@@ -6,6 +6,9 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { createTheme } from '@mui/material/styles';
 import { SessionProvider } from "next-auth/react";
+import { useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import Cookies from 'js-cookie';
 
 const theme = createTheme({
     palette: {
@@ -23,13 +26,32 @@ const theme = createTheme({
     },
 });
 
+// Wrapper component to handle token storage
+function AuthWrapper({ children }: { children: React.ReactNode }) {
+    const { data: session } = useSession();
+
+    useEffect(() => {
+        if (session?.accessToken) {
+            // Store the API token in a cookie
+            Cookies.set('api_token', session.accessToken, {
+                expires: 30, // 30 days
+                sameSite: 'lax'
+            });
+        }
+    }, [session]);
+
+    return <>{children}</>;
+}
+
 export default function App({ Component, pageProps }: AppProps) {
     return (
         <SessionProvider session={pageProps.session}>
             <Provider store={store}>
                 <ThemeProvider theme={theme}>
                     <CssBaseline />
-                    <Component {...pageProps} />
+                    <AuthWrapper>
+                        <Component {...pageProps} />
+                    </AuthWrapper>
                 </ThemeProvider>
             </Provider>
         </SessionProvider>

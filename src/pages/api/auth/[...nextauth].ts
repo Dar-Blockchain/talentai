@@ -7,18 +7,26 @@ import TwitterProvider from "next-auth/providers/twitter";
 // Optionally, uncomment AppleProvider if needed:
 // import AppleProvider from "next-auth/providers/apple";
 
+// Extend session type to include our custom fields
+declare module "next-auth" {
+  interface Session {
+    accessToken?: string;
+    user: any;
+  }
+}
+
 const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
- 
   ],
   secret: process.env.NEXTAUTH_SECRET,
 
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
     async signIn({ user, account, profile }) {
@@ -36,7 +44,7 @@ const authOptions: NextAuthOptions = {
             console.error("Error from connect-gmail API:", data);
             return false;
           }
-
+          console.log("API response:", data);
           // Store API response data in the account
           account.access_token = data.token;
           account.user_data = data.user;
@@ -54,24 +62,24 @@ const authOptions: NextAuthOptions = {
       return true;
     },
 
-
-    async jwt({ token, account }) {
-      if (account) {
-        token.accessToken = account.access_token; // ✅ Store token safely
-        token.userData = account.user_data; // ✅ Store backend user info
+    async jwt({ token, account, user }) {
+      if (account && user) {
+        token.accessToken = account.access_token;
+        token.userData = account.user_data;
       }
       return token;
     },
+
     async session({ session, token }) {
       return {
         ...session,
-        accessToken: token.accessToken as string, // ✅ Type assertion
-        user: token.userData as any, // ✅ Avoid type errors
+        accessToken: token.accessToken as string,
+        user: token.userData || session.user,
       };
-    }
-    ,
+    },
+
     async redirect({ baseUrl }) {
-      return `/preferences`;
+      return `${baseUrl}/preferences`;
     },
   },
 };
