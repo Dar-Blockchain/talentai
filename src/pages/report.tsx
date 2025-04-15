@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { motion } from 'framer-motion';
+import PersonIcon from '@mui/icons-material/Person';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -72,10 +73,10 @@ export default function Report() {
   return (
     <Box sx={{
       minHeight: '100vh',
-      backgroundColor: '#00072D',
+      backgroundColor: '#0f172a',
       backgroundImage: `
-        radial-gradient(circle at 20% 30%, rgba(2,226,255,0.4), transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(0,255,195,0.3), transparent 50%)
+        radial-gradient(circle at 20% 30%, rgba(37, 99, 235, 0.15), transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(29, 78, 216, 0.15), transparent 50%)
       `,
       py: 4
     }}>
@@ -132,6 +133,36 @@ export default function Report() {
               No transcripts available. Please complete the interview first.
             </Typography>
           )}
+
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center',
+            mt: 4,
+            pt: 4,
+            borderTop: '1px solid rgba(0,0,0,0.1)'
+          }}>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => router.push('/dashboardCandidate')}
+              startIcon={<PersonIcon />}
+              sx={{
+                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                color: '#fff',
+                px: 4,
+                py: 1.5,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontSize: '1.1rem',
+                fontWeight: 500,
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                }
+              }}
+            >
+              Go to My Dashboard
+            </Button>
+          </Box>
         </MotionPaper>
       </Container>
     </Box>
