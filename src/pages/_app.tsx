@@ -5,6 +5,7 @@ import { store } from '../store/store';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { createTheme } from '@mui/material/styles';
+import { SessionProvider } from "next-auth/react";
 
 const theme = createTheme({
     palette: {
@@ -24,11 +25,13 @@ const theme = createTheme({
 
 export default function App({ Component, pageProps }: AppProps) {
     return (
-        <Provider store={store}>
-            <ThemeProvider theme={theme}>
-                <CssBaseline />
-                <Component {...pageProps} />
-            </ThemeProvider>
-        </Provider>
+        <SessionProvider session={pageProps.session}>
+            <Provider store={store}>
+                <ThemeProvider theme={theme}>
+                    <CssBaseline />
+                    <Component {...pageProps} />
+                </ThemeProvider>
+            </Provider>
+        </SessionProvider>
     );
 }
