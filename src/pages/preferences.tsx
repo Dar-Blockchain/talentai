@@ -17,8 +17,12 @@ import {
   FormControlLabel,
   Radio,
   LinearProgress,
-  Link,
-  useTheme
+  Tabs,
+  Tab,
+  Paper,
+  Tooltip,
+  TextField,
+  MenuItem
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
@@ -26,24 +30,53 @@ import { StepIconProps } from '@mui/material/StepIcon';
 import CodeIcon from '@mui/icons-material/Code';
 import StarIcon from '@mui/icons-material/Star';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import BusinessIcon from '@mui/icons-material/Business';
+import DesignServicesIcon from '@mui/icons-material/DesignServices';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
+import PersonIcon from '@mui/icons-material/Person';
 
-type Skill = { label: string; color: string };
+type Skill = { label: string; color: string; category: string };
 
-// Available skills (including Hedera)
+// --- Skills List ---
 const ALL_SKILLS: Skill[] = [
-  { label: 'JavaScript', color: 'F7DF1E' },
-  { label: 'TypeScript', color: '3178C6' },
-  { label: 'React',      color: '61DAFB' },
-  { label: 'Node.js',    color: '339933' },
-  { label: 'Python',     color: '3776AB' },
-  { label: 'Go',         color: '00ADD8' },
-  { label: 'Rust',       color: '000000' },
-  { label: 'GraphQL',    color: 'E10098' },
-  { label: 'Docker',     color: '2496ED' },
-  { label: 'Hedera',     color: '02E2FF' },  
+  // Development
+  { label: 'JavaScript', color: 'F7DF1E', category: 'development' },
+  { label: 'TypeScript', color: '3178C6', category: 'development' },
+  { label: 'React', color: '61DAFB', category: 'development' },
+  { label: 'Node.js', color: '339933', category: 'development' },
+  { label: 'Python', color: '3776AB', category: 'development' },
+  { label: 'Go', color: '00ADD8', category: 'development' },
+  { label: 'Rust', color: '000000', category: 'development' },
+  { label: 'GraphQL', color: 'E10098', category: 'development' },
+  { label: 'Docker', color: '2496ED', category: 'development' },
+  { label: 'Hedera', color: '02E2FF', category: 'development' },
+  // Marketing
+  { label: 'SEO', color: 'FF6B6B', category: 'marketing' },
+  { label: 'Content Marketing', color: '4ECDC4', category: 'marketing' },
+  { label: 'Social Media', color: '45B7D1', category: 'marketing' },
+  { label: 'Email Marketing', color: '96CEB4', category: 'marketing' },
+  { label: 'Analytics', color: 'FFEEAD', category: 'marketing' },
+  // Design
+  { label: 'UI/UX', color: 'FF9F1C', category: 'design' },
+  { label: 'Figma', color: 'F24E1E', category: 'design' },
+  { label: 'Adobe XD', color: 'FF61F6', category: 'design' },
+  { label: 'Photoshop', color: '31A8FF', category: 'design' },
+  { label: 'Illustrator', color: 'FF9A00', category: 'design' },
+  // Business
+  { label: 'Project Management', color: '6C5CE7', category: 'business' },
+  { label: 'Agile', color: '00B894', category: 'business' },
+  { label: 'Scrum', color: 'FDCB6E', category: 'business' },
+  { label: 'Product Management', color: 'E84393', category: 'business' },
+  { label: 'Business Analysis', color: '0984E3', category: 'business' }
 ];
 
-// Project categories for Step 3
+const CATEGORIES = [
+  { id: 'development', label: 'Development', icon: <CodeIcon /> },
+  { id: 'marketing', label: 'Marketing', icon: <AnalyticsIcon /> },
+  { id: 'design', label: 'Design', icon: <DesignServicesIcon /> },
+  { id: 'business', label: 'Business', icon: <BusinessIcon /> }
+];
+
 const PROJECT_TYPES = [
   'Web Application',
   'Backend API',
@@ -52,44 +85,81 @@ const PROJECT_TYPES = [
   'Library/Package'
 ];
 
-// Step labels
-const steps = [
-  'Select Skills',
-  'Rate Your Proficiency',
-  'Choose Project Type',
-  'Review & Submit'
+// 5 Hedera QCM questions
+const HEDERA_QUESTIONS = [
+  {
+    id: 'q1',
+    question: 'Which Hedera service have you used?',
+    options: ['Consensus Service', 'Token Service', 'Smart Contract Service']
+  },
+  {
+    id: 'q2',
+    question: 'Which SDK have you used?',
+    options: ['Java SDK', 'JavaScript SDK', 'Go SDK', 'Other']
+  },
+  {
+    id: 'q3',
+    question: 'On which network did you deploy?',
+    options: ['Testnet', 'Mainnet', 'Previewnet']
+  },
+  {
+    id: 'q4',
+    question: 'How long have you worked with Hedera?',
+    options: ['< 1 month', '1–3 months', '3–6 months', '> 6 months']
+  },
+  {
+    id: 'q5',
+    question: 'Have you implemented a Consensus topic?',
+    options: ['Yes', 'No']
+  }
 ];
 
-// Connector with centered line and gradient on active/completed
-const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
-  [`&.${stepConnectorClasses.alternativeLabel}`]: {
-    top: 25,
-  },
+// Add new type and constants
+type UserType = 'candidate' | 'company' | '';
+
+const COMPANY_STEPS = [
+  'Select Type',
+  'Company Details',
+  'Required Skills',
+  'Experience Level',
+  'Project Types',
+  'Review'
+];
+
+const CANDIDATE_STEPS = [
+  'Select Type',
+  'Select Skills',
+  'Rate Proficiency',
+  'Project Types',
+  'Review'
+];
+
+// Styled connector & step icon
+const ColorlibConnector = styled(StepConnector)(() => ({
+  [`&.${stepConnectorClasses.alternativeLabel}`]: { top: 25 },
   [`& .${stepConnectorClasses.line}`]: {
     height: 3,
     border: 0,
     backgroundColor: '#eaeaf0',
-    borderRadius: 1,
+    borderRadius: 1
   },
   [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line},
      &.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
-    backgroundImage: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-  },
+    backgroundImage: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)'
+  }
 }));
-
-// Custom step icon
 function ColorlibStepIcon(props: StepIconProps) {
   const { active, completed, icon } = props;
   const icons: Record<string, React.ReactElement> = {
     1: <CodeIcon />,
     2: <StarIcon />,
     3: <StarIcon />,
-    4: <CheckCircleIcon />,
+    4: <StarIcon />,
+    5: <CheckCircleIcon />
   };
   const bg = active || completed
     ? 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)'
     : '#eaeaf0';
-
   return (
     <Box sx={{
       background: bg,
@@ -108,44 +178,121 @@ function ColorlibStepIcon(props: StepIconProps) {
   );
 }
 
+// Update the step arrays to include conditional Hedera step
+const getSteps = (userType: UserType, hasHederaExp: 'yes' | 'no' | '') => {
+  if (!userType) return ['Select Type'];
+  
+  if (userType === 'company') {
+    const steps = ['Company Details', 'Required Skills', 'Experience Level', 'Review'];
+    return steps;
+  } else {
+    const steps = ['Select Skills'];
+    if (hasHederaExp === 'yes') steps.push('Hedera QCM');
+    steps.push('Rate Proficiency', 'Review');
+    return steps;
+  }
+};
+
 export default function Preferences() {
-  const theme = useTheme();
   const router = useRouter();
   const [activeStep, setActiveStep] = useState(0);
+  const [userType, setUserType] = useState<UserType>('');
+  const [selectedCategory, setSelectedCategory] = useState('development');
+  
+  // Company specific states
+  const [companyDetails, setCompanyDetails] = useState({
+    name: '',
+    industry: '',
+    size: '',
+    location: ''
+  });
+  const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
+  const [experienceLevel, setExperienceLevel] = useState('');
 
-  // STEP 1: Skills
+  // Step 1: skills + Hedera experience
   const [skills, setSkills] = useState<string[]>([]);
   const toggleSkill = (label: string) =>
-    setSkills(prev =>
-      prev.includes(label) ? prev.filter(s => s !== label) : [...prev, label]
-    );
+    setSkills(prev => prev.includes(label) ? prev.filter(s => s !== label) : [...prev, label]);
 
-  // STEP 2: Proficiency
+  const [hederaExp, setHederaExp] = useState<'yes' | 'no' | ''>('');
+
+  // Step 2: QCM answers
+  const [hedQcm, setHedQcm] = useState<Record<string, string>>({});
+  const setQcm = (qid: string, ans: string) =>
+    setHedQcm(prev => ({ ...prev, [qid]: ans }));
+
+  // Step 3: proficiency
   const [proficiency, setProficiency] = useState<Record<string, number>>({});
   const setProf = (skill: string, value: number) =>
     setProficiency(prev => ({ ...prev, [skill]: value }));
 
-  // STEP 3: Project Type
+  // Step 4: project types
   const [projectType, setProjectType] = useState<Record<string, string>>({});
   const setProjType = (skill: string, type: string) =>
     setProjectType(prev => ({ ...prev, [skill]: type }));
 
-  const handleNext = () => setActiveStep(s => s + 1);
-  const handleBack = () => setActiveStep(s => s - 1);
+  // Check if Hedera is selected
+  const hasHederaSkill = useMemo(() => {
+    if (userType === 'company') {
+      return requiredSkills.includes('Hedera');
+    }
+    return skills.includes('Hedera');
+  }, [userType, requiredSkills, skills]);
 
-  // On “Start Test”, persist and navigate
+  // Get steps based on user type and Hedera experience
+  const steps = useMemo(() => {
+    const baseSteps = ['Select Type'];
+    if (userType) {
+      baseSteps.push(...getSteps(userType, hederaExp));
+    }
+    return baseSteps;
+  }, [userType, hederaExp]);
+
+  // Calculate actual step content to show
+  const currentStep = useMemo(() => {
+    if (activeStep === 0) return 'Select Type';
+    return steps[activeStep];
+  }, [steps, activeStep]);
+
+  const progress = (activeStep / (steps.length - 1)) * 100;
+
+  const handleNext = () => setActiveStep(i => i + 1);
+  const handleBack = () => setActiveStep(i => i - 1);
   const handleStartTest = () => {
-    localStorage.setItem('prefs_skills', JSON.stringify(skills));
-    localStorage.setItem('prefs_proficiency', JSON.stringify(proficiency));
-    localStorage.setItem('prefs_projectType', JSON.stringify(projectType));
-    router.push('/test');
+    if (userType === 'company') {
+      // Save company preferences to localStorage
+      localStorage.setItem('company_preferences', JSON.stringify({
+        companyDetails,
+        requiredSkills,
+        experienceLevel,
+        hederaRequired: hederaExp === 'yes'
+      }));
+      router.push('/dashboardCompany');
+    } else {
+      // Existing candidate logic
+      localStorage.setItem('prefs_skills', JSON.stringify(skills));
+      localStorage.setItem('prefs_proficiency', JSON.stringify(proficiency));
+      localStorage.setItem('prefs_projectType', JSON.stringify(projectType));
+      if (hederaExp === 'yes') {
+        localStorage.setItem('prefs_hederaQcm', JSON.stringify(hedQcm));
+      }
+      router.push('/test');
+    }
   };
 
-  // Compute progress
-  const progress = useMemo(
-    () => (activeStep / (steps.length - 1)) * 100,
-    [activeStep]
+  const filteredSkills = useMemo(
+    () => ALL_SKILLS.filter(s => s.category === selectedCategory),
+    [selectedCategory]
   );
+
+  // Add Hedera QCM step
+  const isHederaQcmStep = activeStep === steps.indexOf('Hedera QCM');
+
+  // Handle user type selection with auto-advance
+  const handleUserTypeSelect = (type: UserType) => {
+    setUserType(type);
+    setActiveStep(prev => prev + 1);
+  };
 
   return (
     <Box sx={{
@@ -160,8 +307,7 @@ export default function Preferences() {
       justifyContent: 'center',
       p: 2
     }}>
-      <Card elevation={8} sx={{ width: { xs: '100%', sm: 640 }, p: 4, borderRadius: 3 }}>
-        {/* Progress Bar */}
+      <Card elevation={8} sx={{ width: { xs: '100%', sm: 800 }, p: 4, borderRadius: 3, backdropFilter: 'blur(10px)' }}>
         <LinearProgress
           variant="determinate"
           value={progress}
@@ -176,16 +322,11 @@ export default function Preferences() {
           }}
         />
 
-        <Typography variant="h5" fontWeight={700} gutterBottom>
-          Let’s Deep Dive into Your Skills
+        <Typography variant="h4" fontWeight={700} gutterBottom sx={{ color: '#00072D' }}>
+          {activeStep === 0 ? 'Welcome to TalentAI' : "Let's Deep Dive into Your Skills"}
         </Typography>
 
-        <Stepper
-          alternativeLabel
-          activeStep={activeStep}
-          connector={<ColorlibConnector />}
-          sx={{ my: 4 }}
-        >
+        <Stepper alternativeLabel activeStep={activeStep} connector={<ColorlibConnector />} sx={{ my: 4 }}>
           {steps.map(label => (
             <Step key={label}>
               <StepLabel StepIconComponent={ColorlibStepIcon}>{label}</StepLabel>
@@ -193,61 +334,332 @@ export default function Preferences() {
           ))}
         </Stepper>
 
-        {/* Step Contents */}
-        {activeStep === 0 && (
-          <Box>
-            {/* Hedera Banner */}
-            <Box sx={{
-              mb: 2,
-              p: 2,
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-              borderRadius: 1,
-              textAlign: 'center'
+        {/* User Type Selection Step */}
+        {currentStep === 'Select Type' && (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography variant="h6" gutterBottom>
+              Are you a candidate looking for opportunities or a company seeking talent?
+            </Typography>
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 3, 
+              justifyContent: 'center',
+              mt: 4 
             }}>
-              <Typography variant="body1" sx={{ color: '#fff' }}>
-                Built on{' '}
-                <Link
-                  href="https://hedera.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  sx={{ color: '#fff', fontWeight: 700, textDecoration: 'underline' }}
-                >
-                  Hedera Hashgraph
-                </Link>
-              </Typography>
-            </Box>
-            <Typography mb={2}>Which skills do you bring to the table?</Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
-              {ALL_SKILLS.map(skill => {
-                const sel = skills.includes(skill.label);
-                return (
-                  <Chip
-                    key={skill.label}
-                    label={skill.label}
-                    clickable
-                    onClick={() => toggleSkill(skill.label)}
-                    sx={{
-                      m: 0.5,
-                      border: `1px solid #${skill.color}`,
-                      backgroundColor: sel ? `#${skill.color}` : 'transparent',
-                      color: sel ? '#fff' : `#${skill.color}`,
-                      '&:hover': {
-                        backgroundColor: `#${skill.color}`,
-                        color: '#fff',
-                      },
-                    }}
-                  />
-                );
-              })}
+              <Button
+                variant={userType === 'candidate' ? 'contained' : 'outlined'}
+                onClick={() => handleUserTypeSelect('candidate')}
+                startIcon={<PersonIcon />}
+                sx={{
+                  py: 2,
+                  px: 4,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600
+                }}
+              >
+                I'm a Candidate
+              </Button>
+              <Button
+                variant={userType === 'company' ? 'contained' : 'outlined'}
+                onClick={() => handleUserTypeSelect('company')}
+                startIcon={<BusinessIcon />}
+                sx={{
+                  py: 2,
+                  px: 4,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600
+                }}
+              >
+                I'm a Company
+              </Button>
             </Box>
           </Box>
         )}
 
-        {activeStep === 1 && (
+        {/* Company Details Step */}
+        {currentStep === 'Company Details' && (
+          <Box sx={{ py: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Tell us about your company
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <TextField
+                fullWidth
+                label="Company Name"
+                value={companyDetails.name}
+                onChange={(e) => setCompanyDetails(prev => ({ ...prev, name: e.target.value }))}
+              />
+              <TextField
+                fullWidth
+                label="Industry"
+                value={companyDetails.industry}
+                onChange={(e) => setCompanyDetails(prev => ({ ...prev, industry: e.target.value }))}
+              />
+              <TextField
+                fullWidth
+                label="Company Size"
+                select
+                value={companyDetails.size}
+                onChange={(e) => setCompanyDetails(prev => ({ ...prev, size: e.target.value }))}
+              >
+                {['1-10', '11-50', '51-200', '201-500', '500+'].map(size => (
+                  <MenuItem key={size} value={size}>{size} employees</MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                fullWidth
+                label="Location"
+                value={companyDetails.location}
+                onChange={(e) => setCompanyDetails(prev => ({ ...prev, location: e.target.value }))}
+              />
+            </Box>
+          </Box>
+        )}
+
+        {/* Skills Selection Steps - Combined logic for both candidate and company */}
+        {(currentStep === 'Select Skills' || currentStep === 'Required Skills') && (
+          <Box>
+            {/* Categories Tabs */}
+            <Paper sx={{ mb: 3, p: 2, borderRadius: 2, backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+              <Tabs
+                value={selectedCategory}
+                onChange={(_, v) => setSelectedCategory(v)}
+                variant="scrollable"
+                scrollButtons="auto"
+                sx={{
+                  '& .MuiTab-root': {
+                    minWidth: 120,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    '&.Mui-selected': {
+                      color: '#02E2FF'
+                    }
+                  },
+                  '& .MuiTabs-indicator': {
+                    backgroundColor: '#02E2FF'
+                  }
+                }}
+              >
+                {CATEGORIES.map(c => (
+                  <Tab 
+                    key={c.id} 
+                    value={c.id} 
+                    label={c.label} 
+                    icon={c.icon} 
+                    iconPosition="start"
+                  />
+                ))}
+              </Tabs>
+            </Paper>
+
+            {/* Title */}
+            <Typography variant="h6" mb={2} sx={{ color: '#fff' }}>
+              {userType === 'company' 
+                ? 'Select required skills for your position'
+                : `Select your ${selectedCategory} skills`
+              }
+            </Typography>
+
+            {/* Skills Grid */}
+            <Box sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: 'repeat(2,1fr)', sm: 'repeat(3,1fr)', md: 'repeat(4,1fr)' },
+              gap: 2
+            }}>
+              {filteredSkills.map(skill => {
+                const isCompany = userType === 'company';
+                const skillsList = isCompany ? requiredSkills : skills;
+                const sel = skillsList.includes(skill.label);
+                
+                return (
+                  <Tooltip 
+                    key={skill.label} 
+                    title={`Click to ${sel ? 'remove' : 'add'} ${skill.label}`}
+                  >
+                    <Chip
+                      label={skill.label}
+                      clickable
+                      onClick={() => {
+                        if (isCompany) {
+                          setRequiredSkills(prev => 
+                            sel ? prev.filter(s => s !== skill.label) : [...prev, skill.label]
+                          );
+                        } else {
+                          toggleSkill(skill.label);
+                        }
+                      }}
+                      sx={{
+                        width: '100%',
+                        height: 40,
+                        border: `1px solid #${skill.color}`,
+                        backgroundColor: sel ? `#${skill.color}` : 'transparent',
+                        color: sel ? '#fff' : `#${skill.color}`,
+                        transition: 'all 0.2s ease',
+                        '&:hover': { 
+                          backgroundColor: `#${skill.color}`, 
+                          color: '#fff', 
+                          transform: 'scale(1.05)',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                        }
+                      }}
+                    />
+                  </Tooltip>
+                );
+              })}
+            </Box>
+
+            {/* Hedera Experience Question */}
+            {((userType === 'candidate' && skills.includes('Hedera')) || 
+              (userType === 'company' && requiredSkills.includes('Hedera'))) && (
+              <Box sx={{ mt: 4 }}>
+                <Typography variant="h6" gutterBottom sx={{ color: '#fff' }}>
+                  {userType === 'company' 
+                    ? 'Is Hedera experience required?' 
+                    : 'Do you have experience working with Hedera?'
+                  }
+                </Typography>
+                <RadioGroup
+                  row
+                  value={hederaExp}
+                  onChange={(e) => setHederaExp(e.target.value as 'yes' | 'no')}
+                  sx={{ mt: 1 }}
+                >
+                  <FormControlLabel 
+                    value="yes" 
+                    control={
+                      <Radio 
+                        sx={{
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          '&.Mui-checked': {
+                            color: '#02E2FF'
+                          }
+                        }}
+                      />
+                    } 
+                    label="Yes"
+                    sx={{
+                      color: '#fff'
+                    }}
+                  />
+                  <FormControlLabel 
+                    value="no" 
+                    control={
+                      <Radio 
+                        sx={{
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          '&.Mui-checked': {
+                            color: '#02E2FF'
+                          }
+                        }}
+                      />
+                    } 
+                    label="No"
+                    sx={{
+                      color: '#fff'
+                    }}
+                  />
+                </RadioGroup>
+              </Box>
+            )}
+          </Box>
+        )}
+
+        {/* Experience Level Step for Company */}
+        {currentStep === 'Experience Level' && (
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Required Experience Level
+            </Typography>
+            <RadioGroup
+              value={experienceLevel}
+              onChange={(e) => setExperienceLevel(e.target.value)}
+            >
+              {['Entry Level', 'Mid Level', 'Senior', 'Lead/Expert'].map(level => (
+                <FormControlLabel
+                  key={level}
+                  value={level}
+                  control={<Radio />}
+                  label={level}
+                />
+              ))}
+            </RadioGroup>
+          </Box>
+        )}
+
+        {/* Hedera QCM Step - Only for candidates */}
+        {currentStep === 'Hedera QCM' && userType === 'candidate' && (
+          <Box>
+            <Typography
+              variant="h5"
+              gutterBottom
+              sx={{
+                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                mb: 3
+              }}
+            >
+              Hedera Experience Verification
+            </Typography>
+            {HEDERA_QUESTIONS.map(({ id, question, options }) => (
+              <Paper 
+                key={id} 
+                sx={{ 
+                  p: 3, 
+                  mb: 2, 
+                  backgroundColor: '#fff',
+                  borderRadius: 2,
+                  border: '1px solid #e0e0e0',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    borderColor: '#02E2FF',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                  }
+                }} 
+                elevation={0}
+              >
+                <Typography sx={{ color: '#00072D' }} gutterBottom>
+                  {question}
+                </Typography>
+                <RadioGroup
+                  value={hedQcm[id] || ''}
+                  onChange={e => setQcm(id, e.target.value)}
+                >
+                  {options.map(opt => (
+                    <FormControlLabel
+                      key={opt}
+                      value={opt}
+                      control={
+                        <Radio 
+                          sx={{
+                            color: '#64748b',
+                            '&.Mui-checked': {
+                              color: '#02E2FF'
+                            }
+                          }}
+                        />
+                      }
+                      label={opt}
+                      sx={{ 
+                        color: '#1e293b',
+                        '&:hover': { color: '#02E2FF' }
+                      }}
+                    />
+                  ))}
+                </RadioGroup>
+              </Paper>
+            ))}
+          </Box>
+        )}
+
+        {currentStep === 'Rate Proficiency' && (
           <Box>
             <Typography mb={2}>Rate your proficiency (1 = Novice, 5 = Expert)</Typography>
             {skills.map(skill => (
-              <Box key={skill} sx={{ mb: 3 }}>
+              <Box key={skill} sx={{ mb: 3, position: 'relative' }}>
                 <Typography gutterBottom>{skill}</Typography>
                 <Slider
                   value={proficiency[skill] ?? 3}
@@ -263,86 +675,95 @@ export default function Preferences() {
           </Box>
         )}
 
-        {activeStep === 2 && (
-          <Box>
-            <Typography mb={2}>For each skill, select the type of project you used it in:</Typography>
-            {skills.map(skill => (
-              <Box key={skill} sx={{ mb: 3 }}>
-                <Typography gutterBottom>{skill}</Typography>
-                <RadioGroup
-                  row
-                  value={projectType[skill] || ''}
-                  onChange={e => setProjType(skill, e.target.value)}
-                >
-                  {PROJECT_TYPES.map(pt => (
-                    <FormControlLabel
-                      key={pt}
-                      value={pt}
-                      control={<Radio />}
-                      label={pt}
-                    />
-                  ))}
-                </RadioGroup>
-              </Box>
-            ))}
-          </Box>
-        )}
-
-        {activeStep === 3 && (
+        {currentStep === 'Review' && (
           <Box>
             <Typography mb={2}>Review your inputs before starting the test:</Typography>
-            <Typography variant="body2"><strong>Skills:</strong> {skills.join(', ')}</Typography>
-            <Typography variant="body2" sx={{ mt: 1 }}><strong>Proficiency:</strong></Typography>
-            {skills.map(skill => (
-              <Typography key={skill} variant="body2">
-                – {skill}: {proficiency[skill] ?? '-'}
-              </Typography>
-            ))}
-            <Typography variant="body2" sx={{ mt: 1 }}><strong>Project Types:</strong></Typography>
-            {skills.map(skill => (
-              <Typography key={skill} variant="body2">
-                – {skill}: {projectType[skill] || '(none selected)'}
-              </Typography>
-            ))}
-
-            <Box sx={{ textAlign: 'center', mt: 4 }}>
-              <Typography variant="h6" gutterBottom>
-                Are you ready to pass the test?
-              </Typography>
-              <Button
-                variant="contained"
-                onClick={handleStartTest}
-                sx={{ textTransform: 'none' }}
-              >
-                Yes, let’s go
-              </Button>
-            </Box>
+            <Typography variant="body2">
+              <strong>Type:</strong> {userType === 'company' ? 'Company' : 'Candidate'}
+            </Typography>
+            {userType === 'company' ? (
+              <>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  <strong>Company Details:</strong>
+                </Typography>
+                <Typography variant="body2">
+                  Name: {companyDetails.name}<br />
+                  Industry: {companyDetails.industry}<br />
+                  Size: {companyDetails.size}<br />
+                  Location: {companyDetails.location}
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  <strong>Required Skills:</strong> {requiredSkills.join(', ')}
+                </Typography>
+                {hederaExp === 'yes' && (
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    <strong>Hedera Experience:</strong> Verified
+                  </Typography>
+                )}
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  <strong>Required Experience Level:</strong> {experienceLevel}
+                </Typography>
+              </>
+            ) : (
+              <>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  <strong>Skills:</strong> {skills.join(', ')}
+                </Typography>
+                {hederaExp === 'yes' && (
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    <strong>Hedera Experience:</strong> Verified
+                  </Typography>
+                )}
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  <strong>Proficiency Levels:</strong>
+                </Typography>
+                {skills.map(skill => (
+                  <Typography key={skill} variant="body2">
+                    - {skill}: {proficiency[skill] ?? '-'}/5
+                  </Typography>
+                ))}
+              </>
+            )}
           </Box>
         )}
 
         {/* Navigation */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
           <Button
-            disabled={activeStep === 0}
+            variant="outlined"
             onClick={handleBack}
-            sx={{ textTransform: 'none' }}
+            disabled={activeStep === 0}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              borderColor: '#02E2FF',
+              color: '#02E2FF',
+              '&:hover': {
+                borderColor: '#00FFC3'
+              }
+            }}
           >
             Back
           </Button>
-          {activeStep < steps.length - 1 && (
-            <Button
-              variant="contained"
-              onClick={handleNext}
-              disabled={
-                (activeStep === 0 && skills.length === 0) ||
-                (activeStep === 1 && skills.some(s => proficiency[s] === undefined)) ||
-                (activeStep === 2 && skills.some(s => !projectType[s]))
+          <Button
+            variant="contained"
+            onClick={activeStep === steps.length - 1 ? handleStartTest : handleNext}
+            disabled={activeStep === 0 && !userType}
+            sx={{
+              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              '&:hover': {
+                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
               }
-              sx={{ textTransform: 'none' }}
-            >
-              Next
-            </Button>
-          )}
+            }}
+          >
+            {activeStep === steps.length - 1 
+              ? (userType === 'company' ? 'Go to Dashboard' : 'Start Test') 
+              : 'Next'}
+          </Button>
         </Box>
       </Card>
     </Box>
