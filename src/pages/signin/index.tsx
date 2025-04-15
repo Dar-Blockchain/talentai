@@ -1,55 +1,61 @@
 ﻿// pages/auth/signin.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useRouter } from 'next/router';
+import { useTheme } from '@mui/material/styles';
 import { useForm } from 'react-hook-form';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/router';
 import {
   Box,
   Card,
-  Avatar,
   Typography,
   TextField,
   Button,
-  CircularProgress,
-  Divider,
   Alert,
+  Divider,
+  Avatar,
   InputAdornment,
-  useTheme
+  CircularProgress
 } from '@mui/material';
 import {
   Email as EmailIcon,
   LockClock as LockClockIcon,
   Google as GoogleIcon
 } from '@mui/icons-material';
+import { registerUser, verifyOTP } from '../../store/features/authSlice';
+import type { RootState, AppDispatch } from '../../store/store';
 
 type EmailFormData = { email: string };
-type CodeFormData  = { code: string };
+type CodeFormData = { code: string };
 
 export default function SignIn() {
   const theme = useTheme();
   const router = useRouter();
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState('');
-  const { register, handleSubmit, formState: { errors }, watch } =
-    useForm<EmailFormData & CodeFormData>();
+  const [showVerification, setShowVerification] = useState(false);
+  
+  const dispatch = useDispatch<AppDispatch>();
+  const { isLoading, error: reduxError } = useSelector((state: RootState) => state.auth);
 
-  const email = watch('email');
+  const { register: registerEmail, handleSubmit: handleEmailSubmit, formState: { errors: emailErrors }, watch: watchEmail } = useForm<EmailFormData>();
+  const { register: registerCode, handleSubmit: handleCodeSubmit, formState: { errors: codeErrors }, watch: watchCode } = useForm<CodeFormData>();
+  
+  const email = watchEmail('email');
+  const code = watchCode('code');
 
-  const sendCode = async (emailToSend: string) => {
+  const onEmailSubmit = async (data: EmailFormData) => {
+    const emailToSend = data.email.toLowerCase().trim();
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
-      const res = await fetch('/api/auth/email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailToSend }),
-      });
-      if (!res.ok) {
-        const { message } = await res.json();
-        throw new Error(message || 'Failed to send code');
-      }
+      await dispatch(registerUser(emailToSend)).unwrap();
+      setShowVerification(true);
+      setSuccess(`Please verify your email - we've sent a code to ${emailToSend}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -57,30 +63,32 @@ export default function SignIn() {
     }
   };
 
-  const onEmailSubmit = async ({ email }: EmailFormData) => {
-    await sendCode(email);
-  };
-
-  // NOTE: We no longer need onCodeSubmit for routing,
-  // but we keep it if you want to actually verify.
-  const onCodeSubmit = async ({ code }: CodeFormData) => {
-    setLoading(true);
+  const onVerifySubmit = async (data: CodeFormData) => {
+    if (!code || !email) return;
     setError('');
     try {
-      const result = await signIn('email-code', {
-        email,
-        code,
-        redirect: false
-      });
-      if (result?.error) throw new Error(result.error);
-      // If you still want to verify before routing, keep this:
-      // router.push('/preferences');
+      const response = await dispatch(verifyOTP({ 
+        email: email.toLowerCase().trim(), 
+        otp: code 
+      })).unwrap();
+      
+      // Check if we have a token before redirecting
+      if (response.token) {
+        router.push('/preferences');
+      } else {
+        setError('Verification successful but no token received');
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid code');
-    } finally {
-      setLoading(false);
+      setError(err instanceof Error ? err.message : 'Verification failed');
     }
   };
+
+  // Use Redux error if available
+  useEffect(() => {
+    if (reduxError) {
+      setError(reduxError);
+    }
+  }, [reduxError]);
 
   return (
     <Box
@@ -107,22 +115,23 @@ export default function SignIn() {
         <Typography variant="body2" color="text.secondary" mb={3}>
           Sign in to access your recruitment dashboard
         </Typography>
-
+        
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
         {/* EMAIL FORM */}
-        <Box component="form" onSubmit={handleSubmit(onEmailSubmit)} sx={{ mb: 2 }}>
+        <Box component="form" onSubmit={handleEmailSubmit(onEmailSubmit)} sx={{ mb: 2 }}>
           <TextField
-            {...register('email', {
+            {...registerEmail('email', {
               required: 'Email is required',
               pattern: {
                 value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                 message: 'Invalid email address'
               }
             })}
-            error={!!errors.email}
-            helperText={errors.email?.message}
-            disabled={loading}
+            error={!!emailErrors.email}
+            helperText={emailErrors.email?.message}
+            disabled={loading || isLoading}
             fullWidth
             variant="outlined"
             label="Email Address"
@@ -133,45 +142,44 @@ export default function SignIn() {
         </Box>
 
         {/* CODE INPUT */}
-        <TextField
-          {...register('code', {
-            required: 'Code is required',
-            pattern: { value: /^\d{6}$/, message: 'Enter a 6‑digit code' }
-          })}
-          error={!!errors.code}
-          helperText={errors.code?.message}
-          disabled={loading}
-          fullWidth
-          variant="outlined"
-          label="Verification Code"
-          InputProps={{
-            startAdornment: <LockClockIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-            endAdornment: (
-              <InputAdornment position="end">
-                <Button
-                  onClick={() => {/* no-op now */}}
-                  disabled={loading || !email}
-                  size="small"
-                  sx={{ textTransform: 'none' }}
-                >
-                  {loading ? <CircularProgress size={16} /> : 'Get Code'}
-                </Button>
-              </InputAdornment>
-            )
-          }}
-          sx={{ mb: 2 }}
-        />
+        <Box component="form" onSubmit={handleCodeSubmit(onVerifySubmit)}>
+          <TextField
+            {...registerCode('code')}
+            error={!!codeErrors.code}
+            helperText={codeErrors.code?.message}
+            disabled={loading || isLoading || !showVerification}
+            fullWidth
+            variant="outlined"
+            label="Verification Code"
+            InputProps={{
+              startAdornment: <LockClockIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+              endAdornment: (
+                <InputAdornment position="end">
+                  <Button
+                    onClick={handleEmailSubmit(onEmailSubmit)}
+                    disabled={loading || isLoading || !email}
+                    size="small"
+                    sx={{ textTransform: 'none' }}
+                  >
+                    {loading || isLoading ? <CircularProgress size={16} /> : 'Get Code'}
+                  </Button>
+                </InputAdornment>
+              )
+            }}
+            sx={{ mb: 2 }}
+          />
 
-        {/* VERIFY BUTTON now just navigates */}
-        <Button
-          fullWidth
-          variant="contained"
-          disabled={loading}
-          onClick={() => router.push('/preferences')}   // ← go to preferences
-          sx={{ py: 1.5, textTransform: 'none', mb: 2 }}
-        >
-          Verify
-        </Button>
+          {/* VERIFY BUTTON */}
+          <Button
+            fullWidth
+            type="submit"
+            variant="contained"
+            disabled={loading || isLoading || !showVerification || !code}
+            sx={{ py: 1.5, textTransform: 'none', mb: 2 }}
+          >
+            Verify
+          </Button>
+        </Box>
 
         <Divider sx={{ my: 2 }}>OR</Divider>
 
@@ -180,7 +188,7 @@ export default function SignIn() {
           variant="outlined"
           startIcon={<GoogleIcon />}
           onClick={() => signIn('google', { callbackUrl: '/preferences' })}
-          disabled={loading}
+          disabled={loading || isLoading}
           sx={{ py: 1.5, textTransform: 'none', '&:hover': { backgroundColor: theme.palette.action.hover } }}
         >
           Continue with Google
