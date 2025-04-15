@@ -34,6 +34,7 @@ const NEXTJS_QUESTIONS = [
   "Describe how environment variables are managed in Next.js. How would you securely store and access a third‑party API key?"
 ];
 
+
 // --- Styled Components ---
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   background: 'rgba(0, 7, 45, 0.8)',
