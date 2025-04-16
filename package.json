@@ -17,6 +17,8 @@
     "@types/js-cookie": "^3.0.6",
     "axios": "^1.8.4",
     "cookies-next": "^5.1.0",
+    "formdata-node": "^6.0.3",
+    "formidable": "^3.5.2",
     "framer-motion": "^12.6.5",
     "js-cookie": "^3.0.5",
     "next": "15.3.0",
@@ -25,9 +27,12 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.55.0",
     "react-redux": "^9.2.0",
-    "redux-persist": "^6.0.0"
+    "redux-persist": "^6.0.0",
+    "socket.io-client": "^4.8.1",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@types/formidable": "^3.4.5",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

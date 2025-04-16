@@ -1,4 +1,3 @@
-// pages/test.tsx
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -19,6 +18,7 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CallEndIcon from '@mui/icons-material/CallEnd';
+import { v4 as uuidv4 } from 'uuid';
 
 // --- Inline Next.js Questions JSON ---
 const NEXTJS_QUESTIONS = [
@@ -33,7 +33,6 @@ const NEXTJS_QUESTIONS = [
   "What strategies can you use in Next.js to optimize bundle size and improve performance?",
   "Describe how environment variables are managed in Next.js. How would you securely store and access a third‑party API key?"
 ];
-
 
 // --- Styled Components ---
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -158,19 +157,24 @@ export default function Test() {
   const streamRef = useRef<MediaStream | null>(null);
 
   const [current, setCurrent] = useState(0);
-  const [transcripts, setTranscripts] = useState<string[]>(
-    Array(NEXTJS_QUESTIONS.length).fill('')
-  );
   const [isRecording, setIsRecording] = useState(false);
-  const [currentTranscript, setCurrentTranscript] = useState('');
   const [timeLeft, setTimeLeft] = useState(5);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const currentIndexRef = useRef(0);
 
-  // Sync ref & reset interim + timer on question change
+  // Interval used to finalize each chunk
+  const chunkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // MediaRecorder references
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+
+  // Transcription states
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [transcription, setTranscription] = useState('');
+
+  // Timer resets when question changes
   useEffect(() => {
     currentIndexRef.current = current;
-    setCurrentTranscript('');
     setTimeLeft(5);
   }, [current]);
 
@@ -194,65 +198,136 @@ export default function Test() {
     return () => streamRef.current?.getTracks().forEach(t => t.stop());
   }, []);
 
-  // Initialize speech recognition once
+  // Optional: fetch session data if needed
   useEffect(() => {
-    if (!('webkitSpeechRecognition' in window)) return;
-    const recog = new window.webkitSpeechRecognition();
-    recog.continuous = true;
-    recog.interimResults = true;
-    recog.lang = 'en-US';
-
-    recog.onresult = (ev: SpeechRecognitionEvent) => {
-      let interim = '';
-      for (let i = ev.resultIndex; i < ev.results.length; i++) {
-        const res = ev.results[i];
-        if (res.isFinal) {
-          const text = res[0].transcript.trim() + ' ';
-          setTranscripts(prev => {
-            const copy = [...prev];
-            copy[currentIndexRef.current] = (copy[currentIndexRef.current] + text).trim();
-            localStorage.setItem('test_transcripts', JSON.stringify(copy));
-            return copy;
-          });
-        } else {
-          interim += res[0].transcript;
-        }
+    const initializeSession = async () => {
+      try {
+        const response = await fetch('/api/session');
+        const data = await response.json();
+        console.log('Session data:', data);
+      } catch (error) {
+        console.error('Error initializing session:', error);
       }
-      setCurrentTranscript(interim);
     };
-
-    recog.onerror = e => console.error('Speech error', e);
-    recognitionRef.current = recog;
-    return () => recog.stop();
+    initializeSession();
   }, []);
 
-  // Countdown timer while recording
-  useEffect(() => {
-    if (!isRecording) return;
-    const id = setInterval(() => {
-      setTimeLeft(t => (t > 0 ? t - 1 : 0));
-    }, 1000);
-    return () => clearInterval(id);
-  }, [isRecording, current]);
+  // Helper to create a new MediaRecorder for each chunk
+  const createMediaRecorder = (stream: MediaStream) => {
+    const options = {
+      mimeType: 'audio/webm;codecs=opus',
+      audioBitsPerSecond: 128000,
+    };
+    const recorder = new MediaRecorder(stream, options);
 
-  // Auto‑advance when timer hits zero
-  useEffect(() => {
-    if (timeLeft === 0) {
-      setCurrent(c => Math.min(c + 1, NEXTJS_QUESTIONS.length - 1));
-    }
-  }, [timeLeft]);
+    // Fired once a chunk completes (onstop or after recorder.stop())
+    recorder.ondataavailable = async (event) => {
+      if (event.data.size > 0) {
+        try {
+          setIsTranscribing(true);
+          const formData = new FormData();
+          formData.append('audio', event.data, 'recording.webm');
+          console.log('Sending audio chunk, size =', event.data.size);
 
-  const toggleRecording = () => {
-    if (!recognitionRef.current) return;
-    if (isRecording) {
-      recognitionRef.current.stop();
-      setIsRecording(false);
-    } else {
-      setTimeLeft(5);
-      recognitionRef.current.start();
-      setIsRecording(true);
+          const response = await fetch('/api/session', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Transcription failed');
+          }
+
+          const { text } = await response.json();
+          if (text?.trim()) {
+            setTranscription(prev => prev + ' ' + text.trim());
+          }
+        } catch (error) {
+          console.error('Chunk processing error:', error);
+        } finally {
+          setIsTranscribing(false);
+        }
+      }
+    };
+
+    return recorder;
+  };
+
+  // Every time we finalize a chunk, we stop the recorder, then immediately create a new one
+  const finalizeChunk = () => {
+    if (!mediaRecorderRef.current) return;
+    mediaRecorderRef.current.stop();
+    mediaRecorderRef.current = null;
+
+    // Re-create the recorder for the next chunk
+    if (audioStreamRef.current) {
+      mediaRecorderRef.current = createMediaRecorder(audioStreamRef.current);
+      mediaRecorderRef.current.start(); // Start next chunk
     }
   };
+
+  const toggleRecording = async () => {
+    if (isRecording) {
+      // Stop chunk finalization
+      if (chunkIntervalRef.current) {
+        clearInterval(chunkIntervalRef.current);
+        chunkIntervalRef.current = null;
+      }
+      // Stop the current recorder
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stop();
+        mediaRecorderRef.current = null;
+      }
+      // Stop audio tracks
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach(track => track.stop());
+        audioStreamRef.current = null;
+      }
+      setIsRecording(false);
+    } else {
+      try {
+        setTranscription('');
+        // Get audio stream
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 16000,
+            channelCount: 1,
+          },
+        });
+        audioStreamRef.current = stream;
+
+        // Create first recorder
+        mediaRecorderRef.current = createMediaRecorder(stream);
+        mediaRecorderRef.current.start(); // Start recording
+
+        // Example chunk every 5 seconds (adjust as needed)
+        chunkIntervalRef.current = setInterval(() => {
+          finalizeChunk();
+        }, 5000);
+
+        setIsRecording(true);
+      } catch (error) {
+        console.error('Recording setup error:', error);
+        setIsRecording(false);
+      }
+    }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (chunkIntervalRef.current) {
+        clearInterval(chunkIntervalRef.current);
+      }
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stop();
+      }
+      audioStreamRef.current?.getTracks().forEach(track => track.stop());
+    };
+  }, []);
 
   const handlePrev = () => setCurrent(c => Math.max(0, c - 1));
   const handleNext = () => {
@@ -266,25 +341,30 @@ export default function Test() {
   };
 
   return (
-    <Box sx={{
-      minHeight: '100vh',
-      backgroundColor: '#00072D',
-      backgroundImage: `
-        radial-gradient(circle at 20% 30%, rgba(2,226,255,0.4), transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(0,255,195,0.3), transparent 50%)
-      `,
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: '#00072D',
+        backgroundImage: `
+          radial-gradient(circle at 20% 30%, rgba(2,226,255,0.4), transparent 40%),
+          radial-gradient(circle at 80% 70%, rgba(0,255,195,0.3), transparent 50%)
+        `,
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       <StyledAppBar position="static" elevation={0}>
         <Toolbar>
-          <Typography variant="h6" sx={{
-            flexGrow: 1,
-            background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            fontWeight: 700,
-          }}>
+          <Typography
+            variant="h6"
+            sx={{
+              flexGrow: 1,
+              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: 700,
+            }}
+          >
             Skill Test ({current + 1}/{NEXTJS_QUESTIONS.length})
           </Typography>
           <Typography variant="subtitle1" sx={{ color: '#fff', mr: 2 }}>
@@ -319,20 +399,26 @@ export default function Test() {
         />
       </StyledAppBar>
 
-      <Container maxWidth="md" sx={{
-        flexGrow: 1,
-        py: 4,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        <Paper elevation={12} sx={{
-          position: 'relative',
-          width: '100%',
-          pt: '56.25%', // 16:9
-          borderRadius: 2,
-          overflow: 'hidden',
-        }}>
+      <Container
+        maxWidth="md"
+        sx={{
+          flexGrow: 1,
+          py: 4,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Paper
+          elevation={12}
+          sx={{
+            position: 'relative',
+            width: '100%',
+            pt: '56.25%', // 16:9
+            borderRadius: 2,
+            overflow: 'hidden',
+          }}
+        >
           <video
             ref={videoRef}
             autoPlay
@@ -340,8 +426,10 @@ export default function Test() {
             muted
             style={{
               position: 'absolute',
-              top: 0, left: 0,
-              width: '100%', height: '100%',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
               objectFit: 'cover',
               transform: 'scaleX(-1)',
               borderRadius: '24px',
@@ -361,9 +449,13 @@ export default function Test() {
             >
               {isRecording ? 'Stop Recording' : 'Start Recording'}
             </RecordingButton>
-            {currentTranscript && (
+            {isTranscribing ? (
               <TranscriptDisplay variant="body2">
-                {currentTranscript}
+                Processing...
+              </TranscriptDisplay>
+            ) : (
+              <TranscriptDisplay variant="body2">
+                {transcription}
               </TranscriptDisplay>
             )}
           </RecordingControls>
