@@ -162,6 +162,7 @@ export default function Test() {
   // Transcription states
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcription, setTranscription] = useState('');
+  const [allTranscriptions, setAllTranscriptions] = useState<string[]>([]);
 
   // Fetch questions from API
   useEffect(() => {
@@ -351,11 +352,29 @@ export default function Test() {
     };
   }, []);
 
-  const handlePrev = () => setCurrent(c => Math.max(0, c - 1));
+  const handlePrev = () => {
+    // Load previous transcription when going back
+    const prevIndex = current - 1;
+    if (prevIndex >= 0) {
+      setTranscription(allTranscriptions[prevIndex] || '');
+      setCurrent(prevIndex);
+    }
+  };
+
   const handleNext = () => {
+    // Save current transcription
+    const newTranscriptions = [...allTranscriptions];
+    newTranscriptions[current] = transcription;
+    setAllTranscriptions(newTranscriptions);
+    
+    // Clear current transcription for next question
+    setTranscription('');
+    
     if (current < questions.length - 1) {
       setCurrent(c => c + 1);
     } else {
+      // Save all transcriptions to localStorage before going to report
+      localStorage.setItem('test_transcripts', JSON.stringify(newTranscriptions));
       router.push('/report');
     }
   };
