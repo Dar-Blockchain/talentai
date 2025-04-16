@@ -14,25 +14,13 @@ import {
   Paper,
   styled,
   IconButton,
+  CircularProgress,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 import { v4 as uuidv4 } from 'uuid';
-
-// --- Inline Next.js Questions JSON ---
-const NEXTJS_QUESTIONS = [
-  "Explain the difference between getStaticProps and getServerSideProps. When would you choose one over the other?",
-  "How does Incremental Static Regeneration (ISR) work in Next.js, and what are its benefits?",
-  "Describe how dynamic routes work in Next.js. How would you implement a blog post page that uses dynamic slugs?",
-  "What is the purpose of the Next.js Image component, and how does it improve performance?",
-  "How do API routes in Next.js differ from a traditional Express.js API? Give an example of defining an API route.",
-  "What are middleware in Next.js 12+? Provide a use case where you might use middleware.",
-  "Explain the new App Router introduced in Next.js 13. How does it differ from the Pages Router?",
-  "How would you handle authentication and authorization in a Next.js application?",
-  "What strategies can you use in Next.js to optimize bundle size and improve performance?",
-  "Describe how environment variables are managed in Next.js. How would you securely store and access a third‑party API key?"
-];
+import Cookies from 'js-cookie';
 
 // --- Styled Components ---
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -156,6 +144,9 @@ export default function Test() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  const [questions, setQuestions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [current, setCurrent] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [timeLeft, setTimeLeft] = useState(5);
@@ -171,6 +162,37 @@ export default function Test() {
   // Transcription states
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcription, setTranscription] = useState('');
+
+  // Fetch questions from API
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const token = Cookies.get('api_token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/generate-questions`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch questions');
+        }
+
+        const data = await response.json();
+        setQuestions(data.questions || []);
+        setLoading(false);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load questions');
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
 
   // Timer resets when question changes
   useEffect(() => {
@@ -331,14 +353,69 @@ export default function Test() {
 
   const handlePrev = () => setCurrent(c => Math.max(0, c - 1));
   const handleNext = () => {
-    if (current < NEXTJS_QUESTIONS.length - 1) setCurrent(c => c + 1);
-    else router.push('/report');
+    if (current < questions.length - 1) {
+      setCurrent(c => c + 1);
+    } else {
+      router.push('/report');
+    }
   };
 
   const goHome = () => {
     streamRef.current?.getTracks().forEach(t => t.stop());
     router.push('/');
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Box 
+        sx={{ 
+          height: '100vh', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: 2,
+          backgroundColor: '#00072D'
+        }}
+      >
+        <CircularProgress />
+        <Typography variant="h6" color="white">
+          Loading your interview questions...
+        </Typography>
+      </Box>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <Box 
+        sx={{ 
+          height: '100vh', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: 2,
+          backgroundColor: '#00072D',
+          padding: 3,
+          textAlign: 'center'
+        }}
+      >
+        <Typography variant="h6" color="error">
+          {error}
+        </Typography>
+        <Button 
+          variant="contained" 
+          onClick={() => router.push('/preferences')}
+          sx={{ mt: 2 }}
+        >
+          Go Back
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -365,7 +442,7 @@ export default function Test() {
               fontWeight: 700,
             }}
           >
-            Skill Test ({current + 1}/{NEXTJS_QUESTIONS.length})
+            Skill Test ({current + 1}/{questions.length})
           </Typography>
           <Typography variant="subtitle1" sx={{ color: '#fff', mr: 2 }}>
             0:{timeLeft.toString().padStart(2, '0')}
@@ -388,7 +465,7 @@ export default function Test() {
         </Toolbar>
         <LinearProgress
           variant="determinate"
-          value={((current + 1) / NEXTJS_QUESTIONS.length) * 100}
+          value={((current + 1) / questions.length) * 100}
           sx={{
             height: 4,
             backgroundColor: 'rgba(255,255,255,0.1)',
@@ -461,8 +538,11 @@ export default function Test() {
           </RecordingControls>
 
           <QuestionOverlay>
-            <Typography variant="h6" sx={{ color: '#fff' }}>
-              {NEXTJS_QUESTIONS[current]}
+            <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
+              Question {current + 1} of {questions.length}
+            </Typography>
+            <Typography variant="h6">
+              {questions[current]}
             </Typography>
           </QuestionOverlay>
         </Paper>
@@ -487,7 +567,7 @@ export default function Test() {
             },
           }}
         >
-          {current < NEXTJS_QUESTIONS.length - 1 ? 'Next Question' : 'Finish Test'}
+          {current < questions.length - 1 ? 'Next Question' : 'Finish Test'}
         </Button>
       </NavigationBar>
     </Box>
