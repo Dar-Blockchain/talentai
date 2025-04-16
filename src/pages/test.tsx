@@ -14,13 +14,16 @@ import {
   Paper,
   styled,
   IconButton,
-  CircularProgress,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 import { v4 as uuidv4 } from 'uuid';
+import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
+
+// Remove hardcoded questions
+const NEXTJS_QUESTIONS: string[] = [];
 
 // --- Styled Components ---
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -143,34 +146,30 @@ export default function Test() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const { data: session } = useSession();
 
   const [questions, setQuestions] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(true);
   const [current, setCurrent] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [timeLeft, setTimeLeft] = useState(5);
   const currentIndexRef = useRef(0);
 
-  // Interval used to finalize each chunk
-  const chunkIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // MediaRecorder references
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioStreamRef = useRef<MediaStream | null>(null);
-
-  // Transcription states
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [transcription, setTranscription] = useState('');
-  const [allTranscriptions, setAllTranscriptions] = useState<string[]>([]);
+  // Add state for per-question transcriptions
+  const [transcriptions, setTranscriptions] = useState<{ [key: number]: string }>(
+    {}
+  );
 
   // Fetch questions from API
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
+        setIsGenerating(true);
         const token = Cookies.get('api_token');
         if (!token) {
-          throw new Error('No authentication token found');
+          console.error('No token found');
+          router.push('/');
+          return;
         }
 
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/generate-questions`, {
@@ -184,17 +183,36 @@ export default function Test() {
         }
 
         const data = await response.json();
-        setQuestions(data.questions || []);
-        setLoading(false);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load questions');
-        setLoading(false);
+        setQuestions(data.questions);
+        
+        // Initialize transcriptions with empty strings for each question
+        setTranscriptions(
+          data.questions.reduce((acc: any, _: any, index: number) => ({ 
+            ...acc, 
+            [index]: '' 
+          }), {})
+        );
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+        router.push('/');
+      } finally {
+        setIsGenerating(false);
       }
     };
 
     fetchQuestions();
-  }, []);
+  }, [router]);
 
+  // Interval used to finalize each chunk
+  const chunkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // MediaRecorder references
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+
+  // Transcription states
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  
   // Timer resets when question changes
   useEffect(() => {
     currentIndexRef.current = current;
@@ -235,7 +253,7 @@ export default function Test() {
     initializeSession();
   }, []);
 
-  // Helper to create a new MediaRecorder for each chunk
+  // Modify the recorder.ondataavailable handler inside createMediaRecorder
   const createMediaRecorder = (stream: MediaStream) => {
     const options = {
       mimeType: 'audio/webm;codecs=opus',
@@ -243,7 +261,6 @@ export default function Test() {
     };
     const recorder = new MediaRecorder(stream, options);
 
-    // Fired once a chunk completes (onstop or after recorder.stop())
     recorder.ondataavailable = async (event) => {
       if (event.data.size > 0) {
         try {
@@ -264,7 +281,10 @@ export default function Test() {
 
           const { text } = await response.json();
           if (text?.trim()) {
-            setTranscription(prev => prev + ' ' + text.trim());
+            setTranscriptions(prev => ({
+              ...prev,
+              [currentIndexRef.current]: (prev[currentIndexRef.current] + ' ' + text.trim()).trim()
+            }));
           }
         } catch (error) {
           console.error('Chunk processing error:', error);
@@ -310,7 +330,8 @@ export default function Test() {
       setIsRecording(false);
     } else {
       try {
-        setTranscription('');
+        // Clear only the current question's transcription
+        setTranscriptions(prev => ({ ...prev, [current]: '' }));
         // Get audio stream
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: {
@@ -352,89 +373,16 @@ export default function Test() {
     };
   }, []);
 
-  const handlePrev = () => {
-    // Load previous transcription when going back
-    const prevIndex = current - 1;
-    if (prevIndex >= 0) {
-      setTranscription(allTranscriptions[prevIndex] || '');
-      setCurrent(prevIndex);
-    }
-  };
-
+  const handlePrev = () => setCurrent(c => Math.max(0, c - 1));
   const handleNext = () => {
-    // Save current transcription
-    const newTranscriptions = [...allTranscriptions];
-    newTranscriptions[current] = transcription;
-    setAllTranscriptions(newTranscriptions);
-    
-    // Clear current transcription for next question
-    setTranscription('');
-    
-    if (current < questions.length - 1) {
-      setCurrent(c => c + 1);
-    } else {
-      // Save all transcriptions to localStorage before going to report
-      localStorage.setItem('test_transcripts', JSON.stringify(newTranscriptions));
-      router.push('/report');
-    }
+    if (current < questions.length - 1) setCurrent(c => c + 1);
+    else router.push('/report');
   };
 
   const goHome = () => {
     streamRef.current?.getTracks().forEach(t => t.stop());
     router.push('/');
   };
-
-  // Show loading state
-  if (loading) {
-    return (
-      <Box 
-        sx={{ 
-          height: '100vh', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          flexDirection: 'column',
-          gap: 2,
-          backgroundColor: '#00072D'
-        }}
-      >
-        <CircularProgress />
-        <Typography variant="h6" color="white">
-          Loading your interview questions...
-        </Typography>
-      </Box>
-    );
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <Box 
-        sx={{ 
-          height: '100vh', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          flexDirection: 'column',
-          gap: 2,
-          backgroundColor: '#00072D',
-          padding: 3,
-          textAlign: 'center'
-        }}
-      >
-        <Typography variant="h6" color="error">
-          {error}
-        </Typography>
-        <Button 
-          variant="contained" 
-          onClick={() => router.push('/preferences')}
-          sx={{ mt: 2 }}
-        >
-          Go Back
-        </Button>
-      </Box>
-    );
-  }
 
   return (
     <Box
@@ -461,7 +409,7 @@ export default function Test() {
               fontWeight: 700,
             }}
           >
-            Skill Test ({current + 1}/{questions.length})
+            Skill Test ({current + 1}/{questions.length || '-'})
           </Typography>
           <Typography variant="subtitle1" sx={{ color: '#fff', mr: 2 }}>
             0:{timeLeft.toString().padStart(2, '0')}
@@ -483,8 +431,8 @@ export default function Test() {
           </Button>
         </Toolbar>
         <LinearProgress
-          variant="determinate"
-          value={((current + 1) / questions.length) * 100}
+          variant={isGenerating ? "indeterminate" : "determinate"}
+          value={((current + 1) / (questions.length || 1)) * 100}
           sx={{
             height: 4,
             backgroundColor: 'rgba(255,255,255,0.1)',
@@ -551,17 +499,29 @@ export default function Test() {
               </TranscriptDisplay>
             ) : (
               <TranscriptDisplay variant="body2">
-                {transcription}
+                {transcriptions[current]}
               </TranscriptDisplay>
             )}
           </RecordingControls>
 
           <QuestionOverlay>
-            <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
-              Question {current + 1} of {questions.length}
-            </Typography>
-            <Typography variant="h6">
-              {questions[current]}
+            <Typography variant="h6" sx={{ color: '#fff' }}>
+              {isGenerating ? (
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  gap: 2,
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}>
+                  <span>Generating your interview questions</span>
+                  <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
+                    ...
+                  </Box>
+                </Box>
+              ) : questions[current]}
             </Typography>
           </QuestionOverlay>
         </Paper>
@@ -575,6 +535,7 @@ export default function Test() {
           variant="contained"
           endIcon={<ArrowForwardIcon />}
           onClick={handleNext}
+          disabled={isGenerating}
           sx={{
             textTransform: 'none',
             background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
@@ -584,6 +545,10 @@ export default function Test() {
             '&:hover': {
               background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
             },
+            '&.Mui-disabled': {
+              background: 'rgba(255, 255, 255, 0.12)',
+              color: 'rgba(255, 255, 255, 0.3)',
+            }
           }}
         >
           {current < questions.length - 1 ? 'Next Question' : 'Finish Test'}
