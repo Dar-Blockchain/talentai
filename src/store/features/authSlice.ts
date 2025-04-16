@@ -22,7 +22,7 @@ export const registerUser = createAsyncThunk(
   'auth/register',
   async (email: string, { rejectWithValue }) => {
     try {
-      const response = await axios.post('http://localhost:5000/auth/register', { email });
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/register`, { email });
       return response.data;
     } catch (error: any) {
       if (error.response && error.response.data.message) {
@@ -37,7 +37,7 @@ export const verifyOTP = createAsyncThunk(
   'auth/verifyOTP',
   async ({ email, otp }: { email: string; otp: string }, { rejectWithValue }) => {
     try {
-      const response = await axios.post('http://localhost:5000/auth/verify-otp', { 
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/verify-otp`, { 
         email, 
         otp 
       });

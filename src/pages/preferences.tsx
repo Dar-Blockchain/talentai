@@ -34,6 +34,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import DesignServicesIcon from '@mui/icons-material/DesignServices';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import PersonIcon from '@mui/icons-material/Person';
+import Cookies from 'js-cookie';
 
 type Skill = { label: string; color: string; category: string };
 
@@ -258,7 +259,73 @@ export default function Preferences() {
 
   const handleNext = () => setActiveStep(i => i + 1);
   const handleBack = () => setActiveStep(i => i - 1);
-  const handleStartTest = () => {
+
+  const mapProficiencyToLevel = (proficiencyLevel: number): string => {
+    switch (proficiencyLevel) {
+      case 1:
+        return 'Junior';
+      case 2:
+        return 'Junior+';
+      case 3:
+        return 'Mid-Level';
+      case 4:
+        return 'Senior';
+      case 5:
+        return 'Expert';
+      default:
+        return 'Junior';
+    }
+  };
+
+  const handleCreateOrUpdateProfile = async () => {
+    // If it's a company, just log and return true
+    if (userType === 'company') {
+      console.log('Company profile - no API call needed');
+      return true;
+    }
+
+    try {
+      // Get token from cookies
+      const token = Cookies.get('api_token');
+      
+      if (!token) {
+        console.error('No token found');
+        return false;
+      }
+
+      // Transform skills array into required format with experience level mapping
+      const formattedSkills = skills.map(skill => ({
+        name: skill,
+        proficiencyLevel: proficiency[skill] || 0,
+        experienceLevel: mapProficiencyToLevel(proficiency[skill] || 0)
+      }));
+
+      const profileData = {
+        type: "Candidate",
+        skills: formattedSkills
+      };
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/createOrUpdateProfile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(profileData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create/update profile');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error creating/updating profile:', error);
+      return false;
+    }
+  };
+
+  const handleStartTest = async () => {
     if (userType === 'company') {
       // Save company preferences to localStorage
       localStorage.setItem('company_preferences', JSON.stringify({
@@ -269,6 +336,14 @@ export default function Preferences() {
       }));
       router.push('/dashboardCompany');
     } else {
+      // Create or update profile first
+      const profileCreated = await handleCreateOrUpdateProfile();
+      
+      if (!profileCreated) {
+        // Handle error - you might want to show an error message to the user
+        return;
+      }
+
       // Existing candidate logic
       localStorage.setItem('prefs_skills', JSON.stringify(skills));
       localStorage.setItem('prefs_proficiency', JSON.stringify(proficiency));
