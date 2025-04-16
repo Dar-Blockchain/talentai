@@ -32,11 +32,12 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (session?.accessToken) {
-            // Store the API token in a cookie
+            // Store the API token in a cookie and localStorage
             Cookies.set('api_token', session.accessToken, {
                 expires: 30, // 30 days
                 sameSite: 'lax'
             });
+            localStorage.setItem('api_token', session.accessToken);
         }
     }, [session]);
 
