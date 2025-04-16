@@ -74,6 +74,10 @@ export default function SignIn() {
       
       // Check if we have a token before redirecting
       if (response.token) {
+        // Store the token in localStorage
+        localStorage.setItem('api_token', response.token);
+        // Also store in cookies for API requests
+        document.cookie = `api_token=${response.token}; path=/; max-age=2592000`; // 30 days
         router.push('/preferences');
       } else {
         setError('Verification successful but no token received');
