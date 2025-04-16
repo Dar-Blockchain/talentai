@@ -10,7 +10,8 @@ import {
   Container,
   Button,
   styled,
-  CircularProgress
+  CircularProgress,
+  Divider
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { motion } from 'framer-motion';
@@ -37,18 +38,25 @@ const TranscriptSection = styled(Box)(({ theme }) => ({
 const MotionPaper = motion(StyledPaper);
 const MotionBox = motion(TranscriptSection);
 
+interface TestResult {
+  question: string;
+  answer: string;
+}
+
 export default function Report() {
   const router = useRouter();
-  const [transcripts, setTranscripts] = useState<string[]>([]);
+  const [results, setResults] = useState<TestResult[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('test_transcripts') || '[]');
-      const filtered = Array.isArray(saved) ? saved.filter((t: string) => t.trim() !== '') : [];
-      setTranscripts(filtered);
+      const savedResults = localStorage.getItem('test_results');
+      if (savedResults) {
+        const parsed = JSON.parse(savedResults);
+        setResults(parsed);
+      }
     } catch (e) {
-      console.error(e);
+      console.error('Error loading test results:', e);
     } finally {
       setLoading(false);
     }
@@ -109,28 +117,56 @@ export default function Report() {
               fontWeight: 700
             }}
           >
-            Interview Transcript
+            Interview Results
           </Typography>
 
-          {transcripts.length > 0 ? (
-            transcripts.map((t, i) => (
+          {results.length > 0 ? (
+            results.map((result, i) => (
               <MotionBox
                 key={i}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
               >
-                <Typography variant="h6" sx={{ color: '#02E2FF', mb: 1 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    color: '#02E2FF',
+                    mb: 2,
+                    background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
                   Question {i + 1}
                 </Typography>
-                <Typography variant="body1" sx={{ color: '#fff' }}>
-                  {t}
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    color: '#fff',
+                    mb: 2,
+                    fontWeight: 500
+                  }}
+                >
+                  {result.question}
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    p: 2,
+                    borderRadius: 1,
+                    fontStyle: 'italic'
+                  }}
+                >
+                  {result.answer || 'No answer recorded'}
                 </Typography>
               </MotionBox>
             ))
           ) : (
             <Typography variant="body1" sx={{ color: '#fff', textAlign: 'center' }}>
-              No transcripts available. Please complete the interview first.
+              No results available. Please complete the interview first.
             </Typography>
           )}
 
@@ -139,7 +175,7 @@ export default function Report() {
             justifyContent: 'center',
             mt: 4,
             pt: 4,
-            borderTop: '1px solid rgba(0,0,0,0.1)'
+            borderTop: '1px solid rgba(255,255,255,0.1)'
           }}>
             <Button
               variant="contained"

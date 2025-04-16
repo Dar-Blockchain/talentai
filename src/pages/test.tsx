@@ -14,6 +14,7 @@ import {
   Paper,
   styled,
   IconButton,
+  CircularProgress,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -152,13 +153,16 @@ export default function Test() {
   const [isGenerating, setIsGenerating] = useState(true);
   const [current, setCurrent] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(5);
+  const [timeLeft, setTimeLeft] = useState(10);
   const currentIndexRef = useRef(0);
+  const [hasStartedTest, setHasStartedTest] = useState(false);
 
   // Add state for per-question transcriptions
   const [transcriptions, setTranscriptions] = useState<{ [key: number]: string }>(
     {}
   );
+
+  const [currentTranscript, setCurrentTranscript] = useState('');
 
   // Fetch questions from API
   useEffect(() => {
@@ -213,10 +217,34 @@ export default function Test() {
   // Transcription states
   const [isTranscribing, setIsTranscribing] = useState(false);
   
-  // Timer resets when question changes
+  // Timer only runs when test has started
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (hasStartedTest && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            if (current < questions.length - 1) {
+              setCurrent(c => c + 1);
+              return 10; // Reset timer to 10 seconds
+            } else {
+              stopRecording();
+              saveTestResults();
+              router.push('/report');
+            }
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [current, timeLeft, questions.length, hasStartedTest, router]);
+
+  // Reset timer when question changes
   useEffect(() => {
     currentIndexRef.current = current;
-    setTimeLeft(5);
+    setTimeLeft(10); // Reset to 10 seconds
+    setCurrentTranscript(''); // Clear current transcript
   }, [current]);
 
   // Initialize camera
@@ -267,7 +295,6 @@ export default function Test() {
           setIsTranscribing(true);
           const formData = new FormData();
           formData.append('audio', event.data, 'recording.webm');
-          console.log('Sending audio chunk, size =', event.data.size);
 
           const response = await fetch('/api/session', {
             method: 'POST',
@@ -281,10 +308,17 @@ export default function Test() {
 
           const { text } = await response.json();
           if (text?.trim()) {
-            setTranscriptions(prev => ({
-              ...prev,
-              [currentIndexRef.current]: (prev[currentIndexRef.current] + ' ' + text.trim()).trim()
-            }));
+            // Update both current transcript and stored transcriptions
+            const newText = text.trim();
+            setCurrentTranscript(prev => {
+              const updated = (prev + ' ' + newText).trim();
+              // Update stored transcriptions
+              setTranscriptions(prevT => ({
+                ...prevT,
+                [currentIndexRef.current]: updated
+              }));
+              return updated;
+            });
           }
         } catch (error) {
           console.error('Chunk processing error:', error);
@@ -310,79 +344,100 @@ export default function Test() {
     }
   };
 
-  const toggleRecording = async () => {
-    if (isRecording) {
-      // Stop chunk finalization
-      if (chunkIntervalRef.current) {
-        clearInterval(chunkIntervalRef.current);
-        chunkIntervalRef.current = null;
-      }
-      // Stop the current recorder
-      if (mediaRecorderRef.current) {
-        mediaRecorderRef.current.stop();
-        mediaRecorderRef.current = null;
-      }
-      // Stop audio tracks
-      if (audioStreamRef.current) {
-        audioStreamRef.current.getTracks().forEach(track => track.stop());
-        audioStreamRef.current = null;
-      }
-      setIsRecording(false);
-    } else {
-      try {
-        // Clear only the current question's transcription
-        setTranscriptions(prev => ({ ...prev, [current]: '' }));
-        // Get audio stream
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            sampleRate: 16000,
-            channelCount: 1,
-          },
-        });
-        audioStreamRef.current = stream;
-
-        // Create first recorder
-        mediaRecorderRef.current = createMediaRecorder(stream);
-        mediaRecorderRef.current.start(); // Start recording
-
-        // Example chunk every 5 seconds (adjust as needed)
-        chunkIntervalRef.current = setInterval(() => {
-          finalizeChunk();
-        }, 5000);
-
-        setIsRecording(true);
-      } catch (error) {
-        console.error('Recording setup error:', error);
-        setIsRecording(false);
-      }
+  const stopRecording = () => {
+    // Stop chunk finalization
+    if (chunkIntervalRef.current) {
+      clearInterval(chunkIntervalRef.current);
+      chunkIntervalRef.current = null;
     }
+    // Stop the current recorder
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+    }
+    // Stop audio tracks
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach(track => track.stop());
+      audioStreamRef.current = null;
+    }
+    setIsRecording(false);
+    setHasStartedTest(false);
+  };
+
+  const startTest = async () => {
+    try {
+      // Initialize transcriptions for all questions
+      setTranscriptions(
+        questions.reduce((acc: any, _: any, index: number) => ({ 
+          ...acc, 
+          [index]: '' 
+        }), {})
+      );
+      setCurrentTranscript(''); // Clear current transcript
+
+      // Get audio stream
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 16000,
+          channelCount: 1,
+        },
+      });
+      audioStreamRef.current = stream;
+
+      // Create first recorder
+      mediaRecorderRef.current = createMediaRecorder(stream);
+      mediaRecorderRef.current.start(); // Start recording
+
+      // Process chunks more frequently (every 2 seconds)
+      chunkIntervalRef.current = setInterval(() => {
+        finalizeChunk();
+      }, 2000);
+
+      setIsRecording(true);
+      setHasStartedTest(true);
+      setTimeLeft(10); // Start with 10 seconds
+    } catch (error) {
+      console.error('Recording setup error:', error);
+      setIsRecording(false);
+      setHasStartedTest(false);
+    }
+  };
+
+  const handlePrev = () => setCurrent(c => Math.max(0, c - 1));
+  const handleNext = () => {
+    if (current < questions.length - 1) {
+      setCurrent(c => c + 1);
+    } else {
+      saveTestResults();
+      router.push('/report');
+    }
+  };
+
+  const goHome = () => {
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    if (hasStartedTest) {
+      saveTestResults();
+    }
+    router.push('/');
+  };
+
+  // Function to save test results
+  const saveTestResults = () => {
+    const results = questions.map((question, index) => ({
+      question,
+      answer: transcriptions[index] || ''
+    }));
+    localStorage.setItem('test_results', JSON.stringify(results));
   };
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (chunkIntervalRef.current) {
-        clearInterval(chunkIntervalRef.current);
-      }
-      if (mediaRecorderRef.current) {
-        mediaRecorderRef.current.stop();
-      }
-      audioStreamRef.current?.getTracks().forEach(track => track.stop());
+      stopRecording();
     };
   }, []);
-
-  const handlePrev = () => setCurrent(c => Math.max(0, c - 1));
-  const handleNext = () => {
-    if (current < questions.length - 1) setCurrent(c => c + 1);
-    else router.push('/report');
-  };
-
-  const goHome = () => {
-    streamRef.current?.getTracks().forEach(t => t.stop());
-    router.push('/');
-  };
 
   return (
     <Box
@@ -411,12 +466,17 @@ export default function Test() {
           >
             Skill Test ({current + 1}/{questions.length || '-'})
           </Typography>
-          <Typography variant="subtitle1" sx={{ color: '#fff', mr: 2 }}>
-            0:{timeLeft.toString().padStart(2, '0')}
-          </Typography>
+          {hasStartedTest && (
+            <Typography variant="subtitle1" sx={{ color: '#fff', mr: 2 }}>
+              0:{timeLeft.toString().padStart(2, '0')}
+            </Typography>
+          )}
           <Button
             startIcon={<CallEndIcon />}
-            onClick={goHome}
+            onClick={() => {
+              stopRecording();
+              goHome();
+            }}
             variant="outlined"
             sx={{
               color: theme.palette.error.main,
@@ -483,25 +543,31 @@ export default function Test() {
           <RecordingControls>
             <RecordingButton
               variant="contained"
-              onClick={toggleRecording}
+              onClick={hasStartedTest ? undefined : startTest}
+              disabled={isGenerating || hasStartedTest}
               sx={{
-                backgroundColor: isRecording ? '#ff4444' : '#02E2FF',
+                backgroundColor: '#02E2FF',
                 '&:hover': {
-                  backgroundColor: isRecording ? '#cc0000' : '#00C3FF',
+                  backgroundColor: '#00C3FF',
                 },
+                '&.Mui-disabled': {
+                  backgroundColor: hasStartedTest ? '#ff4444' : 'rgba(255, 255, 255, 0.12)',
+                  color: hasStartedTest ? '#fff' : 'rgba(255, 255, 255, 0.3)',
+                }
               }}
             >
-              {isRecording ? 'Stop Recording' : 'Start Recording'}
+              {hasStartedTest ? `Recording in progress (${timeLeft}s)` : 'Start Test'}
             </RecordingButton>
-            {isTranscribing ? (
-              <TranscriptDisplay variant="body2">
-                Processing...
-              </TranscriptDisplay>
-            ) : (
-              <TranscriptDisplay variant="body2">
-                {transcriptions[current]}
-              </TranscriptDisplay>
-            )}
+            <TranscriptDisplay variant="body2">
+              {isTranscribing ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={16} sx={{ color: '#02E2FF' }} />
+                  <span>Processing audio...</span>
+                </Box>
+              ) : (
+                currentTranscript || 'Speak now...'
+              )}
+            </TranscriptDisplay>
           </RecordingControls>
 
           <QuestionOverlay>
