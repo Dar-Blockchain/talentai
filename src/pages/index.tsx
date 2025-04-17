@@ -117,15 +117,7 @@ export default function Home() {
                 Watch Demo
               </motion.a>
             </div>
-            <div className={styles.trustBadges}>
-              <span>Trusted by leading companies worldwide</span>
-              <div className={styles.companyLogos}>
-                {/* Add company logo placeholders */}
-                <div className={styles.logoPlaceholder}></div>
-                <div className={styles.logoPlaceholder}></div>
-                <div className={styles.logoPlaceholder}></div>
-              </div>
-            </div>
+         
           </motion.div>
           <motion.div 
             className={styles.heroChart}
