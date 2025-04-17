@@ -403,9 +403,13 @@ export default function Preferences() {
   useEffect(() => {
     const checkTrafficCounter = async () => {
       try {
+        // Add a small delay to ensure token is available
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         const token = Cookies.get('api_token');
         if (!token) {
-          console.error('No token found');
+          console.log('No token found, redirecting to home');
+          router.push('/');
           return;
         }
 
@@ -419,14 +423,18 @@ export default function Preferences() {
 
         if (!response.ok) {
           console.error('Failed to fetch profile');
+          router.push('/');
           return;
         }
 
         const data = await response.json();
+        console.log('Profile data:', data);
         
         // If traffic counter is greater than 1, redirect to profile
-        if (data.userId.trafficCounter > 1) {
-          // Check user type from profile data
+        if (data.userId && data.userId.trafficCounter > 1) {
+          console.log('Traffic counter:', data.userId.trafficCounter);
+          console.log('User type:', data.type);
+          
           if (data.type === 'Company') {
             router.push('/dashboardCompany');
           } else {
@@ -435,6 +443,7 @@ export default function Preferences() {
         }
       } catch (error) {
         console.error('Error checking traffic counter:', error);
+        router.push('/');
       }
     };
 

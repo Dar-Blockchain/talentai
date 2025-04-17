@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getMyProfile, selectProfile } from '../store/features/profileSlice';
+import { getMyProfile, selectProfile, clearProfile } from '../store/features/profileSlice';
 import { AppDispatch } from '../store/store';
 import {
   Box,
@@ -30,6 +30,8 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import CategoryIcon from '@mui/icons-material/Category';
 import { useRouter } from 'next/router';
 import StarIcon from '@mui/icons-material/Star';
+import LogoutIcon from '@mui/icons-material/Logout';
+import Cookies from 'js-cookie';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -181,6 +183,30 @@ export default function DashboardCompany() {
   const { profile, loading, error } = useSelector(selectProfile);
   const [editSkillsDialog, setEditSkillsDialog] = useState(false);
 
+  const handleLogout = () => {
+    try {
+      // First clear the token from both localStorage and cookies
+      localStorage.removeItem('api_token');
+      Cookies.remove('api_token', { path: '/' });
+      
+      // Then clear all other data
+      localStorage.clear();
+      
+      // Clear all other cookies
+      Object.keys(Cookies.get()).forEach(cookieName => {
+        Cookies.remove(cookieName, { path: '/' });
+      });
+
+      // Clear Redux state
+      dispatch(clearProfile());
+
+      // Redirect to signin page
+      router.push('/signin');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
   // Add sample matching candidates data
   const sampleMatchingCandidates: MatchingCandidate[] = [
     {
@@ -253,12 +279,33 @@ export default function DashboardCompany() {
       <Container maxWidth="lg">
         {/* Profile Header */}
         <ProfileHeader>
-          <Typography variant="h4" sx={{ fontWeight: 700, mb: 1, position: 'relative', zIndex: 2, color: '#ffffff' }}>
-            {profile.companyDetails?.name}
-          </Typography>
-          <Typography variant="body1" sx={{ opacity: 0.9, mb: 3, position: 'relative', zIndex: 2, color: '#ffffff' }}>
-            {profile.type} • {profile.userId.role}
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 2 }}>
+            <Box>
+              <Typography variant="h4" sx={{ fontWeight: 700, mb: 1, color: '#ffffff' }}>
+                {profile.companyDetails?.name}
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.9, mb: 3, color: '#ffffff' }}>
+                {profile.type} • {profile.userId.role}
+              </Typography>
+            </Box>
+            <Button
+              variant="outlined"
+              startIcon={<LogoutIcon />}
+              onClick={handleLogout}
+              sx={{
+                color: 'rgba(255,255,255,0.9)',
+                borderColor: 'rgba(255,255,255,0.2)',
+                '&:hover': {
+                  borderColor: 'rgba(255,255,255,0.5)',
+                  background: 'rgba(255,255,255,0.1)'
+                },
+                textTransform: 'none',
+                fontWeight: 500
+              }}
+            >
+              Logout
+            </Button>
+          </Box>
           <StatsContainer>
             <StatCard>
               <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff' }}>

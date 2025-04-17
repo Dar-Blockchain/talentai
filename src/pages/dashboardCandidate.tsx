@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getMyProfile, selectProfile } from '../store/features/profileSlice';
+import { getMyProfile, selectProfile, clearProfile } from '../store/features/profileSlice';
 import { AppDispatch } from '../store/store';
 import {
   Box,
@@ -34,7 +34,9 @@ import WorkIcon from '@mui/icons-material/Work';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useRouter } from 'next/router';
+import Cookies from 'js-cookie';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -265,6 +267,30 @@ export default function DashboardCandidate() {
     }
   };
 
+  const handleLogout = () => {
+    try {
+      // First clear the token from both localStorage and cookies
+      localStorage.removeItem('api_token');
+      Cookies.remove('api_token', { path: '/' });
+      
+      // Then clear all other data
+      localStorage.clear();
+      
+      // Clear all other cookies
+      Object.keys(Cookies.get()).forEach(cookieName => {
+        Cookies.remove(cookieName, { path: '/' });
+      });
+
+      // Clear Redux state
+      dispatch(clearProfile());
+
+      // Redirect to signin page
+      router.push('/signin');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
   const matchingCandidates: MatchingCandidate[] = [
     {
       id: "1",
@@ -363,18 +389,39 @@ export default function DashboardCandidate() {
         {/* Profile Header */}
         <ProfileHeader>
           <Box sx={{ position: 'relative', zIndex: 2 }}>
-            <Typography variant="h3" sx={{ 
-              fontWeight: 700, 
-              mb: 2,
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}>
-              Welcome back, {profile.userId.username}!
-            </Typography>
-            <Typography variant="h6" sx={{ opacity: 0.9, mb: 3, color: '#ffffff' }}>
-              {profile.type} • {profile.userId.role}
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+              <Box>
+                <Typography variant="h3" sx={{ 
+                  fontWeight: 700, 
+                  mb: 2,
+                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>
+                  Welcome back, {profile.userId.username}!
+                </Typography>
+                <Typography variant="h6" sx={{ opacity: 0.9, color: '#ffffff' }}>
+                  {profile.type} • {profile.userId.role}
+                </Typography>
+              </Box>
+              <Button
+                variant="outlined"
+                startIcon={<LogoutIcon />}
+                onClick={handleLogout}
+                sx={{
+                  color: 'rgba(255,255,255,0.9)',
+                  borderColor: 'rgba(255,255,255,0.2)',
+                  '&:hover': {
+                    borderColor: 'rgba(255,255,255,0.5)',
+                    background: 'rgba(255,255,255,0.1)'
+                  },
+                  textTransform: 'none',
+                  fontWeight: 500
+                }}
+              >
+                Logout
+              </Button>
+            </Box>
 
             {/* Action Buttons */}
             <Stack direction="row" spacing={2} sx={{ mt: 4 }}>

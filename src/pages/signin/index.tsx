@@ -26,6 +26,7 @@ import {
 } from '@mui/icons-material';
 import { registerUser, verifyOTP } from '../../store/features/authSlice';
 import type { RootState, AppDispatch } from '../../store/store';
+import Cookies from 'js-cookie';
 
 type EmailFormData = { email: string };
 type CodeFormData = { code: string };
@@ -74,11 +75,22 @@ export default function SignIn() {
       
       // Check if we have a token before redirecting
       if (response.token) {
-        // Store the token in localStorage
+        // First clear any existing tokens
+        localStorage.removeItem('api_token');
+        Cookies.remove('api_token');
+        
+        // Then set the new token with a small delay to ensure it's set
         localStorage.setItem('api_token', response.token);
-        // Also store in cookies for API requests
-        document.cookie = `api_token=${response.token}; path=/; max-age=2592000`; // 30 days
-        router.push('/preferences');
+        Cookies.set('api_token', response.token, {
+          expires: 30, // 30 days
+          path: '/',
+          sameSite: 'lax'
+        });
+        
+        // Add a small delay before redirecting to ensure tokens are set
+        setTimeout(() => {
+          router.push('/preferences');
+        }, 100);
       } else {
         setError('Verification successful but no token received');
       }
