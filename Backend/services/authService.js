@@ -101,7 +101,8 @@ module.exports.verifyUserOTP = async (email, otp) => {
 
   user.isVerified = true;
   user.otp = undefined;
-  user.lastLogin = new Date();
+  user.lastLogin = new Date();  
+  user.trafficCounter = user.trafficCounter + 1;
   await user.save();
 
   // Générer le token JWT
@@ -126,6 +127,7 @@ module.exports.connectWithGmail = async (email) => {
       username,
       email,
       isVerified: true, // L'utilisateur est déjà vérifié via Gmail
+      trafficCounter : 0,
       lastLogin: new Date()
     });
     
@@ -133,6 +135,7 @@ module.exports.connectWithGmail = async (email) => {
   } else {
     // Mettre à jour la dernière connexion
     user.lastLogin = new Date();
+    user.trafficCounter = user.trafficCounter + 1;
     await user.save();
   }
   
