@@ -106,7 +106,7 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
 // Récupérer un profil par ID utilisateur
 module.exports.getProfileByUserId = async (userId) => {
   try {
-    const profile = await Profile.findOne({ userId });
+    const profile = await Profile.findOne({ userId }).populate('userId');
     if (!profile) {
       throw new Error('Profil non trouvé');
     }
