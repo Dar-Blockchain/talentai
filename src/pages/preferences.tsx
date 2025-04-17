@@ -1,7 +1,7 @@
 // pages/preferences.tsx
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import {
   Box,
@@ -398,6 +398,48 @@ export default function Preferences() {
     setUserType(type);
     setActiveStep(prev => prev + 1);
   };
+
+  // Add effect to check traffic counter
+  useEffect(() => {
+    const checkTrafficCounter = async () => {
+      try {
+        const token = Cookies.get('api_token');
+        if (!token) {
+          console.error('No token found');
+          return;
+        }
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          console.error('Failed to fetch profile');
+          return;
+        }
+
+        const data = await response.json();
+        
+        // If traffic counter is greater than 1, redirect to profile
+        if (data.userId.trafficCounter > 1) {
+          // Check user type from profile data
+          if (data.type === 'Company') {
+            router.push('/dashboardCompany');
+          } else {
+            router.push('/dashboardCandidate');
+          }
+        }
+      } catch (error) {
+        console.error('Error checking traffic counter:', error);
+      }
+    };
+
+    checkTrafficCounter();
+  }, [router]);
 
   return (
     <Box sx={{
