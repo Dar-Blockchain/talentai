@@ -127,7 +127,7 @@ module.exports.connectWithGmail = async (email) => {
       username,
       email,
       isVerified: true, // L'utilisateur est déjà vérifié via Gmail
-      trafficCounter : 0,
+      trafficCounter : 1,
       lastLogin: new Date()
     });
     
