@@ -1,0 +1,941 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "TalenIA API",
+    "version": "1.0.0",
+    "description": "API pour la plateforme TalenIA - Plateforme de recrutement et d'évaluation des talents"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Serveur de développement"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "tags": ["Welcome"],
+        "summary": "Page d'accueil",
+        "responses": {
+          "200": {
+            "description": "Message de bienvenue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Bienvenue sur l'API Express!"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Inscription utilisateur",
+        "description": "Inscription d'un nouvel utilisateur avec envoi d'un code OTP par email",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "utilisateur@example.com"
+                  }
+                },
+                "required": ["email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Inscription réussie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Inscription réussie. Veuillez vérifier votre email pour le code OTP."
+                    },
+                    "email": {
+                      "type": "string",
+                      "example": "utilisateur@example.com"
+                    },
+                    "username": {
+                      "type": "string",
+                      "example": "utilisateur"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Données invalides"
+          }
+        }
+      }
+    },
+    "/auth/verify-otp": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Vérification OTP",
+        "description": "Vérification du code OTP reçu par email",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "utilisateur@example.com"
+                  },
+                  "otp": {
+                    "type": "string",
+                    "example": "123456"
+                  }
+                },
+                "required": ["email", "otp"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vérification réussie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Email vérifié avec succès"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "_id": {
+                          "type": "string"
+                        },
+                        "username": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "isVerified": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "token": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Code OTP invalide"
+          }
+        }
+      }
+    },
+    "/auth/connect-with-gmail": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Connexion avec Gmail",
+        "description": "Connexion ou inscription via un compte Gmail",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "utilisateur@gmail.com"
+                  }
+                },
+                "required": ["email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Connexion réussie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Connexion réussie"
+                    },
+                    "user": {
+                      "type": "object"
+                    },
+                    "token": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Données invalides"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Déconnexion",
+        "description": "Déconnexion de l'utilisateur",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Déconnexion réussie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Déconnexion réussie"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        }
+      }
+    },
+    "/auth/users": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Récupérer tous les utilisateurs",
+        "description": "Récupération de la liste de tous les utilisateurs enregistrés",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Liste des utilisateurs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "_id": {
+                        "type": "string"
+                      },
+                      "username": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string"
+                      },
+                      "isVerified": {
+                        "type": "boolean"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "403": {
+            "description": "Accès non autorisé"
+          }
+        }
+      }
+    },
+    "/profiles": {
+      "post": {
+        "tags": ["Profiles"],
+        "summary": "Créer ou mettre à jour un profil",
+        "description": "Création ou mise à jour du profil de l'utilisateur connecté",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["Candidate", "Recruiter", "Company"],
+                    "example": "Candidate"
+                  },
+                  "skills": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "example": "TypeScript"
+                        },
+                        "proficiencyLevel": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 5,
+                          "example": 1
+                        }
+                      }
+                    },
+                    "example": [
+                      { "name": "TypeScript", "proficiencyLevel": 1 },
+                      { "name": "JavaScript", "proficiencyLevel": 0 },
+                      { "name": "React", "proficiencyLevel": 0 }
+                    ]
+                  },
+                  "bio": {
+                    "type": "string",
+                    "example": "Développeur full-stack passionné par les technologies web modernes"
+                  },
+                  "experience": {
+                    "type": "number",
+                    "example": 3
+                  },
+                  "education": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "institution": {
+                          "type": "string",
+                          "example": "Université de Paris"
+                        },
+                        "degree": {
+                          "type": "string",
+                          "example": "Master"
+                        },
+                        "field": {
+                          "type": "string",
+                          "example": "Informatique"
+                        },
+                        "startDate": {
+                          "type": "string",
+                          "format": "date",
+                          "example": "2018-09-01"
+                        },
+                        "endDate": {
+                          "type": "string",
+                          "format": "date",
+                          "example": "2020-06-30"
+                        },
+                        "description": {
+                          "type": "string",
+                          "example": "Spécialisation en développement web"
+                        }
+                      }
+                    }
+                  },
+                  "projects": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string",
+                          "example": "Application de gestion de tâches"
+                        },
+                        "description": {
+                          "type": "string",
+                          "example": "Application web de gestion de tâches avec React et Node.js"
+                        },
+                        "technologies": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "example": ["React", "Node.js", "MongoDB"]
+                        },
+                        "link": {
+                          "type": "string",
+                          "example": "https://github.com/user/task-manager"
+                        },
+                        "startDate": {
+                          "type": "string",
+                          "format": "date",
+                          "example": "2021-01-01"
+                        },
+                        "endDate": {
+                          "type": "string",
+                          "format": "date",
+                          "example": "2021-03-31"
+                        }
+                      }
+                    }
+                  },
+                  "certifications": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "example": "AWS Certified Developer"
+                        },
+                        "issuer": {
+                          "type": "string",
+                          "example": "Amazon Web Services"
+                        },
+                        "date": {
+                          "type": "string",
+                          "format": "date",
+                          "example": "2022-05-15"
+                        },
+                        "link": {
+                          "type": "string",
+                          "example": "https://www.credential.net/..."
+                        }
+                      }
+                    }
+                  },
+                  "socialLinks": {
+                    "type": "object",
+                    "properties": {
+                      "github": {
+                        "type": "string",
+                        "example": "https://github.com/username"
+                      },
+                      "linkedin": {
+                        "type": "string",
+                        "example": "https://linkedin.com/in/username"
+                      },
+                      "twitter": {
+                        "type": "string",
+                        "example": "https://twitter.com/username"
+                      },
+                      "portfolio": {
+                        "type": "string",
+                        "example": "https://username.com"
+                      }
+                    }
+                  },
+                  "location": {
+                    "type": "object",
+                    "properties": {
+                      "country": {
+                        "type": "string",
+                        "example": "France"
+                      },
+                      "city": {
+                        "type": "string",
+                        "example": "Paris"
+                      },
+                      "address": {
+                        "type": "string",
+                        "example": "123 Rue de la Paix"
+                      }
+                    }
+                  },
+                  "languages": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "example": "Français"
+                        },
+                        "proficiency": {
+                          "type": "string",
+                          "enum": ["Beginner", "Intermediate", "Advanced", "Native"],
+                          "example": "Native"
+                        }
+                      }
+                    }
+                  },
+                  "availability": {
+                    "type": "string",
+                    "enum": ["Available", "Not Available", "Open to Offers"],
+                    "example": "Available"
+                  },
+                  "hourlyRate": {
+                    "type": "number",
+                    "example": 50
+                  },
+                  "preferredWorkType": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": ["Remote", "On-site", "Hybrid"]
+                    },
+                    "example": ["Remote", "Hybrid"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profil créé/mis à jour avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Profil créé/mis à jour avec succès"
+                    },
+                    "profile": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Données invalides"
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        }
+      },
+      "get": {
+        "tags": ["Profiles"],
+        "summary": "Récupérer tous les profils",
+        "description": "Récupération de la liste de tous les profils",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Liste des profils",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "_id": {
+                        "type": "string"
+                      },
+                      "userId": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "skills": {
+                        "type": "array"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Profiles"],
+        "summary": "Supprimer son profil",
+        "description": "Suppression du profil de l'utilisateur connecté",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Profil supprimé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Profil supprimé avec succès"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        }
+      }
+    },
+    "/profiles/me": {
+      "get": {
+        "tags": ["Profiles"],
+        "summary": "Récupérer son propre profil",
+        "description": "Récupération du profil de l'utilisateur connecté",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Profil de l'utilisateur connecté",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_id": {
+                      "type": "string"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "skills": {
+                      "type": "array"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        }
+      }
+    },
+    "/profiles/{userId}": {
+      "get": {
+        "tags": ["Profiles"],
+        "summary": "Récupérer un profil par ID",
+        "description": "Récupération d'un profil utilisateur par son ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID de l'utilisateur"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profil trouvé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "_id": {
+                      "type": "string"
+                    },
+                    "userId": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "skills": {
+                      "type": "array"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          },
+          "404": {
+            "description": "Profil non trouvé"
+          }
+        }
+      }
+    },
+    "/profiles/search/skills": {
+      "get": {
+        "tags": ["Profiles"],
+        "summary": "Rechercher des profils par compétences",
+        "description": "Recherche de profils utilisateurs par compétences",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "skills",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Liste des compétences séparées par des virgules",
+            "example": "TypeScript,React,Node.js"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profils trouvés",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "_id": {
+                        "type": "string"
+                      },
+                      "userId": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      },
+                      "skills": {
+                        "type": "array"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Non authentifié"
+          }
+        }
+      }
+    },
+    "/api/generate-questions": {
+      "post": {
+        "tags": ["Evaluation"],
+        "summary": "Générer des questions d'entretien",
+        "description": "Génération de questions d'entretien situationnelles basées sur les compétences et l'expérience",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "skills": {
+                    "type": "string",
+                    "example": "TypeScript, React, Node.js",
+                    "description": "Liste des compétences séparées par des virgules"
+                  },
+                  "experience": {
+                    "type": "string",
+                    "example": "3 ans de développement web",
+                    "description": "Description de l'expérience"
+                  }
+                },
+                "required": ["skills", "experience"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Questions générées avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "questions": {
+                      "type": "string",
+                      "example": "1. Pouvez-vous décrire un projet où vous avez utilisé TypeScript et React ensemble?\n2. Comment gérez-vous les états complexes dans une application React?"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Paramètres requis manquants"
+          },
+          "500": {
+            "description": "Échec de la génération des questions"
+          }
+        }
+      },
+      "get": {
+        "tags": ["Evaluation"],
+        "summary": "Vérifier l'endpoint de génération de questions",
+        "description": "Endpoint de débogage pour vérifier que l'endpoint de génération de questions est actif",
+        "responses": {
+          "200": {
+            "description": "Endpoint actif",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Endpoint is active. Please use POST method with required skills and experience."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/create-agent": {
+      "post": {
+        "tags": ["Hedera"],
+        "summary": "Créer un nouvel agent autonome",
+        "description": "Crée une nouvelle paire de clés et un DID pour un agent autonome sur Hedera",
+        "responses": {
+          "200": {
+            "description": "Agent créé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "agent": {
+                      "type": "object",
+                      "properties": {
+                        "privateKey": {
+                          "type": "string",
+                          "description": "Clé privée de l'agent"
+                        },
+                        "publicKey": {
+                          "type": "string",
+                          "description": "Clé publique de l'agent"
+                        },
+                        "did": {
+                          "type": "string",
+                          "description": "DID de l'agent (Decentralized Identifier)",
+                          "example": "did:hedera:testnet:abc123"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Échec de la création de l'agent"
+          }
+        }
+      }
+    },
+    "/api/create-token": {
+      "post": {
+        "tags": ["Hedera"],
+        "summary": "Créer un nouveau token fongible",
+        "description": "Crée un nouveau token fongible sur le réseau Hedera",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "TalenToken",
+                    "description": "Nom du token"
+                  },
+                  "symbol": {
+                    "type": "string",
+                    "example": "TTK",
+                    "description": "Symbole du token"
+                  },
+                  "initialSupply": {
+                    "type": "integer",
+                    "example": 1000,
+                    "description": "Quantité initiale de tokens"
+                  }
+                },
+                "required": ["name", "symbol", "initialSupply"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token créé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "tokenId": {
+                      "type": "string",
+                      "description": "ID du token créé",
+                      "example": "0.0.123456"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Échec de la création du token"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+} 
