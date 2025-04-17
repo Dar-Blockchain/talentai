@@ -1,182 +1,226 @@
 import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { getMyProfile, selectProfile } from '../store/features/profileSlice';
+import { AppDispatch } from '../store/store';
 import {
   Box,
   Container,
   Typography,
   Card,
   Chip,
-  Rating,
   Button,
-  Avatar,
   IconButton,
-  Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField
+  Alert,
+  CircularProgress,
+  TextField,
+  Paper,
+  Grid,
+  Stack,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import EmailIcon from '@mui/icons-material/Email';
-import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
-import VerifiedIcon from '@mui/icons-material/Verified';
-import WorkIcon from '@mui/icons-material/Work';
-import StarIcon from '@mui/icons-material/Star';
-import FilterListIcon from '@mui/icons-material/FilterList';
+import BusinessIcon from '@mui/icons-material/Business';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import GroupsIcon from '@mui/icons-material/Groups';
+import CategoryIcon from '@mui/icons-material/Category';
+import { useRouter } from 'next/router';
 
-// Mock data - This will be replaced with API calls
-const mockCompanyPreferences = {
-  companyDetails: {
-    name: "Tech Corp",
-    industry: "Software Development"
-  },
-  requiredSkills: ["React", "TypeScript", "Node.js"],
-  experienceLevel: "Mid-Senior",
-  hederaRequired: true
-};
-
-const mockCandidates = [
-  {
-    id: '1',
-    name: 'Alex Johnson',
-    avatar: 'https://i.pravatar.cc/150?img=1',
-    skills: [
-      { name: 'React', proficiency: 4.5 },
-      { name: 'TypeScript', proficiency: 4.0 },
-      { name: 'Hedera', proficiency: 4.8 }
-    ],
-    hederaExperience: {
-      verified: true,
-      experience: '1-3 months'
-    },
-    contact: {
-      email: 'alex@example.com',
-      linkedin: 'https://linkedin.com/in/alex'
-    },
-    matchScore: 92
-  },
-  {
-    id: '2',
-    name: 'Sarah Wilson',
-    avatar: 'https://i.pravatar.cc/150?img=2',
-    skills: [
-      { name: 'React', proficiency: 4.2 },
-      { name: 'Node.js', proficiency: 4.5 },
-      { name: 'Hedera', proficiency: 3.8 }
-    ],
-    hederaExperience: {
-      verified: true,
-      experience: '3-6 months'
-    },
-    contact: {
-      email: 'sarah@example.com',
-      linkedin: 'https://linkedin.com/in/sarah'
-    },
-    matchScore: 88
-  },
-  {
-    id: '3',
-    name: 'Michael Chen',
-    avatar: 'https://i.pravatar.cc/150?img=3',
-    skills: [
-      { name: 'React', proficiency: 4.8 },
-      { name: 'TypeScript', proficiency: 4.6 }
-    ],
-    contact: {
-      email: 'michael@example.com'
-    },
-    matchScore: 75
-  }
-];
-
-// Styled components
+// Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
   padding: theme.spacing(3),
-  marginBottom: theme.spacing(2),
-  background: 'rgba(255, 255, 255, 0.95)',
+  marginBottom: theme.spacing(3),
+  background: 'rgba(30, 41, 59, 0.7)',
   backdropFilter: 'blur(10px)',
   borderRadius: '16px',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-  transition: 'all 0.3s ease',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
   border: '1px solid rgba(255,255,255,0.1)',
+  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
   '&:hover': {
-    transform: 'translateY(-4px)',
-    boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
-    borderColor: '#02E2FF'
+    transform: 'translateY(-2px)',
+    boxShadow: '0 6px 25px rgba(0,0,0,0.3)'
   }
 }));
 
-const SkillMatch = styled(Box)(({ theme }) => ({
+const SectionTitle = styled(Typography)(({ theme }) => ({
+  fontSize: '1.5rem',
+  fontWeight: 700,
+  color: '#ffffff',
+  marginBottom: theme.spacing(3),
+  position: 'relative',
+  '&:after': {
+    content: '""',
+    position: 'absolute',
+    bottom: '-8px',
+    left: '0',
+    width: '40px',
+    height: '3px',
+    background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
+    borderRadius: '2px'
+  }
+}));
+
+const ProfileHeader = styled(Box)(({ theme }) => ({
+  background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+  color: '#ffffff',
+  padding: theme.spacing(4),
+  borderRadius: '16px',
+  marginBottom: theme.spacing(3),
+  position: 'relative',
+  overflow: 'hidden',
+  '&:before': {
+    content: '""',
+    position: 'absolute',
+    top: '0',
+    left: '0',
+    right: '0',
+    bottom: '0',
+    background: 'radial-gradient(circle at top right, rgba(2,226,255,0.1) 0%, transparent 60%)',
+    zIndex: 1
+  }
+}));
+
+const StatsContainer = styled(Box)(({ theme }) => ({
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+  gap: theme.spacing(2),
+  marginTop: theme.spacing(3)
+}));
+
+const StatCard = styled(Box)(({ theme }) => ({
+  background: 'rgba(255,255,255,0.1)',
+  padding: theme.spacing(2),
+  borderRadius: '12px',
+  backdropFilter: 'blur(10px)',
+  border: '1px solid rgba(255,255,255,0.1)'
+}));
+
+const CompanyInfoCard = styled(Box)(({ theme }) => ({
+  background: 'rgba(30, 41, 59, 0.6)',
+  borderRadius: '16px',
+  padding: theme.spacing(3),
+  border: '1px solid rgba(255,255,255,0.1)',
+  marginBottom: theme.spacing(3),
+  backdropFilter: 'blur(10px)'
+}));
+
+const InfoRow = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
-  marginBottom: theme.spacing(1.5),
   gap: theme.spacing(2),
-  padding: theme.spacing(1),
-  borderRadius: theme.spacing(1),
-  backgroundColor: 'rgba(0,0,0,0.03)',
+  marginBottom: theme.spacing(2)
+}));
+
+const SkillChip = styled(Chip)(({ theme }) => ({
+  borderRadius: '8px',
+  backgroundColor: 'rgba(2, 226, 255, 0.1)',
+  color: '#02E2FF',
+  fontWeight: 600,
+  margin: theme.spacing(0.5),
   '&:hover': {
-    backgroundColor: 'rgba(2,226,255,0.05)'
+    backgroundColor: 'rgba(2, 226, 255, 0.2)',
+  }
+}));
+
+const CandidateCard = styled(Box)(({ theme }) => ({
+  background: 'rgba(30, 41, 59, 0.6)',
+  borderRadius: '12px',
+  padding: theme.spacing(2),
+  border: '1px solid rgba(255,255,255,0.1)',
+  marginBottom: theme.spacing(2),
+  backdropFilter: 'blur(10px)',
+  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 4px 20px rgba(2,226,255,0.1)'
   }
 }));
 
 const MatchScore = styled(Box)(({ theme }) => ({
+  background: 'linear-gradient(135deg, rgba(2,226,255,0.2) 0%, rgba(0,255,195,0.2) 100%)',
+  borderRadius: '8px',
+  padding: theme.spacing(1),
   display: 'flex',
   alignItems: 'center',
   gap: theme.spacing(1),
-  padding: theme.spacing(0.5, 1.5),
-  borderRadius: theme.spacing(3),
-  backgroundColor: '#2563eb',
-  color: '#fff',
-  fontWeight: 600,
-  fontSize: '0.875rem'
+  width: 'fit-content'
 }));
 
-const CandidatesContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: theme.spacing(3),
-  [theme.breakpoints.up('md')]: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(450px, 1fr))',
-  }
-}));
-
-interface Candidate {
+// Add this near the top with other interfaces
+interface MatchingCandidate {
   id: string;
   name: string;
-  avatar: string;
-  skills: Array<{
-    name: string;
-    proficiency: number;
-  }>;
-  hederaExperience?: {
-    verified: boolean;
-    experience: string;
-  };
-  contact: {
-    email: string;
-    linkedin?: string;
-  };
   matchScore: number;
+  skills: string[];
+  experienceLevel: string;
+  location: string;
 }
 
 export default function DashboardCompany() {
-  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [emailContent, setEmailContent] = useState('');
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const { profile, loading, error } = useSelector(selectProfile);
+  const [editSkillsDialog, setEditSkillsDialog] = useState(false);
 
-  const handleContactCandidate = (candidate: Candidate) => {
-    setSelectedCandidate(candidate);
-    setEmailContent(`Hi ${candidate.name},\n\nI came across your profile on TalentAI and I'm impressed with your skills and experience. Would you be interested in discussing potential opportunities at our company?\n\nBest regards,\n${mockCompanyPreferences.companyDetails.name}`);
-    setDialogOpen(true);
-  };
+  // Add sample matching candidates data
+  const sampleMatchingCandidates: MatchingCandidate[] = [
+    {
+      id: "1",
+      name: "John Doe",
+      matchScore: 95,
+      skills: ["React", "TypeScript", "Node.js"],
+      experienceLevel: "Senior",
+      location: "New York, USA"
+    },
+    {
+      id: "2",
+      name: "Jane Smith",
+      matchScore: 88,
+      skills: ["React", "JavaScript", "AWS"],
+      experienceLevel: "Mid Level",
+      location: "London, UK"
+    },
+    {
+      id: "3",
+      name: "Mike Johnson",
+      matchScore: 82,
+      skills: ["React", "Python", "Docker"],
+      experienceLevel: "Senior",
+      location: "Berlin, Germany"
+    }
+  ];
 
-  const handleSendEmail = () => {
-    // In a real app, this would send the email through your backend
-    window.location.href = `mailto:${selectedCandidate?.contact.email}?subject=Opportunity at ${mockCompanyPreferences.companyDetails.name}&body=${encodeURIComponent(emailContent)}`;
-    setDialogOpen(false);
-  };
+  useEffect(() => {
+    dispatch(getMyProfile());
+  }, [dispatch]);
+
+  if (loading) {
+    return (
+      <Container sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+        <CircularProgress sx={{ color: '#02E2FF' }} />
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container sx={{ mt: 4 }}>
+        <Alert severity="error" sx={{ borderRadius: '12px' }}>{error}</Alert>
+      </Container>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <Container sx={{ mt: 4 }}>
+        <Alert severity="info" sx={{ borderRadius: '12px' }}>No profile data available</Alert>
+      </Container>
+    );
+  }
 
   return (
     <Box sx={{
@@ -188,230 +232,332 @@ export default function DashboardCompany() {
       `,
       py: 4
     }}>
-      <Container maxWidth="xl">
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-          <Typography variant="h4" sx={{ 
-            color: '#fff',
-            fontSize: { xs: '1.75rem', md: '2.5rem' },
-            fontWeight: 600,
-            textShadow: '0 2px 4px rgba(0,0,0,0.2)'
-          }}>
-            Matching Candidates
+      <Container maxWidth="lg">
+        {/* Profile Header */}
+        <ProfileHeader>
+          <Typography variant="h4" sx={{ fontWeight: 700, mb: 1, position: 'relative', zIndex: 2, color: '#ffffff' }}>
+            {profile.companyDetails?.name}
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<FilterListIcon />}
-            sx={{
-              background: 'rgba(255,255,255,0.1)',
-              backdropFilter: 'blur(10px)',
-              '&:hover': {
-                background: 'rgba(255,255,255,0.2)'
-              }
-            }}
-          >
-            Filter Matches
-          </Button>
-        </Box>
-
-        {/* Company Requirements Summary */}
-        <StyledCard sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Your Requirements
-            </Typography>
-            <Button
-              size="small"
-              sx={{ 
-                color: '#2563eb',
-                '&:hover': { backgroundColor: 'rgba(37,99,235,0.05)' }
-              }}
-            >
-              Edit Requirements
-            </Button>
-          </Box>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-            {mockCompanyPreferences.requiredSkills.map((skill: string) => (
-              <Chip
-                key={skill}
-                label={skill}
-                sx={{
-                  backgroundColor: 'rgba(37,99,235,0.1)',
-                  color: '#2563eb',
-                  fontWeight: 500,
-                  '&:hover': {
-                    backgroundColor: 'rgba(37,99,235,0.2)'
-                  }
-                }}
-              />
-            ))}
-          </Box>
-          <Typography variant="body2" sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <WorkIcon sx={{ fontSize: 20 }} />
-            Experience Level: {mockCompanyPreferences.experienceLevel}
-            {mockCompanyPreferences.hederaRequired && (
-              <>
-                <Box component="span" sx={{ mx: 1 }}>•</Box>
-                <VerifiedIcon sx={{ color: '#02E2FF' }} />
-                Hedera experience required
-              </>
-            )}
+          <Typography variant="body1" sx={{ opacity: 0.9, mb: 3, position: 'relative', zIndex: 2, color: '#ffffff' }}>
+            {profile.type} • {profile.userId.role}
           </Typography>
-        </StyledCard>
+          <StatsContainer>
+            <StatCard>
+              <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff' }}>
+                Industry
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#ffffff' }}>
+                {profile.companyDetails?.industry}
+              </Typography>
+            </StatCard>
+            <StatCard>
+              <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff' }}>
+                Company Size
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#ffffff' }}>
+                {profile.companyDetails?.size}
+              </Typography>
+            </StatCard>
+            <StatCard>
+              <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff' }}>
+                Location
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#ffffff' }}>
+                {profile.companyDetails?.location}
+              </Typography>
+            </StatCard>
+          </StatsContainer>
+        </ProfileHeader>
 
-        {/* Candidates List */}
-        <CandidatesContainer>
-          {mockCandidates.map(candidate => (
-            <StyledCard key={candidate.id}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Avatar
-                  src={candidate.avatar}
+        {/* Company Information */}
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
+          <Box sx={{ flex: 1 }}>
+            <CompanyInfoCard>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <SectionTitle>Company Information</SectionTitle>
+                {profile.userId.isVerified && (
+                  <Chip
+                    label="Verified Company"
+                    color="success"
+                    size="small"
+                    sx={{
+                      backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                      color: '#4ade80',
+                      fontWeight: 600,
+                      borderRadius: '8px'
+                    }}
+                  />
+                )}
+              </Box>
+              
+              <InfoRow>
+                <BusinessIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
+                <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.companyDetails?.name}</Typography>
+              </InfoRow>
+              
+              <InfoRow>
+                <CategoryIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
+                <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.companyDetails?.industry}</Typography>
+              </InfoRow>
+              
+              <InfoRow>
+                <GroupsIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
+                <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.companyDetails?.size} employees</Typography>
+              </InfoRow>
+              
+              <InfoRow>
+                <LocationOnIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
+                <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.companyDetails?.location}</Typography>
+              </InfoRow>
+            </CompanyInfoCard>
+
+            {/* Required Skills Section */}
+            <StyledCard>
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                mb: 3
+              }}>
+                <SectionTitle>Required Skills</SectionTitle>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => setEditSkillsDialog(true)}
+                  sx={{
+                    background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                    borderRadius: '12px',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                    }
+                  }}
+                >
+                  Add Skills
+                </Button>
+              </Box>
+              
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {profile.requiredSkills.map((skill, index) => (
+                  <SkillChip key={index} label={skill} />
+                ))}
+              </Box>
+              
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>
+                  Required Experience Level
+                </Typography>
+                <Chip 
+                  label={profile.requiredExperienceLevel}
                   sx={{ 
-                    width: 64,
-                    height: 64,
-                    mr: 2,
-                    border: '2px solid #02E2FF',
-                    boxShadow: '0 0 10px rgba(2,226,255,0.3)'
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(2, 226, 255, 0.1)',
+                    color: '#02E2FF',
+                    fontWeight: 600
                   }}
                 />
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-                    {candidate.name}
-                    {candidate.hederaExperience?.verified && (
-                      <Tooltip title="Hedera Verified">
-                        <VerifiedIcon sx={{ ml: 1, color: '#02E2FF' }} />
-                      </Tooltip>
-                    )}
-                  </Typography>
-                  <MatchScore>
-                    <StarIcon sx={{ fontSize: 18 }} />
-                    {candidate.matchScore}% Match
-                  </MatchScore>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Tooltip title="Contact Candidate">
-                    <IconButton
-                      onClick={() => handleContactCandidate(candidate)}
-                      sx={{ 
-                        backgroundColor: 'rgba(37,99,235,0.1)',
+              </Box>
+            </StyledCard>
+          </Box>
+
+          {/* Matching Candidates Section */}
+          <Box sx={{ flex: 1 }}>
+            <StyledCard>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <SectionTitle>Matching Candidates</SectionTitle>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    borderColor: 'rgba(2,226,255,0.5)',
+                    color: '#02E2FF',
+                    '&:hover': {
+                      borderColor: '#02E2FF',
+                      background: 'rgba(2,226,255,0.1)'
+                    }
+                  }}
+                >
+                  View All Matches
+                </Button>
+              </Box>
+
+              {sampleMatchingCandidates.map((candidate) => (
+                <CandidateCard key={candidate.id}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Box>
+                      <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 600, mb: 0.5 }}>
+                        {candidate.name}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <LocationOnIcon sx={{ fontSize: 16 }} />
+                        {candidate.location}
+                      </Typography>
+                    </Box>
+                    <MatchScore>
+                      <Typography variant="body2" sx={{ color: '#02E2FF', fontWeight: 600 }}>
+                        Match Score
+                      </Typography>
+                      <Typography variant="h6" sx={{ color: '#02E2FF', fontWeight: 700 }}>
+                        {candidate.matchScore}%
+                      </Typography>
+                    </MatchScore>
+                  </Box>
+
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>
+                      Experience Level
+                    </Typography>
+                    <Chip
+                      label={candidate.experienceLevel}
+                      sx={{
+                        backgroundColor: 'rgba(2,226,255,0.1)',
+                        color: '#02E2FF',
+                        fontWeight: 600,
+                        borderRadius: '8px'
+                      }}
+                    />
+                  </Box>
+
+                  <Box>
+                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>
+                      Skills
+                    </Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                      {candidate.skills.map((skill, index) => (
+                        <SkillChip key={index} label={skill} />
+                      ))}
+                    </Stack>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      sx={{
+                        background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                        borderRadius: '8px',
+                        textTransform: 'none',
+                        fontWeight: 600,
                         '&:hover': {
-                          backgroundColor: 'rgba(37,99,235,0.2)'
+                          background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
                         }
                       }}
                     >
-                      <EmailIcon sx={{ color: '#2563eb' }} />
-                    </IconButton>
-                  </Tooltip>
-                  {candidate.contact.linkedin && (
-                    <Tooltip title="View LinkedIn Profile">
-                      <IconButton
-                        onClick={() => window.open(candidate.contact.linkedin, '_blank')}
-                        sx={{ 
-                          backgroundColor: 'rgba(10,102,194,0.1)',
-                          '&:hover': {
-                            backgroundColor: 'rgba(10,102,194,0.2)'
-                          }
-                        }}
-                      >
-                        <LinkedInIcon sx={{ color: '#0A66C2' }} />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </Box>
-              </Box>
-
-              <Typography variant="subtitle2" sx={{ mb: 2, color: 'text.secondary', fontWeight: 500 }}>
-                Skills & Expertise
-              </Typography>
-
-              {/* Skills */}
-              <Box sx={{ mb: 3 }}>
-                {candidate.skills.map(skill => (
-                  <SkillMatch key={skill.name}>
-                    <Typography variant="body2" sx={{ 
-                      minWidth: 120,
-                      fontWeight: 500,
-                      color: mockCompanyPreferences.requiredSkills.includes(skill.name) ? '#2563eb' : 'inherit'
-                    }}>
-                      {skill.name}
-                    </Typography>
-                    <Rating
-                      value={skill.proficiency}
-                      precision={0.5}
-                      readOnly
-                      size="small"
-                      sx={{
-                        '& .MuiRating-iconFilled': {
-                          color: '#2563eb'
-                        }
-                      }}
-                    />
-                    <Typography variant="body2" sx={{ color: 'text.secondary', ml: 'auto' }}>
-                      {(skill.proficiency * 20).toFixed(0)}%
-                    </Typography>
-                  </SkillMatch>
-                ))}
-              </Box>
-
-              {/* Hedera Experience Badge */}
-              {candidate.hederaExperience?.verified && (
-                <Chip
-                  icon={<VerifiedIcon />}
-                  label={`Hedera Experience: ${candidate.hederaExperience.experience}`}
-                  color="primary"
-                  size="small"
-                  sx={{
-                    backgroundColor: 'rgba(2,226,255,0.1)',
-                    color: '#02E2FF',
-                    fontWeight: 600,
-                    '& .MuiChip-icon': {
-                      color: '#02E2FF'
-                    }
-                  }}
-                />
-              )}
+                      View Profile
+                    </Button>
+                  </Box>
+                </CandidateCard>
+              ))}
             </StyledCard>
-          ))}
-        </CandidatesContainer>
+          </Box>
+        </Box>
 
-        {/* Contact Dialog */}
-        <Dialog 
-          open={dialogOpen} 
-          onClose={() => setDialogOpen(false)}
+        {/* Edit Skills Dialog */}
+        <Dialog
+          open={editSkillsDialog}
+          onClose={() => setEditSkillsDialog(false)}
           maxWidth="sm"
           fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(20px)'
+            }
+          }}
         >
-          <DialogTitle>
-            Contact {selectedCandidate?.name}
+          <DialogTitle sx={{ 
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            pb: 2,
+            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+            color: 'white'
+          }}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>Edit Required Skills</Typography>
             <IconButton
-              onClick={() => setDialogOpen(false)}
-              sx={{ position: 'absolute', right: 8, top: 8 }}
+              onClick={() => setEditSkillsDialog(false)}
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+                color: 'rgba(255,255,255,0.8)'
+              }}
             >
               <CloseIcon />
             </IconButton>
           </DialogTitle>
-          <DialogContent>
+          <DialogContent sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
+              Add Required Skills
+            </Typography>
             <TextField
               fullWidth
-              multiline
-              rows={6}
-              value={emailContent}
-              onChange={(e) => setEmailContent(e.target.value)}
-              sx={{ mt: 2 }}
+              placeholder="Enter skills (comma separated)"
+              variant="outlined"
+              sx={{ 
+                mb: 3,
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: 'rgba(255,255,255,0.9)'
+                }
+              }}
             />
+            
+            <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
+              Required Experience Level
+            </Typography>
+            <TextField
+              fullWidth
+              select
+              SelectProps={{
+                native: true,
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '8px',
+                  backgroundColor: 'rgba(255,255,255,0.9)'
+                }
+              }}
+            >
+              <option value="">Select Level</option>
+              <option value="Entry Level">Entry Level</option>
+              <option value="Junior+">Junior+</option>
+              <option value="Mid Level">Mid Level</option>
+              <option value="Senior">Senior</option>
+              <option value="Expert">Expert</option>
+            </TextField>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+          <DialogActions sx={{ 
+            p: 3, 
+            borderTop: '1px solid rgba(255,255,255,0.1)',
+            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
+          }}>
             <Button 
-              onClick={handleSendEmail}
+              onClick={() => setEditSkillsDialog(false)}
+              sx={{ 
+                color: 'rgba(255,255,255,0.8)',
+                borderRadius: '8px',
+                textTransform: 'none',
+                fontWeight: 600
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
               variant="contained"
+              onClick={() => setEditSkillsDialog(false)}
               sx={{
                 background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                borderRadius: '8px',
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 4,
                 '&:hover': {
                   background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
                 }
               }}
             >
-              Send Email
+              Save Changes
             </Button>
           </DialogActions>
         </Dialog>

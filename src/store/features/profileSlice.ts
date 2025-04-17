@@ -13,6 +13,13 @@ interface User {
     profile: string;
 }
 
+interface CompanyDetails {
+    name: string;
+    industry: string;
+    size: string;
+    location: string;
+}
+
 interface Skill {
     _id: string;
     name: string;
@@ -25,8 +32,9 @@ interface Profile {
     userId: User;
     type: string;
     skills: Skill[];
-    requiredSkills: any[];
+    requiredSkills: string[];
     requiredExperienceLevel: string;
+    companyDetails?: CompanyDetails;
     createdAt: string;
     updatedAt: string;
 }
