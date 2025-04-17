@@ -19,12 +19,21 @@ import {
   CircularProgress,
   TextField,
   Divider,
-  Paper
+  Paper,
+  Grid,
+  Stack,
+  MenuItem
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import StarIcon from '@mui/icons-material/Star';
+import PersonIcon from '@mui/icons-material/Person';
+import EmailIcon from '@mui/icons-material/Email';
+import WorkIcon from '@mui/icons-material/Work';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { useRouter } from 'next/router';
 
 // Styled Components
@@ -44,7 +53,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
 }));
 
 const SectionTitle = styled(Typography)(({ theme }) => ({
-  fontSize: '1.5rem',
+  fontSize: '1.75rem',
   fontWeight: 700,
   color: '#ffffff',
   marginBottom: theme.spacing(3),
@@ -54,25 +63,10 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
     position: 'absolute',
     bottom: '-8px',
     left: '0',
-    width: '40px',
-    height: '3px',
+    width: '60px',
+    height: '4px',
     background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
     borderRadius: '2px'
-  }
-}));
-
-const SkillCard = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(2.5),
-  marginBottom: theme.spacing(2),
-  borderRadius: '12px',
-  background: 'rgba(30, 41, 59, 0.6)',
-  backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  transition: 'all 0.2s ease',
-  '&:hover': {
-    transform: 'translateX(4px)',
-    background: 'rgba(30, 41, 59, 0.8)',
-    boxShadow: '0 4px 16px rgba(0,0,0,0.2)'
   }
 }));
 
@@ -86,13 +80,14 @@ const StyledRating = styled(Rating)(({ theme }) => ({
 }));
 
 const ProfileHeader = styled(Box)(({ theme }) => ({
-  background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+  background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
   color: '#ffffff',
-  padding: theme.spacing(4),
-  borderRadius: '16px',
-  marginBottom: theme.spacing(3),
+  padding: theme.spacing(6),
+  borderRadius: '24px',
+  marginBottom: theme.spacing(4),
   position: 'relative',
   overflow: 'hidden',
+  boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
   '&:before': {
     content: '""',
     position: 'absolute',
@@ -100,57 +95,239 @@ const ProfileHeader = styled(Box)(({ theme }) => ({
     left: '0',
     right: '0',
     bottom: '0',
-    background: 'radial-gradient(circle at top right, rgba(2,226,255,0.1) 0%, transparent 60%)',
+    background: 'radial-gradient(circle at top right, rgba(2,226,255,0.15) 0%, transparent 70%)',
     zIndex: 1
   }
 }));
 
-const StatsContainer = styled(Box)(({ theme }) => ({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-  gap: theme.spacing(2),
-  marginTop: theme.spacing(3)
+const StatCard = styled(Paper)(({ theme }) => ({
+  background: 'rgba(255,255,255,0.05)',
+  padding: theme.spacing(3),
+  borderRadius: '16px',
+  backdropFilter: 'blur(10px)',
+  border: '1px solid rgba(255,255,255,0.1)',
+  transition: 'transform 0.2s ease',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    background: 'rgba(255,255,255,0.08)'
+  }
 }));
 
-const StatCard = styled(Box)(({ theme }) => ({
-  background: 'rgba(255,255,255,0.1)',
+const SkillChip = styled(Chip)(({ theme }) => ({
+  margin: theme.spacing(0.5),
+  borderRadius: '8px',
+  padding: theme.spacing(1),
+  height: '32px',
+  background: 'rgba(2, 226, 255, 0.1)',
+  color: '#02E2FF',
+  border: '1px solid rgba(2, 226, 255, 0.2)',
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    background: 'rgba(2, 226, 255, 0.2)',
+    transform: 'scale(1.05)'
+  }
+}));
+
+const ActionButton = styled(Button)(({ theme }) => ({
+  borderRadius: '12px',
+  padding: '12px 24px',
+  textTransform: 'none',
+  fontWeight: 600,
+  fontSize: '1rem',
+  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 6px 16px rgba(0,0,0,0.2)'
+  }
+}));
+
+const InfoItem = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(2),
+  marginBottom: theme.spacing(2),
   padding: theme.spacing(2),
   borderRadius: '12px',
-  backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(255,255,255,0.1)'
+  background: 'rgba(255,255,255,0.03)',
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    background: 'rgba(255,255,255,0.05)',
+    transform: 'translateX(4px)'
+  }
 }));
 
-const UserInfoCard = styled(Box)(({ theme }) => ({
-  background: 'rgba(30, 41, 59, 0.6)',
+interface MatchingCandidate {
+  id: string;
+  name: string;
+  matchScore: number;
+  location: string;
+  role: string;
+  skills: Array<{
+    name: string;
+    proficiencyLevel: number;
+  }>;
+  experienceLevel: string;
+  description: string;
+  avatarUrl: string;
+  availability: string;
+  expectedSalary?: string;
+}
+
+const CandidateCard = styled(Box)(({ theme }) => ({
+  background: 'rgba(30, 41, 59, 0.7)',
+  backdropFilter: 'blur(10px)',
   borderRadius: '16px',
   padding: theme.spacing(3),
   border: '1px solid rgba(255,255,255,0.1)',
-  marginBottom: theme.spacing(3),
-  backdropFilter: 'blur(10px)',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: theme.spacing(2)
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: '0 8px 24px rgba(2,226,255,0.15)',
+    border: '1px solid rgba(2,226,255,0.3)',
+  }
 }));
 
-const InfoRow = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: theme.spacing(2)
+const SkillBar = styled(Box)(({ theme }) => ({
+  height: '4px',
+  background: 'rgba(255,255,255,0.1)',
+  borderRadius: '2px',
+  overflow: 'hidden',
+  '& .bar': {
+    height: '100%',
+    background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
+    transition: 'width 0.3s ease'
+  }
+}));
+
+const AvatarWrapper = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: '12px',
+    height: '12px',
+    background: '#22c55e',
+    borderRadius: '50%',
+    border: '2px solid rgba(30, 41, 59, 0.7)'
+  }
 }));
 
 export default function DashboardCandidate() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { profile, loading, error } = useSelector(selectProfile);
-  const [editSkillDialog, setEditSkillDialog] = useState(false);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    experienceLevel: ''
+  });
 
   useEffect(() => {
     dispatch(getMyProfile());
   }, [dispatch]);
 
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        username: profile.userId.username,
+        email: profile.userId.email,
+        experienceLevel: profile.requiredExperienceLevel || ''
+      });
+    }
+  }, [profile]);
+
+  const handleEditProfileClose = () => {
+    setEditProfileOpen(false);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      // TODO: Add your update profile API call here
+      console.log('Updating profile with:', formData);
+      handleEditProfileClose();
+      // Optionally refresh the profile data
+      dispatch(getMyProfile());
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    }
+  };
+
+  const matchingCandidates: MatchingCandidate[] = [
+    {
+      id: "1",
+      name: "Alex Thompson",
+      matchScore: 95,
+      location: "New York, USA",
+      role: "Full Stack Developer",
+      skills: [
+        { name: "React", proficiencyLevel: 5 },
+        { name: "TypeScript", proficiencyLevel: 4 },
+        { name: "Node.js", proficiencyLevel: 4 }
+      ],
+      experienceLevel: "Senior",
+      description: "Passionate developer with 5+ years of experience in full-stack development and a focus on React ecosystems.",
+      avatarUrl: "https://i.pravatar.cc/150?img=1",
+      availability: "Available in 2 weeks",
+      expectedSalary: "$120k - $150k"
+    },
+    {
+      id: "2",
+      name: "Sarah Chen",
+      matchScore: 88,
+      location: "San Francisco, USA",
+      role: "Machine Learning Engineer",
+      skills: [
+        { name: "Python", proficiencyLevel: 5 },
+        { name: "TensorFlow", proficiencyLevel: 4 },
+        { name: "AWS", proficiencyLevel: 3 }
+      ],
+      experienceLevel: "Mid Level",
+      description: "ML engineer specializing in computer vision and deep learning applications.",
+      avatarUrl: "https://i.pravatar.cc/150?img=5",
+      availability: "Immediately available",
+      expectedSalary: "$100k - $130k"
+    },
+    {
+      id: "3",
+      name: "James Wilson",
+      matchScore: 85,
+      location: "London, UK",
+      role: "Frontend Developer",
+      skills: [
+        { name: "React", proficiencyLevel: 4 },
+        { name: "Vue.js", proficiencyLevel: 5 },
+        { name: "UI/UX", proficiencyLevel: 4 }
+      ],
+      experienceLevel: "Senior",
+      description: "Frontend specialist with a strong focus on creating beautiful and accessible user interfaces.",
+      avatarUrl: "https://i.pravatar.cc/150?img=3",
+      availability: "Available in 1 month",
+      expectedSalary: "£70k - £90k"
+    }
+  ];
+
   if (loading) {
     return (
-      <Container sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+      <Container sx={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        background: '#0f172a' 
+      }}>
         <CircularProgress sx={{ color: '#02E2FF' }} />
       </Container>
     );
@@ -172,19 +349,6 @@ export default function DashboardCandidate() {
     );
   }
 
-  const getProficiencyRating = (level: number) => (level / 5) * 5;
-
-  const getExperienceLevelColor = (level: string) => {
-    const colors: { [key: string]: { bg: string; text: string } } = {
-      'Entry Level': { bg: 'rgba(74, 222, 128, 0.1)', text: '#22c55e' },
-      'Junior+': { bg: 'rgba(56, 189, 248, 0.1)', text: '#0ea5e9' },
-      'Mid Level': { bg: 'rgba(168, 85, 247, 0.1)', text: '#a855f7' },
-      'Senior': { bg: 'rgba(251, 146, 60, 0.1)', text: '#fb923c' },
-      'Expert': { bg: 'rgba(244, 63, 94, 0.1)', text: '#f43f5e' }
-    };
-    return colors[level] || { bg: 'rgba(100, 116, 139, 0.1)', text: '#64748b' };
-  };
-
   return (
     <Box sx={{
       minHeight: '100vh',
@@ -193,290 +357,364 @@ export default function DashboardCandidate() {
         radial-gradient(circle at 20% 30%, rgba(37, 99, 235, 0.15), transparent 40%),
         radial-gradient(circle at 80% 70%, rgba(29, 78, 216, 0.15), transparent 50%)
       `,
-      py: 4
+      py: 6
     }}>
       <Container maxWidth="lg">
         {/* Profile Header */}
         <ProfileHeader>
-          <Typography variant="h4" sx={{ fontWeight: 700, mb: 1, position: 'relative', zIndex: 2, color: '#ffffff' }}>
-            {profile.userId.username}
-          </Typography>
-          <Typography variant="body1" sx={{ opacity: 0.9, mb: 3, position: 'relative', zIndex: 2, color: '#ffffff' }}>
-            {profile.type} • {profile.userId.role}
-          </Typography>
-          <StatsContainer>
-            <StatCard>
-              <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff' }}>
-                Experience Level
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#ffffff' }}>
-                {profile.requiredExperienceLevel}
-              </Typography>
-            </StatCard>
-            <StatCard>
-              <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff' }}>
-                Skills Count
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#ffffff' }}>
-                {profile.skills.length}
-              </Typography>
-            </StatCard>
-            <StatCard>
-              <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff' }}>
-                Last Login
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#ffffff' }}>
-                {new Date(profile.userId.lastLogin).toLocaleDateString('en-US', { 
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric'
-                })}
-              </Typography>
-            </StatCard>
-          </StatsContainer>
+          <Box sx={{ position: 'relative', zIndex: 2 }}>
+            <Typography variant="h3" sx={{ 
+              fontWeight: 700, 
+              mb: 2,
+              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>
+              Welcome back, {profile.userId.username}!
+            </Typography>
+            <Typography variant="h6" sx={{ opacity: 0.9, mb: 3, color: '#ffffff' }}>
+              {profile.type} • {profile.userId.role}
+            </Typography>
+
+            {/* Action Buttons */}
+            <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
+              <ActionButton
+                variant="contained"
+                startIcon={<PlayArrowIcon />}
+                onClick={() => router.push('/test')}
+                sx={{
+                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                  }
+                }}
+              >
+                Start Test
+              </ActionButton>
+              <ActionButton
+                variant="outlined"
+                onClick={() => setEditProfileOpen(true)}
+                sx={{
+                  borderColor: '#02E2FF',
+                  color: '#02E2FF',
+                  '&:hover': {
+                    borderColor: '#00FFC3',
+                    color: '#00FFC3'
+                  }
+                }}
+              >
+                Edit Profile
+              </ActionButton>
+            </Stack>
+
+            {/* Edit Profile Modal */}
+            <Dialog
+              open={editProfileOpen}
+              onClose={handleEditProfileClose}
+              maxWidth="md"
+              fullWidth
+              PaperProps={{
+                sx: {
+                  background: 'rgba(30, 41, 59, 0.95)',
+                  backdropFilter: 'blur(10px)',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                }
+              }}
+            >
+              <DialogTitle sx={{ 
+                borderBottom: '1px solid rgba(255,255,255,0.1)',
+                color: '#ffffff'
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Typography variant="h6">Edit Profile</Typography>
+                  <IconButton
+                    onClick={handleEditProfileClose}
+                    sx={{ color: 'rgba(255,255,255,0.7)' }}
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                </Box>
+              </DialogTitle>
+              <DialogContent sx={{ mt: 2 }}>
+                <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <TextField
+                    name="username"
+                    label="Username"
+                    value={formData.username}
+                    onChange={handleInputChange}
+                    fullWidth
+                    InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                    InputProps={{
+                      sx: {
+                        color: '#ffffff',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255,255,255,0.2)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255,255,255,0.3)',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#02E2FF',
+                        },
+                      },
+                    }}
+                  />
+                  <TextField
+                    name="email"
+                    label="Email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    fullWidth
+                    InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                    InputProps={{
+                      sx: {
+                        color: '#ffffff',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255,255,255,0.2)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255,255,255,0.3)',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#02E2FF',
+                        },
+                      },
+                    }}
+                  />
+                  <TextField
+                    select
+                    name="experienceLevel"
+                    label="Experience Level"
+                    value={formData.experienceLevel}
+                    onChange={handleInputChange}
+                    fullWidth
+                    InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                    InputProps={{
+                      sx: {
+                        color: '#ffffff',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255,255,255,0.2)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255,255,255,0.3)',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#02E2FF',
+                        },
+                      },
+                    }}
+                    SelectProps={{
+                      sx: { color: '#ffffff' }
+                    }}
+                  >
+                    {['Entry Level', 'Junior', 'Mid Level', 'Senior', 'Expert'].map((level) => (
+                      <MenuItem key={level} value={level}>{level}</MenuItem>
+                    ))}
+                  </TextField>
+                </Box>
+              </DialogContent>
+              <DialogActions sx={{ 
+                borderTop: '1px solid rgba(255,255,255,0.1)',
+                padding: 2
+              }}>
+                <Button 
+                  onClick={handleEditProfileClose}
+                  sx={{ 
+                    color: 'rgba(255,255,255,0.7)',
+                    '&:hover': { color: '#ffffff' }
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  onClick={handleSubmit}
+                  sx={{
+                    background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                    color: '#ffffff',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                    }
+                  }}
+                >
+                  Save Changes
+                </Button>
+              </DialogActions>
+            </Dialog>
+          </Box>
+
+          <Box sx={{
+            marginTop: theme => theme.spacing(4),
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              md: 'repeat(4, 1fr)'
+            },
+            gap: theme => theme.spacing(3)
+          }}>
+            <Box>
+              <StatCard>
+                <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff', letterSpacing: 2 }}>
+                  Experience Level
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 600, color: '#02E2FF', mt: 1 }}>
+                  {profile.requiredExperienceLevel || 'Not Set'}
+                </Typography>
+              </StatCard>
+            </Box>
+            <Box>
+              <StatCard>
+                <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff', letterSpacing: 2 }}>
+                  Skills Count
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 600, color: '#02E2FF', mt: 1 }}>
+                  {profile.skills?.length || 0}
+                </Typography>
+              </StatCard>
+            </Box>
+            <Box>
+              <StatCard>
+                <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff', letterSpacing: 2 }}>
+                  Last Login
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 600, color: '#02E2FF', mt: 1 }}>
+                  {new Date(profile.userId.lastLogin).toLocaleDateString('en-US', { 
+                    month: 'short',
+                    day: 'numeric'
+                  })}
+                </Typography>
+              </StatCard>
+            </Box>
+            <Box>
+              <StatCard>
+                <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff', letterSpacing: 2 }}>
+                  Profile Status
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 600, color: '#02E2FF', mt: 1 }}>
+                  {profile.userId.isVerified ? 'Verified' : 'Pending'}
+                </Typography>
+              </StatCard>
+            </Box>
+          </Box>
         </ProfileHeader>
 
         {/* User Information */}
-        <UserInfoCard>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <SectionTitle>User Information</SectionTitle>
-            {profile.userId.isVerified && (
-              <Chip
-                label="Verified Account"
-                color="success"
-                size="small"
-                sx={{
-                  backgroundColor: 'rgba(34, 197, 94, 0.2)',
-                  color: '#4ade80',
-                  fontWeight: 600,
-                  borderRadius: '8px'
-                }}
-              />
-            )}
-          </Box>
-          
-          <InfoRow>
-            <Typography sx={{ color: 'rgba(255,255,255,0.7)', width: '120px' }}>Username:</Typography>
-            <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.userId.username}</Typography>
-          </InfoRow>
-          
-          <InfoRow>
-            <Typography sx={{ color: 'rgba(255,255,255,0.7)', width: '120px' }}>Email:</Typography>
-            <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.userId.email}</Typography>
-          </InfoRow>
-          
-          <InfoRow>
-            <Typography sx={{ color: 'rgba(255,255,255,0.7)', width: '120px' }}>Role:</Typography>
-            <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.userId.role}</Typography>
-          </InfoRow>
-          
-          <InfoRow>
-            <Typography sx={{ color: 'rgba(255,255,255,0.7)', width: '120px' }}>Member Since:</Typography>
-            <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>
-              {new Date(profile.userId.createdAt).toLocaleDateString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric'
-              })}
-            </Typography>
-          </InfoRow>
-          
-          <InfoRow>
-            <Typography sx={{ color: 'rgba(255,255,255,0.7)', width: '120px' }}>Last Active:</Typography>
-            <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>
-              {new Date(profile.userId.lastLogin).toLocaleDateString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </Typography>
-          </InfoRow>
-        </UserInfoCard>
-
-        {/* Skills Section */}
-        <StyledCard>
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            mb: 4
-          }}>
-            <SectionTitle>Technical Skills</SectionTitle>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setEditSkillDialog(true)}
-              sx={{
-                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                borderRadius: '12px',
-                textTransform: 'none',
-                fontWeight: 600,
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-                }
-              }}
-            >
-              Add Skill
-            </Button>
-          </Box>
-          
-          {profile.skills.map((skill) => (
-            <SkillCard key={skill._id} elevation={0}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ 
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            md: 'repeat(2, 1fr)'
+          },
+          gap: 4
+        }}>
+          <Box>
+            <StyledCard>
+              <SectionTitle>Personal Information</SectionTitle>
+              <InfoItem>
+                <PersonIcon sx={{ color: '#02E2FF' }} />
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: '#ffffff' }}>
-                    {skill.name}
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <StyledRating
-                      value={getProficiencyRating(skill.proficiencyLevel)}
-                      precision={0.5}
-                      readOnly
-                      icon={<StarIcon fontSize="small" />}
-                      emptyIcon={<StarIcon fontSize="small" sx={{ color: 'rgba(255,255,255,0.2)' }} />}
-                    />
-                    <Chip 
-                      label={skill.experienceLevel}
-                      size="small"
-                      sx={{ 
-                        borderRadius: '8px',
-                        backgroundColor: getExperienceLevelColor(skill.experienceLevel).bg,
-                        color: getExperienceLevelColor(skill.experienceLevel).text,
-                        fontWeight: 600,
-                        backdropFilter: 'blur(10px)'
-                      }}
-                    />
-                  </Box>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Username</Typography>
+                  <Typography variant="body1" sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.userId.username}</Typography>
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 500, color: 'rgba(255,255,255,0.7)' }}>
-                    Proficiency: {skill.proficiencyLevel}/5
+              </InfoItem>
+              <InfoItem>
+                <EmailIcon sx={{ color: '#02E2FF' }} />
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Email</Typography>
+                  <Typography variant="body1" sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.userId.email}</Typography>
+                </Box>
+              </InfoItem>
+              <InfoItem>
+                <WorkIcon sx={{ color: '#02E2FF' }} />
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Role</Typography>
+                  <Typography variant="body1" sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.userId.role}</Typography>
+                </Box>
+              </InfoItem>
+              <InfoItem>
+                <CalendarTodayIcon sx={{ color: '#02E2FF' }} />
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Member Since</Typography>
+                  <Typography variant="body1" sx={{ color: '#ffffff', fontWeight: 500 }}>
+                    {new Date(profile.userId.createdAt).toLocaleDateString('en-US', {
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
                   </Typography>
+                </Box>
+              </InfoItem>
+            </StyledCard>
+          </Box>
+
+          <Box>
+            <StyledCard>
+              <SectionTitle>Skills & Expertise</SectionTitle>
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', opacity: 0.9 }}>
+                  Technical Skills
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {profile.skills?.map((skill: any) => (
+                    <SkillChip
+                      key={skill.name}
+                      label={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <span>{skill.name}</span>
+                          <Typography
+                            component="span"
+                            sx={{
+                              fontSize: '0.75rem',
+                              opacity: 0.8,
+                              background: 'rgba(2,226,255,0.2)',
+                              padding: '2px 6px',
+                              borderRadius: '4px'
+                            }}
+                          >
+                            {skill.experienceLevel}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  ))}
                 </Box>
               </Box>
-            </SkillCard>
-          ))}
-        </StyledCard>
 
-        {/* Add Skill Dialog */}
-        <Dialog
-          open={editSkillDialog}
-          onClose={() => setEditSkillDialog(false)}
-          maxWidth="sm"
-          fullWidth
-          PaperProps={{
-            sx: {
-              borderRadius: '16px',
-              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-              background: 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(20px)'
-            }
-          }}
-        >
-          <DialogTitle sx={{ 
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
-            pb: 2,
-            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-            color: 'white'
-          }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>Add New Skill</Typography>
-            <IconButton
-              onClick={() => setEditSkillDialog(false)}
-              sx={{
-                position: 'absolute',
-                right: 8,
-                top: 8,
-                color: 'rgba(255,255,255,0.8)'
-              }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
-              Skill Name
-            </Typography>
-            <TextField
-              fullWidth
-              placeholder="e.g., JavaScript, Python, React"
-              variant="outlined"
-              sx={{ 
-                mb: 3,
-                '& .MuiOutlinedInput-root': {
-                  backgroundColor: 'rgba(255,255,255,0.9)'
-                }
-              }}
-            />
-            
-            <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
-              Proficiency Level (1-5)
-            </Typography>
-            <StyledRating
-              sx={{ mb: 3 }}
-              icon={<StarIcon fontSize="large" />}
-              emptyIcon={<StarIcon fontSize="large" />}
-            />
-            
-            <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
-              Experience Level
-            </Typography>
-            <TextField
-              fullWidth
-              select
-              SelectProps={{
-                native: true,
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '8px',
-                  backgroundColor: 'rgba(255,255,255,0.9)'
-                }
-              }}
-            >
-              <option value="">Select Level</option>
-              <option value="Entry Level">Entry Level</option>
-              <option value="Junior+">Junior+</option>
-              <option value="Mid Level">Mid Level</option>
-              <option value="Senior">Senior</option>
-              <option value="Expert">Expert</option>
-            </TextField>
-          </DialogContent>
-          <DialogActions sx={{ 
-            p: 3, 
-            borderTop: '1px solid rgba(255,255,255,0.1)',
-            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
-          }}>
-            <Button 
-              onClick={() => setEditSkillDialog(false)}
-              sx={{ 
-                color: 'rgba(255,255,255,0.8)',
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontWeight: 600
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              onClick={() => setEditSkillDialog(false)}
-              sx={{
-                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                borderRadius: '8px',
-                textTransform: 'none',
-                fontWeight: 600,
-                px: 4,
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-                }
-              }}
-            >
-              Add Skill
-            </Button>
-          </DialogActions>
-        </Dialog>
+              <Box>
+                <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', opacity: 0.9 }}>
+                  Skill Proficiency
+                </Typography>
+                {profile.skills?.map((skill: any) => (
+                  <Box key={skill.name} sx={{ mb: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography sx={{ color: '#ffffff' }}>{skill.name}</Typography>
+                      <Typography sx={{ color: '#02E2FF' }}>{skill.proficiencyLevel}/5</Typography>
+                    </Box>
+                    <Box sx={{ 
+                      height: '6px', 
+                      background: 'rgba(255,255,255,0.1)', 
+                      borderRadius: '3px',
+                      overflow: 'hidden'
+                    }}>
+                      <Box sx={{ 
+                        width: `${(skill.proficiencyLevel / 5) * 100}%`,
+                        height: '100%',
+                        background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
+                        borderRadius: '3px',
+                        transition: 'width 0.3s ease'
+                      }} />
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            </StyledCard>
+          </Box>
+        </Box>
+
+        
       </Container>
     </Box>
   );

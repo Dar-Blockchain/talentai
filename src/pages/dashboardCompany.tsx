@@ -29,6 +29,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import GroupsIcon from '@mui/icons-material/Groups';
 import CategoryIcon from '@mui/icons-material/Category';
 import { useRouter } from 'next/router';
+import StarIcon from '@mui/icons-material/Star';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -131,23 +132,36 @@ const CandidateCard = styled(Box)(({ theme }) => ({
   borderRadius: '12px',
   padding: theme.spacing(2),
   border: '1px solid rgba(255,255,255,0.1)',
-  marginBottom: theme.spacing(2),
   backdropFilter: 'blur(10px)',
   transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+  width: '100%',
   '&:hover': {
     transform: 'translateY(-2px)',
     boxShadow: '0 4px 20px rgba(2,226,255,0.1)'
   }
 }));
 
+const MatchCard = styled(Box)(({ theme }) => ({
+  background: 'rgba(30, 41, 59, 0.7)',
+  backdropFilter: 'blur(10px)',
+  borderRadius: '16px',
+  padding: theme.spacing(3),
+  border: '1px solid rgba(255,255,255,0.1)',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: '0 8px 24px rgba(2,226,255,0.15)',
+    border: '1px solid rgba(2,226,255,0.3)',
+  }
+}));
+
 const MatchScore = styled(Box)(({ theme }) => ({
-  background: 'linear-gradient(135deg, rgba(2,226,255,0.2) 0%, rgba(0,255,195,0.2) 100%)',
+  background: 'linear-gradient(135deg, rgba(2,226,255,0.1) 0%, rgba(0,255,195,0.1) 100%)',
+  padding: theme.spacing(1, 2),
   borderRadius: '8px',
-  padding: theme.spacing(1),
   display: 'flex',
   alignItems: 'center',
-  gap: theme.spacing(1),
-  width: 'fit-content'
+  gap: theme.spacing(1)
 }));
 
 // Add this near the top with other interfaces
@@ -155,9 +169,10 @@ interface MatchingCandidate {
   id: string;
   name: string;
   matchScore: number;
+  location: string;
+  role: string;
   skills: string[];
   experienceLevel: string;
-  location: string;
 }
 
 export default function DashboardCompany() {
@@ -174,7 +189,8 @@ export default function DashboardCompany() {
       matchScore: 95,
       skills: ["React", "TypeScript", "Node.js"],
       experienceLevel: "Senior",
-      location: "New York, USA"
+      location: "New York, USA",
+      role: "Full Stack Developer"
     },
     {
       id: "2",
@@ -182,7 +198,8 @@ export default function DashboardCompany() {
       matchScore: 88,
       skills: ["React", "JavaScript", "AWS"],
       experienceLevel: "Mid Level",
-      location: "London, UK"
+      location: "London, UK",
+      role: "Frontend Developer"
     },
     {
       id: "3",
@@ -190,7 +207,8 @@ export default function DashboardCompany() {
       matchScore: 82,
       skills: ["React", "Python", "Docker"],
       experienceLevel: "Senior",
-      location: "Berlin, Germany"
+      location: "Berlin, Germany",
+      role: "Backend Developer"
     }
   ];
 
@@ -362,26 +380,25 @@ export default function DashboardCompany() {
           </Box>
 
           {/* Matching Candidates Section */}
-          <Box sx={{ flex: 1 }}>
-            <StyledCard>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <SectionTitle>Matching Candidates</SectionTitle>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  sx={{
-                    borderColor: 'rgba(2,226,255,0.5)',
-                    color: '#02E2FF',
-                    '&:hover': {
-                      borderColor: '#02E2FF',
-                      background: 'rgba(2,226,255,0.1)'
-                    }
-                  }}
-                >
-                  View All Matches
-                </Button>
-              </Box>
+          <Box sx={{ flex: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <SectionTitle>Matching Candidates</SectionTitle>
+              <Button
+                startIcon={<AddIcon />}
+                sx={{
+                  color: '#02E2FF',
+                  borderColor: 'rgba(2,226,255,0.5)',
+                  '&:hover': {
+                    borderColor: '#02E2FF',
+                    background: 'rgba(2,226,255,0.1)'
+                  }
+                }}
+              >
+                Filter Candidates
+              </Button>
+            </Box>
 
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {sampleMatchingCandidates.map((candidate) => (
                 <CandidateCard key={candidate.id}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
@@ -389,29 +406,20 @@ export default function DashboardCompany() {
                       <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 600, mb: 0.5 }}>
                         {candidate.name}
                       </Typography>
-                      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="body2" sx={{ 
+                        color: 'rgba(255,255,255,0.7)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5
+                      }}>
                         <LocationOnIcon sx={{ fontSize: 16 }} />
                         {candidate.location}
                       </Typography>
                     </Box>
-                    <MatchScore>
-                      <Typography variant="body2" sx={{ color: '#02E2FF', fontWeight: 600 }}>
-                        Match Score
-                      </Typography>
-                      <Typography variant="h6" sx={{ color: '#02E2FF', fontWeight: 700 }}>
-                        {candidate.matchScore}%
-                      </Typography>
-                    </MatchScore>
-                  </Box>
-
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>
-                      Experience Level
-                    </Typography>
                     <Chip
-                      label={candidate.experienceLevel}
+                      label={`${candidate.matchScore}%`}
                       sx={{
-                        backgroundColor: 'rgba(2,226,255,0.1)',
+                        background: 'linear-gradient(135deg, rgba(2,226,255,0.15) 0%, rgba(0,255,195,0.15) 100%)',
                         color: '#02E2FF',
                         fontWeight: 600,
                         borderRadius: '8px'
@@ -419,37 +427,96 @@ export default function DashboardCompany() {
                     />
                   </Box>
 
-                  <Box>
-                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>
-                      Skills
-                    </Typography>
-                    <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
-                      {candidate.skills.map((skill, index) => (
-                        <SkillChip key={index} label={skill} />
-                      ))}
-                    </Stack>
+                  <Box sx={{ mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                      <Chip
+                        label={candidate.role}
+                        size="small"
+                        sx={{
+                          background: 'rgba(2,226,255,0.1)',
+                          color: '#02E2FF',
+                          borderRadius: '6px'
+                        }}
+                      />
+                      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                        • {candidate.experienceLevel}
+                      </Typography>
+                    </Box>
                   </Box>
 
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" sx={{ 
+                      color: 'rgba(255,255,255,0.7)',
+                      mb: 1
+                    }}>
+                      Skills
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {candidate.skills.map((skill) => (
+                        <SkillChip
+                          key={skill}
+                          label={skill}
+                          size="small"
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', gap: 2, mt: 'auto' }}>
                     <Button
-                      variant="contained"
+                      fullWidth
+                      variant="outlined"
                       size="small"
                       sx={{
-                        background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                        borderRadius: '8px',
-                        textTransform: 'none',
-                        fontWeight: 600,
+                        borderColor: 'rgba(2,226,255,0.5)',
+                        color: '#02E2FF',
                         '&:hover': {
-                          background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                          borderColor: '#02E2FF',
+                          background: 'rgba(2,226,255,0.1)'
                         }
                       }}
                     >
                       View Profile
                     </Button>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      size="small"
+                      sx={{
+                        background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                        color: '#ffffff',
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                        }
+                      }}
+                    >
+                      Contact
+                    </Button>
                   </Box>
                 </CandidateCard>
               ))}
-            </StyledCard>
+            </Box>
+
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center',
+              mt: 3
+            }}>
+              <Button
+                variant="contained"
+                sx={{
+                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                  color: '#ffffff',
+                  px: 4,
+                  py: 1.5,
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                  }
+                }}
+              >
+                View All Candidates
+              </Button>
+            </Box>
           </Box>
         </Box>
 
