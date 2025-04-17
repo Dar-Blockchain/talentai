@@ -278,12 +278,6 @@ export default function Preferences() {
   };
 
   const handleCreateOrUpdateProfile = async () => {
-    // If it's a company, just log and return true
-    if (userType === 'company') {
-      console.log('Company profile - no API call needed');
-      return true;
-    }
-
     try {
       // Get token from cookies
       const token = Cookies.get('api_token');
@@ -293,32 +287,59 @@ export default function Preferences() {
         return false;
       }
 
-      // Transform skills array into required format with experience level mapping
-      const formattedSkills = skills.map(skill => ({
-        name: skill,
-        proficiencyLevel: proficiency[skill] || 0,
-        experienceLevel: mapProficiencyToLevel(proficiency[skill] || 0)
-      }));
+      if (userType === 'company') {
+        // Format company profile data
+        const companyProfileData = {
+          name: companyDetails.name,
+          industry: companyDetails.industry,
+          size: companyDetails.size,
+          location: companyDetails.location,
+          requiredSkills: requiredSkills,
+          requiredExperienceLevel: experienceLevel
+        };
 
-      const profileData = {
-        type: "Candidate",
-        skills: formattedSkills
-      };
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/createOrUpdateCompanyProfile`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(companyProfileData)
+        });
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/createOrUpdateProfile`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(profileData)
-      });
+        if (!response.ok) {
+          throw new Error('Failed to create/update company profile');
+        }
 
-      if (!response.ok) {
-        throw new Error('Failed to create/update profile');
+        return true;
+      } else {
+        // Transform skills array into required format with experience level mapping
+        const formattedSkills = skills.map(skill => ({
+          name: skill,
+          proficiencyLevel: proficiency[skill] || 0,
+          experienceLevel: mapProficiencyToLevel(proficiency[skill] || 0)
+        }));
+
+        const profileData = {
+          type: "Candidate",
+          skills: formattedSkills
+        };
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/createOrUpdateProfile`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(profileData)
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to create/update profile');
+        }
+
+        return true;
       }
-
-      return true;
     } catch (error) {
       console.error('Error creating/updating profile:', error);
       return false;
@@ -327,6 +348,15 @@ export default function Preferences() {
 
   const handleStartTest = async () => {
     if (userType === 'company') {
+      // Create or update company profile first
+      const profileCreated = await handleCreateOrUpdateProfile();
+      
+      if (!profileCreated) {
+        // Handle error - you might want to show an error message to the user
+        console.error('Failed to create company profile');
+        return;
+      }
+
       // Save company preferences to localStorage
       localStorage.setItem('company_preferences', JSON.stringify({
         companyDetails,
