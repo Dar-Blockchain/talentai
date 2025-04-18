@@ -12,6 +12,6 @@ router.use(requireAuthUser);
 //});
 
 router.get('/generate-questions', evaluationController.generateQuestions);
-router.get('/generate-technique-questions', evaluationController.generateTechniqueQuestions);
+router.post('/generate-technique-questions', evaluationController.generateTechniqueQuestions);
 
 module.exports = router; 
