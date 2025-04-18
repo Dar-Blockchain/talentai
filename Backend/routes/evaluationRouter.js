@@ -14,5 +14,6 @@ router.use(requireAuthUser);
 router.get('/generate-questions', evaluationController.generateQuestions);
 router.post('/generate-technique-questions', evaluationController.generateTechniqueQuestions);
 router.post('/generate-soft-skill-questions', evaluationController.generateSoftSkillQuestions);
+router.post('/match-profiles-with-company', evaluationController.matchProfilesWithCompany);
 
 module.exports = router; 
