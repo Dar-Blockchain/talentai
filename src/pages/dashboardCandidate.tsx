@@ -22,7 +22,14 @@ import {
   Paper,
   Grid,
   Stack,
-  MenuItem
+  MenuItem,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  FormControl,
+  FormLabel,
+  Select,
+  InputLabel
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -217,11 +224,28 @@ const AvatarWrapper = styled(Box)(({ theme }) => ({
   }
 }));
 
+const ScoreCircle = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  width: '150px',
+  height: '150px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  margin: '0 auto'
+}));
+
 export default function DashboardCandidate() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { profile, loading, error } = useSelector(selectProfile);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [testModalOpen, setTestModalOpen] = useState(false);
+  const [skillType, setSkillType] = useState('');
+  const [selectedSkill, setSelectedSkill] = useState('');
+  const [softSkillType, setSoftSkillType] = useState('');
+  const [softSkillLanguage, setSoftSkillLanguage] = useState('');
+  const [softSkillSubcategory, setSoftSkillSubcategory] = useState('');
+  
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -291,6 +315,47 @@ export default function DashboardCandidate() {
     }
   };
 
+  const handleStartTest = () => {
+    setTestModalOpen(true);
+  };
+
+  const handleCloseTestModal = () => {
+    setTestModalOpen(false);
+    setSkillType('');
+    setSelectedSkill('');
+    setSoftSkillType('');
+    setSoftSkillLanguage('');
+    setSoftSkillSubcategory('');
+  };
+
+  const handleSkillTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSkillType(event.target.value);
+    setSelectedSkill('');
+    setSoftSkillType('');
+    setSoftSkillLanguage('');
+  };
+
+  const handleTestSubmit = () => {
+    if (skillType === 'technical' && selectedSkill) {
+      router.push(`/test?type=technical&skill=${selectedSkill}`);
+    } else if (skillType === 'soft') {
+      const selectedSoftSkill = softSkills.find(skill => skill.value === softSkillType);
+      const queryParams = new URLSearchParams();
+      queryParams.append('type', 'soft');
+      queryParams.append('skill', softSkillType);
+      
+      if (selectedSoftSkill?.requiresLanguage) {
+        queryParams.append('language', softSkillLanguage);
+      }
+      if (softSkillSubcategory) {
+        queryParams.append('subcategory', softSkillSubcategory);
+      }
+      
+      router.push(`/test?${queryParams.toString()}`);
+    }
+    handleCloseTestModal();
+  };
+
   const matchingCandidates: MatchingCandidate[] = [
     {
       id: "1",
@@ -343,6 +408,60 @@ export default function DashboardCandidate() {
       availability: "Available in 1 month",
       expectedSalary: "£70k - £90k"
     }
+  ];
+
+  const softSkills = [
+    { 
+      value: 'communication',
+      label: 'Communication',
+      requiresLanguage: true
+    },
+    { 
+      value: 'leadership',
+      label: 'Leadership',
+      subcategories: [
+        { value: 'team_management', label: 'Team Management' },
+        { value: 'decision_making', label: 'Decision Making' },
+        { value: 'strategic_planning', label: 'Strategic Planning' },
+        { value: 'conflict_resolution', label: 'Conflict Resolution' }
+      ]
+    },
+    { 
+      value: 'problem_solving',
+      label: 'Problem Solving',
+      subcategories: [
+        { value: 'analytical_thinking', label: 'Analytical Thinking' },
+        { value: 'critical_thinking', label: 'Critical Thinking' },
+        { value: 'creative_thinking', label: 'Creative Thinking' },
+        { value: 'innovation', label: 'Innovation' }
+      ]
+    },
+    { 
+      value: 'interpersonal',
+      label: 'Interpersonal Skills',
+      subcategories: [
+        { value: 'emotional_intelligence', label: 'Emotional Intelligence' },
+        { value: 'teamwork', label: 'Teamwork' },
+        { value: 'networking', label: 'Networking' },
+        { value: 'collaboration', label: 'Collaboration' }
+      ]
+    },
+    { 
+      value: 'time_management',
+      label: 'Time Management',
+      subcategories: [
+        { value: 'prioritization', label: 'Prioritization' },
+        { value: 'delegation', label: 'Delegation' },
+        { value: 'planning', label: 'Planning' },
+        { value: 'organization', label: 'Organization' }
+      ]
+    }
+  ];
+
+  const languages = [
+    { value: 'en', label: 'English' },
+    { value: 'ar', label: 'Arabic' },
+    { value: 'fr', label: 'French' }
   ];
 
   if (loading) {
@@ -428,7 +547,7 @@ export default function DashboardCandidate() {
               <ActionButton
                 variant="contained"
                 startIcon={<PlayArrowIcon />}
-                onClick={() => router.push('/test')}
+                onClick={handleStartTest}
                 sx={{
                   background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
                   '&:hover': {
@@ -590,6 +709,221 @@ export default function DashboardCandidate() {
                 </Button>
               </DialogActions>
             </Dialog>
+
+            {/* Test Selection Modal */}
+            <Dialog
+              open={testModalOpen}
+              onClose={handleCloseTestModal}
+              maxWidth="sm"
+              fullWidth
+              PaperProps={{
+                sx: {
+                  background: 'rgba(30, 41, 59, 0.95)',
+                  backdropFilter: 'blur(10px)',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                }
+              }}
+            >
+              <DialogTitle sx={{ 
+                borderBottom: '1px solid rgba(255,255,255,0.1)',
+                color: '#ffffff'
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Typography variant="h6">Start New Test</Typography>
+                  <IconButton
+                    onClick={handleCloseTestModal}
+                    sx={{ color: 'rgba(255,255,255,0.7)' }}
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                </Box>
+              </DialogTitle>
+              <DialogContent sx={{ mt: 2 }}>
+                <FormControl component="fieldset" sx={{ width: '100%', mb: 3 }}>
+                  <FormLabel sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>Select Skill Type</FormLabel>
+                  <RadioGroup
+                    value={skillType}
+                    onChange={handleSkillTypeChange}
+                  >
+                    <FormControlLabel 
+                      value="technical" 
+                      control={<Radio sx={{ color: '#02E2FF' }} />} 
+                      label="Technical Skill" 
+                      sx={{ color: '#ffffff' }}
+                    />
+                    <FormControlLabel 
+                      value="soft" 
+                      control={<Radio sx={{ color: '#02E2FF' }} />} 
+                      label="Soft Skill" 
+                      sx={{ color: '#ffffff' }}
+                    />
+                  </RadioGroup>
+                </FormControl>
+
+                {skillType === 'technical' && (
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel sx={{ color: 'rgba(255,255,255,0.7)' }}>Select Technical Skill</InputLabel>
+                    <Select
+                      value={selectedSkill}
+                      onChange={(e) => setSelectedSkill(e.target.value)}
+                      sx={{
+                        color: '#ffffff',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255,255,255,0.2)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255,255,255,0.3)',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#02E2FF',
+                        },
+                      }}
+                    >
+                      {profile.skills?.map((skill: any) => (
+                        <MenuItem key={skill.name} value={skill.name}>
+                          {skill.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+
+                {skillType === 'soft' && (
+                  <>
+                    <FormControl fullWidth sx={{ mb: 2 }}>
+                      <InputLabel sx={{ color: 'rgba(255,255,255,0.7)' }}>Select Soft Skill</InputLabel>
+                      <Select
+                        value={softSkillType}
+                        onChange={(e) => {
+                          setSoftSkillType(e.target.value);
+                          setSoftSkillSubcategory('');
+                          setSoftSkillLanguage('');
+                        }}
+                        sx={{
+                          color: '#ffffff',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255,255,255,0.2)',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255,255,255,0.3)',
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#02E2FF',
+                          },
+                        }}
+                      >
+                        {softSkills.map((skill) => (
+                          <MenuItem key={skill.value} value={skill.value}>
+                            {skill.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    {softSkillType && (
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>
+                          {softSkillType === 'communication' ? 'Select Language' : 'Select Specific Area'}
+                        </Typography>
+                        
+                        {softSkillType === 'communication' ? (
+                          <FormControl fullWidth>
+                            <Select
+                              value={softSkillLanguage}
+                              onChange={(e) => setSoftSkillLanguage(e.target.value)}
+                              sx={{
+                                color: '#ffffff',
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: 'rgba(255,255,255,0.2)',
+                                },
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: 'rgba(255,255,255,0.3)',
+                                },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: '#02E2FF',
+                                },
+                              }}
+                            >
+                              {languages.map((lang) => (
+                                <MenuItem key={lang.value} value={lang.value}>
+                                  {lang.label}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        ) : (
+                          <FormControl fullWidth>
+                            <Select
+                              value={softSkillSubcategory}
+                              onChange={(e) => setSoftSkillSubcategory(e.target.value)}
+                              sx={{
+                                color: '#ffffff',
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: 'rgba(255,255,255,0.2)',
+                                },
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: 'rgba(255,255,255,0.3)',
+                                },
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: '#02E2FF',
+                                },
+                              }}
+                            >
+                              {softSkills
+                                .find(skill => skill.value === softSkillType)
+                                ?.subcategories?.map((sub) => (
+                                  <MenuItem key={sub.value} value={sub.value}>
+                                    {sub.label}
+                                  </MenuItem>
+                                ))}
+                            </Select>
+                          </FormControl>
+                        )}
+                      </Box>
+                    )}
+                  </>
+                )}
+              </DialogContent>
+              <DialogActions sx={{ 
+                borderTop: '1px solid rgba(255,255,255,0.1)',
+                padding: 2
+              }}>
+                <Button 
+                  onClick={handleCloseTestModal}
+                  sx={{ 
+                    color: 'rgba(255,255,255,0.7)',
+                    '&:hover': { color: '#ffffff' }
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleTestSubmit}
+                  disabled={
+                    !skillType || 
+                    (skillType === 'technical' && !selectedSkill) ||
+                    (skillType === 'soft' && !softSkillType) ||
+                    (skillType === 'soft' && softSkillType === 'communication' && !softSkillLanguage) ||
+                    (skillType === 'soft' && softSkillType !== 'communication' && !softSkillSubcategory)
+                  }
+                  variant="contained"
+                  sx={{
+                    background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                    color: '#ffffff',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                    },
+                    '&.Mui-disabled': {
+                      background: 'rgba(255,255,255,0.1)',
+                      color: 'rgba(255,255,255,0.3)'
+                    }
+                  }}
+                >
+                  Start Test
+                </Button>
+              </DialogActions>
+            </Dialog>
           </Box>
 
           <Box sx={{
@@ -700,37 +1034,125 @@ export default function DashboardCandidate() {
           <Box>
             <StyledCard>
               <SectionTitle>Skills & Expertise</SectionTitle>
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', opacity: 0.9 }}>
-                  Technical Skills
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {profile.skills?.map((skill: any) => (
-                    <SkillChip
-                      key={skill.name}
-                      label={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <span>{skill.name}</span>
-                          <Typography
-                            component="span"
-                            sx={{
-                              fontSize: '0.75rem',
-                              opacity: 0.8,
-                              background: 'rgba(2,226,255,0.2)',
-                              padding: '2px 6px',
-                              borderRadius: '4px'
-                            }}
-                          >
-                            {skill.experienceLevel}
-                          </Typography>
-                        </Box>
+              
+              <Box sx={{ 
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                alignItems: 'center',
+                gap: 4,
+                mb: 4 
+              }}>
+                <ScoreCircle>
+                  <CircularProgress
+                    variant="determinate"
+                    value={100}
+                    size={150}
+                    thickness={4}
+                    sx={{
+                      position: 'absolute',
+                      color: 'rgba(255, 255, 255, 0.1)'
+                    }}
+                  />
+                  <CircularProgress
+                    variant="determinate"
+                    value={85}
+                    size={150}
+                    thickness={4}
+                    sx={{
+                      position: 'absolute',
+                      color: 'transparent',
+                      '& .MuiCircularProgress-circle': {
+                        strokeLinecap: 'round',
+                        stroke: 'url(#gradient)'
                       }
-                    />
-                  ))}
+                    }}
+                  />
+                  <Box sx={{ 
+                    position: 'absolute',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                  }}>
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      85%
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        mt: 1,
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      Overall
+                    </Typography>
+                  </Box>
+                  <svg width="0" height="0">
+                    <defs>
+                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#02E2FF" />
+                        <stop offset="100%" stopColor="#00FFC3" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </ScoreCircle>
+                
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', opacity: 0.9, textAlign: { xs: 'center', md: 'left' } }}>
+                    Skill Distribution
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Technical Skills</Typography>
+                        <Typography sx={{ color: '#02E2FF' }}>90%</Typography>
+                      </Box>
+                      <Box sx={{ 
+                        height: '6px', 
+                        background: 'rgba(255,255,255,0.1)', 
+                        borderRadius: '3px',
+                        overflow: 'hidden'
+                      }}>
+                        <Box sx={{ 
+                          width: '90%',
+                          height: '100%',
+                          background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
+                          borderRadius: '3px'
+                        }} />
+                      </Box>
+                    </Box>
+                    <Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Soft Skills</Typography>
+                        <Typography sx={{ color: '#02E2FF' }}>80%</Typography>
+                      </Box>
+                      <Box sx={{ 
+                        height: '6px', 
+                        background: 'rgba(255,255,255,0.1)', 
+                        borderRadius: '3px',
+                        overflow: 'hidden'
+                      }}>
+                        <Box sx={{ 
+                          width: '80%',
+                          height: '100%',
+                          background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
+                          borderRadius: '3px'
+                        }} />
+                      </Box>
+                    </Box>
+                  </Box>
                 </Box>
               </Box>
 
-              <Box>
+              <Box sx={{ mb: 4 }}>
                 <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', opacity: 0.9 }}>
                   Skill Proficiency
                 </Typography>
