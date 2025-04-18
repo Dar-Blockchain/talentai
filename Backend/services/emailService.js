@@ -15,7 +15,7 @@ const getEmailTemplate = (otp) => {
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Code de Vérification</title>
+      <title>Verification Code</title>
       <style>
         body {
           font-family: 'Segoe UI', Arial, sans-serif;
@@ -106,30 +106,30 @@ const getEmailTemplate = (otp) => {
       <div class="container">
         <div class="header">
           <h1>TalenIA</h1>
-          <p>Votre Code de Vérification</p>
+          <p>Your Verification Code</p>
         </div>
         <div class="content">
-          <p>Bonjour,</p>
-          <p>Nous avons reçu une demande de vérification pour votre compte. Voici votre code d'authentification :</p>
+          <p>Hello,</p>
+          <p>We received a verification request for your account. Here is your authentication code:</p>
           
           <div class="otp-code">
             ${otp}
           </div>
           
           <div class="warning">
-            <strong>Important :</strong>
+            <strong>Important:</strong>
             <ul>
-              <li>Ce code est valable pendant 5 minutes</li>
-              <li>Ne partagez jamais ce code avec qui que ce soit</li>
-              <li>Si vous n'avez pas demandé ce code, veuillez ignorer cet email</li>
+              <li>This code is valid for 5 minutes</li>
+              <li>Never share this code with anyone</li>
+              <li>If you did not request this code, please ignore this email</li>
             </ul>
           </div>
           
-          <p>Si vous rencontrez des difficultés, notre équipe support est là pour vous aider à <a href="mailto:support@talenia.com">support@talenia.com</a></p>
+          <p>If you experience any difficulties, our support team is here to help at <a href="mailto:support@talenia.com">support@talenia.com</a></p>
         </div>
         <div class="footer">
-          <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
-          <p>&copy; ${new Date().getFullYear()} TalenIA. Tous droits réservés.</p>
+          <p>This email was sent automatically, please do not reply.</p>
+          <p>&copy; ${new Date().getFullYear()} TalenIA. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -141,7 +141,7 @@ module.exports.sendOTP = async (email, otp) => {
   const mailOptions = {
     from: 'studyspheretn@gmail.com',
     to: email,
-    subject: 'Code de Vérification - TalenIA',
+    subject: 'Verification Code - TalenIA',
     html: getEmailTemplate(otp)
   };
 
@@ -149,7 +149,7 @@ module.exports.sendOTP = async (email, otp) => {
     await transporter.sendMail(mailOptions);
     return true;
   } catch (error) {
-    console.error('Erreur lors de l\'envoi de l\'email:', error);
+    console.error('Error sending email:', error);
     return false;
   }
 };
