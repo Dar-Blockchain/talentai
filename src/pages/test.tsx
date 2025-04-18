@@ -211,7 +211,7 @@ export default function Test() {
             }
 
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
-              method: 'GET',
+              method: 'POST',
               headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -234,8 +234,12 @@ export default function Test() {
             const queryParams = new URLSearchParams();
             queryParams.append('type', router.query.type as string);
             queryParams.append('skill', router.query.skill as string);
-            if (router.query.language) queryParams.append('language', router.query.language as string);
-            if (router.query.subcategory) queryParams.append('subcategory', router.query.subcategory as string);
+            // Send language as subcategory for soft skills
+            if (router.query.language) {
+              queryParams.append('subcategory', router.query.language as string);
+            } else if (router.query.subcategory) {
+              queryParams.append('subcategory', router.query.subcategory as string);
+            }
             endpoint = `evaluation/skill-test?${queryParams.toString()}`;
             
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
