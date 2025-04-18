@@ -15,55 +15,90 @@ const getEmailTemplate = (otp) => {
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Code de Vérification</title>
+      <title>Verification Code</title>
       <style>
         body {
-          font-family: Arial, sans-serif;
+          font-family: 'Segoe UI', Arial, sans-serif;
           line-height: 1.6;
-          color: #333;
+          color: #2D3748;
           margin: 0;
           padding: 0;
+          background-color: #F7FAFC;
         }
         .container {
           max-width: 600px;
-          margin: 0 auto;
-          padding: 20px;
+          margin: 20px auto;
+          padding: 0;
+          background-color: #FFFFFF;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          border-radius: 8px;
         }
         .header {
-          background-color: #4CAF50;
+          background: linear-gradient(135deg, #2B6CB0 0%, #1A365D 100%);
           color: white;
-          padding: 20px;
+          padding: 30px 20px;
           text-align: center;
-          border-radius: 5px 5px 0 0;
+          border-radius: 8px 8px 0 0;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 28px;
+          font-weight: 600;
+        }
+        .header p {
+          margin: 10px 0 0;
+          opacity: 0.9;
         }
         .content {
-          background-color: #f9f9f9;
-          padding: 20px;
-          border: 1px solid #ddd;
-          border-radius: 0 0 5px 5px;
+          padding: 30px;
+          background-color: #FFFFFF;
         }
         .otp-code {
-          background-color: #fff;
-          padding: 15px;
-          border: 2px dashed #4CAF50;
+          background-color: #EBF8FF;
+          padding: 20px;
+          border: 2px solid #BEE3F8;
           text-align: center;
-          font-size: 24px;
+          font-size: 32px;
           font-weight: bold;
+          margin: 25px 0;
+          border-radius: 8px;
+          color: #2B6CB0;
+          letter-spacing: 4px;
+        }
+        .warning {
+          background-color: #F7FAFC;
+          border-left: 4px solid #2B6CB0;
+          padding: 15px;
+          border-radius: 4px;
           margin: 20px 0;
-          border-radius: 5px;
+        }
+        .warning strong {
+          color: #2B6CB0;
+          display: block;
+          margin-bottom: 8px;
+        }
+        .warning ul {
+          margin: 0;
+          padding-left: 20px;
+        }
+        .warning li {
+          margin: 5px 0;
+          color: #4A5568;
         }
         .footer {
           text-align: center;
-          margin-top: 20px;
-          font-size: 12px;
-          color: #666;
+          padding: 20px;
+          background-color: #F7FAFC;
+          border-radius: 0 0 8px 8px;
+          font-size: 13px;
+          color: #718096;
         }
-        .warning {
-          background-color: #fff3cd;
-          color: #856404;
-          padding: 10px;
-          border-radius: 5px;
-          margin: 20px 0;
+        a {
+          color: #2B6CB0;
+          text-decoration: none;
+        }
+        a:hover {
+          text-decoration: underline;
         }
       </style>
     </head>
@@ -71,30 +106,30 @@ const getEmailTemplate = (otp) => {
       <div class="container">
         <div class="header">
           <h1>TalenIA</h1>
-          <p>Votre Code de Vérification</p>
+          <p>Your Verification Code</p>
         </div>
         <div class="content">
-          <p>Bonjour,</p>
-          <p>Nous avons reçu une demande de vérification pour votre compte. Utilisez le code suivant pour compléter votre authentification :</p>
+          <p>Hello,</p>
+          <p>We received a verification request for your account. Here is your authentication code:</p>
           
           <div class="otp-code">
             ${otp}
           </div>
           
           <div class="warning">
-            <strong>Important :</strong>
+            <strong>Important:</strong>
             <ul>
-              <li>Ce code est valable pendant 5 minutes</li>
-              <li>Ne partagez jamais ce code avec qui que ce soit</li>
-              <li>Si vous n'avez pas demandé ce code, veuillez ignorer cet email</li>
+              <li>This code is valid for 5 minutes</li>
+              <li>Never share this code with anyone</li>
+              <li>If you did not request this code, please ignore this email</li>
             </ul>
           </div>
           
-          <p>Si vous rencontrez des problèmes, n'hésitez pas à nous contacter à <a href="mailto:support@talenia.com">support@talenia.com</a></p>
+          <p>If you experience any difficulties, our support team is here to help at <a href="mailto:support@talenia.com">support@talenia.com</a></p>
         </div>
         <div class="footer">
-          <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
-          <p>&copy; ${new Date().getFullYear()} TalenIA. Tous droits réservés.</p>
+          <p>This email was sent automatically, please do not reply.</p>
+          <p>&copy; ${new Date().getFullYear()} TalenIA. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -106,7 +141,7 @@ module.exports.sendOTP = async (email, otp) => {
   const mailOptions = {
     from: 'studyspheretn@gmail.com',
     to: email,
-    subject: 'Code de Vérification - TalenIA',
+    subject: 'Verification Code - TalenIA',
     html: getEmailTemplate(otp)
   };
 
@@ -114,7 +149,7 @@ module.exports.sendOTP = async (email, otp) => {
     await transporter.sendMail(mailOptions);
     return true;
   } catch (error) {
-    console.error('Erreur lors de l\'envoi de l\'email:', error);
+    console.error('Error sending email:', error);
     return false;
   }
 };
