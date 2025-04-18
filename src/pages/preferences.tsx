@@ -58,11 +58,11 @@ const ALL_SKILLS: Skill[] = [
   { label: 'Email Marketing', color: '96CEB4', category: 'marketing' },
   { label: 'Analytics', color: 'FFEEAD', category: 'marketing' },
   // Design
-  { label: 'UI/UX', color: 'FF9F1C', category: 'design' },
-  { label: 'Figma', color: 'F24E1E', category: 'design' },
-  { label: 'Adobe XD', color: 'FF61F6', category: 'design' },
-  { label: 'Photoshop', color: '31A8FF', category: 'design' },
-  { label: 'Illustrator', color: 'FF9A00', category: 'design' },
+  // { label: 'UI/UX', color: 'FF9F1C', category: 'design' },
+  // { label: 'Figma', color: 'F24E1E', category: 'design' },
+  // { label: 'Adobe XD', color: 'FF61F6', category: 'design' },
+  // { label: 'Photoshop', color: '31A8FF', category: 'design' },
+  // { label: 'Illustrator', color: 'FF9A00', category: 'design' },
   // Business
   { label: 'Project Management', color: '6C5CE7', category: 'business' },
   { label: 'Agile', color: '00B894', category: 'business' },
@@ -74,7 +74,7 @@ const ALL_SKILLS: Skill[] = [
 const CATEGORIES = [
   { id: 'development', label: 'Development', icon: <CodeIcon /> },
   { id: 'marketing', label: 'Marketing', icon: <AnalyticsIcon /> },
-  { id: 'design', label: 'Design', icon: <DesignServicesIcon /> },
+  // { id: 'design', label: 'Design', icon: <DesignServicesIcon /> },
   { id: 'business', label: 'Business', icon: <BusinessIcon /> }
 ];
 

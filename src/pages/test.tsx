@@ -240,7 +240,7 @@ export default function Test() {
             } else if (router.query.subcategory) {
               queryParams.append('subcategory', router.query.subcategory as string);
             }
-            endpoint = `evaluation/skill-test?${queryParams.toString()}`;
+            endpoint = `evaluation/generate-soft-skill-questions?${queryParams.toString()}`;
             
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
               headers: {
