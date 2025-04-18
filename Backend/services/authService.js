@@ -15,7 +15,7 @@ const extractUsernameFromEmail = (email) => {
 // Générer un token JWT
 const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.Net_Secret, {
-    expiresIn: '24h'
+    expiresIn: '7d'
   });
 };
 
