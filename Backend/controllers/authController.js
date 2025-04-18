@@ -22,7 +22,7 @@ module.exports.verifyOTP = async (req, res) => {
     const { email, otp } = req.body;
     const result = await authService.verifyUserOTP(email, otp);
 
-    res.cookie('jwt_token', result.token, { httpOnly: false, maxAge: 2 * 60 * 60 * 1000 });
+    res.cookie('jwt_token', result.token, { httpOnly: false, maxAge: 24 * 60 * 60 * 1000 });
     // Créer la session avec le token
     res.status(200).json({ 
       message: 'Email vérifié avec succès',
@@ -41,7 +41,7 @@ module.exports.connectWithGmail = async (req, res) => {
     const result = await authService.connectWithGmail(email);
     
     // Créer un cookie avec le token JWT
-    res.cookie('jwt_token', result.token, { httpOnly: false, maxAge: 2 * 60 * 60 * 1000 });
+    res.cookie('jwt_token', result.token, { httpOnly: false, maxAge: 24 * 60 * 60 * 1000 });
     
     res.status(200).json({
       message: result.message,
