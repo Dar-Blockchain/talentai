@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { generateQuestions } = require('../controllers/evaluationController');
+const evaluationController  = require('../controllers/evaluationController');
 
 const { requireAuthUser } = require('../middleware/authMiddleware');
 
@@ -11,6 +11,7 @@ router.use(requireAuthUser);
 //  res.json({ message: 'Endpoint is active. Please use POST method with required skills and experience.' });
 //});
 
-router.get('/generate-questions', generateQuestions);
+router.get('/generate-questions', evaluationController.generateQuestions);
+router.get('/generate-technique-questions', evaluationController.generateTechniqueQuestions);
 
 module.exports = router; 
