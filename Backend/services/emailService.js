@@ -18,52 +18,87 @@ const getEmailTemplate = (otp) => {
       <title>Code de Vérification</title>
       <style>
         body {
-          font-family: Arial, sans-serif;
+          font-family: 'Segoe UI', Arial, sans-serif;
           line-height: 1.6;
-          color: #333;
+          color: #2D3748;
           margin: 0;
           padding: 0;
+          background-color: #F7FAFC;
         }
         .container {
           max-width: 600px;
-          margin: 0 auto;
-          padding: 20px;
+          margin: 20px auto;
+          padding: 0;
+          background-color: #FFFFFF;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          border-radius: 8px;
         }
         .header {
-          background-color: #4CAF50;
+          background: linear-gradient(135deg, #2B6CB0 0%, #1A365D 100%);
           color: white;
-          padding: 20px;
+          padding: 30px 20px;
           text-align: center;
-          border-radius: 5px 5px 0 0;
+          border-radius: 8px 8px 0 0;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 28px;
+          font-weight: 600;
+        }
+        .header p {
+          margin: 10px 0 0;
+          opacity: 0.9;
         }
         .content {
-          background-color: #f9f9f9;
-          padding: 20px;
-          border: 1px solid #ddd;
-          border-radius: 0 0 5px 5px;
+          padding: 30px;
+          background-color: #FFFFFF;
         }
         .otp-code {
-          background-color: #fff;
-          padding: 15px;
-          border: 2px dashed #4CAF50;
+          background-color: #EBF8FF;
+          padding: 20px;
+          border: 2px solid #BEE3F8;
           text-align: center;
-          font-size: 24px;
+          font-size: 32px;
           font-weight: bold;
+          margin: 25px 0;
+          border-radius: 8px;
+          color: #2B6CB0;
+          letter-spacing: 4px;
+        }
+        .warning {
+          background-color: #F7FAFC;
+          border-left: 4px solid #2B6CB0;
+          padding: 15px;
+          border-radius: 4px;
           margin: 20px 0;
-          border-radius: 5px;
+        }
+        .warning strong {
+          color: #2B6CB0;
+          display: block;
+          margin-bottom: 8px;
+        }
+        .warning ul {
+          margin: 0;
+          padding-left: 20px;
+        }
+        .warning li {
+          margin: 5px 0;
+          color: #4A5568;
         }
         .footer {
           text-align: center;
-          margin-top: 20px;
-          font-size: 12px;
-          color: #666;
+          padding: 20px;
+          background-color: #F7FAFC;
+          border-radius: 0 0 8px 8px;
+          font-size: 13px;
+          color: #718096;
         }
-        .warning {
-          background-color: #fff3cd;
-          color: #856404;
-          padding: 10px;
-          border-radius: 5px;
-          margin: 20px 0;
+        a {
+          color: #2B6CB0;
+          text-decoration: none;
+        }
+        a:hover {
+          text-decoration: underline;
         }
       </style>
     </head>
@@ -75,7 +110,7 @@ const getEmailTemplate = (otp) => {
         </div>
         <div class="content">
           <p>Bonjour,</p>
-          <p>Nous avons reçu une demande de vérification pour votre compte. Utilisez le code suivant pour compléter votre authentification :</p>
+          <p>Nous avons reçu une demande de vérification pour votre compte. Voici votre code d'authentification :</p>
           
           <div class="otp-code">
             ${otp}
@@ -90,7 +125,7 @@ const getEmailTemplate = (otp) => {
             </ul>
           </div>
           
-          <p>Si vous rencontrez des problèmes, n'hésitez pas à nous contacter à <a href="mailto:support@talenia.com">support@talenia.com</a></p>
+          <p>Si vous rencontrez des difficultés, notre équipe support est là pour vous aider à <a href="mailto:support@talenia.com">support@talenia.com</a></p>
         </div>
         <div class="footer">
           <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
