@@ -236,9 +236,9 @@ export default function Test() {
             queryParams.append('skill', router.query.skill as string);
             // Send language as subcategory for soft skills
             if (router.query.language) {
-              queryParams.append('subcategory', router.query.language as string);
+              queryParams.append('subSkills', router.query.language as string);
             } else if (router.query.subcategory) {
-              queryParams.append('subcategory', router.query.subcategory as string);
+              queryParams.append('subSkills', router.query.subcategory as string);
             }
             endpoint = `evaluation/generate-soft-skill-questions?${queryParams.toString()}`;
             
