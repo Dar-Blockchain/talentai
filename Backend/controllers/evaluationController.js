@@ -281,3 +281,82 @@ The questions should:
     res.status(500).json({ error: "Failed to generate soft skill questions" });
   }
 };
+
+const User = require('../models/UserModel');
+
+exports.matchProfilesWithCompany = async (req, res) => {
+  try {
+    // Récupérer tous les profils de candidats
+    const candidates = await User.find({ role: 'Candidat' }).populate('profile');
+    
+    // Récupérer les compétences requises de l'entreprise
+    const company = req.user;
+    const requiredSkills = company.profile.requiredSkills;
+
+    const matchedProfiles = [];
+
+    for (const candidate of candidates) {
+      const candidateSkills = candidate.profile.skills;
+      
+      // Préparer le prompt pour OpenAI
+      const prompt = `
+        Compare these candidate skills: ${candidateSkills.join(', ')} 
+        with these required skills: ${requiredSkills.join(', ')}. 
+        Return a JSON with a match percentage (between 70 and 100) and explanation.
+        The match percentage should reflect how well the candidate's skills match the required skills.
+      `;
+
+      console.log(prompt);
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4-turbo-preview",
+        messages: [
+          { 
+            role: "system", 
+            content: "You are an expert at matching candidate skills with job requirements. Return only valid JSON without any markdown formatting or backticks. The match percentage must be between 70 and 100."
+          },
+          { role: "user", content: prompt }
+        ],
+        max_tokens: 150,
+        temperature: 0.7
+      });
+
+      // Nettoyer la réponse avant de la parser
+      let cleanResponse = response.choices[0].message.content
+        .replace(/```json\n?/g, '')  // Enlever ```json
+        .replace(/```\n?/g, '')      // Enlever les backticks restants
+        .trim();                     // Enlever les espaces
+
+      const matchResult = JSON.parse(cleanResponse);
+      
+      // Vérifier que le pourcentage est entre 70 et 100
+      if (matchResult.matchPercentage >= 70 && matchResult.matchPercentage <= 100) {
+        matchedProfiles.push({
+          candidate: {
+            id: candidate._id,
+            name: candidate.name,
+            email: candidate.email,
+            skills: candidateSkills
+          },
+          matchPercentage: matchResult.matchPercentage,
+          explanation: matchResult.explanation
+        });
+      }
+    }
+
+    // Trier les profils par pourcentage de correspondance
+    matchedProfiles.sort((a, b) => b.matchPercentage - a.matchPercentage);
+
+    res.status(200).json({
+      success: true,
+      data: matchedProfiles
+    });
+
+  } catch (error) {
+    console.error('Error in matchProfilesWithCompany:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erreur lors de la correspondance des profils'
+    });
+  }
+};
