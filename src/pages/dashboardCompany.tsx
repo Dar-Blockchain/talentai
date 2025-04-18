@@ -182,6 +182,30 @@ export default function DashboardCompany() {
   const dispatch = useDispatch<AppDispatch>();
   const { profile, loading, error } = useSelector(selectProfile);
   const [editSkillsDialog, setEditSkillsDialog] = useState(false);
+  const [filterDialog, setFilterDialog] = useState(false);
+  const [minScore, setMinScore] = useState<number>(0);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [filteredCandidates, setFilteredCandidates] = useState<MatchingCandidate[]>([]);
+
+  // Add useEffect to handle filtering
+  useEffect(() => {
+    const filtered = sampleMatchingCandidates.filter(candidate => {
+      const meetsScoreRequirement = candidate.matchScore >= minScore;
+      const meetsSkillRequirement = selectedSkills.length === 0 || 
+        selectedSkills.every(skill => candidate.skills.includes(skill));
+      return meetsScoreRequirement && meetsSkillRequirement;
+    });
+    setFilteredCandidates(filtered);
+  }, [minScore, selectedSkills]);
+
+  // Initialize filtered candidates
+  useEffect(() => {
+    setFilteredCandidates(sampleMatchingCandidates);
+  }, []);
+
+  const handleFilterApply = () => {
+    setFilterDialog(false);
+  };
 
   const handleLogout = () => {
     try {
@@ -432,6 +456,7 @@ export default function DashboardCompany() {
               <SectionTitle>Matching Candidates</SectionTitle>
               <Button
                 startIcon={<AddIcon />}
+                onClick={() => setFilterDialog(true)}
                 sx={{
                   color: '#02E2FF',
                   borderColor: 'rgba(2,226,255,0.5)',
@@ -446,7 +471,7 @@ export default function DashboardCompany() {
             </Box>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {sampleMatchingCandidates.map((candidate) => (
+              {filteredCandidates.map((candidate) => (
                 <CandidateCard key={candidate.id}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                     <Box>
@@ -672,6 +697,117 @@ export default function DashboardCompany() {
               }}
             >
               Save Changes
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Filter Dialog */}
+        <Dialog
+          open={filterDialog}
+          onClose={() => setFilterDialog(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: '16px',
+              background: 'rgba(30, 41, 59, 0.95)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255,255,255,0.1)',
+            }
+          }}
+        >
+          <DialogTitle sx={{ 
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            color: '#ffffff'
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="h6">Filter Candidates</Typography>
+              <IconButton
+                onClick={() => setFilterDialog(false)}
+                sx={{ color: 'rgba(255,255,255,0.7)' }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1, color: '#ffffff' }}>
+              Minimum Match Score
+            </Typography>
+            <TextField
+              type="number"
+              value={minScore}
+              onChange={(e) => setMinScore(Number(e.target.value))}
+              fullWidth
+              InputProps={{
+                inputProps: { min: 0, max: 100 },
+                sx: {
+                  color: '#ffffff',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(255,255,255,0.2)',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(255,255,255,0.3)',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#02E2FF',
+                  },
+                },
+              }}
+              sx={{ mb: 3 }}
+            />
+
+            <Typography variant="subtitle2" sx={{ mb: 1, color: '#ffffff' }}>
+              Required Skills
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+              {profile?.requiredSkills.map((skill) => (
+                <SkillChip
+                  key={skill}
+                  label={skill}
+                  onClick={() => {
+                    setSelectedSkills(prev =>
+                      prev.includes(skill)
+                        ? prev.filter(s => s !== skill)
+                        : [...prev, skill]
+                    );
+                  }}
+                  sx={{
+                    backgroundColor: selectedSkills.includes(skill)
+                      ? 'rgba(2,226,255,0.3)'
+                      : 'rgba(2,226,255,0.1)',
+                  }}
+                />
+              ))}
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ 
+            p: 3, 
+            borderTop: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <Button
+              onClick={() => {
+                setMinScore(0);
+                setSelectedSkills([]);
+              }}
+              sx={{ 
+                color: 'rgba(255,255,255,0.8)',
+                mr: 1
+              }}
+            >
+              Reset
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleFilterApply}
+              sx={{
+                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                }
+              }}
+            >
+              Apply Filters
             </Button>
           </DialogActions>
         </Dialog>

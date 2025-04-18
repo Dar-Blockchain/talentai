@@ -231,22 +231,18 @@ export default function Test() {
             setQuestions(data.questions);
           } else {
             // For soft skills
-            const queryParams = new URLSearchParams();
-            queryParams.append('type', router.query.type as string);
-            queryParams.append('skill', router.query.skill as string);
-            // Send language as subcategory for soft skills
-            if (router.query.language) {
-              queryParams.append('subSkills', router.query.language as string);
-            } else if (router.query.subcategory) {
-              queryParams.append('subSkills', router.query.subcategory as string);
-            }
-            endpoint = `evaluation/generate-soft-skill-questions?${queryParams.toString()}`;
+            endpoint = 'evaluation/generate-soft-skill-questions';
             
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
+              method: 'POST',
               headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
-              }
+              },
+              body: JSON.stringify({
+                skill: router.query.skill,
+                subSkills: router.query.language || router.query.subcategory
+              })
             });
 
             if (!response.ok) {

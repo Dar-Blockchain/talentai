@@ -459,9 +459,9 @@ export default function DashboardCandidate() {
   ];
 
   const languages = [
-    { value: 'en', label: 'English' },
-    { value: 'ar', label: 'Arabic' },
-    { value: 'fr', label: 'French' }
+    { value: 'English', label: 'English' },
+    { value: 'Arabic', label: 'Arabic' },
+    { value: 'French', label: 'French' }
   ];
 
   if (loading) {
