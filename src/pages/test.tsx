@@ -169,29 +169,110 @@ export default function Test() {
     const fetchQuestions = async () => {
       try {
         setIsGenerating(true);
+        // Add delay to ensure token is available
+        await new Promise(resolve => setTimeout(resolve,200));
+
         const token = Cookies.get('api_token');
         if (!token) {
-          console.error('No token found');
+          console.log('No token found, redirecting to home');
           router.push('/');
           return;
         }
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/generate-questions`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
+        let endpoint = '';
+        // Detect source based on URL parameters
+        if (router.query.type && router.query.skill) {
+          // This is from dashboardCandidate
+          if (router.query.type === 'technical') {
+            endpoint = 'evaluation/generate-technique-questions';
+            
+            // First fetch the user's profile to get the skill levels
+            const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            if (!profileResponse.ok) {
+              throw new Error('Failed to fetch profile data');
+            }
+
+            const profileData = await profileResponse.json();
+            console.log('Profile data:', profileData);
+
+            // Find the selected skill in the profile
+            const selectedSkill = profileData.skills.find(
+              (skill: any) => skill.name === router.query.skill
+            );
+
+            if (!selectedSkill) {
+              throw new Error('Selected skill not found in profile');
+            }
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                skill: router.query.skill,
+                experienceLevel: selectedSkill.experienceLevel,
+                proficiencyLevel: selectedSkill.proficiencyLevel
+              })
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to fetch questions');
+            }
+
+            const data = await response.json();
+            setQuestions(data.questions);
+          } else {
+            // For soft skills
+            const queryParams = new URLSearchParams();
+            queryParams.append('type', router.query.type as string);
+            queryParams.append('skill', router.query.skill as string);
+            if (router.query.language) queryParams.append('language', router.query.language as string);
+            if (router.query.subcategory) queryParams.append('subcategory', router.query.subcategory as string);
+            endpoint = `evaluation/skill-test?${queryParams.toString()}`;
+            
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to fetch questions');
+            }
+
+            const data = await response.json();
+            setQuestions(data.questions);
           }
-        });
+        } else {
+          // This is from preferences
+          endpoint = 'evaluation/generate-questions';
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch questions');
+          if (!response.ok) {
+            throw new Error('Failed to fetch questions');
+          }
+
+          const data = await response.json();
+          setQuestions(data.questions);
         }
-
-        const data = await response.json();
-        setQuestions(data.questions);
         
         // Initialize transcriptions with empty strings for each question
         setTranscriptions(
-          data.questions.reduce((acc: any, _: any, index: number) => ({ 
+          questions.reduce((acc: any, _: any, index: number) => ({ 
             ...acc, 
             [index]: '' 
           }), {})
@@ -204,8 +285,10 @@ export default function Test() {
       }
     };
 
-    fetchQuestions();
-  }, [router]);
+    if (router.isReady) {
+      fetchQuestions();
+    }
+  }, [router.isReady, router.query]);
 
   // Interval used to finalize each chunk
   const chunkIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -216,7 +299,7 @@ export default function Test() {
 
   // Transcription states
   const [isTranscribing, setIsTranscribing] = useState(false);
-  
+
   // Timer only runs when test has started
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -368,9 +451,9 @@ export default function Test() {
     try {
       // Initialize transcriptions for all questions
       setTranscriptions(
-        questions.reduce((acc: any, _: any, index: number) => ({ 
-          ...acc, 
-          [index]: '' 
+        questions.reduce((acc: any, _: any, index: number) => ({
+          ...acc,
+          [index]: ''
         }), {})
       );
       setCurrentTranscript(''); // Clear current transcript
@@ -573,8 +656,8 @@ export default function Test() {
           <QuestionOverlay>
             <Typography variant="h6" sx={{ color: '#fff' }}>
               {isGenerating ? (
-                <Box sx={{ 
-                  display: 'flex', 
+                <Box sx={{
+                  display: 'flex',
                   alignItems: 'center',
                   gap: 2,
                   justifyContent: 'center',
