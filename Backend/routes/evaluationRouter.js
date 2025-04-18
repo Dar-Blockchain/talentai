@@ -13,5 +13,6 @@ router.use(requireAuthUser);
 
 router.get('/generate-questions', evaluationController.generateQuestions);
 router.post('/generate-technique-questions', evaluationController.generateTechniqueQuestions);
+router.post('/generate-soft-skill-questions', evaluationController.generateSoftSkillQuestions);
 
 module.exports = router; 
