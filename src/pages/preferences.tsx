@@ -403,34 +403,17 @@ export default function Preferences() {
   useEffect(() => {
     const checkTrafficCounter = async () => {
       try {
-        // Try to get token multiple times with increasing delays
-        let token = null;
-        let attempts = 0;
-        const maxAttempts = 3;
+        // Add a small delay to ensure token is available
+        await new Promise(resolve => setTimeout(resolve, 100));
         
-        while (!token && attempts < maxAttempts) {
-          token = Cookies.get('api_token');
-          if (!token) {
-            attempts++;
-            console.log(`Token not found, attempt ${attempts} of ${maxAttempts}`);
-            if (attempts === maxAttempts) {
-              console.log('Max attempts reached, redirecting to home');
-              router.push('/');
-              return;
-            }
-            // Increase delay with each attempt
-            await new Promise(resolve => setTimeout(resolve, 200 * attempts));
-          }
-        }
-
+        const token = Cookies.get('api_token');
         if (!token) {
-          console.log('No token found after retries, redirecting to home');
+          console.log('No token found, redirecting to home');
           router.push('/');
           return;
         }
 
-        console.log('Token found, proceeding with API call');
-
+        console.log('Token found, fetching profile', token);
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
           method: 'GET',
           headers: {
@@ -439,27 +422,23 @@ export default function Preferences() {
           },
         });
 
+        // If response is 500, it might be because profile doesn't exist yet
+        if (response.status === 500) {
+          console.log('Profile not found (500), staying on preferences page');
+          return; // Stay on preferences page to create profile
+        }
+
         if (!response.ok) {
-          if (response.status === 404) {
-            console.log('Profile not found, staying on preferences page to create profile');
-            return; // Stay on preferences page to let user create profile
-          }
-          console.error('Failed to fetch profile, redirecting to home');
+          console.error('Failed to fetch profile');
           router.push('/');
           return;
         }
 
         const data = await response.json();
         console.log('Profile data:', data);
-        
-        // Check if we have valid user data
-        if (!data || !data.userId) {
-          console.log('Invalid profile data, staying on preferences page');
-          return; // Stay on preferences page
-        }
-        
-        // If traffic counter is greater than 1, redirect to profile
-        if (data.userId.trafficCounter > 1) {
+
+        // Only redirect if we have both userId and trafficCounter > 1
+        if (data.userId && data.userId.trafficCounter > 1) {
           console.log('Traffic counter:', data.userId.trafficCounter);
           console.log('User type:', data.type);
           
@@ -469,12 +448,12 @@ export default function Preferences() {
             router.push('/dashboardCandidate');
           }
         } else {
-          console.log('First time user, staying on preferences page');
+          console.log('First time user or no traffic counter, staying on preferences page');
         }
       } catch (error) {
+        // If error occurs, likely means profile doesn't exist yet
         console.error('Error checking traffic counter:', error);
-        // On error, stay on preferences page to let user create profile
-        console.log('Staying on preferences page due to error');
+        console.log('Staying on preferences page to create profile');
       }
     };
 
