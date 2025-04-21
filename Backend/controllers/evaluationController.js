@@ -436,6 +436,21 @@ function getScoreCategory(score) {
   return 'Low Match';
 }
 
+// Helper function to get experience level from proficiency level
+function getExperienceLevel(proficiencyLevel) {
+  const levels = ['Entry Level', 'Junior', 'Mid Level', 'Senior', 'Expert'];
+  return levels[Math.min(Math.max(0, proficiencyLevel - 1), 4)];
+}
+
+// Helper function to determine mastery category
+function getMasteryCategory(score) {
+  if (score >= 90) return "Mastered";
+  if (score >= 75) return "Proficient";
+  if (score >= 60) return "Competent";
+  if (score >= 40) return "Developing";
+  return "Novice";
+}
+
 exports.analyzeProfileAnswers = async (req, res) => {
   try {
     // 1. Validate request body
@@ -606,6 +621,8 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
           skillName: skill.skillName || skill.skill || '',
           currentProficiency: Number(skill.currentProficiency) || 0,
           demonstratedProficiency: Number(skill.demonstratedProficiency) || 0,
+          currentExperienceLevel: getExperienceLevel(Number(skill.currentProficiency) || 0),
+          demonstratedExperienceLevel: getExperienceLevel(Number(skill.demonstratedProficiency) || 0),
           strengths: Array.isArray(skill.strengths) ? skill.strengths : [],
           weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
           confidenceScore: Number(skill.confidenceScore) || 0,
@@ -614,27 +631,33 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
         generalAssessment: analysis.generalAssessment || '',
         recommendations: Array.isArray(analysis.recommendations) ? analysis.recommendations : [],
         technicalLevel: analysis.technicalLevel || 'intermediate',
-        nextSteps: Array.isArray(analysis.nextSteps) ? analysis.nextSteps : []
+        nextSteps: Array.isArray(analysis.nextSteps) ? analysis.nextSteps : [],
+        experienceLevels: ['Entry Level', 'Junior', 'Mid Level', 'Senior', 'Expert']
       };
 
     } catch (error) {
       console.error("Detailed error in analysis parsing:", error);
       console.error("Original response:", response.choices[0].message.content);
       
-      // Attempt to create a basic analysis if parsing fails
       return res.status(200).json({
         success: true,
         result: {
           timestamp: new Date(),
           assessmentType: type,
-          skillsAssessed: skill,
+          skillsAssessed: skill.map(s => ({
+            ...s,
+            experienceLevel: getExperienceLevel(s.proficiencyLevel)
+          })),
           numberOfQuestions: questions.length,
           analysis: {
-            overallScore: 70, // Default score
+            overallScore: 70,
+            experienceLevels: ['Entry Level', 'Junior', 'Mid Level', 'Senior', 'Expert'],
             skillAnalysis: skill.map(s => ({
               skillName: s.name,
               currentProficiency: s.proficiencyLevel,
               demonstratedProficiency: s.proficiencyLevel,
+              currentExperienceLevel: getExperienceLevel(s.proficiencyLevel),
+              demonstratedExperienceLevel: getExperienceLevel(s.proficiencyLevel),
               strengths: ["Assessment incomplete"],
               weaknesses: ["Could not analyze in detail"],
               confidenceScore: 60,
@@ -653,16 +676,25 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
     const result = {
       timestamp: new Date(),
       assessmentType: type,
-      skillsAssessed: skill,
+      skillsAssessed: skill.map(s => ({
+        ...s,
+        experienceLevel: getExperienceLevel(s.proficiencyLevel)
+      })),
       numberOfQuestions: questions.length,
       analysis: {
         ...analysis,
         skillProgression: analysis.skillAnalysis.map(skillAnalysis => {
           const originalSkill = skill.find(s => s.name === skillAnalysis.skillName);
+          const currentLevel = originalSkill ? originalSkill.proficiencyLevel : 1;
           return {
             ...skillAnalysis,
-            proficiencyChange: skillAnalysis.demonstratedProficiency - originalSkill.proficiencyLevel,
-            masteryCategory: getMasteryCategory(skillAnalysis.confidenceScore)
+            proficiencyChange: skillAnalysis.demonstratedProficiency - currentLevel,
+            masteryCategory: getMasteryCategory(skillAnalysis.confidenceScore),
+            levelProgression: {
+              from: getExperienceLevel(currentLevel),
+              to: getExperienceLevel(skillAnalysis.demonstratedProficiency),
+              changed: currentLevel !== skillAnalysis.demonstratedProficiency
+            }
           };
         })
       }
@@ -682,12 +714,3 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
     });
   }
 };
-
-// Helper function to determine mastery category
-function getMasteryCategory(score) {
-  if (score >= 90) return "Mastered";
-  if (score >= 75) return "Proficient";
-  if (score >= 60) return "Competent";
-  if (score >= 40) return "Developing";
-  return "Novice";
-}
