@@ -439,24 +439,54 @@ function getScoreCategory(score) {
 exports.analyzeProfileAnswers = async (req, res) => {
   try {
     // 1. Validate request body
-    const { type, skill, questions, currentLevel } = req.body;
+    const { type, skill, questions } = req.body;
 
-    if (!type || !Array.isArray(skill) || !Array.isArray(questions) || !currentLevel) {
+    /* Example of expected request format:
+    {
+      "type": "technical",
+      "skill": [
+        {
+          "name": "JavaScript",
+          "proficiencyLevel": 3
+        },
+        {
+          "name": "HTTP/REST",
+          "proficiencyLevel": 2
+        }
+      ],
+      "questions": [
+        {
+          "question": "What is the output of `typeof null` in JavaScript?",
+          "answer": "'object'"
+        }
+      ]
+    }
+    */
+
+    if (!type || !Array.isArray(skill) || !Array.isArray(questions)) {
       return res.status(400).json({
         error: "Invalid request format",
         required: {
           type: "Type of assessment (e.g., 'technical')",
-          skill: "Array of skills being assessed",
-          questions: "Array of question-answer pairs",
-          currentLevel: "Current proficiency level (1-5)"
+          skill: "Array of skill objects with name and proficiencyLevel",
+          questions: "Array of question-answer pairs"
         }
       });
     }
 
-    if (currentLevel < 1 || currentLevel > 5) {
+    // Validate skill objects
+    const isValidSkill = skill.every(s => 
+      s.name && 
+      typeof s.name === 'string' && 
+      typeof s.proficiencyLevel === 'number' &&
+      s.proficiencyLevel >= 1 && 
+      s.proficiencyLevel <= 5
+    );
+
+    if (!isValidSkill) {
       return res.status(400).json({
-        error: "Invalid current level",
-        message: "Current level must be between 1 and 5"
+        error: "Invalid skill format",
+        message: "Each skill must have a name (string) and proficiencyLevel (number 1-5)"
       });
     }
 
@@ -465,7 +495,8 @@ exports.analyzeProfileAnswers = async (req, res) => {
 As an expert ${type} interviewer, analyze the following assessment:
 
 Assessment Type: ${type}
-Skills being assessed: ${JSON.stringify(skill)}
+Skills being assessed: 
+${skill.map(s => `- ${s.name} (Current Proficiency Level: ${s.proficiencyLevel}/5)`).join('\n')}
 
 Questions and Answers:
 ${questions.map(qa => `Q: ${qa.question}\nA: ${qa.answer}`).join('\n\n')}
@@ -475,11 +506,13 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
   "overallScore": 85,
   "skillAnalysis": [
     {
-      "skill": "JavaScript",
-      "proficiency": "intermediate",
+      "skillName": "JavaScript",
+      "currentProficiency": 3,
+      "demonstratedProficiency": 4,
       "strengths": ["Good understanding of core concepts"],
       "weaknesses": ["May need more practice with advanced topics"],
-      "confidenceScore": 80
+      "confidenceScore": 80,
+      "improvement": "increased"
     }
   ],
   "generalAssessment": "Strong foundational knowledge with some areas for improvement",
@@ -502,7 +535,9 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       messages: [
         {
           role: "system",
-          content: `You are an expert ${type} interviewer specializing in evaluating developer skills. Provide detailed, actionable feedback in JSON format only.`
+          content: `You are an expert ${type} interviewer specializing in evaluating developer skills. 
+                   Analyze both the answers and the progression from their current proficiency levels.
+                   Provide detailed, actionable feedback in JSON format only.`
         },
         { role: "user", content: prompt }
       ],
@@ -529,13 +564,14 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       numberOfQuestions: questions.length,
       analysis: {
         ...analysis,
-        currentLevel,
-        newLevel: getProficiencyLevel(analysis.overallScore, currentLevel),
-        levelChanged: getProficiencyLevel(analysis.overallScore, currentLevel) !== currentLevel,
-        detailedBreakdown: analysis.skillAnalysis.map(skill => ({
-          ...skill,
-          masteryCategory: getMasteryCategory(skill.confidenceScore)
-        }))
+        skillProgression: analysis.skillAnalysis.map(skillAnalysis => {
+          const originalSkill = skill.find(s => s.name === skillAnalysis.skillName);
+          return {
+            ...skillAnalysis,
+            proficiencyChange: skillAnalysis.demonstratedProficiency - originalSkill.proficiencyLevel,
+            masteryCategory: getMasteryCategory(skillAnalysis.confidenceScore)
+          };
+        })
       }
     };
 
@@ -553,39 +589,6 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
     });
   }
 };
-
-// Helper function to determine new proficiency level based on score and current level
-function getProficiencyLevel(score, currentLevel) {
-  // Convert currentLevel to number to ensure proper comparison
-  const level = Number(currentLevel);
-  
-  switch (level) {
-    case 1:
-      return score >= 70 ? 2 : 1;  // Need 70+ to move up from level 1
-    
-    case 2:
-      if (score >= 80) return 3;   // Need 80+ to move up from level 2
-      if (score < 40) return 1;    // Drop to level 1 if below 40
-      return 2;
-    
-    case 3:
-      if (score >= 80) return 4;   // Need 80+ to move up from level 3
-      if (score < 50) return 2;    // Drop to level 2 if below 50
-      return 3;
-    
-    case 4:
-      if (score >= 85) return 5;   // Need 85+ to move up from level 4
-      if (score < 60) return 3;    // Drop to level 3 if below 60
-      return 4;
-    
-    case 5:
-      if (score < 70) return 4;    // Drop to level 4 if below 70
-      return 5;
-    
-    default:
-      return 1;  // Default to level 1 if invalid current level
-  }
-}
 
 // Helper function to determine mastery category
 function getMasteryCategory(score) {
