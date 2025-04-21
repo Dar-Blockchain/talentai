@@ -132,7 +132,7 @@ export default function Report() {
           console.log('Request body:', requestBody); // Debug log
 
           // Call analysis API endpoint
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/analyze-profile`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/analyze-profile-answers`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
