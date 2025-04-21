@@ -83,7 +83,7 @@ export default function Report() {
 
   useEffect(() => {
     const previousPath = router.query.from as string || localStorage.getItem('previousPath');
-    const type = previousPath?.includes('test') ? 'technical' :
+    const type = router.query.type as string || previousPath?.includes('test') ? 'technical' :
       previousPath?.includes('technical') ? 'technical' : 'soft-skills';
     
     setAssessmentType(type);
@@ -115,16 +115,27 @@ export default function Report() {
         // Get the test results
         const savedResults = localStorage.getItem('test_results');
         if (savedResults) {
-          const testResults = JSON.parse(savedResults);
+          const testData = JSON.parse(savedResults);
           
+          // Validate test data format
+          if (!testData || !testData.results || !Array.isArray(testData.results)) {
+            throw new Error('Invalid test results format in storage');
+          }
+
           const requestBody = {
-            type: "technical",
-            skill: userSkills.map((skill: any) => ({
+            type: router.query.type || testData.metadata?.type || type,
+            skill: router.query.skill ? [{
+              name: router.query.skill as string,
+              proficiencyLevel: 1
+            }] : userSkills.map((skill: any) => ({
               name: skill.name,
               proficiencyLevel: parseInt(skill.proficiencyLevel) || 1
             })),
-            questions: testResults
+            subcategory: router.query.subcategory as string,
+            questions: testData.results
           };
+
+          console.log('Sending analysis request:', JSON.stringify(requestBody, null, 2));
 
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/analyze-profile-answers`, {
             method: 'POST',
@@ -136,10 +147,59 @@ export default function Report() {
           });
 
           if (!response.ok) {
-            throw new Error('Failed to analyze results');
+            const errorText = await response.text();
+            let errorMessage = 'Failed to analyze results';
+            try {
+              const errorJson = JSON.parse(errorText);
+              errorMessage = errorJson.message || errorJson.error || errorText;
+            } catch (parseError) {
+              errorMessage = errorText || 'Failed to analyze results';
+            }
+            throw new Error(`Failed to analyze results: ${errorMessage}`);
           }
 
           const analysisData = await response.json();
+          console.log('Analysis response:', JSON.stringify(analysisData, null, 2));
+
+          // Ensure all fields that should be strings are strings
+          if (analysisData.result?.analysis) {
+            const analysis = analysisData.result.analysis;
+            
+            // Convert any object recommendations to strings
+            if (Array.isArray(analysis.recommendations)) {
+              analysis.recommendations = analysis.recommendations.map((rec: any) => {
+                if (typeof rec === 'object') {
+                  // If it's an object, stringify it or extract relevant text
+                  return Object.values(rec).join(': ');
+                }
+                return rec;
+              });
+            }
+
+            // Convert any object next steps to strings
+            if (Array.isArray(analysis.nextSteps)) {
+              analysis.nextSteps = analysis.nextSteps.map((step: any) => {
+                if (typeof step === 'object') {
+                  return Object.values(step).join(': ');
+                }
+                return step;
+              });
+            }
+
+            // Ensure skill analysis fields are properly formatted
+            if (Array.isArray(analysis.skillAnalysis)) {
+              analysis.skillAnalysis = analysis.skillAnalysis.map((skill: any) => ({
+                ...skill,
+                strengths: Array.isArray(skill.strengths) ? skill.strengths.map((s: any) => 
+                  typeof s === 'object' ? Object.values(s).join(': ') : s
+                ) : [],
+                weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses.map((w: any) => 
+                  typeof w === 'object' ? Object.values(w).join(': ') : w
+                ) : []
+              }));
+            }
+          }
+
           setResults(analysisData.result);
         }
       } catch (e) {
@@ -152,7 +212,7 @@ export default function Report() {
     };
 
     analyzeResults();
-  }, [router.query.from]);
+  }, [router.query.from, router.query.type, router.query.skill, router.query.subcategory]);
 
   const goHome = () => router.push('/');
 

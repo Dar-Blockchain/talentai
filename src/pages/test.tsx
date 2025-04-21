@@ -494,6 +494,8 @@ export default function Test() {
       setCurrent(c => c + 1);
     } else {
       saveTestResults();
+      // Store current URL in localStorage before navigation
+      localStorage.setItem('previousUrl', window.location.href);
       router.push('/report');
     }
   };
@@ -502,6 +504,8 @@ export default function Test() {
     streamRef.current?.getTracks().forEach(t => t.stop());
     if (hasStartedTest) {
       saveTestResults();
+      // Store current URL in localStorage before navigation
+      localStorage.setItem('previousUrl', window.location.href);
     }
     router.push('/');
   };
@@ -512,7 +516,31 @@ export default function Test() {
       question,
       answer: transcriptions[index] || ''
     }));
-    localStorage.setItem('test_results', JSON.stringify(results));
+
+    // Save test results with metadata
+    const testData = {
+      results,
+      metadata: {
+        type: router.query.type || 'technical',
+        skill: router.query.skill,
+        subcategory: router.query.subcategory,
+        timestamp: new Date().toISOString()
+      }
+    };
+
+    localStorage.setItem('test_results', JSON.stringify(testData));
+    localStorage.setItem('last_test_type', router.query.type as string || 'technical');
+    
+    // Navigate to report page with parameters
+    router.push({
+      pathname: '/report',
+      query: {
+        from: 'test',
+        type: router.query.type || 'technical',
+        skill: router.query.skill,
+        subcategory: router.query.subcategory
+      }
+    });
   };
 
   // Cleanup on unmount
