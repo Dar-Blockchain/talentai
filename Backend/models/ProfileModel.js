@@ -12,6 +12,7 @@ const profileSchema = new mongoose.Schema(
       enum: ["Candidate", "Company"],
       required: true
     },
+    overallScore : Number,
     skills: [
       {
         name: String,
