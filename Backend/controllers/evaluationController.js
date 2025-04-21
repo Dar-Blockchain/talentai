@@ -451,10 +451,13 @@ function getMasteryCategory(score) {
   return "Novice";
 }
 
+const profile = require('../models/ProfileModel');
+
 exports.analyzeProfileAnswers = async (req, res) => {
   try {
     // 1. Validate request body
     const { type, skill, questions } = req.body;
+    const userId = req.user._id;
 
     /* Example of expected request format:
     {
@@ -699,6 +702,9 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
         })
       }
     };
+
+    await profileService.createOrUpdateProfile(userId, { overallScore: analysis.overallScore });
+
 
     res.status(200).json({
       success: true,
