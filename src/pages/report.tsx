@@ -77,21 +77,20 @@ export default function Report() {
   const router = useRouter();
   const [results, setResults] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assessmentType, setAssessmentType] = useState<string>('technical');
 
   useEffect(() => {
-    // Get the previous path from router or localStorage
     const previousPath = router.query.from as string || localStorage.getItem('previousPath');
-
-    // Determine assessment type based on previous path
     const type = previousPath?.includes('test') ? 'technical' :
       previousPath?.includes('technical') ? 'technical' : 'soft-skills';
-
+    
     setAssessmentType(type);
 
     const analyzeResults = async () => {
       try {
+        setAnalyzing(true);
         // First get the user's profile
         const token = localStorage.getItem('api_token');
         if (!token) {
@@ -111,7 +110,6 @@ export default function Report() {
         }
 
         const profileData = await profileResponse.json();
-        // Access skills directly from the response data
         const userSkills = profileData?.skills || [];
 
         // Get the test results
@@ -119,7 +117,6 @@ export default function Report() {
         if (savedResults) {
           const testResults = JSON.parse(savedResults);
           
-          // Prepare the request body with skills from profile
           const requestBody = {
             type: "technical",
             skill: userSkills.map((skill: any) => ({
@@ -129,9 +126,6 @@ export default function Report() {
             questions: testResults
           };
 
-          console.log('Request body:', requestBody); // Debug log
-
-          // Call analysis API endpoint
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/analyze-profile-answers`, {
             method: 'POST',
             headers: {
@@ -153,6 +147,7 @@ export default function Report() {
         setError(e instanceof Error ? e.message : 'An error occurred');
       } finally {
         setLoading(false);
+        setAnalyzing(false);
       }
     };
 
@@ -161,16 +156,44 @@ export default function Report() {
 
   const goHome = () => router.push('/');
 
-  if (loading) {
+  if (loading || analyzing) {
     return (
       <Box sx={{
         display: 'flex',
+        flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        background: '#00072D'
+        background: '#00072D',
+        gap: 3
       }}>
         <CircularProgress sx={{ color: '#02E2FF' }} />
+        <Typography variant="h6" sx={{ 
+          color: '#fff',
+          textAlign: 'center',
+          animation: 'pulse 1.5s infinite',
+          '@keyframes pulse': {
+            '0%': { opacity: 0.6 },
+            '50%': { opacity: 1 },
+            '100%': { opacity: 0.6 }
+          }
+        }}>
+          {analyzing ? 'Analyzing Your Results...' : 'Loading...'}
+        </Typography>
+        {analyzing && (
+          <Box sx={{ 
+            maxWidth: '300px',
+            textAlign: 'center',
+            mt: 2
+          }}>
+            <Typography variant="body2" sx={{ 
+              color: 'rgba(255,255,255,0.7)',
+              fontSize: '0.9rem'
+            }}>
+              We're processing your answers and generating a detailed analysis. This may take a moment.
+            </Typography>
+          </Box>
+        )}
       </Box>
     );
   }
