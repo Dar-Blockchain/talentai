@@ -32,6 +32,7 @@ import { useRouter } from 'next/router';
 import StarIcon from '@mui/icons-material/Star';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Cookies from 'js-cookie';
+import WorkIcon from '@mui/icons-material/Work';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -193,6 +194,26 @@ interface MatchingCandidate {
   };
 }
 
+// Add these interfaces after the existing interfaces
+interface JobPost {
+  title: string;
+  description: string;
+  requirements: string[];
+  responsibilities: string[];
+  skills: Array<{
+    name: string;
+    requiredLevel: number;
+  }>;
+  location: string;
+  employmentType: string;
+  experienceLevel: string;
+  salary: {
+    min: number;
+    max: number;
+    currency: string;
+  };
+}
+
 export default function DashboardCompany() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
@@ -205,6 +226,46 @@ export default function DashboardCompany() {
   const [filteredCandidates, setFilteredCandidates] = useState<MatchingCandidate[]>([]);
   const [isLoadingMatches, setIsLoadingMatches] = useState(false);
   const [matchError, setMatchError] = useState<string | null>(null);
+  const [jobPostDialog, setJobPostDialog] = useState(false);
+  const [jobDescription, setJobDescription] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedJob, setGeneratedJob] = useState<JobPost | undefined>({
+    title: "Senior Full Stack Developer",
+    description: "We are seeking an experienced Senior Full Stack Developer to join our innovative team. The ideal candidate will bring deep expertise in modern web technologies and a passion for building scalable, high-performance applications.",
+    requirements: [
+      "Bachelor's degree in Computer Science or related field",
+      "5+ years of experience with React.js and Node.js",
+      "Strong proficiency in TypeScript and modern JavaScript",
+      "Experience with cloud platforms (AWS/Azure/GCP)",
+      "Knowledge of microservices architecture",
+      "Expertise in database design (SQL and NoSQL)"
+    ],
+    responsibilities: [
+      "Lead development of core product features",
+      "Mentor junior developers and conduct code reviews",
+      "Design and implement scalable backend services",
+      "Optimize application performance",
+      "Collaborate with product and design teams",
+      "Participate in architectural decisions"
+    ],
+    skills: [
+      { name: "React.js", requiredLevel: 5 },
+      { name: "Node.js", requiredLevel: 5 },
+      { name: "TypeScript", requiredLevel: 4 },
+      { name: "AWS", requiredLevel: 4 },
+      { name: "MongoDB", requiredLevel: 4 },
+      { name: "Docker", requiredLevel: 3 }
+    ],
+    location: "San Francisco, CA (Hybrid)",
+    employmentType: "Full-time",
+    experienceLevel: "Senior",
+    salary: {
+      min: 120000,
+      max: 180000,
+      currency: "$"
+    }
+  });
+  const [jobPostError, setJobPostError] = useState<string | null>(null);
 
   // Fetch matching profiles
   const fetchMatchingProfiles = async () => {
@@ -286,6 +347,64 @@ const handleLogout = () => {
 useEffect(() => {
   dispatch(getMyProfile());
 }, [dispatch]);
+
+// Add this function to handle job generation
+const handleGenerateJob = async () => {
+  try {
+    setIsGenerating(true);
+    setJobPostError(null);
+    
+    const token = Cookies.get('api_token');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}jobs/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ description: jobDescription })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to generate job post');
+    }
+
+    const data = await response.json();
+    setGeneratedJob(data.job);
+  } catch (error) {
+    console.error('Error generating job:', error);
+    setJobPostError(error instanceof Error ? error.message : 'Failed to generate job post');
+  } finally {
+    setIsGenerating(false);
+  }
+};
+
+// Add this function to handle job posting
+const handlePostJob = async () => {
+  if (!generatedJob) return;
+  
+  try {
+    const token = Cookies.get('api_token');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}jobs/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(generatedJob)
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to post job');
+    }
+
+    setJobPostDialog(false);
+    setGeneratedJob(undefined);
+    setJobDescription('');
+  } catch (error) {
+    console.error('Error posting job:', error);
+    setJobPostError(error instanceof Error ? error.message : 'Failed to post job');
+  }
+};
 
 if (loading) {
   return (
@@ -444,6 +563,434 @@ const renderMatchingProfiles = () => {
   );
 };
 
+// Add the job posting dialog component
+const renderJobPostDialog = () => (
+  <Dialog 
+    open={jobPostDialog} 
+    onClose={() => setJobPostDialog(false)}
+    maxWidth="xl"
+    fullWidth
+    PaperProps={{
+      sx: {
+        background: '#17203D',
+        backdropFilter: 'blur(10px)',
+        borderRadius: { xs: '0', sm: '16px' },
+        border: '1px solid rgba(255,255,255,0.1)',
+        height: { xs: '100vh', sm: '90vh' },
+        maxHeight: { xs: '100vh', sm: '90vh' },
+        margin: { xs: 0, sm: 2 },
+        display: 'flex',
+        flexDirection: 'column',
+      }
+    }}
+  >
+    <DialogTitle sx={{ 
+      color: '#fff', 
+      borderBottom: '1px solid rgba(255,255,255,0.1)',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      p: { xs: 2, sm: 3 },
+      position: 'relative'
+    }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography variant="h6" sx={{ 
+          fontWeight: 600,
+          fontSize: { xs: '1.1rem', sm: '1.25rem' }
+        }}>
+          AI Job Post Generator
+        </Typography>
+        <Chip 
+          label="Beta" 
+          size="small" 
+          sx={{ 
+            backgroundColor: 'rgba(2,226,255,0.1)', 
+            color: '#02E2FF',
+            height: '20px'
+          }} 
+        />
+      </Box>
+      <IconButton
+        onClick={() => setJobPostDialog(false)}
+        sx={{ 
+          color: 'rgba(255,255,255,0.5)',
+          position: { xs: 'absolute', sm: 'static' },
+          right: { xs: 8, sm: 'auto' },
+          top: { xs: 8, sm: 'auto' }
+        }}
+      >
+        <CloseIcon />
+      </IconButton>
+    </DialogTitle>
+
+    <DialogContent sx={{ 
+      p: 0, 
+      display: 'flex', 
+      flexDirection: { xs: 'column', md: 'row' },
+      flexGrow: 1,
+      overflow: 'hidden'
+    }}>
+      <Box sx={{ 
+        width: { xs: '100%', md: '50%' },
+        height: { xs: '40%', md: 'auto' },
+        borderRight: { xs: 'none', md: '1px solid rgba(255,255,255,0.1)' },
+        borderBottom: { xs: '1px solid rgba(255,255,255,0.1)', md: 'none' },
+        display: 'flex',
+        flexDirection: 'column',
+        p: { xs: 2, sm: 3 },
+        gap: 2
+      }}>
+        <Typography variant="h6" sx={{ 
+          color: '#fff', 
+          mb: 1,
+          fontSize: { xs: '1rem', sm: '1.25rem' }
+        }}>
+          Job Description
+        </Typography>
+        <Typography variant="body2" sx={{ 
+          color: 'rgba(255,255,255,0.7)', 
+          mb: 2,
+          fontSize: { xs: '0.875rem', sm: '1rem' }
+        }}>
+          Describe the position you're looking to fill. Be as detailed as possible about responsibilities, requirements, and desired skills.
+        </Typography>
+        <TextField
+          multiline
+          rows={12}
+          fullWidth
+          value={jobDescription}
+          onChange={(e) => setJobDescription(e.target.value)}
+          placeholder="Example: 
+
+We are seeking a Senior Full Stack Developer to join our dynamic team. The ideal candidate will have:
+
+Technical Requirements:
+- 5+ years of experience with React.js and Node.js
+- Strong proficiency in TypeScript and modern JavaScript
+- Experience with cloud platforms (AWS/Azure/GCP)
+- Knowledge of microservices architecture
+- Expertise in database design (SQL and NoSQL)
+
+Responsibilities:
+- Lead development of our core product features
+- Mentor junior developers and conduct code reviews
+- Design and implement scalable backend services
+- Optimize application performance
+- Collaborate with product and design teams
+
+Additional Skills:
+- Experience with CI/CD pipelines
+- Knowledge of Docker and Kubernetes
+- Strong problem-solving abilities
+- Excellent communication skills
+
+Benefits:
+- Competitive salary range: $120,000 - $160,000
+- Remote work options
+- Health insurance
+- 401(k) matching
+- Professional development budget"
+          sx={{
+            flexGrow: 1,
+            height: { xs: '150px', sm: '200px', md: '250px' },
+            '& .MuiOutlinedInput-root': {
+              color: '#fff',
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              borderRadius: '12px',
+              height: '100%',
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              '& fieldset': {
+                borderColor: 'rgba(255,255,255,0.1)',
+              },
+              '&:hover fieldset': {
+                borderColor: 'rgba(2,226,255,0.5)',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#02E2FF',
+              },
+              '& .MuiOutlinedInput-input': {
+                height: '100% !important',
+              },
+            },
+          }}
+        />
+        <Button
+          fullWidth
+          onClick={handleGenerateJob}
+          disabled={!jobDescription.trim() || isGenerating}
+          variant="contained"
+          sx={{
+            mt: 2,
+            py: { xs: 1, sm: 1.5 },
+            fontSize: { xs: '0.875rem', sm: '1rem' },
+            background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+            borderRadius: '12px',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+            },
+            '&.Mui-disabled': {
+              background: 'rgba(255,255,255,0.1)',
+              color: 'rgba(255,255,255,0.3)',
+            }
+          }}
+        >
+          {isGenerating ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CircularProgress size={20} sx={{ color: '#fff' }} />
+              <span>Generating...</span>
+            </Box>
+          ) : (
+            'Generate Job Post'
+          )}
+        </Button>
+      </Box>
+
+      <Box sx={{ 
+        width: { xs: '100%', md: '50%' },
+        height: { xs: '50%', md: 'auto' },
+        p: { xs: 2, sm: 3 },
+        overflowY: 'auto',
+        backgroundColor: 'rgba(0,0,0,0.2)'
+      }}>
+        {jobPostError ? (
+          <Alert 
+            severity="error" 
+            sx={{ 
+              mb: 2,
+              backgroundColor: 'rgba(211,47,47,0.1)',
+              color: '#ff8a80',
+              border: '1px solid rgba(211,47,47,0.3)',
+              '& .MuiAlert-icon': {
+                color: '#ff8a80'
+              }
+            }}
+          >
+            {jobPostError}
+          </Alert>
+        ) : !generatedJob ? (
+          <Box sx={{ 
+            height: '100%', 
+            display: 'flex', 
+            flexDirection: 'column', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            gap: 2,
+            color: 'rgba(255,255,255,0.5)',
+            textAlign: 'center',
+            minHeight: { xs: '300px', md: 'auto' }
+          }}>
+            <Box sx={{ 
+              p: { xs: 2, sm: 3 }, 
+              borderRadius: '50%', 
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <WorkIcon sx={{ fontSize: { xs: 32, sm: 40 } }} />
+            </Box>
+            <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+              Generated job post will appear here
+            </Typography>
+            <Typography variant="body2" sx={{ 
+              maxWidth: '80%',
+              fontSize: { xs: '0.875rem', sm: '1rem' }
+            }}>
+              Enter your job description on the left and click "Generate" to create a professional job posting
+            </Typography>
+          </Box>
+        ) : (
+          <Box sx={{ 
+            color: '#fff',
+            fontSize: { xs: '0.875rem', sm: '1rem' }
+          }}>
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h5" sx={{ 
+                color: '#02E2FF', 
+                mb: 1,
+                fontSize: { xs: '1.25rem', sm: '1.5rem' }
+              }}>
+                {generatedJob.title}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Chip
+                  icon={<LocationOnIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />}
+                  label={generatedJob.location}
+                  size="small"
+                  sx={{ 
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                  }}
+                />
+                <Chip
+                  label={generatedJob.employmentType}
+                  size="small"
+                  sx={{ 
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                  }}
+                />
+                <Chip
+                  label={`${generatedJob.salary.currency}${generatedJob.salary.min}-${generatedJob.salary.max}`}
+                  size="small"
+                  sx={{ 
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                  }}
+                />
+              </Box>
+            </Box>
+
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="subtitle1" sx={{ 
+                color: '#00FFC3', 
+                mb: 2,
+                fontSize: { xs: '1rem', sm: '1.25rem' }
+              }}>
+                Overview
+              </Typography>
+              <Typography variant="body1" sx={{ 
+                color: 'rgba(255,255,255,0.9)', 
+                lineHeight: 1.6,
+                fontSize: { xs: '0.875rem', sm: '1rem' }
+              }}>
+                {generatedJob.description}
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="subtitle1" sx={{ 
+                color: '#00FFC3', 
+                mb: 2,
+                fontSize: { xs: '1rem', sm: '1.25rem' }
+              }}>
+                Requirements
+              </Typography>
+              <Box sx={{ 
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                borderRadius: '12px',
+                p: 2
+              }}>
+                {generatedJob.requirements.map((req, index) => (
+                  <Box key={index} sx={{ 
+                    display: 'flex', 
+                    gap: 2, 
+                    mb: index !== generatedJob.requirements.length - 1 ? 1.5 : 0,
+                    alignItems: 'flex-start'
+                  }}>
+                    <Box sx={{ 
+                      minWidth: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(2,226,255,0.1)',
+                      color: '#02E2FF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: 600
+                    }}>
+                      {index + 1}
+                    </Box>
+                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+                      {req}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="subtitle1" sx={{ 
+                color: '#00FFC3', 
+                mb: 2,
+                fontSize: { xs: '1rem', sm: '1.25rem' }
+              }}>
+                Responsibilities
+              </Typography>
+              <Box sx={{ 
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                borderRadius: '12px',
+                p: 2
+              }}>
+                {generatedJob.responsibilities.map((resp, index) => (
+                  <Box key={index} sx={{ 
+                    display: 'flex', 
+                    gap: 2, 
+                    mb: index !== generatedJob.responsibilities.length - 1 ? 1.5 : 0,
+                    alignItems: 'flex-start'
+                  }}>
+                    <Box sx={{ 
+                      minWidth: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(2,226,255,0.1)',
+                      color: '#02E2FF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: 600
+                    }}>
+                      {index + 1}
+                    </Box>
+                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+                      {resp}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+
+            <Box>
+              <Typography variant="subtitle1" sx={{ 
+                color: '#00FFC3', 
+                mb: 2,
+                fontSize: { xs: '1rem', sm: '1.25rem' }
+              }}>
+                Required Skills
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {generatedJob.skills.map((skill, index) => (
+                  <Chip
+                    key={index}
+                    label={`${skill.name} (Level ${skill.requiredLevel})`}
+                    sx={{
+                      backgroundColor: 'rgba(2,226,255,0.1)',
+                      color: '#02E2FF',
+                      '& .MuiChip-label': {
+                        px: 2
+                      }
+                    }}
+                  />
+                ))}
+              </Box>
+            </Box>
+
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={handlePostJob}
+              sx={{
+                mt: 4,
+                py: { xs: 1, sm: 1.5 },
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                borderRadius: '12px',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                }
+              }}
+            >
+              Post Job
+            </Button>
+          </Box>
+        )}
+      </Box>
+    </DialogContent>
+  </Dialog>
+);
+
 return (
   <Box sx={{
     minHeight: '100vh',
@@ -455,6 +1002,24 @@ return (
     py: 4
   }}>
     <Container maxWidth="lg">
+      {/* Add this button near the top of your dashboard */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setJobPostDialog(true)}
+          sx={{
+            background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+            color: '#fff',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+            },
+          }}
+        >
+          Post New Job
+        </Button>
+      </Box>
+      
       {/* Profile Header */}
       <ProfileHeader>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 2 }}>
@@ -846,6 +1411,9 @@ return (
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Add the job post dialog */}
+      {renderJobPostDialog()}
     </Container>
   </Box>
 );
