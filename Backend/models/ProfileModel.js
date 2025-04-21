@@ -19,6 +19,7 @@ const profileSchema = new mongoose.Schema(
         proficiencyLevel: Number,
         experienceLevel: String,
         NumberTestPassed: Number,
+        ScoreTest: Number,
       },
     ],
     companyDetails: {

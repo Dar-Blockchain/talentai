@@ -457,7 +457,7 @@ exports.analyzeProfileAnswers = async (req, res) => {
   try {
     // 1. Validate request body
     const { type, skill, questions } = req.body;
-    const userId = req.user._id;
+    const user = req.user;
 
     if (!type || !Array.isArray(skill) || !Array.isArray(questions)) {
       return res.status(400).json({
@@ -677,17 +677,34 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
         })
       }
     };
+    console.log(user);
+    if(user.profile.overallScore === 0){
+      console.log("test");
+      const profile = await profileService.createOrUpdateProfile(user._id, {
+        overallScore: analysis.overallScore,
+        skills: analysis.skillAnalysis.map(skill => ({
+          name: skill.skillName,
+          proficiencyLevel: skill.demonstratedProficiency,
+          experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
+        }))
+      });
+      console.log(profile);
+    }else{
+      console.log("test2");
+      const profileOverallScore = await profileService.getProfileByUserId(user._id);
+      const profile = await profileService.createOrUpdateProfile(user._id, {
+        overallScore: (profileOverallScore.overallScore + analysis.overallScore)/2,
+        skills: analysis.skillAnalysis.map(skill => ({
+          name: skill.skillName,
+          proficiencyLevel: skill.demonstratedProficiency,
+          experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
+          ScoreTest:skill.confidenceScore
+        }))
+      });
+      console.log(profile);
+    }
+
     
-    console.log("test");
-    const profile = await profileService.createOrUpdateProfile(userId, {
-      overallScore: analysis.overallScore,
-      skills: analysis.skillAnalysis.map(skill => ({
-        name: skill.skillName,
-        proficiencyLevel: skill.demonstratedProficiency,
-        experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
-      }))
-    });
-    console.log(profile);
 
 
     res.status(200).json({
