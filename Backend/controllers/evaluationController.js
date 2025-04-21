@@ -286,77 +286,152 @@ const User = require('../models/UserModel');
 
 exports.matchProfilesWithCompany = async (req, res) => {
   try {
-    // Récupérer tous les profils de candidats
+    // Get all candidate profiles
     const candidates = await User.find({ role: 'Candidat' }).populate('profile');
     
-    // Récupérer les compétences requises de l'entreprise
+    // Get company's required skills
     const company = req.user;
     const requiredSkills = company.profile.requiredSkills;
 
     const matchedProfiles = [];
 
     for (const candidate of candidates) {
-      const candidateSkills = candidate.profile.skills;
-      
-      // Préparer le prompt pour OpenAI
-      const prompt = `
-        Compare these candidate skills: ${candidateSkills.join(', ')} 
-        with these required skills: ${requiredSkills.join(', ')}. 
-        Return a JSON with a match percentage (between 70 and 100) and explanation.
-        The match percentage should reflect how well the candidate's skills match the required skills.
-      `;
+      try {
+        const candidateSkills = candidate.profile.skills;
+        
+        // Prepare the prompt for OpenAI with explicit JSON format
+        const prompt = `Given these skills:
 
-      console.log(prompt);
+Required company skills: ${JSON.stringify(requiredSkills)}
+Candidate skills: ${JSON.stringify(candidateSkills)}
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
-        messages: [
-          { 
-            role: "system", 
-            content: "You are an expert at matching candidate skills with job requirements. Return only valid JSON without any markdown formatting or backticks. The match percentage must be between 70 and 100."
-          },
-          { role: "user", content: prompt }
-        ],
-        max_tokens: 150,
-        temperature: 0.7
-      });
+Generate a match analysis in the following JSON format ONLY (no additional text):
+{
+  "matchPercentage": 85,
+  "skillMatches": [
+    {
+      "skill": "JavaScript",
+      "proficiency": 4,
+      "importance": "high",
+      "match": "full",
+      "score": 90
+    }
+  ],
+  "overallAssessment": "Strong match with core skills",
+  "recommendations": [
+    "Consider focusing on advanced JavaScript concepts"
+  ]
+}
 
-      // Nettoyer la réponse avant de la parser
-      let cleanResponse = response.choices[0].message.content
-        .replace(/```json\n?/g, '')  // Enlever ```json
-        .replace(/```\n?/g, '')      // Enlever les backticks restants
-        .trim();                     // Enlever les espaces
+Rules:
+- matchPercentage should be 0-100 based on skill overlap
+- Each skill should have a score 0-100
+- Use "high/medium/low" for importance
+- Use "full/partial/none" for match
+- Keep assessment and recommendations concise`;
 
-      const matchResult = JSON.parse(cleanResponse);
-      
-      // Vérifier que le pourcentage est entre 70 et 100
-      if (matchResult.matchPercentage >= 70 && matchResult.matchPercentage <= 100) {
-        matchedProfiles.push({
-          candidate: {
-            id: candidate._id,
-            name: candidate.name,
-            email: candidate.email,
-            skills: candidateSkills
-          },
-          matchPercentage: matchResult.matchPercentage,
-          explanation: matchResult.explanation
+        const response = await openai.chat.completions.create({
+          model: "gpt-4-turbo-preview",
+          messages: [
+            { 
+              role: "system", 
+              content: "You are a JSON-only response generator. Output valid JSON matching the exact format requested, with no additional text or explanation."
+            },
+            { role: "user", content: prompt }
+          ],
+          max_tokens: 500,
+          temperature: 0.7
         });
+
+        let matchResult;
+        try {
+          // Direct parse attempt first
+          matchResult = JSON.parse(response.choices[0].message.content.trim());
+        } catch (parseError) {
+          console.error('Initial JSON parse failed, attempting cleanup:', parseError);
+          
+          // Cleanup attempt
+          const cleanResponse = response.choices[0].message.content
+            .replace(/```json\n?/g, '')
+            .replace(/```\n?/g, '')
+            .trim();
+          
+          try {
+            matchResult = JSON.parse(cleanResponse);
+          } catch (secondParseError) {
+            console.error('JSON parse failed after cleanup:', secondParseError);
+            // Skip this candidate if we can't parse the response
+            continue;
+          }
+        }
+
+        // Validate the required fields
+        if (!matchResult || typeof matchResult.matchPercentage !== 'number' || !Array.isArray(matchResult.skillMatches)) {
+          console.error('Invalid match result structure:', matchResult);
+          continue;
+        }
+
+        // Include all candidates regardless of score
+        matchedProfiles.push({
+          candidateInfo: {
+            id: candidate._id,
+            name: candidate.username,
+            email: candidate.email,
+            skills: candidateSkills.map(skill => ({
+              name: skill.name,
+              proficiencyLevel: skill.proficiencyLevel,
+              experienceLevel: skill.experienceLevel
+            }))
+          },
+          matchAnalysis: {
+            percentage: matchResult.matchPercentage,
+            skillMatches: matchResult.skillMatches.map(skill => ({
+              ...skill,
+              score: skill.score || 0
+            })),
+            assessment: matchResult.overallAssessment,
+            recommendations: matchResult.recommendations
+          }
+        });
+      } catch (candidateError) {
+        console.error(`Error processing candidate ${candidate._id}:`, candidateError);
+        // Continue with next candidate if one fails
+        continue;
       }
     }
 
-    // Trier les profils par pourcentage de correspondance
-    matchedProfiles.sort((a, b) => b.matchPercentage - a.matchPercentage);
+    // Sort profiles by match percentage (highest to lowest)
+    matchedProfiles.sort((a, b) => b.matchAnalysis.percentage - a.matchAnalysis.percentage);
+
+    // Filter profiles with match percentage >= 50%
+    const filteredProfiles = matchedProfiles.filter(profile => profile.matchAnalysis.percentage >= 50);
 
     res.status(200).json({
       success: true,
-      data: matchedProfiles
+      totalCandidates: filteredProfiles.length,
+      matches: filteredProfiles.map(profile => ({
+        ...profile,
+        matchAnalysis: {
+          ...profile.matchAnalysis,
+          scoreCategory: getScoreCategory(profile.matchAnalysis.percentage)
+        }
+      }))
     });
 
   } catch (error) {
     console.error('Error in matchProfilesWithCompany:', error);
     res.status(500).json({
       success: false,
-      error: 'Erreur lors de la correspondance des profils'
+      error: 'Error matching profiles',
+      details: error.message
     });
   }
 };
+
+// Helper function to categorize scores
+function getScoreCategory(score) {
+  if (score >= 90) return 'Excellent Match';
+  if (score >= 70) return 'Good Match';
+  if (score >= 40) return 'Partial Match';
+  return 'Low Match';
+}
