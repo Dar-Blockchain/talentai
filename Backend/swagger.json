@@ -824,11 +824,29 @@
     "/api/create-agent": {
       "post": {
         "tags": ["Hedera"],
-        "summary": "Créer un nouvel agent autonome",
-        "description": "Crée une nouvelle paire de clés et un DID pour un agent autonome sur Hedera",
+        "summary": "Create a new autonomous agent",
+        "description": "Creates a new Hedera wallet for an autonomous agent and stores its details in the database.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Unique name of the agent.",
+                    "example": "MyAutonomousAgent"
+                  }
+                },
+                "required": ["name"]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Agent créé avec succès",
+            "description": "Agent created successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -839,30 +857,32 @@
                       "example": true
                     },
                     "agent": {
-                      "type": "object",
-                      "properties": {
-                        "privateKey": {
-                          "type": "string",
-                          "description": "Clé privée de l'agent"
-                        },
-                        "publicKey": {
-                          "type": "string",
-                          "description": "Clé publique de l'agent"
-                        },
-                        "did": {
-                          "type": "string",
-                          "description": "DID de l'agent (Decentralized Identifier)",
-                          "example": "did:hedera:testnet:abc123"
-                        }
-                      }
+                      "$ref": "#/components/schemas/Agent"
                     }
                   }
                 }
               }
             }
           },
+          "400": {
+            "description": "Bad request (e.g., missing agent name)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "500": {
-            "description": "Échec de la création de l'agent"
+            "description": "Internal server error (e.g., Hedera network failure)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -935,6 +955,48 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Agent": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique name of the agent.",
+            "example": "MyAutonomousAgent"
+          },
+          "accountId": {
+            "type": "string", 
+            "description": "Hedera account ID of the agent.",
+            "example": "0.0.1234"
+          },
+          "pubkey": {
+            "type": "string",
+            "description": "Public key of the agent Hedera wallet.",
+            "example": "302a..."
+          },
+          "privkey": {
+            "type": "string",
+            "description": "Private key of the agent Hedera wallet (exposed only for debugging).",
+            "example": "302e..."
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message.",
+            "example": "Agent creation failed"
+          },
+          "details": {
+            "type": "string",
+            "description": "Detailed error message.",
+            "example": "Hedera network error"
+          }
+        }
       }
     }
   }

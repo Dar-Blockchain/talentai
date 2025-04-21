@@ -1,6 +1,7 @@
 const User = require('../models/UserModel');
 const { sendOTP } = require('./emailService');
 const jwt = require('jsonwebtoken');
+const hederaService = require('./hederaService');
 
 // Générer un code OTP
 const generateOTP = () => {
@@ -54,14 +55,20 @@ module.exports.registerUser = async (email) => {
   const otp = generateOTP();
   const otpExpiry = new Date(Date.now() + 5 * 60000); // 5 minutes
 
-  // Créer l'utilisateur
+  // Créer un portefeuille Hedera pour le nouvel utilisateur
+  const { pubkey, privkey, accountId } = await hederaService.createHederaWallet();
+
+  // Créer l'utilisateur avec le portefeuille Hedera
   const user = new User({
     username,
     email,
     otp: {
       code: otp,
       expiresAt: otpExpiry
-    }
+    },
+    pubkey,
+    privkey,
+    accountId
   });
 
   await user.save();
@@ -120,15 +127,19 @@ module.exports.connectWithGmail = async (email) => {
   let user = await User.findOne({ email });
   
   if (!user) {
-    // Si l'utilisateur n'existe pas, créer un nouveau compte
+    // Si l'utilisateur n'existe pas, créer un nouveau compte avec un portefeuille Hedera
     const username = extractUsernameFromEmail(email);
+    const { pubkey, privkey, accountId } = await hederaService.createHederaWallet();
     
     user = new User({
       username,
       email,
       isVerified: true, // L'utilisateur est déjà vérifié via Gmail
-      trafficCounter : 1,
-      lastLogin: new Date()
+      trafficCounter: 1,
+      lastLogin: new Date(),
+      pubkey,
+      privkey,
+      accountId
     });
     
     await user.save();

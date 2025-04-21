@@ -1,6 +1,7 @@
 require('dotenv').config();
 const {HederaAgentKit} = require('hedera-agent-kit');
 const { AccountId } = require('@hashgraph/sdk');
+const agentService = require("../services/AgentService");
 
 // Initialize Hedera Agent Kit
 const kit = new HederaAgentKit(
@@ -10,27 +11,25 @@ const kit = new HederaAgentKit(
   process.env.HEDERA_NETWORK || 'testnet'
 );
 
-// Create Agent with DID capabilities
+// Create Agent
 exports.createAgent = async (req, res) => {
   try {
-    const agent = await kit.createAgent({
-      type: 'autonomous',
-      capabilities: ['did', 'tokens']
-    });
+    const { name } = req.body; // Agent name from request body
+
+    if (!name) {
+      return res.status(400).json({ error: "Agent name is required" });
+    }
+
+    const { agent } = await agentService.createAgent(name);
 
     res.json({
       success: true,
-      agent: {
-        did: agent.did,
-        publicKey: agent.publicKey,
-        // Note: In production, never expose private keys in API responses
-        privateKey: agent.privateKey 
-      }
+      agent,
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Agent creation failed",
-      details: error.message 
+      details: error.message,
     });
   }
 };
