@@ -403,10 +403,13 @@ Rules:
     // Sort profiles by match percentage (highest to lowest)
     matchedProfiles.sort((a, b) => b.matchAnalysis.percentage - a.matchAnalysis.percentage);
 
+    // Filter profiles with match percentage >= 50%
+    const filteredProfiles = matchedProfiles.filter(profile => profile.matchAnalysis.percentage >= 50);
+
     res.status(200).json({
       success: true,
-      totalCandidates: matchedProfiles.length,
-      matches: matchedProfiles.map(profile => ({
+      totalCandidates: filteredProfiles.length,
+      matches: filteredProfiles.map(profile => ({
         ...profile,
         matchAnalysis: {
           ...profile.matchAnalysis,
