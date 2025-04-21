@@ -8,44 +8,47 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
     if (!user) {
       throw new Error('Utilisateur non trouvé');
     }
-    
-    // Ensure user role is updated to Company
+
+    // S'assurer que le rôle utilisateur est bien défini
     await User.findByIdAndUpdate(userId, { role: 'Candidat' });
 
-    // Rechercher un profil existant
+    // Recherche profil existant
     let profile = await Profile.findOne({ userId });
 
     if (!profile) {
-      // Créer un nouveau profil s'il n'existe pas encore
+      // Créer un nouveau profil s'il n'existe pas
       profile = await Profile.create({
         userId,
-        type: profileData.type,
-        skills: profileData.skills || []
+        type: profileData.type || 'Candidate',
+        skills: profileData.skills || [],
+        overallScore: profileData.overallScore || 0
       });
     } else {
-      // Mise à jour des compétences existantes ou ajout de nouvelles compétences
-      if (profileData.skills && Array.isArray(profileData.skills)) {
+      // Mise à jour overallScore si fourni
+      if (typeof profileData.overallScore === 'number') {
+        profile.overallScore = profileData.overallScore;
+      }
+
+      // Mise à jour ou ajout des skills
+      if (Array.isArray(profileData.skills)) {
         profileData.skills.forEach((newSkill) => {
           const existingSkill = profile.skills.find(skill => skill.name === newSkill.name);
           if (existingSkill) {
-            // Modifier les compétences existantes
             existingSkill.proficiencyLevel = newSkill.proficiencyLevel;
             existingSkill.experienceLevel = newSkill.experienceLevel;
           } else {
-            // Ajouter une nouvelle compétence au profil
             profile.skills.push(newSkill);
           }
         });
       }
 
-      // Mettre à jour le type du profil si fourni
+      // Mise à jour du type de profil si fourni
       profile.type = profileData.type || profile.type;
 
-      // Enregistrer les modifications
       await profile.save();
     }
 
-    // Mise à jour référence du profil dans User
+    // Mise à jour de la référence du profil dans User
     await User.findByIdAndUpdate(userId, { profile: profile._id });
 
     return profile;
