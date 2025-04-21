@@ -451,35 +451,13 @@ function getMasteryCategory(score) {
   return "Novice";
 }
 
-const profile = require('../models/ProfileModel');
+const profileService = require('../services/profileService');
 
 exports.analyzeProfileAnswers = async (req, res) => {
   try {
     // 1. Validate request body
     const { type, skill, questions } = req.body;
     const userId = req.user._id;
-
-    /* Example of expected request format:
-    {
-      "type": "technical",
-      "skill": [
-        {
-          "name": "JavaScript",
-          "proficiencyLevel": 3
-        },
-        {
-          "name": "HTTP/REST",
-          "proficiencyLevel": 2
-        }
-      ],
-      "questions": [
-        {
-          "question": "What is the output of `typeof null` in JavaScript?",
-          "answer": "'object'"
-        }
-      ]
-    }
-    */
 
     if (!type || !Array.isArray(skill) || !Array.isArray(questions)) {
       return res.status(400).json({
@@ -567,7 +545,6 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
     let analysis;
     try {
       const rawResponse = response.choices[0].message.content.trim();
-      console.log('Raw GPT response:', rawResponse); // Debug log
 
       // Try to extract JSON if it's wrapped in markdown code blocks
       let jsonStr = rawResponse;
@@ -582,7 +559,6 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
         .replace(/^[^{]*/, '') // Remove any text before the first {
         .replace(/[^}]*$/, ''); // Remove any text after the last }
 
-      console.log('Cleaned JSON string:', jsonStr); // Debug log
 
       try {
         analysis = JSON.parse(jsonStr);
@@ -596,7 +572,6 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
           .replace(/\n/g, ' ') // Remove newlines
           .replace(/\s+/g, ' '); // Normalize whitespace
         
-        console.log('Second attempt JSON string:', jsonStr); // Debug log
         analysis = JSON.parse(jsonStr);
       }
 
@@ -702,8 +677,17 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
         })
       }
     };
-
-    await profileService.createOrUpdateProfile(userId, { overallScore: analysis.overallScore });
+    
+    console.log("test");
+    const profile = await profileService.createOrUpdateProfile(userId, {
+      overallScore: analysis.overallScore,
+      skills: analysis.skillAnalysis.map(skill => ({
+        name: skill.skillName,
+        proficiencyLevel: skill.demonstratedProficiency,
+        experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
+      }))
+    });
+    console.log(profile);
 
 
     res.status(200).json({
