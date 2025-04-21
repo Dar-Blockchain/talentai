@@ -296,84 +296,108 @@ exports.matchProfilesWithCompany = async (req, res) => {
     const matchedProfiles = [];
 
     for (const candidate of candidates) {
-      const candidateSkills = candidate.profile.skills;
-      
-      // Prepare the prompt for OpenAI
-      const prompt = `
-        Analyze the match between a candidate and company requirements.
+      try {
+        const candidateSkills = candidate.profile.skills;
         
-        Candidate skills: ${JSON.stringify(candidateSkills)}
-        Required skills: ${JSON.stringify(requiredSkills)}
+        // Prepare the prompt for OpenAI with explicit JSON format
+        const prompt = `Given these skills:
 
-        Return a JSON object with the following structure:
-        {
-          "matchPercentage": number (0 to 100, calculate based on skill overlap and proficiency),
-          "skillMatches": [
-            {
-              "skill": "skill name",
-              "proficiency": number (1-5),
-              "importance": "high/medium/low",
-              "match": "full/partial/none",
-              "score": number (0-100, individual skill match score)
-            }
+Required company skills: ${JSON.stringify(requiredSkills)}
+Candidate skills: ${JSON.stringify(candidateSkills)}
+
+Generate a match analysis in the following JSON format ONLY (no additional text):
+{
+  "matchPercentage": 85,
+  "skillMatches": [
+    {
+      "skill": "JavaScript",
+      "proficiency": 4,
+      "importance": "high",
+      "match": "full",
+      "score": 90
+    }
+  ],
+  "overallAssessment": "Strong match with core skills",
+  "recommendations": [
+    "Consider focusing on advanced JavaScript concepts"
+  ]
+}
+
+Rules:
+- matchPercentage should be 0-100 based on skill overlap
+- Each skill should have a score 0-100
+- Use "high/medium/low" for importance
+- Use "full/partial/none" for match
+- Keep assessment and recommendations concise`;
+
+        const response = await openai.chat.completions.create({
+          model: "gpt-4-turbo-preview",
+          messages: [
+            { 
+              role: "system", 
+              content: "You are a JSON-only response generator. Output valid JSON matching the exact format requested, with no additional text or explanation."
+            },
+            { role: "user", content: prompt }
           ],
-          "overallAssessment": "string explaining the match",
-          "recommendations": [
-            "string with recommendations"
-          ]
+          max_tokens: 500,
+          temperature: 0.7
+        });
+
+        let matchResult;
+        try {
+          // Direct parse attempt first
+          matchResult = JSON.parse(response.choices[0].message.content.trim());
+        } catch (parseError) {
+          console.error('Initial JSON parse failed, attempting cleanup:', parseError);
+          
+          // Cleanup attempt
+          const cleanResponse = response.choices[0].message.content
+            .replace(/```json\n?/g, '')
+            .replace(/```\n?/g, '')
+            .trim();
+          
+          try {
+            matchResult = JSON.parse(cleanResponse);
+          } catch (secondParseError) {
+            console.error('JSON parse failed after cleanup:', secondParseError);
+            // Skip this candidate if we can't parse the response
+            continue;
+          }
         }
 
-        Important scoring rules:
-        - For skills that perfectly match with high proficiency: score 90-100
-        - For skills that match with medium proficiency: score 70-89
-        - For skills that partially match or low proficiency: score 40-69
-        - For missing required skills: score 0-39
-        - Overall matchPercentage should be weighted average of individual skill scores
-      `;
+        // Validate the required fields
+        if (!matchResult || typeof matchResult.matchPercentage !== 'number' || !Array.isArray(matchResult.skillMatches)) {
+          console.error('Invalid match result structure:', matchResult);
+          continue;
+        }
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
-        messages: [
-          { 
-            role: "system", 
-            content: "You are an expert AI recruiter specializing in technical skill matching. Provide detailed, structured analysis of skill matches with precise scoring."
+        // Include all candidates regardless of score
+        matchedProfiles.push({
+          candidateInfo: {
+            id: candidate._id,
+            name: candidate.username,
+            email: candidate.email,
+            skills: candidateSkills.map(skill => ({
+              name: skill.name,
+              proficiencyLevel: skill.proficiencyLevel,
+              experienceLevel: skill.experienceLevel
+            }))
           },
-          { role: "user", content: prompt }
-        ],
-        max_tokens: 500,
-        temperature: 0.7
-      });
-
-      // Clean and parse the response
-      let cleanResponse = response.choices[0].message.content
-        .replace(/```json\n?/g, '')
-        .replace(/```\n?/g, '')
-        .trim();
-
-      const matchResult = JSON.parse(cleanResponse);
-      
-      // Include all candidates regardless of score
-      matchedProfiles.push({
-        candidateInfo: {
-          id: candidate._id,
-          name: candidate.username,
-          email: candidate.email,
-          skills: candidateSkills.map(skill => ({
-            name: skill.name,
-            proficiencyLevel: skill.proficiencyLevel,
-            experienceLevel: skill.experienceLevel
-          }))
-        },
-        matchAnalysis: {
-          percentage: matchResult.matchPercentage,
-          skillMatches: matchResult.skillMatches.map(skill => ({
-            ...skill,
-            score: skill.score || 0 // Ensure each skill has a score
-          })),
-          assessment: matchResult.overallAssessment,
-          recommendations: matchResult.recommendations
-        }
-      });
+          matchAnalysis: {
+            percentage: matchResult.matchPercentage,
+            skillMatches: matchResult.skillMatches.map(skill => ({
+              ...skill,
+              score: skill.score || 0
+            })),
+            assessment: matchResult.overallAssessment,
+            recommendations: matchResult.recommendations
+          }
+        });
+      } catch (candidateError) {
+        console.error(`Error processing candidate ${candidate._id}:`, candidateError);
+        // Continue with next candidate if one fails
+        continue;
+      }
     }
 
     // Sort profiles by match percentage (highest to lowest)
@@ -395,7 +419,8 @@ exports.matchProfilesWithCompany = async (req, res) => {
     console.error('Error in matchProfilesWithCompany:', error);
     res.status(500).json({
       success: false,
-      error: 'Error matching profiles'
+      error: 'Error matching profiles',
+      details: error.message
     });
   }
 };
