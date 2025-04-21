@@ -435,3 +435,163 @@ function getScoreCategory(score) {
   if (score >= 40) return 'Partial Match';
   return 'Low Match';
 }
+
+exports.analyzeProfileAnswers = async (req, res) => {
+  try {
+    // 1. Validate request body
+    const { type, skill, questions, currentLevel } = req.body;
+
+    if (!type || !Array.isArray(skill) || !Array.isArray(questions) || !currentLevel) {
+      return res.status(400).json({
+        error: "Invalid request format",
+        required: {
+          type: "Type of assessment (e.g., 'technical')",
+          skill: "Array of skills being assessed",
+          questions: "Array of question-answer pairs",
+          currentLevel: "Current proficiency level (1-5)"
+        }
+      });
+    }
+
+    if (currentLevel < 1 || currentLevel > 5) {
+      return res.status(400).json({
+        error: "Invalid current level",
+        message: "Current level must be between 1 and 5"
+      });
+    }
+
+    // 2. Prepare the data for GPT analysis
+    const prompt = `
+As an expert ${type} interviewer, analyze the following assessment:
+
+Assessment Type: ${type}
+Skills being assessed: ${JSON.stringify(skill)}
+
+Questions and Answers:
+${questions.map(qa => `Q: ${qa.question}\nA: ${qa.answer}`).join('\n\n')}
+
+Based on this ${type} assessment, provide a detailed analysis in the following JSON format ONLY (no additional text):
+{
+  "overallScore": 85,
+  "skillAnalysis": [
+    {
+      "skill": "JavaScript",
+      "proficiency": "intermediate",
+      "strengths": ["Good understanding of core concepts"],
+      "weaknesses": ["May need more practice with advanced topics"],
+      "confidenceScore": 80
+    }
+  ],
+  "generalAssessment": "Strong foundational knowledge with some areas for improvement",
+  "recommendations": [
+    "Focus on advanced JavaScript concepts",
+    "Practice more with React hooks"
+  ],
+  "technicalLevel": "intermediate",
+  "nextSteps": [
+    "Suggested learning resources",
+    "Practice projects to undertake"
+  ],
+  "assessmentType": "${type}",
+  "evaluationContext": "Based on ${type} interview standards"
+}`;
+
+    // 3. Call OpenAI for analysis
+    const response = await openai.chat.completions.create({
+      model: "gpt-4-turbo-preview",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert ${type} interviewer specializing in evaluating developer skills. Provide detailed, actionable feedback in JSON format only.`
+        },
+        { role: "user", content: prompt }
+      ],
+      max_tokens: 1000,
+      temperature: 0.7
+    });
+
+    // 4. Parse and validate the response
+    let analysis;
+    try {
+      analysis = JSON.parse(response.choices[0].message.content.trim());
+    } catch (error) {
+      console.error("Error parsing GPT response:", error);
+      return res.status(500).json({
+        error: "Failed to parse analysis results"
+      });
+    }
+
+    // 5. Add metadata to the response
+    const result = {
+      timestamp: new Date(),
+      assessmentType: type,
+      skillsAssessed: skill,
+      numberOfQuestions: questions.length,
+      analysis: {
+        ...analysis,
+        currentLevel,
+        newLevel: getProficiencyLevel(analysis.overallScore, currentLevel),
+        levelChanged: getProficiencyLevel(analysis.overallScore, currentLevel) !== currentLevel,
+        detailedBreakdown: analysis.skillAnalysis.map(skill => ({
+          ...skill,
+          masteryCategory: getMasteryCategory(skill.confidenceScore)
+        }))
+      }
+    };
+
+    res.status(200).json({
+      success: true,
+      result
+    });
+
+  } catch (error) {
+    console.error("Error analyzing profile answers:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to analyze profile",
+      details: error.message
+    });
+  }
+};
+
+// Helper function to determine new proficiency level based on score and current level
+function getProficiencyLevel(score, currentLevel) {
+  // Convert currentLevel to number to ensure proper comparison
+  const level = Number(currentLevel);
+  
+  switch (level) {
+    case 1:
+      return score >= 70 ? 2 : 1;  // Need 70+ to move up from level 1
+    
+    case 2:
+      if (score >= 80) return 3;   // Need 80+ to move up from level 2
+      if (score < 40) return 1;    // Drop to level 1 if below 40
+      return 2;
+    
+    case 3:
+      if (score >= 80) return 4;   // Need 80+ to move up from level 3
+      if (score < 50) return 2;    // Drop to level 2 if below 50
+      return 3;
+    
+    case 4:
+      if (score >= 85) return 5;   // Need 85+ to move up from level 4
+      if (score < 60) return 3;    // Drop to level 3 if below 60
+      return 4;
+    
+    case 5:
+      if (score < 70) return 4;    // Drop to level 4 if below 70
+      return 5;
+    
+    default:
+      return 1;  // Default to level 1 if invalid current level
+  }
+}
+
+// Helper function to determine mastery category
+function getMasteryCategory(score) {
+  if (score >= 90) return "Mastered";
+  if (score >= 75) return "Proficient";
+  if (score >= 60) return "Competent";
+  if (score >= 40) return "Developing";
+  return "Novice";
+}
