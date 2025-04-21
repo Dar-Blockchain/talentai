@@ -518,10 +518,10 @@ export default function DashboardCandidate() {
                   WebkitTextFillColor: 'transparent'
                 }}>
                   Welcome back, {profile.userId.username}!
-                </Typography>
+          </Typography>
                 <Typography variant="h6" sx={{ opacity: 0.9, color: '#ffffff' }}>
-                  {profile.type} • {profile.userId.role}
-                </Typography>
+            {profile.type} • {profile.userId.role}
+          </Typography>
               </Box>
               <Button
                 variant="outlined"
@@ -540,27 +540,27 @@ export default function DashboardCandidate() {
               >
                 Logout
               </Button>
-            </Box>
-
+          </Box>
+          
             {/* Action Buttons */}
             <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
               <ActionButton
-                variant="contained"
+              variant="contained"
                 startIcon={<PlayArrowIcon />}
                 onClick={handleStartTest}
-                sx={{
-                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-                  }
-                }}
-              >
+              sx={{
+                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                }
+              }}
+            >
                 Start Test
               </ActionButton>
               <ActionButton
                 variant="outlined"
                 onClick={() => setEditProfileOpen(true)}
-                sx={{
+                      sx={{ 
                   borderColor: '#02E2FF',
                   color: '#02E2FF',
                   '&:hover': {
@@ -574,35 +574,35 @@ export default function DashboardCandidate() {
             </Stack>
 
             {/* Edit Profile Modal */}
-            <Dialog
+        <Dialog
               open={editProfileOpen}
               onClose={handleEditProfileClose}
               maxWidth="md"
-              fullWidth
-              PaperProps={{
-                sx: {
+          fullWidth
+          PaperProps={{
+            sx: {
                   background: 'rgba(30, 41, 59, 0.95)',
                   backdropFilter: 'blur(10px)',
-                  borderRadius: '16px',
+              borderRadius: '16px',
                   border: '1px solid rgba(255,255,255,0.1)',
-                }
-              }}
-            >
-              <DialogTitle sx={{ 
-                borderBottom: '1px solid rgba(255,255,255,0.1)',
+            }
+          }}
+        >
+          <DialogTitle sx={{ 
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
                 color: '#ffffff'
-              }}>
+          }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Typography variant="h6">Edit Profile</Typography>
-                  <IconButton
+            <IconButton
                     onClick={handleEditProfileClose}
                     sx={{ color: 'rgba(255,255,255,0.7)' }}
-                  >
-                    <CloseIcon />
-                  </IconButton>
+            >
+              <CloseIcon />
+            </IconButton>
                 </Box>
-              </DialogTitle>
-              <DialogContent sx={{ mt: 2 }}>
+          </DialogTitle>
+          <DialogContent sx={{ mt: 2 }}>
                 <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <TextField
                     name="username"
@@ -648,13 +648,13 @@ export default function DashboardCandidate() {
                       },
                     }}
                   />
-                  <TextField
+            <TextField
                     select
                     name="experienceLevel"
                     label="Experience Level"
                     value={formData.experienceLevel}
                     onChange={handleInputChange}
-                    fullWidth
+              fullWidth
                     InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
                     InputProps={{
                       sx: {
@@ -697,7 +697,7 @@ export default function DashboardCandidate() {
                   type="submit"
                   variant="contained"
                   onClick={handleSubmit}
-                  sx={{
+              sx={{ 
                     background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
                     color: '#ffffff',
                     '&:hover': {
@@ -884,21 +884,21 @@ export default function DashboardCandidate() {
                     )}
                   </>
                 )}
-              </DialogContent>
-              <DialogActions sx={{ 
-                borderTop: '1px solid rgba(255,255,255,0.1)',
+          </DialogContent>
+          <DialogActions sx={{ 
+            borderTop: '1px solid rgba(255,255,255,0.1)',
                 padding: 2
-              }}>
-                <Button 
+          }}>
+            <Button 
                   onClick={handleCloseTestModal}
-                  sx={{ 
+              sx={{ 
                     color: 'rgba(255,255,255,0.7)',
                     '&:hover': { color: '#ffffff' }
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
                   onClick={handleTestSubmit}
                   disabled={
                     !skillType || 
@@ -907,23 +907,23 @@ export default function DashboardCandidate() {
                     (skillType === 'soft' && softSkillType === 'communication' && !softSkillLanguage) ||
                     (skillType === 'soft' && softSkillType !== 'communication' && !softSkillSubcategory)
                   }
-                  variant="contained"
-                  sx={{
-                    background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              variant="contained"
+              sx={{
+                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
                     color: '#ffffff',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
                     },
                     '&.Mui-disabled': {
                       background: 'rgba(255,255,255,0.1)',
                       color: 'rgba(255,255,255,0.3)'
-                    }
-                  }}
-                >
+                }
+              }}
+            >
                   Start Test
-                </Button>
-              </DialogActions>
-            </Dialog>
+            </Button>
+          </DialogActions>
+        </Dialog>
           </Box>
 
           <Box sx={{
