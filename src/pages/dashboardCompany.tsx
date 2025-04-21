@@ -692,12 +692,12 @@ Benefits:
 - Professional development budget"
           sx={{
             flexGrow: 1,
-            height: { xs: '150px', sm: '200px', md: '250px' },
             '& .MuiOutlinedInput-root': {
               color: '#fff',
               backgroundColor: 'rgba(255,255,255,0.05)',
               borderRadius: '12px',
-              height: '100%',
+              minHeight: '200px',
+              maxHeight: '300px',
               fontSize: { xs: '0.875rem', sm: '1rem' },
               '& fieldset': {
                 borderColor: 'rgba(255,255,255,0.1)',
@@ -708,9 +708,9 @@ Benefits:
               '&.Mui-focused fieldset': {
                 borderColor: '#02E2FF',
               },
-              '& .MuiOutlinedInput-input': {
+              '& textarea': {
                 height: '100% !important',
-              },
+              }
             },
           }}
         />

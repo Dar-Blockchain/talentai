@@ -37,6 +37,7 @@ interface Profile {
     companyDetails?: CompanyDetails;
     createdAt: string;
     updatedAt: string;
+    overallScore: string;
 }
 
 interface ProfileState {

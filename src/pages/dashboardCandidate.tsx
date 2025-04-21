@@ -242,7 +242,7 @@ export default function DashboardCandidate() {
   const [testModalOpen, setTestModalOpen] = useState(false);
   const [skillType, setSkillType] = useState('');
   const [selectedSkill, setSelectedSkill] = useState('');
-  const [softSkillType, setSoftSkillType] = useState('');
+  const [softSkillType, setSoftSkillType] = useState('')  
   const [softSkillLanguage, setSoftSkillLanguage] = useState('');
   const [softSkillSubcategory, setSoftSkillSubcategory] = useState('');
   
@@ -1055,7 +1055,7 @@ export default function DashboardCandidate() {
                   />
                   <CircularProgress
                     variant="determinate"
-                    value={85}
+                    value={100}
                     size={150}
                     thickness={4}
                     sx={{
@@ -1082,7 +1082,7 @@ export default function DashboardCandidate() {
                         fontWeight: 'bold'
                       }}
                     >
-                      85%
+                      {profile && profile.overallScore ? `${profile.overallScore}%` : '0%'}
                     </Typography>
                     <Typography
                       variant="caption"
