@@ -229,43 +229,10 @@ export default function DashboardCompany() {
   const [jobPostDialog, setJobPostDialog] = useState(false);
   const [jobDescription, setJobDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedJob, setGeneratedJob] = useState<JobPost | undefined>({
-    title: "Senior Full Stack Developer",
-    description: "We are seeking an experienced Senior Full Stack Developer to join our innovative team. The ideal candidate will bring deep expertise in modern web technologies and a passion for building scalable, high-performance applications.",
-    requirements: [
-      "Bachelor's degree in Computer Science or related field",
-      "5+ years of experience with React.js and Node.js",
-      "Strong proficiency in TypeScript and modern JavaScript",
-      "Experience with cloud platforms (AWS/Azure/GCP)",
-      "Knowledge of microservices architecture",
-      "Expertise in database design (SQL and NoSQL)"
-    ],
-    responsibilities: [
-      "Lead development of core product features",
-      "Mentor junior developers and conduct code reviews",
-      "Design and implement scalable backend services",
-      "Optimize application performance",
-      "Collaborate with product and design teams",
-      "Participate in architectural decisions"
-    ],
-    skills: [
-      { name: "React.js", requiredLevel: 5 },
-      { name: "Node.js", requiredLevel: 5 },
-      { name: "TypeScript", requiredLevel: 4 },
-      { name: "AWS", requiredLevel: 4 },
-      { name: "MongoDB", requiredLevel: 4 },
-      { name: "Docker", requiredLevel: 3 }
-    ],
-    location: "San Francisco, CA (Hybrid)",
-    employmentType: "Full-time",
-    experienceLevel: "Senior",
-    salary: {
-      min: 120000,
-      max: 180000,
-      currency: "$"
-    }
-  });
+  const [isPosting, setIsPosting] = useState(false);
+  const [generatedJob, setGeneratedJob] = useState<JobPost | undefined>(undefined);
   const [jobPostError, setJobPostError] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // Fetch matching profiles
   const fetchMatchingProfiles = async () => {
@@ -355,7 +322,7 @@ const handleGenerateJob = async () => {
     setJobPostError(null);
     
     const token = Cookies.get('api_token');
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}jobs/generate`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/generate-job-post`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -369,7 +336,24 @@ const handleGenerateJob = async () => {
     }
 
     const data = await response.json();
-    setGeneratedJob(data.job);
+    
+    // Map the backend response to our JobPost interface
+    const jobPost: JobPost = {
+      title: data.jobDetails.title,
+      description: data.jobDetails.description,
+      requirements: data.jobDetails.requirements,
+      responsibilities: data.jobDetails.responsibilities,
+      skills: data.skillAnalysis.requiredSkills.map((skill: any) => ({
+        name: skill.name,
+        requiredLevel: parseInt(skill.level)
+      })),
+      location: data.jobDetails.location,
+      employmentType: data.jobDetails.employmentType,
+      experienceLevel: data.jobDetails.experienceLevel,
+      salary: data.jobDetails.salary
+    };
+
+    setGeneratedJob(jobPost);
   } catch (error) {
     console.error('Error generating job:', error);
     setJobPostError(error instanceof Error ? error.message : 'Failed to generate job post');
@@ -380,29 +364,46 @@ const handleGenerateJob = async () => {
 
 // Add this function to handle job posting
 const handlePostJob = async () => {
-  if (!generatedJob) return;
-  
+  if (!generatedJob) {
+    setJobPostError('No job has been generated yet');
+    return;
+  }
+
+  setIsPosting(true);
+  setJobPostError(null);
+
   try {
-    const token = Cookies.get('api_token');
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}jobs/create`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/create-job-post`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(generatedJob)
+      body: JSON.stringify({
+        jobDetails: {
+          title: generatedJob.title,
+          description: generatedJob.description,
+          requirements: generatedJob.requirements,
+          responsibilities: generatedJob.responsibilities,
+          location: generatedJob.location,
+          employmentType: generatedJob.employmentType,
+          experienceLevel: generatedJob.experienceLevel,
+          salary: generatedJob.salary
+        },
+        skillAnalysis: generatedJob.skills
+      })
     });
 
     if (!response.ok) {
       throw new Error('Failed to post job');
     }
 
-    setJobPostDialog(false);
-    setGeneratedJob(undefined);
+    setDialogOpen(false);
     setJobDescription('');
+    setGeneratedJob(undefined);
   } catch (error) {
-    console.error('Error posting job:', error);
     setJobPostError(error instanceof Error ? error.message : 'Failed to post job');
+  } finally {
+    setIsPosting(false);
   }
 };
 
