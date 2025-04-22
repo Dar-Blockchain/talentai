@@ -33,6 +33,7 @@ import StarIcon from '@mui/icons-material/Star';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Cookies from 'js-cookie';
 import WorkIcon from '@mui/icons-material/Work';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -233,6 +234,8 @@ export default function DashboardCompany() {
   const [generatedJob, setGeneratedJob] = useState<JobPost | undefined>(undefined);
   const [jobPostError, setJobPostError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [linkedinCopySuccess, setLinkedinCopySuccess] = useState(false);
 
   // Fetch matching profiles
   const fetchMatchingProfiles = async () => {
@@ -267,7 +270,7 @@ export default function DashboardCompany() {
 
 // Fetch matching profiles on component mount
 useEffect(() => {
-  fetchMatchingProfiles();
+  // fetchMatchingProfiles();
 }, []);
 
 // Filter profiles based on score and skills
@@ -406,6 +409,66 @@ const handlePostJob = async () => {
     setJobPostError(error instanceof Error ? error.message : 'Failed to post job');
   } finally {
     setIsPosting(false);
+  }
+};
+
+const handleCopyForLinkedIn = () => {
+  if (generatedJob) {
+    const linkedinFormat = `🚀 Exciting Opportunity: ${generatedJob.title}
+
+🏢 About the Role:
+${generatedJob.description}
+
+🎯 Key Responsibilities:
+${generatedJob.responsibilities.map(resp => `• ${resp}`).join('\n')}
+
+📋 Requirements:
+${generatedJob.requirements.map(req => `• ${req}`).join('\n')}
+
+🔧 Required Skills:
+${generatedJob.skills.map(skill => `• ${skill.name} (Level ${skill.requiredLevel})`).join('\n')}
+
+💼 Employment Type: ${generatedJob.employmentType}
+📍 Location: ${generatedJob.location}
+💰 Salary Range: ${generatedJob.salary.currency}${generatedJob.salary.min}-${generatedJob.salary.max}
+
+#hiring #jobs #career #opportunity
+
+Interested candidates can apply through our platform or send their resumes directly.`;
+
+    navigator.clipboard.writeText(linkedinFormat)
+      .then(() => {
+        setLinkedinCopySuccess(true);
+        setTimeout(() => setLinkedinCopySuccess(false), 2000);
+      })
+      .catch(err => {
+        console.error('Failed to copy LinkedIn format: ', err);
+      });
+  }
+};
+
+const handleCopyJobData = () => {
+  if (generatedJob) {
+    const jobData = {
+      title: generatedJob.title,
+      description: generatedJob.description,
+      requirements: generatedJob.requirements,
+      responsibilities: generatedJob.responsibilities,
+      skills: generatedJob.skills,
+      location: generatedJob.location,
+      employmentType: generatedJob.employmentType,
+      experienceLevel: generatedJob.experienceLevel,
+      salary: generatedJob.salary
+    };
+
+    navigator.clipboard.writeText(JSON.stringify(jobData, null, 2))
+      .then(() => {
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+      })
+      .catch(err => {
+        console.error('Failed to copy: ', err);
+      });
   }
 };
 
@@ -809,13 +872,45 @@ Benefits:
             fontSize: { xs: '0.875rem', sm: '1rem' }
           }}>
             <Box sx={{ mb: 4 }}>
-              <Typography variant="h5" sx={{ 
-                color: '#02E2FF', 
-                mb: 1,
-                fontSize: { xs: '1.25rem', sm: '1.5rem' }
-              }}>
-                {generatedJob.title}
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 2 }}>
+                <Typography 
+                  variant="h5" 
+                  sx={{ 
+                    color: '#02E2FF', 
+                    fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                  }}
+                >
+                  {generatedJob.title}
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<ContentCopyIcon />}
+                    onClick={handleCopyForLinkedIn}
+                    sx={{
+                      background: 'linear-gradient(135deg, #0077B5 0%, #00A0DC 100%)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #006097 0%, #0077B5 100%)',
+                      }
+                    }}
+                  >
+                    {linkedinCopySuccess ? 'Copied!' : 'Copy for LinkedIn'}
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={<ContentCopyIcon />}
+                    onClick={handleCopyJobData}
+                    sx={{
+                      background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #00C2FF 0%, #00E2A3 100%)',
+                      }
+                    }}
+                  >
+                    {copySuccess ? 'Copied!' : 'Copy JSON'}
+                  </Button>
+                </Box>
+              </Box>
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 <Chip
                   icon={<LocationOnIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />}
