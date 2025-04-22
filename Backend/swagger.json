@@ -947,6 +947,169 @@
           }
         }
       }
+    },
+    "/api/create-talentai-token": {
+      "post": {
+        "tags": ["Hedera"],
+        "summary": "Create TalentAI Token (TALAI)",
+        "description": "Creates the TalentAI Token (TALAI) using the agent's Hedera credentials.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "agentName": {
+                    "type": "string",
+                    "description": "Name of the agent creating the token.",
+                    "example": "MyAutonomousAgent"
+                  }
+                },
+                "required": ["agentName"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "TalentAI Token created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "tokenId": {
+                      "type": "string",
+                      "description": "Hedera Token ID of TALAI",
+                      "example": "0.0.123456"
+                    },
+                    "transactionId": {
+                      "type": "string",
+                      "description": "Hedera Transaction ID",
+                      "example": "0.0.123456@1234567890.123456789"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "TalentAI Token (TALAI) created by agent MyAutonomousAgent"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g., missing agent name)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Agent not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (e.g., Hedera network failure)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mint-tokens": {
+      "post": {
+        "tags": ["Hedera"],
+        "summary": "Mint TALAI tokens to a user",
+        "description": "Mints TALAI tokens from an agent to a recipient user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "agentName": {
+                    "type": "string",
+                    "description": "Name of the agent minting tokens",
+                    "example": "MyAutonomousAgent"
+                  },
+                  "userId": {
+                    "type": "string",
+                    "description": "Database ID of the recipient user",
+                    "example": "64a1b2c3d4e5f6a7b8c9d0e1"
+                  },
+                  "amount": {
+                    "type": "integer",
+                    "description": "Amount of TALAI tokens to mint",
+                    "example": 100
+                  }
+                },
+                "required": ["agentName", "userId", "amount"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tokens minted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "transactionId": {
+                      "type": "string",
+                      "description": "Hedera transaction ID",
+                      "example": "0.0.123456@1234567890.123456789"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Minted 100 TALAI tokens to user 64a1b2c3d4e5f6a7b8c9d0e1"
+                    },
+                    "recipient": {
+                      "type": "string",
+                      "description": "Recipient's Hedera account ID",
+                      "example": "0.0.987654"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (missing parameters)"
+          },
+          "404": {
+            "description": "Agent or user not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
     }
   },
   "components": {
