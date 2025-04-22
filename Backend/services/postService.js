@@ -30,7 +30,7 @@ const validatePostData = (postData) => {
 };
 
 // Créer un nouveau post
-const createPost = async (postData) => {
+module.exports.createPost = async (postData) => {
   try {
     // Valider les données
     validatePostData(postData);
@@ -43,7 +43,7 @@ const createPost = async (postData) => {
 };
 
 // Récupérer tous les posts avec filtres avancés
-const getAllPosts = async (filters = {}) => {
+module.exports.getAllPosts = async (filters = {}) => {
   try {
     let query = {};
 
@@ -86,7 +86,7 @@ const getAllPosts = async (filters = {}) => {
 };
 
 // Récupérer un post par son ID
-const getPostById = async (postId) => {
+module.exports.getPostById = async (postId) => {
   try {
     const post = await Post.findById(postId).populate('user', 'username email');
     if (!post) {
@@ -99,7 +99,7 @@ const getPostById = async (postId) => {
 };
 
 // Récupérer les posts d'un utilisateur
-const getPostsByUserId = async (userId) => {
+module.exports.getPostsByUserId = async (userId) => {
   try {
     return await Post.find({ user: userId })
       .populate('user', 'username email')
@@ -110,7 +110,7 @@ const getPostsByUserId = async (userId) => {
 };
 
 // Mettre à jour un post
-const updatePost = async (postId, userId, updateData) => {
+module.exports.updatePost = async (postId, userId, updateData) => {
   try {
     // Valider les données si une mise à jour complète est fournie
     if (updateData.jobDetails || updateData.skillAnalysis || updateData.linkedinPost) {
@@ -130,7 +130,7 @@ const updatePost = async (postId, userId, updateData) => {
 };
 
 // Supprimer un post
-const deletePost = async (postId, userId) => {
+module.exports.deletePost = async (postId, userId) => {
   try {
     const post = await Post.findOneAndDelete({ _id: postId, user: userId });
     if (!post) {
@@ -143,7 +143,7 @@ const deletePost = async (postId, userId) => {
 };
 
 // Changer le statut d'un post
-const updatePostStatus = async (postId, userId, status) => {
+module.exports.updatePostStatus = async (postId, userId, status) => {
   try {
     const post = await Post.findOne({ _id: postId, user: userId });
     if (!post) {
@@ -156,13 +156,3 @@ const updatePostStatus = async (postId, userId, status) => {
     throw new Error(`Error updating post status: ${error.message}`);
   }
 };
-
-module.exports = {
-  createPost,
-  getAllPosts,
-  getPostById,
-  getPostsByUserId,
-  updatePost,
-  deletePost,
-  updatePostStatus
-}; 

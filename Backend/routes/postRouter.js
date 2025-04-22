@@ -1,16 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/authMiddleware');
+const { requireAuthUser } = require('../middleware/authMiddleware');
 const postController = require('../controllers/postController');
 
 // Routes protégées par authentification
-router.use(authMiddleware);
+router.use(requireAuthUser);
 
 // Route pour créer un post
-router.post('/', postController.createPost);
+router.post('/save-post', postController.createPost);
 
 // Route pour récupérer tous les posts
-router.get('/', postController.getAllPosts);
+router.get('/get-all-posts', postController.getAllPosts);
 
 // Route pour récupérer les posts de l'utilisateur connecté
 router.get('/my-posts', postController.getUserPosts);
