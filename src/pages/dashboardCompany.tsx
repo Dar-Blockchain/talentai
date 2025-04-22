@@ -635,13 +635,14 @@ const renderJobPostDialog = () => (
     }}>
       <Box sx={{ 
         width: { xs: '100%', md: '50%' },
-        height: { xs: '40%', md: 'auto' },
+        height: { xs: 'auto', md: '100%' },
         borderRight: { xs: 'none', md: '1px solid rgba(255,255,255,0.1)' },
         borderBottom: { xs: '1px solid rgba(255,255,255,0.1)', md: 'none' },
         display: 'flex',
         flexDirection: 'column',
         p: { xs: 2, sm: 3 },
-        gap: 2
+        gap: 2,
+        overflow: 'auto'
       }}>
         <Typography variant="h6" sx={{ 
           color: '#fff', 
@@ -659,7 +660,7 @@ const renderJobPostDialog = () => (
         </Typography>
         <TextField
           multiline
-          rows={12}
+          rows={8}
           fullWidth
           value={jobDescription}
           onChange={(e) => setJobDescription(e.target.value)}
@@ -694,13 +695,13 @@ Benefits:
 - 401(k) matching
 - Professional development budget"
           sx={{
-            flexGrow: 1,
+            flex: 1,
+            minHeight: { xs: '200px', sm: '300px', md: '400px' },
             '& .MuiOutlinedInput-root': {
               color: '#fff',
               backgroundColor: 'rgba(255,255,255,0.05)',
               borderRadius: '12px',
-              minHeight: '200px',
-              maxHeight: '300px',
+              height: '100%',
               fontSize: { xs: '0.875rem', sm: '1rem' },
               '& fieldset': {
                 borderColor: 'rgba(255,255,255,0.1)',
