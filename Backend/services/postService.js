@@ -1,4 +1,5 @@
 const Post = require('../models/PostModel');
+const User = require('../models/UserModel');
 
 // Validation des données du post
 const validatePostData = (postData) => {
@@ -36,6 +37,9 @@ module.exports.createPost = async (postData) => {
     validatePostData(postData);
 
     const post = new Post(postData);
+    const user = await User.findById(postData.user);
+    user.post.push(post._id);
+    await user.save();
     return await post.save();
   } catch (error) {
     throw new Error(`Error creating post: ${error.message}`);
