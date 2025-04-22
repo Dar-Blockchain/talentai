@@ -13,6 +13,7 @@ const authRouter = require("./routes/authRouter");
 const agentIARouter = require("./routes/agentIARouter");
 const profileRouter = require("./routes/profileRouter");
 const evaluationRouter = require("./routes/evaluationRouter");
+const linkedinPostRouter = require("./routes/linkedinPostRouter");
 
 require("dotenv").config();
 
@@ -34,6 +35,7 @@ app.use("/auth", authRouter);
 app.use("/profiles", profileRouter);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/evaluation', evaluationRouter);
+app.use('/linkedinPost', linkedinPostRouter);
 app.use('/api', agentIARouter);
 // Route de base
 app.get("/", (req, res) => {
