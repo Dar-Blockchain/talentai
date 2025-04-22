@@ -1,0 +1,122 @@
+.wrapper {
+    background: linear-gradient(to bottom right, #0f172a, #00bcd4);
+    min-height: 100vh;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+  }
+  
+  .toolbar {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .canvas {
+    background: white;
+    width: 794px; /* A4 width */
+    height: 1123px; /* A4 height */
+    position: relative;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.15);
+    overflow: hidden;
+    border-radius: 4px;
+  }
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 200px;
+    background: #10151a;
+    padding: 20px;
+    color: white;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+    z-index: 20;
+  }
+  
+  .textBlock {
+    border: 1px dashed #aaa;
+    background: rgba(0, 0, 0, 0.05);
+    color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4px;
+  }
+  
+  .contentEditable {
+    width: 100%;
+    height: 100%;
+    padding: 8px;
+    outline: none;
+    font-size: 16px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .pageWrapper {
+    background: linear-gradient(to bottom right, #0f172a, #00bcd4);
+    min-height: 100vh;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+    font-family: Arial, sans-serif;
+  }
+  
+  .toolbar {
+    margin-bottom: 20px;
+  }
+  
+  .canvasWrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    overflow: auto;
+  }
+  .sectionActions {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 999;
+    display: flex;
+    gap: 4px;
+    background: rgba(223, 16, 16, 0.747); /* 👈 Visible on white */
+    border-radius: 4px;
+    padding: 2px;
+  }
+  
+  
+  .canvas {
+    background: white;
+    width: 794px; /* A4 width at 96dpi */
+    height: 1123px; /* A4 height */
+    position: relative;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .sectionBox {
+    width: 100%;
+    height: 100%;
+    padding: 8px;
+    font-size: 14px;
+    color: #000;
+    line-height: 1.6;
+    overflow: auto;
+  }
+  
+  .editable {
+    width: 100%;
+    height: 100%;
+    padding: 8px;
+    outline: none;
+    font-size: 16px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  
