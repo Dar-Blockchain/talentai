@@ -36,6 +36,11 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
           if (existingSkill) {
             existingSkill.proficiencyLevel = newSkill.proficiencyLevel;
             existingSkill.experienceLevel = newSkill.experienceLevel;
+
+            // ✅ Ajoute explicitement la mise à jour du ScoreTest
+            if (typeof newSkill.ScoreTest === 'number') {
+              existingSkill.ScoreTest = newSkill.ScoreTest;
+            }
           } else {
             profile.skills.push(newSkill);
           }
@@ -57,6 +62,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
     throw error;
   }
 };
+
 
 // Create or update a Company profile
 exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
