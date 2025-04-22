@@ -896,7 +896,7 @@ Benefits:
                   >
                     {linkedinCopySuccess ? 'Copied!' : 'Copy for LinkedIn'}
                   </Button>
-                  <Button
+                  {/* <Button
                     variant="contained"
                     startIcon={<ContentCopyIcon />}
                     onClick={handleCopyJobData}
@@ -908,7 +908,7 @@ Benefits:
                     }}
                   >
                     {copySuccess ? 'Copied!' : 'Copy JSON'}
-                  </Button>
+                  </Button> */}
                 </Box>
               </Box>
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
