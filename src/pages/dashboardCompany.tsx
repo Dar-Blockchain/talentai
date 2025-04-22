@@ -322,11 +322,11 @@ const handleGenerateJob = async () => {
     setJobPostError(null);
     
     const token = Cookies.get('api_token');
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/generate-job-post`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}linkedinPost/generate-job-post`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ description: jobDescription })
     });
@@ -371,12 +371,14 @@ const handlePostJob = async () => {
 
   setIsPosting(true);
   setJobPostError(null);
+  const token = Cookies.get('api_token');
 
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/create-job-post`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
         jobDetails: {
