@@ -540,7 +540,7 @@ const renderMatchingProfiles = () => {
               </Typography>
             </Box>
             <Chip
-              label={`${candidate.matchAnalysis.percentage}%`}
+              label={`${Number(candidate.matchAnalysis.percentage).toFixed(2)}%`}
               sx={{
                 background: 'linear-gradient(135deg, rgba(2,226,255,0.15) 0%, rgba(0,255,195,0.15) 100%)',
                 color: '#02E2FF',
@@ -575,7 +575,7 @@ const renderMatchingProfiles = () => {
               {candidate.matchAnalysis.skillMatches.map((skill, index) => (
                 <SkillChip
                   key={index}
-                  label={`${skill.skill} (${skill.score}%)`}
+                  label={`${skill.skill} (${Number(skill.score).toFixed(2)}%)`}
                   size="small"
                 />
               ))}
@@ -1227,7 +1227,7 @@ return (
               mb: 3
             }}>
               <SectionTitle>Required Skills</SectionTitle>
-              <Button
+              {/* <Button
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={() => setEditSkillsDialog(true)}
@@ -1242,7 +1242,7 @@ return (
                 }}
               >
                 Add Skills
-              </Button>
+              </Button> */}
             </Box>
 
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
