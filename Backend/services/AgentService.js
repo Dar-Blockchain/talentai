@@ -18,7 +18,7 @@ module.exports.createAgent = async (name) => {
 
     const transaction = new AccountCreateTransaction()
       .setKey(newPublicKey)
-      .setInitialBalance(new Hbar(10));
+      .setInitialBalance(new Hbar(500));
 
     const response = await transaction.execute(client);
     const receipt = await response.getReceipt(client);
