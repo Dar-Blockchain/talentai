@@ -14,6 +14,7 @@ const agentIARouter = require("./routes/agentIARouter");
 const profileRouter = require("./routes/profileRouter");
 const evaluationRouter = require("./routes/evaluationRouter");
 const linkedinPostRouter = require("./routes/linkedinPostRouter");
+const postRouter = require("./routes/postRouter");
 
 require("dotenv").config();
 
@@ -37,6 +38,7 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/evaluation', evaluationRouter);
 app.use('/linkedinPost', linkedinPostRouter);
 app.use('/api', agentIARouter);
+app.use('/post', postRouter);
 // Route de base
 app.get("/", (req, res) => {
   res.json({ message: "Bienvenue sur l'API Express!" });
