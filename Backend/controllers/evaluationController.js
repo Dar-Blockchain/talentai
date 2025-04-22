@@ -721,3 +721,275 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
     });
   }
 };
+
+exports.generateJobPost = async (req, res) => {
+  try {
+    const { description } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ 
+        error: "Missing job description",
+        required: {
+          description: "Detailed description of the job position"
+        }
+      });
+    }
+
+    const prompt = `
+As an expert technical recruiter and technology specialist, thoroughly analyze the following job description.
+Extract all relevant information and provide a comprehensive analysis of required skills and technologies.
+
+Job Description:
+${description}
+
+Return the response in the following JSON format:
+
+{
+  "linkedinPost": "The formatted LinkedIn post with proper sections and formatting",
+  "title": "The job title",
+  "requirements": ["Array of key requirements"],
+  "responsibilities": ["Array of main responsibilities"],
+  "skillAnalysis": {
+    "technicalSkills": [
+      {
+        "name": "Skill name",
+        "requiredLevel": "Required proficiency level (1-5)",
+        "importance": "Critical/High/Medium/Nice-to-have",
+        "category": "Frontend/Backend/DevOps/Database/etc.",
+        "yearsOfExperience": "Recommended years of experience",
+        "description": "Brief description of how this skill will be used"
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "Framework name",
+        "requiredLevel": "Required proficiency level (1-5)",
+        "importance": "Critical/High/Medium/Nice-to-have",
+        "relatedTo": "Related technical skill"
+      }
+    ],
+    "toolsAndTechnologies": [
+      {
+        "name": "Tool/Technology name",
+        "category": "Version Control/CI-CD/Cloud/etc.",
+        "importance": "Critical/High/Medium/Nice-to-have",
+        "purpose": "How this tool will be used in the role"
+      }
+    ],
+    "softSkills": [
+      {
+        "name": "Soft skill name",
+        "importance": "Critical/High/Medium",
+        "context": "How this soft skill applies to the role"
+      }
+    ],
+    "recommendedLearningPath": [
+      {
+        "skill": "Skill to learn",
+        "resources": ["Recommended learning resources"],
+        "priority": "High/Medium/Low"
+      }
+    ]
+  },
+  "stackAnalysis": {
+    "primaryStack": ["Main technologies that form the core stack"],
+    "secondaryStack": ["Supporting technologies"],
+    "suggestedAdditions": ["Technologies that could be beneficial"],
+    "stackMaturity": "Cutting-edge/Modern/Established/Legacy"
+  },
+  "location": "Job location",
+  "employmentType": "Full-time/Part-time/Contract",
+  "experienceLevel": "Required experience level",
+  "salary": {
+    "min": minimum salary,
+    "max": maximum salary,
+    "currency": "Currency code"
+  },
+  "careerGrowth": {
+    "potentialPaths": ["Possible career progression paths"],
+    "keyLearningOpportunities": ["Areas for professional growth"]
+  }
+}
+
+Ensure the analysis:
+1. Identifies both explicit and implicit skill requirements
+2. Suggests modern technology stack combinations
+3. Provides realistic proficiency level requirements
+4. Includes relevant frameworks and tools based on the tech stack
+5. Suggests complementary skills that would be valuable
+`.trim();
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4-turbo-preview",
+      messages: [
+        { 
+          role: "system", 
+          content: "You are an expert technical recruiter and technology specialist with deep knowledge of modern software development stacks, frameworks, and industry best practices. Your analysis should be thorough and forward-thinking, considering both current requirements and future technology trends."
+        },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: 2500,
+      temperature: 0.7,
+    });
+
+    // Parse the response
+    const raw = response.choices[0].message.content;
+    let jobPost;
+    try {
+      // Try to extract JSON if it's wrapped in markdown code blocks
+      const jsonMatch = raw.match(/```json\n?([\s\S]*?)\n?```/) || raw.match(/```\n?([\s\S]*?)\n?```/);
+      const jsonStr = jsonMatch ? jsonMatch[1] : raw;
+      
+      jobPost = JSON.parse(jsonStr);
+
+      // Add derived insights
+      jobPost.insights = {
+        totalSkills: jobPost.skillAnalysis.technicalSkills.length,
+        criticalSkills: jobPost.skillAnalysis.technicalSkills.filter(s => s.importance === 'Critical').map(s => s.name),
+        primaryFrameworks: jobPost.skillAnalysis.frameworks.filter(f => f.importance === 'Critical' || f.importance === 'High').map(f => f.name),
+        stackComplexity: calculateStackComplexity(jobPost.stackAnalysis),
+        learningCurve: calculateLearningCurve(jobPost.skillAnalysis),
+        recommendedBackground: determineRecommendedBackground(jobPost.skillAnalysis, jobPost.experienceLevel)
+      };
+
+    } catch (e) {
+      console.error("Failed to parse job post JSON:", e);
+      return res.status(500).json({ error: "Failed to generate job post" });
+    }
+
+    res.json(jobPost);
+  } catch (error) {
+    console.error("Error generating job post:", error);
+    res.status(500).json({ error: "Failed to generate job post" });
+  }
+};
+
+// Helper function to calculate stack complexity
+function calculateStackComplexity(stackAnalysis) {
+  const totalTechnologies = [
+    ...(stackAnalysis.primaryStack || []),
+    ...(stackAnalysis.secondaryStack || [])
+  ].length;
+
+  if (totalTechnologies <= 3) return "Simple";
+  if (totalTechnologies <= 6) return "Moderate";
+  if (totalTechnologies <= 10) return "Complex";
+  return "Very Complex";
+}
+
+// Helper function to calculate learning curve
+function calculateLearningCurve(skillAnalysis) {
+  const criticalSkills = skillAnalysis.technicalSkills.filter(s => s.importance === 'Critical');
+  const avgRequiredLevel = criticalSkills.reduce((acc, skill) => acc + skill.requiredLevel, 0) / criticalSkills.length;
+
+  if (avgRequiredLevel <= 2) return "Gentle";
+  if (avgRequiredLevel <= 3) return "Moderate";
+  if (avgRequiredLevel <= 4) return "Steep";
+  return "Very Steep";
+}
+
+// Helper function to determine recommended background
+function determineRecommendedBackground(skillAnalysis, experienceLevel) {
+  const primarySkills = skillAnalysis.technicalSkills
+    .filter(s => s.importance === 'Critical' || s.importance === 'High')
+    .map(s => s.name);
+
+  const categories = skillAnalysis.technicalSkills
+    .map(s => s.category)
+    .filter((v, i, a) => a.indexOf(v) === i);
+
+  return {
+    primarySkills,
+    keyCategories: categories,
+    suggestedExperience: experienceLevel,
+    focusAreas: primarySkills.slice(0, 3)
+  };
+}
+
+exports.analyzeJobSkills = async (req, res) => {
+  try {
+    const { description } = req.body;
+
+    if (!description) {
+      return res.status(400).json({ 
+        error: "Missing job description",
+        required: {
+          description: "Job description to analyze"
+        }
+      });
+    }
+
+    const prompt = `
+Analyze the following job description and identify the key technical skills required.
+For each skill, determine the required proficiency level and whether it's a core requirement or a nice-to-have.
+
+Job Description:
+${description}
+
+Return the response in the following JSON format:
+
+{
+  "coreSkills": [
+    {
+      "name": "Skill name",
+      "requiredLevel": "Required proficiency level (1-5)",
+      "yearsOfExperience": "Recommended years of experience",
+      "importance": "Critical/High/Medium",
+      "category": "Frontend/Backend/DevOps/etc."
+    }
+  ],
+  "niceToHaveSkills": [
+    {
+      "name": "Skill name",
+      "preferredLevel": "Preferred proficiency level (1-5)",
+      "category": "Frontend/Backend/DevOps/etc."
+    }
+  ],
+  "suggestedTechnologies": [
+    {
+      "name": "Technology name",
+      "reason": "Why this technology would be relevant"
+    }
+  ],
+  "skillGaps": [
+    {
+      "category": "Skill category",
+      "recommendedAdditions": ["Recommended complementary skills"]
+    }
+  ]
+}
+
+Ensure the analysis is thorough and considers modern technology stacks and industry standards.
+`.trim();
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4-turbo-preview",
+      messages: [
+        { 
+          role: "system", 
+          content: "You are an expert technical recruiter specializing in analyzing technical requirements and identifying key skills needed for technical positions."
+        },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: 1500,
+      temperature: 0.7,
+    });
+
+    // Parse the response
+    const raw = response.choices[0].message.content;
+    let skillAnalysis;
+    try {
+      skillAnalysis = JSON.parse(raw);
+    } catch (e) {
+      console.error("Failed to parse skill analysis JSON:", e);
+      return res.status(500).json({ error: "Failed to analyze job skills" });
+    }
+
+    res.json(skillAnalysis);
+  } catch (error) {
+    console.error("Error analyzing job skills:", error);
+    res.status(500).json({ error: "Failed to analyze job skills" });
+  }
+};
+
+
