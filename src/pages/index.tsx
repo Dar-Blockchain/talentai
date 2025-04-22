@@ -117,7 +117,7 @@ export default function Home() {
             </p>
             <div className={styles.ctaButtons}>
               <motion.a 
-                href="/demo" 
+                href="/signin" 
                 className={styles.primaryButton}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

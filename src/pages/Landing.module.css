@@ -1,6 +1,9 @@
 .container {
   min-height: 100vh;
-  background: linear-gradient(to bottom, #0f172a, #1e293b);
+  background: #00072D;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(2, 226, 255, 0.15), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(0, 255, 195, 0.15), transparent 50%);
   color: #f8fafc;
   font-family: var(--font-geist), sans-serif;
 }
@@ -10,13 +13,14 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 2rem;
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(0, 7, 45, 0.8);
   backdrop-filter: blur(10px);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
+  border-bottom: 1px solid rgba(2, 226, 255, 0.1);
 }
 
 .logo {
@@ -39,19 +43,19 @@
 }
 
 .navLinks a {
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   font-size: 0.95rem;
   transition: color 0.2s ease;
 }
 
 .navLinks a:hover {
-  color: #f8fafc;
+  color: #02E2FF;
 }
 
 .signInButton {
-  background: rgba(99, 102, 241, 0.1);
-  color: #6366f1 !important;
+  background: rgba(2, 226, 255, 0.1);
+  color: #02E2FF !important;
   padding: 0.5rem 1.25rem;
   border-radius: 0.5rem;
   font-weight: 500;
@@ -59,8 +63,8 @@
 }
 
 .signInButton:hover {
-  background: rgba(99, 102, 241, 0.2);
-  color: #818cf8 !important;
+  background: rgba(2, 226, 255, 0.2);
+  color: #00FFC3 !important;
 }
 
 .hero {
@@ -79,8 +83,8 @@
 
 .heroTag {
   display: inline-block;
-  background: rgba(99, 102, 241, 0.1);
-  color: #818cf8;
+  background: rgba(2, 226, 255, 0.1);
+  color: #02E2FF;
   padding: 0.5rem 1rem;
   border-radius: 2rem;
   font-size: 0.875rem;
@@ -97,7 +101,7 @@
 }
 
 .gradientText {
-  background: linear-gradient(135deg, #6366f1, #818cf8);
+  background: linear-gradient(135deg, #02E2FF, #00FFC3);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -105,7 +109,7 @@
 .heroParagraph {
   font-size: 1.125rem;
   line-height: 1.6;
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.7);
   margin-bottom: 2rem;
 }
 
@@ -118,7 +122,7 @@
 }
 
 .primaryButton {
-  background: #6366f1;
+  background: linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%);
   color: white;
   padding: 0.75rem 2rem;
   border-radius: 0.75rem;
@@ -133,12 +137,12 @@
 }
 
 .primaryButton:hover {
-  background: #818cf8;
+  background: linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%);
   transform: translateY(-2px);
 }
 
 .secondaryButton {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(2, 226, 255, 0.1);
   color: white;
   padding: 0.75rem 2rem;
   border-radius: 0.75rem;
@@ -150,11 +154,13 @@
   gap: 0.5rem;
   transition: all 0.2s ease;
   min-width: 160px;
+  border: 1px solid rgba(2, 226, 255, 0.2);
 }
 
 .secondaryButton:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(2, 226, 255, 0.15);
   transform: translateY(-2px);
+  border-color: #02E2FF;
 }
 
 .buttonIcon {
@@ -175,20 +181,20 @@
   display: block;
   font-size: 2rem;
   font-weight: 700;
-  color: #6366f1;
+  color: #02E2FF;
   margin-bottom: 0.5rem;
 }
 
 .statLabel {
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 0.875rem;
 }
 
 .heroChartSection {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(2, 226, 255, 0.05);
   border-radius: 1rem;
   padding: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(2, 226, 255, 0.1);
 }
 
 .chartControls {
@@ -200,7 +206,7 @@
 .chartButton {
   background: none;
   border: none;
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.7);
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   cursor: pointer;
@@ -208,12 +214,12 @@
 }
 
 .chartButton:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(2, 226, 255, 0.1);
 }
 
 .chartButton.active {
-  background: rgba(99, 102, 241, 0.1);
-  color: #6366f1;
+  background: rgba(2, 226, 255, 0.1);
+  color: #02E2FF;
 }
 
 .chartWrapper {
@@ -222,7 +228,7 @@
 
 .features {
   padding: 6rem 2rem;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(2, 226, 255, 0.02);
 }
 
 .featuresContainer {
@@ -245,37 +251,40 @@
 }
 
 .featureCard {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(2, 226, 255, 0.05);
   border-radius: 1rem;
   padding: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(2, 226, 255, 0.1);
   transition: all 0.3s ease;
 }
 
 .featureCard:hover {
   transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(2, 226, 255, 0.08);
+  border-color: rgba(2, 226, 255, 0.2);
 }
 
 .featureIcon {
   font-size: 2rem;
   margin-bottom: 1.5rem;
+  color: #02E2FF;
 }
 
 .featureCard h3 {
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 1rem;
+  color: #ffffff;
 }
 
 .featureCard p {
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.7);
   line-height: 1.6;
   margin-bottom: 1.5rem;
 }
 
 .featureLink {
-  color: #6366f1;
+  color: #02E2FF;
   text-decoration: none;
   font-weight: 500;
   display: inline-flex;
@@ -285,7 +294,7 @@
 
 .testimonials {
   padding: 6rem 2rem;
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(0, 7, 45, 0.95);
 }
 
 .testimonialsContainer {
@@ -301,10 +310,10 @@
 }
 
 .testimonialCard {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(2, 226, 255, 0.05);
   border-radius: 1rem;
   padding: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(2, 226, 255, 0.1);
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
@@ -313,8 +322,8 @@
 
 .testimonialCard:hover {
   transform: translateY(-5px);
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(99, 102, 241, 0.3);
+  background: rgba(2, 226, 255, 0.08);
+  border-color: rgba(2, 226, 255, 0.2);
 }
 
 .testimonialContent {
@@ -322,7 +331,7 @@
 }
 
 .testimonialStars {
-  color: #6366f1;
+  color: #02E2FF;
   font-size: 1.25rem;
   margin-bottom: 1rem;
   letter-spacing: 0.1em;
@@ -345,7 +354,7 @@
   width: 3rem;
   height: 3rem;
   border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1, #818cf8);
+  background: linear-gradient(135deg, #02E2FF, #00FFC3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -362,13 +371,13 @@
 }
 
 .testimonialAuthor p {
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 0.875rem;
 }
 
 .cta {
   padding: 6rem 2rem;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(129, 140, 248, 0.1));
+  background: linear-gradient(135deg, rgba(2, 226, 255, 0.1), rgba(0, 255, 195, 0.1));
 }
 
 .ctaContent {
@@ -382,8 +391,8 @@
 
 .ctaTag {
   display: inline-block;
-  background: rgba(99, 102, 241, 0.1);
-  color: #818cf8;
+  background: rgba(2, 226, 255, 0.1);
+  color: #02E2FF;
   padding: 0.5rem 1rem;
   border-radius: 2rem;
   font-size: 0.875rem;
@@ -396,10 +405,13 @@
   font-weight: 700;
   margin-bottom: 1rem;
   letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #02E2FF, #00FFC3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .ctaContent p {
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 1.125rem;
   margin-bottom: 2rem;
 }
@@ -413,7 +425,7 @@
 }
 
 .ctaPrimaryButton {
-  background: #6366f1;
+  background: linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%);
   color: white;
   border: none;
   padding: 0.75rem 2rem;
@@ -429,14 +441,14 @@
 }
 
 .ctaPrimaryButton:hover {
-  background: #818cf8;
+  background: linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%);
   transform: translateY(-2px);
 }
 
 .ctaSecondaryButton {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(2, 226, 255, 0.1);
   color: white;
-  border: none;
+  border: 1px solid rgba(2, 226, 255, 0.2);
   padding: 0.75rem 2rem;
   border-radius: 0.75rem;
   font-weight: 500;
@@ -451,12 +463,13 @@
 }
 
 .ctaSecondaryButton:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(2, 226, 255, 0.15);
   transform: translateY(-2px);
+  border-color: #02E2FF;
 }
 
 .footer {
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(0, 7, 45, 0.95);
   padding: 4rem 2rem 2rem;
 }
 
@@ -493,7 +506,7 @@
 
 .footerSection a,
 .footerSection p {
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   display: block;
   margin-bottom: 0.75rem;
@@ -502,7 +515,7 @@
 }
 
 .footerSection a:hover {
-  color: #f8fafc;
+  color: #02E2FF;
 }
 
 .socialLinks {
@@ -512,24 +525,24 @@
 }
 
 .socialIcon {
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 .socialIcon:hover {
-  color: #f8fafc;
+  color: #02E2FF;
 }
 
 .footerBottom {
   max-width: 1280px;
   margin: 4rem auto 0;
   padding-top: 2rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(2, 226, 255, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 0.875rem;
 }
 
@@ -539,13 +552,13 @@
 }
 
 .footerLinks a {
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 .footerLinks a:hover {
-  color: #f8fafc;
+  color: #02E2FF;
 }
 
 @media (max-width: 1024px) {
