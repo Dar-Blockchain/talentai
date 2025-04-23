@@ -503,11 +503,57 @@ export default function DashboardCandidate() {
   ];
 
   const softSkills: Skill[] = [
-    { name: 'Communication', proficiencyLevel: 0 },
-    { name: 'Leadership', proficiencyLevel: 0 },
-    { name: 'Problem Solving', proficiencyLevel: 0 },
-    { name: 'Teamwork', proficiencyLevel: 0 },
-    { name: 'Time Management', proficiencyLevel: 0 },
+    { 
+      name: 'Communication', 
+      proficiencyLevel: 0,
+      requiresLanguage: true,
+      subcategories: [
+        { value: 'verbal', label: 'Verbal Communication' },
+        { value: 'written', label: 'Written Communication' },
+        { value: 'presentation', label: 'Presentation Skills' },
+        { value: 'negotiation', label: 'Negotiation Skills' }
+      ]
+    },
+    { 
+      name: 'Leadership', 
+      proficiencyLevel: 0,
+      subcategories: [
+        { value: 'team-management', label: 'Team Management' },
+        { value: 'decision-making', label: 'Decision Making' },
+        { value: 'delegation', label: 'Task Delegation' },
+        { value: 'motivation', label: 'Team Motivation' }
+      ]
+    },
+    { 
+      name: 'Problem Solving', 
+      proficiencyLevel: 0,
+      subcategories: [
+        { value: 'analytical', label: 'Analytical Thinking' },
+        { value: 'critical', label: 'Critical Thinking' },
+        { value: 'creative', label: 'Creative Problem Solving' },
+        { value: 'strategic', label: 'Strategic Planning' }
+      ]
+    },
+    { 
+      name: 'Teamwork', 
+      proficiencyLevel: 0,
+      subcategories: [
+        { value: 'collaboration', label: 'Collaboration' },
+        { value: 'conflict-resolution', label: 'Conflict Resolution' },
+        { value: 'adaptability', label: 'Adaptability' },
+        { value: 'cultural-awareness', label: 'Cultural Awareness' }
+      ]
+    },
+    { 
+      name: 'Time Management', 
+      proficiencyLevel: 0,
+      subcategories: [
+        { value: 'prioritization', label: 'Task Prioritization' },
+        { value: 'scheduling', label: 'Scheduling' },
+        { value: 'deadline-management', label: 'Deadline Management' },
+        { value: 'work-life-balance', label: 'Work-Life Balance' }
+      ]
+    }
   ];
 
   const languages = [
@@ -882,10 +928,10 @@ export default function DashboardCandidate() {
                     {softSkillType && (
                       <Box sx={{ mb: 2 }}>
                         <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>
-                          {softSkillType === 'communication' ? 'Select Language' : 'Select Specific Area'}
+                          {softSkillType === 'Communication' ? 'Select Language' : 'Select Specific Area'}
                         </Typography>
 
-                        {softSkillType === 'communication' ? (
+                        {softSkillType === 'Communication' ? (
                           <FormControl fullWidth>
                             <Select
                               value={softSkillLanguage}
@@ -962,8 +1008,8 @@ export default function DashboardCandidate() {
                     !skillType ||
                     (skillType === 'technical' && !selectedSkill) ||
                     (skillType === 'soft' && !softSkillType) ||
-                    (skillType === 'soft' && softSkillType === 'communication' && !softSkillLanguage) ||
-                    (skillType === 'soft' && softSkillType !== 'communication' && !softSkillSubcategory)
+                    (skillType === 'soft' && softSkillType === 'Communication' && !softSkillLanguage) ||
+                    (skillType === 'soft' && softSkillType !== 'Communication' && !softSkillSubcategory)
                   }
                   variant="contained"
                   sx={{
