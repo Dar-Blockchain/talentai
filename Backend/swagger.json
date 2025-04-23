@@ -1110,6 +1110,61 @@
           }
         }
       }
+    },
+    "/api/jobs/{jobPostId}/matches": {
+      "get": {
+        "tags": ["Matching"],
+        "summary": "Get matching candidates for a job post",
+        "description": "Returns ranked list of candidates matching the job requirements",
+        "parameters": [
+          {
+            "name": "jobPostId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful matching",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "jobPost": { "type": "string" },
+                    "count": { "type": "integer" },
+                    "matches": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "candidateId": { "type": "string" },
+                          "name": { "type": "string" },
+                          "score": { "type": "number" },
+                          "skills": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": { "type": "string" },
+                                "level": { "type": "number" }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
