@@ -171,19 +171,28 @@ const MatchScore = styled(Box)(({ theme }) => ({
 
 // Update the MatchingCandidate interface
 interface MatchingCandidate {
-  candidateId: string;
+  candidateId: {
+    _id: string;
+    username: string;
+    email: string;
+    isVerified: boolean;
+    role: string;
+  };
   name: string;
   score: number;
   matchedSkills: Array<{
     name: string;
     proficiencyLevel: number;
     experienceLevel: string;
+    _id: string;
+    ScoreTest?: number;
   }>;
   requiredSkills: Array<{
     name: string;
     level: string;
     importance: string;
     category: string;
+    _id: string;
   }>;
 }
 
@@ -1027,31 +1036,50 @@ const renderMatchingProfiles = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {matchingProfiles.map((candidate) => (
-        <CandidateCard key={candidate.candidateId}>
+        <CandidateCard key={candidate.candidateId._id}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
             <Box>
               <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 600, mb: 0.5 }}>
                 {candidate.name}
               </Typography>
-              <Typography variant="body2" sx={{
-                color: 'rgba(255,255,255,0.7)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5
-              }}>
-                <LocationOnIcon sx={{ fontSize: 16 }} />
-                Candidate ID: {candidate.candidateId}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                <Typography variant="body2" sx={{
+                  color: 'rgba(255,255,255,0.7)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5
+                }}>
+                  <LocationOnIcon sx={{ fontSize: 16 }} />
+                  {candidate.candidateId.email}
+                </Typography>
+                {candidate.candidateId.isVerified && (
+                  <Chip
+                    size="small"
+                    label="Verified"
+                    sx={{
+                      backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                      color: '#4ade80',
+                      fontSize: '0.75rem',
+                      height: '20px'
+                    }}
+                  />
+                )}
+              </Box>
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+              <Chip
+                label={`${candidate.score}%`}
+                sx={{
+                  background: 'linear-gradient(135deg, rgba(2,226,255,0.15) 0%, rgba(0,255,195,0.15) 100%)',
+                  color: '#02E2FF',
+                  fontWeight: 600,
+                  borderRadius: '8px'
+                }}
+              />
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
+                Match Score
               </Typography>
             </Box>
-            <Chip
-              label={`${candidate.score}%`}
-              sx={{
-                background: 'linear-gradient(135deg, rgba(2,226,255,0.15) 0%, rgba(0,255,195,0.15) 100%)',
-                color: '#02E2FF',
-                fontWeight: 600,
-                borderRadius: '8px'
-              }}
-            />
           </Box>
 
           <Box sx={{ mb: 2 }}>
@@ -1059,11 +1087,33 @@ const renderMatchingProfiles = () => {
               Matched Skills
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {candidate.matchedSkills.map((skill, index) => (
+              {candidate.matchedSkills.map((skill) => (
                 <SkillChip
-                  key={index}
-                  label={`${skill.name} (${skill.experienceLevel})`}
+                  key={skill._id}
+                  label={`${skill.name} (${skill.experienceLevel}${skill.ScoreTest ? ` - Score: ${skill.ScoreTest}` : ''})`}
                   size="small"
+                />
+              ))}
+            </Box>
+          </Box>
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ color: '#ffffff', mb: 1 }}>
+              Required Skills
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {candidate.requiredSkills.map((skill) => (
+                <Chip
+                  key={skill._id}
+                  label={`${skill.name} (Level ${skill.level})`}
+                  size="small"
+                  sx={{
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    color: 'rgba(255,255,255,0.8)',
+                    '& .MuiChip-label': {
+                      px: 2
+                    }
+                  }}
                 />
               ))}
             </Box>
