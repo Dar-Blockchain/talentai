@@ -368,7 +368,7 @@ export default function Test() {
   const createMediaRecorder = (stream: MediaStream) => {
     const options = {
       mimeType: 'audio/webm;codecs=opus',
-      audioBitsPerSecond: 128000,
+      audioBitsPerSecond: 256000,
     };
     const recorder = new MediaRecorder(stream, options);
 
@@ -464,14 +464,37 @@ export default function Test() {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          sampleRate: 16000,
+          autoGainControl: true,
+          sampleRate: 48000, // request high sample rate for clarity
           channelCount: 1,
         },
       });
-      audioStreamRef.current = stream;
+      // Build Web Audio pipeline for further noise filtering
+      const AudioContextClass = (window.AudioContext ?? (window as any).webkitAudioContext) as typeof AudioContext;
+      const audioContext = new AudioContextClass();
+      const sourceNode = audioContext.createMediaStreamSource(rawStream);
+      const highpassFilter = audioContext.createBiquadFilter();
+      highpassFilter.type = 'highpass';
+      highpassFilter.frequency.value = 100; // remove low-frequency noise
+      const notchFilter = audioContext.createBiquadFilter();
+      notchFilter.type = 'notch';
+      notchFilter.frequency.value = 60;
+      notchFilter.Q.value = 1.0;
+      const lowpassFilter = audioContext.createBiquadFilter();
+      lowpassFilter.type = 'lowpass';
+      lowpassFilter.frequency.value = 8000; // remove high-frequency hiss
+      const compressor = audioContext.createDynamicsCompressor();
+      sourceNode.connect(highpassFilter);
+      highpassFilter.connect(notchFilter);
+      notchFilter.connect(lowpassFilter);
+      lowpassFilter.connect(compressor);
+      const destination = audioContext.createMediaStreamDestination();
+      compressor.connect(destination);
+      audioStreamRef.current = destination.stream;
 
-      // Create first recorder
-      mediaRecorderRef.current = createMediaRecorder(stream);
+      // Create first recorder with filtered audio stream
+      mediaRecorderRef.current = createMediaRecorder(audioStreamRef.current);
+
       mediaRecorderRef.current.start(); // Start recording
 
       // Process chunks more frequently (every 2 seconds)
