@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { IncomingForm } from 'formidable';
-import type { Fields, Files } from 'formidable';
 import fs from 'fs';
 import path from 'path';
 
@@ -29,8 +28,9 @@ export default async function handler(
     if (req.method === 'POST') {
       const form = new IncomingForm();
 
-      const [fields, files] = await new Promise<[Fields, Files]>((resolve, reject) => {
-        form.parse(req, (err: Error | null, fields: Fields, files: Files) => {
+      // Parse form without strict typing for fields and files
+      const [fields, files] = await new Promise<[any, any]>((resolve, reject) => {
+        form.parse(req, (err: Error | null, fields: any, files: any) => {
           if (err) return reject(err);
           resolve([fields, files]);
         });
@@ -62,14 +62,21 @@ export default async function handler(
 
         // Send file to OpenAI Whisper
         const formData = new FormData();
-        formData.append(
-          'file',
-          new Blob([fileBuffer], { type: 'audio/webm' }),
-          'recording.webm'
-        );
+        formData.append('file', new Blob([fileBuffer], { type: 'audio/webm' }), 'recording.webm');
         formData.append('model', 'whisper-1');
-        formData.append('response_format', 'json');
-        formData.append('language', 'en');
+        // Use provided prompt for context
+        if (fields.prompt) {
+          formData.append('prompt', String(fields.prompt));
+        }
+        // Default to verbose_json for detailed output
+        const respFmt = fields.response_format ? String(fields.response_format) : 'verbose_json';
+        formData.append('response_format', respFmt);
+        // Deterministic output
+        const temp = fields.temperature ? String(fields.temperature) : '0';
+        formData.append('temperature', temp);
+        // Set language or default to English
+        const lang = fields.language ? String(fields.language) : 'en';
+        formData.append('language', lang);
 
         const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
           method: 'POST',
