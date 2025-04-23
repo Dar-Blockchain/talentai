@@ -171,29 +171,20 @@ const MatchScore = styled(Box)(({ theme }) => ({
 
 // Update the MatchingCandidate interface
 interface MatchingCandidate {
-  candidateInfo: {
-    id: string;
+  candidateId: string;
+  name: string;
+  score: number;
+  matchedSkills: Array<{
     name: string;
-    email: string;
-    skills: Array<{
-      name: string;
-      proficiencyLevel: number;
-      experienceLevel: string;
-    }>;
-  };
-  matchAnalysis: {
-    percentage: number;
-    skillMatches: Array<{
-      skill: string;
-      proficiency: number;
-      importance: string;
-      match: string;
-      score: number;
-    }>;
-    assessment: string;
-    recommendations: string[];
-    scoreCategory: string;
-  };
+    proficiencyLevel: number;
+    experienceLevel: string;
+  }>;
+  requiredSkills: Array<{
+    name: string;
+    level: string;
+    importance: string;
+    category: string;
+  }>;
 }
 
 // Update the JobPost interface
@@ -382,10 +373,10 @@ useEffect(() => {
 // Filter profiles based on score and skills
 useEffect(() => {
   const filtered = matchingProfiles.filter(candidate => {
-    const meetsScoreRequirement = candidate.matchAnalysis.percentage >= minScore;
+    const meetsScoreRequirement = candidate.score >= minScore;
     const meetsSkillRequirement = selectedSkills.length === 0 ||
       selectedSkills.every(skill =>
-        candidate.candidateInfo.skills.some(s => s.name === skill)
+        candidate.matchedSkills.some(s => s.name === skill)
       );
     return meetsScoreRequirement && meetsSkillRequirement;
   });
@@ -403,7 +394,7 @@ const handleFilterApply = async () => {
     setMatchError(null);
     const token = Cookies.get('api_token');
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/matching/jobs/${selectedJob}/matches`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}matching/jobs/${selectedJob}/matches`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -416,7 +407,12 @@ const handleFilterApply = async () => {
     }
 
     const data = await response.json();
-    setMatchingProfiles(data.data || []);
+    console.log('Matching candidates response:', data);
+    if (data.success && data.matches) {
+      setMatchingProfiles(data.matches);
+    } else {
+      setMatchingProfiles([]);
+    }
   } catch (error) {
     setMatchError(error instanceof Error ? error.message : 'Failed to fetch matches');
     console.error('Error fetching matches:', error);
@@ -636,10 +632,6 @@ const handleCopyJobData = () => {
     };
 
     navigator.clipboard.writeText(JSON.stringify(jobData, null, 2))
-      .then(() => {
-        setCopySuccess(true);
-        setTimeout(() => setCopySuccess(false), 2000);
-      })
       .catch(err => {
         console.error('Failed to copy: ', err);
       });
@@ -837,6 +829,12 @@ const handleJobChange = (event: React.ChangeEvent<HTMLInputElement>) => {
   setSelectedJob(event.target.value);
 };
 
+// Update the filter dialog open handler
+const handleFilterDialogOpen = () => {
+  setFilterDialog(true);
+  fetchMyJobs(); // Fetch jobs when dialog opens
+};
+
 const renderFilterDialog = () => (
   <Dialog
     open={filterDialog}
@@ -891,11 +889,6 @@ const renderFilterDialog = () => (
           fullWidth
           value={selectedJob}
           onChange={handleJobChange}
-          onClick={() => {
-            if (myJobs.length === 0) {
-              fetchMyJobs();
-            }
-          }}
           sx={{
             color: '#ffffff',
             '& .MuiOutlinedInput-notchedOutline': {
@@ -998,10 +991,12 @@ if (!profile) {
 
 // Add this before the return statement
 const renderMatchingProfiles = () => {
+  console.log('Current matching profiles:', matchingProfiles);
+
   if (isLoadingMatches) {
     return (
       <Box display="flex" justifyContent="center" p={3}>
-        <CircularProgress />
+        <CircularProgress sx={{ color: '#02E2FF' }} />
       </Box>
     );
   }
@@ -1014,20 +1009,29 @@ const renderMatchingProfiles = () => {
     );
   }
 
-  if (!isLoadingMatches && matchingProfiles.length === 0) {
+  if (!matchingProfiles || matchingProfiles.length === 0) {
     return (
-      <Alert severity="info">No matching profiles found.</Alert>
+      <Alert severity="info" sx={{ 
+        backgroundColor: 'rgba(30, 41, 59, 0.7)',
+        color: '#ffffff',
+        border: '1px solid rgba(255,255,255,0.1)',
+        '& .MuiAlert-icon': {
+          color: '#02E2FF'
+        }
+      }}>
+        No matching profiles found for this job posting. Check back later for potential matches.
+      </Alert>
     );
   }
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {matchingProfiles.map((candidate) => (
-        <CandidateCard key={candidate.candidateInfo.id}>
+        <CandidateCard key={candidate.candidateId}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
             <Box>
               <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 600, mb: 0.5 }}>
-                {candidate.candidateInfo.name}
+                {candidate.name}
               </Typography>
               <Typography variant="body2" sx={{
                 color: 'rgba(255,255,255,0.7)',
@@ -1036,11 +1040,11 @@ const renderMatchingProfiles = () => {
                 gap: 0.5
               }}>
                 <LocationOnIcon sx={{ fontSize: 16 }} />
-                {candidate.candidateInfo.email}
+                Candidate ID: {candidate.candidateId}
               </Typography>
             </Box>
             <Chip
-              label={`${Number(candidate.matchAnalysis.percentage).toFixed(2)}%`}
+              label={`${candidate.score}%`}
               sx={{
                 background: 'linear-gradient(135deg, rgba(2,226,255,0.15) 0%, rgba(0,255,195,0.15) 100%)',
                 color: '#02E2FF',
@@ -1051,63 +1055,21 @@ const renderMatchingProfiles = () => {
           </Box>
 
           <Box sx={{ mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <Chip
-                label={candidate.matchAnalysis.scoreCategory}
-                size="small"
-                sx={{
-                  background: 'rgba(2,226,255,0.1)',
-                  color: '#02E2FF',
-                  borderRadius: '6px'
-                }}
-              />
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                • {candidate.candidateInfo.skills[0].experienceLevel}
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ mb: 2 }}>
             <Typography variant="subtitle2" sx={{ color: '#ffffff', mb: 1 }}>
-              Skills Match
+              Matched Skills
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {candidate.matchAnalysis.skillMatches.map((skill, index) => (
+              {candidate.matchedSkills.map((skill, index) => (
                 <SkillChip
                   key={index}
-                  label={`${skill.skill} (${Number(skill.score).toFixed(2)}%)`}
+                  label={`${skill.name} (${skill.experienceLevel})`}
                   size="small"
                 />
               ))}
             </Box>
           </Box>
 
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle2" sx={{ color: '#ffffff', mb: 1 }}>
-              Assessment
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-              {candidate.matchAnalysis.assessment}
-            </Typography>
-          </Box>
-
           <Box sx={{ display: 'flex', gap: 2, mt: 'auto' }}>
-            {/* <Button
-              fullWidth
-              variant="outlined"
-              size="small"
-              onClick={() => router.push(`/candidate/${candidate.candidateInfo.id}`)}
-              sx={{
-                borderColor: 'rgba(2,226,255,0.5)',
-                color: '#02E2FF',
-                '&:hover': {
-                  borderColor: '#02E2FF',
-                  background: 'rgba(2,226,255,0.1)'
-                }
-              }}
-            >
-              View Profile
-            </Button> */}
             <Button
               fullWidth
               variant="contained"
@@ -1588,9 +1550,7 @@ return (
     py: 4
   }}>
     <Container maxWidth="lg">
-      {/* Replace the existing filter dialog with the new one */}
       {renderFilterDialog()}
-      {/* Add this button near the top of your dashboard */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
         <Button
           variant="contained"
@@ -1608,7 +1568,6 @@ return (
         </Button>
       </Box>
       
-      {/* Profile Header */}
       <ProfileHeader>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 2 }}>
           <Box>
@@ -1665,7 +1624,6 @@ return (
         </StatsContainer>
       </ProfileHeader>
 
-      {/* Company Information */}
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
         <Box sx={{ flex: 1 }}>
           <CompanyInfoCard>
@@ -1707,7 +1665,6 @@ return (
             </InfoRow>
           </CompanyInfoCard>
 
-          {/* Required Skills Section */}
           <StyledCard>
             <Box sx={{
               display: 'flex',
@@ -1716,22 +1673,6 @@ return (
               mb: 3
             }}>
               <SectionTitle>Required Skills</SectionTitle>
-              {/* <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => setEditSkillsDialog(true)}
-                sx={{
-                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                  borderRadius: '12px',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-                  }
-                }}
-              >
-                Add Skills
-              </Button> */}
             </Box>
 
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -1757,13 +1698,12 @@ return (
           </StyledCard>
         </Box>
 
-        {/* Matching Candidates Section */}
         <Box sx={{ flex: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <SectionTitle>Matching Candidates</SectionTitle>
             <Button
               startIcon={<AddIcon />}
-              onClick={() => setFilterDialog(true)}
+              onClick={handleFilterDialogOpen}
               sx={{
                 color: '#02E2FF',
                 borderColor: 'rgba(2,226,255,0.5)',
@@ -1780,7 +1720,6 @@ return (
         </Box>
       </Box>
 
-      {/* Edit Skills Dialog */}
       <Dialog
         open={editSkillsDialog}
         onClose={() => setEditSkillsDialog(false)}
@@ -1889,7 +1828,6 @@ return (
         </DialogActions>
       </Dialog>
 
-      {/* Add the job post dialog */}
       {renderJobPostDialog()}
     </Container>
   </Box>
