@@ -164,9 +164,6 @@ export default function Test() {
 
   const [currentTranscript, setCurrentTranscript] = useState('');
 
-  // Accumulate audio chunks for final transcription per question
-  const questionChunksRef = useRef<Blob[]>([]);
-
   // Fetch questions from API
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -331,8 +328,6 @@ export default function Test() {
     currentIndexRef.current = current;
     setTimeLeft(10); // Reset to 10 seconds
     setCurrentTranscript(''); // Clear current transcript
-    // Clear accumulated audio chunks for new question
-    questionChunksRef.current = [];
   }, [current]);
 
   // Initialize camera
@@ -373,14 +368,12 @@ export default function Test() {
   const createMediaRecorder = (stream: MediaStream) => {
     const options = {
       mimeType: 'audio/webm;codecs=opus',
-      audioBitsPerSecond: 256000, // increase bitrate for better fidelity
+      audioBitsPerSecond: 128000,
     };
     const recorder = new MediaRecorder(stream, options);
 
     recorder.ondataavailable = async (event) => {
       if (event.data.size > 0) {
-        // Accumulate this chunk for final transcription
-        questionChunksRef.current.push(event.data);
         try {
           setIsTranscribing(true);
           const formData = new FormData();
@@ -471,38 +464,14 @@ export default function Test() {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 48000, // request high sample rate for clarity
+          sampleRate: 16000,
           channelCount: 1,
         },
       });
-      // Create audio context with fallback for older browsers
-      const AudioContextClass = (window.AudioContext ?? (window as any).webkitAudioContext) as typeof AudioContext;
-      const audioContext = new AudioContextClass();
-      const sourceNode = audioContext.createMediaStreamSource(rawStream);
-      const highpassFilter = audioContext.createBiquadFilter();
-      highpassFilter.type = 'highpass';
-      highpassFilter.frequency.value = 100; // remove low-frequency noise
-      // Remove mains hum with a notch filter around 60Hz
-      const notchFilter = audioContext.createBiquadFilter();
-      notchFilter.type = 'notch';
-      notchFilter.frequency.value = 60;
-      notchFilter.Q.value = 1.0;
-      const lowpassFilter = audioContext.createBiquadFilter();
-      lowpassFilter.type = 'lowpass';
-      lowpassFilter.frequency.value = 8000; // remove high-frequency hiss
-      const compressor = audioContext.createDynamicsCompressor();
-      sourceNode.connect(highpassFilter);
-      highpassFilter.connect(notchFilter);
-      notchFilter.connect(lowpassFilter);
-      lowpassFilter.connect(compressor);
-      const destination = audioContext.createMediaStreamDestination();
-      compressor.connect(destination);
-      audioStreamRef.current = destination.stream;
+      audioStreamRef.current = stream;
 
-      // Create first recorder with filtered audio stream
-      mediaRecorderRef.current = createMediaRecorder(audioStreamRef.current);
-
+      // Create first recorder
+      mediaRecorderRef.current = createMediaRecorder(stream);
       mediaRecorderRef.current.start(); // Start recording
 
       // Process chunks more frequently (every 2 seconds)
@@ -520,39 +489,8 @@ export default function Test() {
     }
   };
 
-  // After each question, combine chunks and request a single high-quality transcription
-  const finalizeFullTranscription = async () => {
-    if (questionChunksRef.current.length === 0) return;
-    setIsTranscribing(true);
-    try {
-      const fullBlob = new Blob(questionChunksRef.current, { type: 'audio/webm' });
-      const formData = new FormData();
-      formData.append('audio', fullBlob, 'full_recording.webm');
-      formData.append('prompt', questions[current] || '');
-      formData.append('response_format', 'verbose_json');
-      formData.append('temperature', '0');
-      formData.append('language', 'en');
-      const response = await fetch('/api/session', { method: 'POST', body: formData });
-      if (response.ok) {
-        const { text } = await response.json();
-        const cleaned = text.trim();
-        setCurrentTranscript(cleaned);
-        setTranscriptions(prev => ({ ...prev, [current]: cleaned }));
-      }
-    } catch (error) {
-      console.error('Final transcription error:', error);
-    } finally {
-      setIsTranscribing(false);
-      // Reset chunks after finalizing
-      questionChunksRef.current = [];
-    }
-  };
-
   const handlePrev = () => setCurrent(c => Math.max(0, c - 1));
-
-  const handleNext = async () => {
-    // Send the full answer audio for best accuracy
-    await finalizeFullTranscription();
+  const handleNext = () => {
     if (current < questions.length - 1) {
       setCurrent(c => c + 1);
     } else {
