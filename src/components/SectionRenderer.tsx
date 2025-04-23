@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { Rnd } from "react-rnd"
 import type {
   TextSection,
@@ -24,7 +23,10 @@ import { useRef, useState, useLayoutEffect, useEffect } from "react"
 type Props = {
   section: SectionType
   updateContent: (id: string, newContent: string) => void
-  updatePosition: (id: string, pos: { x: number; y: number; width: number; height: number }) => void
+  updatePosition: (
+    id: string,
+    pos: { x: number; y: number; width: number; height: number }
+  ) => void
   onDelete: (id: string) => void
   onDuplicate: (id: string) => void
   isActive: boolean
@@ -45,61 +47,52 @@ export default function SectionRenderer({
   const [isEditing, setIsEditing] = useState(false)
   const [autoHeight, setAutoHeight] = useState(section.height)
   const [showToolbar, setShowToolbar] = useState(false)
-  const [toolbarPos, setToolbarPos] = useState({ top: 0, left: 0 })
   const editableRef = useRef<HTMLDivElement | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
   const rndRef = useRef<Rnd | null>(null)
   const { id, x, y, width, height, type } = section
 
   const MIN_HEIGHT = 40
   const zoomFactor = zoom / 100
 
+  // Handle selection changes to position toolbar
   useEffect(() => {
     const handleSelectionChange = () => {
-      const selection = window.getSelection()
-      if (!selection || selection.isCollapsed || !editableRef.current?.contains(selection.anchorNode)) {
+      const sel = window.getSelection()
+      if (
+        !sel ||
+        sel.isCollapsed ||
+        !editableRef.current?.contains(sel.anchorNode)
+      ) {
         setShowToolbar(false)
-      } else {
-        updateToolbarPosition()
       }
     }
-
     document.addEventListener("selectionchange", handleSelectionChange)
     return () => {
       document.removeEventListener("selectionchange", handleSelectionChange)
     }
   }, [])
 
+  // Fix Rnd position after style changes
   useEffect(() => {
     const fixRndPosition = () => {
       if (rndRef.current) {
-        const rndElement = rndRef.current.resizableElement.current
-        if (rndElement && (x !== undefined || y !== undefined)) {
-          rndElement.style.transform = `translate(${x}px, ${y}px)`
-          const applyPositionFix = () => {
-            if (rndElement) {
-              rndElement.style.transform = `translate(${x}px, ${y}px)`
-            }
-          }
-          requestAnimationFrame(applyPositionFix)
+        const el = rndRef.current.resizableElement.current
+        if (el) {
+          el.style.transform = `translate(${x}px, ${y}px)`
         }
       }
     }
-
     fixRndPosition()
-
-    const handleSelectionEnd = () => {
-      setTimeout(fixRndPosition, 0)
-      setTimeout(fixRndPosition, 50)
-    }
-
-    document.addEventListener("selectionchange", handleSelectionEnd)
+    document.addEventListener("selectionchange", () => setTimeout(fixRndPosition, 0))
     return () => {
-      document.removeEventListener("selectionchange", handleSelectionEnd)
+      document.removeEventListener("selectionchange", () => setTimeout(fixRndPosition, 0))
     }
-  }, [x, y, isEditing, autoHeight])
+  }, [x, y])
 
   const sharedEditableStyle: React.CSSProperties = {
     width: "100%",
+    height: "100%",
     minHeight: `${MIN_HEIGHT}px`,
     padding: "8px",
     fontSize: "16px",
@@ -109,126 +102,68 @@ export default function SectionRenderer({
     color: "#000",
     caretColor: "#000",
     outline: "none",
-    userSelect: isEditing ? "text" : "none", // Allow text selection only in edit mode
+    userSelect: isEditing ? "text" : "none",
     direction: "ltr",
     backgroundColor: "transparent",
-    cursor: isEditing ? "text" : "move",
   }
 
-  const renderContent = () => {
+  // Generate the initial content for sections that don't have saved content yet
+  const generateInitialContent = () => {
     switch (type) {
-      case "text":
-        return (section as TextSection).content
       case "experience":
         const exp = section as ExperienceSection
-        return (
-          <>
-            <strong>{exp.title}</strong> @ {exp.company}
-            <br />
-            <em>
-              {exp.startDate} – {exp.endDate}
-            </em>
-            <p>{exp.description}</p>
-          </>
-        )
+        return `<strong>${exp.title}</strong> @ ${exp.company}<br><em>${exp.startDate} – ${exp.endDate}</em><p>${exp.description}</p>`
       case "skills":
-        return (
-          <>
-            <strong>Skills:</strong>
-            <ul style={{ listStylePosition: "inside", paddingLeft: 0 }}>
-              {(section as SkillsSection).skills.map((s, i) => (
-                <li key={i}>{s}</li>
-              ))}
-            </ul>
-          </>
-        )
+        return `<strong>Skills:</strong><ul style="list-style-position: inside; padding-left: 0">${(section as SkillsSection).skills.map(s => `<li>${s}</li>`).join('')}</ul>`
       case "languages":
-        return (
-          <>
-            <strong>Languages:</strong>
-            <ul style={{ listStylePosition: "inside", paddingLeft: 0 }}>
-              {(section as LanguagesSection).languages.map((lang, i) => (
-                <li key={i}>
-                  {lang.name} — {lang.level}
-                </li>
-              ))}
-            </ul>
-          </>
-        )
+        return `<strong>Languages:</strong><ul style="list-style-position: inside; padding-left: 0">${(section as LanguagesSection).languages.map(lang => `<li>${lang.name} — ${lang.level}</li>`).join('')}</ul>`
       case "education":
         const edu = section as EducationSection
-        return (
-          <>
-            <strong>{edu.degree}</strong> @ {edu.institution}
-            <br />
-            <em>
-              {edu.startDate} – {edu.endDate}
-            </em>
-            <p>{edu.description}</p>
-          </>
-        )
+        return `<strong>${edu.degree}</strong> @ ${edu.institution}<br><em>${edu.startDate} – ${edu.endDate}</em><p>${edu.description}</p>`
       case "projects":
-        return (
-          <>
-            <strong>Projects:</strong>
-            <ul style={{ listStylePosition: "inside", paddingLeft: 0 }}>
-              {(section as ProjectsSection).projects.map((proj, i) => (
-                <li key={i}>
-                  <strong>{proj.name}</strong>: {proj.description}
-                </li>
-              ))}
-            </ul>
-          </>
-        )
+        return `<strong>Projects:</strong><ul style="list-style-position: inside; padding-left: 0">${(section as ProjectsSection).projects.map(proj => `<li><strong>${proj.name}</strong>: ${proj.description}</li>`).join('')}</ul>`
       case "header":
         const header = section as HeaderSection
-        return (
-          <>
-            <h2 style={{ margin: 0 }}>{header.name}</h2>
-            <p style={{ margin: 0 }}>{header.jobTitle}</p>
-          </>
-        )
-      case "custom":
-        return (section as CustomSection).content
+        return `<h2 style="margin: 0">${header.name}</h2><p style="margin: 0">${header.jobTitle}</p>`
       default:
-        return null
+        return ''
     }
   }
 
-  const getContentText = () => editableRef.current?.innerText.trim() || ""
+  // Get content based on section type
+  const getSectionContent = () => {
+    // For text and custom sections, we already store their content in HTML format
+    if (type === "text" || type === "custom") {
+      return (section as any).content || ''
+    }
+    
+    // For all other section types, we need to check if they have a saved HTML content
+    // or generate it from their structured data
+    return (section as any).content || generateInitialContent()
+  }
 
+  // Save HTML including inline styles
   const handleBlur = () => {
-    const newText = getContentText()
-    updateContent(id, newText)
+    if (!editableRef.current) return
+    const html = editableRef.current.innerHTML || ""
+    updateContent(id, html)
     setIsEditing(false)
   }
 
+  // Auto-resize logic remains unchanged
   const resizeToContent = () => {
     const el = editableRef.current
     if (!el) return
-
-    const cleanText = el.innerText.trim()
-    if (cleanText === "") el.innerHTML = ""
-
     requestAnimationFrame(() => {
-      const newHeight = el.scrollHeight
-      const finalHeight = Math.max(newHeight, MIN_HEIGHT)
-      if (Math.abs(finalHeight - autoHeight) > 2) {
-        setAutoHeight(finalHeight)
-
-        const el = rndRef.current?.resizableElement.current
-        if (el) {
-          const transform = el.style.transform
-          const match = transform.match(/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/)
-          const newX = match ? Number.parseFloat(match[1]) : x
-          const newY = match ? Number.parseFloat(match[2]) : y
-
-          updatePosition(id, {
-            x: newX,
-            y: newY,
-            width,
-            height: finalHeight,
-          })
+      const newHeight = Math.max(el.scrollHeight, MIN_HEIGHT)
+      if (Math.abs(newHeight - autoHeight) > 2) {
+        setAutoHeight(newHeight)
+        const node = rndRef.current?.resizableElement.current
+        if (node) {
+          const match = node.style.transform.match(/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/)
+          const newX = match ? parseFloat(match[1]) : x
+          const newY = match ? parseFloat(match[2]) : y
+          updatePosition(id, { x: newX, y: newY, width, height: newHeight })
         }
       }
     })
@@ -237,96 +172,84 @@ export default function SectionRenderer({
   useLayoutEffect(() => {
     const el = editableRef.current
     if (!el) return
-    const observer = new MutationObserver(resizeToContent)
-    observer.observe(el, {
-      childList: true,
-      characterData: true,
-      subtree: true,
-    })
-    return () => observer.disconnect()
+    const obs = new MutationObserver(resizeToContent)
+    obs.observe(el, { childList: true, characterData: true, subtree: true })
+    return () => obs.disconnect()
   }, [autoHeight])
 
+  useEffect(() => {
+    // Set initial content when edit mode begins
+    if (isEditing && editableRef.current) {
+      const content = getSectionContent()
+      // Only set innerHTML if it's empty or different
+      if (editableRef.current.innerHTML !== content) {
+        editableRef.current.innerHTML = content
+      }
+      
+      // Focus on the editable element
+      setTimeout(() => {
+        editableRef.current?.focus()
+      }, 10)
+    }
+  }, [isEditing])
+
   const updateToolbarPosition = () => {
-    const selection = window.getSelection()
-    if (!selection || selection.isCollapsed) return
-    const rect = selection.getRangeAt(0).getClientRects()[0]
-    const scrollY = window.scrollY || document.documentElement.scrollTop
-
-    if (rect) {
-      setToolbarPos({
-        top: rect.top + scrollY - 60,
-        left: rect.left + rect.width / 2,
-      })
-      setShowToolbar(true)
-    }
+    const sel = window.getSelection()
+    if (!sel || sel.isCollapsed) return
+    const rect = sel.getRangeAt(0).getClientRects()[0]
+    if (rect) setShowToolbar(true)
   }
 
-  const handleDragStop = (e: any, d: { x: number; y: number }) => {
-    updatePosition(id, {
-      x: d.x,
-      y: d.y,
-      width,
-      height: autoHeight,
-    })
+  const handleDragStop = (_: any, d: { x: number; y: number }) => {
+    updatePosition(id, { x: d.x, y: d.y, width, height: autoHeight })
   }
 
-  const handleResizeStop = (e: any, direction: any, ref: any, delta: any, position: { x: number; y: number }) => {
-    const newHeight = Number.parseInt(ref.style.height)
-    const newWidth = Number.parseInt(ref.style.width)
-    setAutoHeight(newHeight)
-
-    updatePosition(id, {
-      x: position.x,
-      y: position.y,
-      width: newWidth,
-      height: newHeight,
-    })
+  const handleResizeStop = (
+    _: any,
+    __: any,
+    ref: any,
+    ___: any,
+    pos: { x: number; y: number }
+  ) => {
+    const newH = parseInt(ref.style.height)
+    const newW = parseInt(ref.style.width)
+    setAutoHeight(newH)
+    updatePosition(id, { x: pos.x, y: pos.y, width: newW, height: newH })
   }
 
-  // Prevent text editing (typing, deleting, pasting) in edit mode for skills section
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (type === 'skills' && isEditing) {
-      e.preventDefault()
-    }
+    if (type === "skills" && isEditing) e.preventDefault()
+  }
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    if (type === "skills" && isEditing) e.preventDefault()
   }
 
-  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
-    if (type === 'skills' && isEditing) {
-      e.preventDefault()
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsEditing(true)
+  }
+
+  const handleContainerClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!isEditing) {
+      onClick()
     }
   }
 
   return (
     <Rnd
-    className={styles.sectionWrapper}
+      className={styles.sectionWrapper}
       ref={rndRef}
       bounds="parent"
       disableDragging={isEditing}
-      enableResizing={{
-        top: false,
-        right: false,
-        bottom: true,
-        left: false,
-        topRight: false,
-        bottomRight: true,
-        bottomLeft: false,
-        topLeft: false,
-      }}
+      enableResizing={{ top: false, right: false, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: false, topLeft: false }}
       size={{ width, height: autoHeight }}
       position={{ x, y }}
       onDragStop={handleDragStop}
       onResizeStop={handleResizeStop}
       scale={zoomFactor}
-      onClick={(e: { stopPropagation: () => void }) => {
-        e.stopPropagation()
-        onClick()
-      }}
-      style={{
-        position: "absolute",
-        backgroundColor: "transparent",
-        zIndex: 10,
-        border: isActive ? "1px dashed #00bcd4" : "none",
-      }}
+      style={{ position: "absolute", backgroundColor: "transparent", zIndex: 10, border: isActive ? "1px dashed #00bcd4" : "none" }}
       data-rnd="true"
       data-section-id={id}
     >
@@ -341,31 +264,44 @@ export default function SectionRenderer({
         </div>
       )}
 
-      <div
-        ref={editableRef}
-        contentEditable={isEditing}
-        suppressContentEditableWarning
-        onDoubleClick={(e) => {
-          e.preventDefault()
-          setIsEditing(true)
-        }}
-        onBlur={handleBlur}
-        onClick={(e) => {
-          e.stopPropagation()
-          onClick()
-        }}
-        onInput={resizeToContent}
-        onKeyDown={handleKeyDown}
-        onPaste={handlePaste}
-        onKeyUp={updateToolbarPosition}
-        onMouseUp={updateToolbarPosition}
+      <div 
+        ref={containerRef}
         style={{
-          ...sharedEditableStyle,
-          cursor: isEditing ? (type === 'skills' ? 'default' : 'text') : 'move',
+          width: "100%",
+          height: "100%",
+          position: "relative",
+          cursor: isEditing ? "text" : "move"
         }}
-        data-section-content="true"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!isEditing) onClick();
+        }}
+        onDoubleClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!isEditing) setIsEditing(true);
+        }}
       >
-        {renderContent()}
+        {isEditing ? (
+          <div 
+            ref={editableRef}
+            contentEditable={true}
+            suppressContentEditableWarning={true}
+            onBlur={handleBlur}
+            onInput={resizeToContent}
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
+            onKeyUp={updateToolbarPosition}
+            onMouseUp={updateToolbarPosition}
+            style={sharedEditableStyle}
+            data-section-content="true"
+          />
+        ) : (
+          <div 
+            style={sharedEditableStyle}
+            dangerouslySetInnerHTML={{ __html: getSectionContent() }} 
+          />
+        )}
       </div>
 
       <FloatingToolbar visible={showToolbar} onClose={() => setShowToolbar(false)} />

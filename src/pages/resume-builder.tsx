@@ -44,8 +44,13 @@ export default function ResumeBuilder() {
   }, [dispatch])
 
   const updateSectionContent = (id: string, newContent: string) =>
-    setSections((prev) => prev.map((s) => (s.id === id ? { ...s, content: newContent } : s)))
-
+    setSections((prev) => prev.map((s) => {
+      if (s.id === id) {
+        // Add content field to any section type
+        return { ...s, content: newContent }
+      }
+      return s
+    }))
   const updateSectionPosition = (id: string, pos: { x: number; y: number; width: number; height: number }) =>
     setSections((prev) => prev.map((s) => (s.id === id ? { ...s, ...pos } : s)))
 

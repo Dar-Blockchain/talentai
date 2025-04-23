@@ -284,4 +284,3 @@ const fontLabel: React.CSSProperties = {
   color: "#222",
   fontSize: "14px",
 }
-
