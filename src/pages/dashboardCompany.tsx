@@ -20,6 +20,7 @@ import {
   Paper,
   Grid,
   Stack,
+  MenuItem,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -316,7 +317,7 @@ interface RequiredSkill {
   category: string;
 }
 
-export default function DashboardCompany() {
+const DashboardCompany = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { profile, loading, error } = useSelector(selectProfile);
@@ -337,6 +338,10 @@ export default function DashboardCompany() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [linkedinCopySuccess, setLinkedinCopySuccess] = useState(false);
+  const [myJobs, setMyJobs] = useState<any[]>([]);
+  const [selectedJob, setSelectedJob] = useState('');
+  const [isLoadingJobs, setIsLoadingJobs] = useState(false);
+  const [jobsError, setJobsError] = useState<string | null>(null);
 
   // Fetch matching profiles
   const fetchMatchingProfiles = async () => {
@@ -769,6 +774,173 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
     console.error('Error saving job:', error);
   }
 };
+
+// Add function to fetch job posts
+const fetchMyJobs = async () => {
+  const token = Cookies.get('api_token');
+  setIsLoadingJobs(true);
+  setJobsError(null);
+
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}post/my-posts`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch jobs');
+    }
+
+    const data = await response.json();
+    setMyJobs(data.data || []);
+  } catch (error) {
+    setJobsError(error instanceof Error ? error.message : 'Failed to fetch jobs');
+    console.error('Error fetching jobs:', error);
+  } finally {
+    setIsLoadingJobs(false);
+  }
+};
+
+// Add handler for job selection
+const handleJobChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  setSelectedJob(event.target.value);
+};
+
+const renderFilterDialog = () => (
+  <Dialog
+    open={filterDialog}
+    onClose={() => setFilterDialog(false)}
+    maxWidth="sm"
+    fullWidth
+    PaperProps={{
+      sx: {
+        borderRadius: '16px',
+        background: 'rgba(30, 41, 59, 0.95)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255,255,255,0.1)',
+      }
+    }}
+  >
+    <DialogTitle sx={{
+      borderBottom: '1px solid rgba(255,255,255,0.1)',
+      color: '#ffffff'
+    }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Typography variant="h6">Filter by Job</Typography>
+        <IconButton
+          onClick={() => setFilterDialog(false)}
+          sx={{ color: 'rgba(255,255,255,0.7)' }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </Box>
+    </DialogTitle>
+    <DialogContent sx={{ mt: 2 }}>
+      <Typography variant="subtitle2" sx={{ mb: 1, color: '#ffffff' }}>
+        Select Job
+      </Typography>
+      {isLoadingJobs ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+          <CircularProgress size={24} sx={{ color: '#02E2FF' }} />
+        </Box>
+      ) : jobsError ? (
+        <Alert severity="error" sx={{ 
+          backgroundColor: 'rgba(211,47,47,0.1)', 
+          color: '#ff8a80',
+          border: '1px solid rgba(211,47,47,0.3)',
+          '& .MuiAlert-icon': {
+            color: '#ff8a80'
+          }
+        }}>
+          {jobsError}
+        </Alert>
+      ) : (
+        <TextField
+          select
+          fullWidth
+          value={selectedJob}
+          onChange={handleJobChange}
+          onClick={() => {
+            if (myJobs.length === 0) {
+              fetchMyJobs();
+            }
+          }}
+          sx={{
+            color: '#ffffff',
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'rgba(255,255,255,0.2)'
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'rgba(255,255,255,0.3)'
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: '#02E2FF'
+            }
+          }}
+          SelectProps={{
+            MenuProps: {
+              PaperProps: {
+                sx: {
+                  maxHeight: 300,
+                  backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                  '& .MuiMenuItem-root': {
+                    color: '#ffffff',
+                    '&:hover': {
+                      backgroundColor: 'rgba(2,226,255,0.1)',
+                    },
+                    '&.Mui-selected': {
+                      backgroundColor: 'rgba(2,226,255,0.2)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(2,226,255,0.3)',
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }}
+        >
+          <MenuItem value="">All Jobs</MenuItem>
+          {myJobs.map((job) => (
+            <MenuItem key={job._id} value={job._id}>
+              {job.jobDetails.title}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
+    </DialogContent>
+    <DialogActions sx={{
+      p: 3,
+      borderTop: '1px solid rgba(255,255,255,0.1)'
+    }}>
+      <Button
+        onClick={() => {
+          setSelectedJob('');
+          setFilterDialog(false);
+        }}
+        sx={{
+          color: 'rgba(255,255,255,0.8)',
+          mr: 1
+        }}
+      >
+        Cancel
+      </Button>
+      <Button
+        variant="contained"
+        onClick={handleFilterApply}
+        sx={{
+          background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+          '&:hover': {
+            background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+          }
+        }}
+      >
+        Apply Filter
+      </Button>
+    </DialogActions>
+  </Dialog>
+);
 
 if (loading) {
   return (
@@ -1386,6 +1558,8 @@ return (
     py: 4
   }}>
     <Container maxWidth="lg">
+      {/* Replace the existing filter dialog with the new one */}
+      {renderFilterDialog()}
       {/* Add this button near the top of your dashboard */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
         <Button
@@ -1569,7 +1743,7 @@ return (
                 }
               }}
             >
-              Filter Candidates
+              Filter by Job
             </Button>
           </Box>
           {renderMatchingProfiles()}
@@ -1685,120 +1859,11 @@ return (
         </DialogActions>
       </Dialog>
 
-      {/* Filter Dialog */}
-      <Dialog
-        open={filterDialog}
-        onClose={() => setFilterDialog(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: '16px',
-            background: 'rgba(30, 41, 59, 0.95)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255,255,255,0.1)',
-          }
-        }}
-      >
-        <DialogTitle sx={{
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
-          color: '#ffffff'
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Typography variant="h6">Filter Candidates</Typography>
-            <IconButton
-              onClick={() => setFilterDialog(false)}
-              sx={{ color: 'rgba(255,255,255,0.7)' }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
-        </DialogTitle>
-        <DialogContent sx={{ mt: 2 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1, color: '#ffffff' }}>
-            Minimum Match Score
-          </Typography>
-          <TextField
-            type="number"
-            value={minScore}
-            onChange={(e) => setMinScore(Number(e.target.value))}
-            fullWidth
-            InputProps={{
-              inputProps: { min: 0, max: 100 },
-              sx: {
-                color: '#ffffff',
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(255,255,255,0.2)',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(255,255,255,0.3)',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#02E2FF',
-                },
-              },
-            }}
-            sx={{ mb: 3 }}
-          />
-
-          <Typography variant="subtitle2" sx={{ mb: 1, color: '#ffffff' }}>
-            Required Skills
-          </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-            {profile?.requiredSkills.map((skill) => (
-              <SkillChip
-                key={skill}
-                label={skill}
-                onClick={() => {
-                  setSelectedSkills(prev =>
-                    prev.includes(skill)
-                      ? prev.filter(s => s !== skill)
-                      : [...prev, skill]
-                  );
-                }}
-                sx={{
-                  backgroundColor: selectedSkills.includes(skill)
-                    ? 'rgba(2,226,255,0.3)'
-                    : 'rgba(2,226,255,0.1)',
-                }}
-              />
-            ))}
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{
-          p: 3,
-          borderTop: '1px solid rgba(255,255,255,0.1)'
-        }}>
-          <Button
-            onClick={() => {
-              setMinScore(0);
-              setSelectedSkills([]);
-            }}
-            sx={{
-              color: 'rgba(255,255,255,0.8)',
-              mr: 1
-            }}
-          >
-            Reset
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleFilterApply}
-            sx={{
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-              }
-            }}
-          >
-            Apply Filters
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       {/* Add the job post dialog */}
       {renderJobPostDialog()}
     </Container>
   </Box>
 );
-} 
+}
+
+export default DashboardCompany; 
