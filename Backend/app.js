@@ -40,7 +40,7 @@ app.use('/evaluation', evaluationRouter);
 app.use('/linkedinPost', linkedinPostRouter);
 app.use('/api', agentIARouter);
 app.use('/post', postRouter);
-app.use('/api', matchingRoutes);
+app.use('/matching', matchingRoutes);
 // Route de base
 app.get("/", (req, res) => {
   res.json({ message: "Bienvenue sur l'API Express!" });
