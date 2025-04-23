@@ -392,8 +392,38 @@ useEffect(() => {
   setFilteredCandidates(filtered);
 }, [minScore, selectedSkills, matchingProfiles]);
 
-const handleFilterApply = () => {
-  setFilterDialog(false);
+const handleFilterApply = async () => {
+  if (!selectedJob) {
+    setFilterDialog(false);
+    return;
+  }
+
+  try {
+    setIsLoadingMatches(true);
+    setMatchError(null);
+    const token = Cookies.get('api_token');
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/matching/jobs/${selectedJob}/matches`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch matching candidates');
+    }
+
+    const data = await response.json();
+    setMatchingProfiles(data.data || []);
+  } catch (error) {
+    setMatchError(error instanceof Error ? error.message : 'Failed to fetch matches');
+    console.error('Error fetching matches:', error);
+  } finally {
+    setIsLoadingMatches(false);
+    setFilterDialog(false);
+  }
 };
 
 const handleLogout = () => {
