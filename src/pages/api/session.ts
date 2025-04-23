@@ -62,7 +62,7 @@ export default async function handler(
         fs.writeFileSync(tempFilePath, fileBuffer);
 
         // Transcribe using AssemblyAI
-        const client = new AssemblyAI({ apiKey: '5dfdc21162fa4f8a9f8ce856546218a4'});
+        const client = new AssemblyAI({ apiKey: process.env.ASSEMBLYAI_API_KEY! });
         const transcript = await client.transcripts.transcribe({ audio: tempFilePath });
 
         // Clean up temp files
