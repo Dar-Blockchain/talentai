@@ -29,6 +29,7 @@ type Props = {
   onDuplicate: (id: string) => void
   isActive: boolean
   onClick: () => void
+  zoom?: number
 }
 
 export default function SectionRenderer({
@@ -39,6 +40,7 @@ export default function SectionRenderer({
   onDuplicate,
   isActive,
   onClick,
+  zoom = 100,
 }: Props) {
   const [isEditing, setIsEditing] = useState(false)
   const [autoHeight, setAutoHeight] = useState(section.height)
@@ -49,12 +51,15 @@ export default function SectionRenderer({
   const { id, x, y, width, height, type } = section
 
   const MIN_HEIGHT = 40
+  const zoomFactor = zoom / 100
 
   useEffect(() => {
     const handleSelectionChange = () => {
       const selection = window.getSelection()
       if (!selection || selection.isCollapsed || !editableRef.current?.contains(selection.anchorNode)) {
         setShowToolbar(false)
+      } else {
+        updateToolbarPosition()
       }
     }
 
@@ -64,43 +69,32 @@ export default function SectionRenderer({
     }
   }, [])
 
-  // Fix Rnd position after text edits that might cause jumps
   useEffect(() => {
-    // After any rendering update that might affect position
     const fixRndPosition = () => {
-      // Make sure we have an RND instance
       if (rndRef.current) {
         const rndElement = rndRef.current.resizableElement.current
-
         if (rndElement && (x !== undefined || y !== undefined)) {
-          // Apply position immediately
           rndElement.style.transform = `translate(${x}px, ${y}px)`
-          
-          // Apply multiple fixes to ensure stability during text formatting
           const applyPositionFix = () => {
             if (rndElement) {
               rndElement.style.transform = `translate(${x}px, ${y}px)`
             }
           }
-          
           requestAnimationFrame(applyPositionFix)
-          setTimeout(applyPositionFix, 10)
-          setTimeout(applyPositionFix, 100)
         }
       }
     }
 
     fixRndPosition()
-    
-    // Also trigger position fix whenever the selection changes (for toolbar actions)
+
     const handleSelectionEnd = () => {
       setTimeout(fixRndPosition, 0)
       setTimeout(fixRndPosition, 50)
     }
-    
-    document.addEventListener('selectionchange', handleSelectionEnd)
+
+    document.addEventListener("selectionchange", handleSelectionEnd)
     return () => {
-      document.removeEventListener('selectionchange', handleSelectionEnd)
+      document.removeEventListener("selectionchange", handleSelectionEnd)
     }
   }, [x, y, isEditing, autoHeight])
 
@@ -115,7 +109,7 @@ export default function SectionRenderer({
     color: "#000",
     caretColor: "#000",
     outline: "none",
-    userSelect: isEditing ? "text" : "none",
+    userSelect: isEditing ? "text" : "none", // Allow text selection only in edit mode
     direction: "ltr",
     backgroundColor: "transparent",
     cursor: isEditing ? "text" : "move",
@@ -221,7 +215,21 @@ export default function SectionRenderer({
       const finalHeight = Math.max(newHeight, MIN_HEIGHT)
       if (Math.abs(finalHeight - autoHeight) > 2) {
         setAutoHeight(finalHeight)
-        updatePosition(id, { x, y, width, height: finalHeight })
+
+        const el = rndRef.current?.resizableElement.current
+        if (el) {
+          const transform = el.style.transform
+          const match = transform.match(/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/)
+          const newX = match ? Number.parseFloat(match[1]) : x
+          const newY = match ? Number.parseFloat(match[2]) : y
+
+          updatePosition(id, {
+            x: newX,
+            y: newY,
+            width,
+            height: finalHeight,
+          })
+        }
       }
     })
   }
@@ -253,8 +261,44 @@ export default function SectionRenderer({
     }
   }
 
+  const handleDragStop = (e: any, d: { x: number; y: number }) => {
+    updatePosition(id, {
+      x: d.x,
+      y: d.y,
+      width,
+      height: autoHeight,
+    })
+  }
+
+  const handleResizeStop = (e: any, direction: any, ref: any, delta: any, position: { x: number; y: number }) => {
+    const newHeight = Number.parseInt(ref.style.height)
+    const newWidth = Number.parseInt(ref.style.width)
+    setAutoHeight(newHeight)
+
+    updatePosition(id, {
+      x: position.x,
+      y: position.y,
+      width: newWidth,
+      height: newHeight,
+    })
+  }
+
+  // Prevent text editing (typing, deleting, pasting) in edit mode for skills section
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (type === 'skills' && isEditing) {
+      e.preventDefault()
+    }
+  }
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    if (type === 'skills' && isEditing) {
+      e.preventDefault()
+    }
+  }
+
   return (
     <Rnd
+    className={styles.sectionWrapper}
       ref={rndRef}
       bounds="parent"
       disableDragging={isEditing}
@@ -270,25 +314,9 @@ export default function SectionRenderer({
       }}
       size={{ width, height: autoHeight }}
       position={{ x, y }}
-      onDragStop={(e, d) =>
-        updatePosition(id, {
-          x: d.x,
-          y: d.y,
-          width,
-          height: autoHeight,
-        })
-      }
-      onResizeStop={(e, direction, ref, delta, position) => {
-        const newHeight = Number.parseInt(ref.style.height)
-        const newWidth = Number.parseInt(ref.style.width)
-        setAutoHeight(newHeight)
-        updatePosition(id, {
-          x: position.x,
-          y: position.y,
-          width: newWidth,
-          height: newHeight,
-        })
-      }}
+      onDragStop={handleDragStop}
+      onResizeStop={handleResizeStop}
+      scale={zoomFactor}
       onClick={(e: { stopPropagation: () => void }) => {
         e.stopPropagation()
         onClick()
@@ -299,7 +327,6 @@ export default function SectionRenderer({
         zIndex: 10,
         border: isActive ? "1px dashed #00bcd4" : "none",
       }}
-      // Add data attribute to help with RND detection in toolbar
       data-rnd="true"
       data-section-id={id}
     >
@@ -318,16 +345,24 @@ export default function SectionRenderer({
         ref={editableRef}
         contentEditable={isEditing}
         suppressContentEditableWarning
-        onDoubleClick={() => setIsEditing(true)}
+        onDoubleClick={(e) => {
+          e.preventDefault()
+          setIsEditing(true)
+        }}
         onBlur={handleBlur}
         onClick={(e) => {
           e.stopPropagation()
           onClick()
         }}
         onInput={resizeToContent}
+        onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
         onKeyUp={updateToolbarPosition}
         onMouseUp={updateToolbarPosition}
-        style={sharedEditableStyle}
+        style={{
+          ...sharedEditableStyle,
+          cursor: isEditing ? (type === 'skills' ? 'default' : 'text') : 'move',
+        }}
         data-section-content="true"
       >
         {renderContent()}

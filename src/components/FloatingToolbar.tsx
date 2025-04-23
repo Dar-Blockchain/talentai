@@ -98,59 +98,46 @@ export default function FloatingToolbar({ visible, onClose }: Props) {
 
     try {
       // Store original selection
-      const sel = window.getSelection()
-      if (!sel) return
+
 
       // Check if we're in a list
-      let inListItem = false
-      let listItem: HTMLElement | null = null
-      let current: Node | null = range.commonAncestorContainer
-      while (current && current !== document.body) {
-        if (current.nodeName === "LI") {
-          inListItem = true
-          listItem = current as HTMLElement
-          break
-        }
-        current = current.parentNode
-      }
-
-      // For font-size in list items, apply directly to the list item
-      if (property === "font-size" && inListItem && listItem) {
-        // Apply font size directly to the list item
-        listItem.style.fontSize = value
-        
-        // Update font size state
-        const size = parseInt(value)
-        if (!isNaN(size)) {
-          setFontSize(size)
-        }
-      } else {
-        // Standard approach for non-list items or other properties
+      const sel = window.getSelection()
+      if (!sel || sel.rangeCount === 0) return
+      const range = sel.getRangeAt(0)
+    
+      if (property === "color") {
         document.execCommand("styleWithCSS", false, "true")
-        
-        if (property === "color") {
-          document.execCommand("foreColor", false, value)
-        } else if (property === "font-size") {
-          // Create a span with the desired font size
+        document.execCommand("foreColor", false, value)
+        return
+      }
+    
+      if (property === "font-size") {
+        // 1) try to find a parent <li>
+        let node: Node | null = range.startContainer
+        while (node && node.nodeName !== "LI") node = node.parentNode
+    
+        if (node && node instanceof HTMLElement) {
+          // style that single list‐item (no splitting, no blank bullets)
+          node.style.fontSize = value
+        } else {
+          // wrap only the selected text in a span
           const span = document.createElement("span")
           span.style.fontSize = value
-          
-          // Extract content rather than cloning to avoid duplicates
-          const content = range.extractContents()
-          span.appendChild(content)
+          const contents = range.extractContents()
+          span.appendChild(contents)
           range.insertNode(span)
-          
-          // Update selection
-          range.selectNodeContents(span)
+    
+          // re‑select the new span so future edits still work
           sel.removeAllRanges()
-          sel.addRange(range)
-          
-          // Update font size state
-          const size = parseInt(value)
-          if (!isNaN(size)) {
-            setFontSize(size)
-          }
+          const newRange = document.createRange()
+          newRange.selectNodeContents(span)
+          sel.addRange(newRange)
+          setSelection(prev => ({ ...prev, range: newRange }))
         }
+    
+        // update the toolbar label
+        const size = parseInt(value, 10)
+        if (!isNaN(size)) setFontSize(size)
       }
     } catch (e) {
       console.error(`Error applying ${property}:`, e)
@@ -191,14 +178,17 @@ export default function FloatingToolbar({ visible, onClose }: Props) {
         rndElement.style.transform = rndPosition.transform
         if (rndPosition.top) rndElement.style.top = rndPosition.top
         if (rndPosition.left) rndElement.style.left = rndPosition.left
-
+  
         setTimeout(() => {
-          if (rndElement) {
-            rndElement.style.transform = rndPosition.transform
-            if (rndPosition.top) rndElement.style.top = rndPosition.top
-            if (rndPosition.left) rndElement.style.left = rndPosition.left
+          if (rndElement && rndPosition) {
+            requestAnimationFrame(() => {
+              rndElement.style.transform = rndPosition.transform;
+              if (rndPosition.top) rndElement.style.top = rndPosition.top;
+              if (rndPosition.left) rndElement.style.left = rndPosition.left;
+            });
           }
-        }, 0)
+        }, 50);
+      
       }
     } catch (e) {
       console.error(`Error applying format ${format}:`, e)
