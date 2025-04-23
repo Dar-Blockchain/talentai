@@ -465,6 +465,7 @@ export default function Test() {
       );
       setCurrentTranscript(''); // Clear current transcript
 
+      
       // Get high-fidelity audio stream with noise cancellation and auto gain control
       const rawStream = await navigator.mediaDevices.getUserMedia({
         audio: {
