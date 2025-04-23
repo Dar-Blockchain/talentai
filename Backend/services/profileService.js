@@ -166,4 +166,78 @@ module.exports.searchProfilesBySkills = async (skills) => {
     console.error('Erreur lors de la recherche des profils:', error);
     throw error;
   }
+};
+
+// Gérer les soft skills
+module.exports.addSoftSkills = async (userId, softSkills) => {
+  try {
+    const profile = await Profile.findOne({ userId });
+    if (!profile) {
+      throw new Error('Profil non trouvé');
+    }
+
+    if (!Array.isArray(softSkills)) {
+      throw new Error('Les soft skills doivent être fournis sous forme de tableau');
+    }
+
+    profile.softSkills = [...new Set([...profile.softSkills || [], ...softSkills])];
+    await profile.save();
+    return profile;
+  } catch (error) {
+    console.error('Erreur lors de l\'ajout des soft skills:', error);
+    throw error;
+  }
+};
+
+module.exports.getSoftSkills = async (userId) => {
+  try {
+    const profile = await Profile.findOne({ userId });
+    if (!profile) {
+      throw new Error('Profil non trouvé');
+    }
+    return profile.softSkills || [];
+  } catch (error) {
+    console.error('Erreur lors de la récupération des soft skills:', error);
+    throw error;
+  }
+};
+
+module.exports.updateSoftSkills = async (userId, softSkills) => {
+  try {
+    const profile = await Profile.findOne({ userId });
+    if (!profile) {
+      throw new Error('Profil non trouvé');
+    }
+
+    if (!Array.isArray(softSkills)) {
+      throw new Error('Les soft skills doivent être fournis sous forme de tableau');
+    }
+
+    profile.softSkills = softSkills;
+    await profile.save();
+    return profile;
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour des soft skills:', error);
+    throw error;
+  }
+};
+
+module.exports.deleteSoftSkills = async (userId, softSkillsToDelete) => {
+  try {
+    const profile = await Profile.findOne({ userId });
+    if (!profile) {
+      throw new Error('Profil non trouvé');
+    }
+
+    if (!Array.isArray(softSkillsToDelete)) {
+      throw new Error('Les soft skills à supprimer doivent être fournis sous forme de tableau');
+    }
+
+    profile.softSkills = profile.softSkills.filter(skill => !softSkillsToDelete.includes(skill));
+    await profile.save();
+    return profile;
+  } catch (error) {
+    console.error('Erreur lors de la suppression des soft skills:', error);
+    throw error;
+  }
 }; 

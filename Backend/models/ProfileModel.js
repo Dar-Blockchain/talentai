@@ -22,6 +22,15 @@ const profileSchema = new mongoose.Schema(
         ScoreTest: Number,
       },
     ],
+    softSkills: [
+      {
+        name: String,
+        category: String,
+        experienceLevel: String,
+        NumberTestPassed: Number,
+        ScoreTest: Number,
+      },
+    ],
     companyDetails: {
       name: String,
       industry: String,
