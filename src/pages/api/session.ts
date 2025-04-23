@@ -1,8 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { IncomingForm } from 'formidable';
-import type { Fields, Files } from 'formidable';
 import fs from 'fs';
 import path from 'path';
+import formidable from 'formidable';
+// @ts-ignore: no type declarations for assemblyai
+import { AssemblyAI } from 'assemblyai';
 
 export const config = {
   api: {
@@ -28,9 +30,8 @@ export default async function handler(
     // 2) Handle audio processing (POST)
     if (req.method === 'POST') {
       const form = new IncomingForm();
-
-      const [fields, files] = await new Promise<[Fields, Files]>((resolve, reject) => {
-        form.parse(req, (err: Error | null, fields: Fields, files: Files) => {
+      const [fields, files] = await new Promise<[any, any]>((resolve, reject) => {
+        form.parse(req, (err:any, fields:any, files:any) => {
           if (err) return reject(err);
           resolve([fields, files]);
         });
@@ -60,41 +61,15 @@ export default async function handler(
         const tempFilePath = path.join(tempDir, `audio_${Date.now()}.webm`);
         fs.writeFileSync(tempFilePath, fileBuffer);
 
-        // Send file to OpenAI Whisper
-        const formData = new FormData();
-        formData.append(
-          'file',
-          new Blob([fileBuffer], { type: 'audio/webm' }),
-          'recording.webm'
-        );
-        formData.append('model', 'whisper-1');
-        formData.append('response_format', 'json');
-        formData.append('language', 'en');
-
-        const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY || ''}`,
-          },
-          body: formData,
-        });
+        // Transcribe using AssemblyAI
+        const client = new AssemblyAI({ apiKey: '5dfdc21162fa4f8a9f8ce856546218a4'});
+        const transcript = await client.transcripts.transcribe({ audio: tempFilePath });
 
         // Clean up temp files
-        if (fs.existsSync(audioFile.filepath)) {
-          fs.unlinkSync(audioFile.filepath);
-        }
-        if (fs.existsSync(tempFilePath)) {
-          fs.unlinkSync(tempFilePath);
-        }
+        if (fs.existsSync(audioFile.filepath)) fs.unlinkSync(audioFile.filepath);
+        if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath);
 
-        if (!response.ok) {
-          const error = await response.json();
-          console.error('OpenAI API error:', error);
-          return res.status(response.status).json(error);
-        }
-
-        const data = await response.json();
-        return res.status(200).json({ text: data.text });
+        return res.status(200).json({ text: transcript.text });
       } catch (error) {
         console.error('Processing error:', error);
         return res.status(500).json({

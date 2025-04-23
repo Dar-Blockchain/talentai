@@ -463,7 +463,7 @@ export default function Test() {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          sampleRate: 16000,
+          sampleRate: 48000,
           channelCount: 1,
         },
       });
