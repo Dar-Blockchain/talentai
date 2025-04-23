@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMyProfile, selectProfile, clearProfile } from '../store/features/profileSlice';
 import { AppDispatch } from '../store/store';
@@ -29,7 +29,8 @@ import {
   FormControl,
   FormLabel,
   Select,
-  InputLabel
+  InputLabel,
+  Slider
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -234,6 +235,48 @@ const ScoreCircle = styled(Box)(({ theme }) => ({
   margin: '0 auto'
 }));
 
+interface Skill {
+  name: string;
+  proficiencyLevel: number;
+  value?: string;
+  requiresLanguage?: boolean;
+  subcategories?: Array<{
+    value: string;
+    label: string;
+  }>;
+}
+
+// Add helper functions to calculate skill percentages
+const calculateSkillPercentage = (skills: Array<{ name: string; proficiencyLevel: number }> = [], type: 'technical' | 'soft'): number => {
+  const relevantSkills = skills.filter(skill => {
+    const isTechnical = ['JavaScript', 'Python', 'Java', 'React', 'Node.js'].includes(skill.name);
+    return type === 'technical' ? isTechnical : !isTechnical;
+  });
+
+  if (relevantSkills.length === 0) return 0;
+
+  const totalProficiency = relevantSkills.reduce((sum, skill) => sum + (skill.proficiencyLevel / 5) * 100, 0);
+  return totalProficiency / relevantSkills.length;
+};
+
+// Add helper function to map proficiency to experience level
+const getExperienceLevelFromProficiency = (proficiencyLevel: number): string => {
+  switch (proficiencyLevel) {
+    case 1:
+      return 'Entry Level';
+    case 2:
+      return 'Junior';
+    case 3:
+      return 'Mid Level';
+    case 4:
+      return 'Senior';
+    case 5:
+      return 'Expert';
+    default:
+      return 'Entry Level';
+  }
+};
+
 export default function DashboardCandidate() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
@@ -242,14 +285,20 @@ export default function DashboardCandidate() {
   const [testModalOpen, setTestModalOpen] = useState(false);
   const [skillType, setSkillType] = useState('');
   const [selectedSkill, setSelectedSkill] = useState('');
-  const [softSkillType, setSoftSkillType] = useState('')  
+  const [softSkillType, setSoftSkillType] = useState('')
   const [softSkillLanguage, setSoftSkillLanguage] = useState('');
   const [softSkillSubcategory, setSoftSkillSubcategory] = useState('');
-  
+
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     experienceLevel: ''
+  });
+
+  const [addSkillDialogOpen, setAddSkillDialogOpen] = useState(false);
+  const [newSkill, setNewSkill] = useState({
+    name: '',
+    proficiencyLevel: 0
   });
 
   useEffect(() => {
@@ -296,10 +345,10 @@ export default function DashboardCandidate() {
       // First clear the token from both localStorage and cookies
       localStorage.removeItem('api_token');
       Cookies.remove('api_token', { path: '/' });
-      
+
       // Then clear all other data
       localStorage.clear();
-      
+
       // Clear all other cookies
       Object.keys(Cookies.get()).forEach(cookieName => {
         Cookies.remove(cookieName, { path: '/' });
@@ -343,17 +392,60 @@ export default function DashboardCandidate() {
       const queryParams = new URLSearchParams();
       queryParams.append('type', 'soft');
       queryParams.append('skill', softSkillType);
-      
+
       if (selectedSoftSkill?.requiresLanguage) {
         queryParams.append('language', softSkillLanguage);
       }
       if (softSkillSubcategory) {
         queryParams.append('subcategory', softSkillSubcategory);
       }
-      
+
       router.push(`/test?${queryParams.toString()}`);
     }
     handleCloseTestModal();
+  };
+
+  const handleAddSkill = async () => {
+    try {
+      const token = Cookies.get('api_token');
+
+      // Combine existing skills with the new skill
+      const updatedSkills = [
+        ...(profile?.skills || []),
+        {
+          name: newSkill.name,
+          proficiencyLevel: newSkill.proficiencyLevel,
+          experienceLevel: getExperienceLevelFromProficiency(newSkill.proficiencyLevel),
+          NumberTestPassed: 0,
+          ScoreTest: 0
+        }
+      ];
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/createOrUpdateProfile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          type: "Candidate",
+          skills: updatedSkills
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add skill');
+      }
+
+      // Refresh the profile data
+      dispatch(getMyProfile());
+
+      // Reset form and close dialog
+      setNewSkill({ name: '', proficiencyLevel: 0 });
+      setAddSkillDialogOpen(false);
+    } catch (error) {
+      console.error('Error adding skill:', error);
+    }
   };
 
   const matchingCandidates: MatchingCandidate[] = [
@@ -410,52 +502,12 @@ export default function DashboardCandidate() {
     }
   ];
 
-  const softSkills = [
-    { 
-      value: 'communication',
-      label: 'Communication',
-      requiresLanguage: true
-    },
-    { 
-      value: 'leadership',
-      label: 'Leadership',
-      subcategories: [
-        { value: 'team_management', label: 'Team Management' },
-        { value: 'decision_making', label: 'Decision Making' },
-        { value: 'strategic_planning', label: 'Strategic Planning' },
-        { value: 'conflict_resolution', label: 'Conflict Resolution' }
-      ]
-    },
-    { 
-      value: 'problem_solving',
-      label: 'Problem Solving',
-      subcategories: [
-        { value: 'analytical_thinking', label: 'Analytical Thinking' },
-        { value: 'critical_thinking', label: 'Critical Thinking' },
-        { value: 'creative_thinking', label: 'Creative Thinking' },
-        { value: 'innovation', label: 'Innovation' }
-      ]
-    },
-    { 
-      value: 'interpersonal',
-      label: 'Interpersonal Skills',
-      subcategories: [
-        { value: 'emotional_intelligence', label: 'Emotional Intelligence' },
-        { value: 'teamwork', label: 'Teamwork' },
-        { value: 'networking', label: 'Networking' },
-        { value: 'collaboration', label: 'Collaboration' }
-      ]
-    },
-    { 
-      value: 'time_management',
-      label: 'Time Management',
-      subcategories: [
-        { value: 'prioritization', label: 'Prioritization' },
-        { value: 'delegation', label: 'Delegation' },
-        { value: 'planning', label: 'Planning' },
-        { value: 'organization', label: 'Organization' }
-      ]
-    }
+  const softSkills: Skill[] = [
+    { name: 'Communication', proficiencyLevel: 0 },
+    { name: 'Leadership', proficiencyLevel: 0 },
+    { name: 'Problem Solving', proficiencyLevel: 0 },
+    { name: 'Teamwork', proficiencyLevel: 0 },
+    { name: 'Time Management', proficiencyLevel: 0 },
   ];
 
   const languages = [
@@ -464,14 +516,20 @@ export default function DashboardCandidate() {
     { value: 'French', label: 'French' }
   ];
 
+  const renderSkillOptions = (skill: Skill) => (
+    <MenuItem key={skill.name} value={skill.name}>
+      {skill.name}
+    </MenuItem>
+  );
+
   if (loading) {
     return (
-      <Container sx={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        justifyContent: 'center', 
+      <Container sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
         alignItems: 'center',
-        background: '#0f172a' 
+        background: '#0f172a'
       }}>
         <CircularProgress sx={{ color: '#02E2FF' }} />
       </Container>
@@ -510,18 +568,18 @@ export default function DashboardCandidate() {
           <Box sx={{ position: 'relative', zIndex: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
               <Box>
-                <Typography variant="h3" sx={{ 
-                  fontWeight: 700, 
+                <Typography variant="h3" sx={{
+                  fontWeight: 700,
                   mb: 2,
                   background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent'
                 }}>
                   Welcome back, {profile.userId.username}!
-          </Typography>
+                </Typography>
                 <Typography variant="h6" sx={{ opacity: 0.9, color: '#ffffff' }}>
-            {profile.type} • {profile.userId.role}
-          </Typography>
+                  {profile.type} • {profile.userId.role}
+                </Typography>
               </Box>
               <Button
                 variant="outlined"
@@ -540,27 +598,27 @@ export default function DashboardCandidate() {
               >
                 Logout
               </Button>
-          </Box>
-          
+            </Box>
+
             {/* Action Buttons */}
             <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
               <ActionButton
-              variant="contained"
+                variant="contained"
                 startIcon={<PlayArrowIcon />}
                 onClick={handleStartTest}
-              sx={{
-                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-                }
-              }}
-            >
+                sx={{
+                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                  }
+                }}
+              >
                 Start Test
               </ActionButton>
               <ActionButton
                 variant="outlined"
                 onClick={() => setEditProfileOpen(true)}
-                      sx={{ 
+                sx={{
                   borderColor: '#02E2FF',
                   color: '#02E2FF',
                   '&:hover': {
@@ -574,35 +632,35 @@ export default function DashboardCandidate() {
             </Stack>
 
             {/* Edit Profile Modal */}
-        <Dialog
+            <Dialog
               open={editProfileOpen}
               onClose={handleEditProfileClose}
               maxWidth="md"
-          fullWidth
-          PaperProps={{
-            sx: {
+              fullWidth
+              PaperProps={{
+                sx: {
                   background: 'rgba(30, 41, 59, 0.95)',
                   backdropFilter: 'blur(10px)',
-              borderRadius: '16px',
+                  borderRadius: '16px',
                   border: '1px solid rgba(255,255,255,0.1)',
-            }
-          }}
-        >
-          <DialogTitle sx={{ 
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
+                }
+              }}
+            >
+              <DialogTitle sx={{
+                borderBottom: '1px solid rgba(255,255,255,0.1)',
                 color: '#ffffff'
-          }}>
+              }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Typography variant="h6">Edit Profile</Typography>
-            <IconButton
+                  <IconButton
                     onClick={handleEditProfileClose}
                     sx={{ color: 'rgba(255,255,255,0.7)' }}
-            >
-              <CloseIcon />
-            </IconButton>
+                  >
+                    <CloseIcon />
+                  </IconButton>
                 </Box>
-          </DialogTitle>
-          <DialogContent sx={{ mt: 2 }}>
+              </DialogTitle>
+              <DialogContent sx={{ mt: 2 }}>
                 <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <TextField
                     name="username"
@@ -648,13 +706,13 @@ export default function DashboardCandidate() {
                       },
                     }}
                   />
-            <TextField
+                  <TextField
                     select
                     name="experienceLevel"
                     label="Experience Level"
                     value={formData.experienceLevel}
                     onChange={handleInputChange}
-              fullWidth
+                    fullWidth
                     InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
                     InputProps={{
                       sx: {
@@ -680,13 +738,13 @@ export default function DashboardCandidate() {
                   </TextField>
                 </Box>
               </DialogContent>
-              <DialogActions sx={{ 
+              <DialogActions sx={{
                 borderTop: '1px solid rgba(255,255,255,0.1)',
                 padding: 2
               }}>
-                <Button 
+                <Button
                   onClick={handleEditProfileClose}
-                  sx={{ 
+                  sx={{
                     color: 'rgba(255,255,255,0.7)',
                     '&:hover': { color: '#ffffff' }
                   }}
@@ -697,7 +755,7 @@ export default function DashboardCandidate() {
                   type="submit"
                   variant="contained"
                   onClick={handleSubmit}
-              sx={{ 
+                  sx={{
                     background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
                     color: '#ffffff',
                     '&:hover': {
@@ -725,7 +783,7 @@ export default function DashboardCandidate() {
                 }
               }}
             >
-              <DialogTitle sx={{ 
+              <DialogTitle sx={{
                 borderBottom: '1px solid rgba(255,255,255,0.1)',
                 color: '#ffffff'
               }}>
@@ -746,16 +804,16 @@ export default function DashboardCandidate() {
                     value={skillType}
                     onChange={handleSkillTypeChange}
                   >
-                    <FormControlLabel 
-                      value="technical" 
-                      control={<Radio sx={{ color: '#02E2FF' }} />} 
-                      label="Technical Skill" 
+                    <FormControlLabel
+                      value="technical"
+                      control={<Radio sx={{ color: '#02E2FF' }} />}
+                      label="Technical Skill"
                       sx={{ color: '#ffffff' }}
                     />
-                    <FormControlLabel 
-                      value="soft" 
-                      control={<Radio sx={{ color: '#02E2FF' }} />} 
-                      label="Soft Skill" 
+                    <FormControlLabel
+                      value="soft"
+                      control={<Radio sx={{ color: '#02E2FF' }} />}
+                      label="Soft Skill"
                       sx={{ color: '#ffffff' }}
                     />
                   </RadioGroup>
@@ -814,8 +872,8 @@ export default function DashboardCandidate() {
                         }}
                       >
                         {softSkills.map((skill) => (
-                          <MenuItem key={skill.value} value={skill.value}>
-                            {skill.label}
+                          <MenuItem key={skill.name} value={skill.name}>
+                            {skill.name}
                           </MenuItem>
                         ))}
                       </Select>
@@ -826,7 +884,7 @@ export default function DashboardCandidate() {
                         <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>
                           {softSkillType === 'communication' ? 'Select Language' : 'Select Specific Area'}
                         </Typography>
-                        
+
                         {softSkillType === 'communication' ? (
                           <FormControl fullWidth>
                             <Select
@@ -871,7 +929,7 @@ export default function DashboardCandidate() {
                               }}
                             >
                               {softSkills
-                                .find(skill => skill.value === softSkillType)
+                                .find(skill => skill.name === softSkillType)
                                 ?.subcategories?.map((sub) => (
                                   <MenuItem key={sub.value} value={sub.value}>
                                     {sub.label}
@@ -884,46 +942,46 @@ export default function DashboardCandidate() {
                     )}
                   </>
                 )}
-          </DialogContent>
-          <DialogActions sx={{ 
-            borderTop: '1px solid rgba(255,255,255,0.1)',
+              </DialogContent>
+              <DialogActions sx={{
+                borderTop: '1px solid rgba(255,255,255,0.1)',
                 padding: 2
-          }}>
-            <Button 
+              }}>
+                <Button
                   onClick={handleCloseTestModal}
-              sx={{ 
+                  sx={{
                     color: 'rgba(255,255,255,0.7)',
                     '&:hover': { color: '#ffffff' }
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
                   onClick={handleTestSubmit}
                   disabled={
-                    !skillType || 
+                    !skillType ||
                     (skillType === 'technical' && !selectedSkill) ||
                     (skillType === 'soft' && !softSkillType) ||
                     (skillType === 'soft' && softSkillType === 'communication' && !softSkillLanguage) ||
                     (skillType === 'soft' && softSkillType !== 'communication' && !softSkillSubcategory)
                   }
-              variant="contained"
-              sx={{
-                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                  variant="contained"
+                  sx={{
+                    background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
                     color: '#ffffff',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
                     },
                     '&.Mui-disabled': {
                       background: 'rgba(255,255,255,0.1)',
                       color: 'rgba(255,255,255,0.3)'
-                }
-              }}
-            >
+                    }
+                  }}
+                >
                   Start Test
-            </Button>
-          </DialogActions>
-        </Dialog>
+                </Button>
+              </DialogActions>
+            </Dialog>
           </Box>
 
           <Box sx={{
@@ -962,7 +1020,7 @@ export default function DashboardCandidate() {
                   Last Login
                 </Typography>
                 <Typography variant="h5" sx={{ fontWeight: 600, color: '#02E2FF', mt: 1 }}>
-                  {new Date(profile.userId.lastLogin).toLocaleDateString('en-US', { 
+                  {new Date(profile.userId.lastLogin).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric'
                   })}
@@ -983,7 +1041,7 @@ export default function DashboardCandidate() {
         </ProfileHeader>
 
         {/* User Information */}
-        <Box sx={{ 
+        <Box sx={{
           display: 'grid',
           gridTemplateColumns: {
             xs: '1fr',
@@ -1034,13 +1092,13 @@ export default function DashboardCandidate() {
           <Box>
             <StyledCard>
               <SectionTitle>Skills & Expertise</SectionTitle>
-              
-              <Box sx={{ 
+
+              <Box sx={{
                 display: 'flex',
                 flexDirection: { xs: 'column', md: 'row' },
                 alignItems: 'center',
                 gap: 4,
-                mb: 4 
+                mb: 4
               }}>
                 <ScoreCircle>
                   <CircularProgress
@@ -1067,7 +1125,7 @@ export default function DashboardCandidate() {
                       }
                     }}
                   />
-                  <Box sx={{ 
+                  <Box sx={{
                     position: 'absolute',
                     display: 'flex',
                     flexDirection: 'column',
@@ -1082,7 +1140,7 @@ export default function DashboardCandidate() {
                         fontWeight: 'bold'
                       }}
                     >
-                      {profile && profile.overallScore ? `${profile.overallScore}%` : '0%'}
+                      {profile ? `${calculateSkillPercentage(profile.skills, 'technical').toFixed(2)}%` : '0.00%'}
                     </Typography>
                     <Typography
                       variant="caption"
@@ -1104,7 +1162,7 @@ export default function DashboardCandidate() {
                     </defs>
                   </svg>
                 </ScoreCircle>
-                
+
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', opacity: 0.9, textAlign: { xs: 'center', md: 'left' } }}>
                     Skill Distribution
@@ -1113,16 +1171,18 @@ export default function DashboardCandidate() {
                     <Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                         <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Technical Skills</Typography>
-                        <Typography sx={{ color: '#02E2FF' }}>90%</Typography>
+                        <Typography sx={{ color: '#02E2FF' }}>
+                          {profile ? `${calculateSkillPercentage(profile.skills, 'technical').toFixed(2)}%` : '0.00%'}
+                        </Typography>
                       </Box>
-                      <Box sx={{ 
-                        height: '6px', 
-                        background: 'rgba(255,255,255,0.1)', 
+                      <Box sx={{
+                        height: '6px',
+                        background: 'rgba(255,255,255,0.1)',
                         borderRadius: '3px',
                         overflow: 'hidden'
                       }}>
-                        <Box sx={{ 
-                          width: '90%',
+                        <Box sx={{
+                          width: profile ? `${calculateSkillPercentage(profile.skills, 'technical').toFixed(2)}%` : '0%',
                           height: '100%',
                           background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
                           borderRadius: '3px'
@@ -1132,16 +1192,18 @@ export default function DashboardCandidate() {
                     <Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                         <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Soft Skills</Typography>
-                        <Typography sx={{ color: '#02E2FF' }}>80%</Typography>
+                        <Typography sx={{ color: '#02E2FF' }}>
+                          {profile ? `${calculateSkillPercentage(profile.skills, 'soft').toFixed(2)}%` : '0.00%'}
+                        </Typography>
                       </Box>
-                      <Box sx={{ 
-                        height: '6px', 
-                        background: 'rgba(255,255,255,0.1)', 
+                      <Box sx={{
+                        height: '6px',
+                        background: 'rgba(255,255,255,0.1)',
                         borderRadius: '3px',
                         overflow: 'hidden'
                       }}>
-                        <Box sx={{ 
-                          width: '80%',
+                        <Box sx={{
+                          width: profile ? `${calculateSkillPercentage(profile.skills, 'soft').toFixed(2)}%` : '0%',
                           height: '100%',
                           background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
                           borderRadius: '3px'
@@ -1153,23 +1215,39 @@ export default function DashboardCandidate() {
               </Box>
 
               <Box sx={{ mb: 4 }}>
-                <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', opacity: 0.9 }}>
-                  Skill Proficiency
-                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', opacity: 0.9 }}>
+                    Skill Proficiency
+                  </Typography>
+                  <Button
+                    startIcon={<AddIcon />}
+                    onClick={() => setAddSkillDialogOpen(true)}
+                    sx={{
+                      color: '#02E2FF',
+                      borderColor: 'rgba(2,226,255,0.5)',
+                      '&:hover': {
+                        borderColor: '#02E2FF',
+                        background: 'rgba(2,226,255,0.1)'
+                      }
+                    }}
+                  >
+                    Add Skill
+                  </Button>
+                </Box>
                 {profile.skills?.map((skill: any) => (
                   <Box key={skill.name} sx={{ mb: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                       <Typography sx={{ color: '#ffffff' }}>{skill.name}</Typography>
-                      <Typography sx={{ color: '#02E2FF' }}>{skill.proficiencyLevel}/5</Typography>
+                      <Typography sx={{ color: '#02E2FF' }}>{skill.experienceLevel	}</Typography>
                     </Box>
-                    <Box sx={{ 
-                      height: '6px', 
-                      background: 'rgba(255,255,255,0.1)', 
+                    <Box sx={{
+                      height: '6px',
+                      background: 'rgba(255,255,255,0.1)',
                       borderRadius: '3px',
                       overflow: 'hidden'
                     }}>
-                      <Box sx={{ 
-                        width: `${(skill.proficiencyLevel / 5) * 100}%`,
+                      <Box sx={{
+                        width: `${skill.proficiencyLevel / 5}`,
                         height: '100%',
                         background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
                         borderRadius: '3px',
@@ -1183,7 +1261,132 @@ export default function DashboardCandidate() {
           </Box>
         </Box>
 
-        
+        {/* Add Skill Dialog */}
+        <Dialog
+          open={addSkillDialogOpen}
+          onClose={() => setAddSkillDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              background: 'rgba(30, 41, 59, 0.95)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '16px',
+              border: '1px solid rgba(255,255,255,0.1)',
+            }
+          }}
+        >
+          <DialogTitle sx={{
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            color: '#ffffff'
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="h6">Add New Skill</Typography>
+              <IconButton
+                onClick={() => setAddSkillDialogOpen(false)}
+                sx={{ color: 'rgba(255,255,255,0.7)' }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent sx={{ mt: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <TextField
+                fullWidth
+                label="Skill Name"
+                value={newSkill.name}
+                onChange={(e) => setNewSkill({ ...newSkill, name: e.target.value })}
+                InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                InputProps={{
+                  sx: {
+                    color: '#ffffff',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(255,255,255,0.2)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(255,255,255,0.3)',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                  },
+                }}
+              />
+              <Box>
+                <Typography sx={{ color: '#ffffff', mb: 1 }}>Proficiency Level: {newSkill.proficiencyLevel}</Typography>
+                <Slider
+                  value={newSkill.proficiencyLevel}
+                  onChange={(_, value) => setNewSkill({ ...newSkill, proficiencyLevel: value as number })}
+                  min={1}
+                  max={5}
+                  step={1}
+                  marks={[
+                    { value: 1, label: '1' },
+                    { value: 2, label: '2' },
+                    { value: 3, label: '3' },
+                    { value: 4, label: '4' },
+                    { value: 5, label: '5' },
+                  ]}
+                  sx={{
+                    '& .MuiSlider-rail': {
+                      backgroundColor: 'rgba(255,255,255,0.2)',
+                    },
+                    '& .MuiSlider-track': {
+                      background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
+                    },
+                    '& .MuiSlider-thumb': {
+                      backgroundColor: '#02E2FF',
+                      '&:hover, &.Mui-focusVisible': {
+                        boxShadow: '0 0 0 8px rgba(2,226,255,0.2)',
+                      },
+                    },
+                    '& .MuiSlider-mark': {
+                      backgroundColor: 'rgba(255,255,255,0.3)',
+                    },
+                    '& .MuiSlider-markActive': {
+                      backgroundColor: '#02E2FF',
+                    },
+                    '& .MuiSlider-markLabel': {
+                      color: 'rgba(255,255,255,0.7)',
+                    },
+                  }}
+                />
+              </Box>
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{
+            p: 3,
+            borderTop: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <Button
+              onClick={() => setAddSkillDialogOpen(false)}
+              sx={{
+                color: 'rgba(255,255,255,0.8)',
+                mr: 1
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleAddSkill}
+              disabled={!newSkill.name || !newSkill.proficiencyLevel}
+              sx={{
+                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                },
+                '&.Mui-disabled': {
+                  background: 'rgba(255,255,255,0.1)',
+                  color: 'rgba(255,255,255,0.3)'
+                }
+              }}
+            >
+              Add Skill
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Box>
   );

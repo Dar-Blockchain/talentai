@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Profile'
     },
+    post: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Post'
+    }],
     trafficCounter: { type: Number, default: 0 },
     pubkey: { type: String, default: null },
     privkey: { type: String, default: null },

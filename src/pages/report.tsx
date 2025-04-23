@@ -353,7 +353,7 @@ export default function Report() {
                 }}>
                   <TrendingUpIcon sx={{ color: '#02E2FF' }} />
                   <Typography variant="h5" sx={{ color: '#fff' }}>
-                    Score: {results.analysis.overallScore}%
+                    Score: {Number(results.analysis.overallScore).toFixed(2)}%
                   </Typography>
                   <Chip
                     label={results.analysis.technicalLevel}

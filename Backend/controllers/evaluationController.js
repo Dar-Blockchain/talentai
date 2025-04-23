@@ -693,18 +693,16 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       console.log("test2");
       const profileOverallScore = await profileService.getProfileByUserId(user._id);
       const profile = await profileService.createOrUpdateProfile(user._id, {
-        overallScore: (profileOverallScore.overallScore + analysis.overallScore)/2,
+        overallScore: (profileOverallScore.overallScore + analysis.overallScore) / 2,
         skills: analysis.skillAnalysis.map(skill => ({
           name: skill.skillName,
           proficiencyLevel: skill.demonstratedProficiency,
           experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
-          ScoreTest:skill.confidenceScore
+          ScoreTest: skill.confidenceScore
         }))
       });
-      console.log(profile);
+      console.log(profile);      
     }
-
-    
 
 
     res.status(200).json({

@@ -33,6 +33,7 @@ import StarIcon from '@mui/icons-material/Star';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Cookies from 'js-cookie';
 import WorkIcon from '@mui/icons-material/Work';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -194,24 +195,125 @@ interface MatchingCandidate {
   };
 }
 
-// Add these interfaces after the existing interfaces
+// Update the JobPost interface
 interface JobPost {
+  jobDetails: {
+    title: string;
+    description: string;
+    requirements: string[];
+    responsibilities: string[];
+    location: string;
+    employmentType: string;
+    experienceLevel: string;
+    salary: {
+      min: number;
+      max: number;
+      currency: string;
+    };
+  };
+  skillAnalysis: {
+    requiredSkills: Array<{
+      name: string;
+      level: string;
+      importance: string;
+      category: string;
+    }>;
+    suggestedSkills: {
+      technical: Array<{
+        name: string;
+        reason: string;
+        category: string;
+        priority: string;
+      }>;
+      frameworks: Array<{
+        name: string;
+        relatedTo: string;
+        priority: string;
+      }>;
+      tools: Array<{
+        name: string;
+        purpose: string;
+        category: string;
+      }>;
+    };
+    skillSummary: {
+      mainTechnologies: string[];
+      complementarySkills: string[];
+      learningPath: string[];
+      stackComplexity: string;
+    };
+  };
+  linkedinPost: {
+    formattedContent: {
+      headline: string;
+      introduction: string;
+      companyPitch: string;
+      roleOverview: string;
+      keyPoints: string[];
+      skillsRequired: string;
+      benefitsSection: string;
+      callToAction: string;
+    };
+    hashtags: string[];
+    formatting: {
+      emojis: {
+        company: string;
+        location: string;
+        salary: string;
+        requirements: string;
+        skills: string;
+        benefits: string;
+        apply: string;
+      };
+    };
+    finalPost: string;
+  };
+}
+
+// Add interface for job data
+interface JobData {
   title: string;
   description: string;
   requirements: string[];
-  responsibilities: string[];
   skills: Array<{
     name: string;
-    requiredLevel: number;
+    proficiencyLevel: number;
+    experienceLevel: string;
   }>;
   location: string;
-  employmentType: string;
-  experienceLevel: string;
   salary: {
     min: number;
     max: number;
     currency: string;
   };
+  employmentType: string;
+  experienceLevel: string;
+}
+
+// Add helper function to map proficiency levels to experience levels
+const getExperienceLevelFromProficiency = (proficiencyLevel: number): string => {
+  switch (proficiencyLevel) {
+    case 1:
+      return 'Entry Level';
+    case 2:
+      return 'Junior';
+    case 3:
+      return 'Mid Level';
+    case 4:
+      return 'Senior';
+    case 5:
+      return 'Expert';
+    default:
+      return 'Entry Level';
+  }
+};
+
+// Add interfaces for skill types
+interface RequiredSkill {
+  name: string;
+  level: string;
+  importance: string;
+  category: string;
 }
 
 export default function DashboardCompany() {
@@ -233,6 +335,8 @@ export default function DashboardCompany() {
   const [generatedJob, setGeneratedJob] = useState<JobPost | undefined>(undefined);
   const [jobPostError, setJobPostError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [linkedinCopySuccess, setLinkedinCopySuccess] = useState(false);
 
   // Fetch matching profiles
   const fetchMatchingProfiles = async () => {
@@ -267,7 +371,7 @@ export default function DashboardCompany() {
 
 // Fetch matching profiles on component mount
 useEffect(() => {
-  fetchMatchingProfiles();
+  // fetchMatchingProfiles();
 }, []);
 
 // Filter profiles based on score and skills
@@ -337,21 +441,111 @@ const handleGenerateJob = async () => {
 
     const data = await response.json();
     
-    // Map the backend response to our JobPost interface
-    const jobPost: JobPost = {
-      title: data.jobDetails.title,
-      description: data.jobDetails.description,
-      requirements: data.jobDetails.requirements,
-      responsibilities: data.jobDetails.responsibilities,
-      skills: data.skillAnalysis.requiredSkills.map((skill: any) => ({
-        name: skill.name,
-        requiredLevel: parseInt(skill.level)
-      })),
-      location: data.jobDetails.location,
-      employmentType: data.jobDetails.employmentType,
-      experienceLevel: data.jobDetails.experienceLevel,
-      salary: data.jobDetails.salary
+    // Transform the API response into our required structure
+    const jobPost = {
+      jobDetails: {
+        title: data.jobDetails.title,
+        description: data.jobDetails.description,
+        requirements: data.jobDetails.requirements,
+        responsibilities: data.jobDetails.responsibilities,
+        location: data.jobDetails.location,
+        employmentType: data.jobDetails.employmentType,
+        experienceLevel: data.jobDetails.experienceLevel,
+        salary: data.jobDetails.salary
+      },
+      skillAnalysis: {
+        requiredSkills: data.skillAnalysis.requiredSkills.map((skill: any) => ({
+          name: skill.name,
+          level: skill.level.toString(),
+          importance: "Required",
+          category: skill.name.includes('React') || skill.name.includes('JavaScript') ? 'Frontend' : 
+                   skill.name.includes('Git') ? 'Version Control' : 
+                   'General'
+        })),
+        suggestedSkills: {
+          technical: data.skillAnalysis.suggestedSkills.technical.map((skill: any) => ({
+            name: skill.name,
+            reason: skill.reason,
+            category: skill.category,
+            priority: skill.priority
+          })),
+          frameworks: data.skillAnalysis.suggestedSkills.frameworks.map((framework: any) => ({
+            name: framework.name,
+            relatedTo: framework.relatedTo,
+            priority: framework.priority
+          })),
+          tools: data.skillAnalysis.suggestedSkills.tools.map((tool: any) => ({
+            name: tool.name,
+            purpose: tool.purpose,
+            category: tool.category
+          }))
+        },
+        skillSummary: {
+          mainTechnologies: data.skillAnalysis.requiredSkills.map((skill: any) => skill.name),
+          complementarySkills: data.skillAnalysis.suggestedSkills.technical.map((skill: any) => skill.name),
+          learningPath: data.skillAnalysis.skillSummary.learningPath,
+          stackComplexity: data.skillAnalysis.skillSummary.stackComplexity
+        }
+      },
+      linkedinPost: {
+        formattedContent: {
+          headline: `🌟 We're Hiring: ${data.jobDetails.title} 🌟`,
+          introduction: "Are you passionate about building interactive web applications? We've got an exciting opportunity for you!",
+          companyPitch: "Join a team where innovation, a dynamic culture, and a passion for technology drive us. We believe in empowering our developers and offering endless opportunities for growth.",
+          roleOverview: `As a ${data.jobDetails.title}, you'll be at the heart of our engineering process, building software that matters.`,
+          keyPoints: [
+            "🔹 Develop cutting-edge web applications",
+            "🔹 Work with a team of talented developers",
+            `🔹 ${data.jobDetails.location} work`,
+            `🔹 Salary range: ${data.jobDetails.salary.currency}${data.jobDetails.salary.min}-${data.jobDetails.salary.max}`
+          ],
+          skillsRequired: `💻 Required Skills: ${data.skillAnalysis.requiredSkills.map((skill: any) => skill.name).join(', ')}.`,
+          benefitsSection: "🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.",
+          callToAction: "✨ Ready to make a difference? Apply now and let's build something amazing together."
+        },
+        hashtags: [
+          "#Hiring",
+          "#TechJobs",
+          `#${data.jobDetails.title.replace(/\s+/g, '')}`,
+          "#RemoteWork",
+          "#TechCareers"
+        ],
+        formatting: {
+          emojis: {
+            company: "🏢",
+            location: "📍",
+            salary: "💰",
+            requirements: "📋",
+            skills: "💻",
+            benefits: "🎯",
+            apply: "✨"
+          }
+        },
+        finalPost: `🌟 We're Hiring: ${data.jobDetails.title} 🌟
+
+Are you passionate about building interactive web applications? We've got an exciting opportunity for you!
+
+Join a team where innovation, a dynamic culture, and a passion for technology drive us. We believe in empowering our developers and offering endless opportunities for growth.
+
+As a ${data.jobDetails.title}, you'll be at the heart of our engineering process, building software that matters.
+
+🔹 Develop cutting-edge web applications
+🔹 Work with a team of talented developers
+🔹 ${data.jobDetails.location} work
+🔹 Salary range: ${data.jobDetails.salary.currency}${data.jobDetails.salary.min}-${data.jobDetails.salary.max}
+
+💻 Required Skills: ${data.skillAnalysis.requiredSkills.map((skill: any) => skill.name).join(', ')}.
+
+🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.
+
+✨ Ready to make a difference? Apply now and let's build something amazing together.
+
+#Hiring #TechJobs #${data.jobDetails.title.replace(/\s+/g, '')} #RemoteWork #TechCareers`
+      }
     };
+
+    // Log the transformed job post data
+    console.log('Generated Job Post:', jobPost);
 
     setGeneratedJob(jobPost);
   } catch (error) {
@@ -363,49 +557,216 @@ const handleGenerateJob = async () => {
 };
 
 // Add this function to handle job posting
-const handlePostJob = async () => {
-  if (!generatedJob) {
-    setJobPostError('No job has been generated yet');
-    return;
+const handleCopyForLinkedIn = () => {
+  if (generatedJob) {
+    const linkedinFormat = `🚀 Exciting Opportunity: ${generatedJob.jobDetails.title}
+
+🏢 About the Role:
+${generatedJob.jobDetails.description}
+
+🎯 Key Responsibilities:
+${generatedJob.jobDetails.responsibilities.map(resp => `• ${resp}`).join('\n')}
+
+📋 Requirements:
+${generatedJob.jobDetails.requirements.map(req => `• ${req}`).join('\n')}
+
+🔧 Required Skills:
+${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Level ${skill.level})`).join('\n')}
+
+💼 Employment Type: ${generatedJob.jobDetails.employmentType}
+📍 Location: ${generatedJob.jobDetails.location}
+💰 Salary Range: ${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}
+
+#hiring #jobs #career #opportunity
+
+Interested candidates can apply through our platform or send their resumes directly.`;
+
+    navigator.clipboard.writeText(linkedinFormat)
+      .then(() => {
+        setLinkedinCopySuccess(true);
+        setTimeout(() => setLinkedinCopySuccess(false), 2000);
+      })
+      .catch(err => {
+        console.error('Failed to copy LinkedIn format: ', err);
+      });
   }
+};
 
-  setIsPosting(true);
-  setJobPostError(null);
-  const token = Cookies.get('api_token');
+const handleCopyJobData = () => {
+  if (generatedJob) {
+    const jobData = {
+      jobDetails: generatedJob.jobDetails,
+      skillAnalysis: generatedJob.skillAnalysis,
+      linkedinPost: generatedJob.linkedinPost
+    };
 
+    navigator.clipboard.writeText(JSON.stringify(jobData, null, 2))
+      .then(() => {
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 2000);
+      })
+      .catch(err => {
+        console.error('Failed to copy: ', err);
+      });
+  }
+};
+
+// Update the saveJob function to handle the job data properly
+const saveJob = async () => {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/create-job-post`, {
+    if (!generatedJob) {
+      throw new Error('No job data available');
+    }
+
+    const jobPostData = {
+      jobDetails: {
+        title: generatedJob.jobDetails.title,
+        description: generatedJob.jobDetails.description,
+        requirements: generatedJob.jobDetails.requirements,
+        responsibilities: generatedJob.jobDetails.responsibilities,
+        location: generatedJob.jobDetails.location,
+        employmentType: generatedJob.jobDetails.employmentType,
+        experienceLevel: generatedJob.jobDetails.experienceLevel,
+        salary: generatedJob.jobDetails.salary
+      },
+      skillAnalysis: {
+        requiredSkills: generatedJob.skillAnalysis.requiredSkills.map((skill: any) => ({
+          name: skill.name,
+          level: skill.level.toString(),
+          importance: "Required",
+          category: skill.name.includes('React') || skill.name.includes('JavaScript') ? 'Frontend' : 
+                   skill.name.includes('Git') ? 'Version Control' : 
+                   'General'
+        })),
+        suggestedSkills: {
+          technical: [
+            {
+              name: "TypeScript",
+              reason: "Enhances JavaScript coding, providing static types.",
+              category: "Frontend",
+              priority: "High"
+            },
+            {
+              name: "Redux",
+              reason: "Widely used with React for state management.",
+              category: "Frontend",
+              priority: "Medium"
+            }
+          ],
+          frameworks: [
+            {
+              name: "Next.js",
+              relatedTo: "React",
+              priority: "Medium"
+            }
+          ],
+          tools: [
+            {
+              name: "Webpack",
+              purpose: "Module bundler for modern JavaScript applications.",
+              category: "Build Tools"
+            },
+            {
+              name: "NPM",
+              purpose: "Package manager for JavaScript.",
+              category: "Package Manager"
+            }
+          ]
+        },
+        skillSummary: {
+          mainTechnologies: generatedJob.skillAnalysis.requiredSkills.map((skill: any) => skill.name),
+          complementarySkills: ["TypeScript", "Redux", "Next.js"],
+          learningPath: ["ReactJS -> TypeScript -> Redux -> Next.js"],
+          stackComplexity: "Moderate"
+        }
+      },
+      linkedinPost: {
+        formattedContent: {
+          headline: `🌟 We're Hiring: ${generatedJob.jobDetails.title} 🌟`,
+          introduction: "Are you passionate about building interactive web applications? We've got an exciting opportunity for you!",
+          companyPitch: "Join a team where innovation, a dynamic culture, and a passion for technology drive us. We believe in empowering our developers and offering endless opportunities for growth.",
+          roleOverview: `As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering process, building software that matters.`,
+          keyPoints: [
+            "🔹 Develop cutting-edge web applications",
+            "🔹 Work with a team of talented developers",
+            `🔹 ${generatedJob.jobDetails.location} work`,
+            `🔹 Salary range: ${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}`
+          ],
+          skillsRequired: `💻 Required Skills: ${generatedJob.skillAnalysis.requiredSkills.map((skill: any) => skill.name).join(', ')}.`,
+          benefitsSection: "🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.",
+          callToAction: "✨ Ready to make a difference? Apply now and let's build something amazing together."
+        },
+        hashtags: [
+          "#Hiring",
+          "#TechJobs",
+          `#${generatedJob.jobDetails.title.replace(/\s+/g, '')}`,
+          "#RemoteWork",
+          "#TechCareers"
+        ],
+        formatting: {
+          emojis: {
+            company: "🏢",
+            location: "📍",
+            salary: "💰",
+            requirements: "📋",
+            skills: "💻",
+            benefits: "🎯",
+            apply: "✨"
+          }
+        },
+        finalPost: `🌟 We're Hiring: ${generatedJob.jobDetails.title} 🌟
+
+Are you passionate about building interactive web applications? We've got an exciting opportunity for you!
+
+Join a team where innovation, a dynamic culture, and a passion for technology drive us. We believe in empowering our developers and offering endless opportunities for growth.
+
+As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering process, building software that matters.
+
+🔹 Develop cutting-edge web applications
+🔹 Work with a team of talented developers
+🔹 ${generatedJob.jobDetails.location} work
+🔹 Salary range: ${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}
+
+💻 Required Skills: ${generatedJob.skillAnalysis.requiredSkills.map((skill: any) => skill.name).join(', ')}.
+
+🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.
+
+✨ Ready to make a difference? Apply now and let's build something amazing together.
+
+#Hiring #TechJobs #${generatedJob.jobDetails.title.replace(/\s+/g, '')} #RemoteWork #TechCareers`
+      }
+    };
+
+    // Log the complete job post data
+    console.log('Job Post Data:', jobPostData);
+
+    const token = Cookies.get('api_token');
+    
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}post/save-post`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({
-        jobDetails: {
-          title: generatedJob.title,
-          description: generatedJob.description,
-          requirements: generatedJob.requirements,
-          responsibilities: generatedJob.responsibilities,
-          location: generatedJob.location,
-          employmentType: generatedJob.employmentType,
-          experienceLevel: generatedJob.experienceLevel,
-          salary: generatedJob.salary
-        },
-        skillAnalysis: generatedJob.skills
-      })
+      body: JSON.stringify(jobPostData)
     });
 
     if (!response.ok) {
-      throw new Error('Failed to post job');
+      throw new Error('Failed to save job');
     }
 
-    setDialogOpen(false);
+    const savedJob = await response.json();
+    console.log('Job saved successfully:', savedJob);
+    
+    // Close the dialog after successful save
+    setJobPostDialog(false);
+    
+    // Reset the form
     setJobDescription('');
     setGeneratedJob(undefined);
+    
   } catch (error) {
-    setJobPostError(error instanceof Error ? error.message : 'Failed to post job');
-  } finally {
-    setIsPosting(false);
+    console.error('Error saving job:', error);
   }
 };
 
@@ -477,7 +838,7 @@ const renderMatchingProfiles = () => {
               </Typography>
             </Box>
             <Chip
-              label={`${candidate.matchAnalysis.percentage}%`}
+              label={`${Number(candidate.matchAnalysis.percentage).toFixed(2)}%`}
               sx={{
                 background: 'linear-gradient(135deg, rgba(2,226,255,0.15) 0%, rgba(0,255,195,0.15) 100%)',
                 color: '#02E2FF',
@@ -512,7 +873,7 @@ const renderMatchingProfiles = () => {
               {candidate.matchAnalysis.skillMatches.map((skill, index) => (
                 <SkillChip
                   key={index}
-                  label={`${skill.skill} (${skill.score}%)`}
+                  label={`${skill.skill} (${Number(skill.score).toFixed(2)}%)`}
                   size="small"
                 />
               ))}
@@ -809,17 +1170,36 @@ Benefits:
             fontSize: { xs: '0.875rem', sm: '1rem' }
           }}>
             <Box sx={{ mb: 4 }}>
-              <Typography variant="h5" sx={{ 
-                color: '#02E2FF', 
-                mb: 1,
-                fontSize: { xs: '1.25rem', sm: '1.5rem' }
-              }}>
-                {generatedJob.title}
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 2 }}>
+                <Typography 
+                  variant="h5" 
+                  sx={{ 
+                    color: '#02E2FF', 
+                    fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                  }}
+                >
+                  {generatedJob.jobDetails.title}
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<ContentCopyIcon />}
+                    onClick={handleCopyForLinkedIn}
+                    sx={{
+                      background: 'linear-gradient(135deg, #0077B5 0%, #00A0DC 100%)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #006097 0%, #0077B5 100%)',
+                      }
+                    }}
+                  >
+                    {linkedinCopySuccess ? 'Copied!' : 'Copy for LinkedIn'}
+                  </Button>
+                </Box>
+              </Box>
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 <Chip
                   icon={<LocationOnIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />}
-                  label={generatedJob.location}
+                  label={generatedJob.jobDetails.location}
                   size="small"
                   sx={{ 
                     backgroundColor: 'rgba(255,255,255,0.1)',
@@ -827,7 +1207,7 @@ Benefits:
                   }}
                 />
                 <Chip
-                  label={generatedJob.employmentType}
+                  label={generatedJob.jobDetails.employmentType}
                   size="small"
                   sx={{ 
                     backgroundColor: 'rgba(255,255,255,0.1)',
@@ -835,7 +1215,7 @@ Benefits:
                   }}
                 />
                 <Chip
-                  label={`${generatedJob.salary.currency}${generatedJob.salary.min}-${generatedJob.salary.max}`}
+                  label={`${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}`}
                   size="small"
                   sx={{ 
                     backgroundColor: 'rgba(255,255,255,0.1)',
@@ -858,7 +1238,7 @@ Benefits:
                 lineHeight: 1.6,
                 fontSize: { xs: '0.875rem', sm: '1rem' }
               }}>
-                {generatedJob.description}
+                {generatedJob.jobDetails.description}
               </Typography>
             </Box>
 
@@ -875,11 +1255,11 @@ Benefits:
                 borderRadius: '12px',
                 p: 2
               }}>
-                {generatedJob.requirements.map((req, index) => (
+                {generatedJob.jobDetails.requirements.map((req: string, index: number) => (
                   <Box key={index} sx={{ 
                     display: 'flex', 
                     gap: 2, 
-                    mb: index !== generatedJob.requirements.length - 1 ? 1.5 : 0,
+                    mb: index !== generatedJob.jobDetails.requirements.length - 1 ? 1.5 : 0,
                     alignItems: 'flex-start'
                   }}>
                     <Box sx={{ 
@@ -917,11 +1297,11 @@ Benefits:
                 borderRadius: '12px',
                 p: 2
               }}>
-                {generatedJob.responsibilities.map((resp, index) => (
+                {generatedJob.jobDetails.responsibilities.map((resp: string, index: number) => (
                   <Box key={index} sx={{ 
                     display: 'flex', 
                     gap: 2, 
-                    mb: index !== generatedJob.responsibilities.length - 1 ? 1.5 : 0,
+                    mb: index !== generatedJob.jobDetails.responsibilities.length - 1 ? 1.5 : 0,
                     alignItems: 'flex-start'
                   }}>
                     <Box sx={{ 
@@ -955,10 +1335,10 @@ Benefits:
                 Required Skills
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {generatedJob.skills.map((skill, index) => (
+                {generatedJob.skillAnalysis.requiredSkills.map((skill: RequiredSkill, index: number) => (
                   <Chip
                     key={index}
-                    label={`${skill.name} (Level ${skill.requiredLevel})`}
+                    label={`${skill.name} (Level ${skill.level})`}
                     sx={{
                       backgroundColor: 'rgba(2,226,255,0.1)',
                       color: '#02E2FF',
@@ -974,7 +1354,7 @@ Benefits:
             <Button
               fullWidth
               variant="contained"
-              onClick={handlePostJob}
+              onClick={saveJob}
               sx={{
                 mt: 4,
                 py: { xs: 1, sm: 1.5 },
@@ -986,7 +1366,7 @@ Benefits:
                 }
               }}
             >
-              Post Job
+              Save Job
             </Button>
           </Box>
         )}
@@ -1132,7 +1512,7 @@ return (
               mb: 3
             }}>
               <SectionTitle>Required Skills</SectionTitle>
-              <Button
+              {/* <Button
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={() => setEditSkillsDialog(true)}
@@ -1147,7 +1527,7 @@ return (
                 }}
               >
                 Add Skills
-              </Button>
+              </Button> */}
             </Box>
 
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
