@@ -368,7 +368,7 @@ export default function Test() {
   const createMediaRecorder = (stream: MediaStream) => {
     const options = {
       mimeType: 'audio/webm;codecs=opus',
-      audioBitsPerSecond: 256000, // increase bitrate for higher audio quality
+      audioBitsPerSecond: 128000,
     };
     const recorder = new MediaRecorder(stream, options);
 
@@ -378,11 +378,6 @@ export default function Test() {
           setIsTranscribing(true);
           const formData = new FormData();
           formData.append('audio', event.data, 'recording.webm');
-          // Provide context and parameters to Whisper for more accurate transcription
-          formData.append('prompt', questions[currentIndexRef.current] || '');
-          formData.append('response_format', 'verbose_json');
-          formData.append('temperature', '0');
-          formData.append('language', 'en');
 
           const response = await fetch('/api/session', {
             method: 'POST',
@@ -468,7 +463,8 @@ export default function Test() {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          channelCount: 1, // default sampleRate (e.g. 48000) for higher fidelity
+          sampleRate: 16000,
+          channelCount: 1,
         },
       });
       audioStreamRef.current = stream;
