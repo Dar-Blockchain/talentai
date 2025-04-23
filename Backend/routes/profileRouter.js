@@ -27,4 +27,14 @@ router.delete('/deleteProfile', profileController.deleteProfile);
 // Rechercher des profils par compétences
 router.get('/search/skills', profileController.searchProfilesBySkills);
 
+// Ajouter des soft skills
+router.post('/addSoftSkills', profileController.addSoftSkills); 
+
+// Récupérer les soft skills
+router.get('/getSoftSkills', profileController.getSoftSkills);
+
+// Récupérer les soft skills par ID
+router.get('/getSoftSkillsById/:userId', profileController.getSoftSkills);
+
+
 module.exports = router; 
