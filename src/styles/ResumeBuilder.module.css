@@ -58,7 +58,7 @@
   width: 100%;
 }
 
-/* 4) The white “paper” */
+/* 4) The white "paper" */
 .canvas {
   background: white;
   width: 794px;                   /* fixed A4 width */
@@ -108,7 +108,7 @@
   text-align: center;
 }
 
-/* 6) Section‑level styling */
+/* 6) Section-level styling */
 .toolbar {
   margin-bottom: 20px;
   display: flex;
@@ -138,17 +138,7 @@
   white-space: pre-wrap;
 }
 
-.sectionActions {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  display: flex;
-  gap: 4px;
-  background: rgba(223,16,16,0.75);
-  border-radius: 4px;
-  padding: 2px;
-  z-index: 200;
-}/* wrap each Rnd section so we can detect hover */
+/* wrap each Rnd section so we can detect hover */
 .sectionWrapper {
   position: relative;
 }
@@ -173,6 +163,7 @@
 .sectionWrapper:hover .sectionActions {
   opacity: 1;
 }
+
 /* 7) Responsive tweaks */
 @media (max-width: 768px) {
   .sidebar {

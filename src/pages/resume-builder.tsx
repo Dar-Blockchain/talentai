@@ -18,6 +18,7 @@ import Canvas from '@/components/Canvas'
 import SectionRenderer from '@/components/SectionRenderer'
 import ZoomControls from '@/components/zoom-controls'
 import { HeaderSection, TextSection, SkillsSection, LanguagesSection, EducationSection, ExperienceSection, ProjectsSection, CustomSection, SectionType } from '@/models/sectionTypes'
+import ResumeActions from '@/components/ResumeActions'
 
 export default function ResumeBuilder() {
   const dispatch = useDispatch<AppDispatch>()
@@ -202,92 +203,56 @@ export default function ResumeBuilder() {
     }
   }
 
+  const saveDraft = () => {
+    localStorage.setItem('resume-draft', JSON.stringify(sections))
+  }
+
   return (
     <div className={styles.pageWrapper} onClick={() => setActiveId(null)}>
-      {/* Mobile hamburger */}
-      {isMobile && (
+      {isMobile ? (
         <IconButton
           onClick={() => setDrawerOpen(true)}
-          sx={{
-            position: "fixed",
-            top: 16,
-            left: 16,
-            zIndex: 30,
-            color: "white",
-            background: "rgba(0,0,0,0.3)",
-          }}
+          sx={{ position: "fixed", left: 8, top: 8 }}
         >
           <MenuIcon />
         </IconButton>
-      )}
-
-      {/* Export PDF Button */}
-      <Button
-  variant="outlined"
-  color="secondary"
-  sx={{
-    position: 'fixed',
-    top: 64,           // just below Export PDF
-    right: 16,
-    zIndex: 30,
-  }}
-  onClick={() => {
-    localStorage.setItem('resume-draft', JSON.stringify(sections))
-    // optionally give user feedback:
-    alert('Resume draft saved!')
-  }}
->
-  Save Draft
-</Button>
-      <Button
-        variant="contained"
-        color="primary"
-        startIcon={<PictureAsPdfIcon />}
-        onClick={exportToPDF}
-        sx={{
-          position: "fixed",
-          top: 16,
-          right: 16,
-          zIndex: 30,
-        }}
-      >
-        Export PDF
-      </Button>
-
-      {/* Sidebar (desktop) or Drawer (mobile) */}
-      {isMobile ? (
-        <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} anchor="left">
-          <Sidebar onAdd={addSection} />
-        </Drawer>
       ) : (
-        <div className={styles.sidebar}>
-          <Sidebar onAdd={addSection} />
-        </div>
+        <Sidebar onAdd={addSection} />
       )}
 
-      {/* Canvas */}
+      <ResumeActions 
+        onSaveDraft={saveDraft}
+        onExportPDF={exportToPDF}
+      />
+
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+      >
+        <Sidebar onAdd={addSection} />
+      </Drawer>
+
       <Canvas zoom={zoom}>
-        <DndContext collisionDetection={closestCenter}>
-          <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-            {sections.map((section) => (
-              <SectionRenderer
-                key={section.id}
-                section={section}
-                updateContent={updateSectionContent}
-                updatePosition={updateSectionPosition}
-                onDelete={deleteSection}
-                onDuplicate={duplicateSection}
-                isActive={activeId === section.id}
-                onClick={() => setActiveId(section.id)}
-                zoom={zoom} // Pass zoom level to SectionRenderer
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
+        {sections.map((section) => (
+          <SectionRenderer
+            key={section.id}
+            section={section}
+            updateContent={updateSectionContent}
+            updatePosition={updateSectionPosition}
+            onDelete={deleteSection}
+            onDuplicate={duplicateSection}
+            isActive={section.id === activeId}
+            onClick={() => setActiveId(section.id)}
+            zoom={zoom}
+          />
+        ))}
       </Canvas>
 
-      {/* Zoom Controls */}
-      <ZoomControls zoom={zoom} setZoom={setZoom} />
+      <ZoomControls
+        zoom={zoom}
+        setZoom={setZoom}
+      />
     </div>
   )
 }
