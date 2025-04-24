@@ -41,7 +41,6 @@ const profileSchema = new mongoose.Schema(
     requiredExperienceLevel: {
       type: String,
       enum: ["Entry Level","Mid Level", "Senior", "Lead/Expert"],
-      default: "Entry Level"
     }
   },
   { timestamps: true }

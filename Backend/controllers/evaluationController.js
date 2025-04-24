@@ -595,23 +595,46 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       // Normalize the response structure if needed
       analysis = {
         overallScore: Number(analysis.overallScore) || 0,
-        skillAnalysis: analysis.skillAnalysis.map(skill => ({
-          skillName: skill.skillName || skill.skill || '',
-          currentProficiency: Number(skill.currentProficiency) || 0,
-          demonstratedProficiency: Number(skill.demonstratedProficiency) || 0,
-          currentExperienceLevel: getExperienceLevel(Number(skill.currentProficiency) || 0),
-          demonstratedExperienceLevel: getExperienceLevel(Number(skill.demonstratedProficiency) || 0),
-          strengths: Array.isArray(skill.strengths) ? skill.strengths : [],
-          weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
-          confidenceScore: Number(skill.confidenceScore) || 0,
-          improvement: skill.improvement || 'unchanged'
-        })),
-        generalAssessment: analysis.generalAssessment || '',
-        recommendations: Array.isArray(analysis.recommendations) ? analysis.recommendations : [],
-        technicalLevel: analysis.technicalLevel || 'intermediate',
-        nextSteps: Array.isArray(analysis.nextSteps) ? analysis.nextSteps : [],
-        experienceLevels: ['Entry Level', 'Junior', 'Mid Level', 'Senior', 'Expert']
+        skillAnalysis: analysis.skillAnalysis.map((skill) => {
+          console.log("skill",skill);
+          // Valeurs brutes envoyées par ChatGPT (ou par ta logique précédente)
+          const current   = Number(skill.currentProficiency)      || 0;
+          const rawDemo   = Number(skill.demonstratedProficiency) || current;
+          const score     = Number(skill.confidenceScore)         || 0;
+          console.log("current",current);
+          console.log("rawDemo",rawDemo);
+          console.log("score",score);
+          // ➜ Appliquer la règle demandée
+          let demo;
+          if (score > 80)          demo = current + 1;
+          else if (score >= 50)    demo = current;
+          else                     demo = current - 1;
+      
+          // S’assurer que le niveau reste entre 1 et 5
+          demo = Math.min(Math.max(demo, 1), 5);
+          console.log("demo",demo);
+          return {
+            skillName:                skill.skillName || skill.skill || '',
+            currentProficiency:       current,
+            demonstratedProficiency:  demo,
+            currentExperienceLevel:   getExperienceLevel(current),
+            demonstratedExperienceLevel: getExperienceLevel(demo),
+            strengths:  Array.isArray(skill.strengths)  ? skill.strengths  : [],
+            weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
+            confidenceScore: score,
+            improvement:
+              demo > current ? 'increased' :
+              demo < current ? 'decreased' :
+              'unchanged'
+          };
+        }),
+        generalAssessment:  analysis.generalAssessment || '',
+        recommendations:    Array.isArray(analysis.recommendations) ? analysis.recommendations : [],
+        technicalLevel:     analysis.technicalLevel || 'intermediate',
+        nextSteps:          Array.isArray(analysis.nextSteps) ? analysis.nextSteps : [],
+        experienceLevels:   ['Entry Level', 'Junior', 'Mid Level', 'Senior', 'Expert']
       };
+      console.log(analysis);
 
     } catch (error) {
       console.error("Detailed error in analysis parsing:", error);
@@ -678,6 +701,7 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       }
     };
     console.log(user);
+    console.log(result);
     if(user.profile.overallScore === 0){
       console.log("test");
       const profile = await profileService.createOrUpdateProfile(user._id, {
