@@ -153,7 +153,7 @@ export default function Test() {
   const [isGenerating, setIsGenerating] = useState(true);
   const [current, setCurrent] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(10);
+  const [timeLeft, setTimeLeft] = useState(20);
   const currentIndexRef = useRef(0);
   const [hasStartedTest, setHasStartedTest] = useState(false);
 
@@ -309,7 +309,7 @@ export default function Test() {
           if (prev <= 1) {
             if (current < questions.length - 1) {
               setCurrent(c => c + 1);
-              return 10; // Reset timer to 10 seconds
+              return 20; // Reset timer to 20 seconds
             } else {
               stopRecording();
               saveTestResults();
@@ -326,7 +326,7 @@ export default function Test() {
   // Reset timer when question changes
   useEffect(() => {
     currentIndexRef.current = current;
-    setTimeLeft(10); // Reset to 10 seconds
+    setTimeLeft(20); // Reset to 20 seconds
     setCurrentTranscript(''); // Clear current transcript
   }, [current]);
 
@@ -480,7 +480,7 @@ export default function Test() {
 
       setIsRecording(true);
       setHasStartedTest(true);
-      setTimeLeft(10); // Start with 10 seconds
+      setTimeLeft(20); // Start with 20 seconds
     } catch (error) {
       console.error('Recording setup error:', error);
       setIsRecording(false);
