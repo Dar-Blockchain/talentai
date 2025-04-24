@@ -27,7 +27,6 @@ const profileSchema = new mongoose.Schema(
         name: String,
         category: String,
         experienceLevel: String,
-        NumberTestPassed: Number,
         ScoreTest: Number,
       },
     ],
