@@ -415,7 +415,11 @@ export default function DashboardCandidate() {
   const handleTestSubmit = async () => {
     try {
       if (skillType === 'technical' && selectedSkill) {
-        router.push(`/test?type=technical&skill=${selectedSkill}`);
+        // Find the selected skill in the profile to get its proficiency level
+        const selectedSkillData = profile?.skills.find(skill => skill.name === selectedSkill);
+        const proficiencyLevel = selectedSkillData?.proficiencyLevel || 1;
+        
+        router.push(`/test?type=technical&skill=${selectedSkill}&proficiency=${proficiencyLevel}`);
       } else if (skillType === 'soft') {
         // Get the experience level based on proficiency
         const experienceLevel = getExperienceLevelFromProficiency(softSkillProficiency);

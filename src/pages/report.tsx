@@ -126,7 +126,7 @@ export default function Report() {
             type: router.query.type || testData.metadata?.type || type,
             skill: router.query.skill ? [{
               name: router.query.skill as string,
-              proficiencyLevel: 1
+              proficiencyLevel: parseInt(router.query.proficiency as string) || 1
             }] : userSkills.map((skill: any) => ({
               name: skill.name,
               proficiencyLevel: parseInt(skill.proficiencyLevel) || 1

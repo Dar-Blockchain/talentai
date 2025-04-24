@@ -524,6 +524,7 @@ export default function Test() {
         type: router.query.type || 'technical',
         skill: router.query.skill,
         subcategory: router.query.subcategory,
+        proficiency: router.query.proficiency,
         timestamp: new Date().toISOString()
       }
     };
@@ -538,7 +539,8 @@ export default function Test() {
         from: 'test',
         type: router.query.type || 'technical',
         skill: router.query.skill,
-        subcategory: router.query.subcategory
+        subcategory: router.query.subcategory,
+        proficiency: router.query.proficiency
       }
     });
   };
