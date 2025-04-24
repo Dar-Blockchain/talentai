@@ -702,7 +702,7 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
     };
     console.log(user);
     console.log(result);
-    if(user.profile.overallScore === 0){
+    if(user.profile.overallScore === 0 && type === "technical"){
       console.log("test");
       const profile = await profileService.createOrUpdateProfile(user._id, {
         overallScore: analysis.overallScore,
@@ -727,6 +727,31 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       });
       console.log(profile);      
     }
+
+    if (user.profile.overallScore === 0 && type === "soft") {
+      await profileService.createOrUpdateProfile(user._id, {
+        softSkills: analysis.skillAnalysis.map(s => ({             // ✅
+          name: s.skillName,
+          category: s.category || "",                               // si fourni
+          experienceLevel: getExperienceLevel(s.demonstratedProficiency),
+          ScoreTest: s.confidenceScore
+        }))
+      });
+    }else if (type === "soft") {
+      const old = await profileService.getProfileByUserId(user._id);
+      await profileService.createOrUpdateProfile(user._id, {
+        softSkills: analysis.skillAnalysis.map(s => ({
+          name: s.skillName,
+          category: s.category || "",
+          experienceLevel: getExperienceLevel(s.demonstratedProficiency),
+          ScoreTest: s.confidenceScore
+        }))
+      });
+    }
+    
+    
+
+    
 
 
     res.status(200).json({
