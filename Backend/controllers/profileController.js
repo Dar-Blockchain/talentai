@@ -120,4 +120,79 @@ module.exports.searchProfilesBySkills = async (req, res) => {
     console.error('Erreur lors de la recherche des profils:', error);
     res.status(500).json({ message: error.message || "Erreur lors de la recherche des profils" });
   }
+};
+
+// Ajouter des soft skills
+module.exports.addSoftSkills = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { softSkills } = req.body;
+
+    if (!softSkills || !Array.isArray(softSkills)) {
+      return res.status(400).json({ message: "Les soft skills doivent être fournis sous forme de tableau" });
+    }
+
+    const profile = await profileService.addSoftSkills(userId, softSkills);
+    res.status(200).json({
+      message: "Soft skills ajoutés avec succès",
+      profile
+    });
+  } catch (error) {
+    console.error('Erreur lors de l\'ajout des soft skills:', error);
+    res.status(500).json({ message: error.message || "Erreur lors de l'ajout des soft skills" });
+  }
+};
+
+// Récupérer les soft skills
+module.exports.getSoftSkills = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const softSkills = await profileService.getSoftSkills(userId);
+    res.status(200).json(softSkills);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des soft skills:', error);
+    res.status(500).json({ message: error.message || "Erreur lors de la récupération des soft skills" });
+  }
+};
+
+// Mettre à jour les soft skills
+module.exports.updateSoftSkills = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { softSkills } = req.body;
+
+    if (!softSkills || !Array.isArray(softSkills)) {
+      return res.status(400).json({ message: "Les soft skills doivent être fournis sous forme de tableau" });
+    }
+
+    const profile = await profileService.updateSoftSkills(userId, softSkills);
+    res.status(200).json({
+      message: "Soft skills mis à jour avec succès",
+      profile
+    });
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour des soft skills:', error);
+    res.status(500).json({ message: error.message || "Erreur lors de la mise à jour des soft skills" });
+  }
+};
+
+// Supprimer des soft skills
+module.exports.deleteSoftSkills = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { softSkillsToDelete } = req.body;
+
+    if (!softSkillsToDelete || !Array.isArray(softSkillsToDelete)) {
+      return res.status(400).json({ message: "Les soft skills à supprimer doivent être fournis sous forme de tableau" });
+    }
+
+    const profile = await profileService.deleteSoftSkills(userId, softSkillsToDelete);
+    res.status(200).json({
+      message: "Soft skills supprimés avec succès",
+      profile
+    });
+  } catch (error) {
+    console.error('Erreur lors de la suppression des soft skills:', error);
+    res.status(500).json({ message: error.message || "Erreur lors de la suppression des soft skills" });
+  }
 }; 
