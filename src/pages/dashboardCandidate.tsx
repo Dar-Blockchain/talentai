@@ -1,6 +1,7 @@
 import { useState, useEffect, ReactNode } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMyProfile, selectProfile, clearProfile } from '../store/features/profileSlice';
+import type { Profile as ProfileType } from '../store/features/profileSlice';
 import { AppDispatch } from '../store/store';
 import {
   Box,
@@ -184,6 +185,48 @@ interface MatchingCandidate {
   expectedSalary?: string;
 }
 
+interface Skill {
+  name: string;
+  proficiencyLevel: number;
+  value?: string;
+  requiresLanguage?: boolean;
+  subcategories?: Array<{
+    value: string;
+    label: string;
+  }>;
+}
+
+// Add helper functions to calculate skill percentages
+const calculateSkillPercentage = (skills: Array<{ name: string; proficiencyLevel: number }> = [], type: 'technical' | 'soft'): number => {
+  const relevantSkills = skills.filter(skill => {
+    const isTechnical = ['JavaScript', 'Python', 'Java', 'React', 'Node.js'].includes(skill.name);
+    return type === 'technical' ? isTechnical : !isTechnical;
+  });
+
+  if (relevantSkills.length === 0) return 0;
+
+  const totalProficiency = relevantSkills.reduce((sum, skill) => sum + (skill.proficiencyLevel / 5) * 100, 0);
+  return totalProficiency / relevantSkills.length;
+};
+
+// Add helper function to map proficiency to experience level
+const getExperienceLevelFromProficiency = (proficiencyLevel: number): string => {
+  switch (proficiencyLevel) {
+    case 1:
+      return 'Entry Level';
+    case 2:
+      return 'Junior';
+    case 3:
+      return 'Mid Level';
+    case 4:
+      return 'Senior';
+    case 5:
+      return 'Expert';
+    default:
+      return 'Entry Level';
+  }
+};
+
 const CandidateCard = styled(Box)(({ theme }) => ({
   background: 'rgba(30, 41, 59, 0.7)',
   backdropFilter: 'blur(10px)',
@@ -235,48 +278,6 @@ const ScoreCircle = styled(Box)(({ theme }) => ({
   margin: '0 auto'
 }));
 
-interface Skill {
-  name: string;
-  proficiencyLevel: number;
-  value?: string;
-  requiresLanguage?: boolean;
-  subcategories?: Array<{
-    value: string;
-    label: string;
-  }>;
-}
-
-// Add helper functions to calculate skill percentages
-const calculateSkillPercentage = (skills: Array<{ name: string; proficiencyLevel: number }> = [], type: 'technical' | 'soft'): number => {
-  const relevantSkills = skills.filter(skill => {
-    const isTechnical = ['JavaScript', 'Python', 'Java', 'React', 'Node.js'].includes(skill.name);
-    return type === 'technical' ? isTechnical : !isTechnical;
-  });
-
-  if (relevantSkills.length === 0) return 0;
-
-  const totalProficiency = relevantSkills.reduce((sum, skill) => sum + (skill.proficiencyLevel / 5) * 100, 0);
-  return totalProficiency / relevantSkills.length;
-};
-
-// Add helper function to map proficiency to experience level
-const getExperienceLevelFromProficiency = (proficiencyLevel: number): string => {
-  switch (proficiencyLevel) {
-    case 1:
-      return 'Entry Level';
-    case 2:
-      return 'Junior';
-    case 3:
-      return 'Mid Level';
-    case 4:
-      return 'Senior';
-    case 5:
-      return 'Expert';
-    default:
-      return 'Entry Level';
-  }
-};
-
 export default function DashboardCandidate() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
@@ -285,9 +286,11 @@ export default function DashboardCandidate() {
   const [testModalOpen, setTestModalOpen] = useState(false);
   const [skillType, setSkillType] = useState('');
   const [selectedSkill, setSelectedSkill] = useState('');
-  const [softSkillType, setSoftSkillType] = useState('')
+  const [softSkillType, setSoftSkillType] = useState('');
   const [softSkillLanguage, setSoftSkillLanguage] = useState('');
   const [softSkillSubcategory, setSoftSkillSubcategory] = useState('');
+  const [softSkillProficiency, setSoftSkillProficiency] = useState<number>(1);
+  const [isExistingSoftSkill, setIsExistingSoftSkill] = useState(false);
 
   const [formData, setFormData] = useState({
     username: '',
@@ -375,6 +378,7 @@ export default function DashboardCandidate() {
     setSoftSkillType('');
     setSoftSkillLanguage('');
     setSoftSkillSubcategory('');
+    setSoftSkillProficiency(1);
   };
 
   const handleSkillTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -384,25 +388,60 @@ export default function DashboardCandidate() {
     setSoftSkillLanguage('');
   };
 
-  const handleTestSubmit = () => {
-    if (skillType === 'technical' && selectedSkill) {
-      router.push(`/test?type=technical&skill=${selectedSkill}`);
-    } else if (skillType === 'soft') {
-      const selectedSoftSkill = softSkills.find(skill => skill.value === softSkillType);
-      const queryParams = new URLSearchParams();
-      queryParams.append('type', 'soft');
-      queryParams.append('skill', softSkillType);
+  const handleTestSubmit = async () => {
+    try {
+      if (skillType === 'technical' && selectedSkill) {
+        router.push(`/test?type=technical&skill=${selectedSkill}`);
+      } else if (skillType === 'soft') {
+        // Get the experience level based on proficiency
+        const experienceLevel = getExperienceLevelFromProficiency(softSkillProficiency);
 
-      if (selectedSoftSkill?.requiresLanguage) {
-        queryParams.append('language', softSkillLanguage);
-      }
-      if (softSkillSubcategory) {
-        queryParams.append('subcategory', softSkillSubcategory);
-      }
+        // Add soft skill to database
+        const token = Cookies.get('api_token');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/addSoftSkills`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            softSkills: [
+              {
+                name: softSkillType,
+                category: softSkillType === 'Communication' ? softSkillLanguage : softSkillSubcategory,
+                experienceLevel,
+                NumberTestPassed: 0,
+                ScoreTest: 0
+              }
+            ]
+          })
+        });
 
-      router.push(`/test?${queryParams.toString()}`);
+        if (!response.ok) {
+          throw new Error('Failed to add soft skill');
+        }
+
+        // After successful addition, proceed with the test
+        const selectedSoftSkill = softSkills.find(skill => skill.value === softSkillType);
+        const queryParams = new URLSearchParams();
+        queryParams.append('type', 'soft');
+        queryParams.append('skill', softSkillType);
+        queryParams.append('proficiency', softSkillProficiency.toString());
+
+        if (selectedSoftSkill?.requiresLanguage) {
+          queryParams.append('language', softSkillLanguage);
+        }
+        if (softSkillSubcategory) {
+          queryParams.append('subcategory', softSkillSubcategory);
+        }
+
+        router.push(`/test?${queryParams.toString()}`);
+      }
+      handleCloseTestModal();
+    } catch (error) {
+      console.error('Error in test submission:', error);
+      // You might want to show an error message to the user here
     }
-    handleCloseTestModal();
   };
 
   const handleAddSkill = async () => {
@@ -567,6 +606,69 @@ export default function DashboardCandidate() {
       {skill.name}
     </MenuItem>
   );
+
+  const checkExistingSoftSkill = (skillName: string, category?: string) => {
+    if (!profile?.softSkills?.length) return null;
+    
+    return profile.softSkills.find(
+      (skill) => {
+        if (skillName === 'Communication') {
+          // For Communication skills, match both name and language (category)
+          return skill.name === skillName && skill.category === category;
+        } else {
+          // For other skills, match name and subcategory
+          return skill.name === skillName && skill.category === category;
+        }
+      }
+    );
+  };
+
+  const handleSoftSkillChange = (value: string) => {
+    setSoftSkillType(value);
+    setSoftSkillSubcategory('');
+    setSoftSkillLanguage('');
+    setIsExistingSoftSkill(false);
+    setSoftSkillProficiency(1);
+  };
+
+  const handleSoftSkillSubcategoryChange = (value: string) => {
+    setSoftSkillSubcategory(value);
+    const existingSkill = checkExistingSoftSkill(softSkillType, value);
+    if (existingSkill) {
+      setIsExistingSoftSkill(true);
+      const proficiencyMap: { [key: string]: number } = {
+        'Entry Level': 1,
+        'Junior': 2,
+        'Mid Level': 3,
+        'Senior': 4,
+        'Expert': 5
+      };
+      setSoftSkillProficiency(proficiencyMap[existingSkill.experienceLevel] || 1);
+    } else {
+      setIsExistingSoftSkill(false);
+      setSoftSkillProficiency(1);
+    }
+  };
+
+  // Add handler for language change
+  const handleSoftSkillLanguageChange = (value: string) => {
+    setSoftSkillLanguage(value);
+    const existingSkill = checkExistingSoftSkill(softSkillType, value);
+    if (existingSkill) {
+      setIsExistingSoftSkill(true);
+      const proficiencyMap: { [key: string]: number } = {
+        'Entry Level': 1,
+        'Junior': 2,
+        'Mid Level': 3,
+        'Senior': 4,
+        'Expert': 5
+      };
+      setSoftSkillProficiency(proficiencyMap[existingSkill.experienceLevel] || 1);
+    } else {
+      setIsExistingSoftSkill(false);
+      setSoftSkillProficiency(1);
+    }
+  };
 
   if (loading) {
     return (
@@ -899,11 +1001,7 @@ export default function DashboardCandidate() {
                       <InputLabel sx={{ color: 'rgba(255,255,255,0.7)' }}>Select Soft Skill</InputLabel>
                       <Select
                         value={softSkillType}
-                        onChange={(e) => {
-                          setSoftSkillType(e.target.value);
-                          setSoftSkillSubcategory('');
-                          setSoftSkillLanguage('');
-                        }}
+                        onChange={(e) => handleSoftSkillChange(e.target.value)}
                         sx={{
                           color: '#ffffff',
                           '& .MuiOutlinedInput-notchedOutline': {
@@ -926,65 +1024,131 @@ export default function DashboardCandidate() {
                     </FormControl>
 
                     {softSkillType && (
-                      <Box sx={{ mb: 2 }}>
-                        <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>
-                          {softSkillType === 'Communication' ? 'Select Language' : 'Select Specific Area'}
-                        </Typography>
+                      <>
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>
+                            {softSkillType === 'Communication' ? 'Select Language' : 'Select Specific Area'}
+                          </Typography>
 
-                        {softSkillType === 'Communication' ? (
-                          <FormControl fullWidth>
-                            <Select
-                              value={softSkillLanguage}
-                              onChange={(e) => setSoftSkillLanguage(e.target.value)}
-                              sx={{
-                                color: '#ffffff',
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                  borderColor: 'rgba(255,255,255,0.2)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                  borderColor: 'rgba(255,255,255,0.3)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                  borderColor: '#02E2FF',
-                                },
-                              }}
-                            >
-                              {languages.map((lang) => (
-                                <MenuItem key={lang.value} value={lang.value}>
-                                  {lang.label}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        ) : (
-                          <FormControl fullWidth>
-                            <Select
-                              value={softSkillSubcategory}
-                              onChange={(e) => setSoftSkillSubcategory(e.target.value)}
-                              sx={{
-                                color: '#ffffff',
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                  borderColor: 'rgba(255,255,255,0.2)',
-                                },
-                                '&:hover .MuiOutlinedInput-notchedOutline': {
-                                  borderColor: 'rgba(255,255,255,0.3)',
-                                },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                  borderColor: '#02E2FF',
-                                },
-                              }}
-                            >
-                              {softSkills
-                                .find(skill => skill.name === softSkillType)
-                                ?.subcategories?.map((sub) => (
-                                  <MenuItem key={sub.value} value={sub.value}>
-                                    {sub.label}
+                          {softSkillType === 'Communication' ? (
+                            <FormControl fullWidth>
+                              <Select
+                                value={softSkillLanguage}
+                                onChange={(e) => handleSoftSkillLanguageChange(e.target.value)}
+                                sx={{
+                                  color: '#ffffff',
+                                  '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(255,255,255,0.2)',
+                                  },
+                                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(255,255,255,0.3)',
+                                  },
+                                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: '#02E2FF',
+                                  },
+                                }}
+                              >
+                                {languages.map((lang) => (
+                                  <MenuItem key={lang.value} value={lang.value}>
+                                    {lang.label}
                                   </MenuItem>
                                 ))}
-                            </Select>
-                          </FormControl>
-                        )}
-                      </Box>
+                              </Select>
+                            </FormControl>
+                          ) : (
+                            <FormControl fullWidth>
+                              <Select
+                                value={softSkillSubcategory}
+                                onChange={(e) => handleSoftSkillSubcategoryChange(e.target.value)}
+                                sx={{
+                                  color: '#ffffff',
+                                  '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(255,255,255,0.2)',
+                                  },
+                                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: 'rgba(255,255,255,0.3)',
+                                  },
+                                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: '#02E2FF',
+                                  },
+                                }}
+                              >
+                                {softSkills
+                                  .find(skill => skill.name === softSkillType)
+                                  ?.subcategories?.map((sub) => (
+                                    <MenuItem key={sub.value} value={sub.value}>
+                                      {sub.label}
+                                    </MenuItem>
+                                  ))}
+                              </Select>
+                            </FormControl>
+                          )}
+                        </Box>
+
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>
+                            {isExistingSoftSkill ? 'Current Proficiency Level' : 'Select Proficiency Level'}
+                          </Typography>
+                          <Box sx={{ px: 1 }}>
+                            <Slider
+                              value={softSkillProficiency}
+                              onChange={(_, value) => !isExistingSoftSkill && setSoftSkillProficiency(value as number)}
+                              disabled={isExistingSoftSkill}
+                              min={1}
+                              max={5}
+                              step={1}
+                              marks={[
+                                { value: 1, label: 'Beginner' },
+                                { value: 2, label: 'Elementary' },
+                                { value: 3, label: 'Intermediate' },
+                                { value: 4, label: 'Advanced' },
+                                { value: 5, label: 'Expert' }
+                              ]}
+                              sx={{
+                                color: isExistingSoftSkill ? 'rgba(2,226,255,0.5)' : '#02E2FF',
+                                '& .MuiSlider-mark': {
+                                  backgroundColor: 'rgba(255,255,255,0.3)',
+                                },
+                                '& .MuiSlider-markLabel': {
+                                  color: 'rgba(255,255,255,0.7)',
+                                  fontSize: '0.75rem',
+                                },
+                                '& .MuiSlider-valueLabel': {
+                                  background: isExistingSoftSkill 
+                                    ? 'rgba(2,226,255,0.5)'
+                                    : 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                                },
+                                '& .MuiSlider-thumb': {
+                                  '&:hover, &.Mui-focusVisible': {
+                                    boxShadow: '0 0 0 8px rgba(2,226,255,0.16)',
+                                  },
+                                  '&.Mui-active': {
+                                    boxShadow: '0 0 0 12px rgba(2,226,255,0.24)',
+                                  },
+                                  '&.Mui-disabled': {
+                                    '&:hover': {
+                                      boxShadow: 'none',
+                                    },
+                                  },
+                                },
+                              }}
+                            />
+                          </Box>
+                          {isExistingSoftSkill && (
+                            <Typography 
+                              variant="caption" 
+                              sx={{ 
+                                color: 'rgba(255,255,255,0.7)', 
+                                display: 'block', 
+                                mt: 1,
+                                textAlign: 'center'
+                              }}
+                            >
+                              You have already taken a test for this skill
+                            </Typography>
+                          )}
+                        </Box>
+                      </>
                     )}
                   </>
                 )}
