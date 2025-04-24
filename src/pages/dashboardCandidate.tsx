@@ -196,17 +196,41 @@ interface Skill {
   }>;
 }
 
-// Add helper functions to calculate skill percentages
-const calculateSkillPercentage = (skills: Array<{ name: string; proficiencyLevel: number }> = [], type: 'technical' | 'soft'): number => {
-  const relevantSkills = skills.filter(skill => {
-    const isTechnical = ['JavaScript', 'Python', 'Java', 'React', 'Node.js'].includes(skill.name);
-    return type === 'technical' ? isTechnical : !isTechnical;
-  });
+// Add this before calculateSkillPercentage
+const softSkillNames = ['Communication', 'Leadership', 'Problem Solving', 'Teamwork', 'Time Management'];
 
-  if (relevantSkills.length === 0) return 0;
+// Update the calculation function to handle both technical and soft skills
+const calculateSkillPercentage = (profile: any, type: 'technical' | 'soft'): number => {
+  if (!profile) return 0;
 
-  const totalProficiency = relevantSkills.reduce((sum, skill) => sum + (skill.proficiencyLevel / 5) * 100, 0);
-  return totalProficiency / relevantSkills.length;
+  if (type === 'technical') {
+    const technicalSkills = profile.skills?.filter((skill: any) => !softSkillNames.includes(skill.name)) || [];
+    if (technicalSkills.length === 0) return 0;
+    
+    const totalScore = technicalSkills.reduce((sum: number, skill: any) => {
+      return sum + (skill.proficiencyLevel / 5) * 100;
+    }, 0);
+    
+    return totalScore / technicalSkills.length;
+  } else {
+    // For soft skills
+    if (!profile.softSkills?.length) return 0;
+    
+    const totalScore = profile.softSkills.reduce((sum: any, skill: any) => {
+      // Convert experienceLevel to number
+      const proficiencyMap: { [key: string]: number } = {
+        'Entry Level': 1,
+        'Junior': 2,
+        'Mid Level': 3,
+        'Senior': 4,
+        'Expert': 5
+      };
+      const proficiencyLevel = proficiencyMap[skill.experienceLevel] || 1;
+      return sum + (proficiencyLevel / 5) * 100;
+    }, 0);
+    
+    return totalScore / profile.softSkills.length;
+  }
 };
 
 // Add helper function to map proficiency to experience level
@@ -670,6 +694,12 @@ export default function DashboardCandidate() {
     }
   };
 
+  // Filter technical skills (exclude soft skills)
+  const getTechnicalSkills = () => {
+    if (!profile?.skills) return [];
+    return profile.skills.filter(skill => !softSkillNames.includes(skill.name));
+  };
+
   if (loading) {
     return (
       <Container sx={{
@@ -986,7 +1016,7 @@ export default function DashboardCandidate() {
                         },
                       }}
                     >
-                      {profile.skills?.map((skill: any) => (
+                      {getTechnicalSkills().map((skill: any) => (
                         <MenuItem key={skill.name} value={skill.name}>
                           {skill.name}
                         </MenuItem>
@@ -1303,11 +1333,11 @@ export default function DashboardCandidate() {
             <StyledCard>
               <SectionTitle>Skills & Expertise</SectionTitle>
 
-              <Box sx={{
+              {/* Overall Score Circle */}
+              <Box sx={{ 
                 display: 'flex',
-                flexDirection: { xs: 'column', md: 'row' },
+                justifyContent: 'center',
                 alignItems: 'center',
-                gap: 4,
                 mb: 4
               }}>
                 <ScoreCircle>
@@ -1350,7 +1380,7 @@ export default function DashboardCandidate() {
                         fontWeight: 'bold'
                       }}
                     >
-                      {profile ? `${calculateSkillPercentage(profile.skills, 'technical').toFixed(2)}%` : '0.00%'}
+                      {profile ? `${calculateSkillPercentage(profile, 'technical').toFixed(2)}%` : '0.00%'}
                     </Typography>
                     <Typography
                       variant="caption"
@@ -1372,61 +1402,75 @@ export default function DashboardCandidate() {
                     </defs>
                   </svg>
                 </ScoreCircle>
+              </Box>
 
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', opacity: 0.9, textAlign: { xs: 'center', md: 'left' } }}>
-                    Skill Distribution
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Technical Skills</Typography>
-                        <Typography sx={{ color: '#02E2FF' }}>
-                          {profile ? `${calculateSkillPercentage(profile.skills, 'technical').toFixed(2)}%` : '0.00%'}
-                        </Typography>
-                      </Box>
-                      <Box sx={{
-                        height: '6px',
-                        background: 'rgba(255,255,255,0.1)',
-                        borderRadius: '3px',
-                        overflow: 'hidden'
-                      }}>
-                        <Box sx={{
-                          width: profile ? `${calculateSkillPercentage(profile.skills, 'technical').toFixed(2)}%` : '0%',
-                          height: '100%',
-                          background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
-                          borderRadius: '3px'
-                        }} />
-                      </Box>
-                    </Box>
-                    <Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Soft Skills</Typography>
-                        <Typography sx={{ color: '#02E2FF' }}>
-                          {profile ? `${calculateSkillPercentage(profile.skills, 'soft').toFixed(2)}%` : '0.00%'}
-                        </Typography>
-                      </Box>
-                      <Box sx={{
-                        height: '6px',
-                        background: 'rgba(255,255,255,0.1)',
-                        borderRadius: '3px',
-                        overflow: 'hidden'
-                      }}>
-                        <Box sx={{
-                          width: profile ? `${calculateSkillPercentage(profile.skills, 'soft').toFixed(2)}%` : '0%',
-                          height: '100%',
-                          background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
-                          borderRadius: '3px'
-                        }} />
-                      </Box>
-                    </Box>
-                  </Box>
+              {/* Soft Skills Distribution */}
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', opacity: 0.9 }}>
+                  Soft Skills Distribution
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {profile?.softSkills?.length ? (
+                    profile.softSkills.map((skill: any) => {
+                      const proficiencyMap: { [key: string]: number } = {
+                        'Entry Level': 1,
+                        'Junior': 2,
+                        'Mid Level': 3,
+                        'Senior': 4,
+                        'Expert': 5
+                      };
+                      const proficiencyLevel = proficiencyMap[skill.experienceLevel] || 1;
+                      const percentage = (proficiencyLevel / 5) * 100;
+
+                      return (
+                        <Box key={`${skill.name}-${skill.category}`}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                            <Box>
+                              <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                                {skill.name}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                                {skill.category}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ textAlign: 'right' }}>
+                              <Typography sx={{ color: '#02E2FF' }}>
+                                {percentage.toFixed(0)}%
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                                {skill.experienceLevel}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Box sx={{
+                            height: '6px',
+                            background: 'rgba(255,255,255,0.1)',
+                            borderRadius: '3px',
+                            overflow: 'hidden'
+                          }}>
+                            <Box sx={{
+                              width: `${percentage}%`,
+                              height: '100%',
+                              background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
+                              borderRadius: '3px',
+                              transition: 'width 0.3s ease'
+                            }} />
+                          </Box>
+                        </Box>
+                      );
+                    })
+                  ) : (
+                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center', py: 2 }}>
+                      No soft skills added yet. Start a soft skill test to add them.
+                    </Typography>
+                  )}
                 </Box>
               </Box>
 
-              <Box sx={{ mb: 4 }}>
+              {/* Technical Skills */}
+              <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', opacity: 0.9 }}>
+                  <Typography variant="h6" sx={{ color: '#ffffff', opacity: 0.9 }}>
                     Skill Proficiency
                   </Typography>
                   <Button
@@ -1444,11 +1488,13 @@ export default function DashboardCandidate() {
                     Add Skill
                   </Button>
                 </Box>
-                {profile.skills?.map((skill: any) => (
+                {profile.skills
+                  ?.filter((skill: any) => !softSkillNames.includes(skill.name))
+                  ?.map((skill: any) => (
                   <Box key={skill.name} sx={{ mb: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                       <Typography sx={{ color: '#ffffff' }}>{skill.name}</Typography>
-                      <Typography sx={{ color: '#02E2FF' }}>{skill.experienceLevel	}</Typography>
+                      <Typography sx={{ color: '#02E2FF' }}>{skill.experienceLevel}</Typography>
                     </Box>
                     <Box sx={{
                       height: '6px',
@@ -1457,7 +1503,7 @@ export default function DashboardCandidate() {
                       overflow: 'hidden'
                     }}>
                       <Box sx={{
-                        width: `${skill.proficiencyLevel / 5}`,
+                        width: `${(skill.proficiencyLevel / 5) * 100}%`,
                         height: '100%',
                         background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
                         borderRadius: '3px',
