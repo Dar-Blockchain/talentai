@@ -811,6 +811,20 @@ export default function DashboardCandidate() {
               >
                 Edit Profile
               </ActionButton>
+              <ActionButton
+                variant="outlined"
+                onClick={() => router.push('/resume-builder')}
+                sx={{
+                  borderColor: '#02E2FF',
+                  color: '#02E2FF',
+                  '&:hover': {
+                    borderColor: '#00FFC3',
+                    color: '#00FFC3'
+                  }
+                }}
+              >
+                CV Builder
+              </ActionButton>
             </Stack>
 
             {/* Edit Profile Modal */}
