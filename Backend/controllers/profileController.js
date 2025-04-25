@@ -132,11 +132,8 @@ module.exports.addSoftSkills = async (req, res) => {
       return res.status(400).json({ message: "Les soft skills doivent être fournis sous forme de tableau" });
     }
 
-    const profile = await profileService.addSoftSkills(userId, softSkills);
-    res.status(200).json({
-      message: "Soft skills ajoutés avec succès",
-      profile
-    });
+    const result = await profileService.addSoftSkills(userId, softSkills);
+    res.status(200).json(result);
   } catch (error) {
     console.error('Erreur lors de l\'ajout des soft skills:', error);
     res.status(500).json({ message: error.message || "Erreur lors de l'ajout des soft skills" });
