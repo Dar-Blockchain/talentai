@@ -23,7 +23,7 @@ exports.createResume = async (req, res) => {
 /* ========== READ ALL (liste) ========== */
 exports.getResumes = async (req, res) => {
   try {
-    const filter = req.query.userId ? { userId: req.query.userId } : {};
+    const filter = req.user._id
     const resumes = await Resume.find(filter).sort({ createdAt: -1 });
     res.json(resumes);
   } catch (err) {
@@ -34,7 +34,7 @@ exports.getResumes = async (req, res) => {
 /* ========== READ ONE ========== */
 exports.getResumeById = async (req, res) => {
   try {
-    const resume = await Resume.findById(req.params.id);
+    const resume = await Resume.findById(req.user._id);
     if (!resume) return res.status(404).json({ error: 'CV introuvable' });
     res.json(resume);
   } catch (err) {
@@ -51,7 +51,7 @@ exports.replaceResume = async (req, res) => {
     }
 
     const resume = await Resume.findByIdAndUpdate(
-      req.params.id,
+      req.user._id,
       { sections: sections.map(s => ({ ...s, raw: s })) },
       { new: true, runValidators: true }
     );
@@ -67,7 +67,7 @@ exports.updateResume = async (req, res) => {
   try {
     const updates = req.body;           // ex : { "sections.2.skills": [...] }
     const resume = await Resume.findByIdAndUpdate(
-      req.params.id,
+      req.user._id,
       updates,
       { new: true, runValidators: true }
     );
@@ -81,7 +81,7 @@ exports.updateResume = async (req, res) => {
 /* ========== DELETE ========== */
 exports.deleteResume = async (req, res) => {
   try {
-    const resume = await Resume.findByIdAndDelete(req.params.id);
+    const resume = await Resume.findByIdAndDelete(req.user._id);
     if (!resume) return res.status(404).json({ error: 'CV introuvable' });
     res.json({ message: 'CV supprimé' });
   } catch (err) {
