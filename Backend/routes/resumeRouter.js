@@ -4,6 +4,7 @@ const resumeController= require('../controllers/resumeController');
 const { requireAuthUser } = require('../middleware/authMiddleware');
 
 // Routes protégées par authentification
+router.use(requireAuthUser);
 
 router.post('/createResume', resumeController.createResume);
 router.post('/regenerate', resumeController.regenerate);
