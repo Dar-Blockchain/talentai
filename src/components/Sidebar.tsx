@@ -9,6 +9,8 @@ import LanguageIcon from '@mui/icons-material/Language'
 import AccountBoxIcon from '@mui/icons-material/AccountBox'
 import FolderSpecialIcon from '@mui/icons-material/FolderSpecial'
 import AddIcon from '@mui/icons-material/Add'
+import ImageIcon from '@mui/icons-material/Image'
+import HorizontalRuleIcon from '@mui/icons-material/HorizontalRule'
 import styles from '@/styles/ResumeBuilder.module.css'
 
 type Props = {
@@ -23,6 +25,8 @@ const sections = [
   { type: 'skills', label: 'Skills', icon: CodeIcon },
   { type: 'languages', label: 'Languages', icon: LanguageIcon },
   { type: 'projects', label: 'Projects', icon: FolderSpecialIcon },
+  { type: 'image', label: 'Image', icon: ImageIcon },
+  { type: 'line', label: 'Line Divider', icon: HorizontalRuleIcon },
 ]
 
 export default function Sidebar({ onAdd }: Props) {

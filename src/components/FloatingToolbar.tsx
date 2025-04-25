@@ -13,6 +13,9 @@ type Props = {
 export default function FloatingToolbar({ visible, onClose }: Props) {
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [fontSize, setFontSize] = useState(16)
+  // Store the last set font size to persist between sessions
+  const lastSetFontSizeRef = useRef<number>(16);
+  
   const [selection, setSelection] = useState<{
     range: Range | null
     rndElement: HTMLElement | null
@@ -22,6 +25,47 @@ export default function FloatingToolbar({ visible, onClose }: Props) {
     rndElement: null,
     rndPosition: null,
   })
+
+  // Handle custom font size update events from SectionRenderer
+  useEffect(() => {
+    const handleFontSizeUpdate = (e: Event) => {
+      if (e instanceof CustomEvent && e.detail) {
+        // Check if this is a reset request first
+        if (e.detail.reset) {
+          // Reset the font size state but don't set -1 as the actual value
+          // This ensures we'll use the detected value from the next event
+          return;
+        }
+        
+        // Only update if we have a valid font size
+        if (e.detail.fontSize && e.detail.fontSize > 0) {
+          setFontSize(e.detail.fontSize);
+        }
+      }
+    };
+    
+    // Add event listener
+    document.addEventListener('update-font-size', handleFontSizeUpdate);
+    
+    // Cleanup
+    return () => {
+      document.removeEventListener('update-font-size', handleFontSizeUpdate);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!toolbarRef.current?.contains(e.target as Node)) {
+        const sel = window.getSelection()
+        if (!sel || sel.isCollapsed) onClose()
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [onClose])
 
   // Save selection when toolbar becomes visible
   useEffect(() => {
@@ -63,33 +107,26 @@ export default function FloatingToolbar({ visible, onClose }: Props) {
 
         // Try to detect font size
         try {
-          const node = sel.focusNode?.parentElement
+          // If we've used a specific font size previously, prefer that
+          if (lastSetFontSizeRef.current > 16) {
+            setFontSize(lastSetFontSizeRef.current);
+            return;
+          }
+          
+          // Get selection's parent element
+          const node = sel.focusNode?.parentElement;
           if (node) {
-            const computedSize = Number.parseInt(window.getComputedStyle(node).fontSize)
+            const computedSize = Number.parseInt(window.getComputedStyle(node).fontSize);
             if (!isNaN(computedSize)) {
-              setFontSize(computedSize)
+              setFontSize(computedSize);
             }
           }
         } catch (e) {
-          console.error("Error detecting font size:", e)
+          console.error("Error detecting font size:", e);
         }
       }
     }
   }, [visible])
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (!toolbarRef.current?.contains(e.target as Node)) {
-        const sel = window.getSelection()
-        if (!sel || sel.isCollapsed) onClose()
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [onClose])
 
   // Direct CSS injection approach
   const applyInlineStyle = (property: string, value: string) => {
@@ -97,47 +134,167 @@ export default function FloatingToolbar({ visible, onClose }: Props) {
     if (!range) return
 
     try {
-      // Store original selection
-
-
-      // Check if we're in a list
+      // Restore selection
       const sel = window.getSelection()
-      if (!sel || sel.rangeCount === 0) return
-      const range = sel.getRangeAt(0)
-    
+      if (!sel) return
+
+      sel.removeAllRanges()
+      sel.addRange(range)
+
+      // Apply color directly
       if (property === "color") {
-        document.execCommand("styleWithCSS", false, "true")
-        document.execCommand("foreColor", false, value)
-        return
+         document.execCommand("styleWithCSS", false, "true")
+         document.execCommand("foreColor", false, value)
+         return
       }
-    
+      
+      // Apply style directly for certain properties
       if (property === "font-size") {
-        // 1) try to find a parent <li>
-        let node: Node | null = range.startContainer
-        while (node && node.nodeName !== "LI") node = node.parentNode
-    
-        if (node && node instanceof HTMLElement) {
-          // style that single list‐item (no splitting, no blank bullets)
-          node.style.fontSize = value
-        } else {
-          // wrap only the selected text in a span
-          const span = document.createElement("span")
-          span.style.fontSize = value
-          const contents = range.extractContents()
-          span.appendChild(contents)
-          range.insertNode(span)
-    
-          // re‑select the new span so future edits still work
-          sel.removeAllRanges()
-          const newRange = document.createRange()
-          newRange.selectNodeContents(span)
-          sel.addRange(newRange)
-          setSelection(prev => ({ ...prev, range: newRange }))
+        const size = parseInt(value, 10);
+        if (isNaN(size)) return;
+        
+        // Only update the size in toolbar
+        setFontSize(size);
+        
+        // Save selection boundaries before making changes
+        const startContainer = range.startContainer;
+        const startOffset = range.startOffset;
+        const endContainer = range.endContainer;
+        const endOffset = range.endOffset;
+        
+        // Save whether this is a "whole text" selection (to handle double-click case)
+        const isFullTextSelection = range.toString().trim() === (startContainer.textContent || "").trim();
+        
+        // Try to find if there's an ancestor element with a font-size property already
+        let containerWithSize = null;
+        let node: Node | null = range.startContainer;
+        while (node && !containerWithSize) {
+          if (node instanceof HTMLElement && 
+              (node.style.fontSize || getComputedStyle(node).fontSize !== "16px")) {
+            containerWithSize = node;
+          }
+          node = node.parentNode as Node | null;
         }
-    
-        // update the toolbar label
-        const size = parseInt(value, 10)
-        if (!isNaN(size)) setFontSize(size)
+        
+        // Helper to find parent block element
+        const findParentBlock = (node: Node | null): HTMLElement | null => {
+          const blockElements = ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI'];
+          while (node && node !== document.body) {
+            if (node instanceof HTMLElement && 
+                blockElements.includes(node.nodeName)) {
+              return node;
+            }
+            node = node.parentNode as Node | null;
+          }
+          return null;
+        };
+        
+        if (containerWithSize) {
+          // Update existing container with font size
+          containerWithSize.style.fontSize = value;
+        } else {
+          // If we have a text selection, wrap it in a span
+          if (!range.collapsed) {
+            document.execCommand("styleWithCSS", false, "true");
+              
+            // First try with fontSize command for best compatibility
+            const fontSizeValue = Math.max(1, Math.min(7, Math.round(size/7)));
+            document.execCommand("fontSize", false, fontSizeValue.toString());
+            
+            // Then find all font elements and convert them to spans with exact pixel size
+            const fontElements = document.querySelectorAll('font[size]');
+            fontElements.forEach(fontEl => {
+              if (fontEl instanceof HTMLElement) {
+                const newSpan = document.createElement('span');
+                newSpan.style.fontSize = `${size}px`;
+                
+                // Move all children to the new span
+                while (fontEl.firstChild) {
+                  newSpan.appendChild(fontEl.firstChild);
+                }
+                
+                // Replace the font element with the span
+                if (fontEl.parentNode) {
+                  fontEl.parentNode.replaceChild(newSpan, fontEl);
+                }
+              }
+            });
+          } else {
+            // If no selection, try to style the parent paragraph or div
+            const parentBlock = findParentBlock(range.startContainer);
+            if (parentBlock) {
+              parentBlock.style.fontSize = value;
+            } else {
+              // Last resort - try execCommand
+              document.execCommand("styleWithCSS", false, "true");
+              document.execCommand("fontSize", false, Math.round(size/7).toString());
+            }
+          }
+        }
+        
+        // Try to restore selection after DOM changes
+        try {
+          // Need a new range since the DOM was modified
+          const newRange = document.createRange();
+          
+          // For double-clicked text selection (whole words/elements), try to reselect everything
+          if (isFullTextSelection && startContainer.parentNode) {
+            // Try to find text nodes within the same parent element
+            const parent = startContainer.parentNode;
+            let textContent = '';
+            let firstTextNode: Node | null = null;
+            let lastTextNode: Node | null = null;
+            
+            // Find all text nodes in this element to reselect
+            const processNode = (node: Node) => {
+              if (node.nodeType === Node.TEXT_NODE) {
+                if (!firstTextNode) firstTextNode = node;
+                lastTextNode = node;
+                textContent += node.textContent || '';
+              } else if (node.childNodes) {
+                Array.from(node.childNodes).forEach(processNode);
+              }
+            };
+            
+            if (parent.childNodes.length > 0) {
+              Array.from(parent.childNodes).forEach(processNode);
+            }
+            
+            // If we found text nodes, select them all
+            if (firstTextNode && lastTextNode) {
+              newRange.setStart(firstTextNode, 0);
+              const textNodeContent = (lastTextNode as Text).textContent || '';
+              newRange.setEnd(lastTextNode, textNodeContent.length);
+              
+              // Apply the selection
+              sel.removeAllRanges();
+              sel.addRange(newRange);
+            }
+          } else {
+            // Normal selection - try to restore based on saved positions
+            try {
+              newRange.setStart(startContainer, startOffset);
+              newRange.setEnd(endContainer, endOffset);
+              sel.removeAllRanges();
+              sel.addRange(newRange);
+            } catch (e) {
+              console.log("Could not restore exact selection:", e);
+            }
+          }
+          
+          // Save the new selection range for future operations
+          if (sel.rangeCount > 0) {
+            setSelection({
+              ...selection,
+              range: sel.getRangeAt(0).cloneRange()
+            });
+          }
+        } catch (err) {
+          console.log("Error restoring selection:", err);
+        }
+        
+        // Update toolbar display
+        setFontSize(size);
       }
     } catch (e) {
       console.error(`Error applying ${property}:`, e)
@@ -284,3 +441,4 @@ const fontLabel: React.CSSProperties = {
   color: "#222",
   fontSize: "14px",
 }
+

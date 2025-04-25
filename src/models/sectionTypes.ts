@@ -76,6 +76,24 @@ export type CustomSection = BaseSection & {
   content: string
 }
 
+// 🖼️ Image
+export type ImageSection = BaseSection & {
+  type: 'image'
+  src: string
+  alt?: string
+  isRound?: boolean
+  content?: string // Optional content to store formatted HTML
+}
+
+// ➖ Line
+export type LineSection = BaseSection & {
+  type: 'line'
+  orientation: 'horizontal' | 'vertical'
+  thickness: number
+  color: string
+  content?: string // Optional content to store formatted HTML
+}
+
 export type SectionType =
   | TextSection
   | ExperienceSection
@@ -85,3 +103,5 @@ export type SectionType =
   | HeaderSection
   | ProjectsSection
   | CustomSection
+  | ImageSection
+  | LineSection

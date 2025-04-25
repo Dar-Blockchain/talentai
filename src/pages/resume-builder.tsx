@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { v4 as uuidv4 } from "uuid"
 import { DndContext, closestCenter } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
-import { useTheme, useMediaQuery, Drawer, IconButton, Button } from "@mui/material"
+import { useTheme, useMediaQuery, Drawer, IconButton, Button, Modal, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Box, Paper } from "@mui/material"
 import MenuIcon from "@mui/icons-material/Menu"
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import html2canvas from 'html2canvas'
@@ -17,45 +17,112 @@ import Sidebar from '@/components/Sidebar'
 import Canvas from '@/components/Canvas'
 import SectionRenderer from '@/components/SectionRenderer'
 import ZoomControls from '@/components/zoom-controls'
-import { HeaderSection, TextSection, SkillsSection, LanguagesSection, EducationSection, ExperienceSection, ProjectsSection, CustomSection, SectionType } from '@/models/sectionTypes'
+import { HeaderSection, TextSection, SkillsSection, LanguagesSection, EducationSection, ExperienceSection, ProjectsSection, CustomSection, ImageSection, LineSection, SectionType } from '@/models/sectionTypes'
 import ResumeActions from '@/components/ResumeActions'
+import { useSession } from "next-auth/react"
 
 export default function ResumeBuilder() {
   const dispatch = useDispatch<AppDispatch>()
   const profile = useSelector((state: RootState) => state.profile.profile)
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("md"))
+  const { data: session } = useSession()
 
   const [sections, setSections] = useState<SectionType[]>([])
+  const [sectionsHistory, setSectionsHistory] = useState<SectionType[][]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [zoom, setZoom] = useState(75) // Default zoom level at 75%
+  const [templateModalOpen, setTemplateModalOpen] = useState(false)
+  const [resumeId, setResumeId] = useState<string | null>(null) // Track resume ID for updates
+
   useEffect(() => {
-    const draft = localStorage.getItem('resume-draft')
-    if (draft) {
+    const loadResume = async () => {
       try {
-        setSections(JSON.parse(draft))
-      } catch {
-        console.warn('Could not parse resume draft')
+        // Try to get the latest resume from backend
+        const response = await fetch('/api/resumes/getResumes');
+        if (response.ok) {
+          const resumes = await response.json();
+          if (resumes && resumes.length > 0) {
+            // Get the most recent resume (already sorted by createdAt in the backend)
+            setSections(resumes[0].sections);
+            setResumeId(resumes[0]._id); // Store the resume ID
+            return;
+          }
+        }
+
+        // Fallback to localStorage if no resumes found or API fails
+        const draft = localStorage.getItem('resume-draft');
+        if (draft) {
+          try {
+            setSections(JSON.parse(draft));
+          } catch {
+            console.warn('Could not parse resume draft');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading resume:', error);
+        // Try localStorage as fallback
+        const draft = localStorage.getItem('resume-draft');
+        if (draft) {
+          try {
+            setSections(JSON.parse(draft));
+          } catch {
+            console.warn('Could not parse resume draft');
+          }
+        }
       }
+    };
+
+    loadResume();
+
+    // Check if this is the first visit
+    const hasVisitedBefore = localStorage.getItem('resume-visited');
+    if (!hasVisitedBefore) {
+      // First visit - show the template modal
+      setTemplateModalOpen(true);
+      // Mark as visited
+      localStorage.setItem('resume-visited', 'true');
     }
-  }, [])
+  }, []);
   useEffect(() => {
     dispatch(getMyProfile())
   }, [dispatch])
 
   const updateSectionContent = (id: string, newContent: string) =>
-    setSections((prev) => prev.map((s) => {
+    setSections((prev) => prev.map((s): SectionType => {
       if (s.id === id) {
-        // Add content field to any section type
+        if (s.type === 'image') {
+          const isRound = newContent.includes('border-radius: 50%') || newContent.includes('border-radius:50%')
+          return { ...s, content: newContent, isRound }
+        }
         return { ...s, content: newContent }
       }
       return s
     }))
-  const updateSectionPosition = (id: string, pos: { x: number; y: number; width: number; height: number }) =>
-    setSections((prev) => prev.map((s) => (s.id === id ? { ...s, ...pos } : s)))
+  const updateSectionPosition = (id: string, pos: { x: number; y: number; width: number; height: number }) => {
+    setSections((prev) => {
+      return prev.map((s) => {
+        if (s.id === id) {
+          // Store the precise position
+          return { 
+            ...s, 
+            x: pos.x, 
+            y: pos.y, 
+            width: pos.width, 
+            height: pos.height 
+          };
+        }
+        return s;
+      });
+    });
+  }
 
-  const deleteSection = (id: string) => setSections((prev) => prev.filter((s) => s.id !== id))
+  const deleteSection = (id: string) => {
+    // Save current state to history before deleting
+    setSectionsHistory(prev => [...prev, [...sections]]);
+    setSections((prev) => prev.filter((s) => s.id !== id));
+  }
 
   const duplicateSection = (id: string) => {
     const original = sections.find((s) => s.id === id)
@@ -141,6 +208,30 @@ export default function ResumeBuilder() {
           projects: [{ name: 'Project Name', description: 'Project description...' }]
         } as ProjectsSection
         break
+      case 'image':
+        newSection = {
+          ...common,
+          type: 'image',
+          src: '',
+          alt: 'Profile image',
+          isRound: true,
+          content: '<div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(to bottom, #b2e1ff 60%, #71c371 40%); display: flex; justify-content: center; align-items: center; cursor: pointer;">Double-click to upload</div>',
+          x: 80,
+          y: 80,
+          width: 100,
+          height: 100
+        } as ImageSection
+        break
+      case 'line':
+        newSection = {
+          ...common,
+          height: 20, // Default height for horizontal line
+          type: 'line',
+          orientation: 'horizontal',
+          thickness: 2,
+          color: '#000000'
+        } as LineSection
+        break
       case 'custom':
       default:
         newSection = {
@@ -203,12 +294,1063 @@ export default function ResumeBuilder() {
     }
   }
 
-  const saveDraft = () => {
-    localStorage.setItem('resume-draft', JSON.stringify(sections))
+  const saveDraft = async () => {
+    try {
+      // First, always save to localStorage as backup
+      localStorage.setItem('resume-draft', JSON.stringify(sections));
+      
+      // Get the token from NextAuth session
+      const token = session?.accessToken;
+      
+      if (!token) {
+        console.log('No auth token found - saving only to localStorage');
+        alert('Your resume was saved locally. Log in to save to your account.');
+        return;
+      }
+      
+      // Prepare headers with auth token
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+      
+      // Try to save to backend
+      let response;
+      
+      if (resumeId) {
+        // If we have a resumeId, update the existing resume
+        console.log('Updating existing resume with ID:', resumeId);
+        response = await fetch(`/api/resumes/${resumeId}`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({ sections }),
+        });
+      } else {
+        // Otherwise create a new resume
+        console.log('Creating new resume');
+        response = await fetch('/api/resumes/createResume', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ sections }),
+        });
+      }
+      
+      if (response.status === 413) {
+        // Payload too large error
+        alert('Your resume is too large to save to the server, but it has been saved locally.');
+        return;
+      }
+      
+      const responseText = await response.text();
+      let data;
+      
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse response:', responseText);
+        alert('Error communicating with server. Your resume was saved locally.');
+        return;
+      }
+      
+      if (response.ok) {
+        console.log('Resume saved successfully');
+        
+        // Update resumeId if this was a new resume
+        if (data?.resume && data.resume._id && !resumeId) {
+          setResumeId(data.resume._id);
+        }
+      } else {
+        console.error('Failed to save resume:', data);
+        alert(`Error saving to server: ${data?.error || 'Unknown error'}. Your resume was saved locally.`);
+      }
+    } catch (error) {
+      console.error('Error saving resume:', error);
+      alert('Error saving resume. Your changes were saved locally.');
+    }
   }
+
+  const handleBlankTemplate = () => {
+    setTemplateModalOpen(false)
+    // Start with empty sections
+    setSections([])
+  }
+
+  const handleCanadianTemplate = () => {
+    setTemplateModalOpen(false)
+    // Add Canadian template sections with the same text as in the preview
+    setSections([
+      {
+        id: uuidv4(),
+        type: 'header',
+        name: 'YOUR NAME',
+        jobTitle: 'Professional Title',
+        x: 100,
+        y: 50,
+        width: 400,
+        height: 100
+      },
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: 'PROFESSIONAL SUMMARY\n\nExperienced professional with a proven track record of success in delivering high-quality results. Skilled in problem-solving and teamwork.',
+        x: 100,
+        y: 180,
+        width: 400,
+        height: 120
+      },
+      {
+        id: uuidv4(),
+        type: 'experience',
+        title: 'Job Title',
+        company: 'Company Name',
+        startDate: '2020',
+        endDate: 'Present',
+        description: '• Developed and implemented successful strategies\n• Collaborated with cross-functional teams',
+        x: 100,
+        y: 320,
+        width: 400,
+        height: 150
+      },
+      {
+        id: uuidv4(),
+        type: 'education',
+        institution: 'University Name',
+        degree: 'Degree Name',
+        startDate: '2016',
+        endDate: '2020',
+        description: 'Relevant coursework and achievements',
+        x: 100,
+        y: 490,
+        width: 400,
+        height: 120
+      },
+      {
+        id: uuidv4(),
+        type: 'skills',
+        skills: ['JavaScript', 'React', 'Node.js'],
+        x: 520,
+        y: 180,
+        width: 250,
+        height: 150
+      },
+      {
+        id: uuidv4(),
+        type: 'languages',
+        languages: [
+          { name: "English", level: "Native" },
+          { name: "French", level: "Intermediate" }
+        ],
+        x: 520,
+        y: 350,
+        width: 250,
+        height: 120
+      },
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: 'CONTACT\n\nemail@example.com\n(123) 456-7890',
+        x: 520,
+        y: 50,
+        width: 250,
+        height: 110
+      }
+    ])
+  }
+
+  const handleProfessionalTemplate = () => {
+    setTemplateModalOpen(false)
+    // Add Professional template sections with the same text as in the preview
+    setSections([
+      {
+        id: uuidv4(),
+        type: 'header',
+        name: 'JONATHAN PARKER',
+        jobTitle: 'SENIOR SOFTWARE ENGINEER',
+        x: 100,
+        y: 50,
+        width: 400,
+        height: 100
+      },
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: 'RESULTS-DRIVEN SOFTWARE ENGINEER WITH 7+ YEARS OF EXPERIENCE BUILDING SCALEABLE WEB APPLICATIONS AND LEADING DEVELOPMENT TEAMS. SPECIALIZED IN MODERN JAVASCRIPT FRAMEWORKS AND CLOUD ARCHITECTURE.',
+        x: 100,
+        y: 180,
+        width: 400,
+        height: 120
+      },
+      {
+        id: uuidv4(),
+        type: 'experience',
+        title: 'SENIOR SOFTWARE ENGINEER',
+        company: 'TECH INNOVATIONS INC.',
+        startDate: '2020',
+        endDate: 'PRESENT',
+        description: '• LED DEVELOPMENT OF CLOUD-NATIVE MICROSERVICES ARCHITECTURE\n• REDUCED APPLICATION LOAD TIME BY 40% THROUGH OPTIMIZATION\n• MENTORED JUNIOR DEVELOPERS AND IMPLEMENTED AGILE METHODOLOGIES',
+        x: 100,
+        y: 320,
+        width: 400,
+        height: 150
+      },
+      {
+        id: uuidv4(),
+        type: 'education',
+        institution: 'STANFORD UNIVERSITY',
+        degree: 'M.S. COMPUTER SCIENCE',
+        startDate: '2015',
+        endDate: '2017',
+        description: 'Relevant coursework and achievements',
+        x: 100,
+        y: 490,
+        width: 400,
+        height: 120
+      },
+      {
+        id: uuidv4(),
+        type: 'skills',
+        skills: ['JavaScript', 'React.js', 'Node.js', 'Express', 'AWS', 'Cloud Infrastructure'],
+        x: 520,
+        y: 180,
+        width: 250,
+        height: 150
+      },
+      {
+        id: uuidv4(),
+        type: 'languages',
+        languages: [
+          { name: "Français", level: "Natif" },
+          { name: "Anglais", level: "Courant" }
+        ],
+        x: 50,
+        y: 580,
+        width: 200,
+        height: 100
+      },
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: '<strong style="text-transform: uppercase; font-size: 14px; color: #333;">Profil</strong><br>Développeur web passionné avec 5 ans d\'expérience en création d\'applications web dynamiques et intuitives. Spécialisé dans les technologies front-end modernes.',
+        x: 280,
+        y: 150,
+        width: 350,
+        height: 100
+      },
+      {
+        id: uuidv4(),
+        type: 'experience',
+        title: 'DÉVELOPPEUR FRONT-END',
+        company: 'ACME TECH',
+        startDate: '2020',
+        endDate: 'Présent',
+        description: '• Développement d\'interfaces utilisateur réactives\n• Optimisation des performances des applications\n• Collaboration avec l\'équipe de design',
+        x: 280,
+        y: 260,
+        width: 350,
+        height: 130
+      },
+      {
+        id: uuidv4(),
+        type: 'experience',
+        title: 'DÉVELOPPEUR WEB',
+        company: 'STARTUP INNOVANTE',
+        startDate: '2018',
+        endDate: '2020',
+        description: '• Création de composants réutilisables\n• Intégration d\'APIs et services tiers\n• Développement de la stratégie technique',
+        x: 280,
+        y: 400,
+        width: 350,
+        height: 130
+      },
+      {
+        id: uuidv4(),
+        type: 'experience',
+        title: 'STAGIAIRE DÉVELOPPEUR',
+        company: 'AGENCE DIGITALE',
+        startDate: '2017',
+        endDate: '2018',
+        description: '• Support au développement de sites web\n• Optimisation SEO et accessibilité',
+        x: 280,
+        y: 540,
+        width: 350,
+        height: 110
+      },
+      {
+        id: uuidv4(),
+        type: 'line',
+        orientation: 'vertical',
+        thickness: 1,
+        color: '#eee',
+        x: 260,
+        y: 150,
+        width: 10,
+        height: 500
+      }
+    ]);
+  }
+
+  const handleFrenchTemplate = () => {
+    setTemplateModalOpen(false)
+    setSections([
+      {
+        id: uuidv4(),
+        type: 'header',
+        name: 'Khalil Troudi',
+        jobTitle: 'data scientist',
+        content: '<h2 style="margin: 0; font-size: 22px; font-weight: bold; color: #5170b7;">Khalil Troudi</h2><p style="margin: 0; font-size: 14px; color: #333;">data scientist</p>',
+        height: 122,
+        width: 307,
+        x: 13.33333333333333,
+        y: 15.333333333333336
+      },
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: '<strong style="color: #5170b7; text-transform: uppercase;">PROFIL & OBJECTIF</strong><p>Passionné par l\'innovation basée sur les données et les technologies web. Je dispose de compétences solides en analyse de données, apprentissage automatique, développement web full-stack.</p><p>Doté d\'un esprit analytique, d\'une capacité à gérer des projets transverses et d\'une maîtrise des outils de développement modernes, je vise à intégrer un environnement dynamique où je pourrai contribuer à l\'amélioration des performances via de l\'amélioration des processus décisionnels basés sur les données.</p>',
+        height: 512,
+        width: 240,
+        x: 5.333333333333338,
+        y: 182.66666666666666
+      },
+      {
+        id: uuidv4(),
+        type: 'line',
+        orientation: 'horizontal',
+        thickness: 1,
+        color: '#ccc',
+        height: 2,
+        width: 240,
+        x: 40,
+        y: 400
+      },
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: '<strong style="color: #5170b7; text-transform: uppercase;">CONTACT</strong><p>📞 +12 12457896</p><p>✉️ email@domain.com</p><p>🔗 linkedin.com/in/profile</p><p>🌐 github.com/username</p>',
+        height: 150,
+        width: 240,
+        x: 0,
+        y: 663.333333333333
+      },
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: '<strong style="color: #5170b7; text-transform: uppercase;">FORMATIONS</strong><p><strong>3ème année cycle d\'ingénieur</strong><br>Specialité Architecture IT et Cloud Computing<br><em style="color: #5170b7;">ESPRIT - École Sup Privée d\'Ingénierie et de Technologies</em><br>(Sept. 2022- Present)</p><p><strong>Bachelor en Big Data et analyse des données</strong><br><em style="color: #5170b7;">Institut supérieur des arts multimédia de la Manouba</em><br>(Sept. 2019- Juin 2022)</p><p><strong>Baccalauréat en Informatique</strong><br><em style="color: #5170b7;">Lycée Béchir Nabhani</em> - (Sept. 2015- Juin 2019)</p>',
+        height: 344,
+        width: 350,
+        x: 422,
+        y: 0
+      },
+      {
+        id: uuidv4(),
+        type: 'line',
+        orientation: 'horizontal',
+        thickness: 1,
+        color: '#ccc',
+        height: 2,
+        width: 350,
+        x: 310,
+        y: 210
+      },
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: '<strong style="color: #5170b7; text-transform: uppercase;">EXPÉRIENCES PROFESSIONNELLES</strong><p><strong>Data Scientist</strong><br>Dinosoftlabs Stage, Remote (<em style="color: #5170b7;">Juillet 2024 - septembre 2024</em>)<ul><li>Analyse et traitement des données financières sur la période 2022-2023 dans une évaluation approfondie des gains et pertes.</li><li>Conception et développement de tableaux de bord interactifs pour Power BI pour visualiser la rétention des clients et la situation financière.</li></ul></p><p><strong>Professeur d\'Algorithmes et Python Tutor</strong><br>TuniX Academy, Part-time, Tunisie (<em style="color: #5170b7;">Juillet 2023 - septembre 2024</em>)<ul><li>Enseignement des concepts de base en algorithmique et en programmation Python.</li></ul></p>',
+        height: 416,
+        width: 350,
+        x: 416.6666666666667,
+        y: 342.66666666666725
+      },
+      {
+        id: uuidv4(),
+        type: 'image',
+        alt: 'Profile image',
+        isRound: true,
+        src: '',
+        content: '<div style="width: 160px; height: 160px; margin: 0 auto; border-radius: 50%; overflow: hidden;"><img src="" alt="Profile image" style="width: 100%; height: 100%; object-fit: cover;"></div>',
+        height: 168,
+        width: 100,
+        x: 45.33336666666666,
+        y: 82.66663333333332
+      }
+    ]);
+  }
+
+  // Add an undo function
+  const handleUndo = () => {
+    if (sectionsHistory.length > 0) {
+      // Get the last state from history
+      const lastState = sectionsHistory[sectionsHistory.length - 1];
+      
+      // Restore that state
+      setSections(lastState);
+      
+      // Remove it from history
+      setSectionsHistory(prev => prev.slice(0, prev.length - 1));
+    }
+  };
 
   return (
     <div className={styles.pageWrapper} onClick={() => setActiveId(null)}>
+      <Dialog
+        open={templateModalOpen}
+        onClose={() => setTemplateModalOpen(false)}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Choose a Template</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Typography variant="body1">
+              Select a template to start building your resume
+            </Typography>
+            
+            <Box sx={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(3, 1fr)', 
+              gap: 3
+            }}>
+              {/* Blank Template Preview */}
+              <Paper 
+                onClick={handleBlankTemplate}
+                sx={{ 
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  transition: 'all 0.2s',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  '&:hover': {
+                    boxShadow: 3,
+                    borderColor: 'primary.main',
+                    transform: 'translateY(-4px)'
+                  },
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+              >
+                <Box sx={{ 
+                  height: '260px', 
+                  bgcolor: '#f5f5f5',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  p: 1
+                }}>
+                  {/* Simple blank template preview */}
+                  <Box sx={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    bgcolor: 'white',
+                    border: '1px solid #e0e0e0',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    p: 1
+                  }}>
+                    <Box sx={{ width: '40%', height: '20px', bgcolor: '#e0e0e0', mb: 1 }}></Box>
+                    <Box sx={{ width: '60%', height: '12px', bgcolor: '#e0e0e0', mb: 2 }}></Box>
+                    <Box sx={{ width: '90%', height: '8px', bgcolor: '#f0f0f0', mb: 1 }}></Box>
+                    <Box sx={{ width: '80%', height: '8px', bgcolor: '#f0f0f0', mb: 1 }}></Box>
+                    <Box sx={{ width: '85%', height: '8px', bgcolor: '#f0f0f0', mb: 3 }}></Box>
+                    
+                    <Box sx={{ width: '30%', height: '12px', bgcolor: '#e0e0e0', mb: 1 }}></Box>
+                    <Box sx={{ width: '70%', height: '8px', bgcolor: '#f0f0f0', mb: 1 }}></Box>
+                    <Box sx={{ width: '65%', height: '8px', bgcolor: '#f0f0f0', mb: 1 }}></Box>
+                  </Box>
+                </Box>
+                <Box sx={{ p: 1.5 }}>
+                  <Typography variant="subtitle1" fontWeight="medium">Blank Template</Typography>
+                </Box>
+              </Paper>
+
+              {/* Canadian Template Preview */}
+              <Paper 
+                onClick={handleCanadianTemplate}
+                sx={{ 
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  transition: 'all 0.2s',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  '&:hover': {
+                    boxShadow: 3,
+                    borderColor: 'primary.main',
+                    transform: 'translateY(-4px)'
+                  },
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+              >
+                <Box sx={{ 
+                  height: '260px', 
+                  bgcolor: '#f5f5f5',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  p: 1
+                }}>
+                  {/* Canadian template preview */}
+                  <Box sx={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    bgcolor: 'white',
+                    border: '1px solid #e0e0e0',
+                    display: 'flex',
+                    p: 1
+                  }}>
+                    {/* Left column */}
+                    <Box sx={{ width: '30%', display: 'flex', flexDirection: 'column', pr: 1 }}>
+                      <Box sx={{ width: '70px', height: '70px', borderRadius: '50%', bgcolor: '#e0e0e0', mb: 2, mx: 'auto' }}></Box>
+                      
+                      <Typography variant="caption" sx={{ fontSize: '8px', fontWeight: 'bold', mb: 0.5 }}>
+                        CONTACT
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.5 }}>
+                        email@example.com
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 1.5 }}>
+                        (123) 456-7890
+                      </Typography>
+                      
+                      <Typography variant="caption" sx={{ fontSize: '8px', fontWeight: 'bold', mb: 0.5 }}>
+                        SKILLS
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2 }}>
+                        JavaScript
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2 }}>
+                        React
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 1.5 }}>
+                        Node.js
+                      </Typography>
+                      
+                      <Typography variant="caption" sx={{ fontSize: '8px', fontWeight: 'bold', mb: 0.5 }}>
+                        LANGUAGES
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2 }}>
+                        English - Native
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2 }}>
+                        French - Intermediate
+                      </Typography>
+                    </Box>
+                    
+                    {/* Right column */}
+                    <Box sx={{ width: '70%', display: 'flex', flexDirection: 'column', pl: 1, borderLeft: '1px solid #f0f0f0' }}>
+                      <Typography variant="caption" sx={{ fontSize: '10px', fontWeight: 'bold', mb: 0.2 }}>
+                        YOUR NAME
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '8px', color: '#555', mb: 1 }}>
+                        Professional Title
+                      </Typography>
+                      
+                      <Typography variant="caption" sx={{ fontSize: '8px', fontWeight: 'bold', mb: 0.5 }}>
+                        PROFESSIONAL SUMMARY
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2, display: 'block' }}>
+                        Experienced professional with a proven track record of
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2, display: 'block' }}>
+                        success in delivering high-quality results.
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 1.5, display: 'block' }}>
+                        Skilled in problem-solving and teamwork.
+                      </Typography>
+                      
+                      <Typography variant="caption" sx={{ fontSize: '8px', fontWeight: 'bold', mb: 0.5 }}>
+                        WORK EXPERIENCE
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '7px', fontWeight: 'medium', mb: 0.2 }}>
+                        Job Title
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2 }}>
+                        Company Name | 2020 - Present
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2, display: 'block' }}>
+                        • Developed and implemented successful strategies
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 1.5, display: 'block' }}>
+                        • Collaborated with cross-functional teams
+                      </Typography>
+                      
+                      <Typography variant="caption" sx={{ fontSize: '8px', fontWeight: 'bold', mb: 0.5 }}>
+                        EDUCATION
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '7px', fontWeight: 'medium', mb: 0.2 }}>
+                        Degree Name
+                      </Typography>
+                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2 }}>
+                        University Name | 2016 - 2020
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+                <Box sx={{ p: 1.5 }}>
+                  <Typography variant="subtitle1" fontWeight="medium">Canadian Template</Typography>
+                </Box>
+              </Paper>
+
+              {/* Professional Template - Enhanced Design */}
+              <Paper 
+                onClick={handleProfessionalTemplate}
+                sx={{ 
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  transition: 'all 0.2s',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  '&:hover': {
+                    boxShadow: 3,
+                    borderColor: 'primary.main',
+                    transform: 'translateY(-4px)'
+                  },
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+              >
+                <Box sx={{ 
+                  height: '260px', 
+                  bgcolor: '#f5f5f5',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  p: 1
+                }}>
+                  {/* Professional Modern template preview */}
+                  <Box sx={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    bgcolor: 'white',
+                    border: '1px solid #e0e0e0',
+                    display: 'flex',
+                    p: 1,
+                    position: 'relative'
+                  }}>
+                    {/* Top Section - Name */}
+                    <Box sx={{ 
+                      position: 'absolute',
+                      top: 10,
+                      left: 10,
+                      width: '50%'
+                    }}>
+                      <Typography sx={{ 
+                        fontSize: '12px', 
+                        fontWeight: 'bold', 
+                        letterSpacing: 1,
+                        lineHeight: 1,
+                        mb: 0
+                      }}>
+                        BENJAMIN
+                      </Typography>
+                      <Typography sx={{ 
+                        fontSize: '10px', 
+                        fontWeight: 'medium',
+                        letterSpacing: 1
+                      }}>
+                        LEROY
+                      </Typography>
+                    </Box>
+                    
+                    {/* Profile Photo */}
+                    <Box sx={{ 
+                      position: 'absolute',
+                      top: 8,
+                      right: 10,
+                      width: '45px',
+                      height: '45px',
+                      borderRadius: '50%',
+                      bgcolor: '#e0e0e0',
+                      overflow: 'hidden'
+                    }}></Box>
+
+                    {/* Left Column */}
+                    <Box sx={{ 
+                      width: '38%', 
+                      display: 'flex', 
+                      flexDirection: 'column',
+                      mt: 7,
+                      pr: 1,
+                      fontSize: '6px'
+                    }}>
+                      {/* Contact Section */}
+                      <Typography sx={{ 
+                        fontSize: '7px', 
+                        fontWeight: 'bold', 
+                        color: '#333',
+                        mb: 0.3,
+                        textTransform: 'uppercase'
+                      }}>
+                        Contact
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.2 }}>
+                        email@example.com
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.2 }}>
+                        +33 6 12 34 56 78
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 1 }}>
+                        Paris, France
+                      </Typography>
+
+                      {/* Formation */}
+                      <Typography sx={{ 
+                        fontSize: '7px', 
+                        fontWeight: 'bold', 
+                        color: '#333',
+                        mb: 0.3,
+                        textTransform: 'uppercase'
+                      }}>
+                        Formation
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', fontWeight: 'medium', color: '#444', mb: 0.1 }}>
+                        2018-2021
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                        MSc Computer Science
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.5 }}>
+                        University Paris Tech
+                      </Typography>
+                      
+                      <Typography sx={{ fontSize: '6px', fontWeight: 'medium', color: '#444', mb: 0.1 }}>
+                        2016-2018
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                        BSc Data Science
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 1 }}>
+                        Institute of Technology
+                      </Typography>
+
+                      {/* Competences */}
+                      <Typography sx={{ 
+                        fontSize: '7px', 
+                        fontWeight: 'bold', 
+                        color: '#333',
+                        mb: 0.3,
+                        textTransform: 'uppercase'
+                      }}>
+                        Competences
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                        • JavaScript/React.js
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                        • Python/Data Analysis
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                        • UX/UI Design
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 1 }}>
+                        • Project Management
+                      </Typography>
+
+                      {/* Langues */}
+                      <Typography sx={{ 
+                        fontSize: '7px', 
+                        fontWeight: 'bold', 
+                        color: '#333',
+                        mb: 0.3,
+                        textTransform: 'uppercase'
+                      }}>
+                        Langues
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                        • Français - Natif
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                        • Anglais - Courant
+                      </Typography>
+                    </Box>
+                    
+                    {/* Right Column */}
+                    <Box sx={{ 
+                      width: '62%', 
+                      display: 'flex', 
+                      flexDirection: 'column',
+                      pl: 1.5,
+                      mt: 7,
+                      fontSize: '6px',
+                      borderLeft: '1px solid #eee'
+                    }}>
+                      {/* Profil */}
+                      <Typography sx={{ 
+                        fontSize: '7px', 
+                        fontWeight: 'bold', 
+                        color: '#333',
+                        mb: 0.3,
+                        textTransform: 'uppercase'
+                      }}>
+                        Profil
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 1, lineHeight: 1.3 }}>
+                        Développeur web passionné avec 5 ans d'expérience en
+                        création d'applications web dynamiques et intuitives.
+                        Spécialisé dans les technologies front-end modernes.
+                      </Typography>
+                      
+                      {/* Experiences */}
+                      <Typography sx={{ 
+                        fontSize: '7px', 
+                        fontWeight: 'bold', 
+                        color: '#333',
+                        mb: 0.3,
+                        textTransform: 'uppercase'
+                      }}>
+                        Expériences Professionnelles
+                      </Typography>
+                      
+                      {/* Experience 1 */}
+                      <Typography sx={{ fontSize: '6px', fontWeight: 'medium', color: '#444', mb: 0 }}>
+                        DÉVELOPPEUR FRONT-END | ACME TECH
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#777', mb: 0.2 }}>
+                        2020 - Présent
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                        • Développement d'interfaces utilisateur réactives
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                        • Optimisation des performances des applications
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.7 }}>
+                        • Collaboration avec l'équipe de design
+                      </Typography>
+                      
+                      {/* Experience 2 */}
+                      <Typography sx={{ fontSize: '6px', fontWeight: 'medium', color: '#444', mb: 0 }}>
+                        DÉVELOPPEUR WEB | STARTUP INNOVANTE
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#777', mb: 0.2 }}>
+                        2018 - 2020
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                        • Création de composants réutilisables
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                        • Intégration d'APIs et services tiers
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.7 }}>
+                        • Développement de la stratégie technique
+                      </Typography>
+                      
+                      {/* Experience 3 */}
+                      <Typography sx={{ fontSize: '6px', fontWeight: 'medium', color: '#444', mb: 0 }}>
+                        STAGIAIRE DÉVELOPPEUR | AGENCE DIGITALE
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#777', mb: 0.2 }}>
+                        2017 - 2018
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                        • Support au développement de sites web
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                        • Optimisation SEO et accessibilité
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+                <Box sx={{ p: 1.5 }}>
+                  <Typography variant="subtitle1" fontWeight="medium">Modern Minimal</Typography>
+                </Box>
+              </Paper>
+
+              {/* French Template - Based on image */}
+              <Paper 
+                onClick={handleFrenchTemplate}
+                sx={{ 
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  transition: 'all 0.2s',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  '&:hover': {
+                    boxShadow: 3,
+                    borderColor: 'primary.main',
+                    transform: 'translateY(-4px)'
+                  },
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+              >
+                <Box sx={{ 
+                  height: '260px', 
+                  bgcolor: '#f5f5f5',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  p: 1
+                }}>
+                  {/* French template preview */}
+                  <Box sx={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    bgcolor: 'white',
+                    border: '1px solid #e0e0e0',
+                    display: 'flex',
+                    p: 1,
+                    flexDirection: 'column',
+                    position: 'relative'
+                  }}>
+                    {/* Top header section */}
+                    <Box sx={{ 
+                      display: 'flex',
+                      borderBottom: '1px solid #eee',
+                      pb: 0.7
+                    }}>
+                      <Typography sx={{ 
+                        fontSize: '10px', 
+                        fontWeight: 'bold', 
+                        letterSpacing: 0.5,
+                        color: '#5170b7',
+                        lineHeight: 1,
+                      }}>
+                        Khalil Troudi
+                      </Typography>
+                      <Typography sx={{ 
+                        fontSize: '8px',
+                        color: '#777',
+                        ml: 0.5,
+                        alignSelf: 'flex-end'
+                      }}>
+                        data scientist
+                      </Typography>
+                    </Box>
+
+                    {/* Content section with two columns */}
+                    <Box sx={{ 
+                      display: 'flex', 
+                      mt: 0.8,
+                      fontSize: '6px'
+                    }}>
+                      {/* Left column */}
+                      <Box sx={{ 
+                        width: '32%', 
+                        pr: 0.5,
+                      }}>
+                        {/* Profile picture */}
+                        <Box sx={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(to bottom, #b2e1ff 60%, #71c371 40%)',
+                          mx: 'auto',
+                          mb: 1.5
+                        }}></Box>
+                        
+                        {/* Profile section */}
+                        <Typography sx={{ 
+                          fontSize: '7px', 
+                          fontWeight: 'bold', 
+                          color: '#5170b7',
+                          mb: 0.2,
+                          textTransform: 'uppercase'
+                        }}>
+                          Profil & objectif
+                        </Typography>
+                        <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.8, lineHeight: 1.3 }}>
+                          Passionné par l'innovation basée sur les données et les technologies web. Je dispose de compétences solides en analyse de données...
+                        </Typography>
+                        
+                        {/* Contact section */}
+                        <Typography sx={{ 
+                          fontSize: '7px', 
+                          fontWeight: 'bold', 
+                          color: '#5170b7',
+                          mb: 0.2,
+                          textTransform: 'uppercase'
+                        }}>
+                          Contact
+                        </Typography>
+                        <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                          📞 +12 12457896
+                        </Typography>
+                        <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                          ✉️ email@domain.com
+                        </Typography>
+                        <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                          🔗 linkedin.com/in/profile
+                        </Typography>
+                        <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.8 }}>
+                          🌐 github.com/username
+                        </Typography>
+                      </Box>
+                      
+                      {/* Right column */}
+                      <Box sx={{ 
+                        width: '68%', 
+                        pl: 0.8,
+                        borderLeft: '1px solid #eee'
+                      }}>
+                        {/* Formations section */}
+                        <Typography sx={{ 
+                          fontSize: '7px', 
+                          fontWeight: 'bold', 
+                          color: '#5170b7',
+                          mb: 0.2,
+                          textTransform: 'uppercase'
+                        }}>
+                          Formations
+                        </Typography>
+                        <Typography sx={{ fontSize: '6px', fontWeight: 'medium', color: '#444', mb: 0 }}>
+                          3ème année cycle d'ingénieur
+                        </Typography>
+                        <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                          Specialité Architecture IT et Cloud Computing
+                        </Typography>
+                        <Typography sx={{ fontSize: '6px', color: '#5170b7', fontStyle: 'italic', mb: 0.5 }}>
+                          ESPRIT - École Sup Privée d'Ingénierie et de Technologies
+                        </Typography>
+                        
+                        {/* Experiences section */}
+                        <Typography sx={{ 
+                          fontSize: '7px', 
+                          fontWeight: 'bold', 
+                          color: '#5170b7',
+                          mb: 0.2,
+                          textTransform: 'uppercase'
+                        }}>
+                          Expériences professionnelles
+                        </Typography>
+                        <Typography sx={{ fontSize: '6px', fontWeight: 'medium', color: '#444', mb: 0 }}>
+                          Data Scientist
+                        </Typography>
+                        <Typography sx={{ fontSize: '6px', color: '#777', mb: 0.1 }}>
+                          Dinosoftlabs Stage, Remote (Juillet 2024 - septembre 2024)
+                        </Typography>
+                        <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                          • Analyse et traitement des données financières sur la période 2022-2023...
+                        </Typography>
+                        <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.5 }}>
+                          • Conception et développement de tableaux de bord interactifs...
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+                <Box sx={{ p: 1.5 }}>
+                  <Typography variant="subtitle1" fontWeight="medium">French Data CV</Typography>
+                </Box>
+              </Paper>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTemplateModalOpen(false)} variant="outlined" color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleBlankTemplate} variant="contained" color="primary">
+            Blank Template
+          </Button>
+          <Button onClick={handleProfessionalTemplate} variant="contained" color="secondary">
+            Professional Modern
+          </Button>
+          <Button onClick={handleFrenchTemplate} variant="contained" style={{ backgroundColor: '#5170b7', color: 'white' }}>
+            French Data CV
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {isMobile ? (
         <IconButton
           onClick={() => setDrawerOpen(true)}
@@ -223,6 +1365,9 @@ export default function ResumeBuilder() {
       <ResumeActions 
         onSaveDraft={saveDraft}
         onExportPDF={exportToPDF}
+        onChangeTemplate={() => setTemplateModalOpen(true)}
+        onUndo={handleUndo}
+        canUndo={sectionsHistory.length > 0}
       />
 
       <Drawer
