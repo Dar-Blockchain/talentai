@@ -15,6 +15,10 @@ import {
   styled,
   IconButton,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -30,7 +34,7 @@ const NEXTJS_QUESTIONS: string[] = [];
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   background: 'rgba(0, 7, 45, 0.8)',
   backdropFilter: 'blur(10px)',
-  borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+  borderBottom: '1px solid rgba(255,255,255,0.1)',
 }));
 
 const RecordingControls = styled(Box)(({ theme }) => ({
@@ -104,6 +108,33 @@ const NavigationBar = styled(Box)(({ theme }) => ({
   alignItems: 'center',
 }));
 
+// Add new styled components for the guidelines modal
+const GuidelinesModal = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialog-paper': {
+    background: 'rgba(15, 23, 42, 0.95)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '24px',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    maxWidth: '600px',
+    margin: theme.spacing(2),
+  },
+}));
+
+const GuidelineItem = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'flex-start',
+  gap: theme.spacing(2),
+  padding: theme.spacing(2),
+  borderRadius: '12px',
+  background: 'rgba(255, 255, 255, 0.05)',
+  marginBottom: theme.spacing(2),
+  transition: 'transform 0.2s ease',
+  '&:hover': {
+    transform: 'translateX(8px)',
+    background: 'rgba(255, 255, 255, 0.08)',
+  },
+}));
+
 // --- SpeechRecognition Types ---
 declare global {
   interface Window {
@@ -163,6 +194,10 @@ export default function Test() {
   );
 
   const [currentTranscript, setCurrentTranscript] = useState('');
+
+  // Add state for guidelines modal
+  const [showGuidelines, setShowGuidelines] = useState(true);
+  const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
 
   // Fetch questions from API
   useEffect(() => {
@@ -447,7 +482,18 @@ export default function Test() {
     setHasStartedTest(false);
   };
 
+  const handleGuidelinesAccept = () => {
+    setGuidelinesAccepted(true);
+    setShowGuidelines(false);
+  };
+
+  // Modify startTest to check guidelines acceptance
   const startTest = async () => {
+    if (!guidelinesAccepted) {
+      setShowGuidelines(true);
+      return;
+    }
+
     try {
       // Initialize transcriptions for all questions
       setTranscriptions(
@@ -507,7 +553,7 @@ export default function Test() {
       // Store current URL in localStorage before navigation
       localStorage.setItem('previousUrl', window.location.href);
     }
-    router.push('/');
+    router.push('/dashboardCandidate');
   };
 
   // Function to save test results
@@ -524,6 +570,7 @@ export default function Test() {
         type: router.query.type || 'technical',
         skill: router.query.skill,
         subcategory: router.query.subcategory,
+        proficiency: router.query.proficiency,
         timestamp: new Date().toISOString()
       }
     };
@@ -538,7 +585,8 @@ export default function Test() {
         from: 'test',
         type: router.query.type || 'technical',
         skill: router.query.skill,
-        subcategory: router.query.subcategory
+        subcategory: router.query.subcategory,
+        proficiency: router.query.proficiency
       }
     });
   };
@@ -563,6 +611,127 @@ export default function Test() {
         flexDirection: 'column',
       }}
     >
+      {/* Guidelines Modal */}
+      <GuidelinesModal
+        open={showGuidelines}
+        onClose={() => {}}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
+          padding: theme.spacing(3),
+        }}>
+          <Typography variant="h5" sx={{
+            color: '#fff',
+            fontWeight: 700,
+            background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}>
+            Important Test Guidelines
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ padding: theme.spacing(4) }}>
+          <Typography variant="body1" sx={{ color: '#fff', mb: 3, opacity: 0.9 }}>
+            Please ensure you meet the following requirements before starting the test:
+          </Typography>
+
+          <GuidelineItem>
+            <Box sx={{ color: '#02E2FF', mt: 0.5 }}>⏱️</Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
+                Time Commitment
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                Set aside 30 minutes of uninterrupted time. The test cannot be paused once started.
+              </Typography>
+            </Box>
+          </GuidelineItem>
+
+          <GuidelineItem>
+            <Box sx={{ color: '#02E2FF', mt: 0.5 }}>🔇</Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
+                Quiet Environment
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                Find a quiet room with no background noise. Background sounds can affect your test results.
+              </Typography>
+            </Box>
+          </GuidelineItem>
+
+          <GuidelineItem>
+            <Box sx={{ color: '#02E2FF', mt: 0.5 }}>🎥</Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
+                Camera and Microphone
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                Ensure your camera and microphone are working properly. Test will use both for recording.
+              </Typography>
+            </Box>
+          </GuidelineItem>
+
+          <GuidelineItem>
+            <Box sx={{ color: '#02E2FF', mt: 0.5 }}>👤</Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
+                Individual Assessment
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                Complete the test alone. No other people should be present or helping during the assessment.
+              </Typography>
+            </Box>
+          </GuidelineItem>
+
+          <GuidelineItem>
+            <Box sx={{ color: '#02E2FF', mt: 0.5 }}>💻</Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
+                Technical Setup
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                Use a stable internet connection. Close other applications that might use your camera or microphone.
+              </Typography>
+            </Box>
+          </GuidelineItem>
+        </DialogContent>
+        <DialogActions sx={{
+          padding: theme.spacing(3),
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          justifyContent: 'space-between'
+        }}>
+          <Button
+            onClick={() => router.push('/dashboardCandidate')}
+            sx={{
+              color: 'rgba(255,255,255,0.7)',
+              '&:hover': { color: '#fff' }
+            }}
+          >
+            I'm Not Ready
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleGuidelinesAccept}
+            sx={{
+              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              color: '#fff',
+              px: 4,
+              py: 1,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': {
+                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+              }
+            }}
+          >
+            I Understand & I'm Ready
+          </Button>
+        </DialogActions>
+      </GuidelinesModal>
+
       <StyledAppBar position="static" elevation={0}>
         <Toolbar>
           <Typography
