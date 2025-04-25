@@ -1,4 +1,4 @@
-const Resume = require('../models/Resume');
+const Resume = require('../models/resumeSchema');
 
 /* ========== CREATE ========== */
 exports.createResume = async (req, res) => {

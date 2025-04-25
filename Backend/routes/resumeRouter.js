@@ -1,6 +1,10 @@
 // routes/resumeRoutes.js
 const router = require('express').Router();
-const { createResume } = require('../controllers/resumeController');
+const resumeController= require('../controllers/resumeController');
 
-router.post('/createResume', createResume);
+router.post('/createResume', resumeController.createResume);
+router.get('/getResumes', resumeController.getResumes);
+router.get('/getResume/:id', resumeController.getResumeById);
+router.put('/updateResume/:id', resumeController.updateResume);
+router.delete('/deleteResume/:id', resumeController.deleteResume);
 module.exports = router;
