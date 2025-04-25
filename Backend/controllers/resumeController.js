@@ -88,3 +88,42 @@ exports.deleteResume = async (req, res) => {
     res.status(500).json({ error: 'Erreur serveur' });
   }
 };
+
+// controllers/resumeController.js
+const { OpenAI } = require('openai');
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 20_000 });
+
+exports.regenerate = async (req, res) => {
+  try {
+    const raw = req.body?.prompt?.trim();
+    if (!raw) return res.status(400).json({ error: '`prompt` est requis.' });
+
+    /* ----- Prompt strict : pas d’ajout, pas d’invention ----- */
+    const systemMsg =
+      `You are a copy-editor. Rewrite the user's resume text to sound more professional ` +
+      `WITHOUT adding, removing or inventing any information. ` +
+      `Keep exactly the same sections, headings and ordering. Only rephrase wording.`;
+
+    /* On limite à ~25 % de plus que la taille d’origine */
+    const maxTokens = Math.ceil(raw.split(/\s+/).length * 1.25);
+
+    const { choices } = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      max_tokens: maxTokens,
+      temperature: 0.3,
+      messages: [
+        { role: 'system', content: systemMsg },
+        { role: 'user',   content: raw }
+      ]
+    });
+
+    const content = choices?.[0]?.message?.content?.trim();
+    if (!content) throw new Error('Réponse vide');
+
+    return res.json({ message: 'Résumé régénéré avec succès.', content });
+
+  } catch (err) {
+    console.error('OpenAI error:', err);
+    res.status(err.status ?? 500).json({ error: err.message || 'Erreur serveur.' });
+  }
+};
