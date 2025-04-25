@@ -553,7 +553,7 @@ export default function Test() {
       // Store current URL in localStorage before navigation
       localStorage.setItem('previousUrl', window.location.href);
     }
-    router.push('/');
+    router.push('/dashboardCandidate');
   };
 
   // Function to save test results

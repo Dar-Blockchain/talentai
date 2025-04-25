@@ -34,6 +34,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import DesignServicesIcon from '@mui/icons-material/DesignServices';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import PersonIcon from '@mui/icons-material/Person';
+import BugReportIcon from '@mui/icons-material/BugReport';
 import Cookies from 'js-cookie';
 
 type Skill = { label: string; color: string; category: string };
@@ -57,12 +58,13 @@ const ALL_SKILLS: Skill[] = [
   { label: 'Social Media', color: '45B7D1', category: 'marketing' },
   { label: 'Email Marketing', color: '96CEB4', category: 'marketing' },
   { label: 'Analytics', color: 'FFEEAD', category: 'marketing' },
-  // Design
-  // { label: 'UI/UX', color: 'FF9F1C', category: 'design' },
-  // { label: 'Figma', color: 'F24E1E', category: 'design' },
-  // { label: 'Adobe XD', color: 'FF61F6', category: 'design' },
-  // { label: 'Photoshop', color: '31A8FF', category: 'design' },
-  // { label: 'Illustrator', color: 'FF9A00', category: 'design' },
+  // QA
+  { label: 'Manual Testing', color: '9C27B0', category: 'qa' },
+  { label: 'Automated Testing', color: '673AB7', category: 'qa' },
+  { label: 'Test Planning', color: '3F51B5', category: 'qa' },
+  { label: 'Performance Testing', color: '2196F3', category: 'qa' },
+  { label: 'API Testing', color: '03A9F4', category: 'qa' },
+  { label: 'Security Testing', color: '00BCD4', category: 'qa' },
   // Business
   { label: 'Project Management', color: '6C5CE7', category: 'business' },
   { label: 'Agile', color: '00B894', category: 'business' },
@@ -74,7 +76,7 @@ const ALL_SKILLS: Skill[] = [
 const CATEGORIES = [
   { id: 'development', label: 'Development', icon: <CodeIcon /> },
   { id: 'marketing', label: 'Marketing', icon: <AnalyticsIcon /> },
-  // { id: 'design', label: 'Design', icon: <DesignServicesIcon /> },
+  { id: 'qa', label: 'Quality Assurance', icon: <BugReportIcon /> },
   { id: 'business', label: 'Business', icon: <BusinessIcon /> }
 ];
 
