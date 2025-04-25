@@ -50,12 +50,23 @@ export default function ActionButton({
   className,
   disabled = false 
 }: ActionButtonProps) {
-  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const handleTooltipClose = () => {
+    setOpen(false);
+  };
+
+  const handleTooltipOpen = () => {
+    if (!disabled) {
+      setOpen(true);
+    }
+  };
 
   const handleClick = () => {
     if (!disabled) {
+      // Hide tooltip when button is clicked
+      setOpen(false);
       onClick();
-      setTooltipOpen(false);
     }
   };
 
@@ -66,15 +77,19 @@ export default function ActionButton({
       placement="bottom"
       enterDelay={300}
       leaveDelay={100}
+      open={open}
+      onClose={handleTooltipClose}
+      onOpen={handleTooltipOpen}
+      disableFocusListener={disabled}
       disableHoverListener={disabled}
-      open={tooltipOpen}
-      onOpen={() => setTooltipOpen(true)}
-      onClose={() => setTooltipOpen(false)}
+      disableTouchListener={disabled}
     >
       <StyledButton 
         onClick={handleClick} 
         className={className}
         disabled={disabled}
+        onMouseEnter={handleTooltipOpen}
+        onMouseLeave={handleTooltipClose}
       >
         {icon}
         {label}

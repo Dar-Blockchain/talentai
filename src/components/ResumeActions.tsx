@@ -25,6 +25,7 @@ type ResumeActionsProps = {
   onChangeTemplate?: () => void;
   onUndo?: () => void;
   canUndo?: boolean;
+  sectionsCount?: number;
 }
 
 export default function ResumeActions({ 
@@ -32,8 +33,11 @@ export default function ResumeActions({
   onExportPDF, 
   onChangeTemplate,
   onUndo,
-  canUndo = false
+  canUndo = false,
+  sectionsCount = 0
 }: ResumeActionsProps) {
+  const noSections = sectionsCount === 0;
+  
   return (
     <ActionsContainer>
       {onUndo && (
@@ -50,12 +54,14 @@ export default function ResumeActions({
         label="Save Draft"
         tooltip="Save your resume progress to continue later"
         onClick={onSaveDraft}
+        disabled={noSections}
       />
       <ActionButton
         icon={<PictureAsPdfIcon />}
         label="Export PDF"
         tooltip="Download your resume as a PDF file"
         onClick={onExportPDF}
+        disabled={noSections}
       />
       {onChangeTemplate && (
         <ActionButton

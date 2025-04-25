@@ -25,6 +25,7 @@ import Dialog from "@mui/material/Dialog"
 import DialogContent from "@mui/material/DialogContent" 
 import DialogTitle from "@mui/material/DialogTitle"
 import ImageUploader from "@/components/ImageUploader"
+import LineEditor from "./LineEditor"
 
 type Props = {
   
@@ -167,6 +168,18 @@ export default function SectionRenderer({
             ? `<div style="width: 160px; height: 160px; margin: 0 auto; border-radius: 50%; overflow: hidden;"><img src="${img.src}" alt="${img.alt || ''}" style="width: 100%; height: 100%; object-fit: cover;"></div>`
             : `<img src="${img.src}" alt="${img.alt || ''}" style="max-width:100%; height:auto;">`
           : '<div style="width:100%; height:100%; display:flex; justify-content:center; align-items:center; background:#f0f0f0; border:1px dashed #ccc;">Double-click to upload image</div>'
+      case "line":
+        const line = section as LineSection;
+        const orientation = line.orientation || 'horizontal';
+        const thickness = line.thickness || 2;
+        const color = line.color || '#000000';
+        
+        // Calculate dimensions based on orientation
+        const lineWidth = orientation === 'horizontal' ? '100%' : `${thickness}px`;
+        const lineHeight = orientation === 'horizontal' ? `${thickness}px` : '100%';
+        
+        // Return a div styled as a line
+        return `<div style="width: ${lineWidth}; height: ${lineHeight}; background-color: ${color}; margin: 0 auto;"></div>`;
       default:
         return ''
     }
@@ -547,6 +560,12 @@ export default function SectionRenderer({
       return
     }
     
+    // If this is a line section, show the line editor dialog
+    if (type === "line") {
+      setShowLineEditor(true)
+      return
+    }
+    
     // Special handling for header section to ensure font size is preserved
     if (type === "header" && !isEditing) {
       // Find h2 element with the blue text
@@ -585,6 +604,7 @@ export default function SectionRenderer({
 
   // Add state for dialogs
   const [showImageUploader, setShowImageUploader] = useState(false);
+  const [showLineEditor, setShowLineEditor] = useState(false);
 
   // Handle image upload
   const handleImageSelected = (imageData: string, isRound: boolean) => {
@@ -604,6 +624,31 @@ export default function SectionRenderer({
     }
     
     setShowImageUploader(false);
+  }
+
+  // Handle line properties change
+  const handleLinePropertiesChange = (properties: { orientation: 'horizontal' | 'vertical', thickness: number, color: string }) => {
+    const line = section as LineSection;
+    const { orientation, thickness, color } = properties;
+    
+    // Calculate dimensions based on orientation
+    const lineWidth = orientation === 'horizontal' ? '100%' : `${thickness}px`;
+    const lineHeight = orientation === 'horizontal' ? `${thickness}px` : '100%';
+    
+    // Create HTML content for the line
+    const lineContent = `<div style="width: ${lineWidth}; height: ${lineHeight}; background-color: ${color}; margin: 0 auto;"></div>`;
+    
+    // Update the section content
+    updateContent(id, lineContent);
+    
+    // Adjust container dimensions based on orientation
+    if (orientation === 'horizontal') {
+      updatePosition(id, { x, y, width, height: Math.max(thickness + 16, 20) });
+    } else {
+      updatePosition(id, { x, y, width: Math.max(thickness + 16, 20), height });
+    }
+    
+    setShowLineEditor(false);
   }
 
   // Custom CSS to handle the hover borders
@@ -732,6 +777,19 @@ export default function SectionRenderer({
           <ImageUploader 
             onImageSelected={handleImageSelected}
             initialImage={(section as ImageSection).src}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Line editor dialog */}
+      <Dialog open={showLineEditor} onClose={() => setShowLineEditor(false)}>
+        <DialogTitle>Edit Line</DialogTitle>
+        <DialogContent>
+          <LineEditor 
+            onLinePropertiesChange={handleLinePropertiesChange}
+            initialOrientation={(section as LineSection).orientation}
+            initialThickness={(section as LineSection).thickness}
+            initialColor={(section as LineSection).color}
           />
         </DialogContent>
       </Dialog>

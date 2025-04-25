@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Button, Typography, Divider, Box } from '@mui/material'
 import TextFieldsIcon from '@mui/icons-material/TextFields'
 import WorkIcon from '@mui/icons-material/Work'
@@ -11,10 +12,13 @@ import FolderSpecialIcon from '@mui/icons-material/FolderSpecial'
 import AddIcon from '@mui/icons-material/Add'
 import ImageIcon from '@mui/icons-material/Image'
 import HorizontalRuleIcon from '@mui/icons-material/HorizontalRule'
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions'
 import styles from '@/styles/ResumeBuilder.module.css'
+import IconSelector from './IconSelector'
 
 type Props = {
-  onAdd: (type: string) => void
+  onAdd: (type: string) => void;
+  onAddIcon?: (iconHtml: string) => void;
 }
 
 const sections = [
@@ -29,7 +33,23 @@ const sections = [
   { type: 'line', label: 'Line Divider', icon: HorizontalRuleIcon },
 ]
 
-export default function Sidebar({ onAdd }: Props) {
+export default function Sidebar({ onAdd, onAddIcon }: Props) {
+  const [isIconSelectorOpen, setIsIconSelectorOpen] = useState(false);
+  
+  const handleOpenIconSelector = () => {
+    setIsIconSelectorOpen(true);
+  };
+  
+  const handleCloseIconSelector = () => {
+    setIsIconSelectorOpen(false);
+  };
+  
+  const handleIconSelected = (iconHtml: string) => {
+    if (onAddIcon) {
+      onAddIcon(iconHtml);
+    }
+  };
+
   return (
     <div className={styles.sidebar}>
       <Box sx={{ mb: 4 }}>
@@ -90,6 +110,31 @@ export default function Sidebar({ onAdd }: Props) {
             {label}
           </Button>
         ))}
+        
+        {/* Add Icons button */}
+        <Button
+          onClick={handleOpenIconSelector}
+          startIcon={<EmojiEmotionsIcon />}
+          fullWidth
+          sx={{
+            justifyContent: 'flex-start',
+            color: 'rgba(255,255,255,0.9)',
+            backgroundColor: 'rgba(255,255,255,0.05)',
+            borderRadius: '8px',
+            py: 1.5,
+            px: 2,
+            mb: 1,
+            textAlign: 'left',
+            '&:hover': {
+              backgroundColor: 'rgba(255,255,255,0.1)',
+            },
+            '& .MuiButton-startIcon': {
+              color: '#02E2FF'
+            }
+          }}
+        >
+          Icons
+        </Button>
 
         <Button
           onClick={() => onAdd('custom')}
@@ -128,6 +173,13 @@ export default function Sidebar({ onAdd }: Props) {
     Tip: Double click any section to edit its content
   </Typography>
 </Box>
+
+      {/* Icon Selector Dialog */}
+      <IconSelector 
+        open={isIconSelectorOpen}
+        onClose={handleCloseIconSelector}
+        onSelectIcon={handleIconSelected}
+      />
     </div>
   )
 }

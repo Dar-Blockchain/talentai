@@ -371,6 +371,11 @@ export default function ResumeBuilder() {
 
   const handleBlankTemplate = () => {
     setTemplateModalOpen(false)
+    // Store current sections before clearing (for undo functionality)
+    if (sections.length > 0) {
+      // Save current sections to history
+      setSectionsHistory(prev => [...prev, sections])
+    }
     // Start with empty sections
     setSections([])
   }
@@ -685,9 +690,36 @@ export default function ResumeBuilder() {
       // Restore that state
       setSections(lastState);
       
-      // Remove it from history
-      setSectionsHistory(prev => prev.slice(0, prev.length - 1));
+      // Remove the used state from history
+      setSectionsHistory(prev => prev.slice(0, -1));
     }
+  }
+
+  // Update the handleIconSelected function with improved styling
+  const handleIconSelected = (iconHtml: string) => {
+    // Calculate a reasonable position for the new icon
+    // We'll place it in the center of the visible area by default
+    const canvasCenter = { x: 400, y: 300 };
+    
+    // Generate a unique ID for the new section
+    const newIconId = uuidv4();
+    
+    // Create a new custom section containing just the icon with improved styling
+    const newIconSection = {
+      id: newIconId,
+      type: 'custom' as const,
+      x: canvasCenter.x - 30, // Center the icon
+      y: canvasCenter.y - 30,
+      width: 60,  // Slightly larger for better visibility
+      height: 60, // Slightly larger for better visibility
+      content: `<div style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.8); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">${iconHtml}</div>`
+    };
+    
+    // Add the new icon section to the sections array
+    setSections(prev => [...prev, newIconSection]);
+    
+    // Select the newly created icon section
+    setActiveId(newIconId);
   };
 
   return (
@@ -697,11 +729,19 @@ export default function ResumeBuilder() {
         onClose={() => setTemplateModalOpen(false)}
         fullWidth
         maxWidth="md"
+        PaperProps={{
+          sx: {
+            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+            color: 'white',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            borderRadius: '12px'
+          }
+        }}
       >
-        <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Choose a Template</DialogTitle>
+        <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>Choose a Template</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <Typography variant="body1">
+            <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.85)' }}>
               Select a template to start building your resume
             </Typography>
             
@@ -1336,17 +1376,8 @@ export default function ResumeBuilder() {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setTemplateModalOpen(false)} variant="outlined" color="primary">
+          <Button onClick={() => setTemplateModalOpen(false)} variant="outlined" sx={{ color: 'white', borderColor: 'rgba(255, 255, 255, 0.3)' }}>
             Cancel
-          </Button>
-          <Button onClick={handleBlankTemplate} variant="contained" color="primary">
-            Blank Template
-          </Button>
-          <Button onClick={handleProfessionalTemplate} variant="contained" color="secondary">
-            Professional Modern
-          </Button>
-          <Button onClick={handleFrenchTemplate} variant="contained" style={{ backgroundColor: '#5170b7', color: 'white' }}>
-            French Data CV
           </Button>
         </DialogActions>
       </Dialog>
@@ -1359,7 +1390,7 @@ export default function ResumeBuilder() {
           <MenuIcon />
         </IconButton>
       ) : (
-        <Sidebar onAdd={addSection} />
+        <Sidebar onAdd={addSection} onAddIcon={handleIconSelected} />
       )}
 
       <ResumeActions 
@@ -1368,6 +1399,7 @@ export default function ResumeBuilder() {
         onChangeTemplate={() => setTemplateModalOpen(true)}
         onUndo={handleUndo}
         canUndo={sectionsHistory.length > 0}
+        sectionsCount={sections.length}
       />
 
       <Drawer
@@ -1375,7 +1407,7 @@ export default function ResumeBuilder() {
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
       >
-        <Sidebar onAdd={addSection} />
+        <Sidebar onAdd={addSection} onAddIcon={handleIconSelected} />
       </Drawer>
 
       <Canvas zoom={zoom}>
