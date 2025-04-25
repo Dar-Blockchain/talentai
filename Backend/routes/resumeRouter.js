@@ -7,6 +7,7 @@ const { requireAuthUser } = require('../middleware/authMiddleware');
 router.use(requireAuthUser);
 
 router.post('/createResume', resumeController.createResume);
+router.post('/regenerate', resumeController.regenerate);
 router.get('/getResumes', resumeController.getResumes);
 router.get('/getResume/:id', resumeController.getResumeById);
 router.put('/updateResume/:id', resumeController.updateResume);
