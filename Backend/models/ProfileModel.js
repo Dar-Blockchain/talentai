@@ -27,7 +27,6 @@ const profileSchema = new mongoose.Schema(
         name: String,
         category: String,
         experienceLevel: String,
-        NumberTestPassed: Number,
         ScoreTest: Number,
       },
     ],
@@ -41,7 +40,6 @@ const profileSchema = new mongoose.Schema(
     requiredExperienceLevel: {
       type: String,
       enum: ["Entry Level","Mid Level", "Senior", "Lead/Expert"],
-      default: "Entry Level"
     }
   },
   { timestamps: true }

@@ -190,9 +190,30 @@ module.exports.addSoftSkills = async (userId, softSkills) => {
       throw new Error('Les soft skills doivent être fournis sous forme de tableau');
     }
 
-    profile.softSkills = [...new Set([...profile.softSkills || [], ...softSkills])];
-    await profile.save();
-    return profile;
+    // Vérifier les soft skills existants
+    const existingSoftSkills = profile.softSkills || [];
+    const newSoftSkills = [];
+    const duplicateSoftSkills = [];
+
+    softSkills.forEach(skill => {
+      if (existingSoftSkills.includes(skill)) {
+        duplicateSoftSkills.push(skill);
+      } else {
+        newSoftSkills.push(skill);
+      }
+    });
+
+    if (newSoftSkills.length > 0) {
+      profile.softSkills = [...new Set([...existingSoftSkills, ...newSoftSkills])];
+      await profile.save();
+    }
+
+    return {
+      profile,
+      message: duplicateSoftSkills.length > 0 
+        ? `Les soft skills suivants existent déjà : ${duplicateSoftSkills.join(', ')}`
+        : 'Soft skills ajoutés avec succès'
+    };
   } catch (error) {
     console.error('Erreur lors de l\'ajout des soft skills:', error);
     throw error;

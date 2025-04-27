@@ -27,11 +27,21 @@ interface Skill {
     experienceLevel: string;
 }
 
-interface Profile {
+interface SoftSkill {
+    _id: string;
+    name: string;
+    category: string;
+    experienceLevel: string;
+    NumberTestPassed: number;
+    ScoreTest: number;
+}
+
+export interface Profile {
     _id: string;
     userId: User;
     type: string;
     skills: Skill[];
+    softSkills: SoftSkill[];
     requiredSkills: string[];
     requiredExperienceLevel: string;
     companyDetails?: CompanyDetails;
