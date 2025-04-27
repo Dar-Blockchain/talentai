@@ -1,4 +1,6 @@
 const profileService = require('../services/profileService');
+const Agent = require('../models/AgentModel');
+const agentService = require('../services/AgentService');
 
 // Créer ou mettre à jour un profil
 module.exports.createOrUpdateProfile = async (req, res) => {
@@ -29,18 +31,36 @@ module.exports.createOrUpdateCompanyProfile = async (req, res) => {
   try {
     const userId = req.user._id;
     const profileData = req.body;
+    console.log(profileData);
+    if (!profileData.name) {
+      return res.status(400).json({ message: "Company name is required" });
+    }
 
+    // Check if agent exists with company name
+    let agent = await Agent.findOne({ name: profileData.name });
+    console.log(agent);
+    // If no agent exists, create one
+    if (!agent) {
+      try {
+        const { agent: newAgent } = await agentService.createAgent(profileData.name);
+        agent = newAgent;
+      } catch (agentError) {
+        console.error('Error creating agent:', agentError);
+        return res.status(500).json({ message: "Failed to create company agent" });
+      }
+    }
 
-    // Utiliser le service pour créer ou mettre à jour le profil
+    // After agent is confirmed, create/update the profile
     const profile = await profileService.createOrUpdateCompanyProfile(userId, profileData);
 
     res.status(200).json({
-      message: "Profil créé/mis à jour avec succès",
-      profile
+      message: "Company profile and agent created/updated successfully",
+      profile,
+      agent
     });
   } catch (error) {
-    console.error('Erreur lors de la création/mise à jour du profil:', error);
-    res.status(500).json({ message: error.message || "Erreur lors de la création/mise à jour du profil" });
+    console.error('Error creating/updating company profile:', error);
+    res.status(500).json({ message: error.message || "Error creating/updating company profile" });
   }
 };
 

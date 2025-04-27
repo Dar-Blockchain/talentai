@@ -1,5 +1,7 @@
 const Profile = require('../models/ProfileModel');
 const User = require('../models/UserModel');
+const Agent = require('../models/AgentModel');
+const agentService = require('./AgentService');
 
 // Créer ou mettre à jour un profil utilisateur
 module.exports.createOrUpdateProfile = async (userId, profileData) => {
@@ -100,6 +102,14 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
     } else {
       // Create new profile
       profile = await Profile.create(profileDataToSave);
+      
+      // Create a new agent with the company name
+      try {
+        await agentService.createAgent(profileData.name);
+      } catch (agentError) {
+        console.error('Error creating agent for company:', agentError);
+        // Continue even if agent creation fails
+      }
     }
 
     // Update the user's profile reference
