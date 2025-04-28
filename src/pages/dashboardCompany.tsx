@@ -964,7 +964,8 @@ const renderFilterDialog = () => (
             },
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
               borderColor: '#02E2FF'
-            }
+            },
+            backgroundColor: 'rgba(30,41,59,0.98)'
           }}
           SelectProps={{
             MenuProps: {
@@ -975,7 +976,7 @@ const renderFilterDialog = () => (
                   '& .MuiMenuItem-root': {
                     color: '#ffffff',
                     '&:hover': {
-                      backgroundColor: 'rgba(2,226,255,0.1)',
+                      backgroundColor: 'rgba(30,41,59,1)',
                     },
                     '&.Mui-selected': {
                       backgroundColor: 'rgba(2,226,255,0.2)',
@@ -991,7 +992,7 @@ const renderFilterDialog = () => (
         >
           <MenuItem value="">All Jobs</MenuItem>
           {myJobs.map((job) => (
-            <MenuItem key={job._id} value={job._id}>
+            <MenuItem key={job._id} value={job._id} sx={{ backgroundColor: 'rgba(30,41,59,0.98)' }}>
               {job.jobDetails.title}
             </MenuItem>
           ))}
