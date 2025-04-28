@@ -111,18 +111,18 @@ exports.regenerate = async (req, res) => {
     });
 
     const systemMsg =
-      `As a professional CV writer, your task is to enhance and enrich the ${block} section in a professional and impactful way.
+      `As a professional CV writer, your task is to enhance the ${block} section by creating exactly two powerful bullet points.
       
       Rules to follow:
+      - Create exactly two bullet points, each starting with a hyphen (-)
       - Use professional and dynamic language
       - Add powerful action verbs
       - Quantify achievements when possible
-      - Structure information clearly and concisely
-      - Keep the same format
+      - Keep each bullet point concise but impactful
       - Do not modify dates or company names
       - Do not create new information, only enrich existing content
-      - Develop each point in a detailed and professional manner
-      - Return only the enhanced content, not in JSON format`;
+      - Focus on the most important and impressive aspects
+      - Each bullet point should be a complete, standalone statement`;
 
     const { choices } = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
