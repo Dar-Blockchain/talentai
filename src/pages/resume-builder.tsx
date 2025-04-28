@@ -754,7 +754,10 @@ export default function ResumeBuilder() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ prompt }),
+          body: JSON.stringify({ 
+            block: 'bio', 
+            content: prompt 
+          }),
         });
         
         if (!response.ok) {
@@ -799,7 +802,10 @@ export default function ResumeBuilder() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ 
+          block: 'bio',
+          content: prompt 
+        }),
       });
       
       if (!response.ok) {

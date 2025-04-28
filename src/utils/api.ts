@@ -6,9 +6,10 @@
  * Regenerates text using the AI
  * @param text The text to regenerate
  * @param token The authentication token
+ * @param block The block to regenerate (bio, experience, skills, education, projects)
  * @returns The regenerated text or null if failed
  */
-export const regenerateText = async (text: string, token?: string): Promise<string | null> => {
+export const regenerateText = async (text: string, token?: string, block: string = 'bio'): Promise<string | null> => {
   try {
     // Use provided token or try to get it from storage
     const authToken = token || localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
@@ -28,7 +29,10 @@ export const regenerateText = async (text: string, token?: string): Promise<stri
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${authToken}`
       },
-      body: JSON.stringify({ prompt: text }),
+      body: JSON.stringify({ 
+        block: block, 
+        content: text 
+      }),
     });
     
     if (!response.ok) {

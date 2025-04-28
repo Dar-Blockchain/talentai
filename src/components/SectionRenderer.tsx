@@ -699,8 +699,28 @@ export default function SectionRenderer({
         return;
       }
       
-      // Call the API with the session token
-      const regeneratedContent = await regenerateText(selectedText, session.accessToken);
+      // Determine the block type based on the section content
+      // This is a simple heuristic and could be improved with better detection
+      let blockType = 'bio';
+      
+      // Try to identify the type of content based on the section or selected text
+      const content = section.content?.toLowerCase() || '';
+      if (content.includes('experience') || content.includes('work history') || 
+          content.includes('employment') || content.includes('job')) {
+        blockType = 'experience';
+      } else if (content.includes('education') || content.includes('degree') || 
+                content.includes('university') || content.includes('school')) {
+        blockType = 'education';
+      } else if (content.includes('skill') || content.includes('proficient') || 
+                content.includes('competent') || content.includes('expertise')) {
+        blockType = 'skills';
+      } else if (content.includes('project') || content.includes('portfolio') || 
+                content.includes('achievement')) {
+        blockType = 'projects';
+      }
+      
+      // Call the API with the session token and determined block type
+      const regeneratedContent = await regenerateText(selectedText, session.accessToken, blockType);
       if (regeneratedContent) {
         callback(regeneratedContent);
       } else {

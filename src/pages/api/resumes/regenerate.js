@@ -15,11 +15,11 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // Get prompt from request body
-    const { prompt } = req.body;
+    // Get parameters from request body
+    const { content, block = "bio" } = req.body;
     
-    if (!prompt) {
-      return res.status(400).json({ error: 'Prompt is required' });
+    if (!content) {
+      return res.status(400).json({ error: 'Content is required' });
     }
 
     // Forward request to backend API
@@ -38,7 +38,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         'Authorization': authHeader
       },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ content, block }),
     });
 
     // Get response data
