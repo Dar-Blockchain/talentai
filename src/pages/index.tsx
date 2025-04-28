@@ -232,6 +232,9 @@ export default function Home() {
           >
             Benefits for Companies & Candidates
           </motion.h2>
+        
+
+        
           <div className={styles.benefitsGrid}>
             <motion.div
               className={styles.benefitCard}
