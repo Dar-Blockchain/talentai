@@ -887,7 +887,7 @@ export default function ResumeBuilder() {
             
             <Box sx={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(3, 1fr)', 
+              gridTemplateColumns: 'repeat(2, 1fr)', 
               gap: 3
             }}>
               {/* Blank Template Preview */}
@@ -942,400 +942,7 @@ export default function ResumeBuilder() {
                 </Box>
               </Paper>
 
-              {/* Canadian Template Preview */}
-              <Paper 
-                onClick={handleCanadianTemplate}
-                sx={{ 
-                  cursor: 'pointer',
-                  overflow: 'hidden',
-                  transition: 'all 0.2s',
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 1,
-                  '&:hover': {
-                    boxShadow: 3,
-                    borderColor: 'primary.main',
-                    transform: 'translateY(-4px)'
-                  },
-                  display: 'flex',
-                  flexDirection: 'column'
-                }}
-              >
-                <Box sx={{ 
-                  height: '260px', 
-                  bgcolor: '#f5f5f5',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  p: 1
-                }}>
-                  {/* Canadian template preview */}
-                  <Box sx={{ 
-                    width: '100%', 
-                    height: '100%', 
-                    bgcolor: 'white',
-                    border: '1px solid #e0e0e0',
-                    display: 'flex',
-                    p: 1
-                  }}>
-                    {/* Left column */}
-                    <Box sx={{ width: '30%', display: 'flex', flexDirection: 'column', pr: 1 }}>
-                      <Box sx={{ width: '70px', height: '70px', borderRadius: '50%', bgcolor: '#e0e0e0', mb: 2, mx: 'auto' }}></Box>
-                      
-                      <Typography variant="caption" sx={{ fontSize: '8px', fontWeight: 'bold', mb: 0.5 }}>
-                        CONTACT
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.5 }}>
-                        email@example.com
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 1.5 }}>
-                        (123) 456-7890
-                      </Typography>
-                      
-                      <Typography variant="caption" sx={{ fontSize: '8px', fontWeight: 'bold', mb: 0.5 }}>
-                        SKILLS
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2 }}>
-                        JavaScript
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2 }}>
-                        React
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 1.5 }}>
-                        Node.js
-                      </Typography>
-                      
-                      <Typography variant="caption" sx={{ fontSize: '8px', fontWeight: 'bold', mb: 0.5 }}>
-                        LANGUAGES
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2 }}>
-                        English - Native
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2 }}>
-                        French - Intermediate
-                      </Typography>
-                    </Box>
-                    
-                    {/* Right column */}
-                    <Box sx={{ width: '70%', display: 'flex', flexDirection: 'column', pl: 1, borderLeft: '1px solid #f0f0f0' }}>
-                      <Typography variant="caption" sx={{ fontSize: '10px', fontWeight: 'bold', mb: 0.2 }}>
-                        YOUR NAME
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '8px', color: '#555', mb: 1 }}>
-                        Professional Title
-                      </Typography>
-                      
-                      <Typography variant="caption" sx={{ fontSize: '8px', fontWeight: 'bold', mb: 0.5 }}>
-                        PROFESSIONAL SUMMARY
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2, display: 'block' }}>
-                        Experienced professional with a proven track record of
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2, display: 'block' }}>
-                        success in delivering high-quality results.
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 1.5, display: 'block' }}>
-                        Skilled in problem-solving and teamwork.
-                      </Typography>
-                      
-                      <Typography variant="caption" sx={{ fontSize: '8px', fontWeight: 'bold', mb: 0.5 }}>
-                        WORK EXPERIENCE
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '7px', fontWeight: 'medium', mb: 0.2 }}>
-                        Job Title
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2 }}>
-                        Company Name | 2020 - Present
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2, display: 'block' }}>
-                        • Developed and implemented successful strategies
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 1.5, display: 'block' }}>
-                        • Collaborated with cross-functional teams
-                      </Typography>
-                      
-                      <Typography variant="caption" sx={{ fontSize: '8px', fontWeight: 'bold', mb: 0.5 }}>
-                        EDUCATION
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '7px', fontWeight: 'medium', mb: 0.2 }}>
-                        Degree Name
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '6px', color: '#555', mb: 0.2 }}>
-                        University Name | 2016 - 2020
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-                <Box sx={{ p: 1.5 }}>
-                  <Typography variant="subtitle1" fontWeight="medium">Canadian Template</Typography>
-                </Box>
-              </Paper>
-
-              {/* Professional Template - Enhanced Design */}
-              <Paper 
-                onClick={handleProfessionalTemplate}
-                sx={{ 
-                  cursor: 'pointer',
-                  overflow: 'hidden',
-                  transition: 'all 0.2s',
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 1,
-                  '&:hover': {
-                    boxShadow: 3,
-                    borderColor: 'primary.main',
-                    transform: 'translateY(-4px)'
-                  },
-                  display: 'flex',
-                  flexDirection: 'column'
-                }}
-              >
-                <Box sx={{ 
-                  height: '260px', 
-                  bgcolor: '#f5f5f5',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  p: 1
-                }}>
-                  {/* Professional Modern template preview */}
-                  <Box sx={{ 
-                    width: '100%', 
-                    height: '100%', 
-                    bgcolor: 'white',
-                    border: '1px solid #e0e0e0',
-                    display: 'flex',
-                    p: 1,
-                    position: 'relative'
-                  }}>
-                    {/* Top Section - Name */}
-                    <Box sx={{ 
-                      position: 'absolute',
-                      top: 10,
-                      left: 10,
-                      width: '50%'
-                    }}>
-                      <Typography sx={{ 
-                        fontSize: '12px', 
-                        fontWeight: 'bold', 
-                        letterSpacing: 1,
-                        lineHeight: 1,
-                        mb: 0
-                      }}>
-                        BENJAMIN
-                      </Typography>
-                      <Typography sx={{ 
-                        fontSize: '10px', 
-                        fontWeight: 'medium',
-                        letterSpacing: 1
-                      }}>
-                        LEROY
-                      </Typography>
-                    </Box>
-                    
-                    {/* Profile Photo */}
-                    <Box sx={{ 
-                      position: 'absolute',
-                      top: 8,
-                      right: 10,
-                      width: '45px',
-                      height: '45px',
-                      borderRadius: '50%',
-                      bgcolor: '#e0e0e0',
-                      overflow: 'hidden'
-                    }}></Box>
-
-                    {/* Left Column */}
-                    <Box sx={{ 
-                      width: '38%', 
-                      display: 'flex', 
-                      flexDirection: 'column',
-                      mt: 7,
-                      pr: 1,
-                      fontSize: '6px'
-                    }}>
-                      {/* Contact Section */}
-                      <Typography sx={{ 
-                        fontSize: '7px', 
-                        fontWeight: 'bold', 
-                        color: '#333',
-                        mb: 0.3,
-                        textTransform: 'uppercase'
-                      }}>
-                        Contact
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.2 }}>
-                        email@example.com
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.2 }}>
-                        +33 6 12 34 56 78
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 1 }}>
-                        Paris, France
-                      </Typography>
-
-                      {/* Formation */}
-                      <Typography sx={{ 
-                        fontSize: '7px', 
-                        fontWeight: 'bold', 
-                        color: '#333',
-                        mb: 0.3,
-                        textTransform: 'uppercase'
-                      }}>
-                        Formation
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', fontWeight: 'medium', color: '#444', mb: 0.1 }}>
-                        2018-2021
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                        MSc Computer Science
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.5 }}>
-                        University Paris Tech
-                      </Typography>
-                      
-                      <Typography sx={{ fontSize: '6px', fontWeight: 'medium', color: '#444', mb: 0.1 }}>
-                        2016-2018
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                        BSc Data Science
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 1 }}>
-                        Institute of Technology
-                      </Typography>
-
-                      {/* Competences */}
-                      <Typography sx={{ 
-                        fontSize: '7px', 
-                        fontWeight: 'bold', 
-                        color: '#333',
-                        mb: 0.3,
-                        textTransform: 'uppercase'
-                      }}>
-                        Competences
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                        • JavaScript/React.js
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                        • Python/Data Analysis
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                        • UX/UI Design
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 1 }}>
-                        • Project Management
-                      </Typography>
-
-                      {/* Langues */}
-                      <Typography sx={{ 
-                        fontSize: '7px', 
-                        fontWeight: 'bold', 
-                        color: '#333',
-                        mb: 0.3,
-                        textTransform: 'uppercase'
-                      }}>
-                        Langues
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                        • Français - Natif
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                        • Anglais - Courant
-                      </Typography>
-                    </Box>
-                    
-                    {/* Right Column */}
-                    <Box sx={{ 
-                      width: '62%', 
-                      display: 'flex', 
-                      flexDirection: 'column',
-                      pl: 1.5,
-                      mt: 7,
-                      fontSize: '6px',
-                      borderLeft: '1px solid #eee'
-                    }}>
-                      {/* Profil */}
-                      <Typography sx={{ 
-                        fontSize: '7px', 
-                        fontWeight: 'bold', 
-                        color: '#333',
-                        mb: 0.3,
-                        textTransform: 'uppercase'
-                      }}>
-                        Profil
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 1, lineHeight: 1.3 }}>
-                        Développeur web passionné avec 5 ans d'expérience en
-                        création d'applications web dynamiques et intuitives.
-                        Spécialisé dans les technologies front-end modernes.
-                      </Typography>
-                      
-                      {/* Experiences */}
-                      <Typography sx={{ 
-                        fontSize: '7px', 
-                        fontWeight: 'bold', 
-                        color: '#333',
-                        mb: 0.3,
-                        textTransform: 'uppercase'
-                      }}>
-                        Expériences Professionnelles
-                      </Typography>
-                      
-                      {/* Experience 1 */}
-                      <Typography sx={{ fontSize: '6px', fontWeight: 'medium', color: '#444', mb: 0 }}>
-                        DÉVELOPPEUR FRONT-END | ACME TECH
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#777', mb: 0.2 }}>
-                        2020 - Présent
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                        • Développement d'interfaces utilisateur réactives
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                        • Optimisation des performances des applications
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.7 }}>
-                        • Collaboration avec l'équipe de design
-                      </Typography>
-                      
-                      {/* Experience 2 */}
-                      <Typography sx={{ fontSize: '6px', fontWeight: 'medium', color: '#444', mb: 0 }}>
-                        DÉVELOPPEUR WEB | STARTUP INNOVANTE
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#777', mb: 0.2 }}>
-                        2018 - 2020
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                        • Création de composants réutilisables
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                        • Intégration d'APIs et services tiers
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.7 }}>
-                        • Développement de la stratégie technique
-                      </Typography>
-                      
-                      {/* Experience 3 */}
-                      <Typography sx={{ fontSize: '6px', fontWeight: 'medium', color: '#444', mb: 0 }}>
-                        STAGIAIRE DÉVELOPPEUR | AGENCE DIGITALE
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#777', mb: 0.2 }}>
-                        2017 - 2018
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                        • Support au développement de sites web
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                        • Optimisation SEO et accessibilité
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-                <Box sx={{ p: 1.5 }}>
-                  <Typography variant="subtitle1" fontWeight="medium">Modern Minimal</Typography>
-                </Box>
-              </Paper>
-
-              {/* French Template - Based on image */}
+              {/* French Data CV Template */}
               <Paper 
                 onClick={handleFrenchTemplate}
                 sx={{ 
@@ -1361,100 +968,52 @@ export default function ResumeBuilder() {
                   flexDirection: 'column',
                   p: 1
                 }}>
-                  {/* French template preview */}
+                  {/* French Data CV template preview */}
                   <Box sx={{ 
                     width: '100%', 
                     height: '100%', 
                     bgcolor: 'white',
                     border: '1px solid #e0e0e0',
                     display: 'flex',
-                    p: 1,
-                    flexDirection: 'column',
-                    position: 'relative'
+                    p: 1
                   }}>
-                    {/* Top header section */}
+                    {/* Left column */}
                     <Box sx={{ 
-                      display: 'flex',
-                      borderBottom: '1px solid #eee',
-                      pb: 0.7
-                    }}>
-                      <Typography sx={{ 
-                        fontSize: '10px', 
-                        fontWeight: 'bold', 
-                        letterSpacing: 0.5,
-                        color: '#5170b7',
-                        lineHeight: 1,
-                      }}>
-                        Khalil Troudi
-                      </Typography>
-                      <Typography sx={{ 
-                        fontSize: '8px',
-                        color: '#777',
-                        ml: 0.5,
-                        alignSelf: 'flex-end'
-                      }}>
-                        data scientist
-                      </Typography>
-                    </Box>
-
-                    {/* Content section with two columns */}
-                    <Box sx={{ 
+                      width: '32%', 
                       display: 'flex', 
-                      mt: 0.8,
-                      fontSize: '6px'
+                      flexDirection: 'column',
+                      pr: 0.8
                     }}>
-                      {/* Left column */}
                       <Box sx={{ 
-                        width: '32%', 
-                        pr: 0.5,
+                        width: '60px', 
+                        height: '60px', 
+                        borderRadius: '50%', 
+                        bgcolor: '#e0e0e0', 
+                        mb: 1.5, 
+                        mx: 'auto' 
+                      }}></Box>
+                      
+                      <Typography sx={{ 
+                        fontSize: '7px', 
+                        fontWeight: 'bold', 
+                        color: '#5170b7',
+                        mb: 0.2,
+                        textTransform: 'uppercase'
                       }}>
-                        {/* Profile picture */}
-                        <Box sx={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '50%',
-                          background: 'linear-gradient(to bottom, #b2e1ff 60%, #71c371 40%)',
-                          mx: 'auto',
-                          mb: 1.5
-                        }}></Box>
-                        
-                        {/* Profile section */}
-                        <Typography sx={{ 
-                          fontSize: '7px', 
-                          fontWeight: 'bold', 
-                          color: '#5170b7',
-                          mb: 0.2,
-                          textTransform: 'uppercase'
-                        }}>
-                          Profil & objectif
-                        </Typography>
-                        <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.8, lineHeight: 1.3 }}>
-                          Passionné par l'innovation basée sur les données et les technologies web. Je dispose de compétences solides en analyse de données...
-                        </Typography>
-                        
-                        {/* Contact section */}
-                        <Typography sx={{ 
-                          fontSize: '7px', 
-                          fontWeight: 'bold', 
-                          color: '#5170b7',
-                          mb: 0.2,
-                          textTransform: 'uppercase'
-                        }}>
-                          Contact
-                        </Typography>
-                        <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                          📞 +12 12457896
-                        </Typography>
-                        <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                          ✉️ email@domain.com
-                        </Typography>
-                        <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                          🔗 linkedin.com/in/profile
-                        </Typography>
-                        <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.8 }}>
-                          🌐 github.com/username
-                        </Typography>
-                      </Box>
+                        CONTACT
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                        📞 +12 12457896
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                        ✉️ email@domain.com
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
+                        🔗 linkedin.com/in/profile
+                      </Typography>
+                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.8 }}>
+                        🌐 github.com/username
+                      </Typography>
                       
                       {/* Right column */}
                       <Box sx={{ 

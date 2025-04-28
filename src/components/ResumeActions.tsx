@@ -52,14 +52,6 @@ export default function ResumeActions({
           disabled={!canUndo}
         />
       )}
-      {onRegenerate && (
-        <ActionButton
-          icon={<AutoFixHighIcon />}
-          label="Regenerate"
-          tooltip="Generate resume content using AI"
-          onClick={onRegenerate}
-        />
-      )}
       <ActionButton
         icon={<SaveIcon />}
         label="Save Draft"
