@@ -7,6 +7,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useTheme, useMediaQuery, Drawer, IconButton, Button, Modal, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Box, Paper, TextField, CircularProgress, Snackbar, Alert, AlertColor } from "@mui/material"
 import MenuIcon from "@mui/icons-material/Menu"
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { useDispatch, useSelector } from "react-redux"
@@ -21,6 +22,7 @@ import { HeaderSection, TextSection, SkillsSection, LanguagesSection, EducationS
 import ResumeActions from '@/components/ResumeActions'
 import { useSession } from "next-auth/react"
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
+import { useRouter } from 'next/router'
 
 export default function ResumeBuilder() {
   const dispatch = useDispatch<AppDispatch>()
@@ -28,6 +30,7 @@ export default function ResumeBuilder() {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("md"))
   const { data: session } = useSession()
+  const router = useRouter()
 
   const [sections, setSections] = useState<SectionType[]>([])
   const [sectionsHistory, setSectionsHistory] = useState<SectionType[][]>([])
@@ -871,7 +874,29 @@ export default function ResumeBuilder() {
   };
 
   return (
-    <div className={styles.pageWrapper} onClick={() => setActiveId(null)}>
+    <div className={styles.container}>
+      <IconButton
+        onClick={() => router.push('/dashboardCandidate')}
+        sx={{
+          position: "fixed",
+          left: isMobile ? 120 : 260, // Moved further to the right
+          top: 16,
+          zIndex: 1000,
+          bgcolor: theme.palette.background.paper,
+          color: 'primary.main',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          border: '1px solid',
+          borderColor: 'divider',
+          '&:hover': {
+            bgcolor: 'rgba(25, 118, 210, 0.08)',
+          }
+        }}
+        aria-label="back to dashboard"
+        size="small"
+      >
+        <ArrowBackIcon fontSize="small" />
+      </IconButton>
+
       <Dialog
         open={templateModalOpen}
         onClose={() => setTemplateModalOpen(false)}
