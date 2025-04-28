@@ -95,21 +95,37 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 20_000 
 
 exports.regenerate = async (req, res) => {
   try {
-    const raw = req.body?.prompt?.trim();
-    if (!raw) return res.status(400).json({ error: '`prompt` est requis.' });
+    const { block, content } = req.body;
+    
+    if (!block || !content) {
+      return res.status(400).json({ error: 'Le bloc et son contenu sont requis' });
+    }
 
-    /* ----- Prompt strict : pas d’ajout, pas d’invention ----- */
+    const validBlocks = ['bio', 'experience', 'skills', 'education', 'projects'];
+    if (!validBlocks.includes(block)) {
+      return res.status(400).json({ error: 'Bloc invalide. Les blocs valides sont : bio, experience, skills, education, projects' });
+    }
+
+    const raw = JSON.stringify({
+      [block]: content
+    });
+
     const systemMsg =
-      `You are a copy-editor. Rewrite the user's resume text to sound more professional ` +
-      `WITHOUT adding, removing or inventing any information. ` +
-      `Keep exactly the same sections, headings and ordering. Only rephrase wording.`;
-
-    /* On limite à ~25 % de plus que la taille d’origine */
-    const maxTokens = Math.ceil(raw.split(/\s+/).length * 1.25);
+      `As a professional CV writer, your task is to enhance and enrich the ${block} section in a professional and impactful way.
+      
+      Rules to follow:
+      - Use professional and dynamic language
+      - Add powerful action verbs
+      - Quantify achievements when possible
+      - Structure information clearly and concisely
+      - Keep the same format
+      - Do not modify dates or company names
+      - Do not create new information, only enrich existing content
+      - Develop each point in a detailed and professional manner
+      - Return only the enhanced content, not in JSON format`;
 
     const { choices } = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
-      max_tokens: maxTokens,
       temperature: 0.3,
       messages: [
         { role: 'system', content: systemMsg },
@@ -117,13 +133,16 @@ exports.regenerate = async (req, res) => {
       ]
     });
 
-    const content = choices?.[0]?.message?.content?.trim();
-    if (!content) throw new Error('Réponse vide');
+    const response = choices?.[0]?.message?.content?.trim();
+    if (!response) throw new Error('Empty response');
 
-    return res.json({ message: 'Résumé régénéré avec succès.', content });
+    return res.json({ 
+      message: `${block} regenerated successfully`, 
+      content: response
+    });
 
   } catch (err) {
     console.error('OpenAI error:', err);
-    res.status(err.status ?? 500).json({ error: err.message || 'Erreur serveur.' });
+    res.status(err.status ?? 500).json({ error: err.message || 'Server error' });
   }
 };
