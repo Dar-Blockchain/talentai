@@ -1,40 +1,156 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# TalentAI - AI-Powered Talent Matching Platform
 
-## Getting Started
+TalentAI is an innovative talent matching platform that leverages artificial intelligence and blockchain technology (Hedera) to connect companies with skilled professionals. The platform uses advanced AI algorithms for skill matching and Hedera's secure infrastructure for credential verification and smart contracts.
 
-First, run the development server:
+## 🚀 Features
 
+- AI-powered job post generation
+- Smart skill matching algorithm
+- Blockchain-verified credentials using Hedera
+- Real-time candidate matching
+- LinkedIn-ready job post formatting
+- Company profile management
+- Interactive dashboard
+
+## 🛠 Tech Stack
+
+- **Frontend**: Next.js, React, TypeScript
+- **UI Framework**: Material-UI (MUI)
+- **State Management**: Redux
+- **Blockchain**: Hedera
+- **Authentication**: JWT
+- **API**: RESTful API
+- **Styling**: Styled Components, CSS-in-JS
+
+## 📋 Prerequisites
+
+Before you begin, ensure you have the following installed:
+- Node.js (v14.0.0 or later)
+- npm (v6.0.0 or later)
+- Git
+
+## 🔧 Installation & Setup
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/yourusername/talentai-frontend.git
+cd talentai-frontend
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+3. Create a `.env.local` file in the root directory and add the following environment variables:
+```env
+NEXT_PUBLIC_API_BASE_URL=your_api_url
+NEXT_PUBLIC_HEDERA_NETWORK=testnet
+NEXT_PUBLIC_HEDERA_OPERATOR_ID=your_operator_id
+NEXT_PUBLIC_HEDERA_OPERATOR_KEY=your_operator_key
+```
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+4. Start the development server:
+```bash
+npm run dev
+```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+The application will be available at `http://localhost:3000`
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🏗 Build for Production
 
-## Learn More
+To create a production build:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+To start the production server:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm start
+```
 
-## Deploy on Vercel
+## 🔐 Hedera Integration
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Our platform utilizes Hedera's secure and efficient blockchain infrastructure for various features. Here are the key integrations:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+### 1. Credential Verification
+We use Hedera's HCS (Hedera Consensus Service) to store and verify professional credentials. This ensures that all qualifications and certifications are tamper-proof and easily verifiable.
+
+```typescript
+// Example Hedera credential verification code
+const verifyCredential = async (credentialId: string) => {
+  const client = Client.forTestnet();
+  client.setOperator(operatorId, operatorKey);
+
+  const transaction = new TopicMessageSubmitTransaction()
+    .setTopicId(topicId)
+    .setMessage(credentialId);
+
+  const response = await transaction.execute(client);
+  const receipt = await response.getReceipt(client);
+  
+  return receipt.status === Status.Success;
+};
+```
+
+### 2. Smart Contracts for Job Agreements
+We implement Hedera smart contracts for job offers and agreements, ensuring transparent and secure terms between companies and candidates.
+
+```typescript
+// Example Hedera smart contract deployment
+const deployJobContract = async (jobDetails: JobContract) => {
+  const client = Client.forTestnet();
+  client.setOperator(operatorId, operatorKey);
+
+  const contractBytes = await ContractHelper.getBytecode();
+  const transaction = new ContractCreateTransaction()
+    .setGas(100000)
+    .setBytecode(contractBytes)
+    .setConstructorParameters(
+      new ContractFunctionParameters()
+        .addString(jobDetails.title)
+        .addUint256(jobDetails.salary)
+    );
+
+  const response = await transaction.execute(client);
+  const receipt = await response.getReceipt(client);
+  
+  return receipt.contractId;
+};
+```
+
+### 3. Token System for Platform Rewards
+We utilize Hedera Token Service (HTS) to manage our platform's reward system, incentivizing active participation and successful matches.
+
+## 🔄 CI/CD Pipeline
+
+Our project uses GitHub Actions for continuous integration and deployment. The pipeline includes:
+
+1. Automated testing
+2. Code quality checks
+3. Build verification
+4. Deployment to staging/production
+
+## 📚 Documentation
+
+For detailed documentation about the platform's features and API endpoints, please visit our [documentation site](docs/index.md).
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+For support and queries, please create an issue in the repository or contact our support team at support@talentai.com.
+
+## 🌟 Acknowledgments
+
+- Hedera team for their excellent blockchain infrastructure
+- Material-UI team for the comprehensive UI framework
+- All contributors who have helped shape this project

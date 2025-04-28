@@ -220,6 +220,55 @@ export default function Home() {
           </motion.div>
         </section>
 
+        {/* Benefits Section */}
+        <section className={styles.benefits}>
+          <motion.h2
+            className={styles.sectionTitle}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+            style={{ textAlign: 'center', color: '#8da4f1', marginBottom: '2rem' }}
+          >
+            Benefits for Companies & Candidates
+          </motion.h2>
+          <div className={styles.benefitsGrid}>
+            <motion.div
+              className={styles.benefitCard}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.1 }}
+            >
+              <div className={styles.benefitValue}>60%</div>
+              <div className={styles.benefitTitle}>Time Saved</div>
+              <div className={styles.benefitDesc}>Dramatic reduction in hiring process duration</div>
+            </motion.div>
+            <motion.div
+              className={styles.benefitCard}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+            >
+              <div className={styles.benefitValue}>85%</div>
+              <div className={styles.benefitTitle}>Match Accuracy</div>
+              <div className={styles.benefitDesc}>Improved fit between candidates and roles</div>
+            </motion.div>
+            <motion.div
+              className={styles.benefitCard}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7, delay: 0.3 }}
+            >
+              <div className={styles.benefitValue}>100%</div>
+              <div className={styles.benefitTitle}>Bias Elimination</div>
+              <div className={styles.benefitDesc}>Complete removal of unconscious hiring prejudice</div>
+            </motion.div>
+          </div>
+        </section>
+
         <section className={styles.features} id="features">
           <motion.div
             initial="hidden"

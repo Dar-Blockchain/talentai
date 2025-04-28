@@ -319,6 +319,20 @@ interface RequiredSkill {
   category: string;
 }
 
+// Add interface for bid history
+interface BidHistoryItem {
+  candidate: {
+    _id: string;
+    username: string;
+    email: string;
+    role: string;
+  };
+  status: 'win' | 'lose';
+  bidAmount: number;
+  jobTitle: string;
+  createdAt: string;
+}
+
 const DashboardCompany = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
@@ -344,6 +358,46 @@ const DashboardCompany = () => {
   const [selectedJob, setSelectedJob] = useState('');
   const [isLoadingJobs, setIsLoadingJobs] = useState(false);
   const [jobsError, setJobsError] = useState<string | null>(null);
+  const [bidHistory] = useState<BidHistoryItem[]>([
+    {
+      candidate: {
+        _id: '1',
+        username: 'john_doe',
+        email: 'john@example.com',
+        role: 'Frontend Developer',
+      },
+      status: 'win',
+      bidAmount: 12000,
+      jobTitle: 'React Developer',
+      createdAt: '2024-06-01T10:00:00Z',
+    },
+    {
+      candidate: {
+        _id: '2',
+        username: 'jane_smith',
+        email: 'jane@example.com',
+        role: 'Backend Developer',
+      },
+      status: 'lose',
+      bidAmount: 11000,
+      jobTitle: 'Node.js Engineer',
+      createdAt: '2024-06-02T14:30:00Z',
+    },
+    {
+      candidate: {
+        _id: '3',
+        username: 'alice_wong',
+        email: 'alice@example.com',
+        role: 'Full Stack Developer',
+      },
+      status: 'win',
+      bidAmount: 13000,
+      jobTitle: 'Full Stack Engineer',
+      createdAt: '2024-06-03T09:15:00Z',
+    },
+  ]);
+  const [isLoadingBids] = useState(false);
+  const [bidError] = useState<string | null>(null);
 
   // Fetch matching profiles
   const fetchMatchingProfiles = async () => {
@@ -910,7 +964,8 @@ const renderFilterDialog = () => (
             },
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
               borderColor: '#02E2FF'
-            }
+            },
+            backgroundColor: 'rgba(30,41,59,0.98)'
           }}
           SelectProps={{
             MenuProps: {
@@ -921,7 +976,7 @@ const renderFilterDialog = () => (
                   '& .MuiMenuItem-root': {
                     color: '#ffffff',
                     '&:hover': {
-                      backgroundColor: 'rgba(2,226,255,0.1)',
+                      backgroundColor: 'rgba(30,41,59,1)',
                     },
                     '&.Mui-selected': {
                       backgroundColor: 'rgba(2,226,255,0.2)',
@@ -937,7 +992,7 @@ const renderFilterDialog = () => (
         >
           <MenuItem value="">All Jobs</MenuItem>
           {myJobs.map((job) => (
-            <MenuItem key={job._id} value={job._id}>
+            <MenuItem key={job._id} value={job._id} sx={{ backgroundColor: 'rgba(30,41,59,0.98)' }}>
               {job.jobDetails.title}
             </MenuItem>
           ))}
@@ -976,331 +1031,54 @@ const renderFilterDialog = () => (
   </Dialog>
 );
 
-if (loading) {
-  return (
-    <Container sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-      <CircularProgress sx={{ color: '#02E2FF' }} />
-    </Container>
-  );
-}
-
-if (error) {
-  return (
-    <Container sx={{ mt: 4 }}>
-      <Alert severity="error" sx={{ borderRadius: '12px' }}>{error}</Alert>
-    </Container>
-  );
-}
-
-if (!profile) {
-  return (
-    <Container sx={{ mt: 4 }}>
-      <Alert severity="info" sx={{ borderRadius: '12px' }}>No profile data available</Alert>
-    </Container>
-  );
-}
-
-// Add this before the return statement
-const renderMatchingProfiles = () => {
-  if (isLoadingMatches) {
-    return (
-      <Box display="flex" justifyContent="center" p={3}>
+// Add this render function for bid history
+const renderBidHistory = () => (
+  <StyledCard sx={{ mt: 4 }}>
+    <SectionTitle>Bid History</SectionTitle>
+    {isLoadingBids ? (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
         <CircularProgress sx={{ color: '#02E2FF' }} />
       </Box>
-    );
-  }
-
-  if (matchError) {
-    return (
-      <Alert severity="error" sx={{ mb: 2 }}>
-        {matchError}
-      </Alert>
-    );
-  }
-
-  if (!matchingProfiles || matchingProfiles.length === 0) {
-    return (
-      <Alert severity="info" sx={{ 
-        backgroundColor: 'rgba(30, 41, 59, 0.7)',
-        color: '#ffffff',
-        border: '1px solid rgba(255,255,255,0.1)',
-        '& .MuiAlert-icon': {
-          color: '#02E2FF'
-        }
-      }}>
-        No matching profiles found for this job posting. Check back later for potential matches.
-      </Alert>
-    );
-  }
-
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {matchingProfiles.map((candidate) => (
-        <MatchCard key={candidate.candidateId._id}>
-          {/* Header Section */}
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'flex-start', 
-            mb: 3,
-            pb: 2,
-            borderBottom: '1px solid rgba(255,255,255,0.1)'
+    ) : bidError ? (
+      <Alert severity="error" sx={{ mb: 2 }}>{bidError}</Alert>
+    ) : bidHistory.length === 0 ? (
+      <Alert severity="info" sx={{ mb: 2 }}>No bid history found.</Alert>
+    ) : (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {bidHistory.map((bid) => (
+          <Box key={bid.candidate._id + bid.createdAt} sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: 'rgba(30,41,59,0.5)',
+            borderRadius: '10px',
+            p: 2,
+            border: '1px solid rgba(255,255,255,0.08)'
           }}>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-              {/* Avatar */}
-              <Box sx={{
-                width: 48,
-                height: 48,
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, rgba(2,226,255,0.2) 0%, rgba(0,255,195,0.2) 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '1.5rem',
-                fontWeight: 600,
-                color: '#02E2FF'
-              }}>
-                {candidate.candidateId.username.charAt(0).toUpperCase()}
-              </Box>
-              
-              {/* User Info */}
-              <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                  <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 600 }}>
-                    {candidate.candidateId.username}
-                  </Typography>
-                  {candidate.candidateId.isVerified && (
-                    <Box sx={{ 
-                      width: 16, 
-                      height: 16, 
-                      borderRadius: '50%', 
-                      backgroundColor: '#4ade80',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <StarIcon sx={{ fontSize: 12, color: '#000' }} />
-                    </Box>
-                  )}
-                  <Box sx={{ 
-                    width: 8, 
-                    height: 8, 
-                    borderRadius: '50%', 
-                    backgroundColor: '#4ade80',
-                    ml: 1
-                  }} />
-                </Box>
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                  {candidate.candidateId.email}
-                </Typography>
-                <Typography variant="caption" sx={{ 
-                  color: 'rgba(255,255,255,0.5)',
-                  display: 'block',
-                  mt: 0.5
-                }}>
-                  {candidate.candidateId.role}
-                </Typography>
-              </Box>
+            <Box>
+              <Typography sx={{ color: '#fff', fontWeight: 600 }}>{bid.candidate.username}</Typography>
+              <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}>{bid.candidate.email}</Typography>
+              <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>{bid.jobTitle}</Typography>
             </Box>
-
-            {/* Match Score */}
-            <Box sx={{
-              background: 'linear-gradient(135deg, rgba(2,226,255,0.1) 0%, rgba(0,255,195,0.1) 100%)',
-              padding: '8px',
-              borderRadius: '8px',
-              minWidth: '70px',
-              textAlign: 'center'
-            }}>
-              <Typography variant="h6" sx={{ 
-                fontWeight: 600, 
-                color: '#02E2FF',
-                fontSize: '1.25rem',
-                lineHeight: 1
-              }}>
-                {candidate.score}%
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Chip
+                label={bid.status === 'win' ? 'Won' : 'Lost'}
+                color={bid.status === 'win' ? 'success' : 'error'}
+                sx={{ fontWeight: 700 }}
+              />
+              <Typography sx={{ color: '#02E2FF', fontWeight: 600 }}>
+                ${bid.bidAmount}
               </Typography>
-              <Typography variant="caption" sx={{ 
-                color: 'rgba(255,255,255,0.7)',
-                fontSize: '0.7rem'
-              }}>
-                Match Score
+              <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>
+                {new Date(bid.createdAt).toLocaleDateString()}
               </Typography>
             </Box>
           </Box>
-
-          {/* Skills Section */}
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" sx={{ 
-              color: '#ffffff', 
-              mb: 2,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}>
-              <Box sx={{
-                width: 24,
-                height: 24,
-                borderRadius: '6px',
-                background: 'rgba(2,226,255,0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <StarIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
-              </Box>
-              Matched Skills
-            </Typography>
-            <Box sx={{ 
-              display: 'flex', 
-              flexWrap: 'wrap', 
-              gap: 1,
-              '& > *': {
-                flex: '1 1 calc(50% - 8px)',
-                minWidth: '200px'
-              }
-            }}>
-              {candidate.matchedSkills.map((skill) => (
-                <Box
-                  key={skill._id}
-                  sx={{
-                    backgroundColor: 'rgba(255,255,255,0.05)',
-                    borderRadius: '8px',
-                    padding: '12px',
-                    border: '1px solid rgba(255,255,255,0.1)'
-                  }}
-                >
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>
-                      {skill.name}
-                    </Typography>
-                    <Chip
-                      label={skill.experienceLevel}
-                      size="small"
-                      sx={{
-                        backgroundColor: 'rgba(2,226,255,0.1)',
-                        color: '#02E2FF',
-                        height: '20px'
-                      }}
-                    />
-                  </Box>
-                  <Box sx={{ 
-                    width: '100%', 
-                    height: '4px', 
-                    backgroundColor: 'rgba(255,255,255,0.1)',
-                    borderRadius: '2px',
-                    overflow: 'hidden'
-                  }}>
-                    <Box sx={{ 
-                      width: `${(skill.proficiencyLevel / 5) * 100}%`,
-                      height: '100%',
-                      background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)'
-                    }} />
-                  </Box>
-                  {skill.ScoreTest && (
-                    <Typography variant="caption" sx={{ 
-                      color: 'rgba(255,255,255,0.5)',
-                      display: 'block',
-                      mt: 1,
-                      textAlign: 'right'
-                    }}>
-                      Test Score: {skill.ScoreTest}%
-                    </Typography>
-                  )}
-                </Box>
-              ))}
-            </Box>
-          </Box>
-
-          {/* Required Skills Section */}
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" sx={{ 
-              color: '#ffffff', 
-              mb: 2,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}>
-              <Box sx={{
-                width: 24,
-                height: 24,
-                borderRadius: '6px',
-                background: 'rgba(2,226,255,0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <WorkIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
-              </Box>
-              Required Skills
-            </Typography>
-            <Box sx={{ 
-              display: 'flex', 
-              flexWrap: 'wrap', 
-              gap: 1,
-              backgroundColor: 'rgba(255,255,255,0.05)',
-              borderRadius: '8px',
-              padding: '12px'
-            }}>
-              {candidate.requiredSkills.map((skill) => (
-                <Chip
-                  key={skill._id}
-                  label={`${skill.name} (${skill.level})`}
-                  size="small"
-                  sx={{
-                    backgroundColor: 'rgba(255,255,255,0.1)',
-                    color: 'rgba(255,255,255,0.8)',
-                    '& .MuiChip-label': {
-                      px: 2
-                    }
-                  }}
-                />
-              ))}
-            </Box>
-          </Box>
-
-          {/* Action Buttons */}
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 2, 
-            mt: 'auto',
-            pt: 2,
-            borderTop: '1px solid rgba(255,255,255,0.1)'
-          }}>
-            <Button
-              variant="contained"
-              fullWidth
-              startIcon={<EmailIcon />}
-              sx={{
-                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                color: '#ffffff',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-                }
-              }}
-            >
-              Contact
-            </Button>
-            <Button
-              variant="outlined"
-              fullWidth
-              startIcon={<PersonIcon />}
-              sx={{
-                borderColor: 'rgba(2,226,255,0.5)',
-                color: '#02E2FF',
-                '&:hover': {
-                  borderColor: '#02E2FF',
-                  backgroundColor: 'rgba(2,226,255,0.1)'
-                }
-              }}
-            >
-              View Profile
-            </Button>
-          </Box>
-        </MatchCard>
-      ))}
-    </Box>
-  );
-};
+        ))}
+      </Box>
+    )}
+  </StyledCard>
+);
 
 // Add the job posting dialog component
 const renderJobPostDialog = () => (
@@ -1750,6 +1528,302 @@ Benefits:
   </Dialog>
 );
 
+const renderMatchingProfiles = () => {
+  if (isLoadingMatches) {
+    return (
+      <Box display="flex" justifyContent="center" p={3}>
+        <CircularProgress sx={{ color: '#02E2FF' }} />
+      </Box>
+    );
+  }
+
+  if (matchError) {
+    return (
+      <Alert severity="error" sx={{ mb: 2 }}>
+        {matchError}
+      </Alert>
+    );
+  }
+
+  if (!matchingProfiles || matchingProfiles.length === 0) {
+    return (
+      <Alert severity="info" sx={{ 
+        backgroundColor: 'rgba(30, 41, 59, 0.7)',
+        color: '#ffffff',
+        border: '1px solid rgba(255,255,255,0.1)',
+        '& .MuiAlert-icon': {
+          color: '#02E2FF'
+        }
+      }}>
+        No matching profiles found for this job posting. Check back later for potential matches.
+      </Alert>
+    );
+  }
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {matchingProfiles.map((candidate) => (
+        <MatchCard key={candidate.candidateId._id}>
+          {/* Header Section */}
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'flex-start', 
+            mb: 3,
+            pb: 2,
+            borderBottom: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              {/* Avatar */}
+              <Box sx={{
+                width: 48,
+                height: 48,
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, rgba(2,226,255,0.2) 0%, rgba(0,255,195,0.2) 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.5rem',
+                fontWeight: 600,
+                color: '#02E2FF'
+              }}>
+                {candidate.candidateId.username.charAt(0).toUpperCase()}
+              </Box>
+              {/* User Info */}
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                  <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 600 }}>
+                    {candidate.candidateId.username}
+                  </Typography>
+                  {candidate.candidateId.isVerified && (
+                    <Box sx={{ 
+                      width: 16, 
+                      height: 16, 
+                      borderRadius: '50%', 
+                      backgroundColor: '#4ade80',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <StarIcon sx={{ fontSize: 12, color: '#000' }} />
+                    </Box>
+                  )}
+                  <Box sx={{ 
+                    width: 8, 
+                    height: 8, 
+                    borderRadius: '50%', 
+                    backgroundColor: '#4ade80',
+                    ml: 1
+                  }} />
+                </Box>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                  {candidate.candidateId.email}
+                </Typography>
+                <Typography variant="caption" sx={{ 
+                  color: 'rgba(255,255,255,0.5)',
+                  display: 'block',
+                  mt: 0.5
+                }}>
+                  {candidate.candidateId.role}
+                </Typography>
+              </Box>
+            </Box>
+            {/* Match Score */}
+            <Box sx={{
+              background: 'linear-gradient(135deg, rgba(2,226,255,0.1) 0%, rgba(0,255,195,0.1) 100%)',
+              padding: '8px',
+              borderRadius: '8px',
+              minWidth: '70px',
+              textAlign: 'center'
+            }}>
+              <Typography variant="h6" sx={{ 
+                fontWeight: 600, 
+                color: '#02E2FF',
+                fontSize: '1.25rem',
+                lineHeight: 1
+              }}>
+                {candidate.score}%
+              </Typography>
+              <Typography variant="caption" sx={{ 
+                color: 'rgba(255,255,255,0.7)',
+                fontSize: '0.7rem'
+              }}>
+                Match Score
+              </Typography>
+            </Box>
+          </Box>
+          {/* Skills Section */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" sx={{ 
+              color: '#ffffff', 
+              mb: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}>
+              <Box sx={{
+                width: 24,
+                height: 24,
+                borderRadius: '6px',
+                background: 'rgba(2,226,255,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <StarIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
+              </Box>
+              Matched Skills
+            </Typography>
+            <Box sx={{ 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: 1,
+              '& > *': {
+                flex: '1 1 calc(50% - 8px)',
+                minWidth: '200px'
+              }
+            }}>
+              {candidate.matchedSkills.map((skill) => (
+                <Box
+                  key={skill._id}
+                  sx={{
+                    backgroundColor: 'rgba(255,255,255,0.05)',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>
+                      {skill.name}
+                    </Typography>
+                    <Chip
+                      label={skill.experienceLevel}
+                      size="small"
+                      sx={{
+                        backgroundColor: 'rgba(2,226,255,0.1)',
+                        color: '#02E2FF',
+                        height: '20px'
+                      }}
+                    />
+                  </Box>
+                  <Box sx={{ 
+                    width: '100%', 
+                    height: '4px', 
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    borderRadius: '2px',
+                    overflow: 'hidden'
+                  }}>
+                    <Box sx={{ 
+                      width: `${(skill.proficiencyLevel / 5) * 100}%`,
+                      height: '100%',
+                      background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)'
+                    }} />
+                  </Box>
+                  {skill.ScoreTest && (
+                    <Typography variant="caption" sx={{ 
+                      color: 'rgba(255,255,255,0.5)',
+                      display: 'block',
+                      mt: 1,
+                      textAlign: 'right'
+                    }}>
+                      Test Score: {skill.ScoreTest}%
+                    </Typography>
+                  )}
+                </Box>
+              ))}
+            </Box>
+          </Box>
+          {/* Required Skills Section */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" sx={{ 
+              color: '#ffffff', 
+              mb: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}>
+              <Box sx={{
+                width: 24,
+                height: 24,
+                borderRadius: '6px',
+                background: 'rgba(2,226,255,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <WorkIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
+              </Box>
+              Required Skills
+            </Typography>
+            <Box sx={{ 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: 1,
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              borderRadius: '8px',
+              padding: '12px'
+            }}>
+              {candidate.requiredSkills.map((skill) => (
+                <Chip
+                  key={skill._id}
+                  label={`${skill.name} (${skill.level})`}
+                  size="small"
+                  sx={{
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    color: 'rgba(255,255,255,0.8)',
+                    '& .MuiChip-label': {
+                      px: 2
+                    }
+                  }}
+                />
+              ))}
+            </Box>
+          </Box>
+          {/* Action Buttons */}
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 2, 
+            mt: 'auto',
+            pt: 2,
+            borderTop: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <Button
+              variant="contained"
+              fullWidth
+              startIcon={<EmailIcon />}
+              sx={{
+                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                color: '#ffffff',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                }
+              }}
+            >
+              Contact
+            </Button>
+            <Button
+              variant="outlined"
+              fullWidth
+              startIcon={<PersonIcon />}
+              sx={{
+                borderColor: 'rgba(2,226,255,0.5)',
+                color: '#02E2FF',
+                '&:hover': {
+                  borderColor: '#02E2FF',
+                  backgroundColor: 'rgba(2,226,255,0.1)'
+                }
+              }}
+            >
+              View Profile
+            </Button>
+          </Box>
+        </MatchCard>
+      ))}
+    </Box>
+  );
+};
+
 return (
   <Box sx={{
     minHeight: '100vh',
@@ -1783,10 +1857,10 @@ return (
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 2 }}>
           <Box>
             <Typography variant="h4" sx={{ fontWeight: 700, mb: 1, color: '#ffffff' }}>
-              {profile.companyDetails?.name}
+              {profile?.companyDetails?.name}
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.9, mb: 3, color: '#ffffff' }}>
-              {profile.type} • {profile.userId.role}
+              {profile?.type} • {profile?.userId.role}
             </Typography>
           </Box>
           <Button
@@ -1813,7 +1887,7 @@ return (
               Industry
             </Typography>
             <Typography variant="h6" sx={{ fontWeight: 600, color: '#ffffff' }}>
-              {profile.companyDetails?.industry}
+              {profile?.companyDetails?.industry}
             </Typography>
           </StatCard>
           <StatCard>
@@ -1821,7 +1895,7 @@ return (
               Company Size
             </Typography>
             <Typography variant="h6" sx={{ fontWeight: 600, color: '#ffffff' }}>
-              {profile.companyDetails?.size}
+              {profile?.companyDetails?.size}
             </Typography>
           </StatCard>
           <StatCard>
@@ -1829,7 +1903,7 @@ return (
               Location
             </Typography>
             <Typography variant="h6" sx={{ fontWeight: 600, color: '#ffffff' }}>
-              {profile.companyDetails?.location}
+              {profile?.companyDetails?.location}
             </Typography>
           </StatCard>
         </StatsContainer>
@@ -1840,7 +1914,7 @@ return (
           <CompanyInfoCard>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <SectionTitle>Company Information</SectionTitle>
-              {profile.userId.isVerified && (
+              {profile?.userId.isVerified && (
                 <Chip
                   label="Verified Company"
                   color="success"
@@ -1857,22 +1931,22 @@ return (
 
             <InfoRow>
               <BusinessIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
-              <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.companyDetails?.name}</Typography>
+              <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile?.companyDetails?.name}</Typography>
             </InfoRow>
 
             <InfoRow>
               <CategoryIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
-              <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.companyDetails?.industry}</Typography>
+              <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile?.companyDetails?.industry}</Typography>
             </InfoRow>
 
             <InfoRow>
               <GroupsIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
-              <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.companyDetails?.size} employees</Typography>
+              <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile?.companyDetails?.size} employees</Typography>
             </InfoRow>
 
             <InfoRow>
               <LocationOnIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
-              <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.companyDetails?.location}</Typography>
+              <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile?.companyDetails?.location}</Typography>
             </InfoRow>
           </CompanyInfoCard>
 
@@ -1887,7 +1961,7 @@ return (
             </Box>
 
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {profile.requiredSkills.map((skill, index) => (
+              {profile?.requiredSkills.map((skill, index) => (
                 <SkillChip key={index} label={skill} />
               ))}
             </Box>
@@ -1897,7 +1971,7 @@ return (
                 Required Experience Level
               </Typography>
               <Chip
-                label={profile.requiredExperienceLevel}
+                label={profile?.requiredExperienceLevel}
                 sx={{
                   borderRadius: '8px',
                   backgroundColor: 'rgba(2, 226, 255, 0.1)',
@@ -1930,6 +2004,9 @@ return (
           {renderMatchingProfiles()}
         </Box>
       </Box>
+
+      {/* Bid History Section */}
+      {renderBidHistory()}
 
       <Dialog
         open={editSkillsDialog}

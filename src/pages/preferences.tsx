@@ -558,12 +558,14 @@ export default function Preferences() {
                 label="Company Name"
                 value={companyDetails.name}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, name: e.target.value }))}
+                sx={{ backgroundColor: 'rgba(30,41,59,0.98)' }}
               />
               <TextField
                 fullWidth
                 label="Industry"
                 value={companyDetails.industry}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, industry: e.target.value }))}
+                sx={{ backgroundColor: 'rgba(30,41,59,0.98)' }}
               />
               <TextField
                 fullWidth
@@ -571,9 +573,10 @@ export default function Preferences() {
                 select
                 value={companyDetails.size}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, size: e.target.value }))}
+                sx={{ backgroundColor: 'rgba(30,41,59,0.98)' }}
               >
                 {['1-10', '11-50', '51-200', '201-500', '500+'].map(size => (
-                  <MenuItem key={size} value={size}>{size} employees</MenuItem>
+                  <MenuItem key={size} value={size} sx={{ backgroundColor: 'rgba(30,41,59,0.98)' }}>{size} employees</MenuItem>
                 ))}
               </TextField>
               <TextField
@@ -581,6 +584,7 @@ export default function Preferences() {
                 label="Location"
                 value={companyDetails.location}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, location: e.target.value }))}
+                sx={{ backgroundColor: 'rgba(30,41,59,0.98)' }}
               />
             </Box>
           </Box>

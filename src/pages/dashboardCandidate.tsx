@@ -630,7 +630,7 @@ export default function DashboardCandidate() {
   ];
 
   const renderSkillOptions = (skill: Skill) => (
-    <MenuItem key={skill.name} value={skill.name}>
+    <MenuItem key={skill.name} value={skill.name} sx={{ backgroundColor: 'rgba(30,41,59,0.98)', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>
       {skill.name}
     </MenuItem>
   );
@@ -929,7 +929,7 @@ export default function DashboardCandidate() {
                     }}
                   >
                     {['Entry Level', 'Junior', 'Mid Level', 'Senior', 'Expert'].map((level) => (
-                      <MenuItem key={level} value={level}>{level}</MenuItem>
+                      <MenuItem key={level} value={level} sx={{ backgroundColor: 'rgba(30,41,59,0.98)', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>{level}</MenuItem>
                     ))}
                   </TextField>
                 </Box>
@@ -1035,7 +1035,7 @@ export default function DashboardCandidate() {
                       }}
                     >
                       {getTechnicalSkills().map((skill: any) => (
-                        <MenuItem key={skill.name} value={skill.name}>
+                        <MenuItem key={skill.name} value={skill.name} sx={{ backgroundColor: 'rgba(30,41,59,0.98)', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>
                           {skill.name}
                         </MenuItem>
                       ))}
@@ -1064,7 +1064,7 @@ export default function DashboardCandidate() {
                         }}
                       >
                         {softSkills.map((skill) => (
-                          <MenuItem key={skill.name} value={skill.name}>
+                          <MenuItem key={skill.name} value={skill.name} sx={{ backgroundColor: 'rgba(30,41,59,0.98)', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>
                             {skill.name}
                           </MenuItem>
                         ))}
@@ -1097,7 +1097,7 @@ export default function DashboardCandidate() {
                                 }}
                               >
                                 {languages.map((lang) => (
-                                  <MenuItem key={lang.value} value={lang.value}>
+                                  <MenuItem key={lang.value} value={lang.value} sx={{ backgroundColor: 'rgba(30,41,59,0.98)', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>
                                     {lang.label}
                                   </MenuItem>
                                 ))}
@@ -1124,7 +1124,7 @@ export default function DashboardCandidate() {
                                 {softSkills
                                   .find(skill => skill.name === softSkillType)
                                   ?.subcategories?.map((sub) => (
-                                    <MenuItem key={sub.value} value={sub.value}>
+                                    <MenuItem key={sub.value} value={sub.value} sx={{ backgroundColor: 'rgba(30,41,59,0.98)', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>
                                       {sub.label}
                                     </MenuItem>
                                   ))}
