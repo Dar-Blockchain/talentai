@@ -699,8 +699,13 @@ export default function SectionRenderer({
         return;
       }
       
+      // Check if this is a skills section - if so, prevent regeneration
+      if (type === 'skills') {
+        alert('Regeneration is not available for skills sections');
+        return;
+      }
+      
       // Determine the block type based on the section content
-      // This is a simple heuristic and could be improved with better detection
       let blockType = 'bio';
       
       // Try to identify the type of content based on the section or selected text
@@ -721,8 +726,16 @@ export default function SectionRenderer({
       
       // Call the API with the session token and determined block type
       const regeneratedContent = await regenerateText(selectedText, session.accessToken, blockType);
+      
       if (regeneratedContent) {
-        callback(regeneratedContent);
+        // Process the regenerated content to handle markdown syntax like **bold**
+        let processedContent = regeneratedContent;
+        
+        // Replace **text** with <strong>text</strong> for bold formatting
+        processedContent = processedContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        
+        // Call the callback with the processed content
+        callback(processedContent);
       } else {
         alert('Failed to regenerate text. Please try again.');
       }
