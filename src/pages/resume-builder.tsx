@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { v4 as uuidv4 } from "uuid"
 import { DndContext, closestCenter } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
-import { useTheme, useMediaQuery, Drawer, IconButton, Button, Modal, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Box, Paper, TextField, CircularProgress } from "@mui/material"
+import { useTheme, useMediaQuery, Drawer, IconButton, Button, Modal, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Box, Paper, TextField, CircularProgress, Snackbar, Alert, AlertColor } from "@mui/material"
 import MenuIcon from "@mui/icons-material/Menu"
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import html2canvas from 'html2canvas'
@@ -39,6 +39,11 @@ export default function ResumeBuilder() {
   const [regenerateModalOpen, setRegenerateModalOpen] = useState(false)
   const [prompt, setPrompt] = useState('')
   const [isRegenerating, setIsRegenerating] = useState(false)
+  const [toast, setToast] = useState({
+    open: false,
+    message: '',
+    severity: 'success' as AlertColor
+  })
 
   useEffect(() => {
     const loadResume = async () => {
@@ -51,7 +56,7 @@ export default function ResumeBuilder() {
             // Get the most recent resume (already sorted by createdAt in the backend)
             setSections(resumes[0].sections);
             setResumeId(resumes[0]._id); // Store the resume ID
-            return;
+            return; // Resume loaded, no need to show template selection
           }
         }
 
@@ -60,10 +65,16 @@ export default function ResumeBuilder() {
         if (draft) {
           try {
             setSections(JSON.parse(draft));
+            return; // Resume loaded from localStorage, no need to show template selection
           } catch {
             console.warn('Could not parse resume draft');
+            // Will continue to show template selection
           }
         }
+        
+        // No resume found either from API or localStorage, show template selection
+        setTemplateModalOpen(true);
+        
       } catch (error) {
         console.error('Error loading resume:', error);
         // Try localStorage as fallback
@@ -71,23 +82,22 @@ export default function ResumeBuilder() {
         if (draft) {
           try {
             setSections(JSON.parse(draft));
+            return; // Resume loaded from localStorage, no need to show template selection
           } catch {
             console.warn('Could not parse resume draft');
+            // Will continue to show template selection
           }
         }
+        
+        // No resume found either from API or localStorage, show template selection
+        setTemplateModalOpen(true);
       }
     };
 
     loadResume();
 
-    // Check if this is the first visit
-    const hasVisitedBefore = localStorage.getItem('resume-visited');
-    if (!hasVisitedBefore) {
-      // First visit - show the template modal
-      setTemplateModalOpen(true);
-      // Mark as visited
-      localStorage.setItem('resume-visited', 'true');
-    }
+    // Remove the "first visit" check since we now show the template modal
+    // whenever there's no resume, regardless of first visit or not
   }, []);
   useEffect(() => {
     dispatch(getMyProfile())
@@ -131,6 +141,13 @@ export default function ResumeBuilder() {
   const duplicateSection = (id: string) => {
     const original = sections.find((s) => s.id === id)
     if (!original) return
+    
+    // Prevent duplicating skills section if one already exists
+    if (original.type === 'skills') {
+      showToast('Cannot duplicate Skills section. Only one Skills section is allowed.', 'warning');
+      return;
+    }
+    
     const copy = {
       ...original,
       id: uuidv4(),
@@ -142,6 +159,12 @@ export default function ResumeBuilder() {
 
   const addSection = (type: string) => {
     if (!profile) return // Don't add sections if profile isn't loaded
+    
+    // Prevent adding skills section if one already exists
+    if (type === 'skills' && sections.some(section => section.type === 'skills')) {
+      showToast('Cannot add Skills section. Only one Skills section is allowed.', 'warning');
+      return;
+    }
 
     const common = {
       id: uuidv4(),
@@ -298,6 +321,18 @@ export default function ResumeBuilder() {
     }
   }
 
+  const showToast = (message: string, severity: AlertColor = 'success') => {
+    setToast({
+      open: true,
+      message,
+      severity
+    });
+  };
+
+  const handleCloseToast = () => {
+    setToast(prev => ({ ...prev, open: false }));
+  };
+
   const saveDraft = async () => {
     try {
       // First, always save to localStorage as backup
@@ -308,7 +343,7 @@ export default function ResumeBuilder() {
       
       if (!token) {
         console.log('No auth token found - saving only to localStorage');
-        alert('Your resume was saved locally. Log in to save to your account.');
+        showToast('Your resume was saved locally. Log in to save to your account.', 'info');
         return;
       }
       
@@ -341,7 +376,7 @@ export default function ResumeBuilder() {
       
       if (response.status === 413) {
         // Payload too large error
-        alert('Your resume is too large to save to the server, but it has been saved locally.');
+        showToast('Your resume is too large to save to the server, but it has been saved locally.', 'warning');
         return;
       }
       
@@ -352,12 +387,13 @@ export default function ResumeBuilder() {
         data = JSON.parse(responseText);
       } catch (e) {
         console.error('Failed to parse response:', responseText);
-        alert('Error communicating with server. Your resume was saved locally.');
+        showToast('Error communicating with server. Your resume was saved locally.', 'error');
         return;
       }
       
       if (response.ok) {
         console.log('Resume saved successfully');
+        showToast('Resume saved successfully!');
         
         // Update resumeId if this was a new resume
         if (data?.resume && data.resume._id && !resumeId) {
@@ -365,11 +401,11 @@ export default function ResumeBuilder() {
         }
       } else {
         console.error('Failed to save resume:', data);
-        alert(`Error saving to server: ${data?.error || 'Unknown error'}. Your resume was saved locally.`);
+        showToast(`Error saving to server: ${data?.error || 'Unknown error'}. Your resume was saved locally.`, 'error');
       }
     } catch (error) {
       console.error('Error saving resume:', error);
-      alert('Error saving resume. Your changes were saved locally.');
+      showToast('Error saving resume. Your changes were saved locally.', 'error');
     }
   }
 
@@ -433,6 +469,7 @@ export default function ResumeBuilder() {
         width: 400,
         height: 120
       },
+      // Only one skills section
       {
         id: uuidv4(),
         type: 'skills',
@@ -492,11 +529,11 @@ export default function ResumeBuilder() {
       {
         id: uuidv4(),
         type: 'experience',
-        title: 'SENIOR SOFTWARE ENGINEER',
+        title: 'LEAD FRONT-END DEVELOPER',
         company: 'TECH INNOVATIONS INC.',
         startDate: '2020',
         endDate: 'PRESENT',
-        description: '• LED DEVELOPMENT OF CLOUD-NATIVE MICROSERVICES ARCHITECTURE\n• REDUCED APPLICATION LOAD TIME BY 40% THROUGH OPTIMIZATION\n• MENTORED JUNIOR DEVELOPERS AND IMPLEMENTED AGILE METHODOLOGIES',
+        description: '• Led frontend development for flagship SaaS application reaching 500,000+ users\n• Managed team of 6 developers, increasing deployment efficiency by 40%\n• Implemented CI/CD pipeline, reducing integration time by 65%',
         x: 100,
         y: 320,
         width: 400,
@@ -504,98 +541,59 @@ export default function ResumeBuilder() {
       },
       {
         id: uuidv4(),
-        type: 'education',
-        institution: 'STANFORD UNIVERSITY',
-        degree: 'M.S. COMPUTER SCIENCE',
-        startDate: '2015',
-        endDate: '2017',
-        description: 'Relevant coursework and achievements',
+        type: 'experience',
+        title: 'SOFTWARE ENGINEER',
+        company: 'DATALOOP SOLUTIONS',
+        startDate: '2017',
+        endDate: '2020',
+        description: '• Developed scalable microservices architecture using Node.js\n• Optimized database queries, improving application response time by 30%\n• Collaborated with UX team to implement responsive design patterns',
         x: 100,
-        y: 490,
+        y: 500,
         width: 400,
-        height: 120
-      },
-      {
-        id: uuidv4(),
-        type: 'skills',
-        skills: ['JavaScript', 'React.js', 'Node.js', 'Express', 'AWS', 'Cloud Infrastructure'],
-        x: 520,
-        y: 180,
-        width: 250,
         height: 150
       },
       {
         id: uuidv4(),
-        type: 'languages',
-        languages: [
-          { name: "Français", level: "Natif" },
-          { name: "Anglais", level: "Courant" }
-        ],
-        x: 50,
-        y: 580,
-        width: 200,
+        type: 'education',
+        institution: 'UNIVERSITY OF TECHNOLOGY',
+        degree: 'MASTER OF COMPUTER SCIENCE',
+        startDate: '2015',
+        endDate: '2017',
+        description: 'GPA: 3.9/4.0\nSpecialization in Distributed Systems',
+        x: 520,
+        y: 320,
+        width: 250,
+        height: 120
+      },
+      // Only one skills section
+      {
+        id: uuidv4(),
+        type: 'skills',
+        skills: ['JavaScript/TypeScript', 'React/Redux', 'Node.js', 'AWS/Cloud', 'CI/CD', 'RESTful & GraphQL APIs'],
+        x: 520,
+        y: 460,
+        width: 250,
+        height: 190
+      },
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: 'CONTACT\n\njonathan.parker@email.com\n+1 (555) 123-4567\nlinkedin.com/in/jonathanparker\ngithub.com/jparker',
+        x: 520,
+        y: 50,
+        width: 250,
         height: 100
       },
       {
         id: uuidv4(),
         type: 'text',
-        content: '<strong style="text-transform: uppercase; font-size: 14px; color: #333;">Profil</strong><br>Développeur web passionné avec 5 ans d\'expérience en création d\'applications web dynamiques et intuitives. Spécialisé dans les technologies front-end modernes.',
-        x: 280,
-        y: 150,
-        width: 350,
-        height: 100
-      },
-      {
-        id: uuidv4(),
-        type: 'experience',
-        title: 'DÉVELOPPEUR FRONT-END',
-        company: 'ACME TECH',
-        startDate: '2020',
-        endDate: 'Présent',
-        description: '• Développement d\'interfaces utilisateur réactives\n• Optimisation des performances des applications\n• Collaboration avec l\'équipe de design',
-        x: 280,
-        y: 260,
-        width: 350,
+        content: 'CERTIFICATIONS\n\n• AWS Certified Solutions Architect\n• Google Cloud Professional Developer\n• Certified Scrum Master',
+        x: 520,
+        y: 170,
+        width: 250,
         height: 130
-      },
-      {
-        id: uuidv4(),
-        type: 'experience',
-        title: 'DÉVELOPPEUR WEB',
-        company: 'STARTUP INNOVANTE',
-        startDate: '2018',
-        endDate: '2020',
-        description: '• Création de composants réutilisables\n• Intégration d\'APIs et services tiers\n• Développement de la stratégie technique',
-        x: 280,
-        y: 400,
-        width: 350,
-        height: 130
-      },
-      {
-        id: uuidv4(),
-        type: 'experience',
-        title: 'STAGIAIRE DÉVELOPPEUR',
-        company: 'AGENCE DIGITALE',
-        startDate: '2017',
-        endDate: '2018',
-        description: '• Support au développement de sites web\n• Optimisation SEO et accessibilité',
-        x: 280,
-        y: 540,
-        width: 350,
-        height: 110
-      },
-      {
-        id: uuidv4(),
-        type: 'line',
-        orientation: 'vertical',
-        thickness: 1,
-        color: '#eee',
-        x: 260,
-        y: 150,
-        width: 10,
-        height: 500
       }
-    ]);
+    ])
   }
 
   const handleFrenchTemplate = () => {
@@ -670,6 +668,16 @@ export default function ResumeBuilder() {
         x: 416.6666666666667,
         y: 342.66666666666725
       },
+      // Only add skills section if one doesn't already exist
+      ...(sections.some(section => section.type === 'skills') ? [] : [{
+        id: uuidv4(),
+        type: 'skills' as const,
+        skills: ['Python', 'Data Analysis', 'Machine Learning', 'SQL', 'JavaScript', 'React'],
+        height: 200,
+        width: 240,
+        x: 0,
+        y: 460
+      } as SkillsSection]),
       {
         id: uuidv4(),
         type: 'image',
@@ -682,7 +690,7 @@ export default function ResumeBuilder() {
         x: 45.33336666666666,
         y: 82.66663333333332
       }
-    ]);
+    ])
   }
 
   // Add an undo function
@@ -1204,6 +1212,23 @@ export default function ResumeBuilder() {
         zoom={zoom}
         setZoom={setZoom}
       />
+
+      {/* Toast notification */}
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={6000}
+        onClose={handleCloseToast}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleCloseToast} 
+          severity={toast.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
     </div>
   )
 }
