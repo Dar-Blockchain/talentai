@@ -26,6 +26,8 @@ import DialogContent from "@mui/material/DialogContent"
 import DialogTitle from "@mui/material/DialogTitle"
 import ImageUploader from "@/components/ImageUploader"
 import LineEditor from "./LineEditor"
+import { regenerateText } from "@/utils/api"
+import { useSession } from "next-auth/react"
 
 type Props = {
   
@@ -52,6 +54,7 @@ export default function SectionRenderer({
   onClick,
   zoom = 100,
 }: Props) {
+  const { data: session } = useSession();
   const [isEditing, setIsEditing] = useState(false)
   const [autoHeight, setAutoHeight] = useState(section.height)
   const [showToolbar, setShowToolbar] = useState(false)
@@ -688,6 +691,27 @@ export default function SectionRenderer({
     }
   }, []);
 
+  // Update the handleRegenerateSelection function to use the session token
+  const handleRegenerateSelection = async (selectedText: string, callback: (regeneratedText: string) => void) => {
+    try {
+      if (!session?.accessToken) {
+        alert('You need to be logged in to use this feature');
+        return;
+      }
+      
+      // Call the API with the session token
+      const regeneratedContent = await regenerateText(selectedText, session.accessToken);
+      if (regeneratedContent) {
+        callback(regeneratedContent);
+      } else {
+        alert('Failed to regenerate text. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error regenerating text:', error);
+      alert('Failed to regenerate text. Please try again.');
+    }
+  };
+
   return (
     <Rnd
       className={`${styles.sectionWrapper} hoverable-section ${isActive ? 'active-section' : ''}`}
@@ -768,7 +792,11 @@ export default function SectionRenderer({
         )}
       </div>
 
-      <FloatingToolbar visible={showToolbar} onClose={() => setShowToolbar(false)} />
+      <FloatingToolbar 
+        visible={showToolbar} 
+        onClose={() => setShowToolbar(false)} 
+        onRegenerateSelection={handleRegenerateSelection}
+      />
 
       {/* Image uploader dialog */}
       <Dialog open={showImageUploader} onClose={() => setShowImageUploader(false)}>

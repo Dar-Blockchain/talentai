@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { v4 as uuidv4 } from "uuid"
 import { DndContext, closestCenter } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
-import { useTheme, useMediaQuery, Drawer, IconButton, Button, Modal, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Box, Paper } from "@mui/material"
+import { useTheme, useMediaQuery, Drawer, IconButton, Button, Modal, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Box, Paper, TextField, CircularProgress } from "@mui/material"
 import MenuIcon from "@mui/icons-material/Menu"
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import html2canvas from 'html2canvas'
@@ -20,6 +20,7 @@ import ZoomControls from '@/components/zoom-controls'
 import { HeaderSection, TextSection, SkillsSection, LanguagesSection, EducationSection, ExperienceSection, ProjectsSection, CustomSection, ImageSection, LineSection, SectionType } from '@/models/sectionTypes'
 import ResumeActions from '@/components/ResumeActions'
 import { useSession } from "next-auth/react"
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 
 export default function ResumeBuilder() {
   const dispatch = useDispatch<AppDispatch>()
@@ -35,6 +36,9 @@ export default function ResumeBuilder() {
   const [zoom, setZoom] = useState(75) // Default zoom level at 75%
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
   const [resumeId, setResumeId] = useState<string | null>(null) // Track resume ID for updates
+  const [regenerateModalOpen, setRegenerateModalOpen] = useState(false)
+  const [prompt, setPrompt] = useState('')
+  const [isRegenerating, setIsRegenerating] = useState(false)
 
   useEffect(() => {
     const loadResume = async () => {
@@ -722,6 +726,136 @@ export default function ResumeBuilder() {
     setActiveId(newIconId);
   };
 
+  const handleRegenerate = async () => {
+    try {
+      if (!prompt.trim()) {
+        alert('Please enter a description about yourself');
+        return;
+      }
+
+      setIsRegenerating(true);
+      
+      // First try direct API call to backend
+      try {
+        // Get the auth token from the session
+        const token = session?.accessToken;
+        
+        if (!token) {
+          throw new Error('Authentication required. Please log in.');
+        }
+        
+        // Direct call to backend API, ensuring proper URL formatting
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+        const apiUrl = `${baseUrl}/resume/regenerate`.replace(/([^:]\/)\/+/g, "$1");
+        
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ prompt }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Direct API call failed');
+        }
+        
+        const data = await response.json();
+        
+        if (data.content) {
+          // Create a new text section with the content
+          const newSection = {
+            id: uuidv4(),
+            type: 'text' as const,
+            content: data.content,
+            x: 100,
+            y: 100,
+            width: 400,
+            height: 300
+          } as TextSection;
+          
+          setSections(prev => [...prev, newSection]);
+          setRegenerateModalOpen(false);
+          setPrompt('');
+          setIsRegenerating(false);
+          return;
+        }
+      } catch (directError) {
+        console.log('Direct API call failed, trying through Next.js API route', directError);
+        // Continue to the Next.js API route if direct call fails
+      }
+      
+      // Call through Next.js API route as fallback
+      const token = session?.accessToken;
+      
+      if (!token) {
+        throw new Error('Authentication required. Please log in.');
+      }
+
+      const response = await fetch('/api/resumes/regenerate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ prompt }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to regenerate resume content');
+      }
+      
+      const data = await response.json();
+      
+      if (data.content) {
+        // Create a new text section with the content
+        const newSection = {
+          id: uuidv4(),
+          type: 'text' as const,
+          content: data.content,
+          x: 100,
+          y: 100,
+          width: 400,
+          height: 300
+        } as TextSection;
+        
+        setSections(prev => [...prev, newSection]);
+        setRegenerateModalOpen(false);
+        setPrompt('');
+      }
+    } catch (error: any) {
+      console.error('Error regenerating resume:', error);
+      
+      const errorMessage = error?.message || 'Unknown error';
+      
+      // Provide more specific error messages based on the error
+      if (errorMessage.includes('404')) {
+        alert('Error: API endpoint not found. Please check if the backend server is running and the API routes are correct.');
+      } else if (errorMessage.includes('401') || errorMessage.includes('403')) {
+        alert('Error: Authentication failed. Please log in again before trying.');
+      } else if (errorMessage.includes('500')) {
+        alert('Error: The server encountered an error. This might be due to missing configuration like the OpenAI API key.');
+      } else {
+        alert(`Error regenerating resume: ${errorMessage}. Please try again.`);
+      }
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
+  const openRegenerateModal = () => {
+    // Check if the user is authenticated
+    const token = session?.accessToken;
+    
+    if (!token) {
+      alert('Please log in to use the regenerate feature');
+      return;
+    }
+    
+    setRegenerateModalOpen(true);
+  };
+
   return (
     <div className={styles.pageWrapper} onClick={() => setActiveId(null)}>
       <Dialog
@@ -1382,6 +1516,80 @@ export default function ResumeBuilder() {
         </DialogActions>
       </Dialog>
 
+      <Dialog
+        open={regenerateModalOpen}
+        onClose={() => setRegenerateModalOpen(false)}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{
+          sx: {
+            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+            color: 'white',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            borderRadius: '12px'
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>
+          Regenerate Resume Content
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ my: 2 }}>
+            <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.85)', mb: 2 }}>
+              Enter a description about yourself, and our AI will help enhance your resume content.
+            </Typography>
+            <TextField
+              label="Your description"
+              multiline
+              rows={4}
+              fullWidth
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Example: Je suis Mohamed Aziz Ben Ismail, ingénieur en informatique spécialisé en..."
+              variant="outlined"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  color: 'white',
+                  '& fieldset': {
+                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'primary.main',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: 'rgba(255, 255, 255, 0.7)',
+                },
+              }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
+          <Button 
+            onClick={() => setRegenerateModalOpen(false)} 
+            variant="outlined"
+            sx={{ color: 'white', borderColor: 'rgba(255, 255, 255, 0.3)' }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleRegenerate} 
+            variant="contained"
+            disabled={!prompt.trim() || isRegenerating}
+            sx={{ 
+              bgcolor: 'primary.main',
+              '&:hover': { bgcolor: 'primary.dark' },
+              minWidth: '120px'
+            }}
+          >
+            {isRegenerating ? <CircularProgress size={24} color="inherit" /> : 'Generate'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {isMobile ? (
         <IconButton
           onClick={() => setDrawerOpen(true)}
@@ -1400,6 +1608,7 @@ export default function ResumeBuilder() {
         onUndo={handleUndo}
         canUndo={sectionsHistory.length > 0}
         sectionsCount={sections.length}
+        onRegenerate={openRegenerateModal}
       />
 
       <Drawer

@@ -3,6 +3,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import TemplateIcon from '@mui/icons-material/Dashboard';
 import UndoIcon from '@mui/icons-material/Undo';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import ActionButton from './ActionButton';
 
 const ActionsContainer = styled('div')({
@@ -26,6 +27,7 @@ type ResumeActionsProps = {
   onUndo?: () => void;
   canUndo?: boolean;
   sectionsCount?: number;
+  onRegenerate?: () => void;
 }
 
 export default function ResumeActions({ 
@@ -34,7 +36,8 @@ export default function ResumeActions({
   onChangeTemplate,
   onUndo,
   canUndo = false,
-  sectionsCount = 0
+  sectionsCount = 0,
+  onRegenerate
 }: ResumeActionsProps) {
   const noSections = sectionsCount === 0;
   
@@ -47,6 +50,14 @@ export default function ResumeActions({
           tooltip="Undo last action (restore deleted section)"
           onClick={onUndo}
           disabled={!canUndo}
+        />
+      )}
+      {onRegenerate && (
+        <ActionButton
+          icon={<AutoFixHighIcon />}
+          label="Regenerate"
+          tooltip="Generate resume content using AI"
+          onClick={onRegenerate}
         />
       )}
       <ActionButton

@@ -4,17 +4,22 @@ import type React from "react"
 
 import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import { CircularProgress } from '@mui/material';
+import { useSession } from "next-auth/react";
 
 type Props = {
   visible: boolean
   onClose: () => void
+  onRegenerateSelection?: (selectedText: string, callback: (regeneratedText: string) => void) => void
 }
 
-export default function FloatingToolbar({ visible, onClose }: Props) {
+export default function FloatingToolbar({ visible, onClose, onRegenerateSelection }: Props) {
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [fontSize, setFontSize] = useState(16)
   // Store the last set font size to persist between sessions
   const lastSetFontSizeRef = useRef<number>(16);
+  const { data: session } = useSession();
   
   const [selection, setSelection] = useState<{
     range: Range | null
@@ -25,6 +30,9 @@ export default function FloatingToolbar({ visible, onClose }: Props) {
     rndElement: null,
     rndPosition: null,
   })
+
+  // Add state for regeneration
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   // Handle custom font size update events from SectionRenderer
   useEffect(() => {
@@ -352,6 +360,48 @@ export default function FloatingToolbar({ visible, onClose }: Props) {
     }
   }
 
+  // Add function to handle text regeneration
+  const handleRegenerateClick = () => {
+    if (!onRegenerateSelection) return;
+    
+    const { range } = selection;
+    if (!range) return;
+    
+    try {
+      // Get the selected text
+      const selectedText = range.toString();
+      if (!selectedText || selectedText.trim() === '') return;
+      
+      setIsRegenerating(true);
+      
+      // Call the parent regenerate function and provide a callback
+      onRegenerateSelection(selectedText, (regeneratedText) => {
+        try {
+          // Restore selection
+          const sel = window.getSelection();
+          if (!sel) return;
+          
+          sel.removeAllRanges();
+          sel.addRange(range);
+          
+          // Delete the current selection
+          document.execCommand('delete');
+          
+          // Insert the regenerated text
+          document.execCommand('insertHTML', false, regeneratedText);
+          
+          setIsRegenerating(false);
+        } catch (err) {
+          console.error('Error replacing text:', err);
+          setIsRegenerating(false);
+        }
+      });
+    } catch (err) {
+      console.error('Error regenerating text:', err);
+      setIsRegenerating(false);
+    }
+  };
+
   if (!visible) return null
 
   return createPortal(
@@ -415,6 +465,19 @@ export default function FloatingToolbar({ visible, onClose }: Props) {
       </button>
       <button style={btn} onClick={() => applyFormat("justifyRight")}>
         ↦
+      </button>
+
+      <button 
+        style={{...btn, display: onRegenerateSelection ? 'flex' : 'none', alignItems: 'center'}} 
+        onClick={handleRegenerateClick}
+        disabled={isRegenerating || !session?.accessToken}
+        title="Regenerate with AI"
+      >
+        {isRegenerating ? (
+          <CircularProgress size={14} color="inherit" />
+        ) : (
+          <AutoFixHighIcon style={{ fontSize: '16px' }} />
+        )}
       </button>
 
       <button style={btn} onClick={onClose}>
