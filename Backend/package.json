@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@hashgraph/sdk": "^2.63.0",
+    "agenda": "^5.0.0",
     "axios": "^1.8.4",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

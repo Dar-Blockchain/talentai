@@ -1,5 +1,7 @@
 const Post = require('../models/PostModel');
 const User = require('../models/UserModel');
+const AgentService = require('./AgentService');
+const { schedulePostMatchingAgenda } = require('../postMatchingAgenda');
 
 // Validation des données du post
 const validatePostData = (postData) => {
@@ -40,7 +42,12 @@ module.exports.createPost = async (postData) => {
     const user = await User.findById(postData.user);
     user.post.push(post._id);
     await user.save();
-    return await post.save();
+    await post.save();
+    console.log(post);
+    await schedulePostMatchingAgenda(post._id.toString(), {
+      requiredSkills: post.skillAnalysis.requiredSkills
+    });
+    return post;
   } catch (error) {
     throw new Error(`Error creating post: ${error.message}`);
   }
