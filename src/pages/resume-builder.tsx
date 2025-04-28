@@ -871,8 +871,9 @@ export default function ResumeBuilder() {
     }
     
     setRegenerateModalOpen(true);
-  };
-
+   
+   };
+ 
   return (
     <div className={styles.container}>
       <IconButton
