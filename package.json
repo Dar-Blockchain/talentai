@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^7.0.2",
@@ -21,7 +23,9 @@
     "formdata-node": "^6.0.3",
     "formidable": "^3.5.2",
     "framer-motion": "^12.6.5",
+    "html2canvas": "^1.4.1",
     "js-cookie": "^3.0.5",
+    "jspdf": "^3.0.1",
     "next": "^15.3.0",
     "next-auth": "^4.24.11",
     "openai": "^4.94.0",
@@ -29,6 +33,7 @@
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.55.0",
     "react-redux": "^9.2.0",
+    "react-rnd": "^10.5.2",
     "recharts": "^2.15.2",
     "redux-persist": "^6.0.0",
     "socket.io-client": "^4.8.1",

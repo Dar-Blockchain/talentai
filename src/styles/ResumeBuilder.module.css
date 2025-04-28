@@ -1,0 +1,194 @@
+/* ============================= */
+/*   ResumeBuilder.module.css   */
+/* ============================= */
+
+/* 1) Root wrapper: fixed to viewport, no page scroll */
+.pageWrapper {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  height: 100vh;           /* fill exactly the viewport height */
+  padding: 0;
+  padding-left: 250px;     /* space for the fixed sidebar */
+  overflow: hidden;        /* kill all scrollbars on the page itself */
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  color: white;
+  font-family: Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+/* 2) Fixed sidebar: scrolls its own content */
+.sidebar {
+  position: fixed;
+  top: 0; bottom: 0; left: 0;
+  width: 250px;
+  background: #10151a;
+  padding: 20px;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+  z-index: 20;
+  overflow-y: auto;       /* only sidebar scroll */
+}
+
+/* container for the buttons in the sidebar */
+.sectionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 1rem;
+}
+
+/* 3) Canvas area: scrolls its own content */
+.canvasWrapper {
+  flex: 1 1 auto;         /* take up remaining space */
+  height: 100vh;          /* match viewport height */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 20px;
+  overflow-y: auto;       /* only canvas scroll */
+  box-sizing: border-box;
+}
+
+/* optional inner wrapper */
+.canvasContainer {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+}
+
+/* 4) The white “paper” */
+.canvas {
+  background: white;
+  width: 794px;                   /* fixed A4 width */
+  aspect-ratio: 794 / 1123;       /* auto height */
+  margin: 0 auto;
+  box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+  border-radius: 4px;
+  overflow: hidden;
+  transform-origin: top center;
+  transition: transform 0.2s ease;
+}
+
+/* 5) Zoom controls */
+.zoomControls {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.5);
+  padding: 8px 12px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 30;
+  backdrop-filter: blur(4px);
+}
+
+.zoomControls button {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  padding: 4px 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+  color: white;
+}
+
+.zoomControls input[type="range"] {
+  width: 100px;
+}
+
+.zoomPercentage {
+  color: white;
+  font-size: 14px;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* 6) Section‑level styling */
+.toolbar {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.textBlock {
+  border: 1px dashed #aaa;
+  background: rgba(0,0,0,0.05);
+  color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px;
+}
+
+.contentEditable,
+.editable,
+.sectionBox {
+  width: 100%;
+  height: 100%;
+  padding: 8px;
+  outline: none;
+  font-size: 16px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.sectionActions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  gap: 4px;
+  background: rgba(223,16,16,0.75);
+  border-radius: 4px;
+  padding: 2px;
+  z-index: 200;
+}/* wrap each Rnd section so we can detect hover */
+.sectionWrapper {
+  position: relative;
+}
+
+/* style the action buttons container */
+.sectionActions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  background: rgba(255,255,255,0.85);   /* light translucent backdrop */
+  border-radius: 4px;
+  padding: 2px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  z-index: 200;
+}
+
+/* reveal on hover */
+.sectionWrapper:hover .sectionActions {
+  opacity: 1;
+}
+/* 7) Responsive tweaks */
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+  .pageWrapper {
+    padding-left: 0;
+  }
+  .canvasWrapper {
+    padding: 20px 10px;
+    height: 100vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageWrapper {
+    padding: 20px 10px;
+  }
+}
