@@ -1398,7 +1398,7 @@ export default function DashboardCandidate() {
                         fontWeight: 'bold'
                       }}
                     >
-                      {profile ? `${calculateSkillPercentage(profile, 'technical').toFixed(2)}%` : '0.00%'}
+                      {profile ? Number(profile.overallScore).toFixed(2) : '0.00%'}
                     </Typography>
                     <Typography
                       variant="caption"
