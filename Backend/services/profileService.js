@@ -103,13 +103,6 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
       // Create new profile
       profile = await Profile.create(profileDataToSave);
       
-      // Create a new agent with the company name
-      try {
-        await agentService.createAgent(profileData.name);
-      } catch (agentError) {
-        console.error('Error creating agent for company:', agentError);
-        // Continue even if agent creation fails
-      }
     }
 
     // Update the user's profile reference

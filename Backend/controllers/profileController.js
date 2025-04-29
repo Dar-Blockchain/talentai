@@ -36,27 +36,11 @@ module.exports.createOrUpdateCompanyProfile = async (req, res) => {
       return res.status(400).json({ message: "Company name is required" });
     }
 
-    // Check if agent exists with company name
-    let agent = await Agent.findOne({ name: profileData.name });
-    console.log(agent);
-    // If no agent exists, create one
-    if (!agent) {
-      try {
-        const { agent: newAgent } = await agentService.createAgent(profileData.name);
-        agent = newAgent;
-      } catch (agentError) {
-        console.error('Error creating agent:', agentError);
-        return res.status(500).json({ message: "Failed to create company agent" });
-      }
-    }
-
-    // After agent is confirmed, create/update the profile
+    // Remove agent creation and update profile creation
     const profile = await profileService.createOrUpdateCompanyProfile(userId, profileData);
-
     res.status(200).json({
-      message: "Company profile and agent created/updated successfully",
-      profile,
-      agent
+      message: "Company profile created/updated successfully",
+      profile
     });
   } catch (error) {
     console.error('Error creating/updating company profile:', error);
