@@ -119,7 +119,9 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
 module.exports.getProfileByUserId = async (userId) => {
   try {
     const profile = await Profile.findOne({ userId }).populate('userId');
-
+    if (!profile) {
+      return profile=[];
+    }
     return profile;
   } catch (error) {
     console.error('Erreur lors de la récupération du profil:', error);
