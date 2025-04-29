@@ -58,7 +58,7 @@ module.exports.getMyProfile = async (req, res) => {
 
     // Si result contient la clé message, alors aucun profil
     if (result.message) {
-      return res.status(404).json({ message: result.message });
+      return res.status(200).json({ message: result.message });
     }
 
     // Profil trouvé
