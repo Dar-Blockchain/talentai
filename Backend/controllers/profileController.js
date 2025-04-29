@@ -45,19 +45,28 @@ module.exports.createOrUpdateCompanyProfile = async (req, res) => {
 };
 
 // Récupérer son propre profil
+// controllers/profileController.js
 module.exports.getMyProfile = async (req, res) => {
   try {
     const userId = req.user._id;
-    
-    // Utiliser le service pour récupérer le profil
-    const profile = await profileService.getProfileByUserId(userId);
-    
-    res.status(200).json(profile);
+
+    const result = await profileService.getProfileByUserId(userId);
+
+    // Si result contient la clé message, alors aucun profil
+    if (result.message) {
+      return res.status(404).json({ message: result.message });
+    }
+
+    // Profil trouvé
+    return res.status(200).json(result);
   } catch (error) {
-    console.error('Erreur lors de la récupération du profil:', error);
-    res.status(500).json({ message: error.message || "Erreur lors de la récupération du profil" });
+    console.error('Erreur lors de la récupération du profil :', error);
+    return res.status(500).json({
+      message: error.message || "Erreur interne lors de la récupération du profil."
+    });
   }
 };
+
 
 // Récupérer un profil par ID
 module.exports.getProfileById = async (req, res) => {
