@@ -5,14 +5,14 @@
 /**
  * Regenerates text using the AI
  * @param text The text to regenerate
- * @param token The authentication token
+ * @param token The authentication token (optional, will try to get from localStorage)
  * @param block The block to regenerate (bio, experience, skills, education, projects)
  * @returns The regenerated text or null if failed
  */
 export const regenerateText = async (text: string, token?: string, block: string = 'bio'): Promise<string | null> => {
   try {
-    // Use provided token or try to get it from storage
-    const authToken = token || localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+    // Try to get token from localStorage first, then use provided token as fallback
+    const authToken = localStorage.getItem('api_token') || token;
     
     if (!authToken) {
       console.error('No authentication token found');

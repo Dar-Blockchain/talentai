@@ -712,10 +712,13 @@ export default function SectionRenderer({
     }
   }, []);
 
-  // Update the handleRegenerateSelection function to use the session token
+  // Update the handleRegenerateSelection function to use the same authentication approach as getResumes
   const handleRegenerateSelection = async (selectedText: string, callback: (regeneratedText: string) => void) => {
     try {
-      if (!session?.accessToken) {
+      // Try to get token from multiple sources with localStorage taking precedence
+      const token = localStorage.getItem('api_token') || session?.accessToken;
+      
+      if (!token) {
         alert('You need to be logged in to use this feature');
         return;
       }
@@ -745,8 +748,8 @@ export default function SectionRenderer({
         blockType = 'projects';
       }
       
-      // Call the API with the session token and determined block type
-      const regeneratedContent = await regenerateText(selectedText, session.accessToken, blockType);
+      // Call the API with the token and determined block type
+      const regeneratedContent = await regenerateText(selectedText, token, blockType);
       
       if (regeneratedContent) {
         // Process the regenerated content to handle markdown syntax like **bold**
@@ -899,14 +902,14 @@ export default function SectionRenderer({
             onClick={() => onDelete(id)}
             title="Delete section"
           >
-            <DeleteIcon fontSize="small" sx={{ color: "#444", width: "16px", height: "16px" }} />
+            <DeleteIcon fontSize="small" sx={{ color: "#000", width: "18px", height: "18px" }} />
           </button>
           <button 
             className={styles.sectionActionButton} 
             onClick={() => onDuplicate(id)}
             title="Duplicate section"
           >
-            <ContentCopyIcon fontSize="small" sx={{ color: "#444", width: "16px", height: "16px" }} />
+            <ContentCopyIcon fontSize="small" sx={{ color: "#000", width: "18px", height: "18px" }} />
           </button>
         </div>
       )}
@@ -1121,6 +1124,7 @@ export default function SectionRenderer({
         visible={showToolbar} 
         onClose={() => setShowToolbar(false)} 
         onRegenerateSelection={handleRegenerateSelection}
+        sectionType={section.type}
       />
 
       {/* Image uploader dialog */}

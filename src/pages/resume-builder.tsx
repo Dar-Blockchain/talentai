@@ -824,6 +824,15 @@ export default function ResumeBuilder() {
   const handleDataScientistTemplate = () => {
     setTemplateModalOpen(false);
     
+    // Check if profile is loaded
+    if (!profile) {
+      showToast('Profile not loaded. Using default template.', 'warning');
+      return;
+    }
+    
+    // Get user skills from profile
+    const userSkills = profile.skills?.map(skill => skill.name) || ["Python", "Data Analysis", "Machine Learning", "SQL", "TensorFlow"];
+    
     setSections([
       // Header section (Name and title)
       {
@@ -833,9 +842,9 @@ export default function ResumeBuilder() {
         y: 6.666666666666667,
         width: 400,
         height: 100,
-        name: 'Khalil Troudi',
-        jobTitle: 'Data Scientist',
-        content: "<h2 style=\"margin:0;font-size:28px;color:#556fb5;font-weight:600;\">Khalil Troudi</h2><p style=\"margin:0;font-size:18px;color:#333;font-weight:400;\">data scientist</p>"
+        name: profile.userId?.username || 'Khalil Troudi',
+        jobTitle: profile.type || 'Data Scientist',
+        content: `<h2 style="margin:0;font-size:28px;color:#556fb5;font-weight:600;">${profile.userId?.username || 'Khalil Troudi'}</h2><p style="margin:0;font-size:18px;color:#333;font-weight:400;">${profile.type || 'data scientist'}</p>`
       },
       
       // Education section (Formations)
@@ -938,7 +947,7 @@ export default function ResumeBuilder() {
         content: "<div style=\"width:100%;height:3px;background-color:#556fb5;margin-top:3px;margin-bottom:3px;\"></div>"
       },
       
-      // Skills section
+      // Skills section - now using user's actual skills from profile
       {
         id: uuidv4(),
         type: 'skills' as const,
@@ -946,8 +955,8 @@ export default function ResumeBuilder() {
         y: 334.66702405470596,
         width: 276,
         height: 176,
-        skills: ["React", "Python", "JavaScript", "Docker", "Node.js"],
-        content: "<strong style=\"color: rgb(13, 109, 211);\">Skills:</strong><ul style=\"list-style-position: inside; padding-left: 0\"><li>React</li><li>Python</li><li>JavaScript</li><li>Docker</li><li>Node.js</li></ul>"
+        skills: userSkills,
+        content: `<strong style="color: rgb(13, 109, 211);">Skills:</strong><ul style="list-style-position: inside; padding-left: 0">${userSkills.map(skill => `<li>${skill}</li>`).join('')}</ul>`
       },
       
       // Skills line

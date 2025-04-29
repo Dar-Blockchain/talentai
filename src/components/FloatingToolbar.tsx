@@ -12,9 +12,10 @@ type Props = {
   visible: boolean
   onClose: () => void
   onRegenerateSelection?: (selectedText: string, callback: (regeneratedText: string) => void) => void
+  sectionType?: string
 }
 
-export default function FloatingToolbar({ visible, onClose, onRegenerateSelection }: Props) {
+export default function FloatingToolbar({ visible, onClose, onRegenerateSelection, sectionType }: Props) {
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [fontSize, setFontSize] = useState(16)
   // Store the last set font size to persist between sessions
@@ -617,10 +618,10 @@ export default function FloatingToolbar({ visible, onClose, onRegenerateSelectio
       {onRegenerateSelection && (
         <IconButton 
           onClick={handleRegenerateClick}
-          disabled={isRegenerating || !session?.accessToken}
+          disabled={isRegenerating || sectionType === 'skills'}
           title="Regenerate with AI"
           style={{ 
-            color: isRegenerating || !session?.accessToken ? '#ccc' : '#3662E3',
+            color: isRegenerating || sectionType === 'skills' ? '#ccc' : '#3662E3',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
