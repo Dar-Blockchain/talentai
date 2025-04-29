@@ -6,7 +6,15 @@ import { IconButton } from '@mui/material'
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator'
 import styles from '@/styles/ResumeBuilder.module.css'
 
-export default function ResumeSection({ id, content, onContentChange }) {
+export default function ResumeSection({ 
+  id,
+  content,
+  onContentChange 
+}: {
+  id: string;
+  content: string;
+  onContentChange: (id: string, content: string) => void;
+}) {
   const {
     attributes,
     listeners,
