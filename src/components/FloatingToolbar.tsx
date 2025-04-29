@@ -161,14 +161,55 @@ export default function FloatingToolbar({ visible, onClose, onRegenerateSelectio
         const size = parseInt(value, 10);
         if (isNaN(size)) return;
         
-        // Only update the size in toolbar
+        // Update the size in toolbar and store as last set size
         setFontSize(size);
+        lastSetFontSizeRef.current = size;
         
         // Save selection boundaries before making changes
         const startContainer = range.startContainer;
         const startOffset = range.startOffset;
         const endContainer = range.endContainer;
         const endOffset = range.endOffset;
+        
+        // Check if this is a triple-click selection
+        // @ts-ignore
+        const isTripleClick = window.__isTripleClickSelection === true;
+        // @ts-ignore
+        const tripleClickData = window.__tripleClickSelection;
+        
+        if (isTripleClick && tripleClickData) {
+          // For triple-click, use the saved container to apply style
+          try {
+            const container = tripleClickData.container;
+            if (container instanceof HTMLElement) {
+              // Apply exact pixel size with !important to override any inherited styles
+              container.style.cssText += `; font-size: ${size}px !important;`;
+              
+              // Restore the selection from our saved data
+              const newRange = document.createRange();
+              newRange.setStart(tripleClickData.startContainer, tripleClickData.startOffset);
+              newRange.setEnd(tripleClickData.endContainer, tripleClickData.endOffset);
+              
+              const sel = window.getSelection();
+              if (sel) {
+                sel.removeAllRanges();
+                sel.addRange(newRange);
+                
+                // Update our stored range
+                if (sel.rangeCount > 0) {
+                  setSelection({
+                    ...selection,
+                    range: sel.getRangeAt(0).cloneRange()
+                  });
+                }
+              }
+              return;
+            }
+          } catch (e) {
+            console.error("Error handling triple-click font size:", e);
+            // Continue with standard handling if triple-click special handling fails
+          }
+        }
         
         // Save whether this is a "whole text" selection (to handle double-click case)
         const isFullTextSelection = range.toString().trim() === (startContainer.textContent || "").trim();
@@ -198,44 +239,84 @@ export default function FloatingToolbar({ visible, onClose, onRegenerateSelectio
         };
         
         if (containerWithSize) {
-          // Update existing container with font size
-          containerWithSize.style.fontSize = value;
+          // Update existing container with font size - use exact pixels with !important
+          containerWithSize.style.cssText += `; font-size: ${size}px !important;`;
         } else {
           // If we have a text selection, wrap it in a span
           if (!range.collapsed) {
             document.execCommand("styleWithCSS", false, "true");
               
-            // First try with fontSize command for best compatibility
-            const fontSizeValue = Math.max(1, Math.min(7, Math.round(size/7)));
-            document.execCommand("fontSize", false, fontSizeValue.toString());
+            // Create a temporary unique class name for this operation
+            const tempClassName = `fontSize-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
             
-            // Then find all font elements and convert them to spans with exact pixel size
-            const fontElements = document.querySelectorAll('font[size]');
-            fontElements.forEach(fontEl => {
-              if (fontEl instanceof HTMLElement) {
-                const newSpan = document.createElement('span');
-                newSpan.style.fontSize = `${size}px`;
-                
-                // Move all children to the new span
-                while (fontEl.firstChild) {
-                  newSpan.appendChild(fontEl.firstChild);
+            // First try with insert HTML command for best results
+            try {
+              // Get HTML content of selection
+              const fragment = range.cloneContents();
+              const tempDiv = document.createElement('div');
+              tempDiv.appendChild(fragment);
+              
+              // Create a span with the specific font size
+              const wrappedContent = `<span class="${tempClassName}" style="font-size: ${size}px !important;">${tempDiv.innerHTML}</span>`;
+              
+              // Delete the selection and insert our styled content
+              document.execCommand('delete', false);
+              document.execCommand('insertHTML', false, wrappedContent);
+              
+              // Force the new elements to have the exact pixel size
+              setTimeout(() => {
+                const newElements = document.querySelectorAll(`.${tempClassName}`);
+                newElements.forEach(el => {
+                  if (el instanceof HTMLElement) {
+                    el.style.cssText += `; font-size: ${size}px !important;`;
+                    el.classList.remove(tempClassName);
+                  }
+                });
+              }, 0);
+            } catch (e) {
+              console.error('Error inserting formatted HTML:', e);
+              
+              // Fallback to execCommand fontSize if insertHTML fails
+              document.execCommand("styleWithCSS", false, "true");
+              const fontSizeValue = Math.max(1, Math.min(7, Math.round(size/7)));
+              document.execCommand("fontSize", false, fontSizeValue.toString());
+              
+              // Then find all font elements and convert them to spans with exact pixel size
+              const fontElements = document.querySelectorAll('font[size]');
+              fontElements.forEach(fontEl => {
+                if (fontEl instanceof HTMLElement) {
+                  const newSpan = document.createElement('span');
+                  newSpan.style.cssText = `font-size: ${size}px !important;`;
+                  
+                  // Move all children to the new span
+                  while (fontEl.firstChild) {
+                    newSpan.appendChild(fontEl.firstChild);
+                  }
+                  
+                  // Replace the font element with the span
+                  if (fontEl.parentNode) {
+                    fontEl.parentNode.replaceChild(newSpan, fontEl);
+                  }
                 }
-                
-                // Replace the font element with the span
-                if (fontEl.parentNode) {
-                  fontEl.parentNode.replaceChild(newSpan, fontEl);
-                }
-              }
-            });
+              });
+            }
           } else {
             // If no selection, try to style the parent paragraph or div
             const parentBlock = findParentBlock(range.startContainer);
             if (parentBlock) {
-              parentBlock.style.fontSize = value;
+              parentBlock.style.cssText += `; font-size: ${size}px !important;`;
             } else {
               // Last resort - try execCommand
               document.execCommand("styleWithCSS", false, "true");
               document.execCommand("fontSize", false, Math.round(size/7).toString());
+              
+              // Find and fix any font elements created
+              const fontElements = document.querySelectorAll('font[size]');
+              fontElements.forEach(fontEl => {
+                if (fontEl instanceof HTMLElement) {
+                  fontEl.style.cssText += `; font-size: ${size}px !important;`;
+                }
+              });
             }
           }
         }
@@ -334,7 +415,38 @@ export default function FloatingToolbar({ visible, onClose, onRegenerateSelectio
       sel.removeAllRanges()
       sel.addRange(range)
 
-      // Apply format
+      // Handle list commands differently to avoid styleWithCSS interference
+      if (format === 'insertUnorderedList' || format === 'insertOrderedList') {
+        document.execCommand(format, false, "");
+        
+        // Update RND position if needed
+        if (rndElement && rndPosition) {
+          rndElement.style.transform = rndPosition.transform
+          if (rndPosition.top) rndElement.style.top = rndPosition.top
+          if (rndPosition.left) rndElement.style.left = rndPosition.left
+          
+          setTimeout(() => {
+            if (rndElement && rndPosition) {
+              requestAnimationFrame(() => {
+                rndElement.style.transform = rndPosition.transform;
+                if (rndPosition.top) rndElement.style.top = rndPosition.top;
+                if (rndPosition.left) rndElement.style.left = rndPosition.left;
+              });
+            }
+          }, 50);
+        }
+        
+        // Immediately update stored range
+        if (sel.rangeCount > 0) {
+          setSelection({
+            ...selection,
+            range: sel.getRangeAt(0).cloneRange()
+          });
+        }
+        return;
+      }
+
+      // Apply format for non-list commands
       document.execCommand("styleWithCSS", false, "true")
       document.execCommand(format, false)
 
@@ -343,7 +455,7 @@ export default function FloatingToolbar({ visible, onClose, onRegenerateSelectio
         rndElement.style.transform = rndPosition.transform
         if (rndPosition.top) rndElement.style.top = rndPosition.top
         if (rndPosition.left) rndElement.style.left = rndPosition.left
-  
+
         setTimeout(() => {
           if (rndElement && rndPosition) {
             requestAnimationFrame(() => {
@@ -353,7 +465,14 @@ export default function FloatingToolbar({ visible, onClose, onRegenerateSelectio
             });
           }
         }, 50);
+      }
       
+      // Re-store the new selection
+      if (sel.rangeCount > 0) {
+        setSelection({
+          ...selection,
+          range: sel.getRangeAt(0).cloneRange()
+        });
       }
     } catch (e) {
       console.error(`Error applying format ${format}:`, e)
@@ -412,90 +531,162 @@ export default function FloatingToolbar({ visible, onClose, onRegenerateSelectio
         top: "20px",
         left: "50%",
         transform: "translateX(-50%)",
-        background: "#fff",
-        border: "1px solid #ccc",
-        padding: "6px 10px",
-        borderRadius: "6px",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.15)",
+        background: "#FFFFFF",
+        border: "none",
+        padding: "8px 12px",
+        borderRadius: "8px",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
         display: "flex",
-        gap: "6px",
+        gap: "4px",
         zIndex: 9999,
         alignItems: "center",
-        fontFamily: "Arial",
+        fontFamily: "Inter, system-ui, -apple-system, sans-serif",
+        transition: "all 0.2s ease-in-out",
+        backdropFilter: "blur(10px)",
+        opacity: 0.97
       }}
       onMouseDown={(e) => e.preventDefault()}
     >
-      <button style={btn} onClick={() => applyFormat("bold")}>
-        <strong>B</strong>
-      </button>
-      <button style={btn} onClick={() => applyFormat("italic")}>
-        <em>I</em>
-      </button>
-      <button style={btn} onClick={() => applyFormat("underline")}>
-        <u>U</u>
-      </button>
+      <div style={{ display: 'flex', gap: '2px', borderRight: '1px solid #f0f0f0', paddingRight: '8px', marginRight: '4px' }}>
+        <IconButton onClick={() => applyFormat("bold")} title="Bold">
+          <strong>B</strong>
+        </IconButton>
+        <IconButton onClick={() => applyFormat("italic")} title="Italic">
+          <em>I</em>
+        </IconButton>
+        <IconButton onClick={() => applyFormat("underline")} title="Underline">
+          <u>U</u>
+        </IconButton>
+      </div>
 
-      <button style={btn} onClick={decreaseFontSize}>
-        −
-      </button>
-      <span style={fontLabel}>{fontSize}px</span>
-      <button style={btn} onClick={increaseFontSize}>
-        +
-      </button>
+      <div style={{ display: 'flex', gap: '2px', borderRight: '1px solid #f0f0f0', paddingRight: '8px', marginRight: '4px', alignItems: 'center' }}>
+        <IconButton onClick={decreaseFontSize} title="Decrease font size">
+          <span style={{ fontWeight: 'bold' }}>−</span>
+        </IconButton>
+        <span style={{
+          minWidth: "42px",
+          textAlign: "center",
+          fontWeight: "500",
+          color: "#333",
+          fontSize: "13px",
+          padding: "0 4px"
+        }}>{fontSize}px</span>
+        <IconButton onClick={increaseFontSize} title="Increase font size">
+          <span style={{ fontWeight: 'bold' }}>+</span>
+        </IconButton>
+      </div>
 
-      <input
-        type="color"
-        onChange={(e) => applyInlineStyle("color", e.target.value)}
-        style={{ width: "24px", height: "24px", border: "none", cursor: "pointer" }}
-        title="Text color"
-      />
+      <div style={{ display: 'flex', gap: '2px', borderRight: '1px solid #f0f0f0', paddingRight: '8px', marginRight: '4px' }}>
+        <input
+          type="color"
+          onChange={(e) => applyInlineStyle("color", e.target.value)}
+          style={{ 
+            width: "24px", 
+            height: "24px", 
+            border: "none", 
+            cursor: "pointer", 
+            background: "none",
+            padding: "2px",
+            borderRadius: "4px"
+          }}
+          title="Text color"
+        />
+      </div>
 
-      <button style={btn} onClick={() => applyFormat("insertUnorderedList")}>
-        •
-      </button>
-      <button style={btn} onClick={() => applyFormat("insertOrderedList")}>
-        1.
-      </button>
+      <div style={{ display: 'flex', gap: '2px', borderRight: '1px solid #f0f0f0', paddingRight: '8px', marginRight: '4px' }}>
+        <IconButton onClick={() => applyFormat("insertUnorderedList")} title="Bullet list">
+          <span style={{ fontSize: '14px' }}>•</span>
+        </IconButton>
+        <IconButton onClick={() => applyFormat("insertOrderedList")} title="Numbered list">
+          <span style={{ fontSize: '14px' }}>1.</span>
+        </IconButton>
+      </div>
 
-      <button style={btn} onClick={() => applyFormat("justifyLeft")}>
-        ↤
-      </button>
-      <button style={btn} onClick={() => applyFormat("justifyCenter")}>
-        ↔
-      </button>
-      <button style={btn} onClick={() => applyFormat("justifyRight")}>
-        ↦
-      </button>
+      <div style={{ display: 'flex', gap: '2px', borderRight: onRegenerateSelection ? '1px solid #f0f0f0' : 'none', paddingRight: onRegenerateSelection ? '8px' : '0', marginRight: onRegenerateSelection ? '4px' : '0' }}>
+        <IconButton onClick={() => applyFormat("justifyLeft")} title="Align left">
+          <span style={{ fontSize: '14px' }}>↤</span>
+        </IconButton>
+        <IconButton onClick={() => applyFormat("justifyCenter")} title="Align center">
+          <span style={{ fontSize: '14px' }}>↔</span>
+        </IconButton>
+        <IconButton onClick={() => applyFormat("justifyRight")} title="Align right">
+          <span style={{ fontSize: '14px' }}>↦</span>
+        </IconButton>
+      </div>
 
-      <button 
-        style={{...btn, display: onRegenerateSelection ? 'flex' : 'none', alignItems: 'center'}} 
-        onClick={handleRegenerateClick}
-        disabled={isRegenerating || !session?.accessToken}
-        title="Regenerate with AI"
-      >
-        {isRegenerating ? (
-          <CircularProgress size={14} color="inherit" />
-        ) : (
-          <AutoFixHighIcon style={{ fontSize: '16px' }} />
-        )}
-      </button>
+      {onRegenerateSelection && (
+        <IconButton 
+          onClick={handleRegenerateClick}
+          disabled={isRegenerating || !session?.accessToken}
+          title="Regenerate with AI"
+          style={{ 
+            color: isRegenerating || !session?.accessToken ? '#ccc' : '#3662E3',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          {isRegenerating ? (
+            <CircularProgress size={14} color="inherit" />
+          ) : (
+            <AutoFixHighIcon style={{ fontSize: '16px' }} />
+          )}
+        </IconButton>
+      )}
 
-      <button style={btn} onClick={onClose}>
-        ✕
-      </button>
+      <IconButton onClick={onClose} title="Close toolbar" style={{ marginLeft: '4px' }}>
+        <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#666' }}>✕</span>
+      </IconButton>
     </div>,
     document.body,
   )
 }
 
-const btn: React.CSSProperties = {
-  border: "none",
-  background: "transparent",
-  fontSize: "14px",
-  cursor: "pointer",
-  padding: "4px 6px",
-  color: "#333",
-}
+// Styled button component for the toolbar
+const IconButton = ({ 
+  onClick, 
+  children, 
+  disabled = false, 
+  title = '', 
+  style = {} 
+}: { 
+  onClick: () => void; 
+  children: React.ReactNode; 
+  disabled?: boolean; 
+  title?: string;
+  style?: React.CSSProperties;
+}) => (
+  <button 
+    onClick={onClick}
+    disabled={disabled}
+    title={title}
+    style={{
+      border: "none",
+      background: "transparent",
+      fontSize: "14px",
+      cursor: disabled ? "not-allowed" : "pointer",
+      padding: "5px 8px",
+      color: disabled ? "#ccc" : "#333",
+      borderRadius: "4px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      transition: "all 0.1s ease",
+      opacity: disabled ? 0.5 : 1,
+      ...style
+    }}
+    onMouseEnter={(e) => {
+      if (!disabled) {
+        e.currentTarget.style.background = "#f5f5f5";
+      }
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.background = "transparent";
+    }}
+  >
+    {children}
+  </button>
+);
 
 const fontLabel: React.CSSProperties = {
   minWidth: "38px",

@@ -173,16 +173,11 @@ export default function SectionRenderer({
           : '<div style="width:100%; height:100%; display:flex; justify-content:center; align-items:center; background:#f0f0f0; border:1px dashed #ccc;">Double-click to upload image</div>'
       case "line":
         const line = section as LineSection;
-        const orientation = line.orientation || 'horizontal';
-        const thickness = line.thickness || 2;
-        const color = line.color || '#000000';
+        const thickness = line.thickness || 3;
+        const color = line.color || '#556fb5';
         
-        // Calculate dimensions based on orientation
-        const lineWidth = orientation === 'horizontal' ? '100%' : `${thickness}px`;
-        const lineHeight = orientation === 'horizontal' ? `${thickness}px` : '100%';
-        
-        // Return a div styled as a line
-        return `<div style="width: ${lineWidth}; height: ${lineHeight}; background-color: ${color}; margin: 0 auto;"></div>`;
+        // Create horizontal line with CV style (thin line with margins)
+        return `<div style="width:100%;height:${thickness}px;background-color:${color};margin-top:3px;margin-bottom:3px;"></div>`;
       default:
         return ''
     }
@@ -235,6 +230,7 @@ export default function SectionRenderer({
         }
       }
     })
+
   }
 
   useLayoutEffect(() => {
@@ -274,153 +270,154 @@ export default function SectionRenderer({
 
     // Enhanced size detection
     tryDetectFontSize(sel);
+    
+    // Store the current selection in a global variable to restore it later if needed
+    if (sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      // Store selection information
+      const storedSelection = {
+        startContainer: range.startContainer,
+        startOffset: range.startOffset,
+        endContainer: range.endContainer,
+        endOffset: range.endOffset,
+        text: range.toString()
+      };
+      // @ts-ignore
+      window.__lastSelection = storedSelection;
+    }
   }
   
-  // Helper to detect and dispatch font size based on selection
-  const tryDetectFontSize = (sel: Selection) => {
-    try {
-      // Force toolbar to update with each new selection
-      document.dispatchEvent(new CustomEvent('update-font-size', { 
-        detail: { fontSize: -1, reset: true } 
-      }));
-      
-      // For header sections, always use the h2 font size
-      if (type === 'header' && editableRef.current) {
-        const headerEl = editableRef.current.querySelector('h2') as HTMLElement | null;
-        const size = headerEl
-          ? parseInt(window.getComputedStyle(headerEl).fontSize, 10)
-          : NaN;
-        if (!isNaN(size)) {
-          document.dispatchEvent(new CustomEvent('update-font-size', { detail: { fontSize: size } }));
-          return;
+  // Helper to restore the previous selection if needed
+  const restoreSelection = () => {
+    // @ts-ignore
+    const lastSelection = window.__lastSelection;
+    if (lastSelection && editableRef.current) {
+      try {
+        const selection = window.getSelection();
+        if (selection) {
+          selection.removeAllRanges();
+          const range = document.createRange();
+          range.setStart(lastSelection.startContainer, lastSelection.startOffset);
+          range.setEnd(lastSelection.endContainer, lastSelection.endOffset);
+          selection.addRange(range);
+          // Update toolbar position again
+          const rect = range.getClientRects()[0];
+          if (rect) setShowToolbar(true);
+        }
+      } catch (e) {
+        console.error('Error restoring selection:', e);
+      }
         }
       }
       
-      // Get accurate font size from selection
-      if (!editableRef.current || !sel.rangeCount) return;
-
-      // Double-click typically selects whole words/lines, so we need special handling
-      const range = sel.getRangeAt(0);
-      const isDoubleClickSelection = range.toString().trim().includes(" ");
-
-      // Get selected node
-      const node = sel.focusNode || sel.anchorNode;
-      if (!node) return;
+  // Update tryDetectFontSize to better detect actual pixel sizes
+  const tryDetectFontSize = (sel: Selection) => {
+    try {
+      // Only continue if we have a valid selection
+      if (!sel || !sel.rangeCount || sel.isCollapsed || !editableRef.current) return;
       
-      // Special handling for double-clicked selection (whole words/lines)
-      if (isDoubleClickSelection) {
-        // For double-clicked text, first check if there's a direct span with font-size
-        const parentElement = node.parentElement;
-        if (parentElement) {
-          // Check for spans with explicit font sizes within the selection
-          const fontSize = parentElement.style.fontSize;
-          if (fontSize) {
-            const size = parseInt(fontSize, 10);
-            if (!isNaN(size)) {
+      const range = sel.getRangeAt(0);
+      const selectedNode = range.commonAncestorContainer;
+
+      // Check if this is a triple-click selection
+      // @ts-ignore
+      const isTripleClick = window.__isTripleClickSelection;
+      // @ts-ignore
+      const tripleClickData = window.__tripleClickSelection;
+      
+      // For triple-click selections, use the container element
+      if (isTripleClick && tripleClickData && tripleClickData.container) {
+        const container = tripleClickData.container;
+        if (container instanceof HTMLElement) {
+          // Get exact inline style if set
+          if (container.style.fontSize) {
+            const inlineSize = parseInt(container.style.fontSize, 10);
+            if (!isNaN(inlineSize)) {
               document.dispatchEvent(new CustomEvent('update-font-size', { 
-                detail: { fontSize: size } 
+                detail: { fontSize: inlineSize } 
               }));
               return;
             }
           }
           
-          // If no direct style, check computed style
-          const computedSize = parseInt(window.getComputedStyle(parentElement).fontSize, 10);
-          if (!isNaN(computedSize) && computedSize !== 16) {
+          // Fall back to computed style
+          const computedSize = parseInt(window.getComputedStyle(container).fontSize, 10);
+          if (!isNaN(computedSize)) {
             document.dispatchEvent(new CustomEvent('update-font-size', { 
               detail: { fontSize: computedSize } 
             }));
             return;
           }
-          
-          // If still no luck, look for any styled elements within selection
-          const selectedText = range.toString();
-          if (selectedText && editableRef.current.innerHTML.includes(selectedText)) {
-            // Find elements with explicit font sizes
-            const styledElements = Array.from(editableRef.current.querySelectorAll('[style*="font-size"]'));
-            for (const el of styledElements) {
-              if (el instanceof HTMLElement && el.innerText && selectedText.includes(el.innerText)) {
-                const elSize = parseInt(el.style.fontSize, 10);
-                if (!isNaN(elSize)) {
-                  document.dispatchEvent(new CustomEvent('update-font-size', { 
-                    detail: { fontSize: elSize } 
-                  }));
-                  return;
-                }
-              }
-            }
-          }
         }
       }
       
-      // Get styles directly from the selection range
+      // For normal selections, try to find the specific element with font size
+      // Create a temporary span at cursor position to get the exact font size
+      const tempSpan = document.createElement('span');
+      tempSpan.setAttribute('data-fontsize-probe', 'true');
+      tempSpan.style.display = 'inline';
+      tempSpan.innerHTML = '&#8203;'; // Zero-width space
       
-      // Get direct style, if any
-      // First, check if we already have spans with specific font-size
-      if (node.nodeType === Node.TEXT_NODE && node.parentElement) {
-        const parent = node.parentElement;
-        // Check for direct inline style on parent element
-        if (parent.style.fontSize) {
-          const inlineSize = parseInt(parent.style.fontSize, 10);
-          if (!isNaN(inlineSize)) {
-            document.dispatchEvent(new CustomEvent('update-font-size', { 
-              detail: { fontSize: inlineSize } 
-            }));
-            return;
-          }
+      const originalRange = range.cloneRange();
+      
+      // Insert at the start of the selection
+      range.collapse(true);
+      range.insertNode(tempSpan);
+      
+      // Get computed font size at the selection point
+      const fontSize = parseInt(window.getComputedStyle(tempSpan).fontSize, 10);
+      
+      // Clean up the temporary span
+      if (tempSpan.parentNode) {
+        tempSpan.parentNode.removeChild(tempSpan);
         }
         
-        // Check specific computed style
-        const computedStyle = window.getComputedStyle(parent);
-        const computedSize = parseInt(computedStyle.fontSize, 10);
-        if (!isNaN(computedSize) && computedSize !== 16) {
+      // Restore the original selection
+      sel.removeAllRanges();
+      sel.addRange(originalRange);
+      
+      // Dispatch the detected font size
+      if (!isNaN(fontSize)) {
           document.dispatchEvent(new CustomEvent('update-font-size', { 
-            detail: { fontSize: computedSize } 
+          detail: { fontSize: fontSize } 
           }));
           return;
         }
-      }
       
-      // If we got here, look for any font size in the selection text
-      const selectionText = range.toString().trim();
-      if (selectionText && editableRef.current.innerHTML.includes(selectionText)) {
-        // This is likely a double-click selection - look for all elements containing this text
-        const allElements = Array.from(editableRef.current.querySelectorAll('*'));
-        const matchingElements = allElements.filter(el => 
-          el.textContent && el.textContent.includes(selectionText)
-        );
-        
-        // Find element with non-default font size
-        for (const el of matchingElements) {
-          if (el instanceof HTMLElement) {
-            // Check explicit style first
-            if (el.style.fontSize) {
-              const size = parseInt(el.style.fontSize, 10);
-              if (!isNaN(size)) {
+      // If direct detection failed, try to get font size from selection's parent element(s)
+      let currentNode = selectedNode;
+      while (currentNode && currentNode !== editableRef.current) {
+        if (currentNode instanceof HTMLElement) {
+          // Check for inline style first
+          if (currentNode.style.fontSize) {
+            const inlineSize = parseInt(currentNode.style.fontSize, 10);
+            if (!isNaN(inlineSize)) {
                 document.dispatchEvent(new CustomEvent('update-font-size', { 
-                  detail: { fontSize: size } 
+                detail: { fontSize: inlineSize } 
                 }));
                 return;
               }
             }
             
             // Then check computed style
-            const size = parseInt(window.getComputedStyle(el).fontSize, 10);
-            if (!isNaN(size) && size !== 16) {
+          const computedStyle = window.getComputedStyle(currentNode);
+          if (computedStyle.fontSize !== '16px') { // Not the default size
+            const computedSize = parseInt(computedStyle.fontSize, 10);
+            if (!isNaN(computedSize)) {
               document.dispatchEvent(new CustomEvent('update-font-size', { 
-                detail: { fontSize: size } 
+                detail: { fontSize: computedSize } 
               }));
               return;
             }
           }
         }
+        const parentNode = currentNode.parentNode;
+        if (!parentNode) break;
+        currentNode = parentNode;
       }
       
-      // If we got here, fall back to default size from container
-      const defaultSize = parseInt(
-        window.getComputedStyle(editableRef.current).fontSize, 
-        10
-      );
+      // If we get here, use the default size from the editor
+      const defaultSize = parseInt(window.getComputedStyle(editableRef.current).fontSize, 10);
       if (!isNaN(defaultSize)) {
         document.dispatchEvent(new CustomEvent('update-font-size', { 
           detail: { fontSize: defaultSize } 
@@ -428,6 +425,10 @@ export default function SectionRenderer({
       }
     } catch (err) {
       console.error('Error detecting font size:', err);
+      // Fallback to a reasonable default
+      document.dispatchEvent(new CustomEvent('update-font-size', { 
+        detail: { fontSize: 16 } 
+      }));
     }
   };
 
@@ -630,28 +631,36 @@ export default function SectionRenderer({
   }
 
   // Handle line properties change
-  const handleLinePropertiesChange = (properties: { orientation: 'horizontal' | 'vertical', thickness: number, color: string }) => {
-    const line = section as LineSection;
-    const { orientation, thickness, color } = properties;
+  const handleLinePropertiesChange = (properties: { orientation: 'horizontal', thickness: number, color: string }) => {
+    const { thickness, color } = properties;
     
-    // Calculate dimensions based on orientation
-    const lineWidth = orientation === 'horizontal' ? '100%' : `${thickness}px`;
-    const lineHeight = orientation === 'horizontal' ? `${thickness}px` : '100%';
+    // Store current section position and size
+    const currentX = x;
+    const currentY = y;
+    const currentWidth = width;
     
-    // Create HTML content for the line
-    const lineContent = `<div style="width: ${lineWidth}; height: ${lineHeight}; background-color: ${color}; margin: 0 auto;"></div>`;
+    // Create HTML content for the line with margins, matching the CV style
+    const lineContent = `<div style="width:100%;height:${thickness}px;background-color:${color};margin-top:3px;margin-bottom:3px;"></div>`;
     
     // Update the section content
     updateContent(id, lineContent);
     
-    // Adjust container dimensions based on orientation
-    if (orientation === 'horizontal') {
-      updatePosition(id, { x, y, width, height: Math.max(thickness + 16, 20) });
-    } else {
-      updatePosition(id, { x, y, width: Math.max(thickness + 16, 20), height });
-    }
+    // Adjust height based on thickness plus margins, but keep width the same
+    const newHeight = Math.max(thickness + 16, 20);
     
+    // Update position and dimensions while keeping the same x,y coordinates
+    updatePosition(id, { 
+      x: currentX, 
+      y: currentY, 
+      width: currentWidth, 
+      height: newHeight 
+    });
+    
+    // Close the dialog but keep focus on the section
     setShowLineEditor(false);
+    
+    // Ensure the section stays selected
+    onClick();
   }
 
   // Custom CSS to handle the hover borders
@@ -685,6 +694,18 @@ export default function SectionRenderer({
         /* Ensure all elements inside sections use border-box */
         .hoverable-section * {
           box-sizing: border-box !important;
+        }
+        /* Style for hoverable section content */
+        .hoverable-section-content {
+          cursor: pointer;
+          width: 100% !important;
+          height: 100% !important;
+          display: block;
+          position: relative;
+        }
+        /* Make sure the entire content area is clickable */
+        .hoverable-section-content * {
+          pointer-events: none;
         }
       `;
       document.head.appendChild(styleTag);
@@ -745,6 +766,108 @@ export default function SectionRenderer({
     }
   };
 
+  // Add this function to improve text selection behavior
+  const selectEntireWord = (node: Node, offset: number) => {
+    if (node.nodeType !== Node.TEXT_NODE || !node.textContent) return null;
+    
+    const text = node.textContent;
+    
+    // Check if we're inside a number or date pattern
+    let start = offset;
+    let end = offset;
+    
+    // Pattern for dates and numbers (e.g., "2019", "12/31/2022")
+    const isDigit = (char: string) => /\d/.test(char);
+    const isDateSeparator = (char: string) => /[-/.:]/.test(char);
+    const isPartOfDate = (char: string) => isDigit(char) || isDateSeparator(char);
+    
+    // Check if we're in a date pattern
+    if (offset < text.length && isPartOfDate(text[offset])) {
+      // Find the start of the date/number
+      while (start > 0 && isPartOfDate(text[start - 1])) {
+        start--;
+      }
+      
+      // Find the end of the date/number
+      while (end < text.length && isPartOfDate(text[end])) {
+        end++;
+      }
+      
+      // If we found a reasonable date-like segment
+      if (end - start >= 4) { // At least 4 chars for a year
+        return { node, start, end };
+      }
+    }
+    
+    // If not a date, try to select the whole word
+    start = offset;
+    end = offset;
+    
+    const isWordChar = (char: string) => /\w/.test(char);
+    
+    // Find word boundaries
+    while (start > 0 && isWordChar(text[start - 1])) {
+      start--;
+    }
+    
+    while (end < text.length && isWordChar(text[end])) {
+      end++;
+    }
+    
+    return { node, start, end };
+  };
+  
+  // Enhanced mouse-up handler for better text selection
+  const handleMouseUp = (e: React.MouseEvent) => {
+    updateToolbarPosition();
+    
+    // Handle selection logic
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
+      const range = selection.getRangeAt(0);
+      const selectedText = range.toString().trim();
+      
+      // Detect and update font size after selection
+      tryDetectFontSize(selection);
+      
+      // If this is likely a date or a short word
+      if (selectedText.length < 15 && editableRef.current) {
+        // Try to check if this might be a date part or number
+        const node = selection.anchorNode;
+        const offset = selection.anchorOffset;
+        
+        if (node && node.nodeType === Node.TEXT_NODE) {
+          const enhancedSelection = selectEntireWord(node, offset);
+          
+          if (enhancedSelection) {
+            try {
+              // Create a new range for the enhanced selection
+              const newRange = document.createRange();
+              newRange.setStart(enhancedSelection.node, enhancedSelection.start);
+              newRange.setEnd(enhancedSelection.node, enhancedSelection.end);
+              
+              // Apply the new range
+              selection.removeAllRanges();
+              selection.addRange(newRange);
+              
+              // Update toolbar with new selection
+              updateToolbarPosition();
+              
+              // Store enhanced selection
+              // @ts-ignore
+              window.__selectedText = newRange.toString();
+              
+              // Prevent default browser selection behavior
+              e.preventDefault();
+            } catch (err) {
+              console.error('Error enhancing selection:', err);
+            }
+          }
+        }
+      }
+    }
+  }
+
   return (
     <Rnd
       className={`${styles.sectionWrapper} hoverable-section ${isActive ? 'active-section' : ''}`}
@@ -771,12 +894,20 @@ export default function SectionRenderer({
     >
       {!isEditing && (
         <div className={styles.sectionActions}>
-          <IconButton size="small" onClick={() => onDelete(id)}>
-            <DeleteIcon fontSize="small" sx={{ color: "#333" }} />
-          </IconButton>
-          <IconButton size="small" onClick={() => onDuplicate(id)}>
-            <ContentCopyIcon fontSize="small" sx={{ color: "#333" }} />
-          </IconButton>
+          <button 
+            className={styles.sectionActionButton} 
+            onClick={() => onDelete(id)}
+            title="Delete section"
+          >
+            <DeleteIcon fontSize="small" sx={{ color: "#444", width: "16px", height: "16px" }} />
+          </button>
+          <button 
+            className={styles.sectionActionButton} 
+            onClick={() => onDuplicate(id)}
+            title="Duplicate section"
+          >
+            <ContentCopyIcon fontSize="small" sx={{ color: "#444", width: "16px", height: "16px" }} />
+          </button>
         </div>
       )}
 
@@ -800,6 +931,77 @@ export default function SectionRenderer({
           e.stopPropagation();
           if (!isEditing) handleDoubleClick(e);
         }}
+        onMouseDown={(e) => {
+          // Only process triple-clicks
+          if (e.detail === 3) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Get clicked element
+            const clickedElement = e.target as HTMLElement;
+            if (!clickedElement || !editableRef.current) return;
+            
+            // Find nearest block element
+            const blockTags = ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI'];
+            let targetNode: HTMLElement | null = clickedElement;
+            
+            // If we clicked directly on text node, start with its parent
+            if (!(targetNode instanceof Element)) {
+              targetNode = clickedElement.parentElement;
+            }
+            
+            // Find closest block parent that isn't the editor itself
+            while (
+              targetNode && 
+              targetNode !== editableRef.current && 
+              !blockTags.includes(targetNode.nodeName)
+            ) {
+              targetNode = targetNode.parentElement;
+            }
+            
+            // If no block found or it's the editor itself, 
+            // try to use the original click target
+            if (!targetNode || targetNode === editableRef.current) {
+              targetNode = clickedElement;
+            }
+            
+            // Create selection on this node
+            try {
+              const selection = window.getSelection();
+              if (!selection) return;
+              
+              selection.removeAllRanges();
+              const range = document.createRange();
+              
+              if (targetNode.childNodes.length > 0) {
+                // Select the node contents
+                range.selectNodeContents(targetNode);
+              } else {
+                // Fallback for empty nodes
+                range.selectNode(targetNode);
+              }
+              
+              selection.addRange(range);
+              
+              // Force toolbar to show with this selection
+              updateToolbarPosition();
+              
+              // Store triple-click info for toolbar
+              // @ts-ignore
+              window.__isTripleClickSelection = true;
+              // @ts-ignore
+              window.__tripleClickSelection = {
+                container: targetNode,
+                startContainer: range.startContainer,
+                startOffset: range.startOffset,
+                endContainer: range.endContainer, 
+                endOffset: range.endOffset
+              };
+            } catch (err) {
+              console.error('Error handling triple-click selection:', err);
+            }
+          }
+        }}
         className={isEditing ? "edit-mode" : ""}
       >
         {isEditing ? (
@@ -812,15 +1014,105 @@ export default function SectionRenderer({
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             onKeyUp={updateToolbarPosition}
-            onMouseUp={updateToolbarPosition}
-            style={sharedEditableStyle}
+            onMouseUp={handleMouseUp}
+            onMouseDown={(e) => {
+              // Only process triple-clicks
+              if (e.detail === 3) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Get clicked element
+                const clickedElement = e.target as HTMLElement;
+                if (!clickedElement || !editableRef.current) return;
+                
+                // Find nearest block element
+                const blockTags = ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI'];
+                let targetNode: HTMLElement | null = clickedElement;
+                
+                // If we clicked directly on text node, start with its parent
+                if (!(targetNode instanceof Element)) {
+                  targetNode = clickedElement.parentElement;
+                }
+                
+                // Find closest block parent that isn't the editor itself
+                while (
+                  targetNode && 
+                  targetNode !== editableRef.current && 
+                  !blockTags.includes(targetNode.nodeName)
+                ) {
+                  targetNode = targetNode.parentElement;
+                }
+                
+                // If no block found or it's the editor itself, 
+                // try to use the original click target
+                if (!targetNode || targetNode === editableRef.current) {
+                  targetNode = clickedElement;
+                }
+                
+                // Create selection on this node
+                try {
+                  const selection = window.getSelection();
+                  if (!selection) return;
+                  
+                  selection.removeAllRanges();
+                  const range = document.createRange();
+                  
+                  if (targetNode.childNodes.length > 0) {
+                    // Select the node contents
+                    range.selectNodeContents(targetNode);
+                  } else {
+                    // Fallback for empty nodes
+                    range.selectNode(targetNode);
+                  }
+                  
+                  selection.addRange(range);
+                  
+                  // Force toolbar to show with this selection
+                  updateToolbarPosition();
+                  
+                  // Store triple-click info for toolbar
+                  // @ts-ignore
+                  window.__isTripleClickSelection = true;
+                  // @ts-ignore
+                  window.__tripleClickSelection = {
+                    container: targetNode,
+                    startContainer: range.startContainer,
+                    startOffset: range.startOffset,
+                    endContainer: range.endContainer, 
+                    endOffset: range.endOffset
+                  };
+                } catch (err) {
+                  console.error('Error handling triple-click selection:', err);
+                }
+              }
+            }}
+            style={{
+              ...sharedEditableStyle,
+              outline: "none",
+              caretColor: "#3662E3", // Modern blue cursor color
+              boxShadow: "0 0 0 1px rgba(54, 98, 227, 0.1) inset", // Subtle edit mode indicator
+            }}
+            className={styles.sectionContent}
             data-section-content="true"
           />
         ) : (
           <div 
             ref={editableRef}
-            style={sharedEditableStyle}
+            style={{
+              ...sharedEditableStyle,
+              cursor: 'pointer', // Add pointer cursor to indicate clickable
+              width: '100%',
+              height: '100%',
+              position: 'relative'
+            }}
             dangerouslySetInnerHTML={{ __html: getSectionContent() }} 
+            onDoubleClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDoubleClick(e);
+            }}
+            className={`${styles.sectionContent} ${styles.hoverableSectionContent}`}
+            data-section-content="true"
           />
         )}
       </div>
@@ -848,7 +1140,6 @@ export default function SectionRenderer({
         <DialogContent>
           <LineEditor 
             onLinePropertiesChange={handleLinePropertiesChange}
-            initialOrientation={(section as LineSection).orientation}
             initialThickness={(section as LineSection).thickness}
             initialColor={(section as LineSection).color}
           />

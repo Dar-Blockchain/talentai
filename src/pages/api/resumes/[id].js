@@ -24,59 +24,55 @@ export default async function handler(req, res) {
     
     // Backend requires authentication but no auth token present
     if (!req.headers.authorization) {
-      console.log('No authorization token found in request - 401 will likely occur');
-      return res.status(401).json({ 
-        error: 'You must be logged in to save resumes to the server',
-        details: 'The backend requires authentication for resume operations'
-      });
+      console.log('No authorization token found in request');
+      return res.status(401).json({ message: "Accès non autorisé - Token manquant" });
     }
     
-    console.log(`Sending ${req.method} request to: ${endpoint}`);
-    console.log('Request headers:', req.headers);
-    console.log('Request body:', req.body);
-    
-    // Make the request to the backend
-    try {
-      const response = await fetch(endpoint, {
-        method: req.method,
-        headers: {
-          ...(req.method !== 'GET' && { 'Content-Type': 'application/json' }),
-          // Forward authorization if available
-          ...(req.headers.authorization && { 'Authorization': req.headers.authorization }),
-        },
-        ...(req.method !== 'GET' && { body: JSON.stringify(req.body) }),
-      });
+    // Check if token is in correct format
+    if (!req.headers.authorization.startsWith('Bearer ')) {
+      console.log('Invalid token format');
+      return res.status(401).json({ message: "Format de token invalide" });
+    }
 
-      // Get response as text first
-      const responseText = await response.text();
-      console.log(`Backend response status: ${response.status}`);
-      console.log(`Backend response text: ${responseText}`);
-      
-      // Try to parse the response as JSON, but don't fail if it's not valid JSON
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('Failed to parse backend response as JSON:', responseText);
-        return res.status(response.status).send(responseText);
-      }
-      
-      if (!response.ok) {
-        console.error(`Backend error: ${response.status}`, data);
-      }
-      
-      return res.status(response.status).json(data);
-    } catch (fetchError) {
-      console.error('Error contacting backend server:', fetchError);
+    console.log(`Sending ${req.method} request to: ${endpoint}`);
+    
+    // Make the backend request
+    const options = {
+      method: req.method,
+      headers: {
+        'Authorization': req.headers.authorization,
+        'Content-Type': 'application/json',
+      },
+    };
+    
+    // Add body for appropriate methods
+    if (req.method === 'PUT' || req.method === 'POST') {
+      options.body = JSON.stringify(req.body);
+    }
+    
+    const response = await fetch(endpoint, options);
+    console.log('Backend response status:', response.status);
+    
+    // Get response as text for better error handling
+    const responseText = await response.text();
+    let data;
+    
+    try {
+      // Try to parse as JSON
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse backend response as JSON:', responseText);
       return res.status(500).json({ 
-        error: 'Error connecting to backend service',
-        details: fetchError.message
+        error: 'Invalid response from backend', 
+        details: responseText.substring(0, 500) // Limit long responses
       });
     }
+    
+    return res.status(response.status).json(data);
   } catch (error) {
-    console.error(`Error in API route handler:`, error);
+    console.error(`Error in ${req.method} resume API:`, error);
     return res.status(500).json({ 
-      error: `Failed to handle ${req.method.toLowerCase()} request`,
+      error: `Failed to ${req.method === 'GET' ? 'get' : req.method === 'PUT' ? 'update' : 'delete'} resume`,
       details: error.message
     });
   }

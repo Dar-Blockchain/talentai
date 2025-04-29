@@ -88,7 +88,7 @@ export type ImageSection = BaseSection & {
 // ➖ Line
 export type LineSection = BaseSection & {
   type: 'line'
-  orientation: 'horizontal' | 'vertical'
+  orientation: 'horizontal'
   thickness: number
   color: string
   content?: string // Optional content to store formatted HTML

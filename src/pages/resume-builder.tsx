@@ -23,6 +23,12 @@ import ResumeActions from '@/components/ResumeActions'
 import { useSession } from "next-auth/react"
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import { useRouter } from 'next/router'
+import FrenchDataCV from '@/components/templates/FrenchDataCV'
+import ReactDOM from 'react-dom/client'
+import BugReportIcon from '@mui/icons-material/BugReport'
+
+// Add debug button and dialog
+const DEBUG_MODE = process.env.NODE_ENV === 'development';
 
 export default function ResumeBuilder() {
   const dispatch = useDispatch<AppDispatch>()
@@ -48,36 +54,100 @@ export default function ResumeBuilder() {
     severity: 'success' as AlertColor
   })
 
+  // New state for debug dialog
+  const [debugDialogOpen, setDebugDialogOpen] = useState(false)
+  const [debugInfo, setDebugInfo] = useState<{
+    session: any,
+    token: string | null,
+    resumeId: string | null,
+    hasLocalStorage: boolean
+  }>({
+    session: null,
+    token: null,
+    resumeId: null,
+    hasLocalStorage: false
+  })
+
+  // Function to update debug info
+  const updateDebugInfo = () => {
+    setDebugInfo({
+      session: session,
+      token: session?.accessToken as string || null,
+      resumeId: resumeId,
+      hasLocalStorage: !!localStorage.getItem('resume-draft')
+    });
+  }
+
   useEffect(() => {
     const loadResume = async () => {
       try {
-        // Try to get the latest resume from backend
-        const response = await fetch('/api/resumes/getResumes');
-        if (response.ok) {
-          const resumes = await response.json();
-          if (resumes && resumes.length > 0) {
-            // Get the most recent resume (already sorted by createdAt in the backend)
-            setSections(resumes[0].sections);
-            setResumeId(resumes[0]._id); // Store the resume ID
-            return; // Resume loaded, no need to show template selection
+        // Try to get token from multiple sources with localStorage taking precedence
+        // This matches the approach used in profileSlice.ts
+        const token = localStorage.getItem('api_token') || session?.accessToken;
+        
+        if (token) {
+          // Only try to fetch from backend if we have a token
+          console.log('Attempting to fetch resumes with token');
+          try {
+            const response = await fetch('/api/resumes/getResumes', {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            console.log('getResumes response status:', response.status);
+            
+            if (response.ok) {
+              const resumes = await response.json();
+              console.log('Resumes response:', resumes);
+              if (resumes && resumes.length > 0) {
+                // Get the most recent resume (already sorted by createdAt in the backend)
+                console.log('Setting sections from resume with ID:', resumes[0]._id);
+                console.log('Resume has', resumes[0].sections.length, 'sections');
+                setSections(resumes[0].sections);
+                setResumeId(resumes[0]._id); // Store the resume ID
+                return; // Resume loaded, no need to show template selection
+              } else {
+                console.log('No resumes returned from backend, but response was OK');
+              }
+            } else {
+              // Handle different error scenarios
+              let errorText;
+              try {
+                errorText = await response.text();
+                console.error('Failed to load resumes from backend:', response.status, errorText);
+              } catch (textError) {
+                console.error('Failed to get response text:', textError);
+              }
+              
+              if (response.status === 401 || response.status === 403) {
+                console.log('Auth error when loading resumes - user likely needs to login again');
+              }
+            }
+          } catch (fetchError) {
+            console.error('Error fetching resumes:', fetchError);
           }
+        } else {
+          console.log('No auth token found - cannot load resumes from backend');
         }
 
         // Fallback to localStorage if no resumes found or API fails
         const draft = localStorage.getItem('resume-draft');
         if (draft) {
           try {
+            console.log('Loading resume from localStorage');
             setSections(JSON.parse(draft));
             return; // Resume loaded from localStorage, no need to show template selection
-          } catch {
-            console.warn('Could not parse resume draft');
+          } catch (parseError) {
+            console.warn('Could not parse resume draft:', parseError);
             // Will continue to show template selection
           }
         }
         
         // No resume found either from API or localStorage, show template selection
+        console.log('No resume found, showing template selection');
         setTemplateModalOpen(true);
-        
       } catch (error) {
         console.error('Error loading resume:', error);
         // Try localStorage as fallback
@@ -97,11 +167,26 @@ export default function ResumeBuilder() {
       }
     };
 
-    loadResume();
+    // Check if we should load resumes
+    const hasToken = localStorage.getItem('api_token') || session?.accessToken;
+    if (hasToken) {
+      loadResume();
+    } else {
+      // No auth token available, check for local draft
+      const draft = localStorage.getItem('resume-draft');
+      if (draft) {
+        try {
+          setSections(JSON.parse(draft));
+        } catch {
+          console.warn('Could not parse resume draft');
+          setTemplateModalOpen(true);
+        }
+      } else {
+        setTemplateModalOpen(true);
+      }
+    }
+  }, [session]); // Add session as a dependency
 
-    // Remove the "first visit" check since we now show the template modal
-    // whenever there's no resume, regardless of first visit or not
-  }, []);
   useEffect(() => {
     dispatch(getMyProfile())
   }, [dispatch])
@@ -255,11 +340,13 @@ export default function ResumeBuilder() {
       case 'line':
         newSection = {
           ...common,
-          height: 20, // Default height for horizontal line
-          type: 'line',
+          type: 'line' as const,
           orientation: 'horizontal',
-          thickness: 2,
-          color: '#000000'
+          thickness: 3,
+          color: '#556fb5',
+          height: 20,
+          width: 700,
+          content: `<div style="width:100%;height:3px;background-color:#556fb5;margin-top:3px;margin-bottom:3px;"></div>`
         } as LineSection
         break
       case 'custom':
@@ -340,9 +427,10 @@ export default function ResumeBuilder() {
     try {
       // First, always save to localStorage as backup
       localStorage.setItem('resume-draft', JSON.stringify(sections));
+      console.log('Resume saved to localStorage');
       
-      // Get the token from NextAuth session
-      const token = session?.accessToken;
+      // Get the token from localStorage first (matching profileSlice approach), then fallback to session
+      const token = localStorage.getItem('api_token') || session?.accessToken;
       
       if (!token) {
         console.log('No auth token found - saving only to localStorage');
@@ -355,6 +443,8 @@ export default function ResumeBuilder() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       };
+      
+      console.log('Attempting to save resume to server with token');
       
       // Try to save to backend
       let response;
@@ -377,6 +467,8 @@ export default function ResumeBuilder() {
         });
       }
       
+      console.log('Server response status:', response.status);
+      
       if (response.status === 413) {
         // Payload too large error
         showToast('Your resume is too large to save to the server, but it has been saved locally.', 'warning');
@@ -384,8 +476,9 @@ export default function ResumeBuilder() {
       }
       
       const responseText = await response.text();
-      let data;
+      console.log('Server response text:', responseText.substring(0, 100) + '...');
       
+      let data;
       try {
         data = JSON.parse(responseText);
       } catch (e) {
@@ -400,11 +493,18 @@ export default function ResumeBuilder() {
         
         // Update resumeId if this was a new resume
         if (data?.resume && data.resume._id && !resumeId) {
+          console.log('Setting new resume ID:', data.resume._id);
           setResumeId(data.resume._id);
         }
       } else {
         console.error('Failed to save resume:', data);
-        showToast(`Error saving to server: ${data?.error || 'Unknown error'}. Your resume was saved locally.`, 'error');
+        
+        // Check if this is an authentication error
+        if (response.status === 401 || response.status === 403) {
+          showToast('Authentication error. Please login again to save to the server.', 'error');
+        } else {
+          showToast(`Error saving to server: ${data?.error || data?.message || 'Unknown error'}. Your resume was saved locally.`, 'error');
+        }
       }
     } catch (error) {
       console.error('Error saving resume:', error);
@@ -600,101 +700,425 @@ export default function ResumeBuilder() {
   }
 
   const handleFrenchTemplate = () => {
-    setTemplateModalOpen(false)
+    setTemplateModalOpen(false);
+    
+    // Create exact sections matching the user's data
     setSections([
+      // Header section
       {
         id: uuidv4(),
-        type: 'header',
+        type: 'header' as const,
+        name: 'John Smith',
+        jobTitle: 'Senior Data Scientist',
+        content: "<h2 style=\"margin: 0; font-size: 22px; font-weight: bold; color: #5170b7;\">John Smith</h2><p style=\"margin: 0; font-size: 16px; color: #333;\">Senior Data Scientist</p>",
+        height: 100,
+        width: 400,
+        x: 31.99999999999998,
+        y: 8.66666666666656
+      },
+      
+      // Contact section
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        content: "<strong style=\"color: #5170b7; text-transform: uppercase; font-size: 16px;\">Contact</strong><div style=\"margin-top: 8px;\"><p style=\"margin: 4px 0;\">📍 New York, USA          <span style=\"background-color: transparent; font-size: 16px; letter-spacing: -0.01em;\">📱 +1 (555) 123-4567         </span><span style=\"background-color: transparent; font-size: 16px; letter-spacing: -0.01em;\">📧 john.smith@example.com</span></p><p style=\"margin: 4px 0;\">    linkedin.com/in/johnsmith                      <span style=\"background-color: transparent; font-size: 16px; letter-spacing: -0.01em;\">github.com/johnsmith</span></p></div>",
+        height: 185,
+        width: 733,
+        x: 36.99999999999999,
+        y: 111.33333333333327
+      },
+      
+      // Professional Summary
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        content: "<strong style=\"color: #5170b7; text-transform: uppercase; font-size: 16px;\">Professional Summary</strong><p style=\"margin-top: 8px; line-height: 1.5;\">Data Scientist with over 5 years of experience in data analysis and development of artificial intelligence algorithms. Expertise in machine learning, deep learning, and processing large datasets. Results-oriented with a strong team spirit and proven leadership abilities.</p>",
+        height: 159,
+        width: 745,
+        x: 37.33333333333333,
+        y: 234.00000000000014
+      },
+      
+      // Professional Experience
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        content: "<strong style=\"color: #5170b7; text-transform: uppercase; font-size: 16px;\">Professional Experience</strong><div style=\"margin-top: 8px;\"><div style=\"margin-bottom: 15px;\"><strong>Senior Data Scientist</strong><br><span style=\"color: #5170b7;\">Tech Innovations Inc. • New York, USA</span><br><em style=\"font-size: 12px; color: #666;\">January 2020 - Present</em><ul style=\"margin-top: 5px; padding-left: 20px;\"><li>Implemented a recommendation system that increased sales by 23%</li><li>Led a team of 5 junior data scientists</li><li>Reduced data processing time by 40%</li></ul></div><div><strong>Data Science Intern</strong><br><span style=\"color: #5170b7;\">Global Analytics • San Francisco, USA</span><br><em style=\"font-size: 12px; color: #666;\">June 2019 - December 2019</em><ul style=\"margin-top: 5px; padding-left: 20px;\"><li>Created a real-time data visualization dashboard</li><li>Developed a prediction algorithm with 88% accuracy</li></ul></div></div>",
+        height: 329,
+        width: 669,
+        x: 28,
+        y: 620.0006666666663
+      },
+      
+      // Education
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        content: "<strong style=\"color: #5170b7; text-transform: uppercase; font-size: 16px;\">Education</strong><div style=\"margin-top: 8px;\"><div style=\"margin-bottom: 15px;\"><strong>Master of Science in Computer Science</strong><br><span style=\"color: #5170b7;\">MIT • AI Specialization</span><br><em style=\"font-size: 12px; color: #666;\">2017 - 2019</em><p style=\"margin-top: 5px; margin-bottom: 0;\">GPA: 3.95/4.0, Thesis on neural network optimization</p></div><div><strong>Bachelor of Science in Data Science</strong><br><span style=\"color: #5170b7;\">Stanford University • Computer Science</span><br><em style=\"font-size: 12px; color: #666;\">2013 - 2017</em><p style=\"margin-top: 5px; margin-bottom: 0;\">Graduated with honors</p></div></div>",
+        height: 258,
+        width: 644,
+        x: 36.66666666666666,
+        y: 377.3333333333323
+      },
+      
+      // Languages
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        content: "<strong style=\"color: #5170b7; text-transform: uppercase; font-size: 16px;\">Languages</strong><div style=\"margin-top: 8px;\"><div style=\"display: flex; justify-content: space-between; margin-bottom: 5px;\"><span>English</span><span>Native</span></div><div style=\"display: flex; justify-content: space-between; margin-bottom: 5px;\"><span>Spanish</span><span>Fluent (C1)</span></div><div style=\"display: flex; justify-content: space-between; margin-bottom: 5px;\"><span>German</span><span>Intermediate (B1)</span></div></div>",
+        height: 120,
+        width: 250,
+        x: 485.3333333333333,
+        y: 615.333333333334
+      },
+      
+      // Certifications
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        content: "<strong style=\"color: #5170b7; text-transform: uppercase; font-size: 16px;\">Certifications</strong><div style=\"margin-top: 8px;\"><div style=\"display: flex; justify-content: space-between; margin-bottom: 5px;\"><span>Google Professional Data Engineer</span><span>2022</span></div><div style=\"display: flex; justify-content: space-between; margin-bottom: 5px;\"><span>AWS Certified Machine Learning</span><span>2021</span></div><div style=\"display: flex; justify-content: space-between; margin-bottom: 5px;\"><span>Deep Learning Specialization</span><span>2020</span></div></div>",
+        height: 194,
+        width: 250,
+        x: 482.66666666666674,
+        y: 380.6666666666663
+      },
+      
+      // LinkedIn icon (custom section)
+      {
+        id: uuidv4(),
+        type: 'custom' as const,
+        content: "<div style=\"display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.8); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\"><div style=\"display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;\">\n      <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"#0077b5\">\n        <path d=\"M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z\"></path>\n      </svg>\n    </div></div>",
+        height: 54,
+        width: 43,
+        x: 39.33333333333336,
+        y: 168.66666666666646
+      },
+      
+      // GitHub icon (custom section)
+      {
+        id: uuidv4(),
+        type: 'custom' as const,
+        content: "<div style=\"display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.8); border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\"><div style=\"display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;\">\n      <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"#333333\">\n        <path d=\"M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12\"/>\n      </svg>\n    </div></div>",
+        height: 60,
+        width: 60,
+        x: 272.66666666666674,
+        y: 163.33333333333323
+      },
+      
+      // Skills section
+      ...(sections.some(section => section.type === 'skills') 
+        ? [] 
+        : [{
+            id: uuidv4(),
+            type: 'skills' as const,
+            skills: ["React", "Python", "JavaScript", "Docker", "Node.js"],
+            content: "<strong style=\"color: rgb(56, 123, 229);\">Skills</strong><strong style=\"color: rgb(19, 25, 216);\">:</strong><ul style=\"list-style-position: inside; padding-left: 0\"><li>React</li><li>Python</li><li>JavaScript</li><li>Docker</li><li>Node.js</li></ul>",
+            height: 160,
+            width: 727,
+            x: 32.00000454682027,
+            y: 937.3333333333339
+          }])
+    ]);
+  };
+
+  const handleDataScientistTemplate = () => {
+    setTemplateModalOpen(false);
+    
+    setSections([
+      // Header section (Name and title)
+      {
+        id: uuidv4(),
+        type: 'header' as const,
+        x: 18.66666666666667,
+        y: 6.666666666666667,
+        width: 400,
+        height: 100,
         name: 'Khalil Troudi',
-        jobTitle: 'data scientist',
-        content: '<h2 style="margin: 0; font-size: 22px; font-weight: bold; color: #5170b7;">Khalil Troudi</h2><p style="margin: 0; font-size: 14px; color: #333;">data scientist</p>',
-        height: 122,
-        width: 307,
-        x: 13.33333333333333,
-        y: 15.333333333333336
+        jobTitle: 'Data Scientist',
+        content: "<h2 style=\"margin:0;font-size:28px;color:#556fb5;font-weight:600;\">Khalil Troudi</h2><p style=\"margin:0;font-size:18px;color:#333;font-weight:400;\">data scientist</p>"
       },
+      
+      // Education section (Formations)
       {
         id: uuidv4(),
-        type: 'text',
-        content: '<strong style="color: #5170b7; text-transform: uppercase;">PROFIL & OBJECTIF</strong><p>Passionné par l\'innovation basée sur les données et les technologies web. Je dispose de compétences solides en analyse de données, apprentissage automatique, développement web full-stack.</p><p>Doté d\'un esprit analytique, d\'une capacité à gérer des projets transverses et d\'une maîtrise des outils de développement modernes, je vise à intégrer un environnement dynamique où je pourrai contribuer à l\'amélioration des performances via de l\'amélioration des processus décisionnels basés sur les données.</p>',
-        height: 512,
-        width: 240,
-        x: 5.333333333333338,
-        y: 182.66666666666666
+        type: 'text' as const,
+        x: 458,
+        y: 6.66666,
+        width: 336,
+        height: 327,
+        content: "<div><strong style=\"font-size:18px;color:#556fb5;text-transform:uppercase;letter-spacing:0.5px;\">FORMATIONS</strong></div>"
       },
+      
+      // Formations line
       {
         id: uuidv4(),
-        type: 'line',
+        type: 'line' as const,
+        x: 458.00000067545574,
+        y: 33.33366777102141,
+        width: 336,
+        height: 67,
         orientation: 'horizontal',
-        thickness: 1,
-        color: '#ccc',
-        height: 2,
-        width: 240,
-        x: 40,
-        y: 400
+        thickness: 3,
+        color: '#556fb5',
+        content: "<div style=\"width:100%;height:3px;background-color:#556fb5;margin-top:3px;margin-bottom:3px;\"></div>"
       },
+      
+      // Profile & Objective section
       {
         id: uuidv4(),
-        type: 'text',
-        content: '<strong style="color: #5170b7; text-transform: uppercase;">CONTACT</strong><p>📞 +12 12457896</p><p>✉️ email@domain.com</p><p>🔗 linkedin.com/in/profile</p><p>🌐 github.com/username</p>',
-        height: 150,
-        width: 240,
-        x: 0,
-        y: 663.333333333333
+        type: 'text' as const,
+        x: 18.66666666666667,
+        y: 98.6666666666667,
+        width: 400,
+        height: 156,
+        content: "<div><strong style=\"font-size:18px;color:#556fb5;text-transform:uppercase;letter-spacing:0.5px;\">PROFIL & OBJECTIF</strong></div>"
       },
+      
+      // Profile line
       {
         id: uuidv4(),
-        type: 'text',
-        content: '<strong style="color: #5170b7; text-transform: uppercase;">FORMATIONS</strong><p><strong>3ème année cycle d\'ingénieur</strong><br>Specialité Architecture IT et Cloud Computing<br><em style="color: #5170b7;">ESPRIT - École Sup Privée d\'Ingénierie et de Technologies</em><br>(Sept. 2022- Present)</p><p><strong>Bachelor en Big Data et analyse des données</strong><br><em style="color: #5170b7;">Institut supérieur des arts multimédia de la Manouba</em><br>(Sept. 2019- Juin 2022)</p><p><strong>Baccalauréat en Informatique</strong><br><em style="color: #5170b7;">Lycée Béchir Nabhani</em> - (Sept. 2015- Juin 2019)</p>',
-        height: 344,
-        width: 350,
-        x: 422,
-        y: 0
-      },
-      {
-        id: uuidv4(),
-        type: 'line',
+        type: 'line' as const,
+        x: 20.666633333333326,
+        y: 124.66699999999987,
+        width: 563,
+        height: 40,
         orientation: 'horizontal',
-        thickness: 1,
-        color: '#ccc',
-        height: 2,
-        width: 350,
-        x: 310,
-        y: 210
+        thickness: 3,
+        color: '#556fb5',
+        content: "<div style=\"width:100%;height:3px;background-color:#556fb5;margin-top:3px;margin-bottom:3px;\"></div>"
       },
+      
+      // Contact section
       {
         id: uuidv4(),
-        type: 'text',
-        content: '<strong style="color: #5170b7; text-transform: uppercase;">EXPÉRIENCES PROFESSIONNELLES</strong><p><strong>Data Scientist</strong><br>Dinosoftlabs Stage, Remote (<em style="color: #5170b7;">Juillet 2024 - septembre 2024</em>)<ul><li>Analyse et traitement des données financières sur la période 2022-2023 dans une évaluation approfondie des gains et pertes.</li><li>Conception et développement de tableaux de bord interactifs pour Power BI pour visualiser la rétention des clients et la situation financière.</li></ul></p><p><strong>Professeur d\'Algorithmes et Python Tutor</strong><br>TuniX Academy, Part-time, Tunisie (<em style="color: #5170b7;">Juillet 2023 - septembre 2024</em>)<ul><li>Enseignement des concepts de base en algorithmique et en programmation Python.</li></ul></p>',
-        height: 416,
+        type: 'text' as const,
+        x: 17.33333333333332,
+        y: 240,
         width: 350,
-        x: 416.6666666666667,
-        y: 342.66666666666725
+        height: 141,
+        content: "<div><strong style=\"font-size:18px;color:#556fb5;text-transform:uppercase;letter-spacing:0.5px;\">CONTACT</strong></div>"
       },
-      // Only add skills section if one doesn't already exist
-      ...(sections.some(section => section.type === 'skills') ? [] : [{
+      
+      // Horizontal line
+      {
+        id: uuidv4(),
+        type: 'line' as const,
+        x: 21.3333,
+        y: 266.667,
+        width: 563,
+        height: 40,
+        orientation: 'horizontal',
+        thickness: 3,
+        color: '#556fb5',
+        content: "<div style=\"width:100%;height:3px;background-color:#556fb5;margin-top:3px;margin-bottom:3px;\"></div>"
+      },
+      
+      // Professional Experience section
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        x: 13.333333333333362,
+        y: 397.3333333333332,
+        width: 400,
+        height: 349,
+        content: "<div><strong style=\"font-size:18px;color:#556fb5;text-transform:uppercase;letter-spacing:0.5px;\">EXPÉRIENCES PROFESSIONNELLES</strong></div>"
+      },
+      
+      // Experience line
+      {
+        id: uuidv4(),
+        type: 'line' as const,
+        x: 17.33330511360166,
+        y: 424.66699400469656,
+        width: 508,
+        height: 47,
+        orientation: 'horizontal',
+        thickness: 3,
+        color: '#556fb5',
+        content: "<div style=\"width:100%;height:3px;background-color:#556fb5;margin-top:3px;margin-bottom:3px;\"></div>"
+      },
+      
+      // Skills section
+      {
         id: uuidv4(),
         type: 'skills' as const,
-        skills: ['Python', 'Data Analysis', 'Machine Learning', 'SQL', 'JavaScript', 'React'],
-        height: 200,
-        width: 240,
-        x: 0,
-        y: 460
-      } as SkillsSection]),
+        x: 460.66702894973747,
+        y: 334.66702405470596,
+        width: 276,
+        height: 176,
+        skills: ["React", "Python", "JavaScript", "Docker", "Node.js"],
+        content: "<strong style=\"color: rgb(13, 109, 211);\">Skills:</strong><ul style=\"list-style-position: inside; padding-left: 0\"><li>React</li><li>Python</li><li>JavaScript</li><li>Docker</li><li>Node.js</li></ul>"
+      },
+      
+      // Skills line
       {
         id: uuidv4(),
-        type: 'image',
-        alt: 'Profile image',
-        isRound: true,
-        src: '',
-        content: '<div style="width: 160px; height: 160px; margin: 0 auto; border-radius: 50%; overflow: hidden;"><img src="" alt="Profile image" style="width: 100%; height: 100%; object-fit: cover;"></div>',
-        height: 168,
-        width: 100,
-        x: 45.33336666666666,
-        y: 82.66663333333332
+        type: 'line' as const,
+        x: 463.99996651933,
+        y: 352.6669932380663,
+        width: 269,
+        height: 52,
+        orientation: 'horizontal',
+        thickness: 3,
+        color: '#556fb5',
+        content: "<div style=\"width:100%;height:3px;background-color:#556fb5;margin-top:3px;margin-bottom:3px;\"></div>"
+      },
+      
+      // Interests section
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        x: 456,
+        y: 537.3333333333331,
+        width: 250,
+        height: 114,
+        content: "<div><strong style=\"font-size:18px;color:#556fb5;text-transform:uppercase;letter-spacing:0.5px;\">CENTRES D'INTÉRÊT</strong></div>"
+      },
+      
+      // Interests line
+      {
+        id: uuidv4(),
+        type: 'line' as const,
+        x: 457.99996651933,
+        y: 560.0003265713995,
+        width: 269,
+        height: 52,
+        orientation: 'horizontal',
+        thickness: 3,
+        color: '#556fb5',
+        content: "<div style=\"width:100%;height:3px;background-color:#556fb5;margin-top:3px;margin-bottom:3px;\"></div>"
+      },
+      
+      // Languages section
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        x: 519.9999821980794,
+        y: 778.0740966796877,
+        width: 250,
+        height: 145,
+        content: "<div><strong style=\"font-size:18px;color:#556fb5;text-transform:uppercase;letter-spacing:0.5px;\">LANGUES</strong></div>"
+      },
+      
+      // Languages line
+      {
+        id: uuidv4(),
+        type: 'line' as const,
+        x: 519.99996651933,
+        y: 803.333659904733,
+        width: 269,
+        height: 52,
+        orientation: 'horizontal',
+        thickness: 3,
+        color: '#556fb5',
+        content: "<div style=\"width:100%;height:3px;background-color:#556fb5;margin-top:3px;margin-bottom:3px;\"></div>"
+      },
+      
+      // Projects section
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        x: 14.666666666666663,
+        y: 774.6666666553384,
+        width: 521,
+        height: 284,
+        content: "<div><strong style=\"font-size:18px;color:#556fb5;text-transform:uppercase;letter-spacing:0.5px;\">PROJET PERTINENT</strong></div>"
+      },
+      
+      // Projects line
+      {
+        id: uuidv4(),
+        type: 'line' as const,
+        x: 15.333305113601668,
+        y: 804.0003273380298,
+        width: 508,
+        height: 47,
+        orientation: 'horizontal',
+        thickness: 3,
+        color: '#556fb5',
+        content: "<div style=\"width:100%;height:3px;background-color:#556fb5;margin-top:3px;margin-bottom:3px;\"></div>"
+      },
+      
+      // Add appropriate content sections after the titles and lines
+      
+      // Education content
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        x: 458,
+        y: 70,
+        width: 336,
+        height: 250,
+        content: "<p style=\"margin-top:8px;font-size:14px;font-weight:500;\">3ème année cycle d'Ingénieur<br>Spécialité Architecture IT Et Cloud Computing<br><span style=\"color:#556fb5;font-style:italic;\">ESPRIT - École Sup Privée d'Ingénierie et de Technologies</span><br><span style=\"color:#666;font-style:italic;\">(Sept. 2022- Présent)</span></p><p style=\"margin:12px 0;font-size:14px;font-weight:500;\">Bachelor en Big data et analyse des données<br><span style=\"color:#556fb5;font-style:italic;\">Institut supérieur des arts multimédia de La Manouba</span><br><span style=\"color:#666;font-style:italic;\">(Sept. 2019- Juin 2022)</span></p><p style=\"margin:12px 0;font-size:14px;font-weight:500;\">Baccalauréat en Informatique<br><span style=\"color:#556fb5;font-style:italic;\">Lycée Bechir Nabheni</span><br><span style=\"color:#666;font-style:italic;\">(Sept. 2015- Juil. 2019)</span></p>"
+      },
+      
+      // Profile content
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        x: 18.66666666666667,
+        y: 164.6666666666667,
+        width: 400,
+        height: 70,
+        content: "<p style=\"margin-top:8px;font-size:14px;line-height:1.5;\">Passionné par l'innovation basée sur les données et les technologies web. Compétences solides en analyse de données, machine learning, et développement full-stack, recherche un stage PFE de 6 mois pour contribuer aux projets de transformation digitale.</p>"
+      },
+      
+      // Contact content
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        x: 17.33333333333332,
+        y: 295,
+        width: 350,
+        height: 86,
+        content: "<p style=\"margin:8px 0;font-size:14px;line-height:1.6;\"><span style=\"color:#556fb5;margin-right:5px;\">📱</span> +216 53508615<br><span style=\"color:#556fb5;margin-right:5px;\">📧</span> khalil.troudi@esprit.tn<br><span style=\"color:#556fb5;margin-right:5px;\">🔗</span> www.linkedin.com/in/TroudiKhalil<br><span style=\"color:#556fb5;margin-right:5px;\">👤</span> 24 ans, 12/07/2000</p>"
+      },
+      
+      // Experience content
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        x: 13.333333333333362,
+        y: 471.3333333333332,
+        width: 400,
+        height: 275,
+        content: "<div style=\"margin-top:8px;font-size:14px;\"><div><strong>Data Scientist</strong><br><span style=\"color:#556fb5;\">Opencertif</span>, Stage, Remote <span style=\"color:#666;font-style:italic;\">(juillet 2024 - septembre 2024)</span><ul style=\"margin-top:5px;padding-left:20px;list-style-type:square;color:#556fb5;\"><li><span style=\"color:#333;\">Analyse et prétraitement des données financières sur la période 2022-2024, avec une évaluation approfondie des gains et pertes.</span></li><li><span style=\"color:#333;\">Conception et développement de tableaux de bord interactifs sous Power BI pour visualiser la rétention des clients.</span></li></ul></div><div style=\"margin-top:15px;\"><strong>Data Scientist</strong><br><span style=\"color:#556fb5;\">BFI GROUPE</span>, Stage, Tunisie <span style=\"color:#666;font-style:italic;\">(Fév. 2022 - juin 2022)</span><ul style=\"margin-top:5px;padding-left:20px;list-style-type:square;color:#556fb5;\"><li><span style=\"color:#333;\">Prétraitement des données avec suppression des valeurs aberrantes, clustering avec k-means et visualisation.</span></li></ul></div></div>"
+      },
+      
+      // Interests content
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        x: 456,
+        y: 612.3333333333331,
+        width: 250,
+        height: 65,
+        content: "<ul style=\"margin-top:8px;padding-left:20px;font-size:14px;list-style-type:square;color:#556fb5;\"><li><span style=\"color:#333;\">Technologie</span></li><li><span style=\"color:#333;\">Sport</span></li><li><span style=\"color:#333;\">Gaming</span></li></ul>"
+      },
+      
+      // Languages content
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        x: 519.9999821980794,
+        y: 855.0740966796877,
+        width: 250,
+        height: 96,
+        content: "<div style=\"margin-top:8px;font-size:14px;\"><div style=\"display:flex;justify-content:space-between;margin-bottom:5px;\"><span>Français</span><span>Compétence professionnelle</span></div><div style=\"display:flex;justify-content:space-between;margin-bottom:5px;\"><span>Anglais</span><span>Compétence professionnelle</span></div><div style=\"display:flex;justify-content:space-between;\"><span>Arabe</span><span>Compétence native</span></div></div>"
+      },
+      
+      // Projects content
+      {
+        id: uuidv4(),
+        type: 'text' as const,
+        x: 14.666666666666663,
+        y: 851.6666666553384,
+        width: 521,
+        height: 207,
+        content: "<div style=\"margin-top:8px;font-size:14px;\"><strong>Gestion des risques</strong><ul style=\"margin-top:5px;padding-left:20px;list-style-type:square;color:#556fb5;\"><li><span style=\"color:#333;\">Analyse des données de transactions de devises EUR/TND, calcul du risque d'exposition et élaboration de tableaux de bord via Excel.</span></li></ul><strong style=\"margin-top:15px;display:block;\">Analyse des données de location immobilière</strong><ul style=\"margin-top:5px;padding-left:20px;list-style-type:square;color:#556fb5;\"><li><span style=\"color:#333;\">Prétraitement et analyse des données: gestion des valeurs nulles et identification des relations entre les variables.</span></li><li><span style=\"color:#333;\">Identification de la loi de probabilité de la variable cible et développement d'un modèle prédictif.</span></li></ul></div>"
       }
-    ])
-  }
+    ]);
+  };
 
   // Add an undo function
   const handleUndo = () => {
@@ -872,8 +1296,56 @@ export default function ResumeBuilder() {
     
     setRegenerateModalOpen(true);
    
-   };
- 
+  };
+
+  // Add a new useEffect to log whenever the session or resumeId changes
+  useEffect(() => {
+    if (DEBUG_MODE) {
+      console.log('Session updated:', session?.user?.name);
+      console.log('Has token:', !!session?.accessToken);
+      console.log('Current resumeId:', resumeId);
+    }
+  }, [session, resumeId]);
+
+  // Add handleOpenDebugDialog function
+  const handleOpenDebugDialog = () => {
+    updateDebugInfo();
+    setDebugDialogOpen(true);
+  }
+
+  // Add function to manually reload resume by ID
+  const handleManualLoadResume = async (id: string) => {
+    if (!session?.accessToken) {
+      showToast('You need to be logged in to load a resume', 'error');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/resumes/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${session.accessToken}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.sections) {
+          setSections(data.sections);
+          setResumeId(id);
+          showToast('Resume loaded successfully!', 'success');
+          setDebugDialogOpen(false);
+        } else {
+          showToast('Resume has no sections', 'error');
+        }
+      } else {
+        const error = await response.text();
+        showToast(`Failed to load resume: ${error}`, 'error');
+      }
+    } catch (error) {
+      showToast(`Error: ${error instanceof Error ? error.message : String(error)}`, 'error');
+    }
+  }
+
   return (
     <div className={styles.container}>
       <IconButton
@@ -1009,100 +1481,110 @@ export default function ResumeBuilder() {
                     bgcolor: 'white',
                     border: '1px solid #e0e0e0',
                     display: 'flex',
-                    p: 1
+                    p: 1,
+                    overflow: 'hidden'
                   }}>
-                    {/* Left column */}
+                    <FrenchDataCV isPreview={true} />
+                  </Box>
+                </Box>
+                <Box sx={{ p: 1.5 }}>
+                  <Typography variant="subtitle1" fontWeight="medium">French Data CV</Typography>
+                </Box>
+              </Paper>
+
+              {/* Data Scientist CV Template */}
+              <Paper 
+                onClick={handleDataScientistTemplate}
+                sx={{ 
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  transition: 'all 0.2s',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  '&:hover': {
+                    boxShadow: 3,
+                    borderColor: 'primary.main',
+                    transform: 'translateY(-4px)'
+                  },
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}
+              >
+                <Box sx={{ 
+                  height: '260px', 
+                  bgcolor: '#f5f5f5',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  p: 1
+                }}>
+                  {/* Data Scientist CV template preview */}
+                  <Box sx={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    bgcolor: 'white',
+                    border: '1px solid #e0e0e0',
+                    display: 'flex',
+                    p: 1,
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}>
+                    {/* Left column preview */}
+                    <Box sx={{ width: '40%', height: '100%', pr: 1 }}>
                     <Box sx={{ 
-                      width: '32%', 
+                        height: '20px', 
+                        bgcolor: '#5170b7', 
+                        width: '70%', 
+                        mb: 1 
+                      }}></Box>
+                    <Box sx={{ 
+                        height: '40px', 
+                        borderTop: '2px solid #5170b7',
+                        borderBottom: '1px solid #e0e0e0',
+                        mb: 1 
+                    }}></Box>
+                    <Box sx={{ 
                       display: 'flex', 
                       flexDirection: 'column',
-                      pr: 0.8
-                    }}>
-                      <Box sx={{ 
-                        width: '60px', 
-                        height: '60px', 
-                        borderRadius: '50%', 
-                        bgcolor: '#e0e0e0', 
-                        mb: 1.5, 
-                        mx: 'auto' 
+                        gap: 0.5
+                      }}>
+                        <Box sx={{ height: '6px', width: '90%', bgcolor: '#f0f0f0' }}></Box>
+                        <Box sx={{ height: '6px', width: '85%', bgcolor: '#f0f0f0' }}></Box>
+                        <Box sx={{ height: '6px', width: '80%', bgcolor: '#f0f0f0' }}></Box>
+                    </Box>
+                    </Box>
+                    
+                    {/* Right column preview */}
+                    <Box sx={{ width: '60%', height: '100%', pl: 1 }}>
+                <Box sx={{ 
+                        height: '20px', 
+                        bgcolor: '#5170b7', 
+                        width: '70%', 
+                        mb: 1 
                       }}></Box>
-                      
-                      <Typography sx={{ 
-                        fontSize: '7px', 
-                        fontWeight: 'bold', 
-                        color: '#5170b7',
-                        mb: 0.2,
-                        textTransform: 'uppercase'
-                      }}>
-                        CONTACT
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                        📞 +12 12457896
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                        ✉️ email@domain.com
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                        🔗 linkedin.com/in/profile
-                      </Typography>
-                      <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.8 }}>
-                        🌐 github.com/username
-                      </Typography>
-                      
-                      {/* Right column */}
+                  <Box sx={{ 
+                          height: '40px',
+                        borderTop: '2px solid #5170b7',
+                        borderBottom: '1px solid #e0e0e0',
+                        mb: 1 
+                        }}></Box>
                       <Box sx={{ 
-                        width: '68%', 
-                        pl: 0.8,
-                        borderLeft: '1px solid #eee'
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 0.5
                       }}>
-                        {/* Formations section */}
-                        <Typography sx={{ 
-                          fontSize: '7px', 
-                          fontWeight: 'bold', 
-                          color: '#5170b7',
-                          mb: 0.2,
-                          textTransform: 'uppercase'
-                        }}>
-                          Formations
-                        </Typography>
-                        <Typography sx={{ fontSize: '6px', fontWeight: 'medium', color: '#444', mb: 0 }}>
-                          3ème année cycle d'ingénieur
-                        </Typography>
-                        <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                          Specialité Architecture IT et Cloud Computing
-                        </Typography>
-                        <Typography sx={{ fontSize: '6px', color: '#5170b7', fontStyle: 'italic', mb: 0.5 }}>
-                          ESPRIT - École Sup Privée d'Ingénierie et de Technologies
-                        </Typography>
-                        
-                        {/* Experiences section */}
-                        <Typography sx={{ 
-                          fontSize: '7px', 
-                          fontWeight: 'bold', 
-                          color: '#5170b7',
-                          mb: 0.2,
-                          textTransform: 'uppercase'
-                        }}>
-                          Expériences professionnelles
-                        </Typography>
-                        <Typography sx={{ fontSize: '6px', fontWeight: 'medium', color: '#444', mb: 0 }}>
-                          Data Scientist
-                        </Typography>
-                        <Typography sx={{ fontSize: '6px', color: '#777', mb: 0.1 }}>
-                          Dinosoftlabs Stage, Remote (Juillet 2024 - septembre 2024)
-                        </Typography>
-                        <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.1 }}>
-                          • Analyse et traitement des données financières sur la période 2022-2023...
-                        </Typography>
-                        <Typography sx={{ fontSize: '6px', color: '#555', mb: 0.5 }}>
-                          • Conception et développement de tableaux de bord interactifs...
-                        </Typography>
+                        <Box sx={{ height: '8px', width: '90%', bgcolor: '#f0f0f0' }}></Box>
+                        <Box sx={{ height: '8px', width: '60%', bgcolor: '#f0f0f0', mb: 1 }}></Box>
+                        <Box sx={{ height: '6px', width: '30%', bgcolor: '#5170b7', ml: 2 }}></Box>
+                        <Box sx={{ height: '6px', width: '80%', bgcolor: '#f0f0f0', ml: 2 }}></Box>
+                        <Box sx={{ height: '6px', width: '70%', bgcolor: '#f0f0f0', ml: 2, mb: 1 }}></Box>
+                        <Box sx={{ height: '6px', width: '85%', bgcolor: '#f0f0f0' }}></Box>
                       </Box>
                     </Box>
                   </Box>
                 </Box>
                 <Box sx={{ p: 1.5 }}>
-                  <Typography variant="subtitle1" fontWeight="medium">French Data CV</Typography>
+                  <Typography variant="subtitle1" fontWeight="medium">Data Scientist CV</Typography>
                 </Box>
               </Paper>
             </Box>
@@ -1218,7 +1700,7 @@ export default function ResumeBuilder() {
         <Sidebar onAdd={addSection} onAddIcon={handleIconSelected} />
       </Drawer>
 
-      <Canvas zoom={zoom}>
+      <Canvas zoom={zoom} clearSelection={() => setActiveId(null)}>
         {sections.map((section) => (
           <SectionRenderer
             key={section.id}
@@ -1255,6 +1737,74 @@ export default function ResumeBuilder() {
           {toast.message}
         </Alert>
       </Snackbar>
+
+      {/* Add debug button only in development mode */}
+      {DEBUG_MODE && (
+        <IconButton
+          onClick={handleOpenDebugDialog}
+          sx={{
+            position: 'fixed',
+            right: '80px',
+            bottom: '20px',
+            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            color: 'white',
+            '&:hover': {
+              backgroundColor: 'rgba(0, 0, 0, 0.5)'
+            }
+          }}
+        >
+          <BugReportIcon />
+        </IconButton>
+      )}
+
+      {/* Debug Dialog */}
+      <Dialog open={debugDialogOpen} onClose={() => setDebugDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Debug Information</DialogTitle>
+        <DialogContent>
+          <Typography variant="h6">Session Info</Typography>
+          <Box sx={{ mb: 2, p: 1, backgroundColor: '#f5f5f5', borderRadius: 1, overflow: 'auto', maxHeight: '150px' }}>
+            <pre>{JSON.stringify({ 
+              user: session?.user,
+              expires: session?.expires,
+              hasToken: !!session?.accessToken
+            }, null, 2)}</pre>
+          </Box>
+
+          <Typography variant="h6">Resume Info</Typography>
+          <Box sx={{ mb: 2, p: 1, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+            <Typography>Current Resume ID: {resumeId || 'None'}</Typography>
+            <Typography>Has Local Storage Draft: {debugInfo.hasLocalStorage ? 'Yes' : 'No'}</Typography>
+            <Typography>Sections Count: {sections.length}</Typography>
+          </Box>
+
+          <Typography variant="h6">Manually Load Resume</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+            <TextField 
+              label="Resume ID" 
+              variant="outlined" 
+              fullWidth
+              defaultValue={resumeId || ''}
+              placeholder="Enter resume ID from database"
+              inputProps={{ style: { fontFamily: 'monospace' } }}
+            />
+            <Button 
+              variant="contained" 
+              onClick={(e) => {
+                const input = (e.target as HTMLButtonElement)
+                  .previousElementSibling?.querySelector('input');
+                if (input) {
+                  handleManualLoadResume(input.value);
+                }
+              }}
+            >
+              Load
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDebugDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </div>
   )
 }

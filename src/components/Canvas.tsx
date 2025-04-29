@@ -7,9 +7,10 @@ import { useState } from "react"
 type CanvasProps = {
   children: ReactNode
   zoom: number
+  clearSelection?: () => void
 }
 
-export default function Canvas({ children, zoom }: CanvasProps) {
+export default function Canvas({ children, zoom, clearSelection }: CanvasProps) {
   const [showGuides, setShowGuides] = useState(false);
 
   const guideStyles = {
@@ -38,6 +39,14 @@ export default function Canvas({ children, zoom }: CanvasProps) {
   const guides = {
     horizontal: Array.from({ length: 14 }, (_, i) => i * 20),
     vertical: Array.from({ length: 10 }, (_, i) => i * 20),
+  };
+  
+  // Handle click on the canvas background
+  const handleCanvasClick = (e: React.MouseEvent) => {
+    // Only clear selection if the click was directly on the canvas (not a child element)
+    if (e.target === e.currentTarget && clearSelection) {
+      clearSelection();
+    }
   };
 
   return (
@@ -75,6 +84,7 @@ export default function Canvas({ children, zoom }: CanvasProps) {
             position: "relative",
             boxSizing: "border-box",
           }}
+          onClick={handleCanvasClick}
         >
           {showGuides && (
             <>

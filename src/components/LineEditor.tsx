@@ -1,40 +1,29 @@
 'use client'
 
 import { useState } from 'react'
-import { Box, Slider, Typography, RadioGroup, FormControlLabel, Radio, FormLabel } from '@mui/material'
+import { Box, Slider, Typography, FormLabel } from '@mui/material'
 import { SketchPicker } from 'react-color'
 
 type LineEditorProps = {
   onLinePropertiesChange: (properties: {
-    orientation: 'horizontal' | 'vertical',
+    orientation: 'horizontal',
     thickness: number,
     color: string
   }) => void
-  initialOrientation?: 'horizontal' | 'vertical'
   initialThickness?: number
   initialColor?: string
 }
 
 export default function LineEditor({ 
   onLinePropertiesChange, 
-  initialOrientation = 'horizontal', 
-  initialThickness = 2, 
-  initialColor = '#000000' 
+  initialThickness = 3, 
+  initialColor = '#556fb5' 
 }: LineEditorProps) {
-  const [orientation, setOrientation] = useState<'horizontal' | 'vertical'>(initialOrientation)
+  // Always use horizontal orientation
+  const orientation = 'horizontal'
   const [thickness, setThickness] = useState(initialThickness)
   const [color, setColor] = useState(initialColor)
   const [showColorPicker, setShowColorPicker] = useState(false)
-
-  const handleOrientationChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newOrientation = event.target.value as 'horizontal' | 'vertical'
-    setOrientation(newOrientation)
-    onLinePropertiesChange({
-      orientation: newOrientation,
-      thickness,
-      color
-    })
-  }
 
   const handleThicknessChange = (_event: Event, newValue: number | number[]) => {
     const newThickness = newValue as number
@@ -57,27 +46,11 @@ export default function LineEditor({
 
   return (
     <Box sx={{ p: 2 }}>
-      <FormLabel component="legend">Orientation</FormLabel>
-      <RadioGroup
-        row
-        name="orientation-radio-group"
-        value={orientation}
-        onChange={handleOrientationChange}
-        sx={{ mb: 2 }}
-      >
-        <FormControlLabel 
-          value="horizontal" 
-          control={<Radio />} 
-          label="Horizontal" 
-        />
-        <FormControlLabel 
-          value="vertical" 
-          control={<Radio />} 
-          label="Vertical" 
-        />
-      </RadioGroup>
+      <Typography variant="subtitle1" gutterBottom>
+        Professional Line Settings
+      </Typography>
 
-      <Typography gutterBottom>
+      <Typography gutterBottom sx={{ mt: 2 }}>
         Thickness: {thickness}px
       </Typography>
       <Slider
@@ -85,7 +58,7 @@ export default function LineEditor({
         onChange={handleThicknessChange}
         aria-labelledby="thickness-slider"
         min={1}
-        max={20}
+        max={10}
         step={1}
         sx={{ mb: 3 }}
       />
@@ -127,33 +100,39 @@ export default function LineEditor({
             <SketchPicker 
               color={color}
               onChange={handleColorChange}
+              presetColors={['#556fb5', '#2C3E50', '#E74C3C', '#3498DB', '#2ECC71', '#F39C12', '#8E44AD', '#1ABC9C']}
             />
           </Box>
         )}
       </Box>
 
-      <Box sx={{ mt: 3 }}>
-        <Typography gutterBottom>Preview:</Typography>
-        <Box 
-          sx={{ 
-            backgroundColor: '#f9f9f9', 
-            border: '1px solid #ddd', 
-            borderRadius: '4px',
-            padding: 2,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '100px'
+      <Typography gutterBottom>Preview:</Typography>
+      <Box 
+        sx={{ 
+          backgroundColor: '#f9f9f9', 
+          border: '1px solid #ddd', 
+          borderRadius: '4px',
+          padding: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '80px'
+        }}
+      >
+        <Typography variant="subtitle2" sx={{ mb: 1, color: '#556fb5', textTransform: 'uppercase', fontWeight: 'bold' }}>
+          SECTION TITLE
+        </Typography>
+        <div 
+          style={{
+            width: '100%',
+            height: `${thickness}px`,
+            backgroundColor: color,
+            marginTop: '3px',
+            marginBottom: '10px'
           }}
-        >
-          <div 
-            style={{
-              width: orientation === 'horizontal' ? '100%' : `${thickness}px`,
-              height: orientation === 'horizontal' ? `${thickness}px` : '100px',
-              backgroundColor: color
-            }}
-          />
-        </Box>
+        />
+        <Typography variant="body2" sx={{ color: '#777' }}>
+          Section content would appear here...
+        </Typography>
       </Box>
     </Box>
   )
