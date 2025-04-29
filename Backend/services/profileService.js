@@ -116,18 +116,23 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
 };
 
 // Récupérer un profil par ID utilisateur
+// services/profileService.js
 module.exports.getProfileByUserId = async (userId) => {
   try {
     const profile = await Profile.findOne({ userId }).populate('userId');
+
     if (!profile) {
-      return profile=[];
+      // Aucun profil trouvé
+      return { message: 'Aucun profil trouvé pour cet utilisateur.' };
     }
+
     return profile;
   } catch (error) {
-    console.error('Erreur lors de la récupération du profil:', error);
-    throw error;
+    console.error('Erreur lors de la récupération du profil :', error);
+    throw new Error("Impossible de récupérer le profil."); // message plus générique
   }
 };
+
 
 // Récupérer tous les profils
 module.exports.getAllProfiles = async () => {
