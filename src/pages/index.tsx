@@ -317,7 +317,9 @@ export default function Home() {
           name="description"
           content="Transform your hiring process with AI-powered talent acquisition and management platform"
         />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/talentai.png" />
+        <link rel="apple-touch-icon" href="/talentai.png" />
+        <link rel="shortcut icon" href="/talentai.png" />
       </Head>
 
       <nav className={`${styles.nav} scrollReveal`}>
@@ -327,8 +329,14 @@ export default function Home() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <span className={styles.logoIcon}>🎯</span>
-          TalentAI
+          <img 
+            src="/talentai.png" 
+            alt="TalentAI Logo" 
+            style={{ 
+              height: '40px',
+              width: 'auto',
+            }} 
+          />
         </motion.div>
         <motion.div 
           className={styles.navLinks}
@@ -662,8 +670,15 @@ export default function Home() {
       <footer className={`${styles.footer} scrollReveal`}>
         <div className={styles.footerContent}>
           <div className={styles.footerLogo}>
-            <span className={styles.logoIcon}>🎯</span>
-            TalentAI
+            <img 
+              src="/talentai.png" 
+              alt="TalentAI Logo" 
+              style={{ 
+                height: '50px',
+                width: 'auto',
+                borderRadius: '12px'
+              }} 
+            />
           </div>
           <div className={styles.footerGrid}>
             <div className={styles.footerSection}>
