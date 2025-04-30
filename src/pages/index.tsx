@@ -317,9 +317,9 @@ export default function Home() {
           name="description"
           content="Transform your hiring process with AI-powered talent acquisition and management platform"
         />
-        <link rel="icon" href="/talentai.png" />
-        <link rel="apple-touch-icon" href="/talentai.png" />
-        <link rel="shortcut icon" href="/talentai.png" />
+        <link rel="icon" href="/talentaifavicon.ico" />
+        <link rel="apple-touch-icon" href="/talentaifavicon.ico" />
+        <link rel="shortcut icon" href="/talentaifavicon.ico" />
       </Head>
 
       <nav className={`${styles.nav} scrollReveal`}>
