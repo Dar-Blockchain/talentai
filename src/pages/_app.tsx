@@ -9,6 +9,7 @@ import { SessionProvider } from "next-auth/react";
 import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
+import Head from 'next/head';
 
 const theme = createTheme({
     palette: {
@@ -28,7 +29,7 @@ const theme = createTheme({
 
 // Wrapper component to handle token storage
 function AuthWrapper({ children }: { children: React.ReactNode }) {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
 
     useEffect(() => {
         if (session?.accessToken) {
@@ -50,6 +51,11 @@ export default function App({ Component, pageProps }: AppProps) {
             <Provider store={store}>
                 <ThemeProvider theme={theme}>
                     <CssBaseline />
+                    <Head>
+                        <link rel="icon" href="/talentaifavicon.ico" />
+                        <link rel="apple-touch-icon" href="/talentaifavicon.ico" />
+                        <link rel="shortcut icon" href="/talentaifavicon.ico" />
+                    </Head>
                     <AuthWrapper>
                         <Component {...pageProps} />
                     </AuthWrapper>
