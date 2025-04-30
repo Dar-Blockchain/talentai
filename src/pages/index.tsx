@@ -702,6 +702,9 @@ export default function Home() {
               <a href="#cookies">Cookie Policy</a>
             </div>
             <div className={styles.socialLinks}>
+              <a href="mailto:contact@talentai.bid" className={styles.socialIcon}>Email</a>
+              <a href="https://pitch.talentai.bid/" target="_blank" rel="noopener noreferrer" className={styles.socialIcon}>Pitch Deck</a>
+              <a href="https://www.youtube.com/@TalentAi-w3p" target="_blank" rel="noopener noreferrer" className={styles.socialIcon}>YouTube</a>
               <a href="#" className={styles.socialIcon}>Twitter</a>
               <a href="#" className={styles.socialIcon}>LinkedIn</a>
               <a href="#" className={styles.socialIcon}>GitHub</a>
