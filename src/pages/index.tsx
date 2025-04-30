@@ -120,7 +120,7 @@ const testimonials = [
 const pricingTiers = [
   {
     name: "Starter",
-    price: "$99",
+    price: "$299",
     period: "per month",
     description: "Perfect for small teams getting started with AI recruitment",
     features: [
@@ -135,7 +135,7 @@ const pricingTiers = [
   },
   {
     name: "Professional",
-    price: "$299",
+    price: "$800",
     period: "per month",
     description: "For growing teams that need advanced features",
     features: [
