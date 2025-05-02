@@ -37,6 +37,7 @@ import WorkIcon from '@mui/icons-material/Work';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import EmailIcon from '@mui/icons-material/Email';
 import PersonIcon from '@mui/icons-material/Person';
+import LinkIcon from '@mui/icons-material/Link';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -597,7 +598,7 @@ const handleGenerateJob = async () => {
           ],
           skillsRequired: `💻 Required Skills: ${data.skillAnalysis.requiredSkills.map((skill: any) => skill.name).join(', ')}.`,
           benefitsSection: "🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.",
-          callToAction: "✨ Ready to make a difference? Apply now and let's build something amazing together."
+          callToAction: "✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test"
         },
         hashtags: [
           "#Hiring",
@@ -634,7 +635,7 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
 
 🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.
 
-✨ Ready to make a difference? Apply now and let's build something amazing together.
+✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/
 
 #Hiring #TechJobs #${data.jobDetails.title.replace(/\s+/g, '')} #RemoteWork #TechCareers`
       }
@@ -673,9 +674,9 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 📍 Location: ${generatedJob.jobDetails.location}
 💰 Salary Range: ${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}
 
-#hiring #jobs #career #opportunity
+✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test
 
-Interested candidates can apply through our platform or send their resumes directly.`;
+#Hiring #TechJobs #${generatedJob.jobDetails.title.replace(/\s+/g, '')} #RemoteWork #TechCareers`;
 
     navigator.clipboard.writeText(linkedinFormat)
       .then(() => {
@@ -786,7 +787,7 @@ const saveJob = async () => {
           ],
           skillsRequired: `💻 Required Skills: ${generatedJob.skillAnalysis.requiredSkills.map((skill: any) => skill.name).join(', ')}.`,
           benefitsSection: "🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.",
-          callToAction: "✨ Ready to make a difference? Apply now and let's build something amazing together."
+          callToAction: "✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test"
         },
         hashtags: [
           "#Hiring",
@@ -823,7 +824,7 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
 
 🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.
 
-✨ Ready to make a difference? Apply now and let's build something amazing together.
+✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test
 
 #Hiring #TechJobs #${generatedJob.jobDetails.title.replace(/\s+/g, '')} #RemoteWork #TechCareers`
       }
@@ -1501,6 +1502,40 @@ Benefits:
                     }}
                   />
                 ))}
+              </Box>
+            </Box>
+
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="subtitle1" sx={{ 
+                color: '#00FFC3', 
+                mb: 2,
+                fontSize: { xs: '1rem', sm: '1.25rem' }
+              }}>
+                Application Link
+              </Typography>
+              <Box sx={{ 
+                backgroundColor: 'rgba(2,226,255,0.1)',
+                borderRadius: '12px',
+                p: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2
+              }}>
+                <LinkIcon sx={{ color: '#02E2FF' }} />
+                <Typography 
+                  component="a" 
+                  href="https://staging.talentai.bid/test" 
+                  target="_blank"
+                  sx={{ 
+                    color: '#02E2FF',
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline'
+                    }
+                  }}
+                >
+                  Pass the test at: https://staging.talentai.bid/test
+                </Typography>
               </Box>
             </Box>
 
