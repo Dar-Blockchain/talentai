@@ -478,6 +478,8 @@ export default function SignIn() {
             variant="outlined"
             startIcon={<GoogleIcon />}
             onClick={() => signIn('google')}
+            disabled
+            title="Google Sign-in is currently unavailable"
             sx={{
               py: 1.5,
               textTransform: 'none',
@@ -486,6 +488,11 @@ export default function SignIn() {
               '&:hover': {
                 borderColor: '#02E2FF',
                 background: 'rgba(2, 226, 255, 0.1)',
+              },
+              '&.Mui-disabled': {
+                color: 'rgba(255, 255, 255, 0.3)',
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                background: 'rgba(255, 255, 255, 0.05)'
               }
             }}
           >
