@@ -184,7 +184,7 @@ export default function Test() {
   const [isGenerating, setIsGenerating] = useState(true);
   const [current, setCurrent] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(20);
+  const [timeLeft, setTimeLeft] = useState(120);
   const currentIndexRef = useRef(0);
   const [hasStartedTest, setHasStartedTest] = useState(false);
 
@@ -344,7 +344,7 @@ export default function Test() {
           if (prev <= 1) {
             if (current < questions.length - 1) {
               setCurrent(c => c + 1);
-              return 20; // Reset timer to 20 seconds
+              return 120; // Reset timer to 120 seconds (2 minutes)
             } else {
               stopRecording();
               saveTestResults();
@@ -361,7 +361,7 @@ export default function Test() {
   // Reset timer when question changes
   useEffect(() => {
     currentIndexRef.current = current;
-    setTimeLeft(20); // Reset to 20 seconds
+    setTimeLeft(120); // Reset to 120 seconds (2 minutes)
     setCurrentTranscript(''); // Clear current transcript
   }, [current]);
 
@@ -526,7 +526,7 @@ export default function Test() {
 
       setIsRecording(true);
       setHasStartedTest(true);
-      setTimeLeft(20); // Start with 20 seconds
+      setTimeLeft(120); // Start with 120 seconds (2 minutes)
     } catch (error) {
       console.error('Recording setup error:', error);
       setIsRecording(false);
@@ -748,7 +748,7 @@ export default function Test() {
           </Typography>
           {hasStartedTest && (
             <Typography variant="subtitle1" sx={{ color: '#fff', mr: 2 }}>
-              0:{timeLeft.toString().padStart(2, '0')}
+              {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
             </Typography>
           )}
           <Button
