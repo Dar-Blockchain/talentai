@@ -47,6 +47,7 @@ async function createAgent(name)  {
     const newPrivateKey = PrivateKey.generate();
     const newPublicKey = newPrivateKey.publicKey;
 
+    
     const transaction = new AccountCreateTransaction()
       .setKey(newPublicKey)
       .setInitialBalance(new Hbar(1));
