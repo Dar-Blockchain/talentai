@@ -1534,7 +1534,7 @@ Benefits:
                     }
                   }}
                 >
-                  Pass the test at: https://staging.talentai.bid/test
+                  Pass the test at: https://staging.talentai.bid
                 </Typography>
               </Box>
             </Box>
