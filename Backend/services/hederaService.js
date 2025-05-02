@@ -18,7 +18,7 @@ module.exports.createHederaWallet = async () => {
     // Create a new account with the public key
     const transaction = new AccountCreateTransaction()
       .setKey(newPublicKey)
-      .setInitialBalance(new Hbar(10)); // Initial balance in Hbar
+      .setInitialBalance(new Hbar(1)); // Initial balance in Hbar
 
     const response = await transaction.execute(client);
     const receipt = await response.getReceipt(client);
