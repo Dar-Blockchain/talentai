@@ -168,9 +168,7 @@ module.exports.generateJobPost = async (req, res) => {
   
   ${format.apply} ${result.linkedinPost.formattedContent.callToAction}
   
-  ${result.linkedinPost.hashtags.map(tag => '#' + tag).join(' ')}
-  
-  🔗 Take the test and apply now at: https://staging.talentai.bid/test`;
+  ${result.linkedinPost.hashtags.map(tag => '#' + tag).join(' ')}`;
         }
   
       } catch (e) {
