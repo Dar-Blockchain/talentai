@@ -49,7 +49,7 @@ async function createAgent(name)  {
 
     const transaction = new AccountCreateTransaction()
       .setKey(newPublicKey)
-      .setInitialBalance(new Hbar(50));
+      .setInitialBalance(new Hbar(5));
 
     const response = await transaction.execute(client);
     const receipt = await response.getReceipt(client);
