@@ -1,8 +1,12 @@
 const { OpenAI } = require("openai");
 require("dotenv").config();
 
-// Configure the OpenAI client with your API key
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Configure the OpenAI client with your API key and timeout settings
+const openai = new OpenAI({ 
+  apiKey: process.env.OPENAI_API_KEY,
+  timeout: 180000, // 3 minutes timeout
+  maxRetries: 3
+});
 
 module.exports.generateJobPost = async (req, res) => {
     try {
@@ -84,7 +88,8 @@ Return JSON only:
         ],
         max_tokens: 1000,
         temperature: 0.5,
-        response_format: { type: "json_object" }
+        response_format: { type: "json_object" },
+        timeout: 180000 // 3 minutes timeout
       });
 
       // Parse the response
@@ -131,6 +136,9 @@ ${result.linkedinPost.hashtags.map(tag => '#' + tag).join(' ')}
       }
     } catch (error) {
       console.error("Error in job post generation:", error);
+      if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+        return res.status(504).json({ error: "Request timed out. Please try again." });
+      }
       res.status(500).json({ error: "Failed to process job post request" });
     }
 };

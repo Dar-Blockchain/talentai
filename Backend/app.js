@@ -25,12 +25,17 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 app.use(cors());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static(path.join(__dirname, "public")));
-app.use(logger("dev"));//combined
+app.use(logger("dev"));
 app.use(cookieParser());
+
+// Configure server timeout
+const server = http.createServer(app);
+server.timeout = 300000; // 5 minutes timeout
+server.keepAliveTimeout = 301000; // Keep-alive slightly higher than timeout
 
 // Routes
 app.use("/auth", authRouter);
@@ -48,7 +53,6 @@ app.get("/", (req, res) => {
 });
 
 // Démarrage du serveur HTTP
-const server = http.createServer(app);
 server.listen(process.env.PORT, () => {
   console.log(
     `Le serveur est en cours d'exécution sur le port ${process.env.PORT}`
