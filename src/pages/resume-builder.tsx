@@ -68,107 +68,81 @@ export default function ResumeBuilder() {
     hasLocalStorage: false
   })
 
+  // Helper to retrieve the authentication token from localStorage
+  const getAuthToken = () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('api_token') || localStorage.getItem('token') || null;
+    }
+    return null;
+  };
+
   // Function to update debug info
   const updateDebugInfo = () => {
     setDebugInfo({
       session: session,
-      token: session?.accessToken as string || null,
+      token: getAuthToken(),
       resumeId: resumeId,
       hasLocalStorage: !!localStorage.getItem('resume-draft')
     });
   }
 
+  // Base URL for backend API (normalize to remove trailing slash)
+  const rawBackendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+  const backendUrl = rawBackendUrl.replace(/\/+$/, '');
+
   useEffect(() => {
     const loadResume = async () => {
       try {
-        // Try to get token from multiple sources with localStorage taking precedence
-        // This matches the approach used in profileSlice.ts
-        const token = localStorage.getItem('api_token') || session?.accessToken;
+        const token = getAuthToken();
         
         if (token) {
-          // Only try to fetch from backend if we have a token
-          console.log('Attempting to fetch resumes with token');
           try {
-            const response = await fetch('/api/resumes/getResumes', {
+            // Direct call to backend to fetch resumes
+            const response = await fetch(`${backendUrl}/resume/getResumes`, {
               headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${token}`
               }
             });
             
-            console.log('getResumes response status:', response.status);
-            
             if (response.ok) {
               const resumes = await response.json();
-              console.log('Resumes response:', resumes);
               if (resumes && resumes.length > 0) {
-                // Get the most recent resume (already sorted by createdAt in the backend)
-                console.log('Setting sections from resume with ID:', resumes[0]._id);
-                console.log('Resume has', resumes[0].sections.length, 'sections');
                 setSections(resumes[0].sections);
-                setResumeId(resumes[0]._id); // Store the resume ID
-                return; // Resume loaded, no need to show template selection
-              } else {
-                console.log('No resumes returned from backend, but response was OK');
+                setResumeId(resumes[0]._id);
+                return;
               }
             } else {
-              // Handle different error scenarios
-              let errorText;
-              try {
-                errorText = await response.text();
-                console.error('Failed to load resumes from backend:', response.status, errorText);
-              } catch (textError) {
-                console.error('Failed to get response text:', textError);
-              }
-              
-              if (response.status === 401 || response.status === 403) {
-                console.log('Auth error when loading resumes - user likely needs to login again');
-              }
+              const error = await response.text();
+              console.error('Failed to load resumes:', error);
+              showToast('Failed to load resumes from server', 'error');
             }
           } catch (fetchError) {
             console.error('Error fetching resumes:', fetchError);
+            showToast('Error connecting to server', 'error');
           }
-        } else {
-          console.log('No auth token found - cannot load resumes from backend');
         }
 
-        // Fallback to localStorage if no resumes found or API fails
+        // Fallback to localStorage
         const draft = localStorage.getItem('resume-draft');
         if (draft) {
           try {
-            console.log('Loading resume from localStorage');
             setSections(JSON.parse(draft));
-            return; // Resume loaded from localStorage, no need to show template selection
           } catch (parseError) {
             console.warn('Could not parse resume draft:', parseError);
-            // Will continue to show template selection
+            setTemplateModalOpen(true);
           }
+        } else {
+          setTemplateModalOpen(true);
         }
-        
-        // No resume found either from API or localStorage, show template selection
-        console.log('No resume found, showing template selection');
-        setTemplateModalOpen(true);
       } catch (error) {
         console.error('Error loading resume:', error);
-        // Try localStorage as fallback
-        const draft = localStorage.getItem('resume-draft');
-        if (draft) {
-          try {
-            setSections(JSON.parse(draft));
-            return; // Resume loaded from localStorage, no need to show template selection
-          } catch {
-            console.warn('Could not parse resume draft');
-            // Will continue to show template selection
-          }
-        }
-        
-        // No resume found either from API or localStorage, show template selection
+        showToast('Error loading resume', 'error');
         setTemplateModalOpen(true);
       }
     };
 
     // Check if we should load resumes
-    const hasToken = localStorage.getItem('api_token') || session?.accessToken;
+    const hasToken = getAuthToken();
     if (hasToken) {
       loadResume();
     } else {
@@ -185,7 +159,7 @@ export default function ResumeBuilder() {
         setTemplateModalOpen(true);
       }
     }
-  }, [session]); // Add session as a dependency
+  }, []); // Run once on mount using localStorage token
 
   useEffect(() => {
     dispatch(getMyProfile())
@@ -425,92 +399,67 @@ export default function ResumeBuilder() {
 
   const saveDraft = async () => {
     try {
-      // First, always save to localStorage as backup
+      // Always save to localStorage first
       localStorage.setItem('resume-draft', JSON.stringify(sections));
-      console.log('Resume saved to localStorage');
       
-      // Get the token from localStorage first (matching profileSlice approach), then fallback to session
-      const token = localStorage.getItem('api_token') || session?.accessToken;
-      
+      const token = getAuthToken();
       if (!token) {
-        console.log('No auth token found - saving only to localStorage');
         showToast('Your resume was saved locally. Log in to save to your account.', 'info');
         return;
       }
       
-      // Prepare headers with auth token
       const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       };
-      
-      console.log('Attempting to save resume to server with token');
-      
-      // Try to save to backend
-      let response;
-      
+
+      // First try to update if we have a resumeId
       if (resumeId) {
-        // If we have a resumeId, update the existing resume
-        console.log('Updating existing resume with ID:', resumeId);
-        response = await fetch(`/api/resumes/${resumeId}`, {
+        // Direct backend update call
+        const updateResponse = await fetch(`${backendUrl}/resume/updateResume/${resumeId}`, {
           method: 'PUT',
           headers,
           body: JSON.stringify({ sections }),
         });
-      } else {
-        // Otherwise create a new resume
-        console.log('Creating new resume');
-        response = await fetch('/api/resumes/createResume', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ sections }),
-        });
-      }
-      
-      console.log('Server response status:', response.status);
-      
-      if (response.status === 413) {
-        // Payload too large error
-        showToast('Your resume is too large to save to the server, but it has been saved locally.', 'warning');
-        return;
-      }
-      
-      const responseText = await response.text();
-      console.log('Server response text:', responseText.substring(0, 100) + '...');
-      
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (e) {
-        console.error('Failed to parse response:', responseText);
-        showToast('Error communicating with server. Your resume was saved locally.', 'error');
-        return;
-      }
-      
-      if (response.ok) {
-        console.log('Resume saved successfully');
-        showToast('Resume saved successfully!');
-        
-        // Update resumeId if this was a new resume
-        if (data?.resume && data.resume._id && !resumeId) {
-          console.log('Setting new resume ID:', data.resume._id);
-          setResumeId(data.resume._id);
+
+        if (updateResponse.ok) {
+          const data = await updateResponse.json();
+          showToast('Resume updated successfully!', 'success');
+          return;
         }
-      } else {
-        console.error('Failed to save resume:', data);
-        
-        // Check if this is an authentication error
-        if (response.status === 401 || response.status === 403) {
-          showToast('Authentication error. Please login again to save to the server.', 'error');
-        } else {
-          showToast(`Error saving to server: ${data?.error || data?.message || 'Unknown error'}. Your resume was saved locally.`, 'error');
+
+        // If update failed but not with 404, throw error
+        if (updateResponse.status !== 404) {
+          const error = await updateResponse.json();
+          throw new Error(error.error || 'Failed to update resume');
         }
       }
+
+      // If we get here, either we don't have a resumeId or update failed with 404
+      // Direct backend create call
+      const createResponse = await fetch(`${backendUrl}/resume/createResume`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ sections }),
+      });
+
+      if (!createResponse.ok) {
+        const error = await createResponse.json();
+        throw new Error(error.error || 'Failed to create new resume');
+      }
+
+      const newData = await createResponse.json();
+      setResumeId(newData.resume?._id);
+      showToast(resumeId ? 'Resume saved as new document!' : 'Resume created successfully!', 'success');
+      
     } catch (error) {
       console.error('Error saving resume:', error);
-      showToast('Error saving resume. Your changes were saved locally.', 'error');
+      showToast(
+        error instanceof Error ? error.message : 'Error saving resume. Changes saved locally.',
+        'error'
+      );
     }
-  }
+  };
 
   const handleBlankTemplate = () => {
     setTemplateModalOpen(false)
@@ -1182,15 +1131,14 @@ export default function ResumeBuilder() {
       // First try direct API call to backend
       try {
         // Get the auth token from the session
-        const token = session?.accessToken;
+        const token = getAuthToken();
         
         if (!token) {
           throw new Error('Authentication required. Please log in.');
         }
         
         // Direct call to backend API, ensuring proper URL formatting
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-        const apiUrl = `${baseUrl}/resume/regenerate`.replace(/([^:]\/)\/+/g, "$1");
+        const apiUrl = `${backendUrl}/resume/regenerate`.replace(/([^:]\/\/)\/+/g, "$1");
         
         const response = await fetch(apiUrl, {
           method: 'POST',
@@ -1234,13 +1182,13 @@ export default function ResumeBuilder() {
       }
       
       // Call through Next.js API route as fallback
-      const token = session?.accessToken;
+      const token = getAuthToken();
       
       if (!token) {
         throw new Error('Authentication required. Please log in.');
       }
 
-      const response = await fetch('/api/resumes/regenerate', {
+      const response = await fetch(`${backendUrl}/resume/regenerate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1296,7 +1244,7 @@ export default function ResumeBuilder() {
 
   const openRegenerateModal = () => {
     // Check if the user is authenticated
-    const token = session?.accessToken;
+    const token = getAuthToken();
     
     if (!token) {
       alert('Please log in to use the regenerate feature');
@@ -1324,15 +1272,18 @@ export default function ResumeBuilder() {
 
   // Add function to manually reload resume by ID
   const handleManualLoadResume = async (id: string) => {
-    if (!session?.accessToken) {
+    // Retrieve token from localStorage or session
+    const token = getAuthToken();
+    if (!token) {
       showToast('You need to be logged in to load a resume', 'error');
       return;
     }
 
     try {
-      const response = await fetch(`/api/resumes/${id}`, {
+      // Direct backend fetch by ID
+      const response = await fetch(`${backendUrl}/resume/getResume/${id}`, {
         headers: {
-          'Authorization': `Bearer ${session.accessToken}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
