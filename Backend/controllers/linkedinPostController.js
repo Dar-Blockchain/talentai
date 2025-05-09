@@ -1,9 +1,7 @@
 const { OpenAI } = require("openai");
 require("dotenv").config();
 
-// Configure the OpenAI client with your API key
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
 
 module.exports.generateJobPost = async (req, res) => {
     try {

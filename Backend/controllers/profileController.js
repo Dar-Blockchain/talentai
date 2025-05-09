@@ -146,12 +146,24 @@ module.exports.addSoftSkills = async (req, res) => {
     }
 
     const result = await profileService.addSoftSkills(userId, softSkills);
-    res.status(200).json(result);
+
+    if (result.duplicateSoftSkills.length > 0) {
+      return res.status(200).json({
+        message: `Les soft skills suivants existent déjà : ${result.duplicateSoftSkills.join(', ')}`,
+      });
+    }
+
+    res.status(200).json({
+      message: result.message,
+      profile: result.profile,
+    });
   } catch (error) {
     console.error('Erreur lors de l\'ajout des soft skills:', error);
     res.status(500).json({ message: error.message || "Erreur lors de l'ajout des soft skills" });
   }
 };
+
+
 
 // Récupérer les soft skills
 module.exports.getSoftSkills = async (req, res) => {
