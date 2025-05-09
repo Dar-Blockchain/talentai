@@ -350,6 +350,9 @@ const DashboardCompany = () => {
   const [jobPostDialog, setJobPostDialog] = useState(false);
   const [jobDescription, setJobDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isQuickGenerating, setIsQuickGenerating] = useState(false);
+  const [isDetailedGenerating, setIsDetailedGenerating] = useState(false);
+  const [generationType, setGenerationType] = useState<'quick' | 'detailed'>('quick');
   const [isPosting, setIsPosting] = useState(false);
   const [generatedJob, setGeneratedJob] = useState<JobPost | undefined>(undefined);
   const [jobPostError, setJobPostError] = useState<string | null>(null);
@@ -529,9 +532,14 @@ const DashboardCompany = () => {
   }, [dispatch]);
 
   // Add this function to handle job generation
-  const handleGenerateJob = async () => {
+  const handleGenerateJob = async (type: 'quick' | 'detailed') => {
     try {
-      setIsGenerating(true);
+      setGenerationType(type);
+      if (type === 'quick') {
+        setIsQuickGenerating(true);
+      } else {
+        setIsDetailedGenerating(true);
+      }
       setJobPostError(null);
       
       const token = Cookies.get('api_token');
@@ -541,7 +549,10 @@ const DashboardCompany = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ description: jobDescription })
+        body: JSON.stringify({ 
+          description: jobDescription,
+          type: type // Send the generation type to the API
+        })
       });
 
       if (!response.ok) {
@@ -661,7 +672,11 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
         console.error('Error generating job:', error);
         setJobPostError(error instanceof Error ? error.message : 'Failed to generate job post');
       } finally {
-        setIsGenerating(false);
+        if (type === 'quick') {
+          setIsQuickGenerating(false);
+        } else {
+          setIsDetailedGenerating(false);
+        }
       }
     };
 
@@ -1245,35 +1260,83 @@ Benefits:
               },
             }}
           />
-          <Button
-            fullWidth
-            onClick={handleGenerateJob}
-            disabled={!jobDescription.trim() || isGenerating}
-            variant="contained"
-            sx={{
-              mt: 2,
-              py: { xs: 1, sm: 1.5 },
-              fontSize: { xs: '0.875rem', sm: '1rem' },
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-              borderRadius: '12px',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-              },
-              '&.Mui-disabled': {
-                background: 'rgba(255,255,255,0.1)',
-                color: 'rgba(255,255,255,0.3)',
-              }
-            }}
-          >
-            {isGenerating ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CircularProgress size={20} sx={{ color: '#fff' }} />
-                <span>Generating...</span>
-              </Box>
-            ) : (
-              'Generate Job Post'
-            )}
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+            <Button
+              fullWidth
+              onClick={() => handleGenerateJob('quick')}
+              disabled={!jobDescription.trim() || isQuickGenerating || isDetailedGenerating}
+              variant="contained"
+              sx={{
+                py: { xs: 1, sm: 1.5 },
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                borderRadius: '12px',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                },
+                '&.Mui-disabled': {
+                  background: 'rgba(255,255,255,0.1)',
+                  color: 'rgba(255,255,255,0.3)',
+                }
+              }}
+            >
+              {isQuickGenerating ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={20} sx={{ color: '#fff' }} />
+                  <span>Quick Generating...</span>
+                </Box>
+              ) : (
+                'Quick Generate'
+              )}
+            </Button>
+
+            <Button
+              fullWidth
+              onClick={() => handleGenerateJob('detailed')}
+              disabled={!jobDescription.trim() || isQuickGenerating || isDetailedGenerating}
+              variant="outlined"
+              sx={{
+                py: { xs: 1, sm: 1.5 },
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                color: '#02E2FF',
+                borderColor: 'rgba(2,226,255,0.5)',
+                borderRadius: '12px',
+                '&:hover': {
+                  borderColor: '#02E2FF',
+                  background: 'rgba(2,226,255,0.1)',
+                },
+                '&.Mui-disabled': {
+                  borderColor: 'rgba(255,255,255,0.1)',
+                  color: 'rgba(255,255,255,0.3)',
+                }
+              }}
+            >
+              {isDetailedGenerating ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={20} sx={{ color: '#02E2FF' }} />
+                  <span>Detailed Analysis...</span>
+                </Box>
+              ) : (
+                'Detailed Analysis'
+              )}
+            </Button>
+          </Box>
+
+          {(isQuickGenerating || isDetailedGenerating) && (
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                mt: 1, 
+                textAlign: 'center',
+                color: 'rgba(255,255,255,0.7)',
+                fontSize: '0.875rem'
+              }}
+            >
+              {isQuickGenerating ? 
+                'Generating a concise job post...' : 
+                'Performing detailed analysis and generating comprehensive job post...'}
+            </Typography>
+          )}
         </Box>
 
         <Box sx={{ 
