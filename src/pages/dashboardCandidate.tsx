@@ -797,7 +797,7 @@ export default function DashboardCandidate() {
               >
                 Start Test
               </ActionButton>
-              <ActionButton
+              {/* <ActionButton
                 variant="outlined"
                 onClick={() => setEditProfileOpen(true)}
                 sx={{
@@ -810,7 +810,7 @@ export default function DashboardCandidate() {
                 }}
               >
                 Edit Profile
-              </ActionButton>
+              </ActionButton> */}
               <ActionButton
                 variant="outlined"
                 onClick={() => router.push('/resume-builder')}
@@ -1252,7 +1252,7 @@ export default function DashboardCandidate() {
             },
             gap: theme => theme.spacing(3)
           }}>
-            <Box>
+            {/* <Box>
               <StatCard>
                 <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff', letterSpacing: 2 }}>
                   Experience Level
@@ -1261,7 +1261,7 @@ export default function DashboardCandidate() {
                   {profile.requiredExperienceLevel || 'Not Set'}
                 </Typography>
               </StatCard>
-            </Box>
+            </Box> */}
             <Box>
               <StatCard>
                 <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff', letterSpacing: 2 }}>
