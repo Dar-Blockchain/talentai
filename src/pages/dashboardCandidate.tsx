@@ -625,8 +625,8 @@ export default function DashboardCandidate() {
 
   const languages = [
     { value: 'English', label: 'English' },
-    { value: 'Arabic', label: 'Arabic' },
-    { value: 'French', label: 'French' }
+    // { value: 'Arabic', label: 'Arabic' },
+    // { value: 'French', label: 'French' }
   ];
 
   const renderSkillOptions = (skill: Skill) => (
