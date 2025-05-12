@@ -184,7 +184,7 @@ function ColorlibStepIcon(props: StepIconProps) {
 // Update the step arrays to include conditional Hedera step
 const getSteps = (userType: UserType, hasHederaExp: 'yes' | 'no' | '') => {
   if (!userType) return ['Select Type'];
-  
+
   if (userType === 'company') {
     const steps = ['Company Details', 'Required Skills', 'Experience Level', 'Review'];
     return steps;
@@ -201,7 +201,7 @@ export default function Preferences() {
   const [activeStep, setActiveStep] = useState(0);
   const [userType, setUserType] = useState<UserType>('');
   const [selectedCategory, setSelectedCategory] = useState('development');
-  
+
   // Company specific states
   const [companyDetails, setCompanyDetails] = useState({
     name: '',
@@ -283,7 +283,7 @@ export default function Preferences() {
     try {
       // Get token from cookies
       const token = Cookies.get('api_token');
-      
+
       if (!token) {
         console.error('No token found');
         return false;
@@ -352,7 +352,7 @@ export default function Preferences() {
     if (userType === 'company') {
       // Create or update company profile first
       const profileCreated = await handleCreateOrUpdateProfile();
-      
+
       if (!profileCreated) {
         // Handle error - you might want to show an error message to the user
         console.error('Failed to create company profile');
@@ -370,7 +370,7 @@ export default function Preferences() {
     } else {
       // Create or update profile first
       const profileCreated = await handleCreateOrUpdateProfile();
-      
+
       if (!profileCreated) {
         // Handle error - you might want to show an error message to the user
         return;
@@ -406,9 +406,9 @@ export default function Preferences() {
     const checkTrafficCounter = async () => {
       try {
         // Add a small delay to ensure token is available
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        const token = Cookies.get('api_token');
+        // await new Promise(resolve => setTimeout(resolve, 100));
+
+        const token = localStorage.getItem('api_token')
         if (!token) {
           console.log('No token found, redirecting to home');
           router.push('/');
@@ -443,7 +443,7 @@ export default function Preferences() {
         if (data.userId && data.userId.trafficCounter > 1) {
           console.log('Traffic counter:', data.userId.trafficCounter);
           console.log('User type:', data.type);
-          
+
           if (data.type === 'Company') {
             router.push('/dashboardCompany');
           } else {
@@ -508,11 +508,11 @@ export default function Preferences() {
             <Typography variant="h6" gutterBottom>
               Are you a candidate looking for opportunities or a company seeking talent?
             </Typography>
-            <Box sx={{ 
-              display: 'flex', 
-              gap: 3, 
+            <Box sx={{
+              display: 'flex',
+              gap: 3,
               justifyContent: 'center',
-              mt: 4 
+              mt: 4
             }}>
               <Button
                 variant={userType === 'candidate' ? 'contained' : 'outlined'}
@@ -616,11 +616,11 @@ export default function Preferences() {
                 }}
               >
                 {CATEGORIES.map(c => (
-                  <Tab 
-                    key={c.id} 
-                    value={c.id} 
-                    label={c.label} 
-                    icon={c.icon} 
+                  <Tab
+                    key={c.id}
+                    value={c.id}
+                    label={c.label}
+                    icon={c.icon}
                     iconPosition="start"
                   />
                 ))}
@@ -629,7 +629,7 @@ export default function Preferences() {
 
             {/* Title */}
             <Typography variant="h6" mb={2} sx={{ color: '#fff' }}>
-              {userType === 'company' 
+              {userType === 'company'
                 ? 'Select required skills for your position'
                 : `Select your ${selectedCategory} skills`
               }
@@ -645,10 +645,10 @@ export default function Preferences() {
                 const isCompany = userType === 'company';
                 const skillsList = isCompany ? requiredSkills : skills;
                 const sel = skillsList.includes(skill.label);
-                
+
                 return (
-                  <Tooltip 
-                    key={skill.label} 
+                  <Tooltip
+                    key={skill.label}
                     title={`Click to ${sel ? 'remove' : 'add'} ${skill.label}`}
                   >
                     <Chip
@@ -656,7 +656,7 @@ export default function Preferences() {
                       clickable
                       onClick={() => {
                         if (isCompany) {
-                          setRequiredSkills(prev => 
+                          setRequiredSkills(prev =>
                             sel ? prev.filter(s => s !== skill.label) : [...prev, skill.label]
                           );
                         } else {
@@ -670,9 +670,9 @@ export default function Preferences() {
                         backgroundColor: sel ? `#${skill.color}` : 'transparent',
                         color: sel ? '#fff' : `#${skill.color}`,
                         transition: 'all 0.2s ease',
-                        '&:hover': { 
-                          backgroundColor: `#${skill.color}`, 
-                          color: '#fff', 
+                        '&:hover': {
+                          backgroundColor: `#${skill.color}`,
+                          color: '#fff',
                           transform: 'scale(1.05)',
                           boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
                         }
@@ -684,58 +684,58 @@ export default function Preferences() {
             </Box>
 
             {/* Hedera Experience Question */}
-            {((userType === 'candidate' && skills.includes('Hedera')) || 
+            {((userType === 'candidate' && skills.includes('Hedera')) ||
               (userType === 'company' && requiredSkills.includes('Hedera'))) && (
-              <Box sx={{ mt: 4 }}>
-                <Typography variant="h6" gutterBottom sx={{ color: '#fff' }}>
-                  {userType === 'company' 
-                    ? 'Is Hedera experience required?' 
-                    : 'Do you have experience working with Hedera?'
-                  }
-                </Typography>
-                <RadioGroup
-                  row
-                  value={hederaExp}
-                  onChange={(e) => setHederaExp(e.target.value as 'yes' | 'no')}
-                  sx={{ mt: 1 }}
-                >
-                  <FormControlLabel 
-                    value="yes" 
-                    control={
-                      <Radio 
-                        sx={{
-                          color: 'rgba(255, 255, 255, 0.7)',
-                          '&.Mui-checked': {
-                            color: '#02E2FF'
-                          }
-                        }}
-                      />
-                    } 
-                    label="Yes"
-                    sx={{
-                      color: '#fff'
-                    }}
-                  />
-                  <FormControlLabel 
-                    value="no" 
-                    control={
-                      <Radio 
-                        sx={{
-                          color: 'rgba(255, 255, 255, 0.7)',
-                          '&.Mui-checked': {
-                            color: '#02E2FF'
-                          }
-                        }}
-                      />
-                    } 
-                    label="No"
-                    sx={{
-                      color: '#fff'
-                    }}
-                  />
-                </RadioGroup>
-              </Box>
-            )}
+                <Box sx={{ mt: 4 }}>
+                  <Typography variant="h6" gutterBottom sx={{ color: '#fff' }}>
+                    {userType === 'company'
+                      ? 'Is Hedera experience required?'
+                      : 'Do you have experience working with Hedera?'
+                    }
+                  </Typography>
+                  <RadioGroup
+                    row
+                    value={hederaExp}
+                    onChange={(e) => setHederaExp(e.target.value as 'yes' | 'no')}
+                    sx={{ mt: 1 }}
+                  >
+                    <FormControlLabel
+                      value="yes"
+                      control={
+                        <Radio
+                          sx={{
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            '&.Mui-checked': {
+                              color: '#02E2FF'
+                            }
+                          }}
+                        />
+                      }
+                      label="Yes"
+                      sx={{
+                        color: '#fff'
+                      }}
+                    />
+                    <FormControlLabel
+                      value="no"
+                      control={
+                        <Radio
+                          sx={{
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            '&.Mui-checked': {
+                              color: '#02E2FF'
+                            }
+                          }}
+                        />
+                      }
+                      label="No"
+                      sx={{
+                        color: '#fff'
+                      }}
+                    />
+                  </RadioGroup>
+                </Box>
+              )}
           </Box>
         )}
 
@@ -777,11 +777,11 @@ export default function Preferences() {
               Hedera Experience Verification
             </Typography>
             {HEDERA_QUESTIONS.map(({ id, question, options }) => (
-              <Paper 
-                key={id} 
-                sx={{ 
-                  p: 3, 
-                  mb: 2, 
+              <Paper
+                key={id}
+                sx={{
+                  p: 3,
+                  mb: 2,
                   backgroundColor: '#fff',
                   borderRadius: 2,
                   border: '1px solid #e0e0e0',
@@ -790,7 +790,7 @@ export default function Preferences() {
                     borderColor: '#02E2FF',
                     boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
                   }
-                }} 
+                }}
                 elevation={0}
               >
                 <Typography sx={{ color: '#00072D' }} gutterBottom>
@@ -805,7 +805,7 @@ export default function Preferences() {
                       key={opt}
                       value={opt}
                       control={
-                        <Radio 
+                        <Radio
                           sx={{
                             color: '#64748b',
                             '&.Mui-checked': {
@@ -815,7 +815,7 @@ export default function Preferences() {
                         />
                       }
                       label={opt}
-                      sx={{ 
+                      sx={{
                         color: '#1e293b',
                         '&:hover': { color: '#02E2FF' }
                       }}
@@ -932,8 +932,8 @@ export default function Preferences() {
               }
             }}
           >
-            {activeStep === steps.length - 1 
-              ? (userType === 'company' ? 'Go to Dashboard' : 'Start Test') 
+            {activeStep === steps.length - 1
+              ? (userType === 'company' ? 'Go to Dashboard' : 'Start Test')
               : 'Next'}
           </Button>
         </Box>

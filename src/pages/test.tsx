@@ -205,7 +205,7 @@ export default function Test() {
       try {
         setIsGenerating(true);
         // Add delay to ensure token is available
-        await new Promise(resolve => setTimeout(resolve,200));
+        await new Promise(resolve => setTimeout(resolve, 200));
 
         const token = Cookies.get('api_token');
         if (!token) {
@@ -220,7 +220,7 @@ export default function Test() {
           // This is from dashboardCandidate
           if (router.query.type === 'technical') {
             endpoint = 'evaluation/generate-technique-questions';
-            
+
             // First fetch the user's profile to get the skill levels
             const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
               headers: {
@@ -267,7 +267,7 @@ export default function Test() {
           } else {
             // For soft skills
             endpoint = 'evaluation/generate-soft-skill-questions';
-            
+
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
               method: 'POST',
               headers: {
@@ -304,12 +304,12 @@ export default function Test() {
           const data = await response.json();
           setQuestions(data.questions);
         }
-        
+
         // Initialize transcriptions with empty strings for each question
         setTranscriptions(
-          questions.reduce((acc: any, _: any, index: number) => ({ 
-            ...acc, 
-            [index]: '' 
+          questions.reduce((acc: any, _: any, index: number) => ({
+            ...acc,
+            [index]: ''
           }), {})
         );
       } catch (error) {
@@ -385,19 +385,7 @@ export default function Test() {
     return () => streamRef.current?.getTracks().forEach(t => t.stop());
   }, []);
 
-  // Optional: fetch session data if needed
-  useEffect(() => {
-    const initializeSession = async () => {
-      try {
-        const response = await fetch('/api/session');
-        const data = await response.json();
-        console.log('Session data:', data);
-      } catch (error) {
-        console.error('Error initializing session:', error);
-      }
-    };
-    initializeSession();
-  }, []);
+
 
   // Modify the recorder.ondataavailable handler inside createMediaRecorder
   const createMediaRecorder = (stream: MediaStream) => {
@@ -577,7 +565,7 @@ export default function Test() {
 
     localStorage.setItem('test_results', JSON.stringify(testData));
     localStorage.setItem('last_test_type', router.query.type as string || 'technical');
-    
+
     // Navigate to report page with parameters
     router.push({
       pathname: '/report',
@@ -614,7 +602,7 @@ export default function Test() {
       {/* Guidelines Modal */}
       <GuidelinesModal
         open={showGuidelines}
-        onClose={() => {}}
+        onClose={() => { }}
         maxWidth="md"
         fullWidth
       >

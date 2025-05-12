@@ -1,0 +1,237 @@
+.partnersSection {
+    padding: 80px 0;
+    background: linear-gradient(-45deg, #00072D, #001a4d, #00072D, #001a4d);
+    position: relative;
+    overflow: hidden;
+}
+
+.partnersSection::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(2, 226, 255, 0.2) 50%,
+            transparent 100%);
+}
+
+.partnersSection::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(2, 226, 255, 0.2) 50%,
+            transparent 100%);
+}
+
+.partnersContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+}
+
+.sectionHeader {
+    text-align: center;
+    margin-bottom: 48px;
+    position: relative;
+}
+
+.sectionHeader h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    position: relative;
+    display: inline-block;
+}
+
+.sectionHeader h2::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #02E2FF, #00FFC3);
+    border-radius: 2px;
+}
+
+.sectionHeader p {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.partnersGrid {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 24px;
+    margin-top: 40px;
+    overflow-x: auto;
+    padding: 20px 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    position: relative;
+}
+
+.partnersGrid::-webkit-scrollbar {
+    display: none;
+}
+
+.partnerCard {
+    background: linear-gradient(-45deg, #00072D, #001a4d, #00072D, #001a4d);
+    padding: 32px;
+    border-radius: 16px;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-width: 280px;
+    flex: 0 0 auto;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.partnerCard h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 16px 0;
+    color: #fff;
+    position: relative;
+}
+
+.partnerCard p {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 16px;
+    line-height: 1.6;
+    position: relative;
+}
+
+.partnerCard:hover {
+    transform: translateY(-6px) scale(1.02);
+    background: linear-gradient(-45deg, #00072D, #001a4d, #00072D, #001a4d);
+    border-color: rgba(2, 226, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(2, 226, 255, 0.1);
+}
+
+.partnerLogo {
+    font-size: 48px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80px;
+    position: relative;
+    transition: transform 0.4s ease;
+}
+
+.partnerCard:hover .partnerLogo {
+    transform: scale(1.1);
+}
+
+.partnerLogoImg {
+    height: 60px;
+    width: auto;
+    object-fit: contain;
+    transition: all 0.4s ease;
+    background: #f5f5f5;
+    padding: 8px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e0e0e0;
+}
+
+.partnerCard[data-partner="DarBlockchain"] .partnerLogoImg,
+.partnerCard[data-partner="Lightency"] .partnerLogoImg {
+    background: transparent;
+    border: none;
+}
+
+.partnerCard:hover .partnerLogoImg {
+    transform: scale(1.1);
+}
+
+.partnerCategory {
+    display: inline-block;
+    padding: 6px 16px;
+    background: rgba(2, 226, 255, 0.1);
+    border-radius: 20px;
+    font-size: 0.875rem;
+    color: #02E2FF;
+    font-weight: 500;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.partnerCard:hover .partnerCategory {
+    background: rgba(2, 226, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .partnersSection {
+        padding: 60px 0;
+    }
+
+    .sectionHeader h2 {
+        font-size: 2rem;
+    }
+
+    .partnerCard {
+        min-width: 240px;
+        padding: 24px;
+    }
+}
+
+/* Scroll indicator */
+.scrollIndicator {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: rgba(2, 226, 255, 0.2);
+    border-radius: 2px;
+    margin-top: 16px;
+}
+
+.scrollIndicator::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 50%;
+    background: linear-gradient(90deg, #02E2FF, #00FFC3);
+    border-radius: 2px;
+    animation: scrollIndicator 2s infinite;
+}
+
+@keyframes scrollIndicator {
+    0% {
+        transform: translateX(0);
+    }
+
+    50% {
+        transform: translateX(100%);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
