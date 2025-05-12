@@ -180,6 +180,7 @@ module.exports.searchProfilesBySkills = async (skills) => {
 module.exports.addSoftSkills = async (userId, softSkills) => {
   try {
     const profile = await Profile.findOne({ userId });
+
     if (!profile) {
       throw new Error('Profil non trouvé');
     }
@@ -188,35 +189,45 @@ module.exports.addSoftSkills = async (userId, softSkills) => {
       throw new Error('Les soft skills doivent être fournis sous forme de tableau');
     }
 
-    // Vérifier les soft skills existants
-    const existingSoftSkills = profile.softSkills || [];
+    // Vérification des soft skills existants
+    const existingSoftSkills = profile.softSkills.map(skill => skill.name.toLowerCase());
     const newSoftSkills = [];
     const duplicateSoftSkills = [];
 
+    // Filtrer les compétences existantes et nouvelles
     softSkills.forEach(skill => {
-      if (existingSoftSkills.includes(skill)) {
-        duplicateSoftSkills.push(skill);
+      // Normaliser en minuscules pour éviter les doublons insensibles à la casse
+      const skillName = skill.name.toLowerCase();
+
+      if (existingSoftSkills.includes(skillName)) {
+        duplicateSoftSkills.push(skill.name);
       } else {
         newSoftSkills.push(skill);
       }
     });
 
+    // Si nous avons de nouvelles compétences, les ajouter
     if (newSoftSkills.length > 0) {
-      profile.softSkills = [...new Set([...existingSoftSkills, ...newSoftSkills])];
-      await profile.save();
+      // Ajouter les nouvelles soft skills en préservant l'unicité
+      profile.softSkills = [...profile.softSkills, ...newSoftSkills];
+      await profile.save(); // Sauvegarder les modifications dans la base de données
     }
 
+    // Retourner un message approprié
     return {
       profile,
-      message: duplicateSoftSkills.length > 0 
-        ? `Les soft skills suivants existent déjà : ${duplicateSoftSkills.join(', ')}`
-        : 'Soft skills ajoutés avec succès'
+      message: newSoftSkills.length > 0
+        ? 'Soft skills ajoutés avec succès.'
+        : 'Aucune nouvelle compétence à ajouter.',
+      duplicateSoftSkills, // Liste des doublons trouvés
     };
   } catch (error) {
     console.error('Erreur lors de l\'ajout des soft skills:', error);
-    throw error;
+    throw error; // Lancer l'erreur pour être gérée par le contrôleur
   }
 };
+
+
 
 module.exports.getSoftSkills = async (userId) => {
   try {
