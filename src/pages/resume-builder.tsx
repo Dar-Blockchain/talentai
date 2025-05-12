@@ -26,9 +26,30 @@ import { useRouter } from 'next/router'
 import FrenchDataCV from '@/components/templates/FrenchDataCV'
 import ReactDOM from 'react-dom/client'
 import BugReportIcon from '@mui/icons-material/BugReport'
+import LinkedInIcon from '@mui/icons-material/LinkedIn'
 
 // Add debug button and dialog
 const DEBUG_MODE = process.env.NODE_ENV === 'development';
+
+// Add type declaration for LinkedIn SDK
+declare global {
+  interface Window {
+    IN?: {
+      UI: {
+        Share: () => {
+          params: (config: {
+            url: string;
+            title: string;
+            description: string;
+          }) => {
+            place: () => void;
+          };
+        };
+      };
+      parse: (element: HTMLElement) => void;
+    };
+  }
+}
 
 export default function ResumeBuilder() {
   const dispatch = useDispatch<AppDispatch>()
@@ -67,6 +88,45 @@ export default function ResumeBuilder() {
     resumeId: null,
     hasLocalStorage: false
   })
+
+  // Inside the ResumeBuilder component but outside of any function or method:
+  const [linkedInConnected, setLinkedInConnected] = useState(false);
+
+  // Add a useEffect to check LinkedIn connection status on mount
+  useEffect(() => {
+    const checkLinkedInToken = () => {
+      const token = localStorage.getItem('linkedin_token');
+      
+      // Simple format validation
+      const isValidFormat = token && token.length > 20 && /^[A-Za-z0-9\-_]+$/.test(token);
+      setLinkedInConnected(!!isValidFormat);
+      
+      if (isValidFormat) {
+        console.log('LinkedIn token found in localStorage:', true);
+        console.log('LinkedIn token length:', token.length);
+      }
+    };
+    
+    // Check for token immediately
+    checkLinkedInToken();
+    
+    // Set up listener for storage changes (for when token is added in another window/tab)
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'linkedin_token') {
+        checkLinkedInToken();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Check once more after a short delay to catch any updates
+    const checkAgainTimeout = setTimeout(checkLinkedInToken, 1000);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearTimeout(checkAgainTimeout);
+    };
+  }, []);
 
   // Helper to retrieve the authentication token from localStorage
   const getAuthToken = () => {
@@ -1306,6 +1366,245 @@ export default function ResumeBuilder() {
     }
   }
 
+  // Replace the existing handleShareLinkedIn function with this updated version:
+  const handleShareLinkedIn = async (): Promise<void> => {
+    try {
+      // First check if we need to clear any URL query parameters that might be causing issues
+      if (router.query.linkedin || router.query.t || router.query.error) {
+        const url = new URL(window.location.href);
+        // Clear all query parameters for a fresh start
+        url.search = '';
+        router.replace(url.toString(), undefined, { shallow: true });
+      }
+
+      // Check for token in localStorage instead of cookies
+      console.log('Checking for LinkedIn token in localStorage...');
+      const token = localStorage.getItem('linkedin_token');
+      
+      console.log('LinkedIn token found in localStorage:', !!token);
+      
+      // Add debugging for token value
+      if (token) {
+        console.log('Token length:', token.length);
+        // Check if token format is valid (should be a long string without spaces)
+        const isValidFormat = /^[A-Za-z0-9\-_]+$/.test(token);
+        console.log('Token format appears valid:', isValidFormat);
+        
+        if (!isValidFormat) {
+          console.warn('Token appears to be malformed, clearing and requesting new one');
+          localStorage.removeItem('linkedin_token');
+          if (window.confirm('Your LinkedIn token appears invalid. Would you like to reconnect?')) {
+            window.open('/api/linkedin/auth/start', '_blank', 'width=600,height=700');
+            showToast('Complete LinkedIn login in the popup window, then try sharing again', 'info');
+          }
+          return;
+        }
+      }
+      
+      if (!token) {
+        console.log('LinkedIn token not found in localStorage');
+        // Simplified auth flow
+        if (window.confirm('Connect with LinkedIn to share your resume?')) {
+          window.open('/api/linkedin/auth/start', '_blank', 'width=600,height=700');
+          showToast('Complete LinkedIn login in the popup window, then try sharing again', 'info');
+          return;
+        }
+        return;
+      }
+      
+      // Token exists, proceed with sharing
+      showToast('Preparing to share to LinkedIn...', 'info');
+      
+      // Try the main sharing endpoint first
+      console.log('Sending token to direct share endpoint...');
+      showToast('Sharing to LinkedIn...', 'info');
+      
+      const shareResponse = await fetch('/api/linkedin/directShare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          message: 'Hello! Testing my post from TalentAI resume builder.'
+        })
+      });
+      
+      let result;
+      try {
+        result = await shareResponse.json();
+      } catch (e) {
+        console.error('Failed to parse JSON from LinkedIn share response:', e);
+        result = { error: 'Invalid response from server' };
+      }
+      
+      console.log('LinkedIn share response:', {
+        status: shareResponse.status,
+        statusText: shareResponse.statusText,
+        result
+      });
+      
+      if (shareResponse.ok && result.success) {
+        showToast('Successfully shared to LinkedIn!', 'success');
+        return;
+      }
+      
+      // If we get a 403 error (permission issue), try the simple sharing endpoint that doesn't need profile access
+      if (shareResponse.status === 403) {
+        console.log('Got 403 permission error, trying simplified sharing method...');
+        
+        const simpleShareResponse = await fetch('/api/linkedin/directShareSimple', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token,
+            message: 'Hello! Testing my post from TalentAI resume builder.'
+          })
+        });
+        
+        let simpleResult;
+        try {
+          simpleResult = await simpleShareResponse.json();
+        } catch (e) {
+          console.error('Failed to parse JSON from simple LinkedIn share response:', e);
+          simpleResult = { error: 'Invalid response from server' };
+        }
+        
+        console.log('Simple LinkedIn share response:', {
+          status: simpleShareResponse.status,
+          statusText: simpleShareResponse.statusText,
+          result: simpleResult
+        });
+        
+        if (simpleShareResponse.ok && simpleResult.success) {
+          showToast('Successfully shared to LinkedIn!', 'success');
+          return;
+        }
+        
+        // If both methods fail with permission issues, prompt to reconnect with both scopes
+        console.log('Both sharing methods failed, need to reconnect with expanded permissions');
+        const reconnectWithScopes = window.confirm(
+          'LinkedIn requires additional permissions to share content.\n\n' +
+          'Would you like to reconnect with expanded permissions?'
+        );
+        
+        if (reconnectWithScopes) {
+          localStorage.removeItem('linkedin_token');
+          window.open('/api/linkedin/auth/start', '_blank', 'width=600,height=700');
+          showToast('Please accept all permissions in the LinkedIn window', 'info');
+        }
+        return;
+      }
+      
+      // Handle other error cases
+      if (shareResponse.status === 401) {
+        // Unauthorized - token is invalid/expired
+        console.log('LinkedIn token is invalid or expired');
+        localStorage.removeItem('linkedin_token');
+        
+        const reconnect = window.confirm(
+          'Your LinkedIn session has expired. Would you like to reconnect?'
+        );
+        
+        if (reconnect) {
+          window.open('/api/linkedin/auth/start', '_blank', 'width=600,height=700');
+          showToast('Please log in to LinkedIn in the new window, then try sharing again', 'info');
+        }
+        return;
+      }
+      
+      // In case of server error (500) or other errors, just show the error
+      const errorMessage = result?.error || 'Unknown error';
+      const errorDetails = result?.message || result?.details || '';
+      console.error('LinkedIn sharing failed:', errorMessage, errorDetails);
+      
+      // If we get a "fetch failed" error, it could be a networking issue on the server
+      if (errorMessage === 'Error sharing to LinkedIn' && errorDetails === 'fetch failed') {
+        const retryFromScratch = window.confirm(
+          'LinkedIn connection failed. This could be due to an invalid token or network issue.\n\n' + 
+          'Would you like to reconnect and try again?'
+        );
+        
+        if (retryFromScratch) {
+          // Clear token and start fresh
+          localStorage.removeItem('linkedin_token');
+          window.open('/api/linkedin/auth/start', '_blank', 'width=600,height=700');
+          showToast('Please log in to LinkedIn in the new window, then try sharing again', 'info');
+          return;
+        }
+      }
+      
+      showToast(`Error sharing to LinkedIn: ${errorMessage}`, 'error');
+    } catch (error) {
+      console.error('Error in LinkedIn sharing flow:', error);
+      showToast('Error sharing to LinkedIn', 'error');
+    }
+  };
+
+  // Add useEffect to handle LinkedIn query parameters
+  useEffect(() => {
+    // Check for LinkedIn callback flags in the URL
+    const linkedinParam = router.query.linkedin;
+    const linkedinError = router.query.error;
+    const timeParam = router.query.t;
+    
+    if (linkedinParam) {
+      // Process the parameters only once
+      if (linkedinParam === 'scope_error') {
+        // LinkedIn scope error occurred
+        showToast(
+          `LinkedIn authorization error: ${linkedinError || 'Insufficient permissions'}. The app will use only the w_member_social scope.`, 
+          'warning'
+        );
+      } else if (linkedinParam === 'success') {
+        // Successfully authenticated with LinkedIn
+        showToast('Successfully connected to LinkedIn! You can now share your resume.', 'success');
+      }
+      
+      // Clear the LinkedIn parameters after processing to prevent repeated messages
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('linkedin');
+        url.searchParams.delete('error');
+        
+        // Keep the timestamp parameter to prevent stale callbacks
+        if (!timeParam) {
+          url.searchParams.delete('t');
+        }
+        
+        router.replace(url.pathname + url.search, undefined, { shallow: true });
+      }
+    }
+  }, [router.query.linkedin, router.query.error, router]); // Include router in the dependency array
+
+  // Add listener for auth success messages from popup window
+  useEffect(() => {
+    // Function to handle messages from auth-success page
+    const handleAuthMessage = (event: MessageEvent) => {
+      // Verify the origin for security
+      if (event.origin !== window.location.origin) return;
+      
+      // Check if it's an auth success message
+      if (event.data?.type === 'AUTH_SUCCESS' && event.data?.provider === 'linkedin') {
+        console.log('Received auth success message from popup');
+        
+        // Store the token if it was passed in the message
+        if (event.data?.token) {
+          console.log('Saving LinkedIn token from popup message');
+          localStorage.setItem('linkedin_token', event.data.token);
+        }
+        
+        showToast('Successfully connected to LinkedIn! You can now share your resume.', 'success');
+      }
+    };
+    
+    // Add event listener
+    window.addEventListener('message', handleAuthMessage);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('message', handleAuthMessage);
+    };
+  }, []);
+
   return (
     <div className={styles.container}>
       <IconButton
@@ -1650,6 +1949,8 @@ export default function ResumeBuilder() {
         canUndo={sectionsHistory.length > 0}
         sectionsCount={sections.length}
         onRegenerate={openRegenerateModal}
+        onShareLinkedIn={handleShareLinkedIn}
+        linkedInConnected={linkedInConnected}
       />
 
       <Drawer

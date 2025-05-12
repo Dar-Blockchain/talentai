@@ -39,6 +39,7 @@ import EmailIcon from '@mui/icons-material/Email';
 import PersonIcon from '@mui/icons-material/Person';
 import LinkIcon from '@mui/icons-material/Link';
 import ErrorIcon from '@mui/icons-material/Error';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -692,8 +693,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
       navigator.clipboard.writeText(linkedinFormat)
         .then(() => {
-          setLinkedinCopySuccess(true);
-          setTimeout(() => setLinkedinCopySuccess(false), 2000);
+          setCopySuccess(true);
+          setTimeout(() => setCopySuccess(false), 2000);
         })
         .catch(err => {
           console.error('Failed to copy LinkedIn format: ', err);
@@ -1349,8 +1350,9 @@ Benefits:
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     <Button
                       variant="contained"
-                      startIcon={<ContentCopyIcon />}
-                      onClick={handleCopyForLinkedIn}
+                      startIcon={<LinkedInIcon />}
+                      onClick={handleShareLinkedIn}
+                      disabled={isPosting}
                       sx={{
                         background: 'linear-gradient(135deg, #0077B5 0%, #00A0DC 100%)',
                         '&:hover': {
@@ -1358,7 +1360,23 @@ Benefits:
                         }
                       }}
                     >
-                      {linkedinCopySuccess ? 'Copied!' : 'Copy for LinkedIn'}
+                      {isPosting ? 'Sharing...' : linkedinCopySuccess ? 'Shared!' : 'Share on LinkedIn'}
+                    </Button>
+                    
+                    <Button
+                      variant="outlined"
+                      startIcon={<ContentCopyIcon />}
+                      onClick={handleCopyForLinkedIn}
+                      sx={{
+                        borderColor: 'rgba(255,255,255,0.3)',
+                        color: 'white',
+                        '&:hover': {
+                          borderColor: '#00A0DC',
+                          backgroundColor: 'rgba(0,160,220,0.1)'
+                        }
+                      }}
+                    >
+                      {copySuccess ? 'Copied!' : 'Copy Text'}
                     </Button>
                   </Box>
                 </Box>
@@ -1994,6 +2012,173 @@ Benefits:
         ))}
       </Box>
     );
+  };
+
+  // First, add this new function after handleCopyForLinkedIn function
+
+  const handleShareLinkedIn = async () => {
+    if (!generatedJob) return;
+    
+    try {
+      // Check if we have a LinkedIn token in localStorage
+      const token = localStorage.getItem('linkedin_token');
+      
+      if (!token) {
+        // Open LinkedIn authorization if no token is available
+        window.open('/api/linkedin/auth/start', '_blank', 'width=600,height=700');
+        // Alert the user to try sharing again after connecting
+        alert('Please connect to LinkedIn first. After connecting, try sharing again.');
+        return;
+      }
+      
+      // Prepare the post message - use the finalPost from generatedJob if available
+      const message = generatedJob.linkedinPost?.finalPost || 
+        `🚀 Exciting Opportunity: ${generatedJob.jobDetails.title}
+
+🏢 About the Role:
+${generatedJob.jobDetails.description}
+
+🎯 Key Responsibilities:
+${generatedJob.jobDetails.responsibilities.map(resp => `• ${resp}`).join('\n')}
+
+📋 Requirements:
+${generatedJob.jobDetails.requirements.map(req => `• ${req}`).join('\n')}
+
+🔧 Required Skills:
+${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Level ${skill.level})`).join('\n')}
+
+💼 Employment Type: ${generatedJob.jobDetails.employmentType}
+📍 Location: ${generatedJob.jobDetails.location}
+💰 Salary Range: ${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}
+
+✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test
+
+#Hiring #TechJobs #${generatedJob.jobDetails.title.replace(/\s+/g, '')} #RemoteWork #TechCareers`;
+      
+      // Set a loading state
+      setIsPosting(true);
+      
+      // First try the standard sharing endpoint
+      console.log('Trying the standard LinkedIn sharing endpoint...');
+      
+      let success = false;
+      
+      // Try the main directShare endpoint first
+      try {
+        const shareResponse = await fetch('/api/linkedin/directShare', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token,
+            message
+          })
+        });
+        
+        const shareResult = await shareResponse.json();
+        
+        if (shareResponse.ok && shareResult.success) {
+          success = true;
+          setLinkedinCopySuccess(true);
+          setTimeout(() => setLinkedinCopySuccess(false), 2000);
+          console.log('Successfully shared to LinkedIn with directShare!');
+        } else if (shareResponse.status === 403) {
+          console.log('Permission issue with directShare, will try other methods...');
+        } else {
+          console.error('LinkedIn directShare failed:', shareResult);
+        }
+      } catch (err) {
+        console.error('Error using directShare:', err);
+      }
+      
+      // If directShare failed, try the shareText endpoint which uses cookies
+      if (!success) {
+        try {
+          console.log('Trying the shareText endpoint...');
+          
+          const shareTextResponse = await fetch('/api/linkedin/shareText', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message
+            })
+          });
+          
+          const shareTextResult = await shareTextResponse.json();
+          
+          if (shareTextResponse.ok && shareTextResult.success) {
+            success = true;
+            setLinkedinCopySuccess(true);
+            setTimeout(() => setLinkedinCopySuccess(false), 2000);
+            console.log('Successfully shared to LinkedIn with shareText!');
+          } else {
+            console.error('LinkedIn shareText failed:', shareTextResult);
+          }
+        } catch (err) {
+          console.error('Error using shareText:', err);
+        }
+      }
+      
+      // If both previous methods failed, try the directShareSimple endpoint
+      if (!success) {
+        try {
+          console.log('Trying the directShareSimple endpoint as last resort...');
+          
+          const simpleResponse = await fetch('/api/linkedin/directShareSimple', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              token,
+              message
+            })
+          });
+          
+          const simpleResult = await simpleResponse.json();
+          
+          if (simpleResponse.ok && simpleResult.success) {
+            success = true;
+            setLinkedinCopySuccess(true);
+            setTimeout(() => setLinkedinCopySuccess(false), 2000);
+            console.log('Successfully shared to LinkedIn with directShareSimple!');
+          } else if (simpleResponse.status === 401) {
+            // Token expired - clear it and ask user to reconnect
+            localStorage.removeItem('linkedin_token');
+            alert('Your LinkedIn session has expired. Please reconnect to LinkedIn and try again.');
+            window.open('/api/linkedin/auth/start', '_blank', 'width=600,height=700');
+          } else if (simpleResponse.status === 403) {
+            // Permission issue
+            alert('LinkedIn requires additional permissions. Please reconnect with expanded permissions.');
+            localStorage.removeItem('linkedin_token');
+            window.open('/api/linkedin/auth/start', '_blank', 'width=600,height=700');
+          } else {
+            // Other error
+            console.error('LinkedIn sharing failed with all methods:', simpleResult);
+            
+            // Suggest reconnecting with expanded permissions
+            if (window.confirm('Failed to share to LinkedIn. Would you like to try reconnecting with expanded permissions?')) {
+              localStorage.removeItem('linkedin_token');
+              window.open('/api/linkedin/auth/start', '_blank', 'width=600,height=700');
+            } else {
+              alert(`Unable to share to LinkedIn. As a fallback, the job post has been copied to your clipboard.`);
+              navigator.clipboard.writeText(message);
+            }
+          }
+        } catch (error) {
+          console.error('Error in directShareSimple:', error);
+        }
+      }
+      
+      // If all attempts failed but we didn't already handle reconnection, show generic error
+      if (!success) {
+        alert('Could not share to LinkedIn. The job post has been copied to your clipboard instead.');
+        navigator.clipboard.writeText(message);
+      }
+    } catch (error) {
+      console.error('Error in LinkedIn sharing flow:', error);
+      alert('Error sharing to LinkedIn. Please try again or use the "Copy Text" button instead.');
+      setIsPosting(false);
+    } finally {
+      setIsPosting(false);
+    }
   };
 
   return (
