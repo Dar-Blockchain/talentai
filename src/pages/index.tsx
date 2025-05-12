@@ -751,7 +751,7 @@ export default function Home() {
                 {/* Email Icon */}
                 <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none"/><path d="M4 6.8A2.8 2.8 0 0 1 6.8 4h10.4A2.8 2.8 0 0 1 20 6.8v10.4A2.8 2.8 0 0 1 17.2 20H6.8A2.8 2.8 0 0 1 4 17.2V6.8Zm2.1.7 5.9 5.1 5.9-5.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M19.5 7.5 13 13.5a2 2 0 0 1-2.6 0L4.5 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </a>
-              <a href="https://pitch.talentai.bid/" target="_blank" rel="noopener noreferrer" className={footerStyles.socialIcon} aria-label="Pitch Deck" title="Pitch Deck">
+              <a href="https://www.figma.com/slides/hz5ZCbapUAozjPslnaLs2K/Pitchdeck?node-id=3-1455" target="_blank" rel="noopener noreferrer" className={footerStyles.socialIcon} aria-label="Pitch Deck" title="Pitch Deck">
                 {/* Link Icon */}
                 <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none"/><path d="M14.828 9.172a4 4 0 0 1 0 5.656l-3.535 3.535a4 4 0 0 1-5.657-5.657l1.414-1.414" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.172 14.828a4 4 0 0 1 0-5.656l3.535-3.535a4 4 0 0 1 5.657 5.657l-1.414 1.414" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </a>
@@ -767,7 +767,7 @@ export default function Home() {
                 {/* LinkedIn Icon */}
                 <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none"/><path d="M6.94 7.5a1.44 1.44 0 1 1 0-2.88 1.44 1.44 0 0 1 0 2.88ZM7.5 9.5v7M12 13.5v3M12 9.5v1.5m0 0c0-.828.672-1.5 1.5-1.5s1.5.672 1.5 1.5v3c0 .828-.672 1.5-1.5 1.5s-1.5-.672-1.5-1.5v-3Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </a>
-              <a href="#" className={footerStyles.socialIcon} aria-label="GitHub" title="GitHub">
+              <a href="https://github.com/TalentAI-bid/" className={footerStyles.socialIcon} aria-label="GitHub" title="GitHub">
                 {/* GitHub Icon */}
                 <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none"/><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.867 8.166 6.839 9.489.5.092.682-.217.682-.483 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.34-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.025A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.295 2.748-1.025 2.748-1.025.546 1.378.202 2.397.1 2.65.64.699 1.028 1.592 1.028 2.683 0 3.842-2.338 4.687-4.566 4.936.36.31.68.921.68 1.857 0 1.34-.012 2.422-.012 2.752 0 .268.18.579.688.481C19.135 20.163 22 16.417 22 12c0-5.523-4.477-10-10-10Z" stroke="currentColor" strokeWidth="1.5"/></svg>
               </a>
