@@ -406,7 +406,7 @@ export default function Preferences() {
     const checkTrafficCounter = async () => {
       try {
         // Add a small delay to ensure token is available
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // await new Promise(resolve => setTimeout(resolve, 100));
 
         const token = localStorage.getItem('api_token')
         if (!token) {

@@ -16,6 +16,8 @@ import { motion } from "framer-motion";
 import styles from "./Landing.module.css";
 import { partners } from "../data/partners";
 import partnerStyles from "../styles/Partners.module.css";
+import { useRouter } from "next/router";
+import footerStyles from "../styles/Footer.module.css";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -206,10 +208,17 @@ export default function Home() {
   const [bubbles, setBubbles] = useState<Array<{ id: number; x: number; y: number; size: number }>>([]);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    // Check for token in localStorage or cookies
+    const token = typeof window !== 'undefined' ? localStorage.getItem('api_token') : null;
+
+    if (token) {
+      router.replace('/preferences');
+    }
+  }, [router]);
 
   // Ocean bubbles generation
   useEffect(() => {
@@ -221,9 +230,9 @@ export default function Home() {
         y: window.innerHeight + size,
         size: size
       };
-      
+
       setBubbles(prev => [...prev, newBubble]);
-      
+
       setTimeout(() => {
         setBubbles(prev => prev.filter(bubble => bubble.id !== newBubble.id));
       }, 4000);
@@ -254,12 +263,12 @@ export default function Home() {
   useEffect(() => {
     const handleScroll = () => {
       setScrollPosition(window.scrollY);
-      
+
       const elements = document.querySelectorAll('.scrollReveal');
       elements.forEach(element => {
         const rect = element.getBoundingClientRect();
         const isVisible = rect.top < window.innerHeight * 0.75;
-        
+
         if (isVisible) {
           element.classList.add('visible');
         }
@@ -272,7 +281,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div 
+    <div
       className={`${styles.container} ${geist.variable}`}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
@@ -304,7 +313,7 @@ export default function Home() {
       </div>
 
       {/* Custom Cursor */}
-      <div 
+      <div
         className={`${styles.customCursor} ${isHovering ? styles.hover : ''}`}
         style={{
           left: `${mousePosition.x}px`,
@@ -325,22 +334,22 @@ export default function Home() {
       </Head>
 
       <nav className={`${styles.nav} scrollReveal`}>
-        <motion.div 
+        <motion.div
           className={styles.logo}
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <img 
-            src="/talentai.png" 
-            alt="TalentAI Logo" 
-            style={{ 
+          <img
+            src="/talentai.png"
+            alt="TalentAI Logo"
+            style={{
               height: '40px',
               width: 'auto',
-            }} 
+            }}
           />
         </motion.div>
-        <motion.div 
+        <motion.div
           className={styles.navLinks}
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -350,8 +359,8 @@ export default function Home() {
           <a href="#solutions">Solutions</a>
           <a href="#pricing">Pricing</a>
           <a href="#contact">Contact</a> */}
-          <motion.a 
-            href="/signin" 
+          <motion.a
+            href="/signin"
             className={styles.signInButton}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -363,13 +372,13 @@ export default function Home() {
 
       <main>
         <section className={`${styles.hero} scrollReveal`}>
-          <motion.div 
+          <motion.div
             className={styles.heroContent}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <motion.div 
+            <motion.div
               className={styles.heroTag}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -387,8 +396,8 @@ export default function Home() {
               already transforming their hiring process.
             </p>
             <div className={styles.ctaButtons}>
-              <motion.a 
-                href="/signin" 
+              <motion.a
+                href="/signin"
                 className={styles.primaryButton}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -396,8 +405,8 @@ export default function Home() {
                 Get Started Free
                 <span className={styles.buttonIcon}>→</span>
               </motion.a>
-              <motion.a 
-                href="/signin" 
+              <motion.a
+                href="/signin"
                 className={styles.secondaryButton}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -408,13 +417,13 @@ export default function Home() {
             </div>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             className={styles.heroContent}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <motion.div 
+            <motion.div
               className={styles.metricsContainer}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -445,7 +454,7 @@ export default function Home() {
 
         <section id="features" className={`${styles.features} scrollReveal`}>
           <div className={styles.featuresContainer}>
-            <motion.h2 
+            <motion.h2
               className={styles.sectionTitle}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -474,7 +483,7 @@ export default function Home() {
 
         <section className={`${styles.benefits} scrollReveal`}>
           <div className={styles.benefitsContainer}>
-            <motion.h2 
+            <motion.h2
               className={styles.sectionTitle}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -521,7 +530,7 @@ export default function Home() {
 
         <section className={`${styles.pricing} scrollReveal`}>
           <div className={styles.pricingContainer}>
-            <motion.h2 
+            <motion.h2
               className={styles.sectionTitle}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -645,8 +654,8 @@ export default function Home() {
                 >
                   <div className={partnerStyles.partnerLogo}>
                     {partner.isImage ? (
-                      <img 
-                        src={partner.logo} 
+                      <img
+                        src={partner.logo}
                         alt={`${partner.name} logo`}
                         className={partnerStyles.partnerLogoImg}
                       />
@@ -666,7 +675,7 @@ export default function Home() {
 
         <section className={`${styles.cta} scrollReveal`}>
           <div className={styles.ctaContent}>
-            <motion.div 
+            <motion.div
               className={styles.ctaTag}
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -688,14 +697,14 @@ export default function Home() {
             >
               Join thousands of companies already using TalentAI to revolutionize their hiring process
             </motion.p>
-            <motion.div 
+            <motion.div
               className={styles.ctaButtons}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <motion.a 
-                href="/signin" 
+              <motion.a
+                href="/signin"
                 className={styles.ctaPrimaryButton}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -703,8 +712,8 @@ export default function Home() {
                 Get Started Free
                 <span className={styles.buttonIcon}>→</span>
               </motion.a>
-              <motion.a 
-                href="#demo" 
+              <motion.a
+                href="#demo"
                 className={styles.ctaSecondaryButton}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -717,62 +726,56 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className={`${styles.footer} scrollReveal`}>
-        <div className={styles.footerContent}>
-          <div className={styles.footerLogo}>
-            <img 
-              src="/talentai.png" 
-              alt="TalentAI Logo" 
-              style={{ 
-                height: '50px',
-                width: 'auto',
-                borderRadius: '12px'
-              }} 
-            />
-          </div>
-          <div className={styles.footerGrid}>
-            {/* <div className={styles.footerSection}>
-              <h4>Product</h4>
-              <a href="/signin">SignIn</a>
-              
-            </div> */}
-            {/* <div className={styles.footerSection}>
-              <h4>Company</h4>
-              <a href="#about">About</a>
-              <a href="#careers">Careers</a>
-              <a href="#blog">Blog</a>
-              <a href="#contact">Contact</a>
+      <footer className={`${footerStyles.footer} scrollReveal`}>
+        <div className={footerStyles.footerContent}>
+          <div className={footerStyles.footerLeft}>
+            <div className={footerStyles.footerLogo}>
+              <img
+                src="/talentai.png"
+                alt="TalentAI Logo"
+                style={{ height: '50px', width: 'auto', borderRadius: '12px' }}
+              />
             </div>
-            <div className={styles.footerSection}>
-              <h4>Resources</h4>
-              <a href="#help">Help Center</a>
-              <a href="#docs">Documentation</a>
-              <a href="#api">API</a>
-              <a href="#status">Status</a>
+            <div className={footerStyles.inspiringMessage}>
+              Empowering organizations to discover, hire, and grow the world's best talent with AI-driven precision and heart.
             </div>
-            <div className={styles.footerSection}>
-              <h4>Legal</h4>
-              <a href="#privacy">Privacy</a>
-              <a href="#terms">Terms</a>
-              <a href="#security">Security</a>
-              <a href="#cookies">Cookies</a>
-            </div> */}
           </div>
-          <div className={styles.footerBottom}>
-            <div className={styles.footerLinks}>
+          <div className={footerStyles.footerRight}>
+            <div className={footerStyles.footerLinks}>
               <a href="#privacy">Privacy Policy</a>
               <a href="#terms">Terms of Service</a>
               <a href="#cookies">Cookie Policy</a>
             </div>
-            <div className={styles.socialLinks}>
-              <a href="mailto:contact@talentai.bid" className={styles.socialIcon}>Email</a>
-              <a href="https://pitch.talentai.bid/" target="_blank" rel="noopener noreferrer" className={styles.socialIcon}>Pitch Deck</a>
-              <a href="https://www.youtube.com/@TalentAi-w3p" target="_blank" rel="noopener noreferrer" className={styles.socialIcon}>YouTube</a>
-              <a href="#" className={styles.socialIcon}>Twitter</a>
-              <a href="#" className={styles.socialIcon}>LinkedIn</a>
-              <a href="#" className={styles.socialIcon}>GitHub</a>
+            <div className={footerStyles.socialLinks}>
+              <a href="mailto:contact@talentai.bid" className={footerStyles.socialIcon} aria-label="Email" title="Email">
+                {/* Email Icon */}
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none"/><path d="M4 6.8A2.8 2.8 0 0 1 6.8 4h10.4A2.8 2.8 0 0 1 20 6.8v10.4A2.8 2.8 0 0 1 17.2 20H6.8A2.8 2.8 0 0 1 4 17.2V6.8Zm2.1.7 5.9 5.1 5.9-5.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M19.5 7.5 13 13.5a2 2 0 0 1-2.6 0L4.5 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </a>
+              <a href="https://pitch.talentai.bid/" target="_blank" rel="noopener noreferrer" className={footerStyles.socialIcon} aria-label="Pitch Deck" title="Pitch Deck">
+                {/* Link Icon */}
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none"/><path d="M14.828 9.172a4 4 0 0 1 0 5.656l-3.535 3.535a4 4 0 0 1-5.657-5.657l1.414-1.414" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.172 14.828a4 4 0 0 1 0-5.656l3.535-3.535a4 4 0 0 1 5.657 5.657l-1.414 1.414" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </a>
+              <a href="https://www.youtube.com/@TalentAi-w3p" target="_blank" rel="noopener noreferrer" className={footerStyles.socialIcon} aria-label="YouTube" title="YouTube">
+                {/* YouTube Icon */}
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none"/><path d="M21.8 8.001a2.75 2.75 0 0 0-1.934-1.944C18.01 5.5 12 5.5 12 5.5s-6.01 0-7.866.557A2.75 2.75 0 0 0 2.2 8.001 28.6 28.6 0 0 0 2 12a28.6 28.6 0 0 0 .2 3.999 2.75 2.75 0 0 0 1.934 1.944C5.99 18.5 12 18.5 12 18.5s6.01 0 7.866-.557A2.75 2.75 0 0 0 21.8 15.999 28.6 28.6 0 0 0 22 12a28.6 28.6 0 0 0-.2-3.999Z" stroke="currentColor" strokeWidth="1.5"/><path d="m10 15.5 5-3.5-5-3.5v7Z" fill="currentColor"/></svg>
+              </a>
+              <a href="#" className={footerStyles.socialIcon} aria-label="Twitter" title="Twitter">
+                {/* Twitter Icon */}
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none"/><path d="M22 5.924c-.793.352-1.645.59-2.54.698a4.48 4.48 0 0 0 1.965-2.475 8.94 8.94 0 0 1-2.828 1.082A4.48 4.48 0 0 0 11.5 9.5c0 .352.04.695.116 1.022C7.728 10.37 4.1 8.6 1.671 5.965c-.386.663-.607 1.434-.607 2.26 0 1.56.795 2.936 2.005 3.744a4.48 4.48 0 0 1-2.03-.56v.057c0 2.18 1.553 4.002 3.617 4.417-.378.104-.776.16-1.187.16-.29 0-.57-.028-.844-.08.57 1.78 2.223 3.078 4.183 3.113A8.98 8.98 0 0 1 2 19.07a12.7 12.7 0 0 0 6.88 2.017c8.26 0 12.785-6.84 12.785-12.785 0-.195-.004-.39-.013-.583A9.14 9.14 0 0 0 24 4.59a8.98 8.98 0 0 1-2.6.713Z" stroke="currentColor" strokeWidth="1.5"/></svg>
+              </a>
+              <a href="#" className={footerStyles.socialIcon} aria-label="LinkedIn" title="LinkedIn">
+                {/* LinkedIn Icon */}
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none"/><path d="M6.94 7.5a1.44 1.44 0 1 1 0-2.88 1.44 1.44 0 0 1 0 2.88ZM7.5 9.5v7M12 13.5v3M12 9.5v1.5m0 0c0-.828.672-1.5 1.5-1.5s1.5.672 1.5 1.5v3c0 .828-.672 1.5-1.5 1.5s-1.5-.672-1.5-1.5v-3Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </a>
+              <a href="#" className={footerStyles.socialIcon} aria-label="GitHub" title="GitHub">
+                {/* GitHub Icon */}
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none"/><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.867 8.166 6.839 9.489.5.092.682-.217.682-.483 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.34-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.025A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.295 2.748-1.025 2.748-1.025.546 1.378.202 2.397.1 2.65.64.699 1.028 1.592 1.028 2.683 0 3.842-2.338 4.687-4.566 4.936.36.31.68.921.68 1.857 0 1.34-.012 2.422-.012 2.752 0 .268.18.579.688.481C19.135 20.163 22 16.417 22 12c0-5.523-4.477-10-10-10Z" stroke="currentColor" strokeWidth="1.5"/></svg>
+              </a>
             </div>
           </div>
+        </div>
+        <div className={footerStyles.footerBottom}>
+          &copy; {new Date().getFullYear()} TalentAI. All rights reserved.
         </div>
       </footer>
     </div>
