@@ -14,6 +14,8 @@ import {
 } from "recharts";
 import { motion } from "framer-motion";
 import styles from "./Landing.module.css";
+import { partners } from "../data/partners";
+import partnerStyles from "../styles/Partners.module.css";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -344,10 +346,10 @@ export default function Home() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <a href="#features">Features</a>
+          {/* <a href="#features">Features</a>
           <a href="#solutions">Solutions</a>
           <a href="#pricing">Pricing</a>
-          <a href="#contact">Contact</a>
+          <a href="#contact">Contact</a> */}
           <motion.a 
             href="/signin" 
             className={styles.signInButton}
@@ -395,7 +397,7 @@ export default function Home() {
                 <span className={styles.buttonIcon}>→</span>
               </motion.a>
               <motion.a 
-                href="#demo" 
+                href="/signin" 
                 className={styles.secondaryButton}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -571,7 +573,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className={`${styles.testimonials} scrollReveal`}>
+        {/* <section className={`${styles.testimonials} scrollReveal`}>
           <div className={styles.testimonialsContainer}>
             <motion.h2 
               className={styles.sectionTitle}
@@ -611,6 +613,54 @@ export default function Home() {
                 </motion.div>
               ))}
             </div>
+          </div>
+        </section> */}
+
+        <section className={`${partnerStyles.partnersSection} scrollReveal`}>
+          <div className={partnerStyles.partnersContainer}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className={partnerStyles.sectionHeader}
+            >
+              <h2>Our Trusted Partners</h2>
+              <p>Working with industry leaders to transform talent acquisition</p>
+            </motion.div>
+
+            <motion.div
+              variants={staggerContainer}
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true }}
+              className={partnerStyles.partnersGrid}
+            >
+              {partners.map((partner) => (
+                <motion.div
+                  key={partner.name}
+                  variants={fadeInUp}
+                  className={partnerStyles.partnerCard}
+                  data-partner={partner.name}
+                >
+                  <div className={partnerStyles.partnerLogo}>
+                    {partner.isImage ? (
+                      <img 
+                        src={partner.logo} 
+                        alt={`${partner.name} logo`}
+                        className={partnerStyles.partnerLogoImg}
+                      />
+                    ) : (
+                      partner.logo
+                    )}
+                  </div>
+                  {/* <h3>{partner.name}</h3> */}
+                  <p>{partner.description}</p>
+                  <span className={partnerStyles.partnerCategory}>{partner.category}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+            <div className={partnerStyles.scrollIndicator} />
           </div>
         </section>
 
@@ -681,14 +731,12 @@ export default function Home() {
             />
           </div>
           <div className={styles.footerGrid}>
-            <div className={styles.footerSection}>
+            {/* <div className={styles.footerSection}>
               <h4>Product</h4>
-              <a href="#features">Features</a>
-              <a href="#solutions">Solutions</a>
-              <a href="#pricing">Pricing</a>
-              <a href="#demo">Demo</a>
-            </div>
-            <div className={styles.footerSection}>
+              <a href="/signin">SignIn</a>
+              
+            </div> */}
+            {/* <div className={styles.footerSection}>
               <h4>Company</h4>
               <a href="#about">About</a>
               <a href="#careers">Careers</a>
@@ -708,7 +756,7 @@ export default function Home() {
               <a href="#terms">Terms</a>
               <a href="#security">Security</a>
               <a href="#cookies">Cookies</a>
-            </div>
+            </div> */}
           </div>
           <div className={styles.footerBottom}>
             <div className={styles.footerLinks}>
