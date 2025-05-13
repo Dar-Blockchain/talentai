@@ -46,6 +46,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useRouter } from 'next/router';
 import Cookies from 'js-cookie';
+import { signOut } from 'next-auth/react';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -367,7 +368,7 @@ export default function DashboardCandidate() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
       // First clear the token from both localStorage and cookies
       localStorage.removeItem('api_token');
@@ -383,6 +384,9 @@ export default function DashboardCandidate() {
 
       // Clear Redux state
       dispatch(clearProfile());
+
+      // Sign out from NextAuth
+      await signOut({ redirect: false });
 
       // Redirect to signin page
       router.push('/signin');

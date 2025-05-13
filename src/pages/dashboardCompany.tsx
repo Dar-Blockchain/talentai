@@ -41,6 +41,7 @@ import LinkIcon from '@mui/icons-material/Link';
 import ErrorIcon from '@mui/icons-material/Error';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import InfoIcon from '@mui/icons-material/Info';
+import { signOut } from 'next-auth/react';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -507,7 +508,7 @@ const DashboardCompany = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
       // First clear the token from both localStorage and cookies
       localStorage.removeItem('api_token');
@@ -523,6 +524,9 @@ const DashboardCompany = () => {
 
       // Clear Redux state
       dispatch(clearProfile());
+
+      // Sign out from NextAuth
+      await signOut({ redirect: false });
 
       // Redirect to signin page
       router.push('/signin');
