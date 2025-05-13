@@ -4,25 +4,46 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import TemplateIcon from '@mui/icons-material/Dashboard';
 import UndoIcon from '@mui/icons-material/Undo';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import LinkedInIcon from '@mui/icons-material/LinkedIn';
-import LinkIcon from '@mui/icons-material/Link';
+// import LinkedInIcon from '@mui/icons-material/LinkedIn';
+// import LinkIcon from '@mui/icons-material/Link';
 import ActionButton from './ActionButton';
 import { useState, useEffect } from 'react';
 
 const ActionsContainer = styled('div')({
   position: 'fixed',
   top: '16px',
-  left: '50%',
-  transform: 'translateX(-50%)',
+  right: '20px',
   display: 'flex',
-  flexWrap: 'wrap',
+  flexDirection: 'column',
   gap: '8px',
   zIndex: 1000,
   padding: '12px',
-  background: 'linear-gradient(180deg, rgba(19, 19, 66, 0.9) 0%, rgba(37, 37, 93, 0.9) 100%)',
+  background: 'linear-gradient(180deg, rgba(19, 19, 66, 0.95) 0%, rgba(37, 37, 93, 0.95) 100%)',
   borderRadius: '12px',
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
+  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+  border: '1px solid rgba(255, 255, 255, 0.15)',
+  backdropFilter: 'blur(4px)',
+  maxHeight: 'calc(100vh - 32px)',
+  overflowY: 'auto',
+  width: '180px'
+});
+
+const ActionTitle = styled('div')({
+  color: 'white',
+  fontSize: '14px',
+  fontWeight: 600,
+  marginBottom: '8px',
+  textAlign: 'center',
+  textTransform: 'uppercase',
+  letterSpacing: '1px',
+  borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
+  paddingBottom: '8px'
+});
+
+const ButtonGroup = styled('div')({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '8px'
 });
 
 interface ResumeActionsProps {
@@ -93,53 +114,56 @@ export default function ResumeActions({
 
   return (
     <ActionsContainer>
-      <ActionButton
-        icon={<UndoIcon style={{ color: '#fff' }} />}
-        label="Undo"
-        tooltip="Undo last action"
-        onClick={onUndo || (() => {})}
-        disabled={!canUndo || !onUndo}
-      />
-      <ActionButton
-        icon={<PictureAsPdfIcon style={{ color: '#e85852' }} />}
-        label="Export PDF"
-        tooltip="Export your resume as a PDF file"
-        onClick={onExportPDF}
-        disabled={noSections}
-      />
-      {!isLinkedInConnected && (
+      <ButtonGroup>
         <ActionButton
-          icon={<LinkIcon style={{ color: '#0077b5' }} />}
-          onClick={handleConnectLinkedIn}
-          tooltip="Connect to LinkedIn"
-          label="Connect LinkedIn"
-        />
-      )}
-      {onShareLinkedIn && isLinkedInConnected && (
-        <ActionButton
-          icon={<LinkedInIcon style={{ color: '#0077b5' }} />}
-          onClick={onShareLinkedIn}
-          tooltip="Share to LinkedIn"
-          label="Share to LinkedIn"
+          icon={<SaveIcon style={{ color: '#4caf50' }} />}
+          label="Save Draft"
+          tooltip="Save your resume draft"
+          onClick={onSaveDraft}
           disabled={noSections}
         />
-      )}
-      {onChangeTemplate && (
         <ActionButton
-          icon={<TemplateIcon style={{ color: '#5bb381' }} />}
-          label="Templates"
-          tooltip="Change template"
-          onClick={onChangeTemplate}
+          icon={<UndoIcon style={{ color: '#fff' }} />}
+          label="Undo"
+          tooltip="Undo last action"
+          onClick={onUndo || (() => {})}
+          disabled={!canUndo || !onUndo}
         />
-      )}
-      {onRegenerate && (
         <ActionButton
-          icon={<AutoFixHighIcon style={{ color: '#b68cb8' }} />}
-          label="AI Generate"
-          tooltip="Generate content with AI"
-          onClick={onRegenerate}
+          icon={<PictureAsPdfIcon style={{ color: '#e85852' }} />}
+          label="Export PDF"
+          tooltip="Export your resume as a PDF file"
+          onClick={onExportPDF}
+          disabled={noSections}
         />
-      )}
+        {onChangeTemplate && (
+          <ActionButton
+            icon={<TemplateIcon style={{ color: '#5bb381' }} />}
+            label="Templates"
+            tooltip="Change template"
+            onClick={onChangeTemplate}
+          />
+        )}
+        {/* Temporarily hiding LinkedIn buttons for demo
+        {!isLinkedInConnected && (
+          <ActionButton
+            icon={<LinkIcon style={{ color: '#0077b5' }} />}
+            onClick={handleConnectLinkedIn}
+            tooltip="Connect to LinkedIn"
+            label="Connect LinkedIn"
+          />
+        )}
+        {onShareLinkedIn && isLinkedInConnected && (
+          <ActionButton
+            icon={<LinkedInIcon style={{ color: '#0077b5' }} />}
+            onClick={onShareLinkedIn}
+            tooltip="Share to LinkedIn"
+            label="Share to LinkedIn"
+            disabled={noSections}
+          />
+        )}
+        */}
+      </ButtonGroup>
     </ActionsContainer>
   );
 } 

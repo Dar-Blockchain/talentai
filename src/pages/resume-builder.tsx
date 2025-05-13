@@ -1948,9 +1948,6 @@ export default function ResumeBuilder() {
         onUndo={handleUndo}
         canUndo={sectionsHistory.length > 0}
         sectionsCount={sections.length}
-        onRegenerate={openRegenerateModal}
-        onShareLinkedIn={handleShareLinkedIn}
-        linkedInConnected={linkedInConnected}
       />
 
       <Drawer

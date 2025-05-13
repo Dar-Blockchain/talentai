@@ -5,31 +5,34 @@ import { styled } from '@mui/material/styles';
 const StyledButton = styled('button')<{ disabled?: boolean }>(({ theme, disabled }) => ({
   display: 'flex',
   alignItems: 'center',
-  gap: '8px',
-  padding: '8px 12px',
-  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  border: '1px solid rgba(255, 255, 255, 0.2)',
+  gap: '10px',
+  padding: '10px 15px',
+  backgroundColor: 'rgba(255, 255, 255, 0.12)',
+  border: '1px solid rgba(255, 255, 255, 0.22)',
   borderRadius: '8px',
   color: disabled ? 'rgba(255, 255, 255, 0.5)' : '#fff',
   cursor: disabled ? 'default' : 'pointer',
-  fontSize: '13px',
+  fontSize: '14px',
   fontWeight: 500,
-  transition: 'all 0.2s ease',
-  backdropFilter: 'blur(10px)',
-  width: '140px',
+  transition: 'all 0.15s ease',
+  backdropFilter: 'blur(12px)',
+  width: '100%',
   justifyContent: 'flex-start',
   opacity: disabled ? 0.6 : 1,
+  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
   '&:hover': {
-    backgroundColor: disabled ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.2)',
-    transform: disabled ? 'none' : 'translateX(-2px)',
-    boxShadow: disabled ? 'none' : '0 4px 12px rgba(0, 0, 0, 0.15)',
+    backgroundColor: disabled ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.25)',
+    transform: disabled ? 'none' : 'translateY(-2px)',
+    boxShadow: disabled ? 'none' : '0 4px 10px rgba(0, 0, 0, 0.2)',
   },
   '&:active': {
-    transform: disabled ? 'none' : 'translateX(0)',
+    transform: disabled ? 'none' : 'translateY(0)',
+    boxShadow: '0 2px 3px rgba(0, 0, 0, 0.15)',
   },
   '& svg': {
-    width: '16px',
-    height: '16px',
+    width: '18px',
+    height: '18px',
+    marginRight: '4px'
   }
 }));
 

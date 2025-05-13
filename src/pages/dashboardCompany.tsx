@@ -40,6 +40,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import LinkIcon from '@mui/icons-material/Link';
 import ErrorIcon from '@mui/icons-material/Error';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import InfoIcon from '@mui/icons-material/Info';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -360,6 +361,7 @@ const DashboardCompany = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [linkedinCopySuccess, setLinkedinCopySuccess] = useState(false);
+  const [hasSharedToLinkedIn, setHasSharedToLinkedIn] = useState(false);
   const [myJobs, setMyJobs] = useState<any[]>([]);
   const [selectedJob, setSelectedJob] = useState('');
   const [isLoadingJobs, setIsLoadingJobs] = useState(false);
@@ -405,6 +407,7 @@ const DashboardCompany = () => {
   const [isLoadingBids] = useState(false);
   const [bidError] = useState<string | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [linkedinWarningOpen, setLinkedinWarningOpen] = useState(false);
 
   // Fetch matching profiles
   const fetchMatchingProfiles = async () => {
@@ -532,7 +535,7 @@ const DashboardCompany = () => {
     dispatch(getMyProfile());
   }, [dispatch]);
 
-  // Add this function to handle job generation
+  // Modify the handle generate job function to reset the sharing state ONLY after successful generation
   const handleGenerateJob = async (type: 'quick' | 'detailed') => {
     try {
       setGenerationType(type);
@@ -542,6 +545,9 @@ const DashboardCompany = () => {
         setIsDetailedGenerating(true);
       }
       setJobPostError(null);
+      
+      // Remove this line from here - we'll move it to after successful generation
+      // setHasSharedToLinkedIn(false);
       
       const token = Cookies.get('api_token');
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}linkedinPost/generate-job-post`, {
@@ -669,6 +675,10 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
         console.log('Generated Job Post:', jobPost);
 
         setGeneratedJob(jobPost);
+        
+        // NOW reset the LinkedIn sharing status since we have a new job post
+        setHasSharedToLinkedIn(false);
+        
       } catch (error) {
         console.error('Error generating job:', error);
         setJobPostError(error instanceof Error ? error.message : 'Failed to generate job post');
@@ -1417,29 +1427,23 @@ Benefits:
                       onClick={handleShareLinkedIn}
                       disabled={isPosting}
                       sx={{
-                        background: 'linear-gradient(135deg, #0077B5 0%, #00A0DC 100%)',
+                        background: hasSharedToLinkedIn 
+                          ? 'rgba(0,119,181,0.6)' 
+                          : 'linear-gradient(135deg, #0077B5 0%, #00A0DC 100%)',
                         '&:hover': {
-                          background: 'linear-gradient(135deg, #006097 0%, #0077B5 100%)',
+                          background: hasSharedToLinkedIn 
+                            ? 'rgba(0,119,181,0.7)' 
+                            : 'linear-gradient(135deg, #006097 0%, #0077B5 100%)',
                         }
                       }}
                     >
-                      {isPosting ? 'Sharing...' : linkedinCopySuccess ? 'Shared!' : 'Share on LinkedIn'}
-                    </Button>
-                    
-                    <Button
-                      variant="outlined"
-                      startIcon={<ContentCopyIcon />}
-                      onClick={handleCopyForLinkedIn}
-                      sx={{
-                        borderColor: 'rgba(255,255,255,0.3)',
-                        color: 'white',
-                        '&:hover': {
-                          borderColor: '#00A0DC',
-                          backgroundColor: 'rgba(0,160,220,0.1)'
-                        }
-                      }}
-                    >
-                      {copySuccess ? 'Copied!' : 'Copy Text'}
+                      {isPosting 
+                        ? 'Sharing...' 
+                        : linkedinCopySuccess 
+                          ? 'Shared!' 
+                          : hasSharedToLinkedIn 
+                            ? 'Already Shared' 
+                            : 'Share on LinkedIn'}
                     </Button>
                   </Box>
                 </Box>
@@ -2082,6 +2086,12 @@ Benefits:
   const handleShareLinkedIn = async () => {
     if (!generatedJob) return;
     
+    // If this exact job has already been shared, show dialog instead of alert
+    if (hasSharedToLinkedIn) {
+      setLinkedinWarningOpen(true);
+      return;
+    }
+    
     try {
       // Check if we have a LinkedIn token in localStorage
       const token = localStorage.getItem('linkedin_token');
@@ -2144,10 +2154,35 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           setLinkedinCopySuccess(true);
           setTimeout(() => setLinkedinCopySuccess(false), 2000);
           console.log('Successfully shared to LinkedIn with directShare!');
+          // Mark this job as shared
+          setHasSharedToLinkedIn(true);
         } else if (shareResponse.status === 403) {
           console.log('Permission issue with directShare, will try other methods...');
         } else {
-          console.error('LinkedIn directShare failed:', shareResult);
+          // Check for duplicate post error
+          const isDuplicateError = 
+            (shareResponse.status === 400 || shareResponse.status === 409) && 
+            (typeof shareResult === 'object' && 
+             shareResult !== null && 
+             ((shareResult.details && 
+               (typeof shareResult.details.message === 'string' && 
+                (shareResult.details.message.toLowerCase().includes('duplicate') || 
+                 shareResult.details.message.toLowerCase().includes('same content')))) ||
+              (typeof shareResult.error === 'string' && 
+               (shareResult.error.toLowerCase().includes('duplicate') || 
+                shareResult.error.toLowerCase().includes('same content')))));
+          
+          if (isDuplicateError) {
+            // Show specific message for duplicate posts
+            alert('LinkedIn does not allow posting duplicate content. Please modify your job post or try again later with different content.');
+            
+            // Still consider this a partial success and don't show further errors
+            success = true;
+            // Mark this job as shared since we detected it was already shared
+            setHasSharedToLinkedIn(true);
+          } else {
+            console.error('LinkedIn directShare failed:', shareResult);
+          }
         }
       } catch (err) {
         console.error('Error using directShare:', err);
@@ -2173,8 +2208,33 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             setLinkedinCopySuccess(true);
             setTimeout(() => setLinkedinCopySuccess(false), 2000);
             console.log('Successfully shared to LinkedIn with shareText!');
+            // Mark this job as shared
+            setHasSharedToLinkedIn(true);
           } else {
-            console.error('LinkedIn shareText failed:', shareTextResult);
+            // Check for duplicate post error
+            const isDuplicateError = 
+              (shareTextResponse.status === 400 || shareTextResponse.status === 409) && 
+              (typeof shareTextResult === 'object' && 
+               shareTextResult !== null && 
+               ((shareTextResult.details && 
+                 (typeof shareTextResult.details.message === 'string' && 
+                  (shareTextResult.details.message.toLowerCase().includes('duplicate') || 
+                   shareTextResult.details.message.toLowerCase().includes('same content')))) ||
+                (typeof shareTextResult.error === 'string' && 
+                 (shareTextResult.error.toLowerCase().includes('duplicate') || 
+                  shareTextResult.error.toLowerCase().includes('same content')))));
+            
+            if (isDuplicateError) {
+              // Show specific message for duplicate posts
+              alert('LinkedIn does not allow posting duplicate content. Please modify your job post or try again later with different content.');
+              
+              // Still consider this a partial success and don't show further errors
+              success = true;
+              // Mark this job as shared since we detected it was already shared
+              setHasSharedToLinkedIn(true);
+            } else {
+              console.error('LinkedIn shareText failed:', shareTextResult);
+            }
           }
         } catch (err) {
           console.error('Error using shareText:', err);
@@ -2202,6 +2262,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             setLinkedinCopySuccess(true);
             setTimeout(() => setLinkedinCopySuccess(false), 2000);
             console.log('Successfully shared to LinkedIn with directShareSimple!');
+            // Mark this job as shared
+            setHasSharedToLinkedIn(true);
           } else if (simpleResponse.status === 401) {
             // Token expired - clear it and ask user to reconnect
             localStorage.removeItem('linkedin_token');
@@ -2213,16 +2275,40 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             localStorage.removeItem('linkedin_token');
             window.open('/api/linkedin/auth/start', '_blank', 'width=600,height=700');
           } else {
-            // Other error
-            console.error('LinkedIn sharing failed with all methods:', simpleResult);
+            // Check for duplicate post error - LinkedIn returns a 400 status for duplicate posts
+            // The error message might contain words like "duplicate" or "same content"
+            const isDuplicateError = 
+              (simpleResponse.status === 400 || simpleResponse.status === 409) && 
+              (typeof simpleResult === 'object' && 
+               simpleResult !== null && 
+               ((simpleResult.details && 
+                 (typeof simpleResult.details.message === 'string' && 
+                  (simpleResult.details.message.toLowerCase().includes('duplicate') || 
+                   simpleResult.details.message.toLowerCase().includes('same content')))) ||
+                (typeof simpleResult.error === 'string' && 
+                 (simpleResult.error.toLowerCase().includes('duplicate') || 
+                  simpleResult.error.toLowerCase().includes('same content')))));
             
-            // Suggest reconnecting with expanded permissions
-            if (window.confirm('Failed to share to LinkedIn. Would you like to try reconnecting with expanded permissions?')) {
-              localStorage.removeItem('linkedin_token');
-              window.open('/api/linkedin/auth/start', '_blank', 'width=600,height=700');
+            if (isDuplicateError) {
+              // Show specific message for duplicate posts
+              alert('LinkedIn does not allow posting duplicate content. Please modify your job post or try again later with different content.');
+              
+              // Still consider this a partial success and don't show the reconnect dialog
+              success = true;
+              // Mark this job as shared since we detected it was already shared
+              setHasSharedToLinkedIn(true);
             } else {
-              alert(`Unable to share to LinkedIn. As a fallback, the job post has been copied to your clipboard.`);
-              navigator.clipboard.writeText(message);
+              // Other error
+              console.error('LinkedIn sharing failed with all methods:', simpleResult);
+              
+              // Suggest reconnecting with expanded permissions
+              if (window.confirm('Failed to share to LinkedIn. Would you like to try reconnecting with expanded permissions?')) {
+                localStorage.removeItem('linkedin_token');
+                window.open('/api/linkedin/auth/start', '_blank', 'width=600,height=700');
+              } else {
+                alert(`Unable to share to LinkedIn. As a fallback, the job post has been copied to your clipboard.`);
+                navigator.clipboard.writeText(message);
+              }
             }
           }
         } catch (error) {
@@ -2244,6 +2330,11 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
     }
   };
 
+  // Add a function to handle closing the LinkedIn warning dialog
+  const handleCloseLinkedinWarning = () => {
+    setLinkedinWarningOpen(false);
+  };
+
   return (
     <Box sx={{
       minHeight: '100vh',
@@ -2256,6 +2347,82 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
     }}>
       <Container maxWidth="lg">
         {renderFilterDialog()}
+        
+        {/* Add the LinkedIn duplicate post warning dialog */}
+        <Dialog
+          open={linkedinWarningOpen}
+          onClose={handleCloseLinkedinWarning}
+          PaperProps={{
+            sx: {
+              borderRadius: '16px',
+              background: 'rgba(30, 41, 59, 0.95)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              maxWidth: '450px'
+            }
+          }}
+        >
+          <DialogTitle sx={{ 
+            pb: 1, 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1, 
+            color: '#02E2FF',
+            fontSize: '1.2rem',
+            fontWeight: 600,
+            borderBottom: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <InfoIcon sx={{ color: '#02E2FF' }} />
+            LinkedIn Sharing Restriction
+            <IconButton
+              aria-label="close"
+              onClick={handleCloseLinkedinWarning}
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+                color: 'rgba(255,255,255,0.7)'
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3, pb: 2 }}>
+            <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
+              LinkedIn does not allow posting duplicate content. Please modify your job post or generate a new one before sharing again.
+            </Typography>
+            <Box sx={{ 
+              p: 2, 
+              borderRadius: '8px', 
+              backgroundColor: 'rgba(2,226,255,0.05)',
+              border: '1px solid rgba(2,226,255,0.2)',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 1.5
+            }}>
+              <InfoIcon sx={{ color: '#02E2FF', mt: 0.3 }} />
+              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                This is a LinkedIn platform restriction to prevent spam. Try using the "Quick Generate" or "Detailed Analysis" button to create a different job post.
+              </Typography>
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3, pt: 1 }}>
+            <Button
+              onClick={handleCloseLinkedinWarning}
+              variant="contained"
+              sx={{
+                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                borderRadius: '8px',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                }
+              }}
+            >
+              OK
+            </Button>
+          </DialogActions>
+        </Dialog>
+        
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
           <Button
             variant="contained"
