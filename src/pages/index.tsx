@@ -406,12 +406,14 @@ export default function Home() {
                 <span className={styles.buttonIcon}>→</span>
               </motion.a>
               <motion.a
-                href="/signin"
+                href="https://calendly.com/hatemazaiez1/30min"
+                target="_blank"
+                rel="noopener noreferrer"
                 className={styles.secondaryButton}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Watch Demo
+                Schedule Demo
                 <span className={styles.buttonIcon}>▶</span>
               </motion.a>
             </div>
@@ -712,15 +714,7 @@ export default function Home() {
                 Get Started Free
                 <span className={styles.buttonIcon}>→</span>
               </motion.a>
-              <motion.a
-                href="#demo"
-                className={styles.ctaSecondaryButton}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Schedule Demo
-                <span className={styles.buttonIcon}>▶</span>
-              </motion.a>
+
             </motion.div>
           </div>
         </section>
@@ -749,27 +743,27 @@ export default function Home() {
             <div className={footerStyles.socialLinks}>
               <a href="mailto:contact@talentai.bid" className={footerStyles.socialIcon} aria-label="Email" title="Email">
                 {/* Email Icon */}
-                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none"/><path d="M4 6.8A2.8 2.8 0 0 1 6.8 4h10.4A2.8 2.8 0 0 1 20 6.8v10.4A2.8 2.8 0 0 1 17.2 20H6.8A2.8 2.8 0 0 1 4 17.2V6.8Zm2.1.7 5.9 5.1 5.9-5.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M19.5 7.5 13 13.5a2 2 0 0 1-2.6 0L4.5 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none" /><path d="M4 6.8A2.8 2.8 0 0 1 6.8 4h10.4A2.8 2.8 0 0 1 20 6.8v10.4A2.8 2.8 0 0 1 17.2 20H6.8A2.8 2.8 0 0 1 4 17.2V6.8Zm2.1.7 5.9 5.1 5.9-5.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M19.5 7.5 13 13.5a2 2 0 0 1-2.6 0L4.5 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </a>
               <a href="https://www.figma.com/slides/hz5ZCbapUAozjPslnaLs2K/Pitchdeck?node-id=3-1455" target="_blank" rel="noopener noreferrer" className={footerStyles.socialIcon} aria-label="Pitch Deck" title="Pitch Deck">
                 {/* Link Icon */}
-                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none"/><path d="M14.828 9.172a4 4 0 0 1 0 5.656l-3.535 3.535a4 4 0 0 1-5.657-5.657l1.414-1.414" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.172 14.828a4 4 0 0 1 0-5.656l3.535-3.535a4 4 0 0 1 5.657 5.657l-1.414 1.414" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none" /><path d="M14.828 9.172a4 4 0 0 1 0 5.656l-3.535 3.535a4 4 0 0 1-5.657-5.657l1.414-1.414" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M9.172 14.828a4 4 0 0 1 0-5.656l3.535-3.535a4 4 0 0 1 5.657 5.657l-1.414 1.414" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </a>
               <a href="https://www.youtube.com/@TalentAi-w3p" target="_blank" rel="noopener noreferrer" className={footerStyles.socialIcon} aria-label="YouTube" title="YouTube">
                 {/* YouTube Icon */}
-                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none"/><path d="M21.8 8.001a2.75 2.75 0 0 0-1.934-1.944C18.01 5.5 12 5.5 12 5.5s-6.01 0-7.866.557A2.75 2.75 0 0 0 2.2 8.001 28.6 28.6 0 0 0 2 12a28.6 28.6 0 0 0 .2 3.999 2.75 2.75 0 0 0 1.934 1.944C5.99 18.5 12 18.5 12 18.5s6.01 0 7.866-.557A2.75 2.75 0 0 0 21.8 15.999 28.6 28.6 0 0 0 22 12a28.6 28.6 0 0 0-.2-3.999Z" stroke="currentColor" strokeWidth="1.5"/><path d="m10 15.5 5-3.5-5-3.5v7Z" fill="currentColor"/></svg>
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none" /><path d="M21.8 8.001a2.75 2.75 0 0 0-1.934-1.944C18.01 5.5 12 5.5 12 5.5s-6.01 0-7.866.557A2.75 2.75 0 0 0 2.2 8.001 28.6 28.6 0 0 0 2 12a28.6 28.6 0 0 0 .2 3.999 2.75 2.75 0 0 0 1.934 1.944C5.99 18.5 12 18.5 12 18.5s6.01 0 7.866-.557A2.75 2.75 0 0 0 21.8 15.999 28.6 28.6 0 0 0 22 12a28.6 28.6 0 0 0-.2-3.999Z" stroke="currentColor" strokeWidth="1.5" /><path d="m10 15.5 5-3.5-5-3.5v7Z" fill="currentColor" /></svg>
               </a>
               <a href="#" className={footerStyles.socialIcon} aria-label="Twitter" title="Twitter">
                 {/* Twitter Icon */}
-                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none"/><path d="M22 5.924c-.793.352-1.645.59-2.54.698a4.48 4.48 0 0 0 1.965-2.475 8.94 8.94 0 0 1-2.828 1.082A4.48 4.48 0 0 0 11.5 9.5c0 .352.04.695.116 1.022C7.728 10.37 4.1 8.6 1.671 5.965c-.386.663-.607 1.434-.607 2.26 0 1.56.795 2.936 2.005 3.744a4.48 4.48 0 0 1-2.03-.56v.057c0 2.18 1.553 4.002 3.617 4.417-.378.104-.776.16-1.187.16-.29 0-.57-.028-.844-.08.57 1.78 2.223 3.078 4.183 3.113A8.98 8.98 0 0 1 2 19.07a12.7 12.7 0 0 0 6.88 2.017c8.26 0 12.785-6.84 12.785-12.785 0-.195-.004-.39-.013-.583A9.14 9.14 0 0 0 24 4.59a8.98 8.98 0 0 1-2.6.713Z" stroke="currentColor" strokeWidth="1.5"/></svg>
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none" /><path d="M22 5.924c-.793.352-1.645.59-2.54.698a4.48 4.48 0 0 0 1.965-2.475 8.94 8.94 0 0 1-2.828 1.082A4.48 4.48 0 0 0 11.5 9.5c0 .352.04.695.116 1.022C7.728 10.37 4.1 8.6 1.671 5.965c-.386.663-.607 1.434-.607 2.26 0 1.56.795 2.936 2.005 3.744a4.48 4.48 0 0 1-2.03-.56v.057c0 2.18 1.553 4.002 3.617 4.417-.378.104-.776.16-1.187.16-.29 0-.57-.028-.844-.08.57 1.78 2.223 3.078 4.183 3.113A8.98 8.98 0 0 1 2 19.07a12.7 12.7 0 0 0 6.88 2.017c8.26 0 12.785-6.84 12.785-12.785 0-.195-.004-.39-.013-.583A9.14 9.14 0 0 0 24 4.59a8.98 8.98 0 0 1-2.6.713Z" stroke="currentColor" strokeWidth="1.5" /></svg>
               </a>
               <a href="#" className={footerStyles.socialIcon} aria-label="LinkedIn" title="LinkedIn">
                 {/* LinkedIn Icon */}
-                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none"/><path d="M6.94 7.5a1.44 1.44 0 1 1 0-2.88 1.44 1.44 0 0 1 0 2.88ZM7.5 9.5v7M12 13.5v3M12 9.5v1.5m0 0c0-.828.672-1.5 1.5-1.5s1.5.672 1.5 1.5v3c0 .828-.672 1.5-1.5 1.5s-1.5-.672-1.5-1.5v-3Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none" /><path d="M6.94 7.5a1.44 1.44 0 1 1 0-2.88 1.44 1.44 0 0 1 0 2.88ZM7.5 9.5v7M12 13.5v3M12 9.5v1.5m0 0c0-.828.672-1.5 1.5-1.5s1.5.672 1.5 1.5v3c0 .828-.672 1.5-1.5 1.5s-1.5-.672-1.5-1.5v-3Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </a>
               <a href="https://github.com/TalentAI-bid/" className={footerStyles.socialIcon} aria-label="GitHub" title="GitHub">
                 {/* GitHub Icon */}
-                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none"/><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.867 8.166 6.839 9.489.5.092.682-.217.682-.483 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.34-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.025A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.295 2.748-1.025 2.748-1.025.546 1.378.202 2.397.1 2.65.64.699 1.028 1.592 1.028 2.683 0 3.842-2.338 4.687-4.566 4.936.36.31.68.921.68 1.857 0 1.34-.012 2.422-.012 2.752 0 .268.18.579.688.481C19.135 20.163 22 16.417 22 12c0-5.523-4.477-10-10-10Z" stroke="currentColor" strokeWidth="1.5"/></svg>
+                <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect width="24" height="24" rx="12" fill="none" /><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.867 8.166 6.839 9.489.5.092.682-.217.682-.483 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.34-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.025A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.295 2.748-1.025 2.748-1.025.546 1.378.202 2.397.1 2.65.64.699 1.028 1.592 1.028 2.683 0 3.842-2.338 4.687-4.566 4.936.36.31.68.921.68 1.857 0 1.34-.012 2.422-.012 2.752 0 .268.18.579.688.481C19.135 20.163 22 16.417 22 12c0-5.523-4.477-10-10-10Z" stroke="currentColor" strokeWidth="1.5" /></svg>
               </a>
             </div>
           </div>
