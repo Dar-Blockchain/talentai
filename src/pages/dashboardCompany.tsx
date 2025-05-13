@@ -21,6 +21,9 @@ import {
   Grid,
   Stack,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -42,6 +45,8 @@ import ErrorIcon from '@mui/icons-material/Error';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import InfoIcon from '@mui/icons-material/Info';
 import { signOut } from 'next-auth/react';
+import BoltIcon from '@mui/icons-material/Bolt';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -409,6 +414,22 @@ const DashboardCompany = () => {
   const [bidError] = useState<string | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [linkedinWarningOpen, setLinkedinWarningOpen] = useState(false);
+  const [salaryRange, setSalaryRange] = useState({
+    min: 0,
+    max: 0,
+    currency: '$'
+  });
+
+  const isSalaryRangeValid = () => {
+    return salaryRange.min > 0 && salaryRange.max > 0 && salaryRange.max >= salaryRange.min;
+  };
+
+  const handleSalaryChange = (field: 'min' | 'max' | 'currency', value: string | number) => {
+    setSalaryRange(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   // Fetch matching profiles
   const fetchMatchingProfiles = async () => {
@@ -542,27 +563,28 @@ const DashboardCompany = () => {
   // Modify the handle generate job function to reset the sharing state ONLY after successful generation
   const handleGenerateJob = async (type: 'quick' | 'detailed') => {
     try {
-      setGenerationType(type);
       if (type === 'quick') {
         setIsQuickGenerating(true);
       } else {
         setIsDetailedGenerating(true);
       }
       setJobPostError(null);
-      
-      // Remove this line from here - we'll move it to after successful generation
-      // setHasSharedToLinkedIn(false);
-      
+
       const token = Cookies.get('api_token');
+      
+      // Format salary range for description
+      const salaryText = `\n\nSalary Range: ${salaryRange.currency}${salaryRange.min.toLocaleString()} - ${salaryRange.currency}${salaryRange.max.toLocaleString()}`;
+      const descriptionWithSalary = jobDescription + salaryText;
+      
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}linkedinPost/generate-job-post`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ 
-          description: jobDescription,
-          type: type // Send the generation type to the API
+        body: JSON.stringify({
+          description: descriptionWithSalary,
+          type
         })
       });
 
@@ -1215,6 +1237,7 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
           }}>
             Describe the position you're looking to fill. Be as detailed as possible about responsibilities, requirements, and desired skills.
           </Typography>
+          
           <TextField
             multiline
             rows={8}
@@ -1251,91 +1274,161 @@ Benefits:
 - Health insurance
 - 401(k) matching
 - Professional development budget"
-            sx={{
-              flex: 1,
-              minHeight: { xs: '200px', sm: '300px', md: '400px' },
-              '& .MuiOutlinedInput-root': {
-                color: '#fff',
-                backgroundColor: 'rgba(255,255,255,0.05)',
-                borderRadius: '12px',
-                height: '100%',
-                fontSize: { xs: '0.875rem', sm: '1rem' },
-                '& fieldset': {
-                  borderColor: 'rgba(255,255,255,0.1)',
+            InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+            InputProps={{
+              sx: {
+                color: '#ffffff',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(255,255,255,0.2)',
                 },
-                '&:hover fieldset': {
-                  borderColor: 'rgba(2,226,255,0.5)',
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(255,255,255,0.3)',
                 },
-                '&.Mui-focused fieldset': {
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                   borderColor: '#02E2FF',
                 },
-                '& textarea': {
-                  height: '100% !important',
-                }
               },
             }}
           />
+
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="subtitle1" sx={{ color: '#ffffff', mb: 2 }}>
+              Salary Range
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+              <Box sx={{ flex: 1 }}>
+                <FormControl fullWidth>
+                  <InputLabel sx={{ color: 'rgba(255,255,255,0.7)' }}>Currency</InputLabel>
+                  <Select
+                    value={salaryRange.currency}
+                    onChange={(e) => handleSalaryChange('currency', e.target.value)}
+                    sx={{
+                      color: '#ffffff',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(255,255,255,0.2)',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(255,255,255,0.3)',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#02E2FF',
+                      },
+                    }}
+                  >
+                    <MenuItem value="$" sx={{ backgroundColor: 'rgba(30,41,59,0.98)', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>$ (USD)</MenuItem>
+                    <MenuItem value="€" sx={{ backgroundColor: 'rgba(30,41,59,0.98)', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>€ (EUR)</MenuItem>
+                    <MenuItem value="£" sx={{ backgroundColor: 'rgba(30,41,59,0.98)', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>£ (GBP)</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <TextField
+                  fullWidth
+                  label="Minimum Salary"
+                  type="number"
+                  value={salaryRange.min}
+                  onChange={(e) => handleSalaryChange('min', parseInt(e.target.value) || 0)}
+                  InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                  InputProps={{
+                    sx: {
+                      color: '#ffffff',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(255,255,255,0.2)',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(255,255,255,0.3)',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#02E2FF',
+                      },
+                    },
+                  }}
+                />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <TextField
+                  fullWidth
+                  label="Maximum Salary"
+                  type="number"
+                  value={salaryRange.max}
+                  onChange={(e) => handleSalaryChange('max', parseInt(e.target.value) || 0)}
+                  InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                  InputProps={{
+                    sx: {
+                      color: '#ffffff',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(255,255,255,0.2)',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(255,255,255,0.3)',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#02E2FF',
+                      },
+                    },
+                  }}
+                />
+              </Box>
+            </Box>
+          </Box>
+
           <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
             <Button
-              fullWidth
-              onClick={() => handleGenerateJob('quick')}
-              disabled={!jobDescription.trim() || isQuickGenerating || isDetailedGenerating}
               variant="contained"
+              onClick={() => handleGenerateJob('quick')}
+              disabled={!jobDescription || isQuickGenerating || !isSalaryRangeValid()}
+              startIcon={isQuickGenerating ? <CircularProgress size={20} /> : <BoltIcon />}
               sx={{
-                py: { xs: 1, sm: 1.5 },
-                fontSize: { xs: '0.875rem', sm: '1rem' },
                 background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                borderRadius: '12px',
                 '&:hover': {
                   background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
                 },
                 '&.Mui-disabled': {
                   background: 'rgba(255,255,255,0.1)',
-                  color: 'rgba(255,255,255,0.3)',
+                  color: 'rgba(255,255,255,0.3)'
                 }
               }}
             >
-              {isQuickGenerating ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CircularProgress size={20} sx={{ color: '#fff' }} />
-                  <span>Quick Generating...</span>
-                </Box>
-              ) : (
-                'Quick Generate'
-              )}
+              {isQuickGenerating ? 'Generating...' : 'Quick Generate'}
             </Button>
-
             <Button
-              fullWidth
-              onClick={() => handleGenerateJob('detailed')}
-              disabled={!jobDescription.trim() || isQuickGenerating || isDetailedGenerating}
               variant="outlined"
+              onClick={() => handleGenerateJob('detailed')}
+              disabled={!jobDescription || isDetailedGenerating || !isSalaryRangeValid()}
+              startIcon={isDetailedGenerating ? <CircularProgress size={20} /> : <AutoAwesomeIcon />}
               sx={{
-                py: { xs: 1, sm: 1.5 },
-                fontSize: { xs: '0.875rem', sm: '1rem' },
-                color: '#02E2FF',
                 borderColor: 'rgba(2,226,255,0.5)',
-                borderRadius: '12px',
+                color: '#02E2FF',
                 '&:hover': {
                   borderColor: '#02E2FF',
-                  background: 'rgba(2,226,255,0.1)',
+                  backgroundColor: 'rgba(2,226,255,0.1)'
                 },
                 '&.Mui-disabled': {
                   borderColor: 'rgba(255,255,255,0.1)',
-                  color: 'rgba(255,255,255,0.3)',
+                  color: 'rgba(255,255,255,0.3)'
                 }
               }}
             >
-              {isDetailedGenerating ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CircularProgress size={20} sx={{ color: '#02E2FF' }} />
-                  <span>Detailed Analysis...</span>
-                </Box>
-              ) : (
-                'Detailed Analysis'
-              )}
+              {isDetailedGenerating ? 'Generating...' : 'Detailed Generate'}
             </Button>
           </Box>
+
+          {!isSalaryRangeValid() && (
+            <Alert 
+              severity="warning" 
+              sx={{ 
+                mt: 2,
+                backgroundColor: 'rgba(255,152,0,0.1)',
+                color: '#ffb74d',
+                border: '1px solid rgba(255,152,0,0.3)',
+                '& .MuiAlert-icon': {
+                  color: '#ffb74d'
+                }
+              }}
+            >
+              Please enter a valid salary range (minimum and maximum values required, maximum must be greater than or equal to minimum)
+            </Alert>
+          )}
 
           {(isQuickGenerating || isDetailedGenerating) && (
             <Typography 
