@@ -41,13 +41,13 @@ export default function SignIn() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
-  
+
   const dispatch = useDispatch<AppDispatch>();
   const { isLoading, error: reduxError } = useSelector((state: RootState) => state.auth);
 
   const { register: registerEmail, handleSubmit: handleEmailSubmit, formState: { errors: emailErrors }, watch: watchEmail } = useForm<EmailFormData>();
   const { register: registerCode, handleSubmit: handleCodeSubmit, formState: { errors: codeErrors }, watch: watchCode } = useForm<CodeFormData>();
-  
+
   const email = watchEmail('email');
   const code = watchCode('code');
 
@@ -71,17 +71,17 @@ export default function SignIn() {
     if (!code || !email) return;
     setError('');
     try {
-      const response = await dispatch(verifyOTP({ 
-        email: email.toLowerCase().trim(), 
-        otp: code 
+      const response = await dispatch(verifyOTP({
+        email: email.toLowerCase().trim(),
+        otp: code
       })).unwrap();
-      
+
       // Check if we have a token before redirecting
       if (response.token) {
         // First clear any existing tokens
         localStorage.removeItem('api_token');
         Cookies.remove('api_token');
-        
+
         // Then set the new token with a small delay to ensure it's set
         localStorage.setItem('api_token', response.token);
         Cookies.set('api_token', response.token, {
@@ -89,7 +89,7 @@ export default function SignIn() {
           path: '/',
           sameSite: 'lax'
         });
-        
+
         // Add a small delay before redirecting to ensure tokens are set
         setTimeout(() => {
           router.push('/preferences');
@@ -136,10 +136,10 @@ export default function SignIn() {
         }}
       >
         <Link href="/" style={{ textDecoration: 'none' }}>
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
               gap: 1.5,
               color: 'rgba(255, 255, 255, 0.8)',
               fontSize: '1rem',
@@ -166,12 +166,12 @@ export default function SignIn() {
               },
             }}
           >
-            <ArrowBackIcon 
+            <ArrowBackIcon
               className="arrow-icon"
-              sx={{ 
+              sx={{
                 fontSize: '1.25rem',
                 transition: 'transform 0.3s ease',
-              }} 
+              }}
             />
             <Box
               className="text-gradient"
@@ -199,9 +199,9 @@ export default function SignIn() {
       </Box>
 
       {/* Main Content */}
-      <Container 
-        maxWidth="sm" 
-        sx={{ 
+      <Container
+        maxWidth="sm"
+        sx={{
           flex: 1,
           display: 'flex',
           alignItems: 'center',
@@ -209,13 +209,13 @@ export default function SignIn() {
           py: 4,
         }}
       >
-        <Card 
-          elevation={8} 
-          sx={{ 
+        <Card
+          elevation={8}
+          sx={{
             width: '100%',
             maxWidth: 440,
             p: { xs: 3, sm: 4 },
-            borderRadius: 3, 
+            borderRadius: 3,
             textAlign: 'center',
             background: 'rgba(255, 255, 255, 0.03)',
             backdropFilter: 'blur(20px)',
@@ -228,8 +228,8 @@ export default function SignIn() {
             transform: 'translateY(-2vh)',
           }}
         >
-          <Box 
-            sx={{ 
+          <Box
+            sx={{
               mb: 3,
               display: 'flex',
               flexDirection: 'column',
@@ -251,7 +251,7 @@ export default function SignIn() {
                 transform: 'translate(-50%, -50%)',
               }}
             />
-            
+
             <Typography
               variant="h4"
               sx={{
@@ -291,9 +291,9 @@ export default function SignIn() {
             </Typography>
           </Box>
 
-          <Typography 
-            variant="h5" 
-            fontWeight={600} 
+          <Typography
+            variant="h5"
+            fontWeight={600}
             sx={{
               background: 'linear-gradient(135deg, #02E2FF, #00FFC3)',
               WebkitBackgroundClip: 'text',
@@ -304,10 +304,10 @@ export default function SignIn() {
           >
             Welcome Back
           </Typography>
-          <Typography 
-            variant="body2" 
-            sx={{ 
-              color: 'rgba(255, 255, 255, 0.6)', 
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'rgba(255, 255, 255, 0.6)',
               mb: 4,
               maxWidth: '80%',
               mx: 'auto',
@@ -316,12 +316,12 @@ export default function SignIn() {
           >
             Sign in to access your recruitment dashboard
           </Typography>
-          
+
           {error && (
-            <Alert 
-              severity="error" 
-              sx={{ 
-                mb: 3, 
+            <Alert
+              severity="error"
+              sx={{
+                mb: 3,
                 bgcolor: 'rgba(211, 47, 47, 0.08)',
                 borderLeft: '4px solid #ff4444',
                 '& .MuiAlert-icon': {
@@ -333,10 +333,10 @@ export default function SignIn() {
             </Alert>
           )}
           {success && (
-            <Alert 
-              severity="success" 
-              sx={{ 
-                mb: 3, 
+            <Alert
+              severity="success"
+              sx={{
+                mb: 3,
                 bgcolor: 'rgba(46, 125, 50, 0.08)',
                 borderLeft: '4px solid #00FFC3',
                 '& .MuiAlert-icon': {
@@ -403,7 +403,7 @@ export default function SignIn() {
                       onClick={handleEmailSubmit(onEmailSubmit)}
                       disabled={loading || isLoading || !email}
                       size="small"
-                      sx={{ 
+                      sx={{
                         textTransform: 'none',
                         color: '#02E2FF',
                         '&:hover': {
@@ -440,9 +440,9 @@ export default function SignIn() {
               type="submit"
               variant="contained"
               disabled={loading || isLoading || !showVerification || !code}
-              sx={{ 
-                py: 1.5, 
-                textTransform: 'none', 
+              sx={{
+                py: 1.5,
+                textTransform: 'none',
                 mb: 2,
                 background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
                 '&:hover': {
@@ -462,7 +462,7 @@ export default function SignIn() {
             </Button>
           </Box>
 
-          <Divider sx={{ 
+          <Divider sx={{
             my: 2,
             '&::before, &::after': {
               borderColor: 'rgba(255, 255, 255, 0.1)',
@@ -478,7 +478,7 @@ export default function SignIn() {
             variant="outlined"
             startIcon={<GoogleIcon />}
             onClick={() => signIn('google')}
-            // disabled
+            disabled
             title="Google Sign-in is currently unavailable"
             sx={{
               py: 1.5,
