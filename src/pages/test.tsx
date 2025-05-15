@@ -173,6 +173,37 @@ interface SpeechRecognitionError extends Event {
   message: string;
 }
 
+// --- Security Modal ---
+const SecurityModal = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialog-paper': {
+    background: 'rgba(244, 67, 54, 0.95)',
+    color: '#fff',
+    borderRadius: '24px',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    maxWidth: '480px',
+    margin: theme.spacing(2),
+    textAlign: 'center',
+  },
+}));
+
+// --- First Violation Modal ---
+const FirstViolationModal = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialog-paper': {
+    backgroundColor: '#00072D',
+    backgroundImage: `
+      radial-gradient(circle at 20% 30%, rgba(2,226,255,0.4), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(0,255,195,0.3), transparent 50%)
+    `,
+    color: '#fff',
+    borderRadius: '24px',
+    border: '1px solid rgba(255,255,255,0.1)',
+    maxWidth: '420px',
+    margin: theme.spacing(2),
+    textAlign: 'center',
+    boxShadow: '0 8px 32px 0 rgba(2, 226, 255, 0.10)',
+  },
+}));
+
 export default function Test() {
   const theme = useTheme();
   const router = useRouter();
@@ -198,6 +229,12 @@ export default function Test() {
   // Add state for guidelines modal
   const [showGuidelines, setShowGuidelines] = useState(true);
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
+
+  // --- Security Violation State ---
+  const [securityViolationCount, setSecurityViolationCount] = useState(0);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [showFirstViolationModal, setShowFirstViolationModal] = useState(false);
+  const violationHandledRef = useRef(false); // Prevent double handling
 
   // Fetch questions from API
   useEffect(() => {
@@ -384,8 +421,6 @@ export default function Test() {
     })();
     return () => streamRef.current?.getTracks().forEach(t => t.stop());
   }, []);
-
-
 
   // Modify the recorder.ondataavailable handler inside createMediaRecorder
   const createMediaRecorder = (stream: MediaStream) => {
@@ -579,6 +614,61 @@ export default function Test() {
     });
   };
 
+  // --- Security Violation Handler ---
+  const handleSecurityViolation = () => {
+    setSecurityViolationCount((prev) => {
+      const next = prev + 1;
+      if (next === 1) {
+        // First violation: show intelligent popup
+        setShowFirstViolationModal(true);
+      } else if (next === 2) {
+        // Second violation: redirect and show modal
+        setShowSecurityModal(true);
+        stopRecording();
+        setTimeout(() => {
+          router.push('/dashboardCandidate');
+        }, 2000); // Give time for modal to show
+      }
+      return next;
+    });
+  };
+
+  // --- Security Event Listeners ---
+  useEffect(() => {
+    // Navigation within app
+    const handleRouteChange = (url: string) => {
+      if (!violationHandledRef.current && url !== router.asPath) {
+        violationHandledRef.current = true;
+        handleSecurityViolation();
+        setTimeout(() => { violationHandledRef.current = false; }, 1000);
+      }
+    };
+    router.events.on('routeChangeStart', handleRouteChange);
+
+    // Tab close/refresh
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      handleSecurityViolation();
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Visibility change (tab switch, some screen capture tools)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        handleSecurityViolation();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      router.events.off('routeChangeStart', handleRouteChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [router]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -599,6 +689,55 @@ export default function Test() {
         flexDirection: 'column',
       }}
     >
+      {/* Security Modal */}
+      <SecurityModal open={showSecurityModal} onClose={() => {}}>
+        <DialogTitle sx={{ fontWeight: 700, color: '#fff', fontSize: '1.5rem' }}>
+          Security Violation
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
+            You have attempted to leave or capture the test page more than once. For security reasons, your test has ended and you are being redirected to the dashboard.
+          </Typography>
+        </DialogContent>
+      </SecurityModal>
+
+      {/* First Violation Modal */}
+      <FirstViolationModal
+        open={showFirstViolationModal}
+        onClose={() => setShowFirstViolationModal(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: '1.3rem', color: '#fff', pt: 3 }}>
+          Heads Up!
+        </DialogTitle>
+        <DialogContent sx={{ pb: 0 }}>
+          <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
+            For security reasons, leaving or capturing the test page is not allowed.<br />
+            <b>If you do this again, your test will end and you will be redirected.</b>
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+          <Button
+            variant="contained"
+            onClick={() => setShowFirstViolationModal(false)}
+            sx={{
+              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              color: '#fff',
+              fontWeight: 600,
+              borderRadius: 2,
+              px: 4,
+              textTransform: 'none',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+              },
+            }}
+          >
+            Got it
+          </Button>
+        </DialogActions>
+      </FirstViolationModal>
+
       {/* Guidelines Modal */}
       <GuidelinesModal
         open={showGuidelines}

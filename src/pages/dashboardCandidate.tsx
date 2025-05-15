@@ -31,7 +31,8 @@ import {
   FormLabel,
   Select,
   InputLabel,
-  Slider
+  Slider,
+  Autocomplete
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -348,6 +349,18 @@ const SkillBlock = ({ skill, type, onStartTest }: { skill: any, type: 'technical
   );
 };
 
+// Sample list of technical skills (expand as needed)
+const technicalSkillsList = [
+  'JavaScript', 'TypeScript', 'Python', 'Java', 'C#', 'C++', 'Go', 'Rust', 'Ruby', 'PHP', 'Swift', 'Kotlin',
+  'React', 'Angular', 'Vue.js', 'Next.js', 'Node.js', 'Express', 'Django', 'Flask', 'Spring', 'Laravel',
+  'SQL', 'NoSQL', 'MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'GraphQL', 'REST API', 'Docker', 'Kubernetes',
+  'AWS', 'Azure', 'GCP', 'CI/CD', 'Jenkins', 'Git', 'HTML', 'CSS', 'Sass', 'Tailwind CSS', 'Webpack',
+  'Machine Learning', 'Deep Learning', 'TensorFlow', 'PyTorch', 'NLP', 'Computer Vision', 'Data Science',
+  'Cybersecurity', 'DevOps', 'Agile', 'Scrum', 'Testing', 'Jest', 'Mocha', 'Cypress', 'Playwright',
+  'Mobile Development', 'React Native', 'Flutter', 'iOS', 'Android', 'Unity', 'Unreal Engine',
+  // ...add more as needed
+];
+
 export default function DashboardCandidate() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
@@ -371,7 +384,7 @@ export default function DashboardCandidate() {
   const [addSkillDialogOpen, setAddSkillDialogOpen] = useState(false);
   const [newSkill, setNewSkill] = useState({
     name: '',
-    proficiencyLevel: 0
+    proficiencyLevel: 1
   });
 
   // Add state to track pre-selected skill for test modal
@@ -579,7 +592,7 @@ export default function DashboardCandidate() {
         throw new Error('Failed to add skill');
       }
       dispatch(getMyProfile());
-      setNewSkill({ name: '', proficiencyLevel: 0 });
+      setNewSkill({ name: '', proficiencyLevel: 1 });
       // Don't close dialog yet, allow user to start test
       // setAddSkillDialogOpen(false);
     } catch (error) {
@@ -1589,32 +1602,68 @@ export default function DashboardCandidate() {
           </DialogTitle>
           <DialogContent sx={{ mt: 2 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <TextField
+              <Autocomplete
                 fullWidth
-                label="Skill Name"
-                value={newSkill.name}
-                onChange={(e) => setNewSkill({ ...newSkill, name: e.target.value })}
-                InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
-                InputProps={{
-                  sx: {
+                options={technicalSkillsList}
+                value={newSkill.name || null}
+                onChange={(_, value) => setNewSkill(prev => ({ ...prev, name: value || '' }))}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Skill Name"
+                    InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                    InputProps={{
+                      ...params.InputProps,
+                      sx: {
+                        color: '#ffffff',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255,255,255,0.2)',
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(255,255,255,0.3)',
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#02E2FF',
+                        },
+                        background: 'rgba(30,41,59,0.98)',
+                      },
+                    }}
+                  />
+                )}
+                sx={{
+                  '& .MuiAutocomplete-inputRoot': {
                     color: '#ffffff',
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'rgba(255,255,255,0.2)',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'rgba(255,255,255,0.3)',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#02E2FF',
-                    },
+                    background: 'rgba(30,41,59,0.98)',
                   },
                 }}
+                PaperComponent={(props) => (
+                  <Paper
+                    {...props}
+                    sx={{
+                      background: 'rgba(30,41,59,0.98)',
+                      color: '#fff',
+                      '& .MuiAutocomplete-option': {
+                        backgroundColor: 'rgba(30,41,59,0.98)',
+                        color: '#fff',
+                        '&[aria-selected="true"]': {
+                          backgroundColor: 'rgba(2,226,255,0.12)',
+                        },
+                        '&:hover': {
+                          backgroundColor: 'rgba(2,226,255,0.18)',
+                        },
+                      },
+                    }}
+                  />
+                )}
               />
               <Box>
                 <Typography sx={{ color: '#ffffff', mb: 1 }}>Proficiency Level: {newSkill.proficiencyLevel}</Typography>
                 <Slider
                   value={newSkill.proficiencyLevel}
-                  onChange={(_, value) => setNewSkill({ ...newSkill, proficiencyLevel: value as number })}
+                  onChange={(_, value) => {
+                    const val = typeof value === 'number' ? value : 1;
+                    setNewSkill(prev => ({ ...prev, proficiencyLevel: Math.max(1, val) }));
+                  }}
                   min={1}
                   max={5}
                   step={1}
@@ -1668,7 +1717,7 @@ export default function DashboardCandidate() {
             <Button
               variant="contained"
               onClick={handleAddSkill}
-              disabled={!newSkill.name || !newSkill.proficiencyLevel}
+              disabled={!newSkill.name || newSkill.proficiencyLevel < 1 || newSkill.proficiencyLevel > 5}
               sx={{
                 background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
                 '&:hover': {
