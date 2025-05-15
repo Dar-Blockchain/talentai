@@ -24,6 +24,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Tooltip,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -47,6 +48,8 @@ import InfoIcon from '@mui/icons-material/Info';
 import { signOut } from 'next-auth/react';
 import BoltIcon from '@mui/icons-material/Bolt';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -179,6 +182,33 @@ const MatchScore = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   gap: theme.spacing(1)
+}));
+
+const JobCard = styled(Box)(({ theme }) => ({
+  background: 'rgba(30, 41, 59, 0.7)',
+  backdropFilter: 'blur(10px)',
+  borderRadius: '16px',
+  padding: theme.spacing(3),
+  border: '1px solid rgba(2,226,255,0.15)',
+  boxShadow: '0 4px 20px rgba(2,226,255,0.10)',
+  transition: 'transform 0.2s, box-shadow 0.2s',
+  display: 'flex',
+  flexDirection: 'column',
+  minWidth: 0,
+  width: '100%',
+  maxWidth: 400,
+  flex: '1 1 340px',
+  margin: '0 auto',
+  [theme.breakpoints.down('sm')]: {
+    maxWidth: '100%',
+    minWidth: 0,
+    padding: theme.spacing(2),
+  },
+  '&:hover': {
+    transform: 'translateY(-4px) scale(1.02)',
+    boxShadow: '0 8px 32px rgba(2,226,255,0.18)',
+    border: '1.5px solid #02E2FF',
+  },
 }));
 
 // Update the MatchingCandidate interface
@@ -419,6 +449,9 @@ const DashboardCompany = () => {
     max: 0,
     currency: '$'
   });
+  const [isSaving, setIsSaving] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isSalaryRangeValid = () => {
     return salaryRange.min > 0 && salaryRange.max > 0 && salaryRange.max >= salaryRange.min;
@@ -571,11 +604,11 @@ const DashboardCompany = () => {
       setJobPostError(null);
 
       const token = Cookies.get('api_token');
-      
+
       // Format salary range for description
       const salaryText = `\n\nSalary Range: ${salaryRange.currency}${salaryRange.min.toLocaleString()} - ${salaryRange.currency}${salaryRange.max.toLocaleString()}`;
       const descriptionWithSalary = jobDescription + salaryText;
-      
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}linkedinPost/generate-job-post`, {
         method: 'POST',
         headers: {
@@ -593,7 +626,7 @@ const DashboardCompany = () => {
       }
 
       const data = await response.json();
-      
+
       // Transform the API response into our required structure
       const jobPost = {
         jobDetails: {
@@ -611,9 +644,9 @@ const DashboardCompany = () => {
             name: skill.name,
             level: skill.level.toString(),
             importance: "Required",
-            category: skill.name.includes('React') || skill.name.includes('JavaScript') ? 'Frontend' : 
-                     skill.name.includes('Git') ? 'Version Control' : 
-                     'General'
+            category: skill.name.includes('React') || skill.name.includes('JavaScript') ? 'Frontend' :
+              skill.name.includes('Git') ? 'Version Control' :
+                'General'
           })),
           suggestedSkills: {
             technical: data.skillAnalysis.suggestedSkills.technical.map((skill: any) => ({
@@ -694,28 +727,28 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
 ✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/
 
 #Hiring #TechJobs #${data.jobDetails.title.replace(/\s+/g, '')} #RemoteWork #TechCareers`
-          }
-        };
-
-        // Log the transformed job post data
-        console.log('Generated Job Post:', jobPost);
-
-        setGeneratedJob(jobPost);
-        
-        // NOW reset the LinkedIn sharing status since we have a new job post
-        setHasSharedToLinkedIn(false);
-        
-      } catch (error) {
-        console.error('Error generating job:', error);
-        setJobPostError(error instanceof Error ? error.message : 'Failed to generate job post');
-      } finally {
-        if (type === 'quick') {
-          setIsQuickGenerating(false);
-        } else {
-          setIsDetailedGenerating(false);
         }
+      };
+
+      // Log the transformed job post data
+      console.log('Generated Job Post:', jobPost);
+
+      setGeneratedJob(jobPost);
+
+      // NOW reset the LinkedIn sharing status since we have a new job post
+      setHasSharedToLinkedIn(false);
+
+    } catch (error) {
+      console.error('Error generating job:', error);
+      setJobPostError(error instanceof Error ? error.message : 'Failed to generate job post');
+    } finally {
+      if (type === 'quick') {
+        setIsQuickGenerating(false);
+      } else {
+        setIsDetailedGenerating(false);
       }
-    };
+    }
+  };
 
   // Add this function to handle job posting
   const handleCopyForLinkedIn = () => {
@@ -770,6 +803,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
   // Update the saveJob function to handle the job data properly
   const saveJob = async () => {
+    setIsSaving(true);
     try {
       if (!generatedJob) {
         throw new Error('No job data available');
@@ -791,9 +825,9 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             name: skill.name,
             level: skill.level.toString(),
             importance: "Required",
-            category: skill.name.includes('React') || skill.name.includes('JavaScript') ? 'Frontend' : 
-                     skill.name.includes('Git') ? 'Version Control' : 
-                     'General'
+            category: skill.name.includes('React') || skill.name.includes('JavaScript') ? 'Frontend' :
+              skill.name.includes('Git') ? 'Version Control' :
+                'General'
           })),
           suggestedSkills: {
             technical: [
@@ -891,41 +925,42 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
 ✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test
 
 #Hiring #TechJobs #${generatedJob.jobDetails.title.replace(/\s+/g, '')} #RemoteWork #TechCareers`
-          }
-        };
-
-        // Log the complete job post data
-        console.log('Job Post Data:', jobPostData);
-
-        const token = Cookies.get('api_token');
-        
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}post/save-post`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(jobPostData)
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to save job');
         }
+      };
 
-        const savedJob = await response.json();
-        console.log('Job saved successfully:', savedJob);
-        
-        // Close the dialog after successful save
-        setJobPostDialog(false);
-        
-        // Reset the form
-        setJobDescription('');
-        setGeneratedJob(undefined);
-        
-      } catch (error) {
-        console.error('Error saving job:', error);
+      // Log the complete job post data
+      console.log('Job Post Data:', jobPostData);
+
+      const token = Cookies.get('api_token');
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}post/save-post`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(jobPostData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save job');
       }
-    };
+
+      const savedJob = await response.json();
+      console.log('Job saved successfully:', savedJob);
+
+      // Close the dialog after successful save
+      setJobPostDialog(false);
+
+      setJobDescription('');
+      setGeneratedJob(undefined);
+
+    } catch (error) {
+      console.error('Error saving job:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Add function to fetch job posts
   const fetchMyJobs = async () => {
@@ -964,7 +999,9 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
     setFilterDialog(true);
     fetchMyJobs(); // Fetch jobs when dialog opens
   };
-
+  useEffect(() => {
+    fetchMyJobs();
+  }, []);
   const renderFilterDialog = () => (
     <Dialog
       open={filterDialog}
@@ -1003,8 +1040,8 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
             <CircularProgress size={24} sx={{ color: '#02E2FF' }} />
           </Box>
         ) : jobsError ? (
-          <Alert severity="error" sx={{ 
-            backgroundColor: 'rgba(211,47,47,0.1)', 
+          <Alert severity="error" sx={{
+            backgroundColor: 'rgba(211,47,47,0.1)',
             color: '#ff8a80',
             border: '1px solid rgba(211,47,47,0.3)',
             '& .MuiAlert-icon': {
@@ -1147,8 +1184,8 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
 
   // Add the job posting dialog component
   const renderJobPostDialog = () => (
-    <Dialog 
-      open={jobPostDialog} 
+    <Dialog
+      open={jobPostDialog}
       onClose={() => setJobPostDialog(false)}
       maxWidth="xl"
       fullWidth
@@ -1166,8 +1203,8 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
         }
       }}
     >
-      <DialogTitle sx={{ 
-        color: '#fff', 
+      <DialogTitle sx={{
+        color: '#fff',
         borderBottom: '1px solid rgba(255,255,255,0.1)',
         display: 'flex',
         justifyContent: 'space-between',
@@ -1176,25 +1213,25 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
         position: 'relative'
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="h6" sx={{ 
+          <Typography variant="h6" sx={{
             fontWeight: 600,
             fontSize: { xs: '1.1rem', sm: '1.25rem' }
           }}>
             AI Job Post Generator
           </Typography>
-          <Chip 
-            label="Beta" 
-            size="small" 
-            sx={{ 
-              backgroundColor: 'rgba(2,226,255,0.1)', 
+          <Chip
+            label="Beta"
+            size="small"
+            sx={{
+              backgroundColor: 'rgba(2,226,255,0.1)',
               color: '#02E2FF',
               height: '20px'
-            }} 
+            }}
           />
         </Box>
         <IconButton
           onClick={() => setJobPostDialog(false)}
-          sx={{ 
+          sx={{
             color: 'rgba(255,255,255,0.5)',
             position: { xs: 'absolute', sm: 'static' },
             right: { xs: 8, sm: 'auto' },
@@ -1205,14 +1242,14 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
         </IconButton>
       </DialogTitle>
 
-      <DialogContent sx={{ 
-        p: 0, 
-        display: 'flex', 
+      <DialogContent sx={{
+        p: 0,
+        display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
         flexGrow: 1,
         overflow: 'hidden'
       }}>
-        <Box sx={{ 
+        <Box sx={{
           width: { xs: '100%', md: '50%' },
           height: { xs: 'auto', md: '100%' },
           borderRight: { xs: 'none', md: '1px solid rgba(255,255,255,0.1)' },
@@ -1223,21 +1260,21 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
           gap: 2,
           overflow: 'auto'
         }}>
-          <Typography variant="h6" sx={{ 
-            color: '#fff', 
+          <Typography variant="h6" sx={{
+            color: '#fff',
             mb: 1,
             fontSize: { xs: '1rem', sm: '1.25rem' }
           }}>
             Job Description
           </Typography>
-          <Typography variant="body2" sx={{ 
-            color: 'rgba(255,255,255,0.7)', 
+          <Typography variant="body2" sx={{
+            color: 'rgba(255,255,255,0.7)',
             mb: 2,
             fontSize: { xs: '0.875rem', sm: '1rem' }
           }}>
             Describe the position you're looking to fill. Be as detailed as possible about responsibilities, requirements, and desired skills.
           </Typography>
-          
+
           <TextField
             multiline
             rows={8}
@@ -1414,9 +1451,9 @@ Benefits:
           </Box>
 
           {!isSalaryRangeValid() && (
-            <Alert 
-              severity="warning" 
-              sx={{ 
+            <Alert
+              severity="warning"
+              sx={{
                 mt: 2,
                 backgroundColor: 'rgba(255,152,0,0.1)',
                 color: '#ffb74d',
@@ -1431,23 +1468,23 @@ Benefits:
           )}
 
           {(isQuickGenerating || isDetailedGenerating) && (
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                mt: 1, 
+            <Typography
+              variant="body2"
+              sx={{
+                mt: 1,
                 textAlign: 'center',
                 color: 'rgba(255,255,255,0.7)',
                 fontSize: '0.875rem'
               }}
             >
-              {isQuickGenerating ? 
-                'Generating a concise job post...' : 
+              {isQuickGenerating ?
+                'Generating a concise job post...' :
                 'Performing detailed analysis and generating comprehensive job post...'}
             </Typography>
           )}
         </Box>
 
-        <Box sx={{ 
+        <Box sx={{
           width: { xs: '100%', md: '50%' },
           height: { xs: '50%', md: 'auto' },
           p: { xs: 2, sm: 3 },
@@ -1455,9 +1492,9 @@ Benefits:
           backgroundColor: 'rgba(0,0,0,0.2)'
         }}>
           {jobPostError ? (
-            <Alert 
-              severity="error" 
-              sx={{ 
+            <Alert
+              severity="error"
+              sx={{
                 mb: 2,
                 backgroundColor: 'rgba(211,47,47,0.1)',
                 color: '#ff8a80',
@@ -1470,20 +1507,20 @@ Benefits:
               {jobPostError}
             </Alert>
           ) : !generatedJob ? (
-            <Box sx={{ 
-              height: '100%', 
-              display: 'flex', 
-              flexDirection: 'column', 
-              justifyContent: 'center', 
+            <Box sx={{
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
               alignItems: 'center',
               gap: 2,
               color: 'rgba(255,255,255,0.5)',
               textAlign: 'center',
               minHeight: { xs: '300px', md: 'auto' }
             }}>
-              <Box sx={{ 
-                p: { xs: 2, sm: 3 }, 
-                borderRadius: '50%', 
+              <Box sx={{
+                p: { xs: 2, sm: 3 },
+                borderRadius: '50%',
                 backgroundColor: 'rgba(255,255,255,0.05)',
                 display: 'flex',
                 alignItems: 'center',
@@ -1494,7 +1531,7 @@ Benefits:
               <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                 Generated job post will appear here
               </Typography>
-              <Typography variant="body2" sx={{ 
+              <Typography variant="body2" sx={{
                 maxWidth: '80%',
                 fontSize: { xs: '0.875rem', sm: '1rem' }
               }}>
@@ -1502,16 +1539,16 @@ Benefits:
               </Typography>
             </Box>
           ) : (
-            <Box sx={{ 
+            <Box sx={{
               color: '#fff',
               fontSize: { xs: '0.875rem', sm: '1rem' }
             }}>
               <Box sx={{ mb: 4 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 2 }}>
-                  <Typography 
-                    variant="h5" 
-                    sx={{ 
-                      color: '#02E2FF', 
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      color: '#02E2FF',
                       fontSize: { xs: '1.25rem', sm: '1.5rem' }
                     }}
                   >
@@ -1524,22 +1561,22 @@ Benefits:
                       onClick={handleShareLinkedIn}
                       disabled={isPosting}
                       sx={{
-                        background: hasSharedToLinkedIn 
-                          ? 'rgba(0,119,181,0.6)' 
+                        background: hasSharedToLinkedIn
+                          ? 'rgba(0,119,181,0.6)'
                           : 'linear-gradient(135deg, #0077B5 0%, #00A0DC 100%)',
                         '&:hover': {
-                          background: hasSharedToLinkedIn 
-                            ? 'rgba(0,119,181,0.7)' 
+                          background: hasSharedToLinkedIn
+                            ? 'rgba(0,119,181,0.7)'
                             : 'linear-gradient(135deg, #006097 0%, #0077B5 100%)',
                         }
                       }}
                     >
-                      {isPosting 
-                        ? 'Sharing...' 
-                        : linkedinCopySuccess 
-                          ? 'Shared!' 
-                          : hasSharedToLinkedIn 
-                            ? 'Already Shared' 
+                      {isPosting
+                        ? 'Sharing...'
+                        : linkedinCopySuccess
+                          ? 'Shared!'
+                          : hasSharedToLinkedIn
+                            ? 'Already Shared'
                             : 'Share on LinkedIn'}
                     </Button>
                   </Box>
@@ -1549,7 +1586,7 @@ Benefits:
                     icon={<LocationOnIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />}
                     label={generatedJob.jobDetails.location}
                     size="small"
-                    sx={{ 
+                    sx={{
                       backgroundColor: 'rgba(255,255,255,0.1)',
                       fontSize: { xs: '0.75rem', sm: '0.875rem' }
                     }}
@@ -1557,7 +1594,7 @@ Benefits:
                   <Chip
                     label={generatedJob.jobDetails.employmentType}
                     size="small"
-                    sx={{ 
+                    sx={{
                       backgroundColor: 'rgba(255,255,255,0.1)',
                       fontSize: { xs: '0.75rem', sm: '0.875rem' }
                     }}
@@ -1565,7 +1602,7 @@ Benefits:
                   <Chip
                     label={`${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}`}
                     size="small"
-                    sx={{ 
+                    sx={{
                       backgroundColor: 'rgba(255,255,255,0.1)',
                       fontSize: { xs: '0.75rem', sm: '0.875rem' }
                     }}
@@ -1574,15 +1611,15 @@ Benefits:
               </Box>
 
               <Box sx={{ mb: 4 }}>
-                <Typography variant="subtitle1" sx={{ 
-                  color: '#00FFC3', 
+                <Typography variant="subtitle1" sx={{
+                  color: '#00FFC3',
                   mb: 2,
                   fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}>
                   Overview
                 </Typography>
-                <Typography variant="body1" sx={{ 
-                  color: 'rgba(255,255,255,0.9)', 
+                <Typography variant="body1" sx={{
+                  color: 'rgba(255,255,255,0.9)',
                   lineHeight: 1.6,
                   fontSize: { xs: '0.875rem', sm: '1rem' }
                 }}>
@@ -1591,26 +1628,26 @@ Benefits:
               </Box>
 
               <Box sx={{ mb: 4 }}>
-                <Typography variant="subtitle1" sx={{ 
-                  color: '#00FFC3', 
+                <Typography variant="subtitle1" sx={{
+                  color: '#00FFC3',
                   mb: 2,
                   fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}>
                   Requirements
                 </Typography>
-                <Box sx={{ 
+                <Box sx={{
                   backgroundColor: 'rgba(255,255,255,0.05)',
                   borderRadius: '12px',
                   p: 2
                 }}>
                   {generatedJob.jobDetails.requirements.map((req: string, index: number) => (
-                    <Box key={index} sx={{ 
-                      display: 'flex', 
-                      gap: 2, 
+                    <Box key={index} sx={{
+                      display: 'flex',
+                      gap: 2,
                       mb: index !== generatedJob.jobDetails.requirements.length - 1 ? 1.5 : 0,
                       alignItems: 'flex-start'
                     }}>
-                      <Box sx={{ 
+                      <Box sx={{
                         minWidth: '24px',
                         height: '24px',
                         borderRadius: '50%',
@@ -1633,26 +1670,26 @@ Benefits:
               </Box>
 
               <Box sx={{ mb: 4 }}>
-                <Typography variant="subtitle1" sx={{ 
-                  color: '#00FFC3', 
+                <Typography variant="subtitle1" sx={{
+                  color: '#00FFC3',
                   mb: 2,
                   fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}>
                   Responsibilities
                 </Typography>
-                <Box sx={{ 
+                <Box sx={{
                   backgroundColor: 'rgba(255,255,255,0.05)',
                   borderRadius: '12px',
                   p: 2
                 }}>
                   {generatedJob.jobDetails.responsibilities.map((resp: string, index: number) => (
-                    <Box key={index} sx={{ 
-                      display: 'flex', 
-                      gap: 2, 
+                    <Box key={index} sx={{
+                      display: 'flex',
+                      gap: 2,
                       mb: index !== generatedJob.jobDetails.responsibilities.length - 1 ? 1.5 : 0,
                       alignItems: 'flex-start'
                     }}>
-                      <Box sx={{ 
+                      <Box sx={{
                         minWidth: '24px',
                         height: '24px',
                         borderRadius: '50%',
@@ -1675,8 +1712,8 @@ Benefits:
               </Box>
 
               <Box>
-                <Typography variant="subtitle1" sx={{ 
-                  color: '#00FFC3', 
+                <Typography variant="subtitle1" sx={{
+                  color: '#00FFC3',
                   mb: 2,
                   fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}>
@@ -1700,14 +1737,14 @@ Benefits:
               </Box>
 
               <Box sx={{ mb: 4 }}>
-                <Typography variant="subtitle1" sx={{ 
-                  color: '#00FFC3', 
+                <Typography variant="subtitle1" sx={{
+                  color: '#00FFC3',
                   mb: 2,
                   fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}>
                   Application Link
                 </Typography>
-                <Box sx={{ 
+                <Box sx={{
                   backgroundColor: 'rgba(2,226,255,0.1)',
                   borderRadius: '12px',
                   p: 2,
@@ -1716,11 +1753,11 @@ Benefits:
                   gap: 2
                 }}>
                   <LinkIcon sx={{ color: '#02E2FF' }} />
-                  <Typography 
-                    component="a" 
-                    href="https://staging.talentai.bid/test" 
+                  <Typography
+                    component="a"
+                    href="https://staging.talentai.bid/test"
                     target="_blank"
-                    sx={{ 
+                    sx={{
                       color: '#02E2FF',
                       textDecoration: 'none',
                       '&:hover': {
@@ -1737,18 +1774,26 @@ Benefits:
                 fullWidth
                 variant="contained"
                 onClick={saveJob}
+                disabled={isSaving}
                 sx={{
                   mt: 4,
                   py: { xs: 1, sm: 1.5 },
                   fontSize: { xs: '0.875rem', sm: '1rem' },
                   background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
                   borderRadius: '12px',
+                  color: isSaving ? '#111' : '#fff',
                   '&:hover': {
                     background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                  },
+                  '&.Mui-disabled': {
+                    background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                    color: isSaving ? '#111' : '#fff',
+                    opacity: 0.7,
                   }
                 }}
               >
-                Save Job
+                {isSaving ? <CircularProgress size={20} sx={{ mr: 1, color: '#111' }} /> : null}
+                {isSaving ? 'Saving...' : 'Save Job'}
               </Button>
             </Box>
           )}
@@ -1761,8 +1806,8 @@ Benefits:
   const renderMatchingProfiles = () => {
     if (!selectedJob) {
       return (
-        <Box 
-          sx={{ 
+        <Box
+          sx={{
             backgroundColor: 'rgba(30, 41, 59, 0.7)',
             borderRadius: '12px',
             p: 3,
@@ -1788,9 +1833,9 @@ Benefits:
           }}>
             <WorkIcon sx={{ fontSize: 32, color: '#02E2FF' }} />
           </Box>
-          <Typography 
-            variant="h6" 
-            sx={{ 
+          <Typography
+            variant="h6"
+            sx={{
               color: '#02E2FF',
               mb: 1
             }}
@@ -1821,17 +1866,17 @@ Benefits:
 
     if (matchError) {
       return (
-        <Box 
-          sx={{ 
-            backgroundColor: 'rgba(255,59,48,0.1)', 
+        <Box
+          sx={{
+            backgroundColor: 'rgba(255,59,48,0.1)',
             borderRadius: '12px',
             p: 3,
             border: '1px solid rgba(255,59,48,0.2)'
           }}
         >
-          <Typography 
-            variant="h6" 
-            sx={{ 
+          <Typography
+            variant="h6"
+            sx={{
               color: '#ff3b30',
               mb: 1,
               display: 'flex',
@@ -1868,8 +1913,8 @@ Benefits:
 
     if (!isLoadingMatches && (!matchingProfiles || matchingProfiles.length === 0)) {
       return (
-        <Box 
-          sx={{ 
+        <Box
+          sx={{
             backgroundColor: 'rgba(30, 41, 59, 0.7)',
             borderRadius: '12px',
             p: 3,
@@ -1877,9 +1922,9 @@ Benefits:
             textAlign: 'center'
           }}
         >
-          <Typography 
-            variant="h6" 
-            sx={{ 
+          <Typography
+            variant="h6"
+            sx={{
               color: '#02E2FF',
               mb: 1
             }}
@@ -1915,247 +1960,249 @@ Benefits:
         {matchingProfiles
           .filter(candidate => candidate?.candidateId?.username && candidate.candidateId.username !== 'Anonymous')
           .map((candidate) => (
-          <MatchCard key={candidate?.candidateId?._id || `temp-${Math.random()}`}>
-            {/* Header Section */}
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'flex-start', 
-              mb: 3,
-              pb: 2,
-              borderBottom: '1px solid rgba(255,255,255,0.1)'
-            }}>
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                {/* Avatar */}
-                <Box sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(2,226,255,0.2) 0%, rgba(0,255,195,0.2) 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.5rem',
-                  fontWeight: 600,
-                  color: '#02E2FF'
-                }}>
-                  {candidate?.candidateId?.username ? candidate.candidateId.username.charAt(0).toUpperCase() : '?'}
-                </Box>
-                {/* User Info */}
-                <Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                    <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 600 }}>
-                      {candidate?.candidateId?.username || 'Anonymous'}
-                    </Typography>
-                    {candidate?.candidateId?.isVerified && (
-                      <Box sx={{ 
-                        width: 16, 
-                        height: 16, 
-                        borderRadius: '50%', 
-                        backgroundColor: '#4ade80',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        <StarIcon sx={{ fontSize: 12, color: '#000' }} />
-                      </Box>
-                    )}
-                    <Box sx={{ 
-                      width: 8, 
-                      height: 8, 
-                      borderRadius: '50%', 
-                      backgroundColor: '#4ade80',
-                      ml: 1
-                    }} />
-                  </Box>
-                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                    {candidate?.candidateId?.email || 'No email provided'}
-                  </Typography>
-                  <Typography variant="caption" sx={{ 
-                    color: 'rgba(255,255,255,0.5)',
-                    display: 'block',
-                    mt: 0.5
-                  }}>
-                    {candidate?.candidateId?.role || 'Role not specified'}
-                  </Typography>
-                </Box>
-              </Box>
-              {/* Match Score */}
+            <MatchCard key={candidate?.candidateId?._id || `temp-${Math.random()}`}>
+              {/* Header Section */}
               <Box sx={{
-                background: 'linear-gradient(135deg, rgba(2,226,255,0.1) 0%, rgba(0,255,195,0.1) 100%)',
-                padding: '8px',
-                borderRadius: '8px',
-                minWidth: '70px',
-                textAlign: 'center'
-              }}>
-                <Typography variant="h6" sx={{ 
-                  fontWeight: 600, 
-                  color: '#02E2FF',
-                  fontSize: '1.25rem',
-                  lineHeight: 1
-                }}>
-                  {candidate?.score || 0}%
-                </Typography>
-                <Typography variant="caption" sx={{ 
-                  color: 'rgba(255,255,255,0.7)',
-                  fontSize: '0.7rem'
-                }}>
-                  Match Score
-                </Typography>
-              </Box>
-            </Box>
-            {/* Skills Section */}
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" sx={{ 
-                color: '#ffffff', 
-                mb: 2,
                 display: 'flex',
-                alignItems: 'center',
-                gap: 1
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                mb: 3,
+                pb: 2,
+                borderBottom: '1px solid rgba(255,255,255,0.1)'
               }}>
-                <Box sx={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: '6px',
-                  background: 'rgba(2,226,255,0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <StarIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
-                </Box>
-                Matched Skills
-              </Typography>
-              <Box sx={{ 
-                display: 'flex', 
-                flexWrap: 'wrap', 
-                gap: 1,
-                '& > *': {
-                  flex: '1 1 calc(50% - 8px)',
-                  minWidth: '200px'
-                }
-              }}>
-                {(candidate?.matchedSkills || []).map((skill) => (
-                  <Box
-                    key={skill?._id || `skill-${Math.random()}`}
-                    sx={{
-                      backgroundColor: 'rgba(255,255,255,0.05)',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      border: '1px solid rgba(255,255,255,0.1)'
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>
-                        {skill?.name || 'Unnamed Skill'}
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                  {/* Avatar */}
+                  <Box sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, rgba(2,226,255,0.2) 0%, rgba(0,255,195,0.2) 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.5rem',
+                    fontWeight: 600,
+                    color: '#02E2FF'
+                  }}>
+                    {candidate?.candidateId?.username ? candidate.candidateId.username.charAt(0).toUpperCase() : '?'}
+                  </Box>
+                  {/* User Info */}
+                  <Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                      <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 600 }}>
+                        {candidate?.candidateId?.username || 'Anonymous'}
                       </Typography>
-                      <Chip
-                        label={skill?.experienceLevel || 'N/A'}
-                        size="small"
-                        sx={{
-                          backgroundColor: 'rgba(2,226,255,0.1)',
-                          color: '#02E2FF',
-                          height: '20px'
-                        }}
-                      />
-                    </Box>
-                    <Box sx={{ 
-                      width: '100%', 
-                      height: '4px', 
-                      backgroundColor: 'rgba(255,255,255,0.1)',
-                      borderRadius: '2px',
-                      overflow: 'hidden'
-                    }}>
-                      <Box sx={{ 
-                        width: `${((skill?.proficiencyLevel || 0) / 5) * 100}%`,
-                        height: '100%',
-                        background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)'
+                      {candidate?.candidateId?.isVerified && (
+                        <Box sx={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: '50%',
+                          backgroundColor: '#4ade80',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <StarIcon sx={{ fontSize: 12, color: '#000' }} />
+                        </Box>
+                      )}
+                      <Box sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        backgroundColor: '#4ade80',
+                        ml: 1
                       }} />
                     </Box>
-                    {skill?.ScoreTest && (
-                      <Typography variant="caption" sx={{ 
-                        color: 'rgba(255,255,255,0.5)',
-                        display: 'block',
-                        mt: 1,
-                        textAlign: 'right'
-                      }}>
-                        Test Score: {skill.ScoreTest}%
-                      </Typography>
-                    )}
+                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                      {candidate?.candidateId?.email || 'No email provided'}
+                    </Typography>
+                    <Typography variant="caption" sx={{
+                      color: 'rgba(255,255,255,0.5)',
+                      display: 'block',
+                      mt: 0.5
+                    }}>
+                      {candidate?.candidateId?.role || 'Role not specified'}
+                    </Typography>
                   </Box>
-                ))}
-              </Box>
-            </Box>
-            {/* Required Skills Section */}
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" sx={{ 
-                color: '#ffffff', 
-                mb: 2,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1
-              }}>
+                </Box>
+                {/* Match Score */}
                 <Box sx={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: '6px',
-                  background: 'rgba(2,226,255,0.1)',
+                  background: 'linear-gradient(135deg, rgba(2,226,255,0.1) 0%, rgba(0,255,195,0.1) 100%)',
+                  padding: '8px',
+                  borderRadius: '8px',
+                  minWidth: '70px',
+                  textAlign: 'center'
+                }}>
+                  <Typography variant="h6" sx={{
+                    fontWeight: 600,
+                    color: '#02E2FF',
+                    fontSize: '1.25rem',
+                    lineHeight: 1
+                  }}>
+                    {candidate?.score || 0}%
+                  </Typography>
+                  <Typography variant="caption" sx={{
+                    color: 'rgba(255,255,255,0.7)',
+                    fontSize: '0.7rem'
+                  }}>
+                    Match Score
+                  </Typography>
+                </Box>
+              </Box>
+              {/* Skills Section */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" sx={{
+                  color: '#ffffff',
+                  mb: 2,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  gap: 1
                 }}>
-                  <WorkIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
-                </Box>
-                Required Skills
-              </Typography>
-              <Box sx={{ 
-                display: 'flex', 
-                flexWrap: 'wrap', 
-                gap: 1,
-                backgroundColor: 'rgba(255,255,255,0.05)',
-                borderRadius: '8px',
-                padding: '12px'
-              }}>
-                {(candidate?.requiredSkills || []).map((skill) => (
-                  <Chip
-                    key={skill?._id || `req-skill-${Math.random()}`}
-                    label={`${skill?.name || 'Unnamed'} (${skill?.level || 'N/A'})`}
-                    size="small"
-                    sx={{
-                      backgroundColor: 'rgba(255,255,255,0.1)',
-                      color: 'rgba(255,255,255,0.8)',
-                      '& .MuiChip-label': {
-                        px: 2
-                      }
-                    }}
-                  />
-                ))}
-              </Box>
-            </Box>
-            {/* Action Buttons */}
-            <Box sx={{ 
-              display: 'flex', 
-              gap: 2, 
-              mt: 'auto',
-              pt: 2,
-              borderTop: '1px solid rgba(255,255,255,0.1)'
-            }}>
-              <Button
-                variant="contained"
-                fullWidth
-                startIcon={<EmailIcon />}
-                sx={{
-                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                  color: '#ffffff',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                  <Box sx={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '6px',
+                    background: 'rgba(2,226,255,0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <StarIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
+                  </Box>
+                  Matched Skills
+                </Typography>
+                <Box sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 1,
+                  '& > *': {
+                    flex: '1 1 calc(50% - 8px)',
+                    minWidth: '200px'
                   }
-                }}
-                disabled={!candidate?.candidateId?.email}
-              >
-                Contact
-              </Button>
-              <Button
+                }}>
+                  {(candidate?.matchedSkills || []).map((skill) => (
+                    <Box
+                      key={skill?._id || `skill-${Math.random()}`}
+                      sx={{
+                        backgroundColor: 'rgba(255,255,255,0.05)',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>
+                          {skill?.name || 'Unnamed Skill'}
+                        </Typography>
+                        <Chip
+                          label={skill?.experienceLevel || 'N/A'}
+                          size="small"
+                          sx={{
+                            backgroundColor: 'rgba(2,226,255,0.1)',
+                            color: '#02E2FF',
+                            height: '20px'
+                          }}
+                        />
+                      </Box>
+                      <Box sx={{
+                        width: '100%',
+                        height: '4px',
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        borderRadius: '2px',
+                        overflow: 'hidden'
+                      }}>
+                        <Box sx={{
+                          width: `${((skill?.proficiencyLevel || 0) / 5) * 100}%`,
+                          height: '100%',
+                          background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)'
+                        }} />
+                      </Box>
+                      {skill?.ScoreTest && (
+                        <Typography variant="caption" sx={{
+                          color: 'rgba(255,255,255,0.5)',
+                          display: 'block',
+                          mt: 1,
+                          textAlign: 'right'
+                        }}>
+                          Test Score: {skill.ScoreTest}%
+                        </Typography>
+                      )}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+              {/* Required Skills Section */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" sx={{
+                  color: '#ffffff',
+                  mb: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}>
+                  <Box sx={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '6px',
+                    background: 'rgba(2,226,255,0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <WorkIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
+                  </Box>
+                  Required Skills
+                </Typography>
+                <Box sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 1,
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  borderRadius: '8px',
+                  padding: '12px'
+                }}>
+                  {(candidate?.requiredSkills || []).map((skill) => (
+                    <Chip
+                      key={skill?._id || `req-skill-${Math.random()}`}
+                      label={`${skill?.name || 'Unnamed'} (${skill?.level || 'N/A'})`}
+                      size="small"
+                      sx={{
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        color: 'rgba(255,255,255,0.8)',
+                        '& .MuiChip-label': {
+                          px: 2
+                        }
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+              {/* Action Buttons */}
+              <Box sx={{
+                display: 'flex',
+                gap: 2,
+                mt: 'auto',
+                pt: 2,
+                borderTop: '1px solid rgba(255,255,255,0.1)'
+              }}>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  startIcon={<EmailIcon />}
+                  component="a"
+                  href={`mailto:${candidate?.candidateId?.email}`}
+                  sx={{
+                    background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                    color: '#ffffff',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                    }
+                  }}
+                  disabled={!candidate?.candidateId?.email}
+                >
+                  Contact
+                </Button>
+                {/* <Button
                 variant="outlined"
                 fullWidth
                 startIcon={<PersonIcon />}
@@ -2170,10 +2217,10 @@ Benefits:
                 disabled={!candidate?.candidateId?._id}
               >
                 View Profile
-              </Button>
-            </Box>
-          </MatchCard>
-        ))}
+              </Button> */}
+              </Box>
+            </MatchCard>
+          ))}
       </Box>
     );
   };
@@ -2182,17 +2229,17 @@ Benefits:
 
   const handleShareLinkedIn = async () => {
     if (!generatedJob) return;
-    
+
     // If this exact job has already been shared, show dialog instead of alert
     if (hasSharedToLinkedIn) {
       setLinkedinWarningOpen(true);
       return;
     }
-    
+
     try {
       // Check if we have a LinkedIn token in localStorage
       const token = localStorage.getItem('linkedin_token');
-      
+
       if (!token) {
         // Open LinkedIn authorization if no token is available
         window.open('/api/linkedin/auth/start', '_blank', 'width=600,height=700');
@@ -2200,9 +2247,9 @@ Benefits:
         alert('Please connect to LinkedIn first. After connecting, try sharing again.');
         return;
       }
-      
+
       // Prepare the post message - use the finalPost from generatedJob if available
-      const message = generatedJob.linkedinPost?.finalPost || 
+      const message = generatedJob.linkedinPost?.finalPost ||
         `🚀 Exciting Opportunity: ${generatedJob.jobDetails.title}
 
 🏢 About the Role:
@@ -2224,15 +2271,15 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 ✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test
 
 #Hiring #TechJobs #${generatedJob.jobDetails.title.replace(/\s+/g, '')} #RemoteWork #TechCareers`;
-      
+
       // Set a loading state
       setIsPosting(true);
-      
+
       // First try the standard sharing endpoint
       console.log('Trying the standard LinkedIn sharing endpoint...');
-      
+
       let success = false;
-      
+
       // Try the main directShare endpoint first
       try {
         const shareResponse = await fetch('/api/linkedin/directShare', {
@@ -2243,9 +2290,9 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             message
           })
         });
-        
+
         const shareResult = await shareResponse.json();
-        
+
         if (shareResponse.ok && shareResult.success) {
           success = true;
           setLinkedinCopySuccess(true);
@@ -2257,22 +2304,22 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           console.log('Permission issue with directShare, will try other methods...');
         } else {
           // Check for duplicate post error
-          const isDuplicateError = 
-            (shareResponse.status === 400 || shareResponse.status === 409) && 
-            (typeof shareResult === 'object' && 
-             shareResult !== null && 
-             ((shareResult.details && 
-               (typeof shareResult.details.message === 'string' && 
-                (shareResult.details.message.toLowerCase().includes('duplicate') || 
-                 shareResult.details.message.toLowerCase().includes('same content')))) ||
-              (typeof shareResult.error === 'string' && 
-               (shareResult.error.toLowerCase().includes('duplicate') || 
-                shareResult.error.toLowerCase().includes('same content')))));
-          
+          const isDuplicateError =
+            (shareResponse.status === 400 || shareResponse.status === 409) &&
+            (typeof shareResult === 'object' &&
+              shareResult !== null &&
+              ((shareResult.details &&
+                (typeof shareResult.details.message === 'string' &&
+                  (shareResult.details.message.toLowerCase().includes('duplicate') ||
+                    shareResult.details.message.toLowerCase().includes('same content')))) ||
+                (typeof shareResult.error === 'string' &&
+                  (shareResult.error.toLowerCase().includes('duplicate') ||
+                    shareResult.error.toLowerCase().includes('same content')))));
+
           if (isDuplicateError) {
             // Show specific message for duplicate posts
             alert('LinkedIn does not allow posting duplicate content. Please modify your job post or try again later with different content.');
-            
+
             // Still consider this a partial success and don't show further errors
             success = true;
             // Mark this job as shared since we detected it was already shared
@@ -2284,12 +2331,12 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
       } catch (err) {
         console.error('Error using directShare:', err);
       }
-      
+
       // If directShare failed, try the shareText endpoint which uses cookies
       if (!success) {
         try {
           console.log('Trying the shareText endpoint...');
-          
+
           const shareTextResponse = await fetch('/api/linkedin/shareText', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2297,9 +2344,9 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
               message
             })
           });
-          
+
           const shareTextResult = await shareTextResponse.json();
-          
+
           if (shareTextResponse.ok && shareTextResult.success) {
             success = true;
             setLinkedinCopySuccess(true);
@@ -2309,22 +2356,22 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             setHasSharedToLinkedIn(true);
           } else {
             // Check for duplicate post error
-            const isDuplicateError = 
-              (shareTextResponse.status === 400 || shareTextResponse.status === 409) && 
-              (typeof shareTextResult === 'object' && 
-               shareTextResult !== null && 
-               ((shareTextResult.details && 
-                 (typeof shareTextResult.details.message === 'string' && 
-                  (shareTextResult.details.message.toLowerCase().includes('duplicate') || 
-                   shareTextResult.details.message.toLowerCase().includes('same content')))) ||
-                (typeof shareTextResult.error === 'string' && 
-                 (shareTextResult.error.toLowerCase().includes('duplicate') || 
-                  shareTextResult.error.toLowerCase().includes('same content')))));
-            
+            const isDuplicateError =
+              (shareTextResponse.status === 400 || shareTextResponse.status === 409) &&
+              (typeof shareTextResult === 'object' &&
+                shareTextResult !== null &&
+                ((shareTextResult.details &&
+                  (typeof shareTextResult.details.message === 'string' &&
+                    (shareTextResult.details.message.toLowerCase().includes('duplicate') ||
+                      shareTextResult.details.message.toLowerCase().includes('same content')))) ||
+                  (typeof shareTextResult.error === 'string' &&
+                    (shareTextResult.error.toLowerCase().includes('duplicate') ||
+                      shareTextResult.error.toLowerCase().includes('same content')))));
+
             if (isDuplicateError) {
               // Show specific message for duplicate posts
               alert('LinkedIn does not allow posting duplicate content. Please modify your job post or try again later with different content.');
-              
+
               // Still consider this a partial success and don't show further errors
               success = true;
               // Mark this job as shared since we detected it was already shared
@@ -2337,12 +2384,12 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           console.error('Error using shareText:', err);
         }
       }
-      
+
       // If both previous methods failed, try the directShareSimple endpoint
       if (!success) {
         try {
           console.log('Trying the directShareSimple endpoint as last resort...');
-          
+
           const simpleResponse = await fetch('/api/linkedin/directShareSimple', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2351,9 +2398,9 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
               message
             })
           });
-          
+
           const simpleResult = await simpleResponse.json();
-          
+
           if (simpleResponse.ok && simpleResult.success) {
             success = true;
             setLinkedinCopySuccess(true);
@@ -2374,22 +2421,22 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           } else {
             // Check for duplicate post error - LinkedIn returns a 400 status for duplicate posts
             // The error message might contain words like "duplicate" or "same content"
-            const isDuplicateError = 
-              (simpleResponse.status === 400 || simpleResponse.status === 409) && 
-              (typeof simpleResult === 'object' && 
-               simpleResult !== null && 
-               ((simpleResult.details && 
-                 (typeof simpleResult.details.message === 'string' && 
-                  (simpleResult.details.message.toLowerCase().includes('duplicate') || 
-                   simpleResult.details.message.toLowerCase().includes('same content')))) ||
-                (typeof simpleResult.error === 'string' && 
-                 (simpleResult.error.toLowerCase().includes('duplicate') || 
-                  simpleResult.error.toLowerCase().includes('same content')))));
-            
+            const isDuplicateError =
+              (simpleResponse.status === 400 || simpleResponse.status === 409) &&
+              (typeof simpleResult === 'object' &&
+                simpleResult !== null &&
+                ((simpleResult.details &&
+                  (typeof simpleResult.details.message === 'string' &&
+                    (simpleResult.details.message.toLowerCase().includes('duplicate') ||
+                      simpleResult.details.message.toLowerCase().includes('same content')))) ||
+                  (typeof simpleResult.error === 'string' &&
+                    (simpleResult.error.toLowerCase().includes('duplicate') ||
+                      simpleResult.error.toLowerCase().includes('same content')))));
+
             if (isDuplicateError) {
               // Show specific message for duplicate posts
               alert('LinkedIn does not allow posting duplicate content. Please modify your job post or try again later with different content.');
-              
+
               // Still consider this a partial success and don't show the reconnect dialog
               success = true;
               // Mark this job as shared since we detected it was already shared
@@ -2397,7 +2444,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             } else {
               // Other error
               console.error('LinkedIn sharing failed with all methods:', simpleResult);
-              
+
               // Suggest reconnecting with expanded permissions
               if (window.confirm('Failed to share to LinkedIn. Would you like to try reconnecting with expanded permissions?')) {
                 localStorage.removeItem('linkedin_token');
@@ -2412,7 +2459,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           console.error('Error in directShareSimple:', error);
         }
       }
-      
+
       // If all attempts failed but we didn't already handle reconnection, show generic error
       if (!success) {
         alert('Could not share to LinkedIn. The job post has been copied to your clipboard instead.');
@@ -2432,6 +2479,34 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
     setLinkedinWarningOpen(false);
   };
 
+  const handleDeleteJob = async (jobId: string) => {
+    setIsDeleting(true);
+    try {
+      const token = Cookies.get('api_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}post/deletePost/${jobId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        fetchMyJobs();
+        setDeleteDialogOpen(false);
+      } else {
+        throw new Error('Failed to delete job');
+      }
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      alert('Failed to delete job. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+  };
+
   return (
     <Box sx={{
       minHeight: '100vh',
@@ -2444,7 +2519,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
     }}>
       <Container maxWidth="lg">
         {renderFilterDialog()}
-        
+
         {/* Add the LinkedIn duplicate post warning dialog */}
         <Dialog
           open={linkedinWarningOpen}
@@ -2459,11 +2534,11 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             }
           }}
         >
-          <DialogTitle sx={{ 
-            pb: 1, 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 1, 
+          <DialogTitle sx={{
+            pb: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
             color: '#02E2FF',
             fontSize: '1.2rem',
             fontWeight: 600,
@@ -2488,9 +2563,9 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
               LinkedIn does not allow posting duplicate content. Please modify your job post or generate a new one before sharing again.
             </Typography>
-            <Box sx={{ 
-              p: 2, 
-              borderRadius: '8px', 
+            <Box sx={{
+              p: 2,
+              borderRadius: '8px',
               backgroundColor: 'rgba(2,226,255,0.05)',
               border: '1px solid rgba(2,226,255,0.2)',
               display: 'flex',
@@ -2519,7 +2594,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             </Button>
           </DialogActions>
         </Dialog>
-        
+
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
           <Button
             variant="contained"
@@ -2536,7 +2611,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             Post New Job
           </Button>
         </Box>
-        
+
         <ProfileHeader>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 2 }}>
             <Box>
@@ -2692,7 +2767,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
         </Box>
 
         {/* Bid History Section */}
-        {renderBidHistory()}
+        {/* {renderBidHistory()} */}
 
         <Dialog
           open={editSkillsDialog}
@@ -2803,6 +2878,247 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
         </Dialog>
 
         {renderJobPostDialog()}
+
+        <Box sx={{ mt: 6 }}>
+          <Typography variant="h5" sx={{ color: '#02E2FF', fontWeight: 700, mb: 3 }}>
+            My Job Posts
+          </Typography>
+          {isLoadingJobs ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+              <CircularProgress sx={{ color: '#02E2FF' }} />
+            </Box>
+          ) : jobsError ? (
+            <Alert severity="error" sx={{ mb: 2 }}>{jobsError}</Alert>
+          ) : myJobs.length === 0 ? (
+            <Alert severity="info" sx={{ mb: 2 }}>No job posts found.</Alert>
+          ) : (
+            <Box sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 3,
+              justifyContent: { xs: 'center', sm: 'center', md: 'flex-start' },
+            }}>
+              {myJobs.map((job: any) => (
+                <Box key={job._id} sx={{
+                  flex: { xs: '1 1 100%', sm: '1 1 340px' },
+                  maxWidth: { xs: '100%', sm: 400 },
+                  minWidth: { xs: '0', sm: 320 },
+                  width: { xs: '100%', sm: 'auto' },
+                  m: { xs: '0 auto', sm: 0 },
+                  display: 'flex',
+                }}>
+                  <JobCard>
+                    {/* Header */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'space-between' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <WorkIcon sx={{ color: '#02E2FF', fontSize: 28 }} />
+                        <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>
+                          {job.jobDetails.title}
+                        </Typography>
+                      </Box>
+                      {job.createdAt && (
+                        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', fontWeight: 500, ml: 2 }}>
+                          Posted: {new Date(job.createdAt).toLocaleDateString()}
+                        </Typography>
+                      )}
+                    </Box>
+                    {/* Meta Chips */}
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                      <Chip
+                        icon={<LocationOnIcon sx={{ fontSize: 18 }} />}
+                        label={job.jobDetails.location}
+                        size="small"
+                        sx={{ backgroundColor: 'rgba(2,226,255,0.13)', color: '#02E2FF', fontWeight: 600 }}
+                      />
+                      <Chip
+                        label={job.jobDetails.employmentType}
+                        size="small"
+                        sx={{ backgroundColor: 'rgba(255,255,255,0.13)', color: '#fff', fontWeight: 600 }}
+                      />
+                      <Chip
+                        label={`${job.jobDetails.salary.currency}${job.jobDetails.salary.min}-${job.jobDetails.salary.max}`}
+                        size="small"
+                        sx={{ backgroundColor: 'rgba(255,255,255,0.13)', color: '#fff', fontWeight: 600 }}
+                      />
+                      <Chip
+                        label={job.jobDetails.experienceLevel}
+                        size="small"
+                        sx={{ backgroundColor: 'rgba(255,255,255,0.13)', color: '#fff', fontWeight: 600 }}
+                      />
+                    </Box>
+                    {/* Description */}
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: '#fff',
+                        mb: 2,
+                        minHeight: 40,
+                        fontWeight: 500,
+                        lineHeight: 1.5,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                      }}
+                      title={job.jobDetails.description}
+                    >
+                      {job.jobDetails.description}
+                    </Typography>
+                    {/* Skills */}
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                      {(job.skillAnalysis?.requiredSkills ?? []).slice(0, 4).map((skill: any, idx: number) => (
+                        <Chip
+                          key={idx}
+                          label={skill.name}
+                          size="small"
+                          icon={<StarIcon sx={{ color: '#00FFC3', fontSize: 18 }} />}
+                          sx={{
+                            backgroundColor: 'rgba(2,226,255,0.13)',
+                            color: '#02E2FF',
+                            fontWeight: 700,
+                            fontSize: '0.87rem',
+                            letterSpacing: 0.2,
+                            px: 1,
+                          }}
+                        />
+                      ))}
+                    </Box>
+                    {/* Actions */}
+                    <Box sx={{ display: 'flex', gap: 2, mt: 'auto', pt: 2, borderTop: '1px solid rgba(2,226,255,0.08)' }}>
+                      {/* <Button
+                        variant="contained"
+                        fullWidth
+                        sx={{
+                          background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                          color: '#fff',
+                          fontWeight: 700,
+                          borderRadius: '8px',
+                          textTransform: 'none',
+                          letterSpacing: 0.5,
+                          boxShadow: 'none',
+                          '&:hover': {
+                            background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                          },
+                        }}
+                      >
+                        Edit
+                      </Button> */}
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        sx={{
+                          borderColor: '#ff3b30',
+                          color: '#ff3b30',
+                          fontWeight: 700,
+                          borderRadius: '8px',
+                          textTransform: 'none',
+                          letterSpacing: 0.5,
+                          boxShadow: 'none',
+                          '&:hover': {
+                            borderColor: '#ff3b30',
+                            background: 'rgba(255,59,48,0.08)'
+                          },
+                        }}
+                        onClick={() => {
+                          setSelectedJob(job._id);
+                          setDeleteDialogOpen(true);
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </Box>
+                  </JobCard>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Box>
+
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={handleCancelDelete}
+          maxWidth="xs"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: '16px',
+              background: 'rgba(30, 41, 59, 0.95)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              boxShadow: '0 8px 32px rgba(255,59,48,0.10)',
+              p: 0
+            }
+          }}
+        >
+          <DialogTitle
+            sx={{
+              pb: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              color: '#ff3b30',
+              fontSize: '1.2rem',
+              fontWeight: 700,
+              borderBottom: '1px solid rgba(255,255,255,0.1)',
+              background: 'linear-gradient(135deg, rgba(255,59,48,0.08) 0%, rgba(30,41,59,0.95) 100%)',
+            }}
+          >
+            <ErrorIcon sx={{ color: '#ff3b30', fontSize: 28 }} />
+            Are you sure you want to delete this job post?
+          </DialogTitle>
+          <DialogContent sx={{
+            background: 'none',
+            color: '#fff',
+            py: 3,
+            px: 3,
+            fontSize: '1rem',
+            borderBottom: '1px solid rgba(255,255,255,0.08)'
+          }}>
+            <Typography sx={{ color: 'rgba(255,255,255,0.85)' }}>
+              This action cannot be undone.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{
+            px: 3,
+            py: 2,
+            background: 'none',
+            borderTop: '1px solid rgba(255,255,255,0.08)'
+          }}>
+            <Button onClick={handleCancelDelete} disabled={isDeleting}
+              sx={{
+                color: 'rgba(255,255,255,0.8)',
+                borderRadius: '8px',
+                textTransform: 'none',
+                fontWeight: 600
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => handleDeleteJob(selectedJob)}
+              color="error"
+              variant="contained"
+              disabled={isDeleting}
+              sx={{
+                background: 'linear-gradient(135deg, #ff3b30 0%, #ff8a65 100%)',
+                color: '#fff',
+                borderRadius: '8px',
+                fontWeight: 700,
+                textTransform: 'none',
+                boxShadow: 'none',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #ff3b30 0%, #ff8a65 100%)',
+                  opacity: 0.9
+                },
+                minWidth: 100
+              }}
+              startIcon={<DeleteIcon />}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Box>
   );

@@ -440,7 +440,7 @@ export default function Preferences() {
         console.log('Profile data:', data);
 
         // Only redirect if we have both userId and trafficCounter > 1
-        if (data.userId && data.userId.trafficCounter > 1) {
+        if (data.userId && data.userId.trafficCounter >= 1) {
           console.log('Traffic counter:', data.userId.trafficCounter);
           console.log('User type:', data.type);
 
@@ -630,7 +630,7 @@ export default function Preferences() {
             {/* Title */}
             <Typography variant="h6" mb={2} sx={{ color: '#fff' }}>
               {userType === 'company'
-                ? 'Select required skills for your position'
+                ? 'Select the skills your company is looking for'
                 : `Select your ${selectedCategory} skills`
               }
             </Typography>
