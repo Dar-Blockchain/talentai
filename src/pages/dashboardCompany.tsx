@@ -2767,7 +2767,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
         </Box>
 
         {/* Bid History Section */}
-        {/* {renderBidHistory()} */}
+        {renderBidHistory()}
 
         <Dialog
           open={editSkillsDialog}
