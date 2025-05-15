@@ -19,15 +19,15 @@ router.get('/my-posts', postController.getUserPosts);
 router.get('/user/:userId', postController.getUserPosts);
 
 // Route pour récupérer un post spécifique
-router.get('/:id', postController.getPostById);
+router.get('/getPostById/:id', postController.getPostById);
 
 // Route pour mettre à jour un post
-router.put('/:id', postController.updatePost);
+router.put('/updatePost/:id', postController.updatePost);
 
 // Route pour changer le statut d'un post
-router.patch('/:id/status', postController.updatePostStatus);
+router.patch('/updatePostStatus/:id', postController.updatePostStatus);
 
 // Route pour supprimer un post
-router.delete('/:id', postController.deletePost);
+router.delete('/deletePost/:id', postController.deletePost);
 
 module.exports = router; 
