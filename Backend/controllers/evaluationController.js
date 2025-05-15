@@ -637,7 +637,7 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
           console.log("score", score);
           // ➜ Appliquer la règle demandée
           let demo;
-          if (score > 80) demo = current + 1;
+          if (score > 70) demo = current + 1;
           else if (score >= 50) demo = current;
           else demo = current - 1;
 
