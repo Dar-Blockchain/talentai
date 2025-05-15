@@ -303,6 +303,51 @@ const ScoreCircle = styled(Box)(({ theme }) => ({
   margin: '0 auto'
 }));
 
+// SkillBlock component for unified skill design
+const SkillBlock = ({ skill, type, onStartTest }: { skill: any, type: 'technical' | 'soft', onStartTest: () => void }) => {
+  // For technical: skill.name, skill.experienceLevel, skill.proficiencyLevel
+  // For soft: skill.name, skill.category, skill.experienceLevel
+  const proficiencyMap: { [key: string]: number } = {
+    'Entry Level': 1,
+    'Junior': 2,
+    'Mid Level': 3,
+    'Senior': 4,
+    'Expert': 5
+  };
+  const proficiencyLevel = type === 'technical' ? skill.proficiencyLevel : (proficiencyMap[skill.experienceLevel] || 1);
+  const percentage = (proficiencyLevel / 5) * 100;
+  return (
+    <Box sx={{ mb: 2, p: 2, borderRadius: '12px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+      <Box sx={{ flex: 1 }}>
+        <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{skill.name}</Typography>
+        {type === 'soft' && (
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>{skill.category}</Typography>
+        )}
+        <Typography variant="caption" sx={{ color: '#02E2FF', ml: 1 }}>{type === 'technical' ? skill.experienceLevel : skill.experienceLevel}</Typography>
+        <Box sx={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden', mt: 1 }}>
+          <Box sx={{ width: `${percentage}%`, height: '100%', background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)', borderRadius: '3px', transition: 'width 0.3s ease' }} />
+        </Box>
+      </Box>
+      <Button
+        variant="outlined"
+        size="small"
+        onClick={onStartTest}
+        sx={{
+          color: '#02E2FF',
+          borderColor: 'rgba(2,226,255,0.5)',
+          '&:hover': {
+            borderColor: '#02E2FF',
+            background: 'rgba(2,226,255,0.1)'
+          },
+          minWidth: 110
+        }}
+      >
+        Start Test
+      </Button>
+    </Box>
+  );
+};
+
 export default function DashboardCandidate() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
@@ -328,6 +373,9 @@ export default function DashboardCandidate() {
     name: '',
     proficiencyLevel: 0
   });
+
+  // Add state to track pre-selected skill for test modal
+  const [preSelectedTest, setPreSelectedTest] = useState<{ type: 'technical' | 'soft', skill: any } | null>(null);
 
   useEffect(() => {
     dispatch(getMyProfile());
@@ -395,8 +443,34 @@ export default function DashboardCandidate() {
     }
   };
 
-  const handleStartTest = () => {
-    setTestModalOpen(true);
+  const handleStartTest = (type?: 'technical' | 'soft', skill?: any) => {
+    if (type && skill) {
+      setPreSelectedTest({ type, skill });
+      setSkillType(type);
+      if (type === 'technical') {
+        setSelectedSkill(skill.name);
+      } else {
+        setSoftSkillType(skill.name);
+        if (skill.name === 'Communication') {
+          setSoftSkillLanguage(skill.category);
+        } else {
+          setSoftSkillSubcategory(skill.category);
+        }
+        // Set proficiency for soft skill
+        const proficiencyMap: { [key: string]: number } = {
+          'Entry Level': 1,
+          'Junior': 2,
+          'Mid Level': 3,
+          'Senior': 4,
+          'Expert': 5
+        };
+        setSoftSkillProficiency(proficiencyMap[skill.experienceLevel] || 1);
+      }
+      setTestModalOpen(true);
+    } else {
+      setPreSelectedTest(null);
+      setTestModalOpen(true);
+    }
   };
 
   const handleCloseTestModal = () => {
@@ -407,6 +481,7 @@ export default function DashboardCandidate() {
     setSoftSkillLanguage('');
     setSoftSkillSubcategory('');
     setSoftSkillProficiency(1);
+    setPreSelectedTest(null);
   };
 
   const handleSkillTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -479,8 +554,6 @@ export default function DashboardCandidate() {
   const handleAddSkill = async () => {
     try {
       const token = Cookies.get('api_token');
-
-      // Combine existing skills with the new skill
       const updatedSkills = [
         ...(profile?.skills || []),
         {
@@ -491,7 +564,6 @@ export default function DashboardCandidate() {
           ScoreTest: 0
         }
       ];
-
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/createOrUpdateProfile`, {
         method: 'POST',
         headers: {
@@ -503,17 +575,13 @@ export default function DashboardCandidate() {
           skills: updatedSkills
         })
       });
-
       if (!response.ok) {
         throw new Error('Failed to add skill');
       }
-
-      // Refresh the profile data
       dispatch(getMyProfile());
-
-      // Reset form and close dialog
       setNewSkill({ name: '', proficiencyLevel: 0 });
-      setAddSkillDialogOpen(false);
+      // Don't close dialog yet, allow user to start test
+      // setAddSkillDialogOpen(false);
     } catch (error) {
       console.error('Error adding skill:', error);
     }
@@ -708,6 +776,9 @@ export default function DashboardCandidate() {
     return profile.skills.filter(skill => !softSkillNames.includes(skill.name));
   };
 
+  // Add state to track if a skill was just added
+  const [justAddedSkill, setJustAddedSkill] = useState<any>(null);
+
   if (loading) {
     return (
       <Container sx={{
@@ -791,7 +862,7 @@ export default function DashboardCandidate() {
               <ActionButton
                 variant="contained"
                 startIcon={<PlayArrowIcon />}
-                onClick={handleStartTest}
+                onClick={() => handleStartTest()}
                 sx={{
                   background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
                   '&:hover': {
@@ -1429,58 +1500,18 @@ export default function DashboardCandidate() {
               {/* Soft Skills Distribution */}
               <Box sx={{ mb: 4 }}>
                 <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', opacity: 0.9 }}>
-                  Soft Skills Distribution
+                  Soft Skills
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {profile?.softSkills?.length ? (
-                    profile.softSkills.map((skill: any) => {
-                      const proficiencyMap: { [key: string]: number } = {
-                        'Entry Level': 1,
-                        'Junior': 2,
-                        'Mid Level': 3,
-                        'Senior': 4,
-                        'Expert': 5
-                      };
-                      const proficiencyLevel = proficiencyMap[skill.experienceLevel] || 1;
-                      const percentage = (proficiencyLevel / 5) * 100;
-
-                      return (
-                        <Box key={`${skill.name}-${skill.category}`}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                            <Box>
-                              <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                                {skill.name}
-                              </Typography>
-                              <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                                {skill.category}
-                              </Typography>
-                            </Box>
-                            <Box sx={{ textAlign: 'right' }}>
-                              <Typography sx={{ color: '#02E2FF' }}>
-                                {percentage.toFixed(0)}%
-                              </Typography>
-                              <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                                {skill.experienceLevel}
-                              </Typography>
-                            </Box>
-                          </Box>
-                          <Box sx={{
-                            height: '6px',
-                            background: 'rgba(255,255,255,0.1)',
-                            borderRadius: '3px',
-                            overflow: 'hidden'
-                          }}>
-                            <Box sx={{
-                              width: `${percentage}%`,
-                              height: '100%',
-                              background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
-                              borderRadius: '3px',
-                              transition: 'width 0.3s ease'
-                            }} />
-                          </Box>
-                        </Box>
-                      );
-                    })
+                    profile.softSkills.map((skill: any) => (
+                      <SkillBlock
+                        key={`${skill.name}-${skill.category}`}
+                        skill={skill}
+                        type="soft"
+                        onStartTest={() => handleStartTest('soft', skill)}
+                      />
+                    ))
                   ) : (
                     <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center', py: 2 }}>
                       No soft skills added yet. Start a soft skill test to add them.
@@ -1493,7 +1524,7 @@ export default function DashboardCandidate() {
               <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Typography variant="h6" sx={{ color: '#ffffff', opacity: 0.9 }}>
-                    Skill Proficiency
+                    Technical Skills
                   </Typography>
                   <Button
                     startIcon={<AddIcon />}
@@ -1510,30 +1541,18 @@ export default function DashboardCandidate() {
                     Add Skill
                   </Button>
                 </Box>
-                {profile.skills
-                  ?.filter((skill: any) => !softSkillNames.includes(skill.name))
-                  ?.map((skill: any) => (
-                  <Box key={skill.name} sx={{ mb: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography sx={{ color: '#ffffff' }}>{skill.name}</Typography>
-                      <Typography sx={{ color: '#02E2FF' }}>{skill.experienceLevel}</Typography>
-                    </Box>
-                    <Box sx={{
-                      height: '6px',
-                      background: 'rgba(255,255,255,0.1)',
-                      borderRadius: '3px',
-                      overflow: 'hidden'
-                    }}>
-                      <Box sx={{
-                        width: `${(skill.proficiencyLevel / 5) * 100}%`,
-                        height: '100%',
-                        background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
-                        borderRadius: '3px',
-                        transition: 'width 0.3s ease'
-                      }} />
-                    </Box>
-                  </Box>
-                ))}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {profile.skills
+                    ?.filter((skill: any) => !softSkillNames.includes(skill.name))
+                    ?.map((skill: any) => (
+                      <SkillBlock
+                        key={skill.name}
+                        skill={skill}
+                        type="technical"
+                        onStartTest={() => handleStartTest('technical', skill)}
+                      />
+                  ))}
+                </Box>
               </Box>
             </StyledCard>
           </Box>
@@ -1664,6 +1683,28 @@ export default function DashboardCandidate() {
               Add Skill
             </Button>
           </DialogActions>
+          {justAddedSkill && (
+            <Box sx={{ mt: 2, textAlign: 'center' }}>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  setAddSkillDialogOpen(false);
+                  handleStartTest('technical', justAddedSkill);
+                  setJustAddedSkill(null);
+                }}
+                sx={{
+                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                  color: '#ffffff',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                  },
+                  mt: 2
+                }}
+              >
+                Start Test for {justAddedSkill.name}
+              </Button>
+            </Box>
+          )}
         </Dialog>
       </Container>
     </Box>
