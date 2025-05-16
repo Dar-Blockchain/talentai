@@ -25,6 +25,7 @@ import {
   InputLabel,
   Select,
   Tooltip,
+  InputAdornment,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -50,6 +51,7 @@ import BoltIcon from '@mui/icons-material/Bolt';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -452,6 +454,9 @@ const DashboardCompany = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [bidDialogOpen, setBidDialogOpen] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
+  const [bidAmount, setBidAmount] = useState('');
 
   const isSalaryRangeValid = () => {
     return salaryRange.min > 0 && salaryRange.max > 0 && salaryRange.max >= salaryRange.min;
@@ -2211,22 +2216,23 @@ Benefits:
                 >
                   Contact
                 </Button>
-                {/* <Button
-                variant="outlined"
-                fullWidth
-                startIcon={<PersonIcon />}
-                sx={{
-                  borderColor: 'rgba(2,226,255,0.5)',
-                  color: '#02E2FF',
-                  '&:hover': {
-                    borderColor: '#02E2FF',
-                    backgroundColor: 'rgba(2,226,255,0.1)'
-                  }
-                }}
-                disabled={!candidate?.candidateId?._id}
-              >
-                View Profile
-              </Button> */}
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  startIcon={<AttachMoneyIcon />}
+                  onClick={() => handleBidDialogOpen(candidate)}
+                  sx={{
+                    borderColor: 'rgba(2,226,255,0.5)',
+                    color: '#02E2FF',
+                    '&:hover': {
+                      borderColor: '#02E2FF',
+                      backgroundColor: 'rgba(2,226,255,0.1)'
+                    }
+                  }}
+                  disabled={!candidate?.candidateId?._id || !selectedJob}
+                >
+                  Place Bid
+                </Button>
               </Box>
             </MatchCard>
           ))}
@@ -2514,6 +2520,50 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
+  };
+
+  // Add handler for bid dialog
+  const handleBidDialogOpen = (candidate: any) => {
+    setSelectedCandidate(candidate);
+    setBidDialogOpen(true);
+  };
+
+  const handleBidDialogClose = () => {
+    setBidDialogOpen(false);
+    setSelectedCandidate(null);
+    setBidAmount('');
+  };
+
+  const handleBidSubmit = async () => {
+    if (!selectedCandidate || !bidAmount) return;
+
+    try {
+      const token = Cookies.get('api_token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}bids/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          candidateId: selectedCandidate.candidateId._id,
+          jobId: selectedJob,
+          amount: parseFloat(bidAmount),
+          currency: '$'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit bid');
+      }
+
+      // Close dialog and show success message
+      handleBidDialogClose();
+      // You might want to add a success notification here
+    } catch (error) {
+      console.error('Error submitting bid:', error);
+      // You might want to add an error notification here
+    }
   };
 
   return (
@@ -3125,6 +3175,267 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
               startIcon={<DeleteIcon />}
             >
               {isDeleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Add Bid Dialog */}
+        <Dialog
+          open={bidDialogOpen}
+          onClose={handleBidDialogClose}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              background: 'rgba(30, 41, 59, 0.95)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '16px',
+              border: '1px solid rgba(255,255,255,0.1)',
+            }
+          }}
+        >
+          <DialogTitle sx={{
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            color: '#ffffff'
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="h6">Place Bid</Typography>
+              <IconButton
+                onClick={handleBidDialogClose}
+                sx={{ color: 'rgba(255,255,255,0.7)' }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent sx={{ mt: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ 
+                  color: 'rgba(255,255,255,0.7)', 
+                  mb: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}>
+                  <Box sx={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '6px',
+                    background: 'rgba(2,226,255,0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <PersonIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
+                  </Box>
+                  Candidate Information
+                </Typography>
+                <Box sx={{
+                  background: 'rgba(255,255,255,0.05)',
+                  borderRadius: '12px',
+                  p: 2.5,
+                  border: '1px solid rgba(255,255,255,0.1)'
+                }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 2, 
+                    mb: 2,
+                    pb: 2,
+                    borderBottom: '1px solid rgba(255,255,255,0.1)'
+                  }}>
+                    <Box sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, rgba(2,226,255,0.2) 0%, rgba(0,255,195,0.2) 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.5rem',
+                      fontWeight: 600,
+                      color: '#02E2FF'
+                    }}>
+                      {selectedCandidate?.candidateId?.username?.charAt(0).toUpperCase() || '?'}
+                    </Box>
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                        <Typography sx={{ color: '#ffffff', fontWeight: 600, fontSize: '1.1rem' }}>
+                          {selectedCandidate?.candidateId?.username}
+                        </Typography>
+                        {selectedCandidate?.candidateId?.isVerified && (
+                          <Box sx={{
+                            width: 16,
+                            height: 16,
+                            borderRadius: '50%',
+                            backgroundColor: '#4ade80',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            <StarIcon sx={{ fontSize: 12, color: '#000' }} />
+                          </Box>
+                        )}
+                      </Box>
+                      <Typography sx={{ 
+                        color: 'rgba(255,255,255,0.7)', 
+                        fontSize: '0.9rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5
+                      }}>
+                        <WorkIcon sx={{ fontSize: 16 }} />
+                        {selectedCandidate?.candidateId?.role}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ 
+                      color: 'rgba(255,255,255,0.7)', 
+                      mb: 1.5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1
+                    }}>
+                      <Box sx={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: '6px',
+                        background: 'rgba(2,226,255,0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <StarIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
+                      </Box>
+                      Matched Skills
+                    </Typography>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      flexWrap: 'wrap', 
+                      gap: 1,
+                      '& > *': {
+                        flex: '1 1 calc(50% - 8px)',
+                        minWidth: '140px'
+                      }
+                    }}>
+                      {selectedCandidate?.matchedSkills?.map((skill: any, index: number) => (
+                        <Box
+                          key={index}
+                          sx={{
+                            backgroundColor: 'rgba(255,255,255,0.05)',
+                            borderRadius: '8px',
+                            padding: '12px',
+                            border: '1px solid rgba(255,255,255,0.1)'
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                            <Typography sx={{ color: '#ffffff', fontWeight: 500, fontSize: '0.9rem' }}>
+                              {skill.name}
+                            </Typography>
+                            <Chip
+                              label={skill.experienceLevel}
+                              size="small"
+                              sx={{
+                                backgroundColor: 'rgba(2,226,255,0.1)',
+                                color: '#02E2FF',
+                                height: '20px',
+                                fontSize: '0.7rem'
+                              }}
+                            />
+                          </Box>
+                          <Box sx={{
+                            width: '100%',
+                            height: '4px',
+                            backgroundColor: 'rgba(255,255,255,0.1)',
+                            borderRadius: '2px',
+                            overflow: 'hidden'
+                          }}>
+                            <Box sx={{
+                              width: `${((skill.proficiencyLevel || 0) / 5) * 100}%`,
+                              height: '100%',
+                              background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)'
+                            }} />
+                          </Box>
+                          {skill.ScoreTest && (
+                            <Typography variant="caption" sx={{
+                              color: 'rgba(255,255,255,0.5)',
+                              display: 'block',
+                              mt: 1,
+                              textAlign: 'right',
+                              fontSize: '0.7rem'
+                            }}>
+                              Test Score: {skill.ScoreTest}%
+                            </Typography>
+                          )}
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+              <TextField
+                label="Bid Amount"
+                type="number"
+                value={bidAmount}
+                onChange={(e) => setBidAmount(e.target.value)}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+                fullWidth
+                InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                sx={{
+                  color: '#ffffff',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(255,255,255,0.2)',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(255,255,255,0.3)',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#02E2FF',
+                  },
+                  '& .MuiInputBase-input': {
+                    color: '#ffffff',
+                  },
+                  '& .MuiInputAdornment-root .MuiTypography-root': {
+                    color: 'rgba(255,255,255,0.7)',
+                  },
+                }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{
+            p: 3,
+            borderTop: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <Button
+              onClick={handleBidDialogClose}
+              sx={{
+                color: 'rgba(255,255,255,0.8)',
+                mr: 1
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleBidSubmit}
+              disabled={!bidAmount || parseFloat(bidAmount) <= 0}
+              sx={{
+                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                },
+                '&.Mui-disabled': {
+                  background: 'rgba(255,255,255,0.1)',
+                  color: 'rgba(255,255,255,0.3)'
+                }
+              }}
+            >
+              Submit Bid
             </Button>
           </DialogActions>
         </Dialog>
