@@ -201,7 +201,8 @@ module.exports.updateSoftSkills = async (req, res) => {
 // Mettre à jour le finalBid
 module.exports.updateFinalBid = async (req, res) => {
   try {
-    const { newBid, userId, companyId } = req.body;
+    const companyId = req.user._id;
+    const { newBid, userId } = req.body;
 
     if (typeof newBid !== 'number' || newBid <= 0) {
       return res.status(400).json({ message: "The bid must be a positive number" });
