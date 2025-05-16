@@ -38,5 +38,6 @@ router.get('/getSoftSkillsById/:userId', profileController.getSoftSkills);
 
 router.put('/updateFinalBid', profileController.updateFinalBid);
 
+router.delete('/deleteHardSkill', profileController.deleteHardSkill);
 
 module.exports = router; 
