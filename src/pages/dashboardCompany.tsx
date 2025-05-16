@@ -52,6 +52,7 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import { isRejectedWithValue } from '@reduxjs/toolkit';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -2538,33 +2539,37 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
     if (!selectedCandidate || !bidAmount) return;
 
     try {
-      const token = Cookies.get('api_token');
-      
-    
+      const token = localStorage.getItem('api_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
 
-      // Then update the profile with the final bid
+      // Update the profile with the final bid
       const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateFinalBid`, {
-        method: 'UPDATE',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          newBid: parseFloat(bidAmount),
+          newBid: bidAmount,
           userId: selectedCandidate.candidateId._id
         })
       });
 
       if (!profileResponse.ok) {
-        throw new Error('Failed to update profile with final bid');
+        const errorData = await profileResponse.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to update profile with final bid');
       }
 
       // Close dialog and show success message
       handleBidDialogClose();
-      // You might want to add a success notification here
+      // Refresh the matching profiles to show updated data
+      fetchMatchingProfiles();
+      
     } catch (error) {
       console.error('Error submitting bid:', error);
-      // You might want to add an error notification here
+      alert(error instanceof Error ? error.message : 'Failed to submit bid. Please try again.');
     }
   };
 
@@ -3213,8 +3218,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           <DialogContent sx={{ mt: 2 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ 
-                  color: 'rgba(255,255,255,0.7)', 
+                <Typography variant="subtitle2" sx={{
+                  color: 'rgba(255,255,255,0.7)',
                   mb: 1,
                   display: 'flex',
                   alignItems: 'center',
@@ -3239,10 +3244,10 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                   p: 2.5,
                   border: '1px solid rgba(255,255,255,0.1)'
                 }}>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 2, 
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
                     mb: 2,
                     pb: 2,
                     borderBottom: '1px solid rgba(255,255,255,0.1)'
@@ -3280,8 +3285,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                           </Box>
                         )}
                       </Box>
-                      <Typography sx={{ 
-                        color: 'rgba(255,255,255,0.7)', 
+                      <Typography sx={{
+                        color: 'rgba(255,255,255,0.7)',
                         fontSize: '0.9rem',
                         display: 'flex',
                         alignItems: 'center',
@@ -3294,8 +3299,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                   </Box>
 
                   <Box>
-                    <Typography variant="subtitle2" sx={{ 
-                      color: 'rgba(255,255,255,0.7)', 
+                    <Typography variant="subtitle2" sx={{
+                      color: 'rgba(255,255,255,0.7)',
                       mb: 1.5,
                       display: 'flex',
                       alignItems: 'center',
@@ -3314,9 +3319,9 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                       </Box>
                       Matched Skills
                     </Typography>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      flexWrap: 'wrap', 
+                    <Box sx={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
                       gap: 1,
                       '& > *': {
                         flex: '1 1 calc(50% - 8px)',
