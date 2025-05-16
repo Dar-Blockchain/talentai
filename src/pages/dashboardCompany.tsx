@@ -1077,14 +1077,14 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
       if (!token) {
         throw new Error('No authentication token found');
       }
-
-      const response = await fetch('http://localhost:5000/profiles/getCompanyBid', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getCompanyBid`
+        , {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
 
       if (!response.ok) {
         throw new Error('Failed to fetch bid history');
@@ -2535,7 +2535,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
         progress: undefined,
         theme: "dark",
       });
-      
+
     } catch (error) {
       console.error('Error submitting bid:', error);
       toast.error('Failed to submit bid. Please try again.', {
