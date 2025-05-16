@@ -214,7 +214,7 @@ export default function Report() {
     analyzeResults();
   }, [router.query.from, router.query.type, router.query.skill, router.query.subcategory]);
 
-  const goHome = () => router.push('/');
+  const goHome = () => router.push('/dashboardCandidate');
 
   if (loading || analyzing) {
     return (

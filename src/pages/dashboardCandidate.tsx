@@ -208,16 +208,16 @@ const calculateSkillPercentage = (profile: any, type: 'technical' | 'soft'): num
   if (type === 'technical') {
     const technicalSkills = profile.skills?.filter((skill: any) => !softSkillNames.includes(skill.name)) || [];
     if (technicalSkills.length === 0) return 0;
-    
+
     const totalScore = technicalSkills.reduce((sum: number, skill: any) => {
       return sum + (skill.proficiencyLevel / 5) * 100;
     }, 0);
-    
+
     return totalScore / technicalSkills.length;
   } else {
     // For soft skills
     if (!profile.softSkills?.length) return 0;
-    
+
     const totalScore = profile.softSkills.reduce((sum: any, skill: any) => {
       // Convert experienceLevel to number
       const proficiencyMap: { [key: string]: number } = {
@@ -230,7 +230,7 @@ const calculateSkillPercentage = (profile: any, type: 'technical' | 'soft'): num
       const proficiencyLevel = proficiencyMap[skill.experienceLevel] || 1;
       return sum + (proficiencyLevel / 5) * 100;
     }, 0);
-    
+
     return totalScore / profile.softSkills.length;
   }
 };
@@ -361,6 +361,41 @@ const technicalSkillsList = [
   // ...add more as needed
 ];
 
+// Define skill categories
+const skillCategories = {
+  Development: [
+    'JavaScript', 'TypeScript', 'Python', 'Java', 'C#', 'C++', 'Go', 'Rust', 'Ruby', 'PHP', 'Swift', 'Kotlin',
+    'React', 'Angular', 'Vue.js', 'Next.js', 'Node.js', 'Express', 'Django', 'Flask', 'Spring', 'Laravel',
+    'SQL', 'NoSQL', 'MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'GraphQL', 'REST API', 'Docker', 'Kubernetes',
+    'AWS', 'Azure', 'GCP', 'CI/CD', 'Jenkins', 'Git', 'HTML', 'CSS', 'Sass', 'Tailwind CSS', 'Webpack',
+    'Machine Learning', 'Deep Learning', 'TensorFlow', 'PyTorch', 'NLP', 'Computer Vision', 'Data Science',
+    'Cybersecurity', 'DevOps', 'Agile', 'Scrum', 'Testing', 'Jest', 'Mocha', 'Cypress', 'Playwright',
+    'Mobile Development', 'React Native', 'Flutter', 'iOS', 'Android', 'Unity', 'Unreal Engine',
+  ],
+  Marketing: [
+    'SEO', 'Content Marketing', 'Email Marketing', 'Social Media', 'Google Analytics', 'Copywriting', 'Branding',
+    'Market Research', 'Advertising', 'Digital Marketing', 'Growth Hacking', 'Influencer Marketing',
+  ],
+  QA: [
+    'Testing', 'Cypress', 'Playwright', 'Jest', 'Mocha', 'Manual Testing', 'Automation', 'Bug Tracking',
+    'Quality Assurance', 'Regression Testing', 'Performance Testing',
+  ],
+  Business: [
+    'Business Analysis', 'Project Management', 'Product Management', 'Strategy', 'Finance', 'Sales',
+    'Negotiation', 'Customer Success', 'Operations', 'Entrepreneurship',
+  ],
+
+};
+
+// Category color map
+const categoryColors: Record<string, string> = {
+  Development: '#0ea5e9',
+  Marketing: '#f59e42',
+  QA: '#a21caf',
+  Business: '#22c55e',
+  Other: '#64748b'
+};
+
 export default function DashboardCandidate() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
@@ -374,6 +409,7 @@ export default function DashboardCandidate() {
   const [softSkillSubcategory, setSoftSkillSubcategory] = useState('');
   const [softSkillProficiency, setSoftSkillProficiency] = useState<number>(1);
   const [isExistingSoftSkill, setIsExistingSoftSkill] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
 
   const [formData, setFormData] = useState({
     username: '',
@@ -510,7 +546,7 @@ export default function DashboardCandidate() {
         // Find the selected skill in the profile to get its proficiency level
         const selectedSkillData = profile?.skills.find(skill => skill.name === selectedSkill);
         const proficiencyLevel = selectedSkillData?.proficiencyLevel || 1;
-        
+
         router.push(`/test?type=technical&skill=${selectedSkill}&proficiency=${proficiencyLevel}`);
       } else if (skillType === 'soft') {
         // Get the experience level based on proficiency
@@ -655,8 +691,8 @@ export default function DashboardCandidate() {
   ];
 
   const softSkills: Skill[] = [
-    { 
-      name: 'Communication', 
+    {
+      name: 'Communication',
       proficiencyLevel: 0,
       requiresLanguage: true,
       subcategories: [
@@ -666,8 +702,8 @@ export default function DashboardCandidate() {
         { value: 'negotiation', label: 'Negotiation Skills' }
       ]
     },
-    { 
-      name: 'Leadership', 
+    {
+      name: 'Leadership',
       proficiencyLevel: 0,
       subcategories: [
         { value: 'team-management', label: 'Team Management' },
@@ -676,8 +712,8 @@ export default function DashboardCandidate() {
         { value: 'motivation', label: 'Team Motivation' }
       ]
     },
-    { 
-      name: 'Problem Solving', 
+    {
+      name: 'Problem Solving',
       proficiencyLevel: 0,
       subcategories: [
         { value: 'analytical', label: 'Analytical Thinking' },
@@ -686,8 +722,8 @@ export default function DashboardCandidate() {
         { value: 'strategic', label: 'Strategic Planning' }
       ]
     },
-    { 
-      name: 'Teamwork', 
+    {
+      name: 'Teamwork',
       proficiencyLevel: 0,
       subcategories: [
         { value: 'collaboration', label: 'Collaboration' },
@@ -696,8 +732,8 @@ export default function DashboardCandidate() {
         { value: 'cultural-awareness', label: 'Cultural Awareness' }
       ]
     },
-    { 
-      name: 'Time Management', 
+    {
+      name: 'Time Management',
       proficiencyLevel: 0,
       subcategories: [
         { value: 'prioritization', label: 'Task Prioritization' },
@@ -722,7 +758,7 @@ export default function DashboardCandidate() {
 
   const checkExistingSoftSkill = (skillName: string, category?: string) => {
     if (!profile?.softSkills?.length) return null;
-    
+
     return profile.softSkills.find(
       (skill) => {
         if (skillName === 'Communication') {
@@ -1250,7 +1286,7 @@ export default function DashboardCandidate() {
                                   fontSize: '0.75rem',
                                 },
                                 '& .MuiSlider-valueLabel': {
-                                  background: isExistingSoftSkill 
+                                  background: isExistingSoftSkill
                                     ? 'rgba(2,226,255,0.5)'
                                     : 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
                                 },
@@ -1271,11 +1307,11 @@ export default function DashboardCandidate() {
                             />
                           </Box>
                           {isExistingSoftSkill && (
-                            <Typography 
-                              variant="caption" 
-                              sx={{ 
-                                color: 'rgba(255,255,255,0.7)', 
-                                display: 'block', 
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'rgba(255,255,255,0.7)',
+                                display: 'block',
                                 mt: 1,
                                 textAlign: 'center'
                               }}
@@ -1440,7 +1476,7 @@ export default function DashboardCandidate() {
               <SectionTitle>Skills & Expertise</SectionTitle>
 
               {/* Overall Score Circle */}
-              <Box sx={{ 
+              <Box sx={{
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -1564,7 +1600,7 @@ export default function DashboardCandidate() {
                         type="technical"
                         onStartTest={() => handleStartTest('technical', skill)}
                       />
-                  ))}
+                    ))}
                 </Box>
               </Box>
             </StyledCard>
@@ -1601,10 +1637,64 @@ export default function DashboardCandidate() {
             </Box>
           </DialogTitle>
           <DialogContent sx={{ mt: 2 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {/* Category Select */}
               <Autocomplete
                 fullWidth
-                options={technicalSkillsList}
+                options={Object.keys(skillCategories)}
+                value={selectedCategory || null}
+                onChange={(_, value) => setSelectedCategory(value || '')}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Category"
+                    InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                    sx={{
+                      mt: 2,
+                      color: '#ffffff',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(255,255,255,0.2)',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'rgba(255,255,255,0.3)',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#02E2FF',
+                      },
+                      background: 'rgba(30,41,59,0.98)',
+                    }}
+                  />
+                )}
+                sx={{
+                  '& .MuiAutocomplete-inputRoot': {
+                    color: '#ffffff',
+                    background: 'rgba(30,41,59,0.98)',
+                  },
+                }}
+                PaperComponent={(props) => (
+                  <Paper
+                    {...props}
+                    sx={{
+                      background: 'rgba(30,41,59,0.98)',
+                      color: '#fff',
+                      '& .MuiAutocomplete-option': {
+                        backgroundColor: 'rgba(30,41,59,0.98)',
+                        color: '#fff',
+                        '&[aria-selected="true"]': {
+                          backgroundColor: 'rgba(2,226,255,0.12)',
+                        },
+                        '&:hover': {
+                          backgroundColor: 'rgba(2,226,255,0.18)',
+                        },
+                      },
+                    }}
+                  />
+                )}
+              />
+              {/* Skill Autocomplete */}
+              <Autocomplete
+                fullWidth
+                options={selectedCategory ? skillCategories[selectedCategory as keyof typeof skillCategories] : technicalSkillsList}
                 value={newSkill.name || null}
                 onChange={(_, value) => setNewSkill(prev => ({ ...prev, name: value || '' }))}
                 renderInput={(params) => (

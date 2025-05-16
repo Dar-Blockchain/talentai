@@ -458,10 +458,19 @@ const DashboardCompany = () => {
   };
 
   const handleSalaryChange = (field: 'min' | 'max' | 'currency', value: string | number) => {
-    setSalaryRange(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    if (field === 'currency') {
+      setSalaryRange(prev => ({
+        ...prev,
+        [field]: value as string
+      }));
+    } else {
+      // For min and max fields, ensure we're working with a clean number
+      const numValue = typeof value === 'string' ? parseInt(value.replace(/^0+/, ''), 10) || 0 : value;
+      setSalaryRange(prev => ({
+        ...prev,
+        [field]: numValue
+      }));
+    }
   };
 
   // Fetch matching profiles
@@ -954,7 +963,7 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
 
       setJobDescription('');
       setGeneratedJob(undefined);
-
+      fetchMyJobs()
     } catch (error) {
       console.error('Error saving job:', error);
     } finally {
@@ -1362,7 +1371,7 @@ Benefits:
                 <TextField
                   fullWidth
                   label="Minimum Salary"
-                  type="number"
+                  type="string"
                   value={salaryRange.min}
                   onChange={(e) => handleSalaryChange('min', parseInt(e.target.value) || 0)}
                   InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
@@ -1386,7 +1395,7 @@ Benefits:
                 <TextField
                   fullWidth
                   label="Maximum Salary"
-                  type="number"
+                  type="string"
                   value={salaryRange.max}
                   onChange={(e) => handleSalaryChange('max', parseInt(e.target.value) || 0)}
                   InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
@@ -2940,11 +2949,11 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                         size="small"
                         sx={{ backgroundColor: 'rgba(255,255,255,0.13)', color: '#fff', fontWeight: 600 }}
                       />
-                      <Chip
+                      {/* <Chip
                         label={job.jobDetails.experienceLevel}
                         size="small"
                         sx={{ backgroundColor: 'rgba(255,255,255,0.13)', color: '#fff', fontWeight: 600 }}
-                      />
+                      /> */}
                     </Box>
                     {/* Description */}
                     <Typography
