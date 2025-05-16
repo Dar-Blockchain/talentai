@@ -287,12 +287,12 @@ module.exports.updateFinalBid = async (userId, newBid , companyId) => {
   try {
     const profile = await Profile.findOne({ userId });
     if (!profile) {
-      throw new Error('Profil non trouvé');
+      throw new Error('Profile not found');
     }
 
     // Vérifier si le nouveau bid est supérieur à l'ancien
     if (profile.finalBid && newBid <= profile.finalBid) {
-      throw new Error('Le nouveau bid doit être supérieur à l\'ancien bid');
+      throw new Error('The new bid must be higher than the old bid');
     }
 
     // Mettre à jour le finalBid
@@ -302,7 +302,7 @@ module.exports.updateFinalBid = async (userId, newBid , companyId) => {
 
     return profile;
   } catch (error) {
-    console.error('Erreur lors de la mise à jour du finalBid:', error);
+    console.error('Error updating finalBid:', error);
     throw error;
   }
 };
@@ -312,11 +312,11 @@ module.exports.deleteHardSkill = async (userId, skillToDelete) => {
   try {
     const profile = await Profile.findOne({ userId });
     if (!profile) {
-      throw new Error('Profil non trouvé');
+      throw new Error('Profile not found');
     }
 
     if (!skillToDelete || typeof skillToDelete !== 'string') {
-      throw new Error('Le skill à supprimer doit être fourni sous forme de chaîne de caractères');
+      throw new Error('The skill to be deleted must be provided as a string');
     }
 
     // Trouver l'index du skill à supprimer
@@ -342,11 +342,11 @@ module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
   try {
     const profile = await Profile.findOne({ userId });
     if (!profile) {
-      throw new Error('Profil non trouvé');
+      throw new Error('Profile not found');
     }
 
     if (!softSkillToDelete || typeof softSkillToDelete !== 'string') {
-      throw new Error('Le softSkill à supprimer doit être fourni sous forme de chaîne de caractères');
+      throw new Error('The skill to be deleted must be provided as a string');
     }
 
     // Trouver l'index du softSkill à supprimer
