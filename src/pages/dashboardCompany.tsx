@@ -53,6 +53,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import { isRejectedWithValue } from '@reduxjs/toolkit';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -458,6 +460,7 @@ const DashboardCompany = () => {
   const [bidDialogOpen, setBidDialogOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
   const [bidAmount, setBidAmount] = useState('');
+  const [isSubmittingBid, setIsSubmittingBid] = useState(false);
 
   const isSalaryRangeValid = () => {
     return salaryRange.min > 0 && salaryRange.max > 0 && salaryRange.max >= salaryRange.min;
@@ -2538,13 +2541,14 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
   const handleBidSubmit = async () => {
     if (!selectedCandidate || !bidAmount) return;
 
+    setIsSubmittingBid(true);
     try {
       const token = localStorage.getItem('api_token');
       if (!token) {
-        throw new Error('No authentication token found');
+        return isRejectedWithValue('No authentication token found');
       }
 
-      // Update the profile with the final bid
+      // Then update the profile with the final bid
       const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateFinalBid`, {
         method: 'PUT',
         headers: {
@@ -2552,24 +2556,42 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          newBid: bidAmount,
+          newBid: parseFloat(bidAmount),
           userId: selectedCandidate.candidateId._id
         })
       });
 
       if (!profileResponse.ok) {
-        const errorData = await profileResponse.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to update profile with final bid');
+        throw new Error('Failed to update profile with final bid');
       }
 
       // Close dialog and show success message
       handleBidDialogClose();
-      // Refresh the matching profiles to show updated data
-      fetchMatchingProfiles();
+      toast.success('Bid submitted successfully!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+      });
       
     } catch (error) {
       console.error('Error submitting bid:', error);
-      alert(error instanceof Error ? error.message : 'Failed to submit bid. Please try again.');
+      toast.error('Failed to submit bid. Please try again.', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+      });
+    } finally {
+      setIsSubmittingBid(false);
     }
   };
 
@@ -2583,6 +2605,18 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
         `,
       py: 4
     }}>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
       <Container maxWidth="lg">
         {renderFilterDialog()}
 
@@ -3424,13 +3458,14 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                 color: 'rgba(255,255,255,0.8)',
                 mr: 1
               }}
+              disabled={isSubmittingBid}
             >
               Cancel
             </Button>
             <Button
               variant="contained"
               onClick={handleBidSubmit}
-              disabled={!bidAmount || parseFloat(bidAmount) <= 0}
+              disabled={!bidAmount || parseFloat(bidAmount) <= 0 || isSubmittingBid}
               sx={{
                 background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
                 '&:hover': {
@@ -3442,7 +3477,14 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                 }
               }}
             >
-              Submit Bid
+              {isSubmittingBid ? (
+                <>
+                  <CircularProgress size={20} sx={{ mr: 1, color: '#fff' }} />
+                  Submitting...
+                </>
+              ) : (
+                'Submit Bid'
+              )}
             </Button>
           </DialogActions>
         </Dialog>
