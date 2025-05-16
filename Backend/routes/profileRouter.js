@@ -40,4 +40,6 @@ router.put('/updateFinalBid', profileController.updateFinalBid);
 
 router.delete('/deleteHardSkill', profileController.deleteHardSkill);
 
+router.delete('/deleteSoftSkills', profileController.deleteSoftSkills);
+
 module.exports = router; 
