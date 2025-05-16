@@ -1055,9 +1055,9 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
   };
 
   // Add useEffect to fetch bid history on component mount
-  useEffect(() => {
-    fetchBidHistory();
-  }, []);
+  // useEffect(() => {
+  //   fetchBidHistory();
+  // }, []);
 
   // Update the renderBidHistory function
   const renderBidHistory = () => (
