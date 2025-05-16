@@ -685,56 +685,6 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
     }
   };
 
-  // Add this function to handle job posting
-  const handleCopyForLinkedIn = () => {
-    if (generatedJob) {
-      const linkedinFormat = `🚀 Exciting Opportunity: ${generatedJob.jobDetails.title}
-
-🏢 About the Role:
-${generatedJob.jobDetails.description}
-
-🎯 Key Responsibilities:
-${generatedJob.jobDetails.responsibilities.map(resp => `• ${resp}`).join('\n')}
-
-📋 Requirements:
-${generatedJob.jobDetails.requirements.map(req => `• ${req}`).join('\n')}
-
-🔧 Required Skills:
-${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Level ${skill.level})`).join('\n')}
-
-💼 Employment Type: ${generatedJob.jobDetails.employmentType}
-📍 Location: ${generatedJob.jobDetails.location}
-💰 Salary Range: ${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}
-
-✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test
-
-#Hiring #TechJobs #${generatedJob.jobDetails.title.replace(/\s+/g, '')} #RemoteWork #TechCareers`;
-
-      navigator.clipboard.writeText(linkedinFormat)
-        .then(() => {
-          setCopySuccess(true);
-          setTimeout(() => setCopySuccess(false), 2000);
-        })
-        .catch(err => {
-          console.error('Failed to copy LinkedIn format: ', err);
-        });
-    }
-  };
-
-  const handleCopyJobData = () => {
-    if (generatedJob) {
-      const jobData = {
-        jobDetails: generatedJob.jobDetails,
-        skillAnalysis: generatedJob.skillAnalysis,
-        linkedinPost: generatedJob.linkedinPost
-      };
-
-      navigator.clipboard.writeText(JSON.stringify(jobData, null, 2))
-        .catch(err => {
-          console.error('Failed to copy: ', err);
-        });
-    }
-  };
 
   // Update the saveJob function to handle the job data properly
   const saveJob = async () => {
@@ -2514,7 +2464,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          newBid: parseFloat(bidAmount),
+          newBid: Number(bidAmount),
           userId: selectedCandidate.candidateId._id
         })
       });
