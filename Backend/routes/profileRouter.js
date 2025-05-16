@@ -36,5 +36,7 @@ router.get('/getSoftSkills', profileController.getSoftSkills);
 // Récupérer les soft skills par ID
 router.get('/getSoftSkillsById/:userId', profileController.getSoftSkills);
 
+router.post('/updateFinalBid', profileController.updateFinalBid);
+
 
 module.exports = router; 
