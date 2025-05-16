@@ -198,32 +198,11 @@ module.exports.updateSoftSkills = async (req, res) => {
   }
 };
 
-// Supprimer des soft skills
-module.exports.deleteSoftSkills = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { softSkillsToDelete } = req.body;
-
-    if (!softSkillsToDelete || !Array.isArray(softSkillsToDelete)) {
-      return res.status(400).json({ message: "Les soft skills à supprimer doivent être fournis sous forme de tableau" });
-    }
-
-    const profile = await profileService.deleteSoftSkills(userId, softSkillsToDelete);
-    res.status(200).json({
-      message: "Soft skills supprimés avec succès",
-      profile
-    });
-  } catch (error) {
-    console.error('Erreur lors de la suppression des soft skills:', error);
-    res.status(500).json({ message: error.message || "Erreur lors de la suppression des soft skills" });
-  }
-};
-
 // Mettre à jour le finalBid
 module.exports.updateFinalBid = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const { newBid , companyId } = req.body;
+    const companyId = req.user._id;
+    const { newBid , userId } = req.body;
 
     if (typeof newBid !== 'number' || newBid <= 0) {
       return res.status(400).json({ message: "Le bid doit être un nombre positif" });
