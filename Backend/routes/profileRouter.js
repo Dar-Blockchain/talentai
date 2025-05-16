@@ -33,6 +33,8 @@ router.post('/addSoftSkills', profileController.addSoftSkills);
 // Récupérer les soft skills
 router.get('/getSoftSkills', profileController.getSoftSkills);
 
+router.get('/getCompanyBid', profileController.getCompanyBid);
+
 // Récupérer les soft skills par ID
 router.get('/getSoftSkillsById/:userId', profileController.getSoftSkills);
 
@@ -41,5 +43,6 @@ router.put('/updateFinalBid', profileController.updateFinalBid);
 router.delete('/deleteHardSkill', profileController.deleteHardSkill);
 
 router.delete('/deleteSoftSkills', profileController.deleteSoftSkill);
+
 
 module.exports = router; 
