@@ -48,6 +48,8 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { useRouter } from 'next/router';
 import Cookies from 'js-cookie';
 import { signOut } from 'next-auth/react';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { toast } from 'react-hot-toast';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -305,9 +307,7 @@ const ScoreCircle = styled(Box)(({ theme }) => ({
 }));
 
 // SkillBlock component for unified skill design
-const SkillBlock = ({ skill, type, onStartTest }: { skill: any, type: 'technical' | 'soft', onStartTest: () => void }) => {
-  // For technical: skill.name, skill.experienceLevel, skill.proficiencyLevel
-  // For soft: skill.name, skill.category, skill.experienceLevel
+const SkillBlock = ({ skill, type, onStartTest, onDelete }: { skill: any, type: 'technical' | 'soft', onStartTest: () => void, onDelete?: () => void }) => {
   const proficiencyMap: { [key: string]: number } = {
     'Entry Level': 1,
     'Junior': 2,
@@ -329,22 +329,38 @@ const SkillBlock = ({ skill, type, onStartTest }: { skill: any, type: 'technical
           <Box sx={{ width: `${percentage}%`, height: '100%', background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)', borderRadius: '3px', transition: 'width 0.3s ease' }} />
         </Box>
       </Box>
-      <Button
-        variant="outlined"
-        size="small"
-        onClick={onStartTest}
-        sx={{
-          color: '#02E2FF',
-          borderColor: 'rgba(2,226,255,0.5)',
-          '&:hover': {
-            borderColor: '#02E2FF',
-            background: 'rgba(2,226,255,0.1)'
-          },
-          minWidth: 110
-        }}
-      >
-        Start Test
-      </Button>
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={onStartTest}
+          sx={{
+            color: '#02E2FF',
+            borderColor: 'rgba(2,226,255,0.5)',
+            '&:hover': {
+              borderColor: '#02E2FF',
+              background: 'rgba(2,226,255,0.1)'
+            },
+            minWidth: 110
+          }}
+        >
+          Start Test
+        </Button>
+        {onDelete && (
+          <IconButton
+            onClick={onDelete}
+            size="small"
+            sx={{
+              color: '#ff3b30',
+              '&:hover': {
+                background: 'rgba(255,59,48,0.1)'
+              }
+            }}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        )}
+      </Box>
     </Box>
   );
 };
@@ -827,6 +843,68 @@ export default function DashboardCandidate() {
 
   // Add state to track if a skill was just added
   const [justAddedSkill, setJustAddedSkill] = useState<any>(null);
+
+  // Add delete skill handler
+  const handleDeleteSkill = async (skillName: string) => {
+    try {
+      const token = localStorage.getItem('api_token');
+      if (!token) {
+        toast.error('Authentication token not found');
+        return;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/deleteHardSkill`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ skillToDelete: skillName })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete skill');
+      }
+
+      // Refresh profile data
+      dispatch(getMyProfile());
+      toast.success('Skill deleted successfully');
+    } catch (error) {
+      console.error('Error deleting skill:', error);
+      toast.error('Failed to delete skill');
+    }
+  };
+
+  // Add delete soft skill handler
+  const handleDeleteSoftSkill = async (skillName: string, category: string) => {
+    try {
+      const token = localStorage.getItem('api_token');
+      if (!token) {
+        toast.error('Authentication token not found');
+        return;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/deleteSoftSkills`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ softSkillToDelete: skillName })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete soft skill');
+      }
+
+      // Refresh profile data
+      dispatch(getMyProfile());
+      toast.success('Soft skill deleted successfully');
+    } catch (error) {
+      console.error('Error deleting soft skill:', error);
+      toast.error('Failed to delete soft skill');
+    }
+  };
 
   if (loading) {
     return (
@@ -1559,6 +1637,7 @@ export default function DashboardCandidate() {
                         skill={skill}
                         type="soft"
                         onStartTest={() => handleStartTest('soft', skill)}
+                        onDelete={() => handleDeleteSoftSkill(skill.name, skill.category)}
                       />
                     ))
                   ) : (
@@ -1599,6 +1678,7 @@ export default function DashboardCandidate() {
                         skill={skill}
                         type="technical"
                         onStartTest={() => handleStartTest('technical', skill)}
+                        onDelete={() => handleDeleteSkill(skill.name)}
                       />
                     ))}
                 </Box>
