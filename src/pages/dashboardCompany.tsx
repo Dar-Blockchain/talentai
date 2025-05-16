@@ -2539,22 +2539,24 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
     try {
       const token = Cookies.get('api_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}bids/create`, {
-        method: 'POST',
+      
+    
+
+      // Then update the profile with the final bid
+      const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateFinalBid`, {
+        method: 'UPDATE',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          candidateId: selectedCandidate.candidateId._id,
-          jobId: selectedJob,
-          amount: parseFloat(bidAmount),
-          currency: '$'
+          newBid: parseFloat(bidAmount),
+          userId: selectedCandidate.candidateId._id
         })
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to submit bid');
+      if (!profileResponse.ok) {
+        throw new Error('Failed to update profile with final bid');
       }
 
       // Close dialog and show success message
