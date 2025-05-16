@@ -407,46 +407,9 @@ const DashboardCompany = () => {
   const [selectedJob, setSelectedJob] = useState('');
   const [isLoadingJobs, setIsLoadingJobs] = useState(false);
   const [jobsError, setJobsError] = useState<string | null>(null);
-  const [bidHistory] = useState<BidHistoryItem[]>([
-    {
-      candidate: {
-        _id: '1',
-        username: 'john_doe',
-        email: 'john@example.com',
-        role: 'Frontend Developer',
-      },
-      status: 'win',
-      bidAmount: 12000,
-      jobTitle: 'React Developer',
-      createdAt: '2024-06-01T10:00:00Z',
-    },
-    {
-      candidate: {
-        _id: '2',
-        username: 'jane_smith',
-        email: 'jane@example.com',
-        role: 'Backend Developer',
-      },
-      status: 'lose',
-      bidAmount: 11000,
-      jobTitle: 'Node.js Engineer',
-      createdAt: '2024-06-02T14:30:00Z',
-    },
-    {
-      candidate: {
-        _id: '3',
-        username: 'alice_wong',
-        email: 'alice@example.com',
-        role: 'Full Stack Developer',
-      },
-      status: 'win',
-      bidAmount: 13000,
-      jobTitle: 'Full Stack Engineer',
-      createdAt: '2024-06-03T09:15:00Z',
-    },
-  ]);
-  const [isLoadingBids] = useState(false);
-  const [bidError] = useState<string | null>(null);
+  const [bidHistory, setBidHistory] = useState<BidHistoryItem[]>([]);
+  const [isLoadingBids, setIsLoadingBids] = useState(false);
+  const [bidError, setBidError] = useState<string | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [linkedinWarningOpen, setLinkedinWarningOpen] = useState(false);
   const [salaryRange, setSalaryRange] = useState({
@@ -481,52 +444,6 @@ const DashboardCompany = () => {
       }));
     }
   };
-
-  // Fetch matching profiles
-  const fetchMatchingProfiles = async () => {
-    const token = Cookies.get('api_token');
-
-    if (!token) {
-      setMatchError('Authentication token not found. Please log in again.');
-      setIsLoadingMatches(false);
-      return;
-    }
-
-    try {
-      setIsLoadingMatches(true);
-      setMatchError(null);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/match-profiles-with-company`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to fetch matching profiles (${response.status})`);
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        setMatchingProfiles(data.matches || []);
-      } else {
-        throw new Error(data.error || 'Failed to fetch matches');
-      }
-    } catch (err) {
-      console.error('Error fetching matching profiles:', err);
-      setMatchError(err instanceof Error ? err.message : 'An error occurred while fetching matches');
-    } finally {
-      setIsLoadingMatches(false);
-      setIsInitialLoad(false);
-    }
-  };
-
-  // Fetch matching profiles on component mount
-  useEffect(() => {
-    fetchMatchingProfiles();
-  }, []);
 
   // Filter profiles based on score and skills
   useEffect(() => {
@@ -1151,7 +1068,48 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
     </Dialog>
   );
 
-  // Add this render function for bid history
+  // Add function to fetch bid history
+  const fetchBidHistory = async () => {
+    setIsLoadingBids(true);
+    setBidError(null);
+    try {
+      const token = localStorage.getItem('api_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch('http://localhost:5000/profiles/getCompanyBid', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch bid history');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setBidHistory(data.bids || []);
+      } else {
+        throw new Error(data.error || 'Failed to fetch bid history');
+      }
+    } catch (error) {
+      console.error('Error fetching bid history:', error);
+      setBidError(error instanceof Error ? error.message : 'Failed to fetch bid history');
+    } finally {
+      setIsLoadingBids(false);
+    }
+  };
+
+  // Add useEffect to fetch bid history on component mount
+  useEffect(() => {
+    fetchBidHistory();
+  }, []);
+
+  // Update the renderBidHistory function
   const renderBidHistory = () => (
     <StyledCard sx={{ mt: 4 }}>
       <SectionTitle>Bid History</SectionTitle>
@@ -1911,7 +1869,7 @@ Benefits:
             variant="outlined"
             onClick={() => {
               setIsInitialLoad(true);
-              fetchMatchingProfiles();
+              handleFilterApply();
             }}
             sx={{
               mt: 2,
@@ -1956,7 +1914,7 @@ Benefits:
             variant="outlined"
             onClick={() => {
               setIsInitialLoad(true);
-              fetchMatchingProfiles();
+              handleFilterApply();
             }}
             sx={{
               borderColor: 'rgba(2,226,255,0.5)',
