@@ -280,4 +280,29 @@ module.exports.deleteSoftSkills = async (userId, softSkillsToDelete) => {
     console.error('Erreur lors de la suppression des soft skills:', error);
     throw error;
   }
+};
+
+// Mettre à jour le finalBid
+module.exports.updateFinalBid = async (userId, newBid , companyId) => {
+  try {
+    const profile = await Profile.findOne({ userId });
+    if (!profile) {
+      throw new Error('Profil non trouvé');
+    }
+
+    // Vérifier si le nouveau bid est supérieur à l'ancien
+    if (profile.finalBid && newBid <= profile.finalBid) {
+      throw new Error('Le nouveau bid doit être supérieur à l\'ancien bid');
+    }
+
+    // Mettre à jour le finalBid
+    profile.finalBid = newBid;
+    profile.companyId = companyId;
+    await profile.save();
+
+    return profile;
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du finalBid:', error);
+    throw error;
+  }
 }; 

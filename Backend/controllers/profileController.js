@@ -217,4 +217,26 @@ module.exports.deleteSoftSkills = async (req, res) => {
     console.error('Erreur lors de la suppression des soft skills:', error);
     res.status(500).json({ message: error.message || "Erreur lors de la suppression des soft skills" });
   }
+};
+
+// Mettre à jour le finalBid
+module.exports.updateFinalBid = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { newBid , companyId } = req.body;
+
+    if (typeof newBid !== 'number' || newBid <= 0) {
+      return res.status(400).json({ message: "Le bid doit être un nombre positif" });
+    }
+
+    const profile = await profileService.updateFinalBid(userId, newBid , companyId);
+    
+    res.status(200).json({
+      message: "Bid mis à jour avec succès",
+      profile
+    });
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du bid:', error);
+    res.status(500).json({ message: error.message || "Erreur lors de la mise à jour du bid" });
+  }
 }; 
