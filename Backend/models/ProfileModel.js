@@ -47,7 +47,7 @@ const profileSchema = new mongoose.Schema(
     //Bid
     companyBid: {
       finalBid: Number,
-      companyId: {
+      company: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },

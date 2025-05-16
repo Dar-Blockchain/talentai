@@ -302,7 +302,7 @@ module.exports.updateFinalBid = async (userId, newBid, companyId) => {
 
     // Update the bid
     profile.companyBid.finalBid = newBid;
-    profile.companyBid.companyId = companyId;
+    profile.companyBid.company = companyId;
     await profile.save();
 
     return profile;
@@ -376,7 +376,7 @@ module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
 module.exports.getCompanyBid = async (userId) => {
   try {
     const profile = await Profile.findOne({ userId })
-      .populate('companyBid.companyId', 'username email');
+      .populate('companyBid.company', 'username email');
 
     if (!profile) {
       throw new Error('Profile not found');
@@ -393,7 +393,7 @@ module.exports.getCompanyBid = async (userId) => {
     return {
       companyBid: {
         finalBid: profile.companyBid.finalBid,
-        companyInfo: profile.companyBid.companyId
+        companyInfo: profile.companyBid.company
       }
     };
   } catch (error) {

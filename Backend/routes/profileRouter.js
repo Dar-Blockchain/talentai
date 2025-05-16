@@ -4,7 +4,7 @@ const profileController = require('../controllers/profileController');
 const { requireAuthUser } = require('../middleware/authMiddleware');
 
 // Routes protégées par authentification
-router.use(requireAuthUser);
+//router.use(requireAuthUser);
 
 // Créer ou mettre à jour un profil
 router.post('/createOrUpdateProfile', profileController.createOrUpdateProfile);
