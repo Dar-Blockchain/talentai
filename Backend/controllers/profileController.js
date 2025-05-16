@@ -260,4 +260,25 @@ module.exports.deleteHardSkill = async (req, res) => {
     console.error('Erreur lors de la suppression du skill:', error);
     res.status(500).json({ message: error.message || "Erreur lors de la suppression du skill" });
   }
+};
+
+// Supprimer un softSkill spécifique
+module.exports.deleteSoftSkill = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { softSkillToDelete } = req.body;
+
+    if (!softSkillToDelete || typeof softSkillToDelete !== 'string') {
+      return res.status(400).json({ message: "Le softSkill à supprimer doit être fourni sous forme de chaîne de caractères" });
+    }
+
+    const profile = await profileService.deleteSoftSkill(userId, softSkillToDelete);
+    res.status(200).json({
+      message: `Le softSkill "${softSkillToDelete}" a été supprimé avec succès`,
+      profile
+    });
+  } catch (error) {
+    console.error('Erreur lors de la suppression du softSkill:', error);
+    res.status(500).json({ message: error.message || "Erreur lors de la suppression du softSkill" });
+  }
 }; 

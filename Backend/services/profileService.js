@@ -335,4 +335,34 @@ module.exports.deleteHardSkill = async (userId, skillToDelete) => {
     console.error('Erreur lors de la suppression du skill:', error);
     throw error;
   }
+};
+
+// Supprimer un softSkill spécifique
+module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
+  try {
+    const profile = await Profile.findOne({ userId });
+    if (!profile) {
+      throw new Error('Profil non trouvé');
+    }
+
+    if (!softSkillToDelete || typeof softSkillToDelete !== 'string') {
+      throw new Error('Le softSkill à supprimer doit être fourni sous forme de chaîne de caractères');
+    }
+
+    // Trouver l'index du softSkill à supprimer
+    const softSkillIndex = profile.softSkills.findIndex(skill => skill.name === softSkillToDelete);
+    
+    if (softSkillIndex === -1) {
+      throw new Error(`Le softSkill "${softSkillToDelete}" n'existe pas dans votre profil`);
+    }
+
+    // Supprimer le softSkill du tableau
+    profile.softSkills.splice(softSkillIndex, 1);
+    await profile.save();
+    
+    return profile;
+  } catch (error) {
+    console.error('Erreur lors de la suppression du softSkill:', error);
+    throw error;
+  }
 }; 
