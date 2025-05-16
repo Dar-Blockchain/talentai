@@ -283,21 +283,26 @@ module.exports.deleteSoftSkills = async (userId, softSkillsToDelete) => {
 };
 
 // Mettre à jour le finalBid
-module.exports.updateFinalBid = async (userId, newBid , companyId) => {
+module.exports.updateFinalBid = async (userId, newBid, companyId) => {
   try {
     const profile = await Profile.findOne({ userId });
     if (!profile) {
       throw new Error('Profile not found');
     }
 
-    // Vérifier si le nouveau bid est supérieur à l'ancien
-    if (profile.finalBid && newBid <= profile.finalBid) {
+    // Initialize companyBid if undefined
+    if (!profile.companyBid) {
+      profile.companyBid = {};
+    }
+
+    // Check if the new bid is higher than the old bid
+    if (profile.companyBid.finalBid && newBid <= profile.companyBid.finalBid) {
       throw new Error('The new bid must be higher than the old bid');
     }
 
-    // Mettre à jour le finalBid
-    profile.finalBid = newBid;
-    profile.companyId = companyId;
+    // Update the bid
+    profile.companyBid.finalBid = newBid;
+    profile.companyBid.companyId = companyId;
     await profile.save();
 
     return profile;
@@ -363,6 +368,38 @@ module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
     return profile;
   } catch (error) {
     console.error('Erreur lors de la suppression du softSkill:', error);
+    throw error;
+  }
+};
+
+// Récupérer les informations du companyBid
+module.exports.getCompanyBid = async (userId) => {
+  try {
+    const profile = await Profile.findOne({ userId });
+    if (!profile) {
+      throw new Error('Profile not found');
+    }
+
+    // Vérifier si companyBid existe
+    if (!profile.companyBid) {
+      return {
+        message: "No bid information available",
+        companyBid: null
+      };
+    }
+
+    // Récupérer les informations complètes de la company
+    const companyInfo = await User.findById(profile.companyBid.companyId)
+      .select('username email');
+
+    return {
+      companyBid: {
+        finalBid: profile.companyBid.finalBid,
+        companyInfo: companyInfo
+      }
+    };
+  } catch (error) {
+    console.error('Error getting company bid:', error);
     throw error;
   }
 }; 

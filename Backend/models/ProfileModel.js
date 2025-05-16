@@ -45,12 +45,13 @@ const profileSchema = new mongoose.Schema(
       enum: ["Entry Level", "Mid Level", "Senior", "Lead/Expert"],
     },
     //Bid
-    finalBid: Number,
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+    companyBid: {
+      finalBid: Number,
+      companyId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
     },
-
   },
   { timestamps: true }
 );
