@@ -375,7 +375,9 @@ module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
 // Récupérer les informations du companyBid
 module.exports.getCompanyBid = async (userId) => {
   try {
-    const profile = await Profile.findOne({ userId });
+    const profile = await Profile.findOne({ userId })
+      .populate('companyBid.companyId', 'username email');
+
     if (!profile) {
       throw new Error('Profile not found');
     }
@@ -388,14 +390,10 @@ module.exports.getCompanyBid = async (userId) => {
       };
     }
 
-    // Récupérer les informations complètes de la company
-    const companyInfo = await User.findById(profile.companyBid.companyId)
-      .select('username email');
-
     return {
       companyBid: {
         finalBid: profile.companyBid.finalBid,
-        companyInfo: companyInfo
+        companyInfo: profile.companyBid.companyId
       }
     };
   } catch (error) {
