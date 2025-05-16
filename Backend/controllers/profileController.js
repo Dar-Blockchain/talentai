@@ -239,4 +239,25 @@ module.exports.updateFinalBid = async (req, res) => {
     console.error('Erreur lors de la mise à jour du bid:', error);
     res.status(500).json({ message: error.message || "Erreur lors de la mise à jour du bid" });
   }
+};
+
+// Supprimer un skill spécifique
+module.exports.deleteHardSkill = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { skillToDelete } = req.body;
+
+    if (!skillToDelete || typeof skillToDelete !== 'string') {
+      return res.status(400).json({ message: "Le skill à supprimer doit être fourni sous forme de chaîne de caractères" });
+    }
+
+    const profile = await profileService.deleteHardSkill(userId, skillToDelete);
+    res.status(200).json({
+      message: `Le skill "${skillToDelete}" a été supprimé avec succès`,
+      profile
+    });
+  } catch (error) {
+    console.error('Erreur lors de la suppression du skill:', error);
+    res.status(500).json({ message: error.message || "Erreur lors de la suppression du skill" });
+  }
 }; 

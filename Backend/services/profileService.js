@@ -305,4 +305,34 @@ module.exports.updateFinalBid = async (userId, newBid , companyId) => {
     console.error('Erreur lors de la mise à jour du finalBid:', error);
     throw error;
   }
+};
+
+// Supprimer un skill spécifique
+module.exports.deleteHardSkill = async (userId, skillToDelete) => {
+  try {
+    const profile = await Profile.findOne({ userId });
+    if (!profile) {
+      throw new Error('Profil non trouvé');
+    }
+
+    if (!skillToDelete || typeof skillToDelete !== 'string') {
+      throw new Error('Le skill à supprimer doit être fourni sous forme de chaîne de caractères');
+    }
+
+    // Trouver l'index du skill à supprimer
+    const skillIndex = profile.skills.findIndex(skill => skill.name === skillToDelete);
+    
+    if (skillIndex === -1) {
+      throw new Error(`Le skill "${skillToDelete}" n'existe pas dans votre profil`);
+    }
+
+    // Supprimer le skill du tableau
+    profile.skills.splice(skillIndex, 1);
+    await profile.save();
+    
+    return profile;
+  } catch (error) {
+    console.error('Erreur lors de la suppression du skill:', error);
+    throw error;
+  }
 }; 
