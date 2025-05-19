@@ -1,11 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './features/authSlice';
 import profileReducer from './features/profileSlice';
+import bidReducer from './slices/bidSlice';
 
 export const store = configureStore({
     reducer: {
         auth: authReducer,
         profile: profileReducer,
+        bid: bidReducer
     },
 });
 
