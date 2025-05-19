@@ -1019,40 +1019,40 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
   );
 
   // Add function to fetch bid history
-  const fetchBidHistory = async () => {
-    setIsLoadingBids(true);
-    setBidError(null);
-    try {
-      const token = localStorage.getItem('api_token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getCompanyBid`
-        , {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
+  // const fetchBidHistory = async () => {
+  //   setIsLoadingBids(true);
+  //   setBidError(null);
+  //   try {
+  //     const token = localStorage.getItem('api_token');
+  //     if (!token) {
+  //       throw new Error('No authentication token found');
+  //     }
+  //     const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getCompanyBid`
+  //       , {
+  //         method: 'GET',
+  //         headers: {
+  //           'Authorization': `Bearer ${token}`,
+  //           'Content-Type': 'application/json'
+  //         }
+  //       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch bid history');
-      }
+  //     if (!response.ok) {
+  //       throw new Error('Failed to fetch bid history');
+  //     }
 
-      const data = await response.json();
-      if (data.success) {
-        setBidHistory(data.bids || []);
-      } else {
-        throw new Error(data.error || 'Failed to fetch bid history');
-      }
-    } catch (error) {
-      console.error('Error fetching bid history:', error);
-      setBidError(error instanceof Error ? error.message : 'Failed to fetch bid history');
-    } finally {
-      setIsLoadingBids(false);
-    }
-  };
+  //     const data = await response.json();
+  //     if (data.success) {
+  //       setBidHistory(data.bids || []);
+  //     } else {
+  //       throw new Error(data.error || 'Failed to fetch bid history');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching bid history:', error);
+  //     setBidError(error instanceof Error ? error.message : 'Failed to fetch bid history');
+  //   } finally {
+  //     setIsLoadingBids(false);
+  //   }
+  // };
 
   // Add useEffect to fetch bid history on component mount
   // useEffect(() => {
