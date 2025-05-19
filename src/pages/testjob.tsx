@@ -160,6 +160,35 @@ const FirstViolationModal = styled(Dialog)(({ theme }) => ({
   },
 }));
 
+const ChatContainer = styled(Box)(({ theme }) => ({
+  flex: 1,
+  display: 'flex',
+  flexDirection: 'column',
+  height: '100%',
+  background: 'rgba(0, 7, 45, 0.8)',
+  backdropFilter: 'blur(10px)',
+  borderLeft: '1px solid rgba(255,255,255,0.1)',
+  padding: theme.spacing(3),
+}));
+
+const QuestionBox = styled(Box)(({ theme }) => ({
+  background: 'rgba(255, 255, 255, 0.05)',
+  borderRadius: '12px',
+  padding: theme.spacing(2),
+  marginBottom: theme.spacing(2),
+  border: '1px solid rgba(255, 255, 255, 0.1)',
+}));
+
+const AnswerBox = styled(Box)(({ theme }) => ({
+  background: 'rgba(2, 226, 255, 0.1)',
+  borderRadius: '12px',
+  padding: theme.spacing(2),
+  marginTop: theme.spacing(2),
+  border: '1px solid rgba(2, 226, 255, 0.2)',
+  flex: 1,
+  overflowY: 'auto',
+}));
+
 // --- SpeechRecognition Types ---
 declare global {
   interface Window {
@@ -392,12 +421,6 @@ export default function TestJob() {
         .join('');
 
       setCurrentTranscript(transcript);
-
-      // Check for security violations
-      const violations = checkForViolations(transcript);
-      if (violations.length > 0 && !violationHandledRef.current) {
-        handleSecurityViolation(violations);
-      }
     };
 
     recognition.onerror = (event) => {
@@ -417,29 +440,6 @@ export default function TestJob() {
     }
   };
 
-  // Security violation checks
-  const checkForViolations = (transcript: string): string[] => {
-    const violations: string[] = [];
-    const lowerTranscript = transcript.toLowerCase();
-
-    // Check for multiple people
-    if (lowerTranscript.includes('we') || lowerTranscript.includes('us') || lowerTranscript.includes('our')) {
-      violations.push('multiple_people');
-    }
-
-    // Check for reading from screen
-    if (lowerTranscript.includes('read') || lowerTranscript.includes('reading')) {
-      violations.push('reading');
-    }
-
-    // Check for external help
-    if (lowerTranscript.includes('help') || lowerTranscript.includes('assist')) {
-      violations.push('external_help');
-    }
-
-    return violations;
-  };
-
   // Add visibility change detection
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -456,12 +456,28 @@ export default function TestJob() {
       }
     };
 
+    // Add screenshot detection
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (hasStartedTest && !violationHandledRef.current) {
+        // Check for PrintScreen key
+        if (e.key === 'PrintScreen') {
+          handleSecurityViolation(['screenshot']);
+        }
+        // Check for Alt + PrintScreen
+        if (e.altKey && e.key === 'PrintScreen') {
+          handleSecurityViolation(['screenshot']);
+        }
+      }
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [hasStartedTest]);
 
@@ -652,21 +668,21 @@ export default function TestJob() {
       </StyledAppBar>
 
       <Container 
-        maxWidth="md"
+        maxWidth={false}
         sx={{
           flexGrow: 1,
           py: 4,
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          gap: 3,
+          height: 'calc(100vh - 128px)',
         }}
       >
         <Paper
           elevation={12}
           sx={{
             position: 'relative',
-            width: '100%',
-            pt: '56.25%', // 16:9
+            width: '60%',
+            height: '100%',
             borderRadius: 2,
             overflow: 'hidden',
           }}
@@ -711,18 +727,27 @@ export default function TestJob() {
               </TranscriptDisplay>
             </RecordingControls>
           )}
+        </Paper>
 
-          <QuestionOverlay>
-            <Typography variant="h6" sx={{ color: '#fff' }}>
+        <ChatContainer>
+          <QuestionBox>
+            <Typography variant="h6" sx={{ 
+              color: '#fff',
+              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: 600,
+              mb: 1
+            }}>
+              Current Question
+            </Typography>
+            <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)' }}>
               {isGenerating ? (
                 <Box sx={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 2,
                   justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
                 }}>
                   <span>Generating your interview questions</span>
                   <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
@@ -731,8 +756,21 @@ export default function TestJob() {
                 </Box>
               ) : questions[current]?.text}
             </Typography>
-          </QuestionOverlay>
-        </Paper>
+          </QuestionBox>
+
+          <AnswerBox>
+            <Typography variant="h6" sx={{ 
+              color: '#02E2FF',
+              fontWeight: 600,
+              mb: 2
+            }}>
+              Your Answer
+            </Typography>
+            <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+              {currentTranscript || 'Your answer will appear here as you speak...'}
+            </Typography>
+          </AnswerBox>
+        </ChatContainer>
       </Container>
 
       <NavigationBar>
