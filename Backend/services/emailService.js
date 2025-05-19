@@ -105,7 +105,7 @@ const getEmailTemplate = (otp) => {
     <body>
       <div class="container">
         <div class="header">
-          <h1>TalenIA</h1>
+          <h1>TalentIA</h1>
           <p>Your Verification Code</p>
         </div>
         <div class="content">
