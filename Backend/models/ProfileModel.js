@@ -44,7 +44,7 @@ const profileSchema = new mongoose.Schema(
       type: String,
       enum: ["Entry Level", "Mid Level", "Senior", "Lead/Expert"],
     },
-    //Bid
+    //Bid User
     companyBid: {
       finalBid: Number,
       company: {
@@ -52,6 +52,14 @@ const profileSchema = new mongoose.Schema(
         ref: "User",
       },
     },
+    UserBided: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    }],
+    usersBidedByCompany: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }]
   },
   { timestamps: true }
 );

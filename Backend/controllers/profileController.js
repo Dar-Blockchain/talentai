@@ -198,27 +198,7 @@ module.exports.updateSoftSkills = async (req, res) => {
   }
 };
 
-// Mettre à jour le finalBid
-module.exports.updateFinalBid = async (req, res) => {
-  try {
-    const companyId = req.user._id;
-    const { newBid, userId } = req.body;
 
-    if (typeof newBid !== 'number' || newBid <= 0) {
-      return res.status(400).json({ message: "The bid must be a positive number" });
-    }
-
-    const profile = await profileService.updateFinalBid(userId, newBid, companyId);
-
-    res.status(200).json({
-      message: "Bid updated successfully",
-      profile
-    });
-  } catch (error) {
-    console.error('Error updating bid:', error);
-    res.status(500).json({ message: error.message || "Error updating bid" });
-  }
-};
 
 
 // Supprimer un skill spécifique
@@ -263,12 +243,34 @@ module.exports.deleteSoftSkill = async (req, res) => {
   }
 };
 
+// Mettre à jour le finalBid
+module.exports.updateFinalBid = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { newBid, userId } = req.body;
+console.log(companyId)
+    if (typeof newBid !== 'number' || newBid <= 0) {
+      return res.status(401).json({ message: "The bid must be a positive number" });
+    }
+
+    const profile = await profileService.updateFinalBid(userId, newBid, companyId);
+
+    res.status(200).json({
+      message: "Bid updated successfully",
+      profile
+    });
+  } catch (error) {
+    console.error('Error updating bid:', error);
+    res.status(500).json({ message: error.message || "Error updating bid" });
+  }
+};
+
 // Récupérer les informations du companyBid
 module.exports.getCompanyBid = async (req, res) => {
   try {
     const userId = req.user._id;
     const result = await profileService.getCompanyBid(userId);
-
+console.log(result)
     if (result.message) {
       return res.status(200).json(result);
     }
