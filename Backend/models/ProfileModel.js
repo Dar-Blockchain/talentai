@@ -13,7 +13,8 @@ const profileSchema = new mongoose.Schema(
       required: true,
     },
     overallScore: { type: Number, default: 0 },
-    //HardSkills    
+
+    // Hard Skills
     skills: [
       {
         name: String,
@@ -23,7 +24,8 @@ const profileSchema = new mongoose.Schema(
         ScoreTest: Number,
       },
     ],
-    //SoftSkills
+
+    // Soft Skills
     softSkills: [
       {
         name: String,
@@ -32,19 +34,22 @@ const profileSchema = new mongoose.Schema(
         ScoreTest: Number,
       },
     ],
-    //Company
+
+    // Company details (if type is Company)
     companyDetails: {
       name: String,
       industry: String,
       size: String,
       location: String,
     },
+
     requiredSkills: [String],
     requiredExperienceLevel: {
       type: String,
       enum: ["Entry Level", "Mid Level", "Senior", "Lead/Expert"],
     },
-    //Bid User
+
+    // Bid received by user (if type is Candidate)
     companyBid: {
       finalBid: Number,
       company: {
@@ -52,14 +57,14 @@ const profileSchema = new mongoose.Schema(
         ref: "User",
       },
     },
-    UserBided: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-    }],
-    usersBidedByCompany: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User"
-    }]
+
+    // Users that this company has bid on (if type is Company)
+    usersBidedByCompany: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true }
 );
