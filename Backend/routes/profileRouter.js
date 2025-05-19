@@ -33,7 +33,7 @@ router.post('/addSoftSkills', profileController.addSoftSkills);
 // Récupérer les soft skills
 router.get('/getSoftSkills', profileController.getSoftSkills);
 
-router.get('/getCompanyBid', profileController.getCompanyBid);
+router.get('/getCompanyBid', profileController.getCompanyBids);
 
 // Récupérer les soft skills par ID
 router.get('/getSoftSkillsById/:userId', profileController.getSoftSkills);

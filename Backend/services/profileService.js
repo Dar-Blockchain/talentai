@@ -414,33 +414,35 @@ module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
 };
 
 // Récupérer les informations du companyBid
-module.exports.getCompanyBid = async (userId) => {
+module.exports.getCompanyBids = async (companyId) => {
   try {
-    const profile = await Profile.findOne({ userId }).populate(
-      "companyBid.company",
-      "username email"
-    );
-    console.log("profile", profile);
-    if (!profile) {
-      throw new Error("Profile not found");
+    const companyProfile = await Profile.findOne({ userId: companyId, type: "Company" });
+
+    if (!companyProfile) {
+      throw new Error("Company profile not found");
     }
 
-    // Vérifier si companyBid existe
-    if (!profile.companyBid) {
-      return {
-        message: "No bid information available",
-        companyBid: null,
-      };
-    }
+    const candidates = await Profile.find({
+      userId: { $in: companyProfile.usersBidedByCompany },
+    })
+    .populate({ path: "userId", select: "username email" });
+
+    // Construction du résultat enrichi
+    const enrichedCandidates = candidates.map(candidate => ({
+      _id: candidate._id,
+      userInfo: candidate.userId,
+      finalBid: candidate.companyBid?.finalBid || null,
+      overallScore: candidate.overallScore,
+      skills: candidate.skills,
+      softSkills: candidate.softSkills,
+    }));
 
     return {
-      companyBid: {
-        finalBid: profile.companyBid.finalBid,
-        companyInfo: profile.companyBid.company,
-      },
+      companyName: companyProfile.companyDetails?.name || "Unknown Company",
+      bidedCandidates: enrichedCandidates
     };
   } catch (error) {
-    console.error("Error getting company bid:", error);
+    console.error("Error getting bided candidates:", error);
     throw error;
   }
 };
