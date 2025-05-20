@@ -56,6 +56,7 @@ import { isRejectedWithValue } from '@reduxjs/toolkit';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { fetchBids, placeBid } from '@/store/slices/bidSlice';
+import CheckIcon from '@mui/icons-material/Check';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
