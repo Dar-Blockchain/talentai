@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMyProfile, selectProfile, clearProfile } from '../store/features/profileSlice';
-import { AppDispatch } from '../store/store';
+import { AppDispatch, RootState } from '../store/store';
 import {
   Box,
   Container,
@@ -55,7 +55,7 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import { isRejectedWithValue } from '@reduxjs/toolkit';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { placeBid } from '@/store/slices/bidSlice';
+import { fetchBids, placeBid } from '@/store/slices/bidSlice';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -228,6 +228,7 @@ interface MatchingCandidate {
   };
   name: string;
   score: number;
+  finalBid: number;
   matchedSkills: Array<{
     name: string;
     proficiencyLevel: number;
@@ -382,7 +383,7 @@ interface BidHistoryItem {
 const DashboardCompany = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { profile, loading, error } = useSelector(selectProfile);
+  const { profile, loading } = useSelector(selectProfile);
   const [editSkillsDialog, setEditSkillsDialog] = useState(false);
   const [filterDialog, setFilterDialog] = useState(false);
   const [minScore, setMinScore] = useState<number>(0);
@@ -425,6 +426,7 @@ const DashboardCompany = () => {
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
   const [bidAmount, setBidAmount] = useState('');
   const [isSubmittingBid, setIsSubmittingBid] = useState(false);
+  const { data, status, error } = useSelector((state: RootState) => state.bid.bids);
 
   const isSalaryRangeValid = () => {
     return salaryRange.min > 0 && salaryRange.max > 0 && salaryRange.max >= salaryRange.min;
@@ -445,6 +447,8 @@ const DashboardCompany = () => {
       }));
     }
   };
+
+
 
   // Filter profiles based on score and skills
   useEffect(() => {
@@ -527,6 +531,7 @@ const DashboardCompany = () => {
 
   useEffect(() => {
     dispatch(getMyProfile());
+    dispatch(fetchBids())
   }, [dispatch]);
 
   // Modify the handle generate job function to reset the sharing state ONLY after successful generation
@@ -1064,18 +1069,18 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
   const renderBidHistory = () => (
     <StyledCard sx={{ mt: 4 }}>
       <SectionTitle>Bid History</SectionTitle>
-      {isLoadingBids ? (
+      {status === "loading" ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
           <CircularProgress sx={{ color: '#02E2FF' }} />
         </Box>
-      ) : bidError ? (
-        <Alert severity="error" sx={{ mb: 2 }}>{bidError}</Alert>
-      ) : bidHistory.length === 0 ? (
+      ) : status === "failed" ? (
+        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
+      ) : data.length === 0 ? (
         <Alert severity="info" sx={{ mb: 2 }}>No bid history found.</Alert>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {bidHistory.map((bid) => (
-            <Box key={bid.candidate._id + bid.createdAt} sx={{
+          {data.map((bid: any) => (
+            <Box key={bid._id} sx={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -1085,21 +1090,21 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
               border: '1px solid rgba(255,255,255,0.08)'
             }}>
               <Box>
-                <Typography sx={{ color: '#fff', fontWeight: 600 }}>{bid.candidate.username}</Typography>
-                <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}>{bid.candidate.email}</Typography>
-                <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>{bid.jobTitle}</Typography>
+                <Typography sx={{ color: '#fff', fontWeight: 600 }}>{bid.userInfo.username}</Typography>
+                <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}>{bid.userInfo.email}</Typography>
+                <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>-</Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Chip
+                {/* <Chip
                   label={bid.status === 'win' ? 'Won' : 'Lost'}
                   color={bid.status === 'win' ? 'success' : 'error'}
                   sx={{ fontWeight: 700 }}
-                />
+                /> */}
                 <Typography sx={{ color: '#02E2FF', fontWeight: 600 }}>
-                  ${bid.bidAmount}
+                  ${bid.finalBid}
                 </Typography>
                 <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>
-                  {new Date(bid.createdAt).toLocaleDateString()}
+                  {new Date().toLocaleDateString()}
                 </Typography>
               </Box>
             </Box>
@@ -1967,7 +1972,7 @@ Benefits:
                     fontSize: '1.25rem',
                     lineHeight: 1
                   }}>
-                    {candidate?.score || 0}$
+                    {candidate?.finalBid || 0}$
                   </Typography>
                   <Typography variant="caption" sx={{
                     color: 'rgba(255,255,255,0.7)',
@@ -2480,6 +2485,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
       const params = {
         newBid: Number(bidAmount),
         userId: selectedCandidate.candidateId._id,
+        selectedJob
       };
       await dispatch(placeBid(params)).unwrap();
       handleBidDialogClose();
@@ -3237,7 +3243,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                     fontSize: '1.25rem',
                     lineHeight: 1
                   }}>
-                    {0} $
+                    {selectedCandidate?.finalBid} $
                   </Typography>
                   <Typography variant="caption" sx={{
                     color: 'rgba(255,255,255,0.7)',
@@ -3324,4 +3330,4 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
   );
 }
 
-export default DashboardCompany; 
+export default DashboardCompany;

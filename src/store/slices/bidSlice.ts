@@ -1,22 +1,13 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 
-export interface Bid {
-  _id?: string;
-  candidateId: string;
-  companyId: string;
-  amount: number;
-  message?: string;
-  createdAt?: string;
-}
-
 interface BidState {
   placeBid: {
     status: "idle" | "loading" | "succeeded" | "failed";
     error: string | null;
   };
   bids: {
-    data: Bid[];
+    data: any;
     status: "idle" | "loading" | "succeeded" | "failed";
     error: string | null;
   };
@@ -64,14 +55,13 @@ export const placeBid = createAsyncThunk(
 // Async: fetch bids
 export const fetchBids = createAsyncThunk(
   "bids/fetchBids",
-  async (params: any, { rejectWithValue }) => {
+  async (_, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("api_token");
       if (!token) {
         return rejectWithValue("No authentication token found");
       }
-      const response = await axios.get(`/api/bids`, {
-        params,
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getCompanyBid`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -97,7 +87,7 @@ const bidSlice = createSlice({
         state.placeBid.status = "loading";
         state.placeBid.error = null;
       })
-      .addCase(placeBid.fulfilled, (state, action: PayloadAction<Bid>) => {
+      .addCase(placeBid.fulfilled, (state, action: PayloadAction<any>) => {
         state.placeBid.status = "succeeded";
       })
       .addCase(placeBid.rejected, (state, action) => {
@@ -110,9 +100,9 @@ const bidSlice = createSlice({
         state.bids.status = "loading";
         state.bids.error = null;
       })
-      .addCase(fetchBids.fulfilled, (state, action: PayloadAction<Bid[]>) => {
+      .addCase(fetchBids.fulfilled, (state, action: PayloadAction<any>) => {
         state.bids.status = "succeeded";
-        state.bids.data = action.payload;
+        state.bids.data = action.payload.bidedCandidates;
       })
       .addCase(fetchBids.rejected, (state, action) => {
         state.bids.status = "failed";
