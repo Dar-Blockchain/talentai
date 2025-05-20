@@ -92,7 +92,15 @@ export default function SignIn() {
 
         // Add a small delay before redirecting to ensure tokens are set
         setTimeout(() => {
-          router.push('/preferences');
+          // Check if there's a returnUrl in the query parameters
+          const returnUrl = router.query.returnUrl as string;
+          if (returnUrl) {
+            // Decode the return URL and redirect
+            router.push(decodeURIComponent(returnUrl));
+          } else {
+            // If no return URL, go to preferences
+            router.push('/preferences');
+          }
         }, 100);
       } else {
         setError('Verification successful but no token received');
