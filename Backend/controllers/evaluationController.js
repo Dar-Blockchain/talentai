@@ -2,6 +2,7 @@
 
 const { OpenAI } = require("openai");
 require("dotenv").config();
+const postService = require("../services/postService");
 
 // Configure the OpenAI client with your API key
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -180,6 +181,102 @@ Mix of theoretical and practical questions, including problem-solving scenarios.
     });
   } catch (error) {
     console.error("Error generating technical questions:", error);
+    res.status(500).json({ error: "Failed to generate technical questions" });
+  }
+};
+
+exports.generateTechniqueQuestionsForJob = async (req, res) => {
+  try {
+    const jobId = req.params.id;
+
+    if (!jobId) {
+      return res.status(400).json({
+        error: "Missing required params",
+        required: {
+          id: "The ID of the job",
+        },
+      });
+    }
+
+    // 2️⃣ Fetch required skills for the job
+    const skillsData = await postService.getRequiredSkillsByPostId(jobId);
+
+    if (
+      !skillsData ||
+      !skillsData.requiredSkills ||
+      skillsData.requiredSkills.length === 0
+    ) {
+      return res
+        .status(404)
+        .json({ error: "No required skills found for this job" });
+    }
+
+    // 3️⃣ Format skill list for prompt
+    const skillsList = skillsData.requiredSkills
+      .map((skill) => `- ${skill.name} (Proficiency: ${skill.level}/5)`)
+      .join("\n");
+
+    // 4️⃣ Construct AI Prompt
+    const prompt = `
+You are an experienced technical interviewer specializing in multiple skills. 
+Based on the candidate's profile, generate **exactly 10** technical interview questions.
+
+Skills and proficiency levels:
+${skillsList}
+
+The questions should be appropriate for the given proficiency levels, mixing theoretical concepts, practical applications, and problem-solving scenarios.
+
+**Return ONLY** a JSON array of strings—no commentary, no numbering, no markdown—like this:
+
+[
+  "Technical question 1?",
+  "Technical question 2?",
+  ...
+]
+`.trim();
+
+    // 5️⃣ Call OpenAI API
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content:
+            "Generate 10 highly relevant technical questions tailored to the listed skills and proficiency levels.",
+        },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: 1000,
+      temperature: 0.7,
+    });
+
+    const raw = response.choices[0].message.content;
+
+    // 6️⃣ Extract questions as JSON array
+    let questions;
+    try {
+      questions = JSON.parse(raw.match(/\[([\s\S]*)\]/)[0]); // Extract JSON array safely
+    } catch (error) {
+      console.warn(
+        "Failed to parse JSON, falling back to manual extraction:",
+        error
+      );
+      questions = raw
+        .split("\n")
+        .map((q) => q.trim())
+        .filter(Boolean)
+        .slice(0, 10); // Fallback method
+    }
+
+    // 7️⃣ Return structured response
+    res.json({
+      jobId,
+      requiredSkills: skillsData.requiredSkills,
+      questions,
+      totalQuestions: questions.length,
+    });
+  } catch (error) {
+    console.error("Error generating multiple technical questions:", error);
     res.status(500).json({ error: "Failed to generate technical questions" });
   }
 };
@@ -470,6 +567,7 @@ function getMasteryCategory(score) {
 }
 
 const profileService = require("../services/profileService");
+
 
 exports.analyzeProfileAnswers = async (req, res) => {
   try {
