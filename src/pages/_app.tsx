@@ -10,6 +10,7 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
 import Head from 'next/head';
+import Header from "@/components/Header";
 
 const theme = createTheme({
     palette: {
@@ -57,6 +58,7 @@ export default function App({ Component, pageProps }: AppProps) {
                         <link rel="shortcut icon" href="/talentaifavicon.ico" />
                     </Head>
                     <AuthWrapper>
+                        <Header/>
                         <Component {...pageProps} />
                     </AuthWrapper>
                 </ThemeProvider>
