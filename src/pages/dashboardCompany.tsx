@@ -56,6 +56,7 @@ import { isRejectedWithValue } from '@reduxjs/toolkit';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { placeBid } from '@/store/slices/bidSlice';
+import CheckIcon from '@mui/icons-material/Check';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -425,6 +426,8 @@ const DashboardCompany = () => {
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
   const [bidAmount, setBidAmount] = useState('');
   const [isSubmittingBid, setIsSubmittingBid] = useState(false);
+  const [savedJobLink, setSavedJobLink] = useState('');
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
 
   const isSalaryRangeValid = () => {
     return salaryRange.min > 0 && salaryRange.max > 0 && salaryRange.max >= salaryRange.min;
@@ -835,12 +838,15 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
       const savedJob = await response.json();
       console.log('Job saved successfully:', savedJob);
 
+      // Set the job link with /testjob/ instead of /job/
+      setSavedJobLink(`${window.location.origin}/testjob/${savedJob.data._id}`);
+      setSuccessDialogOpen(true);
+
       // Close the dialog after successful save
       setJobPostDialog(false);
-
       setJobDescription('');
       setGeneratedJob(undefined);
-      fetchMyJobs()
+      fetchMyJobs();
     } catch (error) {
       console.error('Error saving job:', error);
     } finally {
@@ -2509,6 +2515,122 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
     }
   };
 
+  // Add the success dialog component
+  const renderSuccessDialog = () => (
+    <Dialog
+      open={successDialogOpen}
+      onClose={() => setSuccessDialogOpen(false)}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: {
+          background: '#17203D',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '16px',
+          border: '1px solid rgba(255,255,255,0.1)',
+        }
+      }}
+    >
+      <DialogTitle sx={{
+        color: '#fff',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        p: 3
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Job Saved Successfully!
+          </Typography>
+        </Box>
+        <IconButton
+          onClick={() => setSuccessDialogOpen(false)}
+          sx={{ color: 'rgba(255,255,255,0.5)' }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent sx={{ p: 3 }}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)', mb: 2 , mt:3 }}>
+            Your job has been saved successfully. Here's the link to your job test:
+          </Typography>
+          <Box sx={{
+            display: 'flex',
+            gap: 1,
+            alignItems: 'center',
+            backgroundColor: 'rgba(255,255,255,0.05)',
+            p: 2,
+            borderRadius: '8px',
+            border: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: '#02E2FF',
+                wordBreak: 'break-all',
+                flex: 1
+              }}
+            >
+              {savedJobLink}
+            </Typography>
+            <IconButton
+              onClick={() => {
+                navigator.clipboard.writeText(savedJobLink);
+                setCopySuccess(true);
+                setTimeout(() => setCopySuccess(false), 2000);
+              }}
+              sx={{
+                color: copySuccess ? '#00FFC3' : 'rgba(255,255,255,0.5)',
+                '&:hover': {
+                  color: '#02E2FF'
+                }
+              }}
+            >
+              {copySuccess ? <CheckIcon /> : <ContentCopyIcon />}
+            </IconButton>
+          </Box>
+        </Box>
+      </DialogContent>
+      <DialogActions sx={{
+        p: 3,
+        borderTop: '1px solid rgba(255,255,255,0.1)',
+        background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
+      }}>
+        <Button
+          onClick={() => setSuccessDialogOpen(false)}
+          sx={{
+            color: 'rgba(255,255,255,0.8)',
+            borderRadius: '8px',
+            textTransform: 'none',
+            fontWeight: 600
+          }}
+        >
+          Close
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => {
+            window.location.href = savedJobLink;
+          }}
+          sx={{
+            background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+            borderRadius: '8px',
+            textTransform: 'none',
+            fontWeight: 600,
+            px: 4,
+            '&:hover': {
+              background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+            }
+          }}
+        >
+          Test Job
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
   return (
     <Box sx={{
       minHeight: '100vh',
@@ -2533,6 +2655,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
       />
       <Container maxWidth="lg">
         {renderFilterDialog()}
+        {renderJobPostDialog()}
+        {renderSuccessDialog()}
 
         {/* Add the LinkedIn duplicate post warning dialog */}
         <Dialog
@@ -2890,8 +3014,6 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             </Button>
           </DialogActions>
         </Dialog>
-
-        {renderJobPostDialog()}
 
         <Box sx={{ mt: 6 }}>
           <Typography variant="h5" sx={{ color: '#02E2FF', fontWeight: 700, mb: 3 }}>
