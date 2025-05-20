@@ -124,7 +124,7 @@ const HeroSection = () => {
 
         <Box
           display={{ xs: "none", lg: "flex" }}
-          sx={{ justifyContent: "center", flexGrow: 1, position: "relative" }}
+          sx={{ justifyContent: "center", flexGrow: 1, position: "relative", pt: 6 }}
         >
           <Box sx={{ position: "relative", width: "90%", height: 450 }}>
             <Box
