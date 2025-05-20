@@ -240,6 +240,48 @@ export default function TestJob() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { data: session } = useSession();
+  const { id } = router.query;
+
+  const fetchJobQuestions = async () => {
+    try {
+      const token = localStorage.getItem('api_token');
+      if (!token) {
+        console.log('No token found');
+        return;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}jobs/${id}/questions`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch job questions');
+      }
+
+      const data = await response.json();
+      setQuestions(data);
+    } catch (error) {
+      console.error('Error fetching job questions:', error);
+    }
+  };
+
+  // Add authentication check
+  useEffect(() => {
+    if (router.isReady) {
+      const token = localStorage.getItem('api_token');
+      if (!token) {
+        // Construct the return URL with the current job ID
+        const returnUrl = encodeURIComponent(`/testjob/${router.query.id}`);
+        router.push(`/signin?returnUrl=${returnUrl}`);
+        return;
+      }
+      // Continue with fetching job questions if token exists
+      fetchJobQuestions();
+    }
+  }, [router.isReady, router.query.id]);
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isGenerating, setIsGenerating] = useState(true);
@@ -256,60 +298,6 @@ export default function TestJob() {
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [showFirstViolationModal, setShowFirstViolationModal] = useState(false);
   const violationHandledRef = useRef(false);
-
-  // Extract job ID from URL parameters
-  useEffect(() => {
-    const { id } = router.query;
-    
-    if (!router.isReady) return;
-
-    if (!id) {
-      console.log('Missing job ID');
-      return;
-    }
-
-    const fetchQuestions = async () => {
-      try {
-        setIsGenerating(true);
-        const token = localStorage.getItem('api_token');
-        if (!token) {
-          console.log('No token found');
-          return;
-        }
-
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/get-job-questions/${id}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          console.error('Failed to fetch questions');
-          return;
-        }
-
-        const data = await response.json();
-        const questionsWithMetadata = data.questions.map((question: any) => ({
-          id: uuidv4(),
-          text: question.text,
-          skill: question.skill,
-          level: question.level,
-        }));
-
-        if (questionsWithMetadata.length > 0) {
-          setQuestions(questionsWithMetadata);
-        }
-      } catch (error) {
-        console.error('Error fetching questions:', error);
-      } finally {
-        setIsGenerating(false);
-      }
-    };
-
-    fetchQuestions();
-  }, [router.isReady, router.query]);
 
   // Timer effect
   useEffect(() => {
@@ -617,7 +605,7 @@ export default function TestJob() {
             startIcon={<CallEndIcon />}
             onClick={() => {
               stopRecording();
-              router.push('/');
+              router.push('/dashboardCandidate');
             }}
             variant="outlined"
             sx={{
