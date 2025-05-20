@@ -412,6 +412,7 @@ const DashboardCompany = () => {
   const [isLoadingJobs, setIsLoadingJobs] = useState(false);
   const [jobsError, setJobsError] = useState<string | null>(null);
   const [bidHistory, setBidHistory] = useState<BidHistoryItem[]>([]);
+  const [displayCount, setDisplayCount] = useState(3); // Add this line for pagination
   const [isLoadingBids, setIsLoadingBids] = useState(false);
   const [bidError, setBidError] = useState<string | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -1802,83 +1803,324 @@ Benefits:
       );
     }
 
-    if (matchError) {
+    if (isLoadingMatches) {
       return (
-        <Box
-          sx={{
-            backgroundColor: 'rgba(255,59,48,0.1)',
-            borderRadius: '12px',
-            p: 3,
-            border: '1px solid rgba(255,59,48,0.2)'
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              color: '#ff3b30',
-              mb: 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
-            }}
-          >
-            <ErrorIcon /> Error Loading Profiles
-          </Typography>
-          <Typography sx={{ color: 'rgba(255,255,255,0.7)' }}>
-            {matchError}
-          </Typography>
-          <Button
-            variant="outlined"
-            onClick={() => {
-              setIsInitialLoad(true);
-              handleFilterApply();
-            }}
-            sx={{
-              mt: 2,
-              borderColor: 'rgba(255,59,48,0.5)',
-              color: '#ff3b30',
-              '&:hover': {
-                borderColor: '#ff3b30',
-                backgroundColor: 'rgba(255,59,48,0.1)'
-              }
-            }}
-          >
-            Try Again
-          </Button>
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress sx={{ color: '#02E2FF' }} />
         </Box>
       );
     }
 
-    if (!isLoadingMatches && (!matchingProfiles || matchingProfiles.length === 0)) {
+    if (matchError) {
       return (
-        <Box
-          sx={{
-            backgroundColor: 'rgba(30, 41, 59, 0.7)',
-            borderRadius: '12px',
-            p: 3,
-            border: '1px solid rgba(255,255,255,0.1)',
-            textAlign: 'center'
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              color: '#02E2FF',
-              mb: 1
-            }}
-          >
-            No Matches Found
-          </Typography>
-          <Typography sx={{ color: 'rgba(255,255,255,0.7)', mb: 2 }}>
-            We couldn't find any matching profiles for your requirements at the moment.
-          </Typography>
+        <Box sx={{ p: 3, textAlign: 'center', color: 'error.main' }}>
+          <Typography>{matchError}</Typography>
+        </Box>
+      );
+    }
+
+    const displayedCandidates = matchingProfiles
+      .filter(candidate => candidate?.candidateId?.username && candidate.candidateId.username !== 'Anonymous')
+      .slice(0, displayCount);
+
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {displayedCandidates.map((candidate) => (
+          <MatchCard key={candidate?.candidateId?._id || `temp-${Math.random()}`}>
+            {/* Header Section */}
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              mb: 3,
+              pb: 2,
+              borderBottom: '1px solid rgba(255,255,255,0.1)'
+            }}>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                {/* Avatar */}
+                <Box sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(2,226,255,0.2) 0%, rgba(0,255,195,0.2) 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.5rem',
+                  fontWeight: 600,
+                  color: '#02E2FF'
+                }}>
+                  {candidate?.candidateId?.username ? candidate.candidateId.username.charAt(0).toUpperCase() : '?'}
+                </Box>
+                {/* User Info */}
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                    <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 600 }}>
+                      {candidate?.candidateId?.username || 'Anonymous'}
+                    </Typography>
+                    {candidate?.candidateId?.isVerified && (
+                      <Box sx={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: '50%',
+                        backgroundColor: '#4ade80',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <StarIcon sx={{ fontSize: 12, color: '#000' }} />
+                      </Box>
+                    )}
+                    <Box sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      backgroundColor: '#4ade80',
+                      ml: 1
+                    }} />
+                  </Box>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                    {candidate?.candidateId?.email || 'No email provided'}
+                  </Typography>
+                  <Typography variant="caption" sx={{
+                    color: 'rgba(255,255,255,0.5)',
+                    display: 'block',
+                    mt: 0.5
+                  }}>
+                    {candidate?.candidateId?.role || 'Role not specified'}
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{display: "flex", gap: "10px"}}>
+                {/* Current Bid */}
+              <Box sx={{
+                background: 'linear-gradient(135deg, rgba(2,226,255,0.1) 0%, rgba(0,255,195,0.1) 100%)',
+                padding: '8px',
+                borderRadius: '8px',
+                minWidth: '70px',
+                textAlign: 'center'
+              }}>
+                <Typography variant="h6" sx={{
+                  fontWeight: 600,
+                  color: '#02E2FF',
+                  fontSize: '1.25rem',
+                  lineHeight: 1
+                }}>
+                  {candidate?.finalBid || 0}$
+                </Typography>
+                <Typography variant="caption" sx={{
+                  color: 'rgba(255,255,255,0.7)',
+                  fontSize: '0.7rem'
+                }}>
+                  Current Bid
+                </Typography>
+              </Box>
+              {/* Match Score */}
+              <Box sx={{
+                background: 'linear-gradient(135deg, rgba(2,226,255,0.1) 0%, rgba(0,255,195,0.1) 100%)',
+                padding: '8px',
+                borderRadius: '8px',
+                minWidth: '70px',
+                textAlign: 'center'
+              }}>
+                <Typography variant="h6" sx={{
+                  fontWeight: 600,
+                  color: '#02E2FF',
+                  fontSize: '1.25rem',
+                  lineHeight: 1
+                }}>
+                  {candidate?.score || 0}%
+                </Typography>
+                <Typography variant="caption" sx={{
+                  color: 'rgba(255,255,255,0.7)',
+                  fontSize: '0.7rem'
+                }}>
+                  Match Score
+                </Typography>
+              </Box>
+              </Box>
+              
+            </Box>
+            {/* Skills Section */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" sx={{
+                color: '#ffffff',
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}>
+                <Box sx={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: '6px',
+                  background: 'rgba(2,226,255,0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <StarIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
+                </Box>
+                Matched Skills
+              </Typography>
+              <Box sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 1,
+                '& > *': {
+                  flex: '1 1 calc(50% - 8px)',
+                  minWidth: '200px'
+                }
+              }}>
+                {(candidate?.matchedSkills || []).map((skill) => (
+                  <Box
+                    key={skill?._id || `skill-${Math.random()}`}
+                    sx={{
+                      backgroundColor: 'rgba(255,255,255,0.05)',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      border: '1px solid rgba(255,255,255,0.1)'
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>
+                        {skill?.name || 'Unnamed Skill'}
+                      </Typography>
+                      <Chip
+                        label={skill?.experienceLevel || 'N/A'}
+                        size="small"
+                        sx={{
+                          backgroundColor: 'rgba(2,226,255,0.1)',
+                          color: '#02E2FF',
+                          height: '20px'
+                        }}
+                      />
+                    </Box>
+                    <Box sx={{
+                      width: '100%',
+                      height: '4px',
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      borderRadius: '2px',
+                      overflow: 'hidden'
+                    }}>
+                      <Box sx={{
+                        width: `${((skill?.proficiencyLevel || 0) / 5) * 100}%`,
+                        height: '100%',
+                        background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)'
+                      }} />
+                    </Box>
+                    {skill?.ScoreTest && (
+                      <Typography variant="caption" sx={{
+                        color: 'rgba(255,255,255,0.5)',
+                        display: 'block',
+                        mt: 1,
+                        textAlign: 'right'
+                      }}>
+                        Test Score: {skill.ScoreTest}%
+                      </Typography>
+                    )}
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+            {/* Required Skills Section */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" sx={{
+                color: '#ffffff',
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}>
+                <Box sx={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: '6px',
+                  background: 'rgba(2,226,255,0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <WorkIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
+                </Box>
+                Required Skills
+              </Typography>
+              <Box sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 1,
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                borderRadius: '8px',
+                padding: '12px'
+              }}>
+                {(candidate?.requiredSkills || []).map((skill) => (
+                  <Chip
+                    key={skill?._id || `req-skill-${Math.random()}`}
+                    label={`${skill?.name || 'Unnamed'} (${skill?.level || 'N/A'})`}
+                    size="small"
+                    sx={{
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      color: 'rgba(255,255,255,0.8)',
+                      '& .MuiChip-label': {
+                        px: 2
+                      }
+                    }}
+                  />
+                ))}
+              </Box>
+            </Box>
+            {/* Action Buttons */}
+            <Box sx={{
+              display: 'flex',
+              gap: 2,
+              mt: 'auto',
+              pt: 2,
+              borderTop: '1px solid rgba(255,255,255,0.1)'
+            }}>
+              <Button
+                variant="contained"
+                fullWidth
+                startIcon={<EmailIcon />}
+                component="a"
+                href={`mailto:${candidate?.candidateId?.email}`}
+                sx={{
+                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                  color: '#ffffff',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                  }
+                }}
+                disabled={!candidate?.candidateId?.email}
+              >
+                Contact
+              </Button>
+              <Button
+                variant="outlined"
+                fullWidth
+                startIcon={<AttachMoneyIcon />}
+                onClick={() => handleBidDialogOpen(candidate)}
+                sx={{
+                  borderColor: 'rgba(2,226,255,0.5)',
+                  color: '#02E2FF',
+                  '&:hover': {
+                    borderColor: '#02E2FF',
+                    backgroundColor: 'rgba(2,226,255,0.1)'
+                  }
+                }}
+                disabled={!candidate?.candidateId?._id || !selectedJob}
+              >
+                Place Bid
+              </Button>
+            </Box>
+          </MatchCard>
+        ))}
+        
+        {matchingProfiles.length > displayCount && (
           <Button
             variant="outlined"
-            onClick={() => {
-              setIsInitialLoad(true);
-              handleFilterApply();
-            }}
+            onClick={() => setDisplayCount(prev => prev + 5)}
             sx={{
+              mt: 2,
               borderColor: 'rgba(2,226,255,0.5)',
               color: '#02E2FF',
               '&:hover': {
@@ -1887,305 +2129,9 @@ Benefits:
               }
             }}
           >
-            Refresh Matches
+            Show More
           </Button>
-        </Box>
-      );
-    }
-
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {matchingProfiles
-          .filter(candidate => candidate?.candidateId?.username && candidate.candidateId.username !== 'Anonymous')
-          .map((candidate) => (
-            <MatchCard key={candidate?.candidateId?._id || `temp-${Math.random()}`}>
-              {/* Header Section */}
-              <Box sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                mb: 3,
-                pb: 2,
-                borderBottom: '1px solid rgba(255,255,255,0.1)'
-              }}>
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                  {/* Avatar */}
-                  <Box sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: '12px',
-                    background: 'linear-gradient(135deg, rgba(2,226,255,0.2) 0%, rgba(0,255,195,0.2) 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.5rem',
-                    fontWeight: 600,
-                    color: '#02E2FF'
-                  }}>
-                    {candidate?.candidateId?.username ? candidate.candidateId.username.charAt(0).toUpperCase() : '?'}
-                  </Box>
-                  {/* User Info */}
-                  <Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                      <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 600 }}>
-                        {candidate?.candidateId?.username || 'Anonymous'}
-                      </Typography>
-                      {candidate?.candidateId?.isVerified && (
-                        <Box sx={{
-                          width: 16,
-                          height: 16,
-                          borderRadius: '50%',
-                          backgroundColor: '#4ade80',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          <StarIcon sx={{ fontSize: 12, color: '#000' }} />
-                        </Box>
-                      )}
-                      <Box sx={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        backgroundColor: '#4ade80',
-                        ml: 1
-                      }} />
-                    </Box>
-                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                      {candidate?.candidateId?.email || 'No email provided'}
-                    </Typography>
-                    <Typography variant="caption" sx={{
-                      color: 'rgba(255,255,255,0.5)',
-                      display: 'block',
-                      mt: 0.5
-                    }}>
-                      {candidate?.candidateId?.role || 'Role not specified'}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box sx={{display: "flex", gap: "10px"}}>
-                  {/* Current Bid */}
-                <Box sx={{
-                  background: 'linear-gradient(135deg, rgba(2,226,255,0.1) 0%, rgba(0,255,195,0.1) 100%)',
-                  padding: '8px',
-                  borderRadius: '8px',
-                  minWidth: '70px',
-                  textAlign: 'center'
-                }}>
-                  <Typography variant="h6" sx={{
-                    fontWeight: 600,
-                    color: '#02E2FF',
-                    fontSize: '1.25rem',
-                    lineHeight: 1
-                  }}>
-                    {candidate?.finalBid || 0}$
-                  </Typography>
-                  <Typography variant="caption" sx={{
-                    color: 'rgba(255,255,255,0.7)',
-                    fontSize: '0.7rem'
-                  }}>
-                    Current Bid
-                  </Typography>
-                </Box>
-                {/* Match Score */}
-                <Box sx={{
-                  background: 'linear-gradient(135deg, rgba(2,226,255,0.1) 0%, rgba(0,255,195,0.1) 100%)',
-                  padding: '8px',
-                  borderRadius: '8px',
-                  minWidth: '70px',
-                  textAlign: 'center'
-                }}>
-                  <Typography variant="h6" sx={{
-                    fontWeight: 600,
-                    color: '#02E2FF',
-                    fontSize: '1.25rem',
-                    lineHeight: 1
-                  }}>
-                    {candidate?.score || 0}%
-                  </Typography>
-                  <Typography variant="caption" sx={{
-                    color: 'rgba(255,255,255,0.7)',
-                    fontSize: '0.7rem'
-                  }}>
-                    Match Score
-                  </Typography>
-                </Box>
-                </Box>
-                
-              </Box>
-              {/* Skills Section */}
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" sx={{
-                  color: '#ffffff',
-                  mb: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}>
-                  <Box sx={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: '6px',
-                    background: 'rgba(2,226,255,0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <StarIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
-                  </Box>
-                  Matched Skills
-                </Typography>
-                <Box sx={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 1,
-                  '& > *': {
-                    flex: '1 1 calc(50% - 8px)',
-                    minWidth: '200px'
-                  }
-                }}>
-                  {(candidate?.matchedSkills || []).map((skill) => (
-                    <Box
-                      key={skill?._id || `skill-${Math.random()}`}
-                      sx={{
-                        backgroundColor: 'rgba(255,255,255,0.05)',
-                        borderRadius: '8px',
-                        padding: '12px',
-                        border: '1px solid rgba(255,255,255,0.1)'
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>
-                          {skill?.name || 'Unnamed Skill'}
-                        </Typography>
-                        <Chip
-                          label={skill?.experienceLevel || 'N/A'}
-                          size="small"
-                          sx={{
-                            backgroundColor: 'rgba(2,226,255,0.1)',
-                            color: '#02E2FF',
-                            height: '20px'
-                          }}
-                        />
-                      </Box>
-                      <Box sx={{
-                        width: '100%',
-                        height: '4px',
-                        backgroundColor: 'rgba(255,255,255,0.1)',
-                        borderRadius: '2px',
-                        overflow: 'hidden'
-                      }}>
-                        <Box sx={{
-                          width: `${((skill?.proficiencyLevel || 0) / 5) * 100}%`,
-                          height: '100%',
-                          background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)'
-                        }} />
-                      </Box>
-                      {skill?.ScoreTest && (
-                        <Typography variant="caption" sx={{
-                          color: 'rgba(255,255,255,0.5)',
-                          display: 'block',
-                          mt: 1,
-                          textAlign: 'right'
-                        }}>
-                          Test Score: {skill.ScoreTest}%
-                        </Typography>
-                      )}
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
-              {/* Required Skills Section */}
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" sx={{
-                  color: '#ffffff',
-                  mb: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}>
-                  <Box sx={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: '6px',
-                    background: 'rgba(2,226,255,0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <WorkIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
-                  </Box>
-                  Required Skills
-                </Typography>
-                <Box sx={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 1,
-                  backgroundColor: 'rgba(255,255,255,0.05)',
-                  borderRadius: '8px',
-                  padding: '12px'
-                }}>
-                  {(candidate?.requiredSkills || []).map((skill) => (
-                    <Chip
-                      key={skill?._id || `req-skill-${Math.random()}`}
-                      label={`${skill?.name || 'Unnamed'} (${skill?.level || 'N/A'})`}
-                      size="small"
-                      sx={{
-                        backgroundColor: 'rgba(255,255,255,0.1)',
-                        color: 'rgba(255,255,255,0.8)',
-                        '& .MuiChip-label': {
-                          px: 2
-                        }
-                      }}
-                    />
-                  ))}
-                </Box>
-              </Box>
-              {/* Action Buttons */}
-              <Box sx={{
-                display: 'flex',
-                gap: 2,
-                mt: 'auto',
-                pt: 2,
-                borderTop: '1px solid rgba(255,255,255,0.1)'
-              }}>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  startIcon={<EmailIcon />}
-                  component="a"
-                  href={`mailto:${candidate?.candidateId?.email}`}
-                  sx={{
-                    background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                    color: '#ffffff',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-                    }
-                  }}
-                  disabled={!candidate?.candidateId?.email}
-                >
-                  Contact
-                </Button>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  startIcon={<AttachMoneyIcon />}
-                  onClick={() => handleBidDialogOpen(candidate)}
-                  sx={{
-                    borderColor: 'rgba(2,226,255,0.5)',
-                    color: '#02E2FF',
-                    '&:hover': {
-                      borderColor: '#02E2FF',
-                      backgroundColor: 'rgba(2,226,255,0.1)'
-                    }
-                  }}
-                  disabled={!candidate?.candidateId?._id || !selectedJob}
-                >
-                  Place Bid
-                </Button>
-              </Box>
-            </MatchCard>
-          ))}
+        )}
       </Box>
     );
   };

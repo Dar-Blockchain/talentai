@@ -530,6 +530,62 @@ export default function TestJob() {
       } catch (error) {
         console.error('Error saving answer:', error);
       }
+    } else {
+      // This is the last question, save the final answer and redirect to report
+      try {
+        const token = localStorage.getItem('api_token');
+        
+        if (!token) {
+          console.error('Missing token');
+          return;
+        }
+
+        // Stop recording and speech recognition
+        if (streamRef.current) {
+          streamRef.current.getAudioTracks().forEach(track => track.stop());
+        }
+        stopSpeechRecognition();
+
+        // Save final answer
+        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/save-answer`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            questionId: questions[current].id,
+            answer: transcriptions[questions[current].id] || '',
+            skill: questions[current].skill,
+            level: questions[current].level,
+          }),
+        });
+
+        // Store test metadata in localStorage
+        const testData = {
+          results: questions.map((q, index) => ({
+            question: q.text,
+            answer: transcriptions[q.id] || ''
+          })),
+          metadata: {
+            type: 'job',
+            jobId: id,
+            timestamp: new Date().toISOString()
+          }
+        };
+        localStorage.setItem('test_results', JSON.stringify(testData));
+
+        // Redirect to report page with job ID
+        router.push({
+          pathname: '/report',
+          query: {
+            from: 'testjob',
+            jobId: id
+          }
+        });
+      } catch (error) {
+        console.error('Error saving final answer:', error);
+      }
     }
   };
 
