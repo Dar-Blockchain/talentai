@@ -52,9 +52,14 @@ const profileSchema = new mongoose.Schema(
     // Bid received by user (if type is Candidate)
     companyBid: {
       finalBid: Number,
+      dateBid : Date,
       company: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
+      },
+      post: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Post",
       },
     },
 
