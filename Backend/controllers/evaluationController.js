@@ -739,7 +739,7 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
           else if (score >= 50) demo = current;
           else demo = current - 1;
 
-          // S’assurer que le niveau reste entre 1 et 5
+          // S'assurer que le niveau reste entre 1 et 5
           demo = Math.min(Math.max(demo, 1), 5);
           console.log("demo", demo);
           return {
@@ -914,6 +914,238 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       success: false,
       error: "Failed to analyze profile",
       details: error.message,
+    });
+  }
+};
+
+
+exports.analyzeJobTestResults = async (req, res) => {
+  try {
+    // 1. Validate request body
+    const { questions, jobId } = req.body;
+    const user = req.user;
+
+    if (!Array.isArray(questions) || !jobId) {
+      return res.status(400).json({
+        error: "Invalid request format",
+        required: {
+          questions: "Array of question-answer pairs",
+          jobId: "ID of the job posting"
+        }
+      });
+    }
+
+    // 2. Get job requirements
+    const skillsData = await postService.getRequiredSkillsByPostId(jobId);
+    if (!skillsData || !skillsData.requiredSkills || skillsData.requiredSkills.length === 0) {
+      return res.status(404).json({ error: "No required skills found for this job" });
+    }
+
+    // 3. Prepare the data for GPT analysis
+    const prompt = `
+As an expert technical interviewer, analyze the following job assessment:
+
+Required Skills for the Position:
+${skillsData.requiredSkills.map(skill => `- ${skill.name} (Required Level: ${skill.level}/5)`).join('\n')}
+
+Questions and Answers:
+${questions.map((qa) => `Q: ${qa.question}\nA: ${qa.answer || 'No answer provided'}`).join('\n\n')}
+
+Based on this assessment, provide a detailed analysis in the following JSON format ONLY (no additional text):
+{
+  "overallScore": 85,
+  "skillAnalysis": [
+    {
+      "skillName": "JavaScript",
+      "requiredLevel": 4,
+      "demonstratedLevel": 3,
+      "strengths": ["Good understanding of core concepts"],
+      "weaknesses": ["May need more practice with advanced topics"],
+      "confidenceScore": 75,
+      "match": "partial"
+    }
+  ],
+  "generalAssessment": "Strong foundational knowledge with some areas for improvement",
+  "recommendations": [
+    "Focus on advanced JavaScript concepts",
+    "Practice more with React hooks"
+  ],
+  "technicalLevel": "intermediate",
+  "nextSteps": [
+    "Suggested learning resources",
+    "Practice projects to undertake"
+  ],
+  "jobMatch": {
+    "percentage": 75,
+    "status": "partial",
+    "keyGaps": ["Advanced JavaScript", "React Hooks"]
+  }
+}`;
+
+    // 4. Call OpenAI for analysis
+    const response = await openai.chat.completions.create({
+      model: "gpt-4-turbo-preview",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert technical interviewer specializing in evaluating developer skills for job positions. 
+                   Analyze both the answers and compare them against the required skill levels.
+                   Provide detailed, actionable feedback in JSON format only.`,
+        },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: 1000,
+      temperature: 0.7,
+    });
+
+    // 5. Parse and validate the response
+    let analysis;
+    try {
+      const rawResponse = response.choices[0].message.content.trim();
+      let jsonStr = rawResponse;
+      const jsonMatch = rawResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (jsonMatch) {
+        jsonStr = jsonMatch[1];
+      }
+
+      // Clean the string before parsing
+      jsonStr = jsonStr
+        .trim()
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .replace(/^[^{]*/, "")
+        .replace(/[^}]*$/, "");
+
+      try {
+        analysis = JSON.parse(jsonStr);
+      } catch (firstError) {
+        console.error("First parse attempt failed:", firstError);
+        jsonStr = jsonStr
+          .replace(/,(\s*[}\]])/g, "$1")
+          .replace(/'/g, '"')
+          .replace(/\n/g, " ")
+          .replace(/\s+/g, " ");
+        analysis = JSON.parse(jsonStr);
+      }
+
+      // Validate required fields
+      if (!analysis || typeof analysis !== "object") {
+        throw new Error("Analysis is not an object");
+      }
+
+      if (!analysis.skillAnalysis || !Array.isArray(analysis.skillAnalysis)) {
+        throw new Error("Missing or invalid skillAnalysis array");
+      }
+
+      // Ensure all required fields are present
+      const requiredFields = [
+        "overallScore",
+        "skillAnalysis",
+        "generalAssessment",
+        "recommendations",
+        "jobMatch"
+      ];
+      const missingFields = requiredFields.filter(field => !(field in analysis));
+
+      if (missingFields.length > 0) {
+        throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
+      }
+
+      // Normalize the response structure
+      analysis = {
+        overallScore: Number(analysis.overallScore) || 0,
+        skillAnalysis: analysis.skillAnalysis.map(skill => ({
+          skillName: skill.skillName || skill.skill || "",
+          requiredLevel: Number(skill.requiredLevel) || 0,
+          demonstratedLevel: Number(skill.demonstratedLevel) || 0,
+          strengths: Array.isArray(skill.strengths) ? skill.strengths : [],
+          weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
+          confidenceScore: Number(skill.confidenceScore) || 0,
+          match: skill.match || "none",
+          levelGap: Number(skill.requiredLevel) - Number(skill.demonstratedLevel)
+        })),
+        generalAssessment: analysis.generalAssessment || "",
+        recommendations: Array.isArray(analysis.recommendations) ? analysis.recommendations : [],
+        technicalLevel: analysis.technicalLevel || "intermediate",
+        nextSteps: Array.isArray(analysis.nextSteps) ? analysis.nextSteps : [],
+        jobMatch: {
+          percentage: Number(analysis.jobMatch?.percentage) || 0,
+          status: analysis.jobMatch?.status || "none",
+          keyGaps: Array.isArray(analysis.jobMatch?.keyGaps) ? analysis.jobMatch.keyGaps : []
+        }
+      };
+
+    } catch (error) {
+      console.error("Error in analysis parsing:", error);
+      return res.status(200).json({
+        success: true,
+        result: {
+          timestamp: new Date(),
+          assessmentType: 'job',
+          jobId,
+          numberOfQuestions: questions.length,
+          analysis: {
+            overallScore: 70,
+            skillAnalysis: skillsData.requiredSkills.map(skill => ({
+              skillName: skill.name,
+              requiredLevel: skill.level,
+              demonstratedLevel: skill.level - 1,
+              strengths: ["Assessment incomplete"],
+              weaknesses: ["Could not analyze in detail"],
+              confidenceScore: 60,
+              match: "partial",
+              levelGap: 1
+            })),
+            generalAssessment: "Analysis could not be completed fully",
+            recommendations: ["Please try the assessment again"],
+            technicalLevel: "intermediate",
+            nextSteps: ["Retry the assessment"],
+            jobMatch: {
+              percentage: 60,
+              status: "partial",
+              keyGaps: ["Assessment incomplete"]
+            }
+          }
+        }
+      });
+    }
+
+    // 6. Format final response
+    const result = {
+      timestamp: new Date(),
+      assessmentType: 'job',
+      jobId,
+      numberOfQuestions: questions.length,
+      analysis: {
+        ...analysis,
+        skillProgression: analysis.skillAnalysis.map(skillAnalysis => {
+          const requiredSkill = skillsData.requiredSkills.find(
+            s => s.name === skillAnalysis.skillName
+          );
+          return {
+            ...skillAnalysis,
+            requiredSkill: requiredSkill ? {
+              name: requiredSkill.name,
+              level: requiredSkill.level,
+              experienceLevel: getExperienceLevel(requiredSkill.level)
+            } : null,
+            demonstratedExperienceLevel: getExperienceLevel(skillAnalysis.demonstratedLevel),
+            masteryCategory: getMasteryCategory(skillAnalysis.confidenceScore)
+          };
+        })
+      }
+    };
+
+    res.status(200).json({
+      success: true,
+      result
+    });
+
+  } catch (error) {
+    console.error("Error analyzing job test results:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to analyze job test results",
+      details: error.message
     });
   }
 };

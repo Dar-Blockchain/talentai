@@ -97,21 +97,6 @@ export default function Report() {
           throw new Error('No authentication token found');
         }
 
-        const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          }
-        });
-
-        if (!profileResponse.ok) {
-          throw new Error('Failed to fetch user profile');
-        }
-
-        const profileData = await profileResponse.json();
-        const userSkills = profileData?.skills || [];
-
         // Get the test results
         const savedResults = localStorage.getItem('test_results');
         if (savedResults) {
@@ -122,85 +107,133 @@ export default function Report() {
             throw new Error('Invalid test results format in storage');
           }
 
-          const requestBody = {
-            type: router.query.type || testData.metadata?.type || type,
-            skill: router.query.skill ? [{
-              name: router.query.skill as string,
-              proficiencyLevel: parseInt(router.query.proficiency as string) || 1
-            }] : userSkills.map((skill: any) => ({
-              name: skill.name,
-              proficiencyLevel: parseInt(skill.proficiencyLevel) || 1
-            })),
-            subcategory: router.query.subcategory as string,
-            questions: testData.results
-          };
+          // Check if this is a job test
+          const jobId = router.query.jobId as string;
+          if (jobId) {
+            // Use analyzeJobTestResults API for job tests
+            const jobResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/analyze-job-test-results`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                jobId,
+                questions: testData.results
+              })
+            });
 
-          console.log('Sending analysis request:', JSON.stringify(requestBody, null, 2));
-
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/analyze-profile-answers`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify(requestBody)
-          });
-
-          if (!response.ok) {
-            const errorText = await response.text();
-            let errorMessage = 'Failed to analyze results';
-            try {
-              const errorJson = JSON.parse(errorText);
-              errorMessage = errorJson.message || errorJson.error || errorText;
-            } catch (parseError) {
-              errorMessage = errorText || 'Failed to analyze results';
+            if (!jobResponse.ok) {
+              const errorText = await jobResponse.text();
+              let errorMessage = 'Failed to analyze results';
+              try {
+                const errorJson = JSON.parse(errorText);
+                errorMessage = errorJson.message || errorJson.error || errorText;
+              } catch (parseError) {
+                errorMessage = errorText || 'Failed to analyze results';
+              }
+              throw new Error(`Failed to analyze results: ${errorMessage}`);
             }
-            throw new Error(`Failed to analyze results: ${errorMessage}`);
+
+            const analysisData = await jobResponse.json();
+            console.log('Job Analysis response:', JSON.stringify(analysisData, null, 2));
+            setResults(analysisData.result);
+          } else {
+            // Use regular analyze-profile-answers API for other tests
+            const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              }
+            });
+
+            if (!profileResponse.ok) {
+              throw new Error('Failed to fetch user profile');
+            }
+
+            const profileData = await profileResponse.json();
+            const userSkills = profileData?.skills || [];
+
+            const requestBody = {
+              type: router.query.type || testData.metadata?.type || type,
+              skill: router.query.skill ? [{
+                name: router.query.skill as string,
+                proficiencyLevel: parseInt(router.query.proficiency as string) || 1
+              }] : userSkills.map((skill: any) => ({
+                name: skill.name,
+                proficiencyLevel: parseInt(skill.proficiencyLevel) || 1
+              })),
+              subcategory: router.query.subcategory as string,
+              questions: testData.results
+            };
+
+            console.log('Sending analysis request:', JSON.stringify(requestBody, null, 2));
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/analyze-profile-answers`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+              },
+              body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              let errorMessage = 'Failed to analyze results';
+              try {
+                const errorJson = JSON.parse(errorText);
+                errorMessage = errorJson.message || errorJson.error || errorText;
+              } catch (parseError) {
+                errorMessage = errorText || 'Failed to analyze results';
+              }
+              throw new Error(`Failed to analyze results: ${errorMessage}`);
+            }
+
+            const analysisData = await response.json();
+            console.log('Analysis response:', JSON.stringify(analysisData, null, 2));
+
+            // Ensure all fields that should be strings are strings
+            if (analysisData.result?.analysis) {
+              const analysis = analysisData.result.analysis;
+              
+              // Convert any object recommendations to strings
+              if (Array.isArray(analysis.recommendations)) {
+                analysis.recommendations = analysis.recommendations.map((rec: any) => {
+                  if (typeof rec === 'object') {
+                    return Object.values(rec).join(': ');
+                  }
+                  return rec;
+                });
+              }
+
+              // Convert any object next steps to strings
+              if (Array.isArray(analysis.nextSteps)) {
+                analysis.nextSteps = analysis.nextSteps.map((step: any) => {
+                  if (typeof step === 'object') {
+                    return Object.values(step).join(': ');
+                  }
+                  return step;
+                });
+              }
+
+              // Ensure skill analysis fields are properly formatted
+              if (Array.isArray(analysis.skillAnalysis)) {
+                analysis.skillAnalysis = analysis.skillAnalysis.map((skill: any) => ({
+                  ...skill,
+                  strengths: Array.isArray(skill.strengths) ? skill.strengths.map((s: any) => 
+                    typeof s === 'object' ? Object.values(s).join(': ') : s
+                  ) : [],
+                  weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses.map((w: any) => 
+                    typeof w === 'object' ? Object.values(w).join(': ') : w
+                  ) : []
+                }));
+              }
+            }
+
+            setResults(analysisData.result);
           }
-
-          const analysisData = await response.json();
-          console.log('Analysis response:', JSON.stringify(analysisData, null, 2));
-
-          // Ensure all fields that should be strings are strings
-          if (analysisData.result?.analysis) {
-            const analysis = analysisData.result.analysis;
-            
-            // Convert any object recommendations to strings
-            if (Array.isArray(analysis.recommendations)) {
-              analysis.recommendations = analysis.recommendations.map((rec: any) => {
-                if (typeof rec === 'object') {
-                  // If it's an object, stringify it or extract relevant text
-                  return Object.values(rec).join(': ');
-                }
-                return rec;
-              });
-            }
-
-            // Convert any object next steps to strings
-            if (Array.isArray(analysis.nextSteps)) {
-              analysis.nextSteps = analysis.nextSteps.map((step: any) => {
-                if (typeof step === 'object') {
-                  return Object.values(step).join(': ');
-                }
-                return step;
-              });
-            }
-
-            // Ensure skill analysis fields are properly formatted
-            if (Array.isArray(analysis.skillAnalysis)) {
-              analysis.skillAnalysis = analysis.skillAnalysis.map((skill: any) => ({
-                ...skill,
-                strengths: Array.isArray(skill.strengths) ? skill.strengths.map((s: any) => 
-                  typeof s === 'object' ? Object.values(s).join(': ') : s
-                ) : [],
-                weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses.map((w: any) => 
-                  typeof w === 'object' ? Object.values(w).join(': ') : w
-                ) : []
-              }));
-            }
-          }
-
-          setResults(analysisData.result);
         }
       } catch (e) {
         console.error('Error analyzing test results:', e);

@@ -487,7 +487,7 @@ export default function SignIn() {
             startIcon={<GoogleIcon />}
             onClick={() => signIn('google')}
             
-            disabled
+            // disabled
 
             title="Google Sign-in is currently unavailable"
             sx={{

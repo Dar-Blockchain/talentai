@@ -17,5 +17,5 @@ router.post('/job/:id/generate-technique-questions', evaluationController.genera
 router.post('/generate-soft-skill-questions', evaluationController.generateSoftSkillQuestions);
 router.post('/match-profiles-with-company', evaluationController.matchProfilesWithCompany);
 router.post('/analyze-profile-answers', evaluationController.analyzeProfileAnswers);
-
+router.post('/analyze-job-test-results', evaluationController.analyzeJobTestResults);
 module.exports = router; 

@@ -25,6 +25,10 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 import { v4 as uuidv4 } from 'uuid';
 import { useSession } from 'next-auth/react';
+import Cookies from 'js-cookie';
+
+// Remove hardcoded questions
+const NEXTJS_QUESTIONS: string[] = [];
 
 // --- Styled Components ---
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -104,6 +108,7 @@ const NavigationBar = styled(Box)(({ theme }) => ({
   alignItems: 'center',
 }));
 
+// Add new styled components for the guidelines modal
 const GuidelinesModal = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
     background: 'rgba(15, 23, 42, 0.95)',
@@ -128,65 +133,6 @@ const GuidelineItem = styled(Box)(({ theme }) => ({
     transform: 'translateX(8px)',
     background: 'rgba(255, 255, 255, 0.08)',
   },
-}));
-
-const SecurityModal = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialog-paper': {
-    background: 'rgba(244, 67, 54, 0.95)',
-    color: '#fff',
-    borderRadius: '24px',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    maxWidth: '480px',
-    margin: theme.spacing(2),
-    textAlign: 'center',
-    backdropFilter: 'blur(10px)',
-  },
-}));
-
-const FirstViolationModal = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialog-paper': {
-    backgroundColor: '#00072D',
-    backgroundImage: `
-      radial-gradient(circle at 20% 30%, rgba(2,226,255,0.4), transparent 40%),
-      radial-gradient(circle at 80% 70%, rgba(0,255,195,0.3), transparent 50%)
-    `,
-    color: '#fff',
-    borderRadius: '24px',
-    border: '1px solid rgba(255,255,255,0.1)',
-    maxWidth: '420px',
-    margin: theme.spacing(2),
-    textAlign: 'center',
-    backdropFilter: 'blur(10px)',
-  },
-}));
-
-const ChatContainer = styled(Box)(({ theme }) => ({
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
-  height: '100%',
-  background: 'rgba(0, 7, 45, 0.8)',
-  backdropFilter: 'blur(10px)',
-  borderLeft: '1px solid rgba(255,255,255,0.1)',
-  padding: theme.spacing(3),
-}));
-
-const QuestionBox = styled(Box)(({ theme }) => ({
-  background: 'rgba(255, 255, 255, 0.05)',
-  borderRadius: '12px',
-  padding: theme.spacing(2),
-  marginBottom: theme.spacing(2),
-  border: '1px solid rgba(255, 255, 255, 0.1)',
-}));
-
-const AnswerBox = styled(Box)(({ theme }) => ({
-  background: 'rgba(2, 226, 255, 0.1)',
-  borderRadius: '12px',
-  padding: theme.spacing(2),
-  marginTop: theme.spacing(2),
-  border: '1px solid rgba(2, 226, 255, 0.2)',
-  flex: 1,
-  overflowY: 'auto',
 }));
 
 // --- SpeechRecognition Types ---
@@ -227,6 +173,7 @@ interface SpeechRecognitionError extends Event {
   message: string;
 }
 
+// Add back necessary interfaces
 interface Question {
   id: string;
   text: string;
@@ -234,54 +181,23 @@ interface Question {
   level: string;
 }
 
-export default function TestJob() {
+interface JobQuestionsResponse {
+  jobId: string;
+  requiredSkills: Array<{
+    name: string;
+    level: string;
+  }>;
+  questions: string[];
+  totalQuestions: number;
+}
+
+export default function Test() {
   const theme = useTheme();
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { data: session } = useSession();
   const { id } = router.query;
-
-  const fetchJobQuestions = async () => {
-    try {
-      const token = localStorage.getItem('api_token');
-      if (!token) {
-        console.log('No token found');
-        return;
-      }
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}jobs/${id}/questions`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch job questions');
-      }
-
-      const data = await response.json();
-      setQuestions(data);
-    } catch (error) {
-      console.error('Error fetching job questions:', error);
-    }
-  };
-
-  // Add authentication check
-  useEffect(() => {
-    if (router.isReady) {
-      const token = localStorage.getItem('api_token');
-      if (!token) {
-        // Construct the return URL with the current job ID
-        const returnUrl = encodeURIComponent(`/testjob/${router.query.id}`);
-        router.push(`/signin?returnUrl=${returnUrl}`);
-        return;
-      }
-      // Continue with fetching job questions if token exists
-      fetchJobQuestions();
-    }
-  }, [router.isReady, router.query.id]);
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isGenerating, setIsGenerating] = useState(true);
@@ -294,23 +210,112 @@ export default function TestJob() {
   const [currentTranscript, setCurrentTranscript] = useState('');
   const [showGuidelines, setShowGuidelines] = useState(true);
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
-  const [securityViolationCount, setSecurityViolationCount] = useState(0);
-  const [showSecurityModal, setShowSecurityModal] = useState(false);
-  const [showFirstViolationModal, setShowFirstViolationModal] = useState(false);
-  const violationHandledRef = useRef(false);
+  const [answers, setAnswers] = useState<{ [key: string]: string }>({});
 
-  // Timer effect
+  // Fetch questions from API
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        setIsGenerating(true);
+        const token = Cookies.get('api_token');
+        if (!token) {
+          console.log('No token found, redirecting to home');
+          router.push('/');
+          return;
+        }
+
+        // Use job-specific endpoint with only jobId in body
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/job/${id}/generate-technique-questions`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            jobId: id
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch questions');
+        }
+
+        const data: JobQuestionsResponse = await response.json();
+        
+        // Transform the questions array into the required format
+        const formattedQuestions: Question[] = data.questions.map((question, index) => {
+          const skillIndex = index % data.requiredSkills.length;
+          const skill = data.requiredSkills[skillIndex];
+          
+          return {
+            id: `q_${index + 1}`,
+            text: question,
+            skill: skill.name,
+            level: skill.level
+          };
+        });
+
+        setQuestions(formattedQuestions);
+        
+        // Initialize transcriptions with empty strings for each question
+        setTranscriptions(
+          formattedQuestions.reduce((acc: any, _: any, index: number) => ({
+            ...acc,
+            [index]: ''
+          }), {})
+        );
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+        router.push('/');
+      } finally {
+        setIsGenerating(false);
+      }
+    };
+
+    if (router.isReady && id) {
+      fetchQuestions();
+    }
+  }, [router.isReady, id]);
+
+  // Interval used to finalize each chunk
+  const chunkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // MediaRecorder references
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+
+  // Transcription states
+  const [isTranscribing, setIsTranscribing] = useState(false);
+
+  // Timer only runs when test has started
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (isRecording && timeLeft > 0) {
+    if (hasStartedTest && timeLeft > 0) {
       timer = setInterval(() => {
-        setTimeLeft(prev => prev - 1);
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            if (current < questions.length - 1) {
+              setCurrent(c => c + 1);
+              return 120; // Reset timer to 120 seconds (2 minutes)
+            } else {
+              stopRecording();
+              saveTestResults();
+              router.push('/report');
+            }
+          }
+          return prev - 1;
+        });
       }, 1000);
-    } else if (timeLeft === 0) {
-      stopRecording();
     }
     return () => clearInterval(timer);
-  }, [isRecording, timeLeft]);
+  }, [current, timeLeft, questions.length, hasStartedTest, router]);
+
+  // Reset timer when question changes
+  useEffect(() => {
+    currentIndexRef.current = current;
+    setTimeLeft(120); // Reset to 120 seconds (2 minutes)
+    setCurrentTranscript(''); // Clear current transcript
+  }, [current]);
 
   // Initialize camera
   useEffect(() => {
@@ -332,298 +337,196 @@ export default function TestJob() {
     return () => streamRef.current?.getTracks().forEach(t => t.stop());
   }, []);
 
-  // Start recording function
-  const startRecording = async () => {
+  // Modify the recorder.ondataavailable handler inside createMediaRecorder
+  const createMediaRecorder = (stream: MediaStream) => {
+    const options = {
+      mimeType: 'audio/webm;codecs=opus',
+      audioBitsPerSecond: 128000,
+    };
+    const recorder = new MediaRecorder(stream, options);
+
+    recorder.ondataavailable = async (event) => {
+      if (event.data.size > 0) {
+        try {
+          setIsTranscribing(true);
+          const formData = new FormData();
+          formData.append('audio', event.data, 'recording.webm');
+
+          const response = await fetch('/api/session', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Transcription failed');
+          }
+
+          const { text } = await response.json();
+          if (text?.trim()) {
+            // Update both current transcript and stored transcriptions
+            const newText = text.trim();
+            setCurrentTranscript(prev => {
+              const updated = (prev + ' ' + newText).trim();
+              // Update stored transcriptions
+              setTranscriptions(prevT => ({
+                ...prevT,
+                [currentIndexRef.current]: updated
+              }));
+              return updated;
+            });
+          }
+        } catch (error) {
+          console.error('Chunk processing error:', error);
+        } finally {
+          setIsTranscribing(false);
+        }
+      }
+    };
+
+    return recorder;
+  };
+
+  // Every time we finalize a chunk, we stop the recorder, then immediately create a new one
+  const finalizeChunk = () => {
+    if (!mediaRecorderRef.current) return;
+    mediaRecorderRef.current.stop();
+    mediaRecorderRef.current = null;
+
+    // Re-create the recorder for the next chunk
+    if (audioStreamRef.current) {
+      mediaRecorderRef.current = createMediaRecorder(audioStreamRef.current);
+      mediaRecorderRef.current.start(); // Start next chunk
+    }
+  };
+
+  const stopRecording = () => {
+    // Stop chunk finalization
+    if (chunkIntervalRef.current) {
+      clearInterval(chunkIntervalRef.current);
+      chunkIntervalRef.current = null;
+    }
+    // Stop the current recorder
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current = null;
+    }
+    // Stop audio tracks
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach(track => track.stop());
+      audioStreamRef.current = null;
+    }
+    setIsRecording(false);
+    setHasStartedTest(false);
+  };
+
+  const handleGuidelinesAccept = () => {
+    setGuidelinesAccepted(true);
+    setShowGuidelines(false);
+  };
+
+  // Modify startTest to check guidelines acceptance
+  const startTest = async () => {
+    if (!guidelinesAccepted) {
+      setShowGuidelines(true);
+      return;
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user' },
+      // Initialize transcriptions for all questions
+      setTranscriptions(
+        questions.reduce((acc: any, _: any, index: number) => ({
+          ...acc,
+          [index]: ''
+        }), {})
+      );
+      setCurrentTranscript(''); // Clear current transcript
+
+      // Get audio stream
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
           sampleRate: 48000,
           channelCount: 1,
-        }
+        },
       });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => videoRef.current?.play();
-      }
-      streamRef.current = stream;
-      setIsRecording(true);
-      setTimeLeft(120);
-      startSpeechRecognition();
-    } catch (error) {
-      console.error('Error accessing media devices:', error);
-    }
-  };
+      audioStreamRef.current = stream;
 
-  // Stop recording function
-  const stopRecording = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setIsRecording(false);
-    stopSpeechRecognition();
-  };
+      // Create first recorder
+      mediaRecorderRef.current = createMediaRecorder(stream);
+      mediaRecorderRef.current.start(); // Start recording
 
-  // Speech recognition setup
-  const startSpeechRecognition = () => {
-    if (!('webkitSpeechRecognition' in window)) {
-      console.error('Speech recognition not supported');
-      return;
-    }
-
-    const recognition = new window.webkitSpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .map(result => result[0].transcript)
-        .join('');
-
-      setCurrentTranscript(transcript);
-    };
-
-    recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
-      if (event.error === 'no-speech') {
-        stopRecording();
-      }
-    };
-
-    recognition.start();
-  };
-
-  const stopSpeechRecognition = () => {
-    if (window.webkitSpeechRecognition) {
-      const recognition = new window.webkitSpeechRecognition();
-      recognition.stop();
-    }
-  };
-
-  // Add visibility change detection
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden && hasStartedTest && !violationHandledRef.current) {
-        handleSecurityViolation(['visibility_change']);
-      }
-    };
-
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasStartedTest && !violationHandledRef.current) {
-        handleSecurityViolation(['page_leave']);
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-
-    // Add screenshot detection
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (hasStartedTest && !violationHandledRef.current) {
-        // Check for PrintScreen key
-        if (e.key === 'PrintScreen') {
-          handleSecurityViolation(['screenshot']);
-        }
-        // Check for Alt + PrintScreen
-        if (e.altKey && e.key === 'PrintScreen') {
-          handleSecurityViolation(['screenshot']);
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [hasStartedTest]);
-
-  // Update security violation handling
-  const handleSecurityViolation = (violations: string[]) => {
-    violationHandledRef.current = true;
-    setSecurityViolationCount(prev => prev + 1);
-
-    if (securityViolationCount === 0) {
-      setShowFirstViolationModal(true);
-    } else {
-      setShowSecurityModal(true);
-      // Redirect to home after a short delay
-      setTimeout(() => {
-        router.push('/');
+      // Process chunks more frequently (every 2 seconds)
+      chunkIntervalRef.current = setInterval(() => {
+        finalizeChunk();
       }, 2000);
+
+      setIsRecording(true);
+      setHasStartedTest(true);
+      setTimeLeft(120); // Start with 120 seconds (2 minutes)
+    } catch (error) {
+      console.error('Recording setup error:', error);
+      setIsRecording(false);
+      setHasStartedTest(false);
     }
   };
 
-  // Update modal close handlers
-  const handleCloseSecurityModal = () => {
-    setShowSecurityModal(false);
-    router.push('/');
-  };
-
-  const handleCloseFirstViolationModal = () => {
-    setShowFirstViolationModal(false);
-    violationHandledRef.current = false;
-  };
-
-  // Update start test function
-  const startTest = () => {
-    setHasStartedTest(true);
-    startRecording();
-  };
-
-  // Save answer when moving to next question
-  const handleNext = async () => {
+  const handlePrev = () => setCurrent(c => Math.max(0, c - 1));
+  const handleNext = () => {
     if (current < questions.length - 1) {
-      try {
-        const token = localStorage.getItem('api_token');
-        
-        if (!token) {
-          console.error('Missing token');
-          return;
-        }
-
-        // Stop only the audio recording and speech recognition
-        if (streamRef.current) {
-          streamRef.current.getAudioTracks().forEach(track => track.stop());
-        }
-        stopSpeechRecognition();
-
-        // Save current answer
-        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/save-answer`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            questionId: questions[current].id,
-            answer: transcriptions[questions[current].id] || '',
-            skill: questions[current].skill,
-            level: questions[current].level,
-          }),
-        });
-
-        // Move to next question
-        setCurrent(prev => prev + 1);
-        setTimeLeft(120);
-        setCurrentTranscript('');
-        violationHandledRef.current = false;
-
-        // Restart audio recording if it was active
-        if (isRecording) {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
-          streamRef.current = stream;
-          startSpeechRecognition();
-        }
-      } catch (error) {
-        console.error('Error saving answer:', error);
-      }
+      setCurrent(c => c + 1);
     } else {
-      // This is the last question, save the final answer and redirect to report
-      try {
-        const token = localStorage.getItem('api_token');
-        
-        if (!token) {
-          console.error('Missing token');
-          return;
-        }
-
-        // Stop recording and speech recognition
-        if (streamRef.current) {
-          streamRef.current.getAudioTracks().forEach(track => track.stop());
-        }
-        stopSpeechRecognition();
-
-        // Save final answer
-        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/save-answer`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            questionId: questions[current].id,
-            answer: transcriptions[questions[current].id] || '',
-            skill: questions[current].skill,
-            level: questions[current].level,
-          }),
-        });
-
-        // Store test metadata in localStorage
-        const testData = {
-          results: questions.map((q, index) => ({
-            question: q.text,
-            answer: transcriptions[q.id] || ''
-          })),
-          metadata: {
-            type: 'job',
-            jobId: id,
-            timestamp: new Date().toISOString()
-          }
-        };
-        localStorage.setItem('test_results', JSON.stringify(testData));
-
-        // Redirect to report page with job ID
-        router.push({
-          pathname: '/report',
-          query: {
-            from: 'testjob',
-            jobId: id
-          }
-        });
-      } catch (error) {
-        console.error('Error saving final answer:', error);
-      }
+      saveTestResults();
+      router.push('/report');
     }
   };
 
-  // Handle previous question
-  const handlePrevious = () => {
-    if (current > 0) {
-      // Stop only the audio recording and speech recognition
-      if (streamRef.current) {
-        streamRef.current.getAudioTracks().forEach(track => track.stop());
-      }
-      stopSpeechRecognition();
+  const goHome = () => {
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    if (hasStartedTest) {
+      saveTestResults();
+    }
+    router.push('/dashboardCandidate');
+  };
 
-      setCurrent(prev => prev - 1);
-      setTimeLeft(120);
-      setCurrentTranscript('');
-      violationHandledRef.current = false;
+  // Function to save test results
+  const saveTestResults = async () => {
+    try {
+      const results = questions.map((q, index) => ({
+        question: q.text,
+        answer: transcriptions[index] || '',
+        skill: q.skill,
+        level: q.level
+      }));
 
-      // Restart audio recording if it was active
-      if (isRecording) {
-        startRecording();
-      }
+      const testData = {
+        results,
+        metadata: {
+          type: 'job',
+          jobId: id,
+          timestamp: new Date().toISOString()
+        }
+      };
+
+      // Store in both localStorage and Cookies
+      localStorage.setItem('test_results', JSON.stringify(testData));
+      Cookies.set('test_results', JSON.stringify(testData), { expires: 7 });
+
+      // Navigate to report page with job ID
+      router.push({
+        pathname: '/report',
+        query: { jobId: id }
+      });
+    } catch (error) {
+      console.error('Error saving test results:', error);
+      // Still redirect to report page even if saving fails
+      router.push({
+        pathname: '/report',
+        query: { jobId: id }
+      });
     }
   };
-
-  // Guidelines handling
-  const handleAcceptGuidelines = () => {
-    setGuidelinesAccepted(true);
-    setShowGuidelines(false);
-    setHasStartedTest(true);
-  };
-
-  if (isGenerating) {
-    return (
-      <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#00072D' }}>
-        <CircularProgress sx={{ color: '#02E2FF' }} />
-      </Box>
-    );
-  }
 
   return (
     <Box
@@ -638,199 +541,10 @@ export default function TestJob() {
         flexDirection: 'column',
       }}
     >
-      <StyledAppBar position="static" elevation={0}>
-        <Toolbar>
-          <Typography
-            variant="h6"
-            sx={{
-              flexGrow: 1,
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontWeight: 700,
-            }}
-          >
-            Skill Test ({current + 1}/{questions.length || '-'})
-          </Typography>
-          {hasStartedTest && (
-            <Typography variant="subtitle1" sx={{ color: '#fff', mr: 2 }}>
-              {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
-            </Typography>
-          )}
-          <Button
-            startIcon={<CallEndIcon />}
-            onClick={() => {
-              stopRecording();
-              router.push('/dashboardCandidate');
-            }}
-            variant="outlined"
-            sx={{
-              color: theme.palette.error.main,
-              borderColor: theme.palette.error.main,
-              textTransform: 'none',
-              borderRadius: 2,
-              px: 3,
-              '&:hover': { backgroundColor: 'rgba(244,67,54,0.1)' },
-            }}
-          >
-            End Test
-          </Button>
-        </Toolbar>
-        <LinearProgress
-          variant={isGenerating ? "indeterminate" : "determinate"}
-          value={((current + 1) / (questions.length || 1)) * 100}
-          sx={{
-            height: 4,
-            backgroundColor: 'rgba(255,255,255,0.1)',
-            '& .MuiLinearProgress-bar': {
-              backgroundImage: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-            },
-          }}
-        />
-      </StyledAppBar>
-
-      <Container 
-        maxWidth={false}
-        sx={{
-          flexGrow: 1,
-          py: 4,
-          display: 'flex',
-          gap: 3,
-          height: 'calc(100vh - 128px)',
-        }}
-      >
-        <Paper
-          elevation={12}
-          sx={{
-            position: 'relative',
-            width: '60%',
-            height: '100%',
-            borderRadius: 2,
-            overflow: 'hidden',
-          }}
-        >
-          <video
-            ref={videoRef}
-            playsInline
-            muted
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              transform: 'scaleX(-1)',
-              borderRadius: '24px',
-            }}
-          />
-
-          {hasStartedTest && (
-            <RecordingControls>
-              <RecordingButton
-                variant="contained"
-                onClick={isRecording ? stopRecording : startRecording}
-                disabled={timeLeft === 0}
-                sx={{
-                  backgroundColor: '#02E2FF',
-                  '&:hover': {
-                    backgroundColor: '#00C3FF',
-                  },
-                  '&.Mui-disabled': {
-                    backgroundColor: isRecording ? '#ff4444' : 'rgba(255, 255, 255, 0.12)',
-                    color: isRecording ? '#fff' : 'rgba(255, 255, 255, 0.3)',
-                  }
-                }}
-              >
-                {isRecording ? `Recording in progress (${timeLeft}s)` : 'Start Recording'}
-              </RecordingButton>
-              <TranscriptDisplay variant="body2">
-                {currentTranscript || 'Speak now...'}
-              </TranscriptDisplay>
-            </RecordingControls>
-          )}
-        </Paper>
-
-        <ChatContainer>
-          <QuestionBox>
-            <Typography variant="h6" sx={{ 
-              color: '#fff',
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontWeight: 600,
-              mb: 1
-            }}>
-              Current Question
-            </Typography>
-            <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)' }}>
-              {isGenerating ? (
-                <Box sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  justifyContent: 'center',
-                }}>
-                  <span>Generating your interview questions</span>
-                  <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
-                    ...
-                  </Box>
-                </Box>
-              ) : questions[current]?.text}
-            </Typography>
-          </QuestionBox>
-
-          <AnswerBox>
-            <Typography variant="h6" sx={{ 
-              color: '#02E2FF',
-              fontWeight: 600,
-              mb: 2
-            }}>
-              Your Answer
-            </Typography>
-            <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.9)' }}>
-              {currentTranscript || 'Your answer will appear here as you speak...'}
-            </Typography>
-          </AnswerBox>
-        </ChatContainer>
-      </Container>
-
-      <NavigationBar>
-        <IconButton 
-          onClick={handlePrevious} 
-          disabled={current === 0} 
-          sx={{ color: '#fff' }}
-        >
-          <ArrowBackIcon />
-        </IconButton>
-        <Button
-          variant="contained"
-          endIcon={<ArrowForwardIcon />}
-          onClick={handleNext}
-          disabled={isGenerating}
-          sx={{
-            textTransform: 'none',
-            background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-            borderRadius: 2,
-            px: 4,
-            py: 1.5,
-            '&:hover': {
-              background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-            },
-            '&.Mui-disabled': {
-              background: 'rgba(255, 255, 255, 0.12)',
-              color: 'rgba(255, 255, 255, 0.3)',
-            }
-          }}
-        >
-          {current < questions.length - 1 ? 'Next Question' : 'Finish Test'}
-        </Button>
-      </NavigationBar>
-
       {/* Guidelines Modal */}
       <GuidelinesModal
         open={showGuidelines}
-        onClose={() => {}}
+        onClose={() => { }}
         maxWidth="md"
         fullWidth
       >
@@ -913,75 +627,209 @@ export default function TestJob() {
             </Box>
           </GuidelineItem>
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
+        <DialogActions sx={{
+          padding: theme.spacing(3),
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          justifyContent: 'space-between'
+        }}>
           <Button
-            variant="contained"
-            onClick={handleAcceptGuidelines}
-            fullWidth
+            onClick={() => router.push('/dashboardCandidate')}
             sx={{
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-              color: '#00072D',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-              },
+              color: 'rgba(255,255,255,0.7)',
+              '&:hover': { color: '#fff' }
             }}
           >
-            I Accept
+            I'm Not Ready
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleGuidelinesAccept}
+            sx={{
+              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              color: '#fff',
+              px: 4,
+              py: 1,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': {
+                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+              }
+            }}
+          >
+            I Understand & I'm Ready
           </Button>
         </DialogActions>
       </GuidelinesModal>
 
-      {/* Security Violation Modal */}
-      <SecurityModal
-        open={showSecurityModal}
-        onClose={handleCloseSecurityModal}
-      >
-        <DialogTitle sx={{ fontWeight: 700, color: '#fff', fontSize: '1.5rem' }}>
-          Security Violation
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
-            You have attempted to leave or capture the test page more than once. For security reasons, your test has ended and you are being redirected to the dashboard.
-          </Typography>
-        </DialogContent>
-      </SecurityModal>
-
-      {/* First Violation Modal */}
-      <FirstViolationModal
-        open={showFirstViolationModal}
-        onClose={handleCloseFirstViolationModal}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle sx={{ fontWeight: 700, fontSize: '1.3rem', color: '#fff', pt: 3 }}>
-          Heads Up!
-        </DialogTitle>
-        <DialogContent sx={{ pb: 0 }}>
-          <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
-            For security reasons, leaving or capturing the test page is not allowed.<br />
-            <b>If you do this again, your test will end and you will be redirected.</b>
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
-          <Button
-            variant="contained"
-            onClick={handleCloseFirstViolationModal}
+      <StyledAppBar position="static" elevation={0}>
+        <Toolbar>
+          <Typography
+            variant="h6"
             sx={{
+              flexGrow: 1,
               background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-              color: '#fff',
-              fontWeight: 600,
-              borderRadius: 2,
-              px: 4,
-              textTransform: 'none',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-              },
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: 700,
             }}
           >
-            Got it
+            Skill Test ({current + 1}/{questions.length || '-'})
+          </Typography>
+          {hasStartedTest && (
+            <Typography variant="subtitle1" sx={{ color: '#fff', mr: 2 }}>
+              {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+            </Typography>
+          )}
+          <Button
+            startIcon={<CallEndIcon />}
+            onClick={() => {
+              stopRecording();
+              goHome();
+            }}
+            variant="outlined"
+            sx={{
+              color: theme.palette.error.main,
+              borderColor: theme.palette.error.main,
+              textTransform: 'none',
+              borderRadius: 2,
+              px: 3,
+              '&:hover': { backgroundColor: 'rgba(244,67,54,0.1)' },
+            }}
+          >
+            End Test
           </Button>
-        </DialogActions>
-      </FirstViolationModal>
+        </Toolbar>
+        <LinearProgress
+          variant={isGenerating ? "indeterminate" : "determinate"}
+          value={((current + 1) / (questions.length || 1)) * 100}
+          sx={{
+            height: 4,
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            '& .MuiLinearProgress-bar': {
+              backgroundImage: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+            },
+          }}
+        />
+      </StyledAppBar>
+
+      <Container
+        maxWidth="md"
+        sx={{
+          flexGrow: 1,
+          py: 4,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Paper
+          elevation={12}
+          sx={{
+            position: 'relative',
+            width: '100%',
+            pt: '56.25%', // 16:9
+            borderRadius: 2,
+            overflow: 'hidden',
+          }}
+        >
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transform: 'scaleX(-1)',
+              borderRadius: '24px',
+            }}
+          />
+
+          <RecordingControls>
+            <RecordingButton
+              variant="contained"
+              onClick={hasStartedTest ? undefined : startTest}
+              disabled={isGenerating || hasStartedTest}
+              sx={{
+                backgroundColor: '#02E2FF',
+                '&:hover': {
+                  backgroundColor: '#00C3FF',
+                },
+                '&.Mui-disabled': {
+                  backgroundColor: hasStartedTest ? '#ff4444' : 'rgba(255, 255, 255, 0.12)',
+                  color: hasStartedTest ? '#fff' : 'rgba(255, 255, 255, 0.3)',
+                }
+              }}
+            >
+              {hasStartedTest ? `Recording in progress (${timeLeft}s)` : 'Start Test'}
+            </RecordingButton>
+            <TranscriptDisplay variant="body2">
+              {isTranscribing ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={16} sx={{ color: '#02E2FF' }} />
+                  <span>Processing audio...</span>
+                </Box>
+              ) : (
+                currentTranscript || 'Speak now...'
+              )}
+            </TranscriptDisplay>
+          </RecordingControls>
+
+          <QuestionOverlay>
+            <Typography variant="h6" sx={{ color: '#fff' }}>
+              {isGenerating ? (
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}>
+                  <span>Generating your interview questions</span>
+                  <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
+                    ...
+                  </Box>
+                </Box>
+              ) : questions[current]?.text}
+            </Typography>
+          </QuestionOverlay>
+        </Paper>
+      </Container>
+
+      <NavigationBar>
+        <IconButton onClick={handlePrev} disabled={current === 0} sx={{ color: '#fff' }}>
+          <ArrowBackIcon />
+        </IconButton>
+        <Button
+          variant="contained"
+          endIcon={<ArrowForwardIcon />}
+          onClick={handleNext}
+          disabled={isGenerating}
+          sx={{
+            textTransform: 'none',
+            background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+            borderRadius: 2,
+            px: 4,
+            py: 1.5,
+            '&:hover': {
+              background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+            },
+            '&.Mui-disabled': {
+              background: 'rgba(255, 255, 255, 0.12)',
+              color: 'rgba(255, 255, 255, 0.3)',
+            }
+          }}
+        >
+          {current < questions.length - 1 ? 'Next Question' : 'Finish Test'}
+        </Button>
+      </NavigationBar>
     </Box>
   );
-} 
+}
