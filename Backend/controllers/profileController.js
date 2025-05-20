@@ -247,13 +247,13 @@ module.exports.deleteSoftSkill = async (req, res) => {
 module.exports.updateFinalBid = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const { newBid, userId } = req.body;
-console.log(companyId)
+    const { newBid, userId , postId } = req.body;
+
     if (typeof newBid !== 'number' || newBid <= 0) {
       return res.status(401).json({ message: "The bid must be a positive number" });
     }
 
-    const profile = await profileService.updateFinalBid(userId, newBid, companyId);
+    const profile = await profileService.updateFinalBid(userId, newBid, companyId,postId);
 
     res.status(200).json({
       message: "Bid updated successfully",

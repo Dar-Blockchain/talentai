@@ -293,7 +293,7 @@ module.exports.deleteSoftSkills = async (userId, softSkillsToDelete) => {
 };
 
 // Mettre à jour le finalBid
-module.exports.updateFinalBid = async (userId, newBid, companyId) => {
+module.exports.updateFinalBid = async (userId, newBid, companyId,postId) => {
   try {
     const profile = await Profile.findOne({ userId });
     if (!profile) {
@@ -315,6 +315,8 @@ module.exports.updateFinalBid = async (userId, newBid, companyId) => {
     // Mettre à jour le bid
     profile.companyBid.finalBid = newBid;
     profile.companyBid.company = companyId;
+    profile.companyBid.post = postId;
+    profile.companyBid.dateBid = new Date();
     await profile.save();
 
     // 🔄 Supprimer l'user de l'ancienne compagnie s'il y en avait une
@@ -414,27 +416,39 @@ module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
 };
 
 // Récupérer les informations du companyBid
+
 module.exports.getCompanyBids = async (companyId) => {
   try {
+    // Récupérer le profil de la compagnie
     const companyProfile = await Profile.findOne({ userId: companyId, type: "Company" });
 
     if (!companyProfile) {
       throw new Error("Company profile not found");
     }
 
+    // Récupérer les candidats biddés
     const candidates = await Profile.find({
       userId: { $in: companyProfile.usersBidedByCompany },
     })
-    .populate({ path: "userId", select: "username email" });
+    .populate({
+      path: "userId",
+      select: "username email"
+    })
+    .populate({
+      path: "companyBid.post",
+      select: "jobDetails.title status createdAt"
+    });
 
     // Construction du résultat enrichi
     const enrichedCandidates = candidates.map(candidate => ({
       _id: candidate._id,
       userInfo: candidate.userId,
       finalBid: candidate.companyBid?.finalBid || null,
+      dateBid: candidate.companyBid?.dateBid || null,
       overallScore: candidate.overallScore,
       skills: candidate.skills,
       softSkills: candidate.softSkills,
+      post: candidate.companyBid?.post || null,
     }));
 
     return {
