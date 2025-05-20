@@ -1086,7 +1086,7 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {data.map((bid: any) => (
-            <Box key={bid._id} sx={{
+            <Box key={bid?._id} sx={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -1096,9 +1096,9 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
               border: '1px solid rgba(255,255,255,0.08)'
             }}>
               <Box>
-                <Typography sx={{ color: '#fff', fontWeight: 600 }}>{bid.userInfo.username}</Typography>
-                <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}>{bid.userInfo.email}</Typography>
-                <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>-</Typography>
+                <Typography sx={{ color: '#fff', fontWeight: 600 }}>{bid?.userInfo?.username}</Typography>
+                <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}>{bid?.userInfo?.email}</Typography>
+                <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>{bid?.post?.jobDetails?.title}</Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 {/* <Chip
@@ -1107,10 +1107,10 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
                   sx={{ fontWeight: 700 }}
                 /> */}
                 <Typography sx={{ color: '#02E2FF', fontWeight: 600 }}>
-                  ${bid.finalBid}
+                  ${bid?.finalBid}
                 </Typography>
                 <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>
-                  {new Date().toLocaleDateString()}
+                  {new Date(bid?.dateBid).toLocaleDateString()}
                 </Typography>
               </Box>
             </Box>
@@ -2491,7 +2491,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
       const params = {
         newBid: Number(bidAmount),
         userId: selectedCandidate.candidateId._id,
-        selectedJob
+        postId: selectedJob
       };
       await dispatch(placeBid(params)).unwrap();
       handleBidDialogClose();
