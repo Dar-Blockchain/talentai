@@ -57,6 +57,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { fetchBids, placeBid } from '@/store/slices/bidSlice';
 import CheckIcon from '@mui/icons-material/Check';
+import { motion } from 'framer-motion';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -428,6 +429,8 @@ const DashboardCompany = () => {
   const [bidAmount, setBidAmount] = useState('');
   const [isSubmittingBid, setIsSubmittingBid] = useState(false);
   const { data, status, error } = useSelector((state: RootState) => state.bid.bids);
+  const [postedJobId, setPostedJobId] = useState<string | null>(null);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   const isSalaryRangeValid = () => {
     return salaryRange.min > 0 && salaryRange.max > 0 && salaryRange.max >= salaryRange.min;
@@ -839,11 +842,13 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
       }
 
       const savedJob = await response.json();
+      // Store the posted job ID for the success dialog
+      setPostedJobId(savedJob.data?._id || savedJob._id);
       console.log('Job saved successfully:', savedJob);
 
       // Close the dialog after successful save
       setJobPostDialog(false);
-
+      setDialogOpen(true); // Open success dialog
       setJobDescription('');
       setGeneratedJob(undefined);
       fetchMyJobs()
@@ -3325,6 +3330,241 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
               )}
             </Button>
           </DialogActions>
+        </Dialog>
+
+        {/* Success Dialog for Job Post */}
+        <Dialog
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          maxWidth="xs"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: '16px',
+              background: 'rgba(30, 41, 59, 0.95)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(2,226,255,0.2)',
+              boxShadow: '0 8px 32px rgba(2,226,255,0.10)',
+              p: 0
+            }
+          }}
+        >
+          <DialogTitle
+            sx={{
+              pb: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              color: '#02E2FF',
+              fontSize: '1.2rem',
+              fontWeight: 700,
+              borderBottom: '1px solid rgba(255,255,255,0.1)',
+              background: 'linear-gradient(135deg, rgba(2,226,255,0.08) 0%, rgba(30,41,59,0.95) 100%)',
+            }}
+          >
+            <CheckIcon sx={{ color: '#02E2FF', fontSize: 28 }} />
+            Job Posted Successfully!
+            <IconButton
+              aria-label="close"
+              onClick={() => setDialogOpen(false)}
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+                color: 'rgba(255,255,255,0.7)'
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent sx={{ background: 'none', color: '#fff', py: 3, px: 3, fontSize: '1rem' , mt:3}}>
+            <Typography sx={{ color: 'rgba(255,255,255,0.85)', mb: 2 }}>
+              Your job post has been published. Share the test job link below with candidates:
+            </Typography>
+            <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
+              background: 'rgba(2,226,255,0.08)',
+              borderRadius: '8px',
+              p: 2,
+              mb: 2,
+              border: '1px solid rgba(2,226,255,0.2)'
+            }}>
+              <LinkIcon sx={{ color: '#02E2FF', mr: 1 }} />
+              <Typography
+                sx={{ color: '#02E2FF', fontWeight: 600, flex: 1, wordBreak: 'break-all' }}
+                id="test-job-link"
+              >
+                {postedJobId
+                  ? `${typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'http://localhost:3000'}/testjob/${postedJobId}`
+                  : ''}
+              </Typography>
+              <Tooltip title={copySuccess ? 'Copied!' : 'Copy'}>
+                <IconButton
+                  onClick={() => {
+                    if (!postedJobId) return;
+                    const url = `${typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'http://localhost:3000'}/testjob/${postedJobId}`;
+                    navigator.clipboard.writeText(url);
+                    setCopySuccess(true);
+                    setTimeout(() => setCopySuccess(false), 1500);
+                  }}
+                  sx={{ color: copySuccess ? '#00FFC3' : '#02E2FF', ml: 1 }}
+                  disabled={!postedJobId}
+                >
+                  <ContentCopyIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3, pt: 1 }}>
+            <Button
+              onClick={() => setDialogOpen(false)}
+              variant="contained"
+              sx={{
+                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                borderRadius: '8px',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                }
+              }}
+            >
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Success Dialog for Job Post */}
+        <Dialog
+          open={showSuccessDialog}
+          onClose={() => setShowSuccessDialog(false)}
+          PaperProps={{
+            sx: {
+              background: 'rgba(30, 41, 59, 0.95)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '24px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              maxWidth: '500px',
+              width: '100%',
+              overflow: 'hidden',
+              position: 'relative',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: 'linear-gradient(90deg, #02E2FF, #00FFC3)',
+              }
+            }
+          }}
+        >
+          <DialogContent sx={{ p: 4, textAlign: 'center' }}>
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
+              <Box
+                sx={{
+                  width: '80px',
+                  height: '80px',
+                  margin: '0 auto 24px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, rgba(2, 226, 255, 0.1), rgba(0, 255, 195, 0.1))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    inset: '-2px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #02E2FF, #00FFC3)',
+                    opacity: 0.5,
+                    animation: 'pulse 2s infinite',
+                  }
+                }}
+              >
+                <CheckIcon sx={{ fontSize: 40, color: '#00FFC3' }} />
+              </Box>
+            </motion.div>
+            
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
+            >
+              <Typography
+                variant="h5"
+                sx={{
+                  color: '#fff',
+                  fontWeight: 600,
+                  mb: 2,
+                  background: 'linear-gradient(90deg, #02E2FF, #00FFC3)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                Job Posted Successfully!
+              </Typography>
+              
+              <Typography
+                variant="body1"
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  mb: 3,
+                  fontSize: '1.1rem',
+                  lineHeight: 1.6,
+                }}
+              >
+                Your job has been posted and is now visible to potential candidates. You can manage it from your dashboard.
+              </Typography>
+
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowSuccessDialog(false)}
+                  sx={{
+                    color: '#02E2FF',
+                    borderColor: 'rgba(2, 226, 255, 0.3)',
+                    '&:hover': {
+                      borderColor: '#02E2FF',
+                      background: 'rgba(2, 226, 255, 0.1)',
+                    },
+                    px: 3,
+                    py: 1,
+                    borderRadius: '12px',
+                  }}
+                >
+                  Close
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    setShowSuccessDialog(false);
+                    router.push('/dashboardCompany');
+                  }}
+                  sx={{
+                    background: 'linear-gradient(90deg, #02E2FF, #00FFC3)',
+                    color: '#1E293B',
+                    fontWeight: 600,
+                    '&:hover': {
+                      background: 'linear-gradient(90deg, #00FFC3, #02E2FF)',
+                    },
+                    px: 3,
+                    py: 1,
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 15px rgba(0, 255, 195, 0.3)',
+                  }}
+                >
+                  View Dashboard
+                </Button>
+              </Box>
+            </motion.div>
+          </DialogContent>
         </Dialog>
       </Container>
     </Box>
