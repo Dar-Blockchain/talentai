@@ -1,9 +1,19 @@
-require('dotenv').config(); // Load .env file
-const { Client, PrivateKey, AccountCreateTransaction, AccountBalanceQuery, Hbar } = require("@hashgraph/sdk");
+require("dotenv").config(); // Load .env file
+const {
+  Client,
+  PrivateKey,
+  AccountCreateTransaction,
+  Hbar,
+  Wallet,
+  LocalProvider,
+} = require("@hashgraph/sdk");
 
 // Now process.env will include variables from .env
 const client = Client.forTestnet(); // Use forMainnet() for production
-client.setOperator(process.env.HEDERA_ACCOUNT_ID, process.env.HEDERA_PRIVATE_KEY);
+client.setOperator(
+  process.env.HEDERA_ACCOUNT_ID,
+  process.env.HEDERA_PRIVATE_KEY
+);
 
 /**
  * Creates a new Hedera wallet and returns the public and private keys.
@@ -11,22 +21,30 @@ client.setOperator(process.env.HEDERA_ACCOUNT_ID, process.env.HEDERA_PRIVATE_KEY
  */
 module.exports.createHederaWallet = async () => {
   try {
-    // Generate a new private key
-    const newPrivateKey = PrivateKey.generate();
-    const newPublicKey = newPrivateKey.publicKey;
 
-    // Create a new account with the public key
-    const transaction = new AccountCreateTransaction()
-      .setKey(newPublicKey)
-      .setInitialBalance(new Hbar(1)); // Initial balance in Hbar
+    const provider = new LocalProvider(process.env.HEDERA_NETWORK);
+    const wallet = new Wallet(
+      process.env.HEDERA_ACCOUNT_ID,
+      process.env.HEDERA_PRIVATE_KEY,
+      provider
+    );
 
-    const response = await transaction.execute(client);
-    const receipt = await response.getReceipt(client);
+    const privKey = PrivateKey.generate();
+    const pubKey = privKey.publicKey;
+
+    let transaction = await new AccountCreateTransaction()
+      .setInitialBalance(new Hbar(1)) 
+      .setKeyWithoutAlias(privKey.publicKey)
+      .freezeWithSigner(wallet);
+
+    transaction = await transaction.signWithSigner(wallet);
+    const response = await transaction.executeWithSigner(wallet);
+    const receipt = await response.getReceiptWithSigner(wallet);
     const newAccountId = receipt.accountId;
 
     return {
-      pubkey: newPublicKey.toString(),
-      privkey: newPrivateKey.toString(),
+      pubkey: pubKey.toString(),
+      privkey: privKey.toString(),
       accountId: newAccountId.toString(),
     };
   } catch (error) {
