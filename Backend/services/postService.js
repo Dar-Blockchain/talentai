@@ -109,6 +109,29 @@ module.exports.getPostById = async (postId) => {
   }
 };
 
+// Récupérer les required skills d'un post par son ID
+module.exports.getRequiredSkillsByPostId = async (postId) => {
+  try {
+    if (!postId) {
+      throw new Error("Post ID is required");
+    }
+    // Fetch post but only select `requiredSkills`
+    const post = await Post.findById(postId).select("skillAnalysis.requiredSkills");
+    if (!post) {
+      throw new Error("Post not found");
+    }
+    // Extract required skills with levels
+    const requiredSkills = post.skillAnalysis?.requiredSkills?.map(skill => ({
+      name: skill.name,
+      level: skill.level 
+    })) || [];
+
+    return { postId, requiredSkills};
+  } catch (error) {
+    throw new Error(`Error fetching required skills: ${error.message}`);
+  }
+};
+
 // Récupérer les posts d'un utilisateur
 module.exports.getPostsByUserId = async (userId) => {
   try {
