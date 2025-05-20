@@ -265,19 +265,15 @@ console.log(companyId)
   }
 };
 
-// Récupérer les informations du companyBid
-module.exports.getCompanyBid = async (req, res) => {
+// Récupérer les candidats bidés par la compagnie connectée
+module.exports.getCompanyBids = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const result = await profileService.getCompanyBid(userId);
-console.log(result)
-    if (result.message) {
-      return res.status(200).json(result);
-    }
+    const companyId = req.user._id;
+    const result = await profileService.getCompanyBids(companyId);
 
     res.status(200).json(result);
   } catch (error) {
-    console.error('Error getting company bid:', error);
-    res.status(500).json({ message: error.message || "Error getting company bid" });
+    console.error('Error getting company bids:', error);
+    res.status(500).json({ message: error.message || "Error getting company bids" });
   }
-}; 
+};
