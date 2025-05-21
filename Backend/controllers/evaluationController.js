@@ -3,6 +3,7 @@
 const { OpenAI } = require("openai");
 require("dotenv").config();
 const postService = require("../services/postService");
+const JobAssessmentResult = require("../models/JobAssessmentResultModel"); 
 
 // Configure the OpenAI client with your API key
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -924,6 +925,7 @@ exports.analyzeJobTestResults = async (req, res) => {
     // 1. Validate request body
     const { questions, jobId } = req.body;
     const user = req.user;
+    const userId = user._id; 
 
     if (!Array.isArray(questions) || !jobId) {
       return res.status(400).json({
@@ -1110,9 +1112,10 @@ Based on this assessment, provide a detailed analysis in the following JSON form
     }
 
     // 6. Format final response
-    const result = {
+      const result = new JobAssessmentResult({
       timestamp: new Date(),
       assessmentType: 'job',
+      userId,
       jobId,
       numberOfQuestions: questions.length,
       analysis: {
@@ -1133,7 +1136,9 @@ Based on this assessment, provide a detailed analysis in the following JSON form
           };
         })
       }
-    };
+    });
+
+    await result.save();
 
     res.status(200).json({
       success: true,
