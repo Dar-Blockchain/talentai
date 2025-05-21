@@ -101,26 +101,26 @@ export default function SignIn() {
                 'Authorization': `Bearer ${response.token}`
               }
             })
-            .then(profileResponse => {
-              if (!profileResponse.ok) {
-                throw new Error('Profile check failed');
-              }
-              return profileResponse.json();
-            })
-            .then(profileData => {
-              const hasProfile = profileData && profileData.type && Object.keys(profileData).length > 0;
-              if (!hasProfile) {
-                // If no profile, go to preferences first with returnUrl
+              .then(profileResponse => {
+                if (!profileResponse.ok) {
+                  throw new Error('Profile check failed');
+                }
+                return profileResponse.json();
+              })
+              .then(profileData => {
+                const hasProfile = profileData && profileData.type && Object.keys(profileData).length > 0;
+                if (!hasProfile) {
+                  // If no profile, go to preferences first with returnUrl
+                  router.push(`/preferences?returnUrl=${encodeURIComponent(returnUrl)}`);
+                } else {
+                  // If profile exists, go to returnUrl
+                  router.push(decodeURIComponent(returnUrl));
+                }
+              })
+              .catch(() => {
+                // If profile check fails, go to preferences with returnUrl
                 router.push(`/preferences?returnUrl=${encodeURIComponent(returnUrl)}`);
-              } else {
-                // If profile exists, go to returnUrl
-                router.push(decodeURIComponent(returnUrl));
-              }
-            })
-            .catch(() => {
-              // If profile check fails, go to preferences with returnUrl
-              router.push(`/preferences?returnUrl=${encodeURIComponent(returnUrl)}`);
-            });
+              });
           } else {
             // If no return URL, go to preferences
             router.push('/preferences');
@@ -510,8 +510,8 @@ export default function SignIn() {
             variant="outlined"
             startIcon={<GoogleIcon />}
             onClick={() => signIn('google')}
-            
-            // disabled
+
+            disabled
 
             title="Google Sign-in is currently unavailable"
             sx={{
