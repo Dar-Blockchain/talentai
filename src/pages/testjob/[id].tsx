@@ -211,71 +211,115 @@ export default function Test() {
   const [showGuidelines, setShowGuidelines] = useState(true);
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
 
-  // Fetch questions from API
+  // Add useEffect for authentication and profile check
   useEffect(() => {
-    const fetchQuestions = async () => {
+    const checkAuthAndProfile = async () => {
+      const token = Cookies.get('api_token');
+      if (!token) {
+        console.log('No token found, redirecting to signin');
+        router.push(`/signin?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
+        return;
+      }
+
       try {
-        setIsGenerating(true);
-        const token = Cookies.get('api_token');
-        if (!token) {
-          console.log('No token found, redirecting to home');
-          router.push('/');
-          return;
-        }
-
-        // Use job-specific endpoint with only jobId in body
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/job/${id}/generate-technique-questions`, {
-          method: 'POST',
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            jobId: id
-          })
+            'Authorization': `Bearer ${token}`
+          }
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch questions');
+        // If profile exists and is valid, proceed with test
+        if (response.ok) {
+          const profileData = await response.json();
+          console.log('Profile data:', profileData);
+          
+          // Check if profile has required data
+          if (profileData && profileData.type && 
+              ((profileData.type === 'Candidate' && profileData.skills && profileData.skills.length > 0) ||
+               (profileData.type === 'Company' && profileData.requiredSkills && profileData.requiredSkills.length > 0))) {
+            console.log('Profile is complete, proceeding with test');
+            setIsProfileComplete(true);
+            return;
+          }
         }
 
-        const data: JobQuestionsResponse = await response.json();
-        
-        // Transform the questions array into the required format
-        const formattedQuestions: Question[] = data.questions.map((question, index) => {
-          const skillIndex = index % data.requiredSkills.length;
-          const skill = data.requiredSkills[skillIndex];
-          
-          return {
-            id: `q_${index + 1}`,
-            text: question,
-            skill: skill.name,
-            level: skill.level
-          };
-        });
-
-        setQuestions(formattedQuestions);
-        
-        // Initialize transcriptions with empty strings for each question
-        setTranscriptions(
-          formattedQuestions.reduce((acc: any, _: any, index: number) => ({
-            ...acc,
-            [index]: ''
-          }), {})
-        );
+        // If we get here, either profile doesn't exist or is invalid
+        console.log('Profile not found or invalid, redirecting to preferences');
+        router.push(`/preferences?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
       } catch (error) {
-        console.error('Error fetching questions:', error);
-        router.push('/');
-      } finally {
-        setIsGenerating(false);
+        console.error('Error checking profile:', error);
+        router.push(`/preferences?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
       }
     };
 
     if (router.isReady && id) {
-      fetchQuestions();
+      checkAuthAndProfile();
     }
   }, [router.isReady, id]);
+
+  // Fetch questions when profile is complete
+  useEffect(() => {
+    if (isProfileComplete && id) {
+      const fetchQuestions = async () => {
+        try {
+          setIsGenerating(true);
+          const token = Cookies.get('api_token');
+          if (!token) {
+            console.log('No token found, redirecting to signin');
+            router.push(`/signin?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
+            return;
+          }
+
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/job/${id}/generate-technique-questions`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              jobId: id
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch questions');
+          }
+
+          const data: JobQuestionsResponse = await response.json();
+          
+          const formattedQuestions: Question[] = data.questions.map((question, index) => {
+            const skillIndex = index % data.requiredSkills.length;
+            const skill = data.requiredSkills[skillIndex];
+            
+            return {
+              id: `q_${index + 1}`,
+              text: question,
+              skill: skill.name,
+              level: skill.level
+            };
+          });
+
+          setQuestions(formattedQuestions);
+          
+          setTranscriptions(
+            formattedQuestions.reduce((acc: any, _: any, index: number) => ({
+              ...acc,
+              [index]: ''
+            }), {})
+          );
+        } catch (error) {
+          console.error('Error fetching questions:', error);
+          router.push('/');
+        } finally {
+          setIsGenerating(false);
+        }
+      };
+
+      fetchQuestions();
+    }
+  }, [isProfileComplete, id]);
 
   // Interval used to finalize each chunk
   const chunkIntervalRef = useRef<NodeJS.Timeout | null>(null);
