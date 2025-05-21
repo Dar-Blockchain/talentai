@@ -47,7 +47,7 @@ const AnalysisSchema = new mongoose.Schema({
 }, { _id: false });
 
 const JobAssessmentResultSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "Profile", required: true },
   jobId: { type: mongoose.Schema.Types.ObjectId, ref: "Post", required: true },
   timestamp: { type: Date, default: Date.now },
   assessmentType: { type: String, default: "job" },
