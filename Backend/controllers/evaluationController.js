@@ -2,8 +2,12 @@
 
 const { OpenAI } = require("openai");
 require("dotenv").config();
-const postService = require("../services/postService");
+
 const JobAssessmentResult = require("../models/JobAssessmentResultModel"); 
+const Profile = require("../models/ProfileModel");
+
+const postService = require("../services/postService");
+
 
 // Configure the OpenAI client with your API key
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -925,7 +929,12 @@ exports.analyzeJobTestResults = async (req, res) => {
     // 1. Validate request body
     const { questions, jobId } = req.body;
     const user = req.user;
-    const userId = user._id; 
+    const condidateProfile = await Profile.getProfileByUserId(user._id);
+
+    if(!condidateProfile){
+      return { message: "Aucun profil trouvé pour cet utilisateur." };
+    }
+    const condidateId = condidateProfile._id; 
 
     if (!Array.isArray(questions) || !jobId) {
       return res.status(400).json({
@@ -1111,12 +1120,15 @@ Based on this assessment, provide a detailed analysis in the following JSON form
       });
     }
 
+    const company = await profileService.getProfileByPostId(jobId);
+    const companyId = company._id;
     // 6. Format final response
       const result = new JobAssessmentResult({
       timestamp: new Date(),
       assessmentType: 'job',
-      userId,
       jobId,
+      condidateId,
+      companyId,
       numberOfQuestions: questions.length,
       analysis: {
         ...analysis,
@@ -1138,7 +1150,16 @@ Based on this assessment, provide a detailed analysis in the following JSON form
       }
     });
 
+
     await result.save();
+    await Profile.findByIdAndUpdate(
+      companyId,
+      { 
+        $set: { assessmentResults: { $ifNull: ["$assessmentResults", []] } }, // Ensure array exists
+        $push: { assessmentResults: result._id } 
+      },
+      { new: true, upsert: true } // Upsert ensures creation if document doesn't exist
+    );
 
     res.status(200).json({
       success: true,

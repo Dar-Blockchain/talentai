@@ -49,6 +49,8 @@ const profileSchema = new mongoose.Schema(
       enum: ["Entry Level", "Mid Level", "Senior", "Lead/Expert"],
     },
 
+    assessmentResults: [{ type: mongoose.Schema.Types.ObjectId, ref: "JobAssessmentResult" }],
+
     // Bid received by user (if type is Candidate)
     companyBid: {
       finalBid: Number,

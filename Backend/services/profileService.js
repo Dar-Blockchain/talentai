@@ -1,5 +1,6 @@
 const Profile = require("../models/ProfileModel");
 const User = require("../models/UserModel");
+const Post = require("../models/PostModel");
 const Agent = require("../models/AgentModel");
 const agentService = require("./AgentService");
 
@@ -132,6 +133,24 @@ module.exports.getProfileByUserId = async (userId) => {
   } catch (error) {
     console.error("Erreur lors de la récupération du profil :", error);
     throw new Error("Impossible de récupérer le profil."); // message plus générique
+  }
+};
+
+module.exports.getProfileByPostId = async (postId) => {
+  try {
+    const post = await Post.findOne({ _id: postId }).populate({
+      path: "user",
+      populate: { path: "profile" }
+    });
+
+    if (!post || !post.user || !post.user.profile) {
+      return { message: "Aucun profil trouvé pour cet utilisateur." };
+    }
+
+    return post.user.profile;
+  } catch (error) {
+    console.error("Erreur lors de la récupération du profil :", error);
+    throw new Error("Impossible de récupérer le profil."); // Message plus générique
   }
 };
 
