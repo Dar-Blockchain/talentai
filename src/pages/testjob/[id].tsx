@@ -135,6 +135,30 @@ const GuidelineItem = styled(Box)(({ theme }) => ({
   },
 }));
 
+// Add new styled components for the security modal
+const SecurityModal = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialog-paper': {
+    background: 'rgba(15, 23, 42, 0.95)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '24px',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    maxWidth: '600px',
+    margin: theme.spacing(2),
+  },
+}));
+
+// Add new styled components for the first violation modal
+const FirstViolationModal = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialog-paper': {
+    background: 'rgba(15, 23, 42, 0.95)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '24px',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    maxWidth: '600px',
+    margin: theme.spacing(2),
+  },
+}));
+
 // --- SpeechRecognition Types ---
 declare global {
   interface Window {
@@ -212,6 +236,10 @@ export default function Test() {
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
   const [isProfileComplete, setIsProfileComplete] = useState(false);
+  const [securityViolationCount, setSecurityViolationCount] = useState(0);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [showFirstViolationModal, setShowFirstViolationModal] = useState(false);
+  const violationHandledRef = useRef(false);
 
   // Add useEffect for authentication and profile check
   useEffect(() => {
@@ -572,6 +600,76 @@ export default function Test() {
     }
   };
 
+  // Security violation handler
+  const handleSecurityViolation = () => {
+    setSecurityViolationCount((prev) => {
+      const next = prev + 1;
+      if (next === 1) {
+        // First violation: show intelligent popup
+        setShowFirstViolationModal(true);
+      } else if (next === 2) {
+        // Second violation: redirect and show modal
+        setShowSecurityModal(true);
+        stopRecording();
+        setTimeout(() => {
+          router.push('/dashboardCandidate');
+        }, 2000); // Give time for modal to show
+      }
+      return next;
+    });
+  };
+
+  // Add screen capture detection
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (hasStartedTest && !violationHandledRef.current) {
+        // Check for PrintScreen key
+        if (e.key === 'PrintScreen') {
+          handleSecurityViolation();
+        }
+        // Check for Alt + PrintScreen
+        if (e.altKey && e.key === 'PrintScreen') {
+          handleSecurityViolation();
+        }
+        // Check for Windows + Shift + S
+        if (e.key === 'S' && e.shiftKey && e.metaKey) {
+          handleSecurityViolation();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [hasStartedTest]);
+
+  // Add visibility change detection
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && hasStartedTest && !violationHandledRef.current) {
+        handleSecurityViolation();
+      }
+    };
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasStartedTest && !violationHandledRef.current) {
+        handleSecurityViolation();
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasStartedTest]);
+
   return (
     <Box
       sx={{
@@ -585,6 +683,55 @@ export default function Test() {
         flexDirection: 'column',
       }}
     >
+      {/* Security Modal */}
+      <SecurityModal open={showSecurityModal} onClose={() => {}}>
+        <DialogTitle sx={{ fontWeight: 700, color: '#fff', fontSize: '1.5rem' }}>
+          Security Violation
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
+            You have attempted to leave or capture the test page more than once. For security reasons, your test has ended and you are being redirected to the dashboard.
+          </Typography>
+        </DialogContent>
+      </SecurityModal>
+
+      {/* First Violation Modal */}
+      <FirstViolationModal
+        open={showFirstViolationModal}
+        onClose={() => setShowFirstViolationModal(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: '1.3rem', color: '#fff', pt: 3 }}>
+          Heads Up!
+        </DialogTitle>
+        <DialogContent sx={{ pb: 0 }}>
+          <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
+            For security reasons, leaving or capturing the test page is not allowed.<br />
+            <b>If you do this again, your test will end and you will be redirected.</b>
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+          <Button
+            variant="contained"
+            onClick={() => setShowFirstViolationModal(false)}
+            sx={{
+              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              color: '#fff',
+              fontWeight: 600,
+              borderRadius: 2,
+              px: 4,
+              textTransform: 'none',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+              },
+            }}
+          >
+            Got it
+          </Button>
+        </DialogActions>
+      </FirstViolationModal>
+
       {/* Guidelines Modal */}
       <GuidelinesModal
         open={showGuidelines}
