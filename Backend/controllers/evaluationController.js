@@ -1135,6 +1135,8 @@ Based on this assessment, provide a detailed analysis in the following JSON form
       }
     };
 
+    console.log("result", result);
+
     res.status(200).json({
       success: true,
       result
