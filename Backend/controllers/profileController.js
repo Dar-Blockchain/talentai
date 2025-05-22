@@ -278,3 +278,18 @@ module.exports.getCompanyBids = async (req, res) => {
   }
 };
 
+exports.getCompanyWithAssessments = async (req, res) => {
+  try {
+    const { id } = req.user.profile;
+    console.log(id);
+    const profile = await profileService.getCompanyProfileWithAssessments(id);
+
+    if (!profile) {
+      return res.status(404).json({ message: "Profil introuvable ou non une entreprise." });
+    }
+
+    return res.status(200).json(profile);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
