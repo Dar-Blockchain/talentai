@@ -479,3 +479,21 @@ module.exports.getCompanyBids = async (companyId) => {
     throw error;
   }
 };
+
+module.exports.getCompanyProfileWithAssessments = async (profileId) => {
+  try {
+    const profile = await Profile.findById(profileId)
+      .where('type').equals('Company')
+      .populate({
+        path: 'assessmentResults',
+        populate: [
+          { path: 'condidateId', model: 'Profile' },
+          { path: 'jobId', model: 'Post' }
+        ]
+      });
+
+    return profile;
+  } catch (error) {
+    throw new Error("Erreur lors de la récupération du profil et des assessments : " + error.message);
+  }
+}
