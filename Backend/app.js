@@ -17,7 +17,6 @@ const linkedinPostRouter = require("./routes/linkedinPostRouter");
 const postRouter = require("./routes/postRouter");
 const matchingRoutes = require('./routes/matchingRouter');
 const resumeRouter = require('./routes/resumeRouter');
-const JobAssessmentResultRouter = require('./routes/JobAssessmentResultRouter');
 require("dotenv").config();
 
 const app = express();
@@ -43,8 +42,6 @@ app.use('/api', agentIARouter);
 app.use('/post', postRouter);
 app.use('/matching', matchingRoutes);
 app.use('/resume', resumeRouter);
-app.use('/assessments', JobAssessmentResultRouter);
-
 // Route de base
 app.get("/", (req, res) => {
   res.json({ message: "Bienvenue sur l'API Express!" });
