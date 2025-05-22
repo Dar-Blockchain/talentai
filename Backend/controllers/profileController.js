@@ -277,3 +277,4 @@ module.exports.getCompanyBids = async (req, res) => {
     res.status(500).json({ message: error.message || "Error getting company bids" });
   }
 };
+
