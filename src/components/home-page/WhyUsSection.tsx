@@ -1,9 +1,5 @@
 import React from "react";
-import {
-  Box,
-  Typography,
-  Stack,
-} from "@mui/material";
+import { Box, Typography, Stack } from "@mui/material";
 import GradientStepper from "./components/Stepper";
 
 const WhyUsSection = () => {
@@ -61,7 +57,7 @@ const WhyUsSection = () => {
                 md: "2rem",
                 lg: "2.25rem",
               },
-              pt: "-10px"
+              pt: "-10px",
             }}
           >
             Simplified

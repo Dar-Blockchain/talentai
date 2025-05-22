@@ -11,6 +11,7 @@ import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
 import Head from 'next/head';
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 const theme = createTheme({
     palette: {
@@ -60,6 +61,7 @@ export default function App({ Component, pageProps }: AppProps) {
                     <AuthWrapper>
                         <Header/>
                         <Component {...pageProps} />
+                        <Footer/>
                     </AuthWrapper>
                 </ThemeProvider>
             </Provider>

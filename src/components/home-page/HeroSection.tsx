@@ -130,7 +130,7 @@ const HeroSection = () => {
           <Box sx={{ position: "relative", width: "90%", height: 450 }}>
             <Box
               component="img"
-              src="/hero.png"
+              src="/images/home/hero.png"
               alt="TalentAI Logo"
               sx={{
                 width: "100%",
