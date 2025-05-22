@@ -929,7 +929,7 @@ exports.analyzeJobTestResults = async (req, res) => {
     // 1. Validate request body
     const { questions, jobId } = req.body;
     const user = req.user;
-    const condidateProfile = await Profile.getProfileByUserId(user._id);
+    const condidateProfile = await profileService.getProfileByUserId(user._id);
 
     if(!condidateProfile){
       return { message: "Aucun profil trouvé pour cet utilisateur." };
@@ -1150,16 +1150,14 @@ Based on this assessment, provide a detailed analysis in the following JSON form
       }
     });
 
-
     await result.save();
-    await Profile.findByIdAndUpdate(
-      companyId,
-      { 
-        $set: { assessmentResults: { $ifNull: ["$assessmentResults", []] } }, // Ensure array exists
-        $push: { assessmentResults: result._id } 
-      },
-      { new: true, upsert: true } // Upsert ensures creation if document doesn't exist
-    );
+    
+    // 3. Save the updated profile with the new assesmentResult
+    if (!Array.isArray(company.assessmentResults)) {
+      company.assessmentResults = [];
+    }
+    company.assessmentResults.push(result._id);
+    await company.save();
 
     res.status(200).json({
       success: true,
