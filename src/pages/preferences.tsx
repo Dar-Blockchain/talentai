@@ -360,8 +360,11 @@ export default function Preferences() {
 
       // Get returnUrl from query parameters
       const returnUrl = router.query.returnUrl as string;
-
-      // If there's a returnUrl, go there
+      if (userType === 'company') {
+        router.push('/dashboardCompany');
+        return;
+      }   
+      //      // If there's a returnUrl, go there
       if (returnUrl) {
         console.log('Redirecting to returnUrl:', returnUrl);
         const decodedUrl = decodeURIComponent(returnUrl);
@@ -419,11 +422,11 @@ export default function Preferences() {
         // If profile exists and is valid, check returnUrl
         if (response.ok) {
           const data = await response.json();
-          
+
           // Check if profile is complete
-          const isProfileComplete = data && data.type && 
+          const isProfileComplete = data && data.type &&
             ((data.type === 'Candidate' && data.skills && data.skills.length > 0) ||
-             (data.type === 'Company' && data.requiredSkills && data.requiredSkills.length > 0));
+              (data.type === 'Company' && data.requiredSkills && data.requiredSkills.length > 0));
 
           if (isProfileComplete) {
             if (returnUrl) {
@@ -924,9 +927,9 @@ export default function Preferences() {
             }}
           >
             {activeStep === steps.length - 1
-              ? (userType === 'company' 
-                ? 'Go to Dashboard' 
-                : (router.query.returnUrl 
+              ? (userType === 'company'
+                ? 'Go to Dashboard'
+                : (router.query.returnUrl
                   ? 'Continue to Test'
                   : 'Start Test'))
               : 'Next'}

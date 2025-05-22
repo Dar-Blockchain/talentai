@@ -2584,49 +2584,33 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           </DialogActions>
         </Dialog>
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
-          <IconButton
-            onClick={handleMenuClick}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          alignItems: 'center', 
+          mb: 3,
+          position: 'relative'
+        }}>
+          <Button
+            onClick={handleLogout}
+            startIcon={<LogoutIcon />}
+            variant="contained"
             sx={{
-              color: 'rgba(255,255,255,0.9)',
+              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              color: '#0f172a',
+              fontWeight: 600,
               '&:hover': {
-                background: 'rgba(255,255,255,0.1)'
-              }
+                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                boxShadow: '0 4px 12px rgba(2, 226, 255, 0.3)'
+              },
+              textTransform: 'none',
+              padding: '8px 20px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(2, 226, 255, 0.2)'
             }}
           >
-            <MenuIcon />
-          </IconButton>
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleMenuClose}
-            PaperProps={{
-              sx: {
-                background: 'rgba(30, 41, 59, 0.95)',
-                backdropFilter: 'blur(10px)',
-                borderRadius: '12px',
-                border: '1px solid rgba(255,255,255,0.1)',
-                mt: 1
-              }
-            }}
-          >
-            <MenuItem
-              onClick={() => {
-                handleMenuClose();
-                handleLogout();
-              }}
-              sx={{
-                color: 'rgba(255,255,255,0.9)',
-                '&:hover': {
-                  background: 'rgba(255,255,255,0.1)'
-
-                },
-              }}
-            >
-              <LogoutIcon sx={{ mr: 1, fontSize: 20 }} />
-              Logout
-            </MenuItem>
-          </Menu>
+            Logout
+          </Button>
         </Box>
 
         <ProfileHeader>
