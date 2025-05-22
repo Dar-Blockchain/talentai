@@ -44,5 +44,6 @@ router.delete('/deleteHardSkill', profileController.deleteHardSkill);
 
 router.delete('/deleteSoftSkills', profileController.deleteSoftSkill);
 
+router.get('/getCompanyWithAssessments', profileController.getCompanyWithAssessments);
 
 module.exports = router; 
