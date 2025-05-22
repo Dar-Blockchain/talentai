@@ -176,31 +176,24 @@ interface SpeechRecognitionError extends Event {
 // --- Security Modal ---
 const SecurityModal = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
-    background: 'rgba(244, 67, 54, 0.95)',
-    color: '#fff',
+    background: 'rgba(15, 23, 42, 0.95)',
+    backdropFilter: 'blur(10px)',
     borderRadius: '24px',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    maxWidth: '480px',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    maxWidth: '600px',
     margin: theme.spacing(2),
-    textAlign: 'center',
   },
 }));
 
 // --- First Violation Modal ---
 const FirstViolationModal = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
-    backgroundColor: '#00072D',
-    backgroundImage: `
-      radial-gradient(circle at 20% 30%, rgba(2,226,255,0.4), transparent 40%),
-      radial-gradient(circle at 80% 70%, rgba(0,255,195,0.3), transparent 50%)
-    `,
-    color: '#fff',
+    background: 'rgba(15, 23, 42, 0.95)',
+    backdropFilter: 'blur(10px)',
     borderRadius: '24px',
-    border: '1px solid rgba(255,255,255,0.1)',
-    maxWidth: '420px',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    maxWidth: '600px',
     margin: theme.spacing(2),
-    textAlign: 'center',
-    boxShadow: '0 8px 32px 0 rgba(2, 226, 255, 0.10)',
   },
 }));
 
@@ -614,7 +607,7 @@ export default function Test() {
     });
   };
 
-  // --- Security Violation Handler ---
+  // Security violation handler
   const handleSecurityViolation = () => {
     setSecurityViolationCount((prev) => {
       const next = prev + 1;
@@ -633,41 +626,56 @@ export default function Test() {
     });
   };
 
-  // --- Security Event Listeners ---
+  // Add screen capture detection
   useEffect(() => {
-    // Navigation within app
-    const handleRouteChange = (url: string) => {
-      if (!violationHandledRef.current && url !== router.asPath) {
-        violationHandledRef.current = true;
-        handleSecurityViolation();
-        setTimeout(() => { violationHandledRef.current = false; }, 1000);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (hasStartedTest && !violationHandledRef.current) {
+        // Check for PrintScreen key
+        if (e.key === 'PrintScreen') {
+          handleSecurityViolation();
+        }
+        // Check for Alt + PrintScreen
+        if (e.altKey && e.key === 'PrintScreen') {
+          handleSecurityViolation();
+        }
+        // Check for Windows + Shift + S
+        if (e.key === 'S' && e.shiftKey && e.metaKey) {
+          handleSecurityViolation();
+        }
       }
     };
-    router.events.on('routeChangeStart', handleRouteChange);
 
-    // Tab close/refresh
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      handleSecurityViolation();
-      e.preventDefault();
-      e.returnValue = '';
-      return '';
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    // Visibility change (tab switch, some screen capture tools)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        handleSecurityViolation();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      router.events.off('routeChangeStart', handleRouteChange);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [router]);
+  }, [hasStartedTest, handleSecurityViolation]);
+
+  // Add visibility change detection
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && hasStartedTest && !violationHandledRef.current) {
+        handleSecurityViolation();
+      }
+    };
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasStartedTest && !violationHandledRef.current) {
+        handleSecurityViolation();
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasStartedTest, handleSecurityViolation]);
 
   // Cleanup on unmount
   useEffect(() => {
