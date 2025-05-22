@@ -492,8 +492,12 @@ module.exports.getCompanyProfileWithAssessments = async (profileId) => {
         ]
       });
 
-    return profile;
+    if (!profile) {
+      throw new Error("Profil introuvable ou non une entreprise.");
+    }
+
+    return profile.assessmentResults;
   } catch (error) {
-    throw new Error("Erreur lors de la récupération du profil et des assessments : " + error.message);
+    throw new Error("Erreur lors de la récupération des assessments : " + error.message);
   }
-}
+};
