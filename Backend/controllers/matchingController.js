@@ -32,7 +32,7 @@ exports.matchCandidatesToJob = async (req, res) => {
 
         return {
           candidateId: candidate.userId,
-          name: candidate.userId.username,
+          name: candidate.userId?.username || "Anonymous",
           score,
           finalBid: candidate.companyBid?.finalBid || null,
           biddingCompany: candidate.companyBid?.company?.username || null,
@@ -46,7 +46,7 @@ exports.matchCandidatesToJob = async (req, res) => {
           requiredSkills: jobPost.skillAnalysis.requiredSkills,
         };
       })
-      .filter((match) => match.score > 0)
+      .filter((match) => match.score > 0 && match.candidateId && match.candidateId._id)
       .sort((a, b) => b.score - a.score);
 
     // 4. Response
