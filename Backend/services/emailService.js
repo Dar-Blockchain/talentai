@@ -5,11 +5,11 @@ const transporter = nodemailer.createTransport({
   port: 465,
   secure: true, // SSL
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
+    user: 'contact@talentai.bid',
+    pass: '87h0u74HATEMUA'
   },
-  logger: true, // utile pour debug
-  debug: true
+//  logger: true, // utile pour debug
+//  debug: true
 });
 
 const getEmailTemplate = (otp) => `
