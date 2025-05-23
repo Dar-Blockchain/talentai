@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { motion } from "framer-motion";
 import styles from "./Landing.module.css";
+import teamStyles from "../styles/Team.module.css";
 import { partners } from "../data/partners";
 import partnerStyles from "../styles/Partners.module.css";
 import { useRouter } from "next/router";
@@ -197,6 +198,39 @@ const howItWorks = [
     title: "Collaborate & Hire",
     description: "Work with your team to review candidates and make the final hiring decision.",
     icon: "👥"
+  }
+];
+
+const teamMembers = [
+  {
+    name: "Hatem Azaiez",
+    role: "Technical Co-founder",
+    image: "/Hatem.jpg",
+    bio: "+10 Years experience (7y in the Web3 space)."
+  },
+  {
+    name: "Mouhamed Mnif",
+    role: "Business Co-founder",
+    image: "/Mnif.jpg",
+    bio: "+10 Years experience , 3 Times Startup co-founder"
+  },
+  {
+    name: "Jassem Talbi",
+    role: "Team Lead",
+    image: "/Jassem.jpg",
+    bio: "+5 Years experience"
+  },
+  {
+    name: "Aziz Ben Ismail",
+    role: "Backend & Blockchain Consultant",
+    image: "/Aziz.jpg",
+    bio: "+3 Years experience."
+  },
+  {
+    name: "Khalil Troudi",
+    role: "Fullstack Developer",
+    image: "/Khalil.jpg",
+    bio: "+1 Year experience"
   }
 ];
 
@@ -672,6 +706,60 @@ export default function Home() {
               ))}
             </motion.div>
             <div className={partnerStyles.scrollIndicator} />
+          </div>
+        </section>
+
+        <section className={`${teamStyles.team} scrollReveal`}>
+          <div className={teamStyles.teamContainer}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className={teamStyles.sectionHeader}
+            >
+              <motion.h2
+                className={teamStyles.sectionTitle}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+              >
+                Meet Our Team
+              </motion.h2>
+              <motion.p
+                className={teamStyles.sectionSubtitle}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                // viewport={{ once: true }}
+              >
+                The brilliant minds behind TalentAI's innovation. Our diverse team brings together expertise in AI, product design, and recruitment to revolutionize the hiring process.
+              </motion.p>
+            </motion.div>
+
+            <div className={teamStyles.teamGrid}>
+              {teamMembers.map((member, index) => (
+                <motion.div
+                  key={index}
+                  className={teamStyles.teamCard}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <div className={teamStyles.teamImageContainer}>
+                    <img
+                      src={member.image}
+                      alt={member.name}
+                      className={teamStyles.teamImage}
+                    />
+                  </div>
+                  <div className={teamStyles.teamInfo}>
+                    <h3 className={teamStyles.teamName}>{member.name}</h3>
+                    <p className={teamStyles.teamRole}>{member.role}</p>
+                    <p className={teamStyles.teamBio}>{member.bio}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </section>
 

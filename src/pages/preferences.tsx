@@ -349,41 +349,33 @@ export default function Preferences() {
   };
 
   const handleStartTest = async () => {
-    if (userType === 'company') {
-      // Create or update company profile first
-      const profileCreated = await handleCreateOrUpdateProfile();
-
-      if (!profileCreated) {
-        // Handle error - you might want to show an error message to the user
-        console.error('Failed to create company profile');
-        return;
-      }
-
-      // Save company preferences to localStorage
-      localStorage.setItem('company_preferences', JSON.stringify({
-        companyDetails,
-        requiredSkills,
-        experienceLevel,
-        hederaRequired: hederaExp === 'yes'
-      }));
-      router.push('/dashboardCompany');
-    } else {
+    try {
       // Create or update profile first
       const profileCreated = await handleCreateOrUpdateProfile();
 
       if (!profileCreated) {
-        // Handle error - you might want to show an error message to the user
+        console.error('Failed to create/update profile');
         return;
       }
 
-      // Existing candidate logic
-      localStorage.setItem('prefs_skills', JSON.stringify(skills));
-      localStorage.setItem('prefs_proficiency', JSON.stringify(proficiency));
-      localStorage.setItem('prefs_projectType', JSON.stringify(projectType));
-      if (hederaExp === 'yes') {
-        localStorage.setItem('prefs_hederaQcm', JSON.stringify(hedQcm));
+      // Get returnUrl from query parameters
+      const returnUrl = router.query.returnUrl as string;
+      if (userType === 'company') {
+        router.push('/dashboardCompany');
+        return;
+      }   
+      //      // If there's a returnUrl, go there
+      if (returnUrl) {
+        console.log('Redirecting to returnUrl:', returnUrl);
+        const decodedUrl = decodeURIComponent(returnUrl);
+        router.push(decodedUrl);
+      } else {
+        // For normal sign-in, go to general test page
+        router.push('/test');
       }
-      router.push('/test');
+    } catch (error) {
+      console.error('Error in handleStartTest:', error);
+      setError('Failed to save preferences. Please try again.');
     }
   };
 
@@ -403,11 +395,15 @@ export default function Preferences() {
 
   // Add effect to check traffic counter
   useEffect(() => {
-    const checkTrafficCounter = async () => {
-      try {
-        // Add a small delay to ensure token is available
-        // await new Promise(resolve => setTimeout(resolve, 100));
+    const checkProfile = async () => {
+      // Skip the check if we're coming from a test page
+      const returnUrl = router.query.returnUrl as string;
+      if (returnUrl && returnUrl.includes('/testjob/')) {
+        console.log('Coming from test page, skipping profile check');
+        return;
+      }
 
+      try {
         const token = localStorage.getItem('api_token')
         if (!token) {
           console.log('No token found, redirecting to home');
@@ -415,7 +411,6 @@ export default function Preferences() {
           return;
         }
 
-        console.log('Token found, fetching profile', token);
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
           method: 'GET',
           headers: {
@@ -424,43 +419,42 @@ export default function Preferences() {
           },
         });
 
-        // If response is 500, it might be because profile doesn't exist yet
-        if (response.status === 500) {
-          console.log('Profile not found (500), staying on preferences page');
-          return; // Stay on preferences page to create profile
-        }
+        // If profile exists and is valid, check returnUrl
+        if (response.ok) {
+          const data = await response.json();
 
-        if (!response.ok) {
-          console.error('Failed to fetch profile');
-          router.push('/');
-          return;
-        }
+          // Check if profile is complete
+          const isProfileComplete = data && data.type &&
+            ((data.type === 'Candidate' && data.skills && data.skills.length > 0) ||
+              (data.type === 'Company' && data.requiredSkills && data.requiredSkills.length > 0));
 
-        const data = await response.json();
-        console.log('Profile data:', data);
+          if (isProfileComplete) {
+            if (returnUrl) {
+              console.log('Found returnUrl, redirecting to:', returnUrl);
+              router.push(decodeURIComponent(returnUrl));
+              return;
+            }
 
-        // Only redirect if we have both userId and trafficCounter > 1
-        if (data.userId && data.userId.trafficCounter > 1) {
-          console.log('Traffic counter:', data.userId.trafficCounter);
-          console.log('User type:', data.type);
-
-          if (data.type === 'Company') {
-            router.push('/dashboardCompany');
-          } else {
-            router.push('/dashboardCandidate');
+            // If no returnUrl, redirect to appropriate dashboard
+            if (data.type === 'Company') {
+              router.push('/dashboardCompany');
+            } else {
+              router.push('/dashboardCandidate');
+            }
           }
-        } else {
-          console.log('First time user or no traffic counter, staying on preferences page');
+          // If profile is not complete, stay on preferences page
         }
+        // If profile doesn't exist or is invalid, stay on preferences page
       } catch (error) {
-        // If error occurs, likely means profile doesn't exist yet
-        console.error('Error checking traffic counter:', error);
-        console.log('Staying on preferences page to create profile');
+        console.error('Error checking profile:', error);
+        // Stay on preferences page to create profile
       }
     };
 
-    checkTrafficCounter();
+    checkProfile();
   }, [router]);
+
+  const [error, setError] = useState<string>('');
 
   return (
     <Box sx={{
@@ -630,7 +624,7 @@ export default function Preferences() {
             {/* Title */}
             <Typography variant="h6" mb={2} sx={{ color: '#fff' }}>
               {userType === 'company'
-                ? 'Select required skills for your position'
+                ? 'Select the skills your company is looking for'
                 : `Select your ${selectedCategory} skills`
               }
             </Typography>
@@ -933,7 +927,11 @@ export default function Preferences() {
             }}
           >
             {activeStep === steps.length - 1
-              ? (userType === 'company' ? 'Go to Dashboard' : 'Start Test')
+              ? (userType === 'company'
+                ? 'Go to Dashboard'
+                : (router.query.returnUrl
+                  ? 'Continue to Test'
+                  : 'Start Test'))
               : 'Next'}
           </Button>
         </Box>

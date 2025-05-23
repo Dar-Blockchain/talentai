@@ -1,7 +1,7 @@
 // pages/report.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import {
   Box,
@@ -80,47 +80,68 @@ export default function Report() {
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assessmentType, setAssessmentType] = useState<string>('technical');
+  const hasRun = useRef(false);
 
   useEffect(() => {
-    const previousPath = router.query.from as string || localStorage.getItem('previousPath');
-    const type = router.query.type as string || previousPath?.includes('test') ? 'technical' :
-      previousPath?.includes('technical') ? 'technical' : 'soft-skills';
-    
+
+    const previousPath = (router.query.from as string) || localStorage.getItem('previousPath');
+    const type = (router.query.type as string) ||
+      (previousPath?.includes('test') || previousPath?.includes('technical') ? 'technical' : 'soft-skills');
+
     setAssessmentType(type);
 
     const analyzeResults = async () => {
       try {
         setAnalyzing(true);
-        // First get the user's profile
         const token = localStorage.getItem('api_token');
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
+        if (!token) throw new Error('No authentication token found');
 
-        const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          }
-        });
-
-        if (!profileResponse.ok) {
-          throw new Error('Failed to fetch user profile');
-        }
-
-        const profileData = await profileResponse.json();
-        const userSkills = profileData?.skills || [];
-
-        // Get the test results
         const savedResults = localStorage.getItem('test_results');
-        if (savedResults) {
-          const testData = JSON.parse(savedResults);
-          
-          // Validate test data format
-          if (!testData || !testData.results || !Array.isArray(testData.results)) {
-            throw new Error('Invalid test results format in storage');
+        if (!savedResults) return;
+
+        const testData = JSON.parse(savedResults);
+        if (!testData || !testData.results || !Array.isArray(testData.results)) {
+          throw new Error('Invalid test results format in storage');
+        }
+
+        const jobId = router.query.jobId as string;
+        if (jobId) {
+          const jobResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/analyze-job-test-results`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ jobId, questions: testData.results })
+          });
+
+          if (!jobResponse.ok) {
+            const errorText = await jobResponse.text();
+            let errorMessage = 'Failed to analyze results';
+            try {
+              const errorJson = JSON.parse(errorText);
+              errorMessage = errorJson.message || errorJson.error || errorText;
+            } catch {
+              errorMessage = errorText || 'Failed to analyze results';
+            }
+            throw new Error(`Failed to analyze results: ${errorMessage}`);
           }
+
+          const analysisData = await jobResponse.json();
+          console.log('Job Analysis response:', analysisData);
+          setResults(analysisData.result);
+        } else {
+          const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            }
+          });
+
+          if (!profileResponse.ok) throw new Error('Failed to fetch user profile');
+          const profileData = await profileResponse.json();
+          const userSkills = profileData?.skills || [];
 
           const requestBody = {
             type: router.query.type || testData.metadata?.type || type,
@@ -152,50 +173,35 @@ export default function Report() {
             try {
               const errorJson = JSON.parse(errorText);
               errorMessage = errorJson.message || errorJson.error || errorText;
-            } catch (parseError) {
+            } catch {
               errorMessage = errorText || 'Failed to analyze results';
             }
             throw new Error(`Failed to analyze results: ${errorMessage}`);
           }
 
           const analysisData = await response.json();
-          console.log('Analysis response:', JSON.stringify(analysisData, null, 2));
 
-          // Ensure all fields that should be strings are strings
+          // Normalize analysis data
           if (analysisData.result?.analysis) {
             const analysis = analysisData.result.analysis;
-            
-            // Convert any object recommendations to strings
+
             if (Array.isArray(analysis.recommendations)) {
-              analysis.recommendations = analysis.recommendations.map((rec: any) => {
-                if (typeof rec === 'object') {
-                  // If it's an object, stringify it or extract relevant text
-                  return Object.values(rec).join(': ');
-                }
-                return rec;
-              });
+              analysis.recommendations = analysis.recommendations.map((rec: any) =>
+                typeof rec === 'object' ? Object.values(rec).join(': ') : rec
+              );
             }
 
-            // Convert any object next steps to strings
             if (Array.isArray(analysis.nextSteps)) {
-              analysis.nextSteps = analysis.nextSteps.map((step: any) => {
-                if (typeof step === 'object') {
-                  return Object.values(step).join(': ');
-                }
-                return step;
-              });
+              analysis.nextSteps = analysis.nextSteps.map((step: any) =>
+                typeof step === 'object' ? Object.values(step).join(': ') : step
+              );
             }
 
-            // Ensure skill analysis fields are properly formatted
             if (Array.isArray(analysis.skillAnalysis)) {
               analysis.skillAnalysis = analysis.skillAnalysis.map((skill: any) => ({
                 ...skill,
-                strengths: Array.isArray(skill.strengths) ? skill.strengths.map((s: any) => 
-                  typeof s === 'object' ? Object.values(s).join(': ') : s
-                ) : [],
-                weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses.map((w: any) => 
-                  typeof w === 'object' ? Object.values(w).join(': ') : w
-                ) : []
+                strengths: (skill.strengths || []).map((s: any) => typeof s === 'object' ? Object.values(s).join(': ') : s),
+                weaknesses: (skill.weaknesses || []).map((w: any) => typeof w === 'object' ? Object.values(w).join(': ') : w),
               }));
             }
           }
@@ -211,10 +217,13 @@ export default function Report() {
       }
     };
 
-    analyzeResults();
+    if (!hasRun.current) {
+      hasRun.current = true;
+      analyzeResults();
+      
+    }
   }, [router.query.from, router.query.type, router.query.skill, router.query.subcategory]);
-
-  const goHome = () => router.push('/');
+  const goHome = () => router.push('/dashboardCandidate');
 
   if (loading || analyzing) {
     return (
@@ -228,7 +237,7 @@ export default function Report() {
         gap: 3
       }}>
         <CircularProgress sx={{ color: '#02E2FF' }} />
-        <Typography variant="h6" sx={{ 
+        <Typography variant="h6" sx={{
           color: '#fff',
           textAlign: 'center',
           animation: 'pulse 1.5s infinite',
@@ -241,12 +250,12 @@ export default function Report() {
           {analyzing ? 'Analyzing Your Results...' : 'Loading...'}
         </Typography>
         {analyzing && (
-          <Box sx={{ 
+          <Box sx={{
             maxWidth: '300px',
             textAlign: 'center',
             mt: 2
           }}>
-            <Typography variant="body2" sx={{ 
+            <Typography variant="body2" sx={{
               color: 'rgba(255,255,255,0.7)',
               fontSize: '0.9rem'
             }}>

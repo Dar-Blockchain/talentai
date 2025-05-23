@@ -135,6 +135,30 @@ const GuidelineItem = styled(Box)(({ theme }) => ({
   },
 }));
 
+// Add new styled components for the security modal
+const SecurityModal = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialog-paper': {
+    background: 'rgba(15, 23, 42, 0.95)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '24px',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    maxWidth: '600px',
+    margin: theme.spacing(2),
+  },
+}));
+
+// Add new styled components for the first violation modal
+const FirstViolationModal = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialog-paper': {
+    background: 'rgba(15, 23, 42, 0.95)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '24px',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    maxWidth: '600px',
+    margin: theme.spacing(2),
+  },
+}));
+
 // --- SpeechRecognition Types ---
 declare global {
   interface Window {
@@ -173,29 +197,23 @@ interface SpeechRecognitionError extends Event {
   message: string;
 }
 
-// --- Security Modal ---
-const SecurityModal = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialog-paper': {
-    background: 'rgba(15, 23, 42, 0.95)',
-    backdropFilter: 'blur(10px)',
-    borderRadius: '24px',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    maxWidth: '600px',
-    margin: theme.spacing(2),
-  },
-}));
+// Add back necessary interfaces
+interface Question {
+  id: string;
+  text: string;
+  skill: string;
+  level: string;
+}
 
-// --- First Violation Modal ---
-const FirstViolationModal = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialog-paper': {
-    background: 'rgba(15, 23, 42, 0.95)',
-    backdropFilter: 'blur(10px)',
-    borderRadius: '24px',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    maxWidth: '600px',
-    margin: theme.spacing(2),
-  },
-}));
+interface JobQuestionsResponse {
+  jobId: string;
+  requiredSkills: Array<{
+    name: string;
+    level: string;
+  }>;
+  questions: string[];
+  totalQuestions: number;
+}
 
 export default function Test() {
   const theme = useTheme();
@@ -203,157 +221,133 @@ export default function Test() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { data: session } = useSession();
+  const { id } = router.query;
 
-  const [questions, setQuestions] = useState<string[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [isGenerating, setIsGenerating] = useState(true);
   const [current, setCurrent] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [timeLeft, setTimeLeft] = useState(120);
   const currentIndexRef = useRef(0);
   const [hasStartedTest, setHasStartedTest] = useState(false);
-
-  // Add state for per-question transcriptions
-  const [transcriptions, setTranscriptions] = useState<{ [key: number]: string }>(
-    {}
-  );
-
+  const [transcriptions, setTranscriptions] = useState<{ [key: string]: string }>({});
   const [currentTranscript, setCurrentTranscript] = useState('');
-
-  // Add state for guidelines modal
   const [showGuidelines, setShowGuidelines] = useState(true);
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
-
-  // --- Security Violation State ---
+  const [answers, setAnswers] = useState<{ [key: string]: string }>({});
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
   const [securityViolationCount, setSecurityViolationCount] = useState(0);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [showFirstViolationModal, setShowFirstViolationModal] = useState(false);
-  const violationHandledRef = useRef(false); // Prevent double handling
+  const violationHandledRef = useRef(false);
 
-  // Fetch questions from API
+  // Add useEffect for authentication and profile check
   useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        setIsGenerating(true);
-        // Add delay to ensure token is available
-        await new Promise(resolve => setTimeout(resolve, 200));
+    const checkAuthAndProfile = async () => {
+      const token = Cookies.get('api_token');
+      if (!token) {
+        console.log('No token found, redirecting to signin');
+        router.push(`/signin?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
+        return;
+      }
 
-        const token = Cookies.get('api_token');
-        if (!token) {
-          console.log('No token found, redirecting to home');
-          router.push('/');
-          return;
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        // If profile exists and is valid, proceed with test
+        if (response.ok) {
+          const profileData = await response.json();
+          console.log('Profile data:', profileData);
+          
+          // Check if profile has required data
+          if (profileData && profileData.type && 
+              ((profileData.type === 'Candidate' && profileData.skills && profileData.skills.length > 0) ||
+               (profileData.type === 'Company' && profileData.requiredSkills && profileData.requiredSkills.length > 0))) {
+            console.log('Profile is complete, proceeding with test');
+            setIsProfileComplete(true);
+            return;
+          }
         }
 
-        let endpoint = '';
-        // Detect source based on URL parameters
-        if (router.query.type && router.query.skill) {
-          // This is from dashboardCandidate
-          if (router.query.type === 'technical') {
-            endpoint = 'evaluation/generate-technique-questions';
+        // If we get here, either profile doesn't exist or is invalid
+        console.log('Profile not found or invalid, redirecting to preferences');
+        router.push(`/preferences?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
+      } catch (error) {
+        console.error('Error checking profile:', error);
+        router.push(`/preferences?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
+      }
+    };
 
-            // First fetch the user's profile to get the skill levels
-            const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
-            });
+    if (router.isReady && id) {
+      checkAuthAndProfile();
+    }
+  }, [router.isReady, id]);
 
-            if (!profileResponse.ok) {
-              throw new Error('Failed to fetch profile data');
-            }
-
-            const profileData = await profileResponse.json();
-            console.log('Profile data:', profileData);
-
-            // Find the selected skill in the profile
-            const selectedSkill = profileData.skills.find(
-              (skill: any) => skill.name === router.query.skill
-            );
-
-            if (!selectedSkill) {
-              throw new Error('Selected skill not found in profile');
-            }
-
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                skill: router.query.skill,
-                experienceLevel: selectedSkill.experienceLevel,
-                proficiencyLevel: selectedSkill.proficiencyLevel
-              })
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to fetch questions');
-            }
-
-            const data = await response.json();
-            setQuestions(data.questions);
-          } else {
-            // For soft skills
-            endpoint = 'evaluation/generate-soft-skill-questions';
-
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                skill: router.query.skill,
-                subSkills: router.query.language || router.query.subcategory
-              })
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to fetch questions');
-            }
-
-            const data = await response.json();
-            setQuestions(data.questions);
+  // Fetch questions when profile is complete
+  useEffect(() => {
+    if (isProfileComplete && id) {
+      const fetchQuestions = async () => {
+        try {
+          setIsGenerating(true);
+          const token = Cookies.get('api_token');
+          if (!token) {
+            console.log('No token found, redirecting to signin');
+            router.push(`/signin?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
+            return;
           }
-        } else {
-          // This is from preferences
-          endpoint = 'evaluation/generate-questions';
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
+
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/job/${id}/generate-technique-questions`, {
+            method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({
+              jobId: id
+            })
           });
 
           if (!response.ok) {
             throw new Error('Failed to fetch questions');
           }
 
-          const data = await response.json();
-          setQuestions(data.questions);
+          const data: JobQuestionsResponse = await response.json();
+          
+          const formattedQuestions: Question[] = data.questions.map((question, index) => {
+            const skillIndex = index % data.requiredSkills.length;
+            const skill = data.requiredSkills[skillIndex];
+            
+            return {
+              id: `q_${index + 1}`,
+              text: question,
+              skill: skill.name,
+              level: skill.level
+            };
+          });
+
+          setQuestions(formattedQuestions);
+          
+          setTranscriptions(
+            formattedQuestions.reduce((acc: any, _: any, index: number) => ({
+              ...acc,
+              [index]: ''
+            }), {})
+          );
+        } catch (error) {
+          console.error('Error fetching questions:', error);
+          router.push('/');
+        } finally {
+          setIsGenerating(false);
         }
+      };
 
-        // Initialize transcriptions with empty strings for each question
-        setTranscriptions(
-          questions.reduce((acc: any, _: any, index: number) => ({
-            ...acc,
-            [index]: ''
-          }), {})
-        );
-      } catch (error) {
-        console.error('Error fetching questions:', error);
-        router.push('/');
-      } finally {
-        setIsGenerating(false);
-      }
-    };
-
-    if (router.isReady) {
       fetchQuestions();
     }
-  }, [router.isReady, router.query]);
+  }, [isProfileComplete, id]);
 
   // Interval used to finalize each chunk
   const chunkIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -556,8 +550,6 @@ export default function Test() {
       setCurrent(c => c + 1);
     } else {
       saveTestResults();
-      // Store current URL in localStorage before navigation
-      localStorage.setItem('previousUrl', window.location.href);
       router.push('/report');
     }
   };
@@ -566,45 +558,46 @@ export default function Test() {
     streamRef.current?.getTracks().forEach(t => t.stop());
     if (hasStartedTest) {
       saveTestResults();
-      // Store current URL in localStorage before navigation
-      localStorage.setItem('previousUrl', window.location.href);
     }
     router.push('/dashboardCandidate');
   };
 
   // Function to save test results
-  const saveTestResults = () => {
-    const results = questions.map((question, index) => ({
-      question,
-      answer: transcriptions[index] || ''
-    }));
+  const saveTestResults = async () => {
+    try {
+      const results = questions.map((q, index) => ({
+        question: q.text,
+        answer: transcriptions[index] || '',
+        skill: q.skill,
+        level: q.level
+      }));
 
-    // Save test results with metadata
-    const testData = {
-      results,
-      metadata: {
-        type: router.query.type || 'technical',
-        skill: router.query.skill,
-        subcategory: router.query.subcategory,
-        proficiency: router.query.proficiency,
-        timestamp: new Date().toISOString()
-      }
-    };
+      const testData = {
+        results,
+        metadata: {
+          type: 'job',
+          jobId: id,
+          timestamp: new Date().toISOString()
+        }
+      };
 
-    localStorage.setItem('test_results', JSON.stringify(testData));
-    localStorage.setItem('last_test_type', router.query.type as string || 'technical');
+      // Store in both localStorage and Cookies
+      localStorage.setItem('test_results', JSON.stringify(testData));
+      Cookies.set('test_results', JSON.stringify(testData), { expires: 7 });
 
-    // Navigate to report page with parameters
-    router.push({
-      pathname: '/report',
-      query: {
-        from: 'test',
-        type: router.query.type || 'technical',
-        skill: router.query.skill,
-        subcategory: router.query.subcategory,
-        proficiency: router.query.proficiency
-      }
-    });
+      // Navigate to report page with job ID
+      router.push({
+        pathname: '/report',
+        query: { jobId: id }
+      });
+    } catch (error) {
+      console.error('Error saving test results:', error);
+      // Still redirect to report page even if saving fails
+      router.push({
+        pathname: '/report',
+        query: { jobId: id }
+      });
+    }
   };
 
   // Security violation handler
@@ -650,7 +643,7 @@ export default function Test() {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [hasStartedTest, handleSecurityViolation]);
+  }, [hasStartedTest]);
 
   // Add visibility change detection
   useEffect(() => {
@@ -675,14 +668,7 @@ export default function Test() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [hasStartedTest, handleSecurityViolation]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      stopRecording();
-    };
-  }, []);
+  }, [hasStartedTest]);
 
   return (
     <Box
@@ -1002,7 +988,7 @@ export default function Test() {
                     ...
                   </Box>
                 </Box>
-              ) : questions[current]}
+              ) : questions[current]?.text}
             </Typography>
           </QuestionOverlay>
         </Paper>

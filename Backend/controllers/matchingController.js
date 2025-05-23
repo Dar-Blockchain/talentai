@@ -6,26 +6,23 @@ exports.matchCandidatesToJob = async (req, res) => {
   try {
     const { jobPostId } = req.params;
 
-    // Fetch candidate profiles (with skill levels)
+    // 1. Fetch candidate profiles + populate companyBid.company
     const candidates = await Profile.find({ type: "Candidate" })
-      .populate("userId")
-      .select("userId skills companyDetails.name")
+      .populate("userId", "username email")
+      .populate("companyBid.company", "username email") // Populate company info
+      .select("userId skills companyDetails.name companyBid")
       .lean();
 
-    console.log(candidates);
-
-    // Fetch job post skills (with levels)
+    // 2. Fetch job post and skills
     const jobPost = await JobPost.findById(jobPostId)
       .select("skillAnalysis.requiredSkills jobDetails.title")
       .lean();
-
-    console.log(jobPost);
 
     if (!jobPost) {
       return res.status(404).json({ error: "Job post not found" });
     }
 
-    // Calculate matches
+    // 3. Compute matches with additional info
     const matches = candidates
       .map((candidate) => {
         const score = calculateSkillMatchScore(
@@ -35,8 +32,10 @@ exports.matchCandidatesToJob = async (req, res) => {
 
         return {
           candidateId: candidate.userId,
-          name: candidate.companyDetails?.name || "Anonymous",
+          name: candidate.userId?.username || "Anonymous",
           score,
+          finalBid: candidate.companyBid?.finalBid || null,
+          biddingCompany: candidate.companyBid?.company?.username || null,
           matchedSkills: candidate.skills.filter((candidateSkill) =>
             jobPost.skillAnalysis.requiredSkills.some(
               (jobSkill) =>
@@ -47,9 +46,10 @@ exports.matchCandidatesToJob = async (req, res) => {
           requiredSkills: jobPost.skillAnalysis.requiredSkills,
         };
       })
-      .filter((match) => match.score > 0)
+      .filter((match) => match.score > 0 && match.candidateId && match.candidateId._id)
       .sort((a, b) => b.score - a.score);
 
+    // 4. Response
     res.json({
       success: true,
       jobTitle: jobPost.jobDetails.title,

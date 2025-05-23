@@ -198,23 +198,98 @@ module.exports.updateSoftSkills = async (req, res) => {
   }
 };
 
-// Supprimer des soft skills
-module.exports.deleteSoftSkills = async (req, res) => {
+
+
+
+// Supprimer un skill spécifique
+module.exports.deleteHardSkill = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { softSkillsToDelete } = req.body;
+    const { skillToDelete } = req.body;
 
-    if (!softSkillsToDelete || !Array.isArray(softSkillsToDelete)) {
-      return res.status(400).json({ message: "Les soft skills à supprimer doivent être fournis sous forme de tableau" });
+    if (!skillToDelete || typeof skillToDelete !== 'string') {
+      return res.status(400).json({ message: "The skill to be deleted must be provided as a string" });
     }
 
-    const profile = await profileService.deleteSoftSkills(userId, softSkillsToDelete);
+    const profile = await profileService.deleteHardSkill(userId, skillToDelete);
     res.status(200).json({
-      message: "Soft skills supprimés avec succès",
+      message: `Hard Skill "${skillToDelete}" has been successfully deleted`,
       profile
     });
   } catch (error) {
-    console.error('Erreur lors de la suppression des soft skills:', error);
-    res.status(500).json({ message: error.message || "Erreur lors de la suppression des soft skills" });
+    console.error('Error deleting soft skills:', error);
+    res.status(500).json({ message: error.message || "Error deleting soft skills" });
   }
-}; 
+};
+
+// Supprimer un softSkill spécifique
+module.exports.deleteSoftSkill = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { softSkillToDelete } = req.body;
+
+    if (!softSkillToDelete || typeof softSkillToDelete !== 'string') {
+      return res.status(400).json({ message: "The skill to be deleted must be provided as a string" });
+    }
+
+    const profile = await profileService.deleteSoftSkill(userId, softSkillToDelete);
+    res.status(200).json({
+      message: `Soft Skills "${softSkillToDelete}" has been successfully deleted`,
+      profile
+    });
+  } catch (error) {
+    console.error('Error deleting soft skills:', error);
+    res.status(500).json({ message: error.message || "Error deleting soft skills" });
+  }
+};
+
+// Mettre à jour le finalBid
+module.exports.updateFinalBid = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { newBid, userId , postId } = req.body;
+
+    if (typeof newBid !== 'number' || newBid <= 0) {
+      return res.status(401).json({ message: "The bid must be a positive number" });
+    }
+
+    const profile = await profileService.updateFinalBid(userId, newBid, companyId,postId);
+
+    res.status(200).json({
+      message: "Bid updated successfully",
+      profile
+    });
+  } catch (error) {
+    console.error('Error updating bid:', error);
+    res.status(500).json({ message: error.message || "Error updating bid" });
+  }
+};
+
+// Récupérer les candidats bidés par la compagnie connectée
+module.exports.getCompanyBids = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const result = await profileService.getCompanyBids(companyId);
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Error getting company bids:', error);
+    res.status(500).json({ message: error.message || "Error getting company bids" });
+  }
+};
+
+exports.getCompanyWithAssessments = async (req, res) => {
+  try {
+    const { id } = req.user.profile;
+    console.log(id);
+    const profile = await profileService.getCompanyProfileWithAssessments(id);
+
+    if (!profile) {
+      return res.status(404).json({ message: "Profil introuvable ou non une entreprise." });
+    }
+
+    return res.status(200).json(profile);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
