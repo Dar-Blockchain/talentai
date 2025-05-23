@@ -27,6 +27,16 @@ import {
   Tooltip,
   InputAdornment,
   Menu,
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -61,6 +71,8 @@ import CheckIcon from '@mui/icons-material/Check';
 import { motion } from 'framer-motion';
 import MenuIcon from '@mui/icons-material/Menu';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+import axios from 'axios';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -437,6 +449,13 @@ const DashboardCompany = () => {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [jobToDelete, setJobToDelete] = useState<string>('');
+  // Add new state for company profiles
+  const [companyProfiles, setCompanyProfiles] = useState<any[]>([]);
+  const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
+  const [profilesError, setProfilesError] = useState<string | null>(null);
+  // Add new state for selected assessment
+  const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
+  const [assessmentModalOpen, setAssessmentModalOpen] = useState(false);
 
   const isSalaryRangeValid = () => {
     return salaryRange.min > 0 && salaryRange.max > 0 && salaryRange.max >= salaryRange.min;
@@ -2444,6 +2463,285 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
     setAnchorEl(null);
   };
 
+  // Add function to fetch company profiles
+  const fetchCompanyProfiles = async () => {
+    try {
+      setIsLoadingProfiles(true);
+      setProfilesError(null);
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getCompanyWithAssessments`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch company profiles');
+      }
+
+      const data = await response.json();
+      setCompanyProfiles(data);
+    } catch (error) {
+      setProfilesError('Failed to fetch company profiles');
+      console.error('Error fetching company profiles:', error);
+    } finally {
+      setIsLoadingProfiles(false);
+    }
+  };
+
+  // Add useEffect to fetch profiles when component mounts
+  useEffect(() => {
+    fetchCompanyProfiles();
+  }, []);
+
+  // Add function to render company profiles table
+  const renderCompanyProfilesTable = () => {
+    if (isLoadingProfiles) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+          <CircularProgress sx={{ color: '#02E2FF' }} />
+        </Box>
+      );
+    }
+
+    if (profilesError) {
+      return (
+        <Alert severity="error" sx={{ mb: 2 }}>{profilesError}</Alert>
+      );
+    }
+
+    if (!companyProfiles || companyProfiles.length === 0) {
+      return (
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          py: 6,
+          px: 3,
+          backgroundColor: 'rgba(2,226,255,0.05)',
+          borderRadius: '16px',
+          border: '1px solid rgba(2,226,255,0.1)',
+          textAlign: 'center'
+        }}>
+          <BusinessIcon sx={{ fontSize: 48, color: '#02E2FF', mb: 2 }} />
+          <Typography variant="h6" sx={{ color: '#fff', fontWeight: 600, mb: 1 }}>
+            No Assessments Found
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', maxWidth: '400px' }}>
+            There are no assessments available at the moment.
+          </Typography>
+        </Box>
+      );
+    }
+
+    return (
+      <>
+        <TableContainer component={Paper} sx={{ 
+          backgroundColor: 'rgba(30, 41, 59, 0.7)',
+          borderRadius: '16px',
+          border: '1px solid rgba(255,255,255,0.1)',
+          overflow: 'hidden'
+        }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ color: '#02E2FF', fontWeight: 600 }}>Candidate</TableCell>
+                <TableCell sx={{ color: '#02E2FF', fontWeight: 600 }}>Assessment Date</TableCell>
+                <TableCell sx={{ color: '#02E2FF', fontWeight: 600 }}>Overall Score</TableCell>
+                <TableCell sx={{ color: '#02E2FF', fontWeight: 600 }}>Job Match</TableCell>
+                <TableCell sx={{ color: '#02E2FF', fontWeight: 600 }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {companyProfiles.map((assessment) => (
+                <TableRow key={assessment._id} sx={{ '&:hover': { backgroundColor: 'rgba(2,226,255,0.05)' } }}>
+                  <TableCell sx={{ color: '#fff' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <PersonIcon sx={{ color: '#02E2FF' }} />
+                      <Typography>
+                        {assessment.condidateId.userId.email}
+                      </Typography>
+                    </Box>
+                  </TableCell>
+                  <TableCell sx={{ color: '#fff' }}>
+                    {new Date(assessment.timestamp).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell sx={{ color: '#fff' }}>
+                    {assessment.analysis.overallScore}%
+                  </TableCell>
+                  <TableCell sx={{ color: '#fff' }}>
+                    <Chip
+                      label={assessment.analysis.jobMatch.status}
+                      size="small"
+                      sx={{
+                        backgroundColor: assessment.analysis.jobMatch.status === 'match' 
+                          ? 'rgba(0,255,195,0.13)' 
+                          : 'rgba(255,59,48,0.13)',
+                        color: assessment.analysis.jobMatch.status === 'match' 
+                          ? '#00FFC3' 
+                          : '#ff3b30',
+                        fontWeight: 600
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => handleViewAssessmentDetails(assessment)}
+                      sx={{
+                        borderColor: 'rgba(2,226,255,0.5)',
+                        color: '#02E2FF',
+                        '&:hover': {
+                          borderColor: '#02E2FF',
+                          backgroundColor: 'rgba(2,226,255,0.1)'
+                        }
+                      }}
+                    >
+                      View Details
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        {renderAssessmentDetailsModal()}
+      </>
+    );
+  };
+
+  // Add function to handle opening assessment details
+  const handleViewAssessmentDetails = (assessment: any) => {
+    setSelectedAssessment(assessment);
+    setAssessmentModalOpen(true);
+  };
+
+  // Add function to render assessment details modal
+  const renderAssessmentDetailsModal = () => (
+    <Dialog
+      open={assessmentModalOpen}
+      onClose={() => setAssessmentModalOpen(false)}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          backgroundColor: 'rgba(30, 41, 59, 0.95)',
+          borderRadius: '16px',
+          border: '1px solid rgba(2,226,255,0.1)',
+        }
+      }}
+    >
+      <DialogTitle sx={{ color: '#02E2FF', borderBottom: '1px solid rgba(2,226,255,0.1)' }}>
+        Assessment Details
+      </DialogTitle>
+      <DialogContent sx={{ mt: 2 }}>
+        {selectedAssessment && (
+          <Box sx={{ color: '#fff' }}>
+            {/* Candidate Info */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{ color: '#02E2FF', mb: 2 }}>Candidate Information</Typography>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Skills</Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                    {selectedAssessment.condidateId.skills.map((skill: any) => (
+                      <Chip
+                        key={skill._id}
+                        label={`${skill.name} (${skill.experienceLevel})`}
+                        size="small"
+                        sx={{
+                          backgroundColor: 'rgba(2,226,255,0.13)',
+                          color: '#02E2FF',
+                          fontWeight: 600
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Assessment Date</Typography>
+                  <Typography>{new Date(selectedAssessment.timestamp).toLocaleDateString()}</Typography>
+                </Box>
+              </Box>
+            </Box>
+
+            {/* Assessment Results */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{ color: '#02E2FF', mb: 2 }}>Assessment Results</Typography>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Overall Score</Typography>
+                  <Typography>{selectedAssessment.analysis.overallScore}%</Typography>
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Job Match Status</Typography>
+                  <Typography>{selectedAssessment.analysis.jobMatch.status}</Typography>
+                </Box>
+              </Box>
+            </Box>
+
+            {/* Skill Analysis */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{ color: '#02E2FF', mb: 2 }}>Skill Analysis</Typography>
+              {selectedAssessment.analysis.skillAnalysis.map((skill: any, index: number) => (
+                <Box key={index} sx={{ mb: 2, p: 2, backgroundColor: 'rgba(2,226,255,0.05)', borderRadius: '8px' }}>
+                  <Typography variant="subtitle1" sx={{ color: '#fff', mb: 1 }}>{skill.skillName}</Typography>
+                  <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Required Level</Typography>
+                      <Typography>{skill.requiredLevel}</Typography>
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Demonstrated Level</Typography>
+                      <Typography>{skill.demonstratedLevel}</Typography>
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Match Status</Typography>
+                      <Typography>{skill.match}</Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+
+            {/* Recommendations */}
+            <Box>
+              <Typography variant="h6" sx={{ color: '#02E2FF', mb: 2 }}>Recommendations</Typography>
+              <List>
+                {selectedAssessment.analysis.recommendations.map((rec: string, index: number) => (
+                  <ListItem key={index} sx={{ py: 0.5 }}>
+                    <ListItemIcon>
+                      <ArrowForwardIcon sx={{ color: '#02E2FF' }} />
+                    </ListItemIcon>
+                    <ListItemText primary={rec} />
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
+          </Box>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ p: 3, borderTop: '1px solid rgba(2,226,255,0.1)' }}>
+        <Button
+          onClick={() => setAssessmentModalOpen(false)}
+          sx={{
+            color: '#02E2FF',
+            '&:hover': {
+              backgroundColor: 'rgba(2,226,255,0.1)'
+            }
+          }}
+        >
+          Close
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
   return (
     <Box sx={{
       minHeight: '100vh',
@@ -2544,10 +2842,10 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           </DialogActions>
         </Dialog>
 
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'flex-end', 
-          alignItems: 'center', 
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
           mb: 3,
           position: 'relative'
         }}>
@@ -3578,6 +3876,14 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             </motion.div>
           </DialogContent>
         </Dialog>
+
+        {/* Add Company Profiles Section */}
+        <Box sx={{ mt: 6, mb: 6 }}>
+          <Typography variant="h5" sx={{ color: '#02E2FF', fontWeight: 700, mb: 3 }}>
+            Company Profiles & Assessments
+          </Typography>
+          {renderCompanyProfilesTable()}
+        </Box>
       </Container>
     </Box>
   );
