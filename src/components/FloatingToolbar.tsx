@@ -13,9 +13,10 @@ type Props = {
   onClose: () => void
   onRegenerateSelection?: (selectedText: string, callback: (regeneratedText: string) => void) => void
   sectionType?: string
+  onFontSizeChange?: () => void
 }
 
-export default function FloatingToolbar({ visible, onClose, onRegenerateSelection, sectionType }: Props) {
+export default function FloatingToolbar({ visible, onClose, onRegenerateSelection, sectionType, onFontSizeChange }: Props) {
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [fontSize, setFontSize] = useState(16)
   // Store the last set font size to persist between sessions
@@ -178,6 +179,35 @@ export default function FloatingToolbar({ visible, onClose, onRegenerateSelectio
         // @ts-ignore
         const tripleClickData = window.__tripleClickSelection;
         
+        // Find the containing RND element that controls the section size
+        let rndContainer = null;
+        let currentNode: Node | null = range.commonAncestorContainer;
+        while (currentNode && currentNode !== document.body) {
+          if (currentNode instanceof HTMLElement && 
+              currentNode.hasAttribute && 
+              currentNode.hasAttribute('data-rnd')) {
+            rndContainer = currentNode;
+            break;
+          }
+          currentNode = currentNode.parentNode;
+        }
+        
+        // If we found the RND container, find the section-id
+        let sectionId = '';
+        if (rndContainer && rndContainer instanceof HTMLElement) {
+          sectionId = rndContainer.getAttribute('data-section-id') || '';
+        }
+        
+        // Dispatch custom event for the section renderer to handle
+        // This allows the section to resize proportionally with font changes
+        const fontSizeEvent = new CustomEvent('font-size-changed', {
+          detail: {
+            fontSize: size,
+            sectionId: sectionId
+          }
+        });
+        document.dispatchEvent(fontSizeEvent);
+
         if (isTripleClick && tripleClickData) {
           // For triple-click, use the saved container to apply style
           try {
@@ -385,6 +415,12 @@ export default function FloatingToolbar({ visible, onClose, onRegenerateSelectio
         
         // Update toolbar display
         setFontSize(size);
+        document.dispatchEvent(new CustomEvent('font-size-changed'));
+        // Notify parent to resize border
+        if (typeof onFontSizeChange === 'function') {
+          console.log('Calling onFontSizeChange from FloatingToolbar');
+          onFontSizeChange();
+        }
       }
     } catch (e) {
       console.error(`Error applying ${property}:`, e)

@@ -292,8 +292,8 @@ export default function ResumeBuilder() {
       id: uuidv4(),
       x: 100,
       y: 100,
-      width: 400,
-      height: 100,
+      width: 200, // Smaller default width
+      height: 80, // Smaller default height
     }
 
     let newSection: SectionType
@@ -304,28 +304,36 @@ export default function ResumeBuilder() {
           ...common,
           type: 'header',
           name: profile.userId.username || 'Your Name',
-          jobTitle: profile.type || 'Your Title'
+          jobTitle: profile.type || 'Your Title',
+          width: 160, // Reduced from 400
+          height: 60 // Reduced from 100
         } as HeaderSection
         break
       case 'text':
         newSection = {
           ...common,
           type: 'text',
-          content: 'Editable text...'
+          content: 'Editable text...',
+          width: 120, // Reduced from 400
+          height: 30 // Reduced from 120
         } as TextSection
         break
       case 'skills':
         newSection = {
           ...common,
           type: 'skills',
-          skills: profile.skills.map(skill => skill.name)
+          skills: profile.skills.map(skill => skill.name),
+          width: 140, // Reduced from 300
+          // Reduced from 150
         } as SkillsSection
         break
       case 'languages':
         newSection = {
           ...common,
           type: 'languages',
-          languages: [{ name: "Add language", level: "level" }]
+          languages: [{ name: "Add language", level: "level" }],
+          width: 200, // Reduced from 250
+          height: 60 // Reduced from 120
         } as LanguagesSection
         break
       case 'education':
@@ -336,7 +344,9 @@ export default function ResumeBuilder() {
           degree: 'Degree Name',
           startDate: 'Start Date',
           endDate: 'End Date',
-          description: 'Education description...'
+          description: 'Education description...',
+          width: 270, // Reduced from 400
+          //height: 100 // Reduced from 140
         } as EducationSection
         break
       case 'experience':
@@ -347,14 +357,18 @@ export default function ResumeBuilder() {
           company: profile.companyDetails?.name || 'Company Name',
           startDate: 'Start Date',
           endDate: 'End Date',
-          description: 'Job description...'
+          description: 'Job description...',
+          width: 250, // Reduced from 400
+       //   height: 100 // Reduced from 150
         } as ExperienceSection
         break
       case 'projects':
         newSection = {
           ...common,
           type: 'projects',
-          projects: [{ name: 'Project Name', description: 'Project description...' }]
+          projects: [{ name: 'Project Name', description: 'Project description...' }],
+          width: 230, // Reduced from 400
+          //height: 100 // Reduced from 140
         } as ProjectsSection
         break
       case 'image':
@@ -367,8 +381,8 @@ export default function ResumeBuilder() {
           content: '<div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(to bottom, #b2e1ff 60%, #71c371 40%); display: flex; justify-content: center; align-items: center; cursor: pointer;">Double-click to upload</div>',
           x: 80,
           y: 80,
-          width: 100,
-          height: 100
+          width: 120, // Keep the same
+          height: 120 // Keep the same
         } as ImageSection
         break
       case 'line':
@@ -378,9 +392,8 @@ export default function ResumeBuilder() {
           orientation: 'horizontal',
           thickness: 3,
           color: '#556fb5',
-          height: 20,
-          width: 700,
-          content: `<div style="width:100%;height:3px;background-color:#556fb5;margin-top:3px;margin-bottom:3px;"></div>`
+          height: 20, // Keep the same
+          width: 500 // Reduced from 700
         } as LineSection
         break
       case 'custom':
@@ -388,7 +401,9 @@ export default function ResumeBuilder() {
         newSection = {
           ...common,
           type: 'custom',
-          content: 'Write anything here...'
+          content: 'Write anything here...',
+          width: 190, // Reduced from 350
+          height: 50 // Reduced from 120
         } as CustomSection
         break
     }

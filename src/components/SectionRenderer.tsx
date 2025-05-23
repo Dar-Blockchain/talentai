@@ -56,15 +56,32 @@ export default function SectionRenderer({
 }: Props) {
   const { data: session } = useSession();
   const [isEditing, setIsEditing] = useState(false)
-  const [autoHeight, setAutoHeight] = useState(section.height)
   const [showToolbar, setShowToolbar] = useState(false)
+  const [lockAspectRatio, setLockAspectRatio] = useState(false)
   const editableRef = useRef<HTMLDivElement | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const rndRef = useRef<Rnd | null>(null)
+  const initialFitRef = useRef(false)
   const { id, x, y, width, height, type } = section
+  const [fontSize, setFontSize] = useState(16);
 
-  const MIN_HEIGHT = 40
-  const zoomFactor = zoom / 100
+  const MIN_WIDTH = 40;
+  const MIN_HEIGHT = 20;
+
+  // Base font size and dimensions for scaling
+  const BASE_FONT_SIZE = 16;
+  const BASE_WIDTH = 150; // Use your initial width for new sections
+  const BASE_HEIGHT = 40; // Use your initial height for new sections
+
+  const zoomFactor = zoom / 100;
+
+  // Canva-style scaling logic
+  const NATURAL_WIDTH = 400;
+  const NATURAL_HEIGHT = 120;
+  const [baseFontSize, setBaseFontSize] = useState(BASE_FONT_SIZE);
+
+  // Calculate scale to fit current box size
+  const scale = Math.min(width / NATURAL_WIDTH, height / NATURAL_HEIGHT);
 
   // Handle selection changes to position toolbar
   useEffect(() => {
@@ -127,14 +144,15 @@ export default function SectionRenderer({
     }
   }, [x, y])
 
+  // Update shared styles to reduce padding and make border hug content closely
   const sharedEditableStyle: React.CSSProperties = {
-    width: "100%",
-    height: "100%",
-    minHeight: `${MIN_HEIGHT}px`,
-    padding: "8px",
-    fontSize: "16px",
-    lineHeight: "1.5",
-    whiteSpace: "pre-wrap",
+    display: "block", // Allow wrapping
+    minWidth: 0,
+    minHeight: 0,
+    padding: "1px", // Reduced even further to hug content better
+    fontSize: `${fontSize}px`, // Use current font size
+    lineHeight: "1.2", // Tighter line height to reduce vertical space
+    whiteSpace: "pre-wrap", // Allow wrapping and line breaks
     overflowWrap: "break-word",
     color: "#000",
     caretColor: "#000",
@@ -143,7 +161,9 @@ export default function SectionRenderer({
     direction: "ltr",
     backgroundColor: "transparent",
     boxSizing: "border-box",
-    margin: 0
+    margin: 0,
+    width: "100%",
+    height: "100%"
   }
 
   // Generate the initial content for sections that don't have saved content yet
@@ -151,19 +171,19 @@ export default function SectionRenderer({
     switch (type) {
       case "experience":
         const exp = section as ExperienceSection
-        return `<strong>${exp.title}</strong> @ ${exp.company}<br><em>${exp.startDate} – ${exp.endDate}</em><p>${exp.description}</p>`
+        return `<strong>${exp.title}</strong> @ ${exp.company}<br><em style=\"margin:0\">${exp.startDate} – ${exp.endDate}</em><p style=\"margin:0\">${exp.description}</p>`
       case "skills":
-        return `<strong>Skills:</strong><ul style="list-style-position: inside; padding-left: 0">${(section as SkillsSection).skills.map(s => `<li>${s}</li>`).join('')}</ul>`
+        return `<strong>Skills:</strong><ul style=\"list-style-position: inside; padding-left: 0; margin:0 0 0 12px;\">${(section as SkillsSection).skills.map(s => `<li style=\"margin:0\">${s}</li>`).join('')}</ul>`
       case "languages":
-        return `<strong>Languages:</strong><ul style="list-style-position: inside; padding-left: 0">${(section as LanguagesSection).languages.map(lang => `<li>${lang.name} — ${lang.level}</li>`).join('')}</ul>`
+        return `<strong>Languages:</strong><ul style=\"list-style-position: inside; padding-left: 0; margin:0 0 0 12px;\">${(section as LanguagesSection).languages.map(lang => `<li style=\"margin:0\">${lang.name} — ${lang.level}</li>`).join('')}</ul>`
       case "education":
         const edu = section as EducationSection
-        return `<strong>${edu.degree}</strong> @ ${edu.institution}<br><em>${edu.startDate} – ${edu.endDate}</em><p>${edu.description}</p>`
+        return `<strong>${edu.degree}</strong> @ ${edu.institution}<br><em style=\"margin:0\">${edu.startDate} – ${edu.endDate}</em><br><span style=\"margin:0\">${edu.description}</span>`
       case "projects":
-        return `<strong>Projects:</strong><ul style="list-style-position: inside; padding-left: 0">${(section as ProjectsSection).projects.map(proj => `<li><strong>${proj.name}</strong>: ${proj.description}</li>`).join('')}</ul>`
+        return `<strong>Projects:</strong><ul style=\"list-style-position: inside; padding-left: 0; margin:0 0 0 12px;\">${(section as ProjectsSection).projects.map(proj => `<li style=\"margin:0\"><strong>${proj.name}</strong>: ${proj.description}</li>`).join('')}</ul>`
       case "header":
         const header = section as HeaderSection
-        return `<h2 style="margin: 0">${header.name}</h2><p style="margin: 0">${header.jobTitle}</p>`
+        return `<h2 style=\"margin: 0 0 2px 0\">${header.name}</h2><p style=\"margin: 0\">${header.jobTitle}</p>`
       case "image":
         const img = section as ImageSection
         return img.src 
@@ -195,57 +215,70 @@ export default function SectionRenderer({
     return (section as any).content || generateInitialContent()
   }
 
-  // Save HTML including inline styles
+  // Handle blur: save HTML without changing font size
   const handleBlur = () => {
     if (!editableRef.current) return
     const html = editableRef.current.innerHTML || ""
     updateContent(id, html)
     setIsEditing(false)
-    
-    // Reset transform to measure true content size before applying scaling
-    editableRef.current.style.transform = 'none';
-    
-    // Apply scaling after a brief timeout to allow the DOM to update
-    setTimeout(() => {
-      if (editableRef.current) {
-        scaleContentToFit(editableRef, width, autoHeight);
-      }
-    }, 50);
+    // Do NOT change font size here, preserve it
   }
 
   // Auto-resize logic remains unchanged
   const resizeToContent = () => {
-    const el = editableRef.current
-    if (!el) return
-    requestAnimationFrame(() => {
-      const newHeight = Math.max(el.scrollHeight, MIN_HEIGHT)
-      if (Math.abs(newHeight - autoHeight) > 2) {
-        setAutoHeight(newHeight)
-        const node = rndRef.current?.resizableElement.current
-        if (node) {
-          const match = node.style.transform.match(/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/)
-          const newX = match ? parseFloat(match[1]) : x
-          const newY = match ? parseFloat(match[2]) : y
-          updatePosition(id, { x: newX, y: newY, width, height: newHeight })
-        }
-      }
-    })
-
-  }
+    if (skipNextResizeRef.current) {
+      skipNextResizeRef.current = false;
+      return;
+    }
+    const el = editableRef.current;
+    if (!el) return;
+    setTimeout(() => {
+      const newHeight = Math.max(el.scrollHeight, MIN_HEIGHT);
+      const newWidth = el.scrollWidth;
+      console.log('resizeToContent:', {
+        newWidth,
+        newHeight,
+        prevWidth: width,
+        prevHeight: height,
+        fontSize: el.style.fontSize,
+        innerHTML: el.innerHTML,
+        outerHTML: el.outerHTML
+      });
+      updatePosition(id, { x, y, width: newWidth, height: newHeight });
+    }, 100);
+  };
 
   useLayoutEffect(() => {
-    const el = editableRef.current
-    if (!el) return
-    const obs = new MutationObserver(resizeToContent)
-    obs.observe(el, { childList: true, characterData: true, subtree: true })
-    return () => obs.disconnect()
-  }, [autoHeight])
+    let obs: MutationObserver | null = null;
+    if (isEditing && editableRef.current) {
+      obs = new MutationObserver((mutations) => {
+        // Ignore mutations from the temporary font-size probe span
+        const hasProbeMutation = mutations.some(mutation => {
+          return Array.from(mutation.addedNodes).some(node =>
+            node instanceof HTMLElement && node.getAttribute('data-fontsize-probe') === 'true'
+          ) || Array.from(mutation.removedNodes).some(node =>
+            node instanceof HTMLElement && node.getAttribute('data-fontsize-probe') === 'true'
+          );
+        });
+        if (!hasProbeMutation) {
+          resizeToContent();
+        }
+      });
+      obs.observe(editableRef.current, { childList: true, characterData: true, subtree: true });
+    }
+    return () => {
+      if (obs) obs.disconnect();
+    };
+  }, [isEditing]);
 
   useEffect(() => {
     // Set initial content when edit mode begins
     if (isEditing && editableRef.current) {
       // Reset any scaling transformations during edit mode
       editableRef.current.style.transform = 'none';
+      
+      // Ensure we maintain the font size during edit mode
+      editableRef.current.style.fontSize = `${fontSize}px`;
       
       const content = getSectionContent()
       // Only set innerHTML if it's empty or different
@@ -307,8 +340,8 @@ export default function SectionRenderer({
       } catch (e) {
         console.error('Error restoring selection:', e);
       }
-        }
-      }
+    }
+  }
       
   // Update tryDetectFontSize to better detect actual pixel sizes
   const tryDetectFontSize = (sel: Selection) => {
@@ -370,7 +403,7 @@ export default function SectionRenderer({
       // Clean up the temporary span
       if (tempSpan.parentNode) {
         tempSpan.parentNode.removeChild(tempSpan);
-        }
+      }
         
       // Restore the original selection
       sel.removeAllRanges();
@@ -434,100 +467,117 @@ export default function SectionRenderer({
 
   // Handle dragging in real-time
   const handleDrag = (_: any, d: { x: number; y: number }) => {
-    // Keep content scaled appropriately during drag
-    if (editableRef.current) {
-      scaleContentToFit(editableRef, width, autoHeight);
-    }
+    // Only update position on drag
+    updatePosition(id, { x: d.x, y: d.y, width, height });
   };
 
   const handleDragStop = (_: any, d: { x: number; y: number }) => {
-    console.log('Drag stopped at:', d.x, d.y);
-    // Make sure we use the new position coordinates
-    updatePosition(id, { 
-      x: d.x, 
-      y: d.y, 
-      width, 
-      height: autoHeight 
-    });
-    
-    // Make sure content is properly scaled after dragging
-    if (editableRef.current) {
-      scaleContentToFit(editableRef, width, autoHeight);
-    }
-  }
-
-  // Improve the scaling function to always apply appropriate scaling
-  const scaleContentToFit = (contentRef: any, containerWidth: number, containerHeight: number) => {
-    if (!contentRef.current) return;
-    
-    // Only apply scaling when not in edit mode
-    if (isEditing) {
-      contentRef.current.style.transform = 'none';
-      contentRef.current.style.transformOrigin = 'top left';
-      return;
-    }
-    
-    // Reset any previous transforms to measure true size
-    const originalTransform = contentRef.current.style.transform;
-    contentRef.current.style.transform = 'none';
-    
-    // Get the natural size of the content
-    const contentWidth = contentRef.current.scrollWidth;
-    const contentHeight = contentRef.current.scrollHeight;
-    
-    // Calculate scale factors to fit content in container
-    // Account for padding (8px on each side) and potential borders (1px on each side)
-    const widthScale = Math.min(1, (containerWidth - 18) / contentWidth);
-    const heightScale = Math.min(1, (containerHeight - 18) / contentHeight);
-    
-    // Use the smaller scale to ensure content fits in both dimensions
-    const scale = Math.min(widthScale, heightScale);
-    
-    // Always apply the transform to ensure proper scaling in all cases
-    contentRef.current.style.transform = `scale(${scale})`;
-    contentRef.current.style.transformOrigin = 'top left';
+    // Persist position on drag stop
+    updatePosition(id, { x: d.x, y: d.y, width, height });
   };
-  
-  // Handle real-time resize
+
+  // Add a ref to track horizontal resize state
+  const isHorizontalResizeRef = useRef(false);
+  // Track the original size and font size when starting a resize
+  const resizeStartRef = useRef<{ width: number; height: number; fontSize: number } | null>(null);
+  const skipNextResizeRef = useRef(false);
+  // No-op stubs for old auto-fit functions
+  const scaleContentToFit = (_contentRef: any, _w: number, _h: number) => {};
+  const getContentNaturalSize = () => ({ width: MIN_WIDTH, height: MIN_HEIGHT });
+
+  // Handle toolbar font size changes
+  const handleFontSizeChange = (newFontSize?: number) => {
+    if (typeof newFontSize !== 'number') return;
+    
+    // Calculate the scale ratio between new and old font size
+    const fontRatio = newFontSize / fontSize;
+    
+    // Scale the container proportionally
+    const newWidth = width * fontRatio;
+    const newHeight = height * fontRatio;
+    
+    // Update both font size and container size
+    setFontSize(newFontSize);
+    updatePosition(id, { x, y, width: newWidth, height: newHeight });
+    // Apply font size inline so content updates immediately
+    if (editableRef.current) {
+      editableRef.current.style.fontSize = `${newFontSize}px`;
+      editableRef.current.style.transform = 'none';
+    }
+  };
+
+  // Capture original dimensions at the start of a resize
+  const handleResizeStart = (e: any, dir: string) => {
+    const isCorner = ['topLeft', 'topRight', 'bottomLeft', 'bottomRight'].includes(dir)
+    setLockAspectRatio(isCorner)
+    resizeStartRef.current = { width, height, fontSize }
+  };
+
   const handleResize = (
-    _: any,
-    __: any,
+    e: any,
+    dir: string,
     ref: any,
-    ___: any,
+    delta: { width: number; height: number },
     pos: { x: number; y: number }
   ) => {
-    const newH = parseInt(ref.style.height);
+    if (!editableRef.current) return;
     const newW = parseInt(ref.style.width);
-    
-    // Apply scaling in real-time during resize
-    if (editableRef.current) {
-      scaleContentToFit(editableRef, newW, newH);
+    const newH = parseInt(ref.style.height);
+    // Determine if this is a horizontal edge resize (left or right handle)
+    const isHorizontal = dir === 'left' || dir === 'right';
+
+    if (isHorizontal) {
+      // Horizontal edge: keep font size, remove any scaling
+      editableRef.current.style.transform = 'none';
+      editableRef.current.style.fontSize = `${fontSize}px`;
+    } else {
+      // Corner resize: scale proportionally by min of width/height ratios
+      const widthRatio = newW / width;
+      const heightRatio = newH / height;
+      const ratio = Math.min(widthRatio, heightRatio);
+      editableRef.current.style.transform = `scale(${ratio})`;
+      editableRef.current.style.transformOrigin = 'top left';
     }
   };
-  
-  // Keep the handleResizeStop for final position updates
+
   const handleResizeStop = (
-    _: any,
-    __: any,
+    e: any,
+    dir: string,
     ref: any,
-    ___: any,
+    delta: { width: number; height: number },
     pos: { x: number; y: number }
   ) => {
-    const newH = parseInt(ref.style.height);
-    const newW = parseInt(ref.style.width);
-    setAutoHeight(newH);
-    updatePosition(id, { x: pos.x, y: pos.y, width: newW, height: newH });
-    
-    // Apply final scaling
-    scaleContentToFit(editableRef, newW, newH);
-  }
-
-  // Apply scaling when the component mounts or updates
-  useEffect(() => {
-    if (editableRef.current) {
-      scaleContentToFit(editableRef, width, autoHeight);
+    // Ensure editable element and start dimensions exist
+    if (!editableRef.current || !resizeStartRef.current) return;
+    const container = editableRef.current;
+    const { width: startW, height: startH, fontSize: startFS } = resizeStartRef.current;
+    const newW = parseInt(ref.style.width, 10);
+    const newH = parseInt(ref.style.height, 10);
+    // Check if this is a horizontal edge resize (left or right handle)
+    const isHorizontal = dir === 'left' || dir === 'right';
+    // Clear any previous transforms
+    container.style.transform = 'none';
+    if (isHorizontal) {
+      // Horizontal resize: keep original font size, re-wrap text and snap to content size
+      container.style.fontSize = `${startFS}px`;
+      const contentW = container.scrollWidth;
+      const contentH = container.scrollHeight;
+      updatePosition(id, { x: pos.x, y: pos.y, width: contentW, height: contentH });
+    } else {
+      // Corner resize: scale text proportionally to border resize
+      const ratioW = newW / startW;
+      const ratioH = newH / startH;
+      const ratio = Math.min(ratioW, ratioH);
+      const newFontSize = startFS * ratio;
+      Array.from(container.querySelectorAll('[style*="font-size"]')).forEach(el => {
+        try { (el as HTMLElement).style.removeProperty('font-size'); } catch {};
+      });
+      container.style.fontSize = `${newFontSize}px`;
+      setFontSize(newFontSize);
+      // Commit corner resize: use dragged dimensions to preserve proportion
+      updatePosition(id, { x: pos.x, y: pos.y, width: newW, height: newH });
     }
-  }, [width, autoHeight]);
+  };
 
   // Make sure header sections always have explicit font-size
   useEffect(() => {
@@ -555,8 +605,11 @@ export default function SectionRenderer({
   }, []);
 
   const handleDoubleClick = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+    skipNextResizeRef.current = true;
+    e.preventDefault();
+    e.stopPropagation();
+    // Ensure section is selected
+    onClick();
     
     // If this is an image section, show the image uploader dialog
     if (type === "image") {
@@ -871,24 +924,103 @@ export default function SectionRenderer({
     }
   }
 
+  // Listen for font size change events from the FloatingToolbar
+  useEffect(() => {
+    const handleFontSizeChanged = (e: Event) => {
+      if (e instanceof CustomEvent && e.detail) {
+        // Only respond to events for this section
+        if (e.detail.sectionId === id) {
+          const newFontSize = e.detail.fontSize;
+          
+          // Skip if the font size is the same or invalid
+          if (!newFontSize || newFontSize === fontSize) return;
+          
+          // Calculate the ratio between new and old font size
+          const fontRatio = newFontSize / fontSize;
+          
+          // Scale the container proportionally
+          const newWidth = width * fontRatio;
+          const newHeight = height * fontRatio;
+          
+          // Update both font size and container size
+          setFontSize(newFontSize);
+          updatePosition(id, { x, y, width: newWidth, height: newHeight });
+        }
+      }
+    };
+    
+    // Add event listener
+    document.addEventListener('font-size-changed', handleFontSizeChanged);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('font-size-changed', handleFontSizeChanged);
+    };
+  }, [id, fontSize, width, height, x, y, updatePosition]);
+
+  // Track hover state to show handles when hovered
+  const [isHovered, setIsHovered] = useState(false)
+
+  // Determine when to show handles (when active or hovered)
+  const showHandles = isActive || isHovered
+  const handleStyles = showHandles
+    ? {
+        left:    { width: '6px', height: '24px', borderRadius: '2px', background: '#fff', border: '2px solid #8e44ad', top: '50%', transform: 'translateY(-50%)' },
+        right:   { width: '6px', height: '24px', borderRadius: '2px', background: '#fff', border: '2px solid #8e44ad', top: '50%', transform: 'translateY(-50%)' },
+        topLeft:     { width: '16px', height: '16px', borderRadius: '50%', background: '#fff', border: '2px solid #8e44ad' },
+        topRight:    { width: '16px', height: '16px', borderRadius: '50%', background: '#fff', border: '2px solid #8e44ad' },
+        bottomLeft:  { width: '16px', height: '16px', borderRadius: '50%', background: '#fff', border: '2px solid #8e44ad' },
+        bottomRight: { width: '16px', height: '16px', borderRadius: '50%', background: '#fff', border: '2px solid #8e44ad' },
+      }
+    : {
+        left: { display: 'none' },
+        right: { display: 'none' },
+        topLeft: { display: 'none' },
+        topRight: { display: 'none' },
+        bottomLeft: { display: 'none' },
+        bottomRight: { display: 'none' },
+    };
+
   return (
     <Rnd
+      onDoubleClickCapture={(e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleDoubleClick(e);
+      }}
+      // Show handles on hover as well as when active
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      lockAspectRatio={lockAspectRatio}
       className={`${styles.sectionWrapper} hoverable-section ${isActive ? 'active-section' : ''}`}
       ref={rndRef}
       bounds="parent"
       disableDragging={isEditing}
-      enableResizing={{ top: false, right: false, bottom: true, left: false, topRight: false, bottomRight: true, bottomLeft: false, topLeft: false }}
-      size={{ width, height: autoHeight }}
+      enableResizing={{
+        top: false,
+        right: true,
+        bottom: false,
+        left: true,
+        topRight: true,
+        bottomRight: true,
+        bottomLeft: true,
+        topLeft: true
+      }}
+      resizeHandleStyles={handleStyles}
+      size={{ width, height }}
       position={{ x, y }}
-      onDrag={handleDrag}
-      onDragStop={handleDragStop}
+      minWidth={40}
+      minHeight={20}
+      onResizeStart={handleResizeStart}
       onResize={handleResize}
       onResizeStop={handleResizeStop}
+      onDrag={handleDrag}
+      onDragStop={handleDragStop}
       scale={zoomFactor}
       style={{ 
         position: "absolute", 
         backgroundColor: "transparent", 
-        zIndex: 10,
+        zIndex: 100,
         border: "none", // We'll control this with CSS classes instead
         boxSizing: "border-box"
       }}
@@ -923,86 +1055,18 @@ export default function SectionRenderer({
           cursor: isEditing ? "text" : "move",
           boxSizing: "border-box",
           overflow: "hidden",
-          padding: "0px" // Reset padding to ensure consistent sizing
+          padding: "0", // No extra padding in the container
+          margin: 0
         }}
         onClick={(e) => {
           e.stopPropagation();
           if (!isEditing) onClick();
         }}
-        onDoubleClick={(e) => {
+        onDoubleClick={(e: React.MouseEvent<HTMLDivElement>) => {
           e.preventDefault();
           e.stopPropagation();
-          if (!isEditing) handleDoubleClick(e);
-        }}
-        onMouseDown={(e) => {
-          // Only process triple-clicks
-          if (e.detail === 3) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Get clicked element
-            const clickedElement = e.target as HTMLElement;
-            if (!clickedElement || !editableRef.current) return;
-            
-            // Find nearest block element
-            const blockTags = ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI'];
-            let targetNode: HTMLElement | null = clickedElement;
-            
-            // If we clicked directly on text node, start with its parent
-            if (!(targetNode instanceof Element)) {
-              targetNode = clickedElement.parentElement;
-            }
-            
-            // Find closest block parent that isn't the editor itself
-            while (
-              targetNode && 
-              targetNode !== editableRef.current && 
-              !blockTags.includes(targetNode.nodeName)
-            ) {
-              targetNode = targetNode.parentElement;
-            }
-            
-            // If no block found or it's the editor itself, 
-            // try to use the original click target
-            if (!targetNode || targetNode === editableRef.current) {
-              targetNode = clickedElement;
-            }
-            
-            // Create selection on this node
-            try {
-              const selection = window.getSelection();
-              if (!selection) return;
-              
-              selection.removeAllRanges();
-              const range = document.createRange();
-              
-              if (targetNode.childNodes.length > 0) {
-                // Select the node contents
-                range.selectNodeContents(targetNode);
-              } else {
-                // Fallback for empty nodes
-                range.selectNode(targetNode);
-              }
-              
-              selection.addRange(range);
-              
-              // Force toolbar to show with this selection
-              updateToolbarPosition();
-              
-              // Store triple-click info for toolbar
-              // @ts-ignore
-              window.__isTripleClickSelection = true;
-              // @ts-ignore
-              window.__tripleClickSelection = {
-                container: targetNode,
-                startContainer: range.startContainer,
-                startOffset: range.startOffset,
-                endContainer: range.endContainer, 
-                endOffset: range.endOffset
-              };
-            } catch (err) {
-              console.error('Error handling triple-click selection:', err);
-            }
+          if (!isEditing) {
+            handleDoubleClick(e);
           }
         }}
         className={isEditing ? "edit-mode" : ""}
@@ -1013,89 +1077,17 @@ export default function SectionRenderer({
             contentEditable={true}
             suppressContentEditableWarning={true}
             onBlur={handleBlur}
-            onInput={resizeToContent}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             onKeyUp={updateToolbarPosition}
             onMouseUp={handleMouseUp}
-            onMouseDown={(e) => {
-              // Only process triple-clicks
-              if (e.detail === 3) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Get clicked element
-                const clickedElement = e.target as HTMLElement;
-                if (!clickedElement || !editableRef.current) return;
-                
-                // Find nearest block element
-                const blockTags = ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI'];
-                let targetNode: HTMLElement | null = clickedElement;
-                
-                // If we clicked directly on text node, start with its parent
-                if (!(targetNode instanceof Element)) {
-                  targetNode = clickedElement.parentElement;
-                }
-                
-                // Find closest block parent that isn't the editor itself
-                while (
-                  targetNode && 
-                  targetNode !== editableRef.current && 
-                  !blockTags.includes(targetNode.nodeName)
-                ) {
-                  targetNode = targetNode.parentElement;
-                }
-                
-                // If no block found or it's the editor itself, 
-                // try to use the original click target
-                if (!targetNode || targetNode === editableRef.current) {
-                  targetNode = clickedElement;
-                }
-                
-                // Create selection on this node
-                try {
-                  const selection = window.getSelection();
-                  if (!selection) return;
-                  
-                  selection.removeAllRanges();
-                  const range = document.createRange();
-                  
-                  if (targetNode.childNodes.length > 0) {
-                    // Select the node contents
-                    range.selectNodeContents(targetNode);
-                  } else {
-                    // Fallback for empty nodes
-                    range.selectNode(targetNode);
-                  }
-                  
-                  selection.addRange(range);
-                  
-                  // Force toolbar to show with this selection
-                  updateToolbarPosition();
-                  
-                  // Store triple-click info for toolbar
-                  // @ts-ignore
-                  window.__isTripleClickSelection = true;
-                  // @ts-ignore
-                  window.__tripleClickSelection = {
-                    container: targetNode,
-                    startContainer: range.startContainer,
-                    startOffset: range.startOffset,
-                    endContainer: range.endContainer, 
-                    endOffset: range.endOffset
-                  };
-                } catch (err) {
-                  console.error('Error handling triple-click selection:', err);
-                }
-              }
-            }}
             style={{
               ...sharedEditableStyle,
               outline: "none",
-              caretColor: "#3662E3", // Modern blue cursor color
-              boxShadow: "0 0 0 1px rgba(54, 98, 227, 0.1) inset", // Subtle edit mode indicator
+              caretColor: "#3662E3",
+              boxShadow: "0 0 0 1px rgba(54, 98, 227, 0.1) inset",
             }}
-            className={styles.sectionContent}
+            className={`${styles.sectionContent} edit-mode`}
             data-section-content="true"
           />
         ) : (
@@ -1103,13 +1095,16 @@ export default function SectionRenderer({
             ref={editableRef}
             style={{
               ...sharedEditableStyle,
-              cursor: 'pointer', // Add pointer cursor to indicate clickable
-              width: '100%',
-              height: '100%',
-              position: 'relative'
+              cursor: 'pointer',
+              position: 'relative',
+            }}
+            onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => {
+              if (e.detail === 2 && !isEditing) {
+                handleDoubleClick(e);
+              }
             }}
             dangerouslySetInnerHTML={{ __html: getSectionContent() }} 
-            onDoubleClick={(e) => {
+            onDoubleClick={(e: React.MouseEvent<HTMLDivElement>) => {
               e.preventDefault();
               e.stopPropagation();
               handleDoubleClick(e);
@@ -1119,36 +1114,6 @@ export default function SectionRenderer({
           />
         )}
       </div>
-
-      <FloatingToolbar 
-        visible={showToolbar} 
-        onClose={() => setShowToolbar(false)} 
-        onRegenerateSelection={handleRegenerateSelection}
-        sectionType={section.type}
-      />
-
-      {/* Image uploader dialog */}
-      <Dialog open={showImageUploader} onClose={() => setShowImageUploader(false)}>
-        <DialogTitle>Upload Image</DialogTitle>
-        <DialogContent>
-          <ImageUploader 
-            onImageSelected={handleImageSelected}
-            initialImage={(section as ImageSection).src}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Line editor dialog */}
-      <Dialog open={showLineEditor} onClose={() => setShowLineEditor(false)}>
-        <DialogTitle>Edit Line</DialogTitle>
-        <DialogContent>
-          <LineEditor 
-            onLinePropertiesChange={handleLinePropertiesChange}
-            initialThickness={(section as LineSection).thickness}
-            initialColor={(section as LineSection).color}
-          />
-        </DialogContent>
-      </Dialog>
     </Rnd>
   )
 }
