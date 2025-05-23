@@ -2563,7 +2563,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <PersonIcon sx={{ color: '#02E2FF' }} />
                       <Typography>
-                        {assessment.condidateId.userId.email}
+                        {assessment.condidateId.userId.username}
                       </Typography>
                     </Box>
                   </TableCell>
