@@ -479,3 +479,25 @@ module.exports.getCompanyBids = async (companyId) => {
     throw error;
   }
 };
+
+module.exports.getCompanyProfileWithAssessments = async (profileId) => {
+  try {
+    const profile = await Profile.findById(profileId)
+      .where('type').equals('Company')
+      .populate({
+        path: 'assessmentResults',
+        populate: [
+          { path: 'condidateId', model: 'Profile' },
+          { path: 'jobId', model: 'Post' }
+        ]
+      });
+
+    if (!profile) {
+      throw new Error("Profil introuvable ou non une entreprise.");
+    }
+
+    return profile.assessmentResults;
+  } catch (error) {
+    throw new Error("Erreur lors de la récupération des assessments : " + error.message);
+  }
+};
