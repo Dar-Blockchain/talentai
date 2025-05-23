@@ -1,7 +1,10 @@
+const redisClient = require('../config/redis');
+
 const Post = require('../models/PostModel');
 const User = require('../models/UserModel');
 const AgentService = require('./AgentService');
 const { schedulePostMatchingAgenda } = require('../postMatchingAgenda');
+const { generateCacheKey, deserializeCacheData } = require('../utils/cacheUtils');
 
 // Validation des données du post
 const validatePostData = (postData) => {
@@ -56,6 +59,19 @@ module.exports.createPost = async (postData) => {
 // Récupérer tous les posts avec filtres avancés
 module.exports.getAllPosts = async (filters = {}) => {
   try {
+    const cacheKey = generateCacheKey('posts:all', filters);
+    console.log("check cacheKey: ", cacheKey);
+
+    // Try to get cached response
+    const cachedPosts = await redisClient.get(cacheKey);
+    if(!cachedPosts){
+      console.log("not cached !");
+
+    }
+    if (cachedPosts) {
+      return deserializeCacheData(cachedPosts);
+    }
+
     let query = {};
 
     // Filtres pour le statut
@@ -88,9 +104,13 @@ module.exports.getAllPosts = async (filters = {}) => {
       }
     }
 
-    return await Post.find(query)
+    const posts =  await Post.find(query)
       .populate('user', 'username email')
       .sort({ createdAt: -1 });
+
+    await redisClient.setEx(cacheKey, 600, JSON.stringify(posts));
+
+    return  posts; 
   } catch (error) {
     throw new Error(`Error fetching posts: ${error.message}`);
   }
@@ -99,10 +119,20 @@ module.exports.getAllPosts = async (filters = {}) => {
 // Récupérer un post par son ID
 module.exports.getPostById = async (postId) => {
   try {
+
+    const cacheKey = `post:${postId}`;
+    const cachedPost = await redisClient.get(cacheKey);
+    if (cachedPost) {
+      return JSON.parse(cachedPost);
+    }
+
     const post = await Post.findById(postId).populate('user', 'username email');
     if (!post) {
       throw new Error('Post not found');
     }
+
+    await redisClient.setEx(cacheKey, 600, JSON.stringify(post));
+
     return post;
   } catch (error) {
     throw new Error(`Error fetching post: ${error.message}`);

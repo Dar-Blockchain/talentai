@@ -8,6 +8,7 @@ const swaggerDocument = require('./swagger.json');
 
 const http = require("http");
 const connectDB = require("./config/database");
+const redisClient = require("./config/redis");
 
 const authRouter = require("./routes/authRouter");
 const agentIARouter = require("./routes/agentIARouter");
@@ -49,8 +50,19 @@ app.get("/", (req, res) => {
 
 // Démarrage du serveur HTTP
 const server = http.createServer(app);
-server.listen(process.env.PORT, () => {
-  console.log(
-    `Le serveur est en cours d'exécution sur le port ${process.env.PORT}`
-  );
-});
+
+(async () => {
+  try {
+    await redisClient.connect();
+    console.log("Redis connecté!");
+
+    server.listen(process.env.PORT, () => {
+      console.log(
+        `Le serveur est en cours d'exécution sur le port ${process.env.PORT}`
+      );
+    });
+  } catch (error) {
+    console.error("Erreur de connexion à Redis :", error);
+    process.exit(1); // Stop the server
+  }
+})();
