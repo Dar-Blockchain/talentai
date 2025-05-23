@@ -487,7 +487,10 @@ module.exports.getCompanyProfileWithAssessments = async (profileId) => {
       .populate({
         path: 'assessmentResults',
         populate: [
-          { path: 'condidateId', model: 'Profile' },
+          { path: 'condidateId', model: 'Profile', populate: {
+            path: 'userId',
+            model: 'User'
+          } },
           { path: 'jobId', model: 'Post' }
         ]
       });
