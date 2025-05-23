@@ -32,7 +32,7 @@ exports.matchCandidatesToJob = async (req, res) => {
 
         return {
           candidateId: candidate.userId,
-          name: candidate.userId?.username || "Anonymous",
+          name: candidate.userId.username,
           score,
           finalBid: candidate.companyBid?.finalBid || null,
           biddingCompany: candidate.companyBid?.company?.username || null,
