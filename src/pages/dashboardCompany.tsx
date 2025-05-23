@@ -1811,7 +1811,7 @@ Benefits:
 
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {matchingProfiles.map((candidate: MatchingCandidate) => (
+        {matchingProfiles.slice(0, displayCount).map((candidate: MatchingCandidate) => (
           <MatchCard key={candidate?.candidateId?._id || `temp-${Math.random()}`}>
             {/* Header Section */}
             <Box sx={{
@@ -2104,7 +2104,7 @@ Benefits:
         {matchingProfiles.length > displayCount && (
           <Button
             variant="outlined"
-            onClick={() => setDisplayCount(prev => prev + 5)}
+            onClick={() => setDisplayCount(prev => prev + 3)}
             sx={{
               mt: 2,
               borderColor: 'rgba(2,226,255,0.5)',
