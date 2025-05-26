@@ -12,7 +12,6 @@ const HeroSection = () => {
         py: {xs: 3, sm: 4, md:5},
         backgroundColor: "#ffffff",
         color: "#000000",
-        mb: 4
       }}
     >
       <Stack direction="row" spacing={2}>

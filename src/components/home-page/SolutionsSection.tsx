@@ -10,7 +10,7 @@ const SolutionsSection = () => {
       id="solutions"
       sx={{
         px: 3,
-        py: { sm: 4, md: 5 },
+        py: { xs: 3, sm: 4, md: 5 },
         backgroundColor: "#ffffff",
         color: "#000000",
       }}

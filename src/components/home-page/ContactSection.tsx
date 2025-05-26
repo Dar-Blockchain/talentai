@@ -8,9 +8,8 @@ const ContactSection = () => {
       sx={{
         backgroundColor: "rgba(41, 210, 145, 0.18)",
         color: "#000000",
-        mb: 4,
         mx: 3,
-        py: 2,
+        py: { xs: 3, sm: 4, md: 5 },
         borderRadius: "10px",
         position: "relative",
         maxHeight: "max-content",
