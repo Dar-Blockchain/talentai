@@ -37,7 +37,7 @@ const features = [
   },
 ];
 
-const HiringSolutionSection = () => {
+const FeaturesSection = () => {
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
   const isSmUp = useMediaQuery(theme.breakpoints.up("sm"));
@@ -46,6 +46,7 @@ const HiringSolutionSection = () => {
 
   return (
     <Box
+      id="features"
       sx={{
         px: 3,
         py: { sm: 4, md: 5 },
@@ -59,12 +60,7 @@ const HiringSolutionSection = () => {
         fontWeight={600}
         gutterBottom
         sx={{
-          fontSize: {
-            xs: "2rem",
-            sm: "2.5rem",
-            md: "3rem",
-            lg: "3.25rem",
-          },
+          fontSize: 'clamp(1rem, 7vw, 3.25rem)',
           lineHeight: 1.3,
           mb: 0,
         }}
@@ -127,4 +123,4 @@ const HiringSolutionSection = () => {
   );
 };
 
-export default HiringSolutionSection;
+export default FeaturesSection;

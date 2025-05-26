@@ -1,10 +1,13 @@
 import React from "react";
-import { Box, Typography, Stack } from "@mui/material";
+import { Box, Typography, Stack, useTheme, useMediaQuery } from "@mui/material";
 import GradientStepper from "./components/Stepper";
 
-const WhyUsSection = () => {
+const SolutionsSection = () => {
+  const theme = useTheme();
+  const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
   return (
     <Box
+      id="solutions"
       sx={{
         px: 3,
         py: { sm: 4, md: 5 },
@@ -18,12 +21,7 @@ const WhyUsSection = () => {
         fontWeight={600}
         gutterBottom
         sx={{
-          fontSize: {
-            xs: "2rem",
-            sm: "2.5rem",
-            md: "3rem",
-            lg: "3.25rem",
-          },
+          fontSize: "clamp(1rem, 7vw, 3.25rem)",
           lineHeight: 1.3,
           mb: 0,
           display: "flex",
@@ -42,11 +40,19 @@ const WhyUsSection = () => {
           }}
         />
       </Typography>
-      <Typography sx={{ mt: 1 }}>
+      <Typography sx={{ fontSize: { xs: "0.95rem", sm: "1rem" }, mt: 1 }}>
         From Guesswork to Precision—Redefine How You Hire
       </Typography>
-      <Stack direction="row" sx={{ alignItems: "center", py: 8 }} spacing={3}>
-        <Box>
+      <Stack
+        direction="row"
+        sx={{
+          alignItems: "center",
+          pt: { xs: 2, sm: 3, md: 8 },
+          pb: { xs: 0, sm: 0, md: 8 },
+        }}
+        spacing={3}
+      >
+        <Box sx={{ display: { xs: "none", sm: "none", md: "inline-block" } }}>
           <Typography
             variant="h5"
             fontWeight={400}
@@ -73,7 +79,7 @@ const WhyUsSection = () => {
 
         <Box
           sx={{
-            transform: "rotate(10deg)",
+            transform: !isMdUp ? "none" : "rotate(10deg)",
             flexGrow: 1,
           }}
         >
@@ -84,4 +90,4 @@ const WhyUsSection = () => {
   );
 };
 
-export default WhyUsSection;
+export default SolutionsSection;

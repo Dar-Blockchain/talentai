@@ -1,17 +1,17 @@
 import HeroSection from "@/components/home-page/HeroSection";
-import HiringSolutionSection from "@/components/home-page/HiringSolutionSection";
-import JoinUsSection from "@/components/home-page/JoinUsSection";
+import FeaturesSection from "@/components/home-page/FeaturesSection";
+import ContactSection from "@/components/home-page/ContactSection";
 import PricingSection from "@/components/home-page/PricingSection";
-import WhyUsSection from "@/components/home-page/WhyUsSection";
+import SolutionsSection from "@/components/home-page/SolutionsSection";
 
 const HomePage: React.FC = () => {
   return (
     <>
       <HeroSection />
-      <HiringSolutionSection/>
-      <WhyUsSection />
+      <FeaturesSection/>
+      <SolutionsSection />
       <PricingSection />
-      <JoinUsSection />
+      <ContactSection />
     </>
   );
 };

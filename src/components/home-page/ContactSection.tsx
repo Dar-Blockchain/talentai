@@ -1,9 +1,10 @@
 import React from "react";
 import { Box, Typography, Stack, Button } from "@mui/material";
 
-const JoinUsSection = () => {
+const ContactSection = () => {
   return (
     <Box
+      id="contact"
       sx={{
         backgroundColor: "rgba(41, 210, 145, 0.18)",
         color: "#000000",
@@ -21,13 +22,14 @@ const JoinUsSection = () => {
         flexWrap="wrap"
         alignItems="center"
         useFlexGap
-        sx={{ pt: 2, zIndex: 2 }}
+        sx={{ pt: {sm: 0 , md:2}, zIndex: 2 }}
       >
         <Box
           component="img"
           src="/images/home/joinus.png"
           alt="Join Us"
           sx={{
+            display: {xs: 'none', sm: 'none', md: 'flex'},
             maxWidth: "60%",
             maxHeight: "auto",
             borderRadius: 2,
@@ -40,7 +42,7 @@ const JoinUsSection = () => {
           sx={{
             display: "flex",
             flexDirection: "column",
-            alignItems: "flex-start",
+            alignItems: {xs:'center', sm:'center', md:"flex-start"},
             gap: "16px",
             flex: 1,
           }}
@@ -55,6 +57,7 @@ const JoinUsSection = () => {
                 md: "2.25rem",
                 lg: "2.5rem",
               },
+              textAlign: {xs: 'center',sm: 'center', md: 'start'}
             }}
           >
             Start Your Free Trial
@@ -70,6 +73,7 @@ const JoinUsSection = () => {
                 md: "1,25rem",
                 lg: "1.5rem",
               },
+              textAlign: {xs: 'center',sm: 'center', md: 'start'},
               mt: 1,
             }}
           >
@@ -99,4 +103,4 @@ const JoinUsSection = () => {
   );
 };
 
-export default JoinUsSection;
+export default ContactSection;

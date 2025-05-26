@@ -46,6 +46,7 @@ export const pricingPlans = [
 const PricingSection = () => {
   return (
     <Box
+      id="pricing"
       sx={{
         px: 3,
         py: { sm: 4, md: 5 },
@@ -60,12 +61,7 @@ const PricingSection = () => {
         fontWeight={600}
         gutterBottom
         sx={{
-          fontSize: {
-            xs: "2rem",
-            sm: "2.5rem",
-            md: "3rem",
-            lg: "3.25rem",
-          },
+          fontSize: "clamp(1rem, 7vw, 3.25rem)",
           lineHeight: 1.3,
           mb: 0,
         }}

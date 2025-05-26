@@ -15,9 +15,14 @@ import {
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import Link from "next/link";
 
-const navItems = ["Features", "Solutions", "Pricing", "Contact"];
-
+const navItems = [
+  { label: "Features", id: "features" },
+  { label: "Solutions", id: "solutions" },
+  { label: "Pricing", id: "pricing" },
+  { label: "Contact", id: "contact" },
+];
 const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const theme = useTheme();
@@ -47,9 +52,9 @@ const Header = () => {
       />
       <List>
         {navItems.map((item) => (
-          <ListItem key={item}>
+          <ListItem key={item.id}>
             <ListItemText
-              primary={item}
+              primary={item.label}
               sx={{
                 textAlign: "start",
                 fontWeight: 500,
@@ -84,8 +89,9 @@ const Header = () => {
           {!isMobile && (
             <Stack direction="row" spacing={4} alignItems="center">
               {navItems.map((item) => (
+                <Link href={`/home/#${item.id}`} passHref>
                 <Box
-                  key={item}
+                  key={item.id}
                   sx={{
                     cursor: "pointer",
                     fontWeight: 500,
@@ -99,8 +105,9 @@ const Header = () => {
                     },
                   }}
                 >
-                  {item}
+                  {item.label}
                 </Box>
+                </Link>
               ))}
             </Stack>
           )}

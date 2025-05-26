@@ -9,7 +9,7 @@ const HeroSection = () => {
     <Box
       sx={{
         px: 3,
-        py: {sm: 4, md:5},
+        py: {xs: 3, sm: 4, md:5},
         backgroundColor: "#ffffff",
         color: "#000000",
         mb: 4
@@ -22,12 +22,7 @@ const HeroSection = () => {
             fontWeight={500}
             gutterBottom
             sx={{
-              fontSize: {
-                xs: "2rem",
-                sm: "2.5rem",
-                md: "3rem",
-                lg: "3rem",
-              },
+              fontSize: 'clamp(1rem, 5vw, 3rem)',
               lineHeight: 1.3,
               mb: 0,
             }}
@@ -39,12 +34,7 @@ const HeroSection = () => {
             fontWeight={800}
             gutterBottom
             sx={{
-              fontSize: {
-                xs: "2rem",
-                sm: "2.5rem",
-                md: "3rem",
-                lg: "3rem",
-              },
+              fontSize: 'clamp(1rem, 5vw, 3rem)',
               backgroundColor: "rgba(0, 255, 157, 1)",
               display: "inline-block",
               px: 2,
@@ -71,7 +61,8 @@ const HeroSection = () => {
           </Typography>
 
           <Stack
-            direction={{ xs: "column", sm: "row" }}
+            direction="row"
+            sx={{flexWrap: "wrap"}}
             spacing={2}
             mb={{ xs: 3, md: 4 }}
           >
@@ -82,10 +73,10 @@ const HeroSection = () => {
                 color: "#fff",
                 borderRadius: 999,
                 textTransform: "none",
-                px: 4,
-                py: 1.5,
+                px: { xs: 2, sm: 3, md: 4 },
+                py: { xs: 1, sm: 1, md: 1.5 },
                 fontWeight: 500,
-                fontSize: { xs: "0.95rem", sm: "1rem" },
+                fontSize: { xs: "0.75rem", sm: "0.85rem", md: "1rem" },
                 "&:hover": {
                   backgroundColor: "#333",
                 },
@@ -105,10 +96,10 @@ const HeroSection = () => {
               sx={{
                 borderRadius: 999,
                 textTransform: "none",
-                px: 3,
-                py: 1.5,
+                px: { xs: 2, sm: 3, md: 4 },
+                py: { xs: 1, sm: 1.5, md: 1.5 },
                 fontWeight: 500,
-                fontSize: { xs: "0.95rem", sm: "1rem" },
+                fontSize: { xs: "0.75rem", sm: "0.85rem", md: "1rem" },
                 color: "#000",
                 borderColor: "#ccc",
               }}

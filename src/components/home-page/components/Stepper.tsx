@@ -7,6 +7,8 @@ import {
   stepConnectorClasses,
   StepIconProps,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import MingcuteIcon from "@/components/icons/MingcuteIcon";
@@ -28,21 +30,37 @@ const steps = [
   },
 ];
 
-const CustomConnector = styled(StepConnector)(() => ({
-  [`&.${stepConnectorClasses.alternativeLabel}`]: {
-    top: 32,
+const CustomConnector = styled(StepConnector)(({ theme }) => ({
+  [`&.${stepConnectorClasses.vertical}`]: {
+    marginLeft: '25px',
   },
-  [`& .${stepConnectorClasses.line}`]: {
-    border: "7px solid",
-    borderImageSource:
+  [`&.${stepConnectorClasses.alternativeLabel}`]: {
+    top: 22,
+  },
+  // Horizontal line styles
+  [`&.${stepConnectorClasses.horizontal} .${stepConnectorClasses.line}`]: {
+    height: '10px',
+    border: 0,
+    background:
       "linear-gradient(270deg, rgba(41, 210, 145, 0) -0.23%, rgba(41, 210, 145, 0.83) 48.27%, rgba(41, 210, 145, 0.18) 99.77%)",
-    borderImageSlice: 1,
-    borderRadius: 1,
+    borderRadius: 2,
+  },
+
+  // Vertical line styles
+  [`&.${stepConnectorClasses.vertical} .${stepConnectorClasses.line}`]: {
+    width: '10px',
+    border: 0,
+    height: '40px',
+    // height: "100%",
+    background:
+      "linear-gradient(270deg, rgba(41, 210, 145, 0) 0%, rgba(41, 210, 145, 0.83) 50%, rgba(41, 210, 145, 0.18) 100%)",
+    borderRadius: 2,
   },
 }));
 
+
 const CustomStepIconRoot = styled("div")<{
-  ownerState: { active?: boolean; completed?: boolean; icon: any };
+  ownerState: { active?: boolean; completed?: boolean; icon: any; horizontal: boolean };
 }>(({ ownerState }) => {
   const isCurrentStep = ownerState.icon === 2;
   return {
@@ -60,12 +78,16 @@ const CustomStepIconRoot = styled("div")<{
     boxShadow: "0px 4px 30px 0px rgba(51, 51, 51, 0.1)",
     fontSize: 30,
     backdropFilter: "blur(15px)",
-    transform: "rotate(-10deg)",
+    transform: ownerState.horizontal ? "rotate(-10deg)" : "none",
   };
 });
 
-function CustomStepIcon(props: StepIconProps) {
+function CustomStepIcon(props: StepIconProps & { horizontal?: boolean }) {
   const { active, completed, className, icon } = props;
+  const theme = useTheme();
+  const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
+  const isHorizontal = isMdUp; // horizontal only on md and up
+
   const icons: { [key: string]: React.ReactElement } = {
     1: <EditIcon />,
     2: <MingcuteIcon />,
@@ -73,7 +95,7 @@ function CustomStepIcon(props: StepIconProps) {
   };
   return (
     <CustomStepIconRoot
-      ownerState={{ completed, active, icon }}
+      ownerState={{ completed, active, icon, horizontal: isHorizontal }}
       className={className}
     >
       {icons[String(icon)]}
@@ -82,23 +104,29 @@ function CustomStepIcon(props: StepIconProps) {
 }
 
 export default function GradientStepper() {
+  const theme = useTheme();
+  const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
+  const orientation = isMdUp ? "horizontal" : "vertical";
+  const isHorizontal = orientation === "horizontal";
+
   return (
     <Stepper
       activeStep={2}
-      alternativeLabel
+      orientation={orientation}
       connector={<CustomConnector />}
-      sx={{ mt: 6 }}
+      alternativeLabel={isHorizontal}
+      sx={{ mt: { xs: 0, sm: 0, md: 6 }, px: isHorizontal ? 0 : 0, ml: 0 }}
     >
       {steps.map((step, index) => (
         <Step key={step.label}>
-          <StepLabel StepIconComponent={CustomStepIcon}>
+          <StepLabel StepIconComponent={(props) => <CustomStepIcon {...props} horizontal={isHorizontal} />}>
             <Typography
               fontWeight="bold"
-              sx={{ color: "#000", transform: "rotate(-10deg)" }}
+              sx={{ color: "#000", transform: isHorizontal ? "rotate(-10deg)" : "none" }}
             >
               {step.label}
             </Typography>
-            <Typography sx={{ color: "#000", transform: "rotate(-10deg)" }}>
+            <Typography sx={{ color: "#000", transform: isHorizontal ? "rotate(-10deg)" : "none" }}>
               {step.description}
             </Typography>
           </StepLabel>
