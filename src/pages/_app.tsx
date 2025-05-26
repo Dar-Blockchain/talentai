@@ -12,6 +12,7 @@ import Cookies from 'js-cookie';
 import Head from 'next/head';
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ScrollToTop from "@/components/ScrollToTop";
 
 const theme = createTheme({
     palette: {
@@ -61,6 +62,7 @@ export default function App({ Component, pageProps }: AppProps) {
                     <AuthWrapper>
                         <Header/>
                         <Component {...pageProps} />
+                        <ScrollToTop/>
                         <Footer/>
                     </AuthWrapper>
                 </ThemeProvider>
