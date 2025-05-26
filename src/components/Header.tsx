@@ -16,6 +16,7 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 const navItems = [
   { label: "Features", id: "features" },
@@ -24,9 +25,10 @@ const navItems = [
   { label: "Contact", id: "contact" },
 ];
 const Header = () => {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -49,6 +51,7 @@ const Header = () => {
         src="/logo.svg"
         alt="TalentAI Logo"
         sx={{ height: 32, mb: 2 }}
+        onClick={() => router.push('/')}
       />
       <List>
         {navItems.map((item) => (
@@ -85,6 +88,7 @@ const Header = () => {
             src="/logo.svg"
             alt="TalentAI Logo"
             sx={{ height: 32 }}
+            onClick={() => router.push('/')}
           />
           {!isMobile && (
             <Stack direction="row" spacing={4} alignItems="center">
@@ -115,6 +119,7 @@ const Header = () => {
           {!isMobile ? (
             <Button
               variant="contained"
+              onClick={() => router.push('/signin')}
               sx={{
                 backgroundColor: "#000",
                 color: "#fff",
