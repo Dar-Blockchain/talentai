@@ -5,6 +5,7 @@ const User = require('../models/UserModel');
 const AgentService = require('./AgentService');
 const { schedulePostMatchingAgenda } = require('../postMatchingAgenda');
 const { generateCacheKey, deserializeCacheData } = require('../utils/cacheUtils');
+const { POST_CACHE_TTL } = require('../config/cacheConfig');
 
 // Validation des données du post
 const validatePostData = (postData) => {
@@ -60,14 +61,9 @@ module.exports.createPost = async (postData) => {
 module.exports.getAllPosts = async (filters = {}) => {
   try {
     const cacheKey = generateCacheKey('posts:all', filters);
-    console.log("check cacheKey: ", cacheKey);
 
     // Try to get cached response
     const cachedPosts = await redisClient.get(cacheKey);
-    if(!cachedPosts){
-      console.log("not cached !");
-
-    }
     if (cachedPosts) {
       return deserializeCacheData(cachedPosts);
     }
@@ -108,7 +104,7 @@ module.exports.getAllPosts = async (filters = {}) => {
       .populate('user', 'username email')
       .sort({ createdAt: -1 });
 
-    await redisClient.setEx(cacheKey, 600, JSON.stringify(posts));
+    await redisClient.setEx(cacheKey, POST_CACHE_TTL, JSON.stringify(posts));
 
     return  posts; 
   } catch (error) {
@@ -131,7 +127,7 @@ module.exports.getPostById = async (postId) => {
       throw new Error('Post not found');
     }
 
-    await redisClient.setEx(cacheKey, 600, JSON.stringify(post));
+    await redisClient.setEx(cacheKey, POST_CACHE_TTL, JSON.stringify(post));
 
     return post;
   } catch (error) {

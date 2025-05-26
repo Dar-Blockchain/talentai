@@ -1,7 +1,9 @@
-const User = require('../models/UserModel');
-const { sendOTP } = require('./emailService');
-const jwt = require('jsonwebtoken');
-const hederaService = require('./hederaService');
+const User = require("../models/UserModel");
+const { sendOTP } = require("./emailService");
+const jwt = require("jsonwebtoken");
+const hederaService = require("./hederaService");
+const redisClient = require("../config/redis");
+const { AUTH_CACHE_TTL } = require("../config/cacheConfig");
 
 // Générer un code OTP
 const generateOTP = () => {
@@ -10,13 +12,13 @@ const generateOTP = () => {
 
 // Extraire le nom d'utilisateur de l'email
 const extractUsernameFromEmail = (email) => {
-  return email.split('@')[0];
+  return email.split("@")[0];
 };
 
 // Générer un token JWT
 const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.Net_Secret, {
-    expiresIn: '7d'
+    expiresIn: "7d",
   });
 };
 
@@ -34,20 +36,20 @@ module.exports.registerUser = async (email) => {
 
     existingUser.otp = {
       code: otp,
-      expiresAt: otpExpiry
+      expiresAt: otpExpiry,
     };
     await existingUser.save();
 
     // Envoyer le nouveau OTP par email
     const emailSent = await sendOTP(email, otp);
     if (!emailSent) {
-      throw new Error('Erreur lors de l\'envoi de l\'OTP');
+      throw new Error("Erreur lors de l'envoi de l'OTP");
     }
 
-    return { 
-      email, 
+    return {
+      email,
       username: existingUser.username,
-      message: 'Nouveau code OTP envoyé à votre email'
+      message: "Nouveau code OTP envoyé à votre email",
     };
   }
 
@@ -56,7 +58,8 @@ module.exports.registerUser = async (email) => {
   const otpExpiry = new Date(Date.now() + 5 * 60000); // 5 minutes
 
   // Créer un portefeuille Hedera pour le nouvel utilisateur
-  const { pubkey, privkey, accountId } = await hederaService.createHederaWallet();
+  const { pubkey, privkey, accountId } =
+    await hederaService.createHederaWallet();
 
   // Créer l'utilisateur avec le portefeuille Hedera
   const user = new User({
@@ -64,11 +67,11 @@ module.exports.registerUser = async (email) => {
     email,
     otp: {
       code: otp,
-      expiresAt: otpExpiry
+      expiresAt: otpExpiry,
     },
     pubkey,
     privkey,
-    accountId
+    accountId,
   });
 
   await user.save();
@@ -76,13 +79,14 @@ module.exports.registerUser = async (email) => {
   // Envoyer l'OTP par email
   const emailSent = await sendOTP(email, otp);
   if (!emailSent) {
-    throw new Error('Erreur lors de l\'envoi de l\'OTP');
+    throw new Error("Erreur lors de l'envoi de l'OTP");
   }
 
-  return { 
-    email, 
+  return {
+    email,
     username,
-    message: 'Inscription réussie. Veuillez vérifier votre email pour le code OTP.'
+    message:
+      "Inscription réussie. Veuillez vérifier votre email pour le code OTP.",
   };
 };
 
@@ -91,24 +95,24 @@ module.exports.verifyUserOTP = async (email, otp) => {
   const user = await User.findOne({ email });
   console.log(user);
   if (!user) {
-    throw new Error('Utilisateur non trouvé');
+    throw new Error("Utilisateur non trouvé");
   }
 
   if (!user.otp || !user.otp.code || !user.otp.expiresAt) {
-    throw new Error('Aucun OTP trouvé');
+    throw new Error("Aucun OTP trouvé");
   }
 
   if (user.otp.code !== otp) {
-    throw new Error('Code OTP incorrect');
+    throw new Error("Code OTP incorrect");
   }
 
   if (new Date() > user.otp.expiresAt) {
-    throw new Error('Code OTP expiré');
+    throw new Error("Code OTP expiré");
   }
 
   user.isVerified = true;
   user.otp = undefined;
-  user.lastLogin = new Date();  
+  user.lastLogin = new Date();
   user.trafficCounter = user.trafficCounter + 1;
   await user.save();
 
@@ -117,7 +121,7 @@ module.exports.verifyUserOTP = async (email, otp) => {
   console.log(token);
   return {
     user,
-    token
+    token,
   };
 };
 
@@ -125,12 +129,13 @@ module.exports.verifyUserOTP = async (email, otp) => {
 module.exports.connectWithGmail = async (email) => {
   // Vérifier si l'utilisateur existe déjà
   let user = await User.findOne({ email });
-  
+
   if (!user) {
     // Si l'utilisateur n'existe pas, créer un nouveau compte avec un portefeuille Hedera
     const username = extractUsernameFromEmail(email);
-    const { pubkey, privkey, accountId } = await hederaService.createHederaWallet();
-    
+    const { pubkey, privkey, accountId } =
+      await hederaService.createHederaWallet();
+
     user = new User({
       username,
       email,
@@ -139,9 +144,9 @@ module.exports.connectWithGmail = async (email) => {
       lastLogin: new Date(),
       pubkey,
       privkey,
-      accountId
+      accountId,
     });
-    
+
     await user.save();
   } else {
     // Mettre à jour la dernière connexion
@@ -149,18 +154,31 @@ module.exports.connectWithGmail = async (email) => {
     user.trafficCounter = user.trafficCounter + 1;
     await user.save();
   }
-  
+
   // Générer le token JWT
   const token = generateToken(user._id);
-  
+
   return {
     user,
     token,
-    message: user.isVerified ? 'Connexion réussie' : 'Compte créé avec succès'
+    message: user.isVerified ? "Connexion réussie" : "Compte créé avec succès",
   };
 };
 
 module.exports.getAllUsers = async () => {
-  const users = await User.find();
-  return users;
+  try {
+    const cacheKey = "users:all";
+
+    const cachedUsers = await redisClient.get(cacheKey);
+    if (cachedUsers) {
+      return JSON.parse(cachedUsers);
+    }
+
+    const users = await User.find();
+    await redisClient.setEx(cacheKey, AUTH_CACHE_TTL, JSON.stringify(users));
+
+    return users;
+  } catch (error) {
+    throw new Error("Error fetching users: ", error);
+  }
 };
