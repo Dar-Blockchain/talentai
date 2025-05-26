@@ -119,7 +119,7 @@ exports.generateTechniqueQuestions = async (req, res) => {
     if (profile.quota >= 5) {
       return res
         .status(403)
-        .json({ error: "Tu as atteint ta limite de tests (5)" });
+        .json({ error: "You have reached your test limit (5)" });
     }
 
     // Validate proficiency level
