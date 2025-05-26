@@ -12,7 +12,13 @@ const profileSchema = new mongoose.Schema(
       enum: ["Candidate", "Company"],
       required: true,
     },
+
     quota: { type: Number, default: 0 },
+    quotaUpdatedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    
     overallScore: { type: Number, default: 0 },
 
     // Hard Skills

@@ -115,6 +115,16 @@ exports.generateTechniqueQuestions = async (req, res) => {
       return res.status(404).json({ error: "Profile not found" });
     }
 
+     // 🔁 Vérifier et reset le quota si 30 jours sont passés
+     const now = new Date();
+     const daysSinceLastUpdate =
+       (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
+ 
+     if (daysSinceLastUpdate >= 30) {
+       profile.quota = 0;
+       profile.quotaUpdatedAt = now;
+     }
+
     // 🔒 2️⃣ Vérifier si le quota est atteint
     if (profile.quota >= 5) {
       return res
