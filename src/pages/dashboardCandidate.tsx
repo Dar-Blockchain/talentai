@@ -32,7 +32,8 @@ import {
   Select,
   InputLabel,
   Slider,
-  Autocomplete
+  Autocomplete,
+  useTheme
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -45,6 +46,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LogoutIcon from '@mui/icons-material/Logout';
+import DescriptionIcon from '@mui/icons-material/Description';
 import { useRouter } from 'next/router';
 import Cookies from 'js-cookie';
 import { signOut } from 'next-auth/react';
@@ -53,56 +55,55 @@ import { toast } from 'react-hot-toast';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
-  padding: theme.spacing(3),
-  marginBottom: theme.spacing(3),
-  background: 'rgba(30, 41, 59, 0.7)',
-  backdropFilter: 'blur(10px)',
-  borderRadius: '16px',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+  padding: theme.spacing(4),
+  marginBottom: theme.spacing(4),
+  background: '#ffffff',
+  borderRadius: '24px',
+  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.08), 0 0 20px rgba(0, 0, 0, 0.04)',
+  border: '1px solid rgba(0, 0, 0, 0.05)',
+  transition: 'all 0.3s ease',
   '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: '0 6px 25px rgba(0,0,0,0.3)'
+    transform: 'translateY(-4px)',
+    boxShadow: '0 20px 50px rgba(0, 0, 0, 0.12), 0 0 30px rgba(0, 0, 0, 0.08)'
   }
 }));
 
 const SectionTitle = styled(Typography)(({ theme }) => ({
-  fontSize: '1.75rem',
-  fontWeight: 700,
-  color: '#ffffff',
-  marginBottom: theme.spacing(3),
+  fontSize: '2rem',
+  fontWeight: 800,
+  color: '#191919',
+  marginBottom: theme.spacing(4),
   position: 'relative',
   '&:after': {
     content: '""',
     position: 'absolute',
-    bottom: '-8px',
+    bottom: '-12px',
     left: '0',
-    width: '60px',
-    height: '4px',
-    background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
-    borderRadius: '2px'
+    width: '80px',
+    height: '6px',
+    background: '#191919',
+    borderRadius: '3px'
   }
 }));
 
 const StyledRating = styled(Rating)(({ theme }) => ({
   '& .MuiRating-iconFilled': {
-    color: '#02E2FF'
+    color: 'rgba(0, 255, 157, 1)'
   },
   '& .MuiRating-iconHover': {
-    color: '#00FFC3'
+    color: 'rgba(0, 255, 157, 0.8)'
   }
 }));
 
 const ProfileHeader = styled(Box)(({ theme }) => ({
-  background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
-  color: '#ffffff',
-  padding: theme.spacing(6),
-  borderRadius: '24px',
-  marginBottom: theme.spacing(4),
+  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+  color: '#000000',
+  padding: theme.spacing(8),
+  borderRadius: '32px',
+  marginBottom: theme.spacing(6),
   position: 'relative',
   overflow: 'hidden',
-  boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.1), 0 0 30px rgba(0, 0, 0, 0.06)',
   '&:before': {
     content: '""',
     position: 'absolute',
@@ -110,65 +111,68 @@ const ProfileHeader = styled(Box)(({ theme }) => ({
     left: '0',
     right: '0',
     bottom: '0',
-    background: 'radial-gradient(circle at top right, rgba(2,226,255,0.15) 0%, transparent 70%)',
+    background: 'radial-gradient(circle at top right, rgba(0, 0, 0, 0.03) 0%, transparent 70%)',
     zIndex: 1
   }
 }));
 
 const StatCard = styled(Paper)(({ theme }) => ({
-  background: 'rgba(255,255,255,0.05)',
-  padding: theme.spacing(3),
-  borderRadius: '16px',
-  backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  transition: 'transform 0.2s ease',
+  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+  padding: theme.spacing(4),
+  borderRadius: '24px',
+  border: '1px solid rgba(0, 0, 0, 0.05)',
+  boxShadow: '0 8px 30px rgba(0, 0, 0, 0.06), 0 0 15px rgba(0, 0, 0, 0.04)',
+  transition: 'all 0.3s ease',
   '&:hover': {
-    transform: 'translateY(-4px)',
-    background: 'rgba(255,255,255,0.08)'
+    transform: 'translateY(-6px)',
+    boxShadow: '0 15px 40px rgba(0, 0, 0, 0.1), 0 0 25px rgba(0, 0, 0, 0.06)'
   }
 }));
 
 const SkillChip = styled(Chip)(({ theme }) => ({
   margin: theme.spacing(0.5),
-  borderRadius: '8px',
-  padding: theme.spacing(1),
-  height: '32px',
-  background: 'rgba(2, 226, 255, 0.1)',
-  color: '#02E2FF',
-  border: '1px solid rgba(2, 226, 255, 0.2)',
-  transition: 'all 0.2s ease',
+  borderRadius: '12px',
+  padding: theme.spacing(1.5),
+  height: '36px',
+  background: 'rgba(2, 226, 255, 0.08)',
+  color: '#000000',
+  border: '1px solid rgba(2, 226, 255, 0.15)',
+  transition: 'all 0.3s ease',
   '&:hover': {
-    background: 'rgba(2, 226, 255, 0.2)',
+    background: 'rgba(2, 226, 255, 0.15)',
     transform: 'scale(1.05)'
   }
 }));
 
 const ActionButton = styled(Button)(({ theme }) => ({
-  borderRadius: '12px',
-  padding: '12px 24px',
+  borderRadius: '16px',
+  padding: '14px 28px',
   textTransform: 'none',
   fontWeight: 600,
-  fontSize: '1rem',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+  fontSize: '1.1rem',
+  boxShadow: '0 8px 20px rgba(0,0,0,0.08)',
   transition: 'all 0.3s ease',
   '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: '0 6px 16px rgba(0,0,0,0.2)'
+    transform: 'translateY(-3px)',
+    boxShadow: '0 12px 24px rgba(0,0,0,0.12)'
   }
 }));
 
 const InfoItem = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
-  gap: theme.spacing(2),
-  marginBottom: theme.spacing(2),
-  padding: theme.spacing(2),
-  borderRadius: '12px',
-  background: 'rgba(255,255,255,0.03)',
-  transition: 'all 0.2s ease',
+  gap: theme.spacing(3),
+  marginBottom: theme.spacing(3),
+  padding: theme.spacing(3),
+  borderRadius: '16px',
+  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+  color: '#000000',
+  boxShadow: '0 5px 20px rgba(0, 0, 0, 0.04), 0 0 10px rgba(0, 0, 0, 0.02)',
+  transition: 'all 0.3s ease',
   '&:hover': {
-    background: 'rgba(255,255,255,0.05)',
-    transform: 'translateX(4px)'
+    background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
+    transform: 'translateX(6px)',
+    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.08), 0 0 15px rgba(0, 0, 0, 0.04)'
   }
 }));
 
@@ -317,31 +321,70 @@ const SkillBlock = ({ skill, type, onStartTest, onDelete }: { skill: any, type: 
   };
   const proficiencyLevel = type === 'technical' ? skill.proficiencyLevel : (proficiencyMap[skill.experienceLevel] || 1);
   const percentage = (proficiencyLevel / 5) * 100;
+
   return (
-    <Box sx={{ mb: 2, p: 2, borderRadius: '12px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+    <Box sx={{
+      mb: 3,
+      p: 3,
+      borderRadius: '20px',
+      background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+      boxShadow: '0 8px 30px rgba(0, 0, 0, 0.06), 0 0 15px rgba(0, 0, 0, 0.04)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 3,
+      transition: 'all 0.3s ease',
+      '&:hover': {
+        transform: 'translateY(-4px)',
+        boxShadow: '0 15px 40px rgba(0, 0, 0, 0.1), 0 0 25px rgba(0, 0, 0, 0.06)'
+      }
+    }}>
       <Box sx={{ flex: 1 }}>
-        <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{skill.name}</Typography>
+        <Typography sx={{
+          color: 'black',
+          fontWeight: 600,
+          fontSize: '1.1rem',
+          mb: 1
+        }}>{skill.name}</Typography>
         {type === 'soft' && (
-          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>{skill.category}</Typography>
+          <Typography variant="caption" sx={{
+            color: 'rgba(0,0,0,0.6)',
+            display: 'block',
+            mb: 1
+          }}>{skill.category}</Typography>
         )}
-        <Typography variant="caption" sx={{ color: '#02E2FF', ml: 1 }}>{type === 'technical' ? skill.experienceLevel : skill.experienceLevel}</Typography>
-        <Box sx={{ height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden', mt: 1 }}>
-          <Box sx={{ width: `${percentage}%`, height: '100%', background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)', borderRadius: '3px', transition: 'width 0.3s ease' }} />
+        <Typography variant="caption" sx={{
+          color: 'black',
+          ml: 1,
+          fontWeight: 500
+        }}>{type === 'technical' ? skill.experienceLevel : skill.experienceLevel}</Typography>
+        <Box sx={{
+          height: '8px',
+          background: 'rgba(0,0,0,0.06)',
+          borderRadius: '4px',
+          overflow: 'hidden',
+          mt: 2
+        }}>
+          <Box sx={{
+            width: `${percentage}%`,
+            height: '100%',
+            background: "#00FF9D",
+            borderRadius: '4px',
+            transition: 'width 0.5s ease'
+          }} />
         </Box>
       </Box>
-      <Box sx={{ display: 'flex', gap: 1 }}>
+      <Box sx={{ display: 'flex', gap: 2 }}>
         <Button
-          variant="outlined"
-          size="small"
+          variant="contained"
+          startIcon={<PlayArrowIcon />}
           onClick={onStartTest}
           sx={{
-            color: '#02E2FF',
-            borderColor: 'rgba(2,226,255,0.5)',
+            background: 'rgba(0, 255, 157, 1)',
+            color: '#000000',
             '&:hover': {
-              borderColor: '#02E2FF',
-              background: 'rgba(2,226,255,0.1)'
-            },
-            minWidth: 110
+              background: 'rgba(0, 255, 157, 0.9)',
+            }
           }}
         >
           Start Test
@@ -349,15 +392,17 @@ const SkillBlock = ({ skill, type, onStartTest, onDelete }: { skill: any, type: 
         {onDelete && (
           <IconButton
             onClick={onDelete}
-            size="small"
+            size="medium"
             sx={{
               color: '#ff3b30',
+              background: 'rgba(255,59,48,0.08)',
               '&:hover': {
-                background: 'rgba(255,59,48,0.1)'
+                background: 'rgba(255,59,48,0.12)',
+                transform: 'scale(1.1)'
               }
             }}
           >
-            <DeleteIcon fontSize="small" />
+            <DeleteIcon />
           </IconButton>
         )}
       </Box>
@@ -441,6 +486,8 @@ export default function DashboardCandidate() {
 
   // Add state to track pre-selected skill for test modal
   const [preSelectedTest, setPreSelectedTest] = useState<{ type: 'technical' | 'soft', skill: any } | null>(null);
+
+  const theme = useTheme();
 
   useEffect(() => {
     dispatch(getMyProfile());
@@ -937,15 +984,14 @@ export default function DashboardCandidate() {
   }
 
   return (
-    <Box sx={{
-      minHeight: '100vh',
-      backgroundColor: '#0f172a',
-      backgroundImage: `
-        radial-gradient(circle at 20% 30%, rgba(37, 99, 235, 0.15), transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(29, 78, 216, 0.15), transparent 50%)
-      `,
-      py: 6
-    }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        backgroundColor: '#f8fafc',
+        color: 'rgba(0, 255, 157, 1)',
+        padding: theme.spacing(6),
+      }}
+    >
       <Container maxWidth="lg">
         {/* Profile Header */}
         <ProfileHeader>
@@ -955,33 +1001,11 @@ export default function DashboardCandidate() {
                 <Typography variant="h3" sx={{
                   fontWeight: 700,
                   mb: 2,
-                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent'
+                  color: '#191919',
                 }}>
                   Welcome back, {profile.userId.username}!
                 </Typography>
-                <Typography variant="h6" sx={{ opacity: 0.9, color: '#ffffff' }}>
-                  {profile.type} • {profile.userId.role}
-                </Typography>
               </Box>
-              <Button
-                variant="outlined"
-                startIcon={<LogoutIcon />}
-                onClick={handleLogout}
-                sx={{
-                  color: 'rgba(255,255,255,0.9)',
-                  borderColor: 'rgba(255,255,255,0.2)',
-                  '&:hover': {
-                    borderColor: 'rgba(255,255,255,0.5)',
-                    background: 'rgba(255,255,255,0.1)'
-                  },
-                  textTransform: 'none',
-                  fontWeight: 500
-                }}
-              >
-                Logout
-              </Button>
             </Box>
 
             {/* Action Buttons */}
@@ -991,37 +1015,25 @@ export default function DashboardCandidate() {
                 startIcon={<PlayArrowIcon />}
                 onClick={() => handleStartTest()}
                 sx={{
-                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                  background: 'rgba(0, 255, 157, 1)',
+                  color: '#000000',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                    background: 'rgba(0, 255, 157, 0.9)',
                   }
                 }}
               >
                 Start Test
               </ActionButton>
-              {/* <ActionButton
-                variant="outlined"
-                onClick={() => setEditProfileOpen(true)}
-                sx={{
-                  borderColor: '#02E2FF',
-                  color: '#02E2FF',
-                  '&:hover': {
-                    borderColor: '#00FFC3',
-                    color: '#00FFC3'
-                  }
-                }}
-              >
-                Edit Profile
-              </ActionButton> */}
               <ActionButton
                 variant="outlined"
+                startIcon={<DescriptionIcon />}
                 onClick={() => router.push('/resume-builder')}
                 sx={{
-                  borderColor: '#02E2FF',
-                  color: '#02E2FF',
+                  borderColor: 'black',
+                  color: 'black',
                   '&:hover': {
-                    borderColor: '#00FFC3',
-                    color: '#00FFC3'
+                    borderColor: 'rgba(0, 255, 157, 1)',
+                    background: 'rgba(0, 255, 157, 0.08)'
                   }
                 }}
               >
@@ -1046,13 +1058,13 @@ export default function DashboardCandidate() {
             >
               <DialogTitle sx={{
                 borderBottom: '1px solid rgba(255,255,255,0.1)',
-                color: '#ffffff'
+                color: '#000000'
               }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Typography variant="h6">Edit Profile</Typography>
                   <IconButton
                     onClick={handleEditProfileClose}
-                    sx={{ color: 'rgba(255,255,255,0.7)' }}
+                    sx={{ color: 'rgba(0,0,0,0.7)' }}
                   >
                     <CloseIcon />
                   </IconButton>
@@ -1066,15 +1078,15 @@ export default function DashboardCandidate() {
                     value={formData.username}
                     onChange={handleInputChange}
                     fullWidth
-                    InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                    InputLabelProps={{ sx: { color: 'rgba(0,0,0,0.7)' } }}
                     InputProps={{
                       sx: {
-                        color: '#ffffff',
+                        color: '#000000',
                         '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(255,255,255,0.2)',
+                          borderColor: 'rgba(0,0,0,0.2)',
                         },
                         '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(255,255,255,0.3)',
+                          borderColor: 'rgba(0,0,0,0.3)',
                         },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                           borderColor: '#02E2FF',
@@ -1088,15 +1100,15 @@ export default function DashboardCandidate() {
                     value={formData.email}
                     onChange={handleInputChange}
                     fullWidth
-                    InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                    InputLabelProps={{ sx: { color: 'rgba(0,0,0,0.7)' } }}
                     InputProps={{
                       sx: {
-                        color: '#ffffff',
+                        color: '#000000',
                         '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(255,255,255,0.2)',
+                          borderColor: 'rgba(0,0,0,0.2)',
                         },
                         '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(255,255,255,0.3)',
+                          borderColor: 'rgba(0,0,0,0.3)',
                         },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                           borderColor: '#02E2FF',
@@ -1111,15 +1123,15 @@ export default function DashboardCandidate() {
                     value={formData.experienceLevel}
                     onChange={handleInputChange}
                     fullWidth
-                    InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                    InputLabelProps={{ sx: { color: 'rgba(0,0,0,0.7)' } }}
                     InputProps={{
                       sx: {
-                        color: '#ffffff',
+                        color: '#000000',
                         '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(255,255,255,0.2)',
+                          borderColor: 'rgba(0,0,0,0.2)',
                         },
                         '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(255,255,255,0.3)',
+                          borderColor: 'rgba(0,0,0,0.3)',
                         },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                           borderColor: '#02E2FF',
@@ -1127,7 +1139,7 @@ export default function DashboardCandidate() {
                       },
                     }}
                     SelectProps={{
-                      sx: { color: '#ffffff' }
+                      sx: { color: '#000000' }
                     }}
                   >
                     {['Entry Level', 'Junior', 'Mid Level', 'Senior', 'Expert'].map((level) => (
@@ -1143,8 +1155,8 @@ export default function DashboardCandidate() {
                 <Button
                   onClick={handleEditProfileClose}
                   sx={{
-                    color: 'rgba(255,255,255,0.7)',
-                    '&:hover': { color: '#ffffff' }
+                    color: 'rgba(0,0,0,0.7)',
+                    '&:hover': { color: '#000000' }
                   }}
                 >
                   Cancel
@@ -1155,7 +1167,7 @@ export default function DashboardCandidate() {
                   onClick={handleSubmit}
                   sx={{
                     background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                    color: '#ffffff',
+                    color: '#000000',
                     '&:hover': {
                       background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
                     }
@@ -1174,273 +1186,48 @@ export default function DashboardCandidate() {
               fullWidth
               PaperProps={{
                 sx: {
-                  background: 'rgba(30, 41, 59, 0.95)',
-                  backdropFilter: 'blur(10px)',
-                  borderRadius: '16px',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: '#ffffff',
+                  borderRadius: '24px',
+                  border: '1px solid rgba(0, 255, 157, 0.2)',
                 }
               }}
             >
               <DialogTitle sx={{
-                borderBottom: '1px solid rgba(255,255,255,0.1)',
-                color: '#ffffff'
+                borderBottom: '1px solid rgba(0, 255, 157, 0.2)',
+                color: 'rgba(0, 255, 157, 1)'
               }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Typography variant="h6">Start New Test</Typography>
                   <IconButton
                     onClick={handleCloseTestModal}
-                    sx={{ color: 'rgba(255,255,255,0.7)' }}
+                    sx={{ color: 'rgba(0, 255, 157, 0.8)' }}
                   >
                     <CloseIcon />
                   </IconButton>
                 </Box>
               </DialogTitle>
-              <DialogContent sx={{ mt: 2 }}>
+              <DialogContent>
                 <FormControl component="fieldset" sx={{ width: '100%', mb: 3 }}>
-                  <FormLabel sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>Select Skill Type</FormLabel>
+                  <FormLabel sx={{ color: 'rgba(0, 255, 157, 1)', mb: 1 }}>Select Skill Type</FormLabel>
                   <RadioGroup
                     value={skillType}
                     onChange={handleSkillTypeChange}
                   >
                     <FormControlLabel
                       value="technical"
-                      control={<Radio sx={{ color: '#02E2FF' }} />}
+                      control={<Radio sx={{ color: 'rgba(0, 255, 157, 1)' }} />}
                       label="Technical Skill"
-                      sx={{ color: '#ffffff' }}
+                      sx={{ color: 'rgba(0, 255, 157, 1)' }}
                     />
                     <FormControlLabel
                       value="soft"
-                      control={<Radio sx={{ color: '#02E2FF' }} />}
+                      control={<Radio sx={{ color: 'rgba(0, 255, 157, 1)' }} />}
                       label="Soft Skill"
-                      sx={{ color: '#ffffff' }}
+                      sx={{ color: 'rgba(0, 255, 157, 1)' }}
                     />
                   </RadioGroup>
                 </FormControl>
-
-                {skillType === 'technical' && (
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel sx={{ color: 'rgba(255,255,255,0.7)' }}>Select Technical Skill</InputLabel>
-                    <Select
-                      value={selectedSkill}
-                      onChange={(e) => setSelectedSkill(e.target.value)}
-                      sx={{
-                        color: '#ffffff',
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(255,255,255,0.2)',
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(255,255,255,0.3)',
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#02E2FF',
-                        },
-                      }}
-                    >
-                      {getTechnicalSkills().map((skill: any) => (
-                        <MenuItem key={skill.name} value={skill.name} sx={{ backgroundColor: 'rgba(30,41,59,0.98)', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>
-                          {skill.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                )}
-
-                {skillType === 'soft' && (
-                  <>
-                    <FormControl fullWidth sx={{ mb: 2 }}>
-                      <InputLabel sx={{ color: 'rgba(255,255,255,0.7)' }}>Select Soft Skill</InputLabel>
-                      <Select
-                        value={softSkillType}
-                        onChange={(e) => handleSoftSkillChange(e.target.value)}
-                        sx={{
-                          color: '#ffffff',
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'rgba(255,255,255,0.2)',
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'rgba(255,255,255,0.3)',
-                          },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: '#02E2FF',
-                          },
-                        }}
-                      >
-                        {softSkills.map((skill) => (
-                          <MenuItem key={skill.name} value={skill.name} sx={{ backgroundColor: 'rgba(30,41,59,0.98)', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>
-                            {skill.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
-                    {softSkillType && (
-                      <>
-                        <Box sx={{ mb: 2 }}>
-                          <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>
-                            {softSkillType === 'Communication' ? 'Select Language' : 'Select Specific Area'}
-                          </Typography>
-
-                          {softSkillType === 'Communication' ? (
-                            <FormControl fullWidth>
-                              <Select
-                                value={softSkillLanguage}
-                                onChange={(e) => handleSoftSkillLanguageChange(e.target.value)}
-                                sx={{
-                                  color: '#ffffff',
-                                  '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(255,255,255,0.2)',
-                                  },
-                                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(255,255,255,0.3)',
-                                  },
-                                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: '#02E2FF',
-                                  },
-                                }}
-                              >
-                                {languages.map((lang) => (
-                                  <MenuItem key={lang.value} value={lang.value} sx={{ backgroundColor: 'rgba(30,41,59,0.98)', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>
-                                    {lang.label}
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                            </FormControl>
-                          ) : (
-                            <FormControl fullWidth>
-                              <Select
-                                value={softSkillSubcategory}
-                                onChange={(e) => handleSoftSkillSubcategoryChange(e.target.value)}
-                                sx={{
-                                  color: '#ffffff',
-                                  '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(255,255,255,0.2)',
-                                  },
-                                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: 'rgba(255,255,255,0.3)',
-                                  },
-                                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: '#02E2FF',
-                                  },
-                                }}
-                              >
-                                {softSkills
-                                  .find(skill => skill.name === softSkillType)
-                                  ?.subcategories?.map((sub) => (
-                                    <MenuItem key={sub.value} value={sub.value} sx={{ backgroundColor: 'rgba(30,41,59,0.98)', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>
-                                      {sub.label}
-                                    </MenuItem>
-                                  ))}
-                              </Select>
-                            </FormControl>
-                          )}
-                        </Box>
-
-                        <Box sx={{ mb: 2 }}>
-                          <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>
-                            {isExistingSoftSkill ? 'Current Proficiency Level' : 'Select Proficiency Level'}
-                          </Typography>
-                          <Box sx={{ px: 1 }}>
-                            <Slider
-                              value={softSkillProficiency}
-                              onChange={(_, value) => !isExistingSoftSkill && setSoftSkillProficiency(value as number)}
-                              disabled={isExistingSoftSkill}
-                              min={1}
-                              max={5}
-                              step={1}
-                              marks={[
-                                { value: 1, label: 'Beginner' },
-                                { value: 2, label: 'Elementary' },
-                                { value: 3, label: 'Intermediate' },
-                                { value: 4, label: 'Advanced' },
-                                { value: 5, label: 'Expert' }
-                              ]}
-                              sx={{
-                                color: isExistingSoftSkill ? 'rgba(2,226,255,0.5)' : '#02E2FF',
-                                '& .MuiSlider-mark': {
-                                  backgroundColor: 'rgba(255,255,255,0.3)',
-                                },
-                                '& .MuiSlider-markLabel': {
-                                  color: 'rgba(255,255,255,0.7)',
-                                  fontSize: '0.75rem',
-                                },
-                                '& .MuiSlider-valueLabel': {
-                                  background: isExistingSoftSkill
-                                    ? 'rgba(2,226,255,0.5)'
-                                    : 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                                },
-                                '& .MuiSlider-thumb': {
-                                  '&:hover, &.Mui-focusVisible': {
-                                    boxShadow: '0 0 0 8px rgba(2,226,255,0.16)',
-                                  },
-                                  '&.Mui-active': {
-                                    boxShadow: '0 0 0 12px rgba(2,226,255,0.24)',
-                                  },
-                                  '&.Mui-disabled': {
-                                    '&:hover': {
-                                      boxShadow: 'none',
-                                    },
-                                  },
-                                },
-                              }}
-                            />
-                          </Box>
-                          {isExistingSoftSkill && (
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: 'rgba(255,255,255,0.7)',
-                                display: 'block',
-                                mt: 1,
-                                textAlign: 'center'
-                              }}
-                            >
-                              You have already taken a test for this skill
-                            </Typography>
-                          )}
-                        </Box>
-                      </>
-                    )}
-                  </>
-                )}
               </DialogContent>
-              <DialogActions sx={{
-                borderTop: '1px solid rgba(255,255,255,0.1)',
-                padding: 2
-              }}>
-                <Button
-                  onClick={handleCloseTestModal}
-                  sx={{
-                    color: 'rgba(255,255,255,0.7)',
-                    '&:hover': { color: '#ffffff' }
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleTestSubmit}
-                  disabled={
-                    !skillType ||
-                    (skillType === 'technical' && !selectedSkill) ||
-                    (skillType === 'soft' && !softSkillType) ||
-                    (skillType === 'soft' && softSkillType === 'Communication' && !softSkillLanguage) ||
-                    (skillType === 'soft' && softSkillType !== 'Communication' && !softSkillSubcategory)
-                  }
-                  variant="contained"
-                  sx={{
-                    background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                    color: '#ffffff',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-                    },
-                    '&.Mui-disabled': {
-                      background: 'rgba(255,255,255,0.1)',
-                      color: 'rgba(255,255,255,0.3)'
-                    }
-                  }}
-                >
-                  Start Test
-                </Button>
-              </DialogActions>
             </Dialog>
           </Box>
 
@@ -1466,20 +1253,20 @@ export default function DashboardCandidate() {
             </Box> */}
             <Box>
               <StatCard>
-                <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff', letterSpacing: 2 }}>
+                <Typography variant="overline" sx={{ color: 'black', letterSpacing: 2 }}>
                   Skills Count
                 </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 600, color: '#02E2FF', mt: 1 }}>
+                <Typography variant="h5" sx={{ fontWeight: 600, color: '#191919', mt: 1 }}>
                   {profile.skills?.length || 0}
                 </Typography>
               </StatCard>
             </Box>
             <Box>
               <StatCard>
-                <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff', letterSpacing: 2 }}>
+                <Typography variant="overline" sx={{ color: '#191919', letterSpacing: 2 }}>
                   Last Login
                 </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 600, color: '#02E2FF', mt: 1 }}>
+                <Typography variant="h5" sx={{ fontWeight: 600, color: '#191919', mt: 1 }}>
                   {new Date(profile.userId.lastLogin).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric'
@@ -1489,10 +1276,10 @@ export default function DashboardCandidate() {
             </Box>
             <Box>
               <StatCard>
-                <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff', letterSpacing: 2 }}>
+                <Typography variant="overline" sx={{ opacity: 0.7, color: '#191919', letterSpacing: 2 }}>
                   Profile Status
                 </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 600, color: '#02E2FF', mt: 1 }}>
+                <Typography variant="h5" sx={{ fontWeight: 600, color: '#191919', mt: 1 }}>
                   {profile.userId.isVerified ? 'Verified' : 'Pending'}
                 </Typography>
               </StatCard>
@@ -1513,31 +1300,31 @@ export default function DashboardCandidate() {
             <StyledCard>
               <SectionTitle>Personal Information</SectionTitle>
               <InfoItem>
-                <PersonIcon sx={{ color: '#02E2FF' }} />
+                <PersonIcon sx={{ color: 'rgba(0, 255, 157, 1)' }} />
                 <Box>
-                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Username</Typography>
-                  <Typography variant="body1" sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.userId.username}</Typography>
+                  <Typography variant="body2" sx={{ color: '#191919' }}>Username</Typography>
+                  <Typography variant="body1" sx={{ color: '#191919', fontWeight: 500 }}>{profile.userId.username}</Typography>
                 </Box>
               </InfoItem>
               <InfoItem>
-                <EmailIcon sx={{ color: '#02E2FF' }} />
+                <EmailIcon sx={{ color: 'rgba(0, 255, 157, 1)' }} />
                 <Box>
-                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Email</Typography>
-                  <Typography variant="body1" sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.userId.email}</Typography>
+                  <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.7)' }}>Email</Typography>
+                  <Typography variant="body1" sx={{ color: '#000000', fontWeight: 500 }}>{profile.userId.email}</Typography>
                 </Box>
               </InfoItem>
               <InfoItem>
-                <WorkIcon sx={{ color: '#02E2FF' }} />
+                <WorkIcon sx={{ color: 'rgba(0, 255, 157, 1)' }} />
                 <Box>
-                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Role</Typography>
-                  <Typography variant="body1" sx={{ color: '#ffffff', fontWeight: 500 }}>{profile.userId.role}</Typography>
+                  <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.7)' }}>Role</Typography>
+                  <Typography variant="body1" sx={{ color: '#000000', fontWeight: 500 }}>{profile.userId.role}</Typography>
                 </Box>
               </InfoItem>
               <InfoItem>
-                <CalendarTodayIcon sx={{ color: '#02E2FF' }} />
+                <CalendarTodayIcon sx={{ color: 'rgba(0, 255, 157, 1)' }} />
                 <Box>
-                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Member Since</Typography>
-                  <Typography variant="body1" sx={{ color: '#ffffff', fontWeight: 500 }}>
+                  <Typography variant="body2" sx={{ color: 'rgba(0,0,0,0.7)' }}>Member Since</Typography>
+                  <Typography variant="body1" sx={{ color: '#000000', fontWeight: 500 }}>
                     {new Date(profile.userId.createdAt).toLocaleDateString('en-US', {
                       month: 'long',
                       day: 'numeric',
@@ -1568,7 +1355,7 @@ export default function DashboardCandidate() {
                     thickness={4}
                     sx={{
                       position: 'absolute',
-                      color: 'rgba(255, 255, 255, 0.1)'
+                      color: 'rgba(0, 0, 0, 0.1)'
                     }}
                   />
                   <CircularProgress
@@ -1603,9 +1390,8 @@ export default function DashboardCandidate() {
                       {profile ? Number(profile.overallScore).toFixed(2) : '0.00%'}
                     </Typography>
                     <Typography
-                      variant="caption"
                       sx={{
-                        color: 'rgba(255, 255, 255, 0.7)',
+                        color: 'rgba(0, 0, 0, 0.7)',
                         mt: 1,
                         fontSize: '0.875rem'
                       }}
@@ -1626,7 +1412,7 @@ export default function DashboardCandidate() {
 
               {/* Soft Skills Distribution */}
               <Box sx={{ mb: 4 }}>
-                <Typography variant="h6" gutterBottom sx={{ color: '#ffffff', opacity: 0.9 }}>
+                <Typography variant="h6" gutterBottom sx={{ color: 'black', opacity: 0.9 }}>
                   Soft Skills
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -1641,7 +1427,7 @@ export default function DashboardCandidate() {
                       />
                     ))
                   ) : (
-                    <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', textAlign: 'center', py: 2 }}>
+                    <Typography sx={{ color: 'black', textAlign: 'center', py: 2 }}>
                       No soft skills added yet. Start a soft skill test to add them.
                     </Typography>
                   )}
@@ -1651,17 +1437,17 @@ export default function DashboardCandidate() {
               {/* Technical Skills */}
               <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6" sx={{ color: '#ffffff', opacity: 0.9 }}>
+                  <Typography variant="h6" sx={{ color: '#000000', opacity: 0.9 }}>
                     Technical Skills
                   </Typography>
                   <Button
                     startIcon={<AddIcon />}
                     onClick={() => setAddSkillDialogOpen(true)}
                     sx={{
-                      color: '#02E2FF',
-                      borderColor: 'rgba(2,226,255,0.5)',
+                      color: 'black',
+                      borderColor: 'black',
                       '&:hover': {
-                        borderColor: '#02E2FF',
+                        borderColor: 'black',
                         background: 'rgba(2,226,255,0.1)'
                       }
                     }}
@@ -1704,13 +1490,13 @@ export default function DashboardCandidate() {
         >
           <DialogTitle sx={{
             borderBottom: '1px solid rgba(255,255,255,0.1)',
-            color: '#ffffff'
+            color: '#000000'
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography variant="h6">Add New Skill</Typography>
               <IconButton
                 onClick={() => setAddSkillDialogOpen(false)}
-                sx={{ color: 'rgba(255,255,255,0.7)' }}
+                sx={{ color: 'rgba(0,0,0,0.7)' }}
               >
                 <CloseIcon />
               </IconButton>
@@ -1728,15 +1514,15 @@ export default function DashboardCandidate() {
                   <TextField
                     {...params}
                     label="Category"
-                    InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                    InputLabelProps={{ sx: { color: 'rgba(0,0,0,0.7)' } }}
                     sx={{
                       mt: 2,
-                      color: '#ffffff',
+                      color: '#000000',
                       '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255,255,255,0.2)',
+                        borderColor: 'rgba(0,0,0,0.2)',
                       },
                       '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255,255,255,0.3)',
+                        borderColor: 'rgba(0,0,0,0.3)',
                       },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                         borderColor: '#02E2FF',
@@ -1747,7 +1533,7 @@ export default function DashboardCandidate() {
                 )}
                 sx={{
                   '& .MuiAutocomplete-inputRoot': {
-                    color: '#ffffff',
+                    color: '#000000',
                     background: 'rgba(30,41,59,0.98)',
                   },
                 }}
@@ -1781,16 +1567,16 @@ export default function DashboardCandidate() {
                   <TextField
                     {...params}
                     label="Skill Name"
-                    InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                    InputLabelProps={{ sx: { color: 'rgba(0,0,0,0.7)' } }}
                     InputProps={{
                       ...params.InputProps,
                       sx: {
-                        color: '#ffffff',
+                        color: '#000000',
                         '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(255,255,255,0.2)',
+                          borderColor: 'rgba(0,0,0,0.2)',
                         },
                         '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'rgba(255,255,255,0.3)',
+                          borderColor: 'rgba(0,0,0,0.3)',
                         },
                         '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                           borderColor: '#02E2FF',
@@ -1802,7 +1588,7 @@ export default function DashboardCandidate() {
                 )}
                 sx={{
                   '& .MuiAutocomplete-inputRoot': {
-                    color: '#ffffff',
+                    color: '#000000',
                     background: 'rgba(30,41,59,0.98)',
                   },
                 }}
@@ -1827,7 +1613,7 @@ export default function DashboardCandidate() {
                 )}
               />
               <Box>
-                <Typography sx={{ color: '#ffffff', mb: 1 }}>Proficiency Level: {newSkill.proficiencyLevel}</Typography>
+                <Typography sx={{ color: '#000000', mb: 1 }}>Proficiency Level: {newSkill.proficiencyLevel}</Typography>
                 <Slider
                   value={newSkill.proficiencyLevel}
                   onChange={(_, value) => {
@@ -1846,7 +1632,7 @@ export default function DashboardCandidate() {
                   ]}
                   sx={{
                     '& .MuiSlider-rail': {
-                      backgroundColor: 'rgba(255,255,255,0.2)',
+                      backgroundColor: 'rgba(0,0,0,0.2)',
                     },
                     '& .MuiSlider-track': {
                       background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
@@ -1858,13 +1644,13 @@ export default function DashboardCandidate() {
                       },
                     },
                     '& .MuiSlider-mark': {
-                      backgroundColor: 'rgba(255,255,255,0.3)',
+                      backgroundColor: 'rgba(0,0,0,0.3)',
                     },
                     '& .MuiSlider-markActive': {
                       backgroundColor: '#02E2FF',
                     },
                     '& .MuiSlider-markLabel': {
-                      color: 'rgba(255,255,255,0.7)',
+                      color: 'rgba(0,0,0,0.7)',
                     },
                   }}
                 />
@@ -1878,7 +1664,7 @@ export default function DashboardCandidate() {
             <Button
               onClick={() => setAddSkillDialogOpen(false)}
               sx={{
-                color: 'rgba(255,255,255,0.8)',
+                color: 'rgba(0,0,0,0.8)',
                 mr: 1
               }}
             >
