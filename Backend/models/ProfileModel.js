@@ -12,6 +12,7 @@ const profileSchema = new mongoose.Schema(
       enum: ["Candidate", "Company"],
       required: true,
     },
+    quota: { type: Number, default: 5 },
     overallScore: { type: Number, default: 0 },
 
     // Hard Skills
