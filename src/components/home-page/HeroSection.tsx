@@ -126,7 +126,7 @@ const HeroSection = () => {
                 height: "100%",
                 borderRadius: 2,
                 position: "relative",
-                zIndex: 1,
+                zIndex: 3,
               }}
             />
             <Box
@@ -139,7 +139,7 @@ const HeroSection = () => {
                 backgroundColor: "rgba(0, 255, 157, 0.2)",
                 borderRadius: "50%",
                 filter: "blur(60px)",
-                zIndex: 0,
+                zIndex: 2,
               }}
             />
           </Box>

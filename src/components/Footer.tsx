@@ -97,7 +97,6 @@ const Footer = () => {
         sx={{
           mt: { xs: 3, sm: 3, md: 6 },
           justifyContent: { xs: "center", sm: "center", md: "space-between" },
-          borderTop: { md: "2px solid rgba(32, 32, 32, 0.2)" },
           pt: 2,
           gap: "1rem",
         }}
@@ -107,7 +106,14 @@ const Footer = () => {
             key={name}
             direction="row"
             alignItems="center"
-            sx={{ minWidth: { md: 150 }, gap: "0.25rem" }}
+            justifyContent="center"
+            sx={{
+              minWidth: { md: "max-content" },
+              gap: "0.25rem",
+              px: 2,
+              pt: 1,
+              borderTop: { md: "2px solid rgba(32, 32, 32, 0.2)" },
+            }}
           >
             <Typography
               variant="body2"
