@@ -35,7 +35,7 @@ const PartnersSection = () => {
             key={idx}
             src={src}
             alt={`partner-${idx}`}
-            sx={{ height: 60, mx: 4 }}
+            sx={{ height: {xs: 30, sm: 40, md:60}, mx: 4 }}
           />
         ))}
       </Box>
