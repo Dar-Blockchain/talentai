@@ -44,10 +44,10 @@ const Footer = () => {
       }}
     >
       <Stack
-        spacing={4}
         direction="row"
         justifyContent="space-between"
         flexWrap="wrap"
+        sx={{ gap: "1rem" }}
       >
         <Box sx={{ minWidth: 200 }}>
           <Box
@@ -62,46 +62,59 @@ const Footer = () => {
             AI-Powered Speed.
           </Typography>
         </Box>
-
-        {footerSections.map((section) => (
-          <Box key={section.title} sx={{ minWidth: 120 }}>
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-              {section.title}
-            </Typography>
-            {section.items.map((item) => (
-              <Link
-                key={item}
-                href="#"
-                underline="none"
-                color="inherit"
-                variant="body2"
-                sx={{ display: "block", mb: 1 }}
-              >
-                {item}
-              </Link>
-            ))}
-          </Box>
-        ))}
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          flexWrap="wrap"
+          sx={{ gap: "1rem" }}
+        >
+          {footerSections.map((section) => (
+            <Box key={section.title} sx={{ minWidth: 120 }}>
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                {section.title}
+              </Typography>
+              {section.items.map((item) => (
+                <Link
+                  key={item}
+                  href="#"
+                  underline="none"
+                  color="inherit"
+                  variant="body2"
+                  sx={{ display: "block", mb: 1 }}
+                >
+                  {item}
+                </Link>
+              ))}
+            </Box>
+          ))}
+        </Stack>
       </Stack>
 
       <Stack
         direction="row"
-        spacing={4}
         flexWrap="wrap"
-        justifyContent="space-between"
         alignItems="center"
-        mt={6}
-        sx={{ borderTop: "2px solid rgba(32, 32, 32, 0.2)", pt: 2 }}
+        sx={{
+          mt: { xs: 3, sm: 3, md: 6 },
+          justifyContent: { xs: "center", sm: "center", md: "space-between" },
+          borderTop: { md: "2px solid rgba(32, 32, 32, 0.2)" },
+          pt: 2,
+          gap: "1rem",
+        }}
       >
         {socialLinks.map(({ name, icon, href }) => (
           <Stack
             key={name}
             direction="row"
-            spacing={1}
             alignItems="center"
-            sx={{ minWidth: 150 }}
+            sx={{ minWidth: { md: 150 }, gap: "0.25rem" }}
           >
-            <Typography variant="body2">{name}</Typography>
+            <Typography
+              variant="body2"
+              sx={{ display: { xs: "none", sm: "none", md: "flex" } }}
+            >
+              {name}
+            </Typography>
             <IconButton href={href} aria-label={name} sx={{ color: "#000" }}>
               {icon}
             </IconButton>
@@ -112,9 +125,9 @@ const Footer = () => {
       <Typography
         variant="body2"
         sx={{
-          mt: 5,
+          mt: { xs: 2, sm: 2, md: 5 },
           color: "rgba(32, 32, 32, 0.5)",
-          textAlign: "start",
+          textAlign: { xs: "center", sm: "center", md: "start" },
         }}
       >
         © 2025 TalentAI. All rights reserved
