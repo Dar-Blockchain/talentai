@@ -36,6 +36,7 @@ import AnalyticsIcon from '@mui/icons-material/Analytics';
 import PersonIcon from '@mui/icons-material/Person';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import Cookies from 'js-cookie';
+import { color } from 'framer-motion';
 
 type Skill = { label: string; color: string; category: string };
 
@@ -143,14 +144,15 @@ const ColorlibConnector = styled(StepConnector)(() => ({
   [`& .${stepConnectorClasses.line}`]: {
     height: 3,
     border: 0,
-    backgroundColor: '#eaeaf0',
+    backgroundColor: 'black',
     borderRadius: 1
   },
   [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line},
      &.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
-    backgroundImage: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)'
+    backgroundColor: 'rgba(0, 255, 157, 1)'
   }
 }));
+
 function ColorlibStepIcon(props: StepIconProps) {
   const { active, completed, icon } = props;
   const icons: Record<string, React.ReactElement> = {
@@ -161,8 +163,8 @@ function ColorlibStepIcon(props: StepIconProps) {
     5: <CheckCircleIcon />
   };
   const bg = active || completed
-    ? 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)'
-    : '#eaeaf0';
+    ? 'rgba(0, 255, 157, 1)'
+    : 'black';
   return (
     <Box sx={{
       background: bg,
@@ -195,6 +197,30 @@ const getSteps = (userType: UserType, hasHederaExp: 'yes' | 'no' | '') => {
     return steps;
   }
 };
+
+// Add styled select component
+const GREEN_MAIN = 'rgba(0, 255, 157, 1)';
+const StyledSelect = styled(TextField)({
+  '& .MuiSelect-select': {
+    color: 'black'
+  },
+  '& .MuiInputLabel-root': {
+    color: 'black'
+  },
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'rgba(0, 0, 0, 0.23)'
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'rgba(0, 0, 0, 0.23)'
+  },
+  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+    borderColor: 'rgba(0, 0, 0, 0.23)'
+  },
+  [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line},
+     &.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
+    backgroundColor: GREEN_MAIN
+  }
+});
 
 export default function Preferences() {
   const router = useRouter();
@@ -363,7 +389,7 @@ export default function Preferences() {
       if (userType === 'company') {
         router.push('/dashboardCompany');
         return;
-      }   
+      }
       //      // If there's a returnUrl, go there
       if (returnUrl) {
         console.log('Redirecting to returnUrl:', returnUrl);
@@ -459,11 +485,6 @@ export default function Preferences() {
   return (
     <Box sx={{
       minHeight: '100vh',
-      backgroundColor: '#00072D',
-      backgroundImage: `
-        radial-gradient(circle at 20% 30%, rgba(2,226,255,0.4), transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(0,255,195,0.3), transparent 50%)
-      `,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -477,21 +498,29 @@ export default function Preferences() {
             height: 6,
             borderRadius: 3,
             mb: 3,
-            backgroundColor: '#f0f0f0',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
             '& .MuiLinearProgress-bar': {
-              backgroundImage: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)'
+              backgroundColor: GREEN_MAIN
             }
           }}
         />
 
-        <Typography variant="h4" fontWeight={700} gutterBottom sx={{ color: '#00072D' }}>
+        <Typography variant="h4" fontWeight={700} gutterBottom sx={{ color: 'black' }}>
           {activeStep === 0 ? 'Welcome to TalentAI' : "Let's Deep Dive into Your Skills"}
         </Typography>
 
         <Stepper alternativeLabel activeStep={activeStep} connector={<ColorlibConnector />} sx={{ my: 4 }}>
           {steps.map(label => (
             <Step key={label}>
-              <StepLabel StepIconComponent={ColorlibStepIcon}>{label}</StepLabel>
+              <StepLabel
+                StepIconComponent={ColorlibStepIcon}
+                sx={{
+                  '& .MuiStepLabel-label.Mui-active': { color: `${GREEN_MAIN} !important` },
+                  '& .MuiStepLabel-label.Mui-completed': { color: `${GREEN_MAIN} !important` }
+                }}
+              >
+                {label}
+              </StepLabel>
             </Step>
           ))}
         </Stepper>
@@ -499,7 +528,7 @@ export default function Preferences() {
         {/* User Type Selection Step */}
         {currentStep === 'Select Type' && (
           <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" gutterBottom sx={{ color: 'black' }}>
               Are you a candidate looking for opportunities or a company seeking talent?
             </Typography>
             <Box sx={{
@@ -513,11 +542,18 @@ export default function Preferences() {
                 onClick={() => handleUserTypeSelect('candidate')}
                 startIcon={<PersonIcon />}
                 sx={{
+                  color: userType === 'candidate' ? 'black' : GREEN_MAIN,
+                  borderColor: GREEN_MAIN,
+                  backgroundColor: userType === 'candidate' ? GREEN_MAIN : 'transparent',
                   py: 2,
                   px: 4,
                   borderRadius: 2,
                   textTransform: 'none',
-                  fontWeight: 600
+                  fontWeight: 600,
+                  '&:hover': {
+                    backgroundColor: GREEN_MAIN,
+                    color: 'black',
+                  }
                 }}
               >
                 I'm a Candidate
@@ -527,11 +563,18 @@ export default function Preferences() {
                 onClick={() => handleUserTypeSelect('company')}
                 startIcon={<BusinessIcon />}
                 sx={{
+                  color: userType === 'company' ? 'black' : GREEN_MAIN,
+                  borderColor: GREEN_MAIN,
+                  backgroundColor: userType === 'company' ? GREEN_MAIN : 'transparent',
                   py: 2,
                   px: 4,
                   borderRadius: 2,
                   textTransform: 'none',
-                  fontWeight: 600
+                  fontWeight: 600,
+                  '&:hover': {
+                    backgroundColor: GREEN_MAIN,
+                    color: 'black',
+                  }
                 }}
               >
                 I'm a Company
@@ -543,7 +586,7 @@ export default function Preferences() {
         {/* Company Details Step */}
         {currentStep === 'Company Details' && (
           <Box sx={{ py: 2 }}>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" sx={{ color: 'black' }} gutterBottom>
               Tell us about your company
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -552,34 +595,103 @@ export default function Preferences() {
                 label="Company Name"
                 value={companyDetails.name}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, name: e.target.value }))}
-                sx={{ backgroundColor: 'rgba(30,41,59,0.98)' }}
+                sx={{
+                  backgroundColor: 'white',
+                  color: 'black',
+                  '& .MuiInputBase-input': { color: 'grey' },
+                  '& .MuiInputLabel-root': { color: 'grey' },
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'black' }
+                }}
               />
-              <TextField
+              <StyledSelect
+                select
                 fullWidth
                 label="Industry"
                 value={companyDetails.industry}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, industry: e.target.value }))}
-                sx={{ backgroundColor: 'rgba(30,41,59,0.98)' }}
-              />
-              <TextField
+                sx={{
+                  backgroundColor: 'white',
+                  color: 'black',
+                  '& .MuiInputBase-input': { color: 'grey' },
+                  '& .MuiInputLabel-root': { color: 'grey' },
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                }}
+                SelectProps={{
+                  MenuProps: {
+                    PaperProps: {
+                      sx: {
+                        backgroundColor: '#f5f5f5'
+                      }
+                    }
+                  }
+                }}
+              >
+                <MenuItem value="Technology" sx={{ color: 'black' }}>Technology</MenuItem>
+                <MenuItem value="Finance" sx={{ color: 'black' }}>Finance</MenuItem>
+                <MenuItem value="Healthcare" sx={{ color: 'black' }}>Healthcare</MenuItem>
+                <MenuItem value="Education" sx={{ color: 'black' }}>Education</MenuItem>
+                <MenuItem value="Other" sx={{ color: 'black' }}>Other</MenuItem>
+              </StyledSelect>
+
+              <StyledSelect
+                select
                 fullWidth
                 label="Company Size"
-                select
                 value={companyDetails.size}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, size: e.target.value }))}
-                sx={{ backgroundColor: 'rgba(30,41,59,0.98)' }}
+                sx={{
+                  backgroundColor: 'white',
+                  color: 'black',
+                  '& .MuiInputBase-input': { color: 'grey' },
+                  '& .MuiInputLabel-root': { color: 'grey' },
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                }}
+                SelectProps={{
+                  MenuProps: {
+                    PaperProps: {
+                      sx: {
+                        backgroundColor: '#f5f5f5'
+                      }
+                    }
+                  }
+                }}
               >
-                {['1-10', '11-50', '51-200', '201-500', '500+'].map(size => (
-                  <MenuItem key={size} value={size} sx={{ backgroundColor: 'rgba(30,41,59,0.98)' }}>{size} employees</MenuItem>
-                ))}
-              </TextField>
-              <TextField
+                <MenuItem value="1-10" sx={{ color: 'black' }}  >1-10 employees</MenuItem>
+                <MenuItem value="11-50" sx={{ color: 'black' }}>11-50 employees</MenuItem>
+                <MenuItem value="51-200" sx={{ color: 'black' }}>51-200 employees</MenuItem>
+                <MenuItem value="201-500" sx={{ color: 'black' }}>201-500 employees</MenuItem>
+                <MenuItem value="501+" sx={{ color: 'black' }}>501+ employees</MenuItem>
+              </StyledSelect>
+
+              <StyledSelect
+                select
                 fullWidth
                 label="Location"
                 value={companyDetails.location}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, location: e.target.value }))}
-                sx={{ backgroundColor: 'rgba(30,41,59,0.98)' }}
-              />
+                sx={{
+                  backgroundColor: 'white',
+                  color: 'black',
+                  '& .MuiInputBase-input': { color: 'grey' },
+                  '& .MuiInputLabel-root': { color: 'grey' },
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                }}
+                SelectProps={{
+                  MenuProps: {
+                    PaperProps: {
+                      sx: {
+                        backgroundColor: '#f5f5f5'
+                      }
+                    }
+                  }
+                }}
+              >
+                <MenuItem value="Remote" sx={{ color: 'black' }}>Remote</MenuItem>
+                <MenuItem value="On-site" sx={{ color: 'black' }}>On-site</MenuItem>
+                <MenuItem value="Hybrid" sx={{ color: 'black' }}>Hybrid</MenuItem>
+              </StyledSelect>
             </Box>
           </Box>
         )}
@@ -599,13 +711,14 @@ export default function Preferences() {
                     minWidth: 120,
                     textTransform: 'none',
                     fontWeight: 600,
-                    color: 'rgba(255, 255, 255, 0.7)',
+                    boxShadow: 'none',
+                    color: 'black',
                     '&.Mui-selected': {
-                      color: '#02E2FF'
+                      color: GREEN_MAIN
                     }
                   },
                   '& .MuiTabs-indicator': {
-                    backgroundColor: '#02E2FF'
+                    backgroundColor: GREEN_MAIN
                   }
                 }}
               >
@@ -622,7 +735,7 @@ export default function Preferences() {
             </Paper>
 
             {/* Title */}
-            <Typography variant="h6" mb={2} sx={{ color: '#fff' }}>
+            <Typography variant="h6" mb={2} sx={{ color: 'black' }}>
               {userType === 'company'
                 ? 'Select the skills your company is looking for'
                 : `Select your ${selectedCategory} skills`
@@ -700,7 +813,7 @@ export default function Preferences() {
                           sx={{
                             color: 'rgba(255, 255, 255, 0.7)',
                             '&.Mui-checked': {
-                              color: '#02E2FF'
+                              color: GREEN_MAIN
                             }
                           }}
                         />
@@ -717,7 +830,7 @@ export default function Preferences() {
                           sx={{
                             color: 'rgba(255, 255, 255, 0.7)',
                             '&.Mui-checked': {
-                              color: '#02E2FF'
+                              color: GREEN_MAIN
                             }
                           }}
                         />
@@ -736,12 +849,13 @@ export default function Preferences() {
         {/* Experience Level Step for Company */}
         {currentStep === 'Experience Level' && (
           <Box>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6" sx={{ color: 'black' }} gutterBottom>
               Required Experience Level
             </Typography>
             <RadioGroup
               value={experienceLevel}
               onChange={(e) => setExperienceLevel(e.target.value)}
+              sx={{ color: 'black' }}
             >
               {['Entry Level', 'Mid Level', 'Senior', 'Lead/Expert'].map(level => (
                 <FormControlLabel
@@ -823,10 +937,10 @@ export default function Preferences() {
 
         {currentStep === 'Rate Proficiency' && (
           <Box>
-            <Typography mb={2}>Rate your proficiency (1 = Novice, 5 = Expert)</Typography>
+            <Typography mb={2} sx={{ color: 'black' }}>Rate your proficiency (1 = Novice, 5 = Expert)</Typography>
             {skills.map(skill => (
               <Box key={skill} sx={{ mb: 3, position: 'relative' }}>
-                <Typography gutterBottom>{skill}</Typography>
+                <Typography gutterBottom sx={{ color: 'black' }}>{skill}</Typography>
                 <Slider
                   value={proficiency[skill] ?? 3}
                   onChange={(_, v) => setProf(skill, v as number)}
@@ -834,6 +948,7 @@ export default function Preferences() {
                   marks
                   min={1}
                   max={5}
+                  sx={{ color: GREEN_MAIN }}
                   valueLabelDisplay="auto"
                 />
               </Box>
@@ -843,48 +958,48 @@ export default function Preferences() {
 
         {currentStep === 'Review' && (
           <Box>
-            <Typography mb={2}>Review your inputs before starting the test:</Typography>
-            <Typography variant="body2">
+            <Typography mb={2} sx={{ color: 'black' }}>Review your inputs before starting the test:</Typography>
+            <Typography variant="body2" sx={{ color: 'black' }}>
               <strong>Type:</strong> {userType === 'company' ? 'Company' : 'Candidate'}
             </Typography>
             {userType === 'company' ? (
               <>
-                <Typography variant="body2" sx={{ mt: 1 }}>
+                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}>
                   <strong>Company Details:</strong>
                 </Typography>
-                <Typography variant="body2">
+                <Typography variant="body2" sx={{ color: 'black' }}>
                   Name: {companyDetails.name}<br />
                   Industry: {companyDetails.industry}<br />
                   Size: {companyDetails.size}<br />
                   Location: {companyDetails.location}
                 </Typography>
-                <Typography variant="body2" sx={{ mt: 1 }}>
+                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
                   <strong>Required Skills:</strong> {requiredSkills.join(', ')}
                 </Typography>
                 {hederaExp === 'yes' && (
-                  <Typography variant="body2" sx={{ mt: 1 }}>
+                  <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
                     <strong>Hedera Experience:</strong> Verified
                   </Typography>
                 )}
-                <Typography variant="body2" sx={{ mt: 1 }}>
+                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
                   <strong>Required Experience Level:</strong> {experienceLevel}
                 </Typography>
               </>
             ) : (
               <>
-                <Typography variant="body2" sx={{ mt: 1 }}>
+                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
                   <strong>Skills:</strong> {skills.join(', ')}
                 </Typography>
                 {hederaExp === 'yes' && (
-                  <Typography variant="body2" sx={{ mt: 1 }}>
+                  <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
                     <strong>Hedera Experience:</strong> Verified
                   </Typography>
                 )}
-                <Typography variant="body2" sx={{ mt: 1 }}>
+                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
                   <strong>Proficiency Levels:</strong>
                 </Typography>
                 {skills.map(skill => (
-                  <Typography key={skill} variant="body2">
+                  <Typography key={skill} variant="body2" sx={{ color: 'black' }}>
                     - {skill}: {proficiency[skill] ?? '-'}/5
                   </Typography>
                 ))}
@@ -903,10 +1018,10 @@ export default function Preferences() {
               borderRadius: 2,
               textTransform: 'none',
               fontWeight: 600,
-              borderColor: '#02E2FF',
-              color: '#02E2FF',
+              borderColor: GREEN_MAIN,
+              color: GREEN_MAIN,
               '&:hover': {
-                borderColor: '#00FFC3'
+                borderColor: GREEN_MAIN
               }
             }}
           >
@@ -917,12 +1032,12 @@ export default function Preferences() {
             onClick={activeStep === steps.length - 1 ? handleStartTest : handleNext}
             disabled={activeStep === 0 && !userType}
             sx={{
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              background: GREEN_MAIN,
               borderRadius: 2,
               textTransform: 'none',
               fontWeight: 600,
               '&:hover': {
-                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                background: GREEN_MAIN
               }
             }}
           >

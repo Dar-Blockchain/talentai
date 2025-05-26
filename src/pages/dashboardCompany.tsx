@@ -113,6 +113,7 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
 
 const ProfileHeader = styled(Box)(({ theme }) => ({
   background: 'white',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
   color: '#ffffff',
   padding: theme.spacing(4),
   borderRadius: '16px',
@@ -126,7 +127,6 @@ const ProfileHeader = styled(Box)(({ theme }) => ({
     left: '0',
     right: '0',
     bottom: '0',
-    background: 'radial-gradient(circle at top right, rgba(2,226,255,0.1) 0%, transparent 60%)',
     zIndex: 1
   }
 }));
@@ -150,6 +150,7 @@ const StatCard = styled(Box)(({ theme }) => ({
 const CompanyInfoCard = styled(Box)(({ theme }) => ({
   background: 'white',
   borderRadius: '16px',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
   padding: theme.spacing(3),
   border: '1px solid rgba(255,255,255,0.1)',
   marginBottom: theme.spacing(3),
@@ -165,7 +166,7 @@ const InfoRow = styled(Box)(({ theme }) => ({
 
 const SkillChip = styled(Chip)(({ theme }) => ({
   borderRadius: '8px',
-  backgroundColor: 'rgba(0, 255, 157, 1)',
+  backgroundColor: GREEN_MAIN,
   color: 'black',
   fontWeight: 600,
   margin: theme.spacing(0.5),
@@ -1107,7 +1108,7 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
                   color={bid.status === 'win' ? 'success' : 'error'}
                   sx={{ fontWeight: 700 }}
                 /> */}
-                <Typography sx={{ color: 'rgba(0, 255, 157, 1)', fontWeight: 600 }}>
+                <Typography sx={{ color: GREEN_MAIN, fontWeight: 600 }}>
                   ${bid?.finalBid}
                 </Typography>
                 <Typography sx={{ color: 'black', fontSize: '0.8rem' }}>
@@ -1162,7 +1163,7 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
             label="Beta"
             size="small"
             sx={{
-              backgroundColor: 'rgba(0, 255, 157, 1)',
+              backgroundColor: GREEN_MAIN,
               color: 'black',
               height: '20px'
             }}
@@ -1250,18 +1251,18 @@ Benefits:
 - Health insurance
 - 401(k) matching
 - Professional development budget"
-            InputLabelProps={{ sx: { color: 'rgba(0, 255, 157, 1)' } }}
+            InputLabelProps={{ sx: { color: GREEN_MAIN } }}
             InputProps={{
               sx: {
                 color: '#000',
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 255, 157, 1)'
+                  borderColor: GREEN_MAIN
                 },
                 '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 255, 157, 1)',
+                  borderColor: GREEN_MAIN,
                 },
                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(0, 255, 157, 1)',
+                  borderColor: GREEN_MAIN,
                 },
               },
             }}
@@ -1274,20 +1275,20 @@ Benefits:
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
               <Box sx={{ flex: 1 }}>
                 <FormControl fullWidth>
-                  <InputLabel sx={{ color: 'rgba(0, 255, 157, 1)' }}>Currency</InputLabel>
+                  <InputLabel sx={{ color: GREEN_MAIN }}>Currency</InputLabel>
                   <Select
                     value={salaryRange.currency}
                     onChange={(e) => handleSalaryChange('currency', e.target.value)}
                     sx={{
                       color: '#000',
                       '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(0, 255, 157, 1)',
+                        borderColor: GREEN_MAIN,
                       },
                       '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(0, 255, 157, 1)',
+                        borderColor: GREEN_MAIN,
                       },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(0, 255, 157, 1)',
+                        borderColor: GREEN_MAIN,
                       },
                     }}
                   >
@@ -1304,18 +1305,18 @@ Benefits:
                   type="string"
                   value={salaryRange.min}
                   onChange={(e) => handleSalaryChange('min', parseInt(e.target.value) || 0)}
-                  InputLabelProps={{ sx: { color: 'rgba(0, 255, 157, 1)' } }}
+                  InputLabelProps={{ sx: { color: GREEN_MAIN } }}
                   InputProps={{
                     sx: {
                       color: '#000',
                       '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(0, 255, 157, 1)',
+                        borderColor: GREEN_MAIN,
                       },
                       '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(0, 255, 157, 1)',
+                        borderColor: GREEN_MAIN,
                       },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(0, 255, 157, 1)',
+                        borderColor: GREEN_MAIN,
                       },
                     },
                   }}
@@ -1328,18 +1329,18 @@ Benefits:
                   type="string"
                   value={salaryRange.max}
                   onChange={(e) => handleSalaryChange('max', parseInt(e.target.value) || 0)}
-                  InputLabelProps={{ sx: { color: 'rgba(0, 255, 157, 1)' } }}
+                  InputLabelProps={{ sx: { color: GREEN_MAIN } }}
                   InputProps={{
                     sx: {
-                      color: 'rgba(0, 255, 157, 1)',
+                      color: GREEN_MAIN,
                       '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(0, 255, 157, 1)',
+                        borderColor: GREEN_MAIN,
                       },
                       '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(0, 255, 157, 1)',
+                        borderColor: GREEN_MAIN,
                       },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(0, 255, 157, 1)',
+                        borderColor: GREEN_MAIN,
                       },
                     },
                   }}
@@ -1355,12 +1356,12 @@ Benefits:
               disabled={!jobDescription || isQuickGenerating || !isSalaryRangeValid()}
               startIcon={isQuickGenerating ? <CircularProgress size={20} /> : <BoltIcon />}
               sx={{
-                background: 'rgba(0, 255, 157, 1)',
+                background: GREEN_MAIN,
                 '&:hover': {
-                  background: 'rgba(0, 255, 157, 1)',
+                  background: GREEN_MAIN,
                 },
                 '&.Mui-disabled': {
-                  background: 'rgba(0, 255, 157, 1)',
+                  background: GREEN_MAIN,
                   color: 'black'
                 }
               }}
@@ -1373,15 +1374,15 @@ Benefits:
               disabled={!jobDescription || isDetailedGenerating || !isSalaryRangeValid()}
               startIcon={isDetailedGenerating ? <CircularProgress size={20} /> : <AutoAwesomeIcon />}
               sx={{
-                borderColor: 'rgba(0, 255, 157, 1)',
-                color: 'rgba(0, 255, 157, 1)',
+                borderColor: GREEN_MAIN,
+                color: GREEN_MAIN,
                 '&:hover': {
                   borderColor: '#02E2FF',
                   backgroundColor: 'rgba(2,226,255,0.1)'
                 },
                 '&.Mui-disabled': {
-                  borderColor: 'rgba(0, 255, 157, 1)',
-                  color: 'rgba(0, 255, 157, 1)'
+                  borderColor: GREEN_MAIN,
+                  color: GREEN_MAIN
                 }
               }}
             >
@@ -1459,7 +1460,7 @@ Benefits:
               <Box sx={{
                 p: { xs: 2, sm: 3 },
                 borderRadius: '50%',
-                backgroundColor: 'rgba(0, 255, 157, 1)',
+                backgroundColor: GREEN_MAIN,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -1488,7 +1489,7 @@ Benefits:
                   <Typography
                     variant="h5"
                     sx={{
-                      color: 'rgba(0, 255, 157, 1)',
+                      color: GREEN_MAIN,
                       fontSize: { xs: '1.25rem', sm: '1.5rem' }
                     }}
                   >
@@ -1528,7 +1529,7 @@ Benefits:
                     size="small"
                     sx={{
                       color: 'black',
-                      backgroundColor: 'rgba(0, 255, 157, 1)',
+                      backgroundColor: GREEN_MAIN,
                       fontSize: { xs: '0.75rem', sm: '0.875rem' }
                     }}
                   />
@@ -1536,7 +1537,7 @@ Benefits:
                     label={generatedJob.jobDetails.employmentType}
                     size="small"
                     sx={{
-                      backgroundColor: 'rgba(0, 255, 157, 1)',
+                      backgroundColor: GREEN_MAIN,
                       fontSize: { xs: '0.75rem', sm: '0.875rem' },
                       color: 'black'
                     }}
@@ -1546,7 +1547,7 @@ Benefits:
                     size="small"
                     sx={{
                       color: 'black',
-                      backgroundColor: 'rgba(0, 255, 157, 1)',
+                      backgroundColor: GREEN_MAIN,
                       fontSize: { xs: '0.75rem', sm: '0.875rem' }
                     }}
                   />
@@ -1555,7 +1556,7 @@ Benefits:
 
               <Box sx={{ mb: 4 }}>
                 <Typography variant="subtitle1" sx={{
-                  color: 'rgba(0, 255, 157, 1)',
+                  color: GREEN_MAIN,
                   mb: 2,
                   fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}>
@@ -1572,7 +1573,7 @@ Benefits:
 
               <Box sx={{ mb: 4 }}>
                 <Typography variant="subtitle1" sx={{
-                  color: 'rgba(0, 255, 157, 1)',
+                  color: GREEN_MAIN,
                   mb: 2,
                   fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}>
@@ -1594,7 +1595,7 @@ Benefits:
                         minWidth: '24px',
                         height: '24px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(0, 255, 157, 1)',
+                        backgroundColor: GREEN_MAIN,
                         color: 'black',
                         display: 'flex',
                         alignItems: 'center',
@@ -1614,7 +1615,7 @@ Benefits:
 
               <Box sx={{ mb: 4 }}>
                 <Typography variant="subtitle1" sx={{
-                  color: 'rgba(0, 255, 157, 1)',
+                  color: GREEN_MAIN,
                   mb: 2,
                   fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}>
@@ -1636,7 +1637,7 @@ Benefits:
                         minWidth: '24px',
                         height: '24px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(0, 255, 157, 1)',
+                        backgroundColor: GREEN_MAIN,
                         color: 'black',
                         display: 'flex',
                         alignItems: 'center',
@@ -1656,7 +1657,7 @@ Benefits:
 
               <Box>
                 <Typography variant="subtitle1" sx={{
-                  color: 'rgba(0, 255, 157, 1)',
+                  color: GREEN_MAIN,
                   mb: 2,
                   fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}>
@@ -1668,7 +1669,7 @@ Benefits:
                       key={index}
                       label={`${skill.name} (Level ${skill.level})`}
                       sx={{
-                        backgroundColor: 'rgba(0, 255, 157, 1)',
+                        backgroundColor: GREEN_MAIN,
                         color: 'black',
                         '& .MuiChip-label': {
                           px: 2
@@ -1690,14 +1691,14 @@ Benefits:
                   mt: 4,
                   py: { xs: 1, sm: 1.5 },
                   fontSize: { xs: '0.875rem', sm: '1rem' },
-                  background: 'rgba(0, 255, 157, 1)',
+                  background: GREEN_MAIN,
                   borderRadius: '12px',
                   color: isSaving ? '#111' : '#fff',
                   '&:hover': {
-                    background: 'rgba(0, 255, 157, 1)',
+                    background: GREEN_MAIN,
                   },
                   '&.Mui-disabled': {
-                    background: 'rgba(0, 255, 157, 1)',
+                    background: GREEN_MAIN,
                     color: isSaving ? '#111' : '#fff',
                     opacity: 0.7,
                   }
@@ -2690,10 +2691,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
     <Box sx={{
       minHeight: '100vh',
       backgroundColor: 'white',
-      backgroundImage: `
-          radial-gradient(circle at 20% 30%, rgba(37, 99, 235, 0.15), transparent 40%),
-          radial-gradient(circle at 80% 70%, rgba(29, 78, 216, 0.15), transparent 50%)
-        `,
+      
       py: 4,
     }}>
       <ToastContainer
@@ -2825,48 +2823,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                 {profile?.type} • {profile?.userId.role}
               </Typography>
             </Box>
-            {/* <IconButton
-              onClick={handleMenuClick}
-              sx={{
-                color: 'rgba(255,255,255,0.9)',
-                '&:hover': {
-                  background: 'rgba(255,255,255,0.1)'
-                }
-              }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-              PaperProps={{
-                sx: {
-                  background: 'rgba(30, 41, 59, 0.95)',
-                  backdropFilter: 'blur(10px)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  mt: 1
-                }
-              }}
-            >
-              <MenuItem
-                onClick={() => {
-                  handleMenuClose();
-                  handleLogout();
-                }}
-                sx={{
-                  color: 'rgba(255,255,255,0.9)',
-                  '&:hover': {
-                    background: 'rgba(255,255,255,0.1)'
-
-                  },
-                }}
-              >
-                <LogoutIcon sx={{ mr: 1, fontSize: 20 }} />
-                Logout
-              </MenuItem>
-            </Menu> */}
+        
           </Box>
           <StatsContainer>
             <StatCard>

@@ -973,12 +973,35 @@ export default function DashboardCandidate() {
     <Box
       sx={{
         minHeight: '100vh',
-        backgroundColor: '#f8fafc',
         color: GREEN_MAIN,
         padding: theme.spacing(6),
       }}
     >
       <Container maxWidth="lg">
+        {/* Logout Button */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+          <Button
+            onClick={handleLogout}
+            startIcon={<LogoutIcon />}
+            variant="contained"
+            sx={{
+              background: GREEN_MAIN,
+              color: '#000000',
+              fontWeight: 600,
+              borderRadius: '12px',
+              textTransform: 'none',
+              px: 3,
+              py: 1.2,
+              boxShadow: '0 2px 8px rgba(0,255,157,0.15)',
+              '&:hover': {
+                background: GREEN_MAIN,
+                opacity: 0.9
+              }
+            }}
+          >
+            Logout
+          </Button>
+        </Box>
         {/* Profile Header */}
         <ProfileHeader>
           <Box sx={{ position: 'relative', zIndex: 2 }}>
