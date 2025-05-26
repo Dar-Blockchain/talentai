@@ -15,20 +15,20 @@ import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
 
 const theme = createTheme({
-    palette: {
-        mode: 'dark',
-        primary: {
-            main: '#02E2FF',
-        },
-        secondary: {
-            main: '#00FFC3',
-        },
-        background: {
-            default: 'white',
-            paper: 'rgba(255, 255, 255, 0.1)',
-        },
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#00FF9D', // Bright mint green
     },
-});
+    secondary: {
+      main: 'rgba(41, 210, 145, 0.83)', // Soft translucent green
+    },
+    background: {
+      default: 'white', // Consider switching to a dark color if using dark mode
+      paper: 'rgb(0, 0, 0)',
+    },
+  },
+})
 
 // Wrapper component to handle token storage
 function AuthWrapper({ children }: { children: React.ReactNode }) {
