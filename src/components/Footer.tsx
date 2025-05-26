@@ -4,6 +4,7 @@ import YoutubeIcon from "./icons/YoutubeIcon";
 import XIcon from "./icons/XIcon";
 import LinkedinIcon from "./icons/LinkedinIcon";
 import GithubIcon from "./icons/GithubIcon";
+import { useRouter } from "next/router";
 
 const footerSections = [
   {
@@ -32,6 +33,7 @@ const socialLinks = [
 ];
 
 const Footer = () => {
+  const router = useRouter()
   return (
     <Box
       sx={{
@@ -55,6 +57,7 @@ const Footer = () => {
             src="/logo.svg"
             alt="TalentAI Logo"
             sx={{ height: 32 }}
+            onClick={() => router.push('/')}
           />
           <Typography variant="body2" sx={{ mt: 2, lineHeight: "160%" }}>
             Verified Talent. <br />
