@@ -365,23 +365,23 @@ export default function Test() {
               (skill: any) => skill.name === router.query.skill
             );
 
-            if (!selectedSkill) {
-              throw new Error('Selected skill not found in profile');
-            }
+            // if (!selectedSkill) {
+            //   throw new Error('Selected skill not found in profile');
+            // }
 
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
-              },
+              },  
               body: JSON.stringify({
                 skill: router.query.skill,
-                experienceLevel: selectedSkill.experienceLevel,
-                proficiencyLevel: selectedSkill.proficiencyLevel
+                experienceLevel: selectedSkill?.experienceLevel || 'Entry Level',
+                proficiencyLevel: selectedSkill?.proficiencyLevel || 1
               })
             });
-
+            console.log('router:', router);
             if (!response.ok) {
               throw new Error('Failed to fetch questions');
             }
