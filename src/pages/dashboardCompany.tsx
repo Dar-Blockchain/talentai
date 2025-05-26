@@ -2575,13 +2575,13 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
       fullWidth
       PaperProps={{
         sx: {
-          backgroundColor: 'rgba(30, 41, 59, 0.95)',
+          backgroundColor: 'white',
           borderRadius: '16px',
           border: '1px solid rgba(2,226,255,0.1)',
         }
       }}
     >
-      <DialogTitle sx={{ color: '#02E2FF', borderBottom: '1px solid rgba(2,226,255,0.1)' }}>
+      <DialogTitle sx={{ color: 'black', borderBottom: '1px solid rgba(2,226,255,0.1)' }}>
         Assessment Details
       </DialogTitle>
       <DialogContent sx={{ mt: 2 }}>
@@ -2589,10 +2589,10 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           <Box sx={{ color: '#fff' }}>
             {/* Candidate Info */}
             <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ color: '#02E2FF', mb: 2 }}>Candidate Information</Typography>
+              <Typography variant="h6" sx={{ color: 'rgba(0, 255, 157, 1)', mb: 2 }}>Candidate Information</Typography>
               <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Skills</Typography>
+                  <Typography variant="subtitle2" sx={{ color: 'black' }}>Skills</Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
                     {selectedAssessment.condidateId.skills.map((skill: any) => (
                       <Chip
@@ -2600,8 +2600,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                         label={`${skill.name} (${skill.experienceLevel})`}
                         size="small"
                         sx={{
-                          backgroundColor: 'rgba(2,226,255,0.13)',
-                          color: '#02E2FF',
+                          backgroundColor: 'rgba(0, 255, 157, 1)',
+                          color: 'black',
                           fontWeight: 600
                         }}
                       />
@@ -2609,45 +2609,45 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                   </Box>
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Assessment Date</Typography>
-                  <Typography>{new Date(selectedAssessment.timestamp).toLocaleDateString()}</Typography>
+                  <Typography variant="subtitle2" sx={{ color: 'black' }}>Assessment Date</Typography>
+                  <Typography sx={{ color: 'black' }}>{new Date(selectedAssessment.timestamp).toLocaleDateString()}</Typography>
                 </Box>
               </Box>
             </Box>
 
             {/* Assessment Results */}
             <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ color: '#02E2FF', mb: 2 }}>Assessment Results</Typography>
+              <Typography variant="h6" sx={{ color: 'rgba(0, 255, 157, 1)', mb: 2 }}>Assessment Results</Typography>
               <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Overall Score</Typography>
-                  <Typography>{selectedAssessment.analysis.overallScore}%</Typography>
+                  <Typography variant="subtitle2" sx={{ color: 'black' }}>Overall Score</Typography>
+                  <Typography sx={{ color: 'black' }}>{selectedAssessment.analysis.overallScore}%</Typography>
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Job Match Status</Typography>
-                  <Typography>{selectedAssessment.analysis.jobMatch.status}</Typography>
+                  <Typography variant="subtitle2" sx={{ color: 'black' }}>Job Match Status</Typography>
+                  <Typography sx={{ color: 'black' }}>{selectedAssessment.analysis.jobMatch.status}</Typography>
                 </Box>
               </Box>
             </Box>
 
             {/* Skill Analysis */}
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ color: '#02E2FF', mb: 2 }}>Skill Analysis</Typography>
+            <Box sx={{ mb: 4, backgroundColor: 'white', borderRadius: '16px', padding: '16px', border: '2px solid rgba(0, 255, 157, 1)' }}>
+              <Typography variant="h6" sx={{ color: 'rgba(0, 255, 157, 1)', mb: 2 }}>Skill Analysis</Typography>
               {selectedAssessment.analysis.skillAnalysis.map((skill: any, index: number) => (
-                <Box key={index} sx={{ mb: 2, p: 2, backgroundColor: 'rgba(2,226,255,0.05)', borderRadius: '8px' }}>
-                  <Typography variant="subtitle1" sx={{ color: '#fff', mb: 1 }}>{skill.skillName}</Typography>
+                <Box key={index} sx={{ mb: 2, p: 2, backgroundColor: 'white', borderRadius: '8px' }}>
+                  <Typography variant="subtitle1" sx={{ color: 'rgba(0, 255, 157, 1)', mb: 1 }}>{skill.skillName}</Typography>
                   <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
                     <Box sx={{ flex: 1 }}>
-                      <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Required Level</Typography>
-                      <Typography>{skill.requiredLevel}</Typography>
+                      <Typography variant="subtitle2" sx={{ color: '#000' }}>Required Level</Typography>
+                      <Typography sx={{ color: '#000' }}>{skill.requiredLevel}</Typography>
                     </Box>
                     <Box sx={{ flex: 1 }}>
-                      <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Demonstrated Level</Typography>
-                      <Typography>{skill.demonstratedLevel}</Typography>
+                      <Typography variant="subtitle2" sx={{ color: '#000' }}>Demonstrated Level</Typography>
+                      <Typography sx={{ color: '#000' }}>{skill.demonstratedLevel}</Typography>
                     </Box>
                     <Box sx={{ flex: 1 }}>
-                      <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Match Status</Typography>
-                      <Typography>{skill.match}</Typography>
+                      <Typography variant="subtitle2" sx={{ color: '#000' }}>Match Status</Typography>
+                      <Typography sx={{ color: '#000' }}>{skill.match}</Typography>
                     </Box>
                   </Box>
                 </Box>
@@ -2656,14 +2656,14 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
             {/* Recommendations */}
             <Box>
-              <Typography variant="h6" sx={{ color: '#02E2FF', mb: 2 }}>Recommendations</Typography>
+              <Typography variant="h6" sx={{ color: 'rgba(0, 255, 157, 1)', mb: 2 }}>Recommendations</Typography>
               <List>
                 {selectedAssessment.analysis.recommendations.map((rec: string, index: number) => (
                   <ListItem key={index} sx={{ py: 0.5 }}>
                     <ListItemIcon>
-                      <ArrowForwardIcon sx={{ color: '#02E2FF' }} />
+                      <ArrowForwardIcon sx={{ color: 'rgba(0, 255, 157, 1)' }} />
                     </ListItemIcon>
-                    <ListItemText primary={rec} />
+                    <ListItemText primary={rec} sx={{ color: 'black' }} />
                   </ListItem>
                 ))}
               </List>
@@ -2675,9 +2675,9 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
         <Button
           onClick={() => setAssessmentModalOpen(false)}
           sx={{
-            color: '#02E2FF',
+            color: 'rgba(0, 255, 157, 1)',
             '&:hover': {
-              backgroundColor: 'rgba(2,226,255,0.1)'
+              backgroundColor: 'rgba(0, 255, 157, 1)'
             }
           }}
         >
