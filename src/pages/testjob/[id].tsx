@@ -159,6 +159,96 @@ const FirstViolationModal = styled(Dialog)(({ theme }) => ({
   },
 }));
 
+// Add Voice Activity Indicator components
+const VoiceActivityIndicator = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'isActive'
+})<{ isActive: boolean }>(({ theme, isActive }) => ({
+  position: 'relative',
+  width: '48px',
+  height: '48px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginTop: theme.spacing(2),
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    background: isActive ? '#02E2FF' : 'rgba(255, 255, 255, 0.1)',
+    transition: 'all 0.3s ease',
+  },
+}));
+
+const VoiceWaves = styled(Box)(({ theme }) => ({
+  position: 'absolute',
+  width: '100%',
+  height: '100%',
+  '&::before, &::after': {
+    content: '""',
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    borderRadius: '50%',
+    border: '2px solid #02E2FF',
+    animation: 'wave 1.5s ease-out infinite',
+  },
+  '&::before': {
+    width: '100%',
+    height: '100%',
+    animationDelay: '0s',
+  },
+  '&::after': {
+    width: '100%',
+    height: '100%',
+    animationDelay: '0.75s',
+  },
+  '@keyframes wave': {
+    '0%': {
+      transform: 'translate(-50%, -50%) scale(1)',
+      opacity: 0.8,
+    },
+    '100%': {
+      transform: 'translate(-50%, -50%) scale(1.5)',
+      opacity: 0,
+    },
+  },
+}));
+
+const VoiceIcon = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  width: '24px',
+  height: '24px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+    background: '#fff',
+    animation: 'pulse 1s ease-in-out infinite',
+  },
+  '@keyframes pulse': {
+    '0%': {
+      transform: 'scale(1)',
+      opacity: 1,
+    },
+    '50%': {
+      transform: 'scale(1.2)',
+      opacity: 0.8,
+    },
+    '100%': {
+      transform: 'scale(1)',
+      opacity: 1,
+    },
+  },
+}));
+
 // --- SpeechRecognition Types ---
 declare global {
   interface Window {
@@ -240,6 +330,14 @@ export default function Test() {
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [showFirstViolationModal, setShowFirstViolationModal] = useState(false);
   const violationHandledRef = useRef(false);
+
+  // Add streaming state
+  const [streamingToken, setStreamingToken] = useState<string | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
 
   // Add useEffect for authentication and profile check
   useEffect(() => {
@@ -354,7 +452,6 @@ export default function Test() {
 
   // MediaRecorder references
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioStreamRef = useRef<MediaStream | null>(null);
 
   // Transcription states
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -408,6 +505,122 @@ export default function Test() {
     })();
     return () => streamRef.current?.getTracks().forEach(t => t.stop());
   }, []);
+
+  // Generate temporary token for streaming
+  const generateStreamingToken = async (): Promise<string> => {
+    const response = await fetch('/api/session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action: 'generate_token' }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to generate streaming token');
+    }
+
+    const { token } = await response.json();
+    return token;
+  };
+
+  // Setup streaming transcription
+  const setupStreamingTranscription = async (stream: MediaStream) => {
+    try {
+      setIsConnecting(true);
+      
+      // Generate token
+      const token = await generateStreamingToken();
+      setStreamingToken(token);
+
+      // Setup audio context
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
+        sampleRate: 16000,
+      });
+      audioContextRef.current = audioContext;
+
+      const source = audioContext.createMediaStreamSource(stream);
+      const processor = audioContext.createScriptProcessor(4096, 1, 1);
+      processorRef.current = processor;
+
+      // Connect WebSocket
+      const ws = new WebSocket(
+        `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}`
+      );
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        console.log('Streaming connection opened');
+        setIsConnecting(false);
+        
+        // Connect audio processing
+        source.connect(processor);
+        processor.connect(audioContext.destination);
+
+        processor.onaudioprocess = (event) => {
+          if (ws.readyState === WebSocket.OPEN) {
+            const inputBuffer = event.inputBuffer.getChannelData(0);
+            
+            // Convert float32 to int16
+            const int16Buffer = new Int16Array(inputBuffer.length);
+            for (let i = 0; i < inputBuffer.length; i++) {
+              int16Buffer[i] = Math.max(-32768, Math.min(32767, inputBuffer[i] * 32767));
+            }
+            
+            ws.send(int16Buffer.buffer);
+          }
+        };
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        
+        if (data.message_type === 'PartialTranscript' || data.message_type === 'FinalTranscript') {
+          const text = data.text;
+          if (text?.trim()) {
+            if (data.message_type === 'FinalTranscript') {
+              // For final transcripts, add to the stored transcription for this question
+              setTranscriptions(prevT => {
+                const currentQuestionText = prevT[currentIndexRef.current] || '';
+                const updatedQuestionText = (currentQuestionText + ' ' + text).trim();
+                
+                // Also update the current transcript to show the accumulated text
+                setCurrentTranscript(updatedQuestionText);
+                
+                return {
+                  ...prevT,
+                  [currentIndexRef.current]: updatedQuestionText
+                };
+              });
+            } else {
+              // For partial transcripts, show accumulated text + current partial
+              setTranscriptions(prevT => {
+                const currentQuestionText = prevT[currentIndexRef.current] || '';
+                const displayText = currentQuestionText ? (currentQuestionText + ' ' + text).trim() : text;
+                setCurrentTranscript(displayText);
+                return prevT; // Don't update stored transcriptions for partials
+              });
+            }
+          }
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setIsConnecting(false);
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket connection closed');
+        setIsConnecting(false);
+      };
+
+    } catch (error) {
+      console.error('Streaming setup error:', error);
+      setIsConnecting(false);
+      throw error;
+    }
+  };
 
   // Modify the recorder.ondataavailable handler inside createMediaRecorder
   const createMediaRecorder = (stream: MediaStream) => {
@@ -472,24 +685,35 @@ export default function Test() {
     }
   };
 
+  // Update stopRecording function
   const stopRecording = () => {
-    // Stop chunk finalization
-    if (chunkIntervalRef.current) {
-      clearInterval(chunkIntervalRef.current);
-      chunkIntervalRef.current = null;
+    // Close WebSocket connection
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
     }
-    // Stop the current recorder
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current = null;
+    
+    // Stop audio context
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
     }
+    
+    // Disconnect processor
+    if (processorRef.current) {
+      processorRef.current.disconnect();
+      processorRef.current = null;
+    }
+    
     // Stop audio tracks
     if (audioStreamRef.current) {
       audioStreamRef.current.getTracks().forEach(track => track.stop());
       audioStreamRef.current = null;
     }
+    
     setIsRecording(false);
     setHasStartedTest(false);
+    setIsConnecting(false);
   };
 
   const handleGuidelinesAccept = () => {
@@ -497,7 +721,7 @@ export default function Test() {
     setShowGuidelines(false);
   };
 
-  // Modify startTest to check guidelines acceptance
+  // Modify startTest function
   const startTest = async () => {
     if (!guidelinesAccepted) {
       setShowGuidelines(true);
@@ -519,20 +743,14 @@ export default function Test() {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          sampleRate: 48000,
+          sampleRate: 16000,
           channelCount: 1,
         },
       });
       audioStreamRef.current = stream;
 
-      // Create first recorder
-      mediaRecorderRef.current = createMediaRecorder(stream);
-      mediaRecorderRef.current.start(); // Start recording
-
-      // Process chunks more frequently (every 2 seconds)
-      chunkIntervalRef.current = setInterval(() => {
-        finalizeChunk();
-      }, 2000);
+      // Setup streaming transcription
+      await setupStreamingTranscription(stream);
 
       setIsRecording(true);
       setHasStartedTest(true);
@@ -541,6 +759,7 @@ export default function Test() {
       console.error('Recording setup error:', error);
       setIsRecording(false);
       setHasStartedTest(false);
+      setIsConnecting(false);
     }
   };
 
@@ -945,7 +1164,7 @@ export default function Test() {
             <RecordingButton
               variant="contained"
               onClick={hasStartedTest ? undefined : startTest}
-              disabled={isGenerating || hasStartedTest}
+              disabled={isGenerating || hasStartedTest || isConnecting}
               sx={{
                 backgroundColor: '#02E2FF',
                 '&:hover': {
@@ -957,18 +1176,19 @@ export default function Test() {
                 }
               }}
             >
-              {hasStartedTest ? `Recording in progress (${timeLeft}s)` : 'Start Test'}
+              {isConnecting 
+                ? 'Connecting...' 
+                : hasStartedTest 
+                  ? `Recording in progress (${timeLeft}s)` 
+                  : 'Start Test'
+              }
             </RecordingButton>
-            <TranscriptDisplay variant="body2">
-              {isTranscribing ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CircularProgress size={16} sx={{ color: '#02E2FF' }} />
-                  <span>Processing audio...</span>
-                </Box>
-              ) : (
-                currentTranscript || 'Speak now...'
-              )}
-            </TranscriptDisplay>
+            {hasStartedTest && (
+              <VoiceActivityIndicator isActive={currentTranscript.length > 0}>
+                <VoiceWaves />
+                <VoiceIcon />
+              </VoiceActivityIndicator>
+            )}
           </RecordingControls>
 
           <QuestionOverlay>

@@ -197,6 +197,95 @@ const FirstViolationModal = styled(Dialog)(({ theme }) => ({
   },
 }));
 
+const VoiceActivityIndicator = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'isActive'
+})<{ isActive: boolean }>(({ theme, isActive }) => ({
+  position: 'relative',
+  width: '48px',
+  height: '48px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginTop: theme.spacing(2),
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    background: isActive ? '#02E2FF' : 'rgba(255, 255, 255, 0.1)',
+    transition: 'all 0.3s ease',
+  },
+}));
+
+const VoiceWaves = styled(Box)(({ theme }) => ({
+  position: 'absolute',
+  width: '100%',
+  height: '100%',
+  '&::before, &::after': {
+    content: '""',
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    borderRadius: '50%',
+    border: '2px solid #02E2FF',
+    animation: 'wave 1.5s ease-out infinite',
+  },
+  '&::before': {
+    width: '100%',
+    height: '100%',
+    animationDelay: '0s',
+  },
+  '&::after': {
+    width: '100%',
+    height: '100%',
+    animationDelay: '0.75s',
+  },
+  '@keyframes wave': {
+    '0%': {
+      transform: 'translate(-50%, -50%) scale(1)',
+      opacity: 0.8,
+    },
+    '100%': {
+      transform: 'translate(-50%, -50%) scale(1.5)',
+      opacity: 0,
+    },
+  },
+}));
+
+const VoiceIcon = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  width: '24px',
+  height: '24px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+    background: '#fff',
+    animation: 'pulse 1s ease-in-out infinite',
+  },
+  '@keyframes pulse': {
+    '0%': {
+      transform: 'scale(1)',
+      opacity: 1,
+    },
+    '50%': {
+      transform: 'scale(1.2)',
+      opacity: 0.8,
+    },
+    '100%': {
+      transform: 'scale(1)',
+      opacity: 1,
+    },
+  },
+}));
+
 export default function Test() {
   const theme = useTheme();
   const router = useRouter();
@@ -1039,18 +1128,12 @@ export default function Test() {
                   : 'Start Test'
               }
             </RecordingButton>
-            <TranscriptDisplay variant="body2">
-              {isConnecting ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CircularProgress size={16} sx={{ color: '#02E2FF' }} />
-                  <span>Connecting to transcription service...</span>
-                </Box>
-              ) : hasStartedTest ? (
-                currentTranscript || 'Listening...'
-              ) : (
-                'Start test to begin recording'
-              )}
-            </TranscriptDisplay>
+            {hasStartedTest && (
+              <VoiceActivityIndicator isActive={currentTranscript.length > 0}>
+                <VoiceWaves />
+                <VoiceIcon />
+              </VoiceActivityIndicator>
+            )}
           </RecordingControls>
 
           <QuestionOverlay>
