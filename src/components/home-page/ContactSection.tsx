@@ -50,12 +50,7 @@ const ContactSection = () => {
             variant="h5"
             fontWeight={600}
             sx={{
-              fontSize: {
-                xs: "1.75rem",
-                sm: "2rem",
-                md: "2.25rem",
-                lg: "2.5rem",
-              },
+                        fontSize: 'clamp(1.5rem, 5vw, 2.5rem)',
               textAlign: {xs: 'center',sm: 'center', md: 'start'}
             }}
           >

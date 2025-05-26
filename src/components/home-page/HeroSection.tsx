@@ -61,8 +61,7 @@ const HeroSection = () => {
 
           <Stack
             direction="row"
-            sx={{flexWrap: "wrap"}}
-            spacing={2}
+            sx={{flexWrap: "wrap", gap: '1rem', flex: {xs: 1, sm: 1, md: 'none'}}}
             mb={{ xs: 3, md: 4 }}
           >
             <Button
