@@ -10,6 +10,9 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
 import Head from 'next/head';
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import ScrollToTop from "@/components/ScrollToTop";
 
 const theme = createTheme({
     palette: {
@@ -21,7 +24,7 @@ const theme = createTheme({
             main: '#00FFC3',
         },
         background: {
-            default: '#00072D',
+            default: 'white',
             paper: 'rgba(255, 255, 255, 0.1)',
         },
     },
@@ -57,7 +60,10 @@ export default function App({ Component, pageProps }: AppProps) {
                         <link rel="shortcut icon" href="/talentaifavicon.ico" />
                     </Head>
                     <AuthWrapper>
+                        <Header/>
                         <Component {...pageProps} />
+                        <ScrollToTop/>
+                        <Footer/>
                     </AuthWrapper>
                 </ThemeProvider>
             </Provider>
