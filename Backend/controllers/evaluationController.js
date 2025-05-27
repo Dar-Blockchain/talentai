@@ -415,6 +415,29 @@ The questions should:
   }
 };
 
+// Helper function to categorize scores
+function getScoreCategory(score) {
+  if (score >= 90) return "Excellent Match";
+  if (score >= 70) return "Good Match";
+  if (score >= 40) return "Partial Match";
+  return "Low Match";
+}
+
+// Helper function to get experience level from proficiency level
+function getExperienceLevel(proficiencyLevel) {
+  const levels = ["Entry Level", "Junior", "Mid Level", "Senior", "Expert"];
+  return levels[Math.min(Math.max(0, proficiencyLevel - 1), 4)];
+}
+
+// Helper function to determine mastery category
+function getMasteryCategory(score) {
+  if (score >= 90) return "Mastered";
+  if (score >= 75) return "Proficient";
+  if (score >= 60) return "Competent";
+  if (score >= 40) return "Developing";
+  return "Novice";
+}
+
 const profileService = require("../services/profileService");
 
 exports.analyzeProfileAnswers = async (req, res) => {
