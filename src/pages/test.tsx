@@ -30,9 +30,11 @@ import Cookies from 'js-cookie';
 // Remove hardcoded questions
 const NEXTJS_QUESTIONS: string[] = [];
 
+// Add this after imports
+const GREEN_MAIN = 'rgba(0, 255, 157, 1)';
+
 // --- Styled Components ---
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
-  background: 'rgba(0, 7, 45, 0.8)',
   backdropFilter: 'blur(10px)',
   borderBottom: '1px solid rgba(255,255,255,0.1)',
 }));
@@ -100,7 +102,6 @@ const QuestionOverlay = styled(Box)(({ theme }) => ({
 
 const NavigationBar = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
-  background: 'rgba(0, 7, 45, 0.8)',
   backdropFilter: 'blur(10px)',
   borderTop: '1px solid rgba(255, 255, 255, 0.1)',
   display: 'flex',
@@ -111,7 +112,7 @@ const NavigationBar = styled(Box)(({ theme }) => ({
 // Add new styled components for the guidelines modal
 const GuidelinesModal = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
-    background: 'rgba(15, 23, 42, 0.95)',
+    background: 'white',
     backdropFilter: 'blur(10px)',
     borderRadius: '24px',
     border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -122,6 +123,7 @@ const GuidelinesModal = styled(Dialog)(({ theme }) => ({
 
 const GuidelineItem = styled(Box)(({ theme }) => ({
   display: 'flex',
+  boxShadow: '0px 0px 10px 0px rgba(0, 0, 0, 0.1)',
   alignItems: 'flex-start',
   gap: theme.spacing(2),
   padding: theme.spacing(2),
@@ -176,7 +178,6 @@ interface SpeechRecognitionError extends Event {
 // --- Security Modal ---
 const SecurityModal = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
-    background: 'rgba(15, 23, 42, 0.95)',
     backdropFilter: 'blur(10px)',
     borderRadius: '24px',
     border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -188,7 +189,6 @@ const SecurityModal = styled(Dialog)(({ theme }) => ({
 // --- First Violation Modal ---
 const FirstViolationModal = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
-    background: 'rgba(15, 23, 42, 0.95)',
     backdropFilter: 'blur(10px)',
     borderRadius: '24px',
     border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -365,9 +365,9 @@ export default function Test() {
               (skill: any) => skill.name === router.query.skill
             );
 
-            if (!selectedSkill) {
-              throw new Error('Selected skill not found in profile');
-            }
+            // if (!selectedSkill) {
+            //   throw new Error('Selected skill not found in profile');
+            // }
 
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
               method: 'POST',
@@ -377,11 +377,11 @@ export default function Test() {
               },
               body: JSON.stringify({
                 skill: router.query.skill,
-                experienceLevel: selectedSkill.experienceLevel,
-                proficiencyLevel: selectedSkill.proficiencyLevel
+                experienceLevel: selectedSkill?.experienceLevel || 'Entry Level',
+                proficiencyLevel: selectedSkill?.proficiencyLevel || 1
               })
             });
-
+            console.log('router:', router);
             if (!response.ok) {
               throw new Error('Failed to fetch questions');
             }
@@ -529,7 +529,7 @@ export default function Test() {
   const setupStreamingTranscription = async (stream: MediaStream) => {
     try {
       setIsConnecting(true);
-      
+
       // Generate token
       const token = await generateStreamingToken();
       setStreamingToken(token);
@@ -553,7 +553,7 @@ export default function Test() {
       ws.onopen = () => {
         console.log('Streaming connection opened');
         setIsConnecting(false);
-        
+
         // Connect audio processing
         source.connect(processor);
         processor.connect(audioContext.destination);
@@ -561,13 +561,13 @@ export default function Test() {
         processor.onaudioprocess = (event) => {
           if (ws.readyState === WebSocket.OPEN) {
             const inputBuffer = event.inputBuffer.getChannelData(0);
-            
+
             // Convert float32 to int16
             const int16Buffer = new Int16Array(inputBuffer.length);
             for (let i = 0; i < inputBuffer.length; i++) {
               int16Buffer[i] = Math.max(-32768, Math.min(32767, inputBuffer[i] * 32767));
             }
-            
+
             ws.send(int16Buffer.buffer);
           }
         };
@@ -575,7 +575,7 @@ export default function Test() {
 
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        
+
         if (data.message_type === 'PartialTranscript' || data.message_type === 'FinalTranscript') {
           const text = data.text;
           if (text?.trim()) {
@@ -584,10 +584,10 @@ export default function Test() {
               setTranscriptions(prevT => {
                 const currentQuestionText = prevT[currentIndexRef.current] || '';
                 const updatedQuestionText = (currentQuestionText + ' ' + text).trim();
-                
+
                 // Also update the current transcript to show the accumulated text
                 setCurrentTranscript(updatedQuestionText);
-                
+
                 return {
                   ...prevT,
                   [currentIndexRef.current]: updatedQuestionText
@@ -629,25 +629,25 @@ export default function Test() {
       wsRef.current.close();
       wsRef.current = null;
     }
-    
+
     // Stop audio context
     if (audioContextRef.current) {
       audioContextRef.current.close();
       audioContextRef.current = null;
     }
-    
+
     // Disconnect processor
     if (processorRef.current) {
       processorRef.current.disconnect();
       processorRef.current = null;
     }
-    
+
     // Stop audio tracks
     if (audioStreamRef.current) {
       audioStreamRef.current.getTracks().forEach(track => track.stop());
       audioStreamRef.current = null;
     }
-    
+
     setIsRecording(false);
     setHasStartedTest(false);
     setIsConnecting(false);
@@ -838,354 +838,376 @@ export default function Test() {
     <Box
       sx={{
         minHeight: '100vh',
-        backgroundColor: '#00072D',
-        backgroundImage: `
-          radial-gradient(circle at 20% 30%, rgba(2,226,255,0.4), transparent 40%),
-          radial-gradient(circle at 80% 70%, rgba(0,255,195,0.3), transparent 50%)
-        `,
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        py: 4,
       }}
     >
-      {/* Security Modal */}
-      <SecurityModal open={showSecurityModal} onClose={() => {}}>
-        <DialogTitle sx={{ fontWeight: 700, color: '#fff', fontSize: '1.5rem' }}>
-          Security Violation
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
-            You have attempted to leave or capture the test page more than once. For security reasons, your test has ended and you are being redirected to the dashboard.
-          </Typography>
-        </DialogContent>
-      </SecurityModal>
-
-      {/* First Violation Modal */}
-      <FirstViolationModal
-        open={showFirstViolationModal}
-        onClose={() => setShowFirstViolationModal(false)}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle sx={{ fontWeight: 700, fontSize: '1.3rem', color: '#fff', pt: 3 }}>
-          Heads Up!
-        </DialogTitle>
-        <DialogContent sx={{ pb: 0 }}>
-          <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
-            For security reasons, leaving or capturing the test page is not allowed.<br />
-            <b>If you do this again, your test will end and you will be redirected.</b>
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
-          <Button
-            variant="contained"
-            onClick={() => setShowFirstViolationModal(false)}
-            sx={{
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-              color: '#fff',
-              fontWeight: 600,
-              borderRadius: 2,
-              px: 4,
-              textTransform: 'none',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-              },
-            }}
-          >
-            Got it
-          </Button>
-        </DialogActions>
-      </FirstViolationModal>
-
-      {/* Guidelines Modal */}
-      <GuidelinesModal
-        open={showGuidelines}
-        onClose={() => { }}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle sx={{
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
-          padding: theme.spacing(3),
-        }}>
-          <Typography variant="h5" sx={{
-            color: '#fff',
-            fontWeight: 700,
-            background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}>
-            Important Test Guidelines
-          </Typography>
-        </DialogTitle>
-        <DialogContent sx={{ padding: theme.spacing(4) }}>
-          <Typography variant="body1" sx={{ color: '#fff', mb: 3, opacity: 0.9 }}>
-            Please ensure you meet the following requirements before starting the test:
-          </Typography>
-
-          <GuidelineItem>
-            <Box sx={{ color: '#02E2FF', mt: 0.5 }}>⏱️</Box>
-            <Box>
-              <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
-                Time Commitment
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                Set aside 30 minutes of uninterrupted time. The test cannot be paused once started.
-              </Typography>
-            </Box>
-          </GuidelineItem>
-
-          <GuidelineItem>
-            <Box sx={{ color: '#02E2FF', mt: 0.5 }}>🔇</Box>
-            <Box>
-              <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
-                Quiet Environment
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                Find a quiet room with no background noise. Background sounds can affect your test results.
-              </Typography>
-            </Box>
-          </GuidelineItem>
-
-          <GuidelineItem>
-            <Box sx={{ color: '#02E2FF', mt: 0.5 }}>🎥</Box>
-            <Box>
-              <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
-                Camera and Microphone
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                Ensure your camera and microphone are working properly. Test will use both for recording.
-              </Typography>
-            </Box>
-          </GuidelineItem>
-
-          <GuidelineItem>
-            <Box sx={{ color: '#02E2FF', mt: 0.5 }}>👤</Box>
-            <Box>
-              <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
-                Individual Assessment
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                Complete the test alone. No other people should be present or helping during the assessment.
-              </Typography>
-            </Box>
-          </GuidelineItem>
-
-          <GuidelineItem>
-            <Box sx={{ color: '#02E2FF', mt: 0.5 }}>💻</Box>
-            <Box>
-              <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
-                Technical Setup
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-                Use a stable internet connection. Close other applications that might use your camera or microphone.
-              </Typography>
-            </Box>
-          </GuidelineItem>
-        </DialogContent>
-        <DialogActions sx={{
-          padding: theme.spacing(3),
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-          justifyContent: 'space-between'
-        }}>
-          <Button
-            onClick={() => router.push('/dashboardCandidate')}
-            sx={{
-              color: 'rgba(255,255,255,0.7)',
-              '&:hover': { color: '#fff' }
-            }}
-          >
-            I'm Not Ready
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleGuidelinesAccept}
-            sx={{
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-              color: '#fff',
-              px: 4,
-              py: 1,
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 500,
-              '&:hover': {
-                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-              }
-            }}
-          >
-            I Understand & I'm Ready
-          </Button>
-        </DialogActions>
-      </GuidelinesModal>
-
-      <StyledAppBar position="static" elevation={0}>
-        <Toolbar>
-          <Typography
-            variant="h6"
-            sx={{
-              flexGrow: 1,
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              fontWeight: 700,
-            }}
-          >
-            Skill Test ({current + 1}/{questions.length || '-'})
-          </Typography>
-          {hasStartedTest && (
-            <Typography variant="subtitle1" sx={{ color: '#fff', mr: 2 }}>
-              {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
-            </Typography>
-          )}
-          <Button
-            startIcon={<CallEndIcon />}
-            onClick={() => {
-              stopRecording();
-              goHome();
-            }}
-            variant="outlined"
-            sx={{
-              color: theme.palette.error.main,
-              borderColor: theme.palette.error.main,
-              textTransform: 'none',
-              borderRadius: 2,
-              px: 3,
-              '&:hover': { backgroundColor: 'rgba(244,67,54,0.1)' },
-            }}
-          >
-            End Test
-          </Button>
-        </Toolbar>
-        <LinearProgress
-          variant={isGenerating ? "indeterminate" : "determinate"}
-          value={((current + 1) / (questions.length || 1)) * 100}
-          sx={{
-            height: 4,
-            backgroundColor: 'rgba(255,255,255,0.1)',
-            '& .MuiLinearProgress-bar': {
-              backgroundImage: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-            },
-          }}
-        />
-      </StyledAppBar>
-
-      <Container
-        maxWidth="md"
+      <Box
         sx={{
-          flexGrow: 1,
-          py: 4,
+          width: '100%',
+          maxWidth: 900,
+          mx: 'auto',
+          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+          borderRadius: 4,
+          background: 'rgba(255,255,255,0.95)',
+          p: { xs: 2, md: 4 },
+          minHeight: '80vh',
           display: 'flex',
-          alignItems: 'center',
+          flexDirection: 'column',
           justifyContent: 'center',
         }}
       >
-        <Paper
-          elevation={12}
-          sx={{
-            position: 'relative',
-            width: '100%',
-            pt: '56.25%', // 16:9
-            borderRadius: 2,
-            overflow: 'hidden',
-          }}
-        >
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              transform: 'scaleX(-1)',
-              borderRadius: '24px',
-            }}
-          />
+        {/* Security Modal */}
+        <SecurityModal open={showSecurityModal} onClose={() => { }}>
+          <DialogTitle sx={{ fontWeight: 700, color: '#fff', fontSize: '1.5rem' }}>
+            Security Violation
+          </DialogTitle>
+          <DialogContent>
+            <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
+              You have attempted to leave or capture the test page more than once. For security reasons, your test has ended and you are being redirected to the dashboard.
+            </Typography>
+          </DialogContent>
+        </SecurityModal>
 
-          <RecordingControls>
-            <RecordingButton
+        {/* First Violation Modal */}
+        <FirstViolationModal
+          open={showFirstViolationModal}
+          onClose={() => setShowFirstViolationModal(false)}
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle sx={{ fontWeight: 700, fontSize: '1.3rem', color: 'black', pt: 3 }}>
+            Heads Up!
+          </DialogTitle>
+          <DialogContent sx={{ pb: 0 }}>
+            <Typography variant="body1" sx={{ color: 'black', mb: 2 }}>
+              For security reasons, leaving or capturing the test page is not allowed.<br />
+              <b>If you do this again, your test will end and you will be redirected.</b>
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+            <Button
               variant="contained"
-              onClick={hasStartedTest ? undefined : startTest}
-              disabled={isGenerating || hasStartedTest || isConnecting}
+              onClick={() => setShowFirstViolationModal(false)}
               sx={{
-                backgroundColor: '#02E2FF',
+                background: 'rgba(0, 255, 157, 1)',
+                color: '#fff',
+                fontWeight: 600,
+                borderRadius: 2,
+                px: 4,
+                textTransform: 'none',
                 '&:hover': {
-                  backgroundColor: '#00C3FF',
+                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
                 },
-                '&.Mui-disabled': {
-                  backgroundColor: hasStartedTest ? '#ff4444' : 'rgba(255, 255, 255, 0.12)',
-                  color: hasStartedTest ? '#fff' : 'rgba(255, 255, 255, 0.3)',
+              }}
+            >
+              Got it
+            </Button>
+          </DialogActions>
+        </FirstViolationModal>
+
+        {/* Guidelines Modal */}
+        <GuidelinesModal
+          open={showGuidelines}
+          onClose={() => { }}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle sx={{
+            borderBottom: 'white',
+            padding: theme.spacing(3),
+          }}>
+            <Typography variant="h5" sx={{
+              color: '#fff',
+              fontWeight: 700,
+              background: 'rgba(0, 255, 157, 1)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}>
+              Important Test Guidelines
+            </Typography>
+          </DialogTitle>
+          <DialogContent sx={{ padding: theme.spacing(4) }}>
+            <Typography variant="body1" sx={{ color: '#000', mb: 3, opacity: 0.9 }}>
+              Please ensure you meet the following requirements before starting the test:
+            </Typography>
+
+            <GuidelineItem sx={{ color: '#000' }}>
+              <Box sx={{ color: '#02E2FF', mt: 0.5 }}>⏱️</Box>
+              <Box>
+                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
+                  Time Commitment
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#000' }}>
+                  Set aside 30 minutes of uninterrupted time. The test cannot be paused once started.
+                </Typography>
+              </Box>
+            </GuidelineItem>
+
+            <GuidelineItem>
+              <Box sx={{ color: '#02E2FF', mt: 0.5 }}>🔇</Box>
+              <Box>
+                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
+                  Quiet Environment
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#000' }}>
+                  Find a quiet room with no background noise. Background sounds can affect your test results.
+                </Typography>
+              </Box>
+            </GuidelineItem>
+
+            <GuidelineItem>
+              <Box sx={{ color: '#02E2FF', mt: 0.5 }}>🎥</Box>
+              <Box>
+                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
+                  Camera and Microphone
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#000' }}>
+                  Ensure your camera and microphone are working properly. Test will use both for recording.
+                </Typography>
+              </Box>
+            </GuidelineItem>
+
+            <GuidelineItem>
+              <Box sx={{ color: '#02E2FF', mt: 0.5 }}>👤</Box>
+              <Box>
+                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
+                  Individual Assessment
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#000' }}>
+                  Complete the test alone. No other people should be present or helping during the assessment.
+                </Typography>
+              </Box>
+            </GuidelineItem>
+
+            <GuidelineItem>
+              <Box sx={{ color: '#02E2FF', mt: 0.5 }}>💻</Box>
+              <Box>
+                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
+                  Technical Setup
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#000' }}>
+                  Use a stable internet connection. Close other applications that might use your camera or microphone.
+                </Typography>
+              </Box>
+            </GuidelineItem>
+          </DialogContent>
+          <DialogActions sx={{
+            padding: theme.spacing(3),
+            borderTop: '1px solid rgba(255,255,255,0.1)',
+            justifyContent: 'space-between'
+          }}>
+            <Button
+              onClick={() => router.push('/dashboardCandidate')}
+              sx={{
+                color: 'rgba(255,255,255,0.7)',
+                '&:hover': { color: '#fff' }
+              }}
+            >
+              I'm Not Ready
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleGuidelinesAccept}
+              sx={{
+                background: 'rgba(0, 255, 157, 1)',
+                color: '#fff',
+                px: 4,
+                py: 1,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 500,
+                '&:hover': {
+                  background: 'rgba(0, 255, 157, 1)',
                 }
               }}
             >
-              {isConnecting 
-                ? 'Connecting...' 
-                : hasStartedTest 
-                  ? `Recording in progress (${timeLeft}s)` 
-                  : 'Start Test'
-              }
-            </RecordingButton>
-            {hasStartedTest && (
-              <VoiceActivityIndicator isActive={currentTranscript.length > 0}>
-                <VoiceWaves />
-                <VoiceIcon />
-              </VoiceActivityIndicator>
-            )}
-          </RecordingControls>
+              I Understand & I'm Ready
+            </Button>
+          </DialogActions>
+        </GuidelinesModal>
 
-          <QuestionOverlay>
-            <Typography variant="h6" sx={{ color: '#fff' }}>
-              {isGenerating ? (
-                <Box sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}>
-                  <span>Generating your interview questions</span>
-                  <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
-                    ...
-                  </Box>
-                </Box>
-              ) : questions[current]}
+        <StyledAppBar position="static" elevation={0}>
+          <Toolbar>
+            <Typography
+              variant="h6"
+              sx={{
+                flexGrow: 1,
+                background: 'black',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontWeight: 700,
+              }}
+            >
+              Skill Test ({current + 1}/{questions.length || '-'})
             </Typography>
-          </QuestionOverlay>
-        </Paper>
-      </Container>
+            {hasStartedTest && (
+              <Typography variant="subtitle1" sx={{ color: '#fff', mr: 2 }}>
+                {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+              </Typography>
+            )}
+            <Button
+              startIcon={<CallEndIcon />}
+              onClick={() => {
+                stopRecording();
+                goHome();
+              }}
+              variant="outlined"
+              sx={{
+                color: theme.palette.error.main,
+                borderColor: theme.palette.error.main,
+                textTransform: 'none',
+                borderRadius: 2,
+                px: 3,
+                '&:hover': { backgroundColor: 'rgba(244,67,54,0.1)' },
+              }}
+            >
+              End Test
+            </Button>
+          </Toolbar>
+          <LinearProgress
+            variant={isGenerating ? "indeterminate" : "determinate"}
+            value={((current + 1) / (questions.length || 1)) * 100}
+            sx={{
+              height: 4,
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              '& .MuiLinearProgress-bar': {
+                backgroundColor: GREEN_MAIN,
+              },
+            }}
+          />
+        </StyledAppBar>
 
-      <NavigationBar>
-        <IconButton onClick={handlePrev} disabled={current === 0} sx={{ color: '#fff' }}>
-          <ArrowBackIcon />
-        </IconButton>
-        <Button
-          variant="contained"
-          endIcon={<ArrowForwardIcon />}
-          onClick={handleNext}
-          disabled={isGenerating}
+        <Container
+          maxWidth="md"
           sx={{
-            textTransform: 'none',
-            background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-            borderRadius: 2,
-            px: 4,
-            py: 1.5,
-            '&:hover': {
-              background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-            },
-            '&.Mui-disabled': {
-              background: 'rgba(255, 255, 255, 0.12)',
-              color: 'rgba(255, 255, 255, 0.3)',
-            }
+            flexGrow: 1,
+            py: 4,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'transparent',
+            boxShadow: 'none',
           }}
         >
-          {current < questions.length - 1 ? 'Next Question' : 'Finish Test'}
-        </Button>
-      </NavigationBar>
+          <Paper
+            elevation={12}
+            sx={{
+              position: 'relative',
+              width: '100%',
+              pt: '56.25%', // 16:9
+              borderRadius: 4,
+              overflow: 'hidden',
+              background: 'rgba(255,255,255,0.98)',
+              boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
+            }}
+          >
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                transform: 'scaleX(-1)',
+                borderRadius: '24px',
+                boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
+                border: '2px solid #e0f7fa',
+              }}
+            />
+
+            <RecordingControls>
+              <RecordingButton
+                variant="contained"
+                onClick={hasStartedTest ? undefined : startTest}
+                disabled={isGenerating || hasStartedTest || isConnecting}
+                sx={{
+                  backgroundColor: 'rgba(0, 255, 157, 1)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 255, 157, 1)',
+                  },
+                  '&.Mui-disabled': {
+                    backgroundColor: hasStartedTest ? '#ff4444' : 'rgba(255, 255, 255, 0.12)',
+                    color: hasStartedTest ? '#fff' : 'rgba(255, 255, 255, 0.3)',
+                  }
+                }}
+              >
+                {isConnecting
+                  ? 'Connecting...'
+                  : hasStartedTest
+                    ? `Recording in progress (${timeLeft}s)`
+                    : 'Start Test'
+                }
+              </RecordingButton>
+              {hasStartedTest && (
+                <VoiceActivityIndicator isActive={currentTranscript.length > 0}>
+                  <VoiceWaves />
+                  <VoiceIcon />
+                </VoiceActivityIndicator>
+              )}
+            </RecordingControls>
+
+            <QuestionOverlay>
+              <Typography variant="h6" sx={{ color: '#fff' }}>
+                {isGenerating ? (
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    justifyContent: 'center',
+                    background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}>
+                    <span>Generating your interview questions</span>
+                    <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
+                      ...
+                    </Box>
+                  </Box>
+                ) : questions[current]}
+              </Typography>
+            </QuestionOverlay>
+          </Paper>
+        </Container>
+
+        <NavigationBar>
+          <IconButton onClick={handlePrev} disabled={current === 0} sx={{ color: '#fff' }}>
+            <ArrowBackIcon />
+          </IconButton>
+          <Button
+            variant="contained"
+            endIcon={<ArrowForwardIcon />}
+            onClick={handleNext}
+            disabled={isGenerating}
+            sx={{
+              textTransform: 'none',
+              background: GREEN_MAIN,
+              borderRadius: 2,
+              px: 4,
+              py: 1.5,
+              fontWeight: 600,
+              boxShadow: '0 2px 8px 0 rgba(0,255,157,0.10)',
+              '&:hover': {
+                background: GREEN_MAIN,
+              },
+              '&.Mui-disabled': {
+                background: 'rgba(255, 255, 255, 0.12)',
+                color: 'rgba(255, 255, 255, 0.3)',
+              }
+            }}
+          >
+            {current < questions.length - 1 ? 'Next Question' : 'Finish Test'}
+          </Button>
+        </NavigationBar>
+      </Box>
     </Box>
   );
 }
