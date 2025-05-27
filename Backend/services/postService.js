@@ -44,9 +44,9 @@ module.exports.createPost = async (postData) => {
     await user.save();
     await post.save();
     console.log(post);
-    await schedulePostMatchingAgenda(post._id.toString(), {
-      requiredSkills: post.skillAnalysis.requiredSkills
-    });
+    //await schedulePostMatchingAgenda(post._id.toString(), {
+    //  requiredSkills: post.skillAnalysis.requiredSkills
+    //});
     return post;
   } catch (error) {
     throw new Error(`Error creating post: ${error.message}`);
