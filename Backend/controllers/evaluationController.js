@@ -1,15 +1,13 @@
 // generateQuestions.js
-
-const { OpenAI } = require("openai");
+const { Together } = require("together-ai");
 require("dotenv").config();
 
 const JobAssessmentResult = require("../models/JobAssessmentResultModel");
 const Profile = require("../models/ProfileModel");
-
 const postService = require("../services/postService");
 
-// Configure the OpenAI client with your API key
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Configure the Together AI client
+const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
 exports.generateQuestions = async (req, res) => {
   try {
@@ -49,18 +47,22 @@ Based on the candidate's skills (${skillsList}), generate **exactly 10** situati
 \`\`\`
 `.trim();
 
-    // 4. Call OpenAI
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
       messages: [
         { role: "system", content: "You are an experienced interviewer." },
         { role: "user", content: prompt },
       ],
       max_tokens: 500,
       temperature: 0.7,
+      stream: true,
     });
 
-    const raw = response.choices[0].message.content;
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
 
     // 5. Try to extract & parse the JSON array
     let questions;
@@ -159,8 +161,9 @@ Return ONLY a JSON array of strings, like:
 `.trim();
     }
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+    // 5️⃣ Call TogetherAI API
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
       messages: [
         {
           role: "system",
@@ -170,9 +173,14 @@ Return ONLY a JSON array of strings, like:
       ],
       max_tokens: 1000,
       temperature: 0.7,
+      stream: true,
     });
 
-    const raw = response.choices[0].message.content;
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
 
     // Try extracting JSON
     let questions;
@@ -262,9 +270,9 @@ The questions should be appropriate for the given proficiency levels, mixing the
 ]
 `.trim();
 
-    // 5️⃣ Call OpenAI API
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+    // 5️⃣ Call TogetherAI API
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
       messages: [
         {
           role: "system",
@@ -273,11 +281,16 @@ The questions should be appropriate for the given proficiency levels, mixing the
         },
         { role: "user", content: prompt },
       ],
-      max_tokens: 1000,
       temperature: 0.7,
+      max_tokens: 1000,
+      stream: true,
     });
 
-    const raw = response.choices[0].message.content;
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
 
     // 6️⃣ Extract questions as JSON array
     let questions;
@@ -353,9 +366,9 @@ The questions should:
 \`\`\`
 `.trim();
 
-    // 4. Call OpenAI
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+    // 5️⃣ Call TogetherAI API
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
       messages: [
         {
           role: "system",
@@ -367,9 +380,14 @@ The questions should:
       ],
       max_tokens: 1000,
       temperature: 0.7,
+      stream: true,
     });
 
-    const raw = response.choices[0].message.content;
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
 
     // 5. Try to extract & parse the JSON array
     let questions;
@@ -511,9 +529,8 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
   "evaluationContext": "Based on ${type} interview standards"
 }`;
 
-    // 3. Call OpenAI for analysis
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+    const response = await together.chat.completions.create({
+      model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
       messages: [
         {
           role: "system",
@@ -525,12 +542,20 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       ],
       max_tokens: 1000,
       temperature: 0.7,
+      stream: true,
     });
+
+    let rawResponse = "";
+    for await (const chunk of response) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) rawResponse += content;
+    }
 
     // 4. Parse and validate the response
     let analysis;
     try {
-      const rawResponse = response.choices[0].message.content.trim();
+      // const rawResponse = response.choices[0].message.content.trim();
+      rawResponse = rawResponse.trim();
 
       // Try to extract JSON if it's wrapped in markdown code blocks
       let jsonStr = rawResponse;
@@ -637,7 +662,6 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
           "Expert",
         ],
       };
-      console.log(analysis);
     } catch (error) {
       console.error("Detailed error in analysis parsing:", error);
       console.error("Original response:", response.choices[0].message.content);
@@ -715,10 +739,7 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
         }),
       },
     };
-    console.log(user);
-    console.log(result);
     if (user.profile.overallScore === 0 && type === "technical") {
-      console.log("test");
       const profile = await profileService.createOrUpdateProfile(user._id, {
         overallScore: analysis.overallScore,
         skills: analysis.skillAnalysis.map((skill) => ({
@@ -727,9 +748,7 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
           experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
         })),
       });
-      console.log(profile);
     } else {
-      console.log("test2");
       const profileOverallScore = await profileService.getProfileByUserId(
         user._id
       );
@@ -743,7 +762,6 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
           ScoreTest: skill.confidenceScore,
         })),
       });
-      console.log(profile);
     }
 
     if (user.profile.overallScore === 0 && type === "soft") {
@@ -861,9 +879,9 @@ Based on this assessment, provide a detailed analysis in the following JSON form
   }
 }`;
 
-    // 4. Call OpenAI for analysis
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+    // 4. Call TogetherAI API for analysis
+    const stream = await together.chat.completions.create({
+      model: "deepseek-ai/DeepSeek-V3",
       messages: [
         {
           role: "system",
@@ -875,14 +893,19 @@ Based on this assessment, provide a detailed analysis in the following JSON form
       ],
       max_tokens: 1000,
       temperature: 0.7,
+      stream: true,
     });
+
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
 
     // 5. Parse and validate the response
     let analysis;
     try {
-      const rawResponse = response.choices[0].message.content.trim();
-      let jsonStr = rawResponse;
-      const jsonMatch = rawResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
       if (jsonMatch) {
         jsonStr = jsonMatch[1];
       }

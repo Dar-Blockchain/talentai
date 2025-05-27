@@ -1,7 +1,7 @@
-const { OpenAI } = require("openai");
+const { Together } = require("together-ai");
 require("dotenv").config();
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
 module.exports.generateJobPost = async (req, res) => {
   try {
@@ -181,9 +181,9 @@ Ensure:
             temperature: 0.7,
           };
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
-      messages: [
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+        messages: [
         {
           role: "system",
           content:
@@ -194,9 +194,16 @@ Ensure:
         { role: "user", content: prompt },
       ],
       ...config,
+      stream: true,
     });
 
-    const raw = response.choices[0].message.content;
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
+
+    // const raw = response.choices[0].message.content;
     console.log("Raw API Response:", raw);
 
     let result;
