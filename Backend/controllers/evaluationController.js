@@ -1,16 +1,13 @@
 // generateQuestions.js
-
-const { OpenAI } = require("openai");
+const { Together } = require("together-ai");
 require("dotenv").config();
 
-const JobAssessmentResult = require("../models/JobAssessmentResultModel"); 
+const JobAssessmentResult = require("../models/JobAssessmentResultModel");
 const Profile = require("../models/ProfileModel");
-
 const postService = require("../services/postService");
 
-
-// Configure the OpenAI client with your API key
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Configure the Together AI client
+const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
 exports.generateQuestions = async (req, res) => {
   try {
@@ -50,18 +47,22 @@ Based on the candidate's skills (${skillsList}), generate **exactly 10** situati
 \`\`\`
 `.trim();
 
-    // 4. Call OpenAI
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
       messages: [
         { role: "system", content: "You are an experienced interviewer." },
         { role: "user", content: prompt },
       ],
       max_tokens: 500,
       temperature: 0.7,
+      stream: true,
     });
 
-    const raw = response.choices[0].message.content;
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
 
     // 5. Try to extract & parse the JSON array
     let questions;
@@ -137,9 +138,9 @@ Mix of theoretical and practical questions, including problem-solving scenarios.
 \`\`\`
 `.trim();
 
-    // 4. Call OpenAI
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+    // 5️⃣ Call TogetherAI API
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
       messages: [
         {
           role: "system",
@@ -150,9 +151,14 @@ Mix of theoretical and practical questions, including problem-solving scenarios.
       ],
       max_tokens: 1000,
       temperature: 0.7,
+      stream: true,
     });
 
-    const raw = response.choices[0].message.content;
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
 
     // 5. Try to extract & parse the JSON array
     let questions;
@@ -240,9 +246,9 @@ The questions should be appropriate for the given proficiency levels, mixing the
 ]
 `.trim();
 
-    // 5️⃣ Call OpenAI API
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+    // 5️⃣ Call TogetherAI API
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
       messages: [
         {
           role: "system",
@@ -251,11 +257,16 @@ The questions should be appropriate for the given proficiency levels, mixing the
         },
         { role: "user", content: prompt },
       ],
-      max_tokens: 1000,
       temperature: 0.7,
+      max_tokens: 1000,
+      stream: true,
     });
 
-    const raw = response.choices[0].message.content;
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
 
     // 6️⃣ Extract questions as JSON array
     let questions;
@@ -331,9 +342,9 @@ The questions should:
 \`\`\`
 `.trim();
 
-    // 4. Call OpenAI
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+    // 5️⃣ Call TogetherAI API
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
       messages: [
         {
           role: "system",
@@ -345,9 +356,14 @@ The questions should:
       ],
       max_tokens: 1000,
       temperature: 0.7,
+      stream: true,
     });
 
-    const raw = response.choices[0].message.content;
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
 
     // 5. Try to extract & parse the JSON array
     let questions;
@@ -397,6 +413,7 @@ exports.matchProfilesWithCompany = async (req, res) => {
 
     // Get company's required skills
     const company = req.user;
+
     const requiredSkills = company.profile.requiredSkills;
 
     const matchedProfiles = [];
@@ -436,8 +453,8 @@ Rules:
 - Use "full/partial/none" for match
 - Keep assessment and recommendations concise`;
 
-        const response = await openai.chat.completions.create({
-          model: "gpt-4-turbo-preview",
+        const stream = await together.chat.completions.create({
+          model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
           messages: [
             {
               role: "system",
@@ -448,40 +465,61 @@ Rules:
           ],
           max_tokens: 500,
           temperature: 0.7,
+          stream: true,
         });
+
+        let raw = "";
+        for await (const chunk of stream) {
+          const content = chunk.choices?.[0]?.delta?.content;
+          if (content) raw += content;
+        }
 
         let matchResult;
         try {
-          // Direct parse attempt first
-          matchResult = JSON.parse(response.choices[0].message.content.trim());
+          const trimmed = raw.trim();
+          matchResult = JSON.parse(trimmed); 
         } catch (parseError) {
           console.error(
             "Initial JSON parse failed, attempting cleanup:",
             parseError
           );
 
-          // Cleanup attempt
-          const cleanResponse = response.choices[0].message.content
-            .replace(/```json\n?/g, "")
-            .replace(/```\n?/g, "")
+          const cleanResponse = raw
+            .replace(/```json\s*/gi, "")
+            .replace(/```\s*/g, "")
             .trim();
 
           try {
             matchResult = JSON.parse(cleanResponse);
           } catch (secondParseError) {
             console.error("JSON parse failed after cleanup:", secondParseError);
-            // Skip this candidate if we can't parse the response
             continue;
           }
         }
 
         // Validate the required fields
-        if (
-          !matchResult ||
-          typeof matchResult.matchPercentage !== "number" ||
-          !Array.isArray(matchResult.skillMatches)
-        ) {
-          console.error("Invalid match result structure:", matchResult);
+        if (matchResult && matchResult.skillMatches) {
+          if (
+            matchResult.skillMatches &&
+            typeof matchResult.skillMatches === "object"
+          ) {
+            matchResult.skillMatches = Object.values(matchResult.skillMatches);
+          }
+        }
+        
+        if (!matchResult) {
+          console.error(
+            "Invalid match result structure: no matchResult",
+            matchResult
+          );
+          continue;
+        }
+
+        if (typeof matchResult.matchPercentage != "number") {
+          console.error(
+            "Invalid match result structure: no matchResult.matchPercentage:",
+            matchResult
+          );
           continue;
         }
 
@@ -573,7 +611,6 @@ function getMasteryCategory(score) {
 
 const profileService = require("../services/profileService");
 
-
 exports.analyzeProfileAnswers = async (req, res) => {
   try {
     // 1. Validate request body
@@ -652,9 +689,8 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
   "evaluationContext": "Based on ${type} interview standards"
 }`;
 
-    // 3. Call OpenAI for analysis
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+    const response = await together.chat.completions.create({
+      model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
       messages: [
         {
           role: "system",
@@ -666,12 +702,20 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       ],
       max_tokens: 1000,
       temperature: 0.7,
+      stream: true,
     });
+
+    let rawResponse = "";
+    for await (const chunk of response) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) rawResponse += content;
+    }
 
     // 4. Parse and validate the response
     let analysis;
     try {
-      const rawResponse = response.choices[0].message.content.trim();
+      // const rawResponse = response.choices[0].message.content.trim();
+      rawResponse = rawResponse.trim();
 
       // Try to extract JSON if it's wrapped in markdown code blocks
       let jsonStr = rawResponse;
@@ -778,7 +822,6 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
           "Expert",
         ],
       };
-      console.log(analysis);
     } catch (error) {
       console.error("Detailed error in analysis parsing:", error);
       console.error("Original response:", response.choices[0].message.content);
@@ -856,10 +899,7 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
         }),
       },
     };
-    console.log(user);
-    console.log(result);
     if (user.profile.overallScore === 0 && type === "technical") {
-      console.log("test");
       const profile = await profileService.createOrUpdateProfile(user._id, {
         overallScore: analysis.overallScore,
         skills: analysis.skillAnalysis.map((skill) => ({
@@ -868,9 +908,7 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
           experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
         })),
       });
-      console.log(profile);
     } else {
-      console.log("test2");
       const profileOverallScore = await profileService.getProfileByUserId(
         user._id
       );
@@ -884,7 +922,6 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
           ScoreTest: skill.confidenceScore,
         })),
       });
-      console.log(profile);
     }
 
     if (user.profile.overallScore === 0 && type === "soft") {
@@ -923,7 +960,6 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
   }
 };
 
-
 exports.analyzeJobTestResults = async (req, res) => {
   try {
     // 1. Validate request body
@@ -931,25 +967,31 @@ exports.analyzeJobTestResults = async (req, res) => {
     const user = req.user;
     const condidateProfile = await profileService.getProfileByUserId(user._id);
 
-    if(!condidateProfile){
+    if (!condidateProfile) {
       return { message: "Aucun profil trouvé pour cet utilisateur." };
     }
-    const condidateId = condidateProfile._id; 
+    const condidateId = condidateProfile._id;
 
     if (!Array.isArray(questions) || !jobId) {
       return res.status(400).json({
         error: "Invalid request format",
         required: {
           questions: "Array of question-answer pairs",
-          jobId: "ID of the job posting"
-        }
+          jobId: "ID of the job posting",
+        },
       });
     }
 
     // 2. Get job requirements
     const skillsData = await postService.getRequiredSkillsByPostId(jobId);
-    if (!skillsData || !skillsData.requiredSkills || skillsData.requiredSkills.length === 0) {
-      return res.status(404).json({ error: "No required skills found for this job" });
+    if (
+      !skillsData ||
+      !skillsData.requiredSkills ||
+      skillsData.requiredSkills.length === 0
+    ) {
+      return res
+        .status(404)
+        .json({ error: "No required skills found for this job" });
     }
 
     // 3. Prepare the data for GPT analysis
@@ -957,10 +999,14 @@ exports.analyzeJobTestResults = async (req, res) => {
 As an expert technical interviewer, analyze the following job assessment:
 
 Required Skills for the Position:
-${skillsData.requiredSkills.map(skill => `- ${skill.name} (Required Level: ${skill.level}/5)`).join('\n')}
+${skillsData.requiredSkills
+  .map((skill) => `- ${skill.name} (Required Level: ${skill.level}/5)`)
+  .join("\n")}
 
 Questions and Answers:
-${questions.map((qa) => `Q: ${qa.question}\nA: ${qa.answer || 'No answer provided'}`).join('\n\n')}
+${questions
+  .map((qa) => `Q: ${qa.question}\nA: ${qa.answer || "No answer provided"}`)
+  .join("\n\n")}
 
 Based on this assessment, provide a detailed analysis in the following JSON format ONLY (no additional text):
 {
@@ -993,9 +1039,9 @@ Based on this assessment, provide a detailed analysis in the following JSON form
   }
 }`;
 
-    // 4. Call OpenAI for analysis
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+    // 4. Call TogetherAI API for analysis
+    const stream = await together.chat.completions.create({
+      model: "deepseek-ai/DeepSeek-V3",
       messages: [
         {
           role: "system",
@@ -1007,14 +1053,19 @@ Based on this assessment, provide a detailed analysis in the following JSON form
       ],
       max_tokens: 1000,
       temperature: 0.7,
+      stream: true,
     });
+
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
 
     // 5. Parse and validate the response
     let analysis;
     try {
-      const rawResponse = response.choices[0].message.content.trim();
-      let jsonStr = rawResponse;
-      const jsonMatch = rawResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
       if (jsonMatch) {
         jsonStr = jsonMatch[1];
       }
@@ -1053,9 +1104,11 @@ Based on this assessment, provide a detailed analysis in the following JSON form
         "skillAnalysis",
         "generalAssessment",
         "recommendations",
-        "jobMatch"
+        "jobMatch",
       ];
-      const missingFields = requiredFields.filter(field => !(field in analysis));
+      const missingFields = requiredFields.filter(
+        (field) => !(field in analysis)
+      );
 
       if (missingFields.length > 0) {
         throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
@@ -1064,7 +1117,7 @@ Based on this assessment, provide a detailed analysis in the following JSON form
       // Normalize the response structure
       analysis = {
         overallScore: Number(analysis.overallScore) || 0,
-        skillAnalysis: analysis.skillAnalysis.map(skill => ({
+        skillAnalysis: analysis.skillAnalysis.map((skill) => ({
           skillName: skill.skillName || skill.skill || "",
           requiredLevel: Number(skill.requiredLevel) || 0,
           demonstratedLevel: Number(skill.demonstratedLevel) || 0,
@@ -1072,31 +1125,35 @@ Based on this assessment, provide a detailed analysis in the following JSON form
           weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
           confidenceScore: Number(skill.confidenceScore) || 0,
           match: skill.match || "none",
-          levelGap: Number(skill.requiredLevel) - Number(skill.demonstratedLevel)
+          levelGap:
+            Number(skill.requiredLevel) - Number(skill.demonstratedLevel),
         })),
         generalAssessment: analysis.generalAssessment || "",
-        recommendations: Array.isArray(analysis.recommendations) ? analysis.recommendations : [],
+        recommendations: Array.isArray(analysis.recommendations)
+          ? analysis.recommendations
+          : [],
         technicalLevel: analysis.technicalLevel || "intermediate",
         nextSteps: Array.isArray(analysis.nextSteps) ? analysis.nextSteps : [],
         jobMatch: {
           percentage: Number(analysis.jobMatch?.percentage) || 0,
           status: analysis.jobMatch?.status || "none",
-          keyGaps: Array.isArray(analysis.jobMatch?.keyGaps) ? analysis.jobMatch.keyGaps : []
-        }
+          keyGaps: Array.isArray(analysis.jobMatch?.keyGaps)
+            ? analysis.jobMatch.keyGaps
+            : [],
+        },
       };
-
     } catch (error) {
       console.error("Error in analysis parsing:", error);
       return res.status(200).json({
         success: true,
         result: {
           timestamp: new Date(),
-          assessmentType: 'job',
+          assessmentType: "job",
           jobId,
           numberOfQuestions: questions.length,
           analysis: {
             overallScore: 70,
-            skillAnalysis: skillsData.requiredSkills.map(skill => ({
+            skillAnalysis: skillsData.requiredSkills.map((skill) => ({
               skillName: skill.name,
               requiredLevel: skill.level,
               demonstratedLevel: skill.level - 1,
@@ -1104,7 +1161,7 @@ Based on this assessment, provide a detailed analysis in the following JSON form
               weaknesses: ["Could not analyze in detail"],
               confidenceScore: 60,
               match: "partial",
-              levelGap: 1
+              levelGap: 1,
             })),
             generalAssessment: "Analysis could not be completed fully",
             recommendations: ["Please try the assessment again"],
@@ -1113,45 +1170,49 @@ Based on this assessment, provide a detailed analysis in the following JSON form
             jobMatch: {
               percentage: 60,
               status: "partial",
-              keyGaps: ["Assessment incomplete"]
-            }
-          }
-        }
+              keyGaps: ["Assessment incomplete"],
+            },
+          },
+        },
       });
     }
 
     const company = await profileService.getProfileByPostId(jobId);
     const companyId = company._id;
     // 6. Format final response
-      const result = new JobAssessmentResult({
+    const result = new JobAssessmentResult({
       timestamp: new Date(),
-      assessmentType: 'job',
+      assessmentType: "job",
       jobId,
       condidateId,
       companyId,
       numberOfQuestions: questions.length,
       analysis: {
         ...analysis,
-        skillProgression: analysis.skillAnalysis.map(skillAnalysis => {
+        skillProgression: analysis.skillAnalysis.map((skillAnalysis) => {
           const requiredSkill = skillsData.requiredSkills.find(
-            s => s.name === skillAnalysis.skillName
+            (s) => s.name === skillAnalysis.skillName
           );
           return {
             ...skillAnalysis,
-            requiredSkill: requiredSkill ? {
-              name: requiredSkill.name,
-              level: requiredSkill.level,
-              experienceLevel: getExperienceLevel(requiredSkill.level)
-            } : null,
-            demonstratedExperienceLevel: getExperienceLevel(skillAnalysis.demonstratedLevel),
-            masteryCategory: getMasteryCategory(skillAnalysis.confidenceScore)
+            requiredSkill: requiredSkill
+              ? {
+                  name: requiredSkill.name,
+                  level: requiredSkill.level,
+                  experienceLevel: getExperienceLevel(requiredSkill.level),
+                }
+              : null,
+            demonstratedExperienceLevel: getExperienceLevel(
+              skillAnalysis.demonstratedLevel
+            ),
+            masteryCategory: getMasteryCategory(skillAnalysis.confidenceScore),
           };
-        })
-      }
+        }),
+      },
     });
 
     await result.save();
-    
+
     // 3. Save the updated profile with the new assesmentResult
     if (!Array.isArray(company.assessmentResults)) {
       company.assessmentResults = [];
@@ -1161,15 +1222,14 @@ Based on this assessment, provide a detailed analysis in the following JSON form
 
     res.status(200).json({
       success: true,
-      result
+      result,
     });
-
   } catch (error) {
     console.error("Error analyzing job test results:", error);
     res.status(500).json({
       success: false,
       error: "Failed to analyze job test results",
-      details: error.message
+      details: error.message,
     });
   }
 };
