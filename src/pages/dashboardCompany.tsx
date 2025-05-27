@@ -2630,6 +2630,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
               </Box>
             </Box>
 
+
             {/* Skill Analysis */}
             <Box sx={{ mb: 4, backgroundColor: 'white', borderRadius: '16px', padding: '16px', border: '2px solid rgba(0, 255, 157, 1)' }}>
               <Typography variant="h6" sx={{ color: 'rgba(0, 255, 157, 1)', mb: 2 }}>Skill Analysis</Typography>
