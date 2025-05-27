@@ -1,4 +1,6 @@
+const { Together } = require("together-ai");
 const Resume = require('../models/resumeSchema');
+const together = new Together({ apiKey: process.env.TOGETHER_API_KEY , timeout: 20_000});
 
 /* ========== CREATE ========== */
 exports.createResume = async (req, res) => {
@@ -108,10 +110,6 @@ exports.deleteResume = async (req, res) => {
   }
 };
 
-// controllers/resumeController.js
-const { OpenAI } = require('openai');
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: 20_000 });
-
 exports.regenerate = async (req, res) => {
   try {
     const { block, content } = req.body;
@@ -125,10 +123,10 @@ exports.regenerate = async (req, res) => {
       return res.status(400).json({ error: 'Bloc invalide. Les blocs valides sont : bio, experience, skills, education, projects' });
     }
 
-    const raw = JSON.stringify({
+    let raw = JSON.stringify({
       [block]: content
     });
-
+    
     const systemMsg =
       `As a professional CV writer, your task is to enhance the ${block} section by creating exactly two powerful bullet points.
       
@@ -143,25 +141,30 @@ exports.regenerate = async (req, res) => {
       - Focus on the most important and impressive aspects
       - Each bullet point should be a complete, standalone statement`;
 
-    const { choices } = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.3,
-      messages: [
+    const stream = await together.chat.completions.create({
+      model: "deepseek-ai/DeepSeek-V3",
+        messages: [
         { role: 'system', content: systemMsg },
         { role: 'user',   content: raw }
-      ]
+      ],
+      temperature: 0.3,
+      stream: true,
     });
 
-    const response = choices?.[0]?.message?.content?.trim();
-    if (!response) throw new Error('Empty response');
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
+
+    if (!raw) throw new Error('Empty response');
 
     return res.json({ 
       message: `${block} regenerated successfully`, 
-      content: response
+      content: raw
     });
 
   } catch (err) {
-    console.error('OpenAI error:', err);
+    console.error('Together AI error:', err);
     res.status(err.status ?? 500).json({ error: err.message || 'Server error' });
   }
 };
