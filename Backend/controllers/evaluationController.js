@@ -94,80 +94,77 @@ Based on the candidate's skills (${skillsList}), generate **exactly 10** situati
 
 exports.generateTechniqueQuestions = async (req, res) => {
   try {
-    // 1. Validate request body
     const { skill, experienceLevel, proficiencyLevel } = req.body;
 
-    if (!skill || !experienceLevel || !proficiencyLevel) {
-      return res.status(400).json({
-        error: "Missing required fields",
-        required: {
-          skill: "Name of the skill",
-          experienceLevel: "Years of experience",
-          proficiencyLevel: "Level from 1-5",
-        },
-      });
+    if (!skill) {
+      return res.status(400).json({ error: "Missing 'skill' field" });
     }
 
-    // 🔐 1️⃣ Récupérer le profil lié à l'utilisateur connecté
     const profile = await Profile.findOne({ userId: req.user._id });
-
     if (!profile) {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-     // 🔁 Vérifier et reset le quota si 30 jours sont passés
-     const now = new Date();
-     const daysSinceLastUpdate =
-       (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
- 
-     if (daysSinceLastUpdate >= 30) {
-       profile.quota = 0;
-       profile.quotaUpdatedAt = now;
-     }
+    const now = new Date();
+    const daysSinceLastUpdate =
+      (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
+    if (daysSinceLastUpdate >= 30) {
+      profile.quota = 0;
+      profile.quotaUpdatedAt = now;
+    }
 
-    // 🔒 2️⃣ Vérifier si le quota est atteint
     if (profile.quota >= 5) {
       return res
         .status(403)
         .json({ error: "You have reached your test limit (5)" });
     }
 
-    // Validate proficiency level
-    if (proficiencyLevel < 1 || proficiencyLevel > 5) {
-      return res.status(400).json({
-        error: "Proficiency level must be between 1 and 5",
-      });
+    // Determine mode: Specific level OR Mixed levels (1 to 5)
+    let prompt;
+    if (experienceLevel && proficiencyLevel) {
+      if (proficiencyLevel < 1 || proficiencyLevel > 5) {
+        return res
+          .status(400)
+          .json({ error: "Proficiency level must be between 1 and 5" });
+      }
+
+      const skillDescription = `${skill} (Experience: ${experienceLevel} years, Proficiency: ${proficiencyLevel}/5)`;
+      prompt = `
+You are an experienced technical interviewer specializing in ${skill}.
+Generate **exactly 10** technical interview questions for someone with ${experienceLevel} years of experience and proficiency level ${proficiencyLevel}/5.
+Questions should be a mix of theoretical and practical ones.
+
+Return ONLY a JSON array of strings, like:
+[
+  "Question 1?",
+  "Question 2?"
+]
+`.trim();
+    } else {
+      // Only skill provided → Mixed difficulty
+      prompt = `
+You are an expert interviewer for ${skill}.
+Generate **exactly 10** interview questions covering levels 1 to 5:
+- 2 easy questions (level 1)
+- 2 beginner/intermediate (level 2)
+- 2 intermediate+ (level 3)
+- 2 advanced (level 4)
+- 2 expert-level (level 5)
+
+Return ONLY a JSON array of strings, like:
+[
+  "Question 1?",
+  "Question 2?"
+]
+`.trim();
     }
 
-    // 2. Build the skill description
-    const skillDescription = `${skill} (Experience: ${experienceLevel} years, Proficiency: ${proficiencyLevel}/5)`;
-
-    // 3. Prompt: ask for exactly 10 technical questions as a JSON array
-    const prompt = `
-You are an experienced technical interviewer specializing in ${skill}.
-Based on the candidate's profile (${skillDescription}), generate **exactly 10** technical interview questions.
-The questions should be appropriate for someone with ${experienceLevel} years of experience and a proficiency level of ${proficiencyLevel}/5.
-Mix of theoretical and practical questions, including problem-solving scenarios.
-
-**Return ONLY** a JSON array of strings—no commentary, no numbering, no markdown—like this:
-
-\`\`\`json
-[
-  "Technical question 1?",
-  "Technical question 2?",
-  // …
-]
-\`\`\`
-`.trim();
-
-    // 4. Call OpenAI
     const response = await openai.chat.completions.create({
       model: "gpt-4-turbo-preview",
       messages: [
         {
           role: "system",
-          content: `You are an experienced technical interviewer specializing in ${skill} assessments. 
-                   Focus on generating precise, technical questions that test both theoretical knowledge and practical experience.`,
+          content: `You are a technical interviewer generating skill-based questions.`,
         },
         { role: "user", content: prompt },
       ],
@@ -177,47 +174,43 @@ Mix of theoretical and practical questions, including problem-solving scenarios.
 
     const raw = response.choices[0].message.content;
 
-    // 5. Try to extract & parse the JSON array
+    // Try extracting JSON
     let questions;
     const jsonMatch = raw.match(/\[([\s\S]*)\]/);
     if (jsonMatch) {
-      const jsonText = "[" + jsonMatch[1] + "]";
       try {
-        questions = JSON.parse(jsonText);
+        questions = JSON.parse("[" + jsonMatch[1] + "]");
       } catch (e) {
-        console.warn("JSON parse failed on extracted text, falling back:", e);
+        console.warn("JSON parse failed, fallback:", e);
       }
     }
 
-    // 6. Fallback: parse as a numbered list if JSON failed
+    // Fallback if not a clean JSON array
     if (!Array.isArray(questions)) {
-      console.warn("Falling back to numbered-list parsing");
       questions = raw
-        .split(/\n(?=\d+\.\s)/) // split at newline before "1. ", "2. ", etc.
-        .map((q) => q.replace(/^\d+\.\s*/, "")) // strip leading "1. " etc.
-        .map((q) => q.trim())
+        .split(/\n(?=\d+\.\s)/)
+        .map((q) => q.replace(/^\d+\.\s*/, "").trim())
         .filter(Boolean);
     }
 
-     // ✅ 4️⃣ Incrémenter le quota après génération
-     profile.quota += 1;
-     await profile.save();
+    profile.quota += 1;
+    await profile.save();
 
-    // 7. Return the array with metadata
     res.json({
       skill,
-      experienceLevel,
-      proficiencyLevel,
+      mode: experienceLevel && proficiencyLevel ? "targeted" : "mixed",
+      experienceLevel: experienceLevel || "all",
+      proficiencyLevel: proficiencyLevel || "1-5",
       questions,
       totalQuestions: questions.length,
       newQuota: profile.quota,
-
     });
   } catch (error) {
     console.error("Error generating technical questions:", error);
     res.status(500).json({ error: "Failed to generate technical questions" });
   }
 };
+
 
 exports.generateTechniqueQuestionsForJob = async (req, res) => {
   try {
