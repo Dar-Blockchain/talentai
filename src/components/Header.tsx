@@ -50,8 +50,8 @@ const Header = () => {
         component="img"
         src="/logo.svg"
         alt="TalentAI Logo"
-        sx={{ height: 32, mb: 2 }}
-        onClick={() => router.push('/')}
+        sx={{ height: 32, mb: 2, cursor: 'pointer' }}
+        onClick={() => router.push("/")}
       />
       <List>
         {navItems.map((item) => (
@@ -87,30 +87,30 @@ const Header = () => {
             component="img"
             src="/logo.svg"
             alt="TalentAI Logo"
-            sx={{ height: 32 }}
-            onClick={() => router.push('/')}
+            sx={{ height: 32, cursor: 'pointer' }}
+            onClick={() => router.push("/")}
           />
           {!isMobile && (
             <Stack direction="row" spacing={4} alignItems="center">
               {navItems.map((item) => (
-                <Link href={`/home/#${item.id}`} passHref>
-                <Box
-                  key={item.id}
-                  sx={{
-                    cursor: "pointer",
-                    fontWeight: 500,
-                    color: "#000",
-                    typography: "body1",
-                    borderBottom: "2px solid transparent",
-                    transition: "all 0.1s",
-                    "&:hover": {
-                      borderBottom: "4px solid #00FF9D",
-                      fontWeight: "bold",
-                    },
-                  }}
-                >
-                  {item.label}
-                </Box>
+                <Link href={`/#${item.id}`} passHref>
+                  <Box
+                    key={item.id}
+                    sx={{
+                      cursor: "pointer",
+                      fontWeight: 500,
+                      color: "#000",
+                      typography: "body1",
+                      borderBottom: "2px solid transparent",
+                      transition: "all 0.1s",
+                      "&:hover": {
+                        borderBottom: "4px solid #00FF9D",
+                        fontWeight: "bold",
+                      },
+                    }}
+                  >
+                    {item.label}
+                  </Box>
                 </Link>
               ))}
             </Stack>
@@ -119,7 +119,7 @@ const Header = () => {
           {!isMobile ? (
             <Button
               variant="contained"
-              onClick={() => router.push('/signin')}
+              onClick={() => router.push("/signin")}
               sx={{
                 backgroundColor: "#000",
                 color: "#fff",

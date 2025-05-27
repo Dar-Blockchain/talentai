@@ -13,12 +13,16 @@ const profileSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Quota for the user
     quota: { type: Number, default: 0 },
     quotaUpdatedAt: {
       type: Date,
       default: Date.now,
     },
     
+    // Ready for match
+    readyForMatch: { type: Boolean, default: false },
+
     overallScore: { type: Number, default: 0 },
 
     // Hard Skills
