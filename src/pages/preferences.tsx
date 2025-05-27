@@ -490,7 +490,7 @@ export default function Preferences() {
       justifyContent: 'center',
       p: 2
     }}>
-      <Card elevation={8} sx={{ width: { xs: '100%', sm: 800 }, p: 4, borderRadius: 3, backdropFilter: 'blur(10px)' }}>
+      <Card elevation={8} sx={{ backgroundColor: 'white', width: { xs: '100%', sm: 800 }, p: 4, borderRadius: 3, backdropFilter: 'blur(10px)' }}>
         <LinearProgress
           variant="determinate"
           value={progress}

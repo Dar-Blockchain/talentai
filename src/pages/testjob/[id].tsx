@@ -113,7 +113,7 @@ const NavigationBar = styled(Box)(({ theme }) => ({
 // Add new styled components for the guidelines modal
 const GuidelinesModal = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
-    background: 'rgba(15, 23, 42, 0.95)',
+    background: 'white',
     backdropFilter: 'blur(10px)',
     borderRadius: '24px',
     border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -125,6 +125,7 @@ const GuidelinesModal = styled(Dialog)(({ theme }) => ({
 const GuidelineItem = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'flex-start',
+  border: '1px solid #000',
   gap: theme.spacing(2),
   padding: theme.spacing(2),
   borderRadius: '12px',
@@ -362,11 +363,11 @@ export default function Test() {
         if (response.ok) {
           const profileData = await response.json();
           console.log('Profile data:', profileData);
-          
+
           // Check if profile has required data
-          if (profileData && profileData.type && 
-              ((profileData.type === 'Candidate' && profileData.skills && profileData.skills.length > 0) ||
-               (profileData.type === 'Company' && profileData.requiredSkills && profileData.requiredSkills.length > 0))) {
+          if (profileData && profileData.type &&
+            ((profileData.type === 'Candidate' && profileData.skills && profileData.skills.length > 0) ||
+              (profileData.type === 'Company' && profileData.requiredSkills && profileData.requiredSkills.length > 0))) {
             console.log('Profile is complete, proceeding with test');
             setIsProfileComplete(true);
             return;
@@ -416,11 +417,11 @@ export default function Test() {
           }
 
           const data: JobQuestionsResponse = await response.json();
-          
+
           const formattedQuestions: Question[] = data.questions.map((question, index) => {
             const skillIndex = index % data.requiredSkills.length;
             const skill = data.requiredSkills[skillIndex];
-            
+
             return {
               id: `q_${index + 1}`,
               text: question,
@@ -430,7 +431,7 @@ export default function Test() {
           });
 
           setQuestions(formattedQuestions);
-          
+
           setTranscriptions(
             formattedQuestions.reduce((acc: any, _: any, index: number) => ({
               ...acc,
@@ -530,7 +531,7 @@ export default function Test() {
   const setupStreamingTranscription = async (stream: MediaStream) => {
     try {
       setIsConnecting(true);
-      
+
       // Generate token
       const token = await generateStreamingToken();
       setStreamingToken(token);
@@ -554,7 +555,7 @@ export default function Test() {
       ws.onopen = () => {
         console.log('Streaming connection opened');
         setIsConnecting(false);
-        
+
         // Connect audio processing
         source.connect(processor);
         processor.connect(audioContext.destination);
@@ -562,13 +563,13 @@ export default function Test() {
         processor.onaudioprocess = (event) => {
           if (ws.readyState === WebSocket.OPEN) {
             const inputBuffer = event.inputBuffer.getChannelData(0);
-            
+
             // Convert float32 to int16
             const int16Buffer = new Int16Array(inputBuffer.length);
             for (let i = 0; i < inputBuffer.length; i++) {
               int16Buffer[i] = Math.max(-32768, Math.min(32767, inputBuffer[i] * 32767));
             }
-            
+
             ws.send(int16Buffer.buffer);
           }
         };
@@ -576,7 +577,7 @@ export default function Test() {
 
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        
+
         if (data.message_type === 'PartialTranscript' || data.message_type === 'FinalTranscript') {
           const text = data.text;
           if (text?.trim()) {
@@ -585,10 +586,10 @@ export default function Test() {
               setTranscriptions(prevT => {
                 const currentQuestionText = prevT[currentIndexRef.current] || '';
                 const updatedQuestionText = (currentQuestionText + ' ' + text).trim();
-                
+
                 // Also update the current transcript to show the accumulated text
                 setCurrentTranscript(updatedQuestionText);
-                
+
                 return {
                   ...prevT,
                   [currentIndexRef.current]: updatedQuestionText
@@ -694,25 +695,25 @@ export default function Test() {
       wsRef.current.close();
       wsRef.current = null;
     }
-    
+
     // Stop audio context
     if (audioContextRef.current) {
       audioContextRef.current.close();
       audioContextRef.current = null;
     }
-    
+
     // Disconnect processor
     if (processorRef.current) {
       processorRef.current.disconnect();
       processorRef.current = null;
     }
-    
+
     // Stop audio tracks
     if (audioStreamRef.current) {
       audioStreamRef.current.getTracks().forEach(track => track.stop());
       audioStreamRef.current = null;
     }
-    
+
     setIsRecording(false);
     setHasStartedTest(false);
     setIsConnecting(false);
@@ -918,7 +919,7 @@ export default function Test() {
         }}
       >
         {/* Security Modal */}
-        <SecurityModal open={showSecurityModal} onClose={() => {}}>
+        <SecurityModal open={showSecurityModal} onClose={() => { }}>
           <DialogTitle sx={{ fontWeight: 700, color: '#fff', fontSize: '1.5rem' }}>
             Security Violation
           </DialogTitle>
@@ -988,17 +989,17 @@ export default function Test() {
             </Typography>
           </DialogTitle>
           <DialogContent sx={{ padding: theme.spacing(4) }}>
-            <Typography variant="body1" sx={{ color: '#fff', mb: 3, opacity: 0.9 }}>
+            <Typography variant="body1" sx={{ color: '#000', mb: 3, opacity: 0.9 }}>
               Please ensure you meet the following requirements before starting the test:
             </Typography>
 
             <GuidelineItem>
-              <Box sx={{ color: GREEN_MAIN, mt: 0.5 }}>⏱️</Box>
+              <Box sx={{ color: GREEN_MAIN, mt: 0.5  }}>⏱️</Box>
               <Box>
-                <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
+                <Typography variant="subtitle1" sx={{ color: '#000',  fontWeight: 600, mb: 0.5 }}>
                   Time Commitment
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                <Typography variant="body2" sx={{ color: '#000' }}>
                   Set aside 30 minutes of uninterrupted time. The test cannot be paused once started.
                 </Typography>
               </Box>
@@ -1007,10 +1008,10 @@ export default function Test() {
             <GuidelineItem>
               <Box sx={{ color: GREEN_MAIN, mt: 0.5 }}>🔇</Box>
               <Box>
-                <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
+                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
                   Quiet Environment
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                <Typography variant="body2" sx={{ color: '#000' }}>
                   Find a quiet room with no background noise. Background sounds can affect your test results.
                 </Typography>
               </Box>
@@ -1019,10 +1020,10 @@ export default function Test() {
             <GuidelineItem>
               <Box sx={{ color: GREEN_MAIN, mt: 0.5 }}>🎥</Box>
               <Box>
-                <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
+                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
                   Camera and Microphone
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                <Typography variant="body2" sx={{ color: '#000' }}>
                   Ensure your camera and microphone are working properly. Test will use both for recording.
                 </Typography>
               </Box>
@@ -1031,10 +1032,10 @@ export default function Test() {
             <GuidelineItem>
               <Box sx={{ color: GREEN_MAIN, mt: 0.5 }}>👤</Box>
               <Box>
-                <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
+                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
                   Individual Assessment
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                <Typography variant="body2" sx={{ color: '#000' }}>
                   Complete the test alone. No other people should be present or helping during the assessment.
                 </Typography>
               </Box>
@@ -1043,10 +1044,10 @@ export default function Test() {
             <GuidelineItem>
               <Box sx={{ color: GREEN_MAIN, mt: 0.5 }}>💻</Box>
               <Box>
-                <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
+                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
                   Technical Setup
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                <Typography variant="body2" sx={{ color: '#000' }}>
                   Use a stable internet connection. Close other applications that might use your camera or microphone.
                 </Typography>
               </Box>
@@ -1060,8 +1061,8 @@ export default function Test() {
             <Button
               onClick={() => router.push('/dashboardCandidate')}
               sx={{
-                color: 'rgba(255,255,255,0.7)',
-                '&:hover': { color: '#fff' }
+                color: '#000',
+                '&:hover': { color: '#000' }
               }}
             >
               I'm Not Ready
@@ -1071,7 +1072,7 @@ export default function Test() {
               onClick={handleGuidelinesAccept}
               sx={{
                 background: GREEN_MAIN,
-                color: '#fff',
+                color: '#000',
                 px: 4,
                 py: 1,
                 borderRadius: 2,
@@ -1197,10 +1198,10 @@ export default function Test() {
                   }
                 }}
               >
-                {isConnecting 
-                  ? 'Connecting...' 
-                  : hasStartedTest 
-                    ? `Recording in progress (${timeLeft}s)` 
+                {isConnecting
+                  ? 'Connecting...'
+                  : hasStartedTest
+                    ? `Recording in progress (${timeLeft}s)`
                     : 'Start Test'
                 }
               </RecordingButton>
