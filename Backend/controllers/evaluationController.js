@@ -740,7 +740,7 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       },
     };
     if (user.profile.overallScore === 0 && type === "technical") {
-      const profile = await profileService.createOrUpdateProfile(user._id, {
+      await profileService.createOrUpdateProfile(user._id, {
         overallScore: analysis.overallScore,
         skills: analysis.skillAnalysis.map((skill) => ({
           name: skill.skillName,
@@ -752,7 +752,7 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       const profileOverallScore = await profileService.getProfileByUserId(
         user._id
       );
-      const profile = await profileService.createOrUpdateProfile(user._id, {
+      await profileService.createOrUpdateProfile(user._id, {
         overallScore:
           (profileOverallScore.overallScore + analysis.overallScore) / 2,
         skills: analysis.skillAnalysis.map((skill) => ({
@@ -775,7 +775,7 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
         })),
       });
     } else if (type === "soft") {
-      const old = await profileService.getProfileByUserId(user._id);
+    //  const old = await profileService.getProfileByUserId(user._id);
       await profileService.createOrUpdateProfile(user._id, {
         softSkills: analysis.skillAnalysis.map((s) => ({
           name: s.skillName,
