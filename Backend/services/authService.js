@@ -56,7 +56,7 @@ module.exports.registerUser = async (email) => {
   const otpExpiry = new Date(Date.now() + 5 * 60000); // 5 minutes
 
   // Créer un portefeuille Hedera pour le nouvel utilisateur
-  const { pubkey, privkey, accountId } = await hederaService.createHederaWallet();
+  //const { pubkey, privkey, accountId } = await hederaService.createHederaWallet();
 
   // Créer l'utilisateur avec le portefeuille Hedera
   const user = new User({
