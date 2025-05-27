@@ -197,6 +197,17 @@ const FirstViolationModal = styled(Dialog)(({ theme }) => ({
   },
 }));
 
+// Add new TestLimitModal component
+const TestLimitModal = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialog-paper': {
+    background: 'white',
+    borderRadius: '24px',
+    border: '1px solid rgba(0, 0, 0, 0.1)',
+    maxWidth: '500px',
+    margin: theme.spacing(2),
+  },
+}));
+
 const VoiceActivityIndicator = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'isActive'
 })<{ isActive: boolean }>(({ theme, isActive }) => ({
@@ -323,6 +334,9 @@ export default function Test() {
   const [showFirstViolationModal, setShowFirstViolationModal] = useState(false);
   const violationHandledRef = useRef(false); // Prevent double handling
 
+  // Add new state for test limit error
+  const [showTestLimitError, setShowTestLimitError] = useState(false);
+
   // Fetch questions from API
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -365,10 +379,6 @@ export default function Test() {
               (skill: any) => skill.name === router.query.skill
             );
 
-            // if (!selectedSkill) {
-            //   throw new Error('Selected skill not found in profile');
-            // }
-
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
               method: 'POST',
               headers: {
@@ -381,8 +391,14 @@ export default function Test() {
                 proficiencyLevel: selectedSkill?.proficiencyLevel || 1
               })
             });
-            console.log('router:', router);
+
             if (!response.ok) {
+              const errorData = await response.json();
+              if (errorData.error === "You have reached your test limit (5)") {
+                setShowTestLimitError(true);
+                setIsGenerating(false);
+                return;
+              }
               throw new Error('Failed to fetch questions');
             }
 
@@ -405,6 +421,12 @@ export default function Test() {
             });
 
             if (!response.ok) {
+              const errorData = await response.json();
+              if (errorData.error === "You have reached your test limit (5)") {
+                setShowTestLimitError(true);
+                setIsGenerating(false);
+                return;
+              }
               throw new Error('Failed to fetch questions');
             }
 
@@ -422,6 +444,12 @@ export default function Test() {
           });
 
           if (!response.ok) {
+            const errorData = await response.json();
+            if (errorData.error === "You have reached your test limit (5)") {
+              setShowTestLimitError(true);
+              setIsGenerating(false);
+              return;
+            }
             throw new Error('Failed to fetch questions');
           }
 
@@ -845,369 +873,388 @@ export default function Test() {
         py: 4,
       }}
     >
-      <Box
-        sx={{
-          width: '100%',
-          maxWidth: 900,
-          mx: 'auto',
-          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-          borderRadius: 4,
-          background: 'rgba(255,255,255,0.95)',
-          p: { xs: 2, md: 4 },
-          minHeight: '80vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-        }}
+      {/* Add Test Limit Error Modal */}
+      <TestLimitModal 
+        open={showTestLimitError} 
+        onClose={() => router.push('/dashboardCandidate')}
       >
-        {/* Security Modal */}
-        <SecurityModal open={showSecurityModal} onClose={() => { }}>
-          <DialogTitle sx={{ fontWeight: 700, color: '#fff', fontSize: '1.5rem' }}>
-            Security Violation
-          </DialogTitle>
-          <DialogContent>
-            <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
-              You have attempted to leave or capture the test page more than once. For security reasons, your test has ended and you are being redirected to the dashboard.
-            </Typography>
-          </DialogContent>
-        </SecurityModal>
-
-        {/* First Violation Modal */}
-        <FirstViolationModal
-          open={showFirstViolationModal}
-          onClose={() => setShowFirstViolationModal(false)}
-          maxWidth="xs"
-          fullWidth
-        >
-          <DialogTitle sx={{ fontWeight: 700, fontSize: '1.3rem', color: 'black', pt: 3 }}>
-            Heads Up!
-          </DialogTitle>
-          <DialogContent sx={{ pb: 0 }}>
-            <Typography variant="body1" sx={{ color: 'black', mb: 2 }}>
-              For security reasons, leaving or capturing the test page is not allowed.<br />
-              <b>If you do this again, your test will end and you will be redirected.</b>
-            </Typography>
-          </DialogContent>
-          <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
-            <Button
-              variant="contained"
-              onClick={() => setShowFirstViolationModal(false)}
-              sx={{
-                background: 'rgba(0, 255, 157, 1)',
-                color: '#fff',
-                fontWeight: 600,
-                borderRadius: 2,
-                px: 4,
-                textTransform: 'none',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-                },
-              }}
-            >
-              Got it
-            </Button>
-          </DialogActions>
-        </FirstViolationModal>
-
-        {/* Guidelines Modal */}
-        <GuidelinesModal
-          open={showGuidelines}
-          onClose={() => { }}
-          maxWidth="md"
-          fullWidth
-        >
-          <DialogTitle sx={{
-            borderBottom: 'white',
-            padding: theme.spacing(3),
-          }}>
-            <Typography variant="h5" sx={{
-              color: '#fff',
-              fontWeight: 700,
-              background: 'rgba(0, 255, 157, 1)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}>
-              Important Test Guidelines
-            </Typography>
-          </DialogTitle>
-          <DialogContent sx={{ padding: theme.spacing(4) }}>
-            <Typography variant="body1" sx={{ color: '#000', mb: 3, opacity: 0.9 }}>
-              Please ensure you meet the following requirements before starting the test:
-            </Typography>
-
-            <GuidelineItem sx={{ color: '#000' }}>
-              <Box sx={{ color: '#02E2FF', mt: 0.5 }}>⏱️</Box>
-              <Box>
-                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
-                  Time Commitment
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#000' }}>
-                  Set aside 30 minutes of uninterrupted time. The test cannot be paused once started.
-                </Typography>
-              </Box>
-            </GuidelineItem>
-
-            <GuidelineItem>
-              <Box sx={{ color: '#02E2FF', mt: 0.5 }}>🔇</Box>
-              <Box>
-                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
-                  Quiet Environment
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#000' }}>
-                  Find a quiet room with no background noise. Background sounds can affect your test results.
-                </Typography>
-              </Box>
-            </GuidelineItem>
-
-            <GuidelineItem>
-              <Box sx={{ color: '#02E2FF', mt: 0.5 }}>🎥</Box>
-              <Box>
-                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
-                  Camera and Microphone
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#000' }}>
-                  Ensure your camera and microphone are working properly. Test will use both for recording.
-                </Typography>
-              </Box>
-            </GuidelineItem>
-
-            <GuidelineItem>
-              <Box sx={{ color: '#02E2FF', mt: 0.5 }}>👤</Box>
-              <Box>
-                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
-                  Individual Assessment
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#000' }}>
-                  Complete the test alone. No other people should be present or helping during the assessment.
-                </Typography>
-              </Box>
-            </GuidelineItem>
-
-            <GuidelineItem>
-              <Box sx={{ color: '#02E2FF', mt: 0.5 }}>💻</Box>
-              <Box>
-                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
-                  Technical Setup
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#000' }}>
-                  Use a stable internet connection. Close other applications that might use your camera or microphone.
-                </Typography>
-              </Box>
-            </GuidelineItem>
-          </DialogContent>
-          <DialogActions sx={{
-            padding: theme.spacing(3),
-            borderTop: '1px solid rgba(255,255,255,0.1)',
-            justifyContent: 'space-between'
-          }}>
-            <Button
-              onClick={() => router.push('/dashboardCandidate')}
-              sx={{
-                color: 'rgba(255,255,255,0.7)',
-                '&:hover': { color: '#fff' }
-              }}
-            >
-              I'm Not Ready
-            </Button>
-            <Button
-              variant="contained"
-              onClick={handleGuidelinesAccept}
-              sx={{
-                background: 'rgba(0, 255, 157, 1)',
-                color: '#fff',
-                px: 4,
-                py: 1,
-                borderRadius: 2,
-                textTransform: 'none',
-                fontWeight: 500,
-                '&:hover': {
-                  background: 'rgba(0, 255, 157, 1)',
-                }
-              }}
-            >
-              I Understand & I'm Ready
-            </Button>
-          </DialogActions>
-        </GuidelinesModal>
-
-        <StyledAppBar position="static" elevation={0}>
-          <Toolbar>
-            <Typography
-              variant="h6"
-              sx={{
-                flexGrow: 1,
-                background: 'black',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                fontWeight: 700,
-              }}
-            >
-              Skill Test ({current + 1}/{questions.length || '-'})
-            </Typography>
-            {hasStartedTest && (
-              <Typography variant="subtitle1" sx={{ color: '#fff', mr: 2 }}>
-                {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
-              </Typography>
-            )}
-            <Button
-              startIcon={<CallEndIcon />}
-              onClick={() => {
-                stopRecording();
-                goHome();
-              }}
-              variant="outlined"
-              sx={{
-                color: theme.palette.error.main,
-                borderColor: theme.palette.error.main,
-                textTransform: 'none',
-                borderRadius: 2,
-                px: 3,
-                '&:hover': { backgroundColor: 'rgba(244,67,54,0.1)' },
-              }}
-            >
-              End Test
-            </Button>
-          </Toolbar>
-          <LinearProgress
-            variant={isGenerating ? "indeterminate" : "determinate"}
-            value={((current + 1) / (questions.length || 1)) * 100}
-            sx={{
-              height: 4,
-              backgroundColor: 'rgba(255,255,255,0.1)',
-              '& .MuiLinearProgress-bar': {
-                backgroundColor: GREEN_MAIN,
-              },
-            }}
-          />
-        </StyledAppBar>
-
-        <Container
-          maxWidth="md"
-          sx={{
-            flexGrow: 1,
-            py: 4,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'transparent',
-            boxShadow: 'none',
-          }}
-        >
-          <Paper
-            elevation={12}
-            sx={{
-              position: 'relative',
-              width: '100%',
-              pt: '56.25%', // 16:9
-              borderRadius: 4,
-              overflow: 'hidden',
-              background: 'rgba(255,255,255,0.98)',
-              boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
-            }}
-          >
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                transform: 'scaleX(-1)',
-                borderRadius: '24px',
-                boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
-                border: '2px solid #e0f7fa',
-              }}
-            />
-
-            <RecordingControls>
-              <RecordingButton
-                variant="contained"
-                onClick={hasStartedTest ? undefined : startTest}
-                disabled={isGenerating || hasStartedTest || isConnecting}
-                sx={{
-                  backgroundColor: 'rgba(0, 255, 157, 1)',
-                  '&:hover': {
-                    backgroundColor: 'rgba(0, 255, 157, 1)',
-                  },
-                  '&.Mui-disabled': {
-                    backgroundColor: hasStartedTest ? '#ff4444' : 'rgba(255, 255, 255, 0.12)',
-                    color: hasStartedTest ? '#fff' : 'rgba(255, 255, 255, 0.3)',
-                  }
-                }}
-              >
-                {isConnecting
-                  ? 'Connecting...'
-                  : hasStartedTest
-                    ? `Recording in progress (${timeLeft}s)`
-                    : 'Start Test'
-                }
-              </RecordingButton>
-              {hasStartedTest && (
-                <VoiceActivityIndicator isActive={currentTranscript.length > 0}>
-                  <VoiceWaves />
-                  <VoiceIcon />
-                </VoiceActivityIndicator>
-              )}
-            </RecordingControls>
-
-            <QuestionOverlay>
-              <Typography variant="h6" sx={{ color: '#fff' }}>
-                {isGenerating ? (
-                  <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    justifyContent: 'center',
-                    background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }}>
-                    <span>Generating your interview questions</span>
-                    <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
-                      ...
-                    </Box>
-                  </Box>
-                ) : questions[current]}
-              </Typography>
-            </QuestionOverlay>
-          </Paper>
-        </Container>
-
-        <NavigationBar>
-          <IconButton onClick={handlePrev} disabled={current === 0} sx={{ color: '#fff' }}>
-            <ArrowBackIcon />
-          </IconButton>
+        <DialogTitle sx={{ 
+          fontWeight: 700, 
+          color: '#000000', 
+          fontSize: '1.5rem',
+          textAlign: 'center'
+        }}>
+          Test Limit Reached
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ color: '#000000', mb: 2, textAlign: 'center' }}>
+            You have reached your maximum limit of 5 tests. Please contact support if you need to take more tests.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
           <Button
             variant="contained"
-            endIcon={<ArrowForwardIcon />}
-            onClick={handleNext}
-            disabled={isGenerating}
+            onClick={() => router.push('/dashboardCandidate')}
             sx={{
-              textTransform: 'none',
               background: GREEN_MAIN,
-              borderRadius: 2,
-              px: 4,
-              py: 1.5,
-              fontWeight: 600,
-              boxShadow: '0 2px 8px 0 rgba(0,255,157,0.10)',
+              color: '#000000',
               '&:hover': {
-                background: GREEN_MAIN,
-              },
-              '&.Mui-disabled': {
-                background: 'rgba(255, 255, 255, 0.12)',
-                color: 'rgba(255, 255, 255, 0.3)',
+                background: 'rgba(0, 255, 157, 0.9)',
               }
             }}
           >
-            {current < questions.length - 1 ? 'Next Question' : 'Finish Test'}
+            Return to Dashboard
           </Button>
-        </NavigationBar>
-      </Box>
+        </DialogActions>
+      </TestLimitModal>
+
+      {/* Security Modal */}
+      <SecurityModal open={showSecurityModal} onClose={() => { }}>
+        <DialogTitle sx={{ fontWeight: 700, color: '#fff', fontSize: '1.5rem' }}>
+          Security Violation
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
+            You have attempted to leave or capture the test page more than once. For security reasons, your test has ended and you are being redirected to the dashboard.
+          </Typography>
+        </DialogContent>
+      </SecurityModal>
+
+      {/* First Violation Modal */}
+      <FirstViolationModal
+        open={showFirstViolationModal}
+        onClose={() => setShowFirstViolationModal(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, fontSize: '1.3rem', color: 'black', pt: 3 }}>
+          Heads Up!
+        </DialogTitle>
+        <DialogContent sx={{ pb: 0 }}>
+          <Typography variant="body1" sx={{ color: 'black', mb: 2 }}>
+            For security reasons, leaving or capturing the test page is not allowed.<br />
+            <b>If you do this again, your test will end and you will be redirected.</b>
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+          <Button
+            variant="contained"
+            onClick={() => setShowFirstViolationModal(false)}
+            sx={{
+              background: 'rgba(0, 255, 157, 1)',
+              color: '#fff',
+              fontWeight: 600,
+              borderRadius: 2,
+              px: 4,
+              textTransform: 'none',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+              },
+            }}
+          >
+            Got it
+          </Button>
+        </DialogActions>
+      </FirstViolationModal>
+
+      {/* Guidelines Modal */}
+      <GuidelinesModal
+        open={showGuidelines}
+        onClose={() => { }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{
+          borderBottom: 'white',
+          padding: theme.spacing(3),
+        }}>
+          <Typography variant="h5" sx={{
+            color: '#fff',
+            fontWeight: 700,
+            background: 'rgba(0, 255, 157, 1)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}>
+            Important Test Guidelines
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ padding: theme.spacing(4) }}>
+          <Typography variant="body1" sx={{ color: '#000', mb: 3, opacity: 0.9 }}>
+            Please ensure you meet the following requirements before starting the test:
+          </Typography>
+
+          <GuidelineItem sx={{ color: '#000' }}>
+            <Box sx={{ color: '#02E2FF', mt: 0.5 }}>⏱️</Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
+                Time Commitment
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#000' }}>
+                Set aside 30 minutes of uninterrupted time. The test cannot be paused once started.
+              </Typography>
+            </Box>
+          </GuidelineItem>
+
+          <GuidelineItem>
+            <Box sx={{ color: '#02E2FF', mt: 0.5 }}>🔇</Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
+                Quiet Environment
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#000' }}>
+                Find a quiet room with no background noise. Background sounds can affect your test results.
+              </Typography>
+            </Box>
+          </GuidelineItem>
+
+          <GuidelineItem>
+            <Box sx={{ color: '#02E2FF', mt: 0.5 }}>🎥</Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
+                Camera and Microphone
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#000' }}>
+                Ensure your camera and microphone are working properly. Test will use both for recording.
+              </Typography>
+            </Box>
+          </GuidelineItem>
+
+          <GuidelineItem>
+            <Box sx={{ color: '#02E2FF', mt: 0.5 }}>👤</Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
+                Individual Assessment
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#000' }}>
+                Complete the test alone. No other people should be present or helping during the assessment.
+              </Typography>
+            </Box>
+          </GuidelineItem>
+
+          <GuidelineItem>
+            <Box sx={{ color: '#02E2FF', mt: 0.5 }}>💻</Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
+                Technical Setup
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#000' }}>
+                Use a stable internet connection. Close other applications that might use your camera or microphone.
+              </Typography>
+            </Box>
+          </GuidelineItem>
+        </DialogContent>
+        <DialogActions sx={{
+          padding: theme.spacing(3),
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          justifyContent: 'space-between'
+        }}>
+          <Button
+            onClick={() => router.push('/dashboardCandidate')}
+            sx={{
+              color: 'rgba(255,255,255,0.7)',
+              '&:hover': { color: '#fff' }
+            }}
+          >
+            I'm Not Ready
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleGuidelinesAccept}
+            sx={{
+              background: 'rgba(0, 255, 157, 1)',
+              color: '#fff',
+              px: 4,
+              py: 1,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': {
+                background: 'rgba(0, 255, 157, 1)',
+              }
+            }}
+          >
+            I Understand & I'm Ready
+          </Button>
+        </DialogActions>
+      </GuidelinesModal>
+
+      <StyledAppBar position="static" elevation={0}>
+        <Toolbar>
+          <Typography
+            variant="h6"
+            sx={{
+              flexGrow: 1,
+              background: 'black',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: 700,
+            }}
+          >
+            Skill Test ({current + 1}/{questions.length || '-'})
+          </Typography>
+          {hasStartedTest && (
+            <Typography variant="subtitle1" sx={{ color: '#fff', mr: 2 }}>
+              {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+            </Typography>
+          )}
+          <Button
+            startIcon={<CallEndIcon />}
+            onClick={() => {
+              stopRecording();
+              goHome();
+            }}
+            variant="outlined"
+            sx={{
+              color: theme.palette.error.main,
+              borderColor: theme.palette.error.main,
+              textTransform: 'none',
+              borderRadius: 2,
+              px: 3,
+              '&:hover': { backgroundColor: 'rgba(244,67,54,0.1)' },
+            }}
+          >
+            End Test
+          </Button>
+        </Toolbar>
+        <LinearProgress
+          variant={isGenerating ? "indeterminate" : "determinate"}
+          value={((current + 1) / (questions.length || 1)) * 100}
+          sx={{
+            height: 4,
+            backgroundColor: 'rgba(255,255,255,0.1)',
+            '& .MuiLinearProgress-bar': {
+              backgroundColor: GREEN_MAIN,
+            },
+          }}
+        />
+      </StyledAppBar>
+
+      <Container
+        maxWidth="md"
+        sx={{
+          flexGrow: 1,
+          py: 4,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'transparent',
+          boxShadow: 'none',
+        }}
+      >
+        <Paper
+          elevation={12}
+          sx={{
+            position: 'relative',
+            width: '100%',
+            pt: '56.25%', // 16:9
+            borderRadius: 4,
+            overflow: 'hidden',
+            background: 'rgba(255,255,255,0.98)',
+            boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
+          }}
+        >
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transform: 'scaleX(-1)',
+              borderRadius: '24px',
+              boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
+              border: '2px solid #e0f7fa',
+            }}
+          />
+
+          <RecordingControls>
+            <RecordingButton
+              variant="contained"
+              onClick={hasStartedTest ? undefined : startTest}
+              disabled={isGenerating || hasStartedTest || isConnecting}
+              sx={{
+                backgroundColor: 'rgba(0, 255, 157, 1)',
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 255, 157, 1)',
+                },
+                '&.Mui-disabled': {
+                  backgroundColor: hasStartedTest ? '#ff4444' : 'rgba(255, 255, 255, 0.12)',
+                  color: hasStartedTest ? '#fff' : 'rgba(255, 255, 255, 0.3)',
+                }
+              }}
+            >
+              {isConnecting
+                ? 'Connecting...'
+                : hasStartedTest
+                  ? `Recording in progress (${timeLeft}s)`
+                  : 'Start Test'
+              }
+            </RecordingButton>
+            {hasStartedTest && (
+              <VoiceActivityIndicator isActive={currentTranscript.length > 0}>
+                <VoiceWaves />
+                <VoiceIcon />
+              </VoiceActivityIndicator>
+            )}
+          </RecordingControls>
+
+          <QuestionOverlay>
+            <Typography variant="h6" sx={{ color: '#fff' }}>
+              {isGenerating ? (
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}>
+                  <span>Generating your interview questions</span>
+                  <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
+                    ...
+                  </Box>
+                </Box>
+              ) : questions[current]}
+            </Typography>
+          </QuestionOverlay>
+        </Paper>
+      </Container>
+
+      <NavigationBar>
+        <IconButton onClick={handlePrev} disabled={current === 0} sx={{ color: '#fff' }}>
+          <ArrowBackIcon />
+        </IconButton>
+        <Button
+          variant="contained"
+          endIcon={<ArrowForwardIcon />}
+          onClick={handleNext}
+          disabled={isGenerating}
+          sx={{
+            textTransform: 'none',
+            background: GREEN_MAIN,
+            borderRadius: 2,
+            px: 4,
+            py: 1.5,
+            fontWeight: 600,
+            boxShadow: '0 2px 8px 0 rgba(0,255,157,0.10)',
+            '&:hover': {
+              background: GREEN_MAIN,
+            },
+            '&.Mui-disabled': {
+              background: 'rgba(255, 255, 255, 0.12)',
+              color: 'rgba(255, 255, 255, 0.3)',
+            }
+          }}
+        >
+          {current < questions.length - 1 ? 'Next Question' : 'Finish Test'}
+        </Button>
+      </NavigationBar>
     </Box>
   );
 }

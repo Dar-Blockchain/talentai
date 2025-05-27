@@ -33,7 +33,8 @@ import {
   InputLabel,
   Slider,
   Autocomplete,
-  useTheme
+  useTheme,
+  Tooltip
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -47,6 +48,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LogoutIcon from '@mui/icons-material/Logout';
 import DescriptionIcon from '@mui/icons-material/Description';
+import InfoIcon from '@mui/icons-material/Info';
 import { useRouter } from 'next/router';
 import Cookies from 'js-cookie';
 import { signOut } from 'next-auth/react';
@@ -329,17 +331,13 @@ const SkillBlock = ({ skill, type, onStartTest, onDelete }: { skill: any, type: 
       mb: 3,
       p: 3,
       borderRadius: '20px',
-      background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-      boxShadow: '0 8px 30px rgba(0, 0, 0, 0.06), 0 0 15px rgba(0, 0, 0, 0.04)',
+      background: 'white',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: 3,
       transition: 'all 0.3s ease',
-      '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: '0 15px 40px rgba(0, 0, 0, 0.1), 0 0 25px rgba(0, 0, 0, 0.06)'
-      }
+
     }}>
       <Box sx={{ flex: 1 }}>
         <Typography sx={{
@@ -1023,11 +1021,16 @@ export default function DashboardCandidate() {
                 variant="contained"
                 startIcon={<PlayArrowIcon />}
                 onClick={() => handleStartTest()}
+                disabled={profile.quota >= 5}
                 sx={{
                   background: GREEN_MAIN,
                   color: '#000000',
                   '&:hover': {
                     background: 'rgba(0, 255, 157, 0.9)',
+                  },
+                  '&.Mui-disabled': {
+                    background: 'rgba(0,0,0,0.1)',
+                    color: 'rgba(0,0,0,0.3)'
                   }
                 }}
               >
@@ -1206,10 +1209,10 @@ export default function DashboardCandidate() {
                 color: GREEN_MAIN
               }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Typography variant="h6" sx={{  color: "black"  }}>Start New Test</Typography>
+                  <Typography variant="h6" sx={{ color: "black" }}>Start New Test</Typography>
                   <IconButton
                     onClick={handleCloseTestModal}
-                    sx={{  color: "black"  }}
+                    sx={{ color: "black" }}
                   >
                     <CloseIcon />
                   </IconButton>
@@ -1217,7 +1220,7 @@ export default function DashboardCandidate() {
               </DialogTitle>
               <DialogContent>
                 <FormControl component="fieldset" sx={{ width: '100%', mb: 3 }}>
-                  <FormLabel sx={{ color: "black", mb: 1 , mt: 2 }}>Select Skill Type</FormLabel>
+                  <FormLabel sx={{ color: "black", mb: 1, mt: 2 }}>Select Skill Type</FormLabel>
                   <RadioGroup
                     value={skillType}
                     onChange={handleSkillTypeChange}
@@ -1226,13 +1229,13 @@ export default function DashboardCandidate() {
                       value="technical"
                       control={<Radio sx={{ color: "black" }} />}
                       label="Technical Skill"
-                      sx={{ color: "black"  }}
+                      sx={{ color: "black" }}
                     />
                     <FormControlLabel
                       value="soft"
-                      control={<Radio sx={{  color: "black"  }} />}
+                      control={<Radio sx={{ color: "black" }} />}
                       label="Soft Skill"
-                      sx={{  color: "black"  }}
+                      sx={{ color: "black" }}
                     />
                   </RadioGroup>
                 </FormControl>
@@ -1341,9 +1344,10 @@ export default function DashboardCandidate() {
                         <Paper
                           {...props}
                           sx={{
-                            backgroundColor: '#f5f5f5',
+                            backgroundColor: 'white',
+                            color: 'black',
                             '& .MuiAutocomplete-option': {
-                              color: '#000000',
+                              color: 'black',
                               '&[aria-selected="true"]': {
                                 backgroundColor: 'rgba(0, 255, 157, 0.1)',
                               },
@@ -1508,6 +1512,16 @@ export default function DashboardCandidate() {
                 </Typography>
                 <Typography variant="h5" sx={{ fontWeight: 600, color: '#191919', mt: 1 }}>
                   {profile.skills?.length || 0}
+                </Typography>
+              </StatCard>
+            </Box>
+            <Box>
+              <StatCard>
+                <Typography variant="overline" sx={{ color: '#191919', letterSpacing: 2 }}>
+                  Tests Passed
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 600, color: '#191919', mt: 1 }}>
+                  {profile.quota || 0}/5
                 </Typography>
               </StatCard>
             </Box>
@@ -1731,7 +1745,7 @@ export default function DashboardCandidate() {
           fullWidth
           PaperProps={{
             sx: {
-              background: 'rgba(30, 41, 59, 0.95)',
+              background: 'white',
               backdropFilter: 'blur(10px)',
               borderRadius: '16px',
               border: '1px solid rgba(255,255,255,0.1)',
@@ -1764,10 +1778,11 @@ export default function DashboardCandidate() {
                   <TextField
                     {...params}
                     label="Category"
-                    InputLabelProps={{ sx: { color: 'rgba(0,0,0,0.7)' } }}
+                    InputLabelProps={{ sx: { color: 'white)' } }}
                     sx={{
                       mt: 2,
-                      color: '#000000',
+                      color: 'white',
+                      backgroundColor: 'white',
                       '& .MuiOutlinedInput-notchedOutline': {
                         borderColor: 'rgba(0,0,0,0.2)',
                       },
@@ -1777,16 +1792,30 @@ export default function DashboardCandidate() {
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                         borderColor: GREEN_MAIN,
                       },
-                      '&.Mui-focused': {
-                        '& .MuiInputLabel-root': {
-                          color: GREEN_MAIN,
-                        }
-                      },
+
                       '& .MuiInputLabel-root': {
                         '&.Mui-focused': {
                           color: GREEN_MAIN,
                         }
                       }
+                    }}
+                  />
+                )}
+                PaperComponent={(props) => (
+                  <Paper
+                    {...props}
+                    sx={{
+                      backgroundColor: 'white',
+                      color: 'black',
+                      '& .MuiAutocomplete-option': {
+                        color: 'black',
+                        '&[aria-selected="true"]': {
+                          backgroundColor: 'rgba(0, 255, 157, 0.1)',
+                        },
+                        '&:hover': {
+                          backgroundColor: 'rgba(0, 255, 157, 0.05)',
+                        },
+                      },
                     }}
                   />
                 )}
@@ -1801,7 +1830,7 @@ export default function DashboardCandidate() {
                   <TextField
                     {...params}
                     label="Skill Name"
-                    InputLabelProps={{ sx: { color: 'rgba(0,0,0,0.7)' } }}
+                    InputLabelProps={{ sx: { color: 'white' } }}
                     InputProps={{
                       ...params.InputProps,
                       sx: {
@@ -1825,6 +1854,25 @@ export default function DashboardCandidate() {
                             color: GREEN_MAIN,
                           }
                         }
+                      },
+
+                    }}
+
+                  />
+                )} PaperComponent={(props) => (
+                  <Paper
+                    {...props}
+                    sx={{
+                      backgroundColor: 'white',
+                      color: 'black',
+                      '& .MuiAutocomplete-option': {
+                        color: 'black',
+                        '&[aria-selected="true"]': {
+                          backgroundColor: 'rgba(0, 255, 157, 0.1)',
+                        },
+                        '&:hover': {
+                          backgroundColor: 'rgba(0, 255, 157, 0.05)',
+                        },
                       },
                     }}
                   />
@@ -1915,11 +1963,16 @@ export default function DashboardCandidate() {
                   handleStartTest('technical', justAddedSkill);
                   setJustAddedSkill(null);
                 }}
+                disabled={profile.quota >= 5}
                 sx={{
                   background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
                   color: '#ffffff',
                   '&:hover': {
                     background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                  },
+                  '&.Mui-disabled': {
+                    background: 'rgba(0,0,0,0.1)',
+                    color: 'rgba(0,0,0,0.3)'
                   },
                   mt: 2
                 }}
