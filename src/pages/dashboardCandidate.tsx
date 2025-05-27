@@ -34,7 +34,8 @@ import {
   Slider,
   Autocomplete,
   useTheme,
-  Tooltip
+  Tooltip,
+  Checkbox
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -1483,6 +1484,48 @@ export default function DashboardCandidate() {
                 </Button>
               </DialogActions>
             </Dialog>
+          </Box>
+
+          {/* To-Do List Section */}
+          <Box sx={{ mb: 6 }}>
+            <StatCard sx={{
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+              border: '1px solid rgba(0, 255, 157, 0.15)',
+              boxShadow: '0 8px 30px rgba(0, 255, 157, 0.06), 0 0 15px rgba(0, 255, 157, 0.04)',
+              p: 4,
+              borderRadius: '24px',
+              mb: 4
+            }}>
+              <Typography variant="h5" sx={{ fontWeight: 700, color: GREEN_MAIN, mb: 2 }}>
+                To-Do List
+              </Typography>
+              <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Checkbox checked={!!profile.userId.username && !!profile.userId.email} sx={{ color: GREEN_MAIN }} />
+                  <Typography sx={{ color: '#191919', fontWeight: 500 }}>
+                    Complete your profile
+                  </Typography>
+                </Box>
+                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Checkbox checked={profile.skills && profile.skills.length > 0} sx={{ color: GREEN_MAIN }} />
+                  <Typography sx={{ color: '#191919', fontWeight: 500 }}>
+                    Add a new skill
+                  </Typography>
+                </Box>
+                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Checkbox checked={profile.quota > 0} sx={{ color: GREEN_MAIN }} />
+                  <Typography sx={{ color: '#191919', fontWeight: 500 }}>
+                    Take your first test
+                  </Typography>
+                </Box>
+                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Checkbox checked={false} sx={{ color: GREEN_MAIN }} />
+                  <Typography sx={{ color: '#191919', fontWeight: 500 }}>
+                    Upload your CV
+                  </Typography>
+                </Box>
+              </Box>
+            </StatCard>
           </Box>
 
           <Box sx={{
