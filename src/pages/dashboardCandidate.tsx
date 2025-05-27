@@ -329,7 +329,6 @@ const SkillBlock = ({ skill, type, onStartTest, onDelete }: { skill: any, type: 
 
   return (
     <Box sx={{
-      mb: 3,
       p: 3,
       borderRadius: '20px',
       background: 'white',
@@ -338,6 +337,7 @@ const SkillBlock = ({ skill, type, onStartTest, onDelete }: { skill: any, type: 
       justifyContent: 'space-between',
       gap: 3,
       transition: 'all 0.3s ease',
+      border: '1px solid rgba(0, 0, 0, 0.05)',
 
     }}>
       <Box sx={{ flex: 1 }}>
@@ -480,10 +480,7 @@ export default function DashboardCandidate() {
   });
 
   const [addSkillDialogOpen, setAddSkillDialogOpen] = useState(false);
-  const [newSkill, setNewSkill] = useState({
-    name: '',
-    proficiencyLevel: 1
-  });
+  const [newSkill, setNewSkill] = useState({ name: '', proficiencyLevel: 1 });
 
   // Add state to track pre-selected skill for test modal
   const [preSelectedTest, setPreSelectedTest] = useState<{ type: 'technical' | 'soft', skill: any } | null>(null);
@@ -651,12 +648,13 @@ export default function DashboardCandidate() {
   const handleAddSkill = async () => {
     try {
       const token = Cookies.get('api_token');
+      const selectedSkill = newSkill.name; // Capture before state reset
       const updatedSkills = [
         ...(profile?.skills || []),
         {
-          name: newSkill.name,
-          proficiencyLevel: newSkill.proficiencyLevel,
-          experienceLevel: getExperienceLevelFromProficiency(newSkill.proficiencyLevel),
+          name: selectedSkill,
+          proficiencyLevel: 1, // Always set to 1 by default
+          experienceLevel: getExperienceLevelFromProficiency(1), // Always set to Entry Level
           NumberTestPassed: 0,
           ScoreTest: 0
         }
@@ -677,8 +675,11 @@ export default function DashboardCandidate() {
       }
       dispatch(getMyProfile());
       setNewSkill({ name: '', proficiencyLevel: 1 });
-      // Don't close dialog yet, allow user to start test
-      // setAddSkillDialogOpen(false);
+      setAddSkillDialogOpen(false);
+      // Redirect to test for the selected skill
+      if (selectedSkill) {
+        router.push(`/test?type=technical&skill=${encodeURIComponent(selectedSkill)}`);
+      }
     } catch (error) {
       console.error('Error adding skill:', error);
     }
@@ -1898,11 +1899,10 @@ export default function DashboardCandidate() {
                           }
                         }
                       },
-
                     }}
-
                   />
-                )} PaperComponent={(props) => (
+                )}
+                PaperComponent={(props) => (
                   <Paper
                     {...props}
                     sx={{
@@ -1921,49 +1921,7 @@ export default function DashboardCandidate() {
                   />
                 )}
               />
-              <Box>
-                <Typography sx={{ color: '#000000', mb: 1 }}>Proficiency Level: {newSkill.proficiencyLevel}</Typography>
-                <Slider
-                  value={newSkill.proficiencyLevel}
-                  onChange={(_, value) => {
-                    const val = typeof value === 'number' ? value : 1;
-                    setNewSkill(prev => ({ ...prev, proficiencyLevel: Math.max(1, val) }));
-                  }}
-                  min={1}
-                  max={5}
-                  step={1}
-                  marks={[
-                    { value: 1, label: '1' },
-                    { value: 2, label: '2' },
-                    { value: 3, label: '3' },
-                    { value: 4, label: '4' },
-                    { value: 5, label: '5' },
-                  ]}
-                  sx={{
-                    '& .MuiSlider-rail': {
-                      backgroundColor: 'rgba(0,0,0,0.2)',
-                    },
-                    '& .MuiSlider-track': {
-                      background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
-                    },
-                    '& .MuiSlider-thumb': {
-                      backgroundColor: GREEN_MAIN,
-                      '&:hover, &.Mui-focusVisible': {
-                        boxShadow: '0 0 0 8px rgba(2,226,255,0.2)',
-                      },
-                    },
-                    '& .MuiSlider-mark': {
-                      backgroundColor: 'rgba(0,0,0,0.3)',
-                    },
-                    '& .MuiSlider-markActive': {
-                      backgroundColor: GREEN_MAIN,
-                    },
-                    '& .MuiSlider-markLabel': {
-                      color: 'rgba(0,0,0,0.7)',
-                    },
-                  }}
-                />
-              </Box>
+              {/* Removed Proficiency Level slider/input */}
             </Box>
           </DialogContent>
           <DialogActions sx={{
