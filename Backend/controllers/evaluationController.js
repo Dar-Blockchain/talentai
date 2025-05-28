@@ -748,7 +748,7 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
           experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
         })),
       });
-    } else {
+    } else if (type === "technical"){
       const profileOverallScore = await profileService.getProfileByUserId(
         user._id
       );
@@ -1073,3 +1073,191 @@ Based on this assessment, provide a detailed analysis in the following JSON form
     });
   }
 };
+
+exports.analyzeProfileAnswers2 = async (req, res) => {
+  try {
+    const { type, skill, questions } = req.body;
+    const user = req.user;
+
+    // 1. Validation
+    if (!type || !Array.isArray(skill) || !Array.isArray(questions)) {
+      return res.status(400).json({
+        error: "Invalid request format",
+        required: {
+          type: "Type of assessment (e.g., 'technical')",
+          skill: "Array of skill objects with name and proficiencyLevel",
+          questions: "Array of question-answer pairs",
+        },
+      });
+    }
+
+    const isValidSkill = skill.every(
+      s =>
+        typeof s.name === "string" &&
+        typeof s.proficiencyLevel === "number" &&
+        s.proficiencyLevel >= 1 &&
+        s.proficiencyLevel <= 5
+    );
+    if (!isValidSkill) {
+      return res.status(400).json({
+        error: "Invalid skill format",
+        message: "Each skill must have a name and proficiencyLevel between 1–5",
+      });
+    }
+
+    // 2. Prompt GPT
+    const formattedPrompt = generatePrompt(type, skill, questions);
+    const response = await fetchAnalysisFromLLM(formattedPrompt, type);
+
+    // 3. Traitement du résultat brut
+    const parsedAnalysis = await parseLLMResponse(response, skill);
+    const result = buildFinalResult(parsedAnalysis, type, skill, questions);
+
+    // 4. Mise à jour du profil
+    await updateUserProfile(user, type, parsedAnalysis);
+
+    return res.status(200).json({ success: true, result });
+
+  } catch (error) {
+    console.error("Error analyzing profile answers:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to analyze profile",
+      details: error.message,
+    });
+  }
+};
+
+function generatePrompt(type, skill, questions) {
+  return `
+As an expert ${type} interviewer, analyze the following assessment:
+
+Assessment Type: ${type}
+Skills being assessed:
+${skill.map(s => `- ${s.name} (Current Proficiency Level: ${s.proficiencyLevel}/5)`).join("\n")}
+
+Questions and Answers:
+${questions.map(qa => `Q: ${qa.question}\nA: ${qa.answer}`).join("\n\n")}
+
+Respond in this exact JSON format only (no extra text):
+{ "overallScore": 85, "skillAnalysis": [...], "generalAssessment": "...", "recommendations": [...], "technicalLevel": "...", "nextSteps": [...], "assessmentType": "${type}", "evaluationContext": "..." }
+  `;
+}
+
+async function fetchAnalysisFromLLM(prompt, type) {
+  const response = await together.chat.completions.create({
+    model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+    messages: [
+      { role: "system", content: `You are an expert ${type} interviewer. Analyze answers in JSON.` },
+      { role: "user", content: prompt },
+    ],
+    max_tokens: 1000,
+    temperature: 0.7,
+    stream: true,
+  });
+
+  let raw = "";
+  for await (const chunk of response) {
+    const content = chunk.choices?.[0]?.delta?.content;
+    if (content) raw += content;
+  }
+
+  return raw.trim();
+}
+
+async function parseLLMResponse(rawResponse, originalSkills) {
+  let jsonStr = rawResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/)?.[1] || rawResponse;
+  jsonStr = jsonStr.replace(/^[^{]+/, "").replace(/[^}]+$/, "").replace(/,(\s*[}\]])/g, "$1");
+
+  let analysis;
+  try {
+    analysis = JSON.parse(jsonStr);
+  } catch (e) {
+    jsonStr = jsonStr.replace(/'/g, '"').replace(/\n/g, " ").replace(/\s+/g, " ");
+    analysis = JSON.parse(jsonStr);
+  }
+
+  // Validation
+  if (!analysis || !Array.isArray(analysis.skillAnalysis)) throw new Error("Invalid response");
+
+  // Normalisation
+  analysis.skillAnalysis = analysis.skillAnalysis.map(skill => {
+    const current = Number(skill.currentProficiency) || 0;
+    const score = Number(skill.confidenceScore) || 0;
+    let demo = score > 70 ? current + 1 : score >= 50 ? current : current - 1;
+    demo = Math.min(Math.max(demo, 1), 5);
+
+    return {
+      skillName: skill.skillName || skill.skill || "",
+      currentProficiency: current,
+      demonstratedProficiency: demo,
+      currentExperienceLevel: getExperienceLevel(current),
+      demonstratedExperienceLevel: getExperienceLevel(demo),
+      strengths: skill.strengths || [],
+      weaknesses: skill.weaknesses || [],
+      confidenceScore: score,
+      improvement: demo > current ? "increased" : demo < current ? "decreased" : "unchanged",
+    };
+  });
+
+  return analysis;
+}
+
+function buildFinalResult(analysis, type, skill, questions) {
+  return {
+    timestamp: new Date(),
+    assessmentType: type,
+    skillsAssessed: skill.map(s => ({
+      ...s,
+      experienceLevel: getExperienceLevel(s.proficiencyLevel),
+    })),
+    numberOfQuestions: questions.length,
+    analysis: {
+      ...analysis,
+      skillProgression: analysis.skillAnalysis.map(sa => {
+        const original = skill.find(s => s.name === sa.skillName);
+        const originalLevel = original?.proficiencyLevel || 1;
+        return {
+          ...sa,
+          proficiencyChange: sa.demonstratedProficiency - originalLevel,
+          masteryCategory: getMasteryCategory(sa.confidenceScore),
+          levelProgression: {
+            from: getExperienceLevel(originalLevel),
+            to: getExperienceLevel(sa.demonstratedProficiency),
+            changed: originalLevel !== sa.demonstratedProficiency,
+          },
+        };
+      }),
+    },
+  };
+}
+
+async function updateUserProfile(user, type, analysis) {
+  const profile = await profileService.getProfileByUserId(user._id);
+  const isNew = user.profile?.overallScore === 0;
+
+  if (type === "technical") {
+    const updatedScore = isNew
+      ? analysis.overallScore
+      : (profile.overallScore + analysis.overallScore) / 2;
+
+    await profileService.createOrUpdateProfile(user._id, {
+      overallScore: updatedScore,
+      skills: analysis.skillAnalysis.map(s => ({
+        name: s.skillName,
+        proficiencyLevel: s.demonstratedProficiency,
+        experienceLevel: getExperienceLevel(s.demonstratedProficiency),
+        ScoreTest: s.confidenceScore,
+      })),
+    });
+  } else if (type === "soft") {
+    await profileService.createOrUpdateProfile(user._id, {
+      softSkills: analysis.skillAnalysis.map(s => ({
+        name: s.skillName,
+        category: s.category || "",
+        experienceLevel: getExperienceLevel(s.demonstratedProficiency),
+        ScoreTest: s.confidenceScore,
+      })),
+    });
+  }
+}
