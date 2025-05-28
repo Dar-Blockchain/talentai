@@ -219,7 +219,6 @@ Return ONLY a JSON array of strings, like:
   }
 };
 
-
 exports.generateTechniqueQuestionsForJob = async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -462,19 +461,21 @@ exports.analyzeProfileAnswers = async (req, res) => {
         error: "Invalid request format",
         required: {
           type: "Type of assessment (e.g., 'technical')",
-          skill: "Array of skill objects with name and proficiencyLevel (and optional subcategory)",
+          skill:
+            "Array of skill objects with name and proficiencyLevel (and optional subcategory)",
           questions: "Array of question-answer pairs",
         },
       });
     }
 
     // Validate skill objects - allow optional subcategory for soft skills
-    const isValidSkill = skill.every((s) =>
-      s.name &&
-      typeof s.name === "string" &&
-      typeof s.proficiencyLevel === "number" &&
-      s.proficiencyLevel >= 1 &&
-      s.proficiencyLevel <= 5
+    const isValidSkill = skill.every(
+      (s) =>
+        s.name &&
+        typeof s.name === "string" &&
+        typeof s.proficiencyLevel === "number" &&
+        s.proficiencyLevel >= 1 &&
+        s.proficiencyLevel <= 5
     );
 
     if (!isValidSkill) {
@@ -644,7 +645,9 @@ Provide detailed, actionable feedback in JSON format only.`,
                 : "unchanged",
             // Pass subcategory if returned by GPT or fallback to known from front
             subcategory:
-              skill.subcategory || skillSubcategories[skill.skillName || skill.skill] || "",
+              skill.subcategory ||
+              skillSubcategories[skill.skillName || skill.skill] ||
+              "",
           };
         }),
         generalAssessment: analysis.generalAssessment || "",
@@ -687,7 +690,9 @@ Provide detailed, actionable feedback in JSON format only.`,
               currentProficiency: s.proficiencyLevel,
               demonstratedProficiency: s.proficiencyLevel,
               currentExperienceLevel: getExperienceLevel(s.proficiencyLevel),
-              demonstratedExperienceLevel: getExperienceLevel(s.proficiencyLevel),
+              demonstratedExperienceLevel: getExperienceLevel(
+                s.proficiencyLevel
+              ),
               strengths: ["Assessment incomplete"],
               weaknesses: ["Could not analyze in detail"],
               confidenceScore: 60,
@@ -736,11 +741,13 @@ Provide detailed, actionable feedback in JSON format only.`,
       },
     };
 
-    console.log("typeKbira",type)
+    console.log("typeKbira", type);
     // 6. Save profile data based on assessment type
     if (type === "technical") {
-      console.log("type",type)
-      const profileOverallScore = await profileService.getProfileByUserId(user._id);
+      console.log("type", type);
+      const profileOverallScore = await profileService.getProfileByUserId(
+        user._id
+      );
       await profileService.createOrUpdateProfile(user._id, {
         overallScore:
           profileOverallScore.overallScore === 0
@@ -753,15 +760,15 @@ Provide detailed, actionable feedback in JSON format only.`,
           ScoreTest: skill.confidenceScore,
         })),
       });
-    } 
-    
+    }
+
     if (type === "soft") {
       const profile = await Profile.findOne({ userId: user._id });
       const newOverallScore =
         profile.overallScore === 0
           ? analysis.overallScore
           : (profile.overallScore + analysis.overallScore) / 2;
-    
+
       const updated = await Profile.findOneAndUpdate(
         { userId: user._id },
         {
@@ -776,6 +783,69 @@ Provide detailed, actionable feedback in JSON format only.`,
         { new: true }
       );
       console.log("Updated profile softSkills:", updated.softSkills);
+    }
+
+    // Après avoir reçu et parsé la réponse brute de GPT en "analysis"
+    if (type === "technicalSkill") {
+      analysis = {
+        overallScore: Number(analysis.overallScore) || 0,
+        skillAnalysis: analysis.skillAnalysis.map((skill) => {
+          const current = Number(skill.currentProficiency) || 1;
+          // On prend la valeur exacte renvoyée par GPT pour demonstratedProficiency
+          const exactDemo = Number(skill.demonstratedProficiency) || current;
+
+          return {
+            skillName: skill.skillName || skill.skill || "",
+            currentProficiency: current,
+            demonstratedProficiency: exactDemo,
+            currentExperienceLevel: getExperienceLevel(current),
+            demonstratedExperienceLevel: getExperienceLevel(exactDemo),
+            strengths: Array.isArray(skill.strengths) ? skill.strengths : [],
+            weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
+            confidenceScore: Number(skill.confidenceScore) || 0,
+            improvement:
+              exactDemo > current
+                ? "increased"
+                : exactDemo < current
+                ? "decreased"
+                : "unchanged",
+            subcategory:
+              skill.subcategory ||
+              skillSubcategories[skill.skillName || skill.skill] ||
+              "",
+          };
+        }),
+        generalAssessment: analysis.generalAssessment || "",
+        recommendations: Array.isArray(analysis.recommendations)
+          ? analysis.recommendations
+          : [],
+        technicalLevel: analysis.technicalLevel || "intermediate",
+        nextSteps: Array.isArray(analysis.nextSteps) ? analysis.nextSteps : [],
+        experienceLevels: [
+          "Entry Level",
+          "Junior",
+          "Mid Level",
+          "Senior",
+          "Expert",
+        ],
+      };
+
+      // Sauvegarde dans le profil utilisateur (comme pour 'technical')
+      const profileOverallScore = await profileService.getProfileByUserId(
+        user._id
+      );
+      await profileService.createOrUpdateProfile(user._id, {
+        overallScore:
+          profileOverallScore.overallScore === 0
+            ? analysis.overallScore
+            : (profileOverallScore.overallScore + analysis.overallScore) / 2,
+        skills: analysis.skillAnalysis.map((skill) => ({
+          name: skill.skillName,
+          proficiencyLevel: skill.demonstratedProficiency,
+          experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
+          ScoreTest: skill.confidenceScore,
+        })),
+      });
     }
 
     // 7. Return the response
@@ -1066,4 +1136,3 @@ Based on this assessment, provide a detailed analysis in the following JSON form
     });
   }
 };
-
