@@ -19,7 +19,7 @@ const profileSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
-    
+
     // Ready for match
     readyForMatch: { type: Boolean, default: false },
 
@@ -46,6 +46,8 @@ const profileSchema = new mongoose.Schema(
       },
     ],
 
+    todoList: { type: mongoose.Schema.Types.ObjectId, ref: "ToDo" },
+
     // Company details (if type is Company)
     companyDetails: {
       name: String,
@@ -60,12 +62,14 @@ const profileSchema = new mongoose.Schema(
       enum: ["Entry Level", "Mid Level", "Senior", "Lead/Expert"],
     },
 
-    assessmentResults: [{ type: mongoose.Schema.Types.ObjectId, ref: "JobAssessmentResult" }],
+    assessmentResults: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "JobAssessmentResult" },
+    ],
 
     // Bid received by user (if type is Candidate)
     companyBid: {
       finalBid: Number,
-      dateBid : Date,
+      dateBid: Date,
       company: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
