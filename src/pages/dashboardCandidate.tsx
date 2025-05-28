@@ -55,6 +55,7 @@ import Cookies from 'js-cookie';
 import { signOut } from 'next-auth/react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { toast } from 'react-hot-toast';
+import { generateTodos, fetchTodos } from '@/store/slices/todoSlice';
 
 const GREEN_MAIN = 'rgba(0, 255, 157, 1)';
 
@@ -326,7 +327,6 @@ const SkillBlock = ({ skill, type, onStartTest, onDelete }: { skill: any, type: 
   };
   const proficiencyLevel = type === 'technical' ? skill.proficiencyLevel : (proficiencyMap[skill.experienceLevel] || 1);
   const percentage = (proficiencyLevel / 5) * 100;
-
   return (
     <Box sx={{
       mb: 3,
@@ -489,9 +489,12 @@ export default function DashboardCandidate() {
   const [preSelectedTest, setPreSelectedTest] = useState<{ type: 'technical' | 'soft', skill: any } | null>(null);
 
   const theme = useTheme();
-
+  const generateTodoList = () => {
+    dispatch(generateTodos())
+  }
   useEffect(() => {
     dispatch(getMyProfile());
+    dispatch(fetchTodos())
   }, [dispatch]);
 
   useEffect(() => {
@@ -1486,48 +1489,6 @@ export default function DashboardCandidate() {
             </Dialog>
           </Box>
 
-          {/* To-Do List Section */}
-          <Box sx={{ mb: 6 }}>
-            <StatCard sx={{
-              background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-              border: '1px solid rgba(0, 255, 157, 0.15)',
-              boxShadow: '0 8px 30px rgba(0, 255, 157, 0.06), 0 0 15px rgba(0, 255, 157, 0.04)',
-              p: 4,
-              borderRadius: '24px',
-              mb: 4
-            }}>
-              <Typography variant="h5" sx={{ fontWeight: 700, color: GREEN_MAIN, mb: 2 }}>
-                To-Do List
-              </Typography>
-              <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
-                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Checkbox checked={!!profile.userId.username && !!profile.userId.email} sx={{ color: GREEN_MAIN }} />
-                  <Typography sx={{ color: '#191919', fontWeight: 500 }}>
-                    Complete your profile
-                  </Typography>
-                </Box>
-                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Checkbox checked={profile.skills && profile.skills.length > 0} sx={{ color: GREEN_MAIN }} />
-                  <Typography sx={{ color: '#191919', fontWeight: 500 }}>
-                    Add a new skill
-                  </Typography>
-                </Box>
-                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Checkbox checked={profile.quota > 0} sx={{ color: GREEN_MAIN }} />
-                  <Typography sx={{ color: '#191919', fontWeight: 500 }}>
-                    Take your first test
-                  </Typography>
-                </Box>
-                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Checkbox checked={false} sx={{ color: GREEN_MAIN }} />
-                  <Typography sx={{ color: '#191919', fontWeight: 500 }}>
-                    Upload your CV
-                  </Typography>
-                </Box>
-              </Box>
-            </StatCard>
-          </Box>
-
           <Box sx={{
             marginTop: theme => theme.spacing(4),
             display: 'grid',
@@ -1774,6 +1735,54 @@ export default function DashboardCandidate() {
                         onDelete={() => handleDeleteSkill(skill.name)}
                       />
                     ))}
+                </Box>
+              </Box>
+            </StyledCard>
+          </Box>
+          <Box>
+            <StyledCard>
+              <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+              <SectionTitle>To-Do List</SectionTitle>
+                      <Button
+          variant="contained"
+          startIcon={<PlayArrowIcon />}
+          onClick={generateTodoList}
+          sx={{
+            background: GREEN_MAIN,
+            color: '#000000',
+            '&:hover': {
+              background: 'rgba(0, 255, 157, 0.9)',
+            }
+          }}
+        >
+          Generate
+        </Button>
+              </Box>
+
+              <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Checkbox checked={true} sx={{ color: GREEN_MAIN }} />
+                  <Typography sx={{ color: '#191919', fontWeight: 500 }}>
+                    Complete your profile
+                  </Typography>
+                </Box>
+                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Checkbox checked={true} sx={{ color: GREEN_MAIN }} />
+                  <Typography sx={{ color: '#191919', fontWeight: 500 }}>
+                    Add a new skill
+                  </Typography>
+                </Box>
+                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Checkbox checked={true} sx={{ color: GREEN_MAIN }} />
+                  <Typography sx={{ color: '#191919', fontWeight: 500 }}>
+                    Take your first test
+                  </Typography>
+                </Box>
+                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Checkbox checked={false} sx={{ color: GREEN_MAIN }} />
+                  <Typography sx={{ color: '#191919', fontWeight: 500 }}>
+                    Upload your CV
+                  </Typography>
                 </Box>
               </Box>
             </StyledCard>
