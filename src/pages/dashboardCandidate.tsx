@@ -1400,6 +1400,24 @@ export default function DashboardCandidate() {
                             }}
                           />
                         )}
+                        PaperComponent={(props) => (
+                          <Paper
+                            {...props}
+                            sx={{
+                              backgroundColor: 'white',
+                              color: 'black',
+                              '& .MuiAutocomplete-option': {
+                                color: 'black',
+                                '&[aria-selected="true"]': {
+                                  backgroundColor: 'rgba(0, 255, 157, 0.1)',
+                                },
+                                '&:hover': {
+                                  backgroundColor: 'rgba(0, 255, 157, 0.05)',
+                                },
+                              },
+                            }}
+                          />
+                        )}
                       />
                     )}
 
@@ -1439,6 +1457,25 @@ export default function DashboardCandidate() {
                                     color: GREEN_MAIN,
                                   }
                                 }
+                              },
+                            }}
+
+                          />
+                        )}
+                        PaperComponent={(props) => (
+                          <Paper
+                            {...props}
+                            sx={{
+                              backgroundColor: 'white',
+                              color: 'black',
+                              '& .MuiAutocomplete-option': {
+                                color: 'black',
+                                '&[aria-selected="true"]': {
+                                  backgroundColor: 'rgba(0, 255, 157, 0.1)',
+                                },
+                                '&:hover': {
+                                  backgroundColor: 'rgba(0, 255, 157, 0.05)',
+                                },
                               },
                             }}
                           />
