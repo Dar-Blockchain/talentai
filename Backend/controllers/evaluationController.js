@@ -1078,7 +1078,7 @@ exports.analyzeProfileAnswers2 = async (req, res) => {
   try {
     const { type, skill, questions } = req.body;
     const user = req.user;
-
+    console.log("skill",skill)
     // 1. Validation
     if (!type || !Array.isArray(skill) || !Array.isArray(questions)) {
       return res.status(400).json({
@@ -1236,6 +1236,7 @@ async function updateUserProfile(user, type, analysis) {
   const profile = await profileService.getProfileByUserId(user._id);
   const isNew = user.profile?.overallScore === 0;
   console.log(type);
+  console.log(analysis)
   if (type === "technical") {
     console.log("technical");
     const updatedScore = isNew
@@ -1255,6 +1256,13 @@ async function updateUserProfile(user, type, analysis) {
 
   } else if (type === "soft") {
     console.log("soft");
+    const test = analysis.skillAnalysis.map(s => ({
+      name: s.skillName,
+      category: s.category || "",
+      experienceLevel: getExperienceLevel(s.demonstratedProficiency),
+      ScoreTest: s.confidenceScore,
+    }))
+    console.log('test',test)
     const result = await profileService.createOrUpdateProfile(user._id, {
       softSkills: analysis.skillAnalysis.map(s => ({
         name: s.skillName,
@@ -1264,6 +1272,5 @@ async function updateUserProfile(user, type, analysis) {
       })),
     });
     console.log("result soft : ", result);
-
   }
 }
