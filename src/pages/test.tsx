@@ -194,6 +194,7 @@ const FirstViolationModal = styled(Dialog)(({ theme }) => ({
     border: '1px solid rgba(255, 255, 255, 0.1)',
     maxWidth: '600px',
     margin: theme.spacing(2),
+    backgroundColor: 'white',
   },
 }));
 
@@ -205,6 +206,7 @@ const TestLimitModal = styled(Dialog)(({ theme }) => ({
     border: '1px solid rgba(0, 0, 0, 0.1)',
     maxWidth: '500px',
     margin: theme.spacing(2),
+    backgroundColor: 'white',
   },
 }));
 
@@ -311,6 +313,8 @@ export default function Test() {
   const [timeLeft, setTimeLeft] = useState(120);
   const currentIndexRef = useRef(0);
   const [hasStartedTest, setHasStartedTest] = useState(false);
+  const [nextButtonDisabled, setNextButtonDisabled] = useState(true);
+  const [buttonTimer, setButtonTimer] = useState(10);
 
   // Add state for per-question transcriptions
   const [transcriptions, setTranscriptions] = useState<{ [key: number]: string }>(
@@ -686,7 +690,32 @@ export default function Test() {
     setShowGuidelines(false);
   };
 
-  // Modify startTest to check guidelines acceptance
+  // Add timer for next button
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (hasStartedTest && nextButtonDisabled && buttonTimer > 0) {
+      timer = setInterval(() => {
+        setButtonTimer(prev => {
+          if (prev <= 1) {
+            setNextButtonDisabled(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [hasStartedTest, nextButtonDisabled, buttonTimer]);
+
+  // Reset button timer when question changes
+  useEffect(() => {
+    if (current > 0) {
+      setNextButtonDisabled(true);
+      setButtonTimer(10);
+    }
+  }, [current]);
+
+  // Modify startTest to enable next button for first question
   const startTest = async () => {
     if (!guidelinesAccepted) {
       setShowGuidelines(true);
@@ -708,7 +737,7 @@ export default function Test() {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          sampleRate: 16000, // Changed to 16000 for streaming
+          sampleRate: 16000,
           channelCount: 1,
         },
       });
@@ -720,6 +749,7 @@ export default function Test() {
       setIsRecording(true);
       setHasStartedTest(true);
       setTimeLeft(120); // Start with 120 seconds (2 minutes)
+      setNextButtonDisabled(false); // Enable next button for first question
     } catch (error) {
       console.error('Recording setup error:', error);
       setIsRecording(false);
@@ -1234,25 +1264,26 @@ export default function Test() {
           variant="contained"
           endIcon={<ArrowForwardIcon />}
           onClick={handleNext}
-          disabled={isGenerating}
+          disabled={isGenerating || (current > 0 && nextButtonDisabled)}
           sx={{
             textTransform: 'none',
-            background: GREEN_MAIN,
+            background: nextButtonDisabled ? 'rgba(255, 255, 255, 0.12)' : GREEN_MAIN,
             borderRadius: 2,
             px: 4,
             py: 1.5,
             fontWeight: 600,
             boxShadow: '0 2px 8px 0 rgba(0,255,157,0.10)',
             '&:hover': {
-              background: GREEN_MAIN,
+              background: nextButtonDisabled ? 'rgba(255, 255, 255, 0.12)' : GREEN_MAIN,
             },
             '&.Mui-disabled': {
-              background: 'rgba(255, 255, 255, 0.12)',
-              color: 'rgba(255, 255, 255, 0.3)',
+              color: 'black',
             }
           }}
         >
-          {current < questions.length - 1 ? 'Next Question' : 'Finish Test'}
+          {current < questions.length - 1 
+            ? `Next Question${nextButtonDisabled ? ` (${buttonTimer}s)` : ''}` 
+            : 'Finish Test'}
         </Button>
       </NavigationBar>
     </Box>
