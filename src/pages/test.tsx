@@ -314,7 +314,7 @@ export default function Test() {
   const currentIndexRef = useRef(0);
   const [hasStartedTest, setHasStartedTest] = useState(false);
   const [nextButtonDisabled, setNextButtonDisabled] = useState(true);
-  const [buttonTimer, setButtonTimer] = useState(10);
+  const [buttonTimer, setButtonTimer] = useState(2);
 
   // Add state for per-question transcriptions
   const [transcriptions, setTranscriptions] = useState<{ [key: number]: string }>(
@@ -711,7 +711,7 @@ export default function Test() {
   useEffect(() => {
     if (current > 0) {
       setNextButtonDisabled(true);
-      setButtonTimer(10);
+      setButtonTimer(2);
     }
   }, [current]);
 
