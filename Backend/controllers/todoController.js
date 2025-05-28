@@ -15,7 +15,7 @@ exports.generateTodoListForProfile = async (req, res) => {
       return res.status(400).json({ error: "User profile not found." });
     }
 
-    const profile = await Profile.findById(user.profile);
+    const profile = await Profile.findOne({userId: user._id, type: "Candidate"});
 
     if (!profile.skills || profile.skills.length === 0) {
       return res
@@ -44,7 +44,8 @@ Generate a JSON array where each item is an object with:
 - priority: "Low", "Medium", or "High"
 - recommendations: array of up to 3 objects, each with:
   - title: what to do (e.g., "Take XYZ course", "Get ABC certification")
-  - type: one of "Course", "Certification", "Project", "Article", "Video", "Exercise", "Book", or "Other"
+  - type: strictly one of the following (case-sensitive):
+    "Course", "Certification", "Project", "Article", "Video", "Exercise", "Book", or "Other"
   - description: a brief description of the task
   - url (optional)
 
@@ -121,14 +122,16 @@ Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
     }));
 
     // Upsert ToDo
-    let todo = await ToDo.findOne({ profile: profile._id });
+    let todo = await ToDo.findOne({ profileId: profile._id });
 
-    if (!todo) {
+    if (!todo) {  
       todo = await ToDo.create({
-        profile: profile._id,
+        profileId: profile._id,
         skillTasks,
-      });
+      })
+
       profile.todoList = todo._id;
+      await todo.save();
       await profile.save();
     } else {
       todo.skillTasks = skillTasks;
@@ -137,9 +140,8 @@ Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
 
     res.status(201).json({
       message: "ToDo list generated",
-      result: { todoListId: todo._id, profileId: profile._id, todo },
+      result: { todoListId: todo._id, profile: profile._id, todo },
     });
-    // res.status(201).json({ message: "ToDo list generated", result: {todoListId: null, profileId: null, todo} });
   } catch (error) {
     console.error("Error generating ToDo list:", error);
     res.status(500).json({ error: "Failed to generate ToDo list" });
