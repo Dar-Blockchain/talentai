@@ -653,8 +653,6 @@ export default function DashboardCandidate() {
         ...(profile?.skills || []),
         {
           name: selectedSkill,
-          proficiencyLevel: 1, // Always set to 1 by default
-          experienceLevel: getExperienceLevelFromProficiency(1), // Always set to Entry Level
           NumberTestPassed: 0,
           ScoreTest: 0
         }
@@ -678,7 +676,7 @@ export default function DashboardCandidate() {
       setAddSkillDialogOpen(false);
       // Redirect to test for the selected skill
       if (selectedSkill) {
-        router.push(`/test?type=technical&skill=${encodeURIComponent(selectedSkill)}`);
+        router.push(`/test?type=technicalSkill&skill=${encodeURIComponent(selectedSkill)}`);
       }
     } catch (error) {
       console.error('Error adding skill:', error);

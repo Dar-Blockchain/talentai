@@ -356,7 +356,7 @@ export default function Test() {
         // Detect source based on URL parameters
         if (router.query.type && router.query.skill) {
           // This is from dashboardCandidate
-          if (router.query.type === 'technical') {
+          if (router.query.type === 'technical' || router.query.type === 'technicalSkill') {
             endpoint = 'evaluation/generate-technique-questions';
 
             // First fetch the user's profile to get the skill levels
@@ -378,7 +378,7 @@ export default function Test() {
             const selectedSkill = profileData.skills.find(
               (skill: any) => skill.name === router.query.skill
             );
-
+            console.log('Selected skill:', selectedSkill);
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
               method: 'POST',
               headers: {
@@ -387,8 +387,8 @@ export default function Test() {
               },
               body: JSON.stringify({
                 skill: router.query.skill,
-                experienceLevel: selectedSkill?.experienceLevel || 'Entry Level',
-                proficiencyLevel: selectedSkill?.proficiencyLevel || 1
+                experienceLevel: router.query.type === 'technicalSkill' ? null : selectedSkill?.experienceLevel || 'Entry Level',
+                proficiencyLevel: router.query.type === 'technicalSkill' ? null : selectedSkill?.proficiencyLevel || 1
               })
             });
 
@@ -874,13 +874,13 @@ export default function Test() {
       }}
     >
       {/* Add Test Limit Error Modal */}
-      <TestLimitModal 
-        open={showTestLimitError} 
+      <TestLimitModal
+        open={showTestLimitError}
         onClose={() => router.push('/dashboardCandidate')}
       >
-        <DialogTitle sx={{ 
-          fontWeight: 700, 
-          color: '#000000', 
+        <DialogTitle sx={{
+          fontWeight: 700,
+          color: '#000000',
           fontSize: '1.5rem',
           textAlign: 'center'
         }}>
