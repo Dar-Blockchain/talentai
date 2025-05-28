@@ -83,6 +83,7 @@ export default function Report() {
   const hasRun = useRef(false);
 
   useEffect(() => {
+    if (!router.isReady) return;
 
     const previousPath = (router.query.from as string) || localStorage.getItem('previousPath');
     const type = (router.query.type as string) ||
@@ -143,6 +144,13 @@ export default function Report() {
           const profileData = await profileResponse.json();
           const userSkills = profileData?.skills || [];
 
+          console.log('URL Parameters:', {
+            type: router.query.type,
+            skill: router.query.skill,
+            proficiency: router.query.proficiency,
+            subcategory: router.query.subcategory
+          });
+
           const requestBody = {
             type: router.query.type || testData.metadata?.type || type,
             skill: router.query.skill ? [{
@@ -155,6 +163,10 @@ export default function Report() {
             subcategory: router.query.subcategory as string,
             questions: testData.results
           };
+
+          if (!requestBody.skill.length) {
+            throw new Error('No skills found in profile or URL parameters');
+          }
 
           console.log('Sending analysis request:', JSON.stringify(requestBody, null, 2));
 
@@ -220,9 +232,8 @@ export default function Report() {
     if (!hasRun.current) {
       hasRun.current = true;
       analyzeResults();
-
     }
-  }, [router.query.from, router.query.type, router.query.skill, router.query.subcategory]);
+  }, [router.isReady, router.query.from, router.query.type, router.query.skill, router.query.subcategory, router.query.proficiency]);
   const goHome = () => router.push('/dashboardCandidate');
 
   if (loading || analyzing) {

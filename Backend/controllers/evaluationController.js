@@ -462,20 +462,19 @@ exports.analyzeProfileAnswers = async (req, res) => {
         error: "Invalid request format",
         required: {
           type: "Type of assessment (e.g., 'technical')",
-          skill: "Array of skill objects with name and proficiencyLevel",
+          skill: "Array of skill objects with name and proficiencyLevel (and optional subcategory)",
           questions: "Array of question-answer pairs",
         },
       });
     }
 
-    // Validate skill objects
-    const isValidSkill = skill.every(
-      (s) =>
-        s.name &&
-        typeof s.name === "string" &&
-        typeof s.proficiencyLevel === "number" &&
-        s.proficiencyLevel >= 1 &&
-        s.proficiencyLevel <= 5
+    // Validate skill objects - allow optional subcategory for soft skills
+    const isValidSkill = skill.every((s) =>
+      s.name &&
+      typeof s.name === "string" &&
+      typeof s.proficiencyLevel === "number" &&
+      s.proficiencyLevel >= 1 &&
+      s.proficiencyLevel <= 5
     );
 
     if (!isValidSkill) {
@@ -486,6 +485,14 @@ exports.analyzeProfileAnswers = async (req, res) => {
       });
     }
 
+    // Build a map for skillName -> subcategory (for soft skills)
+    const skillSubcategories = {};
+    skill.forEach((s) => {
+      if (s.name && s.subcategory) {
+        skillSubcategories[s.name] = s.subcategory;
+      }
+    });
+
     // 2. Prepare the data for GPT analysis
     const prompt = `
 As an expert ${type} interviewer, analyze the following assessment:
@@ -494,7 +501,10 @@ Assessment Type: ${type}
 Skills being assessed: 
 ${skill
   .map(
-    (s) => `- ${s.name} (Current Proficiency Level: ${s.proficiencyLevel}/5)`
+    (s) =>
+      `- ${s.name} (Current Proficiency Level: ${s.proficiencyLevel}/5${
+        s.subcategory ? `, Subcategory: ${s.subcategory}` : ""
+      })`
   )
   .join("\n")}
 
@@ -506,19 +516,20 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
   "overallScore": 85,
   "skillAnalysis": [
     {
-      "skillName": "JavaScript",
+      "skillName": "Teamwork",
       "currentProficiency": 3,
       "demonstratedProficiency": 4,
-      "strengths": ["Good understanding of core concepts"],
-      "weaknesses": ["May need more practice with advanced topics"],
+      "strengths": ["Good communication"],
+      "weaknesses": ["Needs improvement in conflict resolution"],
       "confidenceScore": 80,
-      "improvement": "increased"
+      "improvement": "increased",
+      "subcategory": "conflict-resolution"  // optional, if applicable
     }
   ],
   "generalAssessment": "Strong foundational knowledge with some areas for improvement",
   "recommendations": [
-    "Focus on advanced JavaScript concepts",
-    "Practice more with React hooks"
+    "Focus on advanced communication techniques",
+    "Practice conflict management"
   ],
   "technicalLevel": "intermediate",
   "nextSteps": [
@@ -535,8 +546,8 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
         {
           role: "system",
           content: `You are an expert ${type} interviewer specializing in evaluating developer skills. 
-                   Analyze both the answers and the progression from their current proficiency levels.
-                   Provide detailed, actionable feedback in JSON format only.`,
+Analyze both the answers and the progression from their current proficiency levels.
+Provide detailed, actionable feedback in JSON format only.`,
         },
         { role: "user", content: prompt },
       ],
@@ -554,17 +565,14 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
     // 4. Parse and validate the response
     let analysis;
     try {
-      // const rawResponse = response.choices[0].message.content.trim();
       rawResponse = rawResponse.trim();
 
-      // Try to extract JSON if it's wrapped in markdown code blocks
       let jsonStr = rawResponse;
       const jsonMatch = rawResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
       if (jsonMatch) {
         jsonStr = jsonMatch[1];
       }
 
-      // Clean the string before parsing
       jsonStr = jsonStr
         .trim()
         .replace(/[\u200B-\u200D\uFEFF]/g, "") // Remove zero-width spaces
@@ -574,9 +582,7 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       try {
         analysis = JSON.parse(jsonStr);
       } catch (firstError) {
-        console.error("First parse attempt failed:", firstError);
-
-        // Second attempt: Try to fix common JSON issues
+        // Attempt to fix common JSON issues
         jsonStr = jsonStr
           .replace(/,(\s*[}\]])/g, "$1") // Remove trailing commas
           .replace(/'/g, '"') // Replace single quotes with double quotes
@@ -586,7 +592,6 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
         analysis = JSON.parse(jsonStr);
       }
 
-      // Validate required fields
       if (!analysis || typeof analysis !== "object") {
         throw new Error("Analysis is not an object");
       }
@@ -595,7 +600,6 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
         throw new Error("Missing or invalid skillAnalysis array");
       }
 
-      // Ensure all required fields are present
       const requiredFields = [
         "overallScore",
         "skillAnalysis",
@@ -605,32 +609,24 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       const missingFields = requiredFields.filter(
         (field) => !(field in analysis)
       );
-
       if (missingFields.length > 0) {
         throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
       }
 
-      // Normalize the response structure if needed
       analysis = {
         overallScore: Number(analysis.overallScore) || 0,
         skillAnalysis: analysis.skillAnalysis.map((skill) => {
-          console.log("skill", skill);
-          // Valeurs brutes envoyées par ChatGPT (ou par ta logique précédente)
           const current = Number(skill.currentProficiency) || 0;
           const rawDemo = Number(skill.demonstratedProficiency) || current;
           const score = Number(skill.confidenceScore) || 0;
-          console.log("current", current);
-          console.log("rawDemo", rawDemo);
-          console.log("score", score);
-          // ➜ Appliquer la règle demandée
+
           let demo;
           if (score > 70) demo = current + 1;
           else if (score >= 50) demo = current;
           else demo = current - 1;
 
-          // S'assurer que le niveau reste entre 1 et 5
           demo = Math.min(Math.max(demo, 1), 5);
-          console.log("demo", demo);
+
           return {
             skillName: skill.skillName || skill.skill || "",
             currentProficiency: current,
@@ -646,6 +642,9 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
                 : demo < current
                 ? "decreased"
                 : "unchanged",
+            // Pass subcategory if returned by GPT or fallback to known from front
+            subcategory:
+              skill.subcategory || skillSubcategories[skill.skillName || skill.skill] || "",
           };
         }),
         generalAssessment: analysis.generalAssessment || "",
@@ -664,8 +663,6 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       };
     } catch (error) {
       console.error("Detailed error in analysis parsing:", error);
-      console.error("Original response:", response.choices[0].message.content);
-
       return res.status(200).json({
         success: true,
         result: {
@@ -690,13 +687,12 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
               currentProficiency: s.proficiencyLevel,
               demonstratedProficiency: s.proficiencyLevel,
               currentExperienceLevel: getExperienceLevel(s.proficiencyLevel),
-              demonstratedExperienceLevel: getExperienceLevel(
-                s.proficiencyLevel
-              ),
+              demonstratedExperienceLevel: getExperienceLevel(s.proficiencyLevel),
               strengths: ["Assessment incomplete"],
               weaknesses: ["Could not analyze in detail"],
               confidenceScore: 60,
               improvement: "unchanged",
+              subcategory: s.subcategory || "",
             })),
             generalAssessment: "Analysis could not be completed fully",
             recommendations: ["Please try the assessment again"],
@@ -739,22 +735,17 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
         }),
       },
     };
-    if (user.profile.overallScore === 0 && type === "technical") {
-      await profileService.createOrUpdateProfile(user._id, {
-        overallScore: analysis.overallScore,
-        skills: analysis.skillAnalysis.map((skill) => ({
-          name: skill.skillName,
-          proficiencyLevel: skill.demonstratedProficiency,
-          experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
-        })),
-      });
-    } else if (type === "technical"){
-      const profileOverallScore = await profileService.getProfileByUserId(
-        user._id
-      );
+
+    console.log("typeKbira",type)
+    // 6. Save profile data based on assessment type
+    if (type === "technical") {
+      console.log("type",type)
+      const profileOverallScore = await profileService.getProfileByUserId(user._id);
       await profileService.createOrUpdateProfile(user._id, {
         overallScore:
-          (profileOverallScore.overallScore + analysis.overallScore) / 2,
+          profileOverallScore.overallScore === 0
+            ? analysis.overallScore
+            : (profileOverallScore.overallScore + analysis.overallScore) / 2,
         skills: analysis.skillAnalysis.map((skill) => ({
           name: skill.skillName,
           proficiencyLevel: skill.demonstratedProficiency,
@@ -762,30 +753,32 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
           ScoreTest: skill.confidenceScore,
         })),
       });
+    } 
+    
+    if (type === "soft") {
+      const profile = await Profile.findOne({ userId: user._id });
+      const newOverallScore =
+        profile.overallScore === 0
+          ? analysis.overallScore
+          : (profile.overallScore + analysis.overallScore) / 2;
+    
+      const updated = await Profile.findOneAndUpdate(
+        { userId: user._id },
+        {
+          overallScore: newOverallScore,
+          softSkills: analysis.skillAnalysis.map((s) => ({
+            name: s.skillName,
+            category: s.subcategory || "",
+            experienceLevel: getExperienceLevel(s.demonstratedProficiency),
+            ScoreTest: s.confidenceScore,
+          })),
+        },
+        { new: true }
+      );
+      console.log("Updated profile softSkills:", updated.softSkills);
     }
 
-    if (user.profile.overallScore === 0 && type === "soft") {
-      await profileService.createOrUpdateProfile(user._id, {
-        softSkills: analysis.skillAnalysis.map((s) => ({
-          // ✅
-          name: s.skillName,
-          category: s.category || "", // si fourni
-          experienceLevel: getExperienceLevel(s.demonstratedProficiency),
-          ScoreTest: s.confidenceScore,
-        })),
-      });
-    } else if (type === "soft") {
-    //  const old = await profileService.getProfileByUserId(user._id);
-      await profileService.createOrUpdateProfile(user._id, {
-        softSkills: analysis.skillAnalysis.map((s) => ({
-          name: s.skillName,
-          category: s.category || "",
-          experienceLevel: getExperienceLevel(s.demonstratedProficiency),
-          ScoreTest: s.confidenceScore,
-        })),
-      });
-    }
-
+    // 7. Return the response
     res.status(200).json({
       success: true,
       result,
@@ -1074,190 +1067,3 @@ Based on this assessment, provide a detailed analysis in the following JSON form
   }
 };
 
-exports.analyzeProfileAnswers2 = async (req, res) => {
-  try {
-    const { type, skill, questions } = req.body;
-    const user = req.user;
-
-    // 1. Validation
-    if (!type || !Array.isArray(skill) || !Array.isArray(questions)) {
-      return res.status(400).json({
-        error: "Invalid request format",
-        required: {
-          type: "Type of assessment (e.g., 'technical')",
-          skill: "Array of skill objects with name and proficiencyLevel",
-          questions: "Array of question-answer pairs",
-        },
-      });
-    }
-
-    const isValidSkill = skill.every(
-      s =>
-        typeof s.name === "string" &&
-        typeof s.proficiencyLevel === "number" &&
-        s.proficiencyLevel >= 1 &&
-        s.proficiencyLevel <= 5
-    );
-    if (!isValidSkill) {
-      return res.status(400).json({
-        error: "Invalid skill format",
-        message: "Each skill must have a name and proficiencyLevel between 1–5",
-      });
-    }
-
-    // 2. Prompt GPT
-    const formattedPrompt = generatePrompt(type, skill, questions);
-    const response = await fetchAnalysisFromLLM(formattedPrompt, type);
-
-    // 3. Traitement du résultat brut
-    const parsedAnalysis = await parseLLMResponse(response, skill);
-    const result = buildFinalResult(parsedAnalysis, type, skill, questions);
-
-    // 4. Mise à jour du profil
-    await updateUserProfile(user, type, parsedAnalysis);
-
-    return res.status(200).json({ success: true, result });
-
-  } catch (error) {
-    console.error("Error analyzing profile answers:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Failed to analyze profile",
-      details: error.message,
-    });
-  }
-};
-
-function generatePrompt(type, skill, questions) {
-  return `
-As an expert ${type} interviewer, analyze the following assessment:
-
-Assessment Type: ${type}
-Skills being assessed:
-${skill.map(s => `- ${s.name} (Current Proficiency Level: ${s.proficiencyLevel}/5)`).join("\n")}
-
-Questions and Answers:
-${questions.map(qa => `Q: ${qa.question}\nA: ${qa.answer}`).join("\n\n")}
-
-Respond in this exact JSON format only (no extra text):
-{ "overallScore": 85, "skillAnalysis": [...], "generalAssessment": "...", "recommendations": [...], "technicalLevel": "...", "nextSteps": [...], "assessmentType": "${type}", "evaluationContext": "..." }
-  `;
-}
-
-async function fetchAnalysisFromLLM(prompt, type) {
-  const response = await together.chat.completions.create({
-    model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-    messages: [
-      { role: "system", content: `You are an expert ${type} interviewer. Analyze answers in JSON.` },
-      { role: "user", content: prompt },
-    ],
-    max_tokens: 1000,
-    temperature: 0.7,
-    stream: true,
-  });
-
-  let raw = "";
-  for await (const chunk of response) {
-    const content = chunk.choices?.[0]?.delta?.content;
-    if (content) raw += content;
-  }
-
-  return raw.trim();
-}
-
-async function parseLLMResponse(rawResponse, originalSkills) {
-  let jsonStr = rawResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/)?.[1] || rawResponse;
-  jsonStr = jsonStr.replace(/^[^{]+/, "").replace(/[^}]+$/, "").replace(/,(\s*[}\]])/g, "$1");
-
-  let analysis;
-  try {
-    analysis = JSON.parse(jsonStr);
-  } catch (e) {
-    jsonStr = jsonStr.replace(/'/g, '"').replace(/\n/g, " ").replace(/\s+/g, " ");
-    analysis = JSON.parse(jsonStr);
-  }
-
-  // Validation
-  if (!analysis || !Array.isArray(analysis.skillAnalysis)) throw new Error("Invalid response");
-
-  // Normalisation
-  analysis.skillAnalysis = analysis.skillAnalysis.map(skill => {
-    const current = Number(skill.currentProficiency) || 0;
-    const score = Number(skill.confidenceScore) || 0;
-    let demo = score > 70 ? current + 1 : score >= 50 ? current : current - 1;
-    demo = Math.min(Math.max(demo, 1), 5);
-
-    return {
-      skillName: skill.skillName || skill.skill || "",
-      currentProficiency: current,
-      demonstratedProficiency: demo,
-      currentExperienceLevel: getExperienceLevel(current),
-      demonstratedExperienceLevel: getExperienceLevel(demo),
-      strengths: skill.strengths || [],
-      weaknesses: skill.weaknesses || [],
-      confidenceScore: score,
-      improvement: demo > current ? "increased" : demo < current ? "decreased" : "unchanged",
-    };
-  });
-
-  return analysis;
-}
-
-function buildFinalResult(analysis, type, skill, questions) {
-  return {
-    timestamp: new Date(),
-    assessmentType: type,
-    skillsAssessed: skill.map(s => ({
-      ...s,
-      experienceLevel: getExperienceLevel(s.proficiencyLevel),
-    })),
-    numberOfQuestions: questions.length,
-    analysis: {
-      ...analysis,
-      skillProgression: analysis.skillAnalysis.map(sa => {
-        const original = skill.find(s => s.name === sa.skillName);
-        const originalLevel = original?.proficiencyLevel || 1;
-        return {
-          ...sa,
-          proficiencyChange: sa.demonstratedProficiency - originalLevel,
-          masteryCategory: getMasteryCategory(sa.confidenceScore),
-          levelProgression: {
-            from: getExperienceLevel(originalLevel),
-            to: getExperienceLevel(sa.demonstratedProficiency),
-            changed: originalLevel !== sa.demonstratedProficiency,
-          },
-        };
-      }),
-    },
-  };
-}
-
-async function updateUserProfile(user, type, analysis) {
-  const profile = await profileService.getProfileByUserId(user._id);
-  const isNew = user.profile?.overallScore === 0;
-
-  if (type === "technical") {
-    const updatedScore = isNew
-      ? analysis.overallScore
-      : (profile.overallScore + analysis.overallScore) / 2;
-
-    await profileService.createOrUpdateProfile(user._id, {
-      overallScore: updatedScore,
-      skills: analysis.skillAnalysis.map(s => ({
-        name: s.skillName,
-        proficiencyLevel: s.demonstratedProficiency,
-        experienceLevel: getExperienceLevel(s.demonstratedProficiency),
-        ScoreTest: s.confidenceScore,
-      })),
-    });
-  } else if (type === "soft") {
-    await profileService.createOrUpdateProfile(user._id, {
-      softSkills: analysis.skillAnalysis.map(s => ({
-        name: s.skillName,
-        category: s.category || "",
-        experienceLevel: getExperienceLevel(s.demonstratedProficiency),
-        ScoreTest: s.confidenceScore,
-      })),
-    });
-  }
-}
