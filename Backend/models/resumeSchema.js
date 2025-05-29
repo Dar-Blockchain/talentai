@@ -1,5 +1,5 @@
 // models/Resume.js
-const { Schema, model, Types } = require('mongoose');
+const { Schema, model, Types } = require("mongoose");
 
 /**
  * Sous-schéma générique pour une « section » du CV.
@@ -11,9 +11,12 @@ const { Schema, model, Types } = require('mongoose');
  */
 const sectionSchema = new Schema(
   {
-    id:        { type: String, required: true },
-    type:      { type: String, required: true },  // header, text, line, image, …
-    x: Number, y: Number, width: Number, height: Number,
+    id: { type: String, required: true },
+    type: { type: String, required: true }, // header, text, line, image, …
+    x: Number,
+    y: Number,
+    width: Number,
+    height: Number,
 
     /* ----------  champs spécifiques OPTIONNELS  ---------- */
     // header
@@ -35,10 +38,10 @@ const sectionSchema = new Schema(
     institution: String,
 
     // skills
-    skills:   [String],
+    skills: [String],
 
     // languages
-    languages:[{ name: String, level: String }],
+    languages: [{ name: String, level: String }],
 
     // projects
     projects: [{ name: String, description: String }],
@@ -54,17 +57,17 @@ const sectionSchema = new Schema(
     color: String,
 
     /* ----------  sauvegarde brute  ---------- */
-    raw: Schema.Types.Mixed
+    raw: Schema.Types.Mixed,
   },
-  { _id: false }           // on garde l’ID fourni par le front
+  { _id: false } // on garde l’ID fourni par le front
 );
 
 const resumeSchema = new Schema(
   {
-    userId: { type: Types.ObjectId, ref: 'User' }, // optionnel
-    sections: { type: [sectionSchema], required: true }
+    userId: { type: Types.ObjectId, ref: "User" }, // optionnel
+    sections: { type: [sectionSchema], required: true },
   },
   { timestamps: true }
 );
 
-module.exports = model('Resume', resumeSchema);
+module.exports = model("Resume", resumeSchema);

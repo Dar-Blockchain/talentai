@@ -1,16 +1,16 @@
-require('dotenv').config();
-const {HederaAgentKit} = require('hedera-agent-kit');
-const { AccountId } = require('@hashgraph/sdk');
+require("dotenv").config();
+const { HederaAgentKit } = require("hedera-agent-kit");
+const { AccountId } = require("@hashgraph/sdk");
 const agentService = require("../services/AgentService");
-const Agent = require('../models/AgentModel');
-const User = require('../models/UserModel');
+const Agent = require("../models/AgentModel");
+const User = require("../models/UserModel");
 
 // Initialize Hedera Agent Kit
 const kit = new HederaAgentKit(
   process.env.HEDERA_ACCOUNT_ID,
   process.env.HEDERA_PRIVATE_KEY,
   process.env.HEDERA_PUBLIC_KEY,
-  process.env.HEDERA_NETWORK || 'testnet'
+  process.env.HEDERA_NETWORK || "testnet"
 );
 
 // Create Agent
@@ -40,24 +40,24 @@ exports.createAgent = async (req, res) => {
 exports.createToken = async (req, res) => {
   try {
     const { name, symbol, initialSupply } = req.body;
-    
+
     const tokenResult = await kit.createToken({
-      type: 'fungible',
+      type: "fungible",
       name,
       symbol,
       initialSupply: parseInt(initialSupply),
-      treasury: process.env.HEDERA_ACCOUNT_ID
+      treasury: process.env.HEDERA_ACCOUNT_ID,
     });
 
     res.json({
       success: true,
       tokenId: tokenResult.tokenId,
-      transactionId: tokenResult.transactionId
+      transactionId: tokenResult.transactionId,
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Token creation failed",
-      details: error.message 
+      details: error.message,
     });
   }
 };
@@ -84,16 +84,16 @@ exports.createTalentAIToken = async (req, res) => {
       agent.accountId,
       agent.privkey,
       agent.pubkey,
-      process.env.HEDERA_NETWORK || 'testnet'
+      process.env.HEDERA_NETWORK || "testnet"
     );
 
     // Create TalentAI Token (TALAI)
     const tokenResult = await agentKit.createFT({
-      type: 'fungible',
-      name: 'TalentAI Token',
-      symbol: 'TALAI',
+      type: "fungible",
+      name: "TalentAI Token",
+      symbol: "TALAI",
       initialSupply: 1_000_000, // Initial supply
-      treasury: agent.accountId // Use the agent's account as the treasury
+      treasury: agent.accountId, // Use the agent's account as the treasury
     });
 
     // Optional: Mint additional tokens (example)
@@ -111,9 +111,9 @@ exports.createTalentAIToken = async (req, res) => {
       // mintTransactionId: mintResult?.transactionId // Uncomment if minting
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       error: "TalentAI Token creation failed",
-      details: error.message 
+      details: error.message,
     });
   }
 };
@@ -127,13 +127,15 @@ exports.mintTokenToUser = async (req, res) => {
 
     // Validate inputs
     if (!agentName || !userId || !amount) {
-      return res.status(400).json({ error: "Agent name, user ID, and amount are required" });
+      return res
+        .status(400)
+        .json({ error: "Agent name, user ID, and amount are required" });
     }
 
     // Fetch agent and user from database
     const [agent, user] = await Promise.all([
       Agent.findOne({ name: agentName }),
-      User.findById(userId)
+      User.findById(userId),
     ]);
 
     if (!agent) {
@@ -148,7 +150,7 @@ exports.mintTokenToUser = async (req, res) => {
       agent.accountId,
       agent.privkey,
       agent.pubkey,
-      process.env.HEDERA_NETWORK || 'testnet'
+      process.env.HEDERA_NETWORK || "testnet"
     );
 
     // Mint tokens (assuming user.accountId exists in your User model)
@@ -157,19 +159,22 @@ exports.mintTokenToUser = async (req, res) => {
     //   new TextEncoder().encode("Metadata For Minted Token")
     // );
     // console.log(mintResult.transactionId);
-  
-    const recipients = [{ accountId:user.accountId, amount: amount }];
-const airdropResult = await agentKit.airdropToken(process.env.TALENTAI_TOKEN_ID, recipients);
+
+    const recipients = [{ accountId: user.accountId, amount: amount }];
+    const airdropResult = await agentKit.airdropToken(
+      process.env.TALENTAI_TOKEN_ID,
+      recipients
+    );
     res.json({
       success: true,
       transactionId: airdropResult.transactionId,
       message: `Minted ${amount} TALAI tokens to user ${userId}`,
-      recipient: user.accountId
+      recipient: user.accountId,
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Token minting failed",
-      details: error.message 
+      details: error.message,
     });
   }
 };
