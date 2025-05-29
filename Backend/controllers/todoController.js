@@ -15,7 +15,10 @@ exports.generateTodoListForProfile = async (req, res) => {
       return res.status(400).json({ error: "User profile not found." });
     }
 
-    const profile = await Profile.findById(user.profile);
+    const profile = await Profile.findOne({
+      userId: user._id,
+      type: "Candidate",
+    });
 
     if (!profile.skills || profile.skills.length === 0) {
       return res
@@ -31,6 +34,10 @@ exports.generateTodoListForProfile = async (req, res) => {
       )
       .join(", ");
 
+    let todo = await ToDo.findOne({ profile: profile._id });
+    if (todo) {
+    }
+
     // Prompt for generating skill-based recommendations
     const prompt = `
 You are a career development AI assistant.
@@ -39,33 +46,36 @@ Given a candidate with the following skills:
 ${formattedSkills}
 
 Generate a JSON array where each item is an object with:
-- skillTitle: the name of the skill
-- type: either "Hard Skill" or "Soft Skill"
-- priority: "Low", "Medium", or "High"
-- recommendations: array of up to 3 objects, each with:
+- title: the name of the skill
+- type:"Skill"
+- tasks (if type is "Skill"): array of up to 3 objects, each with:
   - title: what to do (e.g., "Take XYZ course", "Get ABC certification")
-  - type: one of "Course", "Certification", "Project", "Article", "Video", "Exercise", "Book", or "Other"
+  - type: STRICTLY one of **"Course", "Certification","Project","Article","Video", or "Book"** (No other values allowed).
   - description: a brief description of the task
   - url (optional)
+  - priority: STRICTLY one of **"Low", "Medium", or "High"** (No other values allowed).
+  - dueDate: A recommended completion deadline in timestamp format.
 
 Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
 
 [
   {
-    "skillTitle": "JavaScript",
-    "type": "Hard Skill",
-    "priority": "High",
-    "recommendations": [
+    "title": "JavaScript",
+    "tasks": [
       {
         "title": "Take the JavaScript Algorithms course on freeCodeCamp",
         "type": "Course",
         "description": "Covers fundamental JS algorithms with interactive coding exercises",
-        "url": "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures"
+        "url": "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures", 
+        "priority": "medium",
+        "dueDate": 1717004400
       },
       {
         "title": "Build a ToDo App using vanilla JavaScript",
         "type": "Project",
-        "description": "Apply JS concepts to create a CRUD-based web application"
+        "description": "Apply JS concepts to create a CRUD-based web application",
+        "priority": "medium",
+        "dueDate": 1717004400
       }
     ]
   },
@@ -75,12 +85,7 @@ Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
 
     const stream = await together.chat.completions.create({
       model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
-      messages: [
-        {
-          role: "system",
-          content: prompt,
-        },
-      ],
+      messages: [{ role: "system", content: prompt }],
       max_tokens: 1000,
       temperature: 0.7,
       stream: true,
@@ -94,52 +99,52 @@ Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
 
     // Parse JSON output
     const jsonMatch = raw.match(/\[([\s\S]*)\]/);
-    let tasks = [];
+    let newTodos = [];
 
     if (jsonMatch) {
       const jsonText = "[" + jsonMatch[1] + "]";
       try {
-        tasks = JSON.parse(jsonText);
+        newTodos = JSON.parse(jsonText);
       } catch (err) {
         console.warn("Parsing failed:", err);
         return res.status(500).json({ error: "Failed to parse AI output." });
       }
     }
-
-    // Transform tasks into schema format
-    const skillTasks = tasks.map((t) => ({
-      skillTitle: t.skillTitle,
-      type: t.type,
-      priority: t.priority || "Medium",
-      isCompleted: false,
-      tasks: (t.recommendations || []).map((r) => ({
-        title: r.title,
-        type: r.type,
-        url: r.url,
-        isCompleted: false,
-      })),
-    }));
-
     // Upsert ToDo
-    let todo = await ToDo.findOne({ profile: profile._id });
 
+    const defaultProfileTodos = [
+      { type: "Profile", title: "Complete Your Profile", isCompleted: false },
+      { type: "Profile", title: "Upload CV", isCompleted: false },
+    ];
+
+    let skillTodos = newTodos;
     if (!todo) {
       todo = await ToDo.create({
         profile: profile._id,
-        skillTasks,
+        todos: [...defaultProfileTodos, ...newTodos],
       });
       profile.todoList = todo._id;
       await profile.save();
     } else {
-      todo.skillTasks = skillTasks;
+      skillTodos.forEach((skillTodo) => {
+        const existingSkillTodo = todo.todos.find(
+          (t) => t.title === skillTodo.title && t.type === "Skill"
+        );
+
+        if (existingSkillTodo) {
+          existingSkillTodo.tasks.push(...skillTodo.tasks);
+        } else {
+          todo.todos.push(skillTodo);
+        }
+      });
+
       await todo.save();
     }
 
     res.status(201).json({
-      message: "ToDo list generated",
-      result: { todoListId: todo._id, profileId: profile._id, todo },
+      message: "ToDo list generated/updated",
+      todos: todo.todos,
     });
-    // res.status(201).json({ message: "ToDo list generated", result: {todoListId: null, profileId: null, todo} });
   } catch (error) {
     console.error("Error generating ToDo list:", error);
     res.status(500).json({ error: "Failed to generate ToDo list" });
@@ -160,7 +165,6 @@ exports.getTodoListOfProfile = async (req, res) => {
         error: `profile of the user with userId ${user._id} not found in the db `,
       });
     }
-
     const todoList = await ToDo.findById(profile.todoList);
     if (!todoList) {
       return res.status(200).json({
@@ -168,7 +172,7 @@ exports.getTodoListOfProfile = async (req, res) => {
       });
     }
 
-    return todoList;
+    return res.status(200).json({ todos: todoList.todos });
   } catch (error) {
     console.error("Error generating ToDo list:", error);
     res.status(500).json({ error: "Failed to generate ToDo list" });

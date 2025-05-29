@@ -1,15 +1,15 @@
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: 'gparm9.siteground.biz',
+  host: "gparm9.siteground.biz",
   port: 465,
   secure: true, // SSL
   auth: {
-    user: 'contact@talentai.bid',
-    pass: '87h0u74HATEMUA'
+    user: "contact@talentai.bid",
+    pass: "87h0u74HATEMUA",
   },
-//  logger: true, // utile pour debug
-//  debug: true
+  //  logger: true, // utile pour debug
+  //  debug: true
 });
 
 const getEmailTemplate = (otp) => `
@@ -143,16 +143,16 @@ module.exports.sendOTP = async (email, otp) => {
   const mailOptions = {
     from: '"TalenIA" <contact@talentai.bid>',
     to: email,
-    subject: 'Code de vérification - TalenIA',
-    html: getEmailTemplate(otp)
+    subject: "Code de vérification - TalenIA",
+    html: getEmailTemplate(otp),
   };
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('✅ Email envoyé avec succès à', email);
+    console.log("✅ Email envoyé avec succès à", email);
     return true;
   } catch (error) {
-    console.error('❌ Échec d’envoi:', error.message);
+    console.error("❌ Échec d’envoi:", error.message);
     return false;
   }
 };

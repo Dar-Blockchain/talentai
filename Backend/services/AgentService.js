@@ -1,12 +1,18 @@
-require('dotenv').config();
-const { Client, PrivateKey, AccountCreateTransaction, Hbar } = require('@hashgraph/sdk');
+require("dotenv").config();
+const {
+  Client,
+  PrivateKey,
+  AccountCreateTransaction,
+  Hbar,
+} = require("@hashgraph/sdk");
 const Agent = require("../models/AgentModel");
 
 // Initialize Hedera client (replace with your credentials)
 const client = Client.forTestnet();
-client.setOperator(process.env.HEDERA_ACCOUNT_ID, process.env.HEDERA_PRIVATE_KEY);
-
-
+client.setOperator(
+  process.env.HEDERA_ACCOUNT_ID,
+  process.env.HEDERA_PRIVATE_KEY
+);
 
 /**
  * createAgent creates a new agent using the Hedera SDK and stores it in the database
@@ -14,7 +20,6 @@ client.setOperator(process.env.HEDERA_ACCOUNT_ID, process.env.HEDERA_PRIVATE_KEY
  * @param {number} initialHbar - initial balance for the agent (default 50 HBAR)
  * @returns {object} The newly created agent object
  */
-
 
 /**
  * getAgentByName returns the agent with the specified name from the database
@@ -31,7 +36,7 @@ async function getAgentByName(name) {
     }
     return agent;
   } catch (error) {
-    console.error('Error finding agent by name:', error);
+    console.error("Error finding agent by name:", error);
     throw error;
   }
 }
@@ -41,13 +46,12 @@ async function getAgentByName(name) {
  * @param {string} name - Name of the agent.
  * @returns {Promise<{agent: object}>}
  */
-async function createAgent(name)  {
+async function createAgent(name) {
   try {
     // Create Hedera wallet
     const newPrivateKey = PrivateKey.generate();
     const newPublicKey = newPrivateKey.publicKey;
 
-    
     const transaction = new AccountCreateTransaction()
       .setKey(newPublicKey)
       .setInitialBalance(new Hbar(1));
@@ -67,17 +71,16 @@ async function createAgent(name)  {
     await agent.save();
 
     return {
-        name: agent.name,
-        accountId: agent.accountId,
-        pubkey: agent.pubkey,
-        // Note: In production, avoid returning the private key in responses.
-        privkey: agent.privkey
-      
+      name: agent.name,
+      accountId: agent.accountId,
+      pubkey: agent.pubkey,
+      // Note: In production, avoid returning the private key in responses.
+      privkey: agent.privkey,
     };
   } catch (error) {
     console.error("Error creating agent:", error);
     throw new Error("Failed to create agent");
   }
-};
+}
 
-module.exports = { createAgent,getAgentByName };
+module.exports = { createAgent, getAgentByName };

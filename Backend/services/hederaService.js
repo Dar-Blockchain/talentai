@@ -21,7 +21,6 @@ client.setOperator(
  */
 module.exports.createHederaWallet = async () => {
   try {
-
     const provider = new LocalProvider(process.env.HEDERA_NETWORK);
     const wallet = new Wallet(
       process.env.HEDERA_ACCOUNT_ID,
@@ -33,7 +32,7 @@ module.exports.createHederaWallet = async () => {
     const pubKey = privKey.publicKey;
 
     let transaction = await new AccountCreateTransaction()
-      .setInitialBalance(new Hbar(1)) 
+      .setInitialBalance(new Hbar(1))
       .setKeyWithoutAlias(privKey.publicKey)
       .freezeWithSigner(wallet);
 

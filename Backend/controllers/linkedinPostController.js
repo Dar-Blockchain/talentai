@@ -183,7 +183,7 @@ Ensure:
 
     const stream = await together.chat.completions.create({
       model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-        messages: [
+      messages: [
         {
           role: "system",
           content:

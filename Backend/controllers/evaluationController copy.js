@@ -1,15 +1,13 @@
 // generateQuestions.js
-
-const { OpenAI } = require("openai");
+const { Together } = require("together-ai");
 require("dotenv").config();
 
 const JobAssessmentResult = require("../models/JobAssessmentResultModel");
 const Profile = require("../models/ProfileModel");
-
 const postService = require("../services/postService");
 
-// Configure the OpenAI client with your API key
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Configure the Together AI client
+const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
 exports.generateQuestions = async (req, res) => {
   try {
@@ -49,18 +47,22 @@ Based on the candidate's skills (${skillsList}), generate **exactly 10** situati
 \`\`\`
 `.trim();
 
-    // 4. Call OpenAI
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
       messages: [
         { role: "system", content: "You are an experienced interviewer." },
         { role: "user", content: prompt },
       ],
       max_tokens: 500,
       temperature: 0.7,
+      stream: true,
     });
 
-    const raw = response.choices[0].message.content;
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
 
     // 5. Try to extract & parse the JSON array
     let questions;
@@ -94,124 +96,122 @@ Based on the candidate's skills (${skillsList}), generate **exactly 10** situati
 
 exports.generateTechniqueQuestions = async (req, res) => {
   try {
-    // 1. Validate request body
     const { skill, experienceLevel, proficiencyLevel } = req.body;
 
-    if (!skill || !experienceLevel || !proficiencyLevel) {
-      return res.status(400).json({
-        error: "Missing required fields",
-        required: {
-          skill: "Name of the skill",
-          experienceLevel: "Years of experience",
-          proficiencyLevel: "Level from 1-5",
-        },
-      });
+    if (!skill) {
+      return res.status(400).json({ error: "Missing 'skill' field" });
     }
 
-    // 🔐 1️⃣ Récupérer le profil lié à l'utilisateur connecté
     const profile = await Profile.findOne({ userId: req.user._id });
-
     if (!profile) {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-     // 🔁 Vérifier et reset le quota si 30 jours sont passés
-     const now = new Date();
-     const daysSinceLastUpdate =
-       (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
- 
-     if (daysSinceLastUpdate >= 30) {
-       profile.quota = 0;
-       profile.quotaUpdatedAt = now;
-     }
+    const now = new Date();
+    const daysSinceLastUpdate =
+      (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
+    if (daysSinceLastUpdate >= 30) {
+      profile.quota = 0;
+      profile.quotaUpdatedAt = now;
+    }
 
-    // 🔒 2️⃣ Vérifier si le quota est atteint
     if (profile.quota >= 5) {
       return res
         .status(403)
         .json({ error: "You have reached your test limit (5)" });
     }
 
-    // Validate proficiency level
-    if (proficiencyLevel < 1 || proficiencyLevel > 5) {
-      return res.status(400).json({
-        error: "Proficiency level must be between 1 and 5",
-      });
+    // Determine mode: Specific level OR Mixed levels (1 to 5)
+    let prompt;
+    if (experienceLevel && proficiencyLevel) {
+      if (proficiencyLevel < 1 || proficiencyLevel > 5) {
+        return res
+          .status(400)
+          .json({ error: "Proficiency level must be between 1 and 5" });
+      }
+
+      const skillDescription = `${skill} (Experience: ${experienceLevel} years, Proficiency: ${proficiencyLevel}/5)`;
+      prompt = `
+You are an experienced technical interviewer specializing in ${skill}.
+Generate **exactly 10** technical interview questions for someone with ${experienceLevel} years of experience and proficiency level ${proficiencyLevel}/5.
+Questions should be a mix of theoretical and practical ones.
+
+Return ONLY a JSON array of strings, like:
+[
+  "Question 1?",
+  "Question 2?"
+]
+`.trim();
+    } else {
+      // Only skill provided → Mixed difficulty
+      prompt = `
+You are an expert interviewer for ${skill}.
+Generate **exactly 10** interview questions covering levels 1 to 5:
+- 2 easy questions (level 1)
+- 2 beginner/intermediate (level 2)
+- 2 intermediate+ (level 3)
+- 2 advanced (level 4)
+- 2 expert-level (level 5)
+
+Return ONLY a JSON array of strings, like:
+[
+  "Question 1?",
+  "Question 2?"
+]
+`.trim();
     }
 
-    // 2. Build the skill description
-    const skillDescription = `${skill} (Experience: ${experienceLevel} years, Proficiency: ${proficiencyLevel}/5)`;
-
-    // 3. Prompt: ask for exactly 10 technical questions as a JSON array
-    const prompt = `
-You are an experienced technical interviewer specializing in ${skill}.
-Based on the candidate's profile (${skillDescription}), generate **exactly 10** technical interview questions.
-The questions should be appropriate for someone with ${experienceLevel} years of experience and a proficiency level of ${proficiencyLevel}/5.
-Mix of theoretical and practical questions, including problem-solving scenarios.
-
-**Return ONLY** a JSON array of strings—no commentary, no numbering, no markdown—like this:
-
-\`\`\`json
-[
-  "Technical question 1?",
-  "Technical question 2?",
-  // …
-]
-\`\`\`
-`.trim();
-
-    // 4. Call OpenAI
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+    // 5️⃣ Call TogetherAI API
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
       messages: [
         {
           role: "system",
-          content: `You are an experienced technical interviewer specializing in ${skill} assessments. 
-                   Focus on generating precise, technical questions that test both theoretical knowledge and practical experience.`,
+          content: `You are a technical interviewer generating skill-based questions.`,
         },
         { role: "user", content: prompt },
       ],
       max_tokens: 1000,
       temperature: 0.7,
+      stream: true,
     });
 
-    const raw = response.choices[0].message.content;
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
 
-    // 5. Try to extract & parse the JSON array
+    // Try extracting JSON
     let questions;
     const jsonMatch = raw.match(/\[([\s\S]*)\]/);
     if (jsonMatch) {
-      const jsonText = "[" + jsonMatch[1] + "]";
       try {
-        questions = JSON.parse(jsonText);
+        questions = JSON.parse("[" + jsonMatch[1] + "]");
       } catch (e) {
-        console.warn("JSON parse failed on extracted text, falling back:", e);
+        console.warn("JSON parse failed, fallback:", e);
       }
     }
 
-    // 6. Fallback: parse as a numbered list if JSON failed
+    // Fallback if not a clean JSON array
     if (!Array.isArray(questions)) {
-      console.warn("Falling back to numbered-list parsing");
       questions = raw
-        .split(/\n(?=\d+\.\s)/) // split at newline before "1. ", "2. ", etc.
-        .map((q) => q.replace(/^\d+\.\s*/, "")) // strip leading "1. " etc.
-        .map((q) => q.trim())
+        .split(/\n(?=\d+\.\s)/)
+        .map((q) => q.replace(/^\d+\.\s*/, "").trim())
         .filter(Boolean);
     }
 
-     // ✅ 4️⃣ Incrémenter le quota après génération
-     profile.quota += 1;
-     await profile.save();
+    profile.quota += 1;
+    await profile.save();
 
-    // 7. Return the array with metadata
     res.json({
       skill,
-      experienceLevel,
-      proficiencyLevel,
+      mode: experienceLevel && proficiencyLevel ? "targeted" : "mixed",
+      experienceLevel: experienceLevel || "all",
+      proficiencyLevel: proficiencyLevel || "1-5",
       questions,
       totalQuestions: questions.length,
       newQuota: profile.quota,
-
     });
   } catch (error) {
     console.error("Error generating technical questions:", error);
@@ -269,9 +269,9 @@ The questions should be appropriate for the given proficiency levels, mixing the
 ]
 `.trim();
 
-    // 5️⃣ Call OpenAI API
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+    // 5️⃣ Call TogetherAI API
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
       messages: [
         {
           role: "system",
@@ -280,11 +280,16 @@ The questions should be appropriate for the given proficiency levels, mixing the
         },
         { role: "user", content: prompt },
       ],
-      max_tokens: 1000,
       temperature: 0.7,
+      max_tokens: 1000,
+      stream: true,
     });
 
-    const raw = response.choices[0].message.content;
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
 
     // 6️⃣ Extract questions as JSON array
     let questions;
@@ -360,9 +365,9 @@ The questions should:
 \`\`\`
 `.trim();
 
-    // 4. Call OpenAI
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+    // 5️⃣ Call TogetherAI API
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
       messages: [
         {
           role: "system",
@@ -374,9 +379,14 @@ The questions should:
       ],
       max_tokens: 1000,
       temperature: 0.7,
+      stream: true,
     });
 
-    const raw = response.choices[0].message.content;
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
 
     // 5. Try to extract & parse the JSON array
     let questions;
@@ -412,168 +422,6 @@ The questions should:
   } catch (error) {
     console.error("Error generating soft skill questions:", error);
     res.status(500).json({ error: "Failed to generate soft skill questions" });
-  }
-};
-
-const User = require("../models/UserModel");
-
-exports.matchProfilesWithCompany = async (req, res) => {
-  try {
-    // Get all candidate profiles
-    const candidates = await User.find({ role: "Candidat" }).populate(
-      "profile"
-    );
-
-    // Get company's required skills
-    const company = req.user;
-    const requiredSkills = company.profile.requiredSkills;
-
-    const matchedProfiles = [];
-
-    for (const candidate of candidates) {
-      try {
-        const candidateSkills = candidate.profile.skills;
-
-        // Prepare the prompt for OpenAI with explicit JSON format
-        const prompt = `Given these skills:
-
-Required company skills: ${JSON.stringify(requiredSkills)}
-Candidate skills: ${JSON.stringify(candidateSkills)}
-
-Generate a match analysis in the following JSON format ONLY (no additional text):
-{
-  "matchPercentage": 85,
-  "skillMatches": [
-    {
-      "skill": "JavaScript",
-      "proficiency": 4,
-      "importance": "high",
-      "match": "full",
-      "score": 90
-    }
-  ],
-  "overallAssessment": "Strong match with core skills",
-  "recommendations": [
-    "Consider focusing on advanced JavaScript concepts"
-  ]
-}
-
-Rules:
-- matchPercentage should be 0-100 based on skill overlap
-- Each skill should have a score 0-100
-- Use "high/medium/low" for importance
-- Use "full/partial/none" for match
-- Keep assessment and recommendations concise`;
-
-        const response = await openai.chat.completions.create({
-          model: "gpt-4-turbo-preview",
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are a JSON-only response generator. Output valid JSON matching the exact format requested, with no additional text or explanation.",
-            },
-            { role: "user", content: prompt },
-          ],
-          max_tokens: 500,
-          temperature: 0.7,
-        });
-
-        let matchResult;
-        try {
-          // Direct parse attempt first
-          matchResult = JSON.parse(response.choices[0].message.content.trim());
-        } catch (parseError) {
-          console.error(
-            "Initial JSON parse failed, attempting cleanup:",
-            parseError
-          );
-
-          // Cleanup attempt
-          const cleanResponse = response.choices[0].message.content
-            .replace(/```json\n?/g, "")
-            .replace(/```\n?/g, "")
-            .trim();
-
-          try {
-            matchResult = JSON.parse(cleanResponse);
-          } catch (secondParseError) {
-            console.error("JSON parse failed after cleanup:", secondParseError);
-            // Skip this candidate if we can't parse the response
-            continue;
-          }
-        }
-
-        // Validate the required fields
-        if (
-          !matchResult ||
-          typeof matchResult.matchPercentage !== "number" ||
-          !Array.isArray(matchResult.skillMatches)
-        ) {
-          console.error("Invalid match result structure:", matchResult);
-          continue;
-        }
-
-        // Include all candidates regardless of score
-        matchedProfiles.push({
-          candidateInfo: {
-            id: candidate._id,
-            name: candidate.username,
-            email: candidate.email,
-            skills: candidateSkills.map((skill) => ({
-              name: skill.name,
-              proficiencyLevel: skill.proficiencyLevel,
-              experienceLevel: skill.experienceLevel,
-            })),
-          },
-          matchAnalysis: {
-            percentage: matchResult.matchPercentage,
-            skillMatches: matchResult.skillMatches.map((skill) => ({
-              ...skill,
-              score: skill.score || 0,
-            })),
-            assessment: matchResult.overallAssessment,
-            recommendations: matchResult.recommendations,
-          },
-        });
-      } catch (candidateError) {
-        console.error(
-          `Error processing candidate ${candidate._id}:`,
-          candidateError
-        );
-        // Continue with next candidate if one fails
-        continue;
-      }
-    }
-
-    // Sort profiles by match percentage (highest to lowest)
-    matchedProfiles.sort(
-      (a, b) => b.matchAnalysis.percentage - a.matchAnalysis.percentage
-    );
-
-    // Filter profiles with match percentage >= 50%
-    const filteredProfiles = matchedProfiles.filter(
-      (profile) => profile.matchAnalysis.percentage >= 50
-    );
-
-    res.status(200).json({
-      success: true,
-      totalCandidates: filteredProfiles.length,
-      matches: filteredProfiles.map((profile) => ({
-        ...profile,
-        matchAnalysis: {
-          ...profile.matchAnalysis,
-          scoreCategory: getScoreCategory(profile.matchAnalysis.percentage),
-        },
-      })),
-    });
-  } catch (error) {
-    console.error("Error in matchProfilesWithCompany:", error);
-    res.status(500).json({
-      success: false,
-      error: "Error matching profiles",
-      details: error.message,
-    });
   }
 };
 
@@ -613,13 +461,14 @@ exports.analyzeProfileAnswers = async (req, res) => {
         error: "Invalid request format",
         required: {
           type: "Type of assessment (e.g., 'technical')",
-          skill: "Array of skill objects with name and proficiencyLevel",
+          skill:
+            "Array of skill objects with name and proficiencyLevel (and optional subcategory)",
           questions: "Array of question-answer pairs",
         },
       });
     }
 
-    // Validate skill objects
+    // Validate skill objects - allow optional subcategory for soft skills
     const isValidSkill = skill.every(
       (s) =>
         s.name &&
@@ -637,6 +486,14 @@ exports.analyzeProfileAnswers = async (req, res) => {
       });
     }
 
+    // Build a map for skillName -> subcategory (for soft skills)
+    const skillSubcategories = {};
+    skill.forEach((s) => {
+      if (s.name && s.subcategory) {
+        skillSubcategories[s.name] = s.subcategory;
+      }
+    });
+
     // 2. Prepare the data for GPT analysis
     const prompt = `
 As an expert ${type} interviewer, analyze the following assessment:
@@ -645,7 +502,10 @@ Assessment Type: ${type}
 Skills being assessed: 
 ${skill
   .map(
-    (s) => `- ${s.name} (Current Proficiency Level: ${s.proficiencyLevel}/5)`
+    (s) =>
+      `- ${s.name} (Current Proficiency Level: ${s.proficiencyLevel}/5${
+        s.subcategory ? `, Subcategory: ${s.subcategory}` : ""
+      })`
   )
   .join("\n")}
 
@@ -657,19 +517,20 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
   "overallScore": 85,
   "skillAnalysis": [
     {
-      "skillName": "JavaScript",
+      "skillName": "Teamwork",
       "currentProficiency": 3,
       "demonstratedProficiency": 4,
-      "strengths": ["Good understanding of core concepts"],
-      "weaknesses": ["May need more practice with advanced topics"],
+      "strengths": ["Good communication"],
+      "weaknesses": ["Needs improvement in conflict resolution"],
       "confidenceScore": 80,
-      "improvement": "increased"
+      "improvement": "increased",
+      "subcategory": "conflict-resolution"  // optional, if applicable
     }
   ],
   "generalAssessment": "Strong foundational knowledge with some areas for improvement",
   "recommendations": [
-    "Focus on advanced JavaScript concepts",
-    "Practice more with React hooks"
+    "Focus on advanced communication techniques",
+    "Practice conflict management"
   ],
   "technicalLevel": "intermediate",
   "nextSteps": [
@@ -680,35 +541,39 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
   "evaluationContext": "Based on ${type} interview standards"
 }`;
 
-    // 3. Call OpenAI for analysis
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+    const response = await together.chat.completions.create({
+      model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
       messages: [
         {
           role: "system",
           content: `You are an expert ${type} interviewer specializing in evaluating developer skills. 
-                   Analyze both the answers and the progression from their current proficiency levels.
-                   Provide detailed, actionable feedback in JSON format only.`,
+Analyze both the answers and the progression from their current proficiency levels.
+Provide detailed, actionable feedback in JSON format only.`,
         },
         { role: "user", content: prompt },
       ],
       max_tokens: 1000,
       temperature: 0.7,
+      stream: true,
     });
+
+    let rawResponse = "";
+    for await (const chunk of response) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) rawResponse += content;
+    }
 
     // 4. Parse and validate the response
     let analysis;
     try {
-      const rawResponse = response.choices[0].message.content.trim();
+      rawResponse = rawResponse.trim();
 
-      // Try to extract JSON if it's wrapped in markdown code blocks
       let jsonStr = rawResponse;
       const jsonMatch = rawResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
       if (jsonMatch) {
         jsonStr = jsonMatch[1];
       }
 
-      // Clean the string before parsing
       jsonStr = jsonStr
         .trim()
         .replace(/[\u200B-\u200D\uFEFF]/g, "") // Remove zero-width spaces
@@ -718,9 +583,7 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       try {
         analysis = JSON.parse(jsonStr);
       } catch (firstError) {
-        console.error("First parse attempt failed:", firstError);
-
-        // Second attempt: Try to fix common JSON issues
+        // Attempt to fix common JSON issues
         jsonStr = jsonStr
           .replace(/,(\s*[}\]])/g, "$1") // Remove trailing commas
           .replace(/'/g, '"') // Replace single quotes with double quotes
@@ -730,7 +593,6 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
         analysis = JSON.parse(jsonStr);
       }
 
-      // Validate required fields
       if (!analysis || typeof analysis !== "object") {
         throw new Error("Analysis is not an object");
       }
@@ -739,7 +601,6 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
         throw new Error("Missing or invalid skillAnalysis array");
       }
 
-      // Ensure all required fields are present
       const requiredFields = [
         "overallScore",
         "skillAnalysis",
@@ -749,32 +610,24 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       const missingFields = requiredFields.filter(
         (field) => !(field in analysis)
       );
-
       if (missingFields.length > 0) {
         throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
       }
 
-      // Normalize the response structure if needed
       analysis = {
         overallScore: Number(analysis.overallScore) || 0,
         skillAnalysis: analysis.skillAnalysis.map((skill) => {
-          console.log("skill", skill);
-          // Valeurs brutes envoyées par ChatGPT (ou par ta logique précédente)
           const current = Number(skill.currentProficiency) || 0;
           const rawDemo = Number(skill.demonstratedProficiency) || current;
           const score = Number(skill.confidenceScore) || 0;
-          console.log("current", current);
-          console.log("rawDemo", rawDemo);
-          console.log("score", score);
-          // ➜ Appliquer la règle demandée
+
           let demo;
           if (score > 70) demo = current + 1;
           else if (score >= 50) demo = current;
           else demo = current - 1;
 
-          // S'assurer que le niveau reste entre 1 et 5
           demo = Math.min(Math.max(demo, 1), 5);
-          console.log("demo", demo);
+
           return {
             skillName: skill.skillName || skill.skill || "",
             currentProficiency: current,
@@ -790,6 +643,11 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
                 : demo < current
                 ? "decreased"
                 : "unchanged",
+            // Pass subcategory if returned by GPT or fallback to known from front
+            subcategory:
+              skill.subcategory ||
+              skillSubcategories[skill.skillName || skill.skill] ||
+              "",
           };
         }),
         generalAssessment: analysis.generalAssessment || "",
@@ -806,11 +664,8 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
           "Expert",
         ],
       };
-      console.log(analysis);
     } catch (error) {
       console.error("Detailed error in analysis parsing:", error);
-      console.error("Original response:", response.choices[0].message.content);
-
       return res.status(200).json({
         success: true,
         result: {
@@ -842,6 +697,7 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
               weaknesses: ["Could not analyze in detail"],
               confidenceScore: 60,
               improvement: "unchanged",
+              subcategory: s.subcategory || "",
             })),
             generalAssessment: "Analysis could not be completed fully",
             recommendations: ["Please try the assessment again"],
@@ -884,27 +740,19 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
         }),
       },
     };
-    console.log(user);
-    console.log(result);
-    if (user.profile.overallScore === 0 && type === "technical") {
-      console.log("test");
-      const profile = await profileService.createOrUpdateProfile(user._id, {
-        overallScore: analysis.overallScore,
-        skills: analysis.skillAnalysis.map((skill) => ({
-          name: skill.skillName,
-          proficiencyLevel: skill.demonstratedProficiency,
-          experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
-        })),
-      });
-      console.log(profile);
-    } else {
-      console.log("test2");
+
+    console.log("typeKbira", type);
+    // 6. Save profile data based on assessment type
+    if (type === "technical") {
+      console.log("type", type);
       const profileOverallScore = await profileService.getProfileByUserId(
         user._id
       );
-      const profile = await profileService.createOrUpdateProfile(user._id, {
+      await profileService.createOrUpdateProfile(user._id, {
         overallScore:
-          (profileOverallScore.overallScore + analysis.overallScore) / 2,
+          profileOverallScore.overallScore === 0
+            ? analysis.overallScore
+            : (profileOverallScore.overallScore + analysis.overallScore) / 2,
         skills: analysis.skillAnalysis.map((skill) => ({
           name: skill.skillName,
           proficiencyLevel: skill.demonstratedProficiency,
@@ -912,31 +760,95 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
           ScoreTest: skill.confidenceScore,
         })),
       });
-      console.log(profile);
     }
 
-    if (user.profile.overallScore === 0 && type === "soft") {
+    if (type === "soft") {
+      const profile = await Profile.findOne({ userId: user._id });
+      const newOverallScore =
+        profile.overallScore === 0
+          ? analysis.overallScore
+          : (profile.overallScore + analysis.overallScore) / 2;
+
+      const updated = await Profile.findOneAndUpdate(
+        { userId: user._id },
+        {
+          overallScore: newOverallScore,
+          softSkills: analysis.skillAnalysis.map((s) => ({
+            name: s.skillName,
+            category: s.subcategory || "",
+            experienceLevel: getExperienceLevel(s.demonstratedProficiency),
+            ScoreTest: s.confidenceScore,
+          })),
+        },
+        { new: true }
+      );
+      console.log("Updated profile softSkills:", updated.softSkills);
+    }
+
+    // Après avoir reçu et parsé la réponse brute de GPT en "analysis"
+    if (type === "technicalSkill") {
+      analysis = {
+        overallScore: Number(analysis.overallScore) || 0,
+        skillAnalysis: analysis.skillAnalysis.map((skill) => {
+          const current = Number(skill.currentProficiency) || 1;
+          // On prend la valeur exacte renvoyée par GPT pour demonstratedProficiency
+          const exactDemo = Number(skill.demonstratedProficiency) || current;
+
+          return {
+            skillName: skill.skillName || skill.skill || "",
+            currentProficiency: current,
+            demonstratedProficiency: exactDemo,
+            currentExperienceLevel: getExperienceLevel(current),
+            demonstratedExperienceLevel: getExperienceLevel(exactDemo),
+            strengths: Array.isArray(skill.strengths) ? skill.strengths : [],
+            weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
+            confidenceScore: Number(skill.confidenceScore) || 0,
+            improvement:
+              exactDemo > current
+                ? "increased"
+                : exactDemo < current
+                ? "decreased"
+                : "unchanged",
+            subcategory:
+              skill.subcategory ||
+              skillSubcategories[skill.skillName || skill.skill] ||
+              "",
+          };
+        }),
+        generalAssessment: analysis.generalAssessment || "",
+        recommendations: Array.isArray(analysis.recommendations)
+          ? analysis.recommendations
+          : [],
+        technicalLevel: analysis.technicalLevel || "intermediate",
+        nextSteps: Array.isArray(analysis.nextSteps) ? analysis.nextSteps : [],
+        experienceLevels: [
+          "Entry Level",
+          "Junior",
+          "Mid Level",
+          "Senior",
+          "Expert",
+        ],
+      };
+
+      // Sauvegarde dans le profil utilisateur (comme pour 'technical')
+      const profileOverallScore = await profileService.getProfileByUserId(
+        user._id
+      );
       await profileService.createOrUpdateProfile(user._id, {
-        softSkills: analysis.skillAnalysis.map((s) => ({
-          // ✅
-          name: s.skillName,
-          category: s.category || "", // si fourni
-          experienceLevel: getExperienceLevel(s.demonstratedProficiency),
-          ScoreTest: s.confidenceScore,
-        })),
-      });
-    } else if (type === "soft") {
-      const old = await profileService.getProfileByUserId(user._id);
-      await profileService.createOrUpdateProfile(user._id, {
-        softSkills: analysis.skillAnalysis.map((s) => ({
-          name: s.skillName,
-          category: s.category || "",
-          experienceLevel: getExperienceLevel(s.demonstratedProficiency),
-          ScoreTest: s.confidenceScore,
+        overallScore:
+          profileOverallScore.overallScore === 0
+            ? analysis.overallScore
+            : (profileOverallScore.overallScore + analysis.overallScore) / 2,
+        skills: analysis.skillAnalysis.map((skill) => ({
+          name: skill.skillName,
+          proficiencyLevel: skill.demonstratedProficiency,
+          experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
+          ScoreTest: skill.confidenceScore,
         })),
       });
     }
 
+    // 7. Return the response
     res.status(200).json({
       success: true,
       result,
@@ -1030,9 +942,9 @@ Based on this assessment, provide a detailed analysis in the following JSON form
   }
 }`;
 
-    // 4. Call OpenAI for analysis
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+    // 4. Call TogetherAI API for analysis
+    const stream = await together.chat.completions.create({
+      model: "deepseek-ai/DeepSeek-V3",
       messages: [
         {
           role: "system",
@@ -1044,14 +956,19 @@ Based on this assessment, provide a detailed analysis in the following JSON form
       ],
       max_tokens: 1000,
       temperature: 0.7,
+      stream: true,
     });
+
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
 
     // 5. Parse and validate the response
     let analysis;
     try {
-      const rawResponse = response.choices[0].message.content.trim();
-      let jsonStr = rawResponse;
-      const jsonMatch = rawResponse.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
       if (jsonMatch) {
         jsonStr = jsonMatch[1];
       }

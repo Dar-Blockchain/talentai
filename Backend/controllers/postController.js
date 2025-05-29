@@ -1,22 +1,22 @@
-const postService = require('../services/postService');
+const postService = require("../services/postService");
 
 // Créer un nouveau post
 exports.createPost = async (req, res) => {
   try {
     const postData = {
       ...req.body,
-      user: req.user._id
+      user: req.user._id,
     };
-    
+
     const post = await postService.createPost(postData);
     res.status(201).json({
       success: true,
-      data: post
+      data: post,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -28,16 +28,16 @@ exports.getAllPosts = async (req, res) => {
     if (req.query.status) {
       filters.status = req.query.status;
     }
-    
+
     const posts = await postService.getAllPosts(filters);
     res.status(200).json({
       success: true,
-      data: posts
+      data: posts,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -48,12 +48,12 @@ exports.getPostById = async (req, res) => {
     const post = await postService.getPostById(req.params.id);
     res.status(200).json({
       success: true,
-      data: post
+      data: post,
     });
   } catch (error) {
     res.status(404).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -65,12 +65,12 @@ exports.getUserPosts = async (req, res) => {
     const posts = await postService.getPostsByUserId(userId);
     res.status(200).json({
       success: true,
-      data: posts
+      data: posts,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -85,12 +85,12 @@ exports.updatePost = async (req, res) => {
     );
     res.status(200).json({
       success: true,
-      data: post
+      data: post,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -101,12 +101,12 @@ exports.deletePost = async (req, res) => {
     await postService.deletePost(req.params.id, req.user._id);
     res.status(200).json({
       success: true,
-      message: 'Post deleted successfully'
+      message: "Post deleted successfully",
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -115,10 +115,10 @@ exports.deletePost = async (req, res) => {
 exports.updatePostStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    if (!['drafts', 'posted', 'scheduled'].includes(status)) {
-      throw new Error('Invalid status');
+    if (!["drafts", "posted", "scheduled"].includes(status)) {
+      throw new Error("Invalid status");
     }
-    
+
     const post = await postService.updatePostStatus(
       req.params.id,
       req.user._id,
@@ -126,12 +126,12 @@ exports.updatePostStatus = async (req, res) => {
     );
     res.status(200).json({
       success: true,
-      data: post
+      data: post,
     });
   } catch (error) {
     res.status(400).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
-}; 
+};
