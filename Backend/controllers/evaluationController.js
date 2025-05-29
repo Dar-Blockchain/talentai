@@ -786,95 +786,74 @@ Provide detailed, actionable feedback in JSON format only.`,
     }
 
     // Après avoir reçu et parsé la réponse brute de GPT en "analysis"
-    if (type === "soft") {
-      const profile = await Profile.findOne({ userId: user._id });
-      const newOverallScore =
-        profile.overallScore === 0
-          ? analysis.overallScore
-          : (profile.overallScore + analysis.overallScore) / 2;
-
-      const updated = await Profile.findOneAndUpdate(
-        { userId: user._id },
-        {
-          overallScore: newOverallScore,
-          softSkills: analysis.skillAnalysis.map((s) => ({
-            name: s.skillName,
-            category: s.subcategory || "",
-            experienceLevel: getExperienceLevel(s.demonstratedProficiency),
-            ScoreTest: s.confidenceScore,
-          })),
-        },
-        { new: true }
-      );
-      console.log("Updated profile softSkills:", updated.softSkills);
-    }
-
-    function proficiencyFromConfidenceScore(score) {
-      if (score >= 0 && score < 10) return 1;
-      if (score >= 10 && score < 30) return 2;
-      if (score >= 30 && score < 50) return 3;
-      if (score >= 50 && score < 70) return 4;
-      if (score >= 70 && score <= 100) return 5;
-      return 1; // défaut si hors bornes
-    }
-    
-    const experienceLevels = [
-      "Entry Level",
-      "Junior",
-      "Mid Level",
-      "Senior",
-      "Expert",
-    ];
-    
-    // Dans ton map skillAnalysis, remplace cette partie :
-    
-    skills: analysis.skillAnalysis.map((skill) => {
-      const confScore = Number(skill.confidenceScore) || 0;
-      const profLevel = proficiencyFromConfidenceScore(confScore);
-      return {
-        skillName: skill.skillName || skill.skill || "",
-        currentProficiency: Number(skill.currentProficiency) || 1,
-        demonstratedProficiency: Number(skill.demonstratedProficiency) || 1,
-        currentExperienceLevel: getExperienceLevel(Number(skill.currentProficiency) || 1),
-        demonstratedExperienceLevel: getExperienceLevel(Number(skill.demonstratedProficiency) || 1),
-        strengths: Array.isArray(skill.strengths) ? skill.strengths : [],
-        weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
-        confidenceScore: confScore,
-        improvement:
-          (Number(skill.demonstratedProficiency) || 1) > (Number(skill.currentProficiency) || 1)
-            ? "increased"
-            : (Number(skill.demonstratedProficiency) || 1) < (Number(skill.currentProficiency) || 1)
-            ? "decreased"
-            : "unchanged",
-        subcategory:
-          skill.subcategory ||
-          skillSubcategories[skill.skillName || skill.skill] ||
-          "",
-        // Ajout des nouveaux champs calculés à partir du confidenceScore
-        proficiencyLevel: profLevel,
-        experienceLevel: experienceLevels[profLevel - 1],
-      };
-    }),
-    
-    // Et pour la sauvegarde dans le profil :
-    
-    await profileService.createOrUpdateProfile(user._id, {
-      overallScore:
-        profileOverallScore.overallScore === 0
-          ? analysis.overallScore
-          : (profileOverallScore.overallScore + analysis.overallScore) / 2,
+    if (type === "technicalSkill") {
+      function proficiencyFromConfidenceScore(score) {
+        if (score >= 0 && score < 10) return 1;
+        if (score >= 10 && score < 30) return 2;
+        if (score >= 30 && score < 50) return 3;
+        if (score >= 50 && score < 70) return 4;
+        if (score >= 70 && score <= 100) return 5;
+        return 1; // défaut si hors bornes
+      }
+      
+      const experienceLevels = [
+        "Entry Level",
+        "Junior",
+        "Mid Level",
+        "Senior",
+        "Expert",
+      ];
+      
+      // Dans ton map skillAnalysis, remplace cette partie :
+      
       skills: analysis.skillAnalysis.map((skill) => {
         const confScore = Number(skill.confidenceScore) || 0;
         const profLevel = proficiencyFromConfidenceScore(confScore);
         return {
-          name: skill.skillName || skill.skill || "",
+          skillName: skill.skillName || skill.skill || "",
+          currentProficiency: Number(skill.currentProficiency) || 1,
+          demonstratedProficiency: Number(skill.demonstratedProficiency) || 1,
+          currentExperienceLevel: getExperienceLevel(Number(skill.currentProficiency) || 1),
+          demonstratedExperienceLevel: getExperienceLevel(Number(skill.demonstratedProficiency) || 1),
+          strengths: Array.isArray(skill.strengths) ? skill.strengths : [],
+          weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
+          confidenceScore: confScore,
+          improvement:
+            (Number(skill.demonstratedProficiency) || 1) > (Number(skill.currentProficiency) || 1)
+              ? "increased"
+              : (Number(skill.demonstratedProficiency) || 1) < (Number(skill.currentProficiency) || 1)
+              ? "decreased"
+              : "unchanged",
+          subcategory:
+            skill.subcategory ||
+            skillSubcategories[skill.skillName || skill.skill] ||
+            "",
+          // Ajout des nouveaux champs calculés à partir du confidenceScore
           proficiencyLevel: profLevel,
           experienceLevel: experienceLevels[profLevel - 1],
-          ScoreTest: confScore,
         };
       }),
-    });
-    
+      
+      // Et pour la sauvegarde dans le profil :
+      
+      await profileService.createOrUpdateProfile(user._id, {
+        overallScore:
+          profileOverallScore.overallScore === 0
+            ? analysis.overallScore
+            : (profileOverallScore.overallScore + analysis.overallScore) / 2,
+        skills: analysis.skillAnalysis.map((skill) => {
+          const confScore = Number(skill.confidenceScore) || 0;
+          const profLevel = proficiencyFromConfidenceScore(confScore);
+          return {
+            name: skill.skillName || skill.skill || "",
+            proficiencyLevel: profLevel,
+            experienceLevel: experienceLevels[profLevel - 1],
+            ScoreTest: confScore,
+          };
+        }),
+      });
+      
+    }
 
     // 7. Return the response
     res.status(200).json({
