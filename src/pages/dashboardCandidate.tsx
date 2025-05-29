@@ -472,6 +472,7 @@ export default function DashboardCandidate() {
   const [softSkillProficiency, setSoftSkillProficiency] = useState<number>(1);
   const [isExistingSoftSkill, setIsExistingSoftSkill] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [visibleSkills, setVisibleSkills] = useState(3); // Add this line for tracking visible skills
 
   const [formData, setFormData] = useState({
     username: '',
@@ -1739,7 +1740,7 @@ export default function DashboardCandidate() {
               </Box>
 
               {/* Technical Skills */}
-              <Box>
+              <Box sx={{ mb: 4 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Typography variant="h6" sx={{ color: '#000000', opacity: 0.9 }}>
                     Technical Skills
@@ -1762,6 +1763,7 @@ export default function DashboardCandidate() {
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {profile.skills
                     ?.filter((skill: any) => !softSkillNames.includes(skill.name))
+                    ?.slice(0, visibleSkills)
                     ?.map((skill: any) => (
                       <SkillBlock
                         key={skill.name}
@@ -1772,6 +1774,23 @@ export default function DashboardCandidate() {
                       />
                     ))}
                 </Box>
+                {profile.skills?.filter((skill: any) => !softSkillNames.includes(skill.name))?.length > visibleSkills && (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                    <Button
+                      onClick={() => setVisibleSkills(prev => prev + 3)}
+                      sx={{
+                        color: 'black',
+                        borderColor: 'black',
+                        '&:hover': {
+                          borderColor: 'black',
+                          background: 'rgba(2,226,255,0.1)'
+                        }
+                      }}
+                    >
+                      Load More
+                    </Button>
+                  </Box>
+                )}
               </Box>
             </StyledCard>
           </Box>
