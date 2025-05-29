@@ -36,9 +36,9 @@ const userSchema = new mongoose.Schema(
       },
     ],
     trafficCounter: { type: Number, default: 0 },
-    pubkey: { type: String, default: null },
-    privkey: { type: String, default: null },
-    accountId: { type: String, default: null },
+  //  pubkey: { type: String, default: null },
+  //  privkey: { type: String, default: null },
+  //  accountId: { type: String, default: null },
   },
   { timestamps: true }
 );
