@@ -51,7 +51,7 @@ const skillTaskSchema = new mongoose.Schema(
 // ToDo list schema linked to a profile
 const todoSchema = new mongoose.Schema(
   {
-    profileId: {
+    profile: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Profile",
       required: true,

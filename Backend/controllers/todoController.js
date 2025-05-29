@@ -122,16 +122,14 @@ Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
     }));
 
     // Upsert ToDo
-    let todo = await ToDo.findOne({ profileId: profile._id });
+     let todo = await ToDo.findOne({ profile: profile._id });
 
-    if (!todo) {  
+    if (!todo) {
       todo = await ToDo.create({
-        profileId: profile._id,
+        profile: profile._id,
         skillTasks,
-      })
-
+      });
       profile.todoList = todo._id;
-      await todo.save();
       await profile.save();
     } else {
       todo.skillTasks = skillTasks;
@@ -140,8 +138,9 @@ Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
 
     res.status(201).json({
       message: "ToDo list generated",
-      result: { todoListId: todo._id, profile: profile._id, todo },
+      result: { todoListId: todo._id, profileId: profile._id, todo },
     });
+    // res.status(201).json({ message: "ToDo list generated", result: {todoListId: null, profileId: null, todo} });
   } catch (error) {
     console.error("Error generating ToDo list:", error);
     res.status(500).json({ error: "Failed to generate ToDo list" });
