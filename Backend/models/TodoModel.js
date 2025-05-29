@@ -5,19 +5,10 @@ const taskSchema = new mongoose.Schema(
     title: { type: String, required: true },
     type: {
       type: String,
-      enum: [
-        "Course",
-        "Certification",
-        "Project",
-        "Article",
-        "Video",
-        "Exercise",
-        "Book",
-        "Other",
-      ],
+      enum: ["Course", "Certification", "Project", "Article", "Video", "Exercise", "Book", "Other"],
       required: true,
     },
-    description: { type: String, required: false },
+    description: { type: String },
     url: { type: String }, // Optional: for online resources
     priority: {
       type: String,
@@ -30,25 +21,22 @@ const taskSchema = new mongoose.Schema(
   { _id: false }
 );
 
-// Skill Task schema
-const skillTaskSchema = new mongoose.Schema(
+// Updated Todos Schema (now includes skill-related tasks)
+const todosSchema = new mongoose.Schema(
   {
-    skillTitle: { type: String, required: true },
     type: {
       type: String,
-      enum: ["Hard Skill", "Soft Skill", "Other"],
+      enum: ["Profile", "Skill"],
       required: true,
     },
-
+    title: { type: String, required: true },
     isCompleted: { type: Boolean, default: false },
-    dueDate: Date,
-
-    tasks: [taskSchema],
+    tasks: [taskSchema], // Skill-related tasks when type is "Skill"
   },
   { _id: false }
 );
 
-// ToDo list schema linked to a profile
+
 const todoSchema = new mongoose.Schema(
   {
     profile: {
@@ -57,9 +45,14 @@ const todoSchema = new mongoose.Schema(
       required: true,
       unique: true, // Only one ToDo list per profile
     },
-    completeProfile: { type: Boolean, default: false },
-    uploadCV: { type: Boolean, default: false },
-    skillTasks: [skillTaskSchema],
+     todos: {
+      type: [todosSchema],
+      default: [
+        { type: "Profile", title: "Complete Your Profile", isCompleted: false },
+        { type: "Profile", title: "Upload CV", isCompleted: false },
+      ],
+    },
+  
   },
   { timestamps: true }
 );
