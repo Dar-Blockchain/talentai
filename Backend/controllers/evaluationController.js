@@ -786,6 +786,30 @@ Provide detailed, actionable feedback in JSON format only.`,
     }
 
     // Après avoir reçu et parsé la réponse brute de GPT en "analysis"
+    if (type === "soft") {
+      const profile = await Profile.findOne({ userId: user._id });
+      const newOverallScore =
+        profile.overallScore === 0
+          ? analysis.overallScore
+          : (profile.overallScore + analysis.overallScore) / 2;
+
+      const updated = await Profile.findOneAndUpdate(
+        { userId: user._id },
+        {
+          overallScore: newOverallScore,
+          softSkills: analysis.skillAnalysis.map((s) => ({
+            name: s.skillName,
+            category: s.subcategory || "",
+            experienceLevel: getExperienceLevel(s.demonstratedProficiency),
+            ScoreTest: s.confidenceScore,
+          })),
+        },
+        { new: true }
+      );
+      console.log("Updated profile softSkills:", updated.softSkills);
+    }
+
+    // Après avoir reçu et parsé la réponse brute de GPT en "analysis"
     if (type === "technicalSkill") {
       analysis = {
         overallScore: Number(analysis.overallScore) || 0,
