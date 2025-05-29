@@ -140,7 +140,7 @@ module.exports.getProfileByPostId = async (postId) => {
   try {
     const post = await Post.findOne({ _id: postId }).populate({
       path: "user",
-      populate: { path: "profile" }
+      populate: { path: "profile" },
     });
 
     if (!post || !post.user || !post.user.profile) {
@@ -312,7 +312,7 @@ module.exports.deleteSoftSkills = async (userId, softSkillsToDelete) => {
 };
 
 // Mettre à jour le finalBid
-module.exports.updateFinalBid = async (userId, newBid, companyId,postId) => {
+module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
   try {
     const profile = await Profile.findOne({ userId });
     if (!profile) {
@@ -341,17 +341,18 @@ module.exports.updateFinalBid = async (userId, newBid, companyId,postId) => {
     // 🔄 Supprimer l'user de l'ancienne compagnie s'il y en avait une
     if (oldCompanyId && oldCompanyId.toString() !== companyId.toString()) {
       const oldCompanyProfile = await Profile.findOne({ userId: oldCompanyId });
-      if (oldCompanyProfile && oldCompanyProfile.type === 'Company') {
-        oldCompanyProfile.usersBidedByCompany = oldCompanyProfile.usersBidedByCompany.filter(
-          id => id.toString() !== userId.toString()
-        );
+      if (oldCompanyProfile && oldCompanyProfile.type === "Company") {
+        oldCompanyProfile.usersBidedByCompany =
+          oldCompanyProfile.usersBidedByCompany.filter(
+            (id) => id.toString() !== userId.toString()
+          );
         await oldCompanyProfile.save();
       }
     }
 
     // ➕ Ajouter l'user dans la nouvelle compagnie
     const newCompanyProfile = await Profile.findOne({ userId: companyId });
-    if (newCompanyProfile && newCompanyProfile.type === 'Company') {
+    if (newCompanyProfile && newCompanyProfile.type === "Company") {
       if (!newCompanyProfile.usersBidedByCompany.includes(userId)) {
         newCompanyProfile.usersBidedByCompany.push(userId);
         await newCompanyProfile.save();
@@ -364,7 +365,6 @@ module.exports.updateFinalBid = async (userId, newBid, companyId,postId) => {
     throw error;
   }
 };
-
 
 // Supprimer un skill spécifique
 module.exports.deleteHardSkill = async (userId, skillToDelete) => {
@@ -439,7 +439,10 @@ module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
 module.exports.getCompanyBids = async (companyId) => {
   try {
     // Récupérer le profil de la compagnie
-    const companyProfile = await Profile.findOne({ userId: companyId, type: "Company" });
+    const companyProfile = await Profile.findOne({
+      userId: companyId,
+      type: "Company",
+    });
 
     if (!companyProfile) {
       throw new Error("Company profile not found");
@@ -449,17 +452,17 @@ module.exports.getCompanyBids = async (companyId) => {
     const candidates = await Profile.find({
       userId: { $in: companyProfile.usersBidedByCompany },
     })
-    .populate({
-      path: "userId",
-      select: "username email"
-    })
-    .populate({
-      path: "companyBid.post",
-      select: "jobDetails.title status createdAt"
-    });
+      .populate({
+        path: "userId",
+        select: "username email",
+      })
+      .populate({
+        path: "companyBid.post",
+        select: "jobDetails.title status createdAt",
+      });
 
     // Construction du résultat enrichi
-    const enrichedCandidates = candidates.map(candidate => ({
+    const enrichedCandidates = candidates.map((candidate) => ({
       _id: candidate._id,
       userInfo: candidate.userId,
       finalBid: candidate.companyBid?.finalBid || null,
@@ -472,7 +475,7 @@ module.exports.getCompanyBids = async (companyId) => {
 
     return {
       companyName: companyProfile.companyDetails?.name || "Unknown Company",
-      bidedCandidates: enrichedCandidates
+      bidedCandidates: enrichedCandidates,
     };
   } catch (error) {
     console.error("Error getting bided candidates:", error);
@@ -483,16 +486,21 @@ module.exports.getCompanyBids = async (companyId) => {
 module.exports.getCompanyProfileWithAssessments = async (profileId) => {
   try {
     const profile = await Profile.findById(profileId)
-      .where('type').equals('Company')
+      .where("type")
+      .equals("Company")
       .populate({
-        path: 'assessmentResults',
+        path: "assessmentResults",
         populate: [
-          { path: 'condidateId', model: 'Profile', populate: {
-            path: 'userId',
-            model: 'User'
-          } },
-          { path: 'jobId', model: 'Post' }
-        ]
+          {
+            path: "condidateId",
+            model: "Profile",
+            populate: {
+              path: "userId",
+              model: "User",
+            },
+          },
+          { path: "jobId", model: "Post" },
+        ],
       });
 
     if (!profile) {
@@ -501,6 +509,8 @@ module.exports.getCompanyProfileWithAssessments = async (profileId) => {
 
     return profile.assessmentResults;
   } catch (error) {
-    throw new Error("Erreur lors de la récupération des assessments : " + error.message);
+    throw new Error(
+      "Erreur lors de la récupération des assessments : " + error.message
+    );
   }
 };

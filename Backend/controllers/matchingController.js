@@ -46,7 +46,9 @@ exports.matchCandidatesToJob = async (req, res) => {
           requiredSkills: jobPost.skillAnalysis.requiredSkills,
         };
       })
-      .filter((match) => match.score > 0 && match.candidateId && match.candidateId._id)
+      .filter(
+        (match) => match.score > 0 && match.candidateId && match.candidateId._id
+      )
       .sort((a, b) => b.score - a.score);
 
     // 4. Response
