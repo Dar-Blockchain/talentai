@@ -154,19 +154,15 @@ exports.generateTechniqueQuestions = async (req, res) => {
 
       prompt = `
       You are an experienced technical interviewer specialized in ${skill}.
-      Generate **exactly 10** situational technical interview questions for someone with ${experienceLevel} years of experience and proficiency level ${proficiencyLevel}/5.
+      You are generating questions for a **technical test** designed to evaluate candidates with ${experienceLevel} years of experience and proficiency level ${proficiencyLevel}/5.
       
-      Each question should fall into one of these categories:
-      - Real-world scenario requiring decision-making
-      - Problem-solving based on best practices
-      - Reflection on past experience or common pitfalls
-      - How-to questions based on practical situations
+      Generate **exactly 10** situational technical questions that:
+      - Present real-world scenarios requiring decision-making
+      - Focus on problem-solving and best practices
+      - Encourage reflection on experience and common pitfalls
+      - Assess applied knowledge and reasoning, not just theory
       
-      Avoid pure theory. Focus on questions that assess:
-      - Applied knowledge
-      - Critical thinking
-      - Communication of reasoning
-      - Awareness of trade-offs
+      Questions should simulate challenges candidates would face on the job.
       
       Return ONLY a JSON array of strings, like:
       [
@@ -174,21 +170,22 @@ exports.generateTechniqueQuestions = async (req, res) => {
         "Question 2?"
       ]
       `.trim();
+      
     } else {
       // Only skill provided → Mixed difficulty
       prompt = `
       You are a professional interviewer for the skill ${skill}.
-      Generate **exactly 10** interview questions across difficulty levels (1 to 5), in the following format:
+      Generate **exactly 10** interview questions for a **technical test**, covering difficulty levels 1 to 5:
       - 2 questions at level 1 (simple real-world context)
       - 2 at level 2 (basic problem-solving or reflection)
       - 2 at level 3 (intermediate scenario or best practice dilemma)
       - 2 at level 4 (complex problem-solving with trade-offs)
       - 2 at level 5 (expert-level decision-making in high-impact situations)
       
-      Each question must be:
-      - Situational or scenario-based
-      - Focused on applied knowledge, reasoning, or decision-making
-      - Inspired by real use cases, not theoretical quizzes
+      All questions must be:
+      - Situational and scenario-based
+      - Focused on applied knowledge, reasoning, and decision-making
+      - Representative of challenges candidates would encounter in real projects
       
       Return ONLY a JSON array of strings, like:
       [
@@ -196,6 +193,7 @@ exports.generateTechniqueQuestions = async (req, res) => {
         "Question 2?"
       ]
       `.trim();
+      
     }
 
     // 5️⃣ Call TogetherAI API
