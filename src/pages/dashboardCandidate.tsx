@@ -1,8 +1,8 @@
 import { useState, useEffect, ReactNode } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getMyProfile, selectProfile, clearProfile } from '../store/features/profileSlice';
-import type { Profile as ProfileType } from '../store/features/profileSlice';
-import { AppDispatch } from '../store/store';
+import { getMyProfile, selectProfile, clearProfile } from '../store/slices/profileSlice';
+import type { Profile as ProfileType } from '../store/slices/profileSlice';
+import { AppDispatch, RootState } from '../store/store';
 import {
   Box,
   Container,
@@ -56,7 +56,8 @@ import { signOut } from 'next-auth/react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { toast } from 'react-hot-toast';
 import { generateTodos, fetchTodos } from '@/store/slices/todoSlice';
-
+import { Accordion, AccordionSummary, AccordionDetails } from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 const GREEN_MAIN = 'rgba(0, 255, 157, 1)';
 
 // Styled Components
@@ -462,6 +463,8 @@ export default function DashboardCandidate() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { profile, loading, error } = useSelector(selectProfile);
+  const { todos, generate } = useSelector((state: RootState) => state.todo);
+
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [testModalOpen, setTestModalOpen] = useState(false);
   const [skillType, setSkillType] = useState('');
@@ -544,14 +547,13 @@ export default function DashboardCandidate() {
         Cookies.remove(cookieName, { path: '/' });
       });
 
+      // Redirect to signin page
+      router.push('/signin');
       // Clear Redux state
       dispatch(clearProfile());
-
       // Sign out from NextAuth
       await signOut({ redirect: false });
 
-      // Redirect to signin page
-      router.push('/signin');
     } catch (error) {
       console.error('Logout failed:', error);
     }
@@ -948,7 +950,7 @@ export default function DashboardCandidate() {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        background: '#0f172a'
+        // background: '#0f172a'
       }}>
         <CircularProgress sx={{ color: GREEN_MAIN }} />
       </Container>
@@ -1814,32 +1816,30 @@ export default function DashboardCandidate() {
         </Button>
               </Box>
 
-              <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
-                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Checkbox checked={true} sx={{ color: GREEN_MAIN }} />
-                  <Typography sx={{ color: '#191919', fontWeight: 500 }}>
-                    Complete your profile
-                  </Typography>
+<Box>
+  {todos?.data?.length > 0 &&
+    todos.data.map((item, index) => (
+      <Accordion key={index} disableGutters elevation={0} sx={{ mb: 2, border: '1px solid #ddd', borderRadius: '4px', '&::before': { display: 'none' } }}>
+        <AccordionSummary expandIcon={item.tasks.length > 0 ? <ExpandMoreIcon /> : null} sx={{ display: 'flex', bgcolor: '#f9f9f9', alignItems: 'center', borderRadius: '4px' }}>
+          <Box sx={{display: 'flex', alignItems: 'center'}}><Checkbox checked={item.isCompleted} sx={{ color: GREEN_MAIN, mr: 1 }} />
+          <Typography sx={{ fontWeight: 500 }}>{item.title}</Typography></Box>
+        </AccordionSummary>
+
+        {item?.tasks?.length > 0 && (
+          <AccordionDetails>
+            <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+              {item.tasks.map((task: any, i: any) => (
+                <Box key={i} component="li" sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <Checkbox checked={task.isCompleted} sx={{ color: GREEN_MAIN, mr: 1 }} />
+                  <Typography>{task.title}</Typography>
                 </Box>
-                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Checkbox checked={true} sx={{ color: GREEN_MAIN }} />
-                  <Typography sx={{ color: '#191919', fontWeight: 500 }}>
-                    Add a new skill
-                  </Typography>
-                </Box>
-                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Checkbox checked={true} sx={{ color: GREEN_MAIN }} />
-                  <Typography sx={{ color: '#191919', fontWeight: 500 }}>
-                    Take your first test
-                  </Typography>
-                </Box>
-                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Checkbox checked={false} sx={{ color: GREEN_MAIN }} />
-                  <Typography sx={{ color: '#191919', fontWeight: 500 }}>
-                    Upload your CV
-                  </Typography>
-                </Box>
-              </Box>
+              ))}
+            </Box>
+          </AccordionDetails>
+        )}
+      </Accordion>
+    ))}
+</Box>
             </StyledCard>
           </Box>
         </Box>
