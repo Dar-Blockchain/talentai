@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getMyProfile, selectProfile, clearProfile } from '../store/features/profileSlice';
+import { getMyProfile, selectProfile, clearProfile } from '../store/slices/profileSlice';
 import { AppDispatch, RootState } from '../store/store';
 import {
   Box,

@@ -25,7 +25,7 @@ import {
   Google as GoogleIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
-import { registerUser, verifyOTP } from "../../store/features/authSlice";
+import { registerUser, verifyOTP } from "../../store/slices/authSlice";
 import type { RootState, AppDispatch } from "../../store/store";
 import Cookies from "js-cookie";
 

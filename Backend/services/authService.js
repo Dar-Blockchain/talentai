@@ -66,9 +66,9 @@ module.exports.registerUser = async (email) => {
       code: otp,
       expiresAt: otpExpiry,
     },
-    pubkey,
-    privkey,
-    accountId,
+    // pubkey,
+    // privkey,
+    // accountId,
   });
 
   await user.save();
