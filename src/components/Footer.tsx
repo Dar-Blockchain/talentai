@@ -5,31 +5,32 @@ import XIcon from "./icons/XIcon";
 import LinkedinIcon from "./icons/LinkedinIcon";
 import GithubIcon from "./icons/GithubIcon";
 import { useRouter } from "next/router";
+import { GITHUB_URL, LINKEDIN_URL, TWITTER_URL, YOUTUBE_URL } from "@/constants";
 
 const footerSections = [
   {
     title: "Product",
-    items: ["Features", "Solutions", "Hiring", "Demo"],
+    items: ["Features", "Solutions", "Pricing"],
   },
   {
     title: "Company",
-    items: ["About", "Careers", "Blog", "Contact"],
+    items: ["Contact"],
   },
-  {
-    title: "Resources",
-    items: ["Help Center", "Documentation", "API", "Status"],
-  },
-  {
-    title: "Legal",
-    items: ["Privacy", "Terms & Conditions", "Security", "Cookies"],
-  },
+  // {
+  //   title: "Resources",
+  //   items: ["Help Center", "Documentation", "API", "Status"],
+  // },
+  // {
+  //   title: "Legal",
+  //   items: ["Privacy", "Terms & Conditions", "Security", "Cookies"],
+  // },
 ];
 
 const socialLinks = [
-  { name: "YouTube", icon: <YoutubeIcon />, href: "#" },
-  { name: "X (twitter)", icon: <XIcon />, href: "#" },
-  { name: "LinkedIn", icon: <LinkedinIcon />, href: "#" },
-  { name: "GitHub", icon: <GithubIcon />, href: "#" },
+  { name: "YouTube", icon: <YoutubeIcon />, href: YOUTUBE_URL },
+  { name: "X (twitter)", icon: <XIcon />, href: TWITTER_URL },
+  { name: "LinkedIn", icon: <LinkedinIcon />, href: LINKEDIN_URL },
+  { name: "GitHub", icon: <GithubIcon />, href: GITHUB_URL },
 ];
 
 const Footer = () => {
@@ -79,7 +80,7 @@ const Footer = () => {
               {section.items.map((item) => (
                 <Link
                   key={item}
-                  href="#"
+                  href={`/#${item.toLowerCase()}`}
                   underline="none"
                   color="inherit"
                   variant="body2"
@@ -124,7 +125,7 @@ const Footer = () => {
             >
               {name}
             </Typography>
-            <IconButton href={href} aria-label={name} sx={{ color: "#000" }}>
+            <IconButton href={href} aria-label={name} target='_blank' sx={{ color: "#000" }}>
               {icon}
             </IconButton>
           </Stack>

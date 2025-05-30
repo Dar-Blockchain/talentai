@@ -3,8 +3,11 @@ import { Box, Button, Typography, Stack } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import StatList from "./components/StatList";
+import { useRouter } from "next/router";
+import { BOOK_DEMO_URL } from "@/constants";
 
 const HeroSection = () => {
+  const router = useRouter();
   return (
     <Box
       sx={{
@@ -66,6 +69,7 @@ const HeroSection = () => {
           >
             <Button
               variant="contained"
+              onClick={() => router.push('/signin')}
               sx={{
                 backgroundColor: "#000",
                 color: "#fff",
@@ -91,6 +95,8 @@ const HeroSection = () => {
 
             <Button
               variant="outlined"
+              href={BOOK_DEMO_URL}
+              target='_blank'
               sx={{
                 borderRadius: 999,
                 textTransform: "none",
@@ -105,7 +111,7 @@ const HeroSection = () => {
                 <PlayCircleOutlineIcon sx={{ color: "rgba(0, 255, 157, 1)" }} />
               }
             >
-              Watch Demo
+              Book Demo
             </Button>
           </Stack>
 

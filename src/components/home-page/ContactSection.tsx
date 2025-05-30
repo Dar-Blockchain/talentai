@@ -1,7 +1,9 @@
 import React from "react";
 import { Box, Typography, Stack, Button } from "@mui/material";
+import { useRouter } from "next/router";
 
 const ContactSection = () => {
+  const router = useRouter();
   return (
     <Box
       id="contact"
@@ -77,6 +79,7 @@ const ContactSection = () => {
           </Typography>
           <Button
             variant="contained"
+            onClick={() => router.push('/signin')}
             sx={{
               backgroundColor: "rgba(41, 210, 145, 0.83)",
               color: "#fff",
