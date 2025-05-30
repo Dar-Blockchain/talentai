@@ -35,15 +35,25 @@ exports.generateTodoListForProfile = async (req, res) => {
       .join(", ");
 
     let todo = await ToDo.findOne({ profile: profile._id });
+
+    let existingSkillTodoList = [];
     if (todo) {
+      todo.todos.forEach((t) => {
+        if (t.type == "Skill") {
+          existingSkillTodoList.push(t);
+        }
+      });
     }
 
     // Prompt for generating skill-based recommendations
     const prompt = `
 You are a career development AI assistant.
-Given a candidate with the following skills:
-
+Given:
+- A candidate with the following skills:
 ${formattedSkills}
+- A condidate that has a list of todos for each skill: 
+${existingSkillTodoList}
+
 
 Generate a JSON array where each item is an object with:
 - title: the name of the skill
@@ -55,6 +65,11 @@ Generate a JSON array where each item is an object with:
   - url (optional)
   - priority: STRICTLY one of **"Low", "Medium", or "High"** (No other values allowed).
   - dueDate: A recommended completion deadline in timestamp format.
+
+STRICT REQUIREMENTS:
+- for each skill:  title, type, description, priority are required fields
+- For each skill, **DO NOT include tasks similar in purpose to existing ones, that are already accorded for that task** Ensure each recommendation **adds new skill-improvement value**.
+- Offer a unique learning perspective.
 
 Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
 
@@ -68,14 +83,14 @@ Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
         "description": "Covers fundamental JS algorithms with interactive coding exercises",
         "url": "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures", 
         "priority": "medium",
-        "dueDate": 1717004400
+        "dueDate": 1748531525930
       },
       {
         "title": "Build a ToDo App using vanilla JavaScript",
         "type": "Project",
         "description": "Apply JS concepts to create a CRUD-based web application",
         "priority": "medium",
-        "dueDate": 1717004400
+        "dueDate": 1748531525930
       }
     ]
   },
@@ -111,7 +126,6 @@ Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
       }
     }
     // Upsert ToDo
-
     const defaultProfileTodos = [
       { type: "Profile", title: "Complete Your Profile", isCompleted: false },
       { type: "Profile", title: "Upload CV", isCompleted: false },
@@ -131,9 +145,20 @@ Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
           (t) => t.title === skillTodo.title && t.type === "Skill"
         );
 
+        // Add only up to 5 total tasks
         if (existingSkillTodo) {
-          existingSkillTodo.tasks.push(...skillTodo.tasks);
+          const remainingTodos = Math.max(
+            0,
+            5 - existingSkillTodo.tasks.length
+          );
+
+          if (remainingTodos > 0) {
+            existingSkillTodo.tasks.push(
+              ...skillTodo.tasks.slice(0, remainingTodos)
+            );
+          }
         } else {
+          skillTodo.tasks = skillTodo.tasks.slice(0, 5); // Ensure new skill doesn't exceed the limit
           todo.todos.push(skillTodo);
         }
       });
