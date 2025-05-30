@@ -723,15 +723,6 @@ export default function Test() {
     }
 
     try {
-      // Initialize transcriptions for all questions
-      setTranscriptions(
-        questions.reduce((acc: any, _: any, index: number) => ({
-          ...acc,
-          [index]: ''
-        }), {})
-      );
-      setCurrentTranscript(''); // Clear current transcript
-
       // Get audio stream
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
