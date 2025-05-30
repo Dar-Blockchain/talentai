@@ -342,109 +342,59 @@ export default function Test() {
   const [showTestLimitError, setShowTestLimitError] = useState(false);
 
   // Fetch questions from API
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        setIsGenerating(true);
-        // Add delay to ensure token is available
-        await new Promise(resolve => setTimeout(resolve, 200));
+  const fetchQuestions = async () => {
+    try {
+      setIsGenerating(true);
+      // Add delay to ensure token is available
+      await new Promise(resolve => setTimeout(resolve, 200));
 
-        const token = Cookies.get('api_token');
-        if (!token) {
-          console.log('No token found, redirecting to home');
-          router.push('/');
-          return;
-        }
+      const token = Cookies.get('api_token');
+      if (!token) {
+        console.log('No token found, redirecting to home');
+        router.push('/');
+        return;
+      }
 
-        let endpoint = '';
-        // Detect source based on URL parameters
-        if (router.query.type && router.query.skill) {
-          // This is from dashboardCandidate
-          if (router.query.type === 'technical' || router.query.type === 'technicalSkill') {
-            endpoint = 'evaluation/generate-technique-questions';
+      let endpoint = '';
+      let fetchedQuestions: string[] = [];
 
-            // First fetch the user's profile to get the skill levels
-            const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
-            });
+      // Detect source based on URL parameters
+      if (router.query.type && router.query.skill) {
+        // This is from dashboardCandidate
+        if (router.query.type === 'technical' || router.query.type === 'technicalSkill') {
+          endpoint = 'evaluation/generate-technique-questions';
 
-            if (!profileResponse.ok) {
-              throw new Error('Failed to fetch profile data');
-            }
-
-            const profileData = await profileResponse.json();
-            console.log('Profile data:', profileData);
-
-            // Find the selected skill in the profile
-            const selectedSkill = profileData.skills.find(
-              (skill: any) => skill.name === router.query.skill
-            );
-            console.log('Selected skill:', selectedSkill);
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                skill: router.query.skill,
-                experienceLevel: router.query.type === 'technicalSkill' ? null : selectedSkill?.experienceLevel || 'Entry Level',
-                proficiencyLevel: router.query.type === 'technicalSkill' ? null : selectedSkill?.proficiencyLevel || 1
-              })
-            });
-
-            if (!response.ok) {
-              const errorData = await response.json();
-              if (errorData.error === "You have reached your test limit (5)") {
-                setShowTestLimitError(true);
-                setIsGenerating(false);
-                return;
-              }
-              throw new Error('Failed to fetch questions');
-            }
-
-            const data = await response.json();
-            setQuestions(data.questions);
-          } else {
-            // For soft skills
-            endpoint = 'evaluation/generate-soft-skill-questions';
-
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                skill: router.query.skill,
-                subSkills: router.query.language || router.query.subcategory
-              })
-            });
-
-            if (!response.ok) {
-              const errorData = await response.json();
-              if (errorData.error === "You have reached your test limit (5)") {
-                setShowTestLimitError(true);
-                setIsGenerating(false);
-                return;
-              }
-              throw new Error('Failed to fetch questions');
-            }
-
-            const data = await response.json();
-            setQuestions(data.questions);
-          }
-        } else {
-          // This is from preferences
-          endpoint = 'evaluation/generate-questions';
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
+          // First fetch the user's profile to get the skill levels
+          const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
+          });
+
+          if (!profileResponse.ok) {
+            throw new Error('Failed to fetch profile data');
+          }
+
+          const profileData = await profileResponse.json();
+          console.log('Profile data:', profileData);
+
+          // Find the selected skill in the profile
+          const selectedSkill = profileData.skills.find(
+            (skill: any) => skill.name === router.query.skill
+          );
+          console.log('Selected skill:', selectedSkill);
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              skill: router.query.skill,
+              experienceLevel: router.query.type === 'technicalSkill' ? null : selectedSkill?.experienceLevel || 'Entry Level',
+              proficiencyLevel: router.query.type === 'technicalSkill' ? null : selectedSkill?.proficiencyLevel || 1
+            })
           });
 
           if (!response.ok) {
@@ -458,28 +408,78 @@ export default function Test() {
           }
 
           const data = await response.json();
-          setQuestions(data.questions);
+          fetchedQuestions = data.questions;
+        } else {
+          // For soft skills
+          endpoint = 'evaluation/generate-soft-skill-questions';
+
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              skill: router.query.skill,
+              subSkills: router.query.language || router.query.subcategory
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            if (errorData.error === "You have reached your test limit (5)") {
+              setShowTestLimitError(true);
+              setIsGenerating(false);
+              return;
+            }
+            throw new Error('Failed to fetch questions');
+          }
+
+          const data = await response.json();
+          fetchedQuestions = data.questions;
+        }
+      } else {
+        // This is from preferences
+        endpoint = 'evaluation/generate-questions';
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          if (errorData.error === "You have reached your test limit (5)") {
+            setShowTestLimitError(true);
+            setIsGenerating(false);
+            return;
+          }
+          throw new Error('Failed to fetch questions');
         }
 
-        // Initialize transcriptions with empty strings for each question
-        setTranscriptions(
-          questions.reduce((acc: any, _: any, index: number) => ({
-            ...acc,
-            [index]: ''
-          }), {})
-        );
-      } catch (error) {
-        console.error('Error fetching questions:', error);
-        router.push('/');
-      } finally {
-        setIsGenerating(false);
+        const data = await response.json();
+        fetchedQuestions = data.questions;
       }
-    };
 
-    if (router.isReady) {
-      fetchQuestions();
+      // Set questions first
+      setQuestions(fetchedQuestions);
+
+      // Then initialize transcriptions with the fetched questions
+      setTranscriptions(
+        fetchedQuestions.reduce((acc: any, _: any, index: number) => ({
+          ...acc,
+          [index]: ''
+        }), {})
+      );
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      router.push('/');
+    } finally {
+      setIsGenerating(false);
     }
-  }, [router.isReady, router.query]);
+  };
+
 
   // Audio context for streaming
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -686,6 +686,7 @@ export default function Test() {
   };
 
   const handleGuidelinesAccept = () => {
+    fetchQuestions()
     setGuidelinesAccepted(true);
     setShowGuidelines(false);
   };
@@ -1272,8 +1273,8 @@ export default function Test() {
             }
           }}
         >
-          {current < questions.length - 1 
-            ? `Next Question${nextButtonDisabled ? ` (${buttonTimer}s)` : ''}` 
+          {current < questions.length - 1
+            ? `Next Question${nextButtonDisabled ? ` (${buttonTimer}s)` : ''}`
             : 'Finish Test'}
         </Button>
       </NavigationBar>
