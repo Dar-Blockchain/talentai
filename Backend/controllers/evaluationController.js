@@ -87,9 +87,8 @@ Based on the candidate's skills (${skillsList}), generate **exactly 10** situati
     let questions;
     const jsonMatch = raw.match(/\[([\s\S]*)\]/);
     if (jsonMatch) {
-      const jsonText = "[" + jsonMatch[1] + "]";
       try {
-        questions = JSON.parse(jsonText);
+        questions = JSON.parse("[" + jsonMatch[1] + "]");
       } catch (e) {
         console.warn("JSON parse failed on extracted text, falling back:", e);
       }
