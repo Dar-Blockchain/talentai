@@ -1,10 +1,29 @@
-import React from "react";
-import { Box, Button, Typography, Stack } from "@mui/material";
+import React, { useRef, useState } from "react";
+import { Box, Button, Typography, Stack, IconButton } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
+import PauseCircleOutlineIcon from "@mui/icons-material/PauseCircleOutline";
 import StatList from "./components/StatList";
 
 const HeroSection = () => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const handlePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleVideoEnded = () => {
+    setIsPlaying(false);
+  };
+
   return (
     <Box
       sx={{
@@ -14,8 +33,15 @@ const HeroSection = () => {
         color: "#000000",
       }}
     >
-      <Stack direction="row" spacing={2}>
-        <Box>
+      <Stack 
+        direction="row" 
+        spacing={2}
+        sx={{
+          justifyContent: "space-between",
+          alignItems: "center"
+        }}
+      >
+        <Box >
           <Typography
             variant="h3"
             fontWeight={500}
@@ -114,21 +140,54 @@ const HeroSection = () => {
 
         <Box
           display={{ xs: "none", lg: "flex" }}
-          sx={{ justifyContent: "center", flexGrow: 1, position: "relative", pt: 6 }}
+          sx={{ 
+            justifyContent: "center", 
+            flex: 1,
+            position: "relative", 
+            pt: 6,
+          }}
         >
           <Box sx={{ position: "relative", width: "90%", height: 450 }}>
-            <Box
-              component="img"
-              src="/images/home/hero.png"
-              alt="TalentAI Logo"
-              sx={{
+            <video
+              ref={videoRef}
+              src="/videos/hero.mp4"
+              autoPlay={false}
+              muted={false}
+              loop={false}
+              playsInline
+              controls={false}
+              preload="metadata"
+              onEnded={handleVideoEnded}
+              style={{
                 width: "100%",
                 height: "100%",
-                borderRadius: 2,
+                borderRadius: "16px",
                 position: "relative",
                 zIndex: 3,
+                objectFit: "contain",
+                display: "block",
+                backgroundColor: "#000"
               }}
             />
+            <IconButton
+              onClick={handlePlayPause}
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                zIndex: 4,
+                "&:hover": {
+                  backgroundColor: "transparent",
+                },
+              }}
+            >
+              {isPlaying ? (
+                <PauseCircleOutlineIcon sx={{ fontSize: 48, color: "white" }} />
+              ) : (
+                <PlayCircleOutlineIcon sx={{ fontSize: 48, color: "white" }} />
+              )}
+            </IconButton>
             <Box
               sx={{
                 position: "absolute",
