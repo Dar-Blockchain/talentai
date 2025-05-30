@@ -144,7 +144,7 @@ const GuidelineItem = styled(Box)(({ theme }) => ({
 // Add new styled components for the security modal
 const SecurityModal = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
-    background: 'rgba(15, 23, 42, 0.95)',
+    background: 'white',
     backdropFilter: 'blur(10px)',
     borderRadius: '24px',
     border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -156,7 +156,7 @@ const SecurityModal = styled(Dialog)(({ theme }) => ({
 // Add new styled components for the first violation modal
 const FirstViolationModal = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
-    background: 'rgba(15, 23, 42, 0.95)',
+    background: 'white',
     backdropFilter: 'blur(10px)',
     borderRadius: '24px',
     border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -924,9 +924,9 @@ const Test = () => {
           width: '100%',
           maxWidth: 900,
           mx: 'auto',
-          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
           borderRadius: 4,
-          background: 'rgba(255,255,255,0.95)',
+          background: 'white',
+          backgroundColor: 'white',
           p: { xs: 2, md: 4 },
           minHeight: '80vh',
           display: 'flex',
@@ -936,11 +936,11 @@ const Test = () => {
       >
         {/* Security Modal */}
         <SecurityModal open={showSecurityModal} onClose={() => { }}>
-          <DialogTitle sx={{ fontWeight: 700, color: '#fff', fontSize: '1.5rem' }}>
+          <DialogTitle sx={{ fontWeight: 700, color: 'black', fontSize: '1.5rem' }}>
             Security Violation
           </DialogTitle>
           <DialogContent>
-            <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
+            <Typography variant="body1" sx={{ color: 'black', mb: 2 }}>
               You have attempted to leave or capture the test page more than once. For security reasons, your test has ended and you are being redirected to the dashboard.
             </Typography>
           </DialogContent>
@@ -953,11 +953,11 @@ const Test = () => {
           maxWidth="xs"
           fullWidth
         >
-          <DialogTitle sx={{ fontWeight: 700, fontSize: '1.3rem', color: '#fff', pt: 3 }}>
+          <DialogTitle sx={{ fontWeight: 700, fontSize: '1.3rem', color: 'black', pt: 3 }}>
             Heads Up!
           </DialogTitle>
           <DialogContent sx={{ pb: 0 }}>
-            <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
+            <Typography variant="body1" sx={{ color: 'black', mb: 2 }}>
               For security reasons, leaving or capturing the test page is not allowed.<br />
               <b>If you do this again, your test will end and you will be redirected.</b>
             </Typography>

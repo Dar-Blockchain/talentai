@@ -154,7 +154,7 @@ exports.generateTechniqueQuestions = async (req, res) => {
 
       prompt = `
       You are an experienced technical interviewer specialized in ${skill}.
-      You are generating questions for a **technical test** designed to evaluate candidates with ${experienceLevel} years of experience and proficiency level ${proficiencyLevel}/5.
+      You are generating questions for a **technical test** designed to evaluate candidates with ${experienceLevel} and proficiency level ${proficiencyLevel}/5.
       
       Generate **exactly 10** situational technical questions that:
       - Present real-world scenarios requiring decision-making
@@ -170,7 +170,7 @@ exports.generateTechniqueQuestions = async (req, res) => {
         "Question 2?"
       ]
       `.trim();
-      
+      //situational 3 ,4 ,5
     } else {
       // Only skill provided → Mixed difficulty
       prompt = `
