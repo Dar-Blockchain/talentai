@@ -5,18 +5,18 @@ const taskSchema = new mongoose.Schema(
     title: { type: String, required: true },
     type: {
       type: String,
-      enum: ["Course", "Certification", "Project", "Article", "Video", "Exercise", "Book", "Other"],
+      enum: ["Course", "Certification", "Project", "Article"],
       required: true,
     },
     description: { type: String },
     url: { type: String }, // Optional: for online resources
     priority: {
       type: String,
-      enum: ["Low", "Medium", "High"],
-      default: "Medium",
+      enum: ["low", "medium", "high"],
+      default: "medium",
     },
     isCompleted: { type: Boolean, default: false },
-    dueDate: {type: Number},
+    dueDate: { type: Number },
   },
   { _id: false }
 );
@@ -36,8 +36,7 @@ const todosSchema = new mongoose.Schema(
   { _id: false }
 );
 
-
-const todoSchema = new mongoose.Schema(
+const todoListSchema = new mongoose.Schema(
   {
     profile: {
       type: mongoose.Schema.Types.ObjectId,
@@ -45,16 +44,15 @@ const todoSchema = new mongoose.Schema(
       required: true,
       unique: true, // Only one ToDo list per profile
     },
-     todos: {
+    todos: {
       type: [todosSchema],
       default: [
-        { type: "Profile", title: "Complete Your Profile", isCompleted: false },
         { type: "Profile", title: "Upload CV", isCompleted: false },
+        { type: "Skill", title: "Add Skill", isCompleted: false },
       ],
     },
-  
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("ToDo", todoSchema);
+module.exports = mongoose.model("TodoList", todoListSchema);

@@ -1831,7 +1831,7 @@ Benefits:
               <Box sx={{ display: "flex", gap: "10px" }}>
                 {/* Current Bid */}
                 <Box sx={{
-                  background: 'linear-gradient(135deg, rgba(2,226,255,0.1) 0%, rgba(0,255,195,0.1) 100%)',
+                  background: 'rgba(0, 255, 157, 1)',
                   padding: '8px',
                   borderRadius: '8px',
                   minWidth: '70px',
@@ -1839,13 +1839,14 @@ Benefits:
                 }}>
                   <Typography variant="h6" sx={{
                     fontWeight: 600,
-                    color: '#02E2FF',
+                    color: 'black',
                     fontSize: '1.25rem',
                     lineHeight: 1
                   }}>
                     {candidate?.finalBid || 0}$
                   </Typography>
                   <Typography variant="caption" sx={{
+
                     color: 'black',
                     fontSize: '0.7rem'
                   }}>
@@ -1854,7 +1855,7 @@ Benefits:
                 </Box>
                 {/* Match Score */}
                 <Box sx={{
-                  background: 'linear-gradient(135deg, rgba(2,226,255,0.1) 0%, rgba(0,255,195,0.1) 100%)',
+                  background: 'rgba(0, 255, 157, 1)',
                   padding: '8px',
                   borderRadius: '8px',
                   minWidth: '70px',
@@ -1862,7 +1863,7 @@ Benefits:
                 }}>
                   <Typography variant="h6" sx={{
                     fontWeight: 600,
-                    color: '#02E2FF',
+                    color: 'black',
                     fontSize: '1.25rem',
                     lineHeight: 1
                   }}>
@@ -1879,7 +1880,7 @@ Benefits:
 
             </Box>
             {/* Skills Section */}
-            <Box sx={{ mb: 3 }}>
+            < Box sx={{ mb: 3 }}>
               <Typography variant="subtitle2" sx={{
                 color: 'black',
                 mb: 2,
@@ -1891,12 +1892,12 @@ Benefits:
                   width: 24,
                   height: 24,
                   borderRadius: '6px',
-                  background: 'rgba(2,226,255,0.1)',
+                  background: 'rgba(0, 255, 157, 1)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <StarIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
+                  <StarIcon sx={{ fontSize: 16, color: 'black' }} />
                 </Box>
                 Matched Skills
               </Typography>
@@ -1904,6 +1905,7 @@ Benefits:
                 display: 'flex',
                 flexWrap: 'wrap',
                 gap: 1,
+                // border: '1px solid black',
                 '& > *': {
                   flex: '1 1 calc(50% - 8px)',
                   minWidth: '200px'
@@ -1913,7 +1915,7 @@ Benefits:
                   <Box
                     key={skill?._id || `skill-${Math.random()}`}
                     sx={{
-                      backgroundColor: 'rgba(255,255,255,0.05)',
+                      backgroundColor: 'rgba(0, 255, 157, 1)',
                       borderRadius: '8px',
                       padding: '12px',
                       color: 'black',
@@ -1974,12 +1976,12 @@ Benefits:
                   width: 24,
                   height: 24,
                   borderRadius: '6px',
-                  background: 'rgba(2,226,255,0.1)',
+                  background: 'rgba(0, 255, 157, 1)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <WorkIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
+                  <WorkIcon sx={{ fontSize: 16, color: 'black' }} />
                 </Box>
                 Required Skills
               </Typography>
@@ -1997,7 +1999,7 @@ Benefits:
                     label={`${skill?.name || 'Unnamed'} (${skill?.level || 'N/A'})`}
                     size="small"
                     sx={{
-                      background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)', color: 'black',
+                      background: 'rgba(0, 255, 157, 1)', color: 'black',
                       '& .MuiChip-label': {
                         px: 2
                       }
@@ -2021,10 +2023,10 @@ Benefits:
                 component="a"
                 href={`mailto:${candidate?.candidateId?.email}`}
                 sx={{
-                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                  background: 'rgba(0, 255, 157, 1)',
                   color: '#ffffff',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                    background: 'rgba(0, 255, 157, 1)',
                   }
                 }}
                 disabled={!candidate?.candidateId?.email}
@@ -2038,11 +2040,11 @@ Benefits:
                 onClick={() => handleBidDialogOpen(candidate)}
                 sx={{
 
-                  borderColor: 'rgba(2,226,255,0.5)',
-                  color: '#02E2FF',
+                  borderColor: 'rgba(0, 255, 157, 1)',
+                  color: 'black',
                   '&:hover': {
                     borderColor: '#02E2FF',
-                    backgroundColor: 'rgba(2,226,255,0.1)'
+                    backgroundColor: 'rgba(0, 255, 157, 1)'
                   }
                 }}
                 disabled={!candidate?.candidateId?._id || !selectedJob}
@@ -2050,27 +2052,29 @@ Benefits:
                 Place Bid
               </Button>
             </Box>
-          </MatchCard>
+          </MatchCard >
         ))}
 
-        {matchingProfiles.length > displayCount && (
-          <Button
-            variant="outlined"
-            onClick={() => setDisplayCount(prev => prev + 3)}
-            sx={{
-              mt: 2,
-              borderColor: 'rgba(2,226,255,0.5)',
-              color: '#02E2FF',
-              '&:hover': {
-                borderColor: '#02E2FF',
-                backgroundColor: 'rgba(2,226,255,0.1)'
-              }
-            }}
-          >
-            Show More
-          </Button>
-        )}
-      </Box>
+        {
+          matchingProfiles.length > displayCount && (
+            <Button
+              variant="outlined"
+              onClick={() => setDisplayCount(prev => prev + 3)}
+              sx={{
+                mt: 2,
+                borderColor: 'rgba(2,226,255,0.5)',
+                color: '#02E2FF',
+                '&:hover': {
+                  borderColor: '#02E2FF',
+                  backgroundColor: 'rgba(2,226,255,0.1)'
+                }
+              }}
+            >
+              Show More
+            </Button>
+          )
+        }
+      </Box >
     );
   };
 
