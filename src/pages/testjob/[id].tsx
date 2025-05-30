@@ -26,6 +26,9 @@ import CallEndIcon from '@mui/icons-material/CallEnd';
 import { v4 as uuidv4 } from 'uuid';
 import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
+import { RootState } from '@/store/store';
+import { useSelector } from 'react-redux';
+import dynamic from 'next/dynamic';
 
 // Remove hardcoded questions
 const NEXTJS_QUESTIONS: string[] = [];
@@ -308,7 +311,7 @@ interface JobQuestionsResponse {
   totalQuestions: number;
 }
 
-export default function Test() {
+const Test = () => {
   const theme = useTheme();
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -333,6 +336,8 @@ export default function Test() {
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [showFirstViolationModal, setShowFirstViolationModal] = useState(false);
   const violationHandledRef = useRef(false);
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+
 
   // Add streaming state
   const [streamingToken, setStreamingToken] = useState<string | null>(null);
@@ -341,6 +346,20 @@ export default function Test() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
+    // Interval used to finalize each chunk
+  const chunkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // MediaRecorder references
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+
+  // Transcription states
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  useEffect(() => {
+    if(!isAuthenticated && id){
+      router.push(`/signin?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`)
+    }
+  }, [isAuthenticated, id])
+
 
   // Add useEffect for authentication and profile check
   useEffect(() => {
@@ -450,14 +469,7 @@ export default function Test() {
     }
   }, [isProfileComplete, id]);
 
-  // Interval used to finalize each chunk
-  const chunkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // MediaRecorder references
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-
-  // Transcription states
-  const [isTranscribing, setIsTranscribing] = useState(false);
 
   // Timer only runs when test has started
   useEffect(() => {
@@ -892,6 +904,10 @@ export default function Test() {
     };
   }, [hasStartedTest]);
 
+  if(!isAuthenticated){
+    return null
+  }
+
   return (
     <Box
       sx={{
@@ -1269,3 +1285,11 @@ export default function Test() {
     </Box>
   );
 }
+
+const DynamicContent = dynamic(() => Promise.resolve(Test), { ssr: false })
+
+const TestJob: React.FC = () => {
+  return <DynamicContent />
+}
+
+export default TestJob
