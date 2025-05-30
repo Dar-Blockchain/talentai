@@ -251,7 +251,14 @@ export default function Preferences() {
     setHedQcm(prev => ({ ...prev, [qid]: ans }));
 
   // Step 3: proficiency
-  const [proficiency, setProficiency] = useState<Record<string, number>>({});
+  const [proficiency, setProficiency] = useState<Record<string, number>>(() => {
+    // Initialize with default value of 1 for all skills
+    const defaultProficiency: Record<string, number> = {};
+    ALL_SKILLS.forEach(skill => {
+      defaultProficiency[skill.label] = 1;
+    });
+    return defaultProficiency;
+  });
   const setProf = (skill: string, value: number) =>
     setProficiency(prev => ({ ...prev, [skill]: value }));
 

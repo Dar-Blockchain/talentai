@@ -32,6 +32,25 @@ exports.generateQuestions = async (req, res) => {
       )
       .join(", ");
 
+      const profile = await Profile.findOne({ userId: req.user._id });
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    const now = new Date();
+    const daysSinceLastUpdate =
+      (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
+    if (daysSinceLastUpdate >= 30) {
+      profile.quota = 0;
+      profile.quotaUpdatedAt = now;
+    }
+
+    if (profile.quota >= 5) {
+      return res
+        .status(403)
+        .json({ error: "You have reached your test limit (5)" });
+    }
+
     // 3. Prompt: ask for exactly 10 questions as a JSON array
     const prompt = `
 You are an experienced technical interviewer.
@@ -85,6 +104,9 @@ Based on the candidate's skills (${skillsList}), generate **exactly 10** situati
         .map((q) => q.trim())
         .filter(Boolean);
     }
+
+    profile.quota += 1;
+    await profile.save();
 
     // 7. Return the array
     res.json({ questions });
@@ -335,6 +357,25 @@ exports.generateSoftSkillQuestions = async (req, res) => {
       });
     }
 
+    const profile = await Profile.findOne({ userId: req.user._id });
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    const now = new Date();
+    const daysSinceLastUpdate =
+      (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
+    if (daysSinceLastUpdate >= 30) {
+      profile.quota = 0;
+      profile.quotaUpdatedAt = now;
+    }
+
+    if (profile.quota >= 5) {
+      return res
+        .status(403)
+        .json({ error: "You have reached your test limit (5)" });
+    }
+
     // 2. Build the skill description with sub-skill if provided
     let skillDescription = skill;
     if (subSkills && typeof subSkills === "string" && subSkills.trim() !== "") {
@@ -408,6 +449,9 @@ The questions should:
         .map((q) => q.trim())
         .filter(Boolean);
     }
+
+    profile.quota += 1;
+    await profile.save();
 
     // 7. Return the array with metadata
     res.json({
