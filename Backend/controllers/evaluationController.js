@@ -32,6 +32,25 @@ exports.generateQuestions = async (req, res) => {
       )
       .join(", ");
 
+      const profile = await Profile.findOne({ userId: req.user._id });
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    const now = new Date();
+    const daysSinceLastUpdate =
+      (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
+    if (daysSinceLastUpdate >= 30) {
+      profile.quota = 0;
+      profile.quotaUpdatedAt = now;
+    }
+
+    if (profile.quota >= 5) {
+      return res
+        .status(403)
+        .json({ error: "You have reached your test limit (5)" });
+    }
+
     // 3. Prompt: ask for exactly 10 questions as a JSON array
     const prompt = `
 You are an experienced technical interviewer.
@@ -85,6 +104,9 @@ Based on the candidate's skills (${skillsList}), generate **exactly 10** situati
         .map((q) => q.trim())
         .filter(Boolean);
     }
+
+    profile.quota += 1;
+    await profile.save();
 
     // 7. Return the array
     res.json({ questions });
@@ -335,6 +357,25 @@ exports.generateSoftSkillQuestions = async (req, res) => {
       });
     }
 
+    const profile = await Profile.findOne({ userId: req.user._id });
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    const now = new Date();
+    const daysSinceLastUpdate =
+      (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
+    if (daysSinceLastUpdate >= 30) {
+      profile.quota = 0;
+      profile.quotaUpdatedAt = now;
+    }
+
+    if (profile.quota >= 5) {
+      return res
+        .status(403)
+        .json({ error: "You have reached your test limit (5)" });
+    }
+
     // 2. Build the skill description with sub-skill if provided
     let skillDescription = skill;
     if (subSkills && typeof subSkills === "string" && subSkills.trim() !== "") {
@@ -348,9 +389,8 @@ Generate **exactly 10** behavioral interview questions to evaluate "${skillDescr
 The questions should:
 - Follow the STAR (Situation, Task, Action, Result) format
 - Focus on real-life scenarios
-- Help assess the candidate's ${skill} abilities${
-      subSkills ? " particularly in " + subSkills : ""
-    }
+- Help assess the candidate's ${skill} abilities${subSkills ? " particularly in " + subSkills : ""
+      }
 - Include questions about handling challenges and success stories
 - Be specific and actionable
 
@@ -409,6 +449,9 @@ The questions should:
         .map((q) => q.trim())
         .filter(Boolean);
     }
+
+    profile.quota += 1;
+    await profile.save();
 
     // 7. Return the array with metadata
     res.json({
@@ -501,13 +544,12 @@ As an expert ${type} interviewer, analyze the following assessment:
 Assessment Type: ${type}
 Skills being assessed: 
 ${skill
-  .map(
-    (s) =>
-      `- ${s.name} (Current Proficiency Level: ${s.proficiencyLevel}/5${
-        s.subcategory ? `, Subcategory: ${s.subcategory}` : ""
-      })`
-  )
-  .join("\n")}
+        .map(
+          (s) =>
+            `- ${s.name} (Current Proficiency Level: ${s.proficiencyLevel}/5${s.subcategory ? `, Subcategory: ${s.subcategory}` : ""
+            })`
+        )
+        .join("\n")}
 
 Questions and Answers:
 ${questions.map((qa) => `Q: ${qa.question}\nA: ${qa.answer}`).join("\n\n")}
@@ -641,8 +683,8 @@ Provide detailed, actionable feedback in JSON format only.`,
               demo > current
                 ? "increased"
                 : demo < current
-                ? "decreased"
-                : "unchanged",
+                  ? "decreased"
+                  : "unchanged",
             // Pass subcategory if returned by GPT or fallback to known from front
             subcategory:
               skill.subcategory ||
@@ -787,65 +829,75 @@ Provide detailed, actionable feedback in JSON format only.`,
 
     // Après avoir reçu et parsé la réponse brute de GPT en "analysis"
     if (type === "technicalSkill") {
-      analysis = {
-        overallScore: Number(analysis.overallScore) || 0,
-        skillAnalysis: analysis.skillAnalysis.map((skill) => {
-          const current = Number(skill.currentProficiency) || 1;
-          // On prend la valeur exacte renvoyée par GPT pour demonstratedProficiency
-          const exactDemo = Number(skill.demonstratedProficiency) || current;
-
-          return {
-            skillName: skill.skillName || skill.skill || "",
-            currentProficiency: current,
-            demonstratedProficiency: exactDemo,
-            currentExperienceLevel: getExperienceLevel(current),
-            demonstratedExperienceLevel: getExperienceLevel(exactDemo),
-            strengths: Array.isArray(skill.strengths) ? skill.strengths : [],
-            weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
-            confidenceScore: Number(skill.confidenceScore) || 0,
-            improvement:
-              exactDemo > current
-                ? "increased"
-                : exactDemo < current
-                ? "decreased"
-                : "unchanged",
-            subcategory:
-              skill.subcategory ||
-              skillSubcategories[skill.skillName || skill.skill] ||
-              "",
-          };
-        }),
-        generalAssessment: analysis.generalAssessment || "",
-        recommendations: Array.isArray(analysis.recommendations)
-          ? analysis.recommendations
-          : [],
-        technicalLevel: analysis.technicalLevel || "intermediate",
-        nextSteps: Array.isArray(analysis.nextSteps) ? analysis.nextSteps : [],
-        experienceLevels: [
-          "Entry Level",
-          "Junior",
-          "Mid Level",
-          "Senior",
-          "Expert",
-        ],
-      };
-
-      // Sauvegarde dans le profil utilisateur (comme pour 'technical')
       const profileOverallScore = await profileService.getProfileByUserId(
         user._id
       );
-      await profileService.createOrUpdateProfile(user._id, {
-        overallScore:
-          profileOverallScore.overallScore === 0
-            ? analysis.overallScore
-            : (profileOverallScore.overallScore + analysis.overallScore) / 2,
-        skills: analysis.skillAnalysis.map((skill) => ({
-          name: skill.skillName,
-          proficiencyLevel: skill.demonstratedProficiency,
-          experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
-          ScoreTest: skill.confidenceScore,
-        })),
-      });
+      function proficiencyFromConfidenceScore(score) {
+        if (score >= 0 && score < 10) return 1;
+        if (score >= 10 && score < 30) return 2;
+        if (score >= 30 && score < 50) return 3;
+        if (score >= 50 && score < 70) return 4;
+        if (score >= 70 && score <= 100) return 5;
+        return 1; // défaut si hors bornes
+      }
+
+      const experienceLevels = [
+        "Entry Level",
+        "Junior",
+        "Mid Level",
+        "Senior",
+        "Expert",
+      ];
+
+      // Dans ton map skillAnalysis, remplace cette partie :
+
+      skills: analysis.skillAnalysis.map((skill) => {
+        const confScore = Number(skill.confidenceScore) || 0;
+        const profLevel = proficiencyFromConfidenceScore(confScore);
+        return {
+          skillName: skill.skillName || skill.skill || "",
+          currentProficiency: Number(skill.currentProficiency) || 1,
+          demonstratedProficiency: Number(skill.demonstratedProficiency) || 1,
+          currentExperienceLevel: getExperienceLevel(Number(skill.currentProficiency) || 1),
+          demonstratedExperienceLevel: getExperienceLevel(Number(skill.demonstratedProficiency) || 1),
+          strengths: Array.isArray(skill.strengths) ? skill.strengths : [],
+          weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
+          confidenceScore: confScore,
+          improvement:
+            (Number(skill.demonstratedProficiency) || 1) > (Number(skill.currentProficiency) || 1)
+              ? "increased"
+              : (Number(skill.demonstratedProficiency) || 1) < (Number(skill.currentProficiency) || 1)
+                ? "decreased"
+                : "unchanged",
+          subcategory:
+            skill.subcategory ||
+            skillSubcategories[skill.skillName || skill.skill] ||
+            "",
+          // Ajout des nouveaux champs calculés à partir du confidenceScore
+          proficiencyLevel: profLevel,
+          experienceLevel: experienceLevels[profLevel - 1],
+        };
+      }),
+
+        // Et pour la sauvegarde dans le profil :
+
+        await profileService.createOrUpdateProfile(user._id, {
+          overallScore:
+            profileOverallScore.overallScore === 0
+              ? analysis.overallScore
+              : (profileOverallScore.overallScore + analysis.overallScore) / 2,
+          skills: analysis.skillAnalysis.map((skill) => {
+            const confScore = Number(skill.confidenceScore) || 0;
+            const profLevel = proficiencyFromConfidenceScore(confScore);
+            return {
+              name: skill.skillName || skill.skill || "",
+              proficiencyLevel: profLevel,
+              experienceLevel: experienceLevels[profLevel - 1],
+              ScoreTest: confScore,
+            };
+          }),
+        });
+
     }
 
     // 7. Return the response
@@ -903,13 +955,13 @@ As an expert technical interviewer, analyze the following job assessment:
 
 Required Skills for the Position:
 ${skillsData.requiredSkills
-  .map((skill) => `- ${skill.name} (Required Level: ${skill.level}/5)`)
-  .join("\n")}
+        .map((skill) => `- ${skill.name} (Required Level: ${skill.level}/5)`)
+        .join("\n")}
 
 Questions and Answers:
 ${questions
-  .map((qa) => `Q: ${qa.question}\nA: ${qa.answer || "No answer provided"}`)
-  .join("\n\n")}
+        .map((qa) => `Q: ${qa.question}\nA: ${qa.answer || "No answer provided"}`)
+        .join("\n\n")}
 
 Based on this assessment, provide a detailed analysis in the following JSON format ONLY (no additional text):
 {
@@ -1100,10 +1152,10 @@ Based on this assessment, provide a detailed analysis in the following JSON form
             ...skillAnalysis,
             requiredSkill: requiredSkill
               ? {
-                  name: requiredSkill.name,
-                  level: requiredSkill.level,
-                  experienceLevel: getExperienceLevel(requiredSkill.level),
-                }
+                name: requiredSkill.name,
+                level: requiredSkill.level,
+                experienceLevel: getExperienceLevel(requiredSkill.level),
+              }
               : null,
             demonstratedExperienceLevel: getExperienceLevel(
               skillAnalysis.demonstratedLevel
@@ -1182,10 +1234,10 @@ Assessment Type: ${type}
 
 Skills being assessed: 
 ${skill
-  .map(
-    (s) => `- ${s.name} (Current Proficiency Level: ${s.proficiencyLevel}/5)`
-  )
-  .join("\n")}
+        .map(
+          (s) => `- ${s.name} (Current Proficiency Level: ${s.proficiencyLevel}/5)`
+        )
+        .join("\n")}
 
 Questions and Answers:
 ${questions.map((qa) => `Q: ${qa.question}\nA: ${qa.answer}`).join("\n\n")}
@@ -1329,8 +1381,8 @@ Return a STRICT JSON response in **this format ONLY** (no markdown, no explanati
               demo > current
                 ? "increased"
                 : demo < current
-                ? "decreased"
-                : "unchanged",
+                  ? "decreased"
+                  : "unchanged",
           };
         }),
         generalAssessment: analysis.generalAssessment || "",
@@ -1470,65 +1522,72 @@ Return a STRICT JSON response in **this format ONLY** (no markdown, no explanati
 
     // Après avoir reçu et parsé la réponse brute de GPT en "analysis"
     if (type === "technicalSkill") {
-      analysis = {
-        overallScore: Number(analysis.overallScore) || 0,
-        skillAnalysis: analysis.skillAnalysis.map((skill) => {
-          const current = Number(skill.currentProficiency) || 1;
-          // On prend la valeur exacte renvoyée par GPT pour demonstratedProficiency
-          const exactDemo = Number(skill.demonstratedProficiency) || current;
+      function proficiencyFromConfidenceScore(score) {
+        if (score >= 0 && score < 10) return 1;
+        if (score >= 10 && score < 30) return 2;
+        if (score >= 30 && score < 50) return 3;
+        if (score >= 50 && score < 70) return 4;
+        if (score >= 70 && score <= 100) return 5;
+        return 1; // défaut si hors bornes
+      }
 
-          return {
-            skillName: skill.skillName || skill.skill || "",
-            currentProficiency: current,
-            demonstratedProficiency: exactDemo,
-            currentExperienceLevel: getExperienceLevel(current),
-            demonstratedExperienceLevel: getExperienceLevel(exactDemo),
-            strengths: Array.isArray(skill.strengths) ? skill.strengths : [],
-            weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
-            confidenceScore: Number(skill.confidenceScore) || 0,
-            improvement:
-              exactDemo > current
-                ? "increased"
-                : exactDemo < current
+      const experienceLevels = [
+        "Entry Level",
+        "Junior",
+        "Mid Level",
+        "Senior",
+        "Expert",
+      ];
+
+      // Dans ton map skillAnalysis, remplace cette partie :
+
+      skills: analysis.skillAnalysis.map((skill) => {
+        const confScore = Number(skill.confidenceScore) || 0;
+        const profLevel = proficiencyFromConfidenceScore(confScore);
+        return {
+          skillName: skill.skillName || skill.skill || "",
+          currentProficiency: Number(skill.currentProficiency) || 1,
+          demonstratedProficiency: Number(skill.demonstratedProficiency) || 1,
+          currentExperienceLevel: getExperienceLevel(Number(skill.currentProficiency) || 1),
+          demonstratedExperienceLevel: getExperienceLevel(Number(skill.demonstratedProficiency) || 1),
+          strengths: Array.isArray(skill.strengths) ? skill.strengths : [],
+          weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
+          confidenceScore: confScore,
+          improvement:
+            (Number(skill.demonstratedProficiency) || 1) > (Number(skill.currentProficiency) || 1)
+              ? "increased"
+              : (Number(skill.demonstratedProficiency) || 1) < (Number(skill.currentProficiency) || 1)
                 ? "decreased"
                 : "unchanged",
-            subcategory:
-              skill.subcategory ||
-              skillSubcategories[skill.skillName || skill.skill] ||
-              "",
-          };
-        }),
-        generalAssessment: analysis.generalAssessment || "",
-        recommendations: Array.isArray(analysis.recommendations)
-          ? analysis.recommendations
-          : [],
-        technicalLevel: analysis.technicalLevel || "intermediate",
-        nextSteps: Array.isArray(analysis.nextSteps) ? analysis.nextSteps : [],
-        experienceLevels: [
-          "Entry Level",
-          "Junior",
-          "Mid Level",
-          "Senior",
-          "Expert",
-        ],
-      };
+          subcategory:
+            skill.subcategory ||
+            skillSubcategories[skill.skillName || skill.skill] ||
+            "",
+          // Ajout des nouveaux champs calculés à partir du confidenceScore
+          proficiencyLevel: profLevel,
+          experienceLevel: experienceLevels[profLevel - 1],
+        };
+      }),
 
-      // Sauvegarde dans le profil utilisateur (comme pour 'technical')
-      const profileOverallScore = await profileService.getProfileByUserId(
-        user._id
-      );
-      await profileService.createOrUpdateProfile(user._id, {
-        overallScore:
-          profileOverallScore.overallScore === 0
-            ? analysis.overallScore
-            : (profileOverallScore.overallScore + analysis.overallScore) / 2,
-        skills: analysis.skillAnalysis.map((skill) => ({
-          name: skill.skillName,
-          proficiencyLevel: skill.demonstratedProficiency,
-          experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
-          ScoreTest: skill.confidenceScore,
-        })),
-      });
+        // Et pour la sauvegarde dans le profil :
+
+        await profileService.createOrUpdateProfile(user._id, {
+          overallScore:
+            profileOverallScore.overallScore === 0
+              ? analysis.overallScore
+              : (profileOverallScore.overallScore + analysis.overallScore) / 2,
+          skills: analysis.skillAnalysis.map((skill) => {
+            const confScore = Number(skill.confidenceScore) || 0;
+            const profLevel = proficiencyFromConfidenceScore(confScore);
+            return {
+              name: skill.skillName || skill.skill || "",
+              proficiencyLevel: profLevel,
+              experienceLevel: experienceLevels[profLevel - 1],
+              ScoreTest: confScore,
+            };
+          }),
+        });
+
     }
 
 
