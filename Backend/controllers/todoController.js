@@ -20,24 +20,15 @@ exports.generateTodoListForProfile = async (req, res) => {
       type: "Candidate",
     });
 
-    if (!profile.skills || profile.skills.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "No skills found in the user profile." });
-    }
-
     let {todo, newTodos} = await generateNewTodosForProfile(profile);
 
     let skillTodos = newTodos;
     if (!todo) {
       // Upsert ToDo
-      const defaultProfileTodos = [
-        { type: "Profile", title: "Upload CV", isCompleted: false },
-        { type: "Skill", title: "Add Skill", isCompleted: false },
-      ];
+      
       todo = await TodoList.create({
         profile: profile._id,
-        todos: [...defaultProfileTodos, ...newTodos],
+        todos: [...newTodos],
       });
       profile.todoList = todo._id;
       await profile.save();

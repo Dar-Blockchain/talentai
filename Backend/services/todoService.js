@@ -1,21 +1,24 @@
 const { Together } = require("together-ai");
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
-const {TodoList} = require("../models/TodoModel");
+const TodoList = require("../models/todoListModel");
 
 
 /**
- * Generate skill-based todos for a todoList of a specific profile using AI recommendations.
- * Returns: 
- * todoList 
+ * Generates a new list of skill-based todos for a given profile using AI.
+ * 
+ * Retrieves the existing todoList of the profile (if any). 
+ * Returns:
+ * - The current todoList of the corresponding profile (`todoList`) or `null` if not found.
+ * - `newTodos`: a list of skill-based todos that should update or populate `todoList.todos`.
  *
  * @param {Object} profile - The profile object.
- *
+ * 
  * @returns {Promise<{
- *   todo: Object|null,
- *   todos: Array<{
+ *   todoList: TodoList|null,
+ *   newTodos: Array<{
  *     title: string,
  *     type: "Skill",
- *     tasks?: Array<{
+ *     tasks: Array<{
  *       title: string,
  *       type: "Course" | "Certification" | "Project" | "Article",
  *       description: string,
@@ -128,7 +131,7 @@ Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
     }
   }
 
-  return {todoList , todos};
+  return {todoList , newTodos};
 };
 
 module.exports = { generateNewTodosForProfile };
