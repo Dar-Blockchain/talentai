@@ -547,14 +547,13 @@ export default function DashboardCandidate() {
         Cookies.remove(cookieName, { path: '/' });
       });
 
+      // Redirect to signin page
+      router.push('/signin');
       // Clear Redux state
       dispatch(clearProfile());
-
       // Sign out from NextAuth
       await signOut({ redirect: false });
 
-      // Redirect to signin page
-      router.push('/signin');
     } catch (error) {
       console.error('Logout failed:', error);
     }
