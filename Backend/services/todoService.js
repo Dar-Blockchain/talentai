@@ -1,10 +1,12 @@
 const { Together } = require("together-ai");
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
+const {TodoList} = require("../models/TodoModel");
 
 
 /**
  * Generate skill-based todos for a todoList of a specific profile using AI recommendations.
- * Returns a null 
+ * Returns: 
+ * todoList 
  *
  * @param {Object} profile - The profile object.
  *
