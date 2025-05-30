@@ -32,7 +32,7 @@ exports.generateQuestions = async (req, res) => {
       )
       .join(", ");
 
-      const profile = await Profile.findOne({ userId: req.user._id });
+    const profile = await Profile.findOne({ userId: req.user._id });
     if (!profile) {
       return res.status(404).json({ error: "Profile not found" });
     }
@@ -154,33 +154,49 @@ exports.generateTechniqueQuestions = async (req, res) => {
 
       const skillDescription = `${skill} (Experience: ${experienceLevel} years, Proficiency: ${proficiencyLevel}/5)`;
       prompt = `
-You are an experienced technical interviewer specializing in ${skill}.
-Generate **exactly 10** technical interview questions for someone with ${experienceLevel} years of experience and proficiency level ${proficiencyLevel}/5.
-Questions should be a mix of theoretical and practical ones.
-
-Return ONLY a JSON array of strings, like:
-[
-  "Question 1?",
-  "Question 2?"
-]
-`.trim();
+      You are an experienced technical interviewer specialized in ${skill}.
+      Generate **exactly 10** situational technical interview questions for someone with ${experienceLevel} years of experience and proficiency level ${proficiencyLevel}/5.
+      
+      Each question should fall into one of these categories:
+      - Real-world scenario requiring decision-making
+      - Problem-solving based on best practices
+      - Reflection on past experience or common pitfalls
+      - How-to questions based on practical situations
+      
+      Avoid pure theory. Focus on questions that assess:
+      - Applied knowledge
+      - Critical thinking
+      - Communication of reasoning
+      - Awareness of trade-offs
+      
+      Return ONLY a JSON array of strings, like:
+      [
+        "Question 1?",
+        "Question 2?"
+      ]
+      `.trim();
     } else {
       // Only skill provided → Mixed difficulty
       prompt = `
-You are an expert interviewer for ${skill}.
-Generate **exactly 10** interview questions covering levels 1 to 5:
-- 2 easy questions (level 1)
-- 2 beginner/intermediate (level 2)
-- 2 intermediate+ (level 3)
-- 2 advanced (level 4)
-- 2 expert-level (level 5)
-
-Return ONLY a JSON array of strings, like:
-[
-  "Question 1?",
-  "Question 2?"
-]
-`.trim();
+      You are a professional interviewer for the skill ${skill}.
+      Generate **exactly 10** interview questions across difficulty levels (1 to 5), in the following format:
+      - 2 questions at level 1 (simple real-world context)
+      - 2 at level 2 (basic problem-solving or reflection)
+      - 2 at level 3 (intermediate scenario or best practice dilemma)
+      - 2 at level 4 (complex problem-solving with trade-offs)
+      - 2 at level 5 (expert-level decision-making in high-impact situations)
+      
+      Each question must be:
+      - Situational or scenario-based
+      - Focused on applied knowledge, reasoning, or decision-making
+      - Inspired by real use cases, not theoretical quizzes
+      
+      Return ONLY a JSON array of strings, like:
+      [
+        "Question 1?",
+        "Question 2?"
+      ]
+      `.trim();
     }
 
     // 5️⃣ Call TogetherAI API
@@ -389,8 +405,9 @@ Generate **exactly 10** behavioral interview questions to evaluate "${skillDescr
 The questions should:
 - Follow the STAR (Situation, Task, Action, Result) format
 - Focus on real-life scenarios
-- Help assess the candidate's ${skill} abilities${subSkills ? " particularly in " + subSkills : ""
-      }
+- Help assess the candidate's ${skill} abilities${
+      subSkills ? " particularly in " + subSkills : ""
+    }
 - Include questions about handling challenges and success stories
 - Be specific and actionable
 
@@ -544,12 +561,13 @@ As an expert ${type} interviewer, analyze the following assessment:
 Assessment Type: ${type}
 Skills being assessed: 
 ${skill
-        .map(
-          (s) =>
-            `- ${s.name} (Current Proficiency Level: ${s.proficiencyLevel}/5${s.subcategory ? `, Subcategory: ${s.subcategory}` : ""
-            })`
-        )
-        .join("\n")}
+  .map(
+    (s) =>
+      `- ${s.name} (Current Proficiency Level: ${s.proficiencyLevel}/5${
+        s.subcategory ? `, Subcategory: ${s.subcategory}` : ""
+      })`
+  )
+  .join("\n")}
 
 Questions and Answers:
 ${questions.map((qa) => `Q: ${qa.question}\nA: ${qa.answer}`).join("\n\n")}
@@ -683,8 +701,8 @@ Provide detailed, actionable feedback in JSON format only.`,
               demo > current
                 ? "increased"
                 : demo < current
-                  ? "decreased"
-                  : "unchanged",
+                ? "decreased"
+                : "unchanged",
             // Pass subcategory if returned by GPT or fallback to known from front
             subcategory:
               skill.subcategory ||
@@ -858,17 +876,23 @@ Provide detailed, actionable feedback in JSON format only.`,
           skillName: skill.skillName || skill.skill || "",
           currentProficiency: Number(skill.currentProficiency) || 1,
           demonstratedProficiency: Number(skill.demonstratedProficiency) || 1,
-          currentExperienceLevel: getExperienceLevel(Number(skill.currentProficiency) || 1),
-          demonstratedExperienceLevel: getExperienceLevel(Number(skill.demonstratedProficiency) || 1),
+          currentExperienceLevel: getExperienceLevel(
+            Number(skill.currentProficiency) || 1
+          ),
+          demonstratedExperienceLevel: getExperienceLevel(
+            Number(skill.demonstratedProficiency) || 1
+          ),
           strengths: Array.isArray(skill.strengths) ? skill.strengths : [],
           weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
           confidenceScore: confScore,
           improvement:
-            (Number(skill.demonstratedProficiency) || 1) > (Number(skill.currentProficiency) || 1)
+            (Number(skill.demonstratedProficiency) || 1) >
+            (Number(skill.currentProficiency) || 1)
               ? "increased"
-              : (Number(skill.demonstratedProficiency) || 1) < (Number(skill.currentProficiency) || 1)
-                ? "decreased"
-                : "unchanged",
+              : (Number(skill.demonstratedProficiency) || 1) <
+                (Number(skill.currentProficiency) || 1)
+              ? "decreased"
+              : "unchanged",
           subcategory:
             skill.subcategory ||
             skillSubcategories[skill.skillName || skill.skill] ||
@@ -878,7 +902,6 @@ Provide detailed, actionable feedback in JSON format only.`,
           experienceLevel: experienceLevels[profLevel - 1],
         };
       }),
-
         // Et pour la sauvegarde dans le profil :
 
         await profileService.createOrUpdateProfile(user._id, {
@@ -897,7 +920,6 @@ Provide detailed, actionable feedback in JSON format only.`,
             };
           }),
         });
-
     }
 
     // 7. Return the response
@@ -955,13 +977,13 @@ As an expert technical interviewer, analyze the following job assessment:
 
 Required Skills for the Position:
 ${skillsData.requiredSkills
-        .map((skill) => `- ${skill.name} (Required Level: ${skill.level}/5)`)
-        .join("\n")}
+  .map((skill) => `- ${skill.name} (Required Level: ${skill.level}/5)`)
+  .join("\n")}
 
 Questions and Answers:
 ${questions
-        .map((qa) => `Q: ${qa.question}\nA: ${qa.answer || "No answer provided"}`)
-        .join("\n\n")}
+  .map((qa) => `Q: ${qa.question}\nA: ${qa.answer || "No answer provided"}`)
+  .join("\n\n")}
 
 Based on this assessment, provide a detailed analysis in the following JSON format ONLY (no additional text):
 {
@@ -1152,10 +1174,10 @@ Based on this assessment, provide a detailed analysis in the following JSON form
             ...skillAnalysis,
             requiredSkill: requiredSkill
               ? {
-                name: requiredSkill.name,
-                level: requiredSkill.level,
-                experienceLevel: getExperienceLevel(requiredSkill.level),
-              }
+                  name: requiredSkill.name,
+                  level: requiredSkill.level,
+                  experienceLevel: getExperienceLevel(requiredSkill.level),
+                }
               : null,
             demonstratedExperienceLevel: getExperienceLevel(
               skillAnalysis.demonstratedLevel
@@ -1234,10 +1256,10 @@ Assessment Type: ${type}
 
 Skills being assessed: 
 ${skill
-        .map(
-          (s) => `- ${s.name} (Current Proficiency Level: ${s.proficiencyLevel}/5)`
-        )
-        .join("\n")}
+  .map(
+    (s) => `- ${s.name} (Current Proficiency Level: ${s.proficiencyLevel}/5)`
+  )
+  .join("\n")}
 
 Questions and Answers:
 ${questions.map((qa) => `Q: ${qa.question}\nA: ${qa.answer}`).join("\n\n")}
@@ -1381,8 +1403,8 @@ Return a STRICT JSON response in **this format ONLY** (no markdown, no explanati
               demo > current
                 ? "increased"
                 : demo < current
-                  ? "decreased"
-                  : "unchanged",
+                ? "decreased"
+                : "unchanged",
           };
         }),
         generalAssessment: analysis.generalAssessment || "",
@@ -1548,17 +1570,23 @@ Return a STRICT JSON response in **this format ONLY** (no markdown, no explanati
           skillName: skill.skillName || skill.skill || "",
           currentProficiency: Number(skill.currentProficiency) || 1,
           demonstratedProficiency: Number(skill.demonstratedProficiency) || 1,
-          currentExperienceLevel: getExperienceLevel(Number(skill.currentProficiency) || 1),
-          demonstratedExperienceLevel: getExperienceLevel(Number(skill.demonstratedProficiency) || 1),
+          currentExperienceLevel: getExperienceLevel(
+            Number(skill.currentProficiency) || 1
+          ),
+          demonstratedExperienceLevel: getExperienceLevel(
+            Number(skill.demonstratedProficiency) || 1
+          ),
           strengths: Array.isArray(skill.strengths) ? skill.strengths : [],
           weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
           confidenceScore: confScore,
           improvement:
-            (Number(skill.demonstratedProficiency) || 1) > (Number(skill.currentProficiency) || 1)
+            (Number(skill.demonstratedProficiency) || 1) >
+            (Number(skill.currentProficiency) || 1)
               ? "increased"
-              : (Number(skill.demonstratedProficiency) || 1) < (Number(skill.currentProficiency) || 1)
-                ? "decreased"
-                : "unchanged",
+              : (Number(skill.demonstratedProficiency) || 1) <
+                (Number(skill.currentProficiency) || 1)
+              ? "decreased"
+              : "unchanged",
           subcategory:
             skill.subcategory ||
             skillSubcategories[skill.skillName || skill.skill] ||
@@ -1568,7 +1596,6 @@ Return a STRICT JSON response in **this format ONLY** (no markdown, no explanati
           experienceLevel: experienceLevels[profLevel - 1],
         };
       }),
-
         // Et pour la sauvegarde dans le profil :
 
         await profileService.createOrUpdateProfile(user._id, {
@@ -1587,9 +1614,7 @@ Return a STRICT JSON response in **this format ONLY** (no markdown, no explanati
             };
           }),
         });
-
     }
-
 
     res.status(200).json({
       success: true,
