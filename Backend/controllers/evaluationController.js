@@ -152,7 +152,6 @@ exports.generateTechniqueQuestions = async (req, res) => {
           .json({ error: "Proficiency level must be between 1 and 5" });
       }
 
-      const skillDescription = `${skill} (Experience: ${experienceLevel} years, Proficiency: ${proficiencyLevel}/5)`;
       prompt = `
       You are an experienced technical interviewer specialized in ${skill}.
       Generate **exactly 10** situational technical interview questions for someone with ${experienceLevel} years of experience and proficiency level ${proficiencyLevel}/5.
