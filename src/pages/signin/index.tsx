@@ -219,48 +219,13 @@ export default function SignIn() {
               position: "relative",
             }}
           >
-            {/* Glow effect behind the text */}
-            <Box
-              sx={{
-                position: "absolute",
-                width: "120px",
-                height: "40px",
-                background: "rgba(2, 226, 255, 0.15)",
-                filter: "blur(20px)",
-                borderRadius: "20px",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-              }}
-            />
-
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                fontSize: { xs: "1.75rem", sm: "2rem" },
-                letterSpacing: "0.02em",
-                background:
-                  "linear-gradient(135deg, rgba(41, 210, 145, 0.83), #00FF9D)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                position: "relative",
-                "&::before": {
-                  content: '"TalentAI"',
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  background:
-                    "linear-gradient(135deg, rgba(41, 210, 145, 0.83), #00FF9D)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  filter: "blur(4px)",
-                  zIndex: -1,
-                },
-              }}
-            >
-              TalentAI
-            </Typography>
+          <Box
+            component="img"
+            src="/logo.svg"
+            alt="TalentAI Logo"
+            sx={{ height: 32, cursor: 'pointer' }}
+            onClick={() => router.push("/")}
+          />
             <Typography
               variant="caption"
               sx={{
