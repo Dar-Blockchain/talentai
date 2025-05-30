@@ -14,7 +14,6 @@ import {
   Button,
   Alert,
   Divider,
-  Avatar,
   InputAdornment,
   CircularProgress,
   Container,
@@ -25,7 +24,7 @@ import {
   Google as GoogleIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
-import { registerUser, verifyOTP } from "../../store/features/authSlice";
+import { registerUser, verifyOTP } from "../../store/slices/authSlice";
 import type { RootState, AppDispatch } from "../../store/store";
 import Cookies from "js-cookie";
 
@@ -108,27 +107,27 @@ export default function SignIn() {
         setTimeout(() => {
           // Check if there's a returnUrl in the query parameters
           const returnUrl = router.query.returnUrl as string;
-          if (returnUrl) {
-            // First check if user has a profile
-            fetch(
-              `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`,
-              {
-                headers: {
-                  Authorization: `Bearer ${response.token}`,
-                },
+          // First check if user has a profile
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`,
+            {
+              headers: {
+                Authorization: `Bearer ${response.token}`,
+              },
+            }
+          )
+            .then((profileResponse) => {
+              if (!profileResponse.ok) {
+                throw new Error("Profile check failed");
               }
-            )
-              .then((profileResponse) => {
-                if (!profileResponse.ok) {
-                  throw new Error("Profile check failed");
-                }
-                return profileResponse.json();
-              })
-              .then((profileData) => {
-                const hasProfile =
-                  profileData &&
-                  profileData.type &&
-                  Object.keys(profileData).length > 0;
+              return profileResponse.json();
+            })
+            .then((profileData) => {
+              const hasProfile =
+                profileData &&
+                profileData.type &&
+                Object.keys(profileData).length > 0;
+              if (returnUrl) {
                 if (!hasProfile) {
                   // If no profile, go to preferences first with returnUrl
                   router.push(
@@ -138,17 +137,27 @@ export default function SignIn() {
                   // If profile exists, go to returnUrl
                   router.push(decodeURIComponent(returnUrl));
                 }
-              })
-              .catch(() => {
-                // If profile check fails, go to preferences with returnUrl
+              } else {
+                if (!hasProfile) {
+                  // If no return URL, go to preferences
+                  router.push("/preferences");
+                } else if(profileData.type === 'Candidate') {
+                  router.push("/dashboardCandidate");
+                } else if(profileData.type === 'Company') {
+                  router.push("/dashboardCompany");
+                }
+              }
+            })
+            .catch(() => {
+              // If profile check fails, go to preferences with returnUrl
+              if (returnUrl) {
                 router.push(
                   `/preferences?returnUrl=${encodeURIComponent(returnUrl)}`
                 );
-              });
-          } else {
-            // If no return URL, go to preferences
-            router.push("/preferences");
-          }
+              } else {
+                router.push(`/preferences`);
+              }
+            });
         }, 100);
       } else {
         setError("Verification successful but no token received");
