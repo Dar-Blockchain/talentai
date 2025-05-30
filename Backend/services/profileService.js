@@ -19,6 +19,20 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
     let profile = await Profile.findOne({ userId });
 
     if (!profile) {
+      // generate todoList for the profile
+      let todos = [];
+
+      if (profileData && profileData.skills && profileData.skills.length != 0) {
+        
+
+      } else {
+        todos.push({
+          type: "Skill",
+          title: "Add Skill",
+          isCompleted: false,
+        });
+      }
+
       // Créer un nouveau profil s'il n'existe pas
       profile = await Profile.create({
         userId,

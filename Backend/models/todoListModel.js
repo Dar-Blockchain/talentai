@@ -46,10 +46,11 @@ const todoListSchema = new mongoose.Schema(
     },
     todos: {
       type: [todosSchema],
-      default: [
-        { type: "Profile", title: "Upload CV", isCompleted: false },
-        { type: "Skill", title: "Add Skill", isCompleted: false },
-      ],
+      default: function () {
+        return [
+          { type: "Profile", title: "Upload CV", isCompleted: false },
+        ];
+      },
     },
   },
   { timestamps: true }

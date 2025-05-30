@@ -26,9 +26,7 @@ exports.generateTodoListForProfile = async (req, res) => {
         .json({ error: "No skills found in the user profile." });
     }
 
-    let todo = await TodoList.findOne({ profile: profile._id });
-
-    let newTodos = await generateNewTodosForProfile(todo, profile);
+    let {todo, newTodos} = await generateNewTodosForProfile(profile);
 
     let skillTodos = newTodos;
     if (!todo) {
@@ -94,9 +92,9 @@ exports.getTodoListOfProfile = async (req, res) => {
         error: `profile of the user with userId ${user._id} not found in the db `,
       });
     }
-    let todo = await TodoList.findById(profile.todoList);
+    
     if (!todo) {
-      let newTodos = await generateNewTodosForProfile(todo, profile);
+      let {todo, newTodos} = await generateNewTodosForProfile(todo, profile);
       let skillTodos = newTodos;
       if (!todo) {
         // Upsert ToDo

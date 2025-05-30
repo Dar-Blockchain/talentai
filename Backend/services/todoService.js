@@ -1,6 +1,32 @@
 const { Together } = require("together-ai");
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
-const generateNewTodosForProfile = async (todo, profile) => {
+
+
+/**
+ * Generate skill-based todos for a todoList of a specific profile using AI recommendations.
+ * Returns a null 
+ *
+ * @param {Object} profile - The profile object.
+ *
+ * @returns {Promise<{
+ *   todo: Object|null,
+ *   todos: Array<{
+ *     title: string,
+ *     type: "Skill",
+ *     tasks?: Array<{
+ *       title: string,
+ *       type: "Course" | "Certification" | "Project" | "Article",
+ *       description: string,
+ *       url?: string,
+ *       priority: "low" | "medium" | "high",
+ *       dueDate: number
+ *     }>
+ *   }>
+ * }>}
+ */
+const generateNewTodosForProfile = async (profile) => {
+
+  let todoList = await TodoList.findOne({ profile: profile._id });
   // Format skills into prompt
   const formattedSkills = profile.skills
     .map(
@@ -10,8 +36,8 @@ const generateNewTodosForProfile = async (todo, profile) => {
     .join(", ");
 
   let existingSkillTodoList = [];
-  if (todo) {
-    todo.todos.forEach((t) => {
+  if (todoList) {
+    todoList.todos.forEach((t) => {
       if (t.type == "Skill") {
         existingSkillTodoList.push(t);
       }
@@ -100,7 +126,7 @@ Return a STRICT JSON array in this format ONLY (no markdown, no explanation):
     }
   }
 
-  return newTodos;
+  return {todoList , todos};
 };
 
 module.exports = { generateNewTodosForProfile };
