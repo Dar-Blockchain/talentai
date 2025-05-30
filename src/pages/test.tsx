@@ -937,6 +937,7 @@ export default function Test() {
         </DialogTitle>
         <DialogContent>
           <Typography variant="body1" sx={{ color: 'black', mb: 2 }}>
+            
             You have attempted to leave or capture the test page more than once. For security reasons, your test has ended and you are being redirected to the dashboard.
           </Typography>
         </DialogContent>
