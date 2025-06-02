@@ -13,19 +13,13 @@ exports.generateQuestions = async (req, res) => {
   try {
     const user = req.user;
 
-    // 1. Validate user profile & skills
-    if (!user.profile) {
-      return res.status(400).json({ error: "User profile not found." });
-    }
-    const { skills } = user.profile;
-    if (!skills || skills.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "No skills found in the user profile." });
-    }
+    const { skill, experienceLevel, proficiencyLevel } = req.body;
 
+    if (!skill) {
+      return res.status(400).json({ error: "Missing 'skill' field" });
+    }
     // 2. Build a readable skills list
-    const skillsList = skills
+    const skillsList = skill
       .map(
         (s) =>
           `${s.name} (Experience: ${s.experienceLevel}, Proficiency: ${s.proficiencyLevel}/5)`
@@ -36,7 +30,7 @@ exports.generateQuestions = async (req, res) => {
     if (!profile) {
       return res.status(404).json({ error: "Profile not found" });
     }
-    console.log("skillsList", skillsList);
+
     const now = new Date();
     const daysSinceLastUpdate =
       (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
@@ -68,7 +62,6 @@ Avoid behavioral, soft skills or theoretical recall.
 ]
 \`\`\`
 `.trim();
-
     
 
     const stream = await together.chat.completions.create({
