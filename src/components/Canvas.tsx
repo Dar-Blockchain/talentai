@@ -76,10 +76,10 @@ export default function Canvas({ children, zoom, clearSelection }: CanvasProps) 
           style={{
             transform: `scale(${zoom / 100})`,
             transformOrigin: "top center",
-            minHeight: "297mm",
             background: "rgb(255, 255, 255)",
-            padding: "20mm",
-            width: "210mm", // A4 width
+            padding: "20px",
+            width: "793.7px", // Updated to requested width
+            height: "1122.5px", // Updated to requested height
             margin: "0 auto",
             position: "relative",
             boxSizing: "border-box",

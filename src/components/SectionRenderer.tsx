@@ -224,7 +224,7 @@ export default function SectionRenderer({
     // Do NOT change font size here, preserve it
   }
 
-  // Auto-resize logic remains unchanged
+  // Auto-resize logic - disabled during typing to prevent shrinking
   const resizeToContent = () => {
     if (skipNextResizeRef.current) {
       skipNextResizeRef.current = false;
@@ -232,43 +232,28 @@ export default function SectionRenderer({
     }
     const el = editableRef.current;
     if (!el) return;
+    
+    // Don't auto-resize while actively editing to prevent shrinking during typing
+    if (isEditing) {
+      return;
+    }
+    
     setTimeout(() => {
       const newHeight = Math.max(el.scrollHeight, MIN_HEIGHT);
       const newWidth = el.scrollWidth;
-      console.log('resizeToContent:', {
-        newWidth,
-        newHeight,
-        prevWidth: width,
-        prevHeight: height,
-        fontSize: el.style.fontSize,
-        innerHTML: el.innerHTML,
-        outerHTML: el.outerHTML
-      });
       updatePosition(id, { x, y, width: newWidth, height: newHeight });
     }, 100);
   };
 
   useLayoutEffect(() => {
-    let obs: MutationObserver | null = null;
+    // Disable MutationObserver during editing to prevent constant resizing
     if (isEditing && editableRef.current) {
-      obs = new MutationObserver((mutations) => {
-        // Ignore mutations from the temporary font-size probe span
-        const hasProbeMutation = mutations.some(mutation => {
-          return Array.from(mutation.addedNodes).some(node =>
-            node instanceof HTMLElement && node.getAttribute('data-fontsize-probe') === 'true'
-          ) || Array.from(mutation.removedNodes).some(node =>
-            node instanceof HTMLElement && node.getAttribute('data-fontsize-probe') === 'true'
-          );
-        });
-        if (!hasProbeMutation) {
-          resizeToContent();
-        }
-      });
-      obs.observe(editableRef.current, { childList: true, characterData: true, subtree: true });
+      // We don't want to observe mutations during typing as it causes shrinking
+      // The content will be saved and resize will happen on blur
+      return;
     }
-    return () => {
-      if (obs) obs.disconnect();
-    };
+    
+    // No cleanup needed since we're not creating any observer during editing
   }, [isEditing]);
 
   useEffect(() => {
@@ -465,12 +450,7 @@ export default function SectionRenderer({
     }
   };
 
-  // Handle dragging in real-time
-  const handleDrag = (_: any, d: { x: number; y: number }) => {
-    // Only update position on drag
-    updatePosition(id, { x: d.x, y: d.y, width, height });
-  };
-
+  // Handle dragging - let Rnd handle position updates naturally
   const handleDragStop = (_: any, d: { x: number; y: number }) => {
     // Persist position on drag stop
     updatePosition(id, { x: d.x, y: d.y, width, height });
@@ -982,138 +962,155 @@ export default function SectionRenderer({
     };
 
   return (
-    <Rnd
-      onDoubleClickCapture={(e: React.MouseEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        handleDoubleClick(e);
-      }}
-      // Show handles on hover as well as when active
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      lockAspectRatio={lockAspectRatio}
-      className={`${styles.sectionWrapper} hoverable-section ${isActive ? 'active-section' : ''}`}
-      ref={rndRef}
-      bounds="parent"
-      disableDragging={isEditing}
-      enableResizing={{
-        top: false,
-        right: true,
-        bottom: false,
-        left: true,
-        topRight: true,
-        bottomRight: true,
-        bottomLeft: true,
-        topLeft: true
-      }}
-      resizeHandleStyles={handleStyles}
-      size={{ width, height }}
-      position={{ x, y }}
-      minWidth={40}
-      minHeight={20}
-      onResizeStart={handleResizeStart}
-      onResize={handleResize}
-      onResizeStop={handleResizeStop}
-      onDrag={handleDrag}
-      onDragStop={handleDragStop}
-      scale={zoomFactor}
-      style={{ 
-        position: "absolute", 
-        backgroundColor: "transparent", 
-        zIndex: 100,
-        border: "none", // We'll control this with CSS classes instead
-        boxSizing: "border-box"
-      }}
-      data-rnd="true"
-      data-section-id={id}
-    >
-      {!isEditing && (
-        <div className={styles.sectionActions}>
-          <button 
-            className={styles.sectionActionButton} 
-            onClick={() => onDelete(id)}
-            title="Delete section"
-          >
-            <DeleteIcon fontSize="small" sx={{ color: "#000", width: "18px", height: "18px" }} />
-          </button>
-          <button 
-            className={styles.sectionActionButton} 
-            onClick={() => onDuplicate(id)}
-            title="Duplicate section"
-          >
-            <ContentCopyIcon fontSize="small" sx={{ color: "#000", width: "18px", height: "18px" }} />
-          </button>
-        </div>
-      )}
-
-      <div 
-        ref={containerRef}
-        style={{
-          width: "100%",
-          height: "100%",
-          position: "relative",
-          cursor: isEditing ? "text" : "move",
-          boxSizing: "border-box",
-          overflow: "hidden",
-          padding: "0", // No extra padding in the container
-          margin: 0
-        }}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (!isEditing) onClick();
-        }}
-        onDoubleClick={(e: React.MouseEvent<HTMLDivElement>) => {
+    <>
+      <Rnd
+        onDoubleClickCapture={(e: React.MouseEvent<HTMLDivElement>) => {
           e.preventDefault();
           e.stopPropagation();
-          if (!isEditing) {
-            handleDoubleClick(e);
-          }
+          handleDoubleClick(e);
         }}
-        className={isEditing ? "edit-mode" : ""}
+        // Show handles on hover as well as when active
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        lockAspectRatio={lockAspectRatio}
+        className={`${styles.sectionWrapper} hoverable-section ${isActive ? 'active-section' : ''}`}
+        ref={rndRef}
+        bounds="parent"
+        disableDragging={isEditing}
+        enableResizing={{
+          top: false,
+          right: true,
+          bottom: false,
+          left: true,
+          topRight: true,
+          bottomRight: true,
+          bottomLeft: true,
+          topLeft: true
+        }}
+        resizeHandleStyles={handleStyles}
+        size={{ width, height }}
+        position={{ x, y }}
+        minWidth={40}
+        minHeight={20}
+        onResizeStart={handleResizeStart}
+        onResize={handleResize}
+        onResizeStop={handleResizeStop}
+        onDragStop={handleDragStop}
+        scale={zoomFactor}
+        // Optimize performance during drag operations
+        dragHandleClassName="drag-handle"
+        cancel=".no-drag"
+        // Remove shouldUpdatePosition to allow proper drag feedback
+        style={{ 
+          position: "absolute", 
+          backgroundColor: "transparent", 
+          zIndex: 100,
+          border: "none", // We'll control this with CSS classes instead
+          boxSizing: "border-box",
+          // Optimize for performance
+          willChange: "transform",
+          // Prevent text selection during drag
+          userSelect: isEditing ? "text" : "none"
+        }}
+        data-rnd="true"
+        data-section-id={id}
       >
-        {isEditing ? (
-          <div 
-            ref={editableRef}
-            contentEditable={true}
-            suppressContentEditableWarning={true}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-            onPaste={handlePaste}
-            onKeyUp={updateToolbarPosition}
-            onMouseUp={handleMouseUp}
-            style={{
-              ...sharedEditableStyle,
-              outline: "none",
-              caretColor: "#3662E3",
-              boxShadow: "0 0 0 1px rgba(54, 98, 227, 0.1) inset",
-            }}
-            className={`${styles.sectionContent} edit-mode`}
-            data-section-content="true"
-          />
-        ) : (
-          <div 
-            ref={editableRef}
-            style={{
-              ...sharedEditableStyle,
-              cursor: 'pointer',
-              position: 'relative',
-            }}
-            onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => {
-              if (e.detail === 2 && !isEditing) {
-                handleDoubleClick(e);
-              }
-            }}
-            dangerouslySetInnerHTML={{ __html: getSectionContent() }} 
-            onDoubleClick={(e: React.MouseEvent<HTMLDivElement>) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDoubleClick(e);
-            }}
-            className={`${styles.sectionContent} ${styles.hoverableSectionContent}`}
-            data-section-content="true"
-          />
+        {!isEditing && (
+          <div className={styles.sectionActions}>
+            <button 
+              className={styles.sectionActionButton} 
+              onClick={() => onDelete(id)}
+              title="Delete section"
+            >
+              <DeleteIcon fontSize="small" sx={{ color: "#000", width: "18px", height: "18px" }} />
+            </button>
+            <button 
+              className={styles.sectionActionButton} 
+              onClick={() => onDuplicate(id)}
+              title="Duplicate section"
+            >
+              <ContentCopyIcon fontSize="small" sx={{ color: "#000", width: "18px", height: "18px" }} />
+            </button>
+          </div>
         )}
-      </div>
-    </Rnd>
+
+        <div 
+          ref={containerRef}
+          style={{
+            width: "100%",
+            height: "100%",
+            position: "relative",
+            cursor: isEditing ? "text" : "grab",
+            boxSizing: "border-box",
+            overflow: "hidden",
+            padding: "0", // No extra padding in the container
+            margin: 0
+          }}
+          onClick={handleContainerClick}
+          onDoubleClick={(e: React.MouseEvent<HTMLDivElement>) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!isEditing) {
+              handleDoubleClick(e);
+            }
+          }}
+          className={isEditing ? "edit-mode drag-handle" : "drag-handle"}
+        >
+          {isEditing ? (
+            <div 
+              ref={editableRef}
+              contentEditable={true}
+              suppressContentEditableWarning={true}
+              onBlur={handleBlur}
+              onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
+              onKeyUp={updateToolbarPosition}
+              onMouseUp={handleMouseUp}
+              style={{
+                ...sharedEditableStyle,
+                outline: "none",
+                caretColor: "#3662E3",
+                boxShadow: "0 0 0 1px rgba(54, 98, 227, 0.1) inset",
+              }}
+              className={`${styles.sectionContent} edit-mode`}
+              data-section-content="true"
+            />
+          ) : (
+            <div 
+              ref={editableRef}
+              style={{
+                ...sharedEditableStyle,
+                cursor: 'pointer',
+                position: 'relative',
+              }}
+              onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => {
+                if (e.detail === 2 && !isEditing) {
+                  handleDoubleClick(e);
+                }
+              }}
+              dangerouslySetInnerHTML={{ __html: getSectionContent() }} 
+              onDoubleClick={(e: React.MouseEvent<HTMLDivElement>) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDoubleClick(e);
+              }}
+              className={`${styles.sectionContent} ${styles.hoverableSectionContent}`}
+              data-section-content="true"
+            />
+          )}
+        </div>
+      </Rnd>
+
+      {/* FloatingToolbar for text formatting when text is selected in edit mode */}
+      {isEditing && (
+        <FloatingToolbar
+          visible={showToolbar}
+          onClose={() => setShowToolbar(false)}
+          onRegenerateSelection={session ? handleRegenerateSelection : undefined}
+          sectionType={type}
+          onFontSizeChange={handleFontSizeChange}
+        />
+      )}
+    </>
   )
 }
