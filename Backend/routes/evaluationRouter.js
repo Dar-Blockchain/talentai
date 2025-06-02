@@ -8,7 +8,7 @@ const { requireAuthUser } = require('../middleware/authMiddleware');
 router.use(requireAuthUser);
 
 
-router.get('/generate-questions', evaluationController.generateQuestions);
+router.post('/generate-questions', evaluationController.generateQuestions);
 router.post('/generate-technique-questions', evaluationController.generateTechniqueQuestions);
 router.post('/job/:id/generate-technique-questions', evaluationController.generateTechniqueQuestionsForJob);
 router.post('/generate-soft-skill-questions', evaluationController.generateSoftSkillQuestions);
