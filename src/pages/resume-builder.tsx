@@ -11,7 +11,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { useDispatch, useSelector } from "react-redux"
-import { getMyProfile } from "@/store/features/profileSlice"
+import { getMyProfile } from "@/store/slices/profileSlice"
 import { AppDispatch, RootState } from "@/store/store"
 import styles from '@/styles/ResumeBuilder.module.css'
 import Sidebar from '@/components/Sidebar'

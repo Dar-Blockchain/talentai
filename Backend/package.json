@@ -22,7 +22,9 @@
     "nodemailer": "^6.9.7",
     "openai": "^4.94.0",
     "qrcode": "^1.5.4",
-    "swagger-ui-express": "^5.0.1"
+    "redis": "^5.1.0",
+    "swagger-ui-express": "^5.0.1",
+    "together-ai": "^0.16.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

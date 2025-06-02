@@ -27,24 +27,26 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ["Company", "Candidat"] },
     profile: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Profile'
+      ref: "Profile",
     },
-    post: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Post'
-    }],
+    post: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Post",
+      },
+    ],
     trafficCounter: { type: Number, default: 0 },
-    pubkey: { type: String, default: null },
-    privkey: { type: String, default: null },
-    accountId: { type: String, default: null },
+  //  pubkey: { type: String, default: null },
+  //  privkey: { type: String, default: null },
+  //  accountId: { type: String, default: null },
   },
   { timestamps: true }
 );
 
 // Middleware pour supprimer le profil associé lors de la suppression d'un utilisateur
-userSchema.pre('remove', async function(next) {
+userSchema.pre("remove", async function (next) {
   try {
-    await this.model('Profile').findOneAndDelete({ userId: this._id });
+    await this.model("Profile").findOneAndDelete({ userId: this._id });
     next();
   } catch (error) {
     next(error);

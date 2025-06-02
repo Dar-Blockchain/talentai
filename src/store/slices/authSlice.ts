@@ -1,89 +1,105 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { RootState } from '../store';
-
-interface User {
-    id: string;
-    email: string;
-    name: string;
-}
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
 
 interface AuthState {
-    user: User | null;
-    token: string | null;
-    loading: boolean;
-    error: string | null;
-}
-
-interface SignInResponse {
-    user: User;
-    token: string;
+  user: any | null;
+  isLoading: boolean;
+  error: string | null;
+  isAuthenticated: boolean;
+  token: string | null;
 }
 
 const initialState: AuthState = {
-    user: null,
-    token: null,
-    loading: false,
-    error: null,
+  user: null,
+  isLoading: false,
+  error: null,
+  isAuthenticated: false,
+  token: null
 };
 
-export const signIn = createAsyncThunk<SignInResponse, { email: string; password: string }, { rejectValue: string }>(
-    'auth/signIn',
-    async ({ email, password }, { rejectWithValue }) => {
-        try {
-            const response = await fetch('/api/auth/signin', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                return rejectWithValue(error.message || 'Invalid email or password');
-            }
-
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            return rejectWithValue('An error occurred. Please try again.');
-        }
+// Register user thunk
+export const registerUser = createAsyncThunk(
+  'auth/register',
+  async (email: string, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/register`, { email });
+      return response.data;
+    } catch (error: any) {
+      if (error.response && error.response.data.message) {
+        return rejectWithValue(error.response.data.message);
+      }
+      return rejectWithValue('Registration failed. Please try again.');
     }
+  }
+);
+
+export const verifyOTP = createAsyncThunk(
+  'auth/verifyOTP',
+  async ({ email, otp }: { email: string; otp: string }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/verify-otp`, { 
+        email, 
+        otp 
+      });
+      // Store token in localStorage
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+      }
+      return response.data;
+    } catch (error: any) {
+      if (error.response && error.response.data.message) {
+        return rejectWithValue(error.response.data.message);
+      }
+      return rejectWithValue('Verification failed. Please try again.');
+    }
+  }
 );
 
 const authSlice = createSlice({
-    name: 'auth',
-    initialState,
-    reducers: {
-        signOut: (state: AuthState) => {
-            state.user = null;
-            state.token = null;
-            state.error = null;
-        },
-        clearError: (state: AuthState) => {
-            state.error = null;
-        },
+  name: 'auth',
+  initialState,
+  reducers: {
+    clearError: (state) => {
+      state.error = null;
     },
-    extraReducers: (builder) => {
-        builder
-            .addCase(signIn.pending, (state: AuthState) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(signIn.fulfilled, (state: AuthState, action: PayloadAction<SignInResponse>) => {
-                state.loading = false;
-                state.user = action.payload.user;
-                state.token = action.payload.token;
-            })
-            .addCase(signIn.rejected, (state: AuthState, action: PayloadAction<string | undefined>) => {
-                state.loading = false;
-                state.error = action.payload || 'An error occurred';
-            });
-    },
+    logout: (state) => {
+      state.user = null;
+      state.isAuthenticated = false;
+      state.error = null;
+      state.token = null;
+    }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(registerUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload;
+        state.error = null;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(verifyOTP.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(verifyOTP.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.error = null;
+        state.token = action.payload.token;
+      })
+      .addCase(verifyOTP.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
+  }
 });
 
-export const { signOut, clearError } = authSlice.actions;
-
-export const selectAuth = (state: RootState) => state.auth;
-
+export const { clearError, logout } = authSlice.actions;
 export default authSlice.reducer; 

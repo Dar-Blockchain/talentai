@@ -30,9 +30,11 @@ import Cookies from 'js-cookie';
 // Remove hardcoded questions
 const NEXTJS_QUESTIONS: string[] = [];
 
+// Add this after imports
+const GREEN_MAIN = 'rgba(0, 255, 157, 1)';
+
 // --- Styled Components ---
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
-  background: 'rgba(0, 7, 45, 0.8)',
   backdropFilter: 'blur(10px)',
   borderBottom: '1px solid rgba(255,255,255,0.1)',
 }));
@@ -100,7 +102,6 @@ const QuestionOverlay = styled(Box)(({ theme }) => ({
 
 const NavigationBar = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
-  background: 'rgba(0, 7, 45, 0.8)',
   backdropFilter: 'blur(10px)',
   borderTop: '1px solid rgba(255, 255, 255, 0.1)',
   display: 'flex',
@@ -111,7 +112,7 @@ const NavigationBar = styled(Box)(({ theme }) => ({
 // Add new styled components for the guidelines modal
 const GuidelinesModal = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
-    background: 'rgba(15, 23, 42, 0.95)',
+    background: 'white',
     backdropFilter: 'blur(10px)',
     borderRadius: '24px',
     border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -122,6 +123,7 @@ const GuidelinesModal = styled(Dialog)(({ theme }) => ({
 
 const GuidelineItem = styled(Box)(({ theme }) => ({
   display: 'flex',
+  boxShadow: '0px 0px 10px 0px rgba(0, 0, 0, 0.1)',
   alignItems: 'flex-start',
   gap: theme.spacing(2),
   padding: theme.spacing(2),
@@ -176,7 +178,6 @@ interface SpeechRecognitionError extends Event {
 // --- Security Modal ---
 const SecurityModal = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
-    background: 'rgba(15, 23, 42, 0.95)',
     backdropFilter: 'blur(10px)',
     borderRadius: '24px',
     border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -188,12 +189,113 @@ const SecurityModal = styled(Dialog)(({ theme }) => ({
 // --- First Violation Modal ---
 const FirstViolationModal = styled(Dialog)(({ theme }) => ({
   '& .MuiDialog-paper': {
-    background: 'rgba(15, 23, 42, 0.95)',
     backdropFilter: 'blur(10px)',
     borderRadius: '24px',
     border: '1px solid rgba(255, 255, 255, 0.1)',
     maxWidth: '600px',
     margin: theme.spacing(2),
+    backgroundColor: 'white',
+  },
+}));
+
+// Add new TestLimitModal component
+const TestLimitModal = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialog-paper': {
+    background: 'white',
+    borderRadius: '24px',
+    border: '1px solid rgba(0, 0, 0, 0.1)',
+    maxWidth: '500px',
+    margin: theme.spacing(2),
+    backgroundColor: 'white',
+  },
+}));
+
+const VoiceActivityIndicator = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'isActive'
+})<{ isActive: boolean }>(({ theme, isActive }) => ({
+  position: 'relative',
+  width: '48px',
+  height: '48px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginTop: theme.spacing(2),
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: '50%',
+    background: isActive ? '#02E2FF' : 'rgba(255, 255, 255, 0.1)',
+    transition: 'all 0.3s ease',
+  },
+}));
+
+const VoiceWaves = styled(Box)(({ theme }) => ({
+  position: 'absolute',
+  width: '100%',
+  height: '100%',
+  '&::before, &::after': {
+    content: '""',
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    borderRadius: '50%',
+    border: '2px solid #02E2FF',
+    animation: 'wave 1.5s ease-out infinite',
+  },
+  '&::before': {
+    width: '100%',
+    height: '100%',
+    animationDelay: '0s',
+  },
+  '&::after': {
+    width: '100%',
+    height: '100%',
+    animationDelay: '0.75s',
+  },
+  '@keyframes wave': {
+    '0%': {
+      transform: 'translate(-50%, -50%) scale(1)',
+      opacity: 0.8,
+    },
+    '100%': {
+      transform: 'translate(-50%, -50%) scale(1.5)',
+      opacity: 0,
+    },
+  },
+}));
+
+const VoiceIcon = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  width: '24px',
+  height: '24px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+    background: '#fff',
+    animation: 'pulse 1s ease-in-out infinite',
+  },
+  '@keyframes pulse': {
+    '0%': {
+      transform: 'scale(1)',
+      opacity: 1,
+    },
+    '50%': {
+      transform: 'scale(1.2)',
+      opacity: 0.8,
+    },
+    '100%': {
+      transform: 'scale(1)',
+      opacity: 1,
+    },
   },
 }));
 
@@ -211,6 +313,8 @@ export default function Test() {
   const [timeLeft, setTimeLeft] = useState(120);
   const currentIndexRef = useRef(0);
   const [hasStartedTest, setHasStartedTest] = useState(false);
+  const [nextButtonDisabled, setNextButtonDisabled] = useState(true);
+  const [buttonTimer, setButtonTimer] = useState(2);
 
   // Add state for per-question transcriptions
   const [transcriptions, setTranscriptions] = useState<{ [key: number]: string }>(
@@ -223,147 +327,165 @@ export default function Test() {
   const [showGuidelines, setShowGuidelines] = useState(true);
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
 
+  // Streaming transcription state
+  const [streamingToken, setStreamingToken] = useState<string | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+
   // --- Security Violation State ---
   const [securityViolationCount, setSecurityViolationCount] = useState(0);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [showFirstViolationModal, setShowFirstViolationModal] = useState(false);
   const violationHandledRef = useRef(false); // Prevent double handling
 
+  // Add new state for test limit error
+  const [showTestLimitError, setShowTestLimitError] = useState(false);
+
   // Fetch questions from API
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        setIsGenerating(true);
-        // Add delay to ensure token is available
-        await new Promise(resolve => setTimeout(resolve, 200));
+  const fetchQuestions = async () => {
+    try {
+      setIsGenerating(true);
+      // Add delay to ensure token is available
+      await new Promise(resolve => setTimeout(resolve, 200));
 
-        const token = Cookies.get('api_token');
-        if (!token) {
-          console.log('No token found, redirecting to home');
-          router.push('/');
-          return;
-        }
+      const token = Cookies.get('api_token');
+      if (!token) {
+        console.log('No token found, redirecting to home');
+        router.push('/');
+        return;
+      }
 
-        let endpoint = '';
-        // Detect source based on URL parameters
-        if (router.query.type && router.query.skill) {
-          // This is from dashboardCandidate
-          if (router.query.type === 'technical') {
-            endpoint = 'evaluation/generate-technique-questions';
+      let endpoint = '';
+      let fetchedQuestions: string[] = [];
 
-            // First fetch the user's profile to get the skill levels
-            const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
-            });
+      // Detect source based on URL parameters
+      if (router.query.type && router.query.skill) {
+        // This is from dashboardCandidate
+        if (router.query.type === 'technical' || router.query.type === 'technicalSkill') {
+          endpoint = 'evaluation/generate-technique-questions';
 
-            if (!profileResponse.ok) {
-              throw new Error('Failed to fetch profile data');
-            }
-
-            const profileData = await profileResponse.json();
-            console.log('Profile data:', profileData);
-
-            // Find the selected skill in the profile
-            const selectedSkill = profileData.skills.find(
-              (skill: any) => skill.name === router.query.skill
-            );
-
-            if (!selectedSkill) {
-              throw new Error('Selected skill not found in profile');
-            }
-
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                skill: router.query.skill,
-                experienceLevel: selectedSkill.experienceLevel,
-                proficiencyLevel: selectedSkill.proficiencyLevel
-              })
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to fetch questions');
-            }
-
-            const data = await response.json();
-            setQuestions(data.questions);
-          } else {
-            // For soft skills
-            endpoint = 'evaluation/generate-soft-skill-questions';
-
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                skill: router.query.skill,
-                subSkills: router.query.language || router.query.subcategory
-              })
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to fetch questions');
-            }
-
-            const data = await response.json();
-            setQuestions(data.questions);
-          }
-        } else {
-          // This is from preferences
-          endpoint = 'evaluation/generate-questions';
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
+          // First fetch the user's profile to get the skill levels
+          const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           });
 
+          if (!profileResponse.ok) {
+            throw new Error('Failed to fetch profile data');
+          }
+
+          const profileData = await profileResponse.json();
+          console.log('Profile data:', profileData);
+
+          // Find the selected skill in the profile
+          const selectedSkill = profileData.skills.find(
+            (skill: any) => skill.name === router.query.skill
+          );
+          console.log('Selected skill:', selectedSkill);
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              skill: router.query.skill,
+              experienceLevel: router.query.type === 'technicalSkill' ? null : selectedSkill?.experienceLevel || 'Entry Level',
+              proficiencyLevel: router.query.type === 'technicalSkill' ? null : selectedSkill?.proficiencyLevel || 1
+            })
+          });
+
           if (!response.ok) {
+            const errorData = await response.json();
+            if (errorData.error === "You have reached your test limit (5)") {
+              setShowTestLimitError(true);
+              setIsGenerating(false);
+              return;
+            }
             throw new Error('Failed to fetch questions');
           }
 
           const data = await response.json();
-          setQuestions(data.questions);
+          fetchedQuestions = data.questions;
+        } else {
+          // For soft skills
+          endpoint = 'evaluation/generate-soft-skill-questions';
+
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              skill: router.query.skill,
+              subSkills: router.query.language || router.query.subcategory
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            if (errorData.error === "You have reached your test limit (5)") {
+              setShowTestLimitError(true);
+              setIsGenerating(false);
+              return;
+            }
+            throw new Error('Failed to fetch questions');
+          }
+
+          const data = await response.json();
+          fetchedQuestions = data.questions;
+        }
+      } else {
+        // This is from preferences
+        endpoint = 'evaluation/generate-questions';
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          if (errorData.error === "You have reached your test limit (5)") {
+            setShowTestLimitError(true);
+            setIsGenerating(false);
+            return;
+          }
+          throw new Error('Failed to fetch questions');
         }
 
-        // Initialize transcriptions with empty strings for each question
-        setTranscriptions(
-          questions.reduce((acc: any, _: any, index: number) => ({
-            ...acc,
-            [index]: ''
-          }), {})
-        );
-      } catch (error) {
-        console.error('Error fetching questions:', error);
-        router.push('/');
-      } finally {
-        setIsGenerating(false);
+        const data = await response.json();
+        fetchedQuestions = data.questions;
       }
-    };
 
-    if (router.isReady) {
-      fetchQuestions();
+      // Set questions first
+      setQuestions(fetchedQuestions);
+
+      // Then initialize transcriptions with the fetched questions
+      setTranscriptions(
+        fetchedQuestions.reduce((acc: any, _: any, index: number) => ({
+          ...acc,
+          [index]: ''
+        }), {})
+      );
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      router.push('/');
+    } finally {
+      setIsGenerating(false);
     }
-  }, [router.isReady, router.query]);
+  };
 
-  // Interval used to finalize each chunk
-  const chunkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // MediaRecorder references
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  // Audio context for streaming
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const processorRef = useRef<ScriptProcessorNode | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
 
-  // Transcription states
-  const [isTranscribing, setIsTranscribing] = useState(false);
 
   // Timer only runs when test has started
   useEffect(() => {
@@ -392,8 +514,9 @@ export default function Test() {
   useEffect(() => {
     currentIndexRef.current = current;
     setTimeLeft(120); // Reset to 120 seconds (2 minutes)
-    setCurrentTranscript(''); // Clear current transcript
-  }, [current]);
+    // Show any existing transcript for the new question
+    setCurrentTranscript(transcriptions[current] || '');
+  }, [current, transcriptions]);
 
   // Initialize camera
   useEffect(() => {
@@ -415,95 +538,184 @@ export default function Test() {
     return () => streamRef.current?.getTracks().forEach(t => t.stop());
   }, []);
 
-  // Modify the recorder.ondataavailable handler inside createMediaRecorder
-  const createMediaRecorder = (stream: MediaStream) => {
-    const options = {
-      mimeType: 'audio/webm;codecs=opus',
-      audioBitsPerSecond: 128000,
-    };
-    const recorder = new MediaRecorder(stream, options);
+  // Generate temporary token for streaming
+  const generateStreamingToken = async (): Promise<string> => {
+    const response = await fetch('/api/session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action: 'generate_token' }),
+    });
 
-    recorder.ondataavailable = async (event) => {
-      if (event.data.size > 0) {
-        try {
-          setIsTranscribing(true);
-          const formData = new FormData();
-          formData.append('audio', event.data, 'recording.webm');
+    if (!response.ok) {
+      throw new Error('Failed to generate streaming token');
+    }
 
-          const response = await fetch('/api/session', {
-            method: 'POST',
-            body: formData,
-          });
-
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Transcription failed');
-          }
-
-          const { text } = await response.json();
-          if (text?.trim()) {
-            // Update both current transcript and stored transcriptions
-            const newText = text.trim();
-            setCurrentTranscript(prev => {
-              const updated = (prev + ' ' + newText).trim();
-              // Update stored transcriptions
-              setTranscriptions(prevT => ({
-                ...prevT,
-                [currentIndexRef.current]: updated
-              }));
-              return updated;
-            });
-          }
-        } catch (error) {
-          console.error('Chunk processing error:', error);
-        } finally {
-          setIsTranscribing(false);
-        }
-      }
-    };
-
-    return recorder;
+    const { token } = await response.json();
+    return token;
   };
 
-  // Every time we finalize a chunk, we stop the recorder, then immediately create a new one
-  const finalizeChunk = () => {
-    if (!mediaRecorderRef.current) return;
-    mediaRecorderRef.current.stop();
-    mediaRecorderRef.current = null;
+  // Setup streaming transcription
+  const setupStreamingTranscription = async (stream: MediaStream) => {
+    try {
+      setIsConnecting(true);
 
-    // Re-create the recorder for the next chunk
-    if (audioStreamRef.current) {
-      mediaRecorderRef.current = createMediaRecorder(audioStreamRef.current);
-      mediaRecorderRef.current.start(); // Start next chunk
+      // Generate token
+      const token = await generateStreamingToken();
+      setStreamingToken(token);
+
+      // Setup audio context
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
+        sampleRate: 16000,
+      });
+      audioContextRef.current = audioContext;
+
+      const source = audioContext.createMediaStreamSource(stream);
+      const processor = audioContext.createScriptProcessor(4096, 1, 1);
+      processorRef.current = processor;
+
+      // Connect WebSocket
+      const ws = new WebSocket(
+        `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}`
+      );
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        console.log('Streaming connection opened');
+        setIsConnecting(false);
+
+        // Connect audio processing
+        source.connect(processor);
+        processor.connect(audioContext.destination);
+
+        processor.onaudioprocess = (event) => {
+          if (ws.readyState === WebSocket.OPEN) {
+            const inputBuffer = event.inputBuffer.getChannelData(0);
+
+            // Convert float32 to int16
+            const int16Buffer = new Int16Array(inputBuffer.length);
+            for (let i = 0; i < inputBuffer.length; i++) {
+              int16Buffer[i] = Math.max(-32768, Math.min(32767, inputBuffer[i] * 32767));
+            }
+
+            ws.send(int16Buffer.buffer);
+          }
+        };
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.message_type === 'PartialTranscript' || data.message_type === 'FinalTranscript') {
+          const text = data.text;
+          if (text?.trim()) {
+            if (data.message_type === 'FinalTranscript') {
+              // For final transcripts, add to the stored transcription for this question
+              setTranscriptions(prevT => {
+                const currentQuestionText = prevT[currentIndexRef.current] || '';
+                const updatedQuestionText = (currentQuestionText + ' ' + text).trim();
+
+                // Also update the current transcript to show the accumulated text
+                setCurrentTranscript(updatedQuestionText);
+
+                return {
+                  ...prevT,
+                  [currentIndexRef.current]: updatedQuestionText
+                };
+              });
+            } else {
+              // For partial transcripts, show accumulated text + current partial
+              setTranscriptions(prevT => {
+                const currentQuestionText = prevT[currentIndexRef.current] || '';
+                const displayText = currentQuestionText ? (currentQuestionText + ' ' + text).trim() : text;
+                setCurrentTranscript(displayText);
+                return prevT; // Don't update stored transcriptions for partials
+              });
+            }
+          }
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setIsConnecting(false);
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket connection closed');
+        setIsConnecting(false);
+      };
+
+    } catch (error) {
+      console.error('Streaming setup error:', error);
+      setIsConnecting(false);
+      throw error;
     }
   };
 
   const stopRecording = () => {
-    // Stop chunk finalization
-    if (chunkIntervalRef.current) {
-      clearInterval(chunkIntervalRef.current);
-      chunkIntervalRef.current = null;
+    // Close WebSocket connection
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
     }
-    // Stop the current recorder
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current = null;
+
+    // Stop audio context
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
     }
+
+    // Disconnect processor
+    if (processorRef.current) {
+      processorRef.current.disconnect();
+      processorRef.current = null;
+    }
+
     // Stop audio tracks
     if (audioStreamRef.current) {
       audioStreamRef.current.getTracks().forEach(track => track.stop());
       audioStreamRef.current = null;
     }
+
     setIsRecording(false);
     setHasStartedTest(false);
+    setIsConnecting(false);
   };
 
   const handleGuidelinesAccept = () => {
+    fetchQuestions()
     setGuidelinesAccepted(true);
     setShowGuidelines(false);
   };
 
-  // Modify startTest to check guidelines acceptance
+  // Add timer for next button
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (hasStartedTest && nextButtonDisabled && buttonTimer > 0) {
+      timer = setInterval(() => {
+        setButtonTimer(prev => {
+          if (prev <= 1) {
+            setNextButtonDisabled(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [hasStartedTest, nextButtonDisabled, buttonTimer]);
+
+  // Reset button timer when question changes
+  useEffect(() => {
+    if (current > 0) {
+      setNextButtonDisabled(true);
+      setButtonTimer(2);
+    }
+  }, [current]);
+
+  // Modify startTest to enable next button for first question
   const startTest = async () => {
     if (!guidelinesAccepted) {
       setShowGuidelines(true);
@@ -511,42 +723,29 @@ export default function Test() {
     }
 
     try {
-      // Initialize transcriptions for all questions
-      setTranscriptions(
-        questions.reduce((acc: any, _: any, index: number) => ({
-          ...acc,
-          [index]: ''
-        }), {})
-      );
-      setCurrentTranscript(''); // Clear current transcript
-
       // Get audio stream
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          sampleRate: 48000,
+          sampleRate: 16000,
           channelCount: 1,
         },
       });
       audioStreamRef.current = stream;
 
-      // Create first recorder
-      mediaRecorderRef.current = createMediaRecorder(stream);
-      mediaRecorderRef.current.start(); // Start recording
-
-      // Process chunks more frequently (every 2 seconds)
-      chunkIntervalRef.current = setInterval(() => {
-        finalizeChunk();
-      }, 2000);
+      // Setup streaming transcription
+      await setupStreamingTranscription(stream);
 
       setIsRecording(true);
       setHasStartedTest(true);
       setTimeLeft(120); // Start with 120 seconds (2 minutes)
+      setNextButtonDisabled(false); // Enable next button for first question
     } catch (error) {
       console.error('Recording setup error:', error);
       setIsRecording(false);
       setHasStartedTest(false);
+      setIsConnecting(false);
     }
   };
 
@@ -688,22 +887,56 @@ export default function Test() {
     <Box
       sx={{
         minHeight: '100vh',
-        backgroundColor: '#00072D',
-        backgroundImage: `
-          radial-gradient(circle at 20% 30%, rgba(2,226,255,0.4), transparent 40%),
-          radial-gradient(circle at 80% 70%, rgba(0,255,195,0.3), transparent 50%)
-        `,
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        py: 4,
       }}
     >
+      {/* Add Test Limit Error Modal */}
+      <TestLimitModal
+        open={showTestLimitError}
+        onClose={() => router.push('/dashboardCandidate')}
+      >
+        <DialogTitle sx={{
+          fontWeight: 700,
+          color: '#000000',
+          fontSize: '1.5rem',
+          textAlign: 'center'
+        }}>
+          Test Limit Reached
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ color: '#000000', mb: 2, textAlign: 'center' }}>
+            You have reached your maximum limit of 5 tests. Please contact support if you need to take more tests.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+          <Button
+            variant="contained"
+            onClick={() => router.push('/dashboardCandidate')}
+            sx={{
+              background: GREEN_MAIN,
+              color: '#000000',
+              '&:hover': {
+                background: 'rgba(0, 255, 157, 0.9)',
+              }
+            }}
+          >
+            Return to Dashboard
+          </Button>
+        </DialogActions>
+      </TestLimitModal>
+
       {/* Security Modal */}
-      <SecurityModal open={showSecurityModal} onClose={() => {}}>
-        <DialogTitle sx={{ fontWeight: 700, color: '#fff', fontSize: '1.5rem' }}>
+      <SecurityModal open={showSecurityModal} onClose={() => { }}>
+        <DialogTitle sx={{ fontWeight: 700, color: 'black', fontSize: '1.5rem' }}>
           Security Violation
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
+          <Typography variant="body1" sx={{ color: 'black', mb: 2 }}>
+
             You have attempted to leave or capture the test page more than once. For security reasons, your test has ended and you are being redirected to the dashboard.
           </Typography>
         </DialogContent>
@@ -716,11 +949,11 @@ export default function Test() {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 700, fontSize: '1.3rem', color: '#fff', pt: 3 }}>
+        <DialogTitle sx={{ fontWeight: 700, fontSize: '1.3rem', color: 'black', pt: 3 }}>
           Heads Up!
         </DialogTitle>
         <DialogContent sx={{ pb: 0 }}>
-          <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
+          <Typography variant="body1" sx={{ color: 'black', mb: 2 }}>
             For security reasons, leaving or capturing the test page is not allowed.<br />
             <b>If you do this again, your test will end and you will be redirected.</b>
           </Typography>
@@ -730,7 +963,7 @@ export default function Test() {
             variant="contained"
             onClick={() => setShowFirstViolationModal(false)}
             sx={{
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              background: 'rgba(0, 255, 157, 1)',
               color: '#fff',
               fontWeight: 600,
               borderRadius: 2,
@@ -754,13 +987,13 @@ export default function Test() {
         fullWidth
       >
         <DialogTitle sx={{
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
+          borderBottom: 'white',
           padding: theme.spacing(3),
         }}>
           <Typography variant="h5" sx={{
             color: '#fff',
             fontWeight: 700,
-            background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+            background: 'rgba(0, 255, 157, 1)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}>
@@ -768,17 +1001,17 @@ export default function Test() {
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ padding: theme.spacing(4) }}>
-          <Typography variant="body1" sx={{ color: '#fff', mb: 3, opacity: 0.9 }}>
+          <Typography variant="body1" sx={{ color: '#000', mb: 3, opacity: 0.9 }}>
             Please ensure you meet the following requirements before starting the test:
           </Typography>
 
-          <GuidelineItem>
+          <GuidelineItem sx={{ color: '#000' }}>
             <Box sx={{ color: '#02E2FF', mt: 0.5 }}>⏱️</Box>
             <Box>
-              <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
+              <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
                 Time Commitment
               </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+              <Typography variant="body2" sx={{ color: '#000' }}>
                 Set aside 30 minutes of uninterrupted time. The test cannot be paused once started.
               </Typography>
             </Box>
@@ -787,10 +1020,10 @@ export default function Test() {
           <GuidelineItem>
             <Box sx={{ color: '#02E2FF', mt: 0.5 }}>🔇</Box>
             <Box>
-              <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
+              <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
                 Quiet Environment
               </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+              <Typography variant="body2" sx={{ color: '#000' }}>
                 Find a quiet room with no background noise. Background sounds can affect your test results.
               </Typography>
             </Box>
@@ -799,10 +1032,10 @@ export default function Test() {
           <GuidelineItem>
             <Box sx={{ color: '#02E2FF', mt: 0.5 }}>🎥</Box>
             <Box>
-              <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
+              <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
                 Camera and Microphone
               </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+              <Typography variant="body2" sx={{ color: '#000' }}>
                 Ensure your camera and microphone are working properly. Test will use both for recording.
               </Typography>
             </Box>
@@ -811,10 +1044,10 @@ export default function Test() {
           <GuidelineItem>
             <Box sx={{ color: '#02E2FF', mt: 0.5 }}>👤</Box>
             <Box>
-              <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
+              <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
                 Individual Assessment
               </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+              <Typography variant="body2" sx={{ color: '#000' }}>
                 Complete the test alone. No other people should be present or helping during the assessment.
               </Typography>
             </Box>
@@ -823,10 +1056,10 @@ export default function Test() {
           <GuidelineItem>
             <Box sx={{ color: '#02E2FF', mt: 0.5 }}>💻</Box>
             <Box>
-              <Typography variant="subtitle1" sx={{ color: '#fff', fontWeight: 600, mb: 0.5 }}>
+              <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
                 Technical Setup
               </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+              <Typography variant="body2" sx={{ color: '#000' }}>
                 Use a stable internet connection. Close other applications that might use your camera or microphone.
               </Typography>
             </Box>
@@ -850,7 +1083,7 @@ export default function Test() {
             variant="contained"
             onClick={handleGuidelinesAccept}
             sx={{
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              background: 'rgba(0, 255, 157, 1)',
               color: '#fff',
               px: 4,
               py: 1,
@@ -858,7 +1091,7 @@ export default function Test() {
               textTransform: 'none',
               fontWeight: 500,
               '&:hover': {
-                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                background: 'rgba(0, 255, 157, 1)',
               }
             }}
           >
@@ -873,7 +1106,7 @@ export default function Test() {
             variant="h6"
             sx={{
               flexGrow: 1,
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              background: 'black',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               fontWeight: 700,
@@ -912,7 +1145,7 @@ export default function Test() {
             height: 4,
             backgroundColor: 'rgba(255,255,255,0.1)',
             '& .MuiLinearProgress-bar': {
-              backgroundImage: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              backgroundColor: GREEN_MAIN,
             },
           }}
         />
@@ -926,6 +1159,8 @@ export default function Test() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          background: 'transparent',
+          boxShadow: 'none',
         }}
       >
         <Paper
@@ -934,8 +1169,10 @@ export default function Test() {
             position: 'relative',
             width: '100%',
             pt: '56.25%', // 16:9
-            borderRadius: 2,
+            borderRadius: 4,
             overflow: 'hidden',
+            background: 'rgba(255,255,255,0.98)',
+            boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
           }}
         >
           <video
@@ -952,6 +1189,8 @@ export default function Test() {
               objectFit: 'cover',
               transform: 'scaleX(-1)',
               borderRadius: '24px',
+              boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
+              border: '2px solid #e0f7fa',
             }}
           />
 
@@ -959,11 +1198,11 @@ export default function Test() {
             <RecordingButton
               variant="contained"
               onClick={hasStartedTest ? undefined : startTest}
-              disabled={isGenerating || hasStartedTest}
+              disabled={isGenerating || hasStartedTest || isConnecting}
               sx={{
-                backgroundColor: '#02E2FF',
+                backgroundColor: 'rgba(0, 255, 157, 1)',
                 '&:hover': {
-                  backgroundColor: '#00C3FF',
+                  backgroundColor: 'rgba(0, 255, 157, 1)',
                 },
                 '&.Mui-disabled': {
                   backgroundColor: hasStartedTest ? '#ff4444' : 'rgba(255, 255, 255, 0.12)',
@@ -971,18 +1210,19 @@ export default function Test() {
                 }
               }}
             >
-              {hasStartedTest ? `Recording in progress (${timeLeft}s)` : 'Start Test'}
+              {isConnecting
+                ? 'Connecting...'
+                : hasStartedTest
+                  ? `Recording in progress (${timeLeft}s)`
+                  : 'Start Test'
+              }
             </RecordingButton>
-            <TranscriptDisplay variant="body2">
-              {isTranscribing ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CircularProgress size={16} sx={{ color: '#02E2FF' }} />
-                  <span>Processing audio...</span>
-                </Box>
-              ) : (
-                currentTranscript || 'Speak now...'
-              )}
-            </TranscriptDisplay>
+            {hasStartedTest && (
+              <VoiceActivityIndicator isActive={currentTranscript.length > 0}>
+                <VoiceWaves />
+                <VoiceIcon />
+              </VoiceActivityIndicator>
+            )}
           </RecordingControls>
 
           <QuestionOverlay>
@@ -1016,23 +1256,26 @@ export default function Test() {
           variant="contained"
           endIcon={<ArrowForwardIcon />}
           onClick={handleNext}
-          disabled={isGenerating}
+          disabled={isGenerating || (current > 0 && nextButtonDisabled)}
           sx={{
             textTransform: 'none',
-            background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+            background: nextButtonDisabled ? 'rgba(255, 255, 255, 0.12)' : GREEN_MAIN,
             borderRadius: 2,
             px: 4,
             py: 1.5,
+            fontWeight: 600,
+            boxShadow: '0 2px 8px 0 rgba(0,255,157,0.10)',
             '&:hover': {
-              background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+              background: nextButtonDisabled ? 'rgba(255, 255, 255, 0.12)' : GREEN_MAIN,
             },
             '&.Mui-disabled': {
-              background: 'rgba(255, 255, 255, 0.12)',
-              color: 'rgba(255, 255, 255, 0.3)',
+              color: 'black',
             }
           }}
         >
-          {current < questions.length - 1 ? 'Next Question' : 'Finish Test'}
+          {current < questions.length - 1
+            ? `Next Question${nextButtonDisabled ? ` (${buttonTimer}s)` : ''}`
+            : 'Finish Test'}
         </Button>
       </NavigationBar>
     </Box>

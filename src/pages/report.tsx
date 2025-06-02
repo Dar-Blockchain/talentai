@@ -83,6 +83,7 @@ export default function Report() {
   const hasRun = useRef(false);
 
   useEffect(() => {
+    if (!router.isReady) return;
 
     const previousPath = (router.query.from as string) || localStorage.getItem('previousPath');
     const type = (router.query.type as string) ||
@@ -143,6 +144,13 @@ export default function Report() {
           const profileData = await profileResponse.json();
           const userSkills = profileData?.skills || [];
 
+          console.log('URL Parameters:', {
+            type: router.query.type,
+            skill: router.query.skill,
+            proficiency: router.query.proficiency,
+            subcategory: router.query.subcategory
+          });
+
           const requestBody = {
             type: router.query.type || testData.metadata?.type || type,
             skill: router.query.skill ? [{
@@ -155,6 +163,10 @@ export default function Report() {
             subcategory: router.query.subcategory as string,
             questions: testData.results
           };
+
+          if (!requestBody.skill.length) {
+            throw new Error('No skills found in profile or URL parameters');
+          }
 
           console.log('Sending analysis request:', JSON.stringify(requestBody, null, 2));
 
@@ -220,9 +232,8 @@ export default function Report() {
     if (!hasRun.current) {
       hasRun.current = true;
       analyzeResults();
-      
     }
-  }, [router.query.from, router.query.type, router.query.skill, router.query.subcategory]);
+  }, [router.isReady, router.query.from, router.query.type, router.query.skill, router.query.subcategory, router.query.proficiency]);
   const goHome = () => router.push('/dashboardCandidate');
 
   if (loading || analyzing) {
@@ -233,12 +244,11 @@ export default function Report() {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        background: '#00072D',
         gap: 3
       }}>
         <CircularProgress sx={{ color: '#02E2FF' }} />
         <Typography variant="h6" sx={{
-          color: '#fff',
+          color: '#000',
           textAlign: 'center',
           animation: 'pulse 1.5s infinite',
           '@keyframes pulse': {
@@ -256,7 +266,7 @@ export default function Report() {
             mt: 2
           }}>
             <Typography variant="body2" sx={{
-              color: 'rgba(255,255,255,0.7)',
+              color: '#000',
               fontSize: '0.9rem'
             }}>
               We're processing your answers and generating a detailed analysis. This may take a moment.
@@ -306,11 +316,7 @@ export default function Report() {
   return (
     <Box sx={{
       minHeight: '100vh',
-      backgroundColor: '#0f172a',
-      backgroundImage: `
-        radial-gradient(circle at 20% 30%, rgba(37, 99, 235, 0.15), transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(29, 78, 216, 0.15), transparent 50%)
-      `,
+
       py: 4
     }}>
       <Container maxWidth="md">
@@ -318,7 +324,7 @@ export default function Report() {
           startIcon={<ArrowBackIcon />}
           onClick={goHome}
           sx={{
-            color: '#fff',
+            color: '#000',
             mb: 2,
             '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' }
           }}
@@ -336,7 +342,7 @@ export default function Report() {
             sx={{
               color: '#fff',
               mb: 3,
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              background: 'rgba(0, 255, 157, 1)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               fontWeight: 700
@@ -347,8 +353,8 @@ export default function Report() {
 
           {results ? (
             <>
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="h6" sx={{ color: '#fff', mb: 2 }}>
+              <Box sx={{ mb: 4, padding: '10px', border: '1px solid black' }}>
+                <Typography variant="h6" sx={{ color: '#000', mb: 2 }}>
                   Overall Performance
                 </Typography>
                 <Box sx={{
@@ -361,7 +367,7 @@ export default function Report() {
                   borderRadius: 2
                 }}>
                   <TrendingUpIcon sx={{ color: '#02E2FF' }} />
-                  <Typography variant="h5" sx={{ color: '#fff' }}>
+                  <Typography variant="h5" sx={{ color: '#000' }}>
                     Score: {Number(results.analysis.overallScore).toFixed(2)}%
                   </Typography>
                   <Chip
@@ -373,13 +379,13 @@ export default function Report() {
                     }}
                   />
                 </Box>
-                <Typography variant="body1" sx={{ color: '#fff', mb: 2 }}>
+                <Typography variant="body1" sx={{ color: '#000', mb: 2 }}>
                   {results.analysis.generalAssessment}
                 </Typography>
               </Box>
 
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="h6" sx={{ color: '#fff', mb: 2 }}>
+              <Box sx={{ mb: 4, padding: '10px', border: '1px solid black' }}>
+                <Typography variant="h6" sx={{ color: '#000', mb: 2 }}>
                   Skill Analysis
                 </Typography>
                 {results.analysis.skillAnalysis.map((skill, i) => (
@@ -388,21 +394,22 @@ export default function Report() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.5, delay: i * 0.1 }}
+                    sx={{ backgroundColor: 'white' }}
                   >
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, backgroundColor: 'white' }}>
                       <Box>
-                        <Typography variant="h6" sx={{ color: '#02E2FF' }}>
+                        <Typography variant="h6" sx={{ color: 'rgba(0, 255, 157, 1)' }}>
                           {skill.skillName}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', gap: 2 }}>
                         <Box sx={{ flex: 1 }}>
-                          <Typography sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                          <Typography sx={{ color: '#000' }}>
                             Current Level: {skill.currentExperienceLevel}
                           </Typography>
                         </Box>
                         <Box sx={{ flex: 1 }}>
-                          <Typography sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                          <Typography sx={{ color: '#000' }}>
                             Demonstrated Level: {skill.demonstratedExperienceLevel}
                           </Typography>
                         </Box>
@@ -417,7 +424,7 @@ export default function Report() {
                         <Box sx={{ mt: 2 }}>
                           <Typography sx={{ color: '#FF6B6B', mb: 1 }}>Areas for Improvement:</Typography>
                           {skill.weaknesses.map((weakness, j) => (
-                            <Typography key={j} sx={{ color: '#fff', ml: 2 }}>• {weakness}</Typography>
+                            <Typography key={j} sx={{ color: '#000', ml: 2 }}>• {weakness}</Typography>
                           ))}
                         </Box>
                       </Box>
@@ -426,24 +433,24 @@ export default function Report() {
                 ))}
               </Box>
 
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="h6" sx={{ color: '#fff', mb: 2 }}>
+              <Box sx={{ mb: 4, padding: '10px', border: '1px solid black' }}>
+                <Typography variant="h6" sx={{ color: '#000', mb: 2 }}>
                   Recommendations
                 </Typography>
                 <Box sx={{ backgroundColor: 'rgba(255,255,255,0.05)', p: 2, borderRadius: 2 }}>
                   {results.analysis.recommendations.map((rec, i) => (
-                    <Typography key={i} sx={{ color: '#fff', mb: 1 }}>• {rec}</Typography>
+                    <Typography key={i} sx={{ color: '#000', mb: 1 }}>• {rec}</Typography>
                   ))}
                 </Box>
               </Box>
 
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="h6" sx={{ color: '#fff', mb: 2 }}>
+              <Box sx={{ mb: 4, padding: '10px', border: '1px solid black' }}>
+                <Typography variant="h6" sx={{ color: '#000', mb: 2 }}>
                   Next Steps
                 </Typography>
                 <Box sx={{ backgroundColor: 'rgba(255,255,255,0.05)', p: 2, borderRadius: 2 }}>
                   {results.analysis.nextSteps.map((step, i) => (
-                    <Typography key={i} sx={{ color: '#fff', mb: 1 }}>• {step}</Typography>
+                    <Typography key={i} sx={{ color: '#000', mb: 1 }}>• {step}</Typography>
                   ))}
                 </Box>
               </Box>
@@ -467,7 +474,7 @@ export default function Report() {
               onClick={() => router.push('/dashboardCandidate')}
               startIcon={<PersonIcon />}
               sx={{
-                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                background: 'rgba(0, 255, 157, 1)',
                 color: '#fff',
                 px: 4,
                 py: 1.5,
@@ -476,7 +483,7 @@ export default function Report() {
                 fontSize: '1.1rem',
                 fontWeight: 500,
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                  background: 'rgba(0, 255, 157, 1)',
                 }
               }}
             >

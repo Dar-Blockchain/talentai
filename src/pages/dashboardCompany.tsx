@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getMyProfile, selectProfile, clearProfile } from '../store/features/profileSlice';
+import { getMyProfile, selectProfile, clearProfile } from '../store/slices/profileSlice';
 import { AppDispatch, RootState } from '../store/store';
 import {
   Box,
@@ -74,11 +74,14 @@ import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import axios from 'axios';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
+// At the top of your file, after imports
+const GREEN_MAIN = 'rgba(0, 255, 157, 1)';
+
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
   padding: theme.spacing(3),
   marginBottom: theme.spacing(3),
-  background: 'rgba(30, 41, 59, 0.7)',
+  background: 'white',
   backdropFilter: 'blur(10px)',
   borderRadius: '16px',
   boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
@@ -93,7 +96,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
 const SectionTitle = styled(Typography)(({ theme }) => ({
   fontSize: '1.5rem',
   fontWeight: 700,
-  color: '#ffffff',
+  color: 'black',
   marginBottom: theme.spacing(3),
   position: 'relative',
   '&:after': {
@@ -109,7 +112,8 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
 }));
 
 const ProfileHeader = styled(Box)(({ theme }) => ({
-  background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+  background: 'white',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
   color: '#ffffff',
   padding: theme.spacing(4),
   borderRadius: '16px',
@@ -123,7 +127,6 @@ const ProfileHeader = styled(Box)(({ theme }) => ({
     left: '0',
     right: '0',
     bottom: '0',
-    background: 'radial-gradient(circle at top right, rgba(2,226,255,0.1) 0%, transparent 60%)',
     zIndex: 1
   }
 }));
@@ -140,12 +143,14 @@ const StatCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
   borderRadius: '12px',
   backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(255,255,255,0.1)'
+  border: '1px solid rgba(255,255,255,0.1)',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
 }));
 
 const CompanyInfoCard = styled(Box)(({ theme }) => ({
-  background: 'rgba(30, 41, 59, 0.6)',
+  background: 'white',
   borderRadius: '16px',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
   padding: theme.spacing(3),
   border: '1px solid rgba(255,255,255,0.1)',
   marginBottom: theme.spacing(3),
@@ -161,8 +166,8 @@ const InfoRow = styled(Box)(({ theme }) => ({
 
 const SkillChip = styled(Chip)(({ theme }) => ({
   borderRadius: '8px',
-  backgroundColor: 'rgba(2, 226, 255, 0.1)',
-  color: '#02E2FF',
+  backgroundColor: GREEN_MAIN,
+  color: 'black',
   fontWeight: 600,
   margin: theme.spacing(0.5),
   '&:hover': {
@@ -185,11 +190,11 @@ const CandidateCard = styled(Box)(({ theme }) => ({
 }));
 
 const MatchCard = styled(Box)(({ theme }) => ({
-  background: 'rgba(30, 41, 59, 0.7)',
+  background: 'white',
   backdropFilter: 'blur(10px)',
   borderRadius: '16px',
+  border: '1px solid black',
   padding: theme.spacing(3),
-  border: '1px solid rgba(255,255,255,0.1)',
   transition: 'all 0.3s ease',
   '&:hover': {
     transform: 'translateY(-4px)',
@@ -208,8 +213,7 @@ const MatchScore = styled(Box)(({ theme }) => ({
 }));
 
 const JobCard = styled(Box)(({ theme }) => ({
-  background: 'rgba(30, 41, 59, 0.7)',
-  backdropFilter: 'blur(10px)',
+  background: 'white',
   borderRadius: '16px',
   padding: theme.spacing(3),
   border: '1px solid rgba(2,226,255,0.15)',
@@ -936,18 +940,18 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
       PaperProps={{
         sx: {
           borderRadius: '16px',
-          background: 'rgba(30, 41, 59, 0.95)',
+          background: 'white',
           backdropFilter: 'blur(10px)',
           border: '1px solid rgba(255,255,255,0.1)',
         }
       }}
     >
       <DialogTitle sx={{
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-        color: '#ffffff'
+        borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+        color: '#000000'
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography variant="h6">Filter by Job</Typography>
+          <Typography variant="h6" sx={{ color: '#000000' }}>Filter by Job</Typography>
           <IconButton
             onClick={() => setFilterDialog(false)}
             sx={{ color: 'rgba(255,255,255,0.7)' }}
@@ -957,12 +961,12 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
         </Box>
       </DialogTitle>
       <DialogContent sx={{ mt: 2 }}>
-        <Typography variant="subtitle2" sx={{ mb: 1, color: '#ffffff' }}>
+        <Typography variant="subtitle2" sx={{ mb: 1, color: '#000000' }}>
           Select Job
         </Typography>
         {isLoadingJobs ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-            <CircularProgress size={24} sx={{ color: '#02E2FF' }} />
+            <CircularProgress size={24} sx={{ color: '#000000' }} />
           </Box>
         ) : jobsError ? (
           <Alert severity="error" sx={{
@@ -982,33 +986,39 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
             value={selectedJob}
             onChange={handleJobChange}
             sx={{
-              color: '#ffffff',
+              color: 'black',
               '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'rgba(255,255,255,0.2)'
+                borderColor: '#000000'
               },
               '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'rgba(255,255,255,0.3)'
+                borderColor: '#000000'
               },
               '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#02E2FF'
+                borderColor: '#000000'
               },
-              backgroundColor: 'rgba(30,41,59,0.98)'
+              backgroundColor: 'white',
+              '& .MuiSelect-select': {
+                color: 'black'
+              },
+              '& .MuiInputLabel-root': {
+                color: 'black'
+              }
             }}
             SelectProps={{
               MenuProps: {
                 PaperProps: {
                   sx: {
                     maxHeight: 300,
-                    backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                    backgroundColor: 'white',
                     '& .MuiMenuItem-root': {
-                      color: '#ffffff',
+                      color: 'black',
                       '&:hover': {
-                        backgroundColor: 'rgba(30,41,59,1)',
+                        backgroundColor: 'rgba(0, 255, 157, 0.1)',
                       },
                       '&.Mui-selected': {
-                        backgroundColor: 'rgba(2,226,255,0.2)',
+                        backgroundColor: 'rgba(0, 255, 157, 0.2)',
                         '&:hover': {
-                          backgroundColor: 'rgba(2,226,255,0.3)',
+                          backgroundColor: 'rgba(0, 255, 157, 0.3)',
                         }
                       }
                     }
@@ -1036,8 +1046,12 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
             setFilterDialog(false);
           }}
           sx={{
-            color: 'rgba(255,255,255,0.8)',
-            mr: 1
+            borderColor: 'black',
+            color: 'black',
+            '&:hover': {
+              borderColor: 'rgba(0, 255, 157, 1)',
+              background: 'rgba(0, 255, 157, 0.08)'
+            }
           }}
         >
           Cancel
@@ -1046,9 +1060,9 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
           variant="contained"
           onClick={handleFilterApply}
           sx={{
-            background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+            background: 'rgba(0, 255, 157, 1)',
             '&:hover': {
-              background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+              background: 'rgba(0, 255, 157, 1)',
             }
           }}
         >
@@ -1057,47 +1071,6 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
       </DialogActions>
     </Dialog>
   );
-
-  // Add function to fetch bid history
-  // const fetchBidHistory = async () => {
-  //   setIsLoadingBids(true);
-  //   setBidError(null);
-  //   try {
-  //     const token = localStorage.getItem('api_token');
-  //     if (!token) {
-  //       throw new Error('No authentication token found');
-  //     }
-  //     const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getCompanyBid`
-  //       , {
-  //         method: 'GET',
-  //         headers: {
-  //           'Authorization': `Bearer ${token}`,
-  //           'Content-Type': 'application/json'
-  //         }
-  //       });
-
-  //     if (!response.ok) {
-  //       throw new Error('Failed to fetch bid history');
-  //     }
-
-  //     const data = await response.json();
-  //     if (data.success) {
-  //       setBidHistory(data.bids || []);
-  //     } else {
-  //       throw new Error(data.error || 'Failed to fetch bid history');
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching bid history:', error);
-  //     setBidError(error instanceof Error ? error.message : 'Failed to fetch bid history');
-  //   } finally {
-  //     setIsLoadingBids(false);
-  //   }
-  // };
-
-  // Add useEffect to fetch bid history on component mount
-  // useEffect(() => {
-  //   fetchBidHistory();
-  // }, []);
 
   // Update the renderBidHistory function
   const renderBidHistory = () => (
@@ -1118,15 +1091,16 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              background: 'rgba(30,41,59,0.5)',
+              background: 'white',
               borderRadius: '10px',
               p: 2,
+              boxShadow: '0 0 10px 0 rgba(0, 0, 0, 0.1)',
               border: '1px solid rgba(255,255,255,0.08)'
             }}>
               <Box>
-                <Typography sx={{ color: '#fff', fontWeight: 600 }}>{bid?.userInfo?.username}</Typography>
-                <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}>{bid?.userInfo?.email}</Typography>
-                <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>{bid?.post?.jobDetails?.title}</Typography>
+                <Typography sx={{ color: '#000', fontWeight: 600 }}>{bid?.userInfo?.username}</Typography>
+                <Typography sx={{ color: '#000', fontSize: '0.9rem' }}>{bid?.userInfo?.email}</Typography>
+                <Typography sx={{ color: '#000', fontSize: '0.85rem' }}>{bid?.post?.jobDetails?.title}</Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 {/* <Chip
@@ -1134,10 +1108,10 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
                   color={bid.status === 'win' ? 'success' : 'error'}
                   sx={{ fontWeight: 700 }}
                 /> */}
-                <Typography sx={{ color: '#02E2FF', fontWeight: 600 }}>
+                <Typography sx={{ color: GREEN_MAIN, fontWeight: 600 }}>
                   ${bid?.finalBid}
                 </Typography>
-                <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>
+                <Typography sx={{ color: 'black', fontSize: '0.8rem' }}>
                   {new Date(bid?.dateBid).toLocaleDateString()}
                 </Typography>
               </Box>
@@ -1157,7 +1131,7 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
       fullWidth
       PaperProps={{
         sx: {
-          background: '#17203D',
+          background: 'white',
           backdropFilter: 'blur(10px)',
           borderRadius: { xs: '0', sm: '16px' },
           border: '1px solid rgba(255,255,255,0.1)',
@@ -1170,7 +1144,7 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
       }}
     >
       <DialogTitle sx={{
-        color: '#fff',
+        color: 'black',
         borderBottom: '1px solid rgba(255,255,255,0.1)',
         display: 'flex',
         justifyContent: 'space-between',
@@ -1189,8 +1163,8 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
             label="Beta"
             size="small"
             sx={{
-              backgroundColor: 'rgba(2,226,255,0.1)',
-              color: '#02E2FF',
+              backgroundColor: GREEN_MAIN,
+              color: 'black',
               height: '20px'
             }}
           />
@@ -1198,7 +1172,7 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
         <IconButton
           onClick={() => setJobPostDialog(false)}
           sx={{
-            color: 'rgba(255,255,255,0.5)',
+            color: 'black',
             position: { xs: 'absolute', sm: 'static' },
             right: { xs: 8, sm: 'auto' },
             top: { xs: 8, sm: 'auto' }
@@ -1227,14 +1201,14 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
           overflow: 'auto'
         }}>
           <Typography variant="h6" sx={{
-            color: '#fff',
+            color: '#000',
             mb: 1,
             fontSize: { xs: '1rem', sm: '1.25rem' }
           }}>
             Job Description
           </Typography>
           <Typography variant="body2" sx={{
-            color: 'rgba(255,255,255,0.7)',
+            color: '#000',
             mb: 2,
             fontSize: { xs: '0.875rem', sm: '1rem' }
           }}>
@@ -1277,50 +1251,50 @@ Benefits:
 - Health insurance
 - 401(k) matching
 - Professional development budget"
-            InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+            InputLabelProps={{ sx: { color: GREEN_MAIN } }}
             InputProps={{
               sx: {
-                color: '#ffffff',
+                color: '#000',
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(255,255,255,0.2)',
+                  borderColor: GREEN_MAIN
                 },
                 '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'rgba(255,255,255,0.3)',
+                  borderColor: GREEN_MAIN,
                 },
                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#02E2FF',
+                  borderColor: GREEN_MAIN,
                 },
               },
             }}
           />
 
           <Box sx={{ mt: 3 }}>
-            <Typography variant="subtitle1" sx={{ color: '#ffffff', mb: 2 }}>
+            <Typography variant="subtitle1" sx={{ color: '#000', mb: 2 }}>
               Salary Range
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
               <Box sx={{ flex: 1 }}>
                 <FormControl fullWidth>
-                  <InputLabel sx={{ color: 'rgba(255,255,255,0.7)' }}>Currency</InputLabel>
+                  <InputLabel sx={{ color: GREEN_MAIN }}>Currency</InputLabel>
                   <Select
                     value={salaryRange.currency}
                     onChange={(e) => handleSalaryChange('currency', e.target.value)}
                     sx={{
-                      color: '#ffffff',
+                      color: '#000',
                       '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255,255,255,0.2)',
+                        borderColor: GREEN_MAIN,
                       },
                       '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255,255,255,0.3)',
+                        borderColor: GREEN_MAIN,
                       },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#02E2FF',
+                        borderColor: GREEN_MAIN,
                       },
                     }}
                   >
-                    <MenuItem value="$" sx={{ backgroundColor: 'rgba(30,41,59,0.98)', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>$ (USD)</MenuItem>
-                    <MenuItem value="€" sx={{ backgroundColor: 'rgba(30,41,59,0.98)', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>€ (EUR)</MenuItem>
-                    <MenuItem value="£" sx={{ backgroundColor: 'rgba(30,41,59,0.98)', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>£ (GBP)</MenuItem>
+                    <MenuItem value="$" sx={{ backgroundColor: 'white', color: 'black', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>$ (USD)</MenuItem>
+                    <MenuItem value="€" sx={{ backgroundColor: 'white', color: 'black', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>€ (EUR)</MenuItem>
+                    <MenuItem value="£" sx={{ backgroundColor: 'white', color: 'black', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>£ (GBP)</MenuItem>
                   </Select>
                 </FormControl>
               </Box>
@@ -1331,18 +1305,18 @@ Benefits:
                   type="string"
                   value={salaryRange.min}
                   onChange={(e) => handleSalaryChange('min', parseInt(e.target.value) || 0)}
-                  InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                  InputLabelProps={{ sx: { color: GREEN_MAIN } }}
                   InputProps={{
                     sx: {
-                      color: '#ffffff',
+                      color: '#000',
                       '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255,255,255,0.2)',
+                        borderColor: GREEN_MAIN,
                       },
                       '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255,255,255,0.3)',
+                        borderColor: GREEN_MAIN,
                       },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#02E2FF',
+                        borderColor: GREEN_MAIN,
                       },
                     },
                   }}
@@ -1355,18 +1329,18 @@ Benefits:
                   type="string"
                   value={salaryRange.max}
                   onChange={(e) => handleSalaryChange('max', parseInt(e.target.value) || 0)}
-                  InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                  InputLabelProps={{ sx: { color: GREEN_MAIN } }}
                   InputProps={{
                     sx: {
-                      color: '#ffffff',
+                      color: "#000",
                       '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255,255,255,0.2)',
+                        borderColor: GREEN_MAIN,
                       },
                       '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255,255,255,0.3)',
+                        borderColor: GREEN_MAIN,
                       },
                       '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#02E2FF',
+                        borderColor: GREEN_MAIN,
                       },
                     },
                   }}
@@ -1382,13 +1356,13 @@ Benefits:
               disabled={!jobDescription || isQuickGenerating || !isSalaryRangeValid()}
               startIcon={isQuickGenerating ? <CircularProgress size={20} /> : <BoltIcon />}
               sx={{
-                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                background: GREEN_MAIN,
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                  background: GREEN_MAIN,
                 },
                 '&.Mui-disabled': {
-                  background: 'rgba(255,255,255,0.1)',
-                  color: 'rgba(255,255,255,0.3)'
+                  background: GREEN_MAIN,
+                  color: 'black'
                 }
               }}
             >
@@ -1400,15 +1374,15 @@ Benefits:
               disabled={!jobDescription || isDetailedGenerating || !isSalaryRangeValid()}
               startIcon={isDetailedGenerating ? <CircularProgress size={20} /> : <AutoAwesomeIcon />}
               sx={{
-                borderColor: 'rgba(2,226,255,0.5)',
-                color: '#02E2FF',
+                borderColor: GREEN_MAIN,
+                color: GREEN_MAIN,
                 '&:hover': {
                   borderColor: '#02E2FF',
                   backgroundColor: 'rgba(2,226,255,0.1)'
                 },
                 '&.Mui-disabled': {
-                  borderColor: 'rgba(255,255,255,0.1)',
-                  color: 'rgba(255,255,255,0.3)'
+                  borderColor: GREEN_MAIN,
+                  color: GREEN_MAIN
                 }
               }}
             >
@@ -1455,7 +1429,6 @@ Benefits:
           height: { xs: '50%', md: 'auto' },
           p: { xs: 2, sm: 3 },
           overflowY: 'auto',
-          backgroundColor: 'rgba(0,0,0,0.2)'
         }}>
           {jobPostError ? (
             <Alert
@@ -1487,19 +1460,21 @@ Benefits:
               <Box sx={{
                 p: { xs: 2, sm: 3 },
                 borderRadius: '50%',
-                backgroundColor: 'rgba(255,255,255,0.05)',
+                backgroundColor: GREEN_MAIN,
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                color: 'white'
               }}>
                 <WorkIcon sx={{ fontSize: { xs: 32, sm: 40 } }} />
               </Box>
-              <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+              <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, color: 'black' }}>
                 Generated job post will appear here
               </Typography>
               <Typography variant="body2" sx={{
                 maxWidth: '80%',
-                fontSize: { xs: '0.875rem', sm: '1rem' }
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                color: 'black'
               }}>
                 Enter your job description on the left and click "Generate" to create a professional job posting
               </Typography>
@@ -1514,7 +1489,7 @@ Benefits:
                   <Typography
                     variant="h5"
                     sx={{
-                      color: '#02E2FF',
+                      color: GREEN_MAIN,
                       fontSize: { xs: '1.25rem', sm: '1.5rem' }
                     }}
                   >
@@ -1553,7 +1528,8 @@ Benefits:
                     label={generatedJob.jobDetails.location}
                     size="small"
                     sx={{
-                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      color: 'black',
+                      backgroundColor: GREEN_MAIN,
                       fontSize: { xs: '0.75rem', sm: '0.875rem' }
                     }}
                   />
@@ -1561,15 +1537,17 @@ Benefits:
                     label={generatedJob.jobDetails.employmentType}
                     size="small"
                     sx={{
-                      backgroundColor: 'rgba(255,255,255,0.1)',
-                      fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                      backgroundColor: GREEN_MAIN,
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      color: 'black'
                     }}
                   />
                   <Chip
                     label={`${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}`}
                     size="small"
                     sx={{
-                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      color: 'black',
+                      backgroundColor: GREEN_MAIN,
                       fontSize: { xs: '0.75rem', sm: '0.875rem' }
                     }}
                   />
@@ -1578,14 +1556,14 @@ Benefits:
 
               <Box sx={{ mb: 4 }}>
                 <Typography variant="subtitle1" sx={{
-                  color: '#00FFC3',
+                  color: GREEN_MAIN,
                   mb: 2,
                   fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}>
                   Overview
                 </Typography>
                 <Typography variant="body1" sx={{
-                  color: 'rgba(255,255,255,0.9)',
+                  color: 'black',
                   lineHeight: 1.6,
                   fontSize: { xs: '0.875rem', sm: '1rem' }
                 }}>
@@ -1595,7 +1573,7 @@ Benefits:
 
               <Box sx={{ mb: 4 }}>
                 <Typography variant="subtitle1" sx={{
-                  color: '#00FFC3',
+                  color: GREEN_MAIN,
                   mb: 2,
                   fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}>
@@ -1604,12 +1582,15 @@ Benefits:
                 <Box sx={{
                   backgroundColor: 'rgba(255,255,255,0.05)',
                   borderRadius: '12px',
+                  border: `1px solid black`,
+
                   p: 2
                 }}>
                   {generatedJob.jobDetails.requirements.map((req: string, index: number) => (
                     <Box key={index} sx={{
                       display: 'flex',
                       gap: 2,
+
                       mb: index !== generatedJob.jobDetails.requirements.length - 1 ? 1.5 : 0,
                       alignItems: 'flex-start'
                     }}>
@@ -1617,8 +1598,8 @@ Benefits:
                         minWidth: '24px',
                         height: '24px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(2,226,255,0.1)',
-                        color: '#02E2FF',
+                        backgroundColor: GREEN_MAIN,
+                        color: 'black',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1627,7 +1608,7 @@ Benefits:
                       }}>
                         {index + 1}
                       </Box>
-                      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+                      <Typography variant="body2" sx={{ color: 'black' }}>
                         {req}
                       </Typography>
                     </Box>
@@ -1637,7 +1618,7 @@ Benefits:
 
               <Box sx={{ mb: 4 }}>
                 <Typography variant="subtitle1" sx={{
-                  color: '#00FFC3',
+                  color: GREEN_MAIN,
                   mb: 2,
                   fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}>
@@ -1646,6 +1627,8 @@ Benefits:
                 <Box sx={{
                   backgroundColor: 'rgba(255,255,255,0.05)',
                   borderRadius: '12px',
+                  border: `1px solid black`,
+
                   p: 2
                 }}>
                   {generatedJob.jobDetails.responsibilities.map((resp: string, index: number) => (
@@ -1659,8 +1642,8 @@ Benefits:
                         minWidth: '24px',
                         height: '24px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(2,226,255,0.1)',
-                        color: '#02E2FF',
+                        backgroundColor: GREEN_MAIN,
+                        color: 'black',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1669,7 +1652,7 @@ Benefits:
                       }}>
                         {index + 1}
                       </Box>
-                      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+                      <Typography variant="body2" sx={{ color: 'black' }}>
                         {resp}
                       </Typography>
                     </Box>
@@ -1679,7 +1662,7 @@ Benefits:
 
               <Box>
                 <Typography variant="subtitle1" sx={{
-                  color: '#00FFC3',
+                  color: GREEN_MAIN,
                   mb: 2,
                   fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}>
@@ -1691,8 +1674,8 @@ Benefits:
                       key={index}
                       label={`${skill.name} (Level ${skill.level})`}
                       sx={{
-                        backgroundColor: 'rgba(2,226,255,0.1)',
-                        color: '#02E2FF',
+                        backgroundColor: GREEN_MAIN,
+                        color: 'black',
                         '& .MuiChip-label': {
                           px: 2
                         }
@@ -1702,39 +1685,7 @@ Benefits:
                 </Box>
               </Box>
 
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="subtitle1" sx={{
-                  color: '#00FFC3',
-                  mb: 2,
-                  fontSize: { xs: '1rem', sm: '1.25rem' }
-                }}>
-                  Application Link
-                </Typography>
-                <Box sx={{
-                  backgroundColor: 'rgba(2,226,255,0.1)',
-                  borderRadius: '12px',
-                  p: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2
-                }}>
-                  <LinkIcon sx={{ color: '#02E2FF' }} />
-                  <Typography
-                    component="a"
-                    href="https://staging.talentai.bid/test"
-                    target="_blank"
-                    sx={{
-                      color: '#02E2FF',
-                      textDecoration: 'none',
-                      '&:hover': {
-                        textDecoration: 'underline'
-                      }
-                    }}
-                  >
-                    Pass the test at: https://staging.talentai.bid
-                  </Typography>
-                </Box>
-              </Box>
+
 
               <Button
                 fullWidth
@@ -1745,14 +1696,14 @@ Benefits:
                   mt: 4,
                   py: { xs: 1, sm: 1.5 },
                   fontSize: { xs: '0.875rem', sm: '1rem' },
-                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                  background: GREEN_MAIN,
                   borderRadius: '12px',
                   color: isSaving ? '#111' : '#fff',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                    background: GREEN_MAIN,
                   },
                   '&.Mui-disabled': {
-                    background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                    background: GREEN_MAIN,
                     color: isSaving ? '#111' : '#fff',
                     opacity: 0.7,
                   }
@@ -1793,16 +1744,16 @@ Benefits:
           justifyContent: 'center',
           py: 6,
           px: 3,
-          backgroundColor: 'rgba(2,226,255,0.05)',
+          backgroundColor: 'white',
           borderRadius: '16px',
-          border: '1px solid rgba(2,226,255,0.1)',
-          textAlign: 'center'
+          textAlign: 'center',
+          boxShadow: '0px 0px 2px 0px rgba(0, 255, 157, 1)'
         }}>
-          <PersonSearchIcon sx={{ fontSize: 48, color: '#02E2FF', mb: 2 }} />
-          <Typography variant="h6" sx={{ color: '#fff', fontWeight: 600, mb: 1 }}>
+          <PersonSearchIcon sx={{ fontSize: 48, color: 'rgba(0, 255, 157, 1)', mb: 2 }} />
+          <Typography variant="h6" sx={{ color: 'black', fontWeight: 600, mb: 1 }}>
             No Matching Candidates Found
           </Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', maxWidth: '400px' }}>
+          <Typography variant="body2" sx={{ color: 'black', maxWidth: '400px' }}>
             We couldn't find any candidates that match your job requirements. Try adjusting your filters or requirements to find more matches.
           </Typography>
         </Box>
@@ -1834,14 +1785,14 @@ Benefits:
                   justifyContent: 'center',
                   fontSize: '1.5rem',
                   fontWeight: 600,
-                  color: '#02E2FF'
+                  color: 'black'
                 }}>
                   {candidate?.candidateId?.username ? candidate.candidateId.username.charAt(0).toUpperCase() : '?'}
                 </Box>
                 {/* User Info */}
                 <Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                    <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 600 }}>
+                    <Typography variant="h6" sx={{ color: 'black', fontWeight: 600 }}>
                       {candidate?.candidateId?.username || 'Anonymous'}
                     </Typography>
                     {candidate?.candidateId?.isVerified && (
@@ -1865,11 +1816,11 @@ Benefits:
                       ml: 1
                     }} />
                   </Box>
-                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                  <Typography variant="body2" sx={{ color: 'black' }}>
                     {candidate?.candidateId?.email || 'No email provided'}
                   </Typography>
                   <Typography variant="caption" sx={{
-                    color: 'rgba(255,255,255,0.5)',
+                    color: 'black',
                     display: 'block',
                     mt: 0.5
                   }}>
@@ -1880,7 +1831,7 @@ Benefits:
               <Box sx={{ display: "flex", gap: "10px" }}>
                 {/* Current Bid */}
                 <Box sx={{
-                  background: 'linear-gradient(135deg, rgba(2,226,255,0.1) 0%, rgba(0,255,195,0.1) 100%)',
+                  background: 'rgba(0, 255, 157, 1)',
                   padding: '8px',
                   borderRadius: '8px',
                   minWidth: '70px',
@@ -1888,14 +1839,15 @@ Benefits:
                 }}>
                   <Typography variant="h6" sx={{
                     fontWeight: 600,
-                    color: '#02E2FF',
+                    color: 'black',
                     fontSize: '1.25rem',
                     lineHeight: 1
                   }}>
                     {candidate?.finalBid || 0}$
                   </Typography>
                   <Typography variant="caption" sx={{
-                    color: 'rgba(255,255,255,0.7)',
+
+                    color: 'black',
                     fontSize: '0.7rem'
                   }}>
                     Current Bid
@@ -1903,7 +1855,7 @@ Benefits:
                 </Box>
                 {/* Match Score */}
                 <Box sx={{
-                  background: 'linear-gradient(135deg, rgba(2,226,255,0.1) 0%, rgba(0,255,195,0.1) 100%)',
+                  background: 'rgba(0, 255, 157, 1)',
                   padding: '8px',
                   borderRadius: '8px',
                   minWidth: '70px',
@@ -1911,14 +1863,14 @@ Benefits:
                 }}>
                   <Typography variant="h6" sx={{
                     fontWeight: 600,
-                    color: '#02E2FF',
+                    color: 'black',
                     fontSize: '1.25rem',
                     lineHeight: 1
                   }}>
                     {candidate?.score || 0}%
                   </Typography>
                   <Typography variant="caption" sx={{
-                    color: 'rgba(255,255,255,0.7)',
+                    color: 'black',
                     fontSize: '0.7rem'
                   }}>
                     Match Score
@@ -1928,9 +1880,9 @@ Benefits:
 
             </Box>
             {/* Skills Section */}
-            <Box sx={{ mb: 3 }}>
+            < Box sx={{ mb: 3 }}>
               <Typography variant="subtitle2" sx={{
-                color: '#ffffff',
+                color: 'black',
                 mb: 2,
                 display: 'flex',
                 alignItems: 'center',
@@ -1940,12 +1892,12 @@ Benefits:
                   width: 24,
                   height: 24,
                   borderRadius: '6px',
-                  background: 'rgba(2,226,255,0.1)',
+                  background: 'rgba(0, 255, 157, 1)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <StarIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
+                  <StarIcon sx={{ fontSize: 16, color: 'black' }} />
                 </Box>
                 Matched Skills
               </Typography>
@@ -1953,6 +1905,7 @@ Benefits:
                 display: 'flex',
                 flexWrap: 'wrap',
                 gap: 1,
+                // border: '1px solid black',
                 '& > *': {
                   flex: '1 1 calc(50% - 8px)',
                   minWidth: '200px'
@@ -1962,14 +1915,15 @@ Benefits:
                   <Box
                     key={skill?._id || `skill-${Math.random()}`}
                     sx={{
-                      backgroundColor: 'rgba(255,255,255,0.05)',
+                      backgroundColor: 'rgba(0, 255, 157, 1)',
                       borderRadius: '8px',
                       padding: '12px',
+                      color: 'black',
                       border: '1px solid rgba(255,255,255,0.1)'
                     }}
                   >
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>
+                      <Typography sx={{ color: 'black', fontWeight: 500 }}>
                         {skill?.name || 'Unnamed Skill'}
                       </Typography>
                       <Chip
@@ -1977,7 +1931,7 @@ Benefits:
                         size="small"
                         sx={{
                           backgroundColor: 'rgba(2,226,255,0.1)',
-                          color: '#02E2FF',
+                          color: 'black',
                           height: '20px'
                         }}
                       />
@@ -2012,7 +1966,7 @@ Benefits:
             {/* Required Skills Section */}
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle2" sx={{
-                color: '#ffffff',
+                color: 'black',
                 mb: 2,
                 display: 'flex',
                 alignItems: 'center',
@@ -2022,12 +1976,12 @@ Benefits:
                   width: 24,
                   height: 24,
                   borderRadius: '6px',
-                  background: 'rgba(2,226,255,0.1)',
+                  background: 'rgba(0, 255, 157, 1)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <WorkIcon sx={{ fontSize: 16, color: '#02E2FF' }} />
+                  <WorkIcon sx={{ fontSize: 16, color: 'black' }} />
                 </Box>
                 Required Skills
               </Typography>
@@ -2045,8 +1999,7 @@ Benefits:
                     label={`${skill?.name || 'Unnamed'} (${skill?.level || 'N/A'})`}
                     size="small"
                     sx={{
-                      backgroundColor: 'rgba(255,255,255,0.1)',
-                      color: 'rgba(255,255,255,0.8)',
+                      background: 'rgba(0, 255, 157, 1)', color: 'black',
                       '& .MuiChip-label': {
                         px: 2
                       }
@@ -2070,10 +2023,10 @@ Benefits:
                 component="a"
                 href={`mailto:${candidate?.candidateId?.email}`}
                 sx={{
-                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                  background: 'rgba(0, 255, 157, 1)',
                   color: '#ffffff',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                    background: 'rgba(0, 255, 157, 1)',
                   }
                 }}
                 disabled={!candidate?.candidateId?.email}
@@ -2086,11 +2039,12 @@ Benefits:
                 startIcon={<AttachMoneyIcon />}
                 onClick={() => handleBidDialogOpen(candidate)}
                 sx={{
-                  borderColor: 'rgba(2,226,255,0.5)',
-                  color: '#02E2FF',
+
+                  borderColor: 'rgba(0, 255, 157, 1)',
+                  color: 'black',
                   '&:hover': {
                     borderColor: '#02E2FF',
-                    backgroundColor: 'rgba(2,226,255,0.1)'
+                    backgroundColor: 'rgba(0, 255, 157, 1)'
                   }
                 }}
                 disabled={!candidate?.candidateId?._id || !selectedJob}
@@ -2098,27 +2052,29 @@ Benefits:
                 Place Bid
               </Button>
             </Box>
-          </MatchCard>
+          </MatchCard >
         ))}
 
-        {matchingProfiles.length > displayCount && (
-          <Button
-            variant="outlined"
-            onClick={() => setDisplayCount(prev => prev + 3)}
-            sx={{
-              mt: 2,
-              borderColor: 'rgba(2,226,255,0.5)',
-              color: '#02E2FF',
-              '&:hover': {
-                borderColor: '#02E2FF',
-                backgroundColor: 'rgba(2,226,255,0.1)'
-              }
-            }}
-          >
-            Show More
-          </Button>
-        )}
-      </Box>
+        {
+          matchingProfiles.length > displayCount && (
+            <Button
+              variant="outlined"
+              onClick={() => setDisplayCount(prev => prev + 3)}
+              sx={{
+                mt: 2,
+                borderColor: 'rgba(2,226,255,0.5)',
+                color: '#02E2FF',
+                '&:hover': {
+                  borderColor: '#02E2FF',
+                  backgroundColor: 'rgba(2,226,255,0.1)'
+                }
+              }}
+            >
+              Show More
+            </Button>
+          )
+        }
+      </Box >
     );
   };
 
@@ -2469,7 +2425,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
       setIsLoadingProfiles(true);
       setProfilesError(null);
       const token = localStorage.getItem('token');
-      
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getCompanyWithAssessments`, {
         method: 'GET',
         headers: {
@@ -2522,7 +2478,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           justifyContent: 'center',
           py: 6,
           px: 3,
-          backgroundColor: 'rgba(2,226,255,0.05)',
+          backgroundColor: 'white',
           borderRadius: '16px',
           border: '1px solid rgba(2,226,255,0.1)',
           textAlign: 'center'
@@ -2531,7 +2487,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           <Typography variant="h6" sx={{ color: '#fff', fontWeight: 600, mb: 1 }}>
             No Assessments Found
           </Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', maxWidth: '400px' }}>
+          <Typography variant="body2" sx={{ color: 'black', maxWidth: '400px' }}>
             There are no assessments available at the moment.
           </Typography>
         </Box>
@@ -2540,8 +2496,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
     return (
       <>
-        <TableContainer component={Paper} sx={{ 
-          backgroundColor: 'rgba(30, 41, 59, 0.7)',
+        <TableContainer component={Paper} sx={{
+          backgroundColor: 'white',
           borderRadius: '16px',
           border: '1px solid rgba(255,255,255,0.1)',
           overflow: 'hidden'
@@ -2549,28 +2505,28 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ color: '#02E2FF', fontWeight: 600 }}>Candidate</TableCell>
-                <TableCell sx={{ color: '#02E2FF', fontWeight: 600 }}>Assessment Date</TableCell>
-                <TableCell sx={{ color: '#02E2FF', fontWeight: 600 }}>Overall Score</TableCell>
-                <TableCell sx={{ color: '#02E2FF', fontWeight: 600 }}>Job Match</TableCell>
-                <TableCell sx={{ color: '#02E2FF', fontWeight: 600 }}>Actions</TableCell>
+                <TableCell sx={{ color: '#000', fontWeight: 600 }}>Candidate</TableCell>
+                <TableCell sx={{ color: '#000', fontWeight: 600 }}>Assessment Date</TableCell>
+                <TableCell sx={{ color: '#000', fontWeight: 600 }}>Overall Score</TableCell>
+                <TableCell sx={{ color: '#000', fontWeight: 600 }}>Job Match</TableCell>
+                <TableCell sx={{ color: '#000', fontWeight: 600 }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {companyProfiles.map((assessment) => (
                 <TableRow key={assessment._id} sx={{ '&:hover': { backgroundColor: 'rgba(2,226,255,0.05)' } }}>
-                  <TableCell sx={{ color: '#fff' }}>
+                  <TableCell sx={{ color: '#000' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <PersonIcon sx={{ color: '#02E2FF' }} />
+                      <PersonIcon sx={{ color: 'rgba(0, 255, 157, 1)' }} />
                       <Typography>
-                        {assessment.condidateId.userId.email}
+                        {assessment.condidateId.userId.username}
                       </Typography>
                     </Box>
                   </TableCell>
-                  <TableCell sx={{ color: '#fff' }}>
+                  <TableCell sx={{ color: '#000' }}>
                     {new Date(assessment.timestamp).toLocaleDateString()}
                   </TableCell>
-                  <TableCell sx={{ color: '#fff' }}>
+                  <TableCell sx={{ color: '#000' }}>
                     {assessment.analysis.overallScore}%
                   </TableCell>
                   <TableCell sx={{ color: '#fff' }}>
@@ -2578,11 +2534,11 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                       label={assessment.analysis.jobMatch.status}
                       size="small"
                       sx={{
-                        backgroundColor: assessment.analysis.jobMatch.status === 'match' 
-                          ? 'rgba(0,255,195,0.13)' 
+                        backgroundColor: assessment.analysis.jobMatch.status === 'match'
+                          ? 'rgba(0,255,195,0.13)'
                           : 'rgba(255,59,48,0.13)',
-                        color: assessment.analysis.jobMatch.status === 'match' 
-                          ? '#00FFC3' 
+                        color: assessment.analysis.jobMatch.status === 'match'
+                          ? '#00FFC3'
                           : '#ff3b30',
                         fontWeight: 600
                       }}
@@ -2590,16 +2546,14 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                   </TableCell>
                   <TableCell>
                     <Button
-                      variant="outlined"
+                      variant="contained"
                       size="small"
                       onClick={() => handleViewAssessmentDetails(assessment)}
                       sx={{
-                        borderColor: 'rgba(2,226,255,0.5)',
-                        color: '#02E2FF',
-                        '&:hover': {
-                          borderColor: '#02E2FF',
-                          backgroundColor: 'rgba(2,226,255,0.1)'
-                        }
+                        backgroundColor: 'rgba(0, 255, 157, 1)',
+                        borderColor: '',
+                        color: 'black',
+
                       }}
                     >
                       View Details
@@ -2630,13 +2584,13 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
       fullWidth
       PaperProps={{
         sx: {
-          backgroundColor: 'rgba(30, 41, 59, 0.95)',
+          backgroundColor: 'white',
           borderRadius: '16px',
           border: '1px solid rgba(2,226,255,0.1)',
         }
       }}
     >
-      <DialogTitle sx={{ color: '#02E2FF', borderBottom: '1px solid rgba(2,226,255,0.1)' }}>
+      <DialogTitle sx={{ color: 'black', borderBottom: '1px solid rgba(2,226,255,0.1)' }}>
         Assessment Details
       </DialogTitle>
       <DialogContent sx={{ mt: 2 }}>
@@ -2644,10 +2598,10 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           <Box sx={{ color: '#fff' }}>
             {/* Candidate Info */}
             <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ color: '#02E2FF', mb: 2 }}>Candidate Information</Typography>
+              <Typography variant="h6" sx={{ color: 'rgba(0, 255, 157, 1)', mb: 2 }}>Candidate Information</Typography>
               <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Skills</Typography>
+                  <Typography variant="subtitle2" sx={{ color: 'black' }}>Skills</Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
                     {selectedAssessment.condidateId.skills.map((skill: any) => (
                       <Chip
@@ -2655,8 +2609,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                         label={`${skill.name} (${skill.experienceLevel})`}
                         size="small"
                         sx={{
-                          backgroundColor: 'rgba(2,226,255,0.13)',
-                          color: '#02E2FF',
+                          backgroundColor: 'rgba(0, 255, 157, 1)',
+                          color: 'black',
                           fontWeight: 600
                         }}
                       />
@@ -2664,45 +2618,46 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                   </Box>
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Assessment Date</Typography>
-                  <Typography>{new Date(selectedAssessment.timestamp).toLocaleDateString()}</Typography>
+                  <Typography variant="subtitle2" sx={{ color: 'black' }}>Assessment Date</Typography>
+                  <Typography sx={{ color: 'black' }}>{new Date(selectedAssessment.timestamp).toLocaleDateString()}</Typography>
                 </Box>
               </Box>
             </Box>
 
             {/* Assessment Results */}
             <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ color: '#02E2FF', mb: 2 }}>Assessment Results</Typography>
+              <Typography variant="h6" sx={{ color: 'rgba(0, 255, 157, 1)', mb: 2 }}>Assessment Results</Typography>
               <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Overall Score</Typography>
-                  <Typography>{selectedAssessment.analysis.overallScore}%</Typography>
+                  <Typography variant="subtitle2" sx={{ color: 'black' }}>Overall Score</Typography>
+                  <Typography sx={{ color: 'black' }}>{selectedAssessment.analysis.overallScore}%</Typography>
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Job Match Status</Typography>
-                  <Typography>{selectedAssessment.analysis.jobMatch.status}</Typography>
+                  <Typography variant="subtitle2" sx={{ color: 'black' }}>Job Match Status</Typography>
+                  <Typography sx={{ color: 'black' }}>{selectedAssessment.analysis.jobMatch.status}</Typography>
                 </Box>
               </Box>
             </Box>
 
+
             {/* Skill Analysis */}
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ color: '#02E2FF', mb: 2 }}>Skill Analysis</Typography>
+            <Box sx={{ mb: 4, backgroundColor: 'white', borderRadius: '16px', padding: '16px', border: '2px solid rgba(0, 255, 157, 1)' }}>
+              <Typography variant="h6" sx={{ color: 'rgba(0, 255, 157, 1)', mb: 2 }}>Skill Analysis</Typography>
               {selectedAssessment.analysis.skillAnalysis.map((skill: any, index: number) => (
-                <Box key={index} sx={{ mb: 2, p: 2, backgroundColor: 'rgba(2,226,255,0.05)', borderRadius: '8px' }}>
-                  <Typography variant="subtitle1" sx={{ color: '#fff', mb: 1 }}>{skill.skillName}</Typography>
+                <Box key={index} sx={{ mb: 2, p: 2, backgroundColor: 'white', borderRadius: '8px' }}>
+                  <Typography variant="subtitle1" sx={{ color: 'rgba(0, 255, 157, 1)', mb: 1 }}>{skill.skillName}</Typography>
                   <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
                     <Box sx={{ flex: 1 }}>
-                      <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Required Level</Typography>
-                      <Typography>{skill.requiredLevel}</Typography>
+                      <Typography variant="subtitle2" sx={{ color: '#000' }}>Required Level</Typography>
+                      <Typography sx={{ color: '#000' }}>{skill.requiredLevel}</Typography>
                     </Box>
                     <Box sx={{ flex: 1 }}>
-                      <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Demonstrated Level</Typography>
-                      <Typography>{skill.demonstratedLevel}</Typography>
+                      <Typography variant="subtitle2" sx={{ color: '#000' }}>Demonstrated Level</Typography>
+                      <Typography sx={{ color: '#000' }}>{skill.demonstratedLevel}</Typography>
                     </Box>
                     <Box sx={{ flex: 1 }}>
-                      <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)' }}>Match Status</Typography>
-                      <Typography>{skill.match}</Typography>
+                      <Typography variant="subtitle2" sx={{ color: '#000' }}>Match Status</Typography>
+                      <Typography sx={{ color: '#000' }}>{skill.match}</Typography>
                     </Box>
                   </Box>
                 </Box>
@@ -2711,14 +2666,14 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
             {/* Recommendations */}
             <Box>
-              <Typography variant="h6" sx={{ color: '#02E2FF', mb: 2 }}>Recommendations</Typography>
+              <Typography variant="h6" sx={{ color: 'rgba(0, 255, 157, 1)', mb: 2 }}>Recommendations</Typography>
               <List>
                 {selectedAssessment.analysis.recommendations.map((rec: string, index: number) => (
                   <ListItem key={index} sx={{ py: 0.5 }}>
                     <ListItemIcon>
-                      <ArrowForwardIcon sx={{ color: '#02E2FF' }} />
+                      <ArrowForwardIcon sx={{ color: 'rgba(0, 255, 157, 1)' }} />
                     </ListItemIcon>
-                    <ListItemText primary={rec} />
+                    <ListItemText primary={rec} sx={{ color: 'black' }} />
                   </ListItem>
                 ))}
               </List>
@@ -2730,9 +2685,9 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
         <Button
           onClick={() => setAssessmentModalOpen(false)}
           sx={{
-            color: '#02E2FF',
+            color: 'rgba(0, 255, 157, 1)',
             '&:hover': {
-              backgroundColor: 'rgba(2,226,255,0.1)'
+              backgroundColor: 'rgba(0, 255, 157, 1)'
             }
           }}
         >
@@ -2745,11 +2700,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
   return (
     <Box sx={{
       minHeight: '100vh',
-      backgroundColor: '#0f172a',
-      backgroundImage: `
-          radial-gradient(circle at 20% 30%, rgba(37, 99, 235, 0.15), transparent 40%),
-          radial-gradient(circle at 80% 70%, rgba(29, 78, 216, 0.15), transparent 50%)
-        `,
+      backgroundColor: 'white',
+
       py: 4,
     }}>
       <ToastContainer
@@ -2854,11 +2806,11 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             startIcon={<LogoutIcon />}
             variant="contained"
             sx={{
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              background: 'rgba(0, 255, 157, 1)',
               color: '#0f172a',
               fontWeight: 600,
               '&:hover': {
-                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                background: 'rgba(0, 255, 157, 1)',
                 boxShadow: '0 4px 12px rgba(2, 226, 255, 0.3)'
               },
               textTransform: 'none',
@@ -2874,78 +2826,37 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
         <ProfileHeader>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 2 }}>
             <Box>
-              <Typography variant="h4" sx={{ fontWeight: 700, mb: 1, color: '#ffffff' }}>
+              <Typography variant="h4" sx={{ fontWeight: 700, mb: 1, color: '#000000' }}>
                 {profile?.companyDetails?.name}
               </Typography>
-              <Typography variant="body1" sx={{ opacity: 0.9, mb: 3, color: '#ffffff' }}>
+              <Typography variant="body1" sx={{ opacity: 0.9, mb: 3, color: '#000000' }}>
                 {profile?.type} • {profile?.userId.role}
               </Typography>
             </Box>
-            {/* <IconButton
-              onClick={handleMenuClick}
-              sx={{
-                color: 'rgba(255,255,255,0.9)',
-                '&:hover': {
-                  background: 'rgba(255,255,255,0.1)'
-                }
-              }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-              PaperProps={{
-                sx: {
-                  background: 'rgba(30, 41, 59, 0.95)',
-                  backdropFilter: 'blur(10px)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  mt: 1
-                }
-              }}
-            >
-              <MenuItem
-                onClick={() => {
-                  handleMenuClose();
-                  handleLogout();
-                }}
-                sx={{
-                  color: 'rgba(255,255,255,0.9)',
-                  '&:hover': {
-                    background: 'rgba(255,255,255,0.1)'
 
-                  },
-                }}
-              >
-                <LogoutIcon sx={{ mr: 1, fontSize: 20 }} />
-                Logout
-              </MenuItem>
-            </Menu> */}
           </Box>
           <StatsContainer>
             <StatCard>
-              <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff' }}>
+              <Typography variant="overline" sx={{ opacity: 0.7, color: '#000000' }}>
                 Industry
               </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#ffffff' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#000000' }}>
                 {profile?.companyDetails?.industry}
               </Typography>
             </StatCard>
             <StatCard>
-              <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff' }}>
+              <Typography variant="overline" sx={{ opacity: 0.7, color: '#000000' }}>
                 Company Size
               </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#ffffff' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#000000' }}>
                 {profile?.companyDetails?.size}
               </Typography>
             </StatCard>
             <StatCard>
-              <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff' }}>
+              <Typography variant="overline" sx={{ opacity: 0.7, color: '#000000' }}>
                 Location
               </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#ffffff' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#000000' }}>
                 {profile?.companyDetails?.location}
               </Typography>
             </StatCard>
@@ -2973,23 +2884,23 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
               </Box>
 
               <InfoRow>
-                <BusinessIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
-                <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile?.companyDetails?.name}</Typography>
+                <BusinessIcon sx={{ color: 'rgba(0, 255, 157, 1)' }} />
+                <Typography sx={{ color: '#000000', fontWeight: 500 }}>{profile?.companyDetails?.name}</Typography>
               </InfoRow>
 
               <InfoRow>
-                <CategoryIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
-                <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile?.companyDetails?.industry}</Typography>
+                <CategoryIcon sx={{ color: 'rgba(0, 255, 157, 1)' }} />
+                <Typography sx={{ color: '#000000', fontWeight: 500 }}>{profile?.companyDetails?.industry}</Typography>
               </InfoRow>
 
               <InfoRow>
-                <GroupsIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
-                <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile?.companyDetails?.size} employees</Typography>
+                <GroupsIcon sx={{ color: 'rgba(0, 255, 157, 1)' }} />
+                <Typography sx={{ color: '#000000', fontWeight: 500 }}>{profile?.companyDetails?.size} employees</Typography>
               </InfoRow>
 
               <InfoRow>
-                <LocationOnIcon sx={{ color: 'rgba(255,255,255,0.7)' }} />
-                <Typography sx={{ color: '#ffffff', fontWeight: 500 }}>{profile?.companyDetails?.location}</Typography>
+                <LocationOnIcon sx={{ color: 'rgba(0, 255, 157, 1)' }} />
+                <Typography sx={{ color: '#000000', fontWeight: 500 }}>{profile?.companyDetails?.location}</Typography>
               </InfoRow>
             </CompanyInfoCard>
 
@@ -3010,15 +2921,15 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
               </Box>
 
               <Box sx={{ mt: 3 }}>
-                <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ color: 'black', mb: 1 }}>
                   Required Experience Level
                 </Typography>
                 <Chip
                   label={profile?.requiredExperienceLevel}
                   sx={{
                     borderRadius: '8px',
-                    backgroundColor: 'rgba(2, 226, 255, 0.1)',
-                    color: '#02E2FF',
+                    backgroundColor: 'rgba(0, 255, 157, 1)',
+                    color: 'black',
                     fontWeight: 600
                   }}
                 />
@@ -3030,7 +2941,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             {!selectedJob ? (
               <Box sx={{ mb: 6 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                  <Typography variant="h5" sx={{ color: '#02E2FF', fontWeight: 700 }}>
+                  <Typography variant="h5" sx={{ color: 'black', fontWeight: 700 }}>
                     My Job Posts
                   </Typography>
                   <Button
@@ -3038,10 +2949,10 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                     startIcon={<AddIcon />}
                     onClick={() => setJobPostDialog(true)}
                     sx={{
-                      background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                      color: '#fff',
+                      background: 'rgba(0, 255, 157, 1)',
+                      color: 'black',
                       '&:hover': {
-                        background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                        background: 'rgba(0, 255, 157, 1)',
                       },
                     }}
                   >
@@ -3067,6 +2978,9 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                       <Box key={job._id} sx={{
                         width: '100%',
                         display: 'flex',
+                        background: 'white',
+
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
                       }}>
                         <JobCard sx={{
                           width: '100%',
@@ -3076,13 +2990,13 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                           {/* Header */}
                           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'space-between' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <WorkIcon sx={{ color: '#02E2FF', fontSize: 28 }} />
-                              <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>
+                              <WorkIcon sx={{ color: 'rgba(0, 255, 157, 1)', fontSize: 28 }} />
+                              <Typography variant="h6" sx={{ color: '#000000', fontWeight: 700 }}>
                                 {job.jobDetails.title}
                               </Typography>
                             </Box>
                             {job.createdAt && (
-                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)', fontWeight: 500, ml: 2 }}>
+                              <Typography variant="caption" sx={{ color: 'black', fontWeight: 500, ml: 2 }}>
                                 Posted: {new Date(job.createdAt).toLocaleDateString()}
                               </Typography>
                             )}
@@ -3093,24 +3007,24 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                               icon={<LocationOnIcon sx={{ fontSize: 18 }} />}
                               label={job.jobDetails.location}
                               size="small"
-                              sx={{ backgroundColor: 'rgba(2,226,255,0.13)', color: '#02E2FF', fontWeight: 600 }}
+                              sx={{ backgroundColor: 'rgba(0, 255, 157, 1)', color: 'black', fontWeight: 600 }}
                             />
                             <Chip
                               label={job.jobDetails.employmentType}
                               size="small"
-                              sx={{ backgroundColor: 'rgba(255,255,255,0.13)', color: '#fff', fontWeight: 600 }}
+                              sx={{ backgroundColor: 'rgba(0, 255, 157, 1)', color: 'black', fontWeight: 600 }}
                             />
                             <Chip
                               label={`${job.jobDetails.salary.currency}${job.jobDetails.salary.min}-${job.jobDetails.salary.max}`}
                               size="small"
-                              sx={{ backgroundColor: 'rgba(255,255,255,0.13)', color: '#fff', fontWeight: 600 }}
+                              sx={{ backgroundColor: 'rgba(0, 255, 157, 1)', color: 'black', fontWeight: 600 }}
                             />
                           </Box>
                           {/* Description */}
                           <Typography
                             variant="body2"
                             sx={{
-                              color: '#fff',
+                              color: 'black ',
                               mb: 2,
                               minHeight: 40,
                               fontWeight: 500,
@@ -3134,8 +3048,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                                 size="small"
                                 icon={<StarIcon sx={{ color: '#00FFC3', fontSize: 18 }} />}
                                 sx={{
-                                  backgroundColor: 'rgba(2,226,255,0.13)',
-                                  color: '#02E2FF',
+                                  backgroundColor: 'rgba(0, 255, 157, 1)',
+                                  color: 'white',
                                   fontWeight: 700,
                                   fontSize: '0.87rem',
                                   letterSpacing: 0.2,
@@ -3154,11 +3068,11 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                                 handleFilterDialogOpen();
                               }}
                               sx={{
-                                borderColor: 'rgba(2,226,255,0.5)',
-                                color: '#02E2FF',
+                                borderColor: 'rgba(0, 255, 157, 1)',
+                                color: 'rgba(0, 255, 157, 1)',
                                 '&:hover': {
-                                  borderColor: '#02E2FF',
-                                  backgroundColor: 'rgba(2,226,255,0.1)'
+                                  borderColor: 'rgba(0, 255, 157, 1)',
+                                  backgroundColor: '#fff'
                                 }
                               }}
                             >
@@ -3194,15 +3108,15 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
                     {myJobs.length > displayCount && (
                       <Button
-                        variant="outlined"
+                        variant="contained"
                         onClick={() => setDisplayCount(prev => prev + 3)}
                         sx={{
+                          backgroundColor: 'rgba(0, 255, 157, 1)',
                           mt: 2,
-                          borderColor: 'rgba(2,226,255,0.5)',
-                          color: '#02E2FF',
+                          borderColor: 'rgba(0, 255, 157, 1)',
+                          color: 'white',
                           '&:hover': {
-                            borderColor: '#02E2FF',
-                            backgroundColor: 'rgba(2,226,255,0.1)'
+                            borderColor: 'rgba(0, 255, 157, 1)',
                           }
                         }}
                       >
@@ -3215,7 +3129,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             ) : (
               <Box sx={{ mt: 4 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                  <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 600 }}>
+                  <Typography variant="h6" sx={{ color: '#000000', fontWeight: 600 }}>
                     Matching Candidates
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 2 }}>
@@ -3224,30 +3138,14 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                       startIcon={<WorkIcon />}
                       onClick={() => setSelectedJob('')}
                       sx={{
-                        color: '#02E2FF',
-                        borderColor: 'rgba(2,226,255,0.5)',
-                        '&:hover': {
-                          borderColor: '#02E2FF',
-                          background: 'rgba(2,226,255,0.1)'
-                        }
+                        color: 'rgba(0, 255, 157, 1)',
+                        borderColor: 'rgba(0, 255, 157, 1)',
+
                       }}
                     >
                       Return to Jobs
                     </Button>
-                    {/* <Button
-                      startIcon={<AddIcon />}
-                      onClick={handleFilterDialogOpen}
-                      sx={{
-                        color: '#02E2FF',
-                        borderColor: 'rgba(2,226,255,0.5)',
-                        '&:hover': {
-                          borderColor: '#02E2FF',
-                          background: 'rgba(2,226,255,0.1)'
-                        }
-                      }}
-                    >
-                      Filter by Job
-                    </Button> */}
+
                   </Box>
                 </Box>
                 {renderMatchingProfiles()}
@@ -3397,28 +3295,28 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
               fontSize: '1.2rem',
               fontWeight: 700,
               borderBottom: '1px solid rgba(255,255,255,0.1)',
-              background: 'linear-gradient(135deg, rgba(255,59,48,0.08) 0%, rgba(30,41,59,0.95) 100%)',
+              background: 'white',
             }}
           >
-            <ErrorIcon sx={{ color: '#ff3b30', fontSize: 28 }} />
+            <ErrorIcon sx={{ color: 'red', fontSize: 28 }} />
             Are you sure you want to delete this job post?
           </DialogTitle>
           <DialogContent sx={{
-            background: 'none',
+            background: 'white',
             color: '#fff',
             py: 3,
             px: 3,
             fontSize: '1rem',
             borderBottom: '1px solid rgba(255,255,255,0.08)'
           }}>
-            <Typography sx={{ color: 'rgba(255,255,255,0.85)' }}>
+            <Typography sx={{ color: 'black' }}>
               This action cannot be undone.
             </Typography>
           </DialogContent>
           <DialogActions sx={{
             px: 3,
             py: 2,
-            background: 'none',
+            background: 'white',
             borderTop: '1px solid rgba(255,255,255,0.08)'
           }}>
             <Button onClick={handleCancelDelete} disabled={isDeleting}
@@ -3464,7 +3362,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           fullWidth
           PaperProps={{
             sx: {
-              background: 'rgba(30, 41, 59, 0.95)',
+              background: 'white',
               backdropFilter: 'blur(10px)',
               borderRadius: '16px',
               border: '1px solid rgba(255,255,255,0.1)',
@@ -3473,13 +3371,13 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
         >
           <DialogTitle sx={{
             borderBottom: '1px solid rgba(255,255,255,0.1)',
-            color: '#ffffff'
+            color: 'black'
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography variant="h6">Place Bid</Typography>
               <IconButton
                 onClick={handleBidDialogClose}
-                sx={{ color: 'rgba(255,255,255,0.7)' }}
+                sx={{ color: 'black' }}
               >
                 <CloseIcon />
               </IconButton>
@@ -3492,7 +3390,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                   background: 'rgba(255,255,255,0.05)',
                   borderRadius: '12px',
                   p: 2.5,
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  border: '1px solid black',
                   display: "flex",
                   justifyContent: "space-between"
                 }}>
@@ -3508,16 +3406,17 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                       background: 'linear-gradient(135deg, rgba(2,226,255,0.2) 0%, rgba(0,255,195,0.2) 100%)',
                       display: 'flex',
                       alignItems: 'center',
+
                       justifyContent: 'center',
                       fontSize: '1.5rem',
                       fontWeight: 600,
-                      color: '#02E2FF'
+                      color: 'black'
                     }}>
                       {selectedCandidate?.candidateId?.username?.charAt(0).toUpperCase() || '?'}
                     </Box>
                     <Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                        <Typography sx={{ color: '#ffffff', fontWeight: 600, fontSize: '1.1rem' }}>
+                        <Typography sx={{ color: 'black', fontWeight: 600, fontSize: '1.1rem' }}>
                           {selectedCandidate?.candidateId?.username}
                         </Typography>
                         {selectedCandidate?.candidateId?.isVerified && (
@@ -3530,12 +3429,12 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                             alignItems: 'center',
                             justifyContent: 'center'
                           }}>
-                            <StarIcon sx={{ fontSize: 12, color: '#000' }} />
+                            <StarIcon sx={{ fontSize: 12, color: 'black' }} />
                           </Box>
                         )}
                       </Box>
-                      <Typography sx={{
-                        color: 'rgba(255,255,255,0.7)',
+                      {/* <Typography sx={{
+                        color: 'black',
                         fontSize: '0.9rem',
                         display: 'flex',
                         alignItems: 'center',
@@ -3543,7 +3442,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                       }}>
                         <WorkIcon sx={{ fontSize: 16 }} />
                         {selectedCandidate?.candidateId?.role}
-                      </Typography>
+                      </Typography> */}
                     </Box>
                   </Box>
                   <Box sx={{
@@ -3555,14 +3454,14 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                   }}>
                     <Typography variant="h6" sx={{
                       fontWeight: 600,
-                      color: '#02E2FF',
+                      color: 'black',
                       fontSize: '1.25rem',
                       lineHeight: 1
                     }}>
                       {selectedCandidate?.finalBid} $
                     </Typography>
                     <Typography variant="caption" sx={{
-                      color: 'rgba(255,255,255,0.7)',
+                      color: 'black',
                       fontSize: '0.7rem'
                     }}>
                       Current Bid
@@ -3579,23 +3478,23 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                   startAdornment: <InputAdornment position="start">$</InputAdornment>,
                 }}
                 fullWidth
-                InputLabelProps={{ sx: { color: 'rgba(255,255,255,0.7)' } }}
+                InputLabelProps={{ sx: { color: 'black' } }}
                 sx={{
-                  color: '#ffffff',
+                  color: 'black',
                   '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'rgba(255,255,255,0.2)',
+                    borderColor: 'black',
                   },
                   '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: 'rgba(255,255,255,0.3)',
+                    borderColor: 'black'
                   },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#02E2FF',
+                    borderColor: 'black',
                   },
                   '& .MuiInputBase-input': {
-                    color: '#ffffff',
+                    color: 'black',
                   },
                   '& .MuiInputAdornment-root .MuiTypography-root': {
-                    color: 'rgba(255,255,255,0.7)',
+                    color: 'black',
                   },
                 }}
               />
@@ -3608,7 +3507,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             <Button
               onClick={handleBidDialogClose}
               sx={{
-                color: 'rgba(255,255,255,0.8)',
+                color: 'black',
                 mr: 1
               }}
               disabled={isSubmittingBid}
@@ -3621,11 +3520,12 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
               disabled={!bidAmount || parseFloat(bidAmount) <= 0 || isSubmittingBid}
               sx={{
                 background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                color: 'black',
                 '&:hover': {
                   background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
                 },
                 '&.Mui-disabled': {
-                  background: 'rgba(255,255,255,0.1)',
+                  background: 'grey',
                   color: 'rgba(255,255,255,0.3)'
                 }
               }}
@@ -3665,14 +3565,15 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
               display: 'flex',
               alignItems: 'center',
               gap: 1.5,
-              color: '#02E2FF',
+              color: 'black ',
               fontSize: '1.2rem',
               fontWeight: 700,
+
               borderBottom: '1px solid rgba(255,255,255,0.1)',
-              background: 'linear-gradient(135deg, rgba(2,226,255,0.08) 0%, rgba(30,41,59,0.95) 100%)',
+              background: 'white',
             }}
           >
-            <CheckIcon sx={{ color: '#02E2FF', fontSize: 28 }} />
+            <CheckIcon sx={{ color: 'black', fontSize: 28 }} />
             Job Posted Successfully!
             <IconButton
               aria-label="close"
@@ -3687,14 +3588,14 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
               <CloseIcon />
             </IconButton>
           </DialogTitle>
-          <DialogContent sx={{ background: 'none', color: '#fff', py: 3, px: 3, fontSize: '1rem', mt: 3 }}>
-            <Typography sx={{ color: 'rgba(255,255,255,0.85)', mb: 2 }}>
+          <DialogContent sx={{ background: 'white', color: 'white', fontSize: '1rem', }}>
+            <Typography sx={{ color: 'black', mb: 2 }}>
               Your job post has been published. Share the test job link below with candidates:
             </Typography>
             <Box sx={{
               display: 'flex',
               alignItems: 'center',
-              background: 'rgba(2,226,255,0.08)',
+              background: 'white',
               borderRadius: '8px',
               p: 2,
               mb: 2,
@@ -3726,7 +3627,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
               </Tooltip>
             </Box>
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3, pt: 1 }}>
+          <DialogActions sx={{ px: 3, pb: 3, pt: 1, background: 'white' }}>
             <Button
               onClick={() => setDialogOpen(false)}
               variant="contained"
@@ -3879,7 +3780,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
         {/* Add Company Profiles Section */}
         <Box sx={{ mt: 6, mb: 6 }}>
-          <Typography variant="h5" sx={{ color: '#02E2FF', fontWeight: 700, mb: 3 }}>
+          <Typography variant="h5" sx={{ color: 'black', fontWeight: 700, mb: 3 }}>
             Company Profiles & Assessments
           </Typography>
           {renderCompanyProfilesTable()}
