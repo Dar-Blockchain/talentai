@@ -1164,7 +1164,7 @@ export default function Test() {
           </Typography>
           {hasStartedTest && (
             <Typography variant="subtitle1" sx={{ color: '#fff', mr: 2 }}>
-              {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+              {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')} min
             </Typography>
           )}
           <Button
@@ -1248,9 +1248,9 @@ export default function Test() {
               onClick={hasStartedTest ? undefined : startTest}
               disabled={isGenerating || hasStartedTest || isConnecting}
               sx={{
-                backgroundColor: 'rgba(0, 255, 157, 1)',
+                backgroundColor: GREEN_MAIN,
                 '&:hover': {
-                  backgroundColor: 'rgba(0, 255, 157, 1)',
+                  backgroundColor: 'rgba(0, 255, 157, 0.8)',
                 },
                 '&.Mui-disabled': {
                   backgroundColor: hasStartedTest ? '#ff4444' : 'rgba(255, 255, 255, 0.12)',
@@ -1261,7 +1261,7 @@ export default function Test() {
               {isConnecting
                 ? 'Connecting...'
                 : hasStartedTest
-                  ? `Recording in progress (${timeLeft}s)`
+                  ? `Recording (${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')} min)`
                   : 'Start Test'
               }
             </RecordingButton>

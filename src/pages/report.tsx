@@ -406,7 +406,7 @@ export default function Report() {
                       <Box sx={{ display: 'flex', gap: 2 }}>
                         <Box sx={{ flex: 1 }}>
                           <Typography sx={{ color: '#000' }}>
-                            Current Level: {skill.currentExperienceLevel}
+                            Current Level: {skill.currentExperienceLevel || skill.currentProficiency}
                           </Typography>
                         </Box>
                         <Box sx={{ flex: 1 }}>
