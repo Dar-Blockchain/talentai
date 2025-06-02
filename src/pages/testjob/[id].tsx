@@ -385,7 +385,7 @@ const Test = () => {
 
           // Check if profile has required data
           if (profileData && profileData.type &&
-            ((profileData.type === 'Candidate' && profileData.skills && profileData.skills.length > 0) ||
+            ((profileData.type === 'Candidate') ||
               (profileData.type === 'Company' && profileData.requiredSkills && profileData.requiredSkills.length > 0))) {
             console.log('Profile is complete, proceeding with test');
             setIsProfileComplete(true);

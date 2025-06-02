@@ -785,13 +785,24 @@ export default function Test() {
         router.push({
           pathname: '/report-on-boarding',
           query: {
+            type: 'technicalSkill',
             skills: router.query.skills,
             proficiencyLevels: router.query.proficiencyLevels,
             experienceLevel: router.query.experienceLevel
           }
         });
       } else {
-        router.push('/report');
+        // For technical type, pass the skill and proficiency parameters
+        router.push({
+          pathname: '/report',
+          query: {
+            from: 'test',
+            type: router.query.type || 'technical',
+            skill: router.query.skill,
+            proficiency: router.query.proficiency,
+            subcategory: router.query.subcategory
+          }
+        });
       }
     }
   };
@@ -817,7 +828,7 @@ export default function Test() {
     const testData = {
       results,
       metadata: {
-        type: router.query.type || 'technical',
+        type: router.query.type === 'on-boarding' ? 'technicalSkill' : (router.query.type || 'technical'),
         skill: router.query.skill,
         subcategory: router.query.subcategory,
         proficiency: router.query.proficiency,
@@ -826,19 +837,21 @@ export default function Test() {
     };
 
     localStorage.setItem('test_results', JSON.stringify(testData));
-    localStorage.setItem('last_test_type', router.query.type as string || 'technical');
+    localStorage.setItem('last_test_type', router.query.type === 'on-boarding' ? 'technicalSkill' : (router.query.type as string || 'technical'));
 
-    // Navigate to report page with parameters
-    router.push({
-      pathname: '/report',
-      query: {
-        from: 'test',
-        type: router.query.type || 'technical',
-        skill: router.query.skill,
-        subcategory: router.query.subcategory,
-        proficiency: router.query.proficiency
-      }
-    });
+    // Only navigate if not already navigating in handleNext
+    if (current < questions.length - 1) {
+      router.push({
+        pathname: '/report',
+        query: {
+          from: 'test',
+          type: router.query.type || 'technical',
+          skill: router.query.skill,
+          proficiency: router.query.proficiency,
+          subcategory: router.query.subcategory
+        }
+      });
+    }
   };
 
   // Security violation handler
