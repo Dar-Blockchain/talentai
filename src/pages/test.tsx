@@ -441,11 +441,34 @@ export default function Test() {
       } else {
         // This is from preferences
         endpoint = 'evaluation/generate-questions';
+        
+        // Parse skills and their levels
+        const skillsArray = router.query.skills ? (router.query.skills as string).split(',') : [];
+        const proficiencyMap = router.query.proficiencyLevels ? 
+          Object.fromEntries(
+            (router.query.proficiencyLevels as string).split(',').map(pair => {
+              const [skill, level] = pair.split(':');
+              return [skill, parseInt(level)];
+            })
+          ) : {};
+
+        // Create structured skills array with the exact format required
+        const structuredSkills = skillsArray.map(skill => ({
+          name: skill,
+          proficiencyLevel: proficiencyMap[skill] || 1,
+          experienceLevel: router.query.experienceLevel || 'Entry Level'
+        }));
+
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
-          }
+          },
+          body: JSON.stringify({
+            type: 'on-boarding',
+            skills: structuredSkills
+          })
         });
 
         if (!response.ok) {

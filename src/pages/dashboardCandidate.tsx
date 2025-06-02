@@ -818,7 +818,7 @@ export default function DashboardCandidate() {
     try {
       if (skillType === "technical" && selectedSkill) {
         router.push(
-          `/test?type=technical&skill=${selectedSkill}&proficiency=1`
+          `/test?type=technicalSkill&skill=${selectedSkill}`
         );
       } else if (skillType === "soft" && softSkillType) {
         const proficiencyMap: { [key: string]: number } = {
@@ -1101,10 +1101,76 @@ export default function DashboardCandidate() {
 
   // Filter technical skills (exclude soft skills)
   const getTechnicalSkills = () => {
-    if (!profile?.skills) return [];
-    return profile.skills.filter(
-      (skill) => !softSkillNames.includes(skill.name)
-    );
+    const skills: Skill[] = [
+      // Development
+      { name: 'JavaScript', proficiencyLevel: 0, requiresLanguage: true },
+      { name: 'TypeScript', proficiencyLevel: 0, requiresLanguage: true },
+      { name: 'React', proficiencyLevel: 0 },
+      { name: 'Node.js', proficiencyLevel: 0 },
+      { name: 'Python', proficiencyLevel: 0, requiresLanguage: true },
+      { name: 'Go', proficiencyLevel: 0, requiresLanguage: true },
+      { name: 'Rust', proficiencyLevel: 0, requiresLanguage: true },
+      { name: 'GraphQL', proficiencyLevel: 0 },
+      { name: 'Docker', proficiencyLevel: 0 },
+      { name: 'Hedera', proficiencyLevel: 0 },
+      // Marketing
+      { name: 'SEO', proficiencyLevel: 0 },
+      { name: 'Content Marketing', proficiencyLevel: 0 },
+      { name: 'Social Media', proficiencyLevel: 0 },
+      { name: 'Email Marketing', proficiencyLevel: 0 },
+      { name: 'Analytics', proficiencyLevel: 0 },
+      { name: 'Web3 Marketing', proficiencyLevel: 0 },
+      { name: 'NFT Marketing', proficiencyLevel: 0 },
+      { name: 'Community Management', proficiencyLevel: 0 },
+      { name: 'Token Economics', proficiencyLevel: 0 },
+      { name: 'DeFi Marketing', proficiencyLevel: 0 },
+      { name: 'Crypto PR', proficiencyLevel: 0 },
+      { name: 'Blockchain Events', proficiencyLevel: 0 },
+      { name: 'DAO Governance', proficiencyLevel: 0 },
+      // QA
+      { name: 'Manual Testing', proficiencyLevel: 0 },
+      { name: 'Automated Testing', proficiencyLevel: 0 },
+      { name: 'Test Planning', proficiencyLevel: 0 },
+      { name: 'Performance Testing', proficiencyLevel: 0 },
+      { name: 'API Testing', proficiencyLevel: 0 },
+      { name: 'Security Testing', proficiencyLevel: 0 },
+      // Business
+      { name: 'Project Management', proficiencyLevel: 0 },
+      { name: 'Agile', proficiencyLevel: 0 },
+      { name: 'Scrum', proficiencyLevel: 0 },
+      { name: 'Product Management', proficiencyLevel: 0 },
+      { name: 'Business Analysis', proficiencyLevel: 0 },
+      // Web3
+      { name: 'Solidity', proficiencyLevel: 0, requiresLanguage: true },
+      { name: 'Ethereum', proficiencyLevel: 0 },
+      { name: 'Smart Contracts', proficiencyLevel: 0 },
+      { name: 'DeFi', proficiencyLevel: 0 },
+      { name: 'NFTs', proficiencyLevel: 0 },
+      { name: 'Web3.js', proficiencyLevel: 0 },
+      { name: 'Hardhat', proficiencyLevel: 0 },
+      { name: 'Truffle', proficiencyLevel: 0 },
+      { name: 'Massa', proficiencyLevel: 0 },
+      { name: 'Polkadot', proficiencyLevel: 0 },
+      { name: 'NEAR', proficiencyLevel: 0 },
+      { name: 'Substrate', proficiencyLevel: 0 },
+      { name: 'Cosmos', proficiencyLevel: 0 },
+      { name: 'Solana', proficiencyLevel: 0 },
+      { name: 'Avalanche', proficiencyLevel: 0 },
+      { name: 'Polygon', proficiencyLevel: 0 },
+      { name: 'Arbitrum', proficiencyLevel: 0 },
+      { name: 'Optimism', proficiencyLevel: 0 },
+      { name: 'Base', proficiencyLevel: 0 },
+      // AI
+      { name: 'Machine Learning', proficiencyLevel: 0 },
+      { name: 'Deep Learning', proficiencyLevel: 0 },
+      { name: 'TensorFlow', proficiencyLevel: 0 },
+      { name: 'PyTorch', proficiencyLevel: 0 },
+      { name: 'Natural Language Processing', proficiencyLevel: 0 },
+      { name: 'Computer Vision', proficiencyLevel: 0 },
+      { name: 'Reinforcement Learning', proficiencyLevel: 0 },
+      { name: 'Data Science', proficiencyLevel: 0 }
+    ];
+    return skills;
   };
 
   // Add state to track if a skill was just added
