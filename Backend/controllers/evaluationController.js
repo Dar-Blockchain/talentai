@@ -17,27 +17,21 @@ exports.generateQuestions = async (req, res) => {
     if (!user.profile) {
       return res.status(400).json({ error: "User profile not found." });
     }
-    const { skills } = user.profile;
-    if (!skills || skills.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "No skills found in the user profile." });
-    }
 
-    // 2. Build a readable skills list
-    const skillsList = skills
-      .map(
-        (s) =>
-          `${s.name} (Experience: ${s.experienceLevel}, Proficiency: ${s.proficiencyLevel}/5)`
-      )
-      .join(", ");
+    const skillsArray = req.body.skills || [];
+
+    // Extraire uniquement les noms des skills
+    const skillsList = skillsArray.map(skill => skill.name).join(', ');
 
     const profile = await Profile.findOne({ userId: req.user._id });
     if (!profile) {
       return res.status(404).json({ error: "Profile not found" });
     }
+
     console.log("skillsList", skillsList);
+   
     const now = new Date();
+   
     const daysSinceLastUpdate =
       (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
     if (daysSinceLastUpdate >= 30) {
@@ -53,21 +47,21 @@ exports.generateQuestions = async (req, res) => {
 
     // 3. Prompt: ask for exactly 10 questions as a JSON array
     const prompt = `
-    You are an experienced technical interviewer.
-    Based on the candidate's skills (${skillsList}), generate **exactly 10** purely technical interview questions.
-    These questions must be 100% technical, focusing solely on technical knowledge, skills, problem-solving, and applied concepts.
-    Keep in mind that the candidate will answer these questions **orally** during the interview.
-    No behavioral, soft skills, or theoretical recall questions.
-    **Return ONLY** a JSON array of strings—no commentary, no numbering, no markdown—like this:
-    
-    \`\`\`json
-    [
-      "Question 1?",
-      "Question 2?",
-      // …
-    ]
-    \`\`\`
-    `.trim();
+You are an experienced technical interviewer.
+Based on the candidate's skills (${skillsList}), generate **exactly 10** purely technical interview questions.
+These questions must be 100% technical and designed to be answered **orally**, without requiring any live coding.
+They should focus on applied understanding, architecture decisions, debugging, system reasoning, trade-offs, or performance analysis.
+Avoid behavioral, soft skills or theoretical recall.
+**Return ONLY** a JSON array of strings—no commentary, no numbering, no markdown—like this:
+
+\`\`\`json
+[
+  "Question 1?",
+  "Question 2?",
+  // …
+]
+\`\`\`
+`.trim();
     
 
     const stream = await together.chat.completions.create({
