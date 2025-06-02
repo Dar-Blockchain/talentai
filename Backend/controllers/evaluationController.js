@@ -69,8 +69,6 @@ Avoid behavioral, soft skills or theoretical recall.
 \`\`\`
 `.trim();
 
-    
-
     const stream = await together.chat.completions.create({
       model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
       messages: [
@@ -1630,5 +1628,171 @@ Return a STRICT JSON response in **this format ONLY** (no markdown, no explanati
       error: "Failed to analyze profile",
       details: error.message,
     });
+  }
+};
+
+exports.generateOnboardingQuestions = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    const profile = await Profile.findOne({ userId: req.user._id });
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    const { skills } = req.body;
+    if (!skills || !Array.isArray(skills) || skills.length === 0) {
+      return res
+        .status(400)
+        .json({ error: "skills is required and must be a non-empty array." });
+    }
+
+    const now = new Date();
+    const daysSinceLastUpdate =
+      (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
+    if (daysSinceLastUpdate >= 30) {
+      profile.quota = 0;
+      profile.quotaUpdatedAt = now;
+    }
+
+    if (profile.quota >= 5) {
+      return res
+        .status(403)
+        .json({ error: "You have reached your test limit (5)" });
+    }
+
+    // 3. Prompt: ask for exactly 10 questions as a JSON array
+    const systemPrompt = `
+You are an expert technical interviewer specializing in evaluating developer skills.  
+Your goal is to generate **exactly 10 technical interview questions**, ensuring that each question **strictly matches the candidate's proficiency level** in its respective skill.
+
+Proficiency levels are defined as follows:
+
+1 - Entry Level:  
+- Basic concepts and definitions  
+- Simple explanations without coding  
+- Questions answerable by someone new to the skill  
+
+2 - Junior:  
+- Basic practical understanding  
+- Simple code-related questions or usage  
+- Can explain common patterns and simple problem solving  
+
+3 - Mid Level:  
+- Intermediate concepts and design  
+- Schema design, error handling, query optimization  
+- Real-world application and practical problem solving  
+
+4 - Senior:  
+- Advanced concepts and architecture  
+- Performance tuning, concurrency, complex error handling  
+- Designing scalable systems and best practices  
+
+5 - Expert:  
+- Deep internals and optimization  
+- Scalability, security, and advanced system design  
+- Handling complex real-world challenges and innovations  
+
+
+### 🚨 **STRICT REQUIREMENTS**
+- Generate **exactly 10 questions total**. 
+
+- Each question **must strictly match the exact proficiency level** of its respective skill.  
+- **Questions must be clear, conversational, and answerable orally in a maximum of 2 minutes** (no written coding exercises).  
+- **DO NOT repeat questions or generate generic ones**—each must be **unique and skill-specific**.  
+- **Ensure relevance by simulating real-world challenges candidates would realistically face.**  
+- **Return ONLY a JSON array of strings**, formatted correctly with no markdown or explanations.  
+
+### 📌 Examples of questions per proficiency level:
+
+Entry Level (1):  
+- "What is Node.js and what is it commonly used for?"  
+- "What is a document in MongoDB?"
+Junior (2):  
+- "How do you handle basic error handling in Node.js?"  
+- "How would you insert a document into a MongoDB collection?"
+Mid Level (3):  
+- "How would you design a MongoDB schema for an e-commerce application?"  
+- "Explain how you would optimize a MongoDB query for performance."
+Senior (4):  
+- "How do you design scalable Node.js applications for high concurrency?"  
+- "Describe MongoDB replication and how it ensures high availability."
+Expert (5):  
+- "Explain the internals of the Node.js event loop and how it handles asynchronous operations."  
+- "How would you architect a distributed MongoDB cluster for multi-region data consistency?"
+
+### **📌 Expected JSON Response Format**
+The AI must return **a single valid JSON array** containing **exactly 10 mixed questions**, like this:
+[
+  "Question 1?",
+  "Question 2?",
+  "Question 3?",
+  "Question 4?",
+  "Question 5?",
+  "Question 6?",
+  "Question 7?",
+  "Question 8?",
+  "Question 9?",
+  "Question 10?"
+]
+`.trim();
+
+    const userPrompt = `
+Based on the following skill list, generate exactly 10 oral technical interview questions.  
+Each question must *STRICTLY* match the given "proficiencyLevel".
+Skill List and corresponding proficiency for each skill: 
+
+${skills
+  .map((s) => `- ${s.name} (Proficiency: ${s.proficiencyLevel}/5)`)
+  .join("\n")}.
+
+Distribute the questions evenly across the skills.  
+For example, if there are 2 skills, generate 5 questions per skill.
+`.trim()
+;
+
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      max_tokens: 500,
+      temperature: 0.5,
+      stream: true,
+    });
+
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
+
+    // 5. Try to extract & parse the JSON array
+    raw = raw
+      .replace(/^```json\n/, "")
+      .replace(/\n```$/, "")
+      .trim();
+    let questions;
+
+    try {
+      questions = JSON.parse(raw);
+    } catch (e) {
+      console.warn("JSON parse failed on cleaned text, falling back:", e);
+
+      questions = [];
+    }
+
+    profile.quota += 1;
+    await profile.save();
+
+    // 7. Return the array
+    res.json({ questions });
+  } catch (error) {
+    console.error("Error generating questions:", error);
+    res.status(500).json({ error: "Failed to generate questions" });
   }
 };
