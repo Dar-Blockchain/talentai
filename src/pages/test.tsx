@@ -780,7 +780,19 @@ export default function Test() {
       saveTestResults();
       // Store current URL in localStorage before navigation
       localStorage.setItem('previousUrl', window.location.href);
-      router.push('/report');
+      // Check if this is an on-boarding test
+      if (router.query.type === 'on-boarding') {
+        router.push({
+          pathname: '/report-on-boarding',
+          query: {
+            skills: router.query.skills,
+            proficiencyLevels: router.query.proficiencyLevels,
+            experienceLevel: router.query.experienceLevel
+          }
+        });
+      } else {
+        router.push('/report');
+      }
     }
   };
 
