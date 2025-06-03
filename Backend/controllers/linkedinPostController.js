@@ -128,8 +128,8 @@ As an expert technical recruiter and AI assistant, analyze this job description 
     "description": "Professional summary",
     "requirements": ["Requirement 1", "Requirement 2"],
     "responsibilities": ["Responsibility 1", "Responsibility 2"], // REQUIRED
-    "location": "Location", // REQUIRED – if not specified in description, set to "Non spécifiée"
-    "employmentType": "Full-time/Part-time/Contract", // REQUIRED – if not specified, default to "Non spécifiée"
+    "location": "Location", // REQUIRED – if not specified in description, set to "Non specified"
+    "employmentType": "Full-time/Part-time/Contract", // REQUIRED – if not specified, default to "Non specified"
     "salary": {
       "min": 0,
       "max": 0,
@@ -164,8 +164,8 @@ As an expert technical recruiter and AI assistant, analyze this job description 
 
 IMPORTANT:
 - Always include "responsibilities", "location", and "employmentType".
-- If "location" is not specified in the job description, default to "Non spécifiée".
-- If "employmentType" is not specified, default to "Non spécifiée".
+- If "location" is not specified in the job description, default to "Non specified".
+- If "employmentType" is not specified, default to "Non specified".
 - Return only valid JSON. Avoid markdown or code blocks.
 
 Job Description:
@@ -294,6 +294,35 @@ ${result.linkedinPost.hashtags.map((tag) => "#" + tag).join(" ")}`;
       });
     }
 
+      // Nettoyage : remplace les champs vides par "Non specified"
+      function sanitizeEmptyFields(obj) {
+        if (Array.isArray(obj)) {
+          return obj.length === 0 ? "Non specified" : obj.map(sanitizeEmptyFields);
+        } else if (typeof obj === "object" && obj !== null) {
+          const keys = Object.keys(obj);
+          if (keys.length === 0) return "Non specified";
+          const newObj = {};
+          for (const key of keys) {
+            const value = obj[key];
+            if (
+              value === "" ||
+              value === null ||
+              (typeof value === "object" &&
+                value !== null &&
+                ((Array.isArray(value) && value.length === 0) ||
+                  (!Array.isArray(value) && Object.keys(value).length === 0)))
+            ) {
+              newObj[key] = "Non specified";
+            } else {
+              newObj[key] = sanitizeEmptyFields(value);
+            }
+          }
+          return newObj;
+        }
+        return obj;
+      }
+
+      result = sanitizeEmptyFields(result);
     res.json(result);
   } catch (error) {
     console.error("Error in job post generation:", error);
