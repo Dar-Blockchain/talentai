@@ -73,6 +73,8 @@ import MenuIcon from '@mui/icons-material/Menu';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import axios from 'axios';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 
 // At the top of your file, after imports
 const GREEN_MAIN = 'rgba(0, 255, 157, 1)';
@@ -460,6 +462,9 @@ const DashboardCompany = () => {
   // Add new state for selected assessment
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
   const [assessmentModalOpen, setAssessmentModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedJob, setEditedJob] = useState<any>(null);
+  const [localRequiredSkills, setLocalRequiredSkills] = useState(profile?.requiredSkills || []);
 
   const isSalaryRangeValid = () => {
     return salaryRange.min > 0 && salaryRange.max > 0 && salaryRange.max >= salaryRange.min;
@@ -1486,71 +1491,368 @@ Benefits:
             }}>
               <Box sx={{ mb: 4 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 2 }}>
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      color: GREEN_MAIN,
-                      fontSize: { xs: '1.25rem', sm: '1.5rem' }
-                    }}
-                  >
-                    {generatedJob.jobDetails.title}
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
-                      variant="contained"
-                      startIcon={<LinkedInIcon />}
-                      onClick={handleShareLinkedIn}
-                      disabled={isPosting}
-                      sx={{
-                        background: hasSharedToLinkedIn
-                          ? 'rgba(0,119,181,0.6)'
-                          : 'linear-gradient(135deg, #0077B5 0%, #00A0DC 100%)',
-                        '&:hover': {
-                          background: hasSharedToLinkedIn
-                            ? 'rgba(0,119,181,0.7)'
-                            : 'linear-gradient(135deg, #006097 0%, #0077B5 100%)',
+                  {isEditing ? (
+                    <TextField
+                      fullWidth
+                      label="Job Title"
+                      value={editedJob.jobDetails.title}
+                      onChange={(e) => handleInputChange('title', e.target.value)}
+                      InputLabelProps={{
+                        sx: {
+                          color: GREEN_MAIN,
+                          fontSize: '1rem',
+                          fontWeight: 500
                         }
                       }}
+                      InputProps={{
+                        sx: {
+                          color: '#000',
+                          fontSize: '1.1rem',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: GREEN_MAIN,
+                            borderWidth: '2px'
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: GREEN_MAIN,
+                            borderWidth: '2px'
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: GREEN_MAIN,
+                            borderWidth: '2px'
+                          },
+                        },
+                      }}
+                    />
+                  ) : (
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        color: GREEN_MAIN,
+                        fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                      }}
                     >
-                      {isPosting
-                        ? 'Sharing...'
-                        : linkedinCopySuccess
-                          ? 'Shared!'
-                          : hasSharedToLinkedIn
-                            ? 'Already Shared'
-                            : 'Share on LinkedIn'}
-                    </Button>
+                      {generatedJob.jobDetails.title}
+                    </Typography>
+                  )}
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    {!isEditing ? (
+                      <>
+                        <Button
+                          variant="contained"
+                          startIcon={<EditIcon />}
+                          onClick={handleEdit}
+                          sx={{
+                            background: GREEN_MAIN,
+                            color: 'black',
+                            '&:hover': {
+                              background: 'rgba(0, 255, 157, 0.8)',
+                            }
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="contained"
+                          startIcon={<LinkedInIcon />}
+                          onClick={handleShareLinkedIn}
+                          disabled={isPosting}
+                          sx={{
+                            background: hasSharedToLinkedIn
+                              ? 'rgba(0,119,181,0.6)'
+                              : 'linear-gradient(135deg, #0077B5 0%, #00A0DC 100%)',
+                            '&:hover': {
+                              background: hasSharedToLinkedIn
+                                ? 'rgba(0,119,181,0.7)'
+                                : 'linear-gradient(135deg, #006097 0%, #0077B5 100%)',
+                            }
+                          }}
+                        >
+                          {isPosting
+                            ? 'Sharing...'
+                            : linkedinCopySuccess
+                              ? 'Shared!'
+                              : hasSharedToLinkedIn
+                                ? 'Already Shared'
+                                : 'Share on LinkedIn'}
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          variant="outlined"
+                          onClick={handleCancel}
+                          sx={{
+                            borderColor: GREEN_MAIN,
+                            color: GREEN_MAIN,
+                            '&:hover': {
+                              borderColor: 'rgba(0, 255, 157, 0.8)',
+                            }
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="contained"
+                          onClick={handleSave}
+                          sx={{
+                            background: GREEN_MAIN,
+                            color: 'black',
+                            '&:hover': {
+                              background: 'rgba(0, 255, 157, 0.8)',
+                            }
+                          }}
+                        >
+                          Save Changes
+                        </Button>
+                      </>
+                    )}
                   </Box>
                 </Box>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  <Chip
-                    icon={<LocationOnIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />}
-                    label={generatedJob.jobDetails.location}
-                    size="small"
-                    sx={{
-                      color: 'black',
-                      backgroundColor: GREEN_MAIN,
-                      fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                    }}
-                  />
-                  <Chip
-                    label={generatedJob.jobDetails.employmentType}
-                    size="small"
-                    sx={{
-                      backgroundColor: GREEN_MAIN,
-                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                      color: 'black'
-                    }}
-                  />
-                  <Chip
-                    label={`${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}`}
-                    size="small"
-                    sx={{
-                      color: 'black',
-                      backgroundColor: GREEN_MAIN,
-                      fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                    }}
-                  />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+                  {isEditing && editedJob && editedJob.jobDetails ? (
+                    <>
+                      <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+                        <TextField
+                          fullWidth
+                          label="Location"
+                          value={editedJob.jobDetails.location}
+                          onChange={(e) => handleInputChange('location', e.target.value)}
+                          InputLabelProps={{
+                            sx: {
+                              color: GREEN_MAIN,
+                              fontSize: '1rem',
+                              fontWeight: 500
+                            }
+                          }}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <LocationOnIcon sx={{ color: GREEN_MAIN }} />
+                              </InputAdornment>
+                            ),
+                            sx: {
+                              color: '#000',
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                            },
+                          }}
+                        />
+                        <FormControl fullWidth>
+                          <InputLabel sx={{
+                            color: GREEN_MAIN,
+                            fontSize: '1rem',
+                            fontWeight: 500
+                          }}>
+                            Employment Type
+                          </InputLabel>
+                          <Select
+                            value={editedJob.jobDetails.employmentType}
+                            onChange={(e) => handleInputChange('employmentType', e.target.value)}
+                            label="Employment Type"
+                            startAdornment={
+                              <InputAdornment position="start">
+                                <WorkIcon sx={{ color: GREEN_MAIN }} />
+                              </InputAdornment>
+                            }
+                            sx={{
+                              color: '#000',
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                              '& .MuiSelect-icon': {
+                                color: GREEN_MAIN
+                              }
+                            }}
+                          >
+                            <MenuItem value="Full-time">Full-time</MenuItem>
+                            <MenuItem value="Part-time">Part-time</MenuItem>
+                            <MenuItem value="Contract">Contract</MenuItem>
+                            <MenuItem value="Freelance">Freelance</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Box>
+                      <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+                        <FormControl fullWidth>
+                          <InputLabel sx={{
+                            color: GREEN_MAIN,
+                            fontSize: '1rem',
+                            fontWeight: 500
+                          }}>
+                            Currency
+                          </InputLabel>
+                          <Select
+                            value={editedJob.jobDetails.salary.currency}
+                            onChange={(e) => handleInputChange('salary', {
+                              ...editedJob.jobDetails.salary,
+                              currency: e.target.value
+                            })}
+                            label="Currency"
+                            startAdornment={
+                              <InputAdornment position="start">
+                                <AttachMoneyIcon sx={{ color: GREEN_MAIN }} />
+                              </InputAdornment>
+                            }
+                            sx={{
+                              color: '#000',
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                              '& .MuiSelect-icon': {
+                                color: GREEN_MAIN
+                              }
+                            }}
+                          >
+                            <MenuItem value="$">$ (USD)</MenuItem>
+                            <MenuItem value="€">€ (EUR)</MenuItem>
+                            <MenuItem value="£">£ (GBP)</MenuItem>
+                          </Select>
+                        </FormControl>
+                        <TextField
+                          fullWidth
+                          label="Minimum Salary"
+                          type="number"
+                          value={editedJob.jobDetails.salary.min}
+                          onChange={(e) => handleInputChange('salary', {
+                            ...editedJob.jobDetails.salary,
+                            min: parseInt(e.target.value)
+                          })}
+                          InputLabelProps={{
+                            sx: {
+                              color: GREEN_MAIN,
+                              fontSize: '1rem',
+                              fontWeight: 500
+                            }
+                          }}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <TrendingDownIcon sx={{ color: GREEN_MAIN }} />
+                              </InputAdornment>
+                            ),
+                            sx: {
+                              color: '#000',
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                            },
+                          }}
+                        />
+                        <TextField
+                          fullWidth
+                          label="Maximum Salary"
+                          type="number"
+                          value={editedJob.jobDetails.salary.max}
+                          onChange={(e) => handleInputChange('salary', {
+                            ...editedJob.jobDetails.salary,
+                            max: parseInt(e.target.value)
+                          })}
+                          InputLabelProps={{
+                            sx: {
+                              color: GREEN_MAIN,
+                              fontSize: '1rem',
+                              fontWeight: 500
+                            }
+                          }}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <TrendingUpIcon sx={{ color: GREEN_MAIN }} />
+                              </InputAdornment>
+                            ),
+                            sx: {
+                              color: '#000',
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                            },
+                          }}
+                        />
+                      </Box>
+                    </>
+                  ) : (
+                    <>
+
+                      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                        <Chip
+                          icon={<LocationOnIcon sx={{ fontSize: '0.875rem' }} />}
+                          label={generatedJob.jobDetails.location}
+                          size="small"
+                          sx={{
+                            color: 'black',
+                            backgroundColor: GREEN_MAIN,
+                            fontSize: '0.75rem',
+                            height: '24px'
+                          }}
+                        />
+                        <Chip
+                          label={generatedJob.jobDetails.employmentType}
+                          size="small"
+                          sx={{
+                            backgroundColor: GREEN_MAIN,
+                            fontSize: '0.75rem',
+                            color: 'black',
+                            height: '24px'
+                          }}
+                        />
+                        <Chip
+                          label={`${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}`}
+                          size="small"
+                          sx={{
+                            color: 'black',
+                            backgroundColor: GREEN_MAIN,
+                            fontSize: '0.75rem',
+                            height: '24px'
+                          }}
+                        />
+                      </Box>
+                    </>
+                  )}
                 </Box>
               </Box>
 
@@ -1562,13 +1864,23 @@ Benefits:
                 }}>
                   Overview
                 </Typography>
-                <Typography variant="body1" sx={{
-                  color: 'black',
-                  lineHeight: 1.6,
-                  fontSize: { xs: '0.875rem', sm: '1rem' }
-                }}>
-                  {generatedJob.jobDetails.description}
-                </Typography>
+                {isEditing ? (
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={4}
+                    value={editedJob.jobDetails.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
+                  />
+                ) : (
+                  <Typography variant="body1" sx={{
+                    color: 'black',
+                    lineHeight: 1.6,
+                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                  }}>
+                    {generatedJob.jobDetails.description}
+                  </Typography>
+                )}
               </Box>
 
               <Box sx={{ mb: 4 }}>
@@ -1579,41 +1891,49 @@ Benefits:
                 }}>
                   Requirements
                 </Typography>
-                <Box sx={{
-                  backgroundColor: 'rgba(255,255,255,0.05)',
-                  borderRadius: '12px',
-                  border: `1px solid black`,
-
-                  p: 2
-                }}>
-                  {generatedJob.jobDetails.requirements.map((req: string, index: number) => (
-                    <Box key={index} sx={{
-                      display: 'flex',
-                      gap: 2,
-
-                      mb: index !== generatedJob.jobDetails.requirements.length - 1 ? 1.5 : 0,
-                      alignItems: 'flex-start'
-                    }}>
-                      <Box sx={{
-                        minWidth: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        backgroundColor: GREEN_MAIN,
-                        color: 'black',
+                {isEditing ? (
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={4}
+                    value={editedJob.jobDetails.requirements.join('\n')}
+                    onChange={(e) => handleInputChange('requirements', e.target.value.split('\n'))}
+                  />
+                ) : (
+                  <Box sx={{
+                    backgroundColor: 'rgba(255,255,255,0.05)',
+                    borderRadius: '12px',
+                    border: `1px solid black`,
+                    p: 2
+                  }}>
+                    {generatedJob.jobDetails.requirements.map((req: string, index: number) => (
+                      <Box key={index} sx={{
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '12px',
-                        fontWeight: 600
+                        gap: 2,
+                        mb: index !== generatedJob.jobDetails.requirements.length - 1 ? 1.5 : 0,
+                        alignItems: 'flex-start'
                       }}>
-                        {index + 1}
+                        <Box sx={{
+                          minWidth: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          backgroundColor: GREEN_MAIN,
+                          color: 'black',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '12px',
+                          fontWeight: 600
+                        }}>
+                          {index + 1}
+                        </Box>
+                        <Typography variant="body2" sx={{ color: 'black' }}>
+                          {req}
+                        </Typography>
                       </Box>
-                      <Typography variant="body2" sx={{ color: 'black' }}>
-                        {req}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
+                    ))}
+                  </Box>
+                )}
               </Box>
 
               <Box sx={{ mb: 4 }}>
@@ -1624,40 +1944,49 @@ Benefits:
                 }}>
                   Responsibilities
                 </Typography>
-                <Box sx={{
-                  backgroundColor: 'rgba(255,255,255,0.05)',
-                  borderRadius: '12px',
-                  border: `1px solid black`,
-
-                  p: 2
-                }}>
-                  {generatedJob.jobDetails.responsibilities.map((resp: string, index: number) => (
-                    <Box key={index} sx={{
-                      display: 'flex',
-                      gap: 2,
-                      mb: index !== generatedJob.jobDetails.responsibilities.length - 1 ? 1.5 : 0,
-                      alignItems: 'flex-start'
-                    }}>
-                      <Box sx={{
-                        minWidth: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        backgroundColor: GREEN_MAIN,
-                        color: 'black',
+                {isEditing ? (
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={4}
+                    value={editedJob.jobDetails.responsibilities.join('\n')}
+                    onChange={(e) => handleInputChange('responsibilities', e.target.value.split('\n'))}
+                  />
+                ) : (
+                  <Box sx={{
+                    backgroundColor: 'rgba(255,255,255,0.05)',
+                    borderRadius: '12px',
+                    border: `1px solid black`,
+                    p: 2
+                  }}>
+                    {generatedJob.jobDetails.responsibilities.map((resp: string, index: number) => (
+                      <Box key={index} sx={{
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '12px',
-                        fontWeight: 600
+                        gap: 2,
+                        mb: index !== generatedJob.jobDetails.responsibilities.length - 1 ? 1.5 : 0,
+                        alignItems: 'flex-start'
                       }}>
-                        {index + 1}
+                        <Box sx={{
+                          minWidth: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          backgroundColor: GREEN_MAIN,
+                          color: 'black',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '12px',
+                          fontWeight: 600
+                        }}>
+                          {index + 1}
+                        </Box>
+                        <Typography variant="body2" sx={{ color: 'black' }}>
+                          {resp}
+                        </Typography>
                       </Box>
-                      <Typography variant="body2" sx={{ color: 'black' }}>
-                        {resp}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
+                    ))}
+                  </Box>
+                )}
               </Box>
 
               <Box>
@@ -1669,17 +1998,14 @@ Benefits:
                   Required Skills
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {generatedJob.skillAnalysis.requiredSkills.map((skill: RequiredSkill, index: number) => (
-                    <Chip
+                  {localRequiredSkills.map((skill, index) => (
+                    <SkillChip
                       key={index}
-                      label={`${skill.name} (Level ${skill.level})`}
-                      sx={{
-                        backgroundColor: GREEN_MAIN,
-                        color: 'black',
-                        '& .MuiChip-label': {
-                          px: 2
-                        }
-                      }}
+                      label={skill}
+                      // onDelete={() => {
+                      //   setLocalRequiredSkills(localRequiredSkills.filter((_, i) => i !== index));
+                      // }}
+                      // deleteIcon={<DeleteIcon sx={{ color: 'red' }} />}
                     />
                   ))}
                 </Box>
@@ -2697,6 +3023,61 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
     </Dialog>
   );
 
+  const handleEdit = () => {
+    if (!generatedJob || !generatedJob.jobDetails) return;
+    setEditedJob({
+      ...generatedJob,
+      jobDetails: {
+        ...generatedJob.jobDetails,
+        salary: {
+          ...generatedJob.jobDetails.salary
+        }
+      }
+    });
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditedJob(null);
+  };
+
+  const handleSave = () => {
+    if (!editedJob || !editedJob.jobDetails) return;
+    setGeneratedJob(editedJob);
+    setIsEditing(false);
+    setEditedJob(null);
+  };
+
+  const handleInputChange = (field: string, value: any) => {
+    if (!editedJob || !editedJob.jobDetails) return;
+
+    if (field === 'salary') {
+      setEditedJob((prev: any) => ({
+        ...prev,
+        jobDetails: {
+          ...prev.jobDetails,
+          salary: {
+            ...prev.jobDetails.salary,
+            ...value
+          }
+        }
+      }));
+    } else {
+      setEditedJob((prev: any) => ({
+        ...prev,
+        jobDetails: {
+          ...prev.jobDetails,
+          [field]: value
+        }
+      }));
+    }
+  };
+
+  useEffect(() => {
+    setLocalRequiredSkills(profile?.requiredSkills || []);
+  }, [profile]);
+
   return (
     <Box sx={{
       minHeight: '100vh',
@@ -2915,8 +3296,15 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
               </Box>
 
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {profile?.requiredSkills.map((skill, index) => (
-                  <SkillChip key={index} label={skill} />
+                {localRequiredSkills.map((skill, index) => (
+                  <SkillChip
+                    key={index}
+                    label={skill}
+                    onDelete={() => {
+                      setLocalRequiredSkills(localRequiredSkills.filter((_, i) => i !== index));
+                    }}
+                    deleteIcon={<DeleteIcon sx={{ color: 'red' }} />}
+                  />
                 ))}
               </Box>
 
