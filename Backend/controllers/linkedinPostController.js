@@ -96,10 +96,10 @@ Return the response in the following JSON format:
     "location": "Job location",
     "employmentType": "Full-time/Part-time/Contract",
     "experienceLevel": "Required experience level",
-    "salary": {
-      "min": minimum salary,
-      "max": maximum salary,
-      "currency": "Currency code"
+     "salary": {
+      "min": 0,
+      "max": 0,
+      "currency": "USD"
     }
   },
   "skillAnalysis": {
