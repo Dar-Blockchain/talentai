@@ -82,6 +82,10 @@ As an expert technical recruiter and AI assistant, analyze this job description 
 3. Format it for LinkedIn
 4. Provide comprehensive skill analysis
 
+IMPORTANT:
+- Extract the exact salary range (min, max, currency) as specified in the job description. Do not estimate or change these values.
+
+
 Job Description:
 ${description}
 
