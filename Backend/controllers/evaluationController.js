@@ -4,6 +4,8 @@ require("dotenv").config();
 
 const JobAssessmentResult = require("../models/JobAssessmentResultModel");
 const Profile = require("../models/ProfileModel");
+const Post = require("../models/PostModel");
+
 const postService = require("../services/postService");
 
 // Configure the Together AI client
@@ -268,57 +270,128 @@ exports.generateTechniqueQuestionsForJob = async (req, res) => {
     }
 
     // 2️⃣ Fetch required skills for the job
-    const skillsData = await postService.getRequiredSkillsByPostId(jobId);
+    let result = await postService.getRequiredSkillsByPostId(jobId);
+    skillsData = result.requiredSkills;
 
-    if (
-      !skillsData ||
-      !skillsData.requiredSkills ||
-      skillsData.requiredSkills.length === 0
-    ) {
+    if (!skillsData || skillsData.length === 0) {
       return res
         .status(404)
         .json({ error: "No required skills found for this job" });
     }
 
     // 3️⃣ Format skill list for prompt
-    const skillsList = skillsData.requiredSkills
-      .map((skill) => `- ${skill.name} (Proficiency: ${skill.level}/5)`)
+    const skillsListDetails = skillsData
+      .map((skill) => `- ${skill.name} (ProficiencyLevel: ${skill.level})`)
       .join("\n");
 
-    // 4️⃣ Construct AI Prompt
-    const prompt = `
-    You are an experienced technical interviewer specializing in multiple skills. 
-    Based on the candidate's profile, generate **exactly 10** technical interview questions.
-    
-    Skills and proficiency levels:
-    ${skillsList}
-    
-    The questions should be appropriate for the given proficiency levels, mixing theoretical concepts, practical applications, and problem-solving scenarios.
-    
-    **Important:** All questions must be designed to be answered **orally only**. Do NOT require any live coding, writing code, or recalling syntax.
-    
-    **Return ONLY** a JSON array of strings—no commentary, no numbering, no markdown—like this:
-    
-    [
-      "Technical question 1?",
-      "Technical question 2?",
-      ...
-    ]
-    `.trim();
-    
+    let questionsCount;
+    if (skillsData.length <= 2) {
+      questionsCount = 10;
+    } else {
+      questionsCount = 20;
+    }
+
+    const systemPrompt = `
+You are a senior technical interviewer. Your job is to generate **exactly ${questionsCount} technical interview questions** tailored to assess a candidate's skill proficiency, based strictly on the defined levels below.
+
+Skill Proficiency Levels:
+
+1 - Entry Level:  
+- Basic concepts and definitions  
+- Simple explanations without coding  
+- Questions answerable by someone new to the skill  
+
+2 - Junior:  
+- Basic practical understanding  
+- Simple code-related questions or usage  
+- Can explain common patterns and simple problem solving  
+
+3 - Mid Level:  
+- Intermediate concepts and design  
+- Schema design, error handling, query optimization  
+- Real-world application and practical problem solving  
+
+4 - Senior:  
+- Advanced concepts and architecture  
+- Performance tuning, concurrency, complex error handling  
+- Designing scalable systems and best practices  
+
+5 - Expert:  
+- Deep internals and optimization  
+- Scalability, security, and advanced system design  
+- Handling complex real-world challenges and innovations  
+
+
+### 🚨 **STRICT REQUIREMENTS**
+- Generate **exactly ${questionsCount} questions total**. 
+- Each question must match the skill **and** its **exact proficiency level**
+- **Questions must be clear, conversational, and answerable orally in a maximum of 2 minutes** (no written coding exercises).  
+- **DO NOT repeat questions or generate generic ones**—each must be **unique and skill-specific**.  
+- **Ensure relevance by simulating real-world challenges candidates would realistically face.**  
+- **Return ONLY a JSON array of strings**, formatted correctly with no markdown or explanations.  
+
+### 📌 Examples of questions per proficiency level:
+Entry Level (1):  
+- "What is Node.js and what is it commonly used for?"  
+- "What is a document in MongoDB?"
+Junior (2):  
+- "How do you handle basic error handling in Node.js?"  
+- "How would you insert a document into a MongoDB collection?"
+Mid Level (3):  
+- "How would you design a MongoDB schema for an e-commerce application?"  
+- "Explain how you would optimize a MongoDB query for performance."
+Senior (4):  
+- "How do you design scalable Node.js applications for high concurrency?"  
+- "Describe MongoDB replication and how it ensures high availability."
+Expert (5):  
+- "Explain the internals of the Node.js event loop and how it handles asynchronous operations."  
+- "How would you architect a distributed MongoDB cluster for multi-region data consistency?"
+
+### **📌 Expected JSON Response Format**
+The AI must return **a single valid JSON array** containing **exactly 10 mixed questions**, like this:
+[
+  "Question 1?",
+  "Question 2?",
+  "Question 3?",
+  ...
+  "Question ${questionsCount}?"
+]
+`.trim();
+
+    const userPrompt = `
+You are given a list of required skills with associated proficiency levels for a specific job role.
+
+Skill List (with required proficiency levels):
+${skillsListDetails}. 
+
+# Your task:
+Generate a total of **${questionsCount} oral technical interview questions**.
+
+# Question distribution-per-skill Rules:
+- Distribute questions as **evenly as possible** across all listed skills.
+- If an exact even distribution is not possible, distribute them **as fairly and balanced as possible**.
+- The **maximum total number of questions is 20**.
+
+# Question Requirements: 
+- Generate **exactly ${questionsCount} questions total**. 
+- Each question must match the skill **and** its **exact proficiency level**
+- **Questions must be clear, conversational, and answerable orally in a maximum of 2 minutes** (no written coding exercises).  
+- **DO NOT repeat questions or generate generic ones**—each must be **unique and skill-specific**.  
+- **Ensure relevance by simulating real-world challenges candidates would realistically face.**  
+- **Return ONLY a JSON array of strings**, formatted correctly with no markdown or explanations.  
+`.trim();
 
     // 5️⃣ Call TogetherAI API
     const stream = await together.chat.completions.create({
-      model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+      model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
       messages: [
         {
           role: "system",
-          content:
-            "Generate 10 highly relevant technical questions tailored to the listed skills and proficiency levels.",
+          content: systemPrompt,
         },
-        { role: "user", content: prompt },
+        { role: "user", content: userPrompt },
       ],
-      temperature: 0.7,
+      temperature: 0.6,
       max_tokens: 1000,
       stream: true,
     });
@@ -329,20 +402,19 @@ exports.generateTechniqueQuestionsForJob = async (req, res) => {
       if (content) raw += content;
     }
 
+    raw = raw
+      .replace(/^```json\n/, "")
+      .replace(/\n```$/, "")
+      .trim();
+
     // 6️⃣ Extract questions as JSON array
     let questions;
     try {
-      questions = JSON.parse(raw.match(/\[([\s\S]*)\]/)[0]); // Extract JSON array safely
-    } catch (error) {
-      console.warn(
-        "Failed to parse JSON, falling back to manual extraction:",
-        error
-      );
-      questions = raw
-        .split("\n")
-        .map((q) => q.trim())
-        .filter(Boolean)
-        .slice(0, 10); // Fallback method
+      questions = JSON.parse(raw);
+    } catch (e) {
+      console.warn("JSON parse failed on cleaned text, falling back:", e);
+
+      questions = [];
     }
 
     // 7️⃣ Return structured response
@@ -1750,9 +1822,7 @@ ${skills
 
 Distribute the questions evenly across the skills.  
 For example, if there are 2 skills, generate 5 questions per skill.
-`.trim()
-;
-
+`.trim();
     const stream = await together.chat.completions.create({
       model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
       messages: [
