@@ -465,6 +465,7 @@ const DashboardCompany = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedJob, setEditedJob] = useState<any>(null);
   const [localRequiredSkills, setLocalRequiredSkills] = useState(profile?.requiredSkills || []);
+  const [displayedAssessments, setDisplayedAssessments] = useState(10);
 
   const isSalaryRangeValid = () => {
     return salaryRange.min > 0 && salaryRange.max > 0 && salaryRange.max >= salaryRange.min;
@@ -2820,6 +2821,9 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
       );
     }
 
+    const visibleAssessments = companyProfiles.slice(0, displayedAssessments);
+    const hasMore = companyProfiles.length > displayedAssessments;
+
     return (
       <>
         <TableContainer component={Paper} sx={{
@@ -2839,7 +2843,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
               </TableRow>
             </TableHead>
             <TableBody>
-              {companyProfiles.map((assessment) => (
+              {visibleAssessments.map((assessment) => (
                 <TableRow key={assessment._id} sx={{ '&:hover': { backgroundColor: 'rgba(2,226,255,0.05)' } }}>
                   <TableCell sx={{ color: '#000' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -2879,7 +2883,6 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                         backgroundColor: 'rgba(0, 255, 157, 1)',
                         borderColor: '',
                         color: 'black',
-
                       }}
                     >
                       View Details
@@ -2890,6 +2893,24 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             </TableBody>
           </Table>
         </TableContainer>
+        {hasMore && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={() => setDisplayedAssessments(prev => prev + 10)}
+              sx={{
+                color: '#02E2FF',
+                borderColor: '#02E2FF',
+                '&:hover': {
+                  borderColor: '#02E2FF',
+                  backgroundColor: 'rgba(2, 226, 255, 0.04)'
+                }
+              }}
+            >
+              View More
+            </Button>
+          </Box>
+        )}
         {renderAssessmentDetailsModal()}
       </>
     );
