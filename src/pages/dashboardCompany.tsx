@@ -2004,10 +2004,18 @@ Benefits:
                     <SkillChip
                       key={index}
                       label={`${skill.name} (${generatedJob?.jobDetails?.experienceLevel || 'Entry Level'})`}
-                      onDelete={isEditing ? () => {
-                        setLocalRequiredSkills(localRequiredSkills.filter((_, i) => i !== index));
-                      } : undefined}
-                      deleteIcon={isEditing ? <DeleteIcon sx={{ color: 'red' }} /> : undefined}
+                      // onDelete={isEditing ? () => {
+                      //   const updatedSkills = [...(generatedJob?.skillAnalysis?.requiredSkills || [])];
+                      //   updatedSkills.splice(index, 1);
+                      //   setGeneratedJob((prev: any) => ({
+                      //     ...prev,
+                      //     skillAnalysis: {
+                      //       ...prev.skillAnalysis,
+                      //       requiredSkills: updatedSkills
+                      //     }
+                      //   }));
+                      // } : undefined}
+                      // deleteIcon={isEditing ? <DeleteIcon sx={{ color: 'red' }} /> : undefined}
                     />
                   ))}
                 </Box>
@@ -3054,6 +3062,10 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
         salary: {
           ...generatedJob.jobDetails.salary
         }
+      },
+      skillAnalysis: {
+        ...generatedJob.skillAnalysis,
+        requiredSkills: [...generatedJob.skillAnalysis.requiredSkills]
       }
     });
     setIsEditing(true);
@@ -3066,7 +3078,14 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
   const handleSave = () => {
     if (!editedJob || !editedJob.jobDetails) return;
-    setGeneratedJob(editedJob);
+    // Update the generatedJob with the edited job data, including the updated requiredSkills
+    setGeneratedJob({
+      ...editedJob,
+      skillAnalysis: {
+        ...editedJob.skillAnalysis,
+        requiredSkills: editedJob.skillAnalysis.requiredSkills
+      }
+    });
     setIsEditing(false);
     setEditedJob(null);
   };
