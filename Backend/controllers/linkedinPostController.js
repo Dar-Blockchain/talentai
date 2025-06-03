@@ -120,51 +120,58 @@ module.exports.generateJobPost = async (req, res) => {
 
     // Quick generation prompt - simpler and faster
     const quickPrompt = `
-    As an expert technical recruiter and AI assistant, analyze this job description and generate a JSON object with only the following structure:
-    {
-      "jobDetails": {
-        "title": "Job title",
-        "description": "Professional summary",
-        "requirements": ["Requirement 1", "Requirement 2"],
-        "responsibilities": ["Responsibility 1", "Responsibility 2"],
-        "location": "Location",
-        "employmentType": "Full-time/Part-time/Contract",
-        "salary": {
-          "min": 0,
-          "max": 0,
-          "currency": "USD"
-        }
-      },
-      "skillAnalysis": {
-        "requiredSkills": [
-          {
-            "name": "Skill",
-            "level": "1-5",
-            "importance": "Required/Preferred",
-            "category": "Frontend/Backend/Other"
-          }
-        ],
-        "suggestedSkills": {
-          "technical": [],
-          "frameworks": [],
-          "tools": []
-        },
-        "skillSummary": {
-          "mainTechnologies": [],
-          "complementarySkills": [],
-          "learningPath": [],
-          "stackComplexity": "Simple/Moderate/Complex"
-        }
-      },
-      "linkedinPost": {
-        "finalPost": "Formatted LinkedIn job post with emojis and hashtags"
-      }
+As an expert technical recruiter and AI assistant, analyze this job description and generate a JSON object with exactly the following structure:
+
+{
+  "jobDetails": {
+    "title": "Job title",
+    "description": "Professional summary",
+    "requirements": ["Requirement 1", "Requirement 2"],
+    "responsibilities": ["Responsibility 1", "Responsibility 2"], // REQUIRED
+    "location": "Location", // REQUIRED – if not specified in description, set to "Non spécifiée"
+    "employmentType": "Full-time/Part-time/Contract", // REQUIRED – if not specified, default to "Non spécifiée"
+    "salary": {
+      "min": 0,
+      "max": 0,
+      "currency": "USD"
     }
-    
-    Return only valid JSON. Avoid markdown or code blocks.
-    Job Description:
-    ${description}
-        `.trim();
+  },
+  "skillAnalysis": {
+    "requiredSkills": [
+      {
+        "name": "Skill",
+        "level": "1-5",
+        "importance": "Required/Preferred",
+        "category": "Frontend/Backend/Other"
+      }
+    ],
+    "suggestedSkills": {
+      "technical": [],
+      "frameworks": [],
+      "tools": []
+    },
+    "skillSummary": {
+      "mainTechnologies": [],
+      "complementarySkills": [],
+      "learningPath": [],
+      "stackComplexity": "Simple/Moderate/Complex"
+    }
+  },
+  "linkedinPost": {
+    "finalPost": "Formatted LinkedIn job post with emojis and hashtags"
+  }
+}
+
+IMPORTANT:
+- Always include "responsibilities", "location", and "employmentType".
+- If "location" is not specified in the job description, default to "Non spécifiée".
+- If "employmentType" is not specified, default to "Non spécifiée".
+- Return only valid JSON. Avoid markdown or code blocks.
+
+Job Description:
+${description}
+`.trim();
+
 
     // Choose prompt and configuration based on type
     const prompt = type === "quick" ? quickPrompt : detailedPrompt;
