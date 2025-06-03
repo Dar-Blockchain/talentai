@@ -1275,6 +1275,22 @@ Benefits:
             }}
           />
 
+          {!isSalaryRangeValid() && (
+            <Alert
+              severity="warning"
+              sx={{
+                mt: 2,
+                backgroundColor: 'rgba(255,152,0,0.1)',
+                color: '#ffb74d',
+                border: '1px solid rgba(255,152,0,0.3)',
+                '& .MuiAlert-icon': {
+                  color: '#ffb74d'
+                }
+              }}
+            >
+              Please enter a valid salary range (minimum and maximum values required, maximum must be greater than or equal to minimum)
+            </Alert>
+          )}
           <Box sx={{ mt: 3 }}>
             <Typography variant="subtitle1" sx={{ color: '#000', mb: 2 }}>
               Salary Range
@@ -1397,22 +1413,6 @@ Benefits:
             </Button>
           </Box>
 
-          {!isSalaryRangeValid() && (
-            <Alert
-              severity="warning"
-              sx={{
-                mt: 2,
-                backgroundColor: 'rgba(255,152,0,0.1)',
-                color: '#ffb74d',
-                border: '1px solid rgba(255,152,0,0.3)',
-                '& .MuiAlert-icon': {
-                  color: '#ffb74d'
-                }
-              }}
-            >
-              Please enter a valid salary range (minimum and maximum values required, maximum must be greater than or equal to minimum)
-            </Alert>
-          )}
 
           {(isQuickGenerating || isDetailedGenerating) && (
             <Typography
@@ -3352,7 +3352,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                 {/* <Typography variant="subtitle2" sx={{ color: 'black', mb: 1 }}>
                   Required Experience Level
                 </Typography> */}
-                                <SectionTitle> Required Experience</SectionTitle>
+                <SectionTitle> Required Experience</SectionTitle>
 
                 <Chip
                   label={profile?.requiredExperienceLevel}
