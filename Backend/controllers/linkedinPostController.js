@@ -76,7 +76,7 @@ ${description}
 
     // Detailed generation prompt - more comprehensive
     const detailedPrompt = `
-As an expert technical recruiter and AI assistant, analyze this job description to:
+As an expert technical recruiter and AI assistant, analyze this job description and generate a JSON object with only the following structure:
 1. Create a professional job post
 2. Extract and suggest relevant skills
 3. Format it for LinkedIn
