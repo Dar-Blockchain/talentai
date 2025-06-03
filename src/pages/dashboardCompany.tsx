@@ -290,6 +290,7 @@ interface JobPost {
       level: string;
       importance: string;
       category: string;
+      experienceLevel: string;
     }>;
     suggestedSkills: {
       technical: Array<{
@@ -754,12 +755,12 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
           salary: generatedJob.jobDetails.salary
         },
         skillAnalysis: {
-          requiredSkills: generatedJob.skillAnalysis.requiredSkills.map((skill: any) => ({
-            name: skill.name,
-            level: skill.level.toString(),
+          requiredSkills: localRequiredSkills.map((skillName) => ({
+            name: skillName,
+            level: "3", // Default level
             importance: "Required",
-            category: skill.name.includes('React') || skill.name.includes('JavaScript') ? 'Frontend' :
-              skill.name.includes('Git') ? 'Version Control' :
+            category: skillName.includes('React') || skillName.includes('JavaScript') ? 'Frontend' :
+              skillName.includes('Git') ? 'Version Control' :
                 'General'
           })),
           suggestedSkills: {
@@ -798,7 +799,7 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
             ]
           },
           skillSummary: {
-            mainTechnologies: generatedJob.skillAnalysis.requiredSkills.map((skill: any) => skill.name),
+            mainTechnologies: localRequiredSkills,
             complementarySkills: ["TypeScript", "Redux", "Next.js"],
             learningPath: ["ReactJS -> TypeScript -> Redux -> Next.js"],
             stackComplexity: "Moderate"
@@ -816,7 +817,7 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
               `🔹 ${generatedJob.jobDetails.location} work`,
               `🔹 Salary range: ${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}`
             ],
-            skillsRequired: `💻 Required Skills: ${generatedJob.skillAnalysis.requiredSkills.map((skill: any) => skill.name).join(', ')}.`,
+            skillsRequired: `💻 Required Skills: ${localRequiredSkills.join(', ')}.`,
             benefitsSection: "🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.",
             callToAction: "✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test"
           },
@@ -851,7 +852,7 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
 🔹 ${generatedJob.jobDetails.location} work
 🔹 Salary range: ${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}
 
-💻 Required Skills: ${generatedJob.skillAnalysis.requiredSkills.map((skill: any) => skill.name).join(', ')}.
+💻 Required Skills: ${localRequiredSkills.join(', ')}.
 
 🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.
 
@@ -1035,7 +1036,7 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
           >
             <MenuItem value="">All Jobs</MenuItem>
             {myJobs.map((job) => (
-              <MenuItem key={job._id} value={job._id} sx={{ backgroundColor: 'rgba(30,41,59,0.98)' }}>
+              <MenuItem key={job._id} value={job._id} sx={{ backgroundColor: 'white' }}>
                 {job.jobDetails.title}
               </MenuItem>
             ))}
@@ -1999,14 +2000,14 @@ Benefits:
                   Required Skills
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {localRequiredSkills.map((skill, index) => (
+                  {(generatedJob?.skillAnalysis?.requiredSkills || []).map((skill, index) => (
                     <SkillChip
                       key={index}
-                      label={skill}
-                      // onDelete={() => {
-                      //   setLocalRequiredSkills(localRequiredSkills.filter((_, i) => i !== index));
-                      // }}
-                      // deleteIcon={<DeleteIcon sx={{ color: 'red' }} />}
+                      label={`${skill.name} (${generatedJob?.jobDetails?.experienceLevel || 'Entry Level'})`}
+                      onDelete={isEditing ? () => {
+                        setLocalRequiredSkills(localRequiredSkills.filter((_, i) => i !== index));
+                      } : undefined}
+                      deleteIcon={isEditing ? <DeleteIcon sx={{ color: 'red' }} /> : undefined}
                     />
                   ))}
                 </Box>
@@ -3099,6 +3100,24 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
     setLocalRequiredSkills(profile?.requiredSkills || []);
   }, [profile]);
 
+  const getExperienceLevelFromNumber = (level: string | number): string => {
+    const numLevel = typeof level === 'string' ? parseInt(level) : level;
+    switch (numLevel) {
+      case 1:
+        return 'Entry Level';
+      case 2:
+        return 'Junior';
+      case 3:
+        return 'Mid Level';
+      case 4:
+        return 'Senior';
+      case 5:
+        return 'Expert';
+      default:
+        return 'Entry Level';
+    }
+  };
+
   return (
     <Box sx={{
       minHeight: '100vh',
@@ -3320,19 +3339,21 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                 {localRequiredSkills.map((skill, index) => (
                   <SkillChip
                     key={index}
-                    label={skill}
-                    onDelete={() => {
+                    label={`${skill} (${generatedJob?.jobDetails?.experienceLevel || 'Entry Level'})`}
+                    onDelete={isEditing ? () => {
                       setLocalRequiredSkills(localRequiredSkills.filter((_, i) => i !== index));
-                    }}
-                    deleteIcon={<DeleteIcon sx={{ color: 'red' }} />}
+                    } : undefined}
+                    deleteIcon={isEditing ? <DeleteIcon sx={{ color: 'red' }} /> : undefined}
                   />
                 ))}
               </Box>
 
               <Box sx={{ mt: 3 }}>
-                <Typography variant="subtitle2" sx={{ color: 'black', mb: 1 }}>
+                {/* <Typography variant="subtitle2" sx={{ color: 'black', mb: 1 }}>
                   Required Experience Level
-                </Typography>
+                </Typography> */}
+                                <SectionTitle> Required Experience</SectionTitle>
+
                 <Chip
                   label={profile?.requiredExperienceLevel}
                   sx={{
