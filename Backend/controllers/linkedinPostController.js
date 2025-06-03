@@ -172,7 +172,6 @@ Job Description:
 ${description}
 `.trim();
 
-
     // Choose prompt and configuration based on type
     const prompt = type === "quick" ? quickPrompt : detailedPrompt;
     const config =
@@ -294,35 +293,37 @@ ${result.linkedinPost.hashtags.map((tag) => "#" + tag).join(" ")}`;
       });
     }
 
-      // Nettoyage : remplace les champs vides par "Non specified"
-      function sanitizeEmptyFields(obj) {
-        if (Array.isArray(obj)) {
-          return obj.length === 0 ? "Non specified" : obj.map(sanitizeEmptyFields);
-        } else if (typeof obj === "object" && obj !== null) {
-          const keys = Object.keys(obj);
-          if (keys.length === 0) return "Non specified";
-          const newObj = {};
-          for (const key of keys) {
-            const value = obj[key];
-            if (
-              value === "" ||
-              value === null ||
-              (typeof value === "object" &&
-                value !== null &&
-                ((Array.isArray(value) && value.length === 0) ||
-                  (!Array.isArray(value) && Object.keys(value).length === 0)))
-            ) {
-              newObj[key] = "Non specified";
-            } else {
-              newObj[key] = sanitizeEmptyFields(value);
-            }
+    // Nettoyage : remplace les champs vides par "Non specified"
+    function sanitizeEmptyFields(obj) {
+      if (Array.isArray(obj)) {
+        return obj.length === 0
+          ? "Non specified"
+          : obj.map(sanitizeEmptyFields);
+      } else if (typeof obj === "object" && obj !== null) {
+        const keys = Object.keys(obj);
+        if (keys.length === 0) return "Non specified";
+        const newObj = {};
+        for (const key of keys) {
+          const value = obj[key];
+          if (
+            value === "" ||
+            value === null ||
+            (typeof value === "object" &&
+              value !== null &&
+              ((Array.isArray(value) && value.length === 0) ||
+                (!Array.isArray(value) && Object.keys(value).length === 0)))
+          ) {
+            newObj[key] = "Non specified";
+          } else {
+            newObj[key] = sanitizeEmptyFields(value);
           }
-          return newObj;
         }
-        return obj;
+        return newObj;
       }
+      return obj;
+    }
 
-      result = sanitizeEmptyFields(result);
+    result = sanitizeEmptyFields(result);
     res.json(result);
   } catch (error) {
     console.error("Error in job post generation:", error);
