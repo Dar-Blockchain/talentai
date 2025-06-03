@@ -54,6 +54,11 @@ const profileSchema = new mongoose.Schema(
       industry: String,
       size: String,
       location: String,
+      /*employmentType: {
+        type: String,
+        enum: ["Remote", "Hybrid", "On-site"],
+        required: true,
+      },*/
     },
 
     requiredSkills: [String],

@@ -287,22 +287,25 @@ exports.generateTechniqueQuestionsForJob = async (req, res) => {
 
     // 4️⃣ Construct AI Prompt
     const prompt = `
-You are an experienced technical interviewer specializing in multiple skills. 
-Based on the candidate's profile, generate **exactly 10** technical interview questions.
-
-Skills and proficiency levels:
-${skillsList}
-
-The questions should be appropriate for the given proficiency levels, mixing theoretical concepts, practical applications, and problem-solving scenarios.
-
-**Return ONLY** a JSON array of strings—no commentary, no numbering, no markdown—like this:
-
-[
-  "Technical question 1?",
-  "Technical question 2?",
-  ...
-]
-`.trim();
+    You are an experienced technical interviewer specializing in multiple skills. 
+    Based on the candidate's profile, generate **exactly 10** technical interview questions.
+    
+    Skills and proficiency levels:
+    ${skillsList}
+    
+    The questions should be appropriate for the given proficiency levels, mixing theoretical concepts, practical applications, and problem-solving scenarios.
+    
+    **Important:** All questions must be designed to be answered **orally only**. Do NOT require any live coding, writing code, or recalling syntax.
+    
+    **Return ONLY** a JSON array of strings—no commentary, no numbering, no markdown—like this:
+    
+    [
+      "Technical question 1?",
+      "Technical question 2?",
+      ...
+    ]
+    `.trim();
+    
 
     // 5️⃣ Call TogetherAI API
     const stream = await together.chat.completions.create({
