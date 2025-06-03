@@ -7,6 +7,7 @@ const Profile = require("../models/ProfileModel");
 const Post = require("../models/PostModel");
 
 const postService = require("../services/postService");
+const evaluationservice = require("../services/evaluationService");
 
 // Configure the Together AI client
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
@@ -259,174 +260,56 @@ Return ONLY a JSON array of strings, like:
 exports.generateTechniqueQuestionsForJob = async (req, res) => {
   try {
     const jobId = req.params.id;
-
     if (!jobId) {
-      return res.status(400).json({
-        error: "Missing required params",
-        required: {
-          id: "The ID of the job",
-        },
-      });
+      throw new HttpError(400, `missing required param: jobId`);
     }
 
-    // 2️⃣ Fetch required skills for the job
-    let result = await postService.getRequiredSkillsByPostId(jobId);
-    skillsData = result.requiredSkills;
-
-    if (!skillsData || skillsData.length === 0) {
-      return res
-        .status(404)
-        .json({ error: "No required skills found for this job" });
+    const user = req.user;
+    if (!user) {
+      throw new HttpError(500, `User not found`);
     }
 
-    // 3️⃣ Format skill list for prompt
-    const skillsListDetails = skillsData
-      .map((skill) => `- ${skill.name} (ProficiencyLevel: ${skill.level})`)
-      .join("\n");
-
-    let questionsCount;
-    if (skillsData.length <= 2) {
-      questionsCount = 10;
-    } else {
-      questionsCount = 20;
+    if (!user.profile) {
+      throw new HttpError(500, `User has not profile.`);
     }
 
-    const systemPrompt = `
-You are a senior technical interviewer. Your job is to generate **exactly ${questionsCount} technical interview questions** tailored to assess a candidate's skill proficiency, based strictly on the defined levels below.
-
-Skill Proficiency Levels:
-
-1 - Entry Level:  
-- Basic concepts and definitions  
-- Simple explanations without coding  
-- Questions answerable by someone new to the skill  
-
-2 - Junior:  
-- Basic practical understanding  
-- Simple code-related questions or usage  
-- Can explain common patterns and simple problem solving  
-
-3 - Mid Level:  
-- Intermediate concepts and design  
-- Schema design, error handling, query optimization  
-- Real-world application and practical problem solving  
-
-4 - Senior:  
-- Advanced concepts and architecture  
-- Performance tuning, concurrency, complex error handling  
-- Designing scalable systems and best practices  
-
-5 - Expert:  
-- Deep internals and optimization  
-- Scalability, security, and advanced system design  
-- Handling complex real-world challenges and innovations  
-
-
-### 🚨 **STRICT REQUIREMENTS**
-- Generate **exactly ${questionsCount} questions total**. 
-- Each question must match the skill **and** its **exact proficiency level**
-- **Questions must be clear, conversational, and answerable orally in a maximum of 2 minutes** (no written coding exercises).  
-- **DO NOT repeat questions or generate generic ones**—each must be **unique and skill-specific**.  
-- **Ensure relevance by simulating real-world challenges candidates would realistically face.**  
-- **Return ONLY a JSON array of strings**, formatted correctly with no markdown or explanations.  
-
-### 📌 Examples of questions per proficiency level:
-Entry Level (1):  
-- "What is Node.js and what is it commonly used for?"  
-- "What is a document in MongoDB?"
-Junior (2):  
-- "How do you handle basic error handling in Node.js?"  
-- "How would you insert a document into a MongoDB collection?"
-Mid Level (3):  
-- "How would you design a MongoDB schema for an e-commerce application?"  
-- "Explain how you would optimize a MongoDB query for performance."
-Senior (4):  
-- "How do you design scalable Node.js applications for high concurrency?"  
-- "Describe MongoDB replication and how it ensures high availability."
-Expert (5):  
-- "Explain the internals of the Node.js event loop and how it handles asynchronous operations."  
-- "How would you architect a distributed MongoDB cluster for multi-region data consistency?"
-
-### **📌 Expected JSON Response Format**
-The AI must return **a single valid JSON array** containing **exactly 10 mixed questions**, like this:
-[
-  "Question 1?",
-  "Question 2?",
-  "Question 3?",
-  ...
-  "Question ${questionsCount}?"
-]
-`.trim();
-
-    const userPrompt = `
-You are given a list of required skills with associated proficiency levels for a specific job role.
-
-Skill List (with required proficiency levels):
-${skillsListDetails}. 
-
-# Your task:
-Generate a total of **${questionsCount} oral technical interview questions**.
-
-# Question distribution-per-skill Rules:
-- Distribute questions as **evenly as possible** across all listed skills.
-- If an exact even distribution is not possible, distribute them **as fairly and balanced as possible**.
-- The **maximum total number of questions is 20**.
-
-# Question Requirements: 
-- Generate **exactly ${questionsCount} questions total**. 
-- Each question must match the skill **and** its **exact proficiency level**
-- **Questions must be clear, conversational, and answerable orally in a maximum of 2 minutes** (no written coding exercises).  
-- **DO NOT repeat questions or generate generic ones**—each must be **unique and skill-specific**.  
-- **Ensure relevance by simulating real-world challenges candidates would realistically face.**  
-- **Return ONLY a JSON array of strings**, formatted correctly with no markdown or explanations.  
-`.trim();
-
-    // 5️⃣ Call TogetherAI API
-    const stream = await together.chat.completions.create({
-      model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 0.6,
-      max_tokens: 1000,
-      stream: true,
-    });
-
-    let raw = "";
-    for await (const chunk of stream) {
-      const content = chunk.choices?.[0]?.delta?.content;
-      if (content) raw += content;
+    const post = await Post.findById(jobId);
+    if (!post) {
+      throw new HttpError(500, "post not found in the db");
     }
 
-    raw = raw
-      .replace(/^```json\n/, "")
-      .replace(/\n```$/, "")
-      .trim();
-
-    // 6️⃣ Extract questions as JSON array
-    let questions;
-    try {
-      questions = JSON.parse(raw);
-    } catch (e) {
-      console.warn("JSON parse failed on cleaned text, falling back:", e);
-
-      questions = [];
+    const jobRequiredSkillList = post.skillAnalysis.requiredSkills;
+    if (
+      !jobRequiredSkillList ||
+      !Array.isArray(jobRequiredSkillList) ||
+      jobRequiredSkillList.length === 0
+    ) {
+      throw new HttpError(500, "post has no requiredSkills");
     }
 
-    // 7️⃣ Return structured response
-    res.json({
+    const { requiredSkills, testedSkills, questions } =
+      await evaluationservice.generateTechniqueQuestionsForJob(jobRequiredSkillList, user);
+
+    res.status(200).json({
       jobId,
-      requiredSkills: skillsData.requiredSkills,
+      requiredSkills,
+      testedSkills,
       questions,
       totalQuestions: questions.length,
     });
   } catch (error) {
-    console.error("Error generating multiple technical questions:", error);
-    res.status(500).json({ error: "Failed to generate technical questions" });
+    // Handle known HttpError with custom status and message
+    if (error instanceof HttpError) {
+      return res.status(error.statusCode || 500).json({
+        error: error.message || "A HTTP error occurred.",
+      });
+    }
+
+    // Handle unexpected errors
+    return res.status(500).json({
+      error:
+        "An unexpected error occurred while generating technical questions for job.",
+    });
   }
 };
 
@@ -581,6 +464,7 @@ function getMasteryCategory(score) {
 }
 
 const profileService = require("../services/profileService");
+const { HttpError } = require("../utils/httpUtils");
 
 exports.analyzeProfileAnswers = async (req, res) => {
   try {
