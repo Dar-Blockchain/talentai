@@ -46,7 +46,7 @@ const profileSchema = new mongoose.Schema(
       },
     ],
 
-    todoList: { type: mongoose.Schema.Types.ObjectId, ref: "ToDo" },
+    todoList: { type: mongoose.Schema.Types.ObjectId, ref: "TodoList" },
 
     // Company details (if type is Company)
     companyDetails: {
