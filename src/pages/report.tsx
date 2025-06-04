@@ -13,7 +13,14 @@ import {
   CircularProgress,
   Divider,
   Chip,
-  Grid
+  Grid,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Rating,
+  FormLabel,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { motion } from 'framer-motion';
@@ -41,6 +48,18 @@ const TranscriptSection = styled(Box)(({ theme }) => ({
 
 const MotionPaper = motion(StyledPaper);
 const MotionBox = motion(TranscriptSection);
+
+// Add new styled component for feedback modal
+const FeedbackModal = styled(Dialog)(({ theme }) => ({
+  '& .MuiDialog-paper': {
+    background: 'white',
+    borderRadius: '24px',
+    border: '1px solid rgba(0, 0, 0, 0.1)',
+    maxWidth: '600px',
+    margin: theme.spacing(2),
+    padding: theme.spacing(3),
+  },
+}));
 
 interface SkillAnalysis {
   skillName: string;
@@ -82,6 +101,14 @@ export default function Report() {
   const [error, setError] = useState<string | null>(null);
   const [assessmentType, setAssessmentType] = useState<string>('technical');
   const hasRun = useRef(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedback, setFeedback] = useState({
+    overallExperience: 0,
+    easeOfUse: 0,
+    questionQuality: 0,
+    interfaceRating: 0,
+    recommendation: '',
+  });
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -237,6 +264,32 @@ export default function Report() {
   }, [router.isReady, router.query.from, router.query.type, router.query.skill, router.query.subcategory, router.query.proficiency]);
   const goHome = () => router.push('/dashboardCandidate');
 
+  const handleFeedbackOpen = () => {
+    setFeedbackOpen(true);
+  };
+
+  const handleFeedbackClose = () => {
+    setFeedbackOpen(false);
+  };
+
+  const handleFeedbackSubmit = async () => {
+    try {
+      // Here you would typically send the feedback to your backend
+      console.log('Feedback submitted:', feedback);
+      handleFeedbackClose();
+      // Show success message or redirect
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+    }
+  };
+
+  const handleFeedbackChange = (field: string, value: any) => {
+    setFeedback(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   if (loading || analyzing) {
     return (
       <Box sx={{
@@ -317,7 +370,6 @@ export default function Report() {
   return (
     <Box sx={{
       minHeight: '100vh',
-
       py: 4
     }}>
       <Container maxWidth="md">
@@ -493,6 +545,137 @@ export default function Report() {
           </Box>
         </MotionPaper>
       </Container>
+
+      {/* Add Feedback Button */}
+      <Button
+        variant="contained"
+        onClick={handleFeedbackOpen}
+        sx={{
+          position: 'fixed',
+          bottom: 20,
+          right: 20,
+          background: '#02E2FF',
+          color: '#000000',
+          '&:hover': {
+            background: 'rgba(2, 226, 255, 0.9)',
+          },
+        }}
+      >
+        Give Feedback
+      </Button>
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        open={feedbackOpen}
+        onClose={handleFeedbackClose}
+      >
+        <DialogTitle sx={{ color: '#000000', fontWeight: 600 }}>
+          Help Us Improve
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
+            {/* Overall Experience */}
+            <Box>
+              <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
+                How would you rate your overall experience?
+              </FormLabel>
+              <Rating
+                value={feedback.overallExperience}
+                onChange={(_, value) => handleFeedbackChange('overallExperience', value)}
+                sx={{ color: '#02E2FF' }}
+              />
+            </Box>
+
+            {/* Ease of Use */}
+            <Box>
+              <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
+                How easy was it to use our platform?
+              </FormLabel>
+              <Rating
+                value={feedback.easeOfUse}
+                onChange={(_, value) => handleFeedbackChange('easeOfUse', value)}
+                sx={{ color: '#02E2FF' }}
+              />
+            </Box>
+
+            {/* Question Quality */}
+            <Box>
+              <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
+                How would you rate the quality of the questions?
+              </FormLabel>
+              <Rating
+                value={feedback.questionQuality}
+                onChange={(_, value) => handleFeedbackChange('questionQuality', value)}
+                sx={{ color: '#02E2FF' }}
+              />
+            </Box>
+
+            {/* Interface Rating */}
+            <Box>
+              <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
+                How would you rate the user interface?
+              </FormLabel>
+              <Rating
+                value={feedback.interfaceRating}
+                onChange={(_, value) => handleFeedbackChange('interfaceRating', value)}
+                sx={{ color: '#02E2FF' }}
+              />
+            </Box>
+
+            {/* Additional Comments */}
+            <TextField
+              label="Any additional comments or suggestions?"
+              multiline
+              rows={4}
+              value={feedback.recommendation}
+              onChange={(e) => handleFeedbackChange('recommendation', e.target.value)}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: 'rgba(0, 0, 0, 0.2)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#02E2FF',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#02E2FF',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: 'rgba(0, 0, 0, 0.7)',
+                  '&.Mui-focused': {
+                    color: '#02E2FF',
+                  },
+                },
+              }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ padding: 3 }}>
+          <Button
+            onClick={handleFeedbackClose}
+            sx={{
+              color: 'rgba(0,0,0,0.7)',
+              '&:hover': { color: '#000000' },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleFeedbackSubmit}
+            sx={{
+              background: '#02E2FF',
+              color: '#000000',
+              '&:hover': {
+                background: 'rgba(2, 226, 255, 0.9)',
+              },
+            }}
+          >
+            Submit Feedback
+          </Button>
+        </DialogActions>
+      </FeedbackModal>
     </Box>
   );
 }
