@@ -646,7 +646,7 @@ Provide detailed, actionable feedback in JSON format only.`,
           else demo = current - 1;*/
 
           if (score >= 65) demo = current + 1;
-          else demo = current
+          else demo = current;
 
           demo = Math.min(Math.max(demo, 1), 5);
 
@@ -807,9 +807,12 @@ Provide detailed, actionable feedback in JSON format only.`,
     }
 
     // Après avoir reçu et parsé la réponse brute de GPT en "analysis"
-    if (type === "technicalSkill") {  //AddNewTechnicalSkill
-      const profileOverallScore = await profileService.getProfileByUserId(user._id);
-    
+    if (type === "technicalSkill") {
+      //AddNewTechnicalSkill
+      const profileOverallScore = await profileService.getProfileByUserId(
+        user._id
+      );
+
       function proficiencyFromConfidenceScore(score) {
         if (score >= 0 && score <= 20) return 1;
         if (score > 20 && score <= 30) return 2;
@@ -818,7 +821,7 @@ Provide detailed, actionable feedback in JSON format only.`,
         if (score > 80 && score <= 100) return 5;
         return 1; // défaut si hors bornes
       }
-    
+
       const experienceLevels = [
         "Entry Level",
         "Junior",
@@ -826,12 +829,12 @@ Provide detailed, actionable feedback in JSON format only.`,
         "Senior",
         "Expert",
       ];
-    
+
       // Construction des compétences à partir des données valides
       const validSkills = analysis.skillAnalysis.filter(
         (skill) => Number(skill.confidenceScore) > 0
       );
-    
+
       const mappedSkills = validSkills.map((skill) => {
         const confScore = Number(skill.confidenceScore);
         const profLevel = proficiencyFromConfidenceScore(confScore);
@@ -864,7 +867,7 @@ Provide detailed, actionable feedback in JSON format only.`,
           experienceLevel: experienceLevels[profLevel - 1],
         };
       });
-    
+
       // Utiliser uniquement si on a au moins une skill valide
       if (mappedSkills.length > 0) {
         await profileService.createOrUpdateProfile(user._id, {
@@ -885,7 +888,7 @@ Provide detailed, actionable feedback in JSON format only.`,
         });
       }
     }
-    
+
     // 7. Return the response
     res.status(200).json({
       success: true,
@@ -1201,11 +1204,7 @@ exports.analyzeJobTestResults = async (req, res) => {
     }
 
     const skillsData = post.skillAnalysis.requiredSkills;
-    if (
-      !skillsData ||
-      !Array.isArray(skillsData) ||
-      skillsData.length === 0
-    ) {
+    if (!skillsData || !Array.isArray(skillsData) || skillsData.length === 0) {
       throw new HttpError(500, "post has no requiredSkills");
     }
     // 3. Prepare the data for GPT analysis
@@ -1375,8 +1374,7 @@ Provide only the JSON output without any additional text.
 
       const userSkills = user.profile.skills;
 
-      // Filter out skills the user already has (at or above the required proficiency level).
-      // Only generate questiosn for skills, that the job requires that the user lacks or hasn't mastered yet.
+      // I- if condidate already has proven skills for the job , that they were not tested
       let alreadyProvenSkills = skillsData.filter((reqSkill) => {
         return userSkills.some(
           (userSkill) =>
@@ -1385,22 +1383,83 @@ Provide only the JSON output without any additional text.
         );
       });
 
-
+      // push the already proven skill list to the analysis , so that they can be also returned in the result of this function
       if (alreadyProvenSkills.length > 0) {
         for (let i = 0; i < alreadyProvenSkills.length; i++) {
           analysis.skillAnalysis.push({
             skillName: alreadyProvenSkills[i].name,
             requiredLevel: alreadyProvenSkills[i].proficiencyLevel,
-            demonstratedExperienceLevel:alreadyProvenSkills[i].proficiencyLevel, 
-            strengths: [` Your skills in ${alreadyProvenSkills[i].name} were already present in your profile.
+            demonstratedExperienceLevel:
+              alreadyProvenSkills[i].proficiencyLevel,
+            strengths: [
+              ` Your skills in ${alreadyProvenSkills[i].name} were already present in your profile.
             That is why there was no need to reevalution for this Job Offer.
-            \n If you need to reevaluate your skills in ${alreadyProvenSkills[i].name}, you can navigate to your skills section in your profile and pass a new Test`],
+            \n If you need to reevaluate your skills in ${alreadyProvenSkills[i].name}, you can navigate to your skills section in your profile and pass a new Test`,
+            ],
             weaknesses: [``],
             confidenceScore: alreadyProvenSkills[i].ScoreTest,
           });
         }
       }
 
+      // update level of skills of profile , if any has now a heiger proven proficiencyLevel
+      const profile = await Profile.findById(user.profile);
+
+      // check if any skillsToUpdate
+      let skillsToUpdate = analysis.skillAnalysis.filter((reqSkill) => {
+        return userSkills.some(
+          (userSkill) =>
+            userSkill.name.toLowerCase() === reqSkill.skillName.toLowerCase() &&
+            userSkill.proficiencyLevel <
+              parseInt(reqSkill.demonstratedExperienceLevel)
+        );
+      });
+
+      // Update condidate's skills with the new values (proficiencyLevel, demonstratedExperienceLevel and ScoreTest )
+      skillsToUpdate.forEach((reqSkill) => {
+        const skillName = reqSkill.skillName.toLowerCase();
+        const profileSkill = profile.skills.find(
+          (s) => s.name.toLowerCase() === skillName
+        );
+
+        if (
+          profileSkill &&
+          profileSkill.proficiencyLevel <
+            parseInt(reqSkill.demonstratedExperienceLevel)
+        ) {
+          let experienceLevelString = "";
+          switch (reqSkill.demonstratedExperienceLevel) {
+            case 1:
+              experienceLevelString = "Entry Level";
+              break;
+            case 2:
+              experienceLevelString = "Junior";
+              break;
+            case 3:
+              experienceLevelString = "Mid Level";
+              break;
+            case 4:
+              experienceLevelString = "Senior";
+              break;
+            case 5:
+              experienceLevelString = "Expert";
+              break;
+            default:
+              throw new Error(
+                `Unknown experienceLevel value: ${reqSkill.demonstratedExperienceLevel}  `
+              );
+          }
+          profileSkill.proficiencyLevel = parseInt(
+            reqSkill.demonstratedExperienceLevel
+          );
+          profileSkill.experienceLevel = experienceLevelString;
+          profileSkill.ScoreTest = reqSkill.confidenceScore;
+        }
+      });
+
+      // update profile quota after passing the jobtest
+      profile.quota++;
+      await profile.save();
     } catch (error) {
       console.error("Error in analysis parsing:", error);
     }
@@ -1408,7 +1467,7 @@ Provide only the JSON output without any additional text.
 
     res.status(200).json({
       success: true,
-      result: {analysis},
+      result: { analysis },
     });
   } catch (error) {
     console.error("Error analyzing job test results:", error);
