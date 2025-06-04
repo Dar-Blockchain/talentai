@@ -641,9 +641,12 @@ Provide detailed, actionable feedback in JSON format only.`,
           const score = Number(skill.confidenceScore) || 0;
 
           let demo;
-          if (score > 70) demo = current + 1;
+          /*if (score > 70) demo = current + 1;
           else if (score >= 50) demo = current;
-          else demo = current - 1;
+          else demo = current - 1;*/
+
+          if (score >= 65) demo = current + 1;
+          else demo = current
 
           demo = Math.min(Math.max(demo, 1), 5);
 
@@ -804,20 +807,18 @@ Provide detailed, actionable feedback in JSON format only.`,
     }
 
     // Après avoir reçu et parsé la réponse brute de GPT en "analysis"
-    if (type === "technicalSkill") {
-      const profileOverallScore = await profileService.getProfileByUserId(
-        user._id
-      );
-
+    if (type === "technicalSkill") {  //AddNewTechnicalSkill
+      const profileOverallScore = await profileService.getProfileByUserId(user._id);
+    
       function proficiencyFromConfidenceScore(score) {
-        if (score >= 0 && score < 10) return 1;
-        if (score >= 10 && score < 30) return 2;
-        if (score >= 30 && score < 50) return 3;
-        if (score >= 50 && score < 70) return 4;
-        if (score >= 70 && score <= 100) return 5;
+        if (score >= 0 && score <= 20) return 1;
+        if (score > 20 && score <= 30) return 2;
+        if (score > 30 && score <= 50) return 3;
+        if (score > 50 && score <= 80) return 4;
+        if (score > 80 && score <= 100) return 5;
         return 1; // défaut si hors bornes
       }
-
+    
       const experienceLevels = [
         "Entry Level",
         "Junior",
@@ -825,11 +826,14 @@ Provide detailed, actionable feedback in JSON format only.`,
         "Senior",
         "Expert",
       ];
-
-      // Dans ton map skillAnalysis, remplace cette partie :
-
-      skills: analysis.skillAnalysis.map((skill) => {
-        const confScore = Number(skill.confidenceScore) || 0;
+    
+      // Construction des compétences à partir des données valides
+      const validSkills = analysis.skillAnalysis.filter(
+        (skill) => Number(skill.confidenceScore) > 0
+      );
+    
+      const mappedSkills = validSkills.map((skill) => {
+        const confScore = Number(skill.confidenceScore);
         const profLevel = proficiencyFromConfidenceScore(confScore);
         return {
           skillName: skill.skillName || skill.skill || "",
@@ -856,20 +860,20 @@ Provide detailed, actionable feedback in JSON format only.`,
             skill.subcategory ||
             skillSubcategories[skill.skillName || skill.skill] ||
             "",
-          // Ajout des nouveaux champs calculés à partir du confidenceScore
           proficiencyLevel: profLevel,
           experienceLevel: experienceLevels[profLevel - 1],
         };
-      }),
-        // Et pour la sauvegarde dans le profil :
-
+      });
+    
+      // Utiliser uniquement si on a au moins une skill valide
+      if (mappedSkills.length > 0) {
         await profileService.createOrUpdateProfile(user._id, {
           overallScore:
             profileOverallScore.overallScore === 0
               ? analysis.overallScore
               : (profileOverallScore.overallScore + analysis.overallScore) / 2,
-          skills: analysis.skillAnalysis.map((skill) => {
-            const confScore = Number(skill.confidenceScore) || 0;
+          skills: validSkills.map((skill) => {
+            const confScore = Number(skill.confidenceScore);
             const profLevel = proficiencyFromConfidenceScore(confScore);
             return {
               name: skill.skillName || skill.skill || "",
@@ -879,8 +883,9 @@ Provide detailed, actionable feedback in JSON format only.`,
             };
           }),
         });
+      }
     }
-
+    
     // 7. Return the response
     res.status(200).json({
       success: true,
