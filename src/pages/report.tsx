@@ -98,6 +98,324 @@ interface AnalysisResult {
   };
 }
 
+// Feedback Modal Component
+interface FeedbackModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (feedback: any) => void;
+  onSkip: () => void;
+}
+
+const FeedbackModalComponent = ({ open, onClose, onSubmit, onSkip }: FeedbackModalProps) => {
+  const [feedback, setFeedback] = useState({
+    overallExperience: '',
+    easeOfUse: '',
+    questionQuality: '',
+    interfaceRating: '',
+    evaluationRating: '',
+    recommendation: '',
+  });
+
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleFeedbackChange = (field: string, value: any) => {
+    setFeedback(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSubmit = async () => {
+    try {
+      // Check if all required fields are filled
+      const requiredFields = ['overallExperience', 'easeOfUse', 'questionQuality', 'interfaceRating', 'evaluationRating'];
+      const missingFields = requiredFields.filter(field => !feedback[field as keyof typeof feedback]);
+      
+      if (missingFields.length > 0) {
+        const missingFieldNames = missingFields.map(field => {
+          switch(field) {
+            case 'overallExperience': return 'Overall Experience';
+            case 'easeOfUse': return 'Ease of Use';
+            case 'questionQuality': return 'Question Quality';
+            case 'interfaceRating': return 'Interface Rating';
+            case 'evaluationRating': return 'Evaluation Rating';
+            default: return field;
+          }
+        }).join(', ');
+        
+        setErrorMessage(`Please complete all required fields: ${missingFieldNames}`);
+        return;
+      }
+
+      onSubmit(feedback);
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      setErrorMessage('An error occurred while submitting feedback. Please try again.');
+    }
+  };
+
+  const handleCloseError = () => {
+    setErrorMessage(null);
+  };
+
+  return (
+    <>
+      <FeedbackModal
+        open={open}
+        onClose={onClose}
+      >
+        <DialogTitle sx={{ color: '#000000', fontWeight: 600 }}>
+          Help Us Improve
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
+            {/* Overall Experience */}
+            <Box>
+              <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
+                How would you rate your overall experience? *
+              </FormLabel>
+              <FormControl fullWidth required>
+                <Select
+                  value={feedback.overallExperience}
+                  onChange={(e) => handleFeedbackChange('overallExperience', e.target.value)}
+                  displayEmpty
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 0, 0, 0.2)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>Select your rating</MenuItem>
+                  <MenuItem value="Excellent">Excellent</MenuItem>
+                  <MenuItem value="Very Good">Very Good</MenuItem>
+                  <MenuItem value="Good">Good</MenuItem>
+                  <MenuItem value="Fair">Fair</MenuItem>
+                  <MenuItem value="Poor">Poor</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Ease of Use */}
+            <Box>
+              <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
+                How easy was it to use our platform? *
+              </FormLabel>
+              <FormControl fullWidth required>
+                <Select
+                  value={feedback.easeOfUse}
+                  onChange={(e) => handleFeedbackChange('easeOfUse', e.target.value)}
+                  displayEmpty
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 0, 0, 0.2)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>Select your rating</MenuItem>
+                  <MenuItem value="Very Easy">Very Easy</MenuItem>
+                  <MenuItem value="Easy">Easy</MenuItem>
+                  <MenuItem value="Moderate">Moderate</MenuItem>
+                  <MenuItem value="Difficult">Difficult</MenuItem>
+                  <MenuItem value="Very Difficult">Very Difficult</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Question Quality */}
+            <Box>
+              <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
+                How would you rate the quality of the questions? *
+              </FormLabel>
+              <FormControl fullWidth required>
+                <Select
+                  value={feedback.questionQuality}
+                  onChange={(e) => handleFeedbackChange('questionQuality', e.target.value)}
+                  displayEmpty
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 0, 0, 0.2)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>Select your rating</MenuItem>
+                  <MenuItem value="Excellent">Excellent</MenuItem>
+                  <MenuItem value="Very Good">Very Good</MenuItem>
+                  <MenuItem value="Good">Good</MenuItem>
+                  <MenuItem value="Fair">Fair</MenuItem>
+                  <MenuItem value="Poor">Poor</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Interface Rating */}
+            <Box>
+              <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
+                How would you rate the user interface? *
+              </FormLabel>
+              <FormControl fullWidth required>
+                <Select
+                  value={feedback.interfaceRating}
+                  onChange={(e) => handleFeedbackChange('interfaceRating', e.target.value)}
+                  displayEmpty
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 0, 0, 0.2)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>Select your rating</MenuItem>
+                  <MenuItem value="Excellent">Excellent</MenuItem>
+                  <MenuItem value="Very Good">Very Good</MenuItem>
+                  <MenuItem value="Good">Good</MenuItem>
+                  <MenuItem value="Fair">Fair</MenuItem>
+                  <MenuItem value="Poor">Poor</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Evaluation Rating */}
+            <Box>
+              <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
+                How would you rate the evaluation results? *
+              </FormLabel>
+              <FormControl fullWidth required>
+                <Select
+                  value={feedback.evaluationRating}
+                  onChange={(e) => handleFeedbackChange('evaluationRating', e.target.value)}
+                  displayEmpty
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 0, 0, 0.2)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>Select your rating</MenuItem>
+                  <MenuItem value="Excellent">Excellent</MenuItem>
+                  <MenuItem value="Very Good">Very Good</MenuItem>
+                  <MenuItem value="Good">Good</MenuItem>
+                  <MenuItem value="Fair">Fair</MenuItem>
+                  <MenuItem value="Poor">Poor</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Additional Comments */}
+            <TextField
+              label="Any additional comments or suggestions?"
+              multiline
+              rows={4}
+              value={feedback.recommendation}
+              onChange={(e) => handleFeedbackChange('recommendation', e.target.value)}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: 'rgba(0, 0, 0, 0.2)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#02E2FF',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#02E2FF',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: 'rgba(0, 0, 0, 0.7)',
+                  '&.Mui-focused': {
+                    color: '#02E2FF',
+                  },
+                },
+              }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ padding: 3, justifyContent: 'space-between' }}>
+          <Button
+            variant="contained"
+            onClick={onSkip}
+            sx={{
+              background: 'rgba(0, 255, 157, 1)',
+              color: '#fff',
+              '&:hover': {
+                background: 'rgba(0, 255, 157, 0.9)',
+              },
+            }}
+          >
+            Go To Dashboard
+          </Button>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              sx={{
+                background: '#02E2FF',
+                color: '#000000',
+                '&:hover': {
+                  background: 'rgba(2, 226, 255, 0.9)',
+                },
+              }}
+            >
+              Submit Feedback
+            </Button>
+          </Box>
+        </DialogActions>
+      </FeedbackModal>
+
+      {/* Error Snackbar */}
+      <Snackbar
+        open={!!errorMessage}
+        autoHideDuration={6000}
+        onClose={handleCloseError}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseError} 
+          severity="error" 
+          sx={{ 
+            width: '100%',
+            backgroundColor: '#FF6B6B',
+            color: '#fff',
+            '& .MuiAlert-icon': {
+              color: '#fff'
+            }
+          }}
+        >
+          {errorMessage}
+        </Alert>
+      </Snackbar>
+    </>
+  );
+};
+
 export default function Report() {
   const router = useRouter();
   const [results, setResults] = useState<AnalysisResult | null>(null);
@@ -107,15 +425,6 @@ export default function Report() {
   const [assessmentType, setAssessmentType] = useState<string>('technical');
   const hasRun = useRef(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedback, setFeedback] = useState({
-    overallExperience: '',
-    easeOfUse: '',
-    questionQuality: '',
-    interfaceRating: '',
-    evaluationRating: '',
-    recommendation: '',
-  });
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -279,48 +588,20 @@ export default function Report() {
     setFeedbackOpen(false);
   };
 
-  const handleFeedbackSubmit = async () => {
+  const handleFeedbackSubmit = async (feedback: any) => {
     try {
-      // Check if all required fields are filled
-      const requiredFields = ['overallExperience', 'easeOfUse', 'questionQuality', 'interfaceRating', 'evaluationRating'];
-      const missingFields = requiredFields.filter(field => !feedback[field as keyof typeof feedback]);
-      
-      if (missingFields.length > 0) {
-        // Show error message for missing fields
-        const missingFieldNames = missingFields.map(field => {
-          switch(field) {
-            case 'overallExperience': return 'Overall Experience';
-            case 'easeOfUse': return 'Ease of Use';
-            case 'questionQuality': return 'Question Quality';
-            case 'interfaceRating': return 'Interface Rating';
-            case 'evaluationRating': return 'Evaluation Rating';
-            default: return field;
-          }
-        }).join(', ');
-        
-        setErrorMessage(`Please complete all required fields: ${missingFieldNames}`);
-        return;
-      }
-
       // Here you would typically send the feedback to your backend
       console.log('Feedback submitted:', feedback);
       handleFeedbackClose();
       router.push('/dashboardCandidate');
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      setErrorMessage('An error occurred while submitting feedback. Please try again.');
     }
   };
 
-  const handleFeedbackChange = (field: string, value: any) => {
-    setFeedback(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleCloseError = () => {
-    setErrorMessage(null);
+  const handleSkipFeedback = () => {
+    handleFeedbackClose();
+    router.push('/dashboardCandidate');
   };
 
   if (loading || analyzing) {
@@ -585,271 +866,13 @@ export default function Report() {
         </MotionPaper>
       </Container>
 
-      {/* Feedback Modal */}
-      <FeedbackModal
+      {/* Feedback Modal Component */}
+      <FeedbackModalComponent
         open={feedbackOpen}
         onClose={handleFeedbackClose}
-      >
-        <DialogTitle sx={{ color: '#000000', fontWeight: 600 }}>
-          Help Us Improve
-        </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
-            {/* Overall Experience */}
-            <Box>
-              <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
-                How would you rate your overall experience? *
-              </FormLabel>
-              <FormControl fullWidth required>
-                <Select
-                  value={feedback.overallExperience}
-                  onChange={(e) => handleFeedbackChange('overallExperience', e.target.value)}
-                  displayEmpty
-                  sx={{
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'rgba(0, 0, 0, 0.2)',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#02E2FF',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#02E2FF',
-                    },
-                  }}
-                >
-                  <MenuItem value="" disabled>Select your rating</MenuItem>
-                  <MenuItem value="Excellent">Excellent</MenuItem>
-                  <MenuItem value="Very Good">Very Good</MenuItem>
-                  <MenuItem value="Good">Good</MenuItem>
-                  <MenuItem value="Fair">Fair</MenuItem>
-                  <MenuItem value="Poor">Poor</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-
-            {/* Ease of Use */}
-            <Box>
-              <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
-                How easy was it to use our platform? *
-              </FormLabel>
-              <FormControl fullWidth required>
-                <Select
-                  value={feedback.easeOfUse}
-                  onChange={(e) => handleFeedbackChange('easeOfUse', e.target.value)}
-                  displayEmpty
-                  sx={{
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'rgba(0, 0, 0, 0.2)',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#02E2FF',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#02E2FF',
-                    },
-                  }}
-                >
-                  <MenuItem value="" disabled>Select your rating</MenuItem>
-                  <MenuItem value="Very Easy">Very Easy</MenuItem>
-                  <MenuItem value="Easy">Easy</MenuItem>
-                  <MenuItem value="Moderate">Moderate</MenuItem>
-                  <MenuItem value="Difficult">Difficult</MenuItem>
-                  <MenuItem value="Very Difficult">Very Difficult</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-
-            {/* Question Quality */}
-            <Box>
-              <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
-                How would you rate the quality of the questions? *
-              </FormLabel>
-              <FormControl fullWidth required>
-                <Select
-                  value={feedback.questionQuality}
-                  onChange={(e) => handleFeedbackChange('questionQuality', e.target.value)}
-                  displayEmpty
-                  sx={{
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'rgba(0, 0, 0, 0.2)',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#02E2FF',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#02E2FF',
-                    },
-                  }}
-                >
-                  <MenuItem value="" disabled>Select your rating</MenuItem>
-                  <MenuItem value="Excellent">Excellent</MenuItem>
-                  <MenuItem value="Very Good">Very Good</MenuItem>
-                  <MenuItem value="Good">Good</MenuItem>
-                  <MenuItem value="Fair">Fair</MenuItem>
-                  <MenuItem value="Poor">Poor</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-
-            {/* Interface Rating */}
-            <Box>
-              <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
-                How would you rate the user interface? *
-              </FormLabel>
-              <FormControl fullWidth required>
-                <Select
-                  value={feedback.interfaceRating}
-                  onChange={(e) => handleFeedbackChange('interfaceRating', e.target.value)}
-                  displayEmpty
-                  sx={{
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'rgba(0, 0, 0, 0.2)',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#02E2FF',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#02E2FF',
-                    },
-                  }}
-                >
-                  <MenuItem value="" disabled>Select your rating</MenuItem>
-                  <MenuItem value="Excellent">Excellent</MenuItem>
-                  <MenuItem value="Very Good">Very Good</MenuItem>
-                  <MenuItem value="Good">Good</MenuItem>
-                  <MenuItem value="Fair">Fair</MenuItem>
-                  <MenuItem value="Poor">Poor</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-
-            {/* Evaluation Rating */}
-            <Box>
-              <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
-                How would you rate the evaluation results? *
-              </FormLabel>
-              <FormControl fullWidth required>
-                <Select
-                  value={feedback.evaluationRating}
-                  onChange={(e) => handleFeedbackChange('evaluationRating', e.target.value)}
-                  displayEmpty
-                  sx={{
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: 'rgba(0, 0, 0, 0.2)',
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#02E2FF',
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#02E2FF',
-                    },
-                  }}
-                >
-                  <MenuItem value="" disabled>Select your rating</MenuItem>
-                  <MenuItem value="Excellent">Excellent</MenuItem>
-                  <MenuItem value="Very Good">Very Good</MenuItem>
-                  <MenuItem value="Good">Good</MenuItem>
-                  <MenuItem value="Fair">Fair</MenuItem>
-                  <MenuItem value="Poor">Poor</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-
-            {/* Additional Comments */}
-            <TextField
-              label="Any additional comments or suggestions?"
-              multiline
-              rows={4}
-              value={feedback.recommendation}
-              onChange={(e) => handleFeedbackChange('recommendation', e.target.value)}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': {
-                    borderColor: 'rgba(0, 0, 0, 0.2)',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#02E2FF',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#02E2FF',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: 'rgba(0, 0, 0, 0.7)',
-                  '&.Mui-focused': {
-                    color: '#02E2FF',
-                  },
-                },
-              }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ padding: 3, justifyContent: 'space-between' }}>
-          <Button
-            variant="contained"
-            onClick={() => {
-              handleFeedbackClose();
-              router.push('/dashboardCandidate');
-            }}
-            sx={{
-              background: 'rgba(0, 255, 157, 1)',
-              color: '#fff',
-              '&:hover': {
-                background: 'rgba(0, 255, 157, 0.9)',
-              },
-            }}
-          >
-            Go To Dashboard
-          </Button>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            {/* <Button
-              onClick={handleFeedbackClose}
-              sx={{
-                color: 'rgba(0,0,0,0.7)',
-                '&:hover': { color: '#000000' },
-              }}
-            >
-              Cancel
-            </Button> */}
-            <Button
-              variant="contained"
-              onClick={handleFeedbackSubmit}
-              sx={{
-                background: '#02E2FF',
-                color: '#000000',
-                '&:hover': {
-                  background: 'rgba(2, 226, 255, 0.9)',
-                },
-              }}
-            >
-              Submit Feedback
-            </Button>
-          </Box>
-        </DialogActions>
-      </FeedbackModal>
-
-      {/* Error Snackbar */}
-      <Snackbar
-        open={!!errorMessage}
-        autoHideDuration={6000}
-        onClose={handleCloseError}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert 
-          onClose={handleCloseError} 
-          severity="error" 
-          sx={{ 
-            width: '100%',
-            backgroundColor: '#FF6B6B',
-            color: '#fff',
-            '& .MuiAlert-icon': {
-              color: '#fff'
-            }
-          }}
-        >
-          {errorMessage}
-        </Alert>
-      </Snackbar>
+        onSubmit={handleFeedbackSubmit}
+        onSkip={handleSkipFeedback}
+      />
     </Box>
   );
 }
