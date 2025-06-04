@@ -1274,10 +1274,10 @@ Following this JSON object fields, generate a detailed JSON analysis with these 
 
 {
   "overallScore": 0-100,
-  "technicalLevel":
-  "generalAssassment":
-  "recommendations":
-  "nextSteps:
+  "technicalLevel":"string",
+  "generalAssassment":"string",
+  "recommendations":[],
+  "nextSteps:[],
   "skillAnalysis": [
     {
       "skillName": string,
@@ -1408,7 +1408,7 @@ Provide only the JSON output without any additional text.
 
     res.status(200).json({
       success: true,
-      analysis,
+      result: analysis,
     });
   } catch (error) {
     console.error("Error analyzing job test results:", error);
