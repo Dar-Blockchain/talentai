@@ -848,7 +848,7 @@ Provide detailed, actionable feedback in JSON format only.`,
     }
 
     // Après avoir reçu et parsé la réponse brute de GPT en "analysis"
-    if (type === "technicalSkill") {
+    if (type === "technicalSkill") {  //AddNewTechnicalSkill
       const profileOverallScore = await profileService.getProfileByUserId(user._id);
     
       function proficiencyFromConfidenceScore(score) {
