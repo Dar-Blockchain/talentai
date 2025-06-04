@@ -40,6 +40,7 @@ import {
   useTheme,
   Tooltip,
   Checkbox,
+  Snackbar,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
@@ -899,39 +900,40 @@ export default function DashboardCandidate() {
     }
   };
 
+  const [notification, setNotification] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'error' | 'success' | 'info' | 'warning';
+  }>({
+    open: false,
+    message: '',
+    severity: 'error'
+  });
+
+  const handleCloseNotification = () => {
+    setNotification(prev => ({ ...prev, open: false }));
+  };
+
   const handleAddSkill = async () => {
     try {
       const token = Cookies.get("api_token");
-      const selectedSkill = newSkill.name; // Capture before state reset
-      // const updatedSkills = [
-      //   ...(profile?.skills || []),
-      //   {
-      //     name: selectedSkill,
-      //     NumberTestPassed: 0,
-      //     ScoreTest: 0,
-      //   },
-      // ];
-      // const response = await fetch(
-      //   `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/createOrUpdateProfile`,
-      //   {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //       Authorization: `Bearer ${token}`,
-      //     },
-      //     body: JSON.stringify({
-      //       type: "Candidate",
-      //       skills: updatedSkills,
-      //     }),
-      //   }
-      // );
-      // if (!response.ok) {
-      //   throw new Error("Failed to add skill");
-      // }
-      // dispatch(getMyProfile());
-      // setNewSkill({ name: "", proficiencyLevel: 1 });
-      // setAddSkillDialogOpen(false);
-      
+      const selectedSkill = newSkill.name;
+
+      // Check if skill already exists (case-insensitive)
+      const isDuplicate = profile?.skills?.some(
+        (skill: any) => skill.name.toLowerCase() === selectedSkill.toLowerCase()
+      );
+
+      if (isDuplicate) {
+        console.log("Skill already exists in profile");
+        setNotification({
+          open: true,
+          message: "This skill already exists in your profile!",
+          severity: 'error'
+        });
+        return;
+      }
+
       // Redirect to test for the selected skill
       if (selectedSkill) {
         router.push(
@@ -940,7 +942,17 @@ export default function DashboardCandidate() {
       }
     } catch (error) {
       console.error("Error adding skill:", error);
+      setNotification({
+        open: true,
+        message: "Failed to add skill. Please try again.",
+        severity: 'error'
+      });
     }
+  };
+
+  // Add new handler for skill selection
+  const handleSkillSelection = (value: string | null) => {
+    setNewSkill((prev) => ({ ...prev, name: value || "" }));
   };
 
   const matchingCandidates: MatchingCandidate[] = [
@@ -2430,16 +2442,19 @@ export default function DashboardCandidate() {
           PaperProps={{
             sx: {
               background: "white",
-              backdropFilter: "blur(10px)",
               borderRadius: "16px",
-              border: "1px solid rgba(255,255,255,0.1)",
+              border: "1px solid rgba(0,0,0,0.1)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+              position: "relative",
+              zIndex: 1300
             },
           }}
         >
           <DialogTitle
             sx={{
-              borderBottom: "1px solid rgba(255,255,255,0.1)",
+              borderBottom: "1px solid rgba(0,0,0,0.1)",
               color: "#000000",
+              padding: "16px 24px"
             }}
           >
             <Box
@@ -2458,7 +2473,7 @@ export default function DashboardCandidate() {
               </IconButton>
             </Box>
           </DialogTitle>
-          <DialogContent sx={{ mt: 2 }}>
+          <DialogContent sx={{ mt: 2, padding: "24px" }}>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {/* Category Select */}
               <Autocomplete<string>
@@ -2470,22 +2485,22 @@ export default function DashboardCandidate() {
                   <TextField
                     {...params}
                     label="Category"
-                    InputLabelProps={{ sx: { color: "white)" } }}
+                    InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
                     sx={{
-                      mt: 2,
-                      color: "white",
-                      backgroundColor: "white",
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "rgba(0,0,0,0.2)",
+                      "& .MuiOutlinedInput-root": {
+                        backgroundColor: "white",
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "rgba(0,0,0,0.2)",
+                        },
+                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                          borderColor: "rgba(0,0,0,0.3)",
+                        },
+                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                          borderColor: GREEN_MAIN,
+                        },
                       },
-                      "&:hover .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "rgba(0,0,0,0.3)",
-                      },
-                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                        borderColor: GREEN_MAIN,
-                      },
-
                       "& .MuiInputLabel-root": {
+                        color: "rgba(0,0,0,0.7)",
                         "&.Mui-focused": {
                           color: GREEN_MAIN,
                         },
@@ -2498,7 +2513,6 @@ export default function DashboardCandidate() {
                     {...props}
                     sx={{
                       backgroundColor: "white",
-                      color: "black",
                       "& .MuiAutocomplete-option": {
                         color: "black",
                         '&[aria-selected="true"]': {
@@ -2523,18 +2537,15 @@ export default function DashboardCandidate() {
                     : technicalSkillsList
                 }
                 value={newSkill.name}
-                onChange={(_, value: string | null) =>
-                  setNewSkill((prev) => ({ ...prev, name: value || "" }))
-                }
+                onChange={(_, value: string | null) => handleSkillSelection(value)}
                 renderInput={(params) => (
                   <TextField
                     {...params}
                     label="Skill Name"
-                    InputLabelProps={{ sx: { color: "white" } }}
-                    InputProps={{
-                      ...params.InputProps,
-                      sx: {
-                        color: "#000000",
+                    InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        backgroundColor: "white",
                         "& .MuiOutlinedInput-notchedOutline": {
                           borderColor: "rgba(0,0,0,0.2)",
                         },
@@ -2544,15 +2555,11 @@ export default function DashboardCandidate() {
                         "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
                           borderColor: GREEN_MAIN,
                         },
+                      },
+                      "& .MuiInputLabel-root": {
+                        color: "rgba(0,0,0,0.7)",
                         "&.Mui-focused": {
-                          "& .MuiInputLabel-root": {
-                            color: GREEN_MAIN,
-                          },
-                        },
-                        "& .MuiInputLabel-root": {
-                          "&.Mui-focused": {
-                            color: GREEN_MAIN,
-                          },
+                          color: GREEN_MAIN,
                         },
                       },
                     }}
@@ -2563,7 +2570,6 @@ export default function DashboardCandidate() {
                     {...props}
                     sx={{
                       backgroundColor: "white",
-                      color: "black",
                       "& .MuiAutocomplete-option": {
                         color: "black",
                         '&[aria-selected="true"]': {
@@ -2577,13 +2583,12 @@ export default function DashboardCandidate() {
                   />
                 )}
               />
-              {/* Removed Proficiency Level slider/input */}
             </Box>
           </DialogContent>
           <DialogActions
             sx={{
-              p: 3,
-              borderTop: "1px solid rgba(255,255,255,0.1)",
+              padding: "16px 24px",
+              borderTop: "1px solid rgba(0,0,0,0.1)",
             }}
           >
             <Button
@@ -2598,56 +2603,46 @@ export default function DashboardCandidate() {
             <Button
               variant="contained"
               onClick={handleAddSkill}
-              disabled={
-                !newSkill.name ||
-                newSkill.proficiencyLevel < 1 ||
-                newSkill.proficiencyLevel > 5
-              }
+              disabled={!newSkill.name}
               sx={{
-                background: "linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)",
+                background: GREEN_MAIN,
+                color: "#000000",
                 "&:hover": {
-                  background:
-                    "linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)",
+                  background: "rgba(0, 255, 157, 0.9)",
                 },
                 "&.Mui-disabled": {
-                  background: "rgba(255,255,255,0.1)",
-                  color: "rgba(255,255,255,0.3)",
+                  background: "rgba(0,0,0,0.1)",
+                  color: "rgba(0,0,0,0.3)",
                 },
               }}
             >
               Add Skill
             </Button>
           </DialogActions>
-          {justAddedSkill && (
-            <Box sx={{ mt: 2, textAlign: "center" }}>
-              <Button
-                variant="contained"
-                onClick={() => {
-                  setAddSkillDialogOpen(false);
-                  handleStartTest("technical", justAddedSkill);
-                  setJustAddedSkill(null);
-                }}
-                disabled={profile.quota >= 5}
-                sx={{
-                  background:
-                    "linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)",
-                  color: "#ffffff",
-                  "&:hover": {
-                    background:
-                      "linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)",
-                  },
-                  "&.Mui-disabled": {
-                    background: "rgba(0,0,0,0.1)",
-                    color: "rgba(0,0,0,0.3)",
-                  },
-                  mt: 2,
-                }}
-              >
-                Start Test for {justAddedSkill.name}
-              </Button>
-            </Box>
-          )}
         </Dialog>
+
+        {/* Add Snackbar for notifications */}
+        <Snackbar
+          open={notification.open}
+          autoHideDuration={4000}
+          onClose={handleCloseNotification}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert 
+            onClose={handleCloseNotification} 
+            severity={notification.severity}
+            sx={{ 
+              width: '100%',
+              backgroundColor: notification.severity === 'error' ? '#ffebee' : '#e8f5e9',
+              color: notification.severity === 'error' ? '#c62828' : '#2e7d32',
+              '& .MuiAlert-icon': {
+                color: notification.severity === 'error' ? '#c62828' : '#2e7d32'
+              }
+            }}
+          >
+            {notification.message}
+          </Alert>
+        </Snackbar>
       </Container>
     </Box>
   );
