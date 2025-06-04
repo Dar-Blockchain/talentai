@@ -1207,10 +1207,35 @@ exports.analyzeJobTestResults = async (req, res) => {
     if (!skillsData || !Array.isArray(skillsData) || skillsData.length === 0) {
       throw new HttpError(500, "post has no requiredSkills");
     }
-    // 3. Prepare the data for GPT analysis
 
+    const skillsMap = {};
+
+    questions.forEach(({ skill, level }) => {
+      if (!skillsMap[skill]) {
+        skillsMap[skill] = {
+          name: skill,
+          proficiencyLevel: parseInt(level, 10),
+        };
+      }
+    });
+
+    const requiredSkills = Object.values(skillsMap);
+
+    console.log(requiredSkills);
+    // 3. Prepare the data for GPT analysis
     const systemPrompt = `
 You are an expert technical interviewer specializing in evaluating developer skills for job positions. 
+
+Your task is to:
+- Analyze the candidate’s answers against the required skill levels.
+- Assess each skill individually for:
+  - Demonstrated proficiency level
+  - Strengths
+  - Weaknesses
+  - Confidence score
+- Provide a comprehensive, skill-by-skill analysis.
+- Deliver an overall assessment of the candidate’s technical level.
+- Offer actionable recommendations for improvement.
 
 Skill Proficiency Levels:
 1 - Entry Level:  
@@ -1234,38 +1259,48 @@ Skill Proficiency Levels:
 - Scalability, security, and advanced system design  
 - Handling complex real-world challenges and innovations  
 
-A candidate’s answer to a question is considered valid and correct if it meets or exceeds the proficiency level required by that question.
+Example of Confidence Score Calculation:
+If a skill has 5 associated questions and the answers were:
+- 2 fully correct → +50% (2 × 25%)
+- 2 partially correct → +30% (2 × 15%)
+- 1 incorrect → +0%
+- 1 has empty answer → +0%
+→ Final confidenceScore = 80%
 
-Your task is to:
-- Analyze the candidate’s answers against the required skill levels.
-- Assess each skill individually for:
-  - Demonstrated proficiency level
-  - Strengths
-  - Weaknesses
-  - Confidence score
-- Provide a comprehensive, skill-by-skill analysis.
-- Deliver an overall assessment of the candidate’s technical level.
-- Offer actionable recommendations for improvement.
+Demonstrated Experience Level Calculation (Final Version)
+-The maximum demonstratedExperienceLevel is always the requiredLevel.
+-The level is assigned based on the confidenceScore as follows:
+-If confidenceScore >= 70% → demonstratedExperienceLevel = requiredLevel
+-If 50% <= confidenceScore < 70% → demonstratedExperienceLevel = max(1, requiredLevel - 1)
+-If 20% <= confidenceScore < 50% → demonstratedExperienceLevel = max(1, requiredLevel - 2)
+-If 15% <= confidenceScore < 20% → demonstratedExperienceLevel = 1
+-If confidenceScore < 15% → demonstratedExperienceLevel = 0 (meaning the candidate shows no valid proficiency)
+-The final value must be between 0 and requiredLevel, inclusive.
+
+STRICT REQUIREMENTS: 
+-confidenceScore for each skill is to be set depending on the responses for questions of that skill. 
+-Be objective
+-Do not estimate some knowledge , the answers do not reflect
+-You only repère is the correctness of answers to the questions
 
 Respond strictly in JSON format only, without any additional explanations or text.
 `;
 
     const userPrompt = `
-Analyze the following job assessment data:
+Analyze the following:
 
 Required Skills:
-${skillsData
+${requiredSkills
   .map((skill) => `- ${skill.name} (Required Level: ${skill.level})`)
   .join("\n")}
 
-Candidate’s Questions, Answers, Skill to Evaluate and the Expected proficiency level:
+Questions and Answers:
 ${questions
   .map(
-    (qa) => `
-    Q: ${qa.question}\n
-    A: ${qa.answer}\n
-    Skill To Evaluate: ${qa.skill}\n
-    Proficiency level of the question: ${qa.level}`
+    (qa, index) =>
+      `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}\nSkill: ${
+        qa.skill
+      }\nProficiency Level Required: ${qa.level}`
   )
   .join("\n\n")}
 
@@ -1290,13 +1325,15 @@ Following this JSON object fields, generate a detailed JSON analysis with these 
   ],
 }
 
-The confidenceScore for each skill represents your evaluation of the candidate’s demonstrated proficiency within to the required skill level, based on the condidates responses of all questions of that skill.
-The demonstratedExperienceLevel for each skill must not exceed the required skill level.
+The confidenceScore of each skill represents your evaluation of the candidate’s responses off all questions related to that skill.
 The overallScore should be calculated as the average of all confidenceScores across the evaluated skills.
 Use these definitions to guide your scoring and ensure consistency in the analysis.
 
 Provide only the JSON output without any additional text.
 `;
+
+console.log("userprompt: ", userPrompt);
+
     // 4. Call TogetherAI API for analysis
     const stream = await together.chat.completions.create({
       model: "deepseek-ai/DeepSeek-V3",
@@ -1320,6 +1357,7 @@ Provide only the JSON output without any additional text.
 
     // 5. Parse and validate the response
     let analysis;
+
     let jsonStr;
     try {
       const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
@@ -1388,13 +1426,11 @@ Provide only the JSON output without any additional text.
         for (let i = 0; i < alreadyProvenSkills.length; i++) {
           analysis.skillAnalysis.push({
             skillName: alreadyProvenSkills[i].name,
-            requiredLevel: alreadyProvenSkills[i].proficiencyLevel,
-            demonstratedExperienceLevel:
-              alreadyProvenSkills[i].proficiencyLevel,
+            requiredLevel: alreadyProvenSkills[i].level,
+            demonstratedExperienceLevel: alreadyProvenSkills[i].level,
             strengths: [
-              ` Your skills in ${alreadyProvenSkills[i].name} were already present in your profile.
-            That is why there was no need to reevalution for this Job Offer.
-            \n If you need to reevaluate your skills in ${alreadyProvenSkills[i].name}, you can navigate to your skills section in your profile and pass a new Test`,
+              `Your skills in ${alreadyProvenSkills[i].name} were already present in your profile.\nThat is why there was no need to reevalution for this Job Offer.\n
+               If you need to reevaluate your skills in ${alreadyProvenSkills[i].name}, you can navigate to your skills section in your profile and pass a new Test`,
             ],
             weaknesses: [``],
             confidenceScore: alreadyProvenSkills[i].ScoreTest,
