@@ -18,6 +18,7 @@ const postRouter = require("./routes/postRouter");
 const matchingRoutes = require("./routes/matchingRouter");
 const resumeRouter = require("./routes/resumeRouter");
 const todoRouter = require("./routes/todoRouter");
+const feedbackRouter = require("./routes/feedbackRoutes");
 require("dotenv").config();
 
 const app = express();
@@ -48,6 +49,7 @@ app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use("/evaluation", evaluationRouter);
 app.use("/linkedinPost", linkedinPostRouter);
 app.use("/api", agentIARouter);
+app.use("/feedback", feedbackRouter);
 app.use("/post", postRouter);
 app.use("/matching", matchingRoutes);
 app.use("/resume", resumeRouter);
