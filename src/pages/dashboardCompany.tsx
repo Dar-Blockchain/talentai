@@ -467,6 +467,10 @@ const DashboardCompany = () => {
   const [editedJob, setEditedJob] = useState<any>(null);
   const [localRequiredSkills, setLocalRequiredSkills] = useState(profile?.requiredSkills || []);
   const [displayedAssessments, setDisplayedAssessments] = useState(10);
+  const [newSkill, setNewSkill] = useState('');
+  const [editingSkillIndex, setEditingSkillIndex] = useState<number | null>(null);
+  const [editingSkillName, setEditingSkillName] = useState('');
+  const [showAddSkillInput, setShowAddSkillInput] = useState(false);
 
   const isSalaryRangeValid = () => {
     return salaryRange.min > 0 && salaryRange.max > 0 && salaryRange.max >= salaryRange.min;
@@ -2000,24 +2004,153 @@ Benefits:
                   Required Skills
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {(generatedJob?.skillAnalysis?.requiredSkills || []).map((skill, index) => (
-                    <SkillChip
-                      key={index}
-                      label={`${skill.name} (${generatedJob?.jobDetails?.experienceLevel || 'Entry Level'})`}
-                      // onDelete={isEditing ? () => {
-                      //   const updatedSkills = [...(generatedJob?.skillAnalysis?.requiredSkills || [])];
-                      //   updatedSkills.splice(index, 1);
-                      //   setGeneratedJob((prev: any) => ({
-                      //     ...prev,
-                      //     skillAnalysis: {
-                      //       ...prev.skillAnalysis,
-                      //       requiredSkills: updatedSkills
-                      //     }
-                      //   }));
-                      // } : undefined}
-                      // deleteIcon={isEditing ? <DeleteIcon sx={{ color: 'red' }} /> : undefined}
-                    />
+                  {(isEditing ? editedJob?.skillAnalysis?.requiredSkills : generatedJob?.skillAnalysis?.requiredSkills || []).map((skill: { name: string; level: string; importance: string; category: string }, index: number) => (
+                    editingSkillIndex === index ? (
+                      <Box key={index} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                        <TextField
+                          size="small"
+                          value={editingSkillName}
+                          onChange={(e) => setEditingSkillName(e.target.value)}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: '8px',
+                              backgroundColor: 'white'
+                            }
+                          }}
+                        />
+                        <Button
+                          variant="contained"
+                          onClick={handleSaveSkill}
+                          sx={{
+                            backgroundColor: GREEN_MAIN,
+                            color: 'black',
+                            '&:hover': {
+                              backgroundColor: GREEN_MAIN,
+                            }
+                          }}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          onClick={() => {
+                            setEditingSkillIndex(null);
+                            setEditingSkillName('');
+                          }}
+                          sx={{
+                            borderColor: GREEN_MAIN,
+                            color: GREEN_MAIN,
+                            '&:hover': {
+                              borderColor: GREEN_MAIN,
+                            }
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </Box>
+                    ) : (
+                      <SkillChip
+                        key={index}
+                        label={`${skill.name} (${generatedJob?.jobDetails?.experienceLevel || 'Entry Level'})`}
+                        onDelete={isEditing ? () => {
+                          if (!editedJob) return;
+                          const updatedSkills = [...editedJob.skillAnalysis.requiredSkills];
+                          updatedSkills.splice(index, 1);
+                          setEditedJob({
+                            ...editedJob,
+                            skillAnalysis: {
+                              ...editedJob.skillAnalysis,
+                              requiredSkills: updatedSkills
+                            }
+                          });
+                        } : undefined}
+                        deleteIcon={isEditing ? <DeleteIcon sx={{ color: 'red' }} /> : undefined}
+                        onClick={isEditing ? () => handleEditSkill(index, skill) : undefined}
+                        sx={isEditing ? { cursor: 'pointer' } : undefined}
+                      />
+                    )
                   ))}
+                  
+                  {isEditing && (
+                    <>
+                      {showAddSkillInput ? (
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                          <TextField
+                            size="small"
+                            placeholder="Add new skill"
+                            value={newSkill}
+                            onChange={(e) => setNewSkill(e.target.value)}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: '8px',
+                                backgroundColor: 'white'
+                              }
+                            }}
+                          />
+                          <Button
+                            variant="contained"
+                            onClick={() => {
+                              if (!newSkill.trim() || !editedJob) return;
+                              const updatedSkills = [...editedJob.skillAnalysis.requiredSkills, {
+                                name: newSkill.trim(),
+                                level: "3",
+                                importance: "Required",
+                                category: newSkill.includes('React') || newSkill.includes('JavaScript') ? 'Frontend' :
+                                  newSkill.includes('Git') ? 'Version Control' :
+                                    'General'
+                              }];
+                              setEditedJob({
+                                ...editedJob,
+                                skillAnalysis: {
+                                  ...editedJob.skillAnalysis,
+                                  requiredSkills: updatedSkills
+                                }
+                              });
+                              setNewSkill('');
+                              setShowAddSkillInput(false);
+                            }}
+                            sx={{
+                              backgroundColor: GREEN_MAIN,
+                              color: 'black',
+                              '&:hover': {
+                                backgroundColor: GREEN_MAIN,
+                              }
+                            }}
+                          >
+                            Add
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            onClick={() => {
+                              setShowAddSkillInput(false);
+                              setNewSkill('');
+                            }}
+                            sx={{
+                              borderColor: GREEN_MAIN,
+                              color: GREEN_MAIN,
+                              '&:hover': {
+                                borderColor: GREEN_MAIN,
+                              }
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </Box>
+                      ) : (
+                        <IconButton
+                          onClick={() => setShowAddSkillInput(true)}
+                          sx={{
+                            backgroundColor: 'rgba(0, 255, 157, 0.1)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(0, 255, 157, 0.2)',
+                            }
+                          }}
+                        >
+                          <AddIcon sx={{ color: GREEN_MAIN }} />
+                        </IconButton>
+                      )}
+                    </>
+                  )}
                 </Box>
               </Box>
 
@@ -3078,12 +3211,24 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
   const handleSave = () => {
     if (!editedJob || !editedJob.jobDetails) return;
-    // Update the generatedJob with the edited job data, including the updated requiredSkills
+    
+    // Update the generatedJob with the edited job data
     setGeneratedJob({
       ...editedJob,
       skillAnalysis: {
         ...editedJob.skillAnalysis,
-        requiredSkills: editedJob.skillAnalysis.requiredSkills
+        requiredSkills: editedJob.skillAnalysis.requiredSkills,
+        skillSummary: {
+          ...editedJob.skillAnalysis.skillSummary,
+          mainTechnologies: editedJob.skillAnalysis.requiredSkills.map((skill: { name: string; level: string; importance: string; category: string }) => skill.name)
+        }
+      },
+      linkedinPost: {
+        ...editedJob.linkedinPost,
+        formattedContent: {
+          ...editedJob.linkedinPost.formattedContent,
+          skillsRequired: `💻 Required Skills: ${editedJob.skillAnalysis.requiredSkills.map((skill: { name: string; level: string; importance: string; category: string }) => skill.name).join(', ')}.`
+        }
       }
     });
     setIsEditing(false);
@@ -3135,6 +3280,34 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
       default:
         return 'Entry Level';
     }
+  };
+
+  const handleEditSkill = (index: number, skill: { name: string; level: string; importance: string; category: string }) => {
+    setEditingSkillIndex(index);
+    setEditingSkillName(skill.name);
+  };
+
+  const handleSaveSkill = () => {
+    if (editingSkillIndex === null || !editedJob) return;
+    
+    const updatedSkills = [...editedJob.skillAnalysis.requiredSkills];
+    updatedSkills[editingSkillIndex] = {
+      ...updatedSkills[editingSkillIndex],
+      name: editingSkillName.trim(),
+      category: editingSkillName.includes('React') || editingSkillName.includes('JavaScript') ? 'Frontend' :
+        editingSkillName.includes('Git') ? 'Version Control' :
+          'General'
+    };
+
+    setEditedJob({
+      ...editedJob,
+      skillAnalysis: {
+        ...editedJob.skillAnalysis,
+        requiredSkills: updatedSkills
+      }
+    });
+    setEditingSkillIndex(null);
+    setEditingSkillName('');
   };
 
   return (

@@ -1297,9 +1297,9 @@ export default function Test() {
       </Container>
 
       <NavigationBar>
-        <IconButton onClick={handlePrev} disabled={current === 0} sx={{ color: '#fff' }}>
+        {/* <IconButton onClick={handlePrev} disabled={current === 0} sx={{ color: '#fff' }}>
           <ArrowBackIcon />
-        </IconButton>
+        </IconButton> */}
         <Button
           variant="contained"
           endIcon={<ArrowForwardIcon />}
