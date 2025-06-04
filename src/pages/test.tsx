@@ -441,11 +441,34 @@ export default function Test() {
       } else {
         // This is from preferences
         endpoint = 'evaluation/generate-questions';
+        
+        // Parse skills and their levels
+        const skillsArray = router.query.skills ? (router.query.skills as string).split(',') : [];
+        const proficiencyMap = router.query.proficiencyLevels ? 
+          Object.fromEntries(
+            (router.query.proficiencyLevels as string).split(',').map(pair => {
+              const [skill, level] = pair.split(':');
+              return [skill, parseInt(level)];
+            })
+          ) : {};
+
+        // Create structured skills array with the exact format required
+        const structuredSkills = skillsArray.map(skill => ({
+          name: skill,
+          proficiencyLevel: proficiencyMap[skill] || 1,
+          experienceLevel: router.query.experienceLevel || 'Entry Level'
+        }));
+
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`, {
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
-          }
+          },
+          body: JSON.stringify({
+            type: 'on-boarding',
+            skills: structuredSkills
+          })
         });
 
         if (!response.ok) {
@@ -757,7 +780,30 @@ export default function Test() {
       saveTestResults();
       // Store current URL in localStorage before navigation
       localStorage.setItem('previousUrl', window.location.href);
-      router.push('/report');
+      // Check if this is an on-boarding test
+      if (router.query.type === 'on-boarding') {
+        router.push({
+          pathname: '/report-on-boarding',
+          query: {
+            type: 'technicalSkill',
+            skills: router.query.skills,
+            proficiencyLevels: router.query.proficiencyLevels,
+            experienceLevel: router.query.experienceLevel
+          }
+        });
+      } else {
+        // For technical type, pass the skill and proficiency parameters
+        router.push({
+          pathname: '/report',
+          query: {
+            from: 'test',
+            type: router.query.type || 'technical',
+            skill: router.query.skill,
+            proficiency: router.query.proficiency,
+            subcategory: router.query.subcategory
+          }
+        });
+      }
     }
   };
 
@@ -782,7 +828,7 @@ export default function Test() {
     const testData = {
       results,
       metadata: {
-        type: router.query.type || 'technical',
+        type: router.query.type === 'on-boarding' ? 'technicalSkill' : (router.query.type || 'technical'),
         skill: router.query.skill,
         subcategory: router.query.subcategory,
         proficiency: router.query.proficiency,
@@ -791,19 +837,21 @@ export default function Test() {
     };
 
     localStorage.setItem('test_results', JSON.stringify(testData));
-    localStorage.setItem('last_test_type', router.query.type as string || 'technical');
+    localStorage.setItem('last_test_type', router.query.type === 'on-boarding' ? 'technicalSkill' : (router.query.type as string || 'technical'));
 
-    // Navigate to report page with parameters
-    router.push({
-      pathname: '/report',
-      query: {
-        from: 'test',
-        type: router.query.type || 'technical',
-        skill: router.query.skill,
-        subcategory: router.query.subcategory,
-        proficiency: router.query.proficiency
-      }
-    });
+    // Only navigate if not already navigating in handleNext
+    if (current < questions.length - 1) {
+      router.push({
+        pathname: '/report',
+        query: {
+          from: 'test',
+          type: router.query.type || 'technical',
+          skill: router.query.skill,
+          proficiency: router.query.proficiency,
+          subcategory: router.query.subcategory
+        }
+      });
+    }
   };
 
   // Security violation handler
@@ -1116,7 +1164,7 @@ export default function Test() {
           </Typography>
           {hasStartedTest && (
             <Typography variant="subtitle1" sx={{ color: '#fff', mr: 2 }}>
-              {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+              {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')} min
             </Typography>
           )}
           <Button
@@ -1200,9 +1248,9 @@ export default function Test() {
               onClick={hasStartedTest ? undefined : startTest}
               disabled={isGenerating || hasStartedTest || isConnecting}
               sx={{
-                backgroundColor: 'rgba(0, 255, 157, 1)',
+                backgroundColor: GREEN_MAIN,
                 '&:hover': {
-                  backgroundColor: 'rgba(0, 255, 157, 1)',
+                  backgroundColor: 'rgba(0, 255, 157, 0.8)',
                 },
                 '&.Mui-disabled': {
                   backgroundColor: hasStartedTest ? '#ff4444' : 'rgba(255, 255, 255, 0.12)',
@@ -1213,7 +1261,7 @@ export default function Test() {
               {isConnecting
                 ? 'Connecting...'
                 : hasStartedTest
-                  ? `Recording in progress (${timeLeft}s)`
+                  ? `Recording (${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')} min)`
                   : 'Start Test'
               }
             </RecordingButton>
@@ -1249,9 +1297,9 @@ export default function Test() {
       </Container>
 
       <NavigationBar>
-        <IconButton onClick={handlePrev} disabled={current === 0} sx={{ color: '#fff' }}>
+        {/* <IconButton onClick={handlePrev} disabled={current === 0} sx={{ color: '#fff' }}>
           <ArrowBackIcon />
-        </IconButton>
+        </IconButton> */}
         <Button
           variant="contained"
           endIcon={<ArrowForwardIcon />}

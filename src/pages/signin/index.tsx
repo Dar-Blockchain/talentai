@@ -141,9 +141,9 @@ export default function SignIn() {
                 if (!hasProfile) {
                   // If no return URL, go to preferences
                   router.push("/preferences");
-                } else if(profileData.type === 'Candidate') {
+                } else if (profileData.type === 'Candidate') {
                   router.push("/dashboardCandidate");
-                } else if(profileData.type === 'Company') {
+                } else if (profileData.type === 'Company') {
                   router.push("/dashboardCompany");
                 }
               }
@@ -219,13 +219,13 @@ export default function SignIn() {
               position: "relative",
             }}
           >
-          <Box
-            component="img"
-            src="/logo.svg"
-            alt="TalentAI Logo"
-            sx={{ height: 32, cursor: 'pointer' }}
-            onClick={() => router.push("/")}
-          />
+            <Box
+              component="img"
+              src="/logo.svg"
+              alt="TalentAI Logo"
+              sx={{ height: 32, cursor: 'pointer' }}
+              onClick={() => router.push("/")}
+            />
             <Typography
               variant="caption"
               sx={{
@@ -367,9 +367,9 @@ export default function SignIn() {
                       disabled={loading || isLoading || !email}
                       size="small"
                       sx={{
-                        textTransform: "none",
-                        background: "rgba(2, 0, 0, 0)",
-                        color: "rgba(0, 0, 0, 0.7)",
+                        background: "rgba(41, 210, 145, 0.83)",
+                        color: "black",
+                        padding: "5px",
                         "&:hover": {
                           background: "rgba(2, 0, 0, 0.1)",
                         },
