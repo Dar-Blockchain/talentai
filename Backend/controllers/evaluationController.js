@@ -682,9 +682,12 @@ Provide detailed, actionable feedback in JSON format only.`,
           const score = Number(skill.confidenceScore) || 0;
 
           let demo;
-          if (score > 70) demo = current + 1;
+          /*if (score > 70) demo = current + 1;
           else if (score >= 50) demo = current;
-          else demo = current - 1;
+          else demo = current - 1;*/
+
+          if (score >= 65) demo = current + 1;
+          else demo = current
 
           demo = Math.min(Math.max(demo, 1), 5);
 
