@@ -147,7 +147,45 @@ const FeedbackModalComponent = ({ open, onClose, onSubmit, onSkip }: FeedbackMod
         return;
       }
 
-      onSubmit(feedback);
+      const token = localStorage.getItem('api_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Transform feedback data into the required format
+      const feedbackData = {
+        feedback: [
+          feedback.overallExperience,
+          feedback.easeOfUse,
+          feedback.questionQuality,
+          feedback.interfaceRating,
+          feedback.evaluationRating
+        ],
+        comment: feedback.recommendation || ''
+      };
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}feedback/addFeedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(feedbackData)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = 'Failed to submit feedback';
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.message || errorJson.error || errorText;
+        } catch {
+          errorMessage = errorText || 'Failed to submit feedback';
+        }
+        throw new Error(errorMessage);
+      }
+
+      onSubmit(feedbackData);
     } catch (error) {
       console.error('Error submitting feedback:', error);
       setErrorMessage('An error occurred while submitting feedback. Please try again.');
@@ -588,10 +626,9 @@ export default function Report() {
     setFeedbackOpen(false);
   };
 
-  const handleFeedbackSubmit = async (feedback: any) => {
+  const handleFeedbackSubmit = async (feedbackData: any) => {
     try {
-      // Here you would typically send the feedback to your backend
-      console.log('Feedback submitted:', feedback);
+      console.log('Feedback submitted:', feedbackData);
       handleFeedbackClose();
       router.push('/dashboardCandidate');
     } catch (error) {
