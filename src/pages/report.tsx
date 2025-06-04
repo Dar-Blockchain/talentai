@@ -21,6 +21,11 @@ import {
   TextField,
   Rating,
   FormLabel,
+  Select,
+  MenuItem,
+  FormControl,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { motion } from 'framer-motion';
@@ -103,12 +108,14 @@ export default function Report() {
   const hasRun = useRef(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedback, setFeedback] = useState({
-    overallExperience: 0,
-    easeOfUse: 0,
-    questionQuality: 0,
-    interfaceRating: 0,
+    overallExperience: '',
+    easeOfUse: '',
+    questionQuality: '',
+    interfaceRating: '',
+    evaluationRating: '',
     recommendation: '',
   });
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -274,12 +281,34 @@ export default function Report() {
 
   const handleFeedbackSubmit = async () => {
     try {
+      // Check if all required fields are filled
+      const requiredFields = ['overallExperience', 'easeOfUse', 'questionQuality', 'interfaceRating', 'evaluationRating'];
+      const missingFields = requiredFields.filter(field => !feedback[field as keyof typeof feedback]);
+      
+      if (missingFields.length > 0) {
+        // Show error message for missing fields
+        const missingFieldNames = missingFields.map(field => {
+          switch(field) {
+            case 'overallExperience': return 'Overall Experience';
+            case 'easeOfUse': return 'Ease of Use';
+            case 'questionQuality': return 'Question Quality';
+            case 'interfaceRating': return 'Interface Rating';
+            case 'evaluationRating': return 'Evaluation Rating';
+            default: return field;
+          }
+        }).join(', ');
+        
+        setErrorMessage(`Please complete all required fields: ${missingFieldNames}`);
+        return;
+      }
+
       // Here you would typically send the feedback to your backend
       console.log('Feedback submitted:', feedback);
       handleFeedbackClose();
-      // Show success message or redirect
+      router.push('/dashboardCandidate');
     } catch (error) {
       console.error('Error submitting feedback:', error);
+      setErrorMessage('An error occurred while submitting feedback. Please try again.');
     }
   };
 
@@ -288,6 +317,10 @@ export default function Report() {
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleCloseError = () => {
+    setErrorMessage(null);
   };
 
   if (loading || analyzing) {
@@ -530,7 +563,7 @@ export default function Report() {
             <Button
               variant="contained"
               size="large"
-              onClick={() => router.push('/dashboardCandidate')}
+              onClick={handleFeedbackOpen}
               startIcon={<PersonIcon />}
               sx={{
                 background: 'rgba(0, 255, 157, 1)',
@@ -552,24 +585,6 @@ export default function Report() {
         </MotionPaper>
       </Container>
 
-      {/* Add Feedback Button */}
-      <Button
-        variant="contained"
-        onClick={handleFeedbackOpen}
-        sx={{
-          position: 'fixed',
-          bottom: 20,
-          right: 20,
-          background: '#02E2FF',
-          color: '#000000',
-          '&:hover': {
-            background: 'rgba(2, 226, 255, 0.9)',
-          },
-        }}
-      >
-        Give Feedback
-      </Button>
-
       {/* Feedback Modal */}
       <FeedbackModal
         open={feedbackOpen}
@@ -583,49 +598,161 @@ export default function Report() {
             {/* Overall Experience */}
             <Box>
               <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
-                How would you rate your overall experience?
+                How would you rate your overall experience? *
               </FormLabel>
-              <Rating
-                value={feedback.overallExperience}
-                onChange={(_, value) => handleFeedbackChange('overallExperience', value)}
-                sx={{ color: '#02E2FF' }}
-              />
+              <FormControl fullWidth required>
+                <Select
+                  value={feedback.overallExperience}
+                  onChange={(e) => handleFeedbackChange('overallExperience', e.target.value)}
+                  displayEmpty
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 0, 0, 0.2)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>Select your rating</MenuItem>
+                  <MenuItem value="Excellent">Excellent</MenuItem>
+                  <MenuItem value="Very Good">Very Good</MenuItem>
+                  <MenuItem value="Good">Good</MenuItem>
+                  <MenuItem value="Fair">Fair</MenuItem>
+                  <MenuItem value="Poor">Poor</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
 
             {/* Ease of Use */}
             <Box>
               <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
-                How easy was it to use our platform?
+                How easy was it to use our platform? *
               </FormLabel>
-              <Rating
-                value={feedback.easeOfUse}
-                onChange={(_, value) => handleFeedbackChange('easeOfUse', value)}
-                sx={{ color: '#02E2FF' }}
-              />
+              <FormControl fullWidth required>
+                <Select
+                  value={feedback.easeOfUse}
+                  onChange={(e) => handleFeedbackChange('easeOfUse', e.target.value)}
+                  displayEmpty
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 0, 0, 0.2)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>Select your rating</MenuItem>
+                  <MenuItem value="Very Easy">Very Easy</MenuItem>
+                  <MenuItem value="Easy">Easy</MenuItem>
+                  <MenuItem value="Moderate">Moderate</MenuItem>
+                  <MenuItem value="Difficult">Difficult</MenuItem>
+                  <MenuItem value="Very Difficult">Very Difficult</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
 
             {/* Question Quality */}
             <Box>
               <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
-                How would you rate the quality of the questions?
+                How would you rate the quality of the questions? *
               </FormLabel>
-              <Rating
-                value={feedback.questionQuality}
-                onChange={(_, value) => handleFeedbackChange('questionQuality', value)}
-                sx={{ color: '#02E2FF' }}
-              />
+              <FormControl fullWidth required>
+                <Select
+                  value={feedback.questionQuality}
+                  onChange={(e) => handleFeedbackChange('questionQuality', e.target.value)}
+                  displayEmpty
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 0, 0, 0.2)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>Select your rating</MenuItem>
+                  <MenuItem value="Excellent">Excellent</MenuItem>
+                  <MenuItem value="Very Good">Very Good</MenuItem>
+                  <MenuItem value="Good">Good</MenuItem>
+                  <MenuItem value="Fair">Fair</MenuItem>
+                  <MenuItem value="Poor">Poor</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
 
             {/* Interface Rating */}
             <Box>
               <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
-                How would you rate the user interface?
+                How would you rate the user interface? *
               </FormLabel>
-              <Rating
-                value={feedback.interfaceRating}
-                onChange={(_, value) => handleFeedbackChange('interfaceRating', value)}
-                sx={{ color: '#02E2FF' }}
-              />
+              <FormControl fullWidth required>
+                <Select
+                  value={feedback.interfaceRating}
+                  onChange={(e) => handleFeedbackChange('interfaceRating', e.target.value)}
+                  displayEmpty
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 0, 0, 0.2)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>Select your rating</MenuItem>
+                  <MenuItem value="Excellent">Excellent</MenuItem>
+                  <MenuItem value="Very Good">Very Good</MenuItem>
+                  <MenuItem value="Good">Good</MenuItem>
+                  <MenuItem value="Fair">Fair</MenuItem>
+                  <MenuItem value="Poor">Poor</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Evaluation Rating */}
+            <Box>
+              <FormLabel sx={{ color: '#000000', mb: 1, display: 'block' }}>
+                How would you rate the evaluation results? *
+              </FormLabel>
+              <FormControl fullWidth required>
+                <Select
+                  value={feedback.evaluationRating}
+                  onChange={(e) => handleFeedbackChange('evaluationRating', e.target.value)}
+                  displayEmpty
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 0, 0, 0.2)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#02E2FF',
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>Select your rating</MenuItem>
+                  <MenuItem value="Excellent">Excellent</MenuItem>
+                  <MenuItem value="Very Good">Very Good</MenuItem>
+                  <MenuItem value="Good">Good</MenuItem>
+                  <MenuItem value="Fair">Fair</MenuItem>
+                  <MenuItem value="Poor">Poor</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
 
             {/* Additional Comments */}
@@ -657,31 +784,72 @@ export default function Report() {
             />
           </Box>
         </DialogContent>
-        <DialogActions sx={{ padding: 3 }}>
-          <Button
-            onClick={handleFeedbackClose}
-            sx={{
-              color: 'rgba(0,0,0,0.7)',
-              '&:hover': { color: '#000000' },
-            }}
-          >
-            Cancel
-          </Button>
+        <DialogActions sx={{ padding: 3, justifyContent: 'space-between' }}>
           <Button
             variant="contained"
-            onClick={handleFeedbackSubmit}
+            onClick={() => {
+              handleFeedbackClose();
+              router.push('/dashboardCandidate');
+            }}
             sx={{
-              background: '#02E2FF',
-              color: '#000000',
+              background: 'rgba(0, 255, 157, 1)',
+              color: '#fff',
               '&:hover': {
-                background: 'rgba(2, 226, 255, 0.9)',
+                background: 'rgba(0, 255, 157, 0.9)',
               },
             }}
           >
-            Submit Feedback
+            Go To Dashboard
           </Button>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            {/* <Button
+              onClick={handleFeedbackClose}
+              sx={{
+                color: 'rgba(0,0,0,0.7)',
+                '&:hover': { color: '#000000' },
+              }}
+            >
+              Cancel
+            </Button> */}
+            <Button
+              variant="contained"
+              onClick={handleFeedbackSubmit}
+              sx={{
+                background: '#02E2FF',
+                color: '#000000',
+                '&:hover': {
+                  background: 'rgba(2, 226, 255, 0.9)',
+                },
+              }}
+            >
+              Submit Feedback
+            </Button>
+          </Box>
         </DialogActions>
       </FeedbackModal>
+
+      {/* Error Snackbar */}
+      <Snackbar
+        open={!!errorMessage}
+        autoHideDuration={6000}
+        onClose={handleCloseError}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseError} 
+          severity="error" 
+          sx={{ 
+            width: '100%',
+            backgroundColor: '#FF6B6B',
+            color: '#fff',
+            '& .MuiAlert-icon': {
+              color: '#fff'
+            }
+          }}
+        >
+          {errorMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
