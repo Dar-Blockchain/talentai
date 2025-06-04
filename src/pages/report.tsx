@@ -458,12 +458,18 @@ export default function Report() {
                       <Box sx={{ display: 'flex', gap: 2 }}>
                         <Box sx={{ flex: 1 }}>
                           <Typography sx={{ color: '#000' }}>
-                            Current Level: {skill.currentExperienceLevel || skill.currentProficiency}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography sx={{ color: '#000' }}>
-                            Demonstrated Level: {skill.demonstratedExperienceLevel || skill.demonstratedLevel}
+                            Level: {(() => {
+                              const level = skill.demonstratedExperienceLevel || skill.demonstratedLevel;
+                              if (!level) return 'N/A';
+                              switch(Number(level)) {
+                                case 1: return 'Entry Level';
+                                case 2: return 'Junior';
+                                case 3: return 'Mid Level';
+                                case 4: return 'Senior';
+                                case 5: return 'Expert';
+                                default: return level;
+                              }
+                            })()}
                           </Typography>
                         </Box>
                       </Box>
