@@ -1408,7 +1408,7 @@ Provide only the JSON output without any additional text.
 
     res.status(200).json({
       success: true,
-      result: analysis,
+      result: {analysis},
     });
   } catch (error) {
     console.error("Error analyzing job test results:", error);
