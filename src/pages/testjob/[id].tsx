@@ -338,6 +338,9 @@ const Test = () => {
   const violationHandledRef = useRef(false);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
+  // Add new state for button timer
+  const [nextButtonDisabled, setNextButtonDisabled] = useState(true);
+  const [buttonTimer, setButtonTimer] = useState(2);
 
   // Add streaming state
   const [streamingToken, setStreamingToken] = useState<string | null>(null);
@@ -362,50 +365,48 @@ const Test = () => {
 
 
   // Add useEffect for authentication and profile check
-  useEffect(() => {
-    const checkAuthAndProfile = async () => {
-      const token = Cookies.get('api_token');
-      if (!token) {
-        console.log('No token found, redirecting to signin');
-        router.push(`/signin?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
-        return;
-      }
+  // useEffect(() => {
+  //   const checkAuthAndProfile = async () => {
+  //     const token = Cookies.get('api_token');
+  //     if (!token) {
+  //       console.log('No token found, redirecting to signin');
+  //       router.push(`/signin?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
+  //       return;
+  //     }
 
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+  //     try {
+  //       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
+  //         headers: {
+  //           'Authorization': `Bearer ${token}`
+  //         }
+  //       });
 
-        // If profile exists and is valid, proceed with test
-        if (response.ok) {
-          const profileData = await response.json();
-          console.log('Profile data:', profileData);
+  //       // If profile exists and is valid, proceed with test
+  //       if (response.ok) {
+  //         const profileData = await response.json();
+  //         console.log('Profile data:', profileData);
 
-          // Check if profile has required data
-          if (profileData && profileData.type &&
-            ((profileData.type === 'Candidate' && profileData.skills && profileData.skills.length > 0) ||
-              (profileData.type === 'Company' && profileData.requiredSkills && profileData.requiredSkills.length > 0))) {
-            console.log('Profile is complete, proceeding with test');
-            setIsProfileComplete(true);
-            return;
-          }
-        }
+  //         if (profileData && profileData.type &&
+  //           ((profileData.type === 'Candidate') ||
+  //             (profileData.type === 'Company' && profileData.requiredSkills && profileData.requiredSkills.length > 0))) {
+  //           console.log('Profile is complete, proceeding with test');
+  //           setIsProfileComplete(true);
+  //           return;
+  //         }
+  //       }
 
-        // If we get here, either profile doesn't exist or is invalid
-        console.log('Profile not found or invalid, redirecting to preferences');
-        router.push(`/preferences?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
-      } catch (error) {
-        console.error('Error checking profile:', error);
-        router.push(`/preferences?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
-      }
-    };
+  //       console.log('Profile not found or invalid, redirecting to preferences');
+  //       router.push(`/preferences?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
+  //     } catch (error) {
+  //       console.error('Error checking profile:', error);
+  //       router.push(`/preferences?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
+  //     }
+  //   };
 
-    if (router.isReady && id) {
-      checkAuthAndProfile();
-    }
-  }, [router.isReady, id]);
+  //   if (router.isReady && id) {
+  //     checkAuthAndProfile();
+  //   }
+  // }, [router.isReady, id]);
 
   // Fetch questions when profile is complete
   useEffect(() => {
@@ -731,9 +732,60 @@ const Test = () => {
     setIsConnecting(false);
   };
 
-  const handleGuidelinesAccept = () => {
-    setGuidelinesAccepted(true);
-    setShowGuidelines(false);
+  const handleGuidelinesAccept = async () => {
+    try {
+      setIsGenerating(true);
+      const token = Cookies.get('api_token');
+      if (!token) {
+        console.log('No token found, redirecting to signin');
+        router.push(`/signin?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
+        return;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/job/${id}/generate-technique-questions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          jobId: id
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch questions');
+      }
+
+      const data: JobQuestionsResponse = await response.json();
+
+      const formattedQuestions: Question[] = data.questions.map((question, index) => {
+        const skillIndex = index % data.requiredSkills.length;
+        const skill = data.requiredSkills[skillIndex];
+
+        return {
+          id: `q_${index + 1}`,
+          text: question,
+          skill: skill.name,
+          level: skill.level
+        };
+      });
+
+      setQuestions(formattedQuestions);
+      setTranscriptions(
+        formattedQuestions.reduce((acc: any, _: any, index: number) => ({
+          ...acc,
+          [index]: ''
+        }), {})
+      );
+      setGuidelinesAccepted(true);
+      setShowGuidelines(false);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      router.push('/');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   // Modify startTest function
@@ -903,6 +955,31 @@ const Test = () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [hasStartedTest]);
+
+  // Add timer for next button
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (hasStartedTest && nextButtonDisabled && buttonTimer > 0) {
+      timer = setInterval(() => {
+        setButtonTimer(prev => {
+          if (prev <= 1) {
+            setNextButtonDisabled(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [hasStartedTest, nextButtonDisabled, buttonTimer]);
+
+  // Reset button timer when question changes
+  useEffect(() => {
+    if (current > 0) {
+      setNextButtonDisabled(true);
+      setButtonTimer(2);
+    }
+  }, [current]);
 
   if(!isAuthenticated){
     return null
@@ -1110,7 +1187,7 @@ const Test = () => {
               variant="h6"
               sx={{
                 flexGrow: 1,
-                background: GREEN_MAIN,
+                background: 'white',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 fontWeight: 700,
@@ -1120,7 +1197,7 @@ const Test = () => {
             </Typography>
             {hasStartedTest && (
               <Typography variant="subtitle1" sx={{ color: '#fff', mr: 2 }}>
-                {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+                {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')} min
               </Typography>
             )}
             <Button
@@ -1217,7 +1294,7 @@ const Test = () => {
                 {isConnecting
                   ? 'Connecting...'
                   : hasStartedTest
-                    ? `Recording in progress (${timeLeft}s)`
+                    ? `Recording (${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')} min)`
                     : 'Start Test'
                 }
               </RecordingButton>
@@ -1260,25 +1337,26 @@ const Test = () => {
             variant="contained"
             endIcon={<ArrowForwardIcon />}
             onClick={handleNext}
-            disabled={isGenerating}
+            disabled={isGenerating || (current > 0 && nextButtonDisabled)}
             sx={{
               textTransform: 'none',
-              background: GREEN_MAIN,
+              background: nextButtonDisabled ? 'rgba(255, 255, 255, 0.12)' : GREEN_MAIN,
               borderRadius: 2,
               px: 4,
               py: 1.5,
               fontWeight: 600,
               boxShadow: '0 2px 8px 0 rgba(0,255,157,0.10)',
               '&:hover': {
-                background: GREEN_MAIN,
+                background: nextButtonDisabled ? 'rgba(255, 255, 255, 0.12)' : GREEN_MAIN,
               },
               '&.Mui-disabled': {
-                background: 'rgba(255, 255, 255, 0.12)',
-                color: 'rgba(255, 255, 255, 0.3)',
+                color: 'black',
               }
             }}
           >
-            {current < questions.length - 1 ? 'Next Question' : 'Finish Test'}
+            {current < questions.length - 1
+              ? `Next Question${nextButtonDisabled ? ` (${buttonTimer}s)` : ''}`
+              : 'Finish Test'}
           </Button>
         </NavigationBar>
       </Box>
