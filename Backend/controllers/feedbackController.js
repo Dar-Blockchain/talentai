@@ -4,7 +4,7 @@ exports.create = async (req, res) => {
   try {
     const feedback = await feedbackService.createFeedback({
       ...req.body,
-      userId: req.user._id, // si authentifié
+      userId: req.user._id, // Si l'utilisateur est authentifié
     });
     res.status(201).json(feedback);
   } catch (err) {
@@ -24,7 +24,7 @@ exports.getAll = async (req, res) => {
 exports.getOne = async (req, res) => {
   try {
     const feedback = await feedbackService.getFeedbackById(req.params.id);
-    if (!feedback) return res.status(404).json({ message: 'Not found' });
+    if (!feedback) return res.status(404).json({ message: 'Feedback not found' });
     res.json(feedback);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -34,7 +34,7 @@ exports.getOne = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const updated = await feedbackService.updateFeedback(req.params.id, req.body);
-    if (!updated) return res.status(404).json({ message: 'Not found' });
+    if (!updated) return res.status(404).json({ message: 'Feedback not found' });
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -44,7 +44,7 @@ exports.update = async (req, res) => {
 exports.remove = async (req, res) => {
   try {
     const deleted = await feedbackService.deleteFeedback(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'Not found' });
+    if (!deleted) return res.status(404).json({ message: 'Feedback not found' });
     res.json({ message: 'Feedback deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
