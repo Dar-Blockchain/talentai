@@ -471,6 +471,7 @@ const DashboardCompany = () => {
   const [editingSkillIndex, setEditingSkillIndex] = useState<number | null>(null);
   const [editingSkillName, setEditingSkillName] = useState('');
   const [showAddSkillInput, setShowAddSkillInput] = useState(false);
+  const [newSkillLevel, setNewSkillLevel] = useState("3");
 
   const isSalaryRangeValid = () => {
     return salaryRange.min > 0 && salaryRange.max > 0 && salaryRange.max >= salaryRange.min;
@@ -2087,13 +2088,32 @@ Benefits:
                               }
                             }}
                           />
+                          <TextField
+                            select
+                            size="small"
+                            value={newSkillLevel || "3"}
+                            onChange={(e) => setNewSkillLevel(e.target.value)}
+                            sx={{
+                              minWidth: 120,
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: '8px',
+                                backgroundColor: 'white'
+                              }
+                            }}
+                          >
+                            <MenuItem value="1">Entry Level</MenuItem>
+                            <MenuItem value="2">Junior</MenuItem>
+                            <MenuItem value="3">Mid Level</MenuItem>
+                            <MenuItem value="4">Senior</MenuItem>
+                            <MenuItem value="5">Expert</MenuItem>
+                          </TextField>
                           <Button
                             variant="contained"
                             onClick={() => {
                               if (!newSkill.trim() || !editedJob) return;
                               const updatedSkills = [...editedJob.skillAnalysis.requiredSkills, {
                                 name: newSkill.trim(),
-                                level: "3",
+                                level: newSkillLevel || "3",
                                 importance: "Required",
                                 category: newSkill.includes('React') || newSkill.includes('JavaScript') ? 'Frontend' :
                                   newSkill.includes('Git') ? 'Version Control' :
@@ -2107,6 +2127,7 @@ Benefits:
                                 }
                               });
                               setNewSkill('');
+                              setNewSkillLevel("3");
                               setShowAddSkillInput(false);
                             }}
                             sx={{
@@ -2124,6 +2145,7 @@ Benefits:
                             onClick={() => {
                               setShowAddSkillInput(false);
                               setNewSkill('');
+                              setNewSkillLevel("3");
                             }}
                             sx={{
                               borderColor: GREEN_MAIN,
