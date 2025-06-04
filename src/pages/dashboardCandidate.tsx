@@ -903,34 +903,35 @@ export default function DashboardCandidate() {
     try {
       const token = Cookies.get("api_token");
       const selectedSkill = newSkill.name; // Capture before state reset
-      const updatedSkills = [
-        ...(profile?.skills || []),
-        {
-          name: selectedSkill,
-          NumberTestPassed: 0,
-          ScoreTest: 0,
-        },
-      ];
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/createOrUpdateProfile`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            type: "Candidate",
-            skills: updatedSkills,
-          }),
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Failed to add skill");
-      }
-      dispatch(getMyProfile());
-      setNewSkill({ name: "", proficiencyLevel: 1 });
-      setAddSkillDialogOpen(false);
+      // const updatedSkills = [
+      //   ...(profile?.skills || []),
+      //   {
+      //     name: selectedSkill,
+      //     NumberTestPassed: 0,
+      //     ScoreTest: 0,
+      //   },
+      // ];
+      // const response = await fetch(
+      //   `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/createOrUpdateProfile`,
+      //   {
+      //     method: "POST",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //       Authorization: `Bearer ${token}`,
+      //     },
+      //     body: JSON.stringify({
+      //       type: "Candidate",
+      //       skills: updatedSkills,
+      //     }),
+      //   }
+      // );
+      // if (!response.ok) {
+      //   throw new Error("Failed to add skill");
+      // }
+      // dispatch(getMyProfile());
+      // setNewSkill({ name: "", proficiencyLevel: 1 });
+      // setAddSkillDialogOpen(false);
+      
       // Redirect to test for the selected skill
       if (selectedSkill) {
         router.push(
