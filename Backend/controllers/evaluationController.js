@@ -1274,10 +1274,10 @@ Following this JSON object fields, generate a detailed JSON analysis with these 
 
 {
   "overallScore": 0-100,
-  "technicalLevel":
-  "generalAssassment":
-  "recommendations":
-  "nextSteps:
+  "technicalLevel":"string",
+  "generalAssassment":"string",
+  "recommendations":[],
+  "nextSteps:[],
   "skillAnalysis": [
     {
       "skillName": string,
