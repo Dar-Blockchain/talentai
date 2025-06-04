@@ -852,11 +852,11 @@ Provide detailed, actionable feedback in JSON format only.`,
       const profileOverallScore = await profileService.getProfileByUserId(user._id);
     
       function proficiencyFromConfidenceScore(score) {
-        if (score >= 0 && score < 10) return 1;
-        if (score >= 10 && score < 30) return 2;
+        if (score >= 10 && score < 20) return 1;
+        if (score >= 20 && score < 30) return 2;
         if (score >= 30 && score < 50) return 3;
-        if (score >= 50 && score < 70) return 4;
-        if (score >= 70 && score <= 100) return 5;
+        if (score >= 50 && score < 80) return 4;
+        if (score >= 80 && score <= 100) return 5;
         return 1; // défaut si hors bornes
       }
     
