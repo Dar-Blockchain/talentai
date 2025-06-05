@@ -130,18 +130,15 @@ module.exports.connectWithGmail = async (email) => {
   if (!user) {
     // Si l'utilisateur n'existe pas, créer un nouveau compte avec un portefeuille Hedera
     const username = extractUsernameFromEmail(email);
-    const { pubkey, privkey, accountId } =
+    /*const { pubkey, privkey, accountId } =
       await hederaService.createHederaWallet();
-
+*/
     user = new User({
       username,
       email,
       isVerified: true, // L'utilisateur est déjà vérifié via Gmail
       trafficCounter: 1,
       lastLogin: new Date(),
-      pubkey,
-      privkey,
-      accountId,
     });
 
     await user.save();
