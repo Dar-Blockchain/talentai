@@ -1318,7 +1318,7 @@ Following this JSON object fields, generate a detailed JSON analysis with these 
       "requiredLevel": 1-5,
       
       "demonstratedExperienceLevel": 1-5,
-      "strengths": [string],
+      "strengths": [string], // If no strengths are identified, include "No strengths identified for this skill" in the array
       "weaknesses": [string],
       "confidenceScore": 0-100,
     }
@@ -1432,7 +1432,7 @@ console.log("userprompt: ", userPrompt);
               `Your skills in ${alreadyProvenSkills[i].name} were already present in your profile.\nThat is why there was no need to reevalution for this Job Offer.\n
                If you need to reevaluate your skills in ${alreadyProvenSkills[i].name}, you can navigate to your skills section in your profile and pass a new Test`,
             ],
-            weaknesses: [``],
+            weaknesses: [`No weaknesses found`],
             confidenceScore: alreadyProvenSkills[i].ScoreTest,
           });
         }
