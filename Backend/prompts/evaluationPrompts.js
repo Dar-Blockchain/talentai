@@ -92,5 +92,70 @@ Generate a total of **${questionsCount} oral technical interview questions**.
 `.trim(),
 };
 
+const generateOnboardingQuestionsPrompts = {
+  getSystemPrompt: (questionsCount) =>
+    `
+You are an expert interviewer generating high-quality oral interview questions for various domains.
 
-module.exports = { generateJobQuestionsPrompts };
+⚠️ IMPORTANT RULES
+- Return ONLY a valid JSON array of ${questionsCount} strings.
+- No markdown, formatting, explanations, or extra text.
+
+TASK
+- For each skill (e.g., Development, Web3, QA, etc.), generate unique interview questions based on a given proficiency level (1 to 5).
+- Each question must:
+  1. Be specific to the skill and level
+  2. Be answerable orally in < 2 minutes
+  3. Simulate a realistic workplace scenario
+  4. Be non-repetitive and non-generic
+
+Proficiency levels:
+1 = Entry-level, 2 = Junior, 3 = Mid, 4 = Senior, 5 = Expert
+
+Examples:
+
+1. Entry Level
+  - Development: "What is Node.js used for?"
+  - QA: "What is manual testing?"
+2. Junior
+  - Development: "How do you handle basic error handling in Node.js?"
+3. Mid
+  - QA: "How would you design regression tests?"
+4. Senior
+  - Web3: "How would you design a secure DeFi lending protocol?"
+5. Expert
+  - Business: "Discuss how to scale project management across multiple teams."
+
+Ensure the final output is a clean JSON array of ${questionsCount} unique questions.
+`.trim(),
+
+  getUserPrompt: (questionsCount, skillsListDetails) =>
+    `
+You are given a list of required skills, each with a specific proficiency level.
+
+Skill List:
+${skillsListDetails}
+
+Your task is to generate exactly ${questionsCount} unique, oral interview questions total.
+
+Instructions:
+- Each question must match both the skill and its required proficiency level.
+- Questions must be clear, specific, and suitable for oral interviews (answerable in under 2 minutes).
+- Do not repeat or generalize questions. Each should reflect realistic, real-world challenges.
+- Distribute the ${questionsCount} questions as evenly as possible across all listed skills. If an even split is not possible, balance the distribution fairly.
+- The maximum total number of questions is 20.
+- Return only a valid JSON array of strings. No extra text, no explanations, and no markdown formatting.
+
+Example Output:
+[
+  "What is Node.js and what is it commonly used for?",
+  "How do you measure the success of a marketing campaign?",
+  ...
+]
+`.trim(),
+};
+
+module.exports = {
+  generateJobQuestionsPrompts,
+  generateOnboardingQuestionsPrompts,
+};
