@@ -196,17 +196,16 @@ Example Output:
 const analyzeOnbordingQuestionsPrompts = {
   getSystemPrompt: () =>
     `
-You are a senior technical interviewer. Your job is to analyze the condidate's answers to assess a candidate's skill proficiency, based strictly on responses of the condidate.
+You are a senior interviewer. Your job is to analyze the condidate's answers to assess a candidate's skill proficiency.
 
 Your task is to:
 - Analyze the candidate’s answers against the required skill levels.
-- Assess each skill individually for:
-  - Demonstrated proficiency level
+- Assess the skill for:
+  - demonstratedExperienceLevel
   - Strengths
   - Weaknesses
-  - Confidence score
-- Provide a comprehensive, skill-by-skill analysis.
-- Deliver an overall assessment of the candidate’s technical level.
+  - confidenceScore
+- Provide a comprehensive, skill analysis.
 - Offer actionable recommendations for improvement.
 
 Proficiency levels:
@@ -260,7 +259,6 @@ Technical Level Assignment Rules:
 STRICT REQUIREMENTS: 
 -Be objective
 -Do not estimate some knowledge , the answers do not reflect.
--Evaluation is based solely on the correctness of the responses.
 
 Respond strictly in JSON format only, without any additional explanations or text.
 `,
@@ -300,31 +298,7 @@ Following this JSON object fields, generate a detailed JSON analysis with these 
   ],
 }
 
-confidenceScore Calculation per skill: 
-The skill has exactly 10 questions. For each answer of a question:
-- answer is fully correct → +10%
-- answer is partially correct → +6%
-- answer is incorrect → +0%
-- answer is an empty string → +0%
-Final confidenceScore = Sum of all question scores (maximum = 100%)
 
-Demonstrated Experience Level Calculation:
--The level is assigned based on the confidenceScore as follows:
--The maximum demonstratedExperienceLevel is always the requiredLevel.
--If confidenceScore >= 70% → demonstratedExperienceLevel = requiredLevel
--If 50% <= confidenceScore < 70% → demonstratedExperienceLevel = min(0, requiredLevel-1)
--If 20% <= confidenceScore < 50% → demonstratedExperienceLevel = min(0, requiredLevel-2)
--If 15% <= confidenceScore < 20% → demonstratedExperienceLevel = min(0, requiredLevel-3)
--If confidenceScore < 15% → demonstratedExperienceLevel = 0 (meaning the candidate shows no valid proficiency)
--The final value must be between 0 and requiredLevel, inclusive.
-
-Technical Level Assignment Rules:
-- If demonstratedExperienceLevel == 0 → technicalLevel: "NoLevel"
-- If demonstratedExperienceLevel == 1 → technicalLevel: "Entry Level"
-- If demonstratedExperienceLevel == 2 → technicalLevel: "Junior"
-- If demonstratedExperienceLevel == 3 → technicalLevel: "Mid Level"
-- If demonstratedExperienceLevel == 4 → technicalLevel: "Senior"
-- If demonstratedExperienceLevel == 5 → technicalLevel: "Expert"
 
 STRICT REQUIREMENTS: 
 -Be objective.
