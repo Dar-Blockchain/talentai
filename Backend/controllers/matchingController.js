@@ -1,4 +1,3 @@
-const { calculateSkillMatchScore } = require("../services/matchingService");
 const JobPost = require("../models/PostModel");
 const Profile = require("../models/ProfileModel");
 
@@ -13,7 +12,7 @@ exports.matchCandidatesToJob = async (req, res) => {
       .select("userId skills companyDetails.name companyBid")
       .lean();
 
-      console.log("candidates",candidates)
+    console.log("candidates", candidates);
 
     // 2. Récupérer l'annonce de poste et les compétences requises
     const jobPost = await JobPost.findById(jobPostId)
@@ -24,7 +23,6 @@ exports.matchCandidatesToJob = async (req, res) => {
       return res.status(404).json({ error: "Job post not found" });
     }
 
-    // Log pour vérifier les compétences requises
     console.log("Job Post Skills:", jobPost.skillAnalysis.requiredSkills);
 
     // 3. Calculer les correspondances avec les informations supplémentaires
@@ -36,6 +34,7 @@ exports.matchCandidatesToJob = async (req, res) => {
           return null; // Ignorer ce candidat
         }
 
+        // Calculer le score pour chaque candidat avec ses compétences et celles du job
         const score = calculateSkillMatchScore(
           jobPost.skillAnalysis.requiredSkills,
           candidate.skills
@@ -53,8 +52,8 @@ exports.matchCandidatesToJob = async (req, res) => {
           matchedSkills: candidate.skills.filter((candidateSkill) =>
             jobPost.skillAnalysis.requiredSkills.some(
               (jobSkill) =>
-                jobSkill.name.toLowerCase() ===
-                candidateSkill.name.toLowerCase()
+                jobSkill.name.toLowerCase() === candidateSkill.name.toLowerCase() &&
+                convertLevelToNumber(jobSkill.level) === candidateSkill.Levelconfirmed // Comparaison des niveaux aussi
             )
           ),
           requiredSkills: jobPost.skillAnalysis.requiredSkills,
@@ -76,4 +75,49 @@ exports.matchCandidatesToJob = async (req, res) => {
       details: error.message,
     });
   }
+};
+
+// Calcul du score de correspondance pour chaque candidat
+const calculateSkillMatchScore = (jobSkills, candidateSkills) => {
+  let totalScore = 0;
+  const maxPossibleScore = jobSkills.length * 100; // 100% par compétence
+
+  jobSkills.forEach((jobSkill) => {
+    // Trouver la compétence du candidat avec le même nom
+    const candidateSkill = candidateSkills.find(
+      (s) => s.name.trim().toLowerCase() === jobSkill.name.trim().toLowerCase()
+    );
+
+    if (candidateSkill) {
+      console.log("Job Skill:", jobSkill);
+      console.log("Candidate Skill:", candidateSkill);
+
+      // Comparer le niveau de la compétence du candidat avec celui du job
+      const jobLevel = convertLevelToNumber(jobSkill.level);
+      const candidateLevel = candidateSkill.Levelconfirmed; // Utiliser Levelconfirmed du candidat
+
+      // Si les niveaux correspondent
+      if (jobLevel && candidateLevel) {
+        totalScore += 100; // Score parfait si les niveaux correspondent
+      } else {
+        console.log(`No match for ${jobSkill.name}: Job level ${jobLevel} vs Candidate level ${candidateLevel}`);
+      }
+    }
+  });
+
+  // Calcul du pourcentage global de correspondance
+  const matchPercentage = Math.round((totalScore / maxPossibleScore) * 1000) / 10; // Arrondir à 1 décimale
+  console.log("Total Score:", totalScore, "Max Possible Score:", maxPossibleScore);
+  return matchPercentage;
+};
+
+// Helper: Convertir les niveaux de texte en chiffres
+const convertLevelToNumber = (level) => {
+  const levels = {
+    Beginner: 1,
+    Intermediate: 3,
+    Advanced: 4,
+    Expert: 5,
+  };
+  return levels[level] || 1; // Par défaut à Beginner si inconnu
 };
