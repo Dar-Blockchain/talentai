@@ -784,6 +784,7 @@ Provide detailed, actionable feedback in JSON format only.`,
           proficiencyLevel: skill.demonstratedProficiency,
           experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
           ScoreTest: skill.confidenceScore,
+          Levelconfirmed: profLevel - 1,
         })),
       });
     }
@@ -804,6 +805,7 @@ Provide detailed, actionable feedback in JSON format only.`,
             category: s.subcategory || "",
             experienceLevel: getExperienceLevel(s.demonstratedProficiency),
             ScoreTest: s.confidenceScore,
+            Levelconfirmed: profLevel - 1,
           })),
         },
         { new: true }
@@ -888,6 +890,7 @@ Provide detailed, actionable feedback in JSON format only.`,
               proficiencyLevel: profLevel,
               experienceLevel: experienceLevels[profLevel - 1],
               ScoreTest: confScore,
+              Levelconfirmed: profLevel - 1,
             };
           }),
         });
