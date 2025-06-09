@@ -33,6 +33,7 @@ const profileSchema = new mongoose.Schema(
         experienceLevel: String,
         NumberTestPassed: Number,
         ScoreTest: Number,
+        Levelconfirmed : { type: Number, default: 0 }
       },
     ],
 
