@@ -122,7 +122,7 @@ export default function ReportOnBoarding() {
 
         console.log('Sending on-boarding analysis request:', JSON.stringify(requestBody, null, 2));
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/analyze-profile-answers`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/analyze-onboarding-answers`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -332,11 +332,11 @@ export default function ReportOnBoarding() {
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Box sx={{ flex: 1 }}>
+                    {/* <Box sx={{ flex: 1 }}>
                       <Typography sx={{ color: '#000' }}>
                         Current Level: {skill.currentExperienceLevel}
                       </Typography>
-                    </Box>
+                    </Box> */}
                     <Box sx={{ flex: 1 }}>
                       <Typography sx={{ color: '#000' }}>
                         Demonstrated Level: {skill.demonstratedExperienceLevel}
