@@ -31,12 +31,16 @@ const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
+        console.log("account", account);
+        console.log("profile", profile);
+        console.log("user", user);
         const email = profile?.email ?? "";
+        const id_token = account?.id_token ?? "";
         try {
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/connect-gmail`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email })
+            body: JSON.stringify({ email , id_token })
           });
           const data = await response.json();
 

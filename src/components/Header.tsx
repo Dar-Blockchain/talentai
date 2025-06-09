@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   AppBar,
   Box,
@@ -17,6 +17,11 @@ import MenuIcon from "@mui/icons-material/Menu";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { useDispatch } from "react-redux";
+import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
+import dynamic from 'next/dynamic';
 
 const navItems = [
   { label: "Features", id: "features" },
@@ -24,11 +29,27 @@ const navItems = [
   { label: "Pricing", id: "pricing" },
   { label: "Contact", id: "contact" },
 ];
+
 const Header = () => {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch<AppDispatch>();
+  const { profile, loading, error } = useSelector(selectProfile);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(getMyProfile());
+      console.log("profile", profile);
+    }
+  }, [isAuthenticated, dispatch]);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -75,6 +96,10 @@ const Header = () => {
     </Box>
   );
 
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <>
       <AppBar
@@ -93,9 +118,8 @@ const Header = () => {
           {!isMobile && (
             <Stack direction="row" spacing={4} alignItems="center">
               {navItems.map((item) => (
-                <Link href={`/#${item.id}`} passHref>
+                <Link href={`/#${item.id}`} key={item.id} passHref>
                   <Box
-                    key={item.id}
                     sx={{
                       cursor: "pointer",
                       fontWeight: 500,
@@ -119,7 +143,15 @@ const Header = () => {
           {!isMobile ? (
             <Button
               variant="contained"
-              onClick={() => router.push("/signin")}
+              onClick={() => {
+                if (isAuthenticated && profile && profile.type === "Candidate") {
+                  router.push("/dashboardCandidate");
+                } else if (isAuthenticated && profile && profile.type === "Company") {
+                  router.push("/dashboardCompany");
+                } else {
+                  router.push("/signin");
+                }
+              }}
               sx={{
                 backgroundColor: "#000",
                 color: "#fff",
@@ -137,7 +169,13 @@ const Header = () => {
                 />
               }
             >
-              Get Started
+              {isAuthenticated 
+                ? profile?.type === "Candidate" 
+                  ? "Dashboard Candidate" 
+                  : profile?.type === "Company" 
+                    ? "Dashboard Company" 
+                    : "Go to Dashboard"
+                : "Get Started"}
             </Button>
           ) : (
             <IconButton color="inherit" edge="end" onClick={handleDrawerToggle}>
@@ -154,4 +192,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default dynamic(() => Promise.resolve(Header), { ssr: false });

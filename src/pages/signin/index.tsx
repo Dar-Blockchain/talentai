@@ -440,7 +440,7 @@ export default function SignIn() {
             </Button>
           </Box>
 
-          {/* <Divider
+          <Divider
             sx={{
               my: 2,
               "&::before, &::after": {
@@ -450,10 +450,10 @@ export default function SignIn() {
             }}
           >
             OR
-          </Divider> */}
+          </Divider>
 
           {/* GOOGLE SIGN IN */}
-          {/* <Button
+          <Button
             fullWidth
             variant="contained"
             startIcon={<GoogleIcon />}
@@ -473,7 +473,7 @@ export default function SignIn() {
             }}
           >
             Continue with Google
-          </Button> */}
+          </Button>
         </Card>
       </Container>
     </Box>

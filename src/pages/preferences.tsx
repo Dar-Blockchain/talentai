@@ -122,14 +122,6 @@ const CATEGORIES = [
  
 ];
 
-const PROJECT_TYPES = [
-  'Web Application',
-  'Backend API',
-  'Mobile App',
-  'Automation Script',
-  'Library/Package'
-];
-
 // 5 Hedera QCM questions
 const HEDERA_QUESTIONS = [
   {
@@ -167,14 +159,6 @@ const COMPANY_STEPS = [
   'Company Details',
   'Required Skills',
   'Experience Level',
-  'Project Types',
-  'Review'
-];
-
-const CANDIDATE_STEPS = [
-  'Select Type',
-  'Select Skills',
-  'Rate Proficiency',
   'Project Types',
   'Review'
 ];
@@ -305,16 +289,6 @@ export default function Preferences() {
 
   // Step 4: project types
   const [projectType, setProjectType] = useState<Record<string, string>>({});
-  const setProjType = (skill: string, type: string) =>
-    setProjectType(prev => ({ ...prev, [skill]: type }));
-
-  // Check if Hedera is selected
-  const hasHederaSkill = useMemo(() => {
-    if (userType === 'company') {
-      return requiredSkills.includes('Hedera');
-    }
-    return skills.includes('Hedera');
-  }, [userType, requiredSkills, skills]);
 
   // Get steps based on user type and Hedera experience
   const steps = useMemo(() => {
@@ -336,22 +310,6 @@ export default function Preferences() {
   const handleNext = () => setActiveStep(i => i + 1);
   const handleBack = () => setActiveStep(i => i - 1);
 
-  const mapProficiencyToLevel = (proficiencyLevel: number): string => {
-    switch (proficiencyLevel) {
-      case 1:
-        return 'Junior';
-      case 2:
-        return 'Junior+';
-      case 3:
-        return 'Mid-Level';
-      case 4:
-        return 'Senior';
-      case 5:
-        return 'Expert';
-      default:
-        return 'Junior';
-    }
-  };
 
   const handleCreateOrUpdateProfile = async () => {
     try {
@@ -463,10 +421,6 @@ export default function Preferences() {
     () => ALL_SKILLS.filter(s => s.category === selectedCategory),
     [selectedCategory]
   );
-
-  // Add Hedera QCM step
-  const isHederaQcmStep = activeStep === steps.indexOf('Hedera QCM');
-
   // Handle user type selection with auto-advance
   const handleUserTypeSelect = (type: UserType) => {
     setUserType(type);
