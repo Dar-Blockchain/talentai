@@ -760,57 +760,7 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
           experienceLevel: generatedJob.jobDetails.experienceLevel,
           salary: generatedJob.jobDetails.salary
         },
-        skillAnalysis: {
-          requiredSkills: localRequiredSkills.map((skillName) => ({
-            name: skillName,
-            level: "3", // Default level
-            importance: "Required",
-            category: skillName.includes('React') || skillName.includes('JavaScript') ? 'Frontend' :
-              skillName.includes('Git') ? 'Version Control' :
-                'General'
-          })),
-          suggestedSkills: {
-            technical: [
-              {
-                name: "TypeScript",
-                reason: "Enhances JavaScript coding, providing static types.",
-                category: "Frontend",
-                priority: "High"
-              },
-              {
-                name: "Redux",
-                reason: "Widely used with React for state management.",
-                category: "Frontend",
-                priority: "Medium"
-              }
-            ],
-            frameworks: [
-              {
-                name: "Next.js",
-                relatedTo: "React",
-                priority: "Medium"
-              }
-            ],
-            tools: [
-              {
-                name: "Webpack",
-                purpose: "Module bundler for modern JavaScript applications.",
-                category: "Build Tools"
-              },
-              {
-                name: "NPM",
-                purpose: "Package manager for JavaScript.",
-                category: "Package Manager"
-              }
-            ]
-          },
-          skillSummary: {
-            mainTechnologies: localRequiredSkills,
-            complementarySkills: ["TypeScript", "Redux", "Next.js"],
-            learningPath: ["ReactJS -> TypeScript -> Redux -> Next.js"],
-            stackComplexity: "Moderate"
-          }
-        },
+        skillAnalysis: generatedJob.skillAnalysis,
         linkedinPost: {
           formattedContent: {
             headline: `🌟 We're Hiring: ${generatedJob.jobDetails.title} 🌟`,
@@ -823,7 +773,7 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
               `🔹 ${generatedJob.jobDetails.location} work`,
               `🔹 Salary range: ${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}`
             ],
-            skillsRequired: `💻 Required Skills: ${localRequiredSkills.join(', ')}.`,
+            skillsRequired: `💻 Required Skills: ${generatedJob.skillAnalysis.requiredSkills.map((skill: { name: string; level: string; importance: string; category: string }) => skill.name).join(', ')}.`,
             benefitsSection: "🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.",
             callToAction: "✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test"
           },
@@ -858,7 +808,7 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
 🔹 ${generatedJob.jobDetails.location} work
 🔹 Salary range: ${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}
 
-💻 Required Skills: ${localRequiredSkills.join(', ')}.
+💻 Required Skills: ${generatedJob.skillAnalysis.requiredSkills.map((skill: { name: string; level: string; importance: string; category: string }) => skill.name).join(', ')}.
 
 🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.
 
