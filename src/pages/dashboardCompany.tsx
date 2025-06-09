@@ -468,10 +468,11 @@ const DashboardCompany = () => {
   const [localRequiredSkills, setLocalRequiredSkills] = useState(profile?.requiredSkills || []);
   const [displayedAssessments, setDisplayedAssessments] = useState(10);
   const [newSkill, setNewSkill] = useState('');
+  const [newSkillLevel, setNewSkillLevel] = useState("3");
+  const [showAddSkillInput, setShowAddSkillInput] = useState(false);
   const [editingSkillIndex, setEditingSkillIndex] = useState<number | null>(null);
   const [editingSkillName, setEditingSkillName] = useState('');
-  const [showAddSkillInput, setShowAddSkillInput] = useState(false);
-  const [newSkillLevel, setNewSkillLevel] = useState("3");
+  const [skillWarning, setSkillWarning] = useState('');
 
   const isSalaryRangeValid = () => {
     return salaryRange.min > 0 && salaryRange.max > 0 && salaryRange.max >= salaryRange.min;
@@ -2111,6 +2112,13 @@ Benefits:
                             variant="contained"
                             onClick={() => {
                               if (!newSkill.trim() || !editedJob) return;
+                              
+                              // Check if we already have 3 skills
+                              if (editedJob.skillAnalysis.requiredSkills.length >= 3) {
+                                setSkillWarning('Maximum 3 skills allowed');
+                                return;
+                              }
+
                               const updatedSkills = [...editedJob.skillAnalysis.requiredSkills, {
                                 name: newSkill.trim(),
                                 level: newSkillLevel || "3",
@@ -2129,6 +2137,7 @@ Benefits:
                               setNewSkill('');
                               setNewSkillLevel("3");
                               setShowAddSkillInput(false);
+                              setSkillWarning('');
                             }}
                             sx={{
                               backgroundColor: GREEN_MAIN,
@@ -2146,6 +2155,7 @@ Benefits:
                               setShowAddSkillInput(false);
                               setNewSkill('');
                               setNewSkillLevel("3");
+                              setSkillWarning('');
                             }}
                             sx={{
                               borderColor: GREEN_MAIN,
@@ -2160,7 +2170,13 @@ Benefits:
                         </Box>
                       ) : (
                         <IconButton
-                          onClick={() => setShowAddSkillInput(true)}
+                          onClick={() => {
+                            if (editedJob?.skillAnalysis.requiredSkills.length >= 3) {
+                              setSkillWarning('Maximum 3 skills allowed');
+                              return;
+                            }
+                            setShowAddSkillInput(true);
+                          }}
                           sx={{
                             backgroundColor: 'rgba(0, 255, 157, 0.1)',
                             '&:hover': {
@@ -2170,6 +2186,11 @@ Benefits:
                         >
                           <AddIcon sx={{ color: GREEN_MAIN }} />
                         </IconButton>
+                      )}
+                      {skillWarning && (
+                        <Typography color="error" sx={{ mt: 1, fontSize: '0.875rem' }}>
+                          {skillWarning}
+                        </Typography>
                       )}
                     </>
                   )}

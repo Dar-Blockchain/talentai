@@ -265,8 +265,21 @@ export default function Preferences() {
 
   // Step 1: skills + Hedera experience
   const [skills, setSkills] = useState<string[]>([]);
-  const toggleSkill = (label: string) =>
-    setSkills(prev => prev.includes(label) ? prev.filter(s => s !== label) : [...prev, label]);
+  const [skillWarning, setSkillWarning] = useState<string>('');
+
+  const toggleSkill = (label: string) => {
+    if (skills.includes(label)) {
+      setSkills(prev => prev.filter(s => s !== label));
+      setSkillWarning('');
+    } else {
+      if (skills.length >= 1) {
+        setSkillWarning('You can only select 1 skill');
+        return;
+      }
+      setSkills(prev => [...prev, label]);
+      setSkillWarning('');
+    }
+  };
 
   const [hederaExp, setHederaExp] = useState<'yes' | 'no' | ''>('');
 
@@ -746,9 +759,15 @@ export default function Preferences() {
             <Typography variant="h6" mb={2} sx={{ color: 'black' }}>
               {userType === 'company'
                 ? 'Select the skills your company is looking for'
-                : `Select your ${selectedCategory} skills`
+                : `Select your ${selectedCategory} skill (1 skill required)`
               }
             </Typography>
+
+            {skillWarning && (
+              <Typography color="error" sx={{ mb: 2 }}>
+                {skillWarning}
+              </Typography>
+            )}
 
             {/* Skills Grid */}
             <Box sx={{
@@ -1038,7 +1057,10 @@ export default function Preferences() {
           <Button
             variant="contained"
             onClick={activeStep === steps.length - 1 ? handleStartTest : handleNext}
-            disabled={activeStep === 0 && !userType}
+            disabled={
+              activeStep === 0 && !userType || 
+              (currentStep === 'Select Skills' && skills.length === 0)
+            }
             sx={{
               background: GREEN_MAIN,
               borderRadius: 2,
