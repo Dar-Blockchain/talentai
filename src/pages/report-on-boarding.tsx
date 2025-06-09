@@ -115,8 +115,8 @@ export default function ReportOnBoarding() {
         }));
 
         const requestBody = {
-          type: 'technicalSkill',
-          skill: structuredSkills,
+          // type: 'technicalSkill',
+          // skill: structuredSkills,
           questions: testData.results
         };
 
