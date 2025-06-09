@@ -13,7 +13,7 @@ exports.matchCandidatesToJob = async (req, res) => {
       .select("userId skills companyDetails.name companyBid")
       .lean();
 
-      console.log("candidates",candidates)
+   //   console.log("candidates",candidates)
 
     // 2. Récupérer l'annonce de poste et les compétences requises
     const jobPost = await JobPost.findById(jobPostId)
@@ -25,7 +25,7 @@ exports.matchCandidatesToJob = async (req, res) => {
     }
 
     // Log pour vérifier les compétences requises
-    console.log("Job Post Skills:", jobPost.skillAnalysis.requiredSkills);
+   // console.log("Job Post Skills:", jobPost.skillAnalysis.requiredSkills);
 
     // 3. Calculer les correspondances avec les informations supplémentaires
     const matches = candidates
@@ -62,6 +62,8 @@ exports.matchCandidatesToJob = async (req, res) => {
       })
       .filter((match) => match !== null && match.score > 0) // Filtrer les candidats nulls
       .sort((a, b) => b.score - a.score);
+
+      console.log("matches",matches)
 
     // 4. Retourner la réponse
     res.json({
