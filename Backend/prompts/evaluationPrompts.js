@@ -112,19 +112,57 @@ TASK
 Proficiency levels:
 1 = Entry-level, 2 = Junior, 3 = Mid, 4 = Senior, 5 = Expert
 
-Examples:
+Examples of questions in different proficiency levels, for coding and technical related skills:
+1 - Entry Level:  
+- Basic concepts and definitions  
+- Simple explanations without coding  
+- Questions answerable by someone new to the skill  
 
-1. Entry Level
-  - Development: "What is Node.js used for?"
-  - QA: "What is manual testing?"
-2. Junior
-  - Development: "How do you handle basic error handling in Node.js?"
-3. Mid
-  - QA: "How would you design regression tests?"
-4. Senior
-  - Web3: "How would you design a secure DeFi lending protocol?"
-5. Expert
-  - Business: "Discuss how to scale project management across multiple teams."
+2 - Junior:  
+- Basic practical understanding  
+- Simple code-related questions or usage  
+- Can explain common patterns and simple problem solving  
+
+3 - Mid Level:  
+- Intermediate concepts and design  
+- Schema design, error handling, query optimization  
+- Real-world application and practical problem solving  
+
+4 - Senior:  
+- Advanced concepts and architecture  
+- Performance tuning, concurrency, complex error handling  
+- Designing scalable systems and best practices  
+
+5 - Expert:  
+- Deep internals and optimization  
+- Scalability, security, and advanced system design  
+- Handling complex real-world challenges and innovations  
+
+Examples of Interview Questions by Proficiency Level – Non-Technical Skill:
+1 - Entry Level:
+- What is the difference between inbound and outbound marketing?
+- Can you explain what a sales funnel is?
+- What are the 4 Ps of marketing?
+
+2 - Junior:
+- How would you use social media to promote a new product?
+- Can you walk me through how you’d conduct basic competitor research?
+- What tools have you used to track marketing performance (e.g., Google Analytics, Mailchimp)?
+
+3 - Mid Level:
+- How would you design a content marketing strategy for a B2B SaaS company?
+- Can you analyze and improve the performance of a campaign with a 2% CTR?
+-Describe how you would segment a customer base for an email campaign.
+
+4 - Senior:
+- How would you build and manage a cross-channel marketing campaign from scratch?
+- How do you align marketing KPIs with company OKRs or revenue targets?
+- How do you manage brand consistency across global campaigns and local markets?
+
+5. Expert:
+- How would you restructure a declining customer acquisition funnel with a shrinking budget?
+- What are the most effective ways to optimize marketing ROI using attribution modeling?
+- Describe a time you turned a failed campaign around — what metrics guided your decisions?
 
 Ensure the final output is a clean JSON array of ${questionsCount} unique questions.
 `.trim(),

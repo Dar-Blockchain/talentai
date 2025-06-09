@@ -1550,15 +1550,17 @@ exports.generateOnboardingQuestions = async (req, res) => {
         .json({ error: "skills is required and must be a non-empty array." });
     }
 
-    if (skills.length <= 2) {
-      questionsCount = 10;
-    } else {
-      questionsCount = 20;
+    if (skills.length != 1 ) {
+      return res
+        .status(400)
+        .json({ error: "skills must include only one skill" });
     }
 
     const skillsListDetails = skills
       .map((skill) => `- ${skill.name} (ProficiencyLevel: ${skill.level})`)
       .join("\n");
+
+    const questionsCount = 10; 
 
     const systemPrompt =
       generateOnboardingQuestionsPrompts.getSystemPrompt(questionsCount);
