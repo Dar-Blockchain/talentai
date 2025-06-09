@@ -760,7 +760,57 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
           experienceLevel: generatedJob.jobDetails.experienceLevel,
           salary: generatedJob.jobDetails.salary
         },
-        skillAnalysis: generatedJob.skillAnalysis,
+        skillAnalysis: {
+          requiredSkills: generatedJob.skillAnalysis.requiredSkills || [],
+          suggestedSkills: {
+            technical: (generatedJob.skillAnalysis.suggestedSkills?.technical || []).map(skill => {
+              console.log('Technical skill:', skill);
+              const skillName = typeof skill === 'string' ? skill : (skill?.name || '');
+              if (!skillName) {
+                console.error('Invalid technical skill:', skill);
+                return null;
+              }
+              return {
+                name: skillName,
+                reason: `Required ${skillName} knowledge`,
+                category: 'Technical',
+                priority: 'High'
+              };
+            }).filter(Boolean),
+            frameworks: (generatedJob.skillAnalysis.suggestedSkills?.frameworks || []).map(skill => {
+              console.log('Framework skill:', skill);
+              const skillName = typeof skill === 'string' ? skill : (skill?.name || '');
+              if (!skillName) {
+                console.error('Invalid framework skill:', skill);
+                return null;
+              }
+              return {
+                name: skillName,
+                relatedTo: 'Python',
+                priority: 'Medium'
+              };
+            }).filter(Boolean),
+            tools: (generatedJob.skillAnalysis.suggestedSkills?.tools || []).map(skill => {
+              console.log('Tool skill:', skill);
+              const skillName = typeof skill === 'string' ? skill : (skill?.name || '');
+              if (!skillName) {
+                console.error('Invalid tool skill:', skill);
+                return null;
+              }
+              return {
+                name: skillName,
+                purpose: `Development tool: ${skillName}`,
+                category: 'Development Tools'
+              };
+            }).filter(Boolean)
+          },
+          skillSummary: {
+            mainTechnologies: generatedJob.skillAnalysis.skillSummary?.mainTechnologies || [],
+            complementarySkills: generatedJob.skillAnalysis.skillSummary?.complementarySkills || [],
+            learningPath: generatedJob.skillAnalysis.skillSummary?.learningPath || [],
+            stackComplexity: generatedJob.skillAnalysis.skillSummary?.stackComplexity || "Moderate"
+          }
+        },
         linkedinPost: {
           formattedContent: {
             headline: `🌟 We're Hiring: ${generatedJob.jobDetails.title} 🌟`,
