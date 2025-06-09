@@ -16,7 +16,7 @@ router.post('/analyze-profile-answers', evaluationController.analyzeProfileAnswe
 router.post('/analyze-job-test-results', evaluationController.analyzeJobTestResults);
 
 router.get('/generate-onboarding-questions', evaluationController.generateOnboardingQuestions);
-// router.post('/analyze-onboarding-questions', evaluationController.analyzeOnboardingQuestions);
+router.post('/analyze-onboarding-answers', evaluationController.analyzeOnboardingAnswers);
 
 
 module.exports = router; 

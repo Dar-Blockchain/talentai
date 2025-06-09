@@ -4,6 +4,7 @@ require("dotenv").config();
 
 const {
   generateOnboardingQuestionsPrompts,
+  analyzeOnbordingQuestionsPrompts,
 } = require("../prompts/evaluationPrompts");
 
 const JobAssessmentResult = require("../models/JobAssessmentResultModel");
@@ -1550,7 +1551,7 @@ exports.generateOnboardingQuestions = async (req, res) => {
         .json({ error: "skills is required and must be a non-empty array." });
     }
 
-    if (skills.length != 1 ) {
+    if (skills.length != 1) {
       return res
         .status(400)
         .json({ error: "skills must include only one skill" });
@@ -1560,7 +1561,7 @@ exports.generateOnboardingQuestions = async (req, res) => {
       .map((skill) => `- ${skill.name} (ProficiencyLevel: ${skill.level})`)
       .join("\n");
 
-    const questionsCount = 10; 
+    const questionsCount = 10;
 
     const systemPrompt =
       generateOnboardingQuestionsPrompts.getSystemPrompt(questionsCount);
@@ -1607,5 +1608,153 @@ exports.generateOnboardingQuestions = async (req, res) => {
   } catch (error) {
     console.error("Error generating questions:", error);
     res.status(500).json({ error: "Failed to generate questions" });
+  }
+};
+
+exports.analyzeOnboardingAnswers = async (req, res) => {
+  try {
+    const { questions } = req.body;
+    const user = req.user;
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    const systemPrompt = analyzeOnbordingQuestionsPrompts.getSystemPrompt();
+    const userPrompt =
+      analyzeOnbordingQuestionsPrompts.getUserPrompt(questions);
+
+    // 4. Call TogetherAI API for analysis
+    const stream = await together.chat.completions.create({
+      model: "deepseek-ai/DeepSeek-V3",
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+        { role: "user", content: userPrompt },
+      ],
+      max_tokens: 1000,
+      temperature: 0.6,
+      stream: true,
+    });
+
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
+
+    // 5. Parse and validate the response
+    let analysis;
+
+    let jsonStr;
+    try {
+      const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (jsonMatch) {
+        jsonStr = jsonMatch[1];
+      }
+
+      // Clean the string before parsing
+      jsonStr = jsonStr
+        .trim()
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .replace(/^[^{]*/, "")
+        .replace(/[^}]*$/, "");
+
+      try {
+        analysis = JSON.parse(jsonStr);
+      } catch (firstError) {
+        console.error("First parse attempt failed:", firstError);
+        jsonStr = jsonStr
+          .replace(/,(\s*[}\]])/g, "$1")
+          .replace(/'/g, '"')
+          .replace(/\n/g, " ")
+          .replace(/\s+/g, " ");
+        analysis = JSON.parse(jsonStr);
+      }
+
+      // Validate required fields
+      if (!analysis || typeof analysis !== "object") {
+        throw new Error("Analysis is not an object");
+      }
+
+      if (!analysis.skillAnalysis || !Array.isArray(analysis.skillAnalysis)) {
+        throw new Error("Missing or invalid skillAnalysis array");
+      }
+
+      // Ensure all required fields are present
+      const requiredFields = [
+        "overallScore",
+        "technicalLevel",
+        "generalAssassment",
+        "recommendations",
+        "nextSteps",
+        "skillAnalysis",
+      ];
+      const missingFields = requiredFields.filter(
+        (field) => !(field in analysis)
+      );
+
+      if (missingFields.length > 0) {
+        throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
+      }
+
+      // add skill to profile if experienceLevel is proven
+      const profile = await Profile.findById(user.profile);
+      if (!profile) {
+        return res.status(404).json({ error: "Profile not found" });
+      }
+      const skill = analysis.skillAnalysis[0];
+      if (skill.demonstratedExperienceLevel > 0) {
+        let experienceLevelString = "";
+        switch (skill.demonstratedExperienceLevel) {
+          case 1:
+            experienceLevelString = "Entry Level";
+            break;
+          case 2:
+            experienceLevelString = "Junior";
+            break;
+          case 3:
+            experienceLevelString = "Mid Level";
+            break;
+          case 4:
+            experienceLevelString = "Senior";
+            break;
+          case 5:
+            experienceLevelString = "Expert";
+            break;
+          default:
+            throw new Error(
+              `Unknown experienceLevel value: ${reqSkill.demonstratedExperienceLevel}  `
+            );
+        }
+
+        profile.skills.push({
+          name: skill.skillName,
+          proficiencyLevel: skill.demonstratedExperienceLevel,
+          experienceLevel: experienceLevelString,
+          NumberTestPassed: 1,
+          ScoreTest: skill.confidenceScore,
+        });
+      }
+
+      profile.quota++;
+      await profile.save();
+    } catch (error) {
+      console.error("Error in analysis parsing:", error);
+    }
+
+    res.status(200).json({
+      success: true,
+      result: { analysis },
+    });
+  } catch (error) {
+    console.error("Error analyzing onboardingAnswers results:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to analyze onboardingAnswers",
+      details: error.message,
+    });
   }
 };

@@ -193,7 +193,149 @@ Example Output:
 `.trim(),
 };
 
+const analyzeOnbordingQuestionsPrompts = {
+  getSystemPrompt: () =>
+    `
+You are a senior technical interviewer. Your job is to analyze the condidate's answers to assess a candidate's skill proficiency, based strictly on responses of the condidate.
+
+Your task is to:
+- Analyze the candidate’s answers against the required skill levels.
+- Assess each skill individually for:
+  - Demonstrated proficiency level
+  - Strengths
+  - Weaknesses
+  - Confidence score
+- Provide a comprehensive, skill-by-skill analysis.
+- Deliver an overall assessment of the candidate’s technical level.
+- Offer actionable recommendations for improvement.
+
+Proficiency levels:
+1 = Entry-level, 2 = Junior, 3 = Mid, 4 = Senior, 5 = Expert
+
+Examples of questions in different proficiency levels:
+1 - Entry Level:  
+- Basic concepts and definitions  
+
+2 - Junior:  
+- Basic practical understanding  
+- Can explain common patterns and simple problem solving  
+
+3 - Mid Level:  
+- Intermediate concepts
+- Real-world application and practical problem solving  
+
+4 - Senior:  
+- Advanced concepts
+
+5 - Expert:  
+- Handling complex real-world challenges and innovations  
+
+
+confidenceScore Calculation per skill: 
+The skill has exactly 10 questions. For each answer of a question:
+- answer is fully correct → +10%
+- answer is partially correct → +6%
+- answer is incorrect → +0%
+- answer is an empty string → +0%
+Final confidenceScore = Sum of all question scores (maximum = 100%)
+
+Demonstrated Experience Level Calculation:
+-The level is assigned based on the confidenceScore as follows:
+-The maximum demonstratedExperienceLevel is always the requiredLevel.
+-If confidenceScore >= 70% → demonstratedExperienceLevel = requiredLevel
+-If 50% <= confidenceScore < 70% → demonstratedExperienceLevel = Math.max(0, requiredLevel-1)
+-If 20% <= confidenceScore < 50% → demonstratedExperienceLevel = Math.max(0, requiredLevel-2)
+-If 15% <= confidenceScore < 20% → demonstratedExperienceLevel = Math.max(0, requiredLevel-3)
+-If confidenceScore < 15% → demonstratedExperienceLevel = 0 (meaning the candidate shows no valid proficiency)
+-The final value must be between 0 and requiredLevel, inclusive.
+
+Technical Level Assignment Rules:
+- If demonstratedExperienceLevel == 0 → technicalLevel: "NoLevel"
+- If demonstratedExperienceLevel == 1 → technicalLevel: "Entry Level"
+- If demonstratedExperienceLevel == 2 → technicalLevel: "Junior"
+- If demonstratedExperienceLevel == 3 → technicalLevel: "Mid Level"
+- If demonstratedExperienceLevel == 4 → technicalLevel: "Senior"
+- If demonstratedExperienceLevel == 5 → technicalLevel: "Expert"
+
+STRICT REQUIREMENTS: 
+-Be objective
+-Do not estimate some knowledge , the answers do not reflect.
+-Evaluation is based solely on the correctness of the responses.
+
+Respond strictly in JSON format only, without any additional explanations or text.
+`,
+
+  getUserPrompt: (questions) =>
+    `
+Analyze the following:
+
+Questions ,Answers and related Proficiency Level:
+${questions
+  .map(
+    (qa, index) =>
+      `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}\nSkill: ${
+        qa.skill
+      }\nProficiency Level Required: ${qa.level}`
+  )
+  .join("\n\n")}
+
+Following this JSON object fields, generate a detailed JSON analysis with these fields:
+
+{
+  "overallScore": 0-100,
+  "technicalLevel":"string",
+  "generalAssassment":"string",
+  "recommendations":[],
+  "nextSteps:[],
+  "skillAnalysis": [
+    {
+      "skillName": string,
+      "requiredLevel": 1-5,
+      
+      "demonstratedExperienceLevel": 0-5,
+      "strengths": [string], // If no strengths are identified, include "No strengths identified for this skill" in the array
+      "weaknesses": [string],
+      "confidenceScore": 0-100,
+    }
+  ],
+}
+
+confidenceScore Calculation per skill: 
+The skill has exactly 10 questions. For each answer of a question:
+- answer is fully correct → +10%
+- answer is partially correct → +6%
+- answer is incorrect → +0%
+- answer is an empty string → +0%
+Final confidenceScore = Sum of all question scores (maximum = 100%)
+
+Demonstrated Experience Level Calculation:
+-The level is assigned based on the confidenceScore as follows:
+-The maximum demonstratedExperienceLevel is always the requiredLevel.
+-If confidenceScore >= 70% → demonstratedExperienceLevel = requiredLevel
+-If 50% <= confidenceScore < 70% → demonstratedExperienceLevel = min(0, requiredLevel-1)
+-If 20% <= confidenceScore < 50% → demonstratedExperienceLevel = min(0, requiredLevel-2)
+-If 15% <= confidenceScore < 20% → demonstratedExperienceLevel = min(0, requiredLevel-3)
+-If confidenceScore < 15% → demonstratedExperienceLevel = 0 (meaning the candidate shows no valid proficiency)
+-The final value must be between 0 and requiredLevel, inclusive.
+
+Technical Level Assignment Rules:
+- If demonstratedExperienceLevel == 0 → technicalLevel: "NoLevel"
+- If demonstratedExperienceLevel == 1 → technicalLevel: "Entry Level"
+- If demonstratedExperienceLevel == 2 → technicalLevel: "Junior"
+- If demonstratedExperienceLevel == 3 → technicalLevel: "Mid Level"
+- If demonstratedExperienceLevel == 4 → technicalLevel: "Senior"
+- If demonstratedExperienceLevel == 5 → technicalLevel: "Expert"
+
+STRICT REQUIREMENTS: 
+-Be objective.
+-Do not estimate some knowledge , the answers do not reflect.
+
+Provide only the JSON output without any additional text.
+`,
+};
+
 module.exports = {
   generateJobQuestionsPrompts,
   generateOnboardingQuestionsPrompts,
+  analyzeOnbordingQuestionsPrompts
 };
