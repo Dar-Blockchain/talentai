@@ -21,7 +21,7 @@ module.exports.calculateSkillMatchScore = (jobSkills, candidateSkills) => {
       console.log("Job Skill:", jobLevel);
       console.log("candidateLevel:", candidateLevel);
       // Si les niveaux sont définis, calculer le score pour cette compétence
-      if (jobLevel == candidateLevel) {
+      if (jobLevel <= candidateLevel) {
         const skillScore = (candidateLevel / jobLevel) * 100;
         totalScore += Math.min(skillScore, 100); // Limiter à 100% par compétence
       } else {
