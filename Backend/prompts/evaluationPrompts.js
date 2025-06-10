@@ -243,7 +243,7 @@ Final confidenceScore = Sum of all question scores (maximum = 100%)
 
 Demonstrated Experience Level Calculation:
 -based on the overallScore
-- demonstratedExperienceLevel cannot exceed the requiredLevel.
+-demonstratedExperienceLevel cannot exceed the requiredLevel.
 
 Technical Level Assignment Rules:
 - If demonstratedExperienceLevel == 0 → technicalLevel: "NoLevel"
@@ -263,7 +263,7 @@ STRICT REQUIREMENTS:
 Respond strictly in JSON format only, without any additional explanations or text.
 `,
 
-  getUserPrompt: (questions) =>
+  getUserPrompt: (skillName,requiredLevel,questions) =>
     `
 Analyze the following:
 
@@ -272,8 +272,8 @@ ${questions
   .map(
     (qa, index) =>
       `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}\nSkill: ${
-        qa.skill
-      }\nProficiency Level Required: ${qa.level}`
+        skillName
+      }\nProficiency Level Required: ${requiredLevel}`
   )
   .join("\n\n")}
 
