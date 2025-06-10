@@ -473,6 +473,7 @@ const DashboardCompany = () => {
   const [editingSkillIndex, setEditingSkillIndex] = useState<number | null>(null);
   const [editingSkillName, setEditingSkillName] = useState('');
   const [skillWarning, setSkillWarning] = useState('');
+  const [updatedJobData, setUpdatedJobData] = useState<JobPost | undefined>(undefined);
 
   const isSalaryRangeValid = () => {
     return salaryRange.min > 0 && salaryRange.max > 0 && salaryRange.max >= salaryRange.min;
@@ -745,25 +746,28 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
   const saveJob = async () => {
     setIsSaving(true);
     try {
-      if (!generatedJob) {
+      // Use the updated job data if available, otherwise use the generated job
+      const jobDataToUse = updatedJobData || generatedJob;
+      
+      if (!jobDataToUse) {
         throw new Error('No job data available');
       }
 
       const jobPostData = {
         jobDetails: {
-          title: generatedJob.jobDetails.title,
-          description: generatedJob.jobDetails.description,
-          requirements: generatedJob.jobDetails.requirements,
-          responsibilities: generatedJob.jobDetails.responsibilities,
-          location: generatedJob.jobDetails.location,
-          employmentType: generatedJob.jobDetails.employmentType,
-          experienceLevel: generatedJob.jobDetails.experienceLevel,
-          salary: generatedJob.jobDetails.salary
+          title: jobDataToUse.jobDetails.title,
+          description: jobDataToUse.jobDetails.description,
+          requirements: jobDataToUse.jobDetails.requirements,
+          responsibilities: jobDataToUse.jobDetails.responsibilities,
+          location: jobDataToUse.jobDetails.location,
+          employmentType: jobDataToUse.jobDetails.employmentType,
+          experienceLevel: jobDataToUse.jobDetails.experienceLevel,
+          salary: jobDataToUse.jobDetails.salary
         },
         skillAnalysis: {
-          requiredSkills: generatedJob.skillAnalysis.requiredSkills || [],
+          requiredSkills: jobDataToUse.skillAnalysis.requiredSkills || [],
           suggestedSkills: {
-            technical: (generatedJob.skillAnalysis.suggestedSkills?.technical || []).map(skill => {
+            technical: (jobDataToUse.skillAnalysis.suggestedSkills?.technical || []).map(skill => {
               console.log('Technical skill:', skill);
               const skillName = typeof skill === 'string' ? skill : (skill?.name || '');
               if (!skillName) {
@@ -777,7 +781,7 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
                 priority: 'High'
               };
             }).filter(Boolean),
-            frameworks: (generatedJob.skillAnalysis.suggestedSkills?.frameworks || []).map(skill => {
+            frameworks: (jobDataToUse.skillAnalysis.suggestedSkills?.frameworks || []).map(skill => {
               console.log('Framework skill:', skill);
               const skillName = typeof skill === 'string' ? skill : (skill?.name || '');
               if (!skillName) {
@@ -790,7 +794,7 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
                 priority: 'Medium'
               };
             }).filter(Boolean),
-            tools: (generatedJob.skillAnalysis.suggestedSkills?.tools || []).map(skill => {
+            tools: (jobDataToUse.skillAnalysis.suggestedSkills?.tools || []).map(skill => {
               console.log('Tool skill:', skill);
               const skillName = typeof skill === 'string' ? skill : (skill?.name || '');
               if (!skillName) {
@@ -805,32 +809,32 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
             }).filter(Boolean)
           },
           skillSummary: {
-            mainTechnologies: generatedJob.skillAnalysis.skillSummary?.mainTechnologies || [],
-            complementarySkills: generatedJob.skillAnalysis.skillSummary?.complementarySkills || [],
-            learningPath: generatedJob.skillAnalysis.skillSummary?.learningPath || [],
-            stackComplexity: generatedJob.skillAnalysis.skillSummary?.stackComplexity || "Moderate"
+            mainTechnologies: jobDataToUse.skillAnalysis.skillSummary?.mainTechnologies || [],
+            complementarySkills: jobDataToUse.skillAnalysis.skillSummary?.complementarySkills || [],
+            learningPath: jobDataToUse.skillAnalysis.skillSummary?.learningPath || [],
+            stackComplexity: jobDataToUse.skillAnalysis.skillSummary?.stackComplexity || "Moderate"
           }
         },
         linkedinPost: {
           formattedContent: {
-            headline: `🌟 We're Hiring: ${generatedJob.jobDetails.title} 🌟`,
+            headline: `🌟 We're Hiring: ${jobDataToUse.jobDetails.title} 🌟`,
             introduction: "Are you passionate about building interactive web applications? We've got an exciting opportunity for you!",
             companyPitch: "Join a team where innovation, a dynamic culture, and a passion for technology drive us. We believe in empowering our developers and offering endless opportunities for growth.",
-            roleOverview: `As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering process, building software that matters.`,
+            roleOverview: `As a ${jobDataToUse.jobDetails.title}, you'll be at the heart of our engineering process, building software that matters.`,
             keyPoints: [
               "🔹 Develop cutting-edge web applications",
               "🔹 Work with a team of talented developers",
-              `🔹 ${generatedJob.jobDetails.location} work`,
-              `🔹 Salary range: ${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}`
+              `🔹 ${jobDataToUse.jobDetails.location} work`,
+              `🔹 Salary range: ${jobDataToUse.jobDetails.salary.currency}${jobDataToUse.jobDetails.salary.min}-${jobDataToUse.jobDetails.salary.max}`
             ],
-            skillsRequired: `💻 Required Skills: ${generatedJob.skillAnalysis.requiredSkills.map((skill: { name: string; level: string; importance: string; category: string }) => skill.name).join(', ')}.`,
+            skillsRequired: `💻 Required Skills: ${jobDataToUse.skillAnalysis.requiredSkills.map((skill: { name: string; level: string; importance: string; category: string }) => skill.name).join(', ')}.`,
             benefitsSection: "🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.",
             callToAction: "✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test"
           },
           hashtags: [
             "#Hiring",
             "#TechJobs",
-            `#${generatedJob.jobDetails.title.replace(/\s+/g, '')}`,
+            `#${jobDataToUse.jobDetails.title.replace(/\s+/g, '')}`,
             "#RemoteWork",
             "#TechCareers"
           ],
@@ -845,26 +849,26 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
               apply: "✨"
             }
           },
-          finalPost: `🌟 We're Hiring: ${generatedJob.jobDetails.title} 🌟
+          finalPost: `🌟 We're Hiring: ${jobDataToUse.jobDetails.title} 🌟
 
 Are you passionate about building interactive web applications? We've got an exciting opportunity for you!
 
 Join a team where innovation, a dynamic culture, and a passion for technology drive us. We believe in empowering our developers and offering endless opportunities for growth.
 
-As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering process, building software that matters.
+As a ${jobDataToUse.jobDetails.title}, you'll be at the heart of our engineering process, building software that matters.
 
 🔹 Develop cutting-edge web applications
 🔹 Work with a team of talented developers
-🔹 ${generatedJob.jobDetails.location} work
-🔹 Salary range: ${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}
+🔹 ${jobDataToUse.jobDetails.location} work
+🔹 Salary range: ${jobDataToUse.jobDetails.salary.currency}${jobDataToUse.jobDetails.salary.min}-${jobDataToUse.jobDetails.salary.max}
 
-💻 Required Skills: ${generatedJob.skillAnalysis.requiredSkills.map((skill: { name: string; level: string; importance: string; category: string }) => skill.name).join(', ')}.
+💻 Required Skills: ${jobDataToUse.skillAnalysis.requiredSkills.map((skill: { name: string; level: string; importance: string; category: string }) => skill.name).join(', ')}.
 
 🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.
 
 ✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test
 
-#Hiring #TechJobs #${generatedJob.jobDetails.title.replace(/\s+/g, '')} #RemoteWork #TechCareers`
+#Hiring #TechJobs #${jobDataToUse.jobDetails.title.replace(/\s+/g, '')} #RemoteWork #TechCareers`
         }
       };
 
@@ -896,7 +900,8 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
       setDialogOpen(true); // Open success dialog
       setJobDescription('');
       setGeneratedJob(undefined);
-      fetchMyJobs()
+      setUpdatedJobData(undefined); // Reset updated job data
+      fetchMyJobs();
     } catch (error) {
       console.error('Error saving job:', error);
     } finally {
