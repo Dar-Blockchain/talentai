@@ -1782,6 +1782,7 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
             experienceLevel: experienceLevelString,
             NumberTestPassed: 1,
             ScoreTest: skill.confidenceScore,
+            Levelconfirmed: skill.demonstratedExperienceLevel-1,
           },
         ];
 
