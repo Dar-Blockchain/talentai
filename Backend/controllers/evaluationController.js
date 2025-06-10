@@ -1623,6 +1623,11 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
       return res.status(404).json({ error: "User not found." });
     }
 
+    const profile = await Profile.findById(user.profile);
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
     const systemPrompt = analyzeOnbordingQuestionsPrompts.getSystemPrompt();
     const userPrompt =
       analyzeOnbordingQuestionsPrompts.getUserPrompt(questions);
@@ -1704,10 +1709,7 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
       }
 
       // add skill to profile if experienceLevel is proven
-      const profile = await Profile.findById(user.profile);
-      if (!profile) {
-        return res.status(404).json({ error: "Profile not found" });
-      }
+
       const skill = analysis.skillAnalysis[0];
       if (skill.demonstratedExperienceLevel > 0) {
         let experienceLevelString = "";
@@ -1733,17 +1735,19 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
             );
         }
 
-        profile.skills.push({
+        profile.skills = [{
           name: skill.skillName,
           proficiencyLevel: skill.demonstratedExperienceLevel,
           experienceLevel: experienceLevelString,
           NumberTestPassed: 1,
           ScoreTest: skill.confidenceScore,
-        });
+        }];
+
+      await profile.save();
+
       }
 
-      profile.quota++;
-      await profile.save();
+      // profile.quota++; quota was already increased in the generateOnboardingQuestions
     } catch (error) {
       console.error("Error in analysis parsing:", error);
     }
