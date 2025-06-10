@@ -1,11 +1,17 @@
 const { Together } = require("together-ai");
 require("dotenv").config();
+const Company = require("../models/ProfileModel");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
 module.exports.generateJobPost = async (req, res) => {
   try {
     const { description, type = "detailed" } = req.body;
+    const user = req.user;
+
+    const company = await Company.findById(user.profile);
+    const companyLocation = company.companyDetails.location;
+    console.log(company);
 
     if (!description) {
       return res.status(400).json({
@@ -18,154 +24,165 @@ module.exports.generateJobPost = async (req, res) => {
 
     // Quick generation prompt - simpler and faster
     const quickPrompt = `
-As an expert technical recruiter and AI assistant, analyze this job description and generate a JSON object with only the following structure:
-
-{
-  "jobDetails": {
-    "title": "Job title",
-    "description": "Professional summary",
-    "requirements": ["Requirement 1", "Requirement 2"],
-    "responsibilities": ["Responsibility 1", "Responsibility 2"],
-    "location": "Location",
-    "employmentType": "Full-time/Part-time/Contract",
-    "salary": {
-      "min": 0,
-      "max": 0,
-      "currency": "USD"
-    }
-  },
-  "skillAnalysis": {
-    "requiredSkills": [
-      {
-        "name": "Skill",
-        "level": "1-5",
-        "importance": "Required/Preferred",
-        "category": "Frontend/Backend/Other"
+    As an expert technical recruiter and AI assistant, analyze this job description and generate a JSON object with only the following structure:
+    
+    {
+      "jobDetails": {
+        "title": "Job title",
+        "description": "Professional summary",
+        "requirements": ["Requirement 1", "Requirement 2"],
+        "responsibilities": ["Responsibility 1", "Responsibility 2"],
+        "location": "Location",
+        "employmentType": "Full-time/Part-time/Contract",
+        "salary": {
+          "min": 0,
+          "max": 0,
+          "currency": "USD"
+        }
+      },
+      "skillAnalysis": {
+        "requiredSkills": [
+          {
+            "name": "Skill",
+            "level": "1-5",
+            "importance": "Required/Preferred",
+            "category": "Frontend/Backend/Other"
+          }
+        ],
+        "suggestedSkills": {
+          "technical": [],
+          "frameworks": [],
+          "tools": []
+        },
+        "skillSummary": {
+          "mainTechnologies": [],
+          "complementarySkills": [],
+          "learningPath": [],
+          "stackComplexity": "Simple/Moderate/Complex"
+        }
+      },
+      "linkedinPost": {
+        "finalPost": "Formatted LinkedIn job post with emojis and hashtags"
       }
-    ],
-    "suggestedSkills": {
-      "technical": [],
-      "frameworks": [],
-      "tools": []
-    },
-    "skillSummary": {
-      "mainTechnologies": [],
-      "complementarySkills": [],
-      "learningPath": [],
-      "stackComplexity": "Simple/Moderate/Complex"
     }
-  },
-  "linkedinPost": {
-    "finalPost": "Formatted LinkedIn job post with emojis and hashtags"
-  }
-}
-
-Return only valid JSON. Avoid markdown or code blocks.
-Job Description:
-${description}
+    
+    IMPORTANT:
+    - Always include "responsibilities", "location", and "employmentType".
+    - For the "location" field, extract the location from the job description if specified.
+    - If no location is specified in the job description, use the company location: "${companyLocation}".
+    - Return only valid JSON. Avoid markdown or code blocks.
+    
+    Job Description:
+    ${description}
     `.trim();
-
-    // Detailed generation prompt - more comprehensive
+    
     const detailedPrompt = `
-As an expert technical recruiter and AI assistant, analyze this job description to:
-1. Create a professional job post
-2. Extract and suggest relevant skills
-3. Format it for LinkedIn
-4. Provide comprehensive skill analysis
-
-Job Description:
-${description}
-
-Return the response in the following JSON format:
-
-{
-  "jobDetails": {
-    "title": "Job title",
-    "description": "Engaging job description with clear sections",
-    "requirements": ["List of specific requirements"],
-    "responsibilities": ["List of key responsibilities"],
-    "location": "Job location",
-    "employmentType": "Full-time/Part-time/Contract",
-    "experienceLevel": "Required experience level",
-    "salary": {
-      "min": minimum salary,
-      "max": maximum salary,
-      "currency": "Currency code"
-    }
-  },
-  "skillAnalysis": {
-    "requiredSkills": [
-      {
-        "name": "Skill name",
-        "level": "Required level (1-5)",
-        "importance": "Required/Preferred",
-        "category": "Frontend/Backend/DevOps/etc."
+    As an expert technical recruiter and AI assistant, analyze this job description and generate a JSON object with only the following structure:
+    1. Create a professional job post
+    2. Extract and suggest relevant skills
+    3. Format it for LinkedIn
+    4. Provide comprehensive skill analysis
+    
+    IMPORTANT:
+    - Extract the exact salary range (min, max, currency) as specified in the job description. Do not estimate or change these values.
+    - For the "location" field, extract the location from the job description if specified.
+    - If no location is specified in the job description, use the company location: "${companyLocation}".
+    - Always include "location" in the output.
+    
+    Job Description:
+    ${description}
+    
+    Return the response in the following JSON format:
+    
+    {
+      "jobDetails": {
+        "title": "Job title",
+        "description": "Engaging job description with clear sections",
+        "requirements": ["List of specific requirements"],
+        "responsibilities": ["List of key responsibilities"],
+        "location": "Job location",
+        "employmentType": "Full-time/Part-time/Contract",
+        "experienceLevel": "Required experience level",
+         "salary": {
+          "min": 0,
+          "max": 0,
+          "currency": "USD"
+        }
+      },
+      "skillAnalysis": {
+        "requiredSkills": [
+          {
+            "name": "Skill name",
+            "level": "Required level (1-5)",
+            "importance": "Required/Preferred",
+            "category": "Frontend/Backend/DevOps/etc."
+          }
+        ],
+        "suggestedSkills": {
+          "technical": [
+            {
+              "name": "Skill name",
+              "reason": "Why this skill is relevant",
+              "category": "Frontend/Backend/DevOps/etc.",
+              "priority": "High/Medium/Low"
+            }
+          ],
+          "frameworks": [
+            {
+              "name": "Framework name",
+              "relatedTo": "Related technology",
+              "priority": "High/Medium/Low"
+            }
+          ],
+          "tools": [
+            {
+              "name": "Tool name",
+              "purpose": "What it's used for",
+              "category": "Version Control/CI-CD/Testing/etc."
+            }
+          ]
+        },
+        "skillSummary": {
+          "mainTechnologies": ["Core technologies required"],
+          "complementarySkills": ["Skills that would add value"],
+          "learningPath": ["Suggested skills to learn"],
+          "stackComplexity": "Simple/Moderate/Complex"
+        }
+      },
+      "linkedinPost": {
+        "formattedContent": {
+          "headline": "Attention-grabbing headline",
+          "introduction": "Engaging opening paragraph",
+          "companyPitch": "Brief compelling pitch",
+          "roleOverview": "Clear role description",
+          "keyPoints": ["Bullet points of key aspects"],
+          "skillsRequired": "Formatted skills section",
+          "benefitsSection": "What we offer",
+          "callToAction": "Engaging call to action"
+        },
+        "hashtags": ["Relevant", "Hashtags"],
+        "formatting": {
+          "emojis": {
+            "company": "🏢",
+            "location": "📍",
+            "salary": "💰",
+            "requirements": "📋",
+            "skills": "💻",
+            "benefits": "🎯",
+            "apply": "✨"
+          }
+        },
+        "finalPost": "The complete formatted post ready for LinkedIn"
       }
-    ],
-    "suggestedSkills": {
-      "technical": [
-        {
-          "name": "Skill name",
-          "reason": "Why this skill is relevant",
-          "category": "Frontend/Backend/DevOps/etc.",
-          "priority": "High/Medium/Low"
-        }
-      ],
-      "frameworks": [
-        {
-          "name": "Framework name",
-          "relatedTo": "Related technology",
-          "priority": "High/Medium/Low"
-        }
-      ],
-      "tools": [
-        {
-          "name": "Tool name",
-          "purpose": "What it's used for",
-          "category": "Version Control/CI-CD/Testing/etc."
-        }
-      ]
-    },
-    "skillSummary": {
-      "mainTechnologies": ["Core technologies required"],
-      "complementarySkills": ["Skills that would add value"],
-      "learningPath": ["Suggested skills to learn"],
-      "stackComplexity": "Simple/Moderate/Complex"
     }
-  },
-  "linkedinPost": {
-    "formattedContent": {
-      "headline": "Attention-grabbing headline",
-      "introduction": "Engaging opening paragraph",
-      "companyPitch": "Brief compelling pitch",
-      "roleOverview": "Clear role description",
-      "keyPoints": ["Bullet points of key aspects"],
-      "skillsRequired": "Formatted skills section",
-      "benefitsSection": "What we offer",
-      "callToAction": "Engaging call to action"
-    },
-    "hashtags": ["Relevant", "Hashtags"],
-    "formatting": {
-      "emojis": {
-        "company": "🏢",
-        "location": "📍",
-        "salary": "💰",
-        "requirements": "📋",
-        "skills": "💻",
-        "benefits": "🎯",
-        "apply": "✨"
-      }
-    },
-    "finalPost": "The complete formatted post ready for LinkedIn"
-  }
-}
-
-Ensure:
-1. All sections are professional and engaging
-2. Skills analysis is thorough and relevant
-3. LinkedIn post is properly formatted with emojis and sections
-4. Suggested skills are modern and appropriate for the role
-`.trim();
+    
+    Ensure:
+    1. All sections are professional and engaging
+    2. Skills analysis is thorough and relevant
+    3. LinkedIn post is properly formatted with emojis and sections
+    4. Suggested skills are modern and appropriate for the role
+    `.trim();
+    
 
     // Choose prompt and configuration based on type
     const prompt = type === "quick" ? quickPrompt : detailedPrompt;
@@ -204,7 +221,7 @@ Ensure:
     }
 
     // const raw = response.choices[0].message.content;
-    console.log("Raw API Response:", raw);
+    //console.log("Raw API Response:", raw);
 
     let result;
     try {
@@ -216,7 +233,7 @@ Ensure:
         .replace(/\s+/g, " ") // Replace multiple spaces with single space
         .trim(); // Remove leading/trailing whitespace
 
-      console.log("Cleaned JSON string:", jsonStr);
+     // console.log("Cleaned JSON string:", jsonStr);
 
       try {
         result = JSON.parse(jsonStr);
@@ -241,7 +258,7 @@ Ensure:
             return `${p1}[${fixedArray}]`;
           });
 
-        console.log("Attempting to parse fixed JSON:", jsonStr);
+        //console.log("Attempting to parse fixed JSON:", jsonStr);
         result = JSON.parse(jsonStr);
       }
 

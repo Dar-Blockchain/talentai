@@ -18,6 +18,7 @@ const postRouter = require("./routes/postRouter");
 const matchingRoutes = require("./routes/matchingRouter");
 const resumeRouter = require("./routes/resumeRouter");
 const todoRouter = require("./routes/todoRouter");
+const feedbackRouter = require("./routes/feedbackRoutes");
 require("dotenv").config();
 
 const app = express();
@@ -30,6 +31,7 @@ app.use(express.json());
 app.use(
   cors({
     origin: "https://app.talentai.bid", // Permet toutes les origines
+    //origin: "*", // Permet toutes les origines
     methods: "GET, POST, PUT, DELETE, PATCH",
     allowedHeaders:
       "Origin, X-Requested-With, Content-Type, Accept, Authorization",
@@ -48,6 +50,7 @@ app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use("/evaluation", evaluationRouter);
 app.use("/linkedinPost", linkedinPostRouter);
 app.use("/api", agentIARouter);
+app.use("/feedback", feedbackRouter);
 app.use("/post", postRouter);
 app.use("/matching", matchingRoutes);
 app.use("/resume", resumeRouter);

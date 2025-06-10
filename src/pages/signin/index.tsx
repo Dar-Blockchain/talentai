@@ -141,9 +141,9 @@ export default function SignIn() {
                 if (!hasProfile) {
                   // If no return URL, go to preferences
                   router.push("/preferences");
-                } else if(profileData.type === 'Candidate') {
+                } else if (profileData.type === 'Candidate') {
                   router.push("/dashboardCandidate");
-                } else if(profileData.type === 'Company') {
+                } else if (profileData.type === 'Company') {
                   router.push("/dashboardCompany");
                 }
               }
@@ -219,13 +219,13 @@ export default function SignIn() {
               position: "relative",
             }}
           >
-          <Box
-            component="img"
-            src="/logo.svg"
-            alt="TalentAI Logo"
-            sx={{ height: 32, cursor: 'pointer' }}
-            onClick={() => router.push("/")}
-          />
+            <Box
+              component="img"
+              src="/logo.svg"
+              alt="TalentAI Logo"
+              sx={{ height: 32, cursor: 'pointer' }}
+              onClick={() => router.push("/")}
+            />
             <Typography
               variant="caption"
               sx={{
@@ -367,9 +367,9 @@ export default function SignIn() {
                       disabled={loading || isLoading || !email}
                       size="small"
                       sx={{
-                        textTransform: "none",
-                        background: "rgba(2, 0, 0, 0)",
-                        color: "rgba(0, 0, 0, 0.7)",
+                        background: "rgba(41, 210, 145, 0.83)",
+                        color: "black",
+                        padding: "5px",
                         "&:hover": {
                           background: "rgba(2, 0, 0, 0.1)",
                         },
@@ -440,7 +440,7 @@ export default function SignIn() {
             </Button>
           </Box>
 
-          <Divider
+          {/* <Divider
             sx={{
               my: 2,
               "&::before, &::after": {
@@ -450,34 +450,30 @@ export default function SignIn() {
             }}
           >
             OR
-          </Divider>
+          </Divider> */}
 
           {/* GOOGLE SIGN IN */}
-          <Button
+          {/* <Button
             fullWidth
-            variant="outlined"
+            variant="contained"
             startIcon={<GoogleIcon />}
             onClick={() => signIn("google")}
-            disabled
-            title="Google Sign-in is currently unavailable"
             sx={{
               py: 1.5,
               textTransform: "none",
               color: "#fff",
-              borderColor: "rgba(2, 226, 255, 0.2)",
+              background: "rgba(41, 210, 145, 0.83)",
               "&:hover": {
-                borderColor: "#02E2FF",
-                background: "rgba(2, 226, 255, 0.1)",
+                background: "rgba(41, 210, 145, 0.73)",
               },
               "&.Mui-disabled": {
-                color: "rgba(0, 0, 0, 0.3)",
-                borderColor: "rgba(0, 0, 0, 0.1)",
-                background: "rgba(0, 0, 0, 0.05)",
+                background: "rgba(0, 0, 0, 0.12)",
+                color: "#fff",
               },
             }}
           >
             Continue with Google
-          </Button>
+          </Button> */}
         </Card>
       </Container>
     </Box>

@@ -59,6 +59,14 @@ const ALL_SKILLS: Skill[] = [
   { label: 'Social Media', color: '45B7D1', category: 'marketing' },
   { label: 'Email Marketing', color: '96CEB4', category: 'marketing' },
   { label: 'Analytics', color: 'FFEEAD', category: 'marketing' },
+  { label: 'Web3 Marketing', color: '00B894', category: 'marketing' },
+  { label: 'NFT Marketing', color: '6C5CE7', category: 'marketing' },
+  { label: 'Community Management', color: '0984E3', category: 'marketing' },
+  { label: 'Token Economics', color: 'F7DF1E', category: 'marketing' },
+  { label: 'DeFi Marketing', color: 'FF6B6B', category: 'marketing' },
+  { label: 'Crypto PR', color: '00B894', category: 'marketing' },
+  { label: 'Blockchain Events', color: 'E84393', category: 'marketing' },
+  { label: 'DAO Governance', color: '6C5CE7', category: 'marketing' },
   // QA
   { label: 'Manual Testing', color: '9C27B0', category: 'qa' },
   { label: 'Automated Testing', color: '673AB7', category: 'qa' },
@@ -71,22 +79,47 @@ const ALL_SKILLS: Skill[] = [
   { label: 'Agile', color: '00B894', category: 'business' },
   { label: 'Scrum', color: 'FDCB6E', category: 'business' },
   { label: 'Product Management', color: 'E84393', category: 'business' },
-  { label: 'Business Analysis', color: '0984E3', category: 'business' }
+  { label: 'Business Analysis', color: '0984E3', category: 'business' },
+  // Web3
+  { label: 'Solidity', color: '363636', category: 'web3' },
+  { label: 'Ethereum', color: '627EEA', category: 'web3' },
+  { label: 'Smart Contracts', color: 'F7931A', category: 'web3' },
+  { label: 'DeFi', color: 'FF6B6B', category: 'web3' },
+  { label: 'NFTs', color: '00B894', category: 'web3' },
+  { label: 'Web3.js', color: 'F16822', category: 'web3' },
+  { label: 'Hardhat', color: 'F7DF1E', category: 'web3' },
+  { label: 'Truffle', color: '3FE0C5', category: 'web3' },
+  { label: 'Massa', color: '00B894', category: 'web3' },
+  { label: 'Hedera', color: '02E2FF', category: 'web3' },
+  { label: 'Polkadot', color: 'E6007A', category: 'web3' },
+  { label: 'NEAR', color: '000000', category: 'web3' },
+  { label: 'Substrate', color: '000000', category: 'web3' },
+  { label: 'Cosmos', color: '2E3148', category: 'web3' },
+  { label: 'Solana', color: '00FFA3', category: 'web3' },
+  { label: 'Avalanche', color: 'E84142', category: 'web3' },
+  { label: 'Polygon', color: '8247E5', category: 'web3' },
+  { label: 'Arbitrum', color: '28A0F0', category: 'web3' },
+  { label: 'Optimism', color: 'FF0420', category: 'web3' },
+  { label: 'Base', color: '0052FF', category: 'web3' },
+  // AI
+  { label: 'Machine Learning', color: 'FF6B6B', category: 'ai' },
+  { label: 'Deep Learning', color: '00B894', category: 'ai' },
+  { label: 'TensorFlow', color: 'FF6F00', category: 'ai' },
+  { label: 'PyTorch', color: 'EE4C2C', category: 'ai' },
+  { label: 'Natural Language Processing', color: '4ECDC4', category: 'ai' },
+  { label: 'Computer Vision', color: '6C5CE7', category: 'ai' },
+  { label: 'Reinforcement Learning', color: '0984E3', category: 'ai' },
+  { label: 'Data Science', color: '00B894', category: 'ai' }
 ];
 
 const CATEGORIES = [
   { id: 'development', label: 'Development', icon: <CodeIcon /> },
+  { id: 'web3', label: 'Web3', icon: <DesignServicesIcon /> },
+  { id: 'ai', label: 'AI', icon: <AnalyticsIcon /> },
   { id: 'marketing', label: 'Marketing', icon: <AnalyticsIcon /> },
   { id: 'qa', label: 'Quality Assurance', icon: <BugReportIcon /> },
-  { id: 'business', label: 'Business', icon: <BusinessIcon /> }
-];
-
-const PROJECT_TYPES = [
-  'Web Application',
-  'Backend API',
-  'Mobile App',
-  'Automation Script',
-  'Library/Package'
+  { id: 'business', label: 'Business', icon: <BusinessIcon /> },
+ 
 ];
 
 // 5 Hedera QCM questions
@@ -126,14 +159,6 @@ const COMPANY_STEPS = [
   'Company Details',
   'Required Skills',
   'Experience Level',
-  'Project Types',
-  'Review'
-];
-
-const CANDIDATE_STEPS = [
-  'Select Type',
-  'Select Skills',
-  'Rate Proficiency',
   'Project Types',
   'Review'
 ];
@@ -240,8 +265,21 @@ export default function Preferences() {
 
   // Step 1: skills + Hedera experience
   const [skills, setSkills] = useState<string[]>([]);
-  const toggleSkill = (label: string) =>
-    setSkills(prev => prev.includes(label) ? prev.filter(s => s !== label) : [...prev, label]);
+  const [skillWarning, setSkillWarning] = useState<string>('');
+
+  const toggleSkill = (label: string) => {
+    if (skills.includes(label)) {
+      setSkills(prev => prev.filter(s => s !== label));
+      setSkillWarning('');
+    } else {
+      if (skills.length >= 1) {
+        setSkillWarning('You can only select 1 skill');
+        return;
+      }
+      setSkills(prev => [...prev, label]);
+      setSkillWarning('');
+    }
+  };
 
   const [hederaExp, setHederaExp] = useState<'yes' | 'no' | ''>('');
 
@@ -264,16 +302,6 @@ export default function Preferences() {
 
   // Step 4: project types
   const [projectType, setProjectType] = useState<Record<string, string>>({});
-  const setProjType = (skill: string, type: string) =>
-    setProjectType(prev => ({ ...prev, [skill]: type }));
-
-  // Check if Hedera is selected
-  const hasHederaSkill = useMemo(() => {
-    if (userType === 'company') {
-      return requiredSkills.includes('Hedera');
-    }
-    return skills.includes('Hedera');
-  }, [userType, requiredSkills, skills]);
 
   // Get steps based on user type and Hedera experience
   const steps = useMemo(() => {
@@ -295,22 +323,6 @@ export default function Preferences() {
   const handleNext = () => setActiveStep(i => i + 1);
   const handleBack = () => setActiveStep(i => i - 1);
 
-  const mapProficiencyToLevel = (proficiencyLevel: number): string => {
-    switch (proficiencyLevel) {
-      case 1:
-        return 'Junior';
-      case 2:
-        return 'Junior+';
-      case 3:
-        return 'Mid-Level';
-      case 4:
-        return 'Senior';
-      case 5:
-        return 'Expert';
-      default:
-        return 'Junior';
-    }
-  };
 
   const handleCreateOrUpdateProfile = async () => {
     try {
@@ -348,16 +360,10 @@ export default function Preferences() {
 
         return true;
       } else {
-        // Transform skills array into required format with experience level mapping
-        const formattedSkills = skills.map(skill => ({
-          name: skill,
-          proficiencyLevel: proficiency[skill] || 0,
-          experienceLevel: mapProficiencyToLevel(proficiency[skill] || 0)
-        }));
-
+        // Create candidate profile without skills
         const profileData = {
           type: "Candidate",
-          skills: formattedSkills
+          skills: [] // Empty skills array
         };
 
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/createOrUpdateProfile`, {
@@ -397,14 +403,26 @@ export default function Preferences() {
         router.push('/dashboardCompany');
         return;
       }
-      //      // If there's a returnUrl, go there
+
+      // If there's a returnUrl, go there
       if (returnUrl) {
         console.log('Redirecting to returnUrl:', returnUrl);
         const decodedUrl = decodeURIComponent(returnUrl);
         router.push(decodedUrl);
       } else {
-        // For normal sign-in, go to general test page
-        router.push('/test');
+        // For normal sign-in, go to test page with skills and levels
+        router.push({
+          pathname: '/test',
+          query: {
+            type: 'on-boarding',
+            skills: skills.join(','),
+            experienceLevel: 'Entry Level', // Default experience level
+            proficiencyLevels: Object.entries(proficiency)
+              .filter(([skill]) => skills.includes(skill))
+              .map(([skill, level]) => `${skill}:${level}`)
+              .join(',')
+          }
+        });
       }
     } catch (error) {
       console.error('Error in handleStartTest:', error);
@@ -416,10 +434,6 @@ export default function Preferences() {
     () => ALL_SKILLS.filter(s => s.category === selectedCategory),
     [selectedCategory]
   );
-
-  // Add Hedera QCM step
-  const isHederaQcmStep = activeStep === steps.indexOf('Hedera QCM');
-
   // Handle user type selection with auto-advance
   const handleUserTypeSelect = (type: UserType) => {
     setUserType(type);
@@ -745,9 +759,15 @@ export default function Preferences() {
             <Typography variant="h6" mb={2} sx={{ color: 'black' }}>
               {userType === 'company'
                 ? 'Select the skills your company is looking for'
-                : `Select your ${selectedCategory} skills`
+                : `Select your ${selectedCategory} skill (1 skill required)`
               }
             </Typography>
+
+            {skillWarning && (
+              <Typography color="error" sx={{ mb: 2 }}>
+                {skillWarning}
+              </Typography>
+            )}
 
             {/* Skills Grid */}
             <Box sx={{
@@ -1037,7 +1057,10 @@ export default function Preferences() {
           <Button
             variant="contained"
             onClick={activeStep === steps.length - 1 ? handleStartTest : handleNext}
-            disabled={activeStep === 0 && !userType}
+            disabled={
+              activeStep === 0 && !userType || 
+              (currentStep === 'Select Skills' && skills.length === 0)
+            }
             sx={{
               background: GREEN_MAIN,
               borderRadius: 2,

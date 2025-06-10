@@ -33,6 +33,7 @@ const profileSchema = new mongoose.Schema(
         experienceLevel: String,
         NumberTestPassed: Number,
         ScoreTest: Number,
+        Levelconfirmed : { type: Number, default: 0 }
       },
     ],
 
@@ -46,7 +47,7 @@ const profileSchema = new mongoose.Schema(
       },
     ],
 
-    todoList: { type: mongoose.Schema.Types.ObjectId, ref: "ToDo" },
+    todoList: { type: mongoose.Schema.Types.ObjectId, ref: "TodoList" },
 
     // Company details (if type is Company)
     companyDetails: {
@@ -54,6 +55,11 @@ const profileSchema = new mongoose.Schema(
       industry: String,
       size: String,
       location: String,
+      /*employmentType: {
+        type: String,
+        enum: ["Remote", "Hybrid", "On-site"],
+        required: true,
+      },*/
     },
 
     requiredSkills: [String],

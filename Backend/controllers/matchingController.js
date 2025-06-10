@@ -6,14 +6,16 @@ exports.matchCandidatesToJob = async (req, res) => {
   try {
     const { jobPostId } = req.params;
 
-    // 1. Fetch candidate profiles + populate companyBid.company
+    // 1. Récupérer les profils des candidats + peupler companyBid.company
     const candidates = await Profile.find({ type: "Candidate" })
       .populate("userId", "username email")
-      .populate("companyBid.company", "username email") // Populate company info
+      .populate("companyBid.company", "username email")
       .select("userId skills companyDetails.name companyBid")
       .lean();
 
-    // 2. Fetch job post and skills
+   //   console.log("candidates",candidates)
+
+    // 2. Récupérer l'annonce de poste et les compétences requises
     const jobPost = await JobPost.findById(jobPostId)
       .select("skillAnalysis.requiredSkills jobDetails.title")
       .lean();
@@ -22,17 +24,29 @@ exports.matchCandidatesToJob = async (req, res) => {
       return res.status(404).json({ error: "Job post not found" });
     }
 
-    // 3. Compute matches with additional info
+    // Log pour vérifier les compétences requises
+   // console.log("Job Post Skills:", jobPost.skillAnalysis.requiredSkills);
+
+    // 3. Calculer les correspondances avec les informations supplémentaires
     const matches = candidates
       .map((candidate) => {
+        // Vérifier si userId existe avant de procéder
+        if (!candidate.userId) {
+          console.log("Candidate without userId:", candidate);
+          return null; // Ignorer ce candidat
+        }
+
         const score = calculateSkillMatchScore(
           jobPost.skillAnalysis.requiredSkills,
           candidate.skills
         );
 
+        // Log pour vérifier chaque candidat et son score
+        console.log("Candidate:", candidate.userId.username, "Score:", score);
+
         return {
           candidateId: candidate.userId,
-          name: candidate.userId?.username || "Anonymous",
+          name: candidate.userId?.username || "Anonymous", // S'assurer que username existe
           score,
           finalBid: candidate.companyBid?.finalBid || null,
           biddingCompany: candidate.companyBid?.company?.username || null,
@@ -46,12 +60,12 @@ exports.matchCandidatesToJob = async (req, res) => {
           requiredSkills: jobPost.skillAnalysis.requiredSkills,
         };
       })
-      .filter(
-        (match) => match.score > 0 && match.candidateId && match.candidateId._id
-      )
+      .filter((match) => match !== null && match.score > 0) // Filtrer les candidats nulls
       .sort((a, b) => b.score - a.score);
 
-    // 4. Response
+      console.log("matches",matches)
+
+    // 4. Retourner la réponse
     res.json({
       success: true,
       jobTitle: jobPost.jobDetails.title,
