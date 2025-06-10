@@ -1597,6 +1597,8 @@ Benefits:
                           sx={{
                             borderColor: GREEN_MAIN,
                             color: GREEN_MAIN,
+                            width: '100px',
+                            height: '55px',
                             '&:hover': {
                               borderColor: 'rgba(0, 255, 157, 0.8)',
                             }
@@ -1604,7 +1606,7 @@ Benefits:
                         >
                           Cancel
                         </Button>
-                        <Button
+                        {/* <Button
                           variant="contained"
                           onClick={handleSave}
                           sx={{
@@ -1616,7 +1618,7 @@ Benefits:
                           }}
                         >
                           Save Changes
-                        </Button>
+                        </Button> */}
                       </>
                     )}
                   </Box>
@@ -2207,7 +2209,7 @@ Benefits:
               <Button
                 fullWidth
                 variant="contained"
-                onClick={saveJob}
+                onClick={isEditing ? handleSave : saveJob}
                 disabled={isSaving}
                 sx={{
                   mt: 4,
@@ -3916,7 +3918,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             >
               Cancel
             </Button>
-            <Button
+            {/* <Button
               variant="contained"
               onClick={() => setEditSkillsDialog(false)}
               sx={{
@@ -3931,7 +3933,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
               }}
             >
               Save Changes
-            </Button>
+            </Button> */}
           </DialogActions>
         </Dialog>
 
