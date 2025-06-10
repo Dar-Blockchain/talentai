@@ -359,7 +359,7 @@
 .sectionBox {
   padding: 2px; /* Small padding to prevent text touching border */
   outline: none;
-  font-size: 16px;
+  font-size: 10px;
   line-height: 1.2;
   white-space: pre-wrap;
   overflow-wrap: break-word;
@@ -373,18 +373,27 @@
   margin: 0;
 }
 
-/* Add style for resizing behavior */
-.sectionContent {
-  width: 100% !important;
-  height: 100% !important;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow: visible; /* Changed from hidden to visible */
-  transition: font-size 0.15s ease-out;
-  /* Ensure content hugs borders tightly */
-  margin: 0;
-  padding: 2px; /* Small padding to prevent text touching border */
-  display: block;
+/* Special styling for header sections to keep name and title larger */
+.headerSection .contentEditable,
+.headerSection .editable,
+.headerSection .sectionBox {
+  font-size: 10px; /* Keep base font size small */
+}
+
+/* Override for header name - make it larger */
+.headerName,
+.headerSection h2 {
+  font-size: 20px !important;
+  font-weight: bold !important;
+  margin: 0 0 2px 0 !important;
+}
+
+/* Override for header job title - medium size */
+.headerJobTitle,
+.headerSection p {
+  font-size: 16px !important;
+  font-weight: normal !important;
+  margin: 0 !important;
 }
 
 /* wrap each Rnd section so we can detect hover */

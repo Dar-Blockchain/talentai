@@ -63,13 +63,14 @@ export default function SectionRenderer({
   const rndRef = useRef<Rnd | null>(null)
   const initialFitRef = useRef(false)
   const { id, x, y, width, height, type } = section
-  const [fontSize, setFontSize] = useState(16);
+  const [fontSize, setFontSize] = useState(10);
+  const [isResizing, setIsResizing] = useState(false);
 
   const MIN_WIDTH = 40;
   const MIN_HEIGHT = 20;
 
   // Base font size and dimensions for scaling
-  const BASE_FONT_SIZE = 16;
+  const BASE_FONT_SIZE = 10;
   const BASE_WIDTH = 150; // Use your initial width for new sections
   const BASE_HEIGHT = 40; // Use your initial height for new sections
 
@@ -150,7 +151,7 @@ export default function SectionRenderer({
     minWidth: 0,
     minHeight: 0,
     padding: "1px", // Reduced even further to hug content better
-    fontSize: `${fontSize}px`, // Use current font size
+    fontSize: "10px", // Use fixed base font size - don't use dynamic fontSize state
     lineHeight: "1.2", // Tighter line height to reduce vertical space
     whiteSpace: "pre-wrap", // Allow wrapping and line breaks
     overflowWrap: "break-word",
@@ -183,7 +184,7 @@ export default function SectionRenderer({
         return `<strong>Projects:</strong><ul style=\"list-style-position: inside; padding-left: 0; margin:0 0 0 12px;\">${(section as ProjectsSection).projects.map(proj => `<li style=\"margin:0\"><strong>${proj.name}</strong>: ${proj.description}</li>`).join('')}</ul>`
       case "header":
         const header = section as HeaderSection
-        return `<h2 style=\"margin: 0 0 2px 0\">${header.name}</h2><p style=\"margin: 0\">${header.jobTitle}</p>`
+        return `<h2 class="${styles.headerName}" style=\"margin: 0 0 2px 0; font-size: 20px; font-weight: bold\">${header.name}</h2><p class="${styles.headerJobTitle}" style=\"margin: 0; font-size: 16px\">${header.jobTitle}</p>`
       case "image":
         const img = section as ImageSection
         return img.src 
@@ -217,32 +218,21 @@ export default function SectionRenderer({
 
   // Handle blur: save HTML without changing font size
   const handleBlur = () => {
-    if (!editableRef.current) return
-    const html = editableRef.current.innerHTML || ""
-    updateContent(id, html)
-    setIsEditing(false)
-    // Do NOT change font size here, preserve it
+    // Use requestAnimationFrame to avoid blocking the focusout event
+    requestAnimationFrame(() => {
+      if (!editableRef.current) return;
+      
+      const currentHtml = editableRef.current.innerHTML || "";
+      updateContent(id, currentHtml);
+      setIsEditing(false);
+      // Do NOT change font size here, preserve it
+    });
   }
 
-  // Auto-resize logic - disabled during typing to prevent shrinking
+  // Auto-resize logic - DISABLED to prevent automatic resizing
   const resizeToContent = () => {
-    if (skipNextResizeRef.current) {
-      skipNextResizeRef.current = false;
-      return;
-    }
-    const el = editableRef.current;
-    if (!el) return;
-    
-    // Don't auto-resize while actively editing to prevent shrinking during typing
-    if (isEditing) {
-      return;
-    }
-    
-    setTimeout(() => {
-      const newHeight = Math.max(el.scrollHeight, MIN_HEIGHT);
-      const newWidth = el.scrollWidth;
-      updatePosition(id, { x, y, width: newWidth, height: newHeight });
-    }, 100);
+    // Completely disabled to prevent automatic resizing
+    return;
   };
 
   useLayoutEffect(() => {
@@ -259,17 +249,182 @@ export default function SectionRenderer({
   useEffect(() => {
     // Set initial content when edit mode begins
     if (isEditing && editableRef.current) {
+      // Preserve scaled text size when entering edit mode
+      const currentTransform = editableRef.current.style.transform;
+      let scaleMultiplier = 1;
+      
+      // Extract scale value from transform if it exists
+      if (currentTransform && currentTransform.includes('scale(')) {
+        const scaleMatch = currentTransform.match(/scale\(([^)]+)\)/);
+        if (scaleMatch) {
+          scaleMultiplier = parseFloat(scaleMatch[1]) || 1;
+          console.log('Detected scale multiplier:', scaleMultiplier);
+        }
+      }
+      
+      // IMPORTANT: Capture current DOM content BEFORE resetting transform
+      // This preserves any font size changes made with FloatingToolbar
+      const currentContent = editableRef.current.innerHTML || getSectionContent();
+      
       // Reset any scaling transformations during edit mode
       editableRef.current.style.transform = 'none';
       
-      // Ensure we maintain the font size during edit mode
-      editableRef.current.style.fontSize = `${fontSize}px`;
-      
-      const content = getSectionContent()
-      // Only set innerHTML if it's empty or different
-      if (editableRef.current.innerHTML !== content) {
-        editableRef.current.innerHTML = content
+      // Set the current content (which includes any font changes)
+      if (editableRef.current.innerHTML !== currentContent) {
+        editableRef.current.innerHTML = currentContent
       }
+      
+      // Apply scaling to the current content elements (after innerHTML is set)
+      if (scaleMultiplier !== 1) {
+        const applyScaleToFontSizes = (element: HTMLElement) => {
+          // First pass: wrap all plain text nodes in spans with explicit font-size
+          const wrapTextNodes = (container: HTMLElement) => {
+            const walker = document.createTreeWalker(
+              container,
+              NodeFilter.SHOW_TEXT,
+              null
+            );
+            
+            const textNodes: Text[] = [];
+            let node = walker.nextNode();
+            while (node) {
+              if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
+                textNodes.push(node as Text);
+              }
+              node = walker.nextNode();
+            }
+            
+            // Wrap each text node in a span with explicit font size
+            textNodes.forEach(textNode => {
+              const parent = textNode.parentElement;
+              if (parent) {
+                const computedStyle = window.getComputedStyle(parent);
+                const currentFontSize = parseInt(computedStyle.fontSize) || 10;
+                
+                // Create span wrapper with explicit font size
+                const span = document.createElement('span');
+                const className = `text-wrapper-${currentFontSize}-${Date.now()}`;
+                span.className = className;
+                span.textContent = textNode.textContent;
+                
+                // Inject CSS for this font size
+                const styleElement = document.createElement('style');
+                styleElement.textContent = `
+                  .${className} {
+                    font-size: ${currentFontSize}px !important;
+                    line-height: normal !important;
+                  }
+                  .contentEditable .${className},
+                  .editable .${className},
+                  .sectionBox .${className} {
+                    font-size: ${currentFontSize}px !important;
+                    line-height: normal !important;
+                  }
+                `;
+                document.head.appendChild(styleElement);
+                
+                // Replace text node with span
+                textNode.parentNode?.replaceChild(span, textNode);
+                console.log(`Wrapped text node with ${currentFontSize}px font size`);
+              }
+            });
+          };
+          
+          // Wrap all plain text nodes first
+          wrapTextNodes(element);
+          
+          // Second pass: ensure all elements have explicit font-size styles
+          const walker1 = document.createTreeWalker(
+            element,
+            NodeFilter.SHOW_ELEMENT,
+            null
+          );
+          
+          let node = walker1.nextNode();
+          while (node) {
+            if (node instanceof HTMLElement) {
+              const currentStyle = window.getComputedStyle(node);
+              const currentFontSize = parseInt(currentStyle.fontSize);
+              
+              // If element doesn't have explicit font-size, give it one based on computed style
+              if (!node.style.fontSize && !node.className.includes('font-size-') && !node.className.includes('text-wrapper-') && !isNaN(currentFontSize)) {
+                // Create a class for the current computed font size
+                const baseClassName = `base-font-size-${currentFontSize}-${Date.now()}`;
+                node.className = (node.className + ' ' + baseClassName).trim();
+                
+                // Inject CSS for the base font size
+                const baseStyleElement = document.createElement('style');
+                baseStyleElement.textContent = `
+                  .${baseClassName} {
+                    font-size: ${currentFontSize}px !important;
+                    line-height: normal !important;
+                  }
+                  .contentEditable .${baseClassName},
+                  .editable .${baseClassName},
+                  .sectionBox .${baseClassName} {
+                    font-size: ${currentFontSize}px !important;
+                    line-height: normal !important;
+                  }
+                `;
+                document.head.appendChild(baseStyleElement);
+                
+                console.log(`Set base font size ${currentFontSize}px for element:`, node.tagName);
+              }
+            }
+            node = walker1.nextNode();
+          }
+          
+          // Third pass: apply scaling to all elements (now they all have explicit styles)
+          const walker2 = document.createTreeWalker(
+            element,
+            NodeFilter.SHOW_ELEMENT,
+            null
+          );
+          
+          let node2 = walker2.nextNode();
+          while (node2) {
+            if (node2 instanceof HTMLElement) {
+              const currentStyle = window.getComputedStyle(node2);
+              const currentFontSize = parseInt(currentStyle.fontSize);
+              
+              if (!isNaN(currentFontSize)) {
+                const newFontSize = Math.round(currentFontSize * scaleMultiplier);
+                
+                // Create a unique class name for this scaled font size
+                const className = `scaled-font-size-${newFontSize}-${Date.now()}`;
+                node2.className = (node2.className + ' ' + className).trim();
+                
+                // Inject CSS with high specificity
+                const styleElement = document.createElement('style');
+                styleElement.textContent = `
+                  .${className} {
+                    font-size: ${newFontSize}px !important;
+                    line-height: normal !important;
+                  }
+                  .contentEditable .${className},
+                  .editable .${className},
+                  .sectionBox .${className} {
+                    font-size: ${newFontSize}px !important;
+                    line-height: normal !important;
+                  }
+                `;
+                document.head.appendChild(styleElement);
+                
+                console.log(`Scaled font from ${currentFontSize}px to ${newFontSize}px for element:`, node2.tagName);
+              }
+            }
+            node2 = walker2.nextNode();
+          }
+        };
+        
+        // Apply scaling after a brief delay to ensure DOM is fully updated
+        setTimeout(() => {
+          applyScaleToFontSizes(editableRef.current!);
+        }, 10);
+      }
+      
+      // DON'T set fontSize on entire container - let individual elements have their own font sizes
+      // editableRef.current.style.fontSize = `${fontSize}px`; // REMOVED - this caused whole section to resize
       
       // Focus on the editable element
       setTimeout(() => {
@@ -419,7 +574,7 @@ export default function SectionRenderer({
             
             // Then check computed style
           const computedStyle = window.getComputedStyle(currentNode);
-          if (computedStyle.fontSize !== '16px') { // Not the default size
+          if (computedStyle.fontSize !== '10px') { // Not the default size
             const computedSize = parseInt(computedStyle.fontSize, 10);
             if (!isNaN(computedSize)) {
               document.dispatchEvent(new CustomEvent('update-font-size', { 
@@ -445,7 +600,7 @@ export default function SectionRenderer({
       console.error('Error detecting font size:', err);
       // Fallback to a reasonable default
       document.dispatchEvent(new CustomEvent('update-font-size', { 
-        detail: { fontSize: 16 } 
+        detail: { fontSize: 10 } 
       }));
     }
   };
@@ -465,24 +620,42 @@ export default function SectionRenderer({
   const scaleContentToFit = (_contentRef: any, _w: number, _h: number) => {};
   const getContentNaturalSize = () => ({ width: MIN_WIDTH, height: MIN_HEIGHT });
 
-  // Handle toolbar font size changes
+  // Handle toolbar font size changes - ENABLED automatic container resizing for font changes
   const handleFontSizeChange = (newFontSize?: number) => {
     if (typeof newFontSize !== 'number') return;
     
-    // Calculate the scale ratio between new and old font size
-    const fontRatio = newFontSize / fontSize;
-    
-    // Scale the container proportionally
-    const newWidth = width * fontRatio;
-    const newHeight = height * fontRatio;
-    
-    // Update both font size and container size
+    // Update the font size
     setFontSize(newFontSize);
-    updatePosition(id, { x, y, width: newWidth, height: newHeight });
+    
     // Apply font size inline so content updates immediately
     if (editableRef.current) {
       editableRef.current.style.fontSize = `${newFontSize}px`;
       editableRef.current.style.transform = 'none';
+      
+      // Measure the new content dimensions with the new font size
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = editableRef.current.innerHTML;
+      tempDiv.style.cssText = `
+        position: absolute;
+        visibility: hidden;
+        width: ${width}px;
+        font-size: ${newFontSize}px;
+        line-height: 1.2;
+        padding: 2px;
+        margin: 0;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+        box-sizing: border-box;
+        left: -9999px;
+        top: -9999px;
+      `;
+      
+      document.body.appendChild(tempDiv);
+      const measuredHeight = Math.max(tempDiv.scrollHeight, MIN_HEIGHT);
+      document.body.removeChild(tempDiv);
+      
+      // Update container size to fit the new font size
+      updatePosition(id, { x, y, width, height: measuredHeight });
     }
   };
 
@@ -490,6 +663,7 @@ export default function SectionRenderer({
   const handleResizeStart = (e: any, dir: string) => {
     const isCorner = ['topLeft', 'topRight', 'bottomLeft', 'bottomRight'].includes(dir)
     setLockAspectRatio(isCorner)
+    setIsResizing(true)
     resizeStartRef.current = { width, height, fontSize }
   };
 
@@ -507,11 +681,11 @@ export default function SectionRenderer({
     const isHorizontal = dir === 'left' || dir === 'right';
 
     if (isHorizontal) {
-      // Horizontal edge: keep font size, remove any scaling
+      // Horizontal resize: keep original font size and adjust height to fit content
+      editableRef.current.style.fontSize = `${resizeStartRef.current?.fontSize}px`;
       editableRef.current.style.transform = 'none';
-      editableRef.current.style.fontSize = `${fontSize}px`;
     } else {
-      // Corner resize: scale proportionally by min of width/height ratios
+      // Corner resize: scale proportionally by min of width/height ratios (original behavior)
       const widthRatio = newW / width;
       const heightRatio = newH / height;
       const ratio = Math.min(widthRatio, heightRatio);
@@ -529,34 +703,61 @@ export default function SectionRenderer({
   ) => {
     // Ensure editable element and start dimensions exist
     if (!editableRef.current || !resizeStartRef.current) return;
+    
     const container = editableRef.current;
     const { width: startW, height: startH, fontSize: startFS } = resizeStartRef.current;
     const newW = parseInt(ref.style.width, 10);
     const newH = parseInt(ref.style.height, 10);
+    
     // Check if this is a horizontal edge resize (left or right handle)
     const isHorizontal = dir === 'left' || dir === 'right';
+    
     // Clear any previous transforms
     container.style.transform = 'none';
+    
     if (isHorizontal) {
-      // Horizontal resize: keep original font size, re-wrap text and snap to content size
+      // Horizontal resize: keep original font size and adjust height to fit content
       container.style.fontSize = `${startFS}px`;
-      const contentW = container.scrollWidth;
-      const contentH = container.scrollHeight;
-      updatePosition(id, { x: pos.x, y: pos.y, width: contentW, height: contentH });
+      container.style.transform = 'none';
+      
+      // Create a temporary measuring element to get accurate height
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = container.innerHTML;
+      tempDiv.style.cssText = `
+        position: absolute;
+        visibility: hidden;
+        width: ${newW}px;
+        font-size: ${startFS}px;
+        line-height: 1.2;
+        padding: 2px;
+        margin: 0;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+        box-sizing: border-box;
+        left: -9999px;
+        top: -9999px;
+      `;
+      
+      document.body.appendChild(tempDiv);
+      const measuredHeight = Math.max(tempDiv.scrollHeight, MIN_HEIGHT);
+      document.body.removeChild(tempDiv);
+      
+      // Update position with measured height
+      updatePosition(id, { x: pos.x, y: pos.y, width: newW, height: measuredHeight });
     } else {
-      // Corner resize: scale text proportionally to border resize
-      const ratioW = newW / startW;
-      const ratioH = newH / startH;
-      const ratio = Math.min(ratioW, ratioH);
-      const newFontSize = startFS * ratio;
-      Array.from(container.querySelectorAll('[style*="font-size"]')).forEach(el => {
-        try { (el as HTMLElement).style.removeProperty('font-size'); } catch {};
-      });
-      container.style.fontSize = `${newFontSize}px`;
-      setFontSize(newFontSize);
-      // Commit corner resize: use dragged dimensions to preserve proportion
+      // Corner resize: scale proportionally by min of width/height ratios (original behavior)
+      const widthRatio = newW / width;
+      const heightRatio = newH / height;
+      const ratio = Math.min(widthRatio, heightRatio);
+      container.style.transform = `scale(${ratio})`;
+      container.style.transformOrigin = 'top left';
+      
+      // Use the manually resized dimensions
       updatePosition(id, { x: pos.x, y: pos.y, width: newW, height: newH });
     }
+    
+    // Clear the resize flag
+    setIsResizing(false);
   };
 
   // Make sure header sections always have explicit font-size
@@ -717,7 +918,7 @@ export default function SectionRenderer({
         }
         /* Base styling for section content */
         [data-section-content="true"] {
-          font-size: 16px;
+          font-size: 10px;
           box-sizing: border-box !important;
         }
         /* Make sure span elements maintain their size settings */
@@ -855,56 +1056,61 @@ export default function SectionRenderer({
   
   // Enhanced mouse-up handler for better text selection
   const handleMouseUp = (e: React.MouseEvent) => {
-    updateToolbarPosition();
+    // Debounce toolbar positioning to avoid excessive calls
+    requestAnimationFrame(() => {
+      updateToolbarPosition();
+    });
     
-    // Handle selection logic
+    // Handle selection logic with performance optimization
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0 && !selection.isCollapsed) {
       const range = selection.getRangeAt(0);
       const selectedText = range.toString().trim();
       
-      // Detect and update font size after selection
-      tryDetectFontSize(selection);
+      // Only process expensive font detection for short selections
+      if (selectedText.length < 50) {
+        // Debounce font size detection
+        requestAnimationFrame(() => {
+          tryDetectFontSize(selection);
+        });
+      }
       
-      // If this is likely a date or a short word
-      if (selectedText.length < 15 && editableRef.current) {
-        // Try to check if this might be a date part or number
+      // Only do enhanced selection for very short text (likely dates/numbers)
+      if (selectedText.length < 15 && selectedText.length > 0 && editableRef.current) {
         const node = selection.anchorNode;
         const offset = selection.anchorOffset;
         
         if (node && node.nodeType === Node.TEXT_NODE) {
-          const enhancedSelection = selectEntireWord(node, offset);
-          
-          if (enhancedSelection) {
-            try {
-              // Create a new range for the enhanced selection
+          try {
+            const enhancedSelection = selectEntireWord(node, offset);
+            
+            if (enhancedSelection) {
               const newRange = document.createRange();
               newRange.setStart(enhancedSelection.node, enhancedSelection.start);
               newRange.setEnd(enhancedSelection.node, enhancedSelection.end);
               
-              // Apply the new range
               selection.removeAllRanges();
               selection.addRange(newRange);
               
-              // Update toolbar with new selection
-              updateToolbarPosition();
+              // Store enhanced selection without blocking
+              requestAnimationFrame(() => {
+                updateToolbarPosition();
+                // @ts-ignore
+                window.__selectedText = newRange.toString();
+              });
               
-              // Store enhanced selection
-              // @ts-ignore
-              window.__selectedText = newRange.toString();
-              
-              // Prevent default browser selection behavior
               e.preventDefault();
-            } catch (err) {
-              console.error('Error enhancing selection:', err);
             }
+          } catch (err) {
+            // Silently handle errors to avoid performance impact
+            console.warn('Selection enhancement failed:', err);
           }
         }
       }
     }
   }
 
-  // Listen for font size change events from the FloatingToolbar
+  // Listen for font size change events from the FloatingToolbar - ENABLED automatic resizing for font changes
   useEffect(() => {
     const handleFontSizeChanged = (e: Event) => {
       if (e instanceof CustomEvent && e.detail) {
@@ -915,16 +1121,38 @@ export default function SectionRenderer({
           // Skip if the font size is the same or invalid
           if (!newFontSize || newFontSize === fontSize) return;
           
-          // Calculate the ratio between new and old font size
-          const fontRatio = newFontSize / fontSize;
-          
-          // Scale the container proportionally
-          const newWidth = width * fontRatio;
-          const newHeight = height * fontRatio;
-          
-          // Update both font size and container size
+          // Update font size and resize container
           setFontSize(newFontSize);
-          updatePosition(id, { x, y, width: newWidth, height: newHeight });
+          
+          // Apply font size inline and resize container
+          if (editableRef.current) {
+            editableRef.current.style.fontSize = `${newFontSize}px`;
+            
+            // Measure the new content dimensions with the new font size
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = editableRef.current.innerHTML;
+            tempDiv.style.cssText = `
+              position: absolute;
+              visibility: hidden;
+              width: ${width}px;
+              font-size: ${newFontSize}px;
+              line-height: 1.2;
+              padding: 2px;
+              margin: 0;
+              white-space: pre-wrap;
+              overflow-wrap: break-word;
+              box-sizing: border-box;
+              left: -9999px;
+              top: -9999px;
+            `;
+            
+            document.body.appendChild(tempDiv);
+            const measuredHeight = Math.max(tempDiv.scrollHeight, MIN_HEIGHT);
+            document.body.removeChild(tempDiv);
+            
+            // Update container size to fit the new font size
+            updatePosition(id, { x, y, width, height: measuredHeight });
+          }
         }
       }
     };
@@ -936,7 +1164,7 @@ export default function SectionRenderer({
     return () => {
       document.removeEventListener('font-size-changed', handleFontSizeChanged);
     };
-  }, [id, fontSize, width, height, x, y, updatePosition]);
+  }, [id, fontSize, width, height, x, y, updatePosition]); // Added back dependencies for font size changes
 
   // Track hover state to show handles when hovered
   const [isHovered, setIsHovered] = useState(false)
@@ -973,7 +1201,7 @@ export default function SectionRenderer({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         lockAspectRatio={lockAspectRatio}
-        className={`${styles.sectionWrapper} hoverable-section ${isActive ? 'active-section' : ''}`}
+        className={`${styles.sectionWrapper} ${type === 'header' ? styles.headerSection : ''} hoverable-section ${isActive ? 'active-section' : ''}`}
         ref={rndRef}
         bounds="parent"
         disableDragging={isEditing}

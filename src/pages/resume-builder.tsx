@@ -92,20 +92,6 @@ export default function ResumeBuilder() {
   const [qrLoading, setQrLoading] = useState(false)
   const [qrError, setQrError] = useState('')
 
-  // New state for debug dialog
-  const [debugDialogOpen, setDebugDialogOpen] = useState(false)
-  const [debugInfo, setDebugInfo] = useState<{
-    session: any,
-    token: string | null,
-    resumeId: string | null,
-    hasLocalStorage: boolean
-  }>({
-    session: null,
-    token: null,
-    resumeId: null,
-    hasLocalStorage: false
-  })
-
   // Inside the ResumeBuilder component but outside of any function or method:
   const [linkedInConnected, setLinkedInConnected] = useState(false);
 
@@ -153,94 +139,81 @@ export default function ResumeBuilder() {
     return null;
   };
 
-  // Function to update debug info
-  const updateDebugInfo = () => {
-    setDebugInfo({
-      session: session,
-      token: getAuthToken(),
-      resumeId: resumeId,
-      hasLocalStorage: !!localStorage.getItem('resume-draft')
-    });
-  }
+  // Function to auto-fit section borders to their content (only used when templates are loaded)
+  const autoFitSectionBorders = () => {
+    // Use requestAnimationFrame for better performance
+    requestAnimationFrame(() => {
+      const batchUpdates: Array<{id: string, position: {x: number, y: number, width: number, height: number}}> = [];
+      
+      sections.forEach(section => {
+        // Only auto-fit text-based sections (not images, lines, etc.)
+        if (!['text', 'custom', 'header', 'experience', 'education', 'projects'].includes(section.type)) {
+          return;
+        }
 
-  // Base URL for backend API (normalize to remove trailing slash)
-  const rawBackendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-  const backendUrl = rawBackendUrl.replace(/\/+$/, '');
-
-  useEffect(() => {
-    const loadResume = async () => {
-      try {
-        const token = getAuthToken();
+        // Get the content to measure
+        let contentToMeasure = '';
+        let measureFontSize = '10px'; // Default font size for most sections
         
-        if (token) {
-          try {
-            // Direct call to backend to fetch resumes
-            const response = await fetch(`${backendUrl}/resume/getResumes`, {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            });
-            
-            if (response.ok) {
-              const resumes = await response.json();
-              if (resumes && resumes.length > 0) {
-                setSections(resumes[0].sections);
-                setResumeId(resumes[0]._id);
-                return;
-              }
-            } else {
-              const error = await response.text();
-              console.error('Failed to load resumes:', error);
-              showToast('Failed to load resumes from server', 'error');
-            }
-          } catch (fetchError) {
-            console.error('Error fetching resumes:', fetchError);
-            showToast('Error connecting to server', 'error');
-          }
-        }
-
-        // Fallback to localStorage
-        const draft = localStorage.getItem('resume-draft');
-        if (draft) {
-          try {
-            setSections(JSON.parse(draft));
-          } catch (parseError) {
-            console.warn('Could not parse resume draft:', parseError);
-            setTemplateModalOpen(true);
-          }
+        if (section.type === 'header') {
+          const headerSection = section as any;
+          contentToMeasure = `<h2 style="margin: 0 0 2px 0; font-size: 20px; font-weight: bold">${headerSection.name}</h2><p style="margin: 0; font-size: 16px">${headerSection.jobTitle}</p>`;
+          measureFontSize = '16px'; // Use larger font size for measuring header sections
         } else {
-          setTemplateModalOpen(true);
+          contentToMeasure = (section as any).content || '';
         }
-      } catch (error) {
-        console.error('Error loading resume:', error);
-        showToast('Error loading resume', 'error');
-        setTemplateModalOpen(true);
-      }
-    };
 
-    // Check if we should load resumes
-    const hasToken = getAuthToken();
-    if (hasToken) {
-      loadResume();
-    } else {
-      // No auth token available, check for local draft
-      const draft = localStorage.getItem('resume-draft');
-      if (draft) {
-        try {
-          setSections(JSON.parse(draft));
-        } catch {
-          console.warn('Could not parse resume draft');
-          setTemplateModalOpen(true);
+        if (!contentToMeasure) return;
+
+        // Create a temporary element to measure content size (more efficient)
+        const tempElement = document.createElement('div');
+        tempElement.innerHTML = contentToMeasure;
+        tempElement.style.cssText = `
+          position: absolute;
+          visibility: hidden;
+          pointer-events: none;
+          font-size: ${measureFontSize};
+          line-height: 1.2;
+          padding: 1px;
+          margin: 0;
+          white-space: pre-wrap;
+          overflow-wrap: break-word;
+          box-sizing: border-box;
+          width: ${section.width}px;
+          top: -9999px;
+          left: -9999px;
+        `;
+        
+        // Batch DOM operations
+        document.body.appendChild(tempElement);
+        
+        // Get the natural dimensions immediately
+        const naturalHeight = Math.max(tempElement.offsetHeight + 10, 40);
+        const naturalWidth = Math.max(section.width, 100);
+        
+        // Clean up immediately
+        document.body.removeChild(tempElement);
+
+        // Queue update if dimensions are significantly different
+        if (Math.abs(naturalHeight - section.height) > 20) {
+          batchUpdates.push({
+            id: section.id,
+            position: {
+              x: section.x,
+              y: section.y,
+              width: naturalWidth,
+              height: naturalHeight
+            }
+          });
         }
-      } else {
-        setTemplateModalOpen(true);
-      }
-    }
-  }, []); // Run once on mount using localStorage token
-
-  useEffect(() => {
-    dispatch(getMyProfile())
-  }, [dispatch])
+      });
+      
+      // Apply all updates at once to avoid multiple re-renders
+      batchUpdates.forEach(update => {
+        updateSectionPosition(update.id, update.position);
+      });
+    });
+  };
 
   const updateSectionContent = (id: string, newContent: string) =>
     setSections((prev) => prev.map((s): SectionType => {
@@ -489,6 +462,10 @@ export default function ResumeBuilder() {
     setToast(prev => ({ ...prev, open: false }));
   };
 
+  // Base URL for backend API (normalize to remove trailing slash)
+  const rawBackendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+  const backendUrl = rawBackendUrl.replace(/\/+$/, '');
+
   const saveDraft = async () => {
     try {
       // Always save to localStorage first
@@ -566,178 +543,221 @@ export default function ResumeBuilder() {
 
   const handleCanadianTemplate = () => {
     setTemplateModalOpen(false)
-    // Add Canadian template sections with the same text as in the preview
+    // Store current sections before clearing (for undo functionality)
+    if (sections.length > 0) {
+      setSectionsHistory(prev => [...prev, sections])
+    }
+    
+    // Add comprehensive Canadian template sections with realistic content and proper positioning
     setSections([
+      // Header section with name and title
       {
         id: uuidv4(),
         type: 'header',
-        name: 'YOUR NAME',
-        jobTitle: 'Professional Title',
-        x: 100,
-        y: 50,
-        width: 400,
+        name: 'William Ware',
+        jobTitle: 'Chief Information Officer (CIO)',
+        content: `<h2 style="margin: 0 0 2px 0; font-size: 20px; font-weight: bold">William Ware</h2><p style="margin: 0; font-size: 16px">Chief Information Officer (CIO)</p>`,
+        x: 50,
+        y: 30,
+        width: 450,
+        height: 80
+      },
+      
+      // Contact information in top right
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: '<strong>CONTACT</strong><br><br>email@example.com<br>(123) 456-7890<br>LinkedIn: /in/williamware<br>Toronto, ON, Canada',
+        x: 520,
+        y: 30,
+        width: 220,
+        height: 130
+      },
+      
+      // Professional Summary
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: '<strong>PROFESSIONAL SUMMARY</strong><br><br>Passionate Chief Information Officer with the mission to use technology to improve the lives of people living beyond the status quo. With over 15 years of experience in information management, I help companies deliver the right information to the right people at the right time to optimize daily operations alongside strategic goals.',
+        x: 50,
+        y: 130,
+        width: 450,
+        height: 140
+      },
+      
+      // Work Experience section (increased height significantly)
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: '<strong>WORK EXPERIENCE</strong><br><br><strong>Chief Information Officer (CIO)</strong><br>Peer Computers Inc<br><em>Jan 2018 - Present</em><br><br>• Developed and executed comprehensive IT strategy to integrate all business operations with advanced technology solutions, resulting in 30% cost reduction and operational efficiency<br>• Managed $5M+ annual technology budget and led cross-functional teams of 50+ employees to deliver IT services that improved business processes and user experience<br>• Spearheaded major system integrations and technology implementations, including cloud migration that reduced infrastructure costs by $2M+ annually<br><br><strong>Assistant Chief Information Officer</strong><br>Peer Computers Inc<br><em>Mar 2015 - Dec 2017</em><br><br>• Developed a system that saved over 500 employee hours annually and reduced the time to do business inventory by 80%<br>• Led strategic technology initiatives and mentored junior staff in emerging IT trends, resulting in improved team performance and reduced turnover by 25%<br>• Implemented new security protocols and compliance measures for financial sector regulations, ensuring 100% compliance with industry standards<br><br><strong>Web Developer</strong><br>Peer Computers Inc<br><em>Apr 2012 - Feb 2015</em><br><br>• Design and develop user-friendly websites, including work with both front-end and back-end coding for various industries<br>• Worked on modernizing legacy systems and databases to improve operational efficiency by 40%<br>• Provide adequate training to end users and maintain excellent documentation for all applications',
+        x: 50,
+        y: 290,
+        width: 450,
+        height: 520
+      },
+      
+      // Skills section in right column
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: '<strong>GENERAL SKILLS</strong><br><br>Leadership<br>Cybersecurity<br>Digital Transformation<br>Vendor Management<br>IT Project Management<br>Recruiting & Management<br>Communication<br>Budget Planning<br>Artificial Intelligence and Machine Learning',
+        x: 520,
+        y: 180,
+        width: 220,
+        height: 220
+      },
+      
+      // Certifications section
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: '<strong>CERTIFICATIONS AND MEMBERSHIPS</strong><br><br>Member of the Global CIO Forum (2019 - Present)<br><br>Certified Information Security Manager (CISM)<br><br>Certified Information Privacy Professional (CIPP)<br><br>Certified ScrumMaster (CSM)',
+        x: 520,
+        y: 420,
+        width: 220,
+        height: 160
+      },
+      
+      // Languages section
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: '<strong>LANGUAGES</strong><br><br>English — Native<br>French — Conversational<br>Spanish — Basic',
+        x: 520,
+        y: 600,
+        width: 220,
         height: 100
       },
+      
+      // Education section
       {
         id: uuidv4(),
         type: 'text',
-        content: 'PROFESSIONAL SUMMARY\n\nExperienced professional with a proven track record of success in delivering high-quality results. Skilled in problem-solving and teamwork.',
-        x: 100,
-        y: 180,
-        width: 400,
-        height: 120
+        content: '<strong>EDUCATION</strong><br><br><strong>MSc in Technology Management</strong><br>Columbia University, NY<br><em>2010 - 2012</em><br><br><strong>BS in Computer Science</strong><br>Stanford University, CA<br><em>2006 - 2010</em>',
+        x: 50,
+        y: 830,
+        width: 450,
+        height: 140
       },
-      {
-        id: uuidv4(),
-        type: 'experience',
-        title: 'Job Title',
-        company: 'Company Name',
-        startDate: '2020',
-        endDate: 'Present',
-        description: '• Developed and implemented successful strategies\n• Collaborated with cross-functional teams',
-        x: 100,
-        y: 320,
-        width: 400,
-        height: 150
-      },
-      {
-        id: uuidv4(),
-        type: 'education',
-        institution: 'University Name',
-        degree: 'Degree Name',
-        startDate: '2016',
-        endDate: '2020',
-        description: 'Relevant coursework and achievements',
-        x: 100,
-        y: 490,
-        width: 400,
-        height: 120
-      },
-      // Only one skills section
-      {
-        id: uuidv4(),
-        type: 'skills',
-        skills: ['JavaScript', 'React', 'Node.js'],
-        x: 520,
-        y: 180,
-        width: 250,
-        height: 150
-      },
-      {
-        id: uuidv4(),
-        type: 'languages',
-        languages: [
-          { name: "English", level: "Native" },
-          { name: "French", level: "Intermediate" }
-        ],
-        x: 520,
-        y: 350,
-        width: 250,
-        height: 120
-      },
+      
+      // Interests section
       {
         id: uuidv4(),
         type: 'text',
-        content: 'CONTACT\n\nemail@example.com\n(123) 456-7890',
+        content: '<strong>INTERESTS</strong><br><br>🎵 Music<br>🎯 Chess<br>🚴 Hiking<br>⚡ Renewable Energy',
         x: 520,
-        y: 50,
-        width: 250,
-        height: 110
+        y: 720,
+        width: 220,
+        height: 120
       }
     ])
+    
+    // Auto-fit borders to content after template is loaded
+    autoFitSectionBorders();
   }
 
   const handleProfessionalTemplate = () => {
     setTemplateModalOpen(false)
-    // Add Professional template sections with the same text as in the preview
+    // Store current sections before clearing (for undo functionality)
+    if (sections.length > 0) {
+      setSectionsHistory(prev => [...prev, sections])
+    }
+    
+    // Add Professional template sections with comprehensive content and proper positioning - using blue color for all titles
     setSections([
+      // Header section
       {
         id: uuidv4(),
         type: 'header',
         name: 'JONATHAN PARKER',
         jobTitle: 'SENIOR SOFTWARE ENGINEER',
-        x: 100,
-        y: 50,
-        width: 400,
-        height: 100
+        content: `<h2 style="margin: 0 0 2px 0; font-size: 20px; font-weight: bold">JONATHAN PARKER</h2><p style="margin: 0; font-size: 16px">SENIOR SOFTWARE ENGINEER</p>`,
+        x: 50,
+        y: 30,
+        width: 450,
+        height: 80
       },
+      
+      // Contact information
       {
         id: uuidv4(),
         type: 'text',
-        content: 'RESULTS-DRIVEN SOFTWARE ENGINEER WITH 7+ YEARS OF EXPERIENCE BUILDING SCALEABLE WEB APPLICATIONS AND LEADING DEVELOPMENT TEAMS. SPECIALIZED IN MODERN JAVASCRIPT FRAMEWORKS AND CLOUD ARCHITECTURE.',
-        x: 100,
-        y: 180,
-        width: 400,
-        height: 120
-      },
-      {
-        id: uuidv4(),
-        type: 'experience',
-        title: 'LEAD FRONT-END DEVELOPER',
-        company: 'TECH INNOVATIONS INC.',
-        startDate: '2020',
-        endDate: 'PRESENT',
-        description: '• Led frontend development for flagship SaaS application reaching 500,000+ users\n• Managed team of 6 developers, increasing deployment efficiency by 40%\n• Implemented CI/CD pipeline, reducing integration time by 65%',
-        x: 100,
-        y: 320,
-        width: 400,
+        content: '<strong style="color: #2B6CB0;">CONTACT</strong><br><br>jonathan.parker@email.com<br>+1 (555) 123-4567<br>linkedin.com/in/jonathanparker<br>github.com/jparker<br>San Francisco, CA',
+        x: 520,
+        y: 30,
+        width: 220,
         height: 150
       },
+      
+      // Professional Summary
       {
         id: uuidv4(),
-        type: 'experience',
-        title: 'SOFTWARE ENGINEER',
-        company: 'DATALOOP SOLUTIONS',
-        startDate: '2017',
-        endDate: '2020',
-        description: '• Developed scalable microservices architecture using Node.js\n• Optimized database queries, improving application response time by 30%\n• Collaborated with UX team to implement responsive design patterns',
-        x: 100,
-        y: 500,
-        width: 400,
+        type: 'text',
+        content: '<strong style="color: #2B6CB0;">PROFESSIONAL SUMMARY</strong><br><br>Results-driven Software Engineer with 7+ years of experience building scaleable web applications and leading development teams. Specialized in modern JavaScript frameworks and cloud architecture. Proven track record of delivering high-performance solutions that drive business growth and improve user experiences.',
+        x: 50,
+        y: 130,
+        width: 450,
+        height: 140
+      },
+      
+      // Work Experience (increased height)
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: '<strong style="color: #2B6CB0;">PROFESSIONAL EXPERIENCE</strong><br><br><strong>LEAD FRONT-END DEVELOPER</strong><br>Tech Innovations Inc.<br><em>Jan 2020 - Present</em><br><br>• Led frontend development for flagship SaaS application reaching 500,000+ users<br>• Managed team of 6 developers, increasing deployment efficiency by 40%<br>• Implemented CI/CD pipeline using Jenkins and Docker, reducing integration time by 65%<br>• Architected responsive web applications using React, Redux, and TypeScript<br><br><strong>SOFTWARE ENGINEER</strong><br>DataLoop Solutions<br><em>Mar 2017 - Dec 2019</em><br><br>• Developed scalable microservices architecture using Node.js and Express<br>• Optimized database queries and implemented caching strategies, improving application response time by 30%<br>• Collaborated with UX team to implement responsive design patterns and improve user engagement by 25%<br>• Built RESTful APIs and integrated third-party services to enhance application functionality<br><br><strong>JUNIOR DEVELOPER</strong><br>StartupCorp<br><em>Jun 2016 - Feb 2017</em><br><br>• Developed and maintained web applications using HTML5, CSS3, and JavaScript<br>• Participated in agile development processes and daily stand-ups<br>• Contributed to code reviews and testing procedures to ensure high-quality deliverables',
+        x: 50,
+        y: 290,
+        width: 450,
+        height: 480
+      },
+      
+      // Skills section (increased height)
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: '<strong style="color: #2B6CB0;">TECHNICAL SKILLS</strong><br><br><strong>Programming Languages:</strong><br>JavaScript/TypeScript, Python, Java, C++<br><br><strong>Frontend Technologies:</strong><br>React, Redux, Vue.js, Angular, HTML5, CSS3, SASS<br><br><strong>Backend Technologies:</strong><br>Node.js, Express.js, Django, Spring Boot<br><br><strong>Cloud & DevOps:</strong><br>AWS, Azure, Docker, Kubernetes, Jenkins<br><br><strong>Databases:</strong><br>MongoDB, PostgreSQL, MySQL, Redis<br><br><strong>Tools & Methodologies:</strong><br>Git, Agile/Scrum, RESTful APIs, GraphQL, CI/CD',
+        x: 520,
+        y: 200,
+        width: 220,
+        height: 320
+      },
+      
+      // Education
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: '<strong style="color: #2B6CB0;">EDUCATION</strong><br><br><strong>Master of Computer Science</strong><br>University of Technology<br><em>2015 - 2017</em><br>GPA: 3.9/4.0<br>Specialization in Distributed Systems<br><br><strong>Bachelor of Software Engineering</strong><br>State University<br><em>2011 - 2015</em><br>Magna Cum Laude',
+        x: 50,
+        y: 790,
+        width: 450,
+        height: 160
+      },
+      
+      // Certifications
+      {
+        id: uuidv4(),
+        type: 'text',
+        content: '<strong style="color: #2B6CB0;">CERTIFICATIONS</strong><br><br>• AWS Certified Solutions Architect<br>• Google Cloud Professional Developer<br>• Certified Scrum Master (CSM)<br>• MongoDB Certified Developer<br>• Oracle Certified Professional',
+        x: 520,
+        y: 540,
+        width: 220,
         height: 150
       },
-      {
-        id: uuidv4(),
-        type: 'education',
-        institution: 'UNIVERSITY OF TECHNOLOGY',
-        degree: 'MASTER OF COMPUTER SCIENCE',
-        startDate: '2015',
-        endDate: '2017',
-        description: 'GPA: 3.9/4.0\nSpecialization in Distributed Systems',
-        x: 520,
-        y: 320,
-        width: 250,
-        height: 120
-      },
-      // Only one skills section
-      {
-        id: uuidv4(),
-        type: 'skills',
-        skills: ['JavaScript/TypeScript', 'React/Redux', 'Node.js', 'AWS/Cloud', 'CI/CD', 'RESTful & GraphQL APIs'],
-        x: 520,
-        y: 460,
-        width: 250,
-        height: 190
-      },
+      
+      // Projects/Achievements
       {
         id: uuidv4(),
         type: 'text',
-        content: 'CONTACT\n\njonathan.parker@email.com\n+1 (555) 123-4567\nlinkedin.com/in/jonathanparker\ngithub.com/jparker',
+        content: '<strong style="color: #2B6CB0;">KEY ACHIEVEMENTS</strong><br><br>• Reduced application load time by 50% through performance optimization<br>• Led migration of legacy systems to modern cloud architecture<br>• Mentored 12+ junior developers across multiple projects<br>• Speaker at 3 industry conferences on modern web development',
         x: 520,
-        y: 50,
-        width: 250,
-        height: 100
-      },
-      {
-        id: uuidv4(),
-        type: 'text',
-        content: 'CERTIFICATIONS\n\n• AWS Certified Solutions Architect\n• Google Cloud Professional Developer\n• Certified Scrum Master',
-        x: 520,
-        y: 170,
-        width: 250,
-        height: 130
+        y: 710,
+        width: 220,
+        height: 140
       }
     ])
+    
+    // Auto-fit borders to content after template is loaded
+    autoFitSectionBorders();
   }
 
   // Add missing functions
@@ -854,6 +874,81 @@ export default function ResumeBuilder() {
       setQrLoading(false);
     }
   };
+
+  useEffect(() => {
+    const loadResume = async () => {
+      try {
+        const token = getAuthToken();
+        
+        if (token) {
+          try {
+            // Direct call to backend to fetch resumes
+            const response = await fetch(`${backendUrl}/resume/getResumes`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            if (response.ok) {
+              const resumes = await response.json();
+              if (resumes && resumes.length > 0) {
+                setSections(resumes[0].sections);
+                setResumeId(resumes[0]._id);
+                return;
+              }
+            } else {
+              const error = await response.text();
+              console.error('Failed to load resumes:', error);
+              showToast('Failed to load resumes from server', 'error');
+            }
+          } catch (fetchError) {
+            console.error('Error fetching resumes:', fetchError);
+            showToast('Error connecting to server', 'error');
+          }
+        }
+
+        // Fallback to localStorage
+        const draft = localStorage.getItem('resume-draft');
+        if (draft) {
+          try {
+            setSections(JSON.parse(draft));
+          } catch (parseError) {
+            console.warn('Could not parse resume draft:', parseError);
+            setTemplateModalOpen(true);
+          }
+        } else {
+          setTemplateModalOpen(true);
+        }
+      } catch (error) {
+        console.error('Error loading resume:', error);
+        showToast('Error loading resume', 'error');
+        setTemplateModalOpen(true);
+      }
+    };
+
+    // Check if we should load resumes
+    const hasToken = getAuthToken();
+    if (hasToken) {
+      loadResume();
+    } else {
+      // No auth token available, check for local draft
+      const draft = localStorage.getItem('resume-draft');
+      if (draft) {
+        try {
+          setSections(JSON.parse(draft));
+        } catch {
+          console.warn('Could not parse resume draft');
+          setTemplateModalOpen(true);
+        }
+      } else {
+        setTemplateModalOpen(true);
+      }
+    }
+  }, []); // Run once on mount using localStorage token
+
+  useEffect(() => {
+    dispatch(getMyProfile())
+  }, [dispatch])
 
   return (
     <div className={styles.pageWrapper}>
@@ -1004,12 +1099,21 @@ export default function ResumeBuilder() {
         onClose={() => setTemplateModalOpen(false)}
         fullWidth
         maxWidth="md"
+        disableEnforceFocus={false}
+        disableAutoFocus={false}
+        disableRestoreFocus={false}
+        keepMounted={false}
         PaperProps={{
           sx: {
             background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
             color: 'white',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
             borderRadius: '12px'
+          }
+        }}
+        BackdropProps={{
+          sx: {
+            backgroundColor: 'rgba(0, 0, 0, 0.5)'
           }
         }}
       >

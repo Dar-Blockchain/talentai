@@ -48,12 +48,12 @@ export default function ResumeActions({
           </button>
         </Tooltip>
         
-        {/* <Tooltip title="Generate Blockchain QR Code" arrow>
+        {<Tooltip title="Generate Blockchain QR Code" arrow>
           <button className={styles.topBarButton} onClick={onGenerateQR}>
             <QrCodeIcon fontSize="small" />
             <span>Verify</span>
           </button>
-        </Tooltip> */}
+        </Tooltip> }
         
         <Tooltip title="Undo Last Action" arrow>
           <button 
