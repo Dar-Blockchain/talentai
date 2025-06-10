@@ -2,6 +2,11 @@
 const { Together } = require("together-ai");
 require("dotenv").config();
 
+const {
+  generateOnboardingQuestionsPrompts,
+  analyzeOnbordingQuestionsPrompts,
+} = require("../prompts/evaluationPrompts");
+
 const JobAssessmentResult = require("../models/JobAssessmentResultModel");
 const Profile = require("../models/ProfileModel");
 const Post = require("../models/PostModel");
@@ -779,6 +784,7 @@ Provide detailed, actionable feedback in JSON format only.`,
           proficiencyLevel: skill.demonstratedProficiency,
           experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
           ScoreTest: skill.confidenceScore,
+          Levelconfirmed: profLevel - 1,
         })),
       });
     }
@@ -799,6 +805,7 @@ Provide detailed, actionable feedback in JSON format only.`,
             category: s.subcategory || "",
             experienceLevel: getExperienceLevel(s.demonstratedProficiency),
             ScoreTest: s.confidenceScore,
+            Levelconfirmed: profLevel - 1,
           })),
         },
         { new: true }
@@ -883,6 +890,7 @@ Provide detailed, actionable feedback in JSON format only.`,
               proficiencyLevel: profLevel,
               experienceLevel: experienceLevels[profLevel - 1],
               ScoreTest: confScore,
+              Levelconfirmed: profLevel - 1,
             };
           }),
         });
@@ -1318,7 +1326,7 @@ Following this JSON object fields, generate a detailed JSON analysis with these 
       "requiredLevel": 1-5,
       
       "demonstratedExperienceLevel": 1-5,
-      "strengths": [string],
+      "strengths": [string], // If no strengths are identified, include "No strengths identified for this skill" in the array
       "weaknesses": [string],
       "confidenceScore": 0-100,
     }
@@ -1331,8 +1339,6 @@ Use these definitions to guide your scoring and ensure consistency in the analys
 
 Provide only the JSON output without any additional text.
 `;
-
-console.log("userprompt: ", userPrompt);
 
     // 4. Call TogetherAI API for analysis
     const stream = await together.chat.completions.create({
@@ -1432,7 +1438,7 @@ console.log("userprompt: ", userPrompt);
               `Your skills in ${alreadyProvenSkills[i].name} were already present in your profile.\nThat is why there was no need to reevalution for this Job Offer.\n
                If you need to reevaluate your skills in ${alreadyProvenSkills[i].name}, you can navigate to your skills section in your profile and pass a new Test`,
             ],
-            weaknesses: [``],
+            weaknesses: [`No weaknesses found`],
             confidenceScore: alreadyProvenSkills[i].ScoreTest,
           });
         }
@@ -1527,13 +1533,6 @@ exports.generateOnboardingQuestions = async (req, res) => {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-    const { skills } = req.body;
-    if (!skills || !Array.isArray(skills) || skills.length === 0) {
-      return res
-        .status(400)
-        .json({ error: "skills is required and must be a non-empty array." });
-    }
-
     const now = new Date();
     const daysSinceLastUpdate =
       (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
@@ -1548,94 +1547,31 @@ exports.generateOnboardingQuestions = async (req, res) => {
         .json({ error: "You have reached your test limit (5)" });
     }
 
-    // 3. Prompt: ask for exactly 10 questions as a JSON array
-    const systemPrompt = `
-You are an expert technical interviewer specializing in evaluating developer skills.  
-Your goal is to generate **exactly 10 technical interview questions**, ensuring that each question **strictly matches the candidate's proficiency level** in its respective skill.
+    const { skills } = req.body;
+    if (!skills || !Array.isArray(skills) || skills.length === 0) {
+      return res
+        .status(400)
+        .json({ error: "skills is required and must be a non-empty array." });
+    }
 
-Proficiency levels are defined as follows:
+    if (skills.length != 1) {
+      return res
+        .status(400)
+        .json({ error: "skills must include only one skill" });
+    }
 
-1 - Entry Level:  
-- Basic concepts and definitions  
-- Simple explanations without coding  
-- Questions answerable by someone new to the skill  
+    const skillsListDetails = skills
+      .map((skill) => `- ${skill.name} (ProficiencyLevel: ${skill.level})`)
+      .join("\n");
 
-2 - Junior:  
-- Basic practical understanding  
-- Simple code-related questions or usage  
-- Can explain common patterns and simple problem solving  
+    const questionsCount = 10;
 
-3 - Mid Level:  
-- Intermediate concepts and design  
-- Schema design, error handling, query optimization  
-- Real-world application and practical problem solving  
-
-4 - Senior:  
-- Advanced concepts and architecture  
-- Performance tuning, concurrency, complex error handling  
-- Designing scalable systems and best practices  
-
-5 - Expert:  
-- Deep internals and optimization  
-- Scalability, security, and advanced system design  
-- Handling complex real-world challenges and innovations  
-
-
-### 🚨 **STRICT REQUIREMENTS**
-- Generate **exactly 10 questions total**. 
-
-- Each question **must strictly match the exact proficiency level** of its respective skill.  
-- **Questions must be clear, conversational, and answerable orally in a maximum of 2 minutes** (no written coding exercises).  
-- **DO NOT repeat questions or generate generic ones**—each must be **unique and skill-specific**.  
-- **Ensure relevance by simulating real-world challenges candidates would realistically face.**  
-- **Return ONLY a JSON array of strings**, formatted correctly with no markdown or explanations.  
-
-### 📌 Examples of questions per proficiency level:
-
-Entry Level (1):  
-- "What is Node.js and what is it commonly used for?"  
-- "What is a document in MongoDB?"
-Junior (2):  
-- "How do you handle basic error handling in Node.js?"  
-- "How would you insert a document into a MongoDB collection?"
-Mid Level (3):  
-- "How would you design a MongoDB schema for an e-commerce application?"  
-- "Explain how you would optimize a MongoDB query for performance."
-Senior (4):  
-- "How do you design scalable Node.js applications for high concurrency?"  
-- "Describe MongoDB replication and how it ensures high availability."
-Expert (5):  
-- "Explain the internals of the Node.js event loop and how it handles asynchronous operations."  
-- "How would you architect a distributed MongoDB cluster for multi-region data consistency?"
-
-### **📌 Expected JSON Response Format**
-The AI must return **a single valid JSON array** containing **exactly 10 mixed questions**, like this:
-[
-  "Question 1?",
-  "Question 2?",
-  "Question 3?",
-  "Question 4?",
-  "Question 5?",
-  "Question 6?",
-  "Question 7?",
-  "Question 8?",
-  "Question 9?",
-  "Question 10?"
-]
-`.trim();
-
-    const userPrompt = `
-Based on the following skill list, generate exactly 10 oral technical interview questions.  
-Each question must *STRICTLY* match the given "proficiencyLevel".
-Skill List and corresponding proficiency for each skill: 
-
-${skills
-  .map((s) => `- ${s.name} (Proficiency: ${s.proficiencyLevel}/5)`)
-  .join("\n")}.
-
-Distribute the questions evenly across the skills.  
-For example, if there are 2 skills, generate 5 questions per skill.
-`.trim();
+    const systemPrompt =
+      generateOnboardingQuestionsPrompts.getSystemPrompt(questionsCount);
+    const userPrompt = generateOnboardingQuestionsPrompts.getUserPrompt(
+      questionsCount,
+      skillsListDetails
+    );
     const stream = await together.chat.completions.create({
       model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
       messages: [
@@ -1664,7 +1600,6 @@ For example, if there are 2 skills, generate 5 questions per skill.
       questions = JSON.parse(raw);
     } catch (e) {
       console.warn("JSON parse failed on cleaned text, falling back:", e);
-
       questions = [];
     }
 
@@ -1676,5 +1611,199 @@ For example, if there are 2 skills, generate 5 questions per skill.
   } catch (error) {
     console.error("Error generating questions:", error);
     res.status(500).json({ error: "Failed to generate questions" });
+  }
+};
+
+exports.analyzeOnboardingAnswers = async (req, res) => {
+  try {
+    const { questions, skill } = req.body;
+    const user = req.user;
+
+    if (!Array.isArray(skill)) {
+      return res.status(400).json({
+        error: "Invalid request format",
+        required: {
+          skill:
+            "Array of skill objects with name and proficiencyLevel (and optional subcategory)",
+        },
+      });
+    }
+
+    if (!Array.isArray(skill) || !Array.isArray(questions)) {
+      return res.status(400).json({
+        error: "Invalid request format",
+        required: {
+          questions: "Array of question-answer pairs",
+        },
+      });
+    }
+
+    // Validate skill objects - allow optional subcategory for soft skills
+    const isValidSkill = skill.every(
+      (s) =>
+        s.name &&
+        typeof s.name === "string" &&
+        typeof s.proficiencyLevel === "number" &&
+        s.proficiencyLevel >= 1 &&
+        s.proficiencyLevel <= 5
+    );
+
+    if (!isValidSkill) {
+      return res.status(400).json({
+        error: "Invalid skill format",
+        message:
+          "Each skill must have a name (string) and proficiencyLevel (number 1-5)",
+      });
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    const profile = await Profile.findById(user.profile);
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    const requiredLevel = skill[0].proficiencyLevel; 
+    const skillName = skill[0].name; 
+
+    const systemPrompt = analyzeOnbordingQuestionsPrompts.getSystemPrompt();
+    const userPrompt =
+      analyzeOnbordingQuestionsPrompts.getUserPrompt(skillName,requiredLevel, questions);
+
+    // 4. Call TogetherAI API for analysis
+    const stream = await together.chat.completions.create({
+      model: "deepseek-ai/DeepSeek-V3",
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+        { role: "user", content: userPrompt },
+      ],
+      max_tokens: 1000,
+      temperature: 0.6,
+      stream: true,
+    });
+
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
+
+    // 5. Parse and validate the response
+    let analysis;
+
+    let jsonStr;
+    try {
+      const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+      if (jsonMatch) {
+        jsonStr = jsonMatch[1];
+      }
+
+      // Clean the string before parsing
+      jsonStr = jsonStr
+        .trim()
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .replace(/^[^{]*/, "")
+        .replace(/[^}]*$/, "");
+
+      try {
+        analysis = JSON.parse(jsonStr);
+      } catch (firstError) {
+        console.error("First parse attempt failed:", firstError);
+        jsonStr = jsonStr
+          .replace(/,(\s*[}\]])/g, "$1")
+          .replace(/'/g, '"')
+          .replace(/\n/g, " ")
+          .replace(/\s+/g, " ");
+        analysis = JSON.parse(jsonStr);
+      }
+
+      // Validate required fields
+      if (!analysis || typeof analysis !== "object") {
+        throw new Error("Analysis is not an object");
+      }
+
+      if (!analysis.skillAnalysis || !Array.isArray(analysis.skillAnalysis)) {
+        throw new Error("Missing or invalid skillAnalysis array");
+      }
+
+      // Ensure all required fields are present
+      const requiredFields = [
+        "overallScore",
+        "technicalLevel",
+        "generalAssassment",
+        "recommendations",
+        "nextSteps",
+        "skillAnalysis",
+      ];
+      const missingFields = requiredFields.filter(
+        (field) => !(field in analysis)
+      );
+
+      if (missingFields.length > 0) {
+        throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
+      }
+
+      // add skill to profile if experienceLevel is proven
+
+      const skill = analysis.skillAnalysis[0];
+      if (skill.demonstratedExperienceLevel > 0) {
+        let experienceLevelString = "";
+        switch (skill.demonstratedExperienceLevel) {
+          case 1:
+            experienceLevelString = "Entry Level";
+            break;
+          case 2:
+            experienceLevelString = "Junior";
+            break;
+          case 3:
+            experienceLevelString = "Mid Level";
+            break;
+          case 4:
+            experienceLevelString = "Senior";
+            break;
+          case 5:
+            experienceLevelString = "Expert";
+            break;
+          default:
+            throw new Error(
+              `Unknown experienceLevel value: ${reqSkill.demonstratedExperienceLevel}  `
+            );
+        }
+
+        profile.skills = [
+          {
+            name: skill.skillName,
+            proficiencyLevel: skill.demonstratedExperienceLevel,
+            experienceLevel: experienceLevelString,
+            NumberTestPassed: 1,
+            ScoreTest: skill.confidenceScore,
+            Levelconfirmed: skill.demonstratedExperienceLevel-1,
+          },
+        ];
+
+        await profile.save();
+      }
+
+      // profile.quota++; quota was already increased in the generateOnboardingQuestions
+    } catch (error) {
+      console.error("Error in analysis parsing:", error);
+    }
+
+    res.status(200).json({
+      success: true,
+      result: { analysis },
+    });
+  } catch (error) {
+    console.error("Error analyzing onboardingAnswers results:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to analyze onboardingAnswers",
+      details: error.message,
+    });
   }
 };

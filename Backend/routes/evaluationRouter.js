@@ -15,8 +15,8 @@ router.post('/generate-soft-skill-questions', evaluationController.generateSoftS
 router.post('/analyze-profile-answers', evaluationController.analyzeProfileAnswers);
 router.post('/analyze-job-test-results', evaluationController.analyzeJobTestResults);
 
-router.get('/generate-onboarding-questions', evaluationController.generateOnboardingQuestions);
-// router.post('/analyze-onboarding-questions', evaluationController.analyzeOnboardingQuestions);
+router.post('/generate-onboarding-questions', evaluationController.generateOnboardingQuestions);
+router.post('/analyze-onboarding-answers', evaluationController.analyzeOnboardingAnswers);
 
 
 module.exports = router; 

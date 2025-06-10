@@ -440,8 +440,8 @@ export default function Test() {
         }
       } else {
         // This is from preferences
-        endpoint = 'evaluation/generate-questions';
-        
+        //endpoint = 'evaluation/generate-questions';
+        endpoint = 'evaluation/generate-onboarding-questions';
         // Parse skills and their levels
         const skillsArray = router.query.skills ? (router.query.skills as string).split(',') : [];
         const proficiencyMap = router.query.proficiencyLevels ? 
@@ -466,7 +466,7 @@ export default function Test() {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            type: 'on-boarding',
+            // type: 'on-boarding',
             skills: structuredSkills
           })
         });
@@ -772,7 +772,6 @@ export default function Test() {
     }
   };
 
-  const handlePrev = () => setCurrent(c => Math.max(0, c - 1));
   const handleNext = () => {
     if (current < questions.length - 1) {
       setCurrent(c => c + 1);
