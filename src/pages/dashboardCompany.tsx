@@ -2010,7 +2010,7 @@ Benefits:
                   mb: 2,
                   fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}>
-                  Required Skills
+                  Required Skillss
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {(isEditing ? editedJob?.skillAnalysis?.requiredSkills : generatedJob?.skillAnalysis?.requiredSkills || []).map((skill: { name: string; level: string; importance: string; category: string }, index: number) => (
@@ -2060,7 +2060,7 @@ Benefits:
                     ) : (
                       <SkillChip
                         key={index}
-                        label={`${skill.name} (${generatedJob?.jobDetails?.experienceLevel || 'Entry Level'})`}
+                        label={`${skill.name} (${getExperienceLevelFromNumber(skill.level)})`}
                         onDelete={isEditing ? () => {
                           if (!editedJob) return;
                           const updatedSkills = [...editedJob.skillAnalysis.requiredSkills];
@@ -3865,6 +3865,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           <DialogContent sx={{ mt: 2 }}>
             <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
               Add Required Skills
+
+
             </Typography>
             <TextField
               fullWidth
