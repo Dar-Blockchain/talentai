@@ -42,7 +42,7 @@ exports.matchCandidatesToJob = async (req, res) => {
         );
 
         // Log pour vérifier chaque candidat et son score
-        console.log("Candidate:", candidate.userId.username, "Score:", score);
+      //  console.log("Candidate:", candidate.userId.username, "Score:", score);
 
         return {
           candidateId: candidate.userId,
@@ -63,7 +63,7 @@ exports.matchCandidatesToJob = async (req, res) => {
       .filter((match) => match !== null && match.score > 0) // Filtrer les candidats nulls
       .sort((a, b) => b.score - a.score);
 
-      console.log("matches",matches)
+    //  console.log("matches",matches)
 
     // 4. Retourner la réponse
     res.json({
