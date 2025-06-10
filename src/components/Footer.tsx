@@ -5,7 +5,7 @@ import XIcon from "./icons/XIcon";
 import LinkedinIcon from "./icons/LinkedinIcon";
 import GithubIcon from "./icons/GithubIcon";
 import { useRouter } from "next/router";
-import { GITHUB_URL, LINKEDIN_URL, TWITTER_URL, YOUTUBE_URL } from "@/constants";
+import { GITHUB_URL, LINKEDIN_URL, TWITTER_URL, YOUTUBE_URL } from "../constants";
 
 const footerSections = [
   {

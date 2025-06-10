@@ -1,19 +1,17 @@
 # Step 1: Build the Next.js application
-FROM node:16 AS builder
+FROM node:20 AS builder
 
-# Set the working directory to /app
+# Set the working directory to /app (or /src, or another name)
 WORKDIR /app
 
-# Copy package.json, package-lock.json, and .env.local to the container
-COPY package.json package-lock.json .env.local ./
+# Copy package.json, package-lock.json, .env.local, and next.config.js to the container
+COPY package.json package-lock.json .env.local next.config.ts tsconfig.json ./
 
 # Install dependencies
 RUN npm install
 
-COPY . .
 # Copy the src directory and other project files into the container
 COPY src ./src
-COPY next.config.js ./
 
 # Build the Next.js application
 RUN npm run build
@@ -21,7 +19,7 @@ RUN npm run build
 # Step 2: Run the app in a production environment
 FROM node:16-slim
 
-# Set the working directory to /app
+# Set the working directory to /app (or another name)
 WORKDIR /app
 
 # Copy built application files from the builder stage
