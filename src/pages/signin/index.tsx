@@ -453,7 +453,7 @@ export default function SignIn() {
           </Divider> */}
 
           {/* GOOGLE SIGN IN */}
-          {/* <Button
+          <Button
             fullWidth
             variant="contained"
             startIcon={<GoogleIcon />}
@@ -473,7 +473,7 @@ export default function SignIn() {
             }}
           >
             Continue with Google
-          </Button> */}
+          </Button> 
         </Card>
       </Container>
     </Box>
