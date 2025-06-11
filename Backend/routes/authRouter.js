@@ -12,7 +12,7 @@ router.post("/verify-otp", authController.verifyOTP);
 // Route de connexion avec Gmail
 router.post("/connect-gmail", authController.connectWithGmail);
 
-router.get("/GetEmailGmailByToken", authController.GetEmailGmailByToken);
+router.get("/GetGmailByToken", authController.GetGmailByToken);
 
 router.get("/warnUser", requireAuthUser,authController.warnUser);
 

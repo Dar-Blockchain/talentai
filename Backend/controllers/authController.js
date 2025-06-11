@@ -1,5 +1,4 @@
 const authService = require("../services/authService");
-const User = require("../models/UserModel");
 
 // Route d'inscription
 module.exports.register = async (req, res) => {
@@ -21,7 +20,7 @@ module.exports.register = async (req, res) => {
 module.exports.verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
-        
+
     const result = await authService.verifyUserOTP(email, otp);
 
     res.cookie("jwt_token", result.token, {
@@ -39,30 +38,12 @@ module.exports.verifyOTP = async (req, res) => {
   }
 };
 
-
-const { OAuth2Client } = require("google-auth-library"); // Importer la bibliothèque
-
-// Initialisation du client OAuth2 avec ton Client ID Google
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
 // Connexion avec Gmail
 module.exports.connectWithGmail = async (req, res) => {
   try {
     const { id_token } = req.body; // Récupère le `id_token` envoyé par le frontend
-    //console.log("id_token", id_token);
 
-    // Vérifier le token avec l'API Google
-    const ticket = await client.verifyIdToken({
-      idToken: id_token, // Vérifier le token reçu
-      audience: process.env.GOOGLE_CLIENT_ID, // Ton Client ID Google
-    });
-    //console.log("ticket", ticket);
-
-    // Extraire les informations de l'utilisateur depuis le token validé
-    const payload = ticket.getPayload();
-    const email = payload.email;
-    //console.log("payload", payload);
-    //console.log("email", email);
+    const email = await authService.GetEmailGmailByToken(id_token);
 
     const result = await authService.connectWithGmail(email);
 
@@ -92,9 +73,7 @@ module.exports.logout = (req, res) => {
     req.session.destroy((err) => {
       if (err) {
         console.error("Erreur lors de la destruction de la session:", err);
-        return res
-          .status(500)
-          .json({ message: "Erreur lors de la déconnexion" });
+        return res.status(500).json({ message: "Erreur lors de la déconnexion" });
       }
       res.status(200).json({ message: "Déconnexion réussie" });
     });
@@ -114,41 +93,31 @@ module.exports.getAllUsers = async (req, res) => {
   }
 };
 
-
-module.exports.GetEmailGmailByToken = async (req, res) => {
+module.exports.GetGmailByToken = async (req, res) => {
   try {
     const { id_token } = req.body; // Récupère le `id_token` envoyé par le frontend
 
-    // Vérifier le token avec l'API Google
-    const ticket = await client.verifyIdToken({
-      idToken: id_token, // Vérifier le token reçu
-      audience: process.env.GOOGLE_CLIENT_ID, // Ton Client ID Google
-    });
+    const email = await authService.GetGmailByToken(id_token);
 
-    // Extraire les informations de l'utilisateur depuis le token validé
-    const payload = ticket.getPayload();
-    const email = payload.email;
-
-    // Retourner uniquement l'email sans cookie et sans sauvegarde
     res.status(200).json({
       email,
       message: "Email récupéré avec succès",
     });
   } catch (error) {
-    console.error(error);
-    res.status(400).json({ message: "Erreur lors de la récupération de l'email." });
+    res
+      .status(400)
+      .json({ message: "Erreur lors de la récupération de l'email." });
   }
 };
 
 module.exports.warnUser = async (req, res) => {
   try {
     const user = req.user;
-        
+
     const result = await authService.warnUser(user.email);
 
     // Créer la session avec le token
     res.status(200).json(result);
-
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
