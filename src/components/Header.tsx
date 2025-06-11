@@ -23,6 +23,7 @@ import { AppDispatch, RootState } from "@/store/store";
 import { useDispatch } from "react-redux";
 import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
 import dynamic from 'next/dynamic';
+import { setUserType } from "@/store/slices/userSlice";
 
 const navItems = [
   { label: "Features", id: "features" },
@@ -52,6 +53,7 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
   useEffect(() => {
     if (type) {
       localStorage.setItem("userType", type);
+      dispatch(setUserType(type as "company" | "jobseeker")); 
     }
   }, [type]);
   useEffect(() => {

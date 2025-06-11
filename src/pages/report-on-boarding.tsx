@@ -99,7 +99,7 @@ export default function ReportOnBoarding() {
 
         // Get skills from URL query parameters
         const skillsArray = router.query.skills ? (router.query.skills as string).split(',') : [];
-        const proficiencyMap = router.query.proficiencyLevels ? 
+        const proficiencyMap = router.query.proficiencyLevels ?
           Object.fromEntries(
             (router.query.proficiencyLevels as string).split(',').map(pair => {
               const [skill, level] = pair.split(':');
@@ -339,7 +339,7 @@ export default function ReportOnBoarding() {
                     </Box> */}
                     <Box sx={{ flex: 1 }}>
                       <Typography sx={{ color: '#000' }}>
-                        Demonstrated Level: {skill.demonstratedExperienceLevel}
+                        Demonstrated Level: {results.analysis.technicalLevel}
                       </Typography>
                     </Box>
                   </Box>
@@ -381,6 +381,52 @@ export default function ReportOnBoarding() {
               {results.analysis.nextSteps.map((step, i) => (
                 <Typography key={i} sx={{ color: '#000', mb: 1 }}>• {step}</Typography>
               ))}
+            </Box>
+          </Box>
+
+          {/* Hedera Explanation */}
+          <Box sx={{ mb: 4, padding: '10px', border: '1px solid black' }}>
+            <Typography variant="h6" sx={{ color: '#000', mb: 2 }}>
+              Hedera Network
+            </Typography>
+            <Box sx={{ backgroundColor: 'rgba(255,255,255,0.05)', p: 2, borderRadius: 2 }}>
+              <Typography sx={{ color: '#000', mb: 2 }}>
+                Hedera is a decentralized public network that enables individuals and businesses to create powerful decentralized applications (DApps). It is designed to be a fairer, more efficient system that eliminates some of the limitations that older blockchain-based platforms face.
+              </Typography>
+              <Typography sx={{ color: '#000', mb: 2 }}>
+                Key features of Hedera include:
+              </Typography>
+              <Typography sx={{ color: '#000', ml: 2, mb: 1 }}>• High throughput and low latency</Typography>
+              <Typography sx={{ color: '#000', ml: 2, mb: 1 }}>• Fair and secure consensus mechanism</Typography>
+              <Typography sx={{ color: '#000', ml: 2, mb: 1 }}>• Low and predictable fees</Typography>
+              <Typography sx={{ color: '#000', ml: 2, mb: 1 }}>• Energy-efficient network</Typography>
+            </Box>
+          </Box>
+
+          {/* Pass Test Section */}
+          <Box sx={{ mb: 4, padding: '10px', border: '1px solid black' }}>
+            <Typography variant="h6" sx={{ color: '#000', mb: 2 }}>
+              Pass Test
+            </Typography>
+            <Box sx={{ backgroundColor: 'rgba(255,255,255,0.05)', p: 2, borderRadius: 2 }}>
+              <Typography sx={{ color: '#000', mb: 2 }}>
+                🌐 The Hedera test is now available — and it's free to take!
+              </Typography>
+              <Button
+                variant="contained"
+                href="https://hashgraphdev.com/?code=Dar%20Ranya"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  background: 'rgba(0, 255, 157, 1)',
+                  color: '#fff',
+                  '&:hover': {
+                    background: 'rgba(0, 255, 157, 0.8)',
+                  }
+                }}
+              >
+                Pass the Test
+              </Button>
             </Box>
           </Box>
 
