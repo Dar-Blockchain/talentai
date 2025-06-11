@@ -12,6 +12,7 @@ import {
   useMediaQuery,
   useTheme,
   Stack,
+  Typography,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
@@ -29,8 +30,12 @@ const navItems = [
   { label: "Pricing", id: "pricing" },
   { label: "Contact", id: "contact" },
 ];
-
-const Header = () => {
+type HeaderProps = {
+  logo: string; // path to the logo image
+  type: string; // "company" or "jobseeker"
+  color: string; // "company" or "jobseeker"
+};
+const Header = ({ logo, type, color }: HeaderProps) => {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -69,7 +74,7 @@ const Header = () => {
     >
       <Box
         component="img"
-        src="/logo.svg"
+        src={logo}
         alt="TalentAI Logo"
         sx={{ height: 32, mb: 2, cursor: 'pointer' }}
         onClick={() => router.push("/")}
@@ -139,8 +144,22 @@ const Header = () => {
               ))}
             </Stack>
           )}
-
-          {!isMobile ? (
+          <Typography
+            sx={{
+              cursor: 'pointer',
+              fontFamily: 'Poppins',
+              fontWeight: 500,
+              fontSize: '18px',
+              lineHeight: '100%',
+              letterSpacing: '0%',
+              color: color,
+              display: 'inline-block', // optional, helps with background rendering
+              padding: '4px 8px',      // optional, adds spacing inside the background
+              borderRadius: '4px'      // optional, for a smoother look
+            }}
+          >
+            {type}
+          </Typography>          {!isMobile ? (
             <Button
               variant="contained"
               onClick={() => {
@@ -165,15 +184,15 @@ const Header = () => {
               }}
               endIcon={
                 <ArrowForwardIcon
-                  sx={{ fontSize: 16, color: "rgba(0, 255, 157, 1)" }}
+                  sx={{ fontSize: 16, color: color }}
                 />
               }
             >
-              {isAuthenticated 
-                ? profile?.type === "Candidate" 
-                  ? "Dashboard Candidate" 
-                  : profile?.type === "Company" 
-                    ? "Dashboard Company" 
+              {isAuthenticated
+                ? profile?.type === "Candidate"
+                  ? "Dashboard Candidate"
+                  : profile?.type === "Company"
+                    ? "Dashboard Company"
                     : "Go to Dashboard"
                 : "Get Started"}
             </Button>

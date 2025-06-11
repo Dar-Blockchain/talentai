@@ -20,7 +20,12 @@ const stats = [
   },
 ];
 
-const StatList = () => {
+type StatListProps = {
+  type?: string;
+  color?: string;
+};
+
+const StatList = ({ type, color }: StatListProps) => {
   return (
     <Stack spacing={3}>
       {Array.from({ length: stats.length / 2 }).map((_, rowIndex) => (
@@ -34,7 +39,7 @@ const StatList = () => {
         >
           {stats.slice(rowIndex * 2, rowIndex * 2 + 2).map((stat, index) => (
             <Box key={index} flex={1}>
-              <StatCard {...stat} />
+              <StatCard {...stat} type={type} color={color} />
             </Box>
           ))}
         </Box>

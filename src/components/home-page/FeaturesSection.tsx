@@ -5,7 +5,43 @@ import RobotIcon from "../icons/RobotIcon";
 import ThunderIcon from "../icons/ThunderIcon";
 import ChartIcon from "../icons/ChartIcon";
 import UsersIcon from "../icons/UsersIcon";
-
+import VerifiedIcon from "../icons/VerifiedIcon";
+import DiplomaIcon from "../icons/DiplomaIcon";
+import StandOutIcon from "../icons/StandOutIcon";
+import TokenIcon from "../icons/TokenIcon";
+const featuresJobSeeker = [
+  {
+    icon: <VerifiedIcon />,
+    title: (
+      <>
+        Get Verified,  <br /> Not Just Judged
+      </>
+    ),
+    description:
+      "Our advanced algorithms analyze thousands of data points to find the perfect match for your open positions.",
+  },
+  {
+    icon: <DiplomaIcon />,
+    title: "Own Your Credentials",
+    description:
+      "Save hours of manual work with our intelligent resume screening and initial candidate assessment.",
+  },
+  {
+    icon: <StandOutIcon />,
+    title: (
+      <>
+        Stand Out   <br /> to the Right Companies
+      </>
+    ), description:
+      "Make data-driven hiring decisions with our predictive analytics and performance insights.",
+  },
+  {
+    icon: <TokenIcon />,
+    title: "Earn Talent Tokens",
+    description:
+      "Get rewarded for completing interviews, learning new skills, and staying active.",
+  },
+];
 const features = [
   {
     icon: <RobotIcon />,
@@ -37,7 +73,12 @@ const features = [
   },
 ];
 
-const FeaturesSection = () => {
+type FeaturesSectionProps = {
+  type?: string;
+  color?: string;
+};
+
+const FeaturesSection = ({ type, color }: FeaturesSectionProps) => {
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
   const isSmUp = useMediaQuery(theme.breakpoints.up("sm"));
@@ -64,31 +105,60 @@ const FeaturesSection = () => {
           mb: 0,
         }}
       >
-        Hiring is broken
-        <Box
-          component="span"
-          sx={{
-            width: "0.2em",
-            height: "0.2em",
-            backgroundColor: "rgba(0, 255, 157, 1)",
-            borderRadius: "50%",
-            display: "inline-block",
-            mx: "0.25rem",
-          }}
-        />
-        We're fixing it
-        <Box
-          component="span"
-          sx={{
-            width: "0.2em",
-            height: "0.2em",
-            backgroundColor: "rgba(0, 255, 157, 1)",
-            borderRadius: "50%",
-            display: "inline-block",
-            mx: "0.25rem",
-          }}
-        />{" "}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {type === "company" ? "Hiring is broken" : "WHY"}
+          {type === "jobseeker" && (
+            <>
+              <Box
+                component="img"
+                src="/logo.svg"
+                alt="TalentAI Logo"
+                sx={{ height: '1em', display: 'inline-block' }}
+              />
+              <Typography
+                variant="h3"
+                fontWeight={600}
+                sx={{
+                  fontSize: 'clamp(1rem, 7vw, 3.25rem)',
+                  lineHeight: 1.3,
+                  mb: 0,
+                }}
+              >
+                ?
+              </Typography>
+            </>)}
+          {type === "company" && (
+            <>
+              <Box
+                component="span"
+                sx={{
+                  width: "0.2em",
+                  height: "0.2em",
+                  backgroundColor: "rgba(0, 255, 157, 1)",
+                  borderRadius: "50%",
+                  display: "inline-block",
+                  mx: "0.25rem",
+                }}
+              />
+              We're fixing it
+              <Box
+                component="span"
+                sx={{
+                  width: "0.2em",
+                  height: "0.2em",
+                  backgroundColor: "rgba(0, 255, 157, 1)",
+                  borderRadius: "50%",
+                  display: "inline-block",
+                  mx: "0.25rem",
+                }}
+              />{" "}
+            </>
+          )}
+        </Box>
+
+
       </Typography>
+
       <Typography
         variant="body1"
         color="#000000"
@@ -97,7 +167,7 @@ const FeaturesSection = () => {
           fontSize: { xs: "0.95rem", sm: "1rem" },
         }}
       >
-        From Job Description to Offer — Powered by AI, Verified on Blockchain
+        {type === "jobseeker" ? `Traditional resumes don’t tell your full story—TalentAI does` : `From Job Description to Offer — Powered by AI, Verified on Blockchain`}
       </Typography>
 
       <Stack
@@ -108,7 +178,15 @@ const FeaturesSection = () => {
         useFlexGap
         sx={{ pt: 2 }}
       >
-        {features.map((feature, index) => (
+        {type === "jobseeker" ? featuresJobSeeker.map((feature, index) => (
+          <Stack key={index} sx={{ width: itemWidth }}>
+            <FeatureCard
+              icon={feature.icon}
+              title={feature.title}
+              description={feature.description}
+            />
+          </Stack>
+        )) : features.map((feature, index) => (
           <Stack key={index} sx={{ width: itemWidth }}>
             <FeatureCard
               icon={feature.icon}

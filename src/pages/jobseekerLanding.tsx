@@ -7,19 +7,19 @@ import PartnersSection from "@/components/home-page/PartnersSection";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 
-const HomePage: React.FC = () => {
+const JobSeekerLanding: React.FC = () => {
   return (
     <>
-      <Header logo="/logo.svg" type="Are you a Job Seeker?" color="#29D291D4" />
+      <Header logo="/logojobSeeker.png" type="Are you hiring?" color="#8310FF" />
 
-      <HeroSection title="Revolutionize Your Hiring with" color="#29D291D4" type="company" subtitle="AI-Powered Intelligence" />
+      <HeroSection title="Get Hired" color="#8310FF" type="jobseeker" subtitle="For Who You Really Are." />
       {/* <PartnersSection /> */}
-      <FeaturesSection type="company" color="#29D291D4" />
-      <SolutionsSection type="company" color="#29D291D4" title="Why Choose" subtitle="From Guesswork to Precision—Redefine How You Hire" />
+      <FeaturesSection type="jobseeker" color="#8310FF" />
+      <SolutionsSection type="jobseeker" color="#8310FF" title="How It Works" subtitle="Three steps to unlock career-changing opportunities:" />
       <PricingSection />
       <ContactSection />
       <Footer />
     </>
   );
 };
-export default HomePage;
+export default JobSeekerLanding;
