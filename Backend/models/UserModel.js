@@ -20,6 +20,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isBanned: {
+      type: Boolean,
+      default: false,
+    },
+    warnings: { type: Number, default: 0 }, // au lieu de warning
     lastLogin: {
       type: Date,
       default: null,
@@ -36,9 +41,9 @@ const userSchema = new mongoose.Schema(
       },
     ],
     trafficCounter: { type: Number, default: 0 },
-  //  pubkey: { type: String, default: null },
-  //  privkey: { type: String, default: null },
-  //  accountId: { type: String, default: null },
+    //  pubkey: { type: String, default: null },
+    //  privkey: { type: String, default: null },
+    //  accountId: { type: String, default: null },
   },
   { timestamps: true }
 );

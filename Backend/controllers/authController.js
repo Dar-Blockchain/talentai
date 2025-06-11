@@ -140,3 +140,16 @@ module.exports.GetEmailGmailByToken = async (req, res) => {
   }
 };
 
+module.exports.warnUser = async (req, res) => {
+  try {
+    const user = req.user;
+        
+    const result = await authService.warnUser(user.email);
+
+    // Créer la session avec le token
+    res.status(200).json(result);
+
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
