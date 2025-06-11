@@ -8,6 +8,7 @@ on:
     branches: [ Version-BetaMain ]
     paths: [ 'Backend/**' ]
 
+
 env:
   AWS_REGION: us-west-2  # Change this to your ECR repository region
   ECR_REPOSITORY: talentaibackend  # Backend ECR repository name
