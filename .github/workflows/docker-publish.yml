@@ -39,11 +39,8 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
-        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
       run: |
-        # Ensure we have the correct ECR registry URL format
-        FULL_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-        echo "Using ECR Registry: $FULL_REGISTRY"
+        echo "Using ECR Registry from login: $ECR_REGISTRY"
         
         docker build \
           --build-arg NEXT_PUBLIC_API_BASE_URL="${{ secrets.NEXT_PUBLIC_API_BASE_URL }}" \
@@ -57,10 +54,8 @@ jobs:
           --build-arg GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
           --build-arg ASSEMBLYAI_API_KEY="${{ secrets.ASSEMBLYAI_API_KEY }}" \
           --build-arg NODE_ENV="production" \
-          -t $FULL_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
-          -t $FULL_REGISTRY/$ECR_REPOSITORY:latest .
-        docker push $FULL_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        docker push $FULL_REGISTRY/$ECR_REPOSITORY:latest
+          -t 874772885665.dkr.ecr.us-west-2.amazonaws.com/talentaifrontend 
+        docker push 874772885665.dkr.ecr.us-west-2.amazonaws.com/talentaifrontend
 
     - name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
