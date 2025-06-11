@@ -7,7 +7,6 @@ on:
     branches: [ Version-BetaMain ]
 
 
-
 env:
   AWS_REGION: us-east-1  # Change this to your ECR repository region
   ECR_REPOSITORY: talentaifrontend  # Change this to your ECR repository name
