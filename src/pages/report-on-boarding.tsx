@@ -116,7 +116,7 @@ export default function ReportOnBoarding() {
 
         const requestBody = {
           // type: 'technicalSkill',
-          // skill: structuredSkills,
+          skill: structuredSkills,
           questions: testData.results
         };
 
