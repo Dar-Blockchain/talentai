@@ -43,7 +43,7 @@ COPY src ./src
 RUN npm run build
 
 # Step 2: Run the app in a production environment
-FROM node:16-slim
+FROM node:20-slim
 
 # Set the working directory to /app
 WORKDIR /app

@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+spec:
+  replicas: 2  # Define the number of pods you want
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: 874772885665.dkr.ecr.us-west-2.amazonaws.com/talentaifrontend:latest  # Docker image URL
+        ports:
+        - containerPort: 80  # Port exposed in the container
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  selector:
+    app: frontend
+  ports:
+    - protocol: TCP
+      port: 80  # Exposing port 80 to the Load Balancer
+      targetPort: 80  # The port inside the container to which traffic will be forwarded
+  type: LoadBalancer  # Exposing the service to the internet
