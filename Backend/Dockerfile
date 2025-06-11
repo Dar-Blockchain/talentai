@@ -44,6 +44,8 @@ COPY package.json  ./
 # Install dependencies
 RUN npm install
 
+RUN npm install google-auth-library
+
 # Copy the rest of the backend code (excluding .env file)
 COPY . .
 

@@ -21,8 +21,7 @@ spec:
         env:
         - name: NODE_ENV
           value: "production"
-        # Add any other environment vakubectl get pods
-riables here as needed
+        # Add any other environment variables here as needed
 ---
 apiVersion: v1
 kind: Service
