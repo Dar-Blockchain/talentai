@@ -1,11 +1,37 @@
 # Step 1: Build the Next.js application
 FROM node:20 AS builder
 
-# Set the working directory to /app (or /src, or another name)
+# Set the working directory to /app
 WORKDIR /app
 
-# Copy package.json, package-lock.json, .env.local, and next.config.js to the container
-COPY package.json package-lock.json .env.local next.config.ts tsconfig.json ./
+# Define build arguments for all environment variables
+ARG NEXT_PUBLIC_API_BASE_URL
+ARG OPENAI_API_KEY
+ARG LINKEDIN_CLIENT_ID
+ARG LINKEDIN_CLIENT_SECRET
+ARG LINKEDIN_REDIRECT_URI
+ARG NEXTAUTH_URL
+ARG NEXTAUTH_SECRET
+ARG GOOGLE_CLIENT_ID
+ARG GOOGLE_CLIENT_SECRET
+ARG ASSEMBLYAI_API_KEY
+ARG NODE_ENV=production
+
+# Set environment variables from build arguments
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+ENV OPENAI_API_KEY=$OPENAI_API_KEY
+ENV LINKEDIN_CLIENT_ID=$LINKEDIN_CLIENT_ID
+ENV LINKEDIN_CLIENT_SECRET=$LINKEDIN_CLIENT_SECRET
+ENV LINKEDIN_REDIRECT_URI=$LINKEDIN_REDIRECT_URI
+ENV NEXTAUTH_URL=$NEXTAUTH_URL
+ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
+ENV GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+ENV GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
+ENV ASSEMBLYAI_API_KEY=$ASSEMBLYAI_API_KEY
+ENV NODE_ENV=$NODE_ENV
+
+# Copy package.json, package-lock.json, next.config.js to the container
+COPY package.json package-lock.json next.config.ts tsconfig.json ./
 
 # Install dependencies
 RUN npm install
@@ -19,17 +45,40 @@ RUN npm run build
 # Step 2: Run the app in a production environment
 FROM node:16-slim
 
-# Set the working directory to /app (or another name)
+# Set the working directory to /app
 WORKDIR /app
+
+# Define runtime arguments
+ARG NEXT_PUBLIC_API_BASE_URL
+ARG OPENAI_API_KEY
+ARG LINKEDIN_CLIENT_ID
+ARG LINKEDIN_CLIENT_SECRET
+ARG LINKEDIN_REDIRECT_URI
+ARG NEXTAUTH_URL
+ARG NEXTAUTH_SECRET
+ARG GOOGLE_CLIENT_ID
+ARG GOOGLE_CLIENT_SECRET
+ARG ASSEMBLYAI_API_KEY
+ARG NODE_ENV=production
+
+# Set runtime environment variables
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+ENV OPENAI_API_KEY=$OPENAI_API_KEY
+ENV LINKEDIN_CLIENT_ID=$LINKEDIN_CLIENT_ID
+ENV LINKEDIN_CLIENT_SECRET=$LINKEDIN_CLIENT_SECRET
+ENV LINKEDIN_REDIRECT_URI=$LINKEDIN_REDIRECT_URI
+ENV NEXTAUTH_URL=$NEXTAUTH_URL
+ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
+ENV GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+ENV GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
+ENV ASSEMBLYAI_API_KEY=$ASSEMBLYAI_API_KEY
+ENV NODE_ENV=$NODE_ENV
 
 # Copy built application files from the builder stage
 COPY --from=builder /app ./
 
 # Install only production dependencies
 RUN npm install --production
-
-# Copy .env.local file for runtime as well (since this is needed at runtime)
-COPY .env.local .env.local
 
 # Expose the default Next.js port
 EXPOSE 3000
