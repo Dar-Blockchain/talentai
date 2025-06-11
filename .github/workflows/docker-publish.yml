@@ -1,37 +1,43 @@
-name: Build and Push Docker Image to ECR
+name: Docker Build and Push
 
 on:
   push:
-    branches:
-      - Version-BetaMain  # Change to your branch, e.g., `Version-BetaMain`
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: talentai
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
-
+    
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
-    - name: Log in to AWS ECR
-      uses: aws-actions/amazon-ecr-login@v1
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
       with:
-        region: ${{ secrets.AWS_REGION }}
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
 
-    - name: Build Frontend Docker Image
-      run: |
-        docker build -t ${{ secrets.ECR_REPOSITORY_FRONTEND }} .
-        docker tag ${{ secrets.ECR_REPOSITORY_FRONTEND }}:latest ${{ secrets.ECR_REPOSITORY_FRONTEND }}:latest
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
 
-    - name: Push Frontend Docker Image to ECR
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
       run: |
-        docker push ${{ secrets.ECR_REPOSITORY_FRONTEND }}:latest
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-    - name: Build Backend Docker Image
-      run: |
-        docker build -t ${{ secrets.ECR_REPOSITORY_BACKEND }} .
-        docker tag ${{ secrets.ECR_REPOSITORY_BACKEND }}:latest ${{ secrets.ECR_REPOSITORY_BACKEND }}:latest
-
-    - name: Push Backend Docker Image to ECR
-      run: |
-        docker push ${{ secrets.ECR_REPOSITORY_BACKEND }}:latest
+    - name: Image digest
+      run: echo ${{ steps.docker_build.outputs.digest }}
