@@ -93,10 +93,16 @@ module.exports.registerUser = async (email) => {
 
 // Service de vérification OTP
 module.exports.verifyUserOTP = async (email, otp) => {
-  const user = await User.findOne({ email });
-  console.log(user);
+  const user = await User.findOne({ email });  
+  
   if (!user) {
     throw new Error("Utilisateur non trouvé");
+  }
+
+  if (user && user.isBanned) {
+    return res.status(403).json({
+      message: "You are banned. Please check and contact support.",
+    });
   }
 
   if (!user.otp || !user.otp.code || !user.otp.expiresAt) {
@@ -130,6 +136,12 @@ module.exports.verifyUserOTP = async (email, otp) => {
 module.exports.connectWithGmail = async (email) => {
   // Vérifier si l'utilisateur existe déjà
   let user = await User.findOne({ email });
+
+  if (user && user.isBanned) {
+    return res.status(403).json({
+      message: "You are banned. Please check and contact support.",
+    });
+  }
 
   if (!user) {
     // Si l'utilisateur n'existe pas, créer un nouveau compte avec un portefeuille Hedera
