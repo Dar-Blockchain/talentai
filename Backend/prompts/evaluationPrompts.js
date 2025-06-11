@@ -196,10 +196,13 @@ Example Output:
 const analyzeOnbordingQuestionsPrompts = {
   getSystemPrompt: () =>
     `
-You are a senior interviewer. Your job is to analyze the condidate's answers to assess a candidate's skill proficiency.
+You are a senior interviewer analyzing candidate answers transcribed from oral responses. 
+Your job is to analyze the condidate's answers to assess a candidate's skill proficiency.
+
+Note: The answers were provided orally and transcribed by AI, so the text may contain transcription errors, incomplete sentences, or minor inaccuracies.
 
 Your task is to:
-- Analyze the candidate’s answers against the required skill levels.
+- Analyze the candidate’s answers against the required skill level.
 - Assess the skill for:
   - demonstratedExperienceLevel
   - Strengths
@@ -239,14 +242,8 @@ The skill has exactly 10 questions. For each answer of a question:
 Final confidenceScore = Sum of all question scores (maximum = 100%)
 
 Demonstrated Experience Level Calculation:
--The level is assigned based on the confidenceScore as follows:
--The maximum demonstratedExperienceLevel is always the requiredLevel.
--If confidenceScore >= 70% → demonstratedExperienceLevel = requiredLevel
--If 50% <= confidenceScore < 70% → demonstratedExperienceLevel = Math.max(0, requiredLevel-1)
--If 20% <= confidenceScore < 50% → demonstratedExperienceLevel = Math.max(0, requiredLevel-2)
--If 15% <= confidenceScore < 20% → demonstratedExperienceLevel = Math.max(0, requiredLevel-3)
--If confidenceScore < 15% → demonstratedExperienceLevel = 0 (meaning the candidate shows no valid proficiency)
--The final value must be between 0 and requiredLevel, inclusive.
+-based on the overallScore
+-demonstratedExperienceLevel cannot exceed the requiredLevel.
 
 Technical Level Assignment Rules:
 - If demonstratedExperienceLevel == 0 → technicalLevel: "NoLevel"
@@ -256,14 +253,17 @@ Technical Level Assignment Rules:
 - If demonstratedExperienceLevel == 4 → technicalLevel: "Senior"
 - If demonstratedExperienceLevel == 5 → technicalLevel: "Expert"
 
-STRICT REQUIREMENTS: 
--Be objective
--Do not estimate some knowledge , the answers do not reflect.
+STRICT REQUIREMENTS:
+- Be objective and base your assessment only on the information clearly or reasonably implied in the candidate’s answers.
+- Do not infer or estimate knowledge that is not supported by the content.
+- However, consider that answers were transcribed from speech and may contain minor errors or incomplete sentences.
+- When evaluating, interpret the candidate’s intended meaning only if it can be reasonably and clearly inferred from the context, without making unsupported assumptions.
+
 
 Respond strictly in JSON format only, without any additional explanations or text.
 `,
 
-  getUserPrompt: (questions) =>
+  getUserPrompt: (skillName,requiredLevel,questions) =>
     `
 Analyze the following:
 
@@ -272,8 +272,8 @@ ${questions
   .map(
     (qa, index) =>
       `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}\nSkill: ${
-        qa.skill
-      }\nProficiency Level Required: ${qa.level}`
+        skillName
+      }\nProficiency Level Required: ${requiredLevel}`
   )
   .join("\n\n")}
 
@@ -297,12 +297,6 @@ Following this JSON object fields, generate a detailed JSON analysis with these 
     }
   ],
 }
-
-
-
-STRICT REQUIREMENTS: 
--Be objective.
--Do not estimate some knowledge , the answers do not reflect.
 
 Provide only the JSON output without any additional text.
 `,

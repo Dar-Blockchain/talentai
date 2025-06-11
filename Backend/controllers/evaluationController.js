@@ -1616,16 +1616,61 @@ exports.generateOnboardingQuestions = async (req, res) => {
 
 exports.analyzeOnboardingAnswers = async (req, res) => {
   try {
-    const { questions } = req.body;
+    const { questions, skill } = req.body;
     const user = req.user;
+
+    if (!Array.isArray(skill)) {
+      return res.status(400).json({
+        error: "Invalid request format",
+        required: {
+          skill:
+            "Array of skill objects with name and proficiencyLevel (and optional subcategory)",
+        },
+      });
+    }
+
+    if (!Array.isArray(skill) || !Array.isArray(questions)) {
+      return res.status(400).json({
+        error: "Invalid request format",
+        required: {
+          questions: "Array of question-answer pairs",
+        },
+      });
+    }
+
+    // Validate skill objects - allow optional subcategory for soft skills
+    const isValidSkill = skill.every(
+      (s) =>
+        s.name &&
+        typeof s.name === "string" &&
+        typeof s.proficiencyLevel === "number" &&
+        s.proficiencyLevel >= 1 &&
+        s.proficiencyLevel <= 5
+    );
+
+    if (!isValidSkill) {
+      return res.status(400).json({
+        error: "Invalid skill format",
+        message:
+          "Each skill must have a name (string) and proficiencyLevel (number 1-5)",
+      });
+    }
 
     if (!user) {
       return res.status(404).json({ error: "User not found." });
     }
 
+    const profile = await Profile.findById(user.profile);
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    const requiredLevel = skill[0].proficiencyLevel; 
+    const skillName = skill[0].name; 
+
     const systemPrompt = analyzeOnbordingQuestionsPrompts.getSystemPrompt();
     const userPrompt =
-      analyzeOnbordingQuestionsPrompts.getUserPrompt(questions);
+      analyzeOnbordingQuestionsPrompts.getUserPrompt(skillName,requiredLevel, questions);
 
     // 4. Call TogetherAI API for analysis
     const stream = await together.chat.completions.create({
@@ -1704,10 +1749,7 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
       }
 
       // add skill to profile if experienceLevel is proven
-      const profile = await Profile.findById(user.profile);
-      if (!profile) {
-        return res.status(404).json({ error: "Profile not found" });
-      }
+
       const skill = analysis.skillAnalysis[0];
       if (skill.demonstratedExperienceLevel > 0) {
         let experienceLevelString = "";
@@ -1733,17 +1775,21 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
             );
         }
 
-        profile.skills.push({
-          name: skill.skillName,
-          proficiencyLevel: skill.demonstratedExperienceLevel,
-          experienceLevel: experienceLevelString,
-          NumberTestPassed: 1,
-          ScoreTest: skill.confidenceScore,
-        });
+        profile.skills = [
+          {
+            name: skill.skillName,
+            proficiencyLevel: skill.demonstratedExperienceLevel,
+            experienceLevel: experienceLevelString,
+            NumberTestPassed: 1,
+            ScoreTest: skill.confidenceScore,
+            Levelconfirmed: skill.demonstratedExperienceLevel-1,
+          },
+        ];
+
+        await profile.save();
       }
 
-      profile.quota++;
-      await profile.save();
+      // profile.quota++; quota was already increased in the generateOnboardingQuestions
     } catch (error) {
       console.error("Error in analysis parsing:", error);
     }

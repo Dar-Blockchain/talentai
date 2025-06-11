@@ -6,6 +6,8 @@ export interface Partner {
   isImage?: boolean;
 }
 
+
+
 export const partners: Partner[] = [
   {
     name: "Hgraph",
