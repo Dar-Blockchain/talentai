@@ -869,7 +869,7 @@ export default function Test() {
         const token = localStorage.getItem('api_token');
         if (token) {
           fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/warnUser`, {
-            method: 'POST',
+            method: 'GET',
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`,
