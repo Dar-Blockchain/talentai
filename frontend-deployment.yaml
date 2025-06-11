@@ -17,6 +17,7 @@ spec:
         image: 874772885665.dkr.ecr.us-west-2.amazonaws.com/talentaifrontend:latest  # Docker image URL
         ports:
         - containerPort: 80  # Port exposed in the container
+        
 ---
 apiVersion: v1
 kind: Service
@@ -28,5 +29,5 @@ spec:
   ports:
     - protocol: TCP
       port: 80  # Exposing port 80 to the Load Balancer
-      targetPort: 80  # The port inside the container to which traffic will be forwarded
+      targetPort: 3000  # The port inside the container to which traffic will be forwarded
   type: LoadBalancer  # Exposing the service to the internet
