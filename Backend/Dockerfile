@@ -39,12 +39,10 @@ ENV LINKEDIN_REDIRECT_URI=$LINKEDIN_REDIRECT_URI
 ENV TOGETHER_API_KEY=$TOGETHER_API_KEY
 
 # Copy package.json and package-lock.json into the container
-COPY package.json  ./
+COPY package.json package-lock.json ./
 
 # Install dependencies
 RUN npm install
-
-RUN npm install google-auth-library
 
 # Copy the rest of the backend code (excluding .env file)
 COPY . .
