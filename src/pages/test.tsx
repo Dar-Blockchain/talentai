@@ -444,7 +444,7 @@ export default function Test() {
         endpoint = 'evaluation/generate-onboarding-questions';
         // Parse skills and their levels
         const skillsArray = router.query.skills ? (router.query.skills as string).split(',') : [];
-        const proficiencyMap = router.query.proficiencyLevels ? 
+        const proficiencyMap = router.query.proficiencyLevels ?
           Object.fromEntries(
             (router.query.proficiencyLevels as string).split(',').map(pair => {
               const [skill, level] = pair.split(':');
@@ -854,16 +854,30 @@ export default function Test() {
   };
 
   // Security violation handler
-  const handleSecurityViolation = () => {
+  const handleSecurityViolation = async () => {
     setSecurityViolationCount((prev) => {
       const next = prev + 1;
       if (next === 1) {
         // First violation: show intelligent popup
         setShowFirstViolationModal(true);
+        // Call warning API
+
       } else if (next === 2) {
         // Second violation: redirect and show modal
         setShowSecurityModal(true);
         stopRecording();
+        const token = localStorage.getItem('api_token');
+        if (token) {
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/warnUser`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            }
+          }).catch(error => {
+            console.error('Error sending warning:', error);
+          });
+        }
         setTimeout(() => {
           router.push('/dashboardCandidate');
         }, 2000); // Give time for modal to show
