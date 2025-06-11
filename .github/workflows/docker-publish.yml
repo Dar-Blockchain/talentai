@@ -1,0 +1,37 @@
+name: Build and Push Docker Image to ECR
+
+on:
+  push:
+    branches:
+      - main  # Change to your branch, e.g., `Version-BetaMain`
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Log in to AWS ECR
+      uses: aws-actions/amazon-ecr-login@v1
+      with:
+        region: ${{ secrets.AWS_REGION }}
+
+    - name: Build Frontend Docker Image
+      run: |
+        docker build -t ${{ secrets.ECR_REPOSITORY_FRONTEND }} .
+        docker tag ${{ secrets.ECR_REPOSITORY_FRONTEND }}:latest ${{ secrets.ECR_REPOSITORY_FRONTEND }}:latest
+
+    - name: Push Frontend Docker Image to ECR
+      run: |
+        docker push ${{ secrets.ECR_REPOSITORY_FRONTEND }}:latest
+
+    - name: Build Backend Docker Image
+      run: |
+        docker build -t ${{ secrets.ECR_REPOSITORY_BACKEND }} .
+        docker tag ${{ secrets.ECR_REPOSITORY_BACKEND }}:latest ${{ secrets.ECR_REPOSITORY_BACKEND }}:latest
+
+    - name: Push Backend Docker Image to ECR
+      run: |
+        docker push ${{ secrets.ECR_REPOSITORY_BACKEND }}:latest
