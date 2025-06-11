@@ -74,7 +74,7 @@ const features = [
 ];
 
 type FeaturesSectionProps = {
-  type?: string;
+  type?: "company" | "jobseeker";
   color?: string;
 };
 
@@ -111,9 +111,12 @@ const FeaturesSection = ({ type, color }: FeaturesSectionProps) => {
             <>
               <Box
                 component="img"
-                src="/logo.svg"
+                src={type as "company" | "jobseeker" === "company" ? "/logo.svg" : "/logojobSeeker.svg"}
                 alt="TalentAI Logo"
-                sx={{ height: '1em', display: 'inline-block' }}
+                sx={{
+                  height: "1em",
+                  display: "inline-block",
+                }}
               />
               <Typography
                 variant="h3"
@@ -167,7 +170,7 @@ const FeaturesSection = ({ type, color }: FeaturesSectionProps) => {
           fontSize: { xs: "0.95rem", sm: "1rem" },
         }}
       >
-        {type === "jobseeker" ? `Traditional resumes don’t tell your full story—TalentAI does` : `From Job Description to Offer — Powered by AI, Verified on Blockchain`}
+        {type === "jobseeker" ? `Traditional resumes don't tell your full story—TalentAI does` : `From Job Description to Offer — Powered by AI, Verified on Blockchain`}
       </Typography>
 
       <Stack
@@ -181,6 +184,7 @@ const FeaturesSection = ({ type, color }: FeaturesSectionProps) => {
         {type === "jobseeker" ? featuresJobSeeker.map((feature, index) => (
           <Stack key={index} sx={{ width: itemWidth }}>
             <FeatureCard
+              type="jobseeker"
               icon={feature.icon}
               title={feature.title}
               description={feature.description}
@@ -189,6 +193,7 @@ const FeaturesSection = ({ type, color }: FeaturesSectionProps) => {
         )) : features.map((feature, index) => (
           <Stack key={index} sx={{ width: itemWidth }}>
             <FeatureCard
+              type="company"
               icon={feature.icon}
               title={feature.title}
               description={feature.description}

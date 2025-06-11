@@ -34,8 +34,9 @@ type HeaderProps = {
   logo: string; // path to the logo image
   type: string; // "company" or "jobseeker"
   color: string; // "company" or "jobseeker"
+  link: string;
 };
-const Header = ({ logo, type, color }: HeaderProps) => {
+const Header = ({ logo, type, color, link }: HeaderProps) => {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -115,10 +116,10 @@ const Header = ({ logo, type, color }: HeaderProps) => {
         <Toolbar sx={{ justifyContent: "space-between" }}>
           <Box
             component="img"
-            src="/logo.svg"
+            src={type === "company" ? "/logo.svg" : "/logojobSeeker.svg"}
             alt="TalentAI Logo"
             sx={{ height: 32, cursor: 'pointer' }}
-            onClick={() => router.push("/")}
+            onClick={() => router.push(type === "company" ? '/' : '/jobseekerLanding')}
           />
           {!isMobile && (
             <Stack direction="row" spacing={4} alignItems="center">
@@ -153,13 +154,15 @@ const Header = ({ logo, type, color }: HeaderProps) => {
               lineHeight: '100%',
               letterSpacing: '0%',
               color: color,
-              display: 'inline-block', // optional, helps with background rendering
-              padding: '4px 8px',      // optional, adds spacing inside the background
-              borderRadius: '4px'      // optional, for a smoother look
+              display: 'inline-block',
+              padding: '4px 8px',
+              borderRadius: '4px'
             }}
+            onClick={() => router.push(type === "company" ? '/jobseekerLanding' : '/')}
           >
-            {type}
-          </Typography>          {!isMobile ? (
+            {link}
+          </Typography>
+          {!isMobile ? (
             <Button
               variant="contained"
               onClick={() => {

@@ -33,7 +33,7 @@ const socialLinks = [
   { name: "GitHub", icon: <GithubIcon />, href: GITHUB_URL },
 ];
 
-const Footer = () => {
+const Footer = ({ type }: { type: "company" | "jobseeker" }) => {
   const router = useRouter()
   return (
     <Box
@@ -55,10 +55,10 @@ const Footer = () => {
         <Box sx={{ minWidth: 200 }}>
           <Box
             component="img"
-            src="/logo.svg"
+            src={type === "company" ? "/logo.svg" : "/logojobSeeker.svg"}
             alt="TalentAI Logo"
             sx={{ height: 32 }}
-            onClick={() => router.push('/')}
+            onClick={() => router.push(type === "company" ? '/' : '/jobseekerLanding')}
           />
           <Typography variant="body2" sx={{ mt: 2, lineHeight: "160%" }}>
             Verified Talent. <br />

@@ -5,20 +5,18 @@ type FeatureCardProps = {
   icon: React.ReactElement;
   title: any;
   description: string;
-  type: string;
 };
 
-const FeatureCard: React.FC<FeatureCardProps> = ({
+const CareerCard: React.FC<FeatureCardProps> = ({
   icon,
   title,
   description,
-  type,
 }) => {
   return (
     <Card
       sx={{
         textAlign: "center",
-        padding: 3,
+        padding: 6,
         borderRadius: 3,
         height: "100%",
         display: "flex",
@@ -26,9 +24,11 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
         justifyContent: "flex-start",
         alignItems: "center",
         color: "#000",
-        boxShadow: type === "company" ? "0px 4px 50px 0px rgba(20, 189, 124, 0.15)" : "0px 4px 50px 0px rgba(131, 16, 255, 0.15)",
-        backdropFilter: "blur(15px)",
-        WebkitBackdropFilter: "blur(15px)",
+        boxShadow: "0px 5.48px 36.99px 0px #7A7A7A21",
+
+        backdropFilter: "blur(20.549848556518555px)",
+
+        WebkitBackdropFilter: "blur(20.549848556518555px)",
         backgroundColor: "rgba(255, 255, 255, 0.75)",
       }}
       elevation={0}
@@ -38,9 +38,13 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
         <Typography
           variant="h6"
           sx={{
-            fontSize: "1rem",
+            fontFamily: 'Poppins, sans-serif',
+            fontWeight: 600,
+            fontSize: '20px',
+            lineHeight: '100%',
+            letterSpacing: '0%',
+            textAlign: 'center',
           }}
-          fontWeight="600"
           gutterBottom
         >
           {title}
@@ -48,10 +52,14 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
         <Typography
           variant="body2"
           sx={{
-            fontSize: "0.75rem",
-            pt: 2
+            fontFamily: 'Poppins, sans-serif',
+            fontWeight: 400,
+            fontSize: '19px',
+            lineHeight: '100%',
+            letterSpacing: '0%',
+            textAlign: 'center',
+            pt: 2,
           }}
-          fontWeight="400"
         >
           {description}
         </Typography>
@@ -60,4 +68,4 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
   );
 };
 
-export default FeatureCard;
+export default CareerCard;
