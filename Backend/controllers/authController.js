@@ -43,7 +43,7 @@ module.exports.connectWithGmail = async (req, res) => {
   try {
     const { id_token } = req.body; // Récupère le `id_token` envoyé par le frontend
 
-    const email = await authService.GetEmailGmailByToken(id_token);
+    const email = await authService.GetGmailByToken(id_token);
 
     const result = await authService.connectWithGmail(email);
 
