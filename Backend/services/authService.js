@@ -1,7 +1,6 @@
 const User = require("../models/UserModel");
 const { sendOTP } = require("./emailService");
 const jwt = require("jsonwebtoken");
-const hederaService = require("./hederaService");
 
 // Générer un code OTP
 const generateOTP = () => {
@@ -19,6 +18,11 @@ const generateToken = (userId) => {
     expiresIn: "7d",
   });
 };
+
+const { OAuth2Client } = require("google-auth-library"); 
+
+// Initialisation du client OAuth2 avec ton Client ID Google
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Service d'inscription
 module.exports.registerUser = async (email) => {
@@ -89,10 +93,16 @@ module.exports.registerUser = async (email) => {
 
 // Service de vérification OTP
 module.exports.verifyUserOTP = async (email, otp) => {
-  const user = await User.findOne({ email });
-  console.log(user);
+  const user = await User.findOne({ email });  
+  
   if (!user) {
     throw new Error("Utilisateur non trouvé");
+  }
+
+  if (user && user.isBanned) {
+    return res.status(403).json({
+      message: "You are banned. Please check and contact support.",
+    });
   }
 
   if (!user.otp || !user.otp.code || !user.otp.expiresAt) {
@@ -126,6 +136,12 @@ module.exports.verifyUserOTP = async (email, otp) => {
 module.exports.connectWithGmail = async (email) => {
   // Vérifier si l'utilisateur existe déjà
   let user = await User.findOne({ email });
+
+  if (user && user.isBanned) {
+    return res.status(403).json({
+      message: "You are banned. Please check and contact support.",
+    });
+  }
 
   if (!user) {
     // Si l'utilisateur n'existe pas, créer un nouveau compte avec un portefeuille Hedera
@@ -162,4 +178,54 @@ module.exports.connectWithGmail = async (email) => {
 module.exports.getAllUsers = async () => {
   const users = await User.find();
   return users;
+};
+
+module.exports.GetGmailByToken = async (id_token) => {
+
+  // Vérifier le token avec l'API Google
+  const ticket = await client.verifyIdToken({
+    idToken: id_token, // Vérifier le token reçu
+    audience: process.env.GOOGLE_CLIENT_ID, // Ton Client ID Google
+  });
+
+  // Extraire les informations de l'utilisateur depuis le token validé
+  const payload = ticket.getPayload();
+  const email = payload.email;
+
+  return email;
+};
+
+module.exports.warnUser = async (email) => {
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    const error = new Error("User not found");
+    error.status = 404;
+    throw error;
+  }
+
+  if (user.isBanned) {
+    return {
+      message: "User is already banned",
+      user,
+    };
+  }
+
+  user.warnings = (user.warnings || 0) + 1;
+
+  if (user.warnings >= 3) {
+    user.isBanned = true;
+    await user.save();
+    return {
+      message: "User has been banned after receiving 3 warnings",
+      user,
+    };
+  }
+
+  await user.save();
+
+  return {
+    message: `User has received warning ${user.warnings}/3`,
+    user,
+  };
 };
