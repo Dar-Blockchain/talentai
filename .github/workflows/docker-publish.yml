@@ -2,9 +2,9 @@ name: Docker Build and Push
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ Version-BetaMain ]
   pull_request:
-    branches: [ main ]
+    branches: [ Version-BetaMain ]
 
 
 
