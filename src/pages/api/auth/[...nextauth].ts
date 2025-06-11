@@ -41,7 +41,7 @@ const authOptions: NextAuthOptions = {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             //id_token for connect with google
-            body: JSON.stringify({ email , id_token })
+            body: JSON.stringify({ id_token })
           });
           const data = await response.json();
 
