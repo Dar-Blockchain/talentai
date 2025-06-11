@@ -39,7 +39,7 @@ ENV LINKEDIN_REDIRECT_URI=$LINKEDIN_REDIRECT_URI
 ENV TOGETHER_API_KEY=$TOGETHER_API_KEY
 
 # Copy package.json and package-lock.json into the container
-COPY package.json package-lock.json ./
+COPY package.json  ./
 
 # Install dependencies
 RUN npm install
