@@ -61,9 +61,16 @@ const Footer = ({ type }: { type: "company" | "jobseeker" }) => {
             onClick={() => router.push(type === "company" ? '/' : '/jobseekerLanding')}
           />
           <Typography variant="body2" sx={{ mt: 2, lineHeight: "160%" }}>
-            Verified Talent. <br />
-            Decentralized Hiring. <br />
-            AI-Powered Speed.
+            {type === "company" ? (
+              <>
+                Verified Talent. <br />
+                Decentralized Hiring. <br />
+                AI-Powered Speed.
+              </>
+            ) : (
+              <>
+                TalentAI | Empowering Real Talent      <br />   Join the hiring revolution.        </>
+            )}
           </Typography>
         </Box>
         <Stack
