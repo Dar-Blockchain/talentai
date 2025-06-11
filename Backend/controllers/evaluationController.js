@@ -1560,9 +1560,7 @@ exports.generateOnboardingQuestions = async (req, res) => {
         .json({ error: "skills must include only one skill" });
     }
 
-    const skillsListDetails = skills
-      .map((skill) => `- ${skill.name} (ProficiencyLevel: ${skill.level})`)
-      .join("\n");
+    const skillName = skills[0].name; 
 
     const questionsCount = 10;
 
@@ -1570,7 +1568,7 @@ exports.generateOnboardingQuestions = async (req, res) => {
       generateOnboardingQuestionsPrompts.getSystemPrompt(questionsCount);
     const userPrompt = generateOnboardingQuestionsPrompts.getUserPrompt(
       questionsCount,
-      skillsListDetails
+      skillName
     );
     const stream = await together.chat.completions.create({
       model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
@@ -1578,8 +1576,8 @@ exports.generateOnboardingQuestions = async (req, res) => {
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 500,
-      temperature: 0.5,
+      max_tokens: 700,
+      temperature: 0.6,
       stream: true,
     });
 
