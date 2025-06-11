@@ -16,7 +16,7 @@ jobs:
     - name: Log in to AWS ECR
       uses: aws-actions/amazon-ecr-login@v1
       with:
-        region: ${{ secrets.AWS_REGION }}
+        aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Build Frontend Docker Image
       run: |
