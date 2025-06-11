@@ -163,3 +163,38 @@ module.exports.getAllUsers = async () => {
   const users = await User.find();
   return users;
 };
+
+exports.warnUser = async (email) => {
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    const error = new Error("Utilisateur non trouvé");
+    error.status = 404;
+    throw error;
+  }
+
+  if (user.isBanned) {
+    return {
+      message: "Utilisateur déjà banni",
+      user,
+    };
+  }
+
+  user.warnings = (user.warnings || 0) + 1;
+
+  if (user.warnings >= 3) {
+    user.isBanned = true;
+    await user.save();
+    return {
+      message: "Utilisateur banni après 3 avertissements",
+      user,
+    };
+  }
+
+  await user.save();
+
+  return {
+    message: `Avertissement ${user.warnings}/3 attribué à l'utilisateur`,
+    user,
+  };
+};

@@ -14,6 +14,7 @@ router.post("/connect-gmail", authController.connectWithGmail);
 
 router.get("/GetEmailGmailByToken", authController.GetEmailGmailByToken);
 
+router.get("/warnUser", requireAuthUser,authController.warnUser);
 
 router.get("/getAllUsers", requireAuthUser, authController.getAllUsers);
 
