@@ -54,8 +54,10 @@ jobs:
           --build-arg GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
           --build-arg ASSEMBLYAI_API_KEY="${{ secrets.ASSEMBLYAI_API_KEY }}" \
           --build-arg NODE_ENV="production" \
-          -t 874772885665.dkr.ecr.us-west-2.amazonaws.com/talentaifrontend 
-        docker push 874772885665.dkr.ecr.us-west-2.amazonaws.com/talentaifrontend
+          -t 874772885665.dkr.ecr.us-west-2.amazonaws.com/talentaifrontend:$IMAGE_TAG \
+          -t 874772885665.dkr.ecr.us-west-2.amazonaws.com/talentaifrontend:latest .
+        docker push 874772885665.dkr.ecr.us-west-2.amazonaws.com/talentaifrontend:$IMAGE_TAG
+        docker push 874772885665.dkr.ecr.us-west-2.amazonaws.com/talentaifrontend:latest
 
     - name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
