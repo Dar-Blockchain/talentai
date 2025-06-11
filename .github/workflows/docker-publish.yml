@@ -30,11 +30,21 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
+    - name: Debug ECR Registry URL
+      run: |
+        echo "ECR Registry: ${{ steps.login-ecr.outputs.registry }}"
+        echo "Expected format: {account-id}.dkr.ecr.{region}.amazonaws.com"
+
     - name: Build, tag, and push image to Amazon ECR
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
+        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
       run: |
+        # Ensure we have the correct ECR registry URL format
+        FULL_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        echo "Using ECR Registry: $FULL_REGISTRY"
+        
         docker build \
           --build-arg NEXT_PUBLIC_API_BASE_URL="${{ secrets.NEXT_PUBLIC_API_BASE_URL }}" \
           --build-arg OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
@@ -47,10 +57,10 @@ jobs:
           --build-arg GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
           --build-arg ASSEMBLYAI_API_KEY="${{ secrets.ASSEMBLYAI_API_KEY }}" \
           --build-arg NODE_ENV="production" \
-          -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
-          -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          -t $FULL_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+          -t $FULL_REGISTRY/$ECR_REPOSITORY:latest .
+        docker push $FULL_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $FULL_REGISTRY/$ECR_REPOSITORY:latest
 
     - name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
