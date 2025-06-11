@@ -49,20 +49,20 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 module.exports.connectWithGmail = async (req, res) => {
   try {
     const { id_token } = req.body; // Récupère le `id_token` envoyé par le frontend
-    console.log("id_token", id_token);
+    //console.log("id_token", id_token);
 
     // Vérifier le token avec l'API Google
     const ticket = await client.verifyIdToken({
       idToken: id_token, // Vérifier le token reçu
       audience: process.env.GOOGLE_CLIENT_ID, // Ton Client ID Google
     });
-    console.log("ticket", ticket);
+    //console.log("ticket", ticket);
 
     // Extraire les informations de l'utilisateur depuis le token validé
     const payload = ticket.getPayload();
     const email = payload.email;
-    console.log("payload", payload);
-    console.log("email", email);
+    //console.log("payload", payload);
+    //console.log("email", email);
 
     const result = await authService.connectWithGmail(email);
 
