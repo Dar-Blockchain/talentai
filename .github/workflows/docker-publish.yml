@@ -3,7 +3,7 @@ name: Build and Push Docker Image to ECR
 on:
   push:
     branches:
-      - main  # Change to your branch, e.g., `Version-BetaMain`
+      - Version-BetaMain  # Change to your branch, e.g., `Version-BetaMain`
 
 jobs:
   build:
