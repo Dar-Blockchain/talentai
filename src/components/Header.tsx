@@ -49,7 +49,11 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
   useEffect(() => {
     setMounted(true);
   }, []);
-
+  useEffect(() => {
+    if (type) {
+      localStorage.setItem("userType", type);
+    }
+  }, [type]);
   useEffect(() => {
     if (isAuthenticated) {
       dispatch(getMyProfile());
