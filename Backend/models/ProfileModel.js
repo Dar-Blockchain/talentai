@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const TodoList = require("../models/todoListModel");
 
 const profileSchema = new mongoose.Schema(
   {
@@ -96,5 +97,20 @@ const profileSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+profileSchema.post("save", async function (doc) {
+  try {
+    if (!doc.todoList) {
+      const todoList = await TodoList.create({ profile: doc._id });
+
+      await mongoose.model("Profile").findByIdAndUpdate(doc._id, {
+        todoList: todoList._id,
+      });
+    }
+  } catch (error) {
+    console.error("Error creating TodoList:", error);
+  }
+});
+
 
 module.exports = mongoose.model("Profile", profileSchema);
