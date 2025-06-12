@@ -2943,7 +2943,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
     try {
       setIsLoadingProfiles(true);
       setProfilesError(null);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('api_token');
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getCompanyWithAssessments`, {
         method: 'GET',

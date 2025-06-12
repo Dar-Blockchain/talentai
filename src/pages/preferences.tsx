@@ -483,6 +483,7 @@ export default function Preferences() {
     setUserType(type);
     setActiveStep(prev => prev + 1);
   };
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   // Add effect to check traffic counter
   useEffect(() => {
@@ -494,11 +495,16 @@ export default function Preferences() {
         return;
       }
 
+      // Add a small delay to ensure token is stored
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       try {
-        const token = localStorage.getItem('api_token')
+        const token = localStorage.getItem('api_token');
+        console.log('Current token:', token);
+        
         if (!token) {
-          console.log('No token found, redirecting to home');
-          router.push('/');
+          console.log('No token found, redirecting to signin');
+          router.push('/signin');
           return;
         }
 
@@ -513,11 +519,11 @@ export default function Preferences() {
         // If profile exists and is valid, check returnUrl
         if (response.ok) {
           const data = await response.json();
-
+          
           // Check if profile is complete
           const isProfileComplete = data && data.type &&
-            ((data.type === 'Candidate' && data.skills && data.skills.length > 0) ||
-              (data.type === 'Company' && data.requiredSkills && data.requiredSkills.length > 0));
+            ((data.type === 'Candidate' ) ||
+              (data.type === 'Company' ));
 
           if (isProfileComplete) {
             if (returnUrl) {
