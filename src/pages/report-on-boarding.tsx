@@ -199,7 +199,7 @@ export default function ReportOnBoarding() {
         gap: 3
       }}>
         <CircularProgress sx={{ color: '#02E2FF' }} />
-        <Typography variant="h6" sx={{ color: '#fff' }}>
+        <Typography variant="h6" sx={{ color: 'black' }}>
           {analyzing ? 'Analyzing your responses...' : 'Loading...'}
         </Typography>
       </Box>
@@ -279,7 +279,7 @@ export default function ReportOnBoarding() {
             variant="h4"
             sx={{
               mb: 3,
-              background: 'rgba(0, 255, 157, 1)',
+              background: '#8310FF',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               fontWeight: 700
@@ -327,7 +327,7 @@ export default function ReportOnBoarding() {
               >
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, backgroundColor: 'white' }}>
                   <Box>
-                    <Typography variant="h6" sx={{ color: 'rgba(0, 255, 157, 1)' }}>
+                    <Typography variant="h6" sx={{ color: '#8310FF' }}>
                       {skill.skillName}
                     </Typography>
                   </Box>
@@ -344,7 +344,7 @@ export default function ReportOnBoarding() {
                     </Box>
                   </Box>
                   <Box sx={{ mt: 2 }}>
-                    <Typography sx={{ color: '#00FFC3', mb: 1 }}>Strengths:</Typography>
+                    <Typography sx={{ color: '#8310FF', mb: 1 }}>Strengths:</Typography>
                     {skill.strengths.map((strength, j) => (
                       <Typography key={j} sx={{ color: '#000', ml: 2 }}>• {strength}</Typography>
                     ))}
@@ -418,10 +418,10 @@ export default function ReportOnBoarding() {
                 target="_blank"
                 rel="noopener noreferrer"
                 sx={{
-                  background: 'rgba(0, 255, 157, 1)',
+                  background: '#8310FF',
                   color: '#fff',
                   '&:hover': {
-                    background: 'rgba(0, 255, 157, 0.8)',
+                    background: '#8310FF',
                   }
                 }}
               >
@@ -443,7 +443,7 @@ export default function ReportOnBoarding() {
               onClick={() => router.push('/dashboardCandidate')}
               startIcon={<PersonIcon />}
               sx={{
-                background: 'rgba(0, 255, 157, 1)',
+                background: '#8310FF',
                 color: '#fff',
                 px: 4,
                 py: 1.5,
@@ -452,7 +452,7 @@ export default function ReportOnBoarding() {
                 fontSize: '1.1rem',
                 fontWeight: 500,
                 '&:hover': {
-                  background: 'rgba(0, 255, 157, 1)',
+                  background: '#8310FF',
                 }
               }}
             >
