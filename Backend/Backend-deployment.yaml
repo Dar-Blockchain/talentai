@@ -1,0 +1,37 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+spec:
+  replicas: 2  # Number of backend pods to run
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: 874772885665.dkr.ecr.us-west-2.amazonaws.com/talentaibackend:latest  # Replace with your ECR image URL
+        ports:
+        - containerPort: 5004  # The port your backend application is listening on
+        env:
+        - name: NODE_ENV
+          value: "production"
+        # Add any other environment variables here as needed
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  selector:
+    app: backend  # This selector ensures traffic is routed to the backend pods
+  ports:
+    - protocol: TCP
+      port: 80       # Expose the backend service on port 80 externally
+      targetPort: 5004  # The container port the backend app is listening on
+  type: LoadBalancer  # This exposes the service externally; change to ClusterIP if only internal access is needed

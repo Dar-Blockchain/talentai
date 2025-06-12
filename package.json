@@ -29,6 +29,7 @@
     "formdata-node": "^6.0.3",
     "formidable": "^3.5.2",
     "framer-motion": "^12.6.5",
+    "google-auth-library": "^10.0.0",
     "html2canvas": "^1.4.1",
     "js-cookie": "^3.0.5",
     "jspdf": "^3.0.1",
