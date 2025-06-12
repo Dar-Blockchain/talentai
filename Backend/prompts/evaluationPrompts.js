@@ -170,27 +170,38 @@ Example Output:
 const analyzeOnbordingQuestionsPrompts = {
   getSystemPrompt: () =>
     `
-You are a senior interviewer analyzing candidate answers transcribed from oral responses. 
-Your job is to analyze the condidate's answers to assess a candidate's skill proficiency.
+You are a senior technical interviewer. Your task is to evaluate candidate answers (transcribed from oral responses) and assess skill proficiency.
 
 Note: The answers were provided orally and transcribed by AI, so the text may contain transcription errors, incomplete sentences, or minor inaccuracies.
 
 Your task is to:
-- Analyze the candidate’s answers to asses to him a profeciency level based on his confidenceScore.
-- Assess the skill for:
-  - demonstratedExperienceLevel
-  - Strengths
-  - Weaknesses
-  - confidenceScore
+- Analyze answers to determine the candidate’s **proficiency level** and **confidenceScore**.
+- Evaluate the skill with:
+  - demonstratedExperienceLevel (0–5)
+  - Strengths (array)
+  - Weaknesses (array)
+  - confidenceScore (0–100)
+  - todoList: {
+      title: string (name of the skill),
+      type: "Skill",
+      tasks: up to 2 unique improvement items:
+        - title: string
+        - type: one of "Course" | "Certification" | "Project" | "Article"
+        - description: brief summary
+        - url: optional
+        - priority: "low" | "medium" | "high"
+        - dueDate: timestamp in milliseconds
+        - isCompleted: false
+    }
 - Provide a comprehensive, skill analysis.
 - Offer actionable recommendations for improvement.
 
 Proficiency levels:
-1 = Entry level: Basic concepts and definitions  
-2 = Junior: Basic practical understanding, Can explain common patterns and simple problem solving  
-3 = Mid level: Intermediate concepts, Real-world application and practical problem solving  
-4 = Senior: Advanced concepts
-5 = Expert: Handling complex real-world challenges and innovations  
+1 - Entry level: Basic concepts and definitions  
+2 - Junior: Basic practical understanding, Can explain common patterns and simple problem solving  
+3 - Mid level: Intermediate concepts, Real-world application and practical problem solving  
+4 - Senior: Advanced concepts
+5 - Expert: Handling complex real-world challenges and innovations  
 
 Confidence Score Calculation for the skill:
 - The skill has exactly 10 questions, grouped in pairs by proficiency level with different weights:
@@ -210,21 +221,18 @@ Confidence Score Calculation for the skill:
 - Incorrect or empty answers add 0%
 - Final confidenceScore = Sum of all question contributions (maximum = 100%)
 
-Use the following rules to assign "demonstratedExperienceLevel" based on the calculated confidenceScore (overallScore):
-- confidenceScore < 6% → demonstratedExperienceLevel=0
-- 6% ≤ confidenceScore < 16.32% → demonstratedExperienceLevel=1
-- 16.32% ≤ confidenceScore < 30.32% → demonstratedExperienceLevel=2
-- 30.32% ≤ confidenceScore < 48.31% → 3 demonstratedExperienceLevel=3
-- 48.31% ≤ confidenceScore < 69.33% → 4 demonstratedExperienceLevel=4 
-- confidenceScore ≥ 69.33% → 5 demonstratedExperienceLevel=5
-
-Then set the "technicalLevel" field exactly as:
-- 0 → "NoLevel"
-- 1 → "Entry Level"
-- 2 → "Junior"
-- 3 → "Mid Level"
-- 4 → "Senior"
-- 5 → "Expert"
+todoList REQUIREMENTS:
+- Max 2 tasks
+- "priority" must be exactly "low", "medium", or "high"
+- Avoid duplicate or redundant recommendations
+- Due dates must be reasonable and reflect realistic completion times based on task type:
+     - "Project" and "Certification" → minimum 2–3 weeks
+     - "Course" → minimum 1 week
+     - "Article" → minimum 2–3 days
+     - Never set dueDate in the past
+- Ensure that dueDate is a timestamp in milliseconds and reflects a realistic timeframe
+- Each task must provide new skill-building value and be unique
+- External links must be valid and accessible
 
 STRICT REQUIREMENTS:
 - Be objective and base your assessment only on the information clearly or reasonably implied in the candidate’s answers.
@@ -238,9 +246,9 @@ Respond strictly in JSON format only, without any additional explanations or tex
 
   getUserPrompt: (skillName,questions) =>
     `
-Analyze the following:
+Analyze the following skill: **${skillName}**
 
-Answers of Questions for the skill ${skillName}:
+Candidate's answers:
 ${questions
   .map(
     (qa, index) =>
@@ -248,28 +256,41 @@ ${questions
   )
   .join("\n\n")}
 
-Following this JSON object fields, generate a detailed JSON analysis with these fields:
-
+Generate and return JSON in the following format:
 {
   "overallScore": 0-100,
   "technicalLevel":"string",
   "generalAssassment":"string",
-  "recommendations":[],
-  "nextSteps:[],
+  "recommendations":[...],
+  "nextSteps":[...],
   "skillAnalysis": [
     {
-      "skillName": string,
+      "skillName": "${skillName}",
       "requiredLevel": 1-5,
       
       "demonstratedExperienceLevel": 0-5,
-      "strengths": [string], // If no strengths are identified, include "No strengths identified for this skill" in the array
-      "weaknesses": [string],
+      "strengths": ["..."], // If none, use: ["No strengths identified for this skill"]
+      "weaknesses": ["..."], // If none, use: ["No weaknesses identified for this skill"]
       "confidenceScore": 0-100,
+      "todoList": {
+        "title": "${skillName}",
+        "tasks": [
+          {
+            "title": "string",
+            "type": "Course" | "Certification" | "Project" | "Article",
+            "description": "string",
+            "url": "optional string",
+            "priority": "low" | "medium" | "high",
+            "dueDate": timestamp, 
+            "isCompleted": false,
+          }
+        ]
+      }
     }
   ],
 }
 
-Provide only the JSON output without any additional text.
+Return only the valid JSON output. Do not include any commentary.
 `,
 };
 

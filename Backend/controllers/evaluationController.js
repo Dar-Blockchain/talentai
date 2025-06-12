@@ -9,6 +9,7 @@ const {
 
 const JobAssessmentResult = require("../models/JobAssessmentResultModel");
 const Profile = require("../models/ProfileModel");
+const TodoList = require("../models/todoListModel");
 const Post = require("../models/PostModel");
 
 const postService = require("../services/postService");
@@ -1663,6 +1664,11 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
       return res.status(404).json({ error: "Profile not found" });
     }
 
+    const todoList = await TodoList.findById(profile.todoList);
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
     const skillName = skill[0].name;
     const systemPrompt = analyzeOnbordingQuestionsPrompts.getSystemPrompt();
     const userPrompt = analyzeOnbordingQuestionsPrompts.getUserPrompt(
@@ -1681,7 +1687,7 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
         { role: "user", content: userPrompt },
       ],
       max_tokens: 1000,
-      temperature: 0.6,
+      temperature: 0.7,
       stream: true,
     });
 
@@ -1793,6 +1799,17 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
         ];
 
         await profile.save();
+
+        // for(let i = 0; i< todoList.todos.length; i++){
+        //   if(todoList.todos[i].type == "Skill"){
+        //     todoList.todos[i] = analysis.skillAnalysis[0].todoList;
+        //     todoList.todos[i].isCompleted = false; 
+        //   }
+        // }
+
+        // await todoList.save();
+        // console.log("check todoList: ", todoList);
+
       }
     } catch (error) {
       console.error("Error in analysis parsing:", error);
