@@ -1560,7 +1560,7 @@ exports.generateOnboardingQuestions = async (req, res) => {
         .json({ error: "skills must include only one skill" });
     }
 
-    const skillName = skills[0].name; 
+    const skillName = skills[0].name;
 
     const questionsCount = 10;
 
@@ -1663,12 +1663,12 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-    const requiredLevel = skill[0].proficiencyLevel; 
-    const skillName = skill[0].name; 
-
+    const skillName = skill[0].name;
     const systemPrompt = analyzeOnbordingQuestionsPrompts.getSystemPrompt();
-    const userPrompt =
-      analyzeOnbordingQuestionsPrompts.getUserPrompt(skillName,requiredLevel, questions);
+    const userPrompt = analyzeOnbordingQuestionsPrompts.getUserPrompt(
+      skillName,
+      questions
+    );
 
     // 4. Call TogetherAI API for analysis
     const stream = await together.chat.completions.create({
@@ -1693,7 +1693,6 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
 
     // 5. Parse and validate the response
     let analysis;
-
     let jsonStr;
     try {
       const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
@@ -1746,48 +1745,55 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
         throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
       }
 
+      /*Depending on the calculated overallScore in the analysis Set: 
+       - the technicalLevel 
+       - demonstratedExperienceLevel 
+      */
+      const overallScore = analysis.overallScore;
+      let demonstratedExperienceLevel;
+      let experienceLevelString = "";
+
+      if (overallScore < 6) {
+        demonstratedExperienceLevel = 0;
+        experienceLevelString = "NoLevel";
+      } else if (overallScore < 16.32) {
+        demonstratedExperienceLevel = 1;
+        experienceLevelString = "Entry Level";
+      } else if (overallScore < 30.32) {
+        demonstratedExperienceLevel = 2;
+        experienceLevelString = "Junior";
+      } else if (overallScore < 48.31) {
+        demonstratedExperienceLevel = 3;
+        experienceLevelString = "Mid Level";
+      } else if (overallScore < 69.33) {
+        demonstratedExperienceLevel = 4;
+        experienceLevelString = "Senior";
+      } else {
+        demonstratedExperienceLevel = 5;
+        experienceLevelString = "Expert";
+      }
+
+      // set the technicalLevel in the analysis result:
+      analysis.technicalLevel = experienceLevelString;
+      analysis.skillAnalysis[0].requiredLevel = demonstratedExperienceLevel;
+      analysis.skillAnalysis[0].demonstratedExperienceLevel =
+        demonstratedExperienceLevel;
+
       // add skill to profile if experienceLevel is proven
-
-      const skill = analysis.skillAnalysis[0];
-      if (skill.demonstratedExperienceLevel > 0) {
-        let experienceLevelString = "";
-        switch (skill.demonstratedExperienceLevel) {
-          case 1:
-            experienceLevelString = "Entry Level";
-            break;
-          case 2:
-            experienceLevelString = "Junior";
-            break;
-          case 3:
-            experienceLevelString = "Mid Level";
-            break;
-          case 4:
-            experienceLevelString = "Senior";
-            break;
-          case 5:
-            experienceLevelString = "Expert";
-            break;
-          default:
-            throw new Error(
-              `Unknown experienceLevel value: ${reqSkill.demonstratedExperienceLevel}  `
-            );
-        }
-
+      if (demonstratedExperienceLevel > 0) {
         profile.skills = [
           {
-            name: skill.skillName,
-            proficiencyLevel: skill.demonstratedExperienceLevel,
+            name: analysis.skillAnalysis[0].skillName,
+            proficiencyLevel: demonstratedExperienceLevel,
             experienceLevel: experienceLevelString,
             NumberTestPassed: 1,
-            ScoreTest: skill.confidenceScore,
-            Levelconfirmed: skill.demonstratedExperienceLevel-1,
+            ScoreTest: overallScore,
+            Levelconfirmed: demonstratedExperienceLevel - 1,
           },
         ];
 
         await profile.save();
       }
-
-      // profile.quota++; quota was already increased in the generateOnboardingQuestions
     } catch (error) {
       console.error("Error in analysis parsing:", error);
     }
