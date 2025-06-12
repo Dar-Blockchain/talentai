@@ -16,8 +16,6 @@ router.get("/GetGmailByToken", authController.GetGmailByToken);
 
 router.get("/warnUser", requireAuthUser,authController.warnUser);
 
-router.get("/getAllUsers", requireAuthUser, authController.getAllUsers);
-
 // Route de déconnexion
 router.post("/logout", authController.logout);
 

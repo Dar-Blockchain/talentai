@@ -359,9 +359,7 @@ exports.getCompanyWithAssessments = async (req, res) => {
     const profile = await profileService.getCompanyProfileWithAssessments(id);
 
     if (!profile) {
-      return res
-        .status(404)
-        .json({ message: "Profil introuvable ou non une entreprise." });
+      return res.status(404).json({ message: "Profil introuvable ou non une entreprise." });
     }
 
     return res.status(200).json(profile);
