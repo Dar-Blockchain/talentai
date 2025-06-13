@@ -1,5 +1,6 @@
 import React from 'react'
 import { Box, useTheme } from '@mui/material'
+import Image from 'next/image'
 
 const partners = [
   '/images/partners/Darblockchain.png',
@@ -31,12 +32,27 @@ const PartnersSection = () => {
       >
         {[...partners, ...partners].map((src, idx) => (
           <Box
-            component="img"
             key={idx}
-            src={src}
-            alt={`partner-${idx}`}
-            sx={{ height: {xs: 30, sm: 40, md:60}, mx: 4 }}
-          />
+            sx={{ 
+              height: {xs: 30, sm: 40, md: 60}, 
+              mx: 4,
+              position: 'relative',
+              display: 'inline-block'
+            }}
+          >
+            <Image
+              src={src}
+              alt={`partner-${idx}`}
+              width={200}
+              height={60}
+              style={{
+                height: '100%',
+                width: 'auto',
+                objectFit: 'contain'
+              }}
+              priority={idx < 4} // Prioritize loading first set of images
+            />
+          </Box>
         ))}
       </Box>
 
