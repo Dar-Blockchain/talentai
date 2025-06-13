@@ -27,14 +27,7 @@ module.exports.generateTechniqueQuestionsForJob = async (
     const skillsListDetails = skillListToTest
       .map((skill) => `- ${skill.name} (ProficiencyLevel: ${skill.level})`)
       .join("\n");
-    let questionsCount;
-
-    //
-    if (skillListToTest.length <= 2) {
-      questionsCount = 10;
-    } else {
-      questionsCount = 20;
-    }
+    let questionsCount = 10; 
 
     const systemPrompt =
       generateJobQuestionsPrompts.getSystemPrompt(questionsCount);
