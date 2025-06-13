@@ -36,8 +36,9 @@ COPY package.json package-lock.json next.config.ts tsconfig.json ./
 # Install dependencies
 RUN npm install
 
-# Copy the src directory and other project files into the container
+# Copy the src directory and public directory into the container
 COPY src ./src
+COPY public ./public
 
 # Build the Next.js application
 RUN npm run build

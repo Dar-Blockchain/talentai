@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: frontend-deployment
 spec:
-  replicas: 2  # Define the number of pods you want
+  replicas: 2  # Number of replicas for scaling
   selector:
     matchLabels:
       app: frontend
@@ -14,20 +14,33 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: 874772885665.dkr.ecr.us-west-2.amazonaws.com/talentaifrontend:latest  # Docker image URL
+        image: 874772885665.dkr.ecr.us-west-2.amazonaws.com/talentaifrontend:latest
         ports:
-        - containerPort: 80  # Port exposed in the container
-        
+        - containerPort: 3000  # Port Next.js will be listening on
+        env:
+        - name: NODE_ENV
+          value: "production"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: frontend-service
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: "/"
 spec:
   selector:
     app: frontend
   ports:
     - protocol: TCP
-      port: 80  # Exposing port 80 to the Load Balancer
-      targetPort: 3000  # The port inside the container to which traffic will be forwarded
-  type: LoadBalancer  # Exposing the service to the internet
+      port: 80
+      targetPort: 3000
+  type: ClusterIP
+
+
