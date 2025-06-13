@@ -1,28 +1,13 @@
 const User = require("../models/UserModel");
 const { sendOTP } = require("./emailService");
-const jwt = require("jsonwebtoken");
-
-// Générer un code OTP
-const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-};
+const { generateOTP } = require("../utils/Onetimepassword");
+const { generateToken } = require("../utils/generateToken");
+const { getGmailByToken } = require("../utils/getGmailByToken");
 
 // Extraire le nom d'utilisateur de l'email
 const extractUsernameFromEmail = (email) => {
   return email.split("@")[0];
 };
-
-// Générer un token JWT
-const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.Net_Secret, {
-    expiresIn: "7d",
-  });
-};
-
-const { OAuth2Client } = require("google-auth-library"); 
-
-// Initialisation du client OAuth2 avec ton Client ID Google
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Service d'inscription
 module.exports.registerUser = async (email) => {
@@ -133,7 +118,10 @@ module.exports.verifyUserOTP = async (email, otp) => {
 };
 
 // Service de connexion avec Gmail
-module.exports.connectWithGmail = async (email) => {
+module.exports.connectWithGmail = async (id_token) => {
+
+  const email = await authService.GetGmailByToken(id_token);
+
   // Vérifier si l'utilisateur existe déjà
   let user = await User.findOne({ email });
 
@@ -173,23 +161,6 @@ module.exports.connectWithGmail = async (email) => {
     token,
     message: user.isVerified ? "Connexion réussie" : "Compte créé avec succès",
   };
-};
-
-
-
-module.exports.GetGmailByToken = async (id_token) => {
-
-  // Vérifier le token avec l'API Google
-  const ticket = await client.verifyIdToken({
-    idToken: id_token, // Vérifier le token reçu
-    audience: process.env.GOOGLE_CLIENT_ID, // Ton Client ID Google
-  });
-
-  // Extraire les informations de l'utilisateur depuis le token validé
-  const payload = ticket.getPayload();
-  const email = payload.email;
-
-  return email;
 };
 
 module.exports.warnUser = async (email) => {

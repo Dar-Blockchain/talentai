@@ -483,9 +483,9 @@ module.exports.getCompanyBids = async (companyId) => {
   }
 };
 
-module.exports.getCompanyProfileWithAssessments = async (profileId) => {
+module.exports.getCompanyProfileWithAssessments = async (id, jobId) => {
   try {
-    const profile = await Profile.findById(profileId)
+    const profile = await Profile.findById(id)
       .where("type")
       .equals("Company")
       .populate({
@@ -507,7 +507,13 @@ module.exports.getCompanyProfileWithAssessments = async (profileId) => {
       throw new Error("Profil introuvable ou non une entreprise.");
     }
 
-    return profile.assessmentResults;
+    const assessmentResults = jobId
+      ? profile.assessmentResults.filter(
+          (result) => result.jobId._id?.toString() === jobId
+        )
+      : profile.assessmentResults;
+
+    return assessmentResults;
   } catch (error) {
     throw new Error(
       "Erreur lors de la récupération des assessments : " + error.message

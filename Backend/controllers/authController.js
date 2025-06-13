@@ -43,9 +43,8 @@ module.exports.connectWithGmail = async (req, res) => {
   try {
     const { id_token } = req.body; // Récupère le `id_token` envoyé par le frontend
 
-    const email = await authService.GetGmailByToken(id_token);
 
-    const result = await authService.connectWithGmail(email);
+    const result = await authService.connectWithGmail(id_token);
 
     // Créer un cookie avec le token JWT
     res.cookie("jwt_token", result.token, {
