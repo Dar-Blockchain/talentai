@@ -1,23 +1,15 @@
 const User = require("../models/UserModel");
 const { sendOTP } = require("./emailService");
-const jwt = require("jsonwebtoken");
+const { generateOTP } = require("../utils/Onetimepassword");
+const { generateToken } = require("../utils/generateToken");
 
-// Générer un code OTP
-const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-};
 
 // Extraire le nom d'utilisateur de l'email
 const extractUsernameFromEmail = (email) => {
   return email.split("@")[0];
 };
 
-// Générer un token JWT
-const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.Net_Secret, {
-    expiresIn: "7d",
-  });
-};
+
 
 const { OAuth2Client } = require("google-auth-library"); 
 
