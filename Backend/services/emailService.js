@@ -1,16 +1,15 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  host: "gparm9.siteground.biz",
-  port: 465,
-  secure: true, // SSL
+  host: "mail.privateemail.com",
+  port: 465, // SSL/TLS port for outgoing mail
+  secure: true, // Use SSL
   auth: {
-    user: "contact@talentai.bid",
-    pass: "87h0u74HATEMUA",
+    user: "contact@talentai.bid", // your email address
+    pass: "87h0u74H", // your current mailbox password
   },
-  //  logger: true, // utile pour debug
-  //  debug: true
 });
+
 
 const getEmailTemplate = (otp) => `
     <!DOCTYPE html>
@@ -138,7 +137,6 @@ const getEmailTemplate = (otp) => `
     </body>
     </html>
 `;
-
 module.exports.sendOTP = async (email, otp) => {
   const mailOptions = {
     from: '"TalenIA" <contact@talentai.bid>',
