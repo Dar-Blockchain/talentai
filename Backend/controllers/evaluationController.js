@@ -1325,18 +1325,17 @@ Following this JSON object fields, generate a detailed JSON analysis with these 
     {
       "skillName": string,
       "requiredLevel": 1-5,
-      
       "demonstratedExperienceLevel": 1-5,
       "strengths": [string], // If no strengths are identified, include "No strengths identified for this skill" in the array
       "weaknesses": [string],
       "confidenceScore": 0-100,
-      "match": "partialMatch" | "fullMatch" | "noMatch",
+      "match": "Poor match" | "Moderate match" | "Strong match" ,
       "levelGap": 0-100,
     }
   ],
   "jobMatch": {
   "percentage": 0-10,
-  "status": "partialMatch" | "fullMatch" | "noMatch" ,
+  "status": "Poor match" | "Moderate match" | "Strong match" ,
   "keyGaps": ["Advanced JavaScript", "React Hooks"]
   }
 }
