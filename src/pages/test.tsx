@@ -26,6 +26,8 @@ import CallEndIcon from '@mui/icons-material/CallEnd';
 import { v4 as uuidv4 } from 'uuid';
 import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store/store';
 
 // Remove hardcoded questions
 const NEXTJS_QUESTIONS: string[] = [];
@@ -37,6 +39,7 @@ const GREEN_MAIN = 'rgba(0, 255, 157, 1)';
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   backdropFilter: 'blur(10px)',
   borderBottom: '1px solid rgba(255,255,255,0.1)',
+  backgroundColor: "#8310FF"
 }));
 
 const RecordingControls = styled(Box)(({ theme }) => ({
@@ -305,6 +308,8 @@ export default function Test() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { data: session } = useSession();
+  const userRole = useSelector((state: RootState) => state.user.userType);
+  const GREEN_MAIN = userRole === 'company' ? 'rgba(0, 255, 157, 1)' : '#8310FF';
 
   const [questions, setQuestions] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(true);
@@ -444,7 +449,7 @@ export default function Test() {
         endpoint = 'evaluation/generate-onboarding-questions';
         // Parse skills and their levels
         const skillsArray = router.query.skills ? (router.query.skills as string).split(',') : [];
-        const proficiencyMap = router.query.proficiencyLevels ? 
+        const proficiencyMap = router.query.proficiencyLevels ?
           Object.fromEntries(
             (router.query.proficiencyLevels as string).split(',').map(pair => {
               const [skill, level] = pair.split(':');
@@ -854,16 +859,30 @@ export default function Test() {
   };
 
   // Security violation handler
-  const handleSecurityViolation = () => {
+  const handleSecurityViolation = async () => {
     setSecurityViolationCount((prev) => {
       const next = prev + 1;
       if (next === 1) {
         // First violation: show intelligent popup
         setShowFirstViolationModal(true);
+        // Call warning API
+
       } else if (next === 2) {
         // Second violation: redirect and show modal
         setShowSecurityModal(true);
         stopRecording();
+        const token = localStorage.getItem('api_token');
+        if (token) {
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/warnUser`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            }
+          }).catch(error => {
+            console.error('Error sending warning:', error);
+          });
+        }
         setTimeout(() => {
           router.push('/dashboardCandidate');
         }, 2000); // Give time for modal to show
@@ -1040,7 +1059,7 @@ export default function Test() {
           <Typography variant="h5" sx={{
             color: '#fff',
             fontWeight: 700,
-            background: 'rgba(0, 255, 157, 1)',
+            background: GREEN_MAIN,
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}>
@@ -1120,8 +1139,8 @@ export default function Test() {
           <Button
             onClick={() => router.push('/dashboardCandidate')}
             sx={{
-              color: 'rgba(255,255,255,0.7)',
-              '&:hover': { color: '#fff' }
+              color: 'black ',
+              '&:hover': { color: 'black' }
             }}
           >
             I'm Not Ready
@@ -1130,7 +1149,7 @@ export default function Test() {
             variant="contained"
             onClick={handleGuidelinesAccept}
             sx={{
-              background: 'rgba(0, 255, 157, 1)',
+              background: GREEN_MAIN,
               color: '#fff',
               px: 4,
               py: 1,
@@ -1138,7 +1157,7 @@ export default function Test() {
               textTransform: 'none',
               fontWeight: 500,
               '&:hover': {
-                background: 'rgba(0, 255, 157, 1)',
+                background: GREEN_MAIN,
               }
             }}
           >
@@ -1174,12 +1193,12 @@ export default function Test() {
             }}
             variant="outlined"
             sx={{
-              color: theme.palette.error.main,
-              borderColor: theme.palette.error.main,
+              color: 'white',
+              borderColor: 'white',
               textTransform: 'none',
               borderRadius: 2,
               px: 3,
-              '&:hover': { backgroundColor: 'rgba(244,67,54,0.1)' },
+              '&:hover': { backgroundColor: 'red' },
             }}
           >
             End Test
@@ -1249,7 +1268,7 @@ export default function Test() {
               sx={{
                 backgroundColor: GREEN_MAIN,
                 '&:hover': {
-                  backgroundColor: 'rgba(0, 255, 157, 0.8)',
+                  backgroundColor: GREEN_MAIN,
                 },
                 '&.Mui-disabled': {
                   backgroundColor: hasStartedTest ? '#ff4444' : 'rgba(255, 255, 255, 0.12)',

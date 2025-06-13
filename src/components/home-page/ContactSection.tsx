@@ -2,13 +2,13 @@ import React from "react";
 import { Box, Typography, Stack, Button } from "@mui/material";
 import { useRouter } from "next/router";
 
-const ContactSection = () => {
+const ContactSection = ({ type, color }: { type: string; color: string }) => {
   const router = useRouter();
   return (
     <Box
       id="contact"
       sx={{
-        backgroundColor: "rgba(41, 210, 145, 0.18)",
+        backgroundColor: color,
         color: "#000000",
         mx: 3,
         py: { xs: 3, sm: 4, md: 5 },
@@ -56,9 +56,10 @@ const ContactSection = () => {
               textAlign: {xs: 'center',sm: 'center', md: 'start'}
             }}
           >
-            Start Your Free Trial
+            {type === "jobseeker" ? "Start Now. For Free." : "Start Your Free Trial"}
             <br />
-            Today
+            {type === "company" ? "Today" : ""}
+          
           </Typography>
           <Typography
             fontWeight={400}
@@ -72,23 +73,23 @@ const ContactSection = () => {
               textAlign: {xs: 'center',sm: 'center', md: 'start'},
               mt: 1,
             }}
-          >
-            Join thousands of companies already <br /> using TalentAI to
-            revolutionize their
-            <br /> hiring process
+          >   
+
+          {type === "company" ? "Join thousands of companies already using TalentAI to revolutionize their hiring process" : "No résumé. No cover letter. Just real skills, verified."}
+           
           </Typography>
           <Button
             variant="contained"
             onClick={() => router.push('/signin')}
             sx={{
-              backgroundColor: "rgba(41, 210, 145, 0.83)",
+              backgroundColor: type === "company" ? "rgba(41, 210, 145, 0.83)" : "#8310FF",
               color: "#fff",
               borderRadius: 999,
               textTransform: "none",
               padding: "6px 20px",
               fontWeight: 500,
               "&:hover": {
-                backgroundColor: "rgba(41, 210, 145, 0.73)",
+                backgroundColor: type === "company" ? "rgba(41, 210, 145, 0.73)" : "#8310FF",
               },
             }}
           >

@@ -82,16 +82,6 @@ module.exports.logout = (req, res) => {
   }
 };
 
-module.exports.getAllUsers = async (req, res) => {
-  try {
-    const users = await authService.getAllUsers();
-    res.status(200).json(users);
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Erreur lors de la récupération des utilisateurs" });
-  }
-};
 
 module.exports.GetGmailByToken = async (req, res) => {
   try {

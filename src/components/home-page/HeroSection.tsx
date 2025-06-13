@@ -6,8 +6,13 @@ import PauseCircleOutlineIcon from "@mui/icons-material/PauseCircleOutline";
 import StatList from "./components/StatList";
 import { useRouter } from "next/router";
 import { BOOK_DEMO_URL } from "@/constants";
-
-const HeroSection = () => {
+type HeroSectionProps = {
+  color?: string;
+  title?: string;
+  subtitle?: string;
+  type?: string;
+};
+const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -31,13 +36,13 @@ const HeroSection = () => {
     <Box
       sx={{
         px: 3,
-        py: {xs: 3, sm: 4, md:5},
+        py: { xs: 3, sm: 4, md: 5 },
         backgroundColor: "#ffffff",
         color: "#000000",
       }}
     >
-      <Stack 
-        direction="row" 
+      <Stack
+        direction="row"
         spacing={2}
         sx={{
           justifyContent: "space-between",
@@ -50,12 +55,13 @@ const HeroSection = () => {
             fontWeight={500}
             gutterBottom
             sx={{
-              fontSize: 'clamp(1rem, 5vw, 3rem)',
+              fontSize: type === 'company' ? 'clamp(1rem, 5vw, 3rem)' : "96px",
               lineHeight: 1.3,
+              fontWeight: type === "jobseeker" ? '700' : 0,
               mb: 0,
             }}
           >
-            Revolutionize Your Hiring with
+            {title}{type == "jobseeker" && <span style={{ color: color }}>.</span>}
           </Typography>
 
           <Typography
@@ -63,34 +69,34 @@ const HeroSection = () => {
             gutterBottom
             sx={{
               fontSize: 'clamp(1rem, 5vw, 3rem)',
-              backgroundColor: "rgba(0, 255, 157, 1)",
+              backgroundColor: color,
               display: "inline-block",
               px: 2,
               py: 1,
               borderRadius: 1,
               lineHeight: 1.3,
               mb: 0,
+              color: type === "jobseeker" ? "#fff" : "#000",
             }}
           >
-            AI-Powered Intelligence
+            {subtitle}
           </Typography>
-
-          <Typography
-            variant="body1"
-            color="#000000"
-            sx={{
-              my: { xs: 2, md: 2 },
-              maxWidth: 500,
-              fontSize: { xs: "0.95rem", sm: "1rem" },
-            }}
-          >
-            Experience 3x faster hiring, 90% better candidate matches, and
-            data-driven decisions with our advanced AI recruitment platform.
-          </Typography>
-
+          {type === "jobseeker" && (
+            <Typography
+              variant="body1"
+              color="#000000"
+              sx={{
+                my: { xs: 2, md: 2 },
+                maxWidth: 500,
+                fontSize: { xs: "0.95rem", sm: "1rem" },
+              }}
+            >
+              Showcase your verified skills, stand out to top recruiters, and control your career—backed by AI and blockchain.
+            </Typography>
+          )}
           <Stack
             direction="row"
-            sx={{flexWrap: "wrap", gap: '1rem', flex: {xs: 1, sm: 1, md: 'none'}}}
+            sx={{ flexWrap: "wrap", gap: '1rem', flex: { xs: 1, sm: 1, md: 'none' }, mt: 3 }}
             mb={{ xs: 3, md: 4 }}
           >
             <Button
@@ -112,11 +118,11 @@ const HeroSection = () => {
               endIcon={
                 <ArrowForwardIcon
                   fontSize="small"
-                  sx={{ color: "rgba(0, 255, 157, 1)" }}
+                  sx={{ color: color }}
                 />
               }
             >
-              Get Early Access
+              {type === "company" ? "Get Early Access" : "Join Talent AI Today"}
             </Button>
 
             <Button
@@ -131,25 +137,25 @@ const HeroSection = () => {
                 fontWeight: 500,
                 fontSize: { xs: "0.75rem", sm: "0.85rem", md: "1rem" },
                 color: "#000",
-                borderColor: "#ccc",
+                borderColor: type === "jobseeker" ? "#8310FF" : "#000",
               }}
               endIcon={
-                <PlayCircleOutlineIcon sx={{ color: "rgba(0, 255, 157, 1)" }} />
+                <PlayCircleOutlineIcon sx={{ color: type === "jobseeker" ? "#8310FF" : "#000" }} />
               }
             >
-              Book Demo
+              {type === "company" ? "Book Demo" : "See How it Works"}
             </Button>
           </Stack>
 
-          <StatList />
+          <StatList type={type} color={color} />
         </Box>
 
         <Box
           display={{ xs: "none", lg: "flex" }}
-          sx={{ 
-            justifyContent: "center", 
+          sx={{
+            justifyContent: "center",
             flex: 1,
-            position: "relative", 
+            position: "relative",
             pt: 6,
           }}
         >
@@ -209,8 +215,8 @@ const HeroSection = () => {
             />
           </Box>
         </Box>
-      </Stack>
-    </Box>
+      </Stack >
+    </Box >
   );
 };
 
