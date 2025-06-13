@@ -9,6 +9,7 @@ const {
 
 const JobAssessmentResult = require("../models/JobAssessmentResultModel");
 const Profile = require("../models/ProfileModel");
+const TodoList = require("../models/todoListModel");
 const Post = require("../models/PostModel");
 
 const postService = require("../services/postService");
@@ -1324,13 +1325,19 @@ Following this JSON object fields, generate a detailed JSON analysis with these 
     {
       "skillName": string,
       "requiredLevel": 1-5,
-      
       "demonstratedExperienceLevel": 1-5,
       "strengths": [string], // If no strengths are identified, include "No strengths identified for this skill" in the array
       "weaknesses": [string],
       "confidenceScore": 0-100,
+      "match": "Poor match" | "Moderate match" | "Strong match" ,
+      "levelGap": 0-100,
     }
   ],
+  "jobMatch": {
+  "percentage": 0-10,
+  "status": "Poor match" | "Moderate match" | "Strong match" ,
+  "keyGaps": ["Advanced JavaScript", "React Hooks"]
+  }
 }
 
 The confidenceScore of each skill represents your evaluation of the candidate’s responses off all questions related to that skill.
@@ -1499,6 +1506,30 @@ Provide only the JSON output without any additional text.
         }
       });
 
+      //save jobAssessmentResult 
+      const company = await profileService.getProfileByPostId(jobId);
+      const companyId = company._id;
+      const condidateId = condidateProfile._id;
+      // 6. Format final response
+      const jobAssessmentResult = new JobAssessmentResult({
+        timestamp: new Date(),
+        assessmentType: "job",
+        jobId,
+        condidateId,
+        companyId,
+        numberOfQuestions: questions.length,
+        analysis
+      });
+
+      await jobAssessmentResult.save();
+
+      // 3. Save the updated profile with the new assesmentResult
+      if (!Array.isArray(company.assessmentResults)) {
+        company.assessmentResults = [];
+      }
+      company.assessmentResults.push(jobAssessmentResult._id);
+      await company.save();
+
       // update profile quota after passing the jobtest
       profile.quota++;
       await profile.save();
@@ -1663,6 +1694,11 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
       return res.status(404).json({ error: "Profile not found" });
     }
 
+    const todoList = await TodoList.findById(profile.todoList);
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
     const skillName = skill[0].name;
     const systemPrompt = analyzeOnbordingQuestionsPrompts.getSystemPrompt();
     const userPrompt = analyzeOnbordingQuestionsPrompts.getUserPrompt(
@@ -1681,7 +1717,7 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
         { role: "user", content: userPrompt },
       ],
       max_tokens: 1000,
-      temperature: 0.6,
+      temperature: 0.7,
       stream: true,
     });
 
@@ -1793,6 +1829,16 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
         ];
 
         await profile.save();
+
+        // for(let i = 0; i< todoList.todos.length; i++){
+        //   if(todoList.todos[i].type == "Skill"){
+        //     todoList.todos[i] = analysis.skillAnalysis[0].todoList;
+        //     todoList.todos[i].isCompleted = false;
+        //   }
+        // }
+
+        // await todoList.save();
+        // console.log("check todoList: ", todoList);
       }
     } catch (error) {
       console.error("Error in analysis parsing:", error);
