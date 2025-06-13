@@ -2470,7 +2470,7 @@ Benefits:
                     </Box>
                     {skill?.ScoreTest && (
                       <Typography variant="caption" sx={{
-                        color: 'rgba(255,255,255,0.5)',
+                        color: 'black',
                         display: 'block',
                         mt: 1,
                         textAlign: 'right'
