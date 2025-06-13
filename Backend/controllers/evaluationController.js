@@ -1330,8 +1330,15 @@ Following this JSON object fields, generate a detailed JSON analysis with these 
       "strengths": [string], // If no strengths are identified, include "No strengths identified for this skill" in the array
       "weaknesses": [string],
       "confidenceScore": 0-100,
+      "match": "partialMatch" | "fullMatch" | "noMatch",
+      "levelGap": 0-100,
     }
   ],
+  "jobMatch": {
+  "percentage": 0-10,
+  "status": "partialMatch" | "fullMatch" | "noMatch" ,
+  "keyGaps": ["Advanced JavaScript", "React Hooks"]
+  }
 }
 
 The confidenceScore of each skill represents your evaluation of the candidate’s responses off all questions related to that skill.
