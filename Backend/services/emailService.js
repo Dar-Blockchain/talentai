@@ -2,14 +2,16 @@ const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
   host: "mail.privateemail.com",
+//  host: process.env.Email_host,
   port: 465, // SSL/TLS port for outgoing mail
   secure: true, // Use SSL
   auth: {
     user: "contact@talentai.bid", // your email address
     pass: "87h0u74H", // your current mailbox password
+    //user: process.env.EMAIL_USER, // your email address
+    //pass: process.env.EMAIL_PASSWORD, // your current mailbox password
   },
 });
-
 
 const getEmailTemplate = (otp) => `
     <!DOCTYPE html>
