@@ -1411,7 +1411,7 @@ exports.analyzeJobTestResults = async (req, res) => {
         condidateId,
         companyId,
         numberOfQuestions: questions.length,
-        analysis
+        analysis:analysis
       });
 
       await jobAssessmentResult.save();
