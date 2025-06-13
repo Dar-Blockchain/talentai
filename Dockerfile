@@ -37,8 +37,7 @@ COPY package.json package-lock.json next.config.ts tsconfig.json ./
 RUN npm install
 
 # Copy the src directory and public directory into the container
-COPY src ./src
-COPY public ./public
+COPY . .
 
 # Build the Next.js application
 RUN npm run build
@@ -75,12 +74,12 @@ ENV GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
 ENV ASSEMBLYAI_API_KEY=$ASSEMBLYAI_API_KEY
 ENV NODE_ENV=$NODE_ENV
 
-# Copy built application files from the builder stage
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
+# Copy specific files and directories from builder
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/next.config.ts ./next.config.ts
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/node_modules ./node_modules
 
 # Expose the default Next.js port
 EXPOSE 3000
