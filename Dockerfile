@@ -76,10 +76,11 @@ ENV ASSEMBLYAI_API_KEY=$ASSEMBLYAI_API_KEY
 ENV NODE_ENV=$NODE_ENV
 
 # Copy built application files from the builder stage
-COPY --from=builder /app ./
-
-# Install only production dependencies
-RUN npm install --production
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/next.config.ts ./next.config.ts
 
 # Expose the default Next.js port
 EXPOSE 3000
