@@ -3051,7 +3051,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                   <TableCell sx={{ color: '#000' }}>
                     {assessment.analysis.overallScore}%
                   </TableCell>
-                  <TableCell sx={{ color: '#fff' }}>
+                  {/* <TableCell sx={{ color: '#fff' }}>
                     <Chip
                       label={assessment.analysis.jobMatch.status}
                       size="small"
@@ -3065,7 +3065,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                         fontWeight: 600
                       }}
                     />
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell>
                     <Button
                       variant="contained"
@@ -3171,10 +3171,10 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                   <Typography variant="subtitle2" sx={{ color: 'black' }}>Overall Score</Typography>
                   <Typography sx={{ color: 'black' }}>{selectedAssessment.analysis.overallScore}%</Typography>
                 </Box>
-                <Box sx={{ flex: 1 }}>
+                {/* <Box sx={{ flex: 1 }}>
                   <Typography variant="subtitle2" sx={{ color: 'black' }}>Job Match Status</Typography>
                   <Typography sx={{ color: 'black' }}>{selectedAssessment.analysis.jobMatch.status}</Typography>
-                </Box>
+                </Box> */}
               </Box>
             </Box>
 

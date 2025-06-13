@@ -175,7 +175,7 @@ export default function SignIn() {
   }, [reduxError]);
   const userType = useSelector((state: RootState) => state.user.userType);
   useEffect(() => {
-   console.log("userType", userType);
+    console.log("userType", userType);
   }, [userType]);
   return (
     <Box

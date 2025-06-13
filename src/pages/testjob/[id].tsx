@@ -34,12 +34,13 @@ import dynamic from 'next/dynamic';
 const NEXTJS_QUESTIONS: string[] = [];
 
 // Add this after imports
-const GREEN_MAIN = 'rgba(0, 255, 157, 1)';
+const GREEN_MAIN = '#8310FF';
 
 // --- Styled Components ---
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   backdropFilter: 'blur(10px)',
   borderBottom: '1px solid rgba(255,255,255,0.1)',
+  background: GREEN_MAIN,
 }));
 
 const RecordingControls = styled(Box)(({ theme }) => ({
@@ -341,6 +342,8 @@ const Test = () => {
   // Add new state for button timer
   const [nextButtonDisabled, setNextButtonDisabled] = useState(true);
   const [buttonTimer, setButtonTimer] = useState(2);
+  const userRole = useSelector((state: RootState) => state.user.userType);
+  const GREEN_MAIN = userRole === 'company' ? 'rgba(0, 255, 157, 1)' : '#8310FF';
 
   // Add streaming state
   const [streamingToken, setStreamingToken] = useState<string | null>(null);
@@ -1172,7 +1175,7 @@ const Test = () => {
                 textTransform: 'none',
                 fontWeight: 500,
                 '&:hover': {
-                  background: 'rgba(0, 255, 157, 0.8)',
+                  background: '#8310FF',
                 }
               }}
             >
@@ -1191,6 +1194,7 @@ const Test = () => {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 fontWeight: 700,
+
               }}
             >
               Skill Test ({current + 1}/{questions.length || '-'})
@@ -1208,8 +1212,8 @@ const Test = () => {
               }}
               variant="outlined"
               sx={{
-                color: theme.palette.error.main,
-                borderColor: theme.palette.error.main,
+                color: "white",
+                borderColor: 'white',
                 textTransform: 'none',
                 borderRadius: 2,
                 px: 3,
@@ -1283,7 +1287,7 @@ const Test = () => {
                 sx={{
                   backgroundColor: GREEN_MAIN,
                   '&:hover': {
-                    backgroundColor: 'rgba(0, 255, 157, 0.8)',
+                    backgroundColor: GREEN_MAIN,
                   },
                   '&.Mui-disabled': {
                     backgroundColor: hasStartedTest ? '#ff4444' : 'rgba(255, 255, 255, 0.12)',
