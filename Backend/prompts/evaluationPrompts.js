@@ -244,15 +244,14 @@ STRICT REQUIREMENTS:
 Respond strictly in JSON format only, without any additional explanations or text.
 `,
 
-  getUserPrompt: (skillName,questions) =>
+  getUserPrompt: (skillName, questions) =>
     `
 Analyze the following skill: **${skillName}**
 
 Candidate's answers:
 ${questions
   .map(
-    (qa, index) =>
-      `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}`
+    (qa, index) => `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}`
   )
   .join("\n\n")}
 
@@ -294,10 +293,132 @@ Return only the valid JSON output. Do not include any commentary.
 `,
 };
 
+const analyzeJobTestResultsPrompts = {
+  getSystemPrompt: () => `
+You are an expert technical interviewer specializing in evaluating developer skills for job positions.
 
+Your role is to:
+- Evaluate candidate answers objectively
+- Assess each skill based on proficiency definitions
+- Score confidence and match levels per skill
+- Recommend personalized improvement tasks
+
+--- Evaluation Rules ---
+
+**Proficiency Levels**:
+1 - Entry level  
+2 - Junior  
+3 - Mid  
+4 - Senior  
+5 - Expert
+
+**Confidence Score Rules (per skill):**
+- Every question has equal weight
+- Each answer is scored:
+  - Fully correct → 1 point
+  - Partially correct → 0.6 point
+  - Incorrect or unanswered → 0 points
+- Use exact formula:  
+  confidenceScore = (earnedPoints / totalQuestionsForThisSkill) × 100  
+  Example: 3 full, 1 partial, 1 incorrect → (3 + 0.6 + 0) / 5 × 100 = 72%
+- Return the result as a rounded **integer**, not approximated.
+
+**Overall Score**:
+- Weighted average of confidenceScore × requiredLevel
+- Formula:
+  overallScore = (Σ confidenceScore × requiredLevel) ÷ Σ requiredLevel
+
+**Match Category**:
+- Poor match → confidenceScore < 40
+- Moderate match → 40–69
+- Strong match → 70+
+
+**TodoList Rules**:
+- Max 2 tasks per skill
+- Unique tasks with realistic dueDate:
+  - Project, Certification ≥ 2 weeks
+  - Course ≥ 1 week
+  - Article ≥ 2–3 days
+- Use future timestamps (ms), valid URLs if available
+
+**Strict Requirements**:
+- Be objective, avoid assumptions
+- Minor transcription issues may exist; infer intent only if clearly justified
+- Consider that answers were transcribed from speech and may contain minor errors or incomplete sentences.
+- No markdown or natural language output
+- Return **valid JSON only**
+
+`.trim(),
+
+getUserPrompt: (requiredSkills, questions) => `
+
+Required Skills:
+${requiredSkills
+  .map((skill) => `- ${skill.name} (Required Level: ${skill.proficiencyLevel})`)
+  .join("\n")}
+
+
+Analyze the following questions and answers:
+
+${questions
+  .map(
+    (qa, index) =>
+      `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}`
+  )
+  .join("\n\n")}
+
+Return a valid JSON object matching this schema:
+
+{
+  "overallScore": number,
+  "technicalLevel": string,
+  "generalAssassment": string,
+  "recommendations": [...],
+  "nextSteps": [...],
+  "skillAnalysis": [
+    {
+      "skillName": string,
+      "requiredLevel": 1-5,
+      "demonstratedExperienceLevel": 0-5,
+      "strengths": [string], // or ["No strengths identified for this skill"]
+      "weaknesses": [string], // or ["No weaknesses identified for this skill"]
+      "confidenceScore": 0-100,
+      "match": "Poor match" | "Moderate match" | "Strong match",
+      "levelGap": number
+    }
+  ],
+  "jobMatch": {
+    "percentage": number (0–100),
+    "status": "Poor match" | "Moderate match" | "Strong match",
+    "keyGaps": [string]
+  },
+  "todoList": [
+    {
+      "title": string (skillName),
+      "tasks": [
+        {
+          "title": string,
+          "type": "Course" | "Certification" | "Project" | "Article",
+          "description": string,
+          "url": string (optional),
+          "priority": "low" | "medium" | "high",
+          "dueDate": timestamp in ms,
+          "isCompleted": false
+        }
+      ]
+    }
+  ]
+}
+
+Respond with JSON only. No explanation or natural text.
+`.trim()
+
+
+};
 
 module.exports = {
   generateJobQuestionsPrompts,
   generateOnboardingQuestionsPrompts,
-  analyzeOnbordingQuestionsPrompts
+  analyzeOnbordingQuestionsPrompts,
+  analyzeJobTestResultsPrompts,
 };

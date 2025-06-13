@@ -5,6 +5,7 @@ require("dotenv").config();
 const {
   generateOnboardingQuestionsPrompts,
   analyzeOnbordingQuestionsPrompts,
+  analyzeJobTestResultsPrompts,
 } = require("../prompts/evaluationPrompts");
 
 const JobAssessmentResult = require("../models/JobAssessmentResultModel");
@@ -1232,120 +1233,12 @@ exports.analyzeJobTestResults = async (req, res) => {
 
     console.log(requiredSkills);
     // 3. Prepare the data for GPT analysis
-    const systemPrompt = `
-You are an expert technical interviewer specializing in evaluating developer skills for job positions. 
+    const systemPrompt = analyzeJobTestResultsPrompts.getSystemPrompt();
 
-Your task is to:
-- Analyze the candidate’s answers against the required skill levels.
-- Assess each skill individually for:
-  - Demonstrated proficiency level
-  - Strengths
-  - Weaknesses
-  - Confidence score
-- Provide a comprehensive, skill-by-skill analysis.
-- Deliver an overall assessment of the candidate’s technical level.
-- Offer actionable recommendations for improvement.
+    const userPrompt = analyzeJobTestResultsPrompts.getUserPrompt(requiredSkills, questions);
 
-Skill Proficiency Levels:
-1 - Entry Level:  
-- Basic concepts and definitions  
-- Simple explanations without coding  
-- Questions answerable by someone new to the skill  
-2 - Junior:  
-- Basic practical understanding  
-- Simple code-related questions or usage  
-- Can explain common patterns and simple problem solving  
-3 - Mid Level:  
-- Intermediate concepts and design  
-- Schema design, error handling, query optimization  
-- Real-world application and practical problem solving  
-4 - Senior:  
-- Advanced concepts and architecture  
-- Performance tuning, concurrency, complex error handling  
-- Designing scalable systems and best practices  
-5 - Expert:  
-- Deep internals and optimization  
-- Scalability, security, and advanced system design  
-- Handling complex real-world challenges and innovations  
-
-Example of Confidence Score Calculation:
-If a skill has 5 associated questions and the answers were:
-- 2 fully correct → +50% (2 × 25%)
-- 2 partially correct → +30% (2 × 15%)
-- 1 incorrect → +0%
-- 1 has empty answer → +0%
-→ Final confidenceScore = 80%
-
-Demonstrated Experience Level Calculation (Final Version)
--The maximum demonstratedExperienceLevel is always the requiredLevel.
--The level is assigned based on the confidenceScore as follows:
--If confidenceScore >= 70% → demonstratedExperienceLevel = requiredLevel
--If 50% <= confidenceScore < 70% → demonstratedExperienceLevel = max(1, requiredLevel - 1)
--If 20% <= confidenceScore < 50% → demonstratedExperienceLevel = max(1, requiredLevel - 2)
--If 15% <= confidenceScore < 20% → demonstratedExperienceLevel = 1
--If confidenceScore < 15% → demonstratedExperienceLevel = 0 (meaning the candidate shows no valid proficiency)
--The final value must be between 0 and requiredLevel, inclusive.
-
-STRICT REQUIREMENTS: 
--confidenceScore for each skill is to be set depending on the responses for questions of that skill. 
--Be objective
--Do not estimate some knowledge , the answers do not reflect
--You only repère is the correctness of answers to the questions
-
-Respond strictly in JSON format only, without any additional explanations or text.
-`;
-
-    const userPrompt = `
-Analyze the following:
-
-Required Skills:
-${requiredSkills
-  .map((skill) => `- ${skill.name} (Required Level: ${skill.level})`)
-  .join("\n")}
-
-Questions and Answers:
-${questions
-  .map(
-    (qa, index) =>
-      `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}\nSkill: ${
-        qa.skill
-      }\nProficiency Level Required: ${qa.level}`
-  )
-  .join("\n\n")}
-
-Following this JSON object fields, generate a detailed JSON analysis with these fields:
-
-{
-  "overallScore": 0-100,
-  "technicalLevel":"string",
-  "generalAssassment":"string",
-  "recommendations":[],
-  "nextSteps:[],
-  "skillAnalysis": [
-    {
-      "skillName": string,
-      "requiredLevel": 1-5,
-      "demonstratedExperienceLevel": 1-5,
-      "strengths": [string], // If no strengths are identified, include "No strengths identified for this skill" in the array
-      "weaknesses": [string],
-      "confidenceScore": 0-100,
-      "match": "Poor match" | "Moderate match" | "Strong match" ,
-      "levelGap": 0-100,
-    }
-  ],
-  "jobMatch": {
-  "percentage": 0-10,
-  "status": "Poor match" | "Moderate match" | "Strong match" ,
-  "keyGaps": ["Advanced JavaScript", "React Hooks"]
-  }
-}
-
-The confidenceScore of each skill represents your evaluation of the candidate’s responses off all questions related to that skill.
-The overallScore should be calculated as the average of all confidenceScores across the evaluated skills.
-Use these definitions to guide your scoring and ensure consistency in the analysis.
-
-Provide only the JSON output without any additional text.
-`;
+    console.log("sysPrompt: ", systemPrompt);
+    console.log("userPrompt: ", userPrompt);
 
     // 4. Call TogetherAI API for analysis
     const stream = await together.chat.completions.create({
