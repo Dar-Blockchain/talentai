@@ -748,7 +748,7 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
     try {
       // Use the updated job data if available, otherwise use the generated job
       const jobDataToUse = updatedJobData || generatedJob;
-      
+
       if (!jobDataToUse) {
         throw new Error('No job data available');
       }
@@ -2079,7 +2079,7 @@ Benefits:
                       />
                     )
                   ))}
-                  
+
                   {isEditing && (
                     <>
                       {showAddSkillInput ? (
@@ -2119,7 +2119,7 @@ Benefits:
                             variant="contained"
                             onClick={() => {
                               if (!newSkill.trim() || !editedJob) return;
-                              
+
                               // Check if we already have 3 skills
                               if (editedJob.skillAnalysis.requiredSkills.length >= 3) {
                                 setSkillWarning('Maximum 3 skills allowed');
@@ -3028,6 +3028,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             <TableHead>
               <TableRow>
                 <TableCell sx={{ color: '#000', fontWeight: 600 }}>Candidate</TableCell>
+                <TableCell sx={{ color: '#000', fontWeight: 600 }}>Job Title</TableCell>
                 <TableCell sx={{ color: '#000', fontWeight: 600 }}>Assessment Date</TableCell>
                 <TableCell sx={{ color: '#000', fontWeight: 600 }}>Overall Score</TableCell>
                 <TableCell sx={{ color: '#000', fontWeight: 600 }}>Job Match</TableCell>
@@ -3044,6 +3045,9 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                         {assessment.condidateId.userId.username}
                       </Typography>
                     </Box>
+                  </TableCell>
+                  <TableCell sx={{ color: '#000' }}>
+                    {assessment.jobId.jobDetails.title}
                   </TableCell>
                   <TableCell sx={{ color: '#000' }}>
                     {new Date(assessment.timestamp).toLocaleDateString()}
@@ -3261,7 +3265,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
   const handleSave = () => {
     if (!editedJob || !editedJob.jobDetails) return;
-    
+
     // Update the generatedJob with the edited job data
     setGeneratedJob({
       ...editedJob,
@@ -3339,7 +3343,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
   const handleSaveSkill = () => {
     if (editingSkillIndex === null || !editedJob) return;
-    
+
     const updatedSkills = [...editedJob.skillAnalysis.requiredSkills];
     updatedSkills[editingSkillIndex] = {
       ...updatedSkills[editingSkillIndex],
