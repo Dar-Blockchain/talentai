@@ -75,11 +75,9 @@ ENV ASSEMBLYAI_API_KEY=$ASSEMBLYAI_API_KEY
 ENV NODE_ENV=$NODE_ENV
 
 # Copy specific files and directories from builder
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/next.config.ts ./next.config.ts
-COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Expose the default Next.js port
 EXPOSE 3000
