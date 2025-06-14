@@ -80,6 +80,7 @@ COPY package.json package-lock.json ./
 # Install only production dependencies
 RUN npm install --production
 
+
 # Copy built files and public directory
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
