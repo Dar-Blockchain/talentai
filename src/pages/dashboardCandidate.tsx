@@ -725,7 +725,7 @@ export default function DashboardCandidate() {
   };
   useEffect(() => {
     dispatch(getMyProfile());
-    dispatch(fetchTodos());
+    // dispatch(fetchTodos());
   }, [dispatch]);
 
   useEffect(() => {
