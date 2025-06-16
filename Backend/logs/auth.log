@@ -53,3 +53,8 @@ Headers: {"host":"localhost:5000","connection":"keep-alive","content-length":"39
 Execution Time: 0 ms
 Body: {"email":"medaziz.benismail@gmail.com"}
  - undefined
+2025-06-16T06:56:39.472Z - POST - /auth/register - ::1 - Referer: http://localhost:3000/ - 200 - User_id: N/A | nom: N/A 
+Headers: {"host":"localhost:5000","connection":"keep-alive","content-length":"34","sec-ch-ua-platform":"\"Windows\"","user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 OPR/119.0.0.0","accept":"application/json, text/plain, */*","sec-ch-ua":"\"Chromium\";v=\"134\", \"Not:A-Brand\";v=\"24\", \"Opera\";v=\"119\"","content-type":"application/json","sec-ch-ua-mobile":"?0","origin":"http://localhost:3000","sec-fetch-site":"same-site","sec-fetch-mode":"cors","sec-fetch-dest":"empty","referer":"http://localhost:3000/","accept-encoding":"gzip, deflate, br, zstd","accept-language":"fr,de-DE;q=0.9,de;q=0.8,en;q=0.7,ar;q=0.6","apikey":"S12S8brzUeK1QwoRbGPkXv4ASTVHAWC6JUbteNYC5JHakfdorQpR","secret_key":"S12S8brzUeK1QwoRbGPkXv4ASTVHAWC6JUbteNYC5JHakfdorQpR"}
+Execution Time: 1 ms
+Body: {"email":"mona_beldi@outlook.com"}
+ - undefined

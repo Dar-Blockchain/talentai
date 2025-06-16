@@ -1235,7 +1235,10 @@ exports.analyzeJobTestResults = async (req, res) => {
     // 3. Prepare the data for GPT analysis
     const systemPrompt = analyzeJobTestResultsPrompts.getSystemPrompt();
 
-    const userPrompt = analyzeJobTestResultsPrompts.getUserPrompt(requiredSkills, questions);
+    const userPrompt = analyzeJobTestResultsPrompts.getUserPrompt(
+      requiredSkills,
+      questions
+    );
 
     console.log("sysPrompt: ", systemPrompt);
     console.log("userPrompt: ", userPrompt);
@@ -1399,7 +1402,7 @@ exports.analyzeJobTestResults = async (req, res) => {
         }
       });
 
-      //save jobAssessmentResult 
+      //save jobAssessmentResult
       const company = await profileService.getProfileByPostId(jobId);
       const companyId = company._id;
       const condidateId = condidateProfile._id;
@@ -1411,7 +1414,7 @@ exports.analyzeJobTestResults = async (req, res) => {
         condidateId,
         companyId,
         numberOfQuestions: questions.length,
-        analysis:analysis
+        analysis: analysis,
       });
 
       await jobAssessmentResult.save();
@@ -1723,15 +1726,14 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
 
         await profile.save();
 
-        // for(let i = 0; i< todoList.todos.length; i++){
-        //   if(todoList.todos[i].type == "Skill"){
-        //     todoList.todos[i] = analysis.skillAnalysis[0].todoList;
-        //     todoList.todos[i].isCompleted = false;
-        //   }
-        // }
+        const index = todoList.todos.findIndex((todo) => todo.type === "Skill");
+        if (index !== -1) {
+          todoList.todos[index] = {
+            ...analysis.skillAnalysis[0].todoList,
+          };
+        }
 
-        // await todoList.save();
-        // console.log("check todoList: ", todoList);
+        await todoList.save();
       }
     } catch (error) {
       console.error("Error in analysis parsing:", error);
