@@ -3806,9 +3806,14 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             ) : (
               <Box sx={{ mt: 4 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                  <Typography variant="h6" sx={{ color: '#000000', fontWeight: 600 }}>
-                    Matching Candidates
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="h6" sx={{ color: '#000000', fontWeight: 600 }}>
+                      Matching Candidates
+                    </Typography>
+                    <Tooltip title="Candidates are matched based on their skills meeting or exceeding the required level for your job posting. The match score indicates how well their skills align with your requirements.">
+                      <InfoIcon sx={{ color: 'rgba(0, 255, 157, 1)', cursor: 'help' }} />
+                    </Tooltip>
+                  </Box>
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     <Button
                       variant="outlined"
