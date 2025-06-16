@@ -1213,8 +1213,8 @@ exports.analyzeJobTestResults = async (req, res) => {
       throw new HttpError(500, "post not found in the db");
     }
 
-    const skillsData = post.skillAnalysis.requiredSkills;
-    if (!skillsData || !Array.isArray(skillsData) || skillsData.length === 0) {
+    const jobSkills = post.skillAnalysis.requiredSkills;
+    if (!jobSkills || !Array.isArray(jobSkills) || jobSkills.length === 0) {
       throw new HttpError(500, "post has no requiredSkills");
     }
 
@@ -1231,7 +1231,6 @@ exports.analyzeJobTestResults = async (req, res) => {
 
     const requiredSkills = Object.values(skillsMap);
 
-    console.log(requiredSkills);
     // 3. Prepare the data for GPT analysis
     const systemPrompt = analyzeJobTestResultsPrompts.getSystemPrompt();
 
@@ -1239,9 +1238,6 @@ exports.analyzeJobTestResults = async (req, res) => {
       requiredSkills,
       questions
     );
-
-    console.log("sysPrompt: ", systemPrompt);
-    console.log("userPrompt: ", userPrompt);
 
     // 4. Call TogetherAI API for analysis
     const stream = await together.chat.completions.create({
@@ -1322,7 +1318,7 @@ exports.analyzeJobTestResults = async (req, res) => {
       const userSkills = user.profile.skills;
 
       // I- if condidate already has proven skills for the job , that they were not tested
-      let alreadyProvenSkills = skillsData.filter((reqSkill) => {
+      let alreadyProvenSkills = jobSkills.filter((reqSkill) => {
         return userSkills.some(
           (userSkill) =>
             userSkill.name.toLowerCase() === reqSkill.name.toLowerCase() &&
@@ -1333,16 +1329,26 @@ exports.analyzeJobTestResults = async (req, res) => {
       // push the already proven skill list to the analysis , so that they can be also returned in the result of this function
       if (alreadyProvenSkills.length > 0) {
         for (let i = 0; i < alreadyProvenSkills.length; i++) {
+          const provenSkill = alreadyProvenSkills[i];
+          const matchingUserSkill = userSkills.find(
+            (userSkill) =>
+              userSkill.name.toLowerCase() === provenSkill.name.toLowerCase()
+          );
+
+          const confidenceScore = matchingUserSkill?.ScoreTest ?? 100; 
+
           analysis.skillAnalysis.push({
-            skillName: alreadyProvenSkills[i].name,
-            requiredLevel: alreadyProvenSkills[i].level,
-            demonstratedExperienceLevel: alreadyProvenSkills[i].level,
+            skillName: provenSkill.name,
+            requiredLevel: provenSkill.level,
+            demonstratedExperienceLevel: provenSkill.level,
             strengths: [
-              `Your skills in ${alreadyProvenSkills[i].name} were already present in your profile.\nThat is why there was no need to reevalution for this Job Offer.\n
-               If you need to reevaluate your skills in ${alreadyProvenSkills[i].name}, you can navigate to your skills section in your profile and pass a new Test`,
+              `Your skills in ${provenSkill.name} were already present in your profile.\nThat is why there was no need to reevalution for this Job Offer.\n
+               If you need to reevaluate your skills in ${provenSkill.name}, you can navigate to your skills section in your profile and pass a new Test`,
             ],
             weaknesses: [`No weaknesses found`],
-            confidenceScore: alreadyProvenSkills[i].ScoreTest,
+            confidenceScore: confidenceScore,
+            match: "Strong match",
+            levelGap: 0,
           });
         }
       }
@@ -1399,9 +1405,8 @@ exports.analyzeJobTestResults = async (req, res) => {
           );
           profileSkill.experienceLevel = experienceLevelString;
           profileSkill.ScoreTest = reqSkill.confidenceScore;
-          profileSkill.Levelconfirmed = parseInt(
-            reqSkill.demonstratedExperienceLevel
-          ) -1;
+          profileSkill.Levelconfirmed =
+            parseInt(reqSkill.demonstratedExperienceLevel) - 1;
         }
       });
 
