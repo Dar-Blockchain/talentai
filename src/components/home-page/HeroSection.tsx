@@ -159,17 +159,10 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
             pt: 6,
           }}
         >
-          <Box sx={{ position: "relative", width: "90%", height: 450 }}>
-            <video
-              ref={videoRef}
-              src="/videos/hero.mp4"
-              autoPlay={false}
-              muted={false}
-              loop={false}
-              playsInline
-              controls={false}
-              preload="metadata"
-              onEnded={handleVideoEnded}
+          <Box sx={{ position: "relative", width:  "90%", height: type === "company" ? "100%" : "450px" }}>
+            <img
+              src={type === "company" ? "/jobSeekerImage.jpg" : "/CompanyImage.jpg"}
+              alt="Hero Section"
               style={{
                 width: "100%",
                 height: "100%",
@@ -181,26 +174,7 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
                 backgroundColor: "#000"
               }}
             />
-            <IconButton
-              onClick={handlePlayPause}
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                zIndex: 4,
-                "&:hover": {
-                  backgroundColor: "transparent",
-                },
-              }}
-            >
-              {isPlaying ? (
-                <PauseCircleOutlineIcon sx={{ fontSize: 48, color: "white" }} />
-              ) : (
-                <PlayCircleOutlineIcon sx={{ fontSize: 48, color: "white" }} />
-              )}
-            </IconButton>
-            <Box
+            {/* <Box
               sx={{
                 position: "absolute",
                 bottom: -20,
@@ -212,7 +186,7 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
                 filter: "blur(60px)",
                 zIndex: 2,
               }}
-            />
+            /> */}
           </Box>
         </Box>
       </Stack >
