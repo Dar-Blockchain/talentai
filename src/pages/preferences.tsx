@@ -367,6 +367,27 @@ export default function Preferences() {
   const handleNext = () => setActiveStep(i => i + 1);
   const handleBack = () => setActiveStep(i => i - 1);
 
+  // Add step-specific validation function
+  const isCurrentStepValid = () => {
+    if (userType !== 'company') return true;
+    
+    switch (currentStep) {
+      case 'Company Details':
+        // Check if all company details are filled
+        return Object.values(companyDetails).every(value => value.trim() !== '');
+      
+      case 'Required Skills':
+        // Check if at least one skill is selected
+        return requiredSkills.length > 0;
+      
+      case 'Experience Level':
+        // Check if experience level is selected
+        return experienceLevel !== '';
+      
+      default:
+        return true;
+    }
+  };
 
   const handleCreateOrUpdateProfile = async () => {
     try {
@@ -1109,7 +1130,8 @@ export default function Preferences() {
             onClick={activeStep === steps.length - 1 ? handleStartTest : handleNext}
             disabled={
               activeStep === 0 && !userType ||
-              (currentStep === 'Select Skills' && skills.length === 0)
+              (currentStep === 'Select Skills' && skills.length === 0) ||
+              (userType === 'company' && !isCurrentStepValid())
             }
             sx={{
               background: GREEN_MAIN,
