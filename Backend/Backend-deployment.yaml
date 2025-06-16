@@ -15,13 +15,33 @@ spec:
     spec:
       containers:
       - name: backend
-        image: 874772885665.dkr.ecr.us-west-2.amazonaws.com/talentaibackend:latest  # Replace with your ECR image URL
+        image: 874772885665.dkr.ecr.us-west-2.amazonaws.com/talentaibackend:latest
         ports:
-        - containerPort: 5004  # The port your backend application is listening on
+        - containerPort: 5004
         env:
         - name: NODE_ENV
           value: "production"
-        # Add any other environment variables here as needed
+        - name: PORT
+          value: "5004"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5004
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5004
+          initialDelaySeconds: 5
+          periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -29,31 +49,39 @@ metadata:
   name: backend-service
 spec:
   selector:
-    app: backend  # This selector ensures traffic is routed to the backend pods
+    app: backend
   ports:
     - protocol: TCP
-      port: 80        # Expose the backend service on port 80 externally
-      targetPort: 5004  # The container port the backend app is listening on
-  type: LoadBalancer  # This exposes the service externally via Load Balancer
+      port: 80
+      targetPort: 5004
+  type: ClusterIP
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: backend-ingress
   annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing  # Expose Load Balancer publicly
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-2:874772885665:certificate/c4fe4ff0-d82c-49a2-a454-81e335b75ab0  # SSL Certificate ARN from ACM
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'  # Listen on HTTPS port
-    alb.ingress.kubernetes.io/target-type: ip  # Use pod IP as target for Load Balancer
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-west-2:874772885665:certificate/c4fe4ff0-d82c-49a2-a454-81e335b75ab0
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/healthcheck-port: "5004"
+    alb.ingress.kubernetes.io/success-codes: "200"
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/security-groups: sg-0b024559ab2e9ab5c
+    alb.ingress.kubernetes.io/backend-protocol: HTTP
+    alb.ingress.kubernetes.io/load-balancer-attributes: routing.http.drop_invalid_header_fields.enabled=true,idle_timeout.timeout_seconds=60
 spec:
+  ingressClassName: alb
   rules:
-  - host: backend.talentai.bid  # Custom domain for backend
+  - host: backend.talentai.bid
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: backend-service  # This routes traffic to the backend service
+            name: backend-service
             port:
-              number: 80  # Expose the backend on port 80 internally
+              number: 80

@@ -553,6 +553,22 @@ export default function Preferences() {
 
   const [error, setError] = useState<string>('');
 
+  const isCurrentStepValid = () => {
+    if (userType === 'company') {
+      switch (currentStep) {
+        case 'Company Details':
+          return companyDetails.name && companyDetails.industry && companyDetails.size && companyDetails.location;
+        case 'Required Skills':
+          return requiredSkills.length > 0;
+        case 'Experience Level':
+          return experienceLevel !== '';
+        default:
+          return true;
+      }
+    }
+    return true;
+  };
+
   return (
     <Box sx={{
       minHeight: '100vh',
@@ -1109,7 +1125,8 @@ export default function Preferences() {
             onClick={activeStep === steps.length - 1 ? handleStartTest : handleNext}
             disabled={
               activeStep === 0 && !userType ||
-              (currentStep === 'Select Skills' && skills.length === 0)
+              (currentStep === 'Select Skills' && skills.length === 0) ||
+              (userType === 'company' && !isCurrentStepValid())
             }
             sx={{
               background: GREEN_MAIN,
