@@ -273,6 +273,7 @@ Generate and return JSON in the following format:
       "confidenceScore": 0-100,
       "todoList": {
         "title": "${skillName}",
+        "type": "Skill",
         "tasks": [
           {
             "title": "string",
