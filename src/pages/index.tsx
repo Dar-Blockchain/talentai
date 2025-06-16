@@ -10,15 +10,15 @@ import Header from "@/components/Header";
 const HomePage: React.FC = () => {
   return (
     <>
-      <Header />
+      <Header logo="/logo.svg" type="company" color="#29D291D4" link="Are you a Job Seeker?" />
 
-      <HeroSection />
-      <PartnersSection />
-      <FeaturesSection />
-      <SolutionsSection />
+      <HeroSection title="Revolutionize Your Hiring with" color="#29D291D4" type="company" subtitle="AI-Powered Intelligence" />
+      {/* <PartnersSection /> */}
+      <FeaturesSection type="company" color="#29D291D4" />
+      <SolutionsSection type="company" color="#29D291D4" title="Why Choose" subtitle="From Guesswork to Precision—Redefine How You Hire" />
       <PricingSection />
-      <ContactSection />
-      <Footer />
+      <ContactSection type="company" color="#29D291D4" />
+      <Footer type="company" />
     </>
   );
 };

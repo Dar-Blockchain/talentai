@@ -2,7 +2,14 @@ import React from "react";
 import { Box, Typography, Stack, useTheme, useMediaQuery } from "@mui/material";
 import GradientStepper from "./components/Stepper";
 
-const SolutionsSection = () => {
+type SolutionsSectionProps = {
+  color?: string;
+  type?: string;
+  title?: string;
+  subtitle?: string;
+
+};
+const SolutionsSection = ({ type, color, title, subtitle }: SolutionsSectionProps) => {
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
   return (
@@ -29,19 +36,20 @@ const SolutionsSection = () => {
           gap: 1,
         }}
       >
-        Why Choose
-        <Box
-          component="img"
-          src="/logo.svg"
-          alt="TalentAI Logo"
-          sx={{
-            height: "1em",
-            display: "inline-block",
-          }}
-        />
+        {title}
+        {type === "company" && (
+          <Box
+            component="img"
+            src="/logo.svg"
+            alt="TalentAI Logo"
+            sx={{
+              height: "1em",
+              display: "inline-block",
+            }}
+          />)}
       </Typography>
       <Typography sx={{ fontSize: { xs: "0.95rem", sm: "1rem" }, mt: 1 }}>
-        From Guesswork to Precision—Redefine How You Hire
+        {subtitle}
       </Typography>
       <Stack
         direction="row"
@@ -66,24 +74,33 @@ const SolutionsSection = () => {
               pt: "-10px",
             }}
           >
-            Simplified
-            <br />
-            Hiring Process
+            {type === "company" ? <>
+              Simplified
+              <br />
+              Hiring Process
+            </> : <>
+              Application               <br />
+              Process
+            </>}
           </Typography>
           <Typography sx={{ mt: 1 }}>
-            From Guesswork to Precision
-            <br />
-            Redefine How You Hire
+            {type === "company" ? <>
+              From Guesswork to Precision
+              <br />
+              Redefine How You Hire
+            </> : <>
+              From Resumes to Real Recognition              <br />
+              Redefine how you get noticed, <br />  verified, and hired.
+            </>}
           </Typography>
         </Box>
 
         <Box
           sx={{
-            transform: !isMdUp ? "none" : "rotate(10deg)",
             flexGrow: 1,
           }}
         >
-          <GradientStepper />
+          <GradientStepper type={type} />
         </Box>
       </Stack>
     </Box>

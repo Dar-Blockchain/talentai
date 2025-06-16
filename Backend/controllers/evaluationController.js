@@ -5,10 +5,12 @@ require("dotenv").config();
 const {
   generateOnboardingQuestionsPrompts,
   analyzeOnbordingQuestionsPrompts,
+  analyzeJobTestResultsPrompts,
 } = require("../prompts/evaluationPrompts");
 
 const JobAssessmentResult = require("../models/JobAssessmentResultModel");
 const Profile = require("../models/ProfileModel");
+const TodoList = require("../models/todoListModel");
 const Post = require("../models/PostModel");
 
 const postService = require("../services/postService");
@@ -1231,114 +1233,15 @@ exports.analyzeJobTestResults = async (req, res) => {
 
     console.log(requiredSkills);
     // 3. Prepare the data for GPT analysis
-    const systemPrompt = `
-You are an expert technical interviewer specializing in evaluating developer skills for job positions. 
+    const systemPrompt = analyzeJobTestResultsPrompts.getSystemPrompt();
 
-Your task is to:
-- Analyze the candidate’s answers against the required skill levels.
-- Assess each skill individually for:
-  - Demonstrated proficiency level
-  - Strengths
-  - Weaknesses
-  - Confidence score
-- Provide a comprehensive, skill-by-skill analysis.
-- Deliver an overall assessment of the candidate’s technical level.
-- Offer actionable recommendations for improvement.
+    const userPrompt = analyzeJobTestResultsPrompts.getUserPrompt(
+      requiredSkills,
+      questions
+    );
 
-Skill Proficiency Levels:
-1 - Entry Level:  
-- Basic concepts and definitions  
-- Simple explanations without coding  
-- Questions answerable by someone new to the skill  
-2 - Junior:  
-- Basic practical understanding  
-- Simple code-related questions or usage  
-- Can explain common patterns and simple problem solving  
-3 - Mid Level:  
-- Intermediate concepts and design  
-- Schema design, error handling, query optimization  
-- Real-world application and practical problem solving  
-4 - Senior:  
-- Advanced concepts and architecture  
-- Performance tuning, concurrency, complex error handling  
-- Designing scalable systems and best practices  
-5 - Expert:  
-- Deep internals and optimization  
-- Scalability, security, and advanced system design  
-- Handling complex real-world challenges and innovations  
-
-Example of Confidence Score Calculation:
-If a skill has 5 associated questions and the answers were:
-- 2 fully correct → +50% (2 × 25%)
-- 2 partially correct → +30% (2 × 15%)
-- 1 incorrect → +0%
-- 1 has empty answer → +0%
-→ Final confidenceScore = 80%
-
-Demonstrated Experience Level Calculation (Final Version)
--The maximum demonstratedExperienceLevel is always the requiredLevel.
--The level is assigned based on the confidenceScore as follows:
--If confidenceScore >= 70% → demonstratedExperienceLevel = requiredLevel
--If 50% <= confidenceScore < 70% → demonstratedExperienceLevel = max(1, requiredLevel - 1)
--If 20% <= confidenceScore < 50% → demonstratedExperienceLevel = max(1, requiredLevel - 2)
--If 15% <= confidenceScore < 20% → demonstratedExperienceLevel = 1
--If confidenceScore < 15% → demonstratedExperienceLevel = 0 (meaning the candidate shows no valid proficiency)
--The final value must be between 0 and requiredLevel, inclusive.
-
-STRICT REQUIREMENTS: 
--confidenceScore for each skill is to be set depending on the responses for questions of that skill. 
--Be objective
--Do not estimate some knowledge , the answers do not reflect
--You only repère is the correctness of answers to the questions
-
-Respond strictly in JSON format only, without any additional explanations or text.
-`;
-
-    const userPrompt = `
-Analyze the following:
-
-Required Skills:
-${requiredSkills
-  .map((skill) => `- ${skill.name} (Required Level: ${skill.level})`)
-  .join("\n")}
-
-Questions and Answers:
-${questions
-  .map(
-    (qa, index) =>
-      `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}\nSkill: ${
-        qa.skill
-      }\nProficiency Level Required: ${qa.level}`
-  )
-  .join("\n\n")}
-
-Following this JSON object fields, generate a detailed JSON analysis with these fields:
-
-{
-  "overallScore": 0-100,
-  "technicalLevel":"string",
-  "generalAssassment":"string",
-  "recommendations":[],
-  "nextSteps:[],
-  "skillAnalysis": [
-    {
-      "skillName": string,
-      "requiredLevel": 1-5,
-      
-      "demonstratedExperienceLevel": 1-5,
-      "strengths": [string], // If no strengths are identified, include "No strengths identified for this skill" in the array
-      "weaknesses": [string],
-      "confidenceScore": 0-100,
-    }
-  ],
-}
-
-The confidenceScore of each skill represents your evaluation of the candidate’s responses off all questions related to that skill.
-The overallScore should be calculated as the average of all confidenceScores across the evaluated skills.
-Use these definitions to guide your scoring and ensure consistency in the analysis.
-
-Provide only the JSON output without any additional text.
-`;
+    console.log("sysPrompt: ", systemPrompt);
+    console.log("userPrompt: ", userPrompt);
 
     // 4. Call TogetherAI API for analysis
     const stream = await together.chat.completions.create({
@@ -1499,6 +1402,30 @@ Provide only the JSON output without any additional text.
         }
       });
 
+      //save jobAssessmentResult
+      const company = await profileService.getProfileByPostId(jobId);
+      const companyId = company._id;
+      const condidateId = condidateProfile._id;
+      // 6. Format final response
+      const jobAssessmentResult = new JobAssessmentResult({
+        timestamp: new Date(),
+        assessmentType: "job",
+        jobId,
+        condidateId,
+        companyId,
+        numberOfQuestions: questions.length,
+        analysis: analysis,
+      });
+
+      await jobAssessmentResult.save();
+
+      // 3. Save the updated profile with the new assesmentResult
+      if (!Array.isArray(company.assessmentResults)) {
+        company.assessmentResults = [];
+      }
+      company.assessmentResults.push(jobAssessmentResult._id);
+      await company.save();
+
       // update profile quota after passing the jobtest
       profile.quota++;
       await profile.save();
@@ -1560,7 +1487,7 @@ exports.generateOnboardingQuestions = async (req, res) => {
         .json({ error: "skills must include only one skill" });
     }
 
-    const skillName = skills[0].name; 
+    const skillName = skills[0].name;
 
     const questionsCount = 10;
 
@@ -1663,12 +1590,17 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
       return res.status(404).json({ error: "Profile not found" });
     }
 
-    const requiredLevel = skill[0].proficiencyLevel; 
-    const skillName = skill[0].name; 
+    const todoList = await TodoList.findById(profile.todoList);
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
 
+    const skillName = skill[0].name;
     const systemPrompt = analyzeOnbordingQuestionsPrompts.getSystemPrompt();
-    const userPrompt =
-      analyzeOnbordingQuestionsPrompts.getUserPrompt(skillName,requiredLevel, questions);
+    const userPrompt = analyzeOnbordingQuestionsPrompts.getUserPrompt(
+      skillName,
+      questions
+    );
 
     // 4. Call TogetherAI API for analysis
     const stream = await together.chat.completions.create({
@@ -1681,7 +1613,7 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
         { role: "user", content: userPrompt },
       ],
       max_tokens: 1000,
-      temperature: 0.6,
+      temperature: 0.7,
       stream: true,
     });
 
@@ -1693,7 +1625,6 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
 
     // 5. Parse and validate the response
     let analysis;
-
     let jsonStr;
     try {
       const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
@@ -1746,48 +1677,64 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
         throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
       }
 
+      /*Depending on the calculated overallScore in the analysis Set: 
+       - the technicalLevel 
+       - demonstratedExperienceLevel 
+      */
+      const overallScore = analysis.overallScore;
+      let demonstratedExperienceLevel;
+      let experienceLevelString = "";
+
+      if (overallScore < 6) {
+        demonstratedExperienceLevel = 0;
+        experienceLevelString = "NoLevel";
+      } else if (overallScore < 16.32) {
+        demonstratedExperienceLevel = 1;
+        experienceLevelString = "Entry Level";
+      } else if (overallScore < 30.32) {
+        demonstratedExperienceLevel = 2;
+        experienceLevelString = "Junior";
+      } else if (overallScore < 48.31) {
+        demonstratedExperienceLevel = 3;
+        experienceLevelString = "Mid Level";
+      } else if (overallScore < 69.33) {
+        demonstratedExperienceLevel = 4;
+        experienceLevelString = "Senior";
+      } else {
+        demonstratedExperienceLevel = 5;
+        experienceLevelString = "Expert";
+      }
+
+      // set the technicalLevel in the analysis result:
+      analysis.technicalLevel = experienceLevelString;
+      analysis.skillAnalysis[0].requiredLevel = demonstratedExperienceLevel;
+      analysis.skillAnalysis[0].demonstratedExperienceLevel =
+        demonstratedExperienceLevel;
+
       // add skill to profile if experienceLevel is proven
-
-      const skill = analysis.skillAnalysis[0];
-      if (skill.demonstratedExperienceLevel > 0) {
-        let experienceLevelString = "";
-        switch (skill.demonstratedExperienceLevel) {
-          case 1:
-            experienceLevelString = "Entry Level";
-            break;
-          case 2:
-            experienceLevelString = "Junior";
-            break;
-          case 3:
-            experienceLevelString = "Mid Level";
-            break;
-          case 4:
-            experienceLevelString = "Senior";
-            break;
-          case 5:
-            experienceLevelString = "Expert";
-            break;
-          default:
-            throw new Error(
-              `Unknown experienceLevel value: ${reqSkill.demonstratedExperienceLevel}  `
-            );
-        }
-
+      if (demonstratedExperienceLevel > 0) {
         profile.skills = [
           {
-            name: skill.skillName,
-            proficiencyLevel: skill.demonstratedExperienceLevel,
+            name: analysis.skillAnalysis[0].skillName,
+            proficiencyLevel: demonstratedExperienceLevel,
             experienceLevel: experienceLevelString,
             NumberTestPassed: 1,
-            ScoreTest: skill.confidenceScore,
-            Levelconfirmed: skill.demonstratedExperienceLevel-1,
+            ScoreTest: overallScore,
+            Levelconfirmed: demonstratedExperienceLevel - 1,
           },
         ];
 
         await profile.save();
-      }
 
-      // profile.quota++; quota was already increased in the generateOnboardingQuestions
+        const index = todoList.todos.findIndex((todo) => todo.type === "Skill");
+        if (index !== -1) {
+          todoList.todos[index] = {
+            ...analysis.skillAnalysis[0].todoList,
+          };
+        }
+
+        await todoList.save();
+      }
     } catch (error) {
       console.error("Error in analysis parsing:", error);
     }

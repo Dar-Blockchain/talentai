@@ -94,49 +94,15 @@ exports.getTodoListOfProfile = async (req, res) => {
         error: `profile of the user with userId ${user._id} not found in the db `,
       });
     }
-    let todo = await TodoList.findById(profile.todoList);
-    if (!todo) {
-      let newTodos = await generateNewTodosForProfile(todo, profile);
-      let skillTodos = newTodos;
-      if (!todo) {
-        // Upsert ToDo
-        const defaultProfileTodos = [
-          { type: "Profile", title: "Upload CV", isCompleted: false },
-          { type: "Skill", title: "Add Skill", isCompleted: false },
-        ];
-        todo = await TodoList.create({
-          profile: profile._id,
-          todos: [...defaultProfileTodos, ...newTodos],
-        });
-        profile.todoList = todo._id;
-        await profile.save();
-      } else {
-        skillTodos.forEach((skillTodo) => {
-          const existingSkillTodo = todo.todos.find(
-            (t) => t.title === skillTodo.title && t.type === "Skill"
-          );
 
-          // Add only up to 5 total tasks
-          if (existingSkillTodo) {
-            const remainingTodos = Math.max(
-              0,
-              5 - existingSkillTodo.tasks.length
-            );
-
-            if (remainingTodos > 0) {
-              existingSkillTodo.tasks.push(
-                ...skillTodo.tasks.slice(0, remainingTodos)
-              );
-            }
-          } else {
-            skillTodo.tasks = skillTodo.tasks.slice(0, 5); // Ensure new skill doesn't exceed the limit
-            todo.todos.push(skillTodo);
-          }
-        });
-
-        await todo.save();
-      }
+    // by saving the profile , an initial todoList will be created if the profile does not already have one
+    if (!profile.todoList) {
+      const todoList = await TodoList.create({ profile: profile._id });
+      profile.todoList = todoList._id;
+      await profile.save();
     }
+
+    let todo = await TodoList.findById(profile.todoList);
 
     return res.status(200).json({ todos: todo.todos });
   } catch (error) {

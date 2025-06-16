@@ -43,9 +43,8 @@ module.exports.connectWithGmail = async (req, res) => {
   try {
     const { id_token } = req.body; // Récupère le `id_token` envoyé par le frontend
 
-    const email = await authService.GetGmailByToken(id_token);
 
-    const result = await authService.connectWithGmail(email);
+    const result = await authService.connectWithGmail(id_token);
 
     // Créer un cookie avec le token JWT
     res.cookie("jwt_token", result.token, {
@@ -82,16 +81,6 @@ module.exports.logout = (req, res) => {
   }
 };
 
-module.exports.getAllUsers = async (req, res) => {
-  try {
-    const users = await authService.getAllUsers();
-    res.status(200).json(users);
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Erreur lors de la récupération des utilisateurs" });
-  }
-};
 
 module.exports.GetGmailByToken = async (req, res) => {
   try {

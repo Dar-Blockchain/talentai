@@ -13,6 +13,8 @@ module.exports.calculateSkillMatchScore = (jobSkills, candidateSkills) => {
       // Utiliser Levelconfirmed au lieu de proficiencyLevel
       const jobLevel = jobSkill.level;
       const candidateLevel = candidateSkill.Levelconfirmed;
+      //const candidateLevel = candidateSkill.proficiencyLevel - 1;
+
 
       let skillScore = 0; // Initialiser skillScore à 0
 
