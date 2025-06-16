@@ -1399,6 +1399,9 @@ exports.analyzeJobTestResults = async (req, res) => {
           );
           profileSkill.experienceLevel = experienceLevelString;
           profileSkill.ScoreTest = reqSkill.confidenceScore;
+          profileSkill.Levelconfirmed = parseInt(
+            reqSkill.demonstratedExperienceLevel
+          ) -1;
         }
       });
 
