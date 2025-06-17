@@ -4,30 +4,33 @@ const userModel = require("../../models/UserModel");
 const path = require("path"); // Importer le module path
 const Log = require("../../models/logSchema"); // Import the Log model
 
-function authLogMiddleware(req, res, next) {
-  const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.split(" ")[1];
-  const startTime = new Date(); // Temps de début de la requête
-  if (token) {
-    jwt.verify(token, process.env.Net_Secret, async (err, decodedToken) => {
-      if (err) {
-        console.log(err)
-        req.user = null;
-      } else {
-        let user = await userModel.findById(decodedToken.id);
-        req.user = user;
-      }
-      appendLog(req, res, startTime); // Log to DB
+function authLogMiddleware(logType) {
+  return function (req, res, next) {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(" ")[1];
+    const startTime = new Date(); // Temps de début de la requête
+
+    if (token) {
+      jwt.verify(token, process.env.Net_Secret, async (err, decodedToken) => {
+        if (err) {
+          console.log(err);
+          req.user = null;
+        } else {
+          let user = await userModel.findById(decodedToken.id);
+          req.user = user;
+        }
+        appendLog(req, res, startTime, logType); // Pass logType as parameter
+        next();
+      });
+    } else {
+      req.user = null;
+      appendLog(req, res, startTime, logType); // Pass logType as parameter
       next();
-    });
-  } else {
-    req.user = null;
-    appendLog(req, res, startTime); // Log to DB
-    next();
-  }
+    }
+  };
 }
 
-async function appendLog(req, res, startTime) {
+async function appendLog(req, res, startTime, logType) {
   const headers = JSON.stringify(req.headers);
   const endTime = new Date();
   const executionTime = endTime - startTime; // Temps d'exécution en millisecondes
@@ -40,7 +43,7 @@ async function appendLog(req, res, startTime) {
 
   // Save the log to MongoDB
   const log = new Log({
-    type: "Auth",
+    type: logType, // Use logType here
     method: req.method,
     url: req.originalUrl,
     ip: req.ip,
@@ -75,5 +78,6 @@ async function appendLog(req, res, startTime) {
     console.error("Error saving log to file:", err);
   }
 }
+
 
 module.exports = authLogMiddleware;
