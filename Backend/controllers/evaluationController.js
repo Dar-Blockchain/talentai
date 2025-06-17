@@ -786,8 +786,10 @@ Provide detailed, actionable feedback in JSON format only.`,
           proficiencyLevel: skill.demonstratedProficiency,
           experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
           ScoreTest: skill.confidenceScore,
-          Levelconfirmed: profLevel - 1,
-        })),
+          Levelconfirmed:
+          skill.demonstratedProficiency === 5 && skill.confidenceScore > 75
+            ? 5
+            : profLevel - 1,          })),
       });
     }
 
@@ -807,8 +809,10 @@ Provide detailed, actionable feedback in JSON format only.`,
             category: s.subcategory || "",
             experienceLevel: getExperienceLevel(s.demonstratedProficiency),
             ScoreTest: s.confidenceScore,
-            Levelconfirmed: profLevel - 1,
-          })),
+            Levelconfirmed:
+            skill.demonstratedProficiency === 5 && skill.confidenceScore > 75
+              ? 5
+              : profLevel - 1,            })),
         },
         { new: true }
       );
@@ -892,7 +896,10 @@ Provide detailed, actionable feedback in JSON format only.`,
               proficiencyLevel: profLevel,
               experienceLevel: experienceLevels[profLevel - 1],
               ScoreTest: confScore,
-              Levelconfirmed: profLevel - 1,
+              Levelconfirmed:
+              skill.demonstratedProficiency === 5 && skill.confidenceScore > 75
+                ? 5
+                : profLevel - 1,                    
             };
           }),
         });
@@ -1492,7 +1499,10 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
             experienceLevel: experienceLevelString,
             NumberTestPassed: 1,
             ScoreTest: overallScore,
-            Levelconfirmed: demonstratedExperienceLevel - 1,
+            Levelconfirmed:
+            demonstratedExperienceLevel === 5 && overallScore > 75
+              ? 5
+              : demonstratedExperienceLevel - 1,  
           },
         ];
 

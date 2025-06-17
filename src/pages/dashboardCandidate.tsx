@@ -124,11 +124,15 @@ const ProfileHeader = styled(Box)(({ theme }) => ({
 
 const StatCard = styled(Paper)(({ theme }) => ({
   background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-  padding: theme.spacing(4),
+  padding: theme.spacing(3),
   borderRadius: "24px",
   border: "1px solid rgba(0, 0, 0, 0.05)",
   boxShadow: "0 8px 30px rgba(0, 0, 0, 0.06), 0 0 15px rgba(0, 0, 0, 0.04)",
   transition: "all 0.3s ease",
+  height: "120px",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between",
   "&:hover": {
     transform: "translateY(-6px)",
     boxShadow: "0 15px 40px rgba(0, 0, 0, 0.1), 0 0 25px rgba(0, 0, 0, 0.06)",
@@ -349,6 +353,18 @@ const SkillBlock = ({
     Senior: 4,
     Expert: 5,
   };
+
+  const getLevelFromNumber = (level: number): string => {
+    const levelMap: { [key: number]: string } = {
+      1: "Entry Level",
+      2: "Junior",
+      3: "Mid Level",
+      4: "Senior",
+      5: "Expert"
+    };
+    return levelMap[level] || "Entry Level";
+  };
+
   const proficiencyLevel =
     type === "technical"
       ? skill.proficiencyLevel
@@ -399,7 +415,25 @@ const SkillBlock = ({
             fontWeight: 500,
           }}
         >
-          {type === "technical" ? skill.experienceLevel : skill.experienceLevel}
+          {type === "technical" ? (
+            <>
+              {skill.Levelconfirmed && (
+                <Chip
+                  label={`${getLevelFromNumber(skill.Levelconfirmed)} Confirmed`}
+                  size="small"
+                  sx={{
+                    ml: 1,
+                    backgroundColor: "rgba(0, 255, 157, 0.2)",
+                    color: "black",
+                    height: "20px",
+                    fontSize: "0.75rem",
+                  }}
+                />
+              )}
+            </>
+          ) : (
+            skill.experienceLevel
+          )}
         </Typography>
         <Box
           sx={{
@@ -436,6 +470,7 @@ const SkillBlock = ({
         >
           Start Test
         </Button>
+
         {onDelete && (
           <IconButton
             onClick={onDelete}
@@ -691,6 +726,8 @@ export default function DashboardCandidate() {
   const dispatch = useDispatch<AppDispatch>();
   const { profile, loading, error } = useSelector(selectProfile);
   const { todos, generate } = useSelector((state: RootState) => state.todo);
+  const [timeUntilReset, setTimeUntilReset] = useState<string>("");
+  const [resetDate, setResetDate] = useState<string>("");
 
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [testModalOpen, setTestModalOpen] = useState(false);
@@ -737,6 +774,47 @@ export default function DashboardCandidate() {
       });
     }
   }, [profile]);
+
+  // Add useEffect for timer
+  useEffect(() => {
+    const updateTimer = () => {
+      if (profile?.quotaUpdatedAt) {
+        const quotaDate = new Date(profile.quotaUpdatedAt);
+        const resetDate = new Date(quotaDate.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 days from quotaUpdatedAt
+        const now = new Date();
+        const timeDiff = resetDate.getTime() - now.getTime();
+
+        // Format reset date
+        const options: Intl.DateTimeFormatOptions = {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        };
+        setResetDate(resetDate.toLocaleDateString('en-US', options));
+
+        if (timeDiff > 0) {
+          const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+
+          if (days > 0) {
+            setTimeUntilReset(`${days}d ${hours}h`);
+          } else {
+            setTimeUntilReset(`${hours}h ${minutes}m`);
+          }
+        } else {
+          setTimeUntilReset("Reset available");
+        }
+      }
+    };
+
+    updateTimer();
+    const timer = setInterval(updateTimer, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, [profile?.quotaUpdatedAt]);
 
   const handleEditProfileClose = () => {
     setEditProfileOpen(false);
@@ -2017,7 +2095,7 @@ export default function DashboardCandidate() {
                 </Typography>
                 <Typography
                   variant="h5"
-                  sx={{ fontWeight: 600, color: "#191919", mt: 1 }}
+                  sx={{ fontWeight: 600, color: "#191919" }}
                 >
                   {profile.skills?.length || 0}
                 </Typography>
@@ -2025,18 +2103,36 @@ export default function DashboardCandidate() {
             </Box>
             <Box>
               <StatCard>
-                <Typography
-                  variant="overline"
-                  sx={{ color: "#191919", letterSpacing: 2 }}
-                >
-                  Tests Passed
-                </Typography>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 600, color: "#191919", mt: 1 }}
-                >
-                  {profile.quota || 0}/5
-                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.1 }}>
+                  <Typography
+                    variant="overline"
+                    sx={{ color: "#191919", letterSpacing: 2 }}
+                  >
+                    Tests Passed
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 600, color: "#191919" }}
+                  >
+                    {profile.quota || 0}/5
+                  </Typography>
+                  {timeUntilReset && (
+                    <Chip
+                      label={`Reset: ${resetDate}`}
+                      size="small"
+                      sx={{
+                        height: '20px',
+                        fontSize: '0.7rem',
+                        backgroundColor: 'rgba(0,0,0,0.05)',
+                        color: 'rgba(0,0,0,0.6)',
+                        '& .MuiChip-label': {
+                          px: 1,
+                          py: 0.5
+                        }
+                      }}
+                    />
+                  )}
+                </Box>
               </StatCard>
             </Box>
             <Box>
