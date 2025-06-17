@@ -1,32 +1,254 @@
+.sectionWrapper {
+  position: relative;
+  border: 0.5px solid #c0c0c0;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px 0 rgba(60, 60, 60, 0.05);
+  transition: box-shadow 0.2s, border-color 0.2s;
+  background: transparent;
+  overflow: visible; /* Changed from hidden to visible */
+  /* Remove padding to make border hug content tightly */
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.sectionContent {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: visible; /* Changed from hidden to visible to prevent text clipping */
+  transition: font-size 0.15s ease-out;
+  /* Remove margin and padding to make border hug content tightly */
+  margin: 0;
+  padding: 2px; /* Small padding to prevent text touching border */
+  display: block;
+}
+
+/* Add a new class for newly created sections to ensure tight borders */
+.newSection {
+  padding: 0;
+  margin: 0;
+  border: 0.5px solid #c0c0c0;
+}
+
 /* ============================= */
 /*   ResumeBuilder.module.css   */
 /* ============================= */
 
 /* 1) Root wrapper: fixed to viewport, no page scroll */
 .pageWrapper {
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-  height: 100vh;           /* fill exactly the viewport height */
+  background: #F0F1F5;
+  height: 100vh; /* fill exactly the viewport height */
+  width: 100vw; /* fill exactly the viewport width */
   padding: 0;
-  padding-left: 250px;     /* space for the fixed sidebar */
-  overflow: hidden;        /* kill all scrollbars on the page itself */
+  margin: 0;
+  overflow: hidden; /* kill all scrollbars on the page itself */
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  color: white;
+  flex-direction: column; /* Changed to column to accommodate top bar */
+  color: #333; /* Change text color to dark for light background */
   font-family: Arial, sans-serif;
   box-sizing: border-box;
+  /* Prevent any scrolling on the main page */
+  position: fixed;
+  top: 0;
+  left: 0;
+  /* Completely isolate from any child scroll events */
+  isolation: isolate;
+  contain: layout style;
 }
 
-/* 2) Fixed sidebar: scrolls its own content */
+/* 2) Top bar */
+.topBar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(90deg, #537AE3 0%, #5D3BDB 100%);
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 40;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.topBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.topBarCenter {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Top bar action buttons */
+.topBarButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+  font-size: 12px;
+  min-width: 60px;
+}
+
+.topBarButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.topBarButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.topBarButton svg {
+  margin-bottom: 2px;
+}
+
+/* 3) Elements button */
+.elementsButton {
+  position: fixed;
+  top: 70px; /* Moved closer to top bar */
+  left: 10px; /* Moved more to the left */
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  z-index: 30;
+  transition: background-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 50px;
+}
+
+.elementsButton:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.elementsButton svg {
+  color: #666;
+  font-size: 18px;
+}
+
+.elementsButton span {
+  font-size: 10px;
+  font-weight: 500;
+  color: #666;
+}
+
+/* 3.5) Icons button */
+.iconsButton {
+  position: fixed;
+  top: 130px; /* Below the Elements button */
+  left: 10px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  z-index: 30;
+  transition: background-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 50px;
+}
+
+.iconsButton:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.iconsButton svg {
+  color: #666;
+  font-size: 18px;
+}
+
+.iconsButton span {
+  font-size: 10px;
+  font-weight: 500;
+  color: #666;
+}
+
+/* 4) Content area wrapper */
+.contentWrapper {
+  display: flex;
+  flex: 1;
+  margin-top: 60px; /* Space for top bar */
+  transition: margin-left 0.3s ease;
+}
+
+.contentWrapper.sidebarOpen {
+  margin-left: 330px; /* Adjust for button width + sidebar width */
+}
+
+/* 5) Fixed sidebar: hidden by default, shows instantly */
 .sidebar {
   position: fixed;
-  top: 0; bottom: 0; left: 0;
+  top: 60px; /* Below top bar */
+  bottom: 0;
+  left: -250px; /* Hidden by default */
   width: 250px;
-  background: #10151a;
+  background: #ffffff;
   padding: 20px;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-  z-index: 20;
-  overflow-y: auto;       /* only sidebar scroll */
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 25;
+  overflow-y: auto;
+  overflow-x: hidden; /* Completely prevent horizontal scroll */
+  transition: none; /* Remove animation */
+  border-right: 1px solid #e0e0e0;
+  /* Custom scrollbar styling for blue theme */
+  /* Prevent scroll from affecting parent */
+  isolation: isolate;
+  contain: layout style;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: rgba(83, 122, 227, 0.1);
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #537AE3 0%, #5D3BDB 100%);
+  border-radius: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #4A6ED7 0%, #5235C7 100%);
+}
+
+.sidebar.open {
+  left: 70px; /* Show sidebar to the right of the button */
+}
+
+.sidebar.permanent {
+  left: 70px; /* Show sidebar permanently to the right of the button */
+  box-shadow: none;
+  border-right: 1px solid #e0e0e0;
 }
 
 /* container for the buttons in the sidebar */
@@ -37,16 +259,22 @@
   margin-top: 1rem;
 }
 
-/* 3) Canvas area: scrolls its own content */
+/* 6) Canvas area: scrolls its own content */
 .canvasWrapper {
-  flex: 1 1 auto;         /* take up remaining space */
-  height: 100vh;          /* match viewport height */
+  flex: 1 1 auto; /* take up remaining space */
+  height: calc(100vh - 60px); /* Account for top bar */
   display: flex;
   justify-content: center;
   align-items: flex-start;
   padding: 40px 20px;
-  overflow-y: auto;       /* only canvas scroll */
+  overflow-y: auto; /* only canvas scroll */
+  overflow-x: hidden; /* prevent horizontal scroll */
   box-sizing: border-box;
+  /* Isolate canvas scrolling */
+  isolation: isolate;
+  contain: layout style;
+  /* Ensure stable scrollbar */
+  scrollbar-gutter: stable;
 }
 
 /* optional inner wrapper */
@@ -58,26 +286,26 @@
   width: 100%;
 }
 
-/* 4) The white "paper" */
+/* 7) The white "paper" */
 .canvas {
   background: white;
-  width: 794px;                   /* fixed A4 width */
-  aspect-ratio: 794 / 1123;       /* auto height */
+  width: 793.7px; /* Updated to requested width */
+  height: 1122.5px; /* Updated to requested height */
   margin: 0 auto;
-  box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+  box-shadow: 0 5px 30px rgba(0, 0, 0, 0.1);
   border-radius: 4px;
   overflow: hidden;
   transform-origin: top center;
   transition: transform 0.2s ease;
 }
 
-/* 5) Zoom controls */
+/* 8) Zoom controls */
 .zoomControls {
   position: fixed;
   bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   padding: 8px 12px;
   border-radius: 30px;
   display: flex;
@@ -88,7 +316,7 @@
 }
 
 .zoomControls button {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   border: none;
   padding: 4px 8px;
   font-size: 1rem;
@@ -108,7 +336,7 @@
   text-align: center;
 }
 
-/* 6) Section-level styling */
+/* 9) Section-level styling */
 .toolbar {
   margin-bottom: 20px;
   display: flex;
@@ -118,7 +346,7 @@
 
 .textBlock {
   border: 1px dashed #aaa;
-  background: rgba(0,0,0,0.05);
+  background: rgba(0, 0, 0, 0.05);
   color: #000;
   display: flex;
   justify-content: center;
@@ -129,18 +357,58 @@
 .contentEditable,
 .editable,
 .sectionBox {
-  width: 100%;
-  height: 100%;
-  padding: 8px;
+  padding: 2px; /* Small padding to prevent text touching border */
   outline: none;
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 10px;
+  line-height: 1.2;
   white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+  text-align: left;
+  box-sizing: border-box;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0;
+}
+
+/* Special styling for header sections to keep name and title larger */
+.headerSection .contentEditable,
+.headerSection .editable,
+.headerSection .sectionBox {
+  font-size: 10px; /* Keep base font size small */
+}
+
+/* Override for header name - make it larger */
+.headerName,
+.headerSection h2 {
+  font-size: 20px !important;
+  font-weight: bold !important;
+  margin: 0 0 2px 0 !important;
+}
+
+/* Override for header job title - medium size */
+.headerJobTitle,
+.headerSection p {
+  font-size: 16px !important;
+  font-weight: normal !important;
+  margin: 0 !important;
 }
 
 /* wrap each Rnd section so we can detect hover */
 .sectionWrapper {
   position: relative;
+  border: 0.5px solid #c0c0c0;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px 0 rgba(60, 60, 60, 0.05);
+  transition: box-shadow 0.2s, border-color 0.2s;
+  background: transparent;
+  overflow: visible; /* Changed from hidden to visible */
+  /* Ensure wrapper tightly contains content */
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 /* style the action buttons container */
@@ -150,10 +418,10 @@
   right: 8px;
   display: flex;
   gap: 4px;
-  background: rgba(255,255,255,0.95);  /* more opaque white background */
+  background: rgba(255, 255, 255, 0.95); /* more opaque white background */
   border-radius: 4px;
   padding: 2px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
   z-index: 200;
@@ -183,7 +451,57 @@
   opacity: 1;
 }
 
-/* 7) Responsive tweaks */
+/* Active and hover styles using mixed local/global selectors */
+.sectionWrapper:global(.active-section) {
+  border: 2px solid #8e44ad !important;
+  box-shadow: none !important;
+}
+.sectionWrapper:global(.hoverable-section):hover:not(:global(.active-section)) {
+  border: 2px solid rgba(142, 68, 173, 0.5) !important;
+  border-radius: 4px;
+}
+
+/* Differentiated resize handles shapes and colors */
+.sectionWrapper :global(.rnd-resizable-handle) {
+  background: #fff !important;
+  border: 2px solid #8e44ad !important;
+  box-shadow: 0 1px 4px rgba(60, 60, 60, 0.1) !important;
+  opacity: 1 !important;
+  z-index: 1000 !important;
+  pointer-events: all !important;
+}
+.sectionWrapper :global(.rnd-resizable-handle-left),
+.sectionWrapper :global(.rnd-resizable-handle-right) {
+  width: 6px !important;
+  height: 24px !important;
+  border-radius: 2px !important;
+}
+.sectionWrapper :global(.rnd-resizable-handle-topleft),
+.sectionWrapper :global(.rnd-resizable-handle-topright),
+.sectionWrapper :global(.rnd-resizable-handle-bottomleft),
+.sectionWrapper :global(.rnd-resizable-handle-bottomright) {
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 50% !important;
+}
+
+/* Hover state: filled purple, white border */
+.sectionWrapper :global(.rnd-resizable-handle:hover) {
+  background: #8e44ad !important;
+  border: 2px solid #fff !important;
+}
+
+/* Custom cursors for directional handles */
+.sectionWrapper :global(.rnd-resizable-handle-top) { cursor: ns-resize !important; }
+.sectionWrapper :global(.rnd-resizable-handle-right) { cursor: ew-resize !important; }
+.sectionWrapper :global(.rnd-resizable-handle-bottom) { cursor: ns-resize !important; }
+.sectionWrapper :global(.rnd-resizable-handle-left) { cursor: ew-resize !important; }
+.sectionWrapper :global(.rnd-resizable-handle-topright) { cursor: nesw-resize !important; }
+.sectionWrapper :global(.rnd-resizable-handle-bottomright) { cursor: nwse-resize !important; }
+.sectionWrapper :global(.rnd-resizable-handle-bottomleft) { cursor: nesw-resize !important; }
+.sectionWrapper :global(.rnd-resizable-handle-topleft) { cursor: nwse-resize !important; }
+
+/* 8) Responsive tweaks */
 @media (max-width: 768px) {
   .sidebar {
     display: none;
@@ -201,4 +519,53 @@
   .pageWrapper {
     padding: 20px 10px;
   }
+}
+
+/* Icons sidebar: similar to main sidebar */
+.iconsSidebar {
+  position: fixed;
+  top: 60px; /* Below top bar */
+  bottom: 0;
+  left: -250px; /* Hidden by default */
+  width: 250px;
+  background: #ffffff;
+  padding: 20px;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 25;
+  overflow-y: auto;
+  overflow-x: hidden; /* Completely prevent horizontal scroll */
+  transition: none; /* Remove animation */
+  border-right: 1px solid #e0e0e0;
+  /* Custom scrollbar styling for blue theme */
+  /* Prevent scroll from affecting parent */
+  isolation: isolate;
+  contain: layout style;
+}
+
+.iconsSidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.iconsSidebar::-webkit-scrollbar-track {
+  background: rgba(83, 122, 227, 0.1);
+  border-radius: 4px;
+}
+
+.iconsSidebar::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #537AE3 0%, #5D3BDB 100%);
+  border-radius: 4px;
+}
+
+.iconsSidebar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #4A6ED7 0%, #5235C7 100%);
+}
+
+.iconsSidebar.open {
+  left: 70px; /* Show sidebar to the right of the button */
+}
+
+.iconsSidebar.permanent {
+  left: 70px; /* Show sidebar permanently to the right of the button */
+  box-shadow: none;
+  border-right: 1px solid #e0e0e0;
 }

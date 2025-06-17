@@ -35,7 +35,7 @@ app.use(
     methods: "GET, POST, PUT, DELETE, PATCH",
     allowedHeaders:
       "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-    credentials: true, // Désactive le support des credentials
+    credentials: true,
   })
 );
 app.use(express.urlencoded({ extended: true }));
