@@ -1,5 +1,29 @@
 const { getExperienceLevelLabel } = require("./skillUtils");
 
+function processSkillsData(analysis) {
+  for (let i = 0; i < analysis.skillAnalysis.length; i++) {
+    const skill = analysis.skillAnalysis[i];
+
+    const requiredLevel = parseInt(skill.requiredLevel);
+    const confidenceScore = parseFloat(skill.confidenceScore);
+    let newLevel = 0;
+
+    if (confidenceScore >= 70) {
+      newLevel = requiredLevel;
+    } else if (confidenceScore >= 50) {
+      newLevel = Math.floor(requiredLevel * 0.7);
+    } else if (confidenceScore >= 30) {
+      newLevel = Math.floor(requiredLevel * 0.4);
+    } else {
+      newLevel = 0;
+    }
+    // Ensure the level is within bounds
+    newLevel = Math.min(Math.max(newLevel, 0), requiredLevel);
+    // Apply the updated level
+    skill.demonstratedExperienceLevel = newLevel;
+  }
+}
+
 function updateUpgradedSkills(userSkills, skillAnalysis) {
   skillAnalysis.forEach((reqSkill) => {
     const skillName = reqSkill.skillName.toLowerCase();
@@ -20,11 +44,13 @@ function updateUpgradedSkills(userSkills, skillAnalysis) {
 function updateProfileWithNewSkills(profile, skillAnalysis) {
   skillAnalysis.forEach((reqSkill) => {
     const skillName = reqSkill.skillName.toLowerCase();
+    const skillLevel = parseInt(reqSkill.demonstratedExperienceLevel);
+
     const existingSkill = profile.skills.find(
       (s) => s.name.toLowerCase() === skillName
     );
 
-    if (!existingSkill) {
+    if (!existingSkill && skillLevel > 0) {
       profile.skills.push({
         name: reqSkill.skillName,
         proficiencyLevel: parseInt(reqSkill.demonstratedExperienceLevel),
@@ -83,9 +109,22 @@ If you need to reevaluate your skills in ${matchingUserSkill.name}, you can navi
   });
 }
 
+function processAnalysisData(analysis) {
+  
+  let scoreSum = 0;
+  for (const skill of analysis.skillAnalysis) {
+    const confidenceScore = parseFloat(skill.confidenceScore) || 0;
+    scoreSum += confidenceScore;
+  }
+  analysis.overallScore = parseFloat((scoreSum / analysis.skillAnalysis.length).toFixed(2));
+}
+
+
 module.exports = {
+  processSkillsData,
   updateUpgradedSkills,
   updateProfileWithNewSkills,
   findAlreadyProvenSkills,
   mergeAlreadyProvenSkills,
+  processAnalysisData
 };
