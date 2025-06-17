@@ -1,5 +1,9 @@
 const { getExperienceLevelLabel } = require("./skillUtils");
 
+/**
+ * Processes skill analysis data to assign the corresponding demonstratedExperienceLevel
+ * based on confidenceScore and requiredLevel.
+ */
 function processSkillsData(analysis) {
   for (let i = 0; i < analysis.skillAnalysis.length; i++) {
     const skill = analysis.skillAnalysis[i];
@@ -24,6 +28,11 @@ function processSkillsData(analysis) {
   }
 }
 
+
+/**
+ * Updates existing profile skills if a higher demonstrated level is detected.
+ * Only upgrades existing skills (does not add new ones).
+ */
 function updateUpgradedSkills(userSkills, skillAnalysis) {
   skillAnalysis.forEach((reqSkill) => {
     const skillName = reqSkill.skillName.toLowerCase();
@@ -41,6 +50,11 @@ function updateUpgradedSkills(userSkills, skillAnalysis) {
   });
 }
 
+
+/**
+ * Adds new skills to the profile if they are not already present
+ * and their demonstratedExperienceLevel is greater than 0.
+ */
 function updateProfileWithNewSkills(profile, skillAnalysis) {
   skillAnalysis.forEach((reqSkill) => {
     const skillName = reqSkill.skillName.toLowerCase();
@@ -64,6 +78,11 @@ function updateProfileWithNewSkills(profile, skillAnalysis) {
   });
 }
 
+
+/**
+ * Identifies which job-required skills are already proven in the user's profile
+ * based on skill name and sufficient proficiency level.
+ */
 function findAlreadyProvenSkills(userSkills, jobSkills) {
   return jobSkills.filter((jobSkill) =>
     userSkills.some(
@@ -74,6 +93,10 @@ function findAlreadyProvenSkills(userSkills, jobSkills) {
   );
 }
 
+
+/**
+ * Merges already proven skills into the skill analysis.
+ */
 function mergeAlreadyProvenSkills(skillAnalysis, provenSkills, userSkills) {
   provenSkills.forEach((provenSkill) => {
     const matchingUserSkill = userSkills.find(
@@ -109,6 +132,10 @@ If you need to reevaluate your skills in ${matchingUserSkill.name}, you can navi
   });
 }
 
+/**
+ * Computes the overallScore based on the average of all skill confidenceScores.
+ * Sets the jobMatch percentage and status based on the overall score.
+ */
 function processAnalysisData(analysis) {
   // process the overallScore
   let scoreSum = 0;
