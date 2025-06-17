@@ -110,15 +110,29 @@ If you need to reevaluate your skills in ${matchingUserSkill.name}, you can navi
 }
 
 function processAnalysisData(analysis) {
-  
+  // process the overallScore
   let scoreSum = 0;
   for (const skill of analysis.skillAnalysis) {
     const confidenceScore = parseFloat(skill.confidenceScore) || 0;
     scoreSum += confidenceScore;
   }
-  analysis.overallScore = parseFloat((scoreSum / analysis.skillAnalysis.length).toFixed(2));
-}
+  analysis.overallScore = parseFloat(
+    (scoreSum / analysis.skillAnalysis.length).toFixed(2)
+  );
 
+  // process the jobMatch
+  let status;
+  if (analysis.overallScore >= 70) {
+    status = "Strong match";
+  } else if (analysis.overallScore >= 50) {
+    status = "Moderate match";
+  } else {
+    status = "Poor match";
+  }
+
+  analysis.jobMatch.percentage = analysis.overallScore;
+  analysis.jobMatch.status = status;
+}
 
 module.exports = {
   processSkillsData,
@@ -126,5 +140,5 @@ module.exports = {
   updateProfileWithNewSkills,
   findAlreadyProvenSkills,
   mergeAlreadyProvenSkills,
-  processAnalysisData
+  processAnalysisData,
 };
