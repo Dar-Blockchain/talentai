@@ -1,10 +1,19 @@
 const { Together } = require("together-ai");
 require("dotenv").config();
 
-const { generateJobQuestionsPrompts } = require("../prompts/evaluationPrompts");
+const JobAssessmentResult = require("../models/JobAssessmentResultModel");
+const Profile = require("../models/ProfileModel");
+const Post = require("../models/PostModel");
+
+const profileService = require("../services/profileService");
+
+const { generateJobQuestionsPrompts, analyzeJobTestResultsPrompts } = require("../prompts/evaluationPrompts");
 const { HttpError } = require("../utils/httpUtils");
+const { parseAndValidateAIResponse } = require("../parsers/AIResponseParser");
+const { updateProfileWithNewSkills, findAlreadyProvenSkills, mergeAlreadyProvenSkills, updateUpgradedSkills } = require("../utils/evaluationUtils");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
+
 
 module.exports.generateTechniqueQuestionsForJob = async (
   jobRequiredSkillList,
@@ -83,4 +92,80 @@ module.exports.generateTechniqueQuestionsForJob = async (
         
     throw new HttpError(500, "Internal server error");
   }
+};
+
+exports.analyzeJobTestResults = async ({ questions, jobId, user }) => {
+  const profile = await Profile.findById(user.profile);
+  if (!profile) throw new HttpError(404, "Aucun profil trouvé pour cet utilisateur.");
+
+  const post = await Post.findById(jobId);
+  if (!post) throw new HttpError(404, "Post not found in the DB");
+
+  const jobSkills = post.skillAnalysis.requiredSkills || [];
+  if (!Array.isArray(jobSkills) || jobSkills.length === 0) {
+    throw new HttpError(400, "Post has no requiredSkills");
+  }
+
+  const requiredSkills = jobSkills.map((s) => ({
+    name: s.name,
+    proficiencyLevel: s.level,
+  }));
+
+  const systemPrompt = analyzeJobTestResultsPrompts.getSystemPrompt();
+  const userPrompt = analyzeJobTestResultsPrompts.getUserPrompt(requiredSkills, questions);
+
+  const stream = await together.chat.completions.create({
+    model: "deepseek-ai/DeepSeek-V3",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    max_tokens: 1000,
+    temperature: 0.6,
+    stream: true,
+  });
+
+  let raw = "";
+  for await (const chunk of stream) {
+    const content = chunk.choices?.[0]?.delta?.content;
+    if (content) raw += content;
+  }
+
+  let analysis = await parseAndValidateAIResponse(raw);
+
+  // I. Add new skills to profile
+  updateProfileWithNewSkills(profile, analysis.skillAnalysis);
+
+  // II. Add already proven skills
+  const alreadyProvenSkills = findAlreadyProvenSkills(profile.skills, jobSkills);
+  mergeAlreadyProvenSkills(analysis.skillAnalysis, alreadyProvenSkills, profile.skills);
+
+  // III. Update skills that are now at a higher level
+  updateUpgradedSkills(profile.skills, analysis.skillAnalysis);
+
+  await profile.save();
+
+  // IV. Save JobAssessmentResult
+  const company = await profileService.getProfileByPostId(jobId);
+  const jobAssessmentResult = new JobAssessmentResult({
+    timestamp: new Date(),
+    assessmentType: "job",
+    jobId,
+    condidateId: profile._id,
+    companyId: company._id,
+    numberOfQuestions: questions.length,
+    analysis,
+  });
+
+  await jobAssessmentResult.save();
+
+  if (!Array.isArray(company.assessmentResults)) company.assessmentResults = [];
+  company.assessmentResults.push(jobAssessmentResult._id);
+  await company.save();
+
+  // V. Update quota
+  profile.quota++;
+  await profile.save();
+
+  return { analysis };
 };
