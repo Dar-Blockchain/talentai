@@ -123,19 +123,29 @@ const ProfileHeader = styled(Box)(({ theme }) => ({
 }));
 
 const StatCard = styled(Paper)(({ theme }) => ({
-  background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+  background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.grey[100]} 100%)`,
   padding: theme.spacing(3),
-  borderRadius: "24px",
-  border: "1px solid rgba(0, 0, 0, 0.05)",
-  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.06), 0 0 15px rgba(0, 0, 0, 0.04)",
-  transition: "all 0.3s ease",
-  height: "120px",
+  borderRadius: theme.shape.borderRadius * 3,
+  border: `1px solid ${theme.palette.divider}`,
+  boxShadow: `
+    0 6px 20px rgba(0, 0, 0, 0.05),
+    0 1px 6px rgba(0, 0, 0, 0.04)
+  `,
+  transition: theme.transitions.create(["transform", "box-shadow"], {
+    duration: theme.transitions.duration.short,
+  }),
+  minHeight: 120,
   display: "flex",
   flexDirection: "column",
   justifyContent: "space-between",
+  cursor: "default",
+
   "&:hover": {
-    transform: "translateY(-6px)",
-    boxShadow: "0 15px 40px rgba(0, 0, 0, 0.1), 0 0 25px rgba(0, 0, 0, 0.06)",
+    transform: "translateY(-5px)",
+    boxShadow: `
+      0 12px 35px rgba(0, 0, 0, 0.08),
+      0 4px 20px rgba(0, 0, 0, 0.04)
+    `,
   },
 }));
 
@@ -155,16 +165,40 @@ const SkillChip = styled(Chip)(({ theme }) => ({
 }));
 
 const ActionButton = styled(Button)(({ theme }) => ({
-  borderRadius: "16px",
-  padding: "14px 28px",
+  borderRadius: theme.shape.borderRadius * 2.5,
   textTransform: "none",
   fontWeight: 600,
-  fontSize: "1.1rem",
-  boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
-  transition: "all 0.3s ease",
+  fontSize: "1rem", // base font size (mobile)
+  padding: theme.spacing(1.5, 3), // base padding (mobile)
+  // backgroundColor: theme.palette.primary.main,
+  color: theme.palette.primary.contrastText,
+  boxShadow: "0 6px 18px rgba(0, 0, 0, 0.08)",
+  transition: theme.transitions.create(["transform", "box-shadow"], {
+    duration: theme.transitions.duration.short,
+  }),
+
+  // Responsive styles
+  [theme.breakpoints.up("sm")]: {
+    fontSize: "1.05rem",
+    padding: theme.spacing(1.75, 3.5),
+  },
+  [theme.breakpoints.up("md")]: {
+    fontSize: "1.1rem",
+    padding: theme.spacing(2, 4),
+  },
+
   "&:hover": {
-    transform: "translateY(-3px)",
-    boxShadow: "0 12px 24px rgba(0,0,0,0.12)",
+    backgroundColor: theme.palette.primary.dark,
+    transform: "translateY(-2px)",
+    boxShadow: "0 10px 24px rgba(0, 0, 0, 0.15)",
+  },
+  "&:active": {
+    transform: "translateY(0)",
+    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+  },
+  "&:focus-visible": {
+    outline: `2px solid ${theme.palette.primary.light}`,
+    outlineOffset: 2,
   },
 }));
 
@@ -1138,22 +1172,9 @@ export default function DashboardCandidate() {
 
   const languages = [
     { value: "English", label: "English" },
-    // { value: 'Arabic', label: 'Arabic' },
-    // { value: 'French', label: 'French' }
+
   ];
 
-  const renderSkillOptions = (skill: Skill) => (
-    <MenuItem
-      key={skill.name}
-      value={skill.name}
-      sx={{
-        backgroundColor: "rgba(30,41,59,0.98)",
-        "&:hover": { backgroundColor: "rgba(30,41,59,1)" },
-      }}
-    >
-      {skill.name}
-    </MenuItem>
-  );
 
   const checkExistingSoftSkill = (skillName: string, category?: string) => {
     if (!profile?.softSkills?.length) return null;
@@ -1221,78 +1242,7 @@ export default function DashboardCandidate() {
   };
 
   // Filter technical skills (exclude soft skills)
-  const getTechnicalSkills = () => {
-    const skills: Skill[] = [
-      // Development
-      { name: 'JavaScript', proficiencyLevel: 0, requiresLanguage: true },
-      { name: 'TypeScript', proficiencyLevel: 0, requiresLanguage: true },
-      { name: 'React', proficiencyLevel: 0 },
-      { name: 'Node.js', proficiencyLevel: 0 },
-      { name: 'Python', proficiencyLevel: 0, requiresLanguage: true },
-      { name: 'Go', proficiencyLevel: 0, requiresLanguage: true },
-      { name: 'Rust', proficiencyLevel: 0, requiresLanguage: true },
-      { name: 'GraphQL', proficiencyLevel: 0 },
-      { name: 'Docker', proficiencyLevel: 0 },
-      { name: 'Hedera', proficiencyLevel: 0 },
-      // Marketing
-      { name: 'SEO', proficiencyLevel: 0 },
-      { name: 'Content Marketing', proficiencyLevel: 0 },
-      { name: 'Social Media', proficiencyLevel: 0 },
-      { name: 'Email Marketing', proficiencyLevel: 0 },
-      { name: 'Analytics', proficiencyLevel: 0 },
-      { name: 'Web3 Marketing', proficiencyLevel: 0 },
-      { name: 'NFT Marketing', proficiencyLevel: 0 },
-      { name: 'Community Management', proficiencyLevel: 0 },
-      { name: 'Token Economics', proficiencyLevel: 0 },
-      { name: 'DeFi Marketing', proficiencyLevel: 0 },
-      { name: 'Crypto PR', proficiencyLevel: 0 },
-      { name: 'Blockchain Events', proficiencyLevel: 0 },
-      { name: 'DAO Governance', proficiencyLevel: 0 },
-      // QA
-      { name: 'Manual Testing', proficiencyLevel: 0 },
-      { name: 'Automated Testing', proficiencyLevel: 0 },
-      { name: 'Test Planning', proficiencyLevel: 0 },
-      { name: 'Performance Testing', proficiencyLevel: 0 },
-      { name: 'API Testing', proficiencyLevel: 0 },
-      { name: 'Security Testing', proficiencyLevel: 0 },
-      // Business
-      { name: 'Project Management', proficiencyLevel: 0 },
-      { name: 'Agile', proficiencyLevel: 0 },
-      { name: 'Scrum', proficiencyLevel: 0 },
-      { name: 'Product Management', proficiencyLevel: 0 },
-      { name: 'Business Analysis', proficiencyLevel: 0 },
-      // Web3
-      { name: 'Solidity', proficiencyLevel: 0, requiresLanguage: true },
-      { name: 'Ethereum', proficiencyLevel: 0 },
-      { name: 'Smart Contracts', proficiencyLevel: 0 },
-      { name: 'DeFi', proficiencyLevel: 0 },
-      { name: 'NFTs', proficiencyLevel: 0 },
-      { name: 'Web3.js', proficiencyLevel: 0 },
-      { name: 'Hardhat', proficiencyLevel: 0 },
-      { name: 'Truffle', proficiencyLevel: 0 },
-      { name: 'Massa', proficiencyLevel: 0 },
-      { name: 'Polkadot', proficiencyLevel: 0 },
-      { name: 'NEAR', proficiencyLevel: 0 },
-      { name: 'Substrate', proficiencyLevel: 0 },
-      { name: 'Cosmos', proficiencyLevel: 0 },
-      { name: 'Solana', proficiencyLevel: 0 },
-      { name: 'Avalanche', proficiencyLevel: 0 },
-      { name: 'Polygon', proficiencyLevel: 0 },
-      { name: 'Arbitrum', proficiencyLevel: 0 },
-      { name: 'Optimism', proficiencyLevel: 0 },
-      { name: 'Base', proficiencyLevel: 0 },
-      // AI
-      { name: 'Machine Learning', proficiencyLevel: 0 },
-      { name: 'Deep Learning', proficiencyLevel: 0 },
-      { name: 'TensorFlow', proficiencyLevel: 0 },
-      { name: 'PyTorch', proficiencyLevel: 0 },
-      { name: 'Natural Language Processing', proficiencyLevel: 0 },
-      { name: 'Computer Vision', proficiencyLevel: 0 },
-      { name: 'Reinforcement Learning', proficiencyLevel: 0 },
-      { name: 'Data Science', proficiencyLevel: 0 }
-    ];
-    return skills;
-  };
+
 
   // Add state to track if a skill was just added
   const [justAddedSkill, setJustAddedSkill] = useState<any>(null);
@@ -2063,56 +2013,47 @@ export default function DashboardCandidate() {
             </Dialog>
           </Box>
 
-          <Box
-            sx={{
-              marginTop: (theme) => theme.spacing(4),
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(2, 1fr)",
-                md: "repeat(4, 1fr)",
-              },
-              gap: (theme) => theme.spacing(3),
-            }}
-          >
-            {/* <Box>
-              <StatCard>
-                <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff', letterSpacing: 2 }}>
-                  Experience Level
-                </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 600, color: '#02E2FF', mt: 1 }}>
-                  {profile.requiredExperienceLevel || 'Not Set'}
-                </Typography>
-              </StatCard>
-            </Box> */}
-            <Box>
+          <Container maxWidth="lg">
+            <Box
+              sx={{
+                mt: 4,
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(2, 1fr)",
+                  md: "repeat(4, 1fr)",
+                },
+                gap: 3,
+              }}
+            >
+              {/* Skills Count */}
               <StatCard>
                 <Typography
                   variant="overline"
-                  sx={{ color: "black", letterSpacing: 2 }}
+                  sx={{ color: "text.secondary", letterSpacing: 2 }}
                 >
                   Skills Count
                 </Typography>
                 <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 600, color: "#191919" }}
+                  variant="h6"
+                  sx={{ fontWeight: 600, color: "text.primary", mt: 1 }}
                 >
                   {profile.skills?.length || 0}
                 </Typography>
               </StatCard>
-            </Box>
-            <Box>
+
+              {/* Tests Passed */}
               <StatCard>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.1 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                   <Typography
                     variant="overline"
-                    sx={{ color: "#191919", letterSpacing: 2 }}
+                    sx={{ color: "text.secondary", letterSpacing: 2 }}
                   >
                     Tests Passed
                   </Typography>
                   <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 600, color: "#191919" }}
+                    variant="h6"
+                    sx={{ fontWeight: 600, color: "text.primary" }}
                   >
                     {profile.quota || 0}/5
                   </Typography>
@@ -2121,59 +2062,58 @@ export default function DashboardCandidate() {
                       label={`Reset: ${resetDate}`}
                       size="small"
                       sx={{
-                        height: '20px',
-                        fontSize: '0.7rem',
-                        backgroundColor: 'rgba(0,0,0,0.05)',
-                        color: 'rgba(0,0,0,0.6)',
-                        '& .MuiChip-label': {
+                        alignSelf: "flex-start",
+                        height: 20,
+                        fontSize: "0.75rem",
+                        backgroundColor: "rgba(0,0,0,0.05)",
+                        color: "rgba(0,0,0,0.6)",
+                        "& .MuiChip-label": {
                           px: 1,
-                          py: 0.5
-                        }
+                          py: 0.5,
+                        },
                       }}
                     />
                   )}
                 </Box>
               </StatCard>
-            </Box>
-            <Box>
+
+              {/* Last Login */}
               <StatCard>
                 <Typography
                   variant="overline"
-                  sx={{ color: "#191919", letterSpacing: 2 }}
+                  sx={{ color: "text.secondary", letterSpacing: 2 }}
                 >
                   Last Login
                 </Typography>
                 <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 600, color: "#191919", mt: 1 }}
+                  variant="h6"
+                  sx={{ fontWeight: 600, color: "text.primary", mt: 1 }}
                 >
-                  {new Date(profile.userId.lastLogin).toLocaleDateString(
-                    "en-US",
-                    {
-                      month: "short",
-                      day: "numeric",
-                    }
-                  )}
+                  {new Date(profile.userId.lastLogin).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
                 </Typography>
               </StatCard>
-            </Box>
-            <Box>
+
+              {/* Profile Status */}
               <StatCard>
                 <Typography
                   variant="overline"
-                  sx={{ opacity: 0.7, color: "#191919", letterSpacing: 2 }}
+                  sx={{ color: "text.secondary", letterSpacing: 2 }}
                 >
                   Profile Status
                 </Typography>
                 <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 600, color: "#191919", mt: 1 }}
+                  variant="h6"
+                  sx={{ fontWeight: 600, color: "text.primary", mt: 1 }}
                 >
                   {profile.userId.isVerified ? "Verified" : "Pending"}
                 </Typography>
               </StatCard>
             </Box>
-          </Box>
+          </Container>
         </ProfileHeader>
 
         {/* User Information */}
