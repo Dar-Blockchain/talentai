@@ -5,6 +5,7 @@ const logger = require("morgan");
 const cookieParser = require("cookie-parser");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./swagger.json");
+const blockPostmanRequests = require('./middleware/blockPostmanRequests');
 
 const http = require("http");
 const connectDB = require("./config/database");
@@ -27,11 +28,12 @@ const app = express();
 connectDB();
 
 // Middleware
+app.use(blockPostmanRequests);
 app.use(express.json());
 app.use(
   cors({
-    origin: "https://app.talentai.bid", // Permet toutes les origines
-    // origin:  "*", // Permet toutes les origines
+   // origin: "https://app.talentai.bid", // Permet toutes les origines
+     origin:  "*", // Permet toutes les origines
     methods: "GET, POST, PUT, DELETE, PATCH",
     allowedHeaders:
       "Origin, X-Requested-With, Content-Type, Accept, Authorization",
@@ -55,6 +57,9 @@ app.use("/post", postRouter);
 app.use("/matching", matchingRoutes);
 app.use("/resume", resumeRouter);
 app.use("/todo", todoRouter);
+app.get('/some-route', (req, res) => {
+  res.json('Route accessible');
+});
 // Route de base
 app.get("/", (req, res) => {
   res.json({ message: "Bienvenue sur l'API Express!" });
