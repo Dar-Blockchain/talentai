@@ -374,8 +374,8 @@ Return a valid JSON object matching this schema:
   "overallScore": number,
   "technicalLevel": string,
   "generalAssassment": string,
-  "recommendations": [...],
-  "nextSteps": [...],
+  "recommendations": [string], // Must NOT be empty and each item must contain meaningful advice or suggestions.
+  "nextSteps": [string],  // Must NOT be empty and each item must contain actionable steps or plans.
   "skillAnalysis": [
     {
       "skillName": string,
