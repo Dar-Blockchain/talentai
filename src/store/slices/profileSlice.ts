@@ -49,6 +49,7 @@ export interface Profile {
     updatedAt: string;
     overallScore: string;
     quota: number;
+    quotaUpdatedAt: string;
 }
 
 interface ProfileState {
