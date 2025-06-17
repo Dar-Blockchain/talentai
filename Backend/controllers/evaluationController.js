@@ -1192,11 +1192,13 @@ exports.analyzeJobTestResults = async (req, res) => {
   try {
     const { questions, jobId } = req.body;
     const user = req.user;
-    const condidateProfile = await profileService.getProfileByUserId(user._id);
+    
+    const profile = await Profile.findById(user.profile);
 
-    if (!condidateProfile) {
+    if (!profile) {
       return { message: "Aucun profil trouvé pour cet utilisateur." };
     }
+
 
     if (!Array.isArray(questions) || !jobId) {
       return res.status(400).json({
@@ -1213,25 +1215,18 @@ exports.analyzeJobTestResults = async (req, res) => {
       throw new HttpError(500, "post not found in the db");
     }
 
-    const skillsData = post.skillAnalysis.requiredSkills;
-    if (!skillsData || !Array.isArray(skillsData) || skillsData.length === 0) {
+    const jobSkills = post.skillAnalysis.requiredSkills;
+    if (!jobSkills || !Array.isArray(jobSkills) || jobSkills.length === 0) {
       throw new HttpError(500, "post has no requiredSkills");
     }
 
-    const skillsMap = {};
+    const requiredSkills = jobSkills.map((s) => ({
+      name: s.name,
+      proficiencyLevel: s.level,
+    }));
 
-    questions.forEach(({ skill, level }) => {
-      if (!skillsMap[skill]) {
-        skillsMap[skill] = {
-          name: skill,
-          proficiencyLevel: parseInt(level, 10),
-        };
-      }
-    });
+    console.log("taaa: ", requiredSkills);
 
-    const requiredSkills = Object.values(skillsMap);
-
-    console.log(requiredSkills);
     // 3. Prepare the data for GPT analysis
     const systemPrompt = analyzeJobTestResultsPrompts.getSystemPrompt();
 
@@ -1239,9 +1234,6 @@ exports.analyzeJobTestResults = async (req, res) => {
       requiredSkills,
       questions
     );
-
-    console.log("sysPrompt: ", systemPrompt);
-    console.log("userPrompt: ", userPrompt);
 
     // 4. Call TogetherAI API for analysis
     const stream = await together.chat.completions.create({
@@ -1319,38 +1311,99 @@ exports.analyzeJobTestResults = async (req, res) => {
         throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
       }
 
-      const userSkills = user.profile.skills;
+      // I- store new skills in the candidate's profile
+      analysis.skillAnalysis.forEach((reqSkill) => {
+        const skillName = reqSkill.skillName.toLowerCase();
+        const existingSkill = profile.skills.find(
+          (s) => s.name.toLowerCase() === skillName
+        );
 
-      // I- if condidate already has proven skills for the job , that they were not tested
-      let alreadyProvenSkills = skillsData.filter((reqSkill) => {
+        if (!existingSkill) {
+          let experienceLevelString = "";
+          switch (parseInt(reqSkill.demonstratedExperienceLevel)) {
+            case 1:
+              experienceLevelString = "Entry Level";
+              break;
+            case 2:
+              experienceLevelString = "Junior";
+              break;
+            case 3:
+              experienceLevelString = "Mid Level";
+              break;
+            case 4:
+              experienceLevelString = "Senior";
+              break;
+            case 5:
+              experienceLevelString = "Expert";
+              break;
+            default:
+              experienceLevelString = "Unknown";
+          }
+
+          profile.skills.push({
+            name: reqSkill.skillName,
+            proficiencyLevel: parseInt(reqSkill.demonstratedExperienceLevel),
+            experienceLevel: experienceLevelString,
+            ScoreTest: reqSkill.confidenceScore,
+            Levelconfirmed: parseInt(reqSkill.demonstratedExperienceLevel) - 1,
+          });
+        }
+      });
+
+      await profile.save();
+
+      // II- if condidate already has proven skills for the job , that they were not tested
+      const userSkills = user.profile.skills;
+      let alreadyProvenSkills = jobSkills.filter((jobSkill) => {
         return userSkills.some(
           (userSkill) =>
-            userSkill.name.toLowerCase() === reqSkill.name.toLowerCase() &&
-            userSkill.proficiencyLevel >= parseInt(reqSkill.level)
+            userSkill.name.toLowerCase() === jobSkill.name.toLowerCase() &&
+            userSkill.proficiencyLevel >= parseInt(jobSkill.level)
         );
       });
 
-      // push the already proven skill list to the analysis , so that they can be also returned in the result of this function
+      // add the already proven skill list to the analysis , so that they can be also returned in the result of this function
       if (alreadyProvenSkills.length > 0) {
         for (let i = 0; i < alreadyProvenSkills.length; i++) {
-          analysis.skillAnalysis.push({
-            skillName: alreadyProvenSkills[i].name,
-            requiredLevel: alreadyProvenSkills[i].level,
-            demonstratedExperienceLevel: alreadyProvenSkills[i].level,
+          const provenSkill = alreadyProvenSkills[i];
+          const matchingUserSkill = userSkills.find(
+            (userSkill) =>
+              userSkill.name.toLowerCase() === provenSkill.name.toLowerCase()
+          );
+
+          const confidenceScore = matchingUserSkill?.ScoreTest ?? 100;
+
+          const updatedSkill = {
+            skillName: matchingUserSkill.name,
+            requiredLevel: matchingUserSkill.proficiencyLevel,
+            demonstratedExperienceLevel: matchingUserSkill.proficiencyLevel,
             strengths: [
-              `Your skills in ${alreadyProvenSkills[i].name} were already present in your profile.\nThat is why there was no need to reevalution for this Job Offer.\n
-               If you need to reevaluate your skills in ${alreadyProvenSkills[i].name}, you can navigate to your skills section in your profile and pass a new Test`,
+              `Your skills in ${matchingUserSkill.name} were already present in your profile.\nThat is why there was no need to reevaluate for this Job Offer.\n
+         If you need to reevaluate your skills in ${matchingUserSkill.name}, you can navigate to your skills section in your profile and pass a new Test.`,
             ],
             weaknesses: [`No weaknesses found`],
-            confidenceScore: alreadyProvenSkills[i].ScoreTest,
-          });
+            confidenceScore: confidenceScore,
+            match: "Strong match",
+            levelGap: 0,
+          };
+
+          // Check if this skill already exists in the analysis
+          const index = analysis.skillAnalysis.findIndex(
+            (item) =>
+              item.skillName.toLowerCase() === provenSkill.name.toLowerCase()
+          );
+
+          if (index !== -1) {
+            // Replace existing skill data
+            analysis.skillAnalysis[index] = updatedSkill;
+          } else {
+            // Add new skill
+            analysis.skillAnalysis.push(updatedSkill);
+          }
         }
       }
 
-      // update level of skills of profile , if any has now a heiger proven proficiencyLevel
-      const profile = await Profile.findById(user.profile);
-
-      // check if any skillsToUpdate
+      // III- check if any skillsToUpdate (heigher level is proven)
       let skillsToUpdate = analysis.skillAnalysis.filter((reqSkill) => {
         return userSkills.some(
           (userSkill) =>
@@ -1399,14 +1452,15 @@ exports.analyzeJobTestResults = async (req, res) => {
           );
           profileSkill.experienceLevel = experienceLevelString;
           profileSkill.ScoreTest = reqSkill.confidenceScore;
+          profileSkill.Levelconfirmed =
+            parseInt(reqSkill.demonstratedExperienceLevel) - 1;
         }
       });
 
       //save jobAssessmentResult
       const company = await profileService.getProfileByPostId(jobId);
       const companyId = company._id;
-      const condidateId = condidateProfile._id;
-      // 6. Format final response
+      const condidateId = profile._id;
       const jobAssessmentResult = new JobAssessmentResult({
         timestamp: new Date(),
         assessmentType: "job",
@@ -1419,7 +1473,6 @@ exports.analyzeJobTestResults = async (req, res) => {
 
       await jobAssessmentResult.save();
 
-      // 3. Save the updated profile with the new assesmentResult
       if (!Array.isArray(company.assessmentResults)) {
         company.assessmentResults = [];
       }
@@ -1432,7 +1485,6 @@ exports.analyzeJobTestResults = async (req, res) => {
     } catch (error) {
       console.error("Error in analysis parsing:", error);
     }
-    //storing jobAssessmentResults in db is for now removed , until requirements are set clearly
 
     res.status(200).json({
       success: true,
