@@ -310,6 +310,7 @@ interface JobQuestionsResponse {
   }>;
   questions: string[];
   totalQuestions: number;
+  testedSkills: any[];
 }
 
 const Test = () => {
@@ -325,6 +326,7 @@ const Test = () => {
   const [current, setCurrent] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [timeLeft, setTimeLeft] = useState(120);
+  const [testedSkills, setTestedSkills] = useState<any[]>([]);
   const currentIndexRef = useRef(0);
   const [hasStartedTest, setHasStartedTest] = useState(false);
   const [transcriptions, setTranscriptions] = useState<{ [key: string]: string }>({});
@@ -440,6 +442,7 @@ const Test = () => {
           }
 
           const data: JobQuestionsResponse = await response.json();
+          setTestedSkills(data.testedSkills);
 
           const formattedQuestions: Question[] = data.questions.map((question, index) => {
             const skillIndex = index % data.requiredSkills.length;
@@ -454,7 +457,6 @@ const Test = () => {
           });
 
           setQuestions(formattedQuestions);
-
           setTranscriptions(
             formattedQuestions.reduce((acc: any, _: any, index: number) => ({
               ...acc,
@@ -761,7 +763,7 @@ const Test = () => {
       }
 
       const data: JobQuestionsResponse = await response.json();
-
+      setTestedSkills(data.testedSkills);
       const formattedQuestions: Question[] = data.questions.map((question, index) => {
         const skillIndex = index % data.requiredSkills.length;
         const skill = data.requiredSkills[skillIndex];
@@ -863,6 +865,7 @@ const Test = () => {
 
       const testData = {
         results,
+        testedSkills,
         metadata: {
           type: 'job',
           jobId: id,

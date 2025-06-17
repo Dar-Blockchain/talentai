@@ -480,6 +480,7 @@ export default function Report() {
         if (!token) throw new Error('No authentication token found');
 
         const savedResults = localStorage.getItem('test_results');
+        console.log('Saved results:', savedResults);
         if (!savedResults) return;
 
         const testData = JSON.parse(savedResults);
@@ -495,7 +496,7 @@ export default function Report() {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`,
             },
-            body: JSON.stringify({ jobId, questions: testData.results })
+            body: JSON.stringify({ jobId, questions: testData.results, testedSkills: testData.testedSkills })
           });
 
           if (!jobResponse.ok) {
@@ -828,7 +829,7 @@ export default function Report() {
                         <Box sx={{ mt: 2 }}>
                           <Typography sx={{ color: '#00FFC3', mb: 1 }}>Strengths:</Typography>
                           {skill.strengths.map((strength, j) => (
-                            <Typography key={j} sx={{ color: '#fff', ml: 2 }}>• {strength}</Typography>
+                            <Typography key={j} sx={{ color: 'black', ml: 2 }}>• {strength}</Typography>
                           ))}
                         </Box>
                         <Box sx={{ mt: 2 }}>
