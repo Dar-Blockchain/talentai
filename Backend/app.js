@@ -30,12 +30,8 @@ connectDB();
 app.use(express.json());
 app.use(
   cors({
-<<<<<<< HEAD
-    origin: "*", // Allow all origins
-=======
     origin: "https://app.talentai.bid", // Permet toutes les origines
     // origin:  "*", // Permet toutes les origines
->>>>>>> f0878390459a1c120af03f661f6c01bda7165c7c
     methods: "GET, POST, PUT, DELETE, PATCH",
     allowedHeaders:
       "Origin, X-Requested-With, Content-Type, Accept, Authorization",
