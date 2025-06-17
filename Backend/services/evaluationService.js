@@ -10,7 +10,7 @@ const profileService = require("../services/profileService");
 const { generateJobQuestionsPrompts, analyzeJobTestResultsPrompts } = require("../prompts/evaluationPrompts");
 const { HttpError } = require("../utils/httpUtils");
 const { parseAndValidateAIResponse } = require("../parsers/AIResponseParser");
-const { updateProfileWithNewSkills, findAlreadyProvenSkills, mergeAlreadyProvenSkills, updateUpgradedSkills } = require("../utils/evaluationUtils");
+const { updateProfileWithNewSkills, findAlreadyProvenSkills, mergeAlreadyProvenSkills, updateUpgradedSkills, processSkillAnalysis } = require("../utils/evaluationUtils");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
@@ -132,6 +132,9 @@ exports.analyzeJobTestResults = async ({ questions, testedSkills, jobId, user })
   }
 
   let analysis = await parseAndValidateAIResponse(raw);
+
+  // 0. process profeciencyLevel of each skill, depending on its requiredLevel and the condidenceScore (generated with AI)
+  processSkillsData(analysis);
 
   // I. Add new skills to profile
   updateProfileWithNewSkills(profile, analysis.skillAnalysis);
