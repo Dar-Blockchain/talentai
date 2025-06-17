@@ -20,11 +20,13 @@ function updateUpgradedSkills(userSkills, skillAnalysis) {
 function updateProfileWithNewSkills(profile, skillAnalysis) {
   skillAnalysis.forEach((reqSkill) => {
     const skillName = reqSkill.skillName.toLowerCase();
+    const skillLevel = parseInt(reqSkill.demonstratedExperienceLevel);
+
     const existingSkill = profile.skills.find(
       (s) => s.name.toLowerCase() === skillName
     );
 
-    if (!existingSkill) {
+    if (!existingSkill && skillLevel > 0) {
       profile.skills.push({
         name: reqSkill.skillName,
         proficiencyLevel: parseInt(reqSkill.demonstratedExperienceLevel),
