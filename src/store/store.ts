@@ -14,8 +14,11 @@ import authReducer from './slices/authSlice';
 import profileReducer from './slices/profileSlice';
 import bidReducer from './slices/bidSlice';
 import todoReducer from './slices/todoSlice';
-
+import userReducer from './slices/userSlice';
+  
 const rootReducer = combineReducers({
+  user: userReducer,
+
   auth: authReducer,
   profile: profileReducer,
   bid: bidReducer,

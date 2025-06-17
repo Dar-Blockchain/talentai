@@ -63,7 +63,7 @@ import { toast } from "react-hot-toast";
 import { generateTodos, fetchTodos } from "@/store/slices/todoSlice";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-const GREEN_MAIN = "rgba(0, 255, 157, 1)";
+const GREEN_MAIN = "#8310FF";
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -98,14 +98,7 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
   },
 }));
 
-const StyledRating = styled(Rating)(({ theme }) => ({
-  "& .MuiRating-iconFilled": {
-    color: GREEN_MAIN,
-  },
-  "& .MuiRating-iconHover": {
-    color: "rgba(0, 255, 157, 0.8)",
-  },
-}));
+
 
 const ProfileHeader = styled(Box)(({ theme }) => ({
   background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
@@ -437,7 +430,7 @@ const SkillBlock = ({
             background: GREEN_MAIN,
             color: "#000000",
             "&:hover": {
-              background: "rgba(0, 255, 157, 0.9)",
+              background: GREEN_MAIN,
             },
           }}
         >
@@ -732,7 +725,7 @@ export default function DashboardCandidate() {
   };
   useEffect(() => {
     dispatch(getMyProfile());
-    dispatch(fetchTodos());
+    // dispatch(fetchTodos());
   }, [dispatch]);
 
   useEffect(() => {
@@ -822,8 +815,7 @@ export default function DashboardCandidate() {
         };
         setSoftSkillProficiency(proficiencyMap[skill.experienceLevel] || 1);
         router.push(
-          `/test?type=soft&skill=${skill.name}&category=${
-            skill.category
+          `/test?type=soft&skill=${skill.name}&category=${skill.category
           }&proficiency=${proficiencyMap[skill.experienceLevel] || 1}`
         );
       }
@@ -869,7 +861,7 @@ export default function DashboardCandidate() {
         };
         const proficiency =
           proficiencyMap[
-            getExperienceLevelFromProficiency(softSkillProficiency)
+          getExperienceLevelFromProficiency(softSkillProficiency)
           ] || 1;
 
         const queryParams = new URLSearchParams();
@@ -1400,7 +1392,7 @@ export default function DashboardCandidate() {
                   background: GREEN_MAIN,
                   color: "#000000",
                   "&:hover": {
-                    background: "rgba(0, 255, 157, 0.9)",
+                    background: GREEN_MAIN,
                   },
                   "&.Mui-disabled": {
                     background: "rgba(0,0,0,0.1)",
@@ -1605,13 +1597,13 @@ export default function DashboardCandidate() {
                 sx: {
                   background: "#ffffff",
                   borderRadius: "24px",
-                  border: "1px solid rgba(0, 255, 157, 0.2)",
+                  border: "1px solid #8310FF",
                 },
               }}
             >
               <DialogTitle
                 sx={{
-                  borderBottom: "1px solid rgba(0, 255, 157, 0.2)",
+                  borderBottom: "1px solid #8310FF",
                   color: GREEN_MAIN,
                 }}
               >
@@ -1635,8 +1627,11 @@ export default function DashboardCandidate() {
               </DialogTitle>
               <DialogContent>
                 <FormControl component="fieldset" sx={{ width: "100%", mb: 3 }}>
-                  <FormLabel sx={{ color: "black", mb: 1, mt: 2 }}>
-                    Select Skill Type
+                  <FormLabel sx={{
+                    color: GREEN_MAIN, mb: 1, mt: 2,
+
+                  }}>
+                    <Typography variant="h6" sx={{ color: GREEN_MAIN }}>Select Skill Type</Typography>
                   </FormLabel>
                   <RadioGroup
                     value={skillType}
@@ -1644,21 +1639,41 @@ export default function DashboardCandidate() {
                   >
                     <FormControlLabel
                       value="technical"
-                      control={<Radio sx={{ color: "black" }} />}
+                      control={<Radio sx={{
+                        color: 'rgba(0,0,0,0.6)',
+                        '&.Mui-checked': {
+                          color: GREEN_MAIN
+                        }
+                      }} />}
                       label="Technical Skill"
-                      sx={{ color: "black" }}
+                      sx={{
+                        '&.Mui-checked': {
+                          color: GREEN_MAIN
+                        }
+                      }}
                     />
                     <FormControlLabel
                       value="soft"
-                      control={<Radio sx={{ color: "black" }} />}
+                      control={<Radio sx={{
+                        color: 'rgba(0,0,0,0.6)',
+                        '&.Mui-checked': {
+                          color: GREEN_MAIN
+                        }
+                      }} />}
                       label="Soft Skill"
-                      sx={{ color: "black" }}
+                      sx={{
+                        '&.Mui-checked': {
+                          color: GREEN_MAIN
+                        }
+                      }}
                     />
                   </RadioGroup>
                 </FormControl>
 
                 {skillType === "technical" && (
-                  <Box sx={{ mt: 2 }}>
+                  <Box >
+                    <Typography sx={{ color: GREEN_MAIN }}>Select Technical Skill</Typography>
+
                     <Autocomplete
                       fullWidth
                       options={technicalSkillsList}
@@ -1667,8 +1682,7 @@ export default function DashboardCandidate() {
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label="Select Technical Skill"
-                          InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
+                          InputLabelProps={{ sx: { color: GREEN_MAIN } }}
                           InputProps={{
                             ...params.InputProps,
                             sx: {
@@ -1677,12 +1691,11 @@ export default function DashboardCandidate() {
                                 borderColor: "rgba(0,0,0,0.2)",
                               },
                               "&:hover .MuiOutlinedInput-notchedOutline": {
-                                borderColor: "rgba(0, 255, 157, 0.5)",
+                                borderColor: GREEN_MAIN,
                               },
-                              "&.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                {
-                                  borderColor: GREEN_MAIN,
-                                },
+                              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                                borderColor: GREEN_MAIN,
+                              },
                               "&.Mui-focused": {
                                 "& .MuiInputLabel-root": {
                                   color: GREEN_MAIN,
@@ -1701,14 +1714,15 @@ export default function DashboardCandidate() {
                         <Paper
                           {...props}
                           sx={{
-                            backgroundColor: "#f5f5f5",
+                            backgroundColor: "white",
                             "& .MuiAutocomplete-option": {
-                              color: "#000000",
+                              color: "black",
                               '&[aria-selected="true"]': {
-                                backgroundColor: "rgba(0, 255, 157, 0.1)",
+                                backgroundColor: "rgba(131, 16, 255, 0.1)",
+                                color: GREEN_MAIN
                               },
                               "&:hover": {
-                                backgroundColor: "rgba(0, 255, 157, 0.05)",
+                                backgroundColor: "rgba(131, 16, 255, 0.05)",
                               },
                             },
                           }}
@@ -1719,7 +1733,9 @@ export default function DashboardCandidate() {
                 )}
 
                 {skillType === "soft" && (
-                  <Box sx={{ mt: 2 }}>
+                  <Box sx={{}}>
+                    <Typography sx={{ color: GREEN_MAIN }}>Select Soft Skill</Typography>
+
                     <Autocomplete
                       fullWidth
                       options={softSkills}
@@ -1733,7 +1749,6 @@ export default function DashboardCandidate() {
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label="Select Soft Skill"
                           InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
                           InputProps={{
                             ...params.InputProps,
@@ -1743,12 +1758,12 @@ export default function DashboardCandidate() {
                                 borderColor: "rgba(0,0,0,0.2)",
                               },
                               "&:hover .MuiOutlinedInput-notchedOutline": {
-                                borderColor: "rgba(0, 255, 157, 0.5)",
+                                borderColor: GREEN_MAIN,
                               },
                               "&.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                {
-                                  borderColor: GREEN_MAIN,
-                                },
+                              {
+                                borderColor: GREEN_MAIN,
+                              },
                               "&.Mui-focused": {
                                 "& .MuiInputLabel-root": {
                                   color: GREEN_MAIN,
@@ -1800,24 +1815,23 @@ export default function DashboardCandidate() {
                         renderInput={(params) => (
                           <TextField
                             {...params}
-                            label="Select Language"
                             InputLabelProps={{
-                              sx: { color: "rgba(0,0,0,0.7)" },
+                              sx: { color: GREEN_MAIN },
                             }}
                             InputProps={{
                               ...params.InputProps,
                               sx: {
                                 color: "#000000",
                                 "& .MuiOutlinedInput-notchedOutline": {
-                                  borderColor: "rgba(0,0,0,0.2)",
+                                  borderColor: GREEN_MAIN,
                                 },
                                 "&:hover .MuiOutlinedInput-notchedOutline": {
-                                  borderColor: "rgba(0, 255, 157, 0.5)",
+                                  borderColor: GREEN_MAIN
                                 },
                                 "&.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                  {
-                                    borderColor: GREEN_MAIN,
-                                  },
+                                {
+                                  borderColor: GREEN_MAIN,
+                                },
                                 "&.Mui-focused": {
                                   "& .MuiInputLabel-root": {
                                     color: GREEN_MAIN,
@@ -1841,10 +1855,10 @@ export default function DashboardCandidate() {
                               "& .MuiAutocomplete-option": {
                                 color: "black",
                                 '&[aria-selected="true"]': {
-                                  backgroundColor: "rgba(0, 255, 157, 0.1)",
+                                  backgroundColor: GREEN_MAIN,
                                 },
                                 "&:hover": {
-                                  backgroundColor: "rgba(0, 255, 157, 0.05)",
+                                  backgroundColor: GREEN_MAIN,
                                 },
                               },
                             }}
@@ -1875,7 +1889,6 @@ export default function DashboardCandidate() {
                         renderInput={(params) => (
                           <TextField
                             {...params}
-                            label="Select Subcategory"
                             InputLabelProps={{
                               sx: { color: "rgba(0,0,0,0.7)" },
                             }}
@@ -1884,15 +1897,15 @@ export default function DashboardCandidate() {
                               sx: {
                                 color: "#000000",
                                 "& .MuiOutlinedInput-notchedOutline": {
-                                  borderColor: "rgba(0,0,0,0.2)",
+                                  borderColor: "rgba(4, 3, 3, 0.2)",
                                 },
                                 "&:hover .MuiOutlinedInput-notchedOutline": {
-                                  borderColor: "rgba(0, 255, 157, 0.5)",
+                                  borderColor: GREEN_MAIN,
                                 },
                                 "&.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                  {
-                                    borderColor: GREEN_MAIN,
-                                  },
+                                {
+                                  borderColor: GREEN_MAIN,
+                                },
                                 "&.Mui-focused": {
                                   "& .MuiInputLabel-root": {
                                     color: GREEN_MAIN,
@@ -1916,10 +1929,10 @@ export default function DashboardCandidate() {
                               "& .MuiAutocomplete-option": {
                                 color: "black",
                                 '&[aria-selected="true"]': {
-                                  backgroundColor: "rgba(0, 255, 157, 0.1)",
+                                  backgroundColor: GREEN_MAIN,
                                 },
                                 "&:hover": {
-                                  backgroundColor: "rgba(0, 255, 157, 0.05)",
+                                  backgroundColor: GREEN_MAIN,
                                 },
                               },
                             }}
@@ -1958,7 +1971,7 @@ export default function DashboardCandidate() {
                     background: GREEN_MAIN,
                     color: "#000000",
                     "&:hover": {
-                      background: "rgba(0, 255, 157, 0.9)",
+                      background: GREEN_MAIN,
                     },
                     "&.Mui-disabled": {
                       background: "rgba(0,0,0,0.1)",
@@ -2317,24 +2330,24 @@ export default function DashboardCandidate() {
                 {profile.skills?.filter(
                   (skill: any) => !softSkillNames.includes(skill.name)
                 )?.length > visibleSkills && (
-                  <Box
-                    sx={{ display: "flex", justifyContent: "center", mt: 2 }}
-                  >
-                    <Button
-                      onClick={() => setVisibleSkills((prev) => prev + 3)}
-                      sx={{
-                        color: "black",
-                        borderColor: "black",
-                        "&:hover": {
-                          borderColor: "black",
-                          background: "rgba(2,226,255,0.1)",
-                        },
-                      }}
+                    <Box
+                      sx={{ display: "flex", justifyContent: "center", mt: 2 }}
                     >
-                      Load More
-                    </Button>
-                  </Box>
-                )}
+                      <Button
+                        onClick={() => setVisibleSkills((prev) => prev + 3)}
+                        sx={{
+                          color: "black",
+                          borderColor: "black",
+                          "&:hover": {
+                            borderColor: "black",
+                            background: "rgba(2,226,255,0.1)",
+                          },
+                        }}
+                      >
+                        Load More
+                      </Button>
+                    </Box>
+                  )}
               </Box>
             </StyledCard>
           </Box>
@@ -2532,8 +2545,8 @@ export default function DashboardCandidate() {
                 options={
                   selectedCategory
                     ? skillCategories[
-                        selectedCategory as keyof typeof skillCategories
-                      ]
+                    selectedCategory as keyof typeof skillCategories
+                    ]
                     : technicalSkillsList
                 }
                 value={newSkill.name}
@@ -2608,7 +2621,7 @@ export default function DashboardCandidate() {
                 background: GREEN_MAIN,
                 color: "#000000",
                 "&:hover": {
-                  background: "rgba(0, 255, 157, 0.9)",
+                  background: GREEN_MAIN,
                 },
                 "&.Mui-disabled": {
                   background: "rgba(0,0,0,0.1)",
@@ -2628,10 +2641,10 @@ export default function DashboardCandidate() {
           onClose={handleCloseNotification}
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         >
-          <Alert 
-            onClose={handleCloseNotification} 
+          <Alert
+            onClose={handleCloseNotification}
             severity={notification.severity}
-            sx={{ 
+            sx={{
               width: '100%',
               backgroundColor: notification.severity === 'error' ? '#ffebee' : '#e8f5e9',
               color: notification.severity === 'error' ? '#c62828' : '#2e7d32',

@@ -4,7 +4,7 @@ const SkillProgressionSchema = new mongoose.Schema(
   {
     skillName: String,
     requiredLevel: Number,
-    demonstratedLevel: Number,
+    demonstratedExperienceLevel: Number,
     strengths: [String],
     weaknesses: [String],
     confidenceScore: Number,
@@ -15,7 +15,6 @@ const SkillProgressionSchema = new mongoose.Schema(
       level: String,
       experienceLevel: String,
     },
-    demonstratedExperienceLevel: String,
     masteryCategory: String,
   },
   { _id: false }
@@ -25,12 +24,14 @@ const SkillAnalysisSchema = new mongoose.Schema(
   {
     skillName: String,
     requiredLevel: Number,
-    demonstratedLevel: Number,
+    demonstratedExperienceLevel: Number,
     strengths: [String],
     weaknesses: [String],
     confidenceScore: Number,
     match: String,
     levelGap: Number,
+
+    
   },
   { _id: false }
 );

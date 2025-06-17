@@ -5,7 +5,7 @@ import XIcon from "./icons/XIcon";
 import LinkedinIcon from "./icons/LinkedinIcon";
 import GithubIcon from "./icons/GithubIcon";
 import { useRouter } from "next/router";
-import { GITHUB_URL, LINKEDIN_URL, TWITTER_URL, YOUTUBE_URL } from "@/constants";
+import { GITHUB_URL, LINKEDIN_URL, TWITTER_URL, YOUTUBE_URL } from "../constants";
 
 const footerSections = [
   {
@@ -33,7 +33,7 @@ const socialLinks = [
   { name: "GitHub", icon: <GithubIcon />, href: GITHUB_URL },
 ];
 
-const Footer = () => {
+const Footer = ({ type }: { type: "company" | "jobseeker" }) => {
   const router = useRouter()
   return (
     <Box
@@ -55,15 +55,22 @@ const Footer = () => {
         <Box sx={{ minWidth: 200 }}>
           <Box
             component="img"
-            src="/logo.svg"
+            src={type === "company" ? "/logo.svg" : "/logojobSeeker.svg"}
             alt="TalentAI Logo"
             sx={{ height: 32 }}
-            onClick={() => router.push('/')}
+            onClick={() => router.push(type === "company" ? '/' : '/jobseekerLanding')}
           />
           <Typography variant="body2" sx={{ mt: 2, lineHeight: "160%" }}>
-            Verified Talent. <br />
-            Decentralized Hiring. <br />
-            AI-Powered Speed.
+            {type === "company" ? (
+              <>
+                Verified Talent. <br />
+                Decentralized Hiring. <br />
+                AI-Powered Speed.
+              </>
+            ) : (
+              <>
+                TalentAI | Empowering Real Talent      <br />   Join the hiring revolution.        </>
+            )}
           </Typography>
         </Box>
         <Stack

@@ -20,6 +20,7 @@ module.exports.register = async (req, res) => {
 module.exports.verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
+
     const result = await authService.verifyUserOTP(email, otp);
 
     res.cookie("jwt_token", result.token, {
@@ -40,8 +41,10 @@ module.exports.verifyOTP = async (req, res) => {
 // Connexion avec Gmail
 module.exports.connectWithGmail = async (req, res) => {
   try {
-    const { email } = req.body;
-    const result = await authService.connectWithGmail(email);
+    const { id_token } = req.body; // Récupère le `id_token` envoyé par le frontend
+
+
+    const result = await authService.connectWithGmail(id_token);
 
     // Créer un cookie avec le token JWT
     res.cookie("jwt_token", result.token, {
@@ -69,9 +72,7 @@ module.exports.logout = (req, res) => {
     req.session.destroy((err) => {
       if (err) {
         console.error("Erreur lors de la destruction de la session:", err);
-        return res
-          .status(500)
-          .json({ message: "Erreur lors de la déconnexion" });
+        return res.status(500).json({ message: "Erreur lors de la déconnexion" });
       }
       res.status(200).json({ message: "Déconnexion réussie" });
     });
@@ -80,13 +81,33 @@ module.exports.logout = (req, res) => {
   }
 };
 
-module.exports.getAllUsers = async (req, res) => {
+
+module.exports.GetGmailByToken = async (req, res) => {
   try {
-    const users = await authService.getAllUsers();
-    res.status(200).json(users);
+    const { id_token } = req.body; // Récupère le `id_token` envoyé par le frontend
+
+    const email = await authService.GetGmailByToken(id_token);
+
+    res.status(200).json({
+      email,
+      message: "Email récupéré avec succès",
+    });
   } catch (error) {
     res
-      .status(500)
-      .json({ message: "Erreur lors de la récupération des utilisateurs" });
+      .status(400)
+      .json({ message: "Erreur lors de la récupération de l'email." });
+  }
+};
+
+module.exports.warnUser = async (req, res) => {
+  try {
+    const user = req.user;
+
+    const result = await authService.warnUser(user.email);
+
+    // Créer la session avec le token
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 };

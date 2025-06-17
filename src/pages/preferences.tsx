@@ -37,6 +37,8 @@ import PersonIcon from '@mui/icons-material/Person';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import Cookies from 'js-cookie';
 import { color } from 'framer-motion';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store/store';
 
 type Skill = { label: string; color: string; category: string };
 
@@ -119,7 +121,7 @@ const CATEGORIES = [
   { id: 'marketing', label: 'Marketing', icon: <AnalyticsIcon /> },
   { id: 'qa', label: 'Quality Assurance', icon: <BugReportIcon /> },
   { id: 'business', label: 'Business', icon: <BusinessIcon /> },
- 
+
 ];
 
 // 5 Hedera QCM questions
@@ -163,23 +165,11 @@ const COMPANY_STEPS = [
   'Review'
 ];
 
-// Styled connector & step icon
-const ColorlibConnector = styled(StepConnector)(() => ({
-  [`&.${stepConnectorClasses.alternativeLabel}`]: { top: 25 },
-  [`& .${stepConnectorClasses.line}`]: {
-    height: 3,
-    border: 0,
-    backgroundColor: 'black',
-    borderRadius: 1
-  },
-  [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line},
-     &.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
-    backgroundColor: 'rgba(0, 255, 157, 1)'
-  }
-}));
+
 
 function ColorlibStepIcon(props: StepIconProps) {
   const { active, completed, icon } = props;
+  const userRole = useSelector((state: RootState) => state.user.userType);
   const icons: Record<string, React.ReactElement> = {
     1: <CodeIcon />,
     2: <StarIcon />,
@@ -188,7 +178,7 @@ function ColorlibStepIcon(props: StepIconProps) {
     5: <CheckCircleIcon />
   };
   const bg = active || completed
-    ? 'rgba(0, 255, 157, 1)'
+    ? userRole === 'company' ? 'rgba(0, 255, 157, 1)' : '#8310FF'
     : 'black';
   return (
     <Box sx={{
@@ -224,28 +214,7 @@ const getSteps = (userType: UserType, hasHederaExp: 'yes' | 'no' | '') => {
 };
 
 // Add styled select component
-const GREEN_MAIN = 'rgba(0, 255, 157, 1)';
-const StyledSelect = styled(TextField)({
-  '& .MuiSelect-select': {
-    color: 'black'
-  },
-  '& .MuiInputLabel-root': {
-    color: 'black'
-  },
-  '& .MuiOutlinedInput-notchedOutline': {
-    borderColor: 'rgba(0, 0, 0, 0.23)'
-  },
-  '&:hover .MuiOutlinedInput-notchedOutline': {
-    borderColor: 'rgba(0, 0, 0, 0.23)'
-  },
-  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-    borderColor: 'rgba(0, 0, 0, 0.23)'
-  },
-  [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line},
-     &.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
-    backgroundColor: GREEN_MAIN
-  }
-});
+
 
 export default function Preferences() {
   const router = useRouter();
@@ -267,6 +236,81 @@ export default function Preferences() {
   const [skills, setSkills] = useState<string[]>([]);
   const [skillWarning, setSkillWarning] = useState<string>('');
 
+  const userRole = useSelector((state: RootState) => state.user.userType);
+
+  const GREEN_MAIN = userRole === 'company' ? 'rgba(0, 255, 157, 1)' : '#8310FF';
+  // Styled connector & step icon
+  const COMPANY_COLOR = 'rgba(0,255,157,1)';
+  const USER_COLOR = '#8310FF';
+  const FADE_OPACITY = 0.3;
+
+  const ColorlibConnector = styled(StepConnector)(({ theme }: any) => {
+    const primary = userRole === 'company' ? COMPANY_COLOR : USER_COLOR;
+    const faded = `rgba(${parseInt(primary.slice(1, 3), 16)},${parseInt(primary.slice(3, 5), 16)},${parseInt(primary.slice(5, 7), 16)},${FADE_OPACITY})`;
+
+    return {
+      /* shrink connector to exactly the pills + a bit of breathing room */
+      [`&.${stepConnectorClasses.root}`]: {
+        margin: '0 8px',
+      },
+
+      /* hide default solid line */
+      [`& .${stepConnectorClasses.line}`]: {
+        backgroundColor: 'transparent',
+        height: 4,
+        position: 'relative',
+      },
+
+      /* draw two pills, default grey */
+      [`& .${stepConnectorClasses.line}::before,
+        & .${stepConnectorClasses.line}::after`]: {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        width: 62,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: theme.palette.grey[300],
+      },
+      [`& .${stepConnectorClasses.line}::before`]: { left: 0 },
+      [`& .${stepConnectorClasses.line}::after`]: { right: 0 },
+
+      /* COMPLETED connector: both pills full color */
+      [`&.${stepConnectorClasses.completed} .${stepConnectorClasses.line}::before,
+        &.${stepConnectorClasses.completed} .${stepConnectorClasses.line}::after`]: {
+        backgroundColor: primary,
+      },
+
+      /* ACTIVE connector: first pill full color, second pill faded */
+      [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line}::before`]: {
+        backgroundColor: primary,
+      },
+      [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line}::after`]: {
+        backgroundColor: faded,
+      },
+    };
+  });
+  const StyledSelect = styled(TextField)({
+    '& .MuiSelect-select': {
+      color: 'black'
+    },
+    '& .MuiInputLabel-root': {
+      color: 'black'
+    },
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: 'rgba(0, 0, 0, 0.23)'
+    },
+    '&:hover .MuiOutlinedInput-notchedOutline': {
+      borderColor: 'rgba(0, 0, 0, 0.23)'
+    },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: 'rgba(0, 0, 0, 0.23)'
+    },
+    [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line},
+       &.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
+      backgroundColor: GREEN_MAIN
+    }
+  });
   const toggleSkill = (label: string) => {
     if (skills.includes(label)) {
       setSkills(prev => prev.filter(s => s !== label));
@@ -439,6 +483,7 @@ export default function Preferences() {
     setUserType(type);
     setActiveStep(prev => prev + 1);
   };
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   // Add effect to check traffic counter
   useEffect(() => {
@@ -450,11 +495,16 @@ export default function Preferences() {
         return;
       }
 
+      // Add a small delay to ensure token is stored
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       try {
-        const token = localStorage.getItem('api_token')
+        const token = localStorage.getItem('api_token');
+        console.log('Current token:', token);
+        
         if (!token) {
-          console.log('No token found, redirecting to home');
-          router.push('/');
+          console.log('No token found, redirecting to signin');
+          router.push('/signin');
           return;
         }
 
@@ -469,11 +519,11 @@ export default function Preferences() {
         // If profile exists and is valid, check returnUrl
         if (response.ok) {
           const data = await response.json();
-
+          
           // Check if profile is complete
           const isProfileComplete = data && data.type &&
-            ((data.type === 'Candidate' && data.skills && data.skills.length > 0) ||
-              (data.type === 'Company' && data.requiredSkills && data.requiredSkills.length > 0));
+            ((data.type === 'Candidate' ) ||
+              (data.type === 'Company' ));
 
           if (isProfileComplete) {
             if (returnUrl) {
@@ -502,6 +552,22 @@ export default function Preferences() {
   }, [router]);
 
   const [error, setError] = useState<string>('');
+
+  const isCurrentStepValid = () => {
+    if (userType === 'company') {
+      switch (currentStep) {
+        case 'Company Details':
+          return companyDetails.name && companyDetails.industry && companyDetails.size && companyDetails.location;
+        case 'Required Skills':
+          return requiredSkills.length > 0;
+        case 'Experience Level':
+          return experienceLevel !== '';
+        default:
+          return true;
+      }
+    }
+    return true;
+  };
 
   return (
     <Box sx={{
@@ -562,6 +628,7 @@ export default function Preferences() {
                 variant={userType === 'candidate' ? 'contained' : 'outlined'}
                 onClick={() => handleUserTypeSelect('candidate')}
                 startIcon={<PersonIcon />}
+                disabled={userRole === 'company'}
                 sx={{
                   color: userType === 'candidate' ? 'black' : GREEN_MAIN,
                   borderColor: GREEN_MAIN,
@@ -572,8 +639,12 @@ export default function Preferences() {
                   textTransform: 'none',
                   fontWeight: 600,
                   '&:hover': {
-                    backgroundColor: GREEN_MAIN,
-                    color: 'black',
+                    backgroundColor: userRole === 'company' ? 'transparent' : GREEN_MAIN,
+                    color: userRole === 'company' ? GREEN_MAIN : 'black',
+                  },
+                  '&.Mui-disabled': {
+                    color: 'rgba(0, 0, 0, 0.26)',
+                    borderColor: 'rgba(0, 0, 0, 0.26)',
                   }
                 }}
               >
@@ -583,6 +654,7 @@ export default function Preferences() {
                 variant={userType === 'company' ? 'contained' : 'outlined'}
                 onClick={() => handleUserTypeSelect('company')}
                 startIcon={<BusinessIcon />}
+                disabled={userRole === 'jobseeker'}
                 sx={{
                   color: userType === 'company' ? 'black' : GREEN_MAIN,
                   borderColor: GREEN_MAIN,
@@ -593,8 +665,12 @@ export default function Preferences() {
                   textTransform: 'none',
                   fontWeight: 600,
                   '&:hover': {
-                    backgroundColor: GREEN_MAIN,
-                    color: 'black',
+                    backgroundColor: userRole === 'jobseeker' ? 'transparent' : GREEN_MAIN,
+                    color: userRole === 'jobseeker' ? GREEN_MAIN : 'black',
+                  },
+                  '&.Mui-disabled': {
+                    color: 'rgba(0, 0, 0, 0.26)',
+                    borderColor: 'rgba(0, 0, 0, 0.26)',
                   }
                 }}
               >
@@ -1058,8 +1134,9 @@ export default function Preferences() {
             variant="contained"
             onClick={activeStep === steps.length - 1 ? handleStartTest : handleNext}
             disabled={
-              activeStep === 0 && !userType || 
-              (currentStep === 'Select Skills' && skills.length === 0)
+              activeStep === 0 && !userType ||
+              (currentStep === 'Select Skills' && skills.length === 0) ||
+              (userType === 'company' && !isCurrentStepValid())
             }
             sx={{
               background: GREEN_MAIN,

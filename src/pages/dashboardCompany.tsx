@@ -473,6 +473,7 @@ const DashboardCompany = () => {
   const [editingSkillIndex, setEditingSkillIndex] = useState<number | null>(null);
   const [editingSkillName, setEditingSkillName] = useState('');
   const [skillWarning, setSkillWarning] = useState('');
+  const [updatedJobData, setUpdatedJobData] = useState<JobPost | undefined>(undefined);
 
   const isSalaryRangeValid = () => {
     return salaryRange.min > 0 && salaryRange.max > 0 && salaryRange.max >= salaryRange.min;
@@ -745,25 +746,28 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
   const saveJob = async () => {
     setIsSaving(true);
     try {
-      if (!generatedJob) {
+      // Use the updated job data if available, otherwise use the generated job
+      const jobDataToUse = updatedJobData || generatedJob;
+
+      if (!jobDataToUse) {
         throw new Error('No job data available');
       }
 
       const jobPostData = {
         jobDetails: {
-          title: generatedJob.jobDetails.title,
-          description: generatedJob.jobDetails.description,
-          requirements: generatedJob.jobDetails.requirements,
-          responsibilities: generatedJob.jobDetails.responsibilities,
-          location: generatedJob.jobDetails.location,
-          employmentType: generatedJob.jobDetails.employmentType,
-          experienceLevel: generatedJob.jobDetails.experienceLevel,
-          salary: generatedJob.jobDetails.salary
+          title: jobDataToUse.jobDetails.title,
+          description: jobDataToUse.jobDetails.description,
+          requirements: jobDataToUse.jobDetails.requirements,
+          responsibilities: jobDataToUse.jobDetails.responsibilities,
+          location: jobDataToUse.jobDetails.location,
+          employmentType: jobDataToUse.jobDetails.employmentType,
+          experienceLevel: jobDataToUse.jobDetails.experienceLevel,
+          salary: jobDataToUse.jobDetails.salary
         },
         skillAnalysis: {
-          requiredSkills: generatedJob.skillAnalysis.requiredSkills || [],
+          requiredSkills: jobDataToUse.skillAnalysis.requiredSkills || [],
           suggestedSkills: {
-            technical: (generatedJob.skillAnalysis.suggestedSkills?.technical || []).map(skill => {
+            technical: (jobDataToUse.skillAnalysis.suggestedSkills?.technical || []).map(skill => {
               console.log('Technical skill:', skill);
               const skillName = typeof skill === 'string' ? skill : (skill?.name || '');
               if (!skillName) {
@@ -777,7 +781,7 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
                 priority: 'High'
               };
             }).filter(Boolean),
-            frameworks: (generatedJob.skillAnalysis.suggestedSkills?.frameworks || []).map(skill => {
+            frameworks: (jobDataToUse.skillAnalysis.suggestedSkills?.frameworks || []).map(skill => {
               console.log('Framework skill:', skill);
               const skillName = typeof skill === 'string' ? skill : (skill?.name || '');
               if (!skillName) {
@@ -790,7 +794,7 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
                 priority: 'Medium'
               };
             }).filter(Boolean),
-            tools: (generatedJob.skillAnalysis.suggestedSkills?.tools || []).map(skill => {
+            tools: (jobDataToUse.skillAnalysis.suggestedSkills?.tools || []).map(skill => {
               console.log('Tool skill:', skill);
               const skillName = typeof skill === 'string' ? skill : (skill?.name || '');
               if (!skillName) {
@@ -805,32 +809,32 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
             }).filter(Boolean)
           },
           skillSummary: {
-            mainTechnologies: generatedJob.skillAnalysis.skillSummary?.mainTechnologies || [],
-            complementarySkills: generatedJob.skillAnalysis.skillSummary?.complementarySkills || [],
-            learningPath: generatedJob.skillAnalysis.skillSummary?.learningPath || [],
-            stackComplexity: generatedJob.skillAnalysis.skillSummary?.stackComplexity || "Moderate"
+            mainTechnologies: jobDataToUse.skillAnalysis.skillSummary?.mainTechnologies || [],
+            complementarySkills: jobDataToUse.skillAnalysis.skillSummary?.complementarySkills || [],
+            learningPath: jobDataToUse.skillAnalysis.skillSummary?.learningPath || [],
+            stackComplexity: jobDataToUse.skillAnalysis.skillSummary?.stackComplexity || "Moderate"
           }
         },
         linkedinPost: {
           formattedContent: {
-            headline: `🌟 We're Hiring: ${generatedJob.jobDetails.title} 🌟`,
+            headline: `🌟 We're Hiring: ${jobDataToUse.jobDetails.title} 🌟`,
             introduction: "Are you passionate about building interactive web applications? We've got an exciting opportunity for you!",
             companyPitch: "Join a team where innovation, a dynamic culture, and a passion for technology drive us. We believe in empowering our developers and offering endless opportunities for growth.",
-            roleOverview: `As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering process, building software that matters.`,
+            roleOverview: `As a ${jobDataToUse.jobDetails.title}, you'll be at the heart of our engineering process, building software that matters.`,
             keyPoints: [
               "🔹 Develop cutting-edge web applications",
               "🔹 Work with a team of talented developers",
-              `🔹 ${generatedJob.jobDetails.location} work`,
-              `🔹 Salary range: ${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}`
+              `🔹 ${jobDataToUse.jobDetails.location} work`,
+              `🔹 Salary range: ${jobDataToUse.jobDetails.salary.currency}${jobDataToUse.jobDetails.salary.min}-${jobDataToUse.jobDetails.salary.max}`
             ],
-            skillsRequired: `💻 Required Skills: ${generatedJob.skillAnalysis.requiredSkills.map((skill: { name: string; level: string; importance: string; category: string }) => skill.name).join(', ')}.`,
+            skillsRequired: `💻 Required Skills: ${jobDataToUse.skillAnalysis.requiredSkills.map((skill: { name: string; level: string; importance: string; category: string }) => skill.name).join(', ')}.`,
             benefitsSection: "🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.",
             callToAction: "✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test"
           },
           hashtags: [
             "#Hiring",
             "#TechJobs",
-            `#${generatedJob.jobDetails.title.replace(/\s+/g, '')}`,
+            `#${jobDataToUse.jobDetails.title.replace(/\s+/g, '')}`,
             "#RemoteWork",
             "#TechCareers"
           ],
@@ -845,26 +849,26 @@ As a ${data.jobDetails.title}, you'll be at the heart of our engineering process
               apply: "✨"
             }
           },
-          finalPost: `🌟 We're Hiring: ${generatedJob.jobDetails.title} 🌟
+          finalPost: `🌟 We're Hiring: ${jobDataToUse.jobDetails.title} 🌟
 
 Are you passionate about building interactive web applications? We've got an exciting opportunity for you!
 
 Join a team where innovation, a dynamic culture, and a passion for technology drive us. We believe in empowering our developers and offering endless opportunities for growth.
 
-As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering process, building software that matters.
+As a ${jobDataToUse.jobDetails.title}, you'll be at the heart of our engineering process, building software that matters.
 
 🔹 Develop cutting-edge web applications
 🔹 Work with a team of talented developers
-🔹 ${generatedJob.jobDetails.location} work
-🔹 Salary range: ${generatedJob.jobDetails.salary.currency}${generatedJob.jobDetails.salary.min}-${generatedJob.jobDetails.salary.max}
+🔹 ${jobDataToUse.jobDetails.location} work
+🔹 Salary range: ${jobDataToUse.jobDetails.salary.currency}${jobDataToUse.jobDetails.salary.min}-${jobDataToUse.jobDetails.salary.max}
 
-💻 Required Skills: ${generatedJob.skillAnalysis.requiredSkills.map((skill: { name: string; level: string; importance: string; category: string }) => skill.name).join(', ')}.
+💻 Required Skills: ${jobDataToUse.skillAnalysis.requiredSkills.map((skill: { name: string; level: string; importance: string; category: string }) => skill.name).join(', ')}.
 
 🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.
 
 ✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test
 
-#Hiring #TechJobs #${generatedJob.jobDetails.title.replace(/\s+/g, '')} #RemoteWork #TechCareers`
+#Hiring #TechJobs #${jobDataToUse.jobDetails.title.replace(/\s+/g, '')} #RemoteWork #TechCareers`
         }
       };
 
@@ -896,7 +900,8 @@ As a ${generatedJob.jobDetails.title}, you'll be at the heart of our engineering
       setDialogOpen(true); // Open success dialog
       setJobDescription('');
       setGeneratedJob(undefined);
-      fetchMyJobs()
+      setUpdatedJobData(undefined); // Reset updated job data
+      fetchMyJobs();
     } catch (error) {
       console.error('Error saving job:', error);
     } finally {
@@ -1592,6 +1597,8 @@ Benefits:
                           sx={{
                             borderColor: GREEN_MAIN,
                             color: GREEN_MAIN,
+                            width: '100px',
+                            height: '55px',
                             '&:hover': {
                               borderColor: 'rgba(0, 255, 157, 0.8)',
                             }
@@ -1599,7 +1606,7 @@ Benefits:
                         >
                           Cancel
                         </Button>
-                        <Button
+                        {/* <Button
                           variant="contained"
                           onClick={handleSave}
                           sx={{
@@ -1611,7 +1618,7 @@ Benefits:
                           }}
                         >
                           Save Changes
-                        </Button>
+                        </Button> */}
                       </>
                     )}
                   </Box>
@@ -2003,7 +2010,7 @@ Benefits:
                   mb: 2,
                   fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}>
-                  Required Skills
+                  Required Skillss
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {(isEditing ? editedJob?.skillAnalysis?.requiredSkills : generatedJob?.skillAnalysis?.requiredSkills || []).map((skill: { name: string; level: string; importance: string; category: string }, index: number) => (
@@ -2053,7 +2060,7 @@ Benefits:
                     ) : (
                       <SkillChip
                         key={index}
-                        label={`${skill.name} (${generatedJob?.jobDetails?.experienceLevel || 'Entry Level'})`}
+                        label={`${skill.name} (${getExperienceLevelFromNumber(skill.level)})`}
                         onDelete={isEditing ? () => {
                           if (!editedJob) return;
                           const updatedSkills = [...editedJob.skillAnalysis.requiredSkills];
@@ -2072,7 +2079,7 @@ Benefits:
                       />
                     )
                   ))}
-                  
+
                   {isEditing && (
                     <>
                       {showAddSkillInput ? (
@@ -2112,7 +2119,7 @@ Benefits:
                             variant="contained"
                             onClick={() => {
                               if (!newSkill.trim() || !editedJob) return;
-                              
+
                               // Check if we already have 3 skills
                               if (editedJob.skillAnalysis.requiredSkills.length >= 3) {
                                 setSkillWarning('Maximum 3 skills allowed');
@@ -2202,7 +2209,7 @@ Benefits:
               <Button
                 fullWidth
                 variant="contained"
-                onClick={saveJob}
+                onClick={isEditing ? handleSave : saveJob}
                 disabled={isSaving}
                 sx={{
                   mt: 4,
@@ -2463,7 +2470,7 @@ Benefits:
                     </Box>
                     {skill?.ScoreTest && (
                       <Typography variant="caption" sx={{
-                        color: 'rgba(255,255,255,0.5)',
+                        color: 'black',
                         display: 'block',
                         mt: 1,
                         textAlign: 'right'
@@ -2936,7 +2943,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
     try {
       setIsLoadingProfiles(true);
       setProfilesError(null);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('api_token');
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getCompanyWithAssessments`, {
         method: 'GET',
@@ -3021,6 +3028,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             <TableHead>
               <TableRow>
                 <TableCell sx={{ color: '#000', fontWeight: 600 }}>Candidate</TableCell>
+                <TableCell sx={{ color: '#000', fontWeight: 600 }}>Job Title</TableCell>
                 <TableCell sx={{ color: '#000', fontWeight: 600 }}>Assessment Date</TableCell>
                 <TableCell sx={{ color: '#000', fontWeight: 600 }}>Overall Score</TableCell>
                 <TableCell sx={{ color: '#000', fontWeight: 600 }}>Job Match</TableCell>
@@ -3039,11 +3047,15 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                     </Box>
                   </TableCell>
                   <TableCell sx={{ color: '#000' }}>
+                    {assessment.jobId.jobDetails.title}
+                  </TableCell>
+                  <TableCell sx={{ color: '#000' }}>
                     {new Date(assessment.timestamp).toLocaleDateString()}
                   </TableCell>
                   <TableCell sx={{ color: '#000' }}>
                     {assessment.analysis.overallScore}%
                   </TableCell>
+                  
                   <TableCell sx={{ color: '#fff' }}>
                     <Chip
                       label={assessment.analysis.jobMatch.status}
@@ -3183,10 +3195,10 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                       <Typography variant="subtitle2" sx={{ color: '#000' }}>Required Level</Typography>
                       <Typography sx={{ color: '#000' }}>{skill.requiredLevel}</Typography>
                     </Box>
-                    <Box sx={{ flex: 1 }}>
+                    {/* <Box sx={{ flex: 1 }}>
                       <Typography variant="subtitle2" sx={{ color: '#000' }}>Demonstrated Level</Typography>
                       <Typography sx={{ color: '#000' }}>{skill.demonstratedLevel}</Typography>
-                    </Box>
+                    </Box> */}
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="subtitle2" sx={{ color: '#000' }}>Match Status</Typography>
                       <Typography sx={{ color: '#000' }}>{skill.match}</Typography>
@@ -3254,7 +3266,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
   const handleSave = () => {
     if (!editedJob || !editedJob.jobDetails) return;
-    
+
     // Update the generatedJob with the edited job data
     setGeneratedJob({
       ...editedJob,
@@ -3332,7 +3344,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
   const handleSaveSkill = () => {
     if (editingSkillIndex === null || !editedJob) return;
-    
+
     const updatedSkills = [...editedJob.skillAnalysis.requiredSkills];
     updatedSkills[editingSkillIndex] = {
       ...updatedSkills[editingSkillIndex],
@@ -3794,9 +3806,14 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             ) : (
               <Box sx={{ mt: 4 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                  <Typography variant="h6" sx={{ color: '#000000', fontWeight: 600 }}>
-                    Matching Candidates
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="h6" sx={{ color: '#000000', fontWeight: 600 }}>
+                      Matching Candidates
+                    </Typography>
+                    <Tooltip title="Candidates are matched based on their skills meeting or exceeding the required level for your job posting. The match score indicates how well their skills align with your requirements.">
+                      <InfoIcon sx={{ color: 'rgba(0, 255, 157, 1)', cursor: 'help' }} />
+                    </Tooltip>
+                  </Box>
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     <Button
                       variant="outlined"
@@ -3858,6 +3875,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           <DialogContent sx={{ mt: 2 }}>
             <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
               Add Required Skills
+
+
             </Typography>
             <TextField
               fullWidth
@@ -3911,7 +3930,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             >
               Cancel
             </Button>
-            <Button
+            {/* <Button
               variant="contained"
               onClick={() => setEditSkillsDialog(false)}
               sx={{
@@ -3926,7 +3945,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
               }}
             >
               Save Changes
-            </Button>
+            </Button> */}
           </DialogActions>
         </Dialog>
 

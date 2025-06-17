@@ -6,9 +6,11 @@ interface StatCardProps {
   value: string;
   label: string;
   description: string;
+  type?: string;
+  color?: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ value, label, description }) => {
+const StatCard: React.FC<StatCardProps> = ({ value, label, description, type, color }) => {
   return (
     <Stack direction="row" spacing={2} alignItems="flex-start">
       <Box>
@@ -17,7 +19,7 @@ const StatCard: React.FC<StatCardProps> = ({ value, label, description }) => {
             sx={{
               width: "6px",
               height: { xs: "40px", sm: "40px", md: "50px" },
-              backgroundColor: "#00F09E",
+              backgroundColor: type === "company" ? "#00F09E" : color,
             }}
           />
           <Stack direction="row" alignItems="center" sx={{ pl: 1 }}>
@@ -26,7 +28,7 @@ const StatCard: React.FC<StatCardProps> = ({ value, label, description }) => {
               sx={{
                 fontSize: {
                   xs: "1.5rem",
-                  sm: "1.5rem",
+                  sm: "1.5rem", 
                   md: "1.75rem",
                 },
               }}
@@ -36,7 +38,7 @@ const StatCard: React.FC<StatCardProps> = ({ value, label, description }) => {
 
             <ExpandCircleDownOutlinedIcon
               fontSize="small"
-              sx={{ color: "#00F09E", alignSelf: "self-start" }}
+              sx={{ color: type === "company" ? "#00F09E" : color, alignSelf: "self-start" }}
             />
           </Stack>
 

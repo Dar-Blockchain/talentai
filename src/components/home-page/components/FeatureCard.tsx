@@ -5,12 +5,14 @@ type FeatureCardProps = {
   icon: React.ReactElement;
   title: any;
   description: string;
+  type: string;
 };
 
 const FeatureCard: React.FC<FeatureCardProps> = ({
   icon,
   title,
   description,
+  type,
 }) => {
   return (
     <Card
@@ -24,7 +26,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
         justifyContent: "flex-start",
         alignItems: "center",
         color: "#000",
-        boxShadow: "0px 4px 50px 0px rgba(20, 189, 124, 0.15)",
+        boxShadow: type === "company" ? "0px 4px 50px 0px rgba(20, 189, 124, 0.15)" : "0px 4px 50px 0px rgba(131, 16, 255, 0.15)",
         backdropFilter: "blur(15px)",
         WebkitBackdropFilter: "blur(15px)",
         backgroundColor: "rgba(255, 255, 255, 0.75)",

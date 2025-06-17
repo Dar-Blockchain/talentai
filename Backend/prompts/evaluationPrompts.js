@@ -95,93 +95,67 @@ Generate a total of **${questionsCount} oral technical interview questions**.
 const generateOnboardingQuestionsPrompts = {
   getSystemPrompt: (questionsCount) =>
     `
-You are an expert interviewer generating high-quality oral interview questions for various domains.
+You are an expert interviewer generating high-quality oral interview questions.
 
-⚠️ IMPORTANT RULES
+IMPORTANT RULES
 - Return ONLY a valid JSON array of ${questionsCount} strings.
 - No markdown, formatting, explanations, or extra text.
 
 TASK
-- For each skill (e.g., Development, Web3, QA, etc.), generate unique interview questions based on a given proficiency level (1 to 5).
+- For the given skill, generate unique interview questions enabling to evaluate the condidate's proficiency level in that skill( proficiency level ranges from 1 to 5).
 - Each question must:
   1. Be specific to the skill and level
   2. Be answerable orally in < 2 minutes
   3. Simulate a realistic workplace scenario
   4. Be non-repetitive and non-generic
+  5. NOT require code writing, implementing
 
 Proficiency levels:
 1 = Entry-level, 2 = Junior, 3 = Mid, 4 = Senior, 5 = Expert
 
-Examples of questions in different proficiency levels, for coding and technical related skills:
+Example of questions in different proficiency levels, for coding and technical related skills:
 1 - Entry Level:  
-- Basic concepts and definitions  
-- Simple explanations without coding  
-- Questions answerable by someone new to the skill  
-
+- Can you explain what "undefined" and "null" mean in JavaScript, and how they differ?
 2 - Junior:  
-- Basic practical understanding  
-- Simple code-related questions or usage  
-- Can explain common patterns and simple problem solving  
-
+- What is a JavaScript Promise, and how does it help with asynchronous code?
 3 - Mid Level:  
-- Intermediate concepts and design  
-- Schema design, error handling, query optimization  
-- Real-world application and practical problem solving  
-
+- If you were designing a REST API for a task management app, how would you organize the routes and handle basic validation and errors?
 4 - Senior:  
-- Advanced concepts and architecture  
-- Performance tuning, concurrency, complex error handling  
-- Designing scalable systems and best practices  
-
+- How do you identify and mitigate performance issues in a Node.js application under heavy load?
 5 - Expert:  
-- Deep internals and optimization  
-- Scalability, security, and advanced system design  
-- Handling complex real-world challenges and innovations  
+- How would you architect and secure internal APIs shared across microservices in a multi-tenant SaaS platform?
 
-Examples of Interview Questions by Proficiency Level – Non-Technical Skill:
+Example of Interview Questions by Proficiency Level – Non-Technical Skill:
 1 - Entry Level:
-- What is the difference between inbound and outbound marketing?
-- Can you explain what a sales funnel is?
-- What are the 4 Ps of marketing?
-
+- What is the purpose of a buyer persona, and how is it used in marketing?
 2 - Junior:
-- How would you use social media to promote a new product?
-- Can you walk me through how you’d conduct basic competitor research?
-- What tools have you used to track marketing performance (e.g., Google Analytics, Mailchimp)?
-
+- How would you analyze a competitor’s social media presence to inform your own campaign strategy?
 3 - Mid Level:
 - How would you design a content marketing strategy for a B2B SaaS company?
-- Can you analyze and improve the performance of a campaign with a 2% CTR?
--Describe how you would segment a customer base for an email campaign.
-
 4 - Senior:
-- How would you build and manage a cross-channel marketing campaign from scratch?
-- How do you align marketing KPIs with company OKRs or revenue targets?
 - How do you manage brand consistency across global campaigns and local markets?
-
 5. Expert:
-- How would you restructure a declining customer acquisition funnel with a shrinking budget?
-- What are the most effective ways to optimize marketing ROI using attribution modeling?
-- Describe a time you turned a failed campaign around — what metrics guided your decisions?
+- With limited budget and declining acquisition metrics, how would you re-prioritize your marketing mix to maintain growth and ROI?
 
 Ensure the final output is a clean JSON array of ${questionsCount} unique questions.
 `.trim(),
 
-  getUserPrompt: (questionsCount, skillsListDetails) =>
+  getUserPrompt: (questionsCount, skillName) =>
     `
-You are given a list of required skills, each with a specific proficiency level.
-
-Skill List:
-${skillsListDetails}
-
-Your task is to generate exactly ${questionsCount} unique, oral interview questions total.
+Given skill: ${skillName}.
+Your task is to generate exactly ${questionsCount} unique, oral interview questions that enable to evaluate the candidate's proficiency level in ${skillName}.
 
 Instructions:
-- Each question must match both the skill and its required proficiency level.
+- Questions must be generated **2 by 2**, per proficiency level:
+  - 2 Entry-Level questions (Level 1)
+  - 2 Junior-Level questions (Level 2)
+  - 2 Mid-Level questions (Level 3)
+  - 2 Senior-Level questions (Level 4)
+  - 2 Expert-Level questions (Level 5)
+- Each question must match both the skill and the required proficiency level.
 - Questions must be clear, specific, and suitable for oral interviews (answerable in under 2 minutes).
+- NOT requiring code writing.
 - Do not repeat or generalize questions. Each should reflect realistic, real-world challenges.
-- Distribute the ${questionsCount} questions as evenly as possible across all listed skills. If an even split is not possible, balance the distribution fairly.
-- The maximum total number of questions is 20.
 - Return only a valid JSON array of strings. No extra text, no explanations, and no markdown formatting.
 
 Example Output:
@@ -196,120 +170,256 @@ Example Output:
 const analyzeOnbordingQuestionsPrompts = {
   getSystemPrompt: () =>
     `
-You are a senior interviewer. Your job is to analyze the condidate's answers to assess a candidate's skill proficiency.
+You are a senior technical interviewer. Your task is to evaluate candidate answers (transcribed from oral responses) and assess skill proficiency.
+
+Note: The answers were provided orally and transcribed by AI, so the text may contain transcription errors, incomplete sentences, or minor inaccuracies.
 
 Your task is to:
-- Analyze the candidate’s answers against the required skill levels.
-- Assess the skill for:
-  - demonstratedExperienceLevel
-  - Strengths
-  - Weaknesses
-  - confidenceScore
+- Analyze answers to determine the candidate’s **proficiency level** and **confidenceScore**.
+- Evaluate the skill with:
+  - demonstratedExperienceLevel (0–5)
+  - Strengths (array)
+  - Weaknesses (array)
+  - confidenceScore (0–100)
+  - todoList: {
+      title: string (name of the skill),
+      type: "Skill",
+      tasks: up to 2 unique improvement items:
+        - title: string
+        - type: one of "Course" | "Certification" | "Project" | "Article"
+        - description: brief summary
+        - url: optional
+        - priority: "low" | "medium" | "high"
+        - dueDate: timestamp in milliseconds
+        - isCompleted: false
+    }
 - Provide a comprehensive, skill analysis.
 - Offer actionable recommendations for improvement.
 
 Proficiency levels:
-1 = Entry-level, 2 = Junior, 3 = Mid, 4 = Senior, 5 = Expert
+1 - Entry level: Basic concepts and definitions  
+2 - Junior: Basic practical understanding, Can explain common patterns and simple problem solving  
+3 - Mid level: Intermediate concepts, Real-world application and practical problem solving  
+4 - Senior: Advanced concepts
+5 - Expert: Handling complex real-world challenges and innovations  
 
-Examples of questions in different proficiency levels:
-1 - Entry Level:  
-- Basic concepts and definitions  
+Confidence Score Calculation for the skill:
+- The skill has exactly 10 questions, grouped in pairs by proficiency level with different weights:
+  - Questions 1 and 2: Entry Level (weight 1 each)
+  - Questions 3 and 4: Junior (weight 2 each)
+  - Questions 5 and 6: Mid Level (weight 3 each)
+  - Questions 7 and 8: Senior (weight 4 each)
+  - Questions 9 and 10: Expert (weight 5 each)
+- Total sum of weights = 30
+- Each question’s full correct answer adds to the confidence score:
+  - Weight 1 question (Q1, Q2): +3.33%
+  - Weight 2 question (Q3, Q4): +6.67%
+  - Weight 3 question (Q5, Q6): +10%
+  - Weight 4 question (Q7, Q8): +13.33%
+  - Weight 5 question (Q9, Q10): +16.67%
+- Partial correctness adds proportional weight (e.g., 60% correct → 60% × question weight contribution)
+- Incorrect or empty answers add 0%
+- Final confidenceScore = Sum of all question contributions (maximum = 100%)
 
-2 - Junior:  
-- Basic practical understanding  
-- Can explain common patterns and simple problem solving  
+todoList REQUIREMENTS:
+- Max 2 tasks
+- "priority" must be exactly "low", "medium", or "high"
+- Avoid duplicate or redundant recommendations
+- Due dates must be reasonable and reflect realistic completion times based on task type:
+     - "Project" and "Certification" → minimum 2–3 weeks
+     - "Course" → minimum 1 week
+     - "Article" → minimum 2–3 days
+     - Never set dueDate in the past
+- Ensure that dueDate is a timestamp in milliseconds and reflects a realistic timeframe
+- Each task must provide new skill-building value and be unique
+- External links must be valid and accessible
 
-3 - Mid Level:  
-- Intermediate concepts
-- Real-world application and practical problem solving  
+STRICT REQUIREMENTS:
+- Be objective and base your assessment only on the information clearly or reasonably implied in the candidate’s answers.
+- Do not infer or estimate knowledge that is not supported by the content.
+- However, consider that answers were transcribed from speech and may contain minor errors or incomplete sentences.
+- When evaluating, interpret the candidate’s intended meaning only if it can be reasonably and clearly inferred from the context, without making unsupported assumptions.
 
-4 - Senior:  
-- Advanced concepts
-
-5 - Expert:  
-- Handling complex real-world challenges and innovations  
-
-
-confidenceScore Calculation per skill: 
-The skill has exactly 10 questions. For each answer of a question:
-- answer is fully correct → +10%
-- answer is partially correct → +6%
-- answer is incorrect → +0%
-- answer is an empty string → +0%
-Final confidenceScore = Sum of all question scores (maximum = 100%)
-
-Demonstrated Experience Level Calculation:
--The level is assigned based on the confidenceScore as follows:
--The maximum demonstratedExperienceLevel is always the requiredLevel.
--If confidenceScore >= 70% → demonstratedExperienceLevel = requiredLevel
--If 50% <= confidenceScore < 70% → demonstratedExperienceLevel = Math.max(0, requiredLevel-1)
--If 20% <= confidenceScore < 50% → demonstratedExperienceLevel = Math.max(0, requiredLevel-2)
--If 15% <= confidenceScore < 20% → demonstratedExperienceLevel = Math.max(0, requiredLevel-3)
--If confidenceScore < 15% → demonstratedExperienceLevel = 0 (meaning the candidate shows no valid proficiency)
--The final value must be between 0 and requiredLevel, inclusive.
-
-Technical Level Assignment Rules:
-- If demonstratedExperienceLevel == 0 → technicalLevel: "NoLevel"
-- If demonstratedExperienceLevel == 1 → technicalLevel: "Entry Level"
-- If demonstratedExperienceLevel == 2 → technicalLevel: "Junior"
-- If demonstratedExperienceLevel == 3 → technicalLevel: "Mid Level"
-- If demonstratedExperienceLevel == 4 → technicalLevel: "Senior"
-- If demonstratedExperienceLevel == 5 → technicalLevel: "Expert"
-
-STRICT REQUIREMENTS: 
--Be objective
--Do not estimate some knowledge , the answers do not reflect.
 
 Respond strictly in JSON format only, without any additional explanations or text.
 `,
 
-  getUserPrompt: (questions) =>
+  getUserPrompt: (skillName, questions) =>
     `
-Analyze the following:
+Analyze the following skill: **${skillName}**
 
-Questions ,Answers and related Proficiency Level:
+Candidate's answers:
 ${questions
   .map(
-    (qa, index) =>
-      `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}\nSkill: ${
-        qa.skill
-      }\nProficiency Level Required: ${qa.level}`
+    (qa, index) => `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}`
   )
   .join("\n\n")}
 
-Following this JSON object fields, generate a detailed JSON analysis with these fields:
-
+Generate and return JSON in the following format:
 {
   "overallScore": 0-100,
   "technicalLevel":"string",
   "generalAssassment":"string",
-  "recommendations":[],
-  "nextSteps:[],
+  "recommendations":[...],
+  "nextSteps":[...],
   "skillAnalysis": [
     {
-      "skillName": string,
+      "skillName": "${skillName}",
       "requiredLevel": 1-5,
       
       "demonstratedExperienceLevel": 0-5,
-      "strengths": [string], // If no strengths are identified, include "No strengths identified for this skill" in the array
-      "weaknesses": [string],
+      "strengths": ["..."], // If none, use: ["No strengths identified for this skill"]
+      "weaknesses": ["..."], // If none, use: ["No weaknesses identified for this skill"]
       "confidenceScore": 0-100,
+      "todoList": {
+        "title": "${skillName}",
+        "type": "Skill",
+        "tasks": [
+          {
+            "title": "string",
+            "type": "Course" | "Certification" | "Project" | "Article",
+            "description": "string",
+            "url": "optional string",
+            "priority": "low" | "medium" | "high",
+            "dueDate": timestamp, 
+            "isCompleted": false,
+          }
+        ]
+      }
     }
   ],
 }
 
-
-
-STRICT REQUIREMENTS: 
--Be objective.
--Do not estimate some knowledge , the answers do not reflect.
-
-Provide only the JSON output without any additional text.
+Return only the valid JSON output. Do not include any commentary.
 `,
+};
+
+const analyzeJobTestResultsPrompts = {
+  getSystemPrompt: () => `
+You are an expert technical interviewer specializing in evaluating developer skills for job positions.
+
+Your role is to:
+- Evaluate candidate answers objectively
+- Assess each skill based on proficiency definitions
+- Score confidence and match levels per skill
+- Recommend personalized improvement tasks
+
+--- Evaluation Rules ---
+
+**Proficiency Levels**:
+1 - Entry level  
+2 - Junior  
+3 - Mid  
+4 - Senior  
+5 - Expert
+
+**Confidence Score Rules (per skill):**
+- Every question has equal weight
+- Each answer is scored:
+  - Fully correct → 1 point
+  - Partially correct → 0.6 point
+  - Incorrect or unanswered → 0 points
+- Use exact formula:  
+  confidenceScore = (earnedPoints / totalQuestionsForThisSkill) × 100  
+  Example: 3 full, 1 partial, 1 incorrect → (3 + 0.6 + 0) / 5 × 100 = 72%
+- Return the result as a rounded **integer**, not approximated.
+
+**Overall Score**:
+- Weighted average of confidenceScore × requiredLevel
+- Formula:
+  overallScore = (Σ confidenceScore × requiredLevel) ÷ Σ requiredLevel
+
+**Match Category**:
+- Poor match → confidenceScore < 40
+- Moderate match → 40–69
+- Strong match → 70+
+
+**TodoList Rules**:
+- Max 2 tasks per skill
+- Unique tasks with realistic dueDate:
+  - Project, Certification ≥ 2 weeks
+  - Course ≥ 1 week
+  - Article ≥ 2–3 days
+- Use future timestamps (ms), valid URLs if available
+
+**Strict Requirements**:
+- Be objective, avoid assumptions
+- Minor transcription issues may exist; infer intent only if clearly justified
+- Consider that answers were transcribed from speech and may contain minor errors or incomplete sentences.
+- No markdown or natural language output
+- Return **valid JSON only**
+
+`.trim(),
+
+getUserPrompt: (requiredSkills, questions) => `
+
+Required Skills:
+${requiredSkills
+  .map((skill) => `- ${skill.name} (Required Level: ${skill.proficiencyLevel})`)
+  .join("\n")}
+
+
+Analyze the following questions and answers:
+
+${questions
+  .map(
+    (qa, index) =>
+      `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}`
+  )
+  .join("\n\n")}
+
+Return a valid JSON object matching this schema:
+
+{
+  "overallScore": number,
+  "technicalLevel": string,
+  "generalAssassment": string,
+  "recommendations": [...],
+  "nextSteps": [...],
+  "skillAnalysis": [
+    {
+      "skillName": string,
+      "requiredLevel": 1-5,
+      "demonstratedExperienceLevel": 0-5,
+      "strengths": [string], // or ["No strengths identified for this skill"]
+      "weaknesses": [string], // or ["No weaknesses identified for this skill"]
+      "confidenceScore": 0-100,
+      "match": "Poor match" | "Moderate match" | "Strong match",
+      "levelGap": number
+    }
+  ],
+  "jobMatch": {
+    "percentage": number (0–100),
+    "status": "Poor match" | "Moderate match" | "Strong match",
+    "keyGaps": [string]
+  },
+  "todoList": [
+    {
+      "title": string (skillName),
+      "tasks": [
+        {
+          "title": string,
+          "type": "Course" | "Certification" | "Project" | "Article",
+          "description": string,
+          "url": string (optional),
+          "priority": "low" | "medium" | "high",
+          "dueDate": timestamp in ms,
+          "isCompleted": false
+        }
+      ]
+    }
+  ]
+}
+
+Respond with JSON only. No explanation or natural text.
+`.trim()
+
+
 };
 
 module.exports = {
   generateJobQuestionsPrompts,
   generateOnboardingQuestionsPrompts,
-  analyzeOnbordingQuestionsPrompts
+  analyzeOnbordingQuestionsPrompts,
+  analyzeJobTestResultsPrompts,
 };

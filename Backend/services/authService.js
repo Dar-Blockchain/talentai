@@ -1,23 +1,12 @@
 const User = require("../models/UserModel");
-const { sendOTP } = require("./emailService");
-const jwt = require("jsonwebtoken");
-const hederaService = require("./hederaService");
-
-// Générer un code OTP
-const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-};
+const { sendOTP } = require("../utils/mailing");
+const { generateOTP } = require("../utils/Onetimepassword");
+const { generateToken } = require("../utils/generateToken");
+const { getGmailByToken } = require("../utils/getGmailByToken");
 
 // Extraire le nom d'utilisateur de l'email
 const extractUsernameFromEmail = (email) => {
   return email.split("@")[0];
-};
-
-// Générer un token JWT
-const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.Net_Secret, {
-    expiresIn: "7d",
-  });
 };
 
 // Service d'inscription
@@ -89,10 +78,16 @@ module.exports.registerUser = async (email) => {
 
 // Service de vérification OTP
 module.exports.verifyUserOTP = async (email, otp) => {
-  const user = await User.findOne({ email });
-  console.log(user);
+  const user = await User.findOne({ email });  
+  
   if (!user) {
     throw new Error("Utilisateur non trouvé");
+  }
+
+  if (user && user.isBanned) {
+    return res.status(403).json({
+      message: "You are banned. Please check and contact support.",
+    });
   }
 
   if (!user.otp || !user.otp.code || !user.otp.expiresAt) {
@@ -123,9 +118,18 @@ module.exports.verifyUserOTP = async (email, otp) => {
 };
 
 // Service de connexion avec Gmail
-module.exports.connectWithGmail = async (email) => {
+module.exports.connectWithGmail = async (id_token) => {
+
+  const email = getGmailByToken(id_token);
+
   // Vérifier si l'utilisateur existe déjà
   let user = await User.findOne({ email });
+
+  if (user && user.isBanned) {
+    return res.status(403).json({
+      message: "You are banned. Please check and contact support.",
+    });
+  }
 
   if (!user) {
     // Si l'utilisateur n'existe pas, créer un nouveau compte avec un portefeuille Hedera
@@ -159,7 +163,37 @@ module.exports.connectWithGmail = async (email) => {
   };
 };
 
-module.exports.getAllUsers = async () => {
-  const users = await User.find();
-  return users;
+module.exports.warnUser = async (email) => {
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    const error = new Error("User not found");
+    error.status = 404;
+    throw error;
+  }
+
+  if (user.isBanned) {
+    return {
+      message: "User is already banned",
+      user,
+    };
+  }
+
+  user.warnings = (user.warnings || 0) + 1;
+
+  if (user.warnings >= 3) {
+    user.isBanned = true;
+    await user.save();
+    return {
+      message: "User has been banned after receiving 3 warnings",
+      user,
+    };
+  }
+
+  await user.save();
+
+  return {
+    message: `User has received warning ${user.warnings}/3`,
+    user,
+  };
 };

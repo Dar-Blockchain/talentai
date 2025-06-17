@@ -173,7 +173,10 @@ export default function SignIn() {
       setError(reduxError);
     }
   }, [reduxError]);
-
+  const userType = useSelector((state: RootState) => state.user.userType);
+  useEffect(() => {
+    console.log("userType", userType);
+  }, [userType]);
   return (
     <Box
       sx={{
@@ -221,7 +224,7 @@ export default function SignIn() {
           >
             <Box
               component="img"
-              src="/logo.svg"
+              src={userType === "company" ? "/logo.svg" : "/logojobSeeker.svg"}
               alt="TalentAI Logo"
               sx={{ height: 32, cursor: 'pointer' }}
               onClick={() => router.push("/")}
@@ -244,8 +247,9 @@ export default function SignIn() {
             variant="h5"
             fontWeight={600}
             sx={{
-              background:
-                "linear-gradient(135deg, rgba(41, 210, 145, 0.33), #00FF9D)",
+              background: userType === "company" ?
+                "linear-gradient(135deg, rgba(41, 210, 145, 0.33), #00FF9D)" :
+                "linear-gradient(135deg, rgba(131, 16, 255, 0.33), #8310FF)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               mb: 1,
@@ -325,13 +329,13 @@ export default function SignIn() {
                 sx: {
                   color: "#000",
                   "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "rgba(41, 210, 145, 0.83)",
+                    borderColor: userType === "company" ? "rgba(41, 210, 145, 0.83)" : "rgba(131, 16, 255, 0.83)",
                   },
                   "&:hover .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "rgba(41, 210, 145, 0.83)",
+                    borderColor: userType === "company" ? "rgba(41, 210, 145, 0.83)" : "rgba(131, 16, 255, 0.83)",
                   },
                   "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "rgba(41, 210, 145, 0.83)",
+                    borderColor: userType === "company" ? "rgba(41, 210, 145, 0.83)" : "rgba(131, 16, 255, 0.83)",
                   },
                 },
               }}
@@ -367,8 +371,8 @@ export default function SignIn() {
                       disabled={loading || isLoading || !email}
                       size="small"
                       sx={{
-                        background: "rgba(41, 210, 145, 0.83)",
-                        color: "black",
+                        background: userType === "company" ? "rgba(41, 210, 145, 0.83)" : "rgba(131, 16, 255, 0.83)",
+                        color: "white",
                         padding: "5px",
                         "&:hover": {
                           background: "rgba(2, 0, 0, 0.1)",
@@ -387,13 +391,13 @@ export default function SignIn() {
                 sx: {
                   color: "#000",
                   "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "rgba(41, 210, 145, 0.83)",
+                    borderColor: userType === "company" ? "rgba(41, 210, 145, 0.83)" : "rgba(131, 16, 255, 0.83)",
                   },
                   "&:hover .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "rgba(41, 210, 145, 0.83)",
+                    borderColor: userType === "company" ? "rgba(41, 210, 145, 0.83)" : "rgba(131, 16, 255, 0.83)",
                   },
                   "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "rgba(41, 210, 145, 0.83)",
+                    borderColor: userType === "company" ? "rgba(41, 210, 145, 0.83)" : "rgba(131, 16, 255, 0.83)",
                   },
                 },
               }}
@@ -401,7 +405,7 @@ export default function SignIn() {
                 sx: {
                   color: "rgba(0, 0, 0, 0.7)",
                   "&.Mui-focused": {
-                    color: "rgba(41, 210, 145, 0.83)", // Keep it black on focus
+                    color: userType === "company" ? "rgba(41, 210, 145, 0.83)" : "rgba(131, 16, 255, 0.83)", // Keep it black on focus
                   },
                 },
               }}
@@ -419,9 +423,9 @@ export default function SignIn() {
                 textTransform: "none",
                 mb: 2,
                 color: "#fff",
-                background: "rgba(41, 210, 145, 0.83)",
+                background: userType === "company" ? "rgba(41, 210, 145, 0.83)" : "rgba(131, 16, 255, 0.83)",
                 "&:hover": {
-                  background: "rgba(41, 210, 145, 0.73)",
+                  background: userType === "company" ? "rgba(41, 210, 145, 0.73)" : "rgba(131, 16, 255, 0.73)",
                 },
                 "&.Mui-disabled": {
                   background: "rgba(0, 0, 0, 0.12)",
@@ -438,6 +442,23 @@ export default function SignIn() {
                 "Verify"
               )}
             </Button>
+
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Button
+                startIcon={<ArrowBackIcon />}
+                onClick={() => router.push('/')}
+                sx={{
+                  color: userType === "company" ? "rgba(41, 210, 145, 0.83)" : "rgba(131, 16, 255, 0.83)",
+                  textTransform: "none",
+                  '&:hover': {
+                    background: 'transparent',
+                    color: userType === "company" ? "rgba(41, 210, 145, 0.73)" : "rgba(131, 16, 255, 0.73)",
+                  }
+                }}
+              >
+                Back to Landing Page
+              </Button>
+            </Box>
           </Box>
 
           {/* <Divider
@@ -462,9 +483,9 @@ export default function SignIn() {
               py: 1.5,
               textTransform: "none",
               color: "#fff",
-              background: "rgba(41, 210, 145, 0.83)",
+              background: userType === "company" ? "rgba(41, 210, 145, 0.83)" : "rgba(131, 16, 255, 0.83)",
               "&:hover": {
-                background: "rgba(41, 210, 145, 0.73)",
+                background: userType === "company" ? "rgba(41, 210, 145, 0.73)" : "rgba(131, 16, 255, 0.73)",
               },
               "&.Mui-disabled": {
                 background: "rgba(0, 0, 0, 0.12)",

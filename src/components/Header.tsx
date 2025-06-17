@@ -12,6 +12,7 @@ import {
   useMediaQuery,
   useTheme,
   Stack,
+  Typography,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
@@ -22,6 +23,7 @@ import { AppDispatch, RootState } from "@/store/store";
 import { useDispatch } from "react-redux";
 import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
 import dynamic from 'next/dynamic';
+import { setUserType } from "@/store/slices/userSlice";
 
 const navItems = [
   { label: "Features", id: "features" },
@@ -29,8 +31,13 @@ const navItems = [
   { label: "Pricing", id: "pricing" },
   { label: "Contact", id: "contact" },
 ];
-
-const Header = () => {
+type HeaderProps = {
+  logo: string; // path to the logo image
+  type: string; // "company" or "jobseeker"
+  color: string; // "company" or "jobseeker"
+  link: string;
+};
+const Header = ({ logo, type, color, link }: HeaderProps) => {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -43,7 +50,12 @@ const Header = () => {
   useEffect(() => {
     setMounted(true);
   }, []);
-
+  useEffect(() => {
+    if (type) {
+      localStorage.setItem("userType", type);
+      dispatch(setUserType(type as "company" | "jobseeker")); 
+    }
+  }, [type]);
   useEffect(() => {
     if (isAuthenticated) {
       dispatch(getMyProfile());
@@ -69,7 +81,7 @@ const Header = () => {
     >
       <Box
         component="img"
-        src="/logo.svg"
+        src={logo}
         alt="TalentAI Logo"
         sx={{ height: 32, mb: 2, cursor: 'pointer' }}
         onClick={() => router.push("/")}
@@ -110,10 +122,10 @@ const Header = () => {
         <Toolbar sx={{ justifyContent: "space-between" }}>
           <Box
             component="img"
-            src="/logo.svg"
+            src={type === "company" ? "/logo.svg" : "/logojobSeeker.svg"}
             alt="TalentAI Logo"
             sx={{ height: 32, cursor: 'pointer' }}
-            onClick={() => router.push("/")}
+            onClick={() => router.push(type === "company" ? '/' : '/jobseekerLanding')}
           />
           {!isMobile && (
             <Stack direction="row" spacing={4} alignItems="center">
@@ -139,7 +151,23 @@ const Header = () => {
               ))}
             </Stack>
           )}
-
+          <Typography
+            sx={{
+              cursor: 'pointer',
+              fontFamily: 'Poppins',
+              fontWeight: 500,
+              fontSize: '18px',
+              lineHeight: '100%',
+              letterSpacing: '0%',
+              color: color,
+              display: 'inline-block',
+              padding: '4px 8px',
+              borderRadius: '4px'
+            }}
+            onClick={() => router.push(type === "company" ? '/jobseekerLanding' : '/')}
+          >
+            {link}
+          </Typography>
           {!isMobile ? (
             <Button
               variant="contained"
@@ -165,16 +193,16 @@ const Header = () => {
               }}
               endIcon={
                 <ArrowForwardIcon
-                  sx={{ fontSize: 16, color: "rgba(0, 255, 157, 1)" }}
+                  sx={{ fontSize: 16, color: color }}
                 />
               }
             >
-              {isAuthenticated 
-                ? profile?.type === "Candidate" 
-                  ? "Dashboard Candidate" 
-                  : profile?.type === "Company" 
-                    ? "Dashboard Company" 
-                    : "Go to Dashboard"
+              {isAuthenticated && profile
+                ? profile.type === "Candidate"
+                  ? "Dashboard Candidate"
+                  : profile.type === "Company"
+                    ? "Dashboard Company"
+                    : "Get Started"
                 : "Get Started"}
             </Button>
           ) : (

@@ -40,7 +40,8 @@ const authOptions: NextAuthOptions = {
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/connect-gmail`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email , id_token })
+            //id_token for connect with google
+            body: JSON.stringify({ id_token })
           });
           const data = await response.json();
 

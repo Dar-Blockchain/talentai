@@ -99,7 +99,7 @@ export default function ReportOnBoarding() {
 
         // Get skills from URL query parameters
         const skillsArray = router.query.skills ? (router.query.skills as string).split(',') : [];
-        const proficiencyMap = router.query.proficiencyLevels ? 
+        const proficiencyMap = router.query.proficiencyLevels ?
           Object.fromEntries(
             (router.query.proficiencyLevels as string).split(',').map(pair => {
               const [skill, level] = pair.split(':');
@@ -116,7 +116,7 @@ export default function ReportOnBoarding() {
 
         const requestBody = {
           // type: 'technicalSkill',
-          // skill: structuredSkills,
+          skill: structuredSkills,
           questions: testData.results
         };
 
@@ -199,7 +199,7 @@ export default function ReportOnBoarding() {
         gap: 3
       }}>
         <CircularProgress sx={{ color: '#02E2FF' }} />
-        <Typography variant="h6" sx={{ color: '#fff' }}>
+        <Typography variant="h6" sx={{ color: 'black' }}>
           {analyzing ? 'Analyzing your responses...' : 'Loading...'}
         </Typography>
       </Box>
@@ -279,7 +279,7 @@ export default function ReportOnBoarding() {
             variant="h4"
             sx={{
               mb: 3,
-              background: 'rgba(0, 255, 157, 1)',
+              background: '#8310FF',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               fontWeight: 700
@@ -327,7 +327,7 @@ export default function ReportOnBoarding() {
               >
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, backgroundColor: 'white' }}>
                   <Box>
-                    <Typography variant="h6" sx={{ color: 'rgba(0, 255, 157, 1)' }}>
+                    <Typography variant="h6" sx={{ color: '#8310FF' }}>
                       {skill.skillName}
                     </Typography>
                   </Box>
@@ -339,12 +339,12 @@ export default function ReportOnBoarding() {
                     </Box> */}
                     <Box sx={{ flex: 1 }}>
                       <Typography sx={{ color: '#000' }}>
-                        Demonstrated Level: {skill.demonstratedExperienceLevel}
+                        Demonstrated Level: {results.analysis.technicalLevel}
                       </Typography>
                     </Box>
                   </Box>
                   <Box sx={{ mt: 2 }}>
-                    <Typography sx={{ color: '#00FFC3', mb: 1 }}>Strengths:</Typography>
+                    <Typography sx={{ color: '#8310FF', mb: 1 }}>Strengths:</Typography>
                     {skill.strengths.map((strength, j) => (
                       <Typography key={j} sx={{ color: '#000', ml: 2 }}>• {strength}</Typography>
                     ))}
@@ -384,6 +384,52 @@ export default function ReportOnBoarding() {
             </Box>
           </Box>
 
+          {/* Hedera Explanation */}
+          <Box sx={{ mb: 4, padding: '10px', border: '1px solid black' }}>
+            <Typography variant="h6" sx={{ color: '#000', mb: 2 }}>
+              Hedera Network
+            </Typography>
+            <Box sx={{ backgroundColor: 'rgba(255,255,255,0.05)', p: 2, borderRadius: 2 }}>
+              <Typography sx={{ color: '#000', mb: 2 }}>
+                Hedera is a decentralized public network that enables individuals and businesses to create powerful decentralized applications (DApps). It is designed to be a fairer, more efficient system that eliminates some of the limitations that older blockchain-based platforms face.
+              </Typography>
+              <Typography sx={{ color: '#000', mb: 2 }}>
+                Key features of Hedera include:
+              </Typography>
+              <Typography sx={{ color: '#000', ml: 2, mb: 1 }}>• High throughput and low latency</Typography>
+              <Typography sx={{ color: '#000', ml: 2, mb: 1 }}>• Fair and secure consensus mechanism</Typography>
+              <Typography sx={{ color: '#000', ml: 2, mb: 1 }}>• Low and predictable fees</Typography>
+              <Typography sx={{ color: '#000', ml: 2, mb: 1 }}>• Energy-efficient network</Typography>
+            </Box>
+          </Box>
+
+          {/* Pass Test Section */}
+          <Box sx={{ mb: 4, padding: '10px', border: '1px solid black' }}>
+            <Typography variant="h6" sx={{ color: '#000', mb: 2 }}>
+              Pass Test
+            </Typography>
+            <Box sx={{ backgroundColor: 'rgba(255,255,255,0.05)', p: 2, borderRadius: 2 }}>
+              <Typography sx={{ color: '#000', mb: 2 }}>
+                🌐 The Hedera test is now available — and it's free to take!
+              </Typography>
+              <Button
+                variant="contained"
+                href="https://hashgraphdev.com/?code=Dar%20Ranya"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  background: '#8310FF',
+                  color: '#fff',
+                  '&:hover': {
+                    background: '#8310FF',
+                  }
+                }}
+              >
+                Pass the Test
+              </Button>
+            </Box>
+          </Box>
+
           <Box sx={{
             display: 'flex',
             justifyContent: 'center',
@@ -397,7 +443,7 @@ export default function ReportOnBoarding() {
               onClick={() => router.push('/dashboardCandidate')}
               startIcon={<PersonIcon />}
               sx={{
-                background: 'rgba(0, 255, 157, 1)',
+                background: '#8310FF',
                 color: '#fff',
                 px: 4,
                 py: 1.5,
@@ -406,7 +452,7 @@ export default function ReportOnBoarding() {
                 fontSize: '1.1rem',
                 fontWeight: 500,
                 '&:hover': {
-                  background: 'rgba(0, 255, 157, 1)',
+                  background: '#8310FF',
                 }
               }}
             >
