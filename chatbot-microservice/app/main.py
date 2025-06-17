@@ -19,6 +19,7 @@ from app.core.intent_classifier import IntentClassifier
 from app.learning.pipeline import LearningPipeline
 from app.api.routes import router
 from app.utils.logger import setup_logging
+from app.services.deepseek_service import deepseek_service
 
 # Global instances
 classifier = None
@@ -115,7 +116,8 @@ async def health_check() -> Dict[str, Any]:
         "version": "1.0.0",
         "environment": settings.API_ENVIRONMENT,
         "classifier_ready": hasattr(app.state, 'classifier') and app.state.classifier is not None,
-        "learning_pipeline_ready": hasattr(app.state, 'learning_pipeline') and app.state.learning_pipeline is not None
+        "learning_pipeline_ready": hasattr(app.state, 'learning_pipeline') and app.state.learning_pipeline is not None,
+        "deepseek_service_ready": deepseek_service.is_ready()
     }
 
 # Root endpoint

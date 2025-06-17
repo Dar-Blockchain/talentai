@@ -16,6 +16,8 @@ from app.data.responses import (
     get_contextual_response, 
     get_follow_up_suggestions
 )
+from app.services.deepseek_service import deepseek_service
+from app.core.config import settings
 
 
 class ResponseGenerator:
@@ -56,7 +58,64 @@ class ResponseGenerator:
                 user_input, intent, confidence, user_id, session_id, additional_context
             )
             
-            # Generate base response
+            # Check if we should use DeepSeek AI fallback
+            should_use_deepseek = (
+                settings.ENABLE_DEEPSEEK_FALLBACK and  # Check if feature is enabled
+                (intent == "fallback" or confidence < settings.FALLBACK_CONFIDENCE_THRESHOLD) 
+                and deepseek_service.is_available()
+            )
+            
+            self.logger.debug(f"DeepSeek fallback check - Intent: {intent}, Confidence: {confidence:.3f}, Threshold: {settings.FALLBACK_CONFIDENCE_THRESHOLD}, Enabled: {settings.ENABLE_DEEPSEEK_FALLBACK}, Available: {deepseek_service.is_available()}, Should use: {should_use_deepseek}")
+            
+            # Try DeepSeek AI fallback first if conditions are met
+            if should_use_deepseek:
+                self.logger.info(f"🤖 Triggering DeepSeek AI fallback for query: '{user_input[:50]}...' (intent: {intent}, confidence: {confidence:.3f})")
+                
+                deepseek_response = await deepseek_service.generate_fallback_response(
+                    user_input, context
+                )
+                
+                if deepseek_response:
+                    # Build comprehensive response with DeepSeek content
+                    response = {
+                        "response": deepseek_response,
+                        "intent": "deepseek_fallback",
+                        "confidence": 0.85,  # Set higher confidence for AI-generated response
+                        "session_id": session_id or str(uuid.uuid4()),
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "suggestions": [
+                            "Tell me more about that",
+                            "What else can you help with?",
+                            "How does TalentAI work?"
+                        ],
+                        "context": {
+                            "user_id": user_id,
+                            "conversation_turn": context.get("conversation_turn", 1),
+                            "session_duration": context.get("session_duration", 0),
+                            "powered_by": "DeepSeek AI",
+                            "original_intent": intent,
+                            "original_confidence": round(confidence, 3)
+                        }
+                    }
+                    
+                    # Add personalization elements
+                    response = await self._add_personalization(response, context)
+                    
+                    # Update conversation history
+                    await self._update_conversation_history(response, context)
+                    
+                    self.logger.info(f"✅ DeepSeek fallback response generated successfully for: {user_input[:50]}...")
+                    return response
+                else:
+                    self.logger.warning("⚠️ DeepSeek AI returned empty response, falling back to standard response")
+            else:
+                if intent == "fallback" or confidence < settings.FALLBACK_CONFIDENCE_THRESHOLD:
+                    if not settings.ENABLE_DEEPSEEK_FALLBACK:
+                        self.logger.debug("🔄 DeepSeek fallback disabled in settings, using standard fallback")
+                    elif not deepseek_service.is_available():
+                        self.logger.warning("⚠️ DeepSeek service not available, using standard fallback")
+            
+            # Generate standard response if DeepSeek is not used or failed
             response_text = get_contextual_response(intent, context, confidence)
             
             # Get follow-up suggestions

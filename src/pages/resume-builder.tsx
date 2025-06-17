@@ -33,6 +33,7 @@ import WidgetsIcon from '@mui/icons-material/Widgets'
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions'
 import IconsSidebar from '@/components/IconsSidebar'
 import QRCode from 'qrcode'
+import { ResumeBuilderChatBot, ResumeChatBotFab } from '@/components/resume-chatbot'
 
 // Add debug button and dialog
 const DEBUG_MODE = process.env.NODE_ENV === 'development';
@@ -94,6 +95,9 @@ export default function ResumeBuilder() {
 
   // Inside the ResumeBuilder component but outside of any function or method:
   const [linkedInConnected, setLinkedInConnected] = useState(false);
+
+  // Resume Builder Chatbot state
+  const [resumeChatbotOpen, setResumeChatbotOpen] = useState(false);
 
   // Add a useEffect to check LinkedIn connection status on mount
   useEffect(() => {
@@ -400,6 +404,12 @@ export default function ResumeBuilder() {
 
     setSections(prev => [...prev, newSection])
   }
+
+  // Handler for when resume chatbot generates a section
+  const handleSectionGenerated = (sectionData: any) => {
+    setSections(prev => [...prev, sectionData]);
+    showToast(`${sectionData.type} section added to your resume!`, 'success');
+  };
 
   const exportToPDF = async () => {
     const contentArea = document.querySelector(`.${styles.canvas}`) as HTMLElement
@@ -1285,6 +1295,21 @@ export default function ResumeBuilder() {
           {toast.message}
         </Alert>
       </Snackbar>
+
+      {/* Resume Builder Chatbot FAB */}
+      <ResumeChatBotFab
+        onClick={() => setResumeChatbotOpen(true)}
+        isVisible={!resumeChatbotOpen}
+      />
+
+      {/* Resume Builder Chatbot */}
+      <ResumeBuilderChatBot
+        isOpen={resumeChatbotOpen}
+        onClose={() => setResumeChatbotOpen(false)}
+        onSectionGenerated={handleSectionGenerated}
+        currentSections={sections}
+        userId={session?.user?.email || 'guest'}
+      />
     </div>
   )
 }

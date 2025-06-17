@@ -12,6 +12,13 @@ import {
   Tooltip,
   Card,
   CardContent,
+  Switch,
+  FormControlLabel,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
 } from '@mui/material';
 import {
   Send,
@@ -24,6 +31,9 @@ import {
   ThumbUp,
   ThumbDown,
   RefreshRounded,
+  Settings,
+  Psychology,
+  Speed,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -76,13 +86,78 @@ const ChatBot: React.FC<ChatBotProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // DeepSeek AI controls
+  const [deepSeekEnabled, setDeepSeekEnabled] = useState(true);
+  const [deepSeekStatus, setDeepSeekStatus] = useState<'checking' | 'available' | 'unavailable'>('checking');
+  const [settingsMenuAnchor, setSettingsMenuAnchor] = useState<HTMLElement | null>(null);
+  const [isTestingDeepSeek, setIsTestingDeepSeek] = useState(false);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // DeepSeek AI functions
+  const checkDeepSeekStatus = async () => {
+    try {
+      const response = await axios.get(`${CHATBOT_API_URL}/deepseek/status`);
+      setDeepSeekStatus(response.data.status === 'available' ? 'available' : 'unavailable');
+      setDeepSeekEnabled(response.data.configuration.enabled);
+    } catch (error) {
+      console.error('Error checking DeepSeek status:', error);
+      setDeepSeekStatus('unavailable');
+    }
+  };
+
+  const toggleDeepSeek = async (enabled: boolean) => {
+    try {
+      const response = await axios.post(`${CHATBOT_API_URL}/deepseek/toggle?enabled=${enabled}`);
+      setDeepSeekEnabled(response.data.enabled);
+      toast.success(response.data.message);
+    } catch (error) {
+      console.error('Error toggling DeepSeek:', error);
+      toast.error('Failed to toggle DeepSeek AI');
+    }
+  };
+
+  const testDeepSeek = async () => {
+    setIsTestingDeepSeek(true);
+    try {
+      const response = await axios.post(`${CHATBOT_API_URL}/deepseek/test`, {
+        test_query: "What is artificial intelligence and how does it help in recruitment?"
+      });
+      
+      if (response.data.success) {
+        const testMessage: Message = {
+          id: `deepseek_test_${Date.now()}`,
+          text: `🧪 **DeepSeek AI Test Result:**\n\n${response.data.test_response}`,
+          sender: 'bot',
+          timestamp: new Date(),
+          intent: 'deepseek_test',
+          confidence: 0.95,
+          suggestions: ['Tell me more', 'How does this help?', 'What else can you do?']
+        };
+        setMessages(prev => [...prev, testMessage]);
+        toast.success('DeepSeek AI test completed successfully!');
+      } else {
+        toast.error('DeepSeek AI test failed');
+      }
+    } catch (error) {
+      console.error('Error testing DeepSeek:', error);
+      toast.error('Failed to test DeepSeek AI');
+    } finally {
+      setIsTestingDeepSeek(false);
+    }
   };
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (isOpen) {
+      checkDeepSeekStatus();
+    }
+  }, [isOpen]);
 
   const sendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -225,9 +300,28 @@ const ChatBot: React.FC<ChatBotProps> = ({
               <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
                 TalentAI Assistant
               </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                AI-powered recruitment help
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                  AI-powered recruitment help
+                </Typography>
+                {deepSeekStatus === 'available' && deepSeekEnabled && (
+                  <Chip 
+                    icon={<Psychology />}
+                    label="DeepSeek AI"
+                    size="small"
+                    sx={{ 
+                      height: 18, 
+                      fontSize: '0.65rem', 
+                      bgcolor: 'rgba(16, 185, 129, 0.2)', 
+                      color: '#10b981',
+                      '& .MuiChip-icon': { fontSize: '0.8rem' }
+                    }}
+                  />
+                )}
+                {deepSeekStatus === 'checking' && (
+                  <CircularProgress size={12} sx={{ color: 'rgba(255,255,255,0.7)' }} />
+                )}
+              </Box>
             </Box>
           </Box>
           
@@ -260,8 +354,81 @@ const ChatBot: React.FC<ChatBotProps> = ({
                 <Close fontSize="small" />
               </IconButton>
             </Tooltip>
+            <Tooltip title="DeepSeek AI Settings">
+              <IconButton 
+                size="small" 
+                sx={{ color: 'white' }} 
+                onClick={(e) => setSettingsMenuAnchor(e.currentTarget)}
+              >
+                <Settings fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </Box>
         </Box>
+
+        {/* DeepSeek Settings Menu */}
+        <Menu
+          anchorEl={settingsMenuAnchor}
+          open={Boolean(settingsMenuAnchor)}
+          onClose={() => setSettingsMenuAnchor(null)}
+          PaperProps={{
+            sx: { minWidth: 250 }
+          }}
+        >
+          <MenuItem disabled>
+            <ListItemIcon>
+              <Psychology />
+            </ListItemIcon>
+            <ListItemText 
+              primary="DeepSeek AI Settings"
+              secondary={`Status: ${deepSeekStatus}`}
+            />
+          </MenuItem>
+          
+          <Divider />
+          
+          <MenuItem>
+            <ListItemText primary="Enable DeepSeek AI" />
+            <Switch
+              checked={deepSeekEnabled}
+              onChange={(e) => toggleDeepSeek(e.target.checked)}
+              disabled={deepSeekStatus !== 'available'}
+              size="small"
+            />
+          </MenuItem>
+          
+          <MenuItem 
+            onClick={() => {
+              testDeepSeek();
+              setSettingsMenuAnchor(null);
+            }}
+            disabled={!deepSeekEnabled || deepSeekStatus !== 'available' || isTestingDeepSeek}
+          >
+            <ListItemIcon>
+              <Speed />
+            </ListItemIcon>
+            <ListItemText 
+              primary="Test DeepSeek AI"
+              secondary="Send a test query"
+            />
+            {isTestingDeepSeek && <CircularProgress size={16} />}
+          </MenuItem>
+          
+          <MenuItem 
+            onClick={() => {
+              checkDeepSeekStatus();
+              setSettingsMenuAnchor(null);
+            }}
+          >
+            <ListItemIcon>
+              <RefreshRounded />
+            </ListItemIcon>
+            <ListItemText 
+              primary="Refresh Status"
+              secondary="Check DeepSeek availability"
+            />
+          </MenuItem>
+        </Menu>
 
         {!isMinimized && (
           <>
@@ -333,6 +500,20 @@ const ChatBot: React.FC<ChatBotProps> = ({
                                   color={message.confidence > 0.8 ? 'success' : message.confidence > 0.6 ? 'warning' : 'error'}
                                   sx={{ fontSize: '0.7rem', height: 20 }}
                                 />
+                                {message.intent === 'deepseek_fallback' && (
+                                  <Chip
+                                    icon={<Psychology />}
+                                    label="DeepSeek AI"
+                                    size="small"
+                                    sx={{ 
+                                      fontSize: '0.7rem', 
+                                      height: 20,
+                                      bgcolor: 'rgba(16, 185, 129, 0.1)',
+                                      color: '#10b981',
+                                      '& .MuiChip-icon': { fontSize: '0.7rem' }
+                                    }}
+                                  />
+                                )}
                               </Box>
                             )}
                           </Paper>

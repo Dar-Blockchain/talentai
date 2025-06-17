@@ -51,11 +51,42 @@ class Settings(BaseSettings):
     TALENTAI_API_URL: str = Field(default="http://localhost:3001/api", env="TALENTAI_API_URL")
     TALENTAI_API_KEY: str = Field(default="", env="TALENTAI_API_KEY")
     
+    # Together AI Configuration for DeepSeek Fallback
+    TOGETHER_API_KEY: str = Field(default="", env="TOGETHER_API_KEY")
+    DEEPSEEK_MODEL: str = Field(default="deepseek-ai/DeepSeek-R1-Distill-Llama-70B-free", env="DEEPSEEK_MODEL")
+    ENABLE_DEEPSEEK_FALLBACK: bool = Field(default=True, env="ENABLE_DEEPSEEK_FALLBACK")
+    DEEPSEEK_MAX_TOKENS: int = Field(default=500, env="DEEPSEEK_MAX_TOKENS")
+    DEEPSEEK_TEMPERATURE: float = Field(default=0.7, env="DEEPSEEK_TEMPERATURE")
+    FALLBACK_CONFIDENCE_THRESHOLD: float = Field(default=0.4, env="FALLBACK_CONFIDENCE_THRESHOLD")
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
         
     def __init__(self, **kwargs):
+        # Load environment variables from Backend directory
+        from pathlib import Path
+        from dotenv import load_dotenv
+        
+        # Explicitly load from Backend directory
+        backend_env_path = "../Backend/.env"
+        
+        # Try multiple possible paths to the Backend .env file
+        possible_env_files = [
+            Path(".env"),  # Current working directory
+            Path("../.env"),  # Parent of working directory  
+            Path("../Backend/.env"),  # Backend directory from chatbot-microservice
+            Path("../../Backend/.env"),  # In case we're nested deeper
+        ]
+        
+        for env_file in possible_env_files:
+            if env_file.exists():
+                print(f"✅ Loading .env from: {env_file.resolve()}")
+                load_dotenv(dotenv_path=str(env_file))
+                break
+        else:
+            print("⚠️ No .env file found in expected locations")
+        
         super().__init__(**kwargs)
         
         # Parse comma-separated lists from environment variables

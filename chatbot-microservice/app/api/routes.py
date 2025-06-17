@@ -39,6 +39,9 @@ response_generator = ResponseGenerator()
 # Logger
 logger = logging.getLogger(__name__)
 
+# Import DeepSeek service
+from app.services.deepseek_service import deepseek_service
+
 
 @router.post(
     "/chat",
@@ -788,4 +791,128 @@ async def get_ab_test_status(fastapi_request: Request) -> Dict[str, Any]:
         raise HTTPException(
             status_code=500,
             detail="An error occurred while retrieving A/B test status"
-    ) 
+        )
+
+
+@router.get(
+    "/deepseek/status",
+    summary="Get DeepSeek AI Service Status",
+    description="Get status and configuration information about the DeepSeek AI fallback service."
+)
+async def get_deepseek_status() -> Dict[str, Any]:
+    """
+    Get DeepSeek AI service status and configuration
+    """
+    try:
+        # Reinitialize service to ensure latest configuration
+        deepseek_service.reinitialize()
+        
+        service_info = deepseek_service.get_service_info()
+        
+        return {
+            "service": "DeepSeek AI Fallback",
+            "status": "available" if deepseek_service.is_available() else "unavailable",
+            "configuration": service_info,
+            "description": "Provides intelligent fallback responses using DeepSeek R1 Distill model when chatbot confidence is low"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting DeepSeek status: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving DeepSeek service status"
+        )
+
+
+@router.post(
+    "/deepseek/toggle",
+    summary="Toggle DeepSeek AI Service",
+    description="Enable or disable the DeepSeek AI fallback service."
+)
+async def toggle_deepseek_service(enabled: bool) -> Dict[str, Any]:
+    """
+    Toggle DeepSeek AI service on/off
+    """
+    try:
+        # Update the global settings
+        settings.ENABLE_DEEPSEEK_FALLBACK = enabled
+        
+        # Reinitialize the service with new settings
+        success = deepseek_service.reinitialize()
+        
+        if enabled and not success:
+            return {
+                "success": False,
+                "message": "Failed to enable DeepSeek AI - check API key configuration",
+                "status": "unavailable",
+                "enabled": False,
+                "api_key_configured": bool(settings.TOGETHER_API_KEY)
+            }
+        
+        status = "enabled" if deepseek_service.is_available() else "disabled"
+        
+        logger.info(f"DeepSeek AI service {status} by user request")
+        
+        return {
+            "success": True,
+            "message": f"DeepSeek AI service has been {status}",
+            "status": status,
+            "enabled": deepseek_service.is_available(),
+            "api_key_configured": bool(settings.TOGETHER_API_KEY)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error toggling DeepSeek service: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while toggling DeepSeek service"
+        )
+
+
+@router.post(
+    "/deepseek/test",
+    summary="Test DeepSeek AI Service", 
+    description="Test the DeepSeek AI service with a sample query."
+)
+async def test_deepseek_service(test_query: str = "What is artificial intelligence?") -> Dict[str, Any]:
+    """
+    Test DeepSeek AI service with a sample query
+    """
+    try:
+        if not deepseek_service.is_available():
+            raise HTTPException(
+                status_code=503,
+                detail="DeepSeek service is not available. Check configuration and API key."
+            )
+        
+        # Generate test response
+        test_response = await deepseek_service.generate_fallback_response(
+            test_query, 
+            {"conversation_turn": 1, "session_history": []}
+        )
+        
+        if test_response:
+            return {
+                "success": True,
+                "test_query": test_query,
+                "test_response": test_response,
+                "service_status": "working",
+                "response_length": len(test_response)
+            }
+        else:
+            return {
+                "success": False,
+                "test_query": test_query,
+                "test_response": None,
+                "service_status": "error",
+                "message": "DeepSeek service returned empty response"
+            }
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error testing DeepSeek service: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while testing DeepSeek service: {str(e)}"
+        ) 
