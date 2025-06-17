@@ -94,7 +94,7 @@ module.exports.generateTechniqueQuestionsForJob = async (
   }
 };
 
-exports.analyzeJobTestResults = async ({ questions, jobId, user }) => {
+exports.analyzeJobTestResults = async ({ questions, testedSkills, jobId, user }) => {
   const profile = await Profile.findById(user.profile);
   if (!profile) throw new HttpError(404, "Aucun profil trouvé pour cet utilisateur.");
 
@@ -106,7 +106,7 @@ exports.analyzeJobTestResults = async ({ questions, jobId, user }) => {
     throw new HttpError(400, "Post has no requiredSkills");
   }
 
-  const requiredSkills = jobSkills.map((s) => ({
+  const requiredSkills = testedSkills.map((s) => ({
     name: s.name,
     proficiencyLevel: s.level,
   }));

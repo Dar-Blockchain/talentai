@@ -1197,7 +1197,7 @@ Provide detailed, actionable feedback in JSON format only.`,
 
 exports.analyzeJobTestResults = async (req, res) => {
   try {
-    const { questions, jobId } = req.body;
+    const { questions, testedSkills, jobId } = req.body;
     const user = req.user;
 
     if (!Array.isArray(questions) || !jobId) {
@@ -1212,6 +1212,7 @@ exports.analyzeJobTestResults = async (req, res) => {
 
     const result = await evaluationservice.analyzeJobTestResults({
       questions,
+      testedSkills, 
       jobId,
       user,
     });

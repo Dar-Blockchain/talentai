@@ -1,5 +1,6 @@
 function getExperienceLevelLabel(level) {
   switch (parseInt(level)) {
+    case 0: return "NoLevel";
     case 1: return "Entry Level";
     case 2: return "Junior";
     case 3: return "Mid Level";
