@@ -1200,6 +1200,22 @@ exports.analyzeJobTestResults = async (req, res) => {
     const { questions, testedSkills, jobId } = req.body;
     const user = req.user;
 
+    const profile = user.profile; 
+
+    const now = new Date();
+    const daysSinceLastUpdate =
+      (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
+    if (daysSinceLastUpdate >= 30) {
+      profile.quota = 0;
+      profile.quotaUpdatedAt = now;
+    }
+
+    if (profile.quota >= 5) {
+      return res
+        .status(403)
+        .json({ error: "You have reached your test limit (5)" });
+    }
+
     if (!Array.isArray(questions) || !jobId) {
       return res.status(400).json({
         error: "Invalid request format",
