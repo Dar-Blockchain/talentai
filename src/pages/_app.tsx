@@ -11,6 +11,8 @@ import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
 import Head from 'next/head';
 import ScrollToTop from "@/components/ScrollToTop";
+import ChatBotFab from "@/components/ChatBotFab";
+import { Toaster } from 'react-hot-toast';
 
 const theme = createTheme({
   palette: {
@@ -60,6 +62,29 @@ export default function App({ Component, pageProps }: AppProps) {
                     <AuthWrapper>
                         <Component {...pageProps} />
                         <ScrollToTop/>
+                        {/* <ChatBotFab />
+                        <Toaster 
+                            position="top-right"
+                            toastOptions={{
+                                duration: 4000,
+                                style: {
+                                    background: '#333',
+                                    color: '#fff',
+                                },
+                                success: {
+                                    duration: 3000,
+                                    style: {
+                                        background: '#4caf50',
+                                    },
+                                },
+                                error: {
+                                    duration: 5000,
+                                    style: {
+                                        background: '#f44336',
+                                    },
+                                },
+                            }}
+                        /> */}
                     </AuthWrapper>
                 </ThemeProvider>
             </Provider>

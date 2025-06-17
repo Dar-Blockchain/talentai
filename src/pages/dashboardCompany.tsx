@@ -2010,7 +2010,7 @@ Benefits:
                   mb: 2,
                   fontSize: { xs: '1rem', sm: '1.25rem' }
                 }}>
-                  Required Skillss
+                  Required Skills
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {(isEditing ? editedJob?.skillAnalysis?.requiredSkills : generatedJob?.skillAnalysis?.requiredSkills || []).map((skill: { name: string; level: string; importance: string; category: string }, index: number) => (
@@ -2027,6 +2027,25 @@ Benefits:
                             }
                           }}
                         />
+                        <TextField
+                          select
+                          size="small"
+                          value={newSkillLevel}
+                          onChange={(e) => setNewSkillLevel(e.target.value)}
+                          sx={{
+                            minWidth: 120,
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: '8px',
+                              backgroundColor: 'white'
+                            }
+                          }}
+                        >
+                          <MenuItem value="1">Entry Level</MenuItem>
+                          <MenuItem value="2">Junior</MenuItem>
+                          <MenuItem value="3">Mid Level</MenuItem>
+                          <MenuItem value="4">Senior</MenuItem>
+                          <MenuItem value="5">Expert</MenuItem>
+                        </TextField>
                         <Button
                           variant="contained"
                           onClick={handleSaveSkill}
@@ -2045,6 +2064,7 @@ Benefits:
                           onClick={() => {
                             setEditingSkillIndex(null);
                             setEditingSkillName('');
+                            setNewSkillLevel("3");
                           }}
                           sx={{
                             borderColor: GREEN_MAIN,
@@ -3340,6 +3360,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
   const handleEditSkill = (index: number, skill: { name: string; level: string; importance: string; category: string }) => {
     setEditingSkillIndex(index);
     setEditingSkillName(skill.name);
+    setNewSkillLevel(skill.level);
   };
 
   const handleSaveSkill = () => {
@@ -3349,6 +3370,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
     updatedSkills[editingSkillIndex] = {
       ...updatedSkills[editingSkillIndex],
       name: editingSkillName.trim(),
+      level: newSkillLevel,
       category: editingSkillName.includes('React') || editingSkillName.includes('JavaScript') ? 'Frontend' :
         editingSkillName.includes('Git') ? 'Version Control' :
           'General'
@@ -3363,6 +3385,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
     });
     setEditingSkillIndex(null);
     setEditingSkillName('');
+    setNewSkillLevel("3");
   };
 
   return (
@@ -3806,9 +3829,14 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             ) : (
               <Box sx={{ mt: 4 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                  <Typography variant="h6" sx={{ color: '#000000', fontWeight: 600 }}>
-                    Matching Candidates
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="h6" sx={{ color: '#000000', fontWeight: 600 }}>
+                      Matching Candidates
+                    </Typography>
+                    <Tooltip title="Candidates are matched based on their skills meeting or exceeding the required level for your job posting. The match score indicates how well their skills align with your requirements.">
+                      <InfoIcon sx={{ color: 'rgba(0, 255, 157, 1)', cursor: 'help' }} />
+                    </Tooltip>
+                  </Box>
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     <Button
                       variant="outlined"

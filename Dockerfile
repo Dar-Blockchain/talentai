@@ -36,13 +36,13 @@ COPY package.json package-lock.json next.config.ts tsconfig.json ./
 # Install dependencies
 RUN npm install
 
-# Copy the src directory and other project files into the container
-COPY src ./src
+# Copy the entire project
+COPY . .
 
 # Build the Next.js application
 RUN npm run build
 
-# Step 2: Run the app in a production environment
+# Step 2: Run the app in production environment
 FROM node:20-slim
 
 # Set the working directory to /app
@@ -74,11 +74,20 @@ ENV GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
 ENV ASSEMBLYAI_API_KEY=$ASSEMBLYAI_API_KEY
 ENV NODE_ENV=$NODE_ENV
 
-# Copy built application files from the builder stage
-COPY --from=builder /app ./
+# Copy package files first
+COPY package.json package-lock.json ./
 
 # Install only production dependencies
 RUN npm install --production
+
+
+# Copy built files and public directory
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/next.config.ts ./
+
+# Verify public directory exists and list contents for debugging
+RUN ls -la && echo "Checking public directory:" && ls -la public
 
 # Expose the default Next.js port
 EXPOSE 3000

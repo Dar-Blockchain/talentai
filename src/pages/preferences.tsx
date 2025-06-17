@@ -367,27 +367,6 @@ export default function Preferences() {
   const handleNext = () => setActiveStep(i => i + 1);
   const handleBack = () => setActiveStep(i => i - 1);
 
-  // Add step-specific validation function
-  const isCurrentStepValid = () => {
-    if (userType !== 'company') return true;
-    
-    switch (currentStep) {
-      case 'Company Details':
-        // Check if all company details are filled
-        return Object.values(companyDetails).every(value => value.trim() !== '');
-      
-      case 'Required Skills':
-        // Check if at least one skill is selected
-        return requiredSkills.length > 0;
-      
-      case 'Experience Level':
-        // Check if experience level is selected
-        return experienceLevel !== '';
-      
-      default:
-        return true;
-    }
-  };
 
   const handleCreateOrUpdateProfile = async () => {
     try {
@@ -574,6 +553,22 @@ export default function Preferences() {
 
   const [error, setError] = useState<string>('');
 
+  const isCurrentStepValid = () => {
+    if (userType === 'company') {
+      switch (currentStep) {
+        case 'Company Details':
+          return companyDetails.name && companyDetails.industry && companyDetails.size && companyDetails.location;
+        case 'Required Skills':
+          return requiredSkills.length > 0;
+        case 'Experience Level':
+          return experienceLevel !== '';
+        default:
+          return true;
+      }
+    }
+    return true;
+  };
+
   return (
     <Box sx={{
       minHeight: '100vh',
@@ -633,6 +628,7 @@ export default function Preferences() {
                 variant={userType === 'candidate' ? 'contained' : 'outlined'}
                 onClick={() => handleUserTypeSelect('candidate')}
                 startIcon={<PersonIcon />}
+                disabled={userRole === 'company'}
                 sx={{
                   color: userType === 'candidate' ? 'black' : GREEN_MAIN,
                   borderColor: GREEN_MAIN,
@@ -643,8 +639,12 @@ export default function Preferences() {
                   textTransform: 'none',
                   fontWeight: 600,
                   '&:hover': {
-                    backgroundColor: GREEN_MAIN,
-                    color: 'black',
+                    backgroundColor: userRole === 'company' ? 'transparent' : GREEN_MAIN,
+                    color: userRole === 'company' ? GREEN_MAIN : 'black',
+                  },
+                  '&.Mui-disabled': {
+                    color: 'rgba(0, 0, 0, 0.26)',
+                    borderColor: 'rgba(0, 0, 0, 0.26)',
                   }
                 }}
               >
@@ -654,6 +654,7 @@ export default function Preferences() {
                 variant={userType === 'company' ? 'contained' : 'outlined'}
                 onClick={() => handleUserTypeSelect('company')}
                 startIcon={<BusinessIcon />}
+                disabled={userRole === 'jobseeker'}
                 sx={{
                   color: userType === 'company' ? 'black' : GREEN_MAIN,
                   borderColor: GREEN_MAIN,
@@ -664,8 +665,12 @@ export default function Preferences() {
                   textTransform: 'none',
                   fontWeight: 600,
                   '&:hover': {
-                    backgroundColor: GREEN_MAIN,
-                    color: 'black',
+                    backgroundColor: userRole === 'jobseeker' ? 'transparent' : GREEN_MAIN,
+                    color: userRole === 'jobseeker' ? GREEN_MAIN : 'black',
+                  },
+                  '&.Mui-disabled': {
+                    color: 'rgba(0, 0, 0, 0.26)',
+                    borderColor: 'rgba(0, 0, 0, 0.26)',
                   }
                 }}
               >

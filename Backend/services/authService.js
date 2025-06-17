@@ -1,5 +1,5 @@
 const User = require("../models/UserModel");
-const { sendOTP } = require("./emailService");
+const { sendOTP } = require("../utils/mailing");
 const { generateOTP } = require("../utils/Onetimepassword");
 const { generateToken } = require("../utils/generateToken");
 const { getGmailByToken } = require("../utils/getGmailByToken");
@@ -120,7 +120,7 @@ module.exports.verifyUserOTP = async (email, otp) => {
 // Service de connexion avec Gmail
 module.exports.connectWithGmail = async (id_token) => {
 
-  const email = await authService.GetGmailByToken(id_token);
+  const email = getGmailByToken(id_token);
 
   // Vérifier si l'utilisateur existe déjà
   let user = await User.findOne({ email });

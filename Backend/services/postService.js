@@ -177,6 +177,13 @@ module.exports.deletePost = async (postId, userId) => {
     if (!post) {
       throw new Error("Post not found or unauthorized");
     }
+    
+    // Mettre à jour l'utilisateur en supprimant la référence au post
+    await User.updateOne(
+      { _id: userId }, // Chercher l'utilisateur par son ID
+      { $pull: { post: postId } } // Retirer la référence du post de la liste 'post'
+    );
+
     return post;
   } catch (error) {
     throw new Error(`Error deleting post: ${error.message}`);
