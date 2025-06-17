@@ -372,7 +372,7 @@ export default function SignIn() {
                       size="small"
                       sx={{
                         background: userType === "company" ? "rgba(41, 210, 145, 0.83)" : "rgba(131, 16, 255, 0.83)",
-                        color: "black",
+                        color: "white",
                         padding: "5px",
                         "&:hover": {
                           background: "rgba(2, 0, 0, 0.1)",
@@ -442,6 +442,23 @@ export default function SignIn() {
                 "Verify"
               )}
             </Button>
+
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Button
+                startIcon={<ArrowBackIcon />}
+                onClick={() => router.push('/')}
+                sx={{
+                  color: userType === "company" ? "rgba(41, 210, 145, 0.83)" : "rgba(131, 16, 255, 0.83)",
+                  textTransform: "none",
+                  '&:hover': {
+                    background: 'transparent',
+                    color: userType === "company" ? "rgba(41, 210, 145, 0.73)" : "rgba(131, 16, 255, 0.73)",
+                  }
+                }}
+              >
+                Back to Landing Page
+              </Button>
+            </Box>
           </Box>
 
           {/* <Divider

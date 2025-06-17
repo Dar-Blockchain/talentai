@@ -197,12 +197,12 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
                 />
               }
             >
-              {isAuthenticated
-                ? profile?.type === "Candidate"
+              {isAuthenticated && profile
+                ? profile.type === "Candidate"
                   ? "Dashboard Candidate"
-                  : profile?.type === "Company"
+                  : profile.type === "Company"
                     ? "Dashboard Company"
-                    : "Go to Dashboard"
+                    : "Get Started"
                 : "Get Started"}
             </Button>
           ) : (

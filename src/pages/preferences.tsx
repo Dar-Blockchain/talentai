@@ -628,6 +628,7 @@ export default function Preferences() {
                 variant={userType === 'candidate' ? 'contained' : 'outlined'}
                 onClick={() => handleUserTypeSelect('candidate')}
                 startIcon={<PersonIcon />}
+                disabled={userRole === 'company'}
                 sx={{
                   color: userType === 'candidate' ? 'black' : GREEN_MAIN,
                   borderColor: GREEN_MAIN,
@@ -638,8 +639,12 @@ export default function Preferences() {
                   textTransform: 'none',
                   fontWeight: 600,
                   '&:hover': {
-                    backgroundColor: GREEN_MAIN,
-                    color: 'black',
+                    backgroundColor: userRole === 'company' ? 'transparent' : GREEN_MAIN,
+                    color: userRole === 'company' ? GREEN_MAIN : 'black',
+                  },
+                  '&.Mui-disabled': {
+                    color: 'rgba(0, 0, 0, 0.26)',
+                    borderColor: 'rgba(0, 0, 0, 0.26)',
                   }
                 }}
               >
@@ -649,6 +654,7 @@ export default function Preferences() {
                 variant={userType === 'company' ? 'contained' : 'outlined'}
                 onClick={() => handleUserTypeSelect('company')}
                 startIcon={<BusinessIcon />}
+                disabled={userRole === 'jobseeker'}
                 sx={{
                   color: userType === 'company' ? 'black' : GREEN_MAIN,
                   borderColor: GREEN_MAIN,
@@ -659,8 +665,12 @@ export default function Preferences() {
                   textTransform: 'none',
                   fontWeight: 600,
                   '&:hover': {
-                    backgroundColor: GREEN_MAIN,
-                    color: 'black',
+                    backgroundColor: userRole === 'jobseeker' ? 'transparent' : GREEN_MAIN,
+                    color: userRole === 'jobseeker' ? GREEN_MAIN : 'black',
+                  },
+                  '&.Mui-disabled': {
+                    color: 'rgba(0, 0, 0, 0.26)',
+                    borderColor: 'rgba(0, 0, 0, 0.26)',
                   }
                 }}
               >
