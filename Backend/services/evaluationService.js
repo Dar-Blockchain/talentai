@@ -7,13 +7,21 @@ const Post = require("../models/PostModel");
 
 const profileService = require("../services/profileService");
 
-const { generateJobQuestionsPrompts, analyzeJobTestResultsPrompts } = require("../prompts/evaluationPrompts");
+const {
+  generateJobQuestionsPrompts,
+  analyzeJobTestResultsPrompts,
+} = require("../prompts/evaluationPrompts");
 const { HttpError } = require("../utils/httpUtils");
 const { parseAndValidateAIResponse } = require("../parsers/AIResponseParser");
-const { updateProfileWithNewSkills, findAlreadyProvenSkills, mergeAlreadyProvenSkills, updateUpgradedSkills, processSkillAnalysis } = require("../utils/evaluationUtils");
+const {
+  updateProfileWithNewSkills,
+  findAlreadyProvenSkills,
+  mergeAlreadyProvenSkills,
+  updateUpgradedSkills,
+  processSkillsData,
+} = require("../utils/evaluationUtils");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
-
 
 module.exports.generateTechniqueQuestionsForJob = async (
   jobRequiredSkillList,
@@ -36,7 +44,7 @@ module.exports.generateTechniqueQuestionsForJob = async (
     const skillsListDetails = skillListToTest
       .map((skill) => `- ${skill.name} (ProficiencyLevel: ${skill.level})`)
       .join("\n");
-    let questionsCount = 10; 
+    let questionsCount = 10;
 
     const systemPrompt =
       generateJobQuestionsPrompts.getSystemPrompt(questionsCount);
@@ -89,14 +97,20 @@ module.exports.generateTechniqueQuestionsForJob = async (
     };
   } catch (error) {
     if (error instanceof HttpError) throw error;
-        
+
     throw new HttpError(500, "Internal server error");
   }
 };
 
-exports.analyzeJobTestResults = async ({ questions, testedSkills, jobId, user }) => {
+exports.analyzeJobTestResults = async ({
+  questions,
+  testedSkills,
+  jobId,
+  user,
+}) => {
   const profile = await Profile.findById(user.profile);
-  if (!profile) throw new HttpError(404, "Aucun profil trouvé pour cet utilisateur.");
+  if (!profile)
+    throw new HttpError(404, "Aucun profil trouvé pour cet utilisateur.");
 
   const post = await Post.findById(jobId);
   if (!post) throw new HttpError(404, "Post not found in the DB");
@@ -112,7 +126,10 @@ exports.analyzeJobTestResults = async ({ questions, testedSkills, jobId, user })
   }));
 
   const systemPrompt = analyzeJobTestResultsPrompts.getSystemPrompt();
-  const userPrompt = analyzeJobTestResultsPrompts.getUserPrompt(requiredSkills, questions);
+  const userPrompt = analyzeJobTestResultsPrompts.getUserPrompt(
+    requiredSkills,
+    questions
+  );
 
   const stream = await together.chat.completions.create({
     model: "deepseek-ai/DeepSeek-V3",
@@ -140,8 +157,15 @@ exports.analyzeJobTestResults = async ({ questions, testedSkills, jobId, user })
   updateProfileWithNewSkills(profile, analysis.skillAnalysis);
 
   // II. Add already proven skills
-  const alreadyProvenSkills = findAlreadyProvenSkills(profile.skills, jobSkills);
-  mergeAlreadyProvenSkills(analysis.skillAnalysis, alreadyProvenSkills, profile.skills);
+  const alreadyProvenSkills = findAlreadyProvenSkills(
+    profile.skills,
+    jobSkills
+  );
+  mergeAlreadyProvenSkills(
+    analysis.skillAnalysis,
+    alreadyProvenSkills,
+    profile.skills
+  );
 
   // III. Update skills that are now at a higher level
   updateUpgradedSkills(profile.skills, analysis.skillAnalysis);
