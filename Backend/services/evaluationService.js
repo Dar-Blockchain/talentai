@@ -19,6 +19,7 @@ const {
   mergeAlreadyProvenSkills,
   updateUpgradedSkills,
   processSkillsData,
+  processAnalysisData
 } = require("../utils/evaluationUtils");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
@@ -169,6 +170,9 @@ exports.analyzeJobTestResults = async ({
 
   // III. Update skills that are now at a higher level
   updateUpgradedSkills(profile.skills, analysis.skillAnalysis);
+
+  // IV. Process analysis for overallScore
+  processAnalysisData(analysis)
 
   await profile.save();
 

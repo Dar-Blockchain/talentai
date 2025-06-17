@@ -109,10 +109,22 @@ If you need to reevaluate your skills in ${matchingUserSkill.name}, you can navi
   });
 }
 
+function processAnalysisData(analysis) {
+  
+  let scoreSum = 0;
+  for (const skill of analysis.skillAnalysis) {
+    const confidenceScore = parseFloat(skill.confidenceScore) || 0;
+    scoreSum += confidenceScore;
+  }
+  analysis.overallScore = parseFloat((scoreSum / analysis.skillAnalysis.length).toFixed(2));
+}
+
+
 module.exports = {
   processSkillsData,
   updateUpgradedSkills,
   updateProfileWithNewSkills,
   findAlreadyProvenSkills,
   mergeAlreadyProvenSkills,
+  processAnalysisData
 };
