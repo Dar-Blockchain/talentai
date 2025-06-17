@@ -1,8 +1,8 @@
-const { requireAuth_checkUser } = require("../authMiddleware");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const userModel = require("../../models/UserModel");
 const path = require("path"); // Importer le module path
+const Log = require("../../models/logSchema"); // Import the Log model
 
 function authLogMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -17,37 +17,63 @@ function authLogMiddleware(req, res, next) {
         let user = await userModel.findById(decodedToken.id);
         req.user = user;
       }
-      appendLog(req, res, startTime);
+      appendLog(req, res, startTime); // Log to DB
       next();
     });
   } else {
     req.user = null;
-    appendLog(req, res, startTime);
+    appendLog(req, res, startTime); // Log to DB
     next();
   }
 }
 
 async function appendLog(req, res, startTime) {
   const headers = JSON.stringify(req.headers);
-  const endTime = new Date(); // Temps de fin de la requête
+  const endTime = new Date();
   const executionTime = endTime - startTime; // Temps d'exécution en millisecondes
   const body = Object.keys(req.body).length > 0 ? JSON.stringify(req.body) : 'N/A';
   const referer = req.headers.referer || 'N/A';
-  const log = `${new Date().toISOString()} - ${req.method} - ${req.originalUrl} - ${req.ip} - Referer: ${referer} - ${res.statusCode} - User_id: ${req.user ? req.user._id : 'N/A'} | nom: ${req.user ? req.user.nom : 'N/A'} \nHeaders: ${headers}\nExecution Time: ${executionTime} ms\nBody: ${body}\n - ${res.locals.data}\n`;
+  const userAgent = req.get('User-Agent');
+  const queryParams = JSON.stringify(req.query);
+  const contentType = req.get('Content-Type');
+  const origin = req.get('Origin') || 'N/A';
 
-  const logsDirectory = path.join(__dirname, '..', '..', 'logs'); // Chemin du dossier logs, en remontant de deux niveaux
-  const logFilePath = path.join(logsDirectory, 'auth.log'); // Chemin complet du fichier de logs
+  // Save the log to MongoDB
+  const log = new Log({
+    type: "Auth",
+    method: req.method,
+    url: req.originalUrl,
+    ip: req.ip,
+    referer: referer,
+    statusCode: res.statusCode,
+    user_id: req.user ? req.user._id : 'N/A',
+    user_nom: req.user ? req.user.nom : 'N/A',
+    headers: headers,
+    executionTime: executionTime,
+    body: body,
+    timestamp: new Date()
+  });
 
-    // Vérifier si le dossier logs existe, sinon le créer
+  try {
+    await log.save(); // Save to MongoDB
+  } catch (err) {
+    console.error("Error saving log to database:", err);
+  }
+
+  // Optional: Write log to file (for debugging or other needs)
+  const logsDirectory = path.join(__dirname, '..', '..', 'logs');
+  const logFilePath = path.join(logsDirectory, 'auth.log');
+  const fileLog = `${new Date().toISOString()} - ${req.method} - ${req.originalUrl} - ${req.ip} - Referer: ${referer} - Origin: ${origin} - User-Agent: ${userAgent} - ${res.statusCode} - User_id: ${req.user ? req.user._id : 'N/A'} | nom: ${req.user ? req.user.nom : 'N/A'} \nHeaders: ${headers}\nExecution Time: ${executionTime} ms\nBody: ${body}\nQuery: ${queryParams}\nContent-Type: ${contentType}\n - ${res.locals.data}\n`;
+
   if (!fs.existsSync(logsDirectory)) {
     fs.mkdirSync(logsDirectory);
   }
 
   try {
-    fs.appendFileSync(logFilePath, log); // Ajouter le log au fichier de logs
-
+    fs.appendFileSync(logFilePath, fileLog); // Add the log to the file
   } catch (err) {
-    console.error("Erreur lors de l'enregistrement dans le fichier journal :", err);
+    console.error("Error saving log to file:", err);
   }
 }
+
 module.exports = authLogMiddleware;
