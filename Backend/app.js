@@ -20,6 +20,7 @@ const matchingRoutes = require("./routes/matchingRouter");
 const resumeRouter = require("./routes/resumeRouter");
 const todoRouter = require("./routes/todoRouter");
 const feedbackRouter = require("./routes/feedbackRoutes");
+const logRoutes = require("./routes/logRoutes");
 require("dotenv").config();
 
 const app = express();
@@ -57,6 +58,8 @@ app.use("/post", postRouter);
 app.use("/matching", matchingRoutes);
 app.use("/resume", resumeRouter);
 app.use("/todo", todoRouter);
+app.use("/logRoutes", logRoutes);
+
 app.get('/some-route', (req, res) => {
   res.json('Route accessible');
 });
