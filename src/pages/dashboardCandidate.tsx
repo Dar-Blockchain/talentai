@@ -41,6 +41,13 @@ import {
   Tooltip,
   Checkbox,
   Snackbar,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
@@ -63,6 +70,7 @@ import { toast } from "react-hot-toast";
 import { generateTodos, fetchTodos } from "@/store/slices/todoSlice";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import RefreshIcon from "@mui/icons-material/Refresh";
 const GREEN_MAIN = "#8310FF";
 
 // Styled Components
@@ -246,6 +254,23 @@ interface Skill {
     value: string;
     label: string;
   }>;
+}
+
+interface Log {
+  _id: string;
+  type: string;
+  method: string;
+  url: string;
+  ip: string;
+  referer: string;
+  statusCode: number;
+  user_id: string;
+  user_nom: string;
+  headers: string;
+  executionTime: number;
+  body: string;
+  timestamp: string;
+  __v: number;
 }
 
 // Add this before calculateSkillPercentage
@@ -790,6 +815,13 @@ export default function DashboardCandidate() {
     skill: any;
   } | null>(null);
 
+  // Logs state management
+  const [logs, setLogs] = useState<Log[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logsError, setLogsError] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const theme = useTheme();
   const generateTodoList = () => {
     dispatch(generateTodos());
@@ -798,6 +830,53 @@ export default function DashboardCandidate() {
     dispatch(getMyProfile());
     // dispatch(fetchTodos());
   }, [dispatch]);
+
+  // Fetch logs function
+  const fetchLogs = async () => {
+    try {
+      setLogsLoading(true);
+      setLogsError(null);
+      
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        setLogsError("Authentication token not found");
+        return;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}logs/getAllLogs`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch logs: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setLogs(data);
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+      setLogsError(error instanceof Error ? error.message : "Failed to fetch logs");
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
+  // Fetch logs on component mount
+  useEffect(() => {
+    fetchLogs();
+  }, []);
+
+  // Pagination handlers
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   useEffect(() => {
     if (profile) {
@@ -2692,6 +2771,171 @@ export default function DashboardCandidate() {
             {notification.message}
           </Alert>
         </Snackbar>
+
+        {/* Logs Table Section */}
+        <StyledCard sx={{ mt: 4 }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+            <SectionTitle>System Logs</SectionTitle>
+            <Button
+              variant="outlined"
+              onClick={fetchLogs}
+              disabled={logsLoading}
+              startIcon={logsLoading ? <CircularProgress size={16} /> : <RefreshIcon />}
+              sx={{
+                borderColor: GREEN_MAIN,
+                color: GREEN_MAIN,
+                "&:hover": {
+                  borderColor: GREEN_MAIN,
+                  background: "rgba(131, 16, 255, 0.08)",
+                },
+              }}
+            >
+              Refresh
+            </Button>
+          </Box>
+
+          {logsError && (
+            <Alert severity="error" sx={{ mb: 3, borderRadius: "12px" }}>
+              {logsError}
+            </Alert>
+          )}
+
+          {logsLoading ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+              <CircularProgress sx={{ color: GREEN_MAIN }} />
+            </Box>
+          ) : (
+            <>
+              <TableContainer component={Paper} sx={{ borderRadius: "12px", overflow: "hidden" }}>
+                <Table sx={{ minWidth: 650 }} aria-label="logs table">
+                  <TableHead>
+                    <TableRow sx={{ backgroundColor: "rgba(131, 16, 255, 0.08)" }}>
+                      <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>Type</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>Method</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>URL</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>IP</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>User</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>Execution Time</TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>Timestamp</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {logs
+                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      .map((log) => (
+                        <TableRow
+                          key={log._id}
+                          sx={{
+                            "&:nth-of-type(odd)": {
+                              backgroundColor: "rgba(0, 0, 0, 0.02)",
+                            },
+                            "&:hover": {
+                              backgroundColor: "rgba(131, 16, 255, 0.04)",
+                            },
+                          }}
+                        >
+                          <TableCell>
+                            <Chip
+                              label={log.type}
+                              size="small"
+                              sx={{
+                                backgroundColor: log.type === "Auth" ? "rgba(76, 175, 80, 0.1)" : "rgba(33, 150, 243, 0.1)",
+                                color: log.type === "Auth" ? "#2e7d32" : "#1976d2",
+                                fontWeight: 500,
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={log.method}
+                              size="small"
+                              sx={{
+                                backgroundColor: 
+                                  log.method === "GET" ? "rgba(76, 175, 80, 0.1)" :
+                                  log.method === "POST" ? "rgba(33, 150, 243, 0.1)" :
+                                  log.method === "PUT" ? "rgba(255, 152, 0, 0.1)" :
+                                  log.method === "DELETE" ? "rgba(244, 67, 54, 0.1)" :
+                                  "rgba(158, 158, 158, 0.1)",
+                                color: 
+                                  log.method === "GET" ? "#2e7d32" :
+                                  log.method === "POST" ? "#1976d2" :
+                                  log.method === "PUT" ? "#f57c00" :
+                                  log.method === "DELETE" ? "#d32f2f" :
+                                  "#616161",
+                                fontWeight: 500,
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ maxWidth: 200, wordBreak: "break-word" }}>
+                            <Tooltip title={log.url}>
+                              <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+                                {log.url.length > 30 ? `${log.url.substring(0, 30)}...` : log.url}
+                              </Typography>
+                            </Tooltip>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={log.statusCode}
+                              size="small"
+                              sx={{
+                                backgroundColor: 
+                                  log.statusCode >= 200 && log.statusCode < 300 ? "rgba(76, 175, 80, 0.1)" :
+                                  log.statusCode >= 400 && log.statusCode < 500 ? "rgba(255, 152, 0, 0.1)" :
+                                  log.statusCode >= 500 ? "rgba(244, 67, 54, 0.1)" :
+                                  "rgba(158, 158, 158, 0.1)",
+                                color: 
+                                  log.statusCode >= 200 && log.statusCode < 300 ? "#2e7d32" :
+                                  log.statusCode >= 400 && log.statusCode < 500 ? "#f57c00" :
+                                  log.statusCode >= 500 ? "#d32f2f" :
+                                  "#616161",
+                                fontWeight: 500,
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+                              {log.ip}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+                              {log.user_nom !== "N/A" ? log.user_nom : "Anonymous"}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+                              {log.executionTime}ms
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+                              {new Date(log.timestamp).toLocaleString()}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25, 50]}
+                component="div"
+                count={logs.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                sx={{
+                  "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+                    color: "rgba(0, 0, 0, 0.7)",
+                  },
+                }}
+              />
+            </>
+          )}
+        </StyledCard>
       </Container>
     </Box>
   );
