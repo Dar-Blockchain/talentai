@@ -12,15 +12,26 @@ function processSkillsData(analysis) {
     const confidenceScore = parseFloat(skill.confidenceScore);
     let newLevel = 0;
 
-    if (confidenceScore >= 70) {
-      newLevel = requiredLevel;
-    } else if (confidenceScore >= 50) {
-      newLevel = Math.floor(requiredLevel * 0.7);
-    } else if (confidenceScore >= 30) {
-      newLevel = Math.floor(requiredLevel * 0.4);
-    } else {
-      newLevel = 0;
+    if (requiredLevel != 1) {
+      if (confidenceScore >= 60) {
+        newLevel = requiredLevel;
+      } else if (confidenceScore >= 40) {
+        newLevel = Math.floor(requiredLevel * 0.7);
+      } else if (confidenceScore >= 25) {
+        newLevel = Math.floor(requiredLevel * 0.4);
+      } else {
+        newLevel = 0;
+      }
     }
+
+    if (requiredLevel == 1) {
+      if (confidenceScore >= 25) {
+        newLevel = requiredLevel;
+      } else {
+        newLevel = 0;
+      }
+    }
+
     // Ensure the level is within bounds
     newLevel = Math.min(Math.max(newLevel, 0), requiredLevel);
     // Apply the updated level
