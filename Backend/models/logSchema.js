@@ -11,6 +11,7 @@ const logSchema = new mongoose.Schema({
   user_nom: String,
   headers: String,
   executionTime: Number,
+  location: String,
   body: String,
   timestamp: { type: Date, default: Date.now }
 });
