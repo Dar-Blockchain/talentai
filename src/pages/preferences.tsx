@@ -221,6 +221,7 @@ export default function Preferences() {
   const [activeStep, setActiveStep] = useState(0);
   const [userType, setUserType] = useState<UserType>('');
   const [selectedCategory, setSelectedCategory] = useState('development');
+  const [isTestJobReturnUrl, setIsTestJobReturnUrl] = useState(false);
 
   // Company specific states
   const [companyDetails, setCompanyDetails] = useState({
@@ -488,10 +489,11 @@ export default function Preferences() {
   // Add effect to check traffic counter
   useEffect(() => {
     const checkProfile = async () => {
-      // Skip the check if we're coming from a test page
+      // Check if returnUrl points to a test job
       const returnUrl = router.query.returnUrl as string;
       if (returnUrl && returnUrl.includes('/testjob/')) {
-        console.log('Coming from test page, skipping profile check');
+        console.log('Coming from test page, setting test job return URL flag');
+        setIsTestJobReturnUrl(true);
         return;
       }
 
@@ -550,6 +552,15 @@ export default function Preferences() {
 
     checkProfile();
   }, [router]);
+
+  // Add effect to check for returnUrl on component mount
+  useEffect(() => {
+    const returnUrl = router.query.returnUrl as string;
+    if (returnUrl && returnUrl.includes('/testjob/')) {
+      setIsTestJobReturnUrl(true);
+      setUserType('candidate');
+    }
+  }, [router.query.returnUrl]);
 
   const [error, setError] = useState<string>('');
 
@@ -618,6 +629,11 @@ export default function Preferences() {
             <Typography variant="h6" gutterBottom sx={{ color: 'black' }}>
               Are you a candidate looking for opportunities or a company seeking talent?
             </Typography>
+            {isTestJobReturnUrl && (
+              <Typography variant="body2" sx={{ color: 'orange', mb: 2, fontStyle: 'italic' }}>
+                You're accessing a job test, so only candidate registration is available.
+              </Typography>
+            )}
             <Box sx={{
               display: 'flex',
               gap: 3,
@@ -628,7 +644,7 @@ export default function Preferences() {
                 variant={userType === 'candidate' ? 'contained' : 'outlined'}
                 onClick={() => handleUserTypeSelect('candidate')}
                 startIcon={<PersonIcon />}
-                disabled={userRole === 'company'}
+                disabled={userRole === 'company' && !isTestJobReturnUrl}
                 sx={{
                   color: userType === 'candidate' ? 'black' : GREEN_MAIN,
                   borderColor: GREEN_MAIN,
@@ -654,7 +670,7 @@ export default function Preferences() {
                 variant={userType === 'company' ? 'contained' : 'outlined'}
                 onClick={() => handleUserTypeSelect('company')}
                 startIcon={<BusinessIcon />}
-                disabled={userRole === 'jobseeker'}
+                disabled={userRole === 'jobseeker' || isTestJobReturnUrl}
                 sx={{
                   color: userType === 'company' ? 'black' : GREEN_MAIN,
                   borderColor: GREEN_MAIN,
