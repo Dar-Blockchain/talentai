@@ -4,6 +4,7 @@ require("dotenv").config();
 const JobAssessmentResult = require("../models/JobAssessmentResultModel");
 const Profile = require("../models/ProfileModel");
 const Post = require("../models/PostModel");
+const TodoList = require("../models/todoListModel");
 
 const profileService = require("../services/profileService");
 
@@ -19,8 +20,10 @@ const {
   mergeAlreadyProvenSkills,
   updateUpgradedSkills,
   processSkillsData,
-  processAnalysisData
+  processAnalysisData,
+  updateTodoListWithNewSkills
 } = require("../utils/evaluationUtils");
+
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
@@ -113,6 +116,8 @@ exports.analyzeJobTestResults = async ({
   if (!profile)
     throw new HttpError(404, "Aucun profil trouvé pour cet utilisateur.");
 
+  const todoList = await TodoList.findOne({ profile: profile._id });
+
   const post = await Post.findById(jobId);
   if (!post) throw new HttpError(404, "Post not found in the DB");
 
@@ -157,7 +162,10 @@ exports.analyzeJobTestResults = async ({
   // I. Add new skills to profile
   updateProfileWithNewSkills(profile, analysis.skillAnalysis);
 
-  // II. Add already proven skills
+  // II. Update the todoList with the new skills
+  // await updateTodoListWithNewSkills(todoList, analysis )
+
+  // III. Add already proven skills
   const alreadyProvenSkills = findAlreadyProvenSkills(
     profile.skills,
     jobSkills
@@ -168,15 +176,15 @@ exports.analyzeJobTestResults = async ({
     profile.skills
   );
 
-  // III. Update skills that are now at a higher level
+  // IV. Update skills that are now at a higher level
   updateUpgradedSkills(profile.skills, analysis.skillAnalysis);
 
-  // IV. Process analysis for overallScore
+  // V. Process analysis for overallScore
   processAnalysisData(analysis)
 
   await profile.save();
 
-  // IV. Save JobAssessmentResult
+  // VI. Save JobAssessmentResult
   const company = await profileService.getProfileByPostId(jobId);
   const jobAssessmentResult = new JobAssessmentResult({
     timestamp: new Date(),
@@ -194,7 +202,7 @@ exports.analyzeJobTestResults = async ({
   company.assessmentResults.push(jobAssessmentResult._id);
   await company.save();
 
-  // V. Update quota
+  // VII. Update quota
   profile.quota++;
   await profile.save();
 
