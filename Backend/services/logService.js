@@ -1,4 +1,4 @@
-const Log = require('../models/logModel');  // Importer le modèle Log
+const Log = require('../models/logSchema');  // Importer le modèle Log
 
 // Fonction pour récupérer tous les logs
 module.exports.getAllLogs = async () => {

@@ -29,7 +29,7 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(blockPostmanRequests);
+//app.use(blockPostmanRequests);
 app.use(express.json());
 app.use(
   cors({
@@ -58,7 +58,7 @@ app.use("/post", postRouter);
 app.use("/matching", matchingRoutes);
 app.use("/resume", resumeRouter);
 app.use("/todo", todoRouter);
-app.use("/logRoutes", logRoutes);
+app.use("/logs", logRoutes);
 
 app.get('/some-route', (req, res) => {
   res.json('Route accessible');
