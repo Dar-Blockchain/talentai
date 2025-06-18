@@ -29,7 +29,7 @@ const app = express();
 connectDB();
 
 // Middleware
-//app.use(blockPostmanRequests);
+app.use(blockPostmanRequests);
 app.use(express.json());
 app.use(
   cors({
