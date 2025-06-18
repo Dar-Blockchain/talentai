@@ -41,6 +41,13 @@ import {
   Tooltip,
   Checkbox,
   Snackbar,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
@@ -63,6 +70,7 @@ import { toast } from "react-hot-toast";
 import { generateTodos, fetchTodos } from "@/store/slices/todoSlice";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import RefreshIcon from "@mui/icons-material/Refresh";
 const GREEN_MAIN = "#8310FF";
 
 // Styled Components
@@ -123,19 +131,29 @@ const ProfileHeader = styled(Box)(({ theme }) => ({
 }));
 
 const StatCard = styled(Paper)(({ theme }) => ({
-  background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+  background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.grey[100]} 100%)`,
   padding: theme.spacing(3),
-  borderRadius: "24px",
-  border: "1px solid rgba(0, 0, 0, 0.05)",
-  boxShadow: "0 8px 30px rgba(0, 0, 0, 0.06), 0 0 15px rgba(0, 0, 0, 0.04)",
-  transition: "all 0.3s ease",
-  height: "120px",
+  borderRadius: theme.shape.borderRadius * 3,
+  border: `1px solid ${theme.palette.divider}`,
+  boxShadow: `
+    0 6px 20px rgba(0, 0, 0, 0.05),
+    0 1px 6px rgba(0, 0, 0, 0.04)
+  `,
+  transition: theme.transitions.create(["transform", "box-shadow"], {
+    duration: theme.transitions.duration.short,
+  }),
+  minHeight: 120,
   display: "flex",
   flexDirection: "column",
   justifyContent: "space-between",
+  cursor: "default",
+
   "&:hover": {
-    transform: "translateY(-6px)",
-    boxShadow: "0 15px 40px rgba(0, 0, 0, 0.1), 0 0 25px rgba(0, 0, 0, 0.06)",
+    transform: "translateY(-5px)",
+    boxShadow: `
+      0 12px 35px rgba(0, 0, 0, 0.08),
+      0 4px 20px rgba(0, 0, 0, 0.04)
+    `,
   },
 }));
 
@@ -155,16 +173,40 @@ const SkillChip = styled(Chip)(({ theme }) => ({
 }));
 
 const ActionButton = styled(Button)(({ theme }) => ({
-  borderRadius: "16px",
-  padding: "14px 28px",
+  borderRadius: theme.shape.borderRadius * 2.5,
   textTransform: "none",
   fontWeight: 600,
-  fontSize: "1.1rem",
-  boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
-  transition: "all 0.3s ease",
+  fontSize: "1rem", // base font size (mobile)
+  padding: theme.spacing(1.5, 3), // base padding (mobile)
+  // backgroundColor: theme.palette.primary.main,
+  color: theme.palette.primary.contrastText,
+  boxShadow: "0 6px 18px rgba(0, 0, 0, 0.08)",
+  transition: theme.transitions.create(["transform", "box-shadow"], {
+    duration: theme.transitions.duration.short,
+  }),
+
+  // Responsive styles
+  [theme.breakpoints.up("sm")]: {
+    fontSize: "1.05rem",
+    padding: theme.spacing(1.75, 3.5),
+  },
+  [theme.breakpoints.up("md")]: {
+    fontSize: "1.1rem",
+    padding: theme.spacing(2, 4),
+  },
+
   "&:hover": {
-    transform: "translateY(-3px)",
-    boxShadow: "0 12px 24px rgba(0,0,0,0.12)",
+    backgroundColor: theme.palette.primary.dark,
+    transform: "translateY(-2px)",
+    boxShadow: "0 10px 24px rgba(0, 0, 0, 0.15)",
+  },
+  "&:active": {
+    transform: "translateY(0)",
+    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+  },
+  "&:focus-visible": {
+    outline: `2px solid ${theme.palette.primary.light}`,
+    outlineOffset: 2,
   },
 }));
 
@@ -212,6 +254,23 @@ interface Skill {
     value: string;
     label: string;
   }>;
+}
+
+interface Log {
+  _id: string;
+  type: string;
+  method: string;
+  url: string;
+  ip: string;
+  referer: string;
+  statusCode: number;
+  user_id: string;
+  user_nom: string;
+  headers: string;
+  executionTime: number;
+  body: string;
+  timestamp: string;
+  __v: number;
 }
 
 // Add this before calculateSkillPercentage
@@ -756,6 +815,13 @@ export default function DashboardCandidate() {
     skill: any;
   } | null>(null);
 
+  // Logs state management
+  const [logs, setLogs] = useState<Log[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logsError, setLogsError] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   const theme = useTheme();
   const generateTodoList = () => {
     dispatch(generateTodos());
@@ -764,6 +830,53 @@ export default function DashboardCandidate() {
     dispatch(getMyProfile());
     // dispatch(fetchTodos());
   }, [dispatch]);
+
+  // Fetch logs function
+  const fetchLogs = async () => {
+    try {
+      setLogsLoading(true);
+      setLogsError(null);
+      
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        setLogsError("Authentication token not found");
+        return;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}logs/getAllLogs`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch logs: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setLogs(data);
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+      setLogsError(error instanceof Error ? error.message : "Failed to fetch logs");
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
+  // Fetch logs on component mount
+  useEffect(() => {
+    fetchLogs();
+  }, []);
+
+  // Pagination handlers
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   useEffect(() => {
     if (profile) {
@@ -1138,22 +1251,9 @@ export default function DashboardCandidate() {
 
   const languages = [
     { value: "English", label: "English" },
-    // { value: 'Arabic', label: 'Arabic' },
-    // { value: 'French', label: 'French' }
+
   ];
 
-  const renderSkillOptions = (skill: Skill) => (
-    <MenuItem
-      key={skill.name}
-      value={skill.name}
-      sx={{
-        backgroundColor: "rgba(30,41,59,0.98)",
-        "&:hover": { backgroundColor: "rgba(30,41,59,1)" },
-      }}
-    >
-      {skill.name}
-    </MenuItem>
-  );
 
   const checkExistingSoftSkill = (skillName: string, category?: string) => {
     if (!profile?.softSkills?.length) return null;
@@ -1221,78 +1321,7 @@ export default function DashboardCandidate() {
   };
 
   // Filter technical skills (exclude soft skills)
-  const getTechnicalSkills = () => {
-    const skills: Skill[] = [
-      // Development
-      { name: 'JavaScript', proficiencyLevel: 0, requiresLanguage: true },
-      { name: 'TypeScript', proficiencyLevel: 0, requiresLanguage: true },
-      { name: 'React', proficiencyLevel: 0 },
-      { name: 'Node.js', proficiencyLevel: 0 },
-      { name: 'Python', proficiencyLevel: 0, requiresLanguage: true },
-      { name: 'Go', proficiencyLevel: 0, requiresLanguage: true },
-      { name: 'Rust', proficiencyLevel: 0, requiresLanguage: true },
-      { name: 'GraphQL', proficiencyLevel: 0 },
-      { name: 'Docker', proficiencyLevel: 0 },
-      { name: 'Hedera', proficiencyLevel: 0 },
-      // Marketing
-      { name: 'SEO', proficiencyLevel: 0 },
-      { name: 'Content Marketing', proficiencyLevel: 0 },
-      { name: 'Social Media', proficiencyLevel: 0 },
-      { name: 'Email Marketing', proficiencyLevel: 0 },
-      { name: 'Analytics', proficiencyLevel: 0 },
-      { name: 'Web3 Marketing', proficiencyLevel: 0 },
-      { name: 'NFT Marketing', proficiencyLevel: 0 },
-      { name: 'Community Management', proficiencyLevel: 0 },
-      { name: 'Token Economics', proficiencyLevel: 0 },
-      { name: 'DeFi Marketing', proficiencyLevel: 0 },
-      { name: 'Crypto PR', proficiencyLevel: 0 },
-      { name: 'Blockchain Events', proficiencyLevel: 0 },
-      { name: 'DAO Governance', proficiencyLevel: 0 },
-      // QA
-      { name: 'Manual Testing', proficiencyLevel: 0 },
-      { name: 'Automated Testing', proficiencyLevel: 0 },
-      { name: 'Test Planning', proficiencyLevel: 0 },
-      { name: 'Performance Testing', proficiencyLevel: 0 },
-      { name: 'API Testing', proficiencyLevel: 0 },
-      { name: 'Security Testing', proficiencyLevel: 0 },
-      // Business
-      { name: 'Project Management', proficiencyLevel: 0 },
-      { name: 'Agile', proficiencyLevel: 0 },
-      { name: 'Scrum', proficiencyLevel: 0 },
-      { name: 'Product Management', proficiencyLevel: 0 },
-      { name: 'Business Analysis', proficiencyLevel: 0 },
-      // Web3
-      { name: 'Solidity', proficiencyLevel: 0, requiresLanguage: true },
-      { name: 'Ethereum', proficiencyLevel: 0 },
-      { name: 'Smart Contracts', proficiencyLevel: 0 },
-      { name: 'DeFi', proficiencyLevel: 0 },
-      { name: 'NFTs', proficiencyLevel: 0 },
-      { name: 'Web3.js', proficiencyLevel: 0 },
-      { name: 'Hardhat', proficiencyLevel: 0 },
-      { name: 'Truffle', proficiencyLevel: 0 },
-      { name: 'Massa', proficiencyLevel: 0 },
-      { name: 'Polkadot', proficiencyLevel: 0 },
-      { name: 'NEAR', proficiencyLevel: 0 },
-      { name: 'Substrate', proficiencyLevel: 0 },
-      { name: 'Cosmos', proficiencyLevel: 0 },
-      { name: 'Solana', proficiencyLevel: 0 },
-      { name: 'Avalanche', proficiencyLevel: 0 },
-      { name: 'Polygon', proficiencyLevel: 0 },
-      { name: 'Arbitrum', proficiencyLevel: 0 },
-      { name: 'Optimism', proficiencyLevel: 0 },
-      { name: 'Base', proficiencyLevel: 0 },
-      // AI
-      { name: 'Machine Learning', proficiencyLevel: 0 },
-      { name: 'Deep Learning', proficiencyLevel: 0 },
-      { name: 'TensorFlow', proficiencyLevel: 0 },
-      { name: 'PyTorch', proficiencyLevel: 0 },
-      { name: 'Natural Language Processing', proficiencyLevel: 0 },
-      { name: 'Computer Vision', proficiencyLevel: 0 },
-      { name: 'Reinforcement Learning', proficiencyLevel: 0 },
-      { name: 'Data Science', proficiencyLevel: 0 }
-    ];
-    return skills;
-  };
+
 
   // Add state to track if a skill was just added
   const [justAddedSkill, setJustAddedSkill] = useState<any>(null);
@@ -2063,56 +2092,47 @@ export default function DashboardCandidate() {
             </Dialog>
           </Box>
 
-          <Box
-            sx={{
-              marginTop: (theme) => theme.spacing(4),
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(2, 1fr)",
-                md: "repeat(4, 1fr)",
-              },
-              gap: (theme) => theme.spacing(3),
-            }}
-          >
-            {/* <Box>
-              <StatCard>
-                <Typography variant="overline" sx={{ opacity: 0.7, color: '#ffffff', letterSpacing: 2 }}>
-                  Experience Level
-                </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 600, color: '#02E2FF', mt: 1 }}>
-                  {profile.requiredExperienceLevel || 'Not Set'}
-                </Typography>
-              </StatCard>
-            </Box> */}
-            <Box>
+          <Container maxWidth="lg">
+            <Box
+              sx={{
+                mt: 4,
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(2, 1fr)",
+                  md: "repeat(4, 1fr)",
+                },
+                gap: 3,
+              }}
+            >
+              {/* Skills Count */}
               <StatCard>
                 <Typography
                   variant="overline"
-                  sx={{ color: "black", letterSpacing: 2 }}
+                  sx={{ color: "text.secondary", letterSpacing: 2 }}
                 >
                   Skills Count
                 </Typography>
                 <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 600, color: "#191919" }}
+                  variant="h6"
+                  sx={{ fontWeight: 600, color: "text.primary", mt: 1 }}
                 >
                   {profile.skills?.length || 0}
                 </Typography>
               </StatCard>
-            </Box>
-            <Box>
+
+              {/* Tests Passed */}
               <StatCard>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.1 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                   <Typography
                     variant="overline"
-                    sx={{ color: "#191919", letterSpacing: 2 }}
+                    sx={{ color: "text.secondary", letterSpacing: 2 }}
                   >
                     Tests Passed
                   </Typography>
                   <Typography
-                    variant="h5"
-                    sx={{ fontWeight: 600, color: "#191919" }}
+                    variant="h6"
+                    sx={{ fontWeight: 600, color: "text.primary" }}
                   >
                     {profile.quota || 0}/5
                   </Typography>
@@ -2121,59 +2141,58 @@ export default function DashboardCandidate() {
                       label={`Reset: ${resetDate}`}
                       size="small"
                       sx={{
-                        height: '20px',
-                        fontSize: '0.7rem',
-                        backgroundColor: 'rgba(0,0,0,0.05)',
-                        color: 'rgba(0,0,0,0.6)',
-                        '& .MuiChip-label': {
+                        alignSelf: "flex-start",
+                        height: 20,
+                        fontSize: "0.75rem",
+                        backgroundColor: "rgba(0,0,0,0.05)",
+                        color: "rgba(0,0,0,0.6)",
+                        "& .MuiChip-label": {
                           px: 1,
-                          py: 0.5
-                        }
+                          py: 0.5,
+                        },
                       }}
                     />
                   )}
                 </Box>
               </StatCard>
-            </Box>
-            <Box>
+
+              {/* Last Login */}
               <StatCard>
                 <Typography
                   variant="overline"
-                  sx={{ color: "#191919", letterSpacing: 2 }}
+                  sx={{ color: "text.secondary", letterSpacing: 2 }}
                 >
                   Last Login
                 </Typography>
                 <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 600, color: "#191919", mt: 1 }}
+                  variant="h6"
+                  sx={{ fontWeight: 600, color: "text.primary", mt: 1 }}
                 >
-                  {new Date(profile.userId.lastLogin).toLocaleDateString(
-                    "en-US",
-                    {
-                      month: "short",
-                      day: "numeric",
-                    }
-                  )}
+                  {new Date(profile.userId.lastLogin).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
                 </Typography>
               </StatCard>
-            </Box>
-            <Box>
+
+              {/* Profile Status */}
               <StatCard>
                 <Typography
                   variant="overline"
-                  sx={{ opacity: 0.7, color: "#191919", letterSpacing: 2 }}
+                  sx={{ color: "text.secondary", letterSpacing: 2 }}
                 >
                   Profile Status
                 </Typography>
                 <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 600, color: "#191919", mt: 1 }}
+                  variant="h6"
+                  sx={{ fontWeight: 600, color: "text.primary", mt: 1 }}
                 >
                   {profile.userId.isVerified ? "Verified" : "Pending"}
                 </Typography>
               </StatCard>
             </Box>
-          </Box>
+          </Container>
         </ProfileHeader>
 
         {/* User Information */}
@@ -2752,6 +2771,173 @@ export default function DashboardCandidate() {
             {notification.message}
           </Alert>
         </Snackbar>
+
+        {/* Logs Table Section - Only show for specific user */}
+        {profile?.userId?.email === "aziz.270700@gmail.com" && (
+          <StyledCard sx={{ mt: 4 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+              <SectionTitle>System Logs</SectionTitle>
+              <Button
+                variant="outlined"
+                onClick={fetchLogs}
+                disabled={logsLoading}
+                startIcon={logsLoading ? <CircularProgress size={16} /> : <RefreshIcon />}
+                sx={{
+                  borderColor: GREEN_MAIN,
+                  color: GREEN_MAIN,
+                  "&:hover": {
+                    borderColor: GREEN_MAIN,
+                    background: "rgba(131, 16, 255, 0.08)",
+                  },
+                }}
+              >
+                Refresh
+              </Button>
+            </Box>
+
+            {logsError && (
+              <Alert severity="error" sx={{ mb: 3, borderRadius: "12px" }}>
+                {logsError}
+              </Alert>
+            )}
+
+            {logsLoading ? (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                <CircularProgress sx={{ color: GREEN_MAIN }} />
+              </Box>
+            ) : (
+              <>
+                <TableContainer component={Paper} sx={{ borderRadius: "12px", overflow: "hidden" }}>
+                  <Table sx={{ minWidth: 650 }} aria-label="logs table">
+                    <TableHead>
+                      <TableRow sx={{ backgroundColor: "rgba(131, 16, 255, 0.08)" }}>
+                        <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>Type</TableCell>
+                        <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>Method</TableCell>
+                        <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>URL</TableCell>
+                        <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>Status</TableCell>
+                        <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>IP</TableCell>
+                        <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>User</TableCell>
+                        <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>Execution Time</TableCell>
+                        <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>Timestamp</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {logs
+                        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                        .map((log) => (
+                          <TableRow
+                            key={log._id}
+                            sx={{
+                              "&:nth-of-type(odd)": {
+                                backgroundColor: "rgba(0, 0, 0, 0.02)",
+                              },
+                              "&:hover": {
+                                backgroundColor: "rgba(131, 16, 255, 0.04)",
+                              },
+                            }}
+                          >
+                            <TableCell>
+                              <Chip
+                                label={log.type}
+                                size="small"
+                                sx={{
+                                  backgroundColor: log.type === "Auth" ? "rgba(76, 175, 80, 0.1)" : "rgba(33, 150, 243, 0.1)",
+                                  color: log.type === "Auth" ? "#2e7d32" : "#1976d2",
+                                  fontWeight: 500,
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={log.method}
+                                size="small"
+                                sx={{
+                                  backgroundColor: 
+                                    log.method === "GET" ? "rgba(76, 175, 80, 0.1)" :
+                                    log.method === "POST" ? "rgba(33, 150, 243, 0.1)" :
+                                    log.method === "PUT" ? "rgba(255, 152, 0, 0.1)" :
+                                    log.method === "DELETE" ? "rgba(244, 67, 54, 0.1)" :
+                                    "rgba(158, 158, 158, 0.1)",
+                                  color: 
+                                    log.method === "GET" ? "#2e7d32" :
+                                    log.method === "POST" ? "#1976d2" :
+                                    log.method === "PUT" ? "#f57c00" :
+                                    log.method === "DELETE" ? "#d32f2f" :
+                                    "#616161",
+                                  fontWeight: 500,
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell sx={{ maxWidth: 200, wordBreak: "break-word" }}>
+                              <Tooltip title={log.url}>
+                                <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+                                  {log.url.length > 30 ? `${log.url.substring(0, 30)}...` : log.url}
+                                </Typography>
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={log.statusCode}
+                                size="small"
+                                sx={{
+                                  backgroundColor: 
+                                    log.statusCode >= 200 && log.statusCode < 300 ? "rgba(76, 175, 80, 0.1)" :
+                                    log.statusCode >= 400 && log.statusCode < 500 ? "rgba(255, 152, 0, 0.1)" :
+                                    log.statusCode >= 500 ? "rgba(244, 67, 54, 0.1)" :
+                                    "rgba(158, 158, 158, 0.1)",
+                                  color: 
+                                    log.statusCode >= 200 && log.statusCode < 300 ? "#2e7d32" :
+                                    log.statusCode >= 400 && log.statusCode < 500 ? "#f57c00" :
+                                    log.statusCode >= 500 ? "#d32f2f" :
+                                    "#616161",
+                                  fontWeight: 500,
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+                                {log.ip}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+                                {log.user_nom !== "N/A" ? log.user_nom : "Anonymous"}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+                                {log.executionTime}ms
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+                                {new Date(log.timestamp).toLocaleString()}
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                
+                <TablePagination
+                  rowsPerPageOptions={[5, 10, 25, 50]}
+                  component="div"
+                  count={logs.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                  sx={{
+                    "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+                      color: "rgba(0, 0, 0, 0.7)",
+                    },
+                  }}
+                />
+              </>
+            )}
+          </StyledCard>
+        )}
       </Container>
     </Box>
   );
