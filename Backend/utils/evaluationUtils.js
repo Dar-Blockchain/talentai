@@ -28,7 +28,6 @@ function processSkillsData(analysis) {
   }
 }
 
-
 /**
  * Updates existing profile skills if a higher demonstrated level is detected.
  * Only upgrades existing skills (does not add new ones).
@@ -49,7 +48,6 @@ function updateUpgradedSkills(userSkills, skillAnalysis) {
     }
   });
 }
-
 
 /**
  * Adds new skills to the profile if they are not already present
@@ -78,7 +76,6 @@ function updateProfileWithNewSkills(profile, skillAnalysis) {
   });
 }
 
-
 /**
  * Identifies which job-required skills are already proven in the user's profile
  * based on skill name and sufficient proficiency level.
@@ -92,7 +89,6 @@ function findAlreadyProvenSkills(userSkills, jobSkills) {
     )
   );
 }
-
 
 /**
  * Merges already proven skills into the skill analysis.
@@ -161,6 +157,52 @@ function processAnalysisData(analysis) {
   analysis.jobMatch.status = status;
 }
 
+async function updateTodoListWithNewSkills(todoList, analysis) {
+  analysis.skillAnalysis.forEach((reqSkill) => {
+    const skillName = reqSkill.skillName.trim();
+    const demonstratedExperienceLevel = reqSkill.demonstratedExperienceLevel;
+
+    if (
+      demonstratedExperienceLevel > 0 &&
+      Array.isArray(analysis.todoList) &&
+      analysis.todoList.length > 0
+    ) {
+      const alreadyExists = todoList.todos.some(
+        (todo) => todo.type === "Skill" && todo.title.trim() == skillName
+      );
+
+      if (!alreadyExists) {
+        const todoFromAnalysis = analysis.todoList.find(
+          (t) => t.title.trim() == skillName
+        );
+
+        if (todoFromAnalysis) {
+          const tasks = todoFromAnalysis.tasks.map((task) => ({
+            title: task.title,
+            type: task.type,
+            description: task.description,
+            url: task.url || undefined,
+            priority: task.priority,
+            dueDate: task.dueDate,
+            isCompleted: false,
+          }));
+
+          todoList.todos.push({
+            type: "Skill",
+            title: reqSkill.skillName,
+            isCompleted: false,
+            tasks,
+          });
+        } else {
+          console.log("No matching todo found in analysis for:", skillName);
+        }
+      }
+    }
+  });
+
+  await todoList.save();
+}
+
 module.exports = {
   processSkillsData,
   updateUpgradedSkills,
@@ -168,4 +210,5 @@ module.exports = {
   findAlreadyProvenSkills,
   mergeAlreadyProvenSkills,
   processAnalysisData,
+  updateTodoListWithNewSkills,
 };

@@ -335,7 +335,20 @@ Your role is to:
 - Strong match → 70+
 
 **TodoList Rules**:
-- Max 2 tasks per skill
+- Each todo represents a skill and contains 1–2 personalized learning tasks. All tasks must follow these constraints:
+- \`todo.type\`: must be exactly \`"Skill"\`
+- \`todo.title\`: name of the skill
+- \`todo.tasks\`: max **2** items per skill
+- Task object structure:
+  {
+    "title": string,                // clear, concise
+    "type": "Course" | "Project" | "Article" | "Certification",
+    "description": string,          // action-oriented guidance
+    "url": string | undefined,      // valid link or omit
+    "priority": "low" | "medium" | "high",
+    "dueDate": number,              // future timestamp in milliseconds
+    "isCompleted": false
+  }
 - Unique tasks with realistic dueDate:
   - Project, Certification ≥ 2 weeks
   - Course ≥ 1 week
@@ -396,6 +409,8 @@ Return a valid JSON object matching this schema:
   "todoList": [
     {
       "title": string (skillName),
+      "type": "Skill", 
+      "isCompleted": false,
       "tasks": [
         {
           "title": string,
