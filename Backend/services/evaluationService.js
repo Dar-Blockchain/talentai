@@ -163,7 +163,7 @@ exports.analyzeJobTestResults = async ({
   updateProfileWithNewSkills(profile, analysis.skillAnalysis);
 
   // II. Update the todoList with the new skills
-  await updateTodoListWithNewSkills(todoList, analysis )
+  // await updateTodoListWithNewSkills(todoList, analysis )
 
   // III. Add already proven skills
   const alreadyProvenSkills = findAlreadyProvenSkills(

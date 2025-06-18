@@ -426,7 +426,7 @@ Return a valid JSON object matching this schema:
   ]
 }
 
-Respond with JSON only. No explanation or natural text.
+Return **valid JSON only**
 `.trim()
 
 
