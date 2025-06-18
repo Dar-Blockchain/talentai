@@ -143,7 +143,7 @@ exports.analyzeJobTestResults = async ({
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    max_tokens: 1000,
+    max_tokens: 2500,
     temperature: 0.6,
     stream: true,
   });
@@ -153,6 +153,8 @@ exports.analyzeJobTestResults = async ({
     const content = chunk.choices?.[0]?.delta?.content;
     if (content) raw += content;
   }
+
+  console.log("check raw: ", raw);
 
   let analysis = await parseAndValidateAIResponse(raw);
 
