@@ -54,6 +54,7 @@ jobs:
           --build-arg GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
           --build-arg GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
           --build-arg ASSEMBLYAI_API_KEY="${{ secrets.ASSEMBLYAI_API_KEY }}" \
+          --build-arg TOGETHER_API_KEY="${{ secrets.TOGETHER_API_KEY }}" \
           --build-arg NODE_ENV="production" \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
