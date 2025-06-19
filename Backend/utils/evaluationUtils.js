@@ -81,7 +81,12 @@ function updateProfileWithNewSkills(profile, skillAnalysis) {
           reqSkill.demonstratedExperienceLevel
         ),
         ScoreTest: reqSkill.confidenceScore,
-        Levelconfirmed: parseInt(reqSkill.demonstratedExperienceLevel) - 1,
+        Levelconfirmed:
+          parseInt(reqSkill.demonstratedExperienceLevel) === 1
+            ? 1
+            : parseInt(reqSkill.demonstratedExperienceLevel) === 5
+            ? 5
+            : parseInt(reqSkill.demonstratedExperienceLevel) - 1,
       });
     }
   });

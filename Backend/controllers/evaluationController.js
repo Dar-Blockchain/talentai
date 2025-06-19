@@ -787,9 +787,10 @@ Provide detailed, actionable feedback in JSON format only.`,
           experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
           ScoreTest: skill.confidenceScore,
           Levelconfirmed:
-          skill.demonstratedProficiency === 5 && skill.confidenceScore > 75
-            ? 5
-            : profLevel - 1,          })),
+            skill.demonstratedProficiency === 5 && skill.confidenceScore > 75
+              ? 5
+              : profLevel - 1,
+        })),
       });
     }
 
@@ -810,9 +811,10 @@ Provide detailed, actionable feedback in JSON format only.`,
             experienceLevel: getExperienceLevel(s.demonstratedProficiency),
             ScoreTest: s.confidenceScore,
             Levelconfirmed:
-            skill.demonstratedProficiency === 5 && skill.confidenceScore > 75
-              ? 5
-              : profLevel - 1,            })),
+              skill.demonstratedProficiency === 5 && skill.confidenceScore > 75
+                ? 5
+                : profLevel - 1,
+          })),
         },
         { new: true }
       );
@@ -897,9 +899,10 @@ Provide detailed, actionable feedback in JSON format only.`,
               experienceLevel: experienceLevels[profLevel - 1],
               ScoreTest: confScore,
               Levelconfirmed:
-              skill.demonstratedProficiency === 5 && skill.confidenceScore > 75
-                ? 5
-                : profLevel - 1,                    
+                skill.demonstratedProficiency === 5 &&
+                skill.confidenceScore > 75
+                  ? 5
+                  : profLevel - 1,
             };
           }),
         });
@@ -1200,7 +1203,7 @@ exports.analyzeJobTestResults = async (req, res) => {
     const { questions, testedSkills, jobId } = req.body;
     const user = req.user;
 
-    const profile = user.profile; 
+    const profile = user.profile;
 
     const now = new Date();
     const daysSinceLastUpdate =
@@ -1228,7 +1231,7 @@ exports.analyzeJobTestResults = async (req, res) => {
 
     const result = await evaluationservice.analyzeJobTestResults({
       questions,
-      testedSkills, 
+      testedSkills,
       jobId,
       user,
     });
@@ -1517,9 +1520,11 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
             NumberTestPassed: 1,
             ScoreTest: overallScore,
             Levelconfirmed:
-            demonstratedExperienceLevel === 5 && overallScore > 75
-              ? 5
-              : demonstratedExperienceLevel - 1,  
+              demonstratedExperienceLevel === 1
+                ? 1
+                : demonstratedExperienceLevel === 5
+                ? 5
+                : demonstratedExperienceLevel - 1,
           },
         ];
 
