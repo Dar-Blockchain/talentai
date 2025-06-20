@@ -16,3 +16,23 @@ module.exports.getAllUsers = async (req, res) => {
     res.status(500).json({ message: error.message || "Erreur lors de la récupération des utilisateurs" });
   }
 };
+
+// jobAssessmentController.js
+const dashboardService = require("../services/dashboardService");
+
+module.exports.getAllJobAssessments = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+
+    // Appeler le service pour récupérer tous les résultats d'évaluation
+    //const result = await dashboardService.getAllJobAssessments(page, limit);
+
+    //const result = await dashboardService.getJobAssessmentResultsGroupedByJobId(page, limit);
+
+    const result = await dashboardService.getJobAssessmentResultsGroupedByJobId2(page, limit);
+    // Retourner la réponse avec les résultats et la pagination
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: error.message || "Erreur lors de la récupération des résultats d'évaluation des jobs" });
+  }
+};

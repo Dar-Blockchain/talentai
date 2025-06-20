@@ -42,3 +42,233 @@ module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
     throw new Error("Erreur lors de la récupération des utilisateurs : " + error.message);
   }
 };
+
+//Simple Get All
+
+// jobAssessmentService.js
+const JobAssessmentResult = require("../models/JobAssessmentResultModel");
+
+module.exports.getAllJobAssessments = async (page = 1, limit = 10) => {
+  try {
+    const skip = (page - 1) * limit;
+
+    // S'assurer que limit est un nombre
+    limit = parseInt(limit);
+
+    if (isNaN(limit) || limit <= 0) {
+      throw new Error("Le paramètre limit doit être un nombre valide supérieur à 0.");
+    }
+
+    // Utiliser `populate` avec `strictPopulate: false` si nécessaire
+    const results = await JobAssessmentResult.find()
+      .skip(skip)  // Pagination: sauter les résultats précédents
+      .limit(limit)  // Limiter le nombre de résultats
+      .populate('candidateId', null, null, { strictPopulate: false })  // Peupler candidateId
+      .populate('companyId', null, null, { strictPopulate: false })  // Peupler companyId
+      .populate('jobId', null, null, { strictPopulate: false })  // Peupler jobId
+      .exec();
+
+    // Compter le nombre total de résultats pour la pagination
+    const totalResults = await JobAssessmentResult.countDocuments();
+
+    const totalPages = Math.ceil(totalResults / limit);
+
+    return {
+      results,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalResults,
+      },
+    };
+  } catch (error) {
+    throw new Error("Erreur lors de la récupération des résultats d'évaluation des jobs : " + error.message);
+  }
+};
+
+// jobAssessmentService.js
+
+//Regroupement mahabech hne dima targe3 vide 
+
+module.exports.getJobAssessmentResultsGroupedByJobId = async (page = 1, limit = 10) => {
+  try {
+    const skip = (page - 1) * limit;
+
+    // S'assurer que limit est un nombre valide
+    limit = parseInt(limit);
+
+    if (isNaN(limit) || limit <= 0) {
+      throw new Error("Le paramètre limit doit être un nombre valide supérieur à 0.");
+    }
+
+    // Utiliser l'agrégation pour regrouper les résultats par `jobId`
+    const results = await JobAssessmentResult.aggregate([
+      {
+        $group: {
+          _id: "$jobId",  // Regrouper par jobId
+          assessments: { $push: "$$ROOT" },  // Ajouter tous les résultats d'évaluation dans un tableau
+        },
+      },
+      {
+        $skip: skip,  // Pagination: sauter les résultats précédents
+      },
+      {
+        $limit: limit,  // Limiter le nombre de résultats à `limit`
+      },
+      {
+        $lookup: {
+          from: "posts",  // Joindre la collection des jobs (Post)
+          localField: "_id",  // `jobId` correspond à `_id` dans le groupement
+          foreignField: "_id",  // Cherche le même `_id` dans la collection "posts"
+          as: "jobDetails",  // Renommer le champ résultat de l'agrégation
+        },
+      },
+      {
+        $unwind: "$jobDetails",  // Décomposer l'array de jobDetails pour chaque groupe
+      },
+      {
+        $lookup: {
+          from: "profiles",  // Joindre la collection des candidats (Profile)
+          localField: "assessments.candidateId",  // Associer par `candidateId`
+          foreignField: "_id",  // Relier `candidateId` avec le `_id` de la collection "profiles"
+          as: "candidateDetails",
+        },
+      },
+      {
+        $unwind: "$candidateDetails",  // Décomposer l'array de candidateDetails
+      },
+      {
+        $lookup: {
+          from: "profiles",  // Joindre la collection des entreprises (Profile)
+          localField: "assessments.companyId",  // Associer par `companyId`
+          foreignField: "_id",  // Relier `companyId` avec le `_id` de la collection "profiles"
+          as: "companyDetails",
+        },
+      },
+      {
+        $unwind: "$companyDetails",  // Décomposer l'array de companyDetails
+      },
+      {
+        $project: {
+          _id: 1,
+          assessments: 1,
+          jobDetails: 1,
+          candidateDetails: 1,
+          companyDetails: 1,
+        },
+      },
+    ]);
+
+    // Compter le nombre total de groupes pour la pagination
+    const totalResults = await JobAssessmentResult.countDocuments();
+
+    const totalPages = Math.ceil(totalResults / limit);
+
+    return {
+      results,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalResults,
+      },
+    };
+  } catch (error) {
+    throw new Error("Erreur lors de la récupération des résultats d'évaluation des jobs : " + error.message);
+  }
+};
+
+
+//last chanse
+
+module.exports.getJobAssessmentResultsGroupedByJobId2 = async (page = 1, limit = 10) => {
+  try {
+    const skip = (page - 1) * limit;
+
+    // S'assurer que limit est un nombre valide
+    limit = parseInt(limit);
+
+    if (isNaN(limit) || limit <= 0) {
+      throw new Error("Le paramètre limit doit être un nombre valide supérieur à 0.");
+    }
+
+    // Ajouter un filtre dans $match avant de faire l'agrégation
+    const results = await JobAssessmentResult.aggregate([
+      {
+        $match: {
+          // Par exemple, vous pouvez filtrer par `timestamp`, `assessmentType`, etc.
+          assessmentType: "job"  // Filtrer seulement les évaluations de type "job"
+        },
+      },
+      {
+        $group: {
+          _id: "$jobId",  // Regrouper par jobId
+          assessments: { $push: "$$ROOT" },  // Ajouter tous les résultats d'évaluation dans un tableau
+        },
+      },
+      {
+        $skip: skip,  // Pagination: sauter les résultats précédents
+      },
+      {
+        $limit: limit,  // Limiter le nombre de résultats
+      },
+      {
+        $lookup: {
+          from: "posts",  // Joindre la collection des jobs (Post)
+          localField: "_id",  // `jobId` correspond à `_id` dans le groupement
+          foreignField: "_id",  // Cherche le même `_id` dans la collection "posts"
+          as: "jobDetails",  // Renommer le champ résultat de l'agrégation
+        },
+      },
+      {
+        $unwind: "$jobDetails",  // Décomposer l'array de jobDetails pour chaque groupe
+      },
+      {
+        $lookup: {
+          from: "profiles",  // Joindre la collection des candidats (Profile)
+          localField: "assessments.candidateId",  // Associer par `candidateId`
+          foreignField: "_id",  // Relier `candidateId` avec le `_id` de la collection "profiles"
+          as: "candidateDetails",
+        },
+      },
+      {
+        $unwind: "$candidateDetails",  // Décomposer l'array de candidateDetails
+      },
+      {
+        $lookup: {
+          from: "profiles",  // Joindre la collection des entreprises (Profile)
+          localField: "assessments.companyId",  // Associer par `companyId`
+          foreignField: "_id",  // Relier `companyId` avec le `_id` de la collection "profiles"
+          as: "companyDetails",
+        },
+      },
+      {
+        $unwind: "$companyDetails",  // Décomposer l'array de companyDetails
+      },
+      {
+        $project: {
+          _id: 1,
+          assessments: 1,
+          jobDetails: 1,
+          candidateDetails: 1,
+          companyDetails: 1,
+        },
+      },
+    ]);
+
+    // Compter le nombre total de groupes pour la pagination
+    const totalResults = await JobAssessmentResult.countDocuments({ assessmentType: "job" });
+
+    const totalPages = Math.ceil(totalResults / limit);
+
+    return {
+      results,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalResults,
+      },
+    };
+  } catch (error) {
+    throw new Error("Erreur lors de la récupération des résultats d'évaluation des jobs : " + error.message);
+  }
+};

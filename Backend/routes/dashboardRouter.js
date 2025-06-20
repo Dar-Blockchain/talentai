@@ -5,5 +5,6 @@ const { requireAuthUser } = require("../middleware/authMiddleware");
 
 router.get("/getAllUsers", dashboardController.getAllUsers);
 
+router.get("/getAllJobAssessments", dashboardController.getAllJobAssessments);
 
 module.exports = router;
