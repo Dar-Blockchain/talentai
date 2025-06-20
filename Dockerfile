@@ -78,7 +78,7 @@ ENV NODE_ENV=$NODE_ENV
 COPY package.json package-lock.json ./
 
 # Install only production dependencies
-RUN npm install --legacy-peer-deps
+RUN npm install --production
 
 
 # Copy built files and public directory
