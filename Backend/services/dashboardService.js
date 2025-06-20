@@ -332,9 +332,10 @@ module.exports.getCounts = async () => {
   }
 };
 
-module.exports.getUserCountsByDay = async () => {
+
+module.exports.getCountsByDay = async () => {
   try {
-    // Agrégation pour compter les utilisateurs créés chaque jour
+    // Comptage des utilisateurs créés chaque jour
     const usersCreatedByDay = await User.aggregate([
       {
         $project: {
@@ -352,10 +353,48 @@ module.exports.getUserCountsByDay = async () => {
       }
     ]);
 
-    // Calculer le nombre total d'utilisateurs
-    const totalUsers = await User.countDocuments();
+    // Comptage des posts créés chaque jour
+    const postsCreatedByDay = await Post.aggregate([
+      {
+        $project: {
+          day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }  // Formater la date pour qu'elle soit au format "YYYY-MM-DD"
+        }
+      },
+      {
+        $group: {
+          _id: "$day",  // Regrouper par date (jour)
+          postCount: { $sum: 1 }  // Compter le nombre de posts créés ce jour-là
+        }
+      },
+      {
+        $sort: { _id: 1 }  // Trier par date croissante
+      }
+    ]);
 
-    // Calculer le pourcentage de chaque jour par rapport au total
+    // Comptage des job assessments créés chaque jour
+    const jobAssessmentsCreatedByDay = await JobAssessmentResult.aggregate([
+      {
+        $project: {
+          day: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } }  // Formater la date pour qu'elle soit au format "YYYY-MM-DD"
+        }
+      },
+      {
+        $group: {
+          _id: "$day",  // Regrouper par date (jour)
+          jobAssessmentCount: { $sum: 1 }  // Compter le nombre de job assessments créés ce jour-là
+        }
+      },
+      {
+        $sort: { _id: 1 }  // Trier par date croissante
+      }
+    ]);
+
+    // Calculer le nombre total d'utilisateurs, de posts et de job assessments
+    const totalUsers = await User.countDocuments();
+    const totalPosts = await Post.countDocuments();
+    const totalJobAssessments = await JobAssessmentResult.countDocuments();
+
+    // Calculer les pourcentages
     const usersWithPercentage = usersCreatedByDay.map((dayData) => {
       const percentage = totalUsers > 0 ? (dayData.userCount / totalUsers) * 100 : 0;
       return {
@@ -365,8 +404,30 @@ module.exports.getUserCountsByDay = async () => {
       };
     });
 
-    return usersWithPercentage;
+    const postsWithPercentage = postsCreatedByDay.map((dayData) => {
+      const percentage = totalPosts > 0 ? (dayData.postCount / totalPosts) * 100 : 0;
+      return {
+        day: dayData._id,
+        postCount: dayData.postCount,
+        percentage: percentage.toFixed(2)
+      };
+    });
+
+    const jobAssessmentsWithPercentage = jobAssessmentsCreatedByDay.map((dayData) => {
+      const percentage = totalJobAssessments > 0 ? (dayData.jobAssessmentCount / totalJobAssessments) * 100 : 0;
+      return {
+        day: dayData._id,
+        jobAssessmentCount: dayData.jobAssessmentCount,
+        percentage: percentage.toFixed(2)
+      };
+    });
+
+    return {
+      usersCreatedByDay: usersWithPercentage,
+      postsCreatedByDay: postsWithPercentage,
+      jobAssessmentsCreatedByDay: jobAssessmentsWithPercentage
+    };
   } catch (error) {
-    throw new Error('Error fetching user counts by day: ' + error.message);
+    throw new Error('Error fetching counts by day: ' + error.message);
   }
 };

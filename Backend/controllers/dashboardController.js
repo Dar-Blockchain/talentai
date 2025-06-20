@@ -45,13 +45,14 @@ module.exports.getCounts = async (req, res) => {
 };
 
 // Fonction pour gérer la requête et envoyer les résultats
-module.exports.getUserCountsByDay = async (req, res) => {
+module.exports.getCountsByDay = async (req, res) => {
   try {
-    // Appeler la fonction de service pour obtenir les utilisateurs créés par jour
-    const userCountsByDay = await dashboardService.getUserCountsByDay();
-    res.status(200).json({ success: true, data: userCountsByDay });
+    // Appeler la fonction de service pour obtenir les résultats
+    const countsByDay = await dashboardService.getCountsByDay();
+    res.status(200).json({ success: true, data: countsByDay });
   } catch (error) {
     // En cas d'erreur, renvoyer un message d'erreur
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
