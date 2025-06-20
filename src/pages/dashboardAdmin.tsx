@@ -1103,9 +1103,9 @@ const DashboardAdmin = () => {
             </Box>
 
             {/* World Map */}
-            <Box sx={{ mb: 4 }}>
+            {/* <Box sx={{ mb: 4 }}>
                 <WorldMap userLocations={processUserLocations()} totalUsers={stats.totalUsers} />
-            </Box>
+            </Box> */}
         </Box>
     );
 
