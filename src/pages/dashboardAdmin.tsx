@@ -252,6 +252,13 @@ const DashboardAdmin = () => {
     const [assessmentTypeFilter, setAssessmentTypeFilter] = useState('');
     const [assessmentStatusFilter, setAssessmentStatusFilter] = useState('');
 
+    // Add totalUsers state
+    const [totalUsers, setTotalUsers] = useState(0);
+
+    // Add username and email filter state
+    const [userUsernameFilter, setUserUsernameFilter] = useState('');
+    const [userEmailFilter, setUserEmailFilter] = useState('');
+
     // Fetch data on component mount
     useEffect(() => {
         fetchDashboardData();
@@ -286,17 +293,26 @@ const DashboardAdmin = () => {
         });
     };
 
-    const fetchUsers = async (page = 1, limit = 10) => {
+    const fetchUsers = async (page = 1, limit = 10, username = '', email = '', role = '', status = '') => {
         try {
             setLoading(true);
-            const res = await fetch(`http://localhost:5000/users/getAllUsers?page=${page}&limit=${limit}`);
+            const params = new URLSearchParams({
+                page: String(page),
+                limit: String(limit),
+            });
+            if (username) params.append('username', username);
+            if (email) params.append('email', email);
+            if (role) params.append('role', role);
+            if (status) params.append('status', status);
+            const res = await fetch(`http://localhost:5000/users/getAllUsers?${params.toString()}`);
             const data = await res.json();
             if (data && data.users) {
                 setUsers(data.users);
-                // Optionally, set pagination state if you want to use API pagination
-                // setUsersPage(data.pagination.currentPage - 1);
-                // setUsersRowsPerPage(limit);
-                // setTotalUsers(data.pagination.totalUsers);
+                if (data.pagination) {
+                    setTotalUsers(data.pagination.totalUsers);
+                    setUsersPage(data.pagination.currentPage - 1);
+                    setUsersRowsPerPage(limit);
+                }
             }
         } catch (err) {
             setError('Failed to fetch users from API');
@@ -426,6 +442,11 @@ const DashboardAdmin = () => {
             default: return 'default';
         }
     };
+
+    // On filter change, fetch page 1 with new filters
+    useEffect(() => {
+        fetchUsers(1, usersRowsPerPage, userUsernameFilter, userEmailFilter, userRoleFilter, userStatusFilter);
+    }, [userUsernameFilter, userEmailFilter, userRoleFilter, userStatusFilter]);
 
     const renderDashboard = () => (
         <Box>
@@ -600,11 +621,19 @@ const DashboardAdmin = () => {
             {/* Filter Card */}
             <StyledCard sx={{ mb: 3, p: { xs: 2, md: 3 }, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
                 <TextField
-                    label="Search by name or email"
+                    label="Username"
                     variant="outlined"
                     size="small"
-                    value={userSearch}
-                    onChange={e => setUserSearch(e.target.value)}
+                    value={userUsernameFilter}
+                    onChange={e => setUserUsernameFilter(e.target.value)}
+                    sx={{ minWidth: 160 }}
+                />
+                <TextField
+                    label="Email"
+                    variant="outlined"
+                    size="small"
+                    value={userEmailFilter}
+                    onChange={e => setUserEmailFilter(e.target.value)}
                     sx={{ minWidth: 200 }}
                 />
                 <FormControl size="small" sx={{ minWidth: 140 }}>
@@ -615,29 +644,34 @@ const DashboardAdmin = () => {
                         onChange={e => setUserRoleFilter(e.target.value)}
                     >
                         <MenuItem value="">All</MenuItem>
-                        <MenuItem value="candidate">Candidate</MenuItem>
-                        <MenuItem value="company">Company</MenuItem>
-                        <MenuItem value="admin">Admin</MenuItem>
+                        <MenuItem value="Candidat">Candidate</MenuItem>
+                        <MenuItem value="Company">Company</MenuItem>
+                        <MenuItem value="Admin">Admin</MenuItem>
                     </Select>
                 </FormControl>
-
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                        value={userStatusFilter}
+                        label="Status"
+                        onChange={e => setUserStatusFilter(e.target.value)}
+                    >
+                        <MenuItem value="">All</MenuItem>
+                        <MenuItem value="verified">Verified</MenuItem>
+                        <MenuItem value="pending">Pending</MenuItem>
+                    </Select>
+                </FormControl>
                 <Button
                     variant="outlined"
                     color="secondary"
-                    onClick={() => { setUserSearch(''); setUserRoleFilter(''); setUserStatusFilter(''); }}
+                    onClick={() => { setUserUsernameFilter(''); setUserEmailFilter(''); setUserRoleFilter(''); setUserStatusFilter(''); }}
                     sx={{ ml: 'auto' }}
                 >
                     Reset Filters
                 </Button>
             </StyledCard>
 
-            <Tabs value={usersTab} onChange={handleUsersTabChange} sx={{ mb: 3 }}>
-                <Tab label="All Users" />
-                <Tab label="Candidates" />
-                <Tab label="Companies" />
-                <Tab label="Admins" />
-            </Tabs>
-
+        
             <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
                 <Table>
                     <TableHead>
@@ -651,101 +685,99 @@ const DashboardAdmin = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {users
-                            .filter(user =>
-                                (!userSearch || user.username.toLowerCase().includes(userSearch.toLowerCase()) || user.email.toLowerCase().includes(userSearch.toLowerCase())) &&
-                                (!userRoleFilter || user.role === userRoleFilter) &&
-                                (!userStatusFilter || (userStatusFilter === 'verified' ? user.isVerified : !user.isVerified))
-                            )
-                            .slice(usersPage * usersRowsPerPage, usersPage * usersRowsPerPage + usersRowsPerPage)
-                            .map((user) => (
-                                <TableRow key={user._id} hover>
-                                    <TableCell>
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <Avatar sx={{ mr: 2, bgcolor: GREEN_MAIN }}>
-                                                {user.username.charAt(0).toUpperCase()}
-                                            </Avatar>
-                                            <Box>
+                        {users.map((user) => (
+                            <TableRow key={user._id} hover>
+                                <TableCell>
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <Avatar sx={{ mr: 2, bgcolor: GREEN_MAIN }}>
+                                            {user.username.charAt(0).toUpperCase()}
+                                        </Avatar>
+                                        <Box>
+                                            {user.profile && user.profile.firstName && user.profile.lastName ? (
+                                                <>
+                                                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                                                        {user.profile.firstName} {user.profile.lastName}
+                                                    </Typography>
+                                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                                        @{user.username}
+                                                    </Typography>
+                                                </>
+                                            ) : (
                                                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                                    {user.profile?.firstName && user.profile?.lastName
-                                                        ? `${user.profile.firstName} ${user.profile.lastName}`
-                                                        : user.username}
+                                                    {user.username}
                                                 </Typography>
-                                                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                                    {user.email}
-                                                </Typography>
-                                            </Box>
+                                            )}
+                                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                                {user.email}
+                                            </Typography>
                                         </Box>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Chip
-                                            label={user.role}
-                                            color={getRoleColor(user.role) as any}
-                                            size="small"
-                                            sx={{ textTransform: 'capitalize' }}
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Chip
-                                            label={user.isVerified ? 'Verified' : 'Pending'}
-                                            color={user.isVerified ? 'success' : 'warning'}
-                                            size="small"
-                                            icon={user.isVerified ? <CheckCircleIcon /> : <PendingIcon />}
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2">
-                                            {new Date(user.createdAt).toLocaleDateString()}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2">
-                                            {user.lastLogin
-                                                ? new Date(user.lastLogin).toLocaleDateString()
-                                                : 'Never'}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Stack direction="row" spacing={1}>
-                                            <Tooltip title="View Details">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => {
-                                                        setSelectedUser(user);
-                                                        setUserDialogOpen(true);
-                                                    }}
-                                                >
-                                                    <VisibilityIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                            <Tooltip title="Edit User">
-                                                <IconButton size="small">
-                                                    <EditIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                            <Tooltip title="Delete User">
-                                                <IconButton size="small" color="error">
-                                                    <DeleteIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </Stack>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                                    </Box>
+                                </TableCell>
+                                <TableCell>
+                                    <Chip
+                                        label={user.role}
+                                        color={getRoleColor(user.role) as any}
+                                        size="small"
+                                        sx={{ textTransform: 'capitalize' }}
+                                    />
+                                </TableCell>
+                                <TableCell>
+                                    <Chip
+                                        label={user.isVerified ? 'Verified' : 'Pending'}
+                                        color={user.isVerified ? 'success' : 'warning'}
+                                        size="small"
+                                        icon={user.isVerified ? <CheckCircleIcon /> : <PendingIcon />}
+                                    />
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2">
+                                        {new Date(user.createdAt).toLocaleDateString()}
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography variant="body2">
+                                        {user.lastLogin
+                                            ? new Date(user.lastLogin).toLocaleDateString()
+                                            : 'Never'}
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Stack direction="row" spacing={1}>
+                                        <Tooltip title="View Details">
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => {
+                                                    setSelectedUser(user);
+                                                    setUserDialogOpen(true);
+                                                }}
+                                            >
+                                                <VisibilityIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Edit User">
+                                            <IconButton size="small">
+                                                <EditIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Delete User">
+                                            <IconButton size="small" color="error">
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </Stack>
+                                </TableCell>
+                            </TableRow>
+                        ))}
                     </TableBody>
                 </Table>
                 <TablePagination
                     rowsPerPageOptions={[5, 10, 25]}
                     component="div"
-                    count={users.filter(user =>
-                        (!userSearch || user.username.toLowerCase().includes(userSearch.toLowerCase()) || user.email.toLowerCase().includes(userSearch.toLowerCase())) &&
-                        (!userRoleFilter || user.role === userRoleFilter) &&
-                        (!userStatusFilter || (userStatusFilter === 'verified' ? user.isVerified : !user.isVerified))
-                    ).length}
+                    count={totalUsers}
                     rowsPerPage={usersRowsPerPage}
                     page={usersPage}
-                    onPageChange={handleUsersPageChange}
-                    onRowsPerPageChange={handleUsersRowsPerPageChange}
+                    onPageChange={(event, newPage) => fetchUsers(newPage + 1, usersRowsPerPage, userUsernameFilter, userEmailFilter, userRoleFilter, userStatusFilter)}
+                    onRowsPerPageChange={e => fetchUsers(1, parseInt(e.target.value, 10), userUsernameFilter, userEmailFilter, userRoleFilter, userStatusFilter)}
                 />
             </TableContainer>
         </Box>
@@ -1028,76 +1060,54 @@ const DashboardAdmin = () => {
             </DialogTitle>
             <DialogContent>
                 {selectedUser && (
-                    <Box sx={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: 3
-                    }}>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
                         <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
                             <Typography variant="h6" sx={{ mb: 2 }}>Basic Information</Typography>
                             <Stack spacing={2}>
-                                <Box>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Username</Typography>
-                                    <Typography variant="body1">{selectedUser.username}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Email</Typography>
-                                    <Typography variant="body1">{selectedUser.email}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Role</Typography>
-                                    <Chip
-                                        label={selectedUser.role}
-                                        color={getRoleColor(selectedUser.role) as any}
-                                        sx={{ textTransform: 'capitalize' }}
-                                    />
-                                </Box>
-                                <Box>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Status</Typography>
-                                    <Chip
-                                        label={selectedUser.isVerified ? 'Verified' : 'Pending'}
-                                        color={selectedUser.isVerified ? 'success' : 'warning'}
-                                        icon={selectedUser.isVerified ? <CheckCircleIcon /> : <PendingIcon />}
-                                    />
-                                </Box>
+                                {Object.entries(selectedUser).map(([key, value]) => (
+                                    key !== 'profile' && !key.toLowerCase().includes('id') && (
+                                        <Box key={key}>
+                                            <Typography variant="body2" sx={{ color: 'text.secondary' }}>{key}</Typography>
+                                            <Typography variant="body1" sx={{ wordBreak: 'break-all' }}>{String(value)}</Typography>
+                                        </Box>
+                                    )
+                                ))}
                             </Stack>
                         </Box>
                         <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
-                            <Typography variant="h6" sx={{ mb: 2 }}>Profile Information</Typography>
-                            <Stack spacing={2}>
-                                {selectedUser.profile?.firstName && (
-                                    <Box>
-                                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>Name</Typography>
-                                        <Typography variant="body1">
-                                            {selectedUser.profile.firstName} {selectedUser.profile.lastName}
-                                        </Typography>
-                                    </Box>
-                                )}
-                                {selectedUser.profile?.phone && (
-                                    <Box>
-                                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>Phone</Typography>
-                                        <Typography variant="body1">{selectedUser.profile.phone}</Typography>
-                                    </Box>
-                                )}
-                                {selectedUser.profile?.location && (
-                                    <Box>
-                                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>Location</Typography>
-                                        <Typography variant="body1">{selectedUser.profile.location}</Typography>
-                                    </Box>
-                                )}
-                                {selectedUser.profile?.company && (
-                                    <Box>
-                                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>Company</Typography>
-                                        <Typography variant="body1">{selectedUser.profile.company}</Typography>
-                                    </Box>
-                                )}
-                                {selectedUser.profile?.position && (
-                                    <Box>
-                                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>Position</Typography>
-                                        <Typography variant="body1">{selectedUser.profile.position}</Typography>
-                                    </Box>
-                                )}
-                            </Stack>
+                            <Typography variant="h6" sx={{ mb: 2 }}>Profile</Typography>
+                            {selectedUser.profile ? (
+                                <Stack spacing={2}>
+                                    {Object.entries(selectedUser.profile).map(([key, value]) => (
+                                        !key.toLowerCase().includes('id') && (
+                                            <Box key={key}>
+                                                <Typography variant="body2" sx={{ color: 'text.secondary' }}>{key}</Typography>
+                                                {Array.isArray(value) ? (
+                                                    <Box sx={{ pl: 2 }}>
+                                                        {value.length === 0 ? (
+                                                            <Typography variant="body2" sx={{ color: 'text.disabled' }}>Empty</Typography>
+                                                        ) : (
+                                                            value.map((item, idx) => (
+                                                                <Box key={idx} sx={{ mb: 1 }}>
+                                                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>- {typeof item === 'object' ? JSON.stringify(item, null, 2) : String(item)}</Typography>
+                                                                </Box>
+                                                            ))
+                                                        )}
+                                                    </Box>
+                                                ) : typeof value === 'object' && value !== null ? (
+                                                    <Box sx={{ pl: 2 }}>
+                                                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>{JSON.stringify(value, null, 2)}</Typography>
+                                                    </Box>
+                                                ) : (
+                                                    <Typography variant="body1" sx={{ wordBreak: 'break-all' }}>{String(value)}</Typography>
+                                                )}
+                                            </Box>
+                                        )
+                                    ))}
+                                </Stack>
+                            ) : (
+                                <Typography variant="body2" sx={{ color: 'text.disabled' }}>No profile data</Typography>
+                            )}
                         </Box>
                     </Box>
                 )}
