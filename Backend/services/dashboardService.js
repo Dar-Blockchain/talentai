@@ -179,33 +179,32 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (page = 1, limit = 
 
 
 //last chanse
-
 module.exports.getJobAssessmentResultsGroupedByJobId2 = async (page = 1, limit = 10) => {
   try {
     const skip = (page - 1) * limit;
 
-    // S'assurer que limit est un nombre valide
+    // Ensure that limit is a valid number
     limit = parseInt(limit);
 
     if (isNaN(limit) || limit <= 0) {
-      throw new Error("Le paramètre limit doit être un nombre valide supérieur à 0.");
+      throw new Error("The 'limit' parameter must be a valid number greater than 0.");
     }
 
     // First, get the total count of unique jobIds for pagination
     const totalResults = await JobAssessmentResult.aggregate([
       {
         $match: {
-          assessmentType: "job"
-        }
+          assessmentType: "job",
+        },
       },
       {
         $group: {
-          _id: "$jobId"
-        }
+          _id: "$jobId",
+        },
       },
       {
-        $count: "total"
-      }
+        $count: "total",
+      },
     ]);
 
     const totalGroups = totalResults.length > 0 ? totalResults[0].total : 0;
@@ -214,8 +213,8 @@ module.exports.getJobAssessmentResultsGroupedByJobId2 = async (page = 1, limit =
     const results = await JobAssessmentResult.aggregate([
       {
         $match: {
-          assessmentType: "job"
-        }
+          assessmentType: "job",
+        },
       },
       {
         $group: {
@@ -223,50 +222,21 @@ module.exports.getJobAssessmentResultsGroupedByJobId2 = async (page = 1, limit =
           assessments: { $push: "$$ROOT" },
           numberOfAttempts: { $sum: 1 },
           totalScore: { $sum: "$analysis.overallScore" },
-          totalQuestions: { $sum: "$numberOfQuestions" }
-        }
+          totalQuestions: { $sum: "$numberOfQuestions" },
+        },
       },
       {
-        $sort: { _id: -1 } // Sort by jobId descending
+        $sort: { _id: -1 }, // Sort by jobId descending
       },
       {
-        $skip: skip
+        $skip: skip,
       },
       {
-        $limit: limit
+        $limit: limit,
       },
-      {
-        $lookup: {
-          from: "posts",
-          localField: "_id",
-          foreignField: "_id",
-          as: "jobDetails"
-        }
-      },
-      {
-        $unwind: {
-          path: "$jobDetails",
-          preserveNullAndEmptyArrays: true
-        }
-      },
-      {
-        $project: {
-          _id: 1,
-          jobName: "$jobDetails.title",
-          jobDescription: "$jobDetails.description",
-          numberOfAttempts: 1,
-          averageScore: {
-            $cond: {
-              if: { $gt: ["$numberOfAttempts", 0] },
-              then: { $round: [{ $divide: ["$totalScore", "$numberOfAttempts"] }, 2] },
-              else: 0
-            }
-          },
-          totalQuestions: 1,
-          assessments: 1
-        }
-      }
-    ]);
+    ])
+      .populate("jobId", "title description") // Populate the jobId field with job details
+      .exec();
 
     const totalPages = Math.ceil(totalGroups / limit);
 
@@ -279,6 +249,8 @@ module.exports.getJobAssessmentResultsGroupedByJobId2 = async (page = 1, limit =
       },
     };
   } catch (error) {
-    throw new Error("Erreur lors de la récupération des résultats d'évaluation des jobs : " + error.message);
+    throw new Error(
+      "Error fetching job assessment results: " + error.message
+    );
   }
 };
