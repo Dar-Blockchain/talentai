@@ -406,12 +406,53 @@ const DashboardAdmin = () => {
             const data = await res.json();
             if (data.success && data.data) {
                 // Process the data for the chart
-                const processedData = data.data.map((item: any) => ({
+                const processedData = data.data.usersCreatedByDay.map((item: any) => ({
                     day: new Date(item.day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
                     users: item.userCount,
-                    assessments: 0, // We'll add assessment data later if available
+                    posts: 0, // Will be updated below
+                    assessments: 0, // Will be updated below
                     fullDate: item.day
                 }));
+
+                // Add posts data
+                if (data.data.postsCreatedByDay) {
+                    data.data.postsCreatedByDay.forEach((postItem: any) => {
+                        const existingDay = processedData.find((item: any) => item.fullDate === postItem.day);
+                        if (existingDay) {
+                            existingDay.posts = postItem.postCount;
+                        } else {
+                            processedData.push({
+                                day: new Date(postItem.day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                                users: 0,
+                                posts: postItem.postCount,
+                                assessments: 0,
+                                fullDate: postItem.day
+                            });
+                        }
+                    });
+                }
+
+                // Add assessments data if available
+                if (data.data.jobAssessmentsCreatedByDay) {
+                    data.data.jobAssessmentsCreatedByDay.forEach((assessmentItem: any) => {
+                        const existingDay = processedData.find((item: any) => item.fullDate === assessmentItem.day);
+                        if (existingDay) {
+                            existingDay.assessments = assessmentItem.assessmentCount;
+                        } else {
+                            processedData.push({
+                                day: new Date(assessmentItem.day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                                users: 0,
+                                posts: 0,
+                                assessments: assessmentItem.assessmentCount,
+                                fullDate: assessmentItem.day
+                            });
+                        }
+                    });
+                }
+
+                // Sort by date
+                processedData.sort((a: any, b: any) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime());
+                
                 setUserGrowthData(processedData);
             }
         } catch (err) {
@@ -1003,7 +1044,7 @@ const DashboardAdmin = () => {
                     <StyledCard>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                             <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                User Growth
+                                Growth Analytics
                             </Typography>
                             <FormControl size="small" sx={{ minWidth: 140 }}>
                                 <InputLabel>Filter by Month</InputLabel>
@@ -1013,6 +1054,7 @@ const DashboardAdmin = () => {
                                     onChange={(e) => setSelectedMonth(e.target.value)}
                                 >
                                     <MenuItem value="all">All Time</MenuItem>
+                                    <MenuItem value="2025-04">April 2025</MenuItem>
                                     <MenuItem value="2025-05">May 2025</MenuItem>
                                     <MenuItem value="2025-06">June 2025</MenuItem>
                                 </Select>
@@ -1025,6 +1067,8 @@ const DashboardAdmin = () => {
                                 <YAxis />
                                 <RechartsTooltip />
                                 <Line type="monotone" dataKey="users" stroke="#8310FF" strokeWidth={2} name="Users" />
+                                <Line type="monotone" dataKey="posts" stroke="#00C49F" strokeWidth={2} name="Posts" />
+                                <Line type="monotone" dataKey="assessments" stroke="#FFBB28" strokeWidth={2} name="Assessments" />
                             </LineChart>
                         </ResponsiveContainer>
                     </StyledCard>
