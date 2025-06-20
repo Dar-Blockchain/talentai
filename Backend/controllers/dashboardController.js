@@ -31,14 +31,25 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (req, res) => {
   }
 };
 
-const countsService = require('../services/dashboardService');
 
 // Fonction pour gérer la requête et envoyer les résultats
 module.exports.getCounts = async (req, res) => {
   try {
     // Appeler la fonction de service pour obtenir les résultats
-    const counts = await countsService.getCounts();
+    const counts = await dashboardService.getCounts();
     res.status(200).json({ success: true, data: counts });
+  } catch (error) {
+    // En cas d'erreur, renvoyer un message d'erreur
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Fonction pour gérer la requête et envoyer les résultats
+module.exports.getUserCountsByDay = async (req, res) => {
+  try {
+    // Appeler la fonction de service pour obtenir les utilisateurs créés par jour
+    const userCountsByDay = await dashboardService.getUserCountsByDay();
+    res.status(200).json({ success: true, data: userCountsByDay });
   } catch (error) {
     // En cas d'erreur, renvoyer un message d'erreur
     res.status(500).json({ success: false, message: error.message });

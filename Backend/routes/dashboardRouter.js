@@ -7,6 +7,8 @@ router.get("/getAllUsers", dashboardController.getAllUsers);
 
 router.get("/getCounts", dashboardController.getCounts);
 
+router.get("/getUserCountsByDay", dashboardController.getUserCountsByDay);
+
 router.get("/job-assessment-results-grouped", dashboardController.getJobAssessmentResultsGroupedByJobId);
 
 module.exports = router;

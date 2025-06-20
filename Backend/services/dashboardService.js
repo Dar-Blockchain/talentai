@@ -332,3 +332,41 @@ module.exports.getCounts = async () => {
   }
 };
 
+module.exports.getUserCountsByDay = async () => {
+  try {
+    // Agrégation pour compter les utilisateurs créés chaque jour
+    const usersCreatedByDay = await User.aggregate([
+      {
+        $project: {
+          day: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }  // Formater la date pour qu'elle soit au format "YYYY-MM-DD"
+        }
+      },
+      {
+        $group: {
+          _id: "$day",  // Regrouper par date (jour)
+          userCount: { $sum: 1 }  // Compter le nombre d'utilisateurs créés ce jour-là
+        }
+      },
+      {
+        $sort: { _id: 1 }  // Trier par date croissante
+      }
+    ]);
+
+    // Calculer le nombre total d'utilisateurs
+    const totalUsers = await User.countDocuments();
+
+    // Calculer le pourcentage de chaque jour par rapport au total
+    const usersWithPercentage = usersCreatedByDay.map((dayData) => {
+      const percentage = totalUsers > 0 ? (dayData.userCount / totalUsers) * 100 : 0;
+      return {
+        day: dayData._id,
+        userCount: dayData.userCount,
+        percentage: percentage.toFixed(2)  // Formater le pourcentage avec 2 décimales
+      };
+    });
+
+    return usersWithPercentage;
+  } catch (error) {
+    throw new Error('Error fetching user counts by day: ' + error.message);
+  }
+};
