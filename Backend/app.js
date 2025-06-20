@@ -11,7 +11,7 @@ const http = require("http");
 const connectDB = require("./config/database");
 
 const authRouter = require("./routes/authRouter");
-const usersRouter = require("./routes/usersRouter");
+const dashboardRouter = require("./routes/dashboardRouter");
 const agentIARouter = require("./routes/agentIARouter");
 const profileRouter = require("./routes/profileRouter");
 const evaluationRouter = require("./routes/evaluationRouter");
@@ -49,7 +49,7 @@ app.use(cookieParser());
 
 // Routes
 app.use("/auth", authRouter);
-app.use("/users", usersRouter);
+app.use("/dashboard", dashboardRouter);
 app.use("/profiles", profileRouter);
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use("/evaluation", evaluationRouter);
