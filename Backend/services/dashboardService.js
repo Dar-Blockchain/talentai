@@ -191,81 +191,92 @@ module.exports.getJobAssessmentResultsGroupedByJobId2 = async (page = 1, limit =
       throw new Error("Le paramètre limit doit être un nombre valide supérieur à 0.");
     }
 
-    // Ajouter un filtre dans $match avant de faire l'agrégation
-    const results = await JobAssessmentResult.aggregate([
+    // First, get the total count of unique jobIds for pagination
+    const totalResults = await JobAssessmentResult.aggregate([
       {
         $match: {
-          // Par exemple, vous pouvez filtrer par `timestamp`, `assessmentType`, etc.
-          assessmentType: "job"  // Filtrer seulement les évaluations de type "job"
-        },
+          assessmentType: "job"
+        }
       },
       {
         $group: {
-          _id: "$jobId",  // Regrouper par jobId
-          assessments: { $push: "$$ROOT" },  // Ajouter tous les résultats d'évaluation dans un tableau
-        },
+          _id: "$jobId"
+        }
       },
       {
-        $skip: skip,  // Pagination: sauter les résultats précédents
+        $count: "total"
+      }
+    ]);
+
+    const totalGroups = totalResults.length > 0 ? totalResults[0].total : 0;
+
+    // Main aggregation pipeline
+    const results = await JobAssessmentResult.aggregate([
+      {
+        $match: {
+          assessmentType: "job"
+        }
       },
       {
-        $limit: limit,  // Limiter le nombre de résultats
+        $group: {
+          _id: "$jobId",
+          assessments: { $push: "$$ROOT" },
+          assessmentCount: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { _id: -1 } // Sort by jobId descending
+      },
+      {
+        $skip: skip
+      },
+      {
+        $limit: limit
       },
       {
         $lookup: {
-          from: "posts",  // Joindre la collection des jobs (Post)
-          localField: "_id",  // `jobId` correspond à `_id` dans le groupement
-          foreignField: "_id",  // Cherche le même `_id` dans la collection "posts"
-          as: "jobDetails",  // Renommer le champ résultat de l'agrégation
-        },
-      },
-      {
-        $unwind: "$jobDetails",  // Décomposer l'array de jobDetails pour chaque groupe
+          from: "posts",
+          localField: "_id",
+          foreignField: "_id",
+          as: "jobDetails"
+        }
       },
       {
         $lookup: {
-          from: "profiles",  // Joindre la collection des candidats (Profile)
-          localField: "assessments.candidateId",  // Associer par `candidateId`
-          foreignField: "_id",  // Relier `candidateId` avec le `_id` de la collection "profiles"
-          as: "candidateDetails",
-        },
-      },
-      {
-        $unwind: "$candidateDetails",  // Décomposer l'array de candidateDetails
+          from: "profiles",
+          localField: "assessments.candidateId",
+          foreignField: "_id",
+          as: "candidateDetails"
+        }
       },
       {
         $lookup: {
-          from: "profiles",  // Joindre la collection des entreprises (Profile)
-          localField: "assessments.companyId",  // Associer par `companyId`
-          foreignField: "_id",  // Relier `companyId` avec le `_id` de la collection "profiles"
-          as: "companyDetails",
-        },
-      },
-      {
-        $unwind: "$companyDetails",  // Décomposer l'array de companyDetails
+          from: "profiles",
+          localField: "assessments.companyId",
+          foreignField: "_id",
+          as: "companyDetails"
+        }
       },
       {
         $project: {
           _id: 1,
           assessments: 1,
-          jobDetails: 1,
+          assessmentCount: 1,
+          jobDetails: { $arrayElemAt: ["$jobDetails", 0] },
           candidateDetails: 1,
-          companyDetails: 1,
-        },
-      },
+          companyDetails: 1
+        }
+      }
     ]);
 
-    // Compter le nombre total de groupes pour la pagination
-    const totalResults = await JobAssessmentResult.countDocuments({ assessmentType: "job" });
-
-    const totalPages = Math.ceil(totalResults / limit);
+    const totalPages = Math.ceil(totalGroups / limit);
 
     return {
       results,
       pagination: {
         currentPage: parseInt(page),
         totalPages,
-        totalResults,
+        totalResults: totalGroups,
       },
     };
   } catch (error) {
