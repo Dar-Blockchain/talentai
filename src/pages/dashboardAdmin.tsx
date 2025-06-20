@@ -164,6 +164,22 @@ interface User {
 
 interface Assessment {
     _id: string;
+    jobId?: {
+        _id: string;
+        title: string;
+        description: string;
+        requirements: string[];
+        responsibilities: string[];
+        location: string;
+        employmentType: string;
+        experienceLevel: string;
+        salary: {
+            min: number;
+            max: number;
+            currency: string;
+        };
+        createdAt: string;
+    };
     jobName?: string;
     jobDescription?: string;
     numberOfAttempts: number;
@@ -173,7 +189,22 @@ interface Assessment {
         _id: string;
         condidateId: string;
         companyId: string;
-        jobId: string;
+        jobId: {
+            _id: string;
+            title: string;
+            description: string;
+            requirements: string[];
+            responsibilities: string[];
+            location: string;
+            employmentType: string;
+            experienceLevel: string;
+            salary: {
+                min: number;
+                max: number;
+                currency: string;
+            };
+            createdAt: string;
+        };
         timestamp: string;
         assessmentType: string;
         numberOfQuestions: number;
@@ -199,6 +230,8 @@ interface Assessment {
             };
             skillProgression: any[];
         };
+        candidateDetails?: any;
+        companyDetails?: any;
     }>;
 }
 
@@ -829,7 +862,9 @@ const DashboardAdmin = () => {
                     <TableBody>
                         {assessments
                             .filter(assessment =>
-                                (!assessmentSearch || (assessment.jobName && assessment.jobName.toLowerCase().includes(assessmentSearch.toLowerCase())))
+                                (!assessmentSearch || 
+                                 (assessment.jobId?.title && assessment.jobId.title.toLowerCase().includes(assessmentSearch.toLowerCase())) ||
+                                 (assessment.jobName && assessment.jobName.toLowerCase().includes(assessmentSearch.toLowerCase())))
                             )
                             .slice(assessmentsPage * assessmentsRowsPerPage, assessmentsPage * assessmentsRowsPerPage + assessmentsRowsPerPage)
                             .map((assessment) => (
@@ -837,17 +872,29 @@ const DashboardAdmin = () => {
                                     <TableCell>
                                         <Box>
                                             <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                                {assessment.jobName || 'Unnamed Job'}
+                                                {assessment.jobId?.title || assessment.jobName || 'Unnamed Job'}
                                             </Typography>
                                             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                                                 Job ID: {assessment._id}
                                             </Typography>
+                                            {assessment.jobId?.location && (
+                                                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                                                    📍 {assessment.jobId.location}
+                                                </Typography>
+                                            )}
                                         </Box>
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                            {assessment.jobDescription || 'No description available'}
+                                            {assessment.jobId?.description || assessment.jobDescription || 'No description available'}
                                         </Typography>
+                                        {assessment.jobId?.employmentType && (
+                                            <Chip 
+                                                label={assessment.jobId.employmentType} 
+                                                size="small" 
+                                                sx={{ mt: 1, textTransform: 'capitalize' }}
+                                            />
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2">
@@ -892,7 +939,9 @@ const DashboardAdmin = () => {
                     rowsPerPageOptions={[5, 10, 25]}
                     component="div"
                     count={assessments.filter(assessment =>
-                        (!assessmentSearch || (assessment.jobName && assessment.jobName.toLowerCase().includes(assessmentSearch.toLowerCase())))
+                        (!assessmentSearch || 
+                         (assessment.jobId?.title && assessment.jobId.title.toLowerCase().includes(assessmentSearch.toLowerCase())) ||
+                         (assessment.jobName && assessment.jobName.toLowerCase().includes(assessmentSearch.toLowerCase())))
                     ).length}
                     rowsPerPage={assessmentsRowsPerPage}
                     page={assessmentsPage}
@@ -1083,13 +1132,39 @@ const DashboardAdmin = () => {
                             <Typography variant="h6" sx={{ mb: 2 }}>Job Information</Typography>
                             <Stack spacing={2}>
                                 <Box>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Job Name</Typography>
-                                    <Typography variant="body1">{selectedAssessment.jobName || 'Unnamed Job'}</Typography>
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Job Title</Typography>
+                                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                        {selectedAssessment.jobId?.title || selectedAssessment.jobName || 'Unnamed Job'}
+                                    </Typography>
                                 </Box>
                                 <Box>
                                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>Job Description</Typography>
-                                    <Typography variant="body1">{selectedAssessment.jobDescription || 'No description available'}</Typography>
+                                    <Typography variant="body1">
+                                        {selectedAssessment.jobId?.description || selectedAssessment.jobDescription || 'No description available'}
+                                    </Typography>
                                 </Box>
+                                {selectedAssessment.jobId?.location && (
+                                    <Box>
+                                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>Location</Typography>
+                                        <Typography variant="body1">📍 {selectedAssessment.jobId.location}</Typography>
+                                    </Box>
+                                )}
+                                {selectedAssessment.jobId?.employmentType && (
+                                    <Box>
+                                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>Employment Type</Typography>
+                                        <Chip 
+                                            label={selectedAssessment.jobId.employmentType} 
+                                            size="small" 
+                                            sx={{ textTransform: 'capitalize' }}
+                                        />
+                                    </Box>
+                                )}
+                                {selectedAssessment.jobId?.experienceLevel && (
+                                    <Box>
+                                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>Experience Level</Typography>
+                                        <Typography variant="body1">{selectedAssessment.jobId.experienceLevel}</Typography>
+                                    </Box>
+                                )}
                                 <Box>
                                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>Job ID</Typography>
                                     <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>{selectedAssessment._id}</Typography>
@@ -1117,6 +1192,14 @@ const DashboardAdmin = () => {
                                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>Assessment Type</Typography>
                                     <Typography variant="body1">Job Assessment</Typography>
                                 </Box>
+                                {selectedAssessment.jobId?.salary && (
+                                    <Box>
+                                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>Salary Range</Typography>
+                                        <Typography variant="body1">
+                                            {selectedAssessment.jobId.salary.min.toLocaleString()} - {selectedAssessment.jobId.salary.max.toLocaleString()} {selectedAssessment.jobId.salary.currency}
+                                        </Typography>
+                                    </Box>
+                                )}
                             </Stack>
                         </Box>
                     </Box>

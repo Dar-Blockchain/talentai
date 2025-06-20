@@ -217,9 +217,75 @@ module.exports.getJobAssessmentResultsGroupedByJobId2 = async (page = 1, limit =
         },
       },
       {
+        $lookup: {
+          from: "posts",
+          localField: "jobId",
+          foreignField: "_id",
+          as: "jobDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$jobDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "profiles",
+          localField: "condidateId",
+          foreignField: "_id",
+          as: "candidateDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$candidateDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "profiles",
+          localField: "companyId",
+          foreignField: "_id",
+          as: "companyDetails",
+        },
+      },
+      {
+        $unwind: {
+          path: "$companyDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
         $group: {
           _id: "$jobId",
-          assessments: { $push: "$$ROOT" },
+          assessments: { 
+            $push: {
+              _id: "$_id",
+              condidateId: "$condidateId",
+              companyId: "$companyId",
+              jobId: {
+                _id: "$jobDetails._id",
+                title: "$jobDetails.jobDetails.title",
+                description: "$jobDetails.jobDetails.description",
+                requirements: "$jobDetails.jobDetails.requirements",
+                responsibilities: "$jobDetails.jobDetails.responsibilities",
+                location: "$jobDetails.jobDetails.location",
+                employmentType: "$jobDetails.jobDetails.employmentType",
+                experienceLevel: "$jobDetails.jobDetails.experienceLevel",
+                salary: "$jobDetails.jobDetails.salary",
+                createdAt: "$jobDetails.createdAt",
+              },
+              timestamp: "$timestamp",
+              assessmentType: "$assessmentType",
+              numberOfQuestions: "$numberOfQuestions",
+              analysis: "$analysis",
+              candidateDetails: "$candidateDetails",
+              companyDetails: "$companyDetails",
+            }
+          },
           numberOfAttempts: { $sum: 1 },
           totalScore: { $sum: "$analysis.overallScore" },
           totalQuestions: { $sum: "$numberOfQuestions" },
@@ -234,9 +300,36 @@ module.exports.getJobAssessmentResultsGroupedByJobId2 = async (page = 1, limit =
       {
         $limit: limit,
       },
-    ])
-      .populate("jobId", "title description") // Populate the jobId field with job details
-      .exec();
+      {
+        $project: {
+          _id: 1,
+          jobId: {
+            _id: { $arrayElemAt: ["$assessments.jobId._id", 0] },
+            title: { $arrayElemAt: ["$assessments.jobId.title", 0] },
+            description: { $arrayElemAt: ["$assessments.jobId.description", 0] },
+            requirements: { $arrayElemAt: ["$assessments.jobId.requirements", 0] },
+            responsibilities: { $arrayElemAt: ["$assessments.jobId.responsibilities", 0] },
+            location: { $arrayElemAt: ["$assessments.jobId.location", 0] },
+            employmentType: { $arrayElemAt: ["$assessments.jobId.employmentType", 0] },
+            experienceLevel: { $arrayElemAt: ["$assessments.jobId.experienceLevel", 0] },
+            salary: { $arrayElemAt: ["$assessments.jobId.salary", 0] },
+            createdAt: { $arrayElemAt: ["$assessments.jobId.createdAt", 0] },
+          },
+          jobName: { $arrayElemAt: ["$assessments.jobId.title", 0] },
+          jobDescription: { $arrayElemAt: ["$assessments.jobId.description", 0] },
+          numberOfAttempts: 1,
+          averageScore: {
+            $cond: {
+              if: { $gt: ["$numberOfAttempts", 0] },
+              then: { $round: [{ $divide: ["$totalScore", "$numberOfAttempts"] }, 2] },
+              else: 0,
+            },
+          },
+          totalQuestions: 1,
+          assessments: 1,
+        },
+      },
+    ]);
 
     const totalPages = Math.ceil(totalGroups / limit);
 
