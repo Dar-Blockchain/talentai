@@ -649,18 +649,7 @@ const DashboardAdmin = () => {
                         <MenuItem value="Admin">Admin</MenuItem>
                     </Select>
                 </FormControl>
-                <FormControl size="small" sx={{ minWidth: 140 }}>
-                    <InputLabel>Status</InputLabel>
-                    <Select
-                        value={userStatusFilter}
-                        label="Status"
-                        onChange={e => setUserStatusFilter(e.target.value)}
-                    >
-                        <MenuItem value="">All</MenuItem>
-                        <MenuItem value="verified">Verified</MenuItem>
-                        <MenuItem value="pending">Pending</MenuItem>
-                    </Select>
-                </FormControl>
+
                 <Button
                     variant="outlined"
                     color="secondary"
@@ -671,7 +660,7 @@ const DashboardAdmin = () => {
                 </Button>
             </StyledCard>
 
-        
+
             <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
                 <Table>
                     <TableHead>
@@ -822,19 +811,7 @@ const DashboardAdmin = () => {
                         <MenuItem value="personality">Personality</MenuItem>
                     </Select>
                 </FormControl>
-                <FormControl size="small" sx={{ minWidth: 140 }}>
-                    <InputLabel>Status</InputLabel>
-                    <Select
-                        value={assessmentStatusFilter}
-                        label="Status"
-                        onChange={e => setAssessmentStatusFilter(e.target.value)}
-                    >
-                        <MenuItem value="">All</MenuItem>
-                        <MenuItem value="active">Active</MenuItem>
-                        <MenuItem value="inactive">Inactive</MenuItem>
-                        <MenuItem value="draft">Draft</MenuItem>
-                    </Select>
-                </FormControl>
+
                 <Button
                     variant="outlined"
                     color="secondary"
