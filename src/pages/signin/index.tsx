@@ -141,6 +141,8 @@ export default function SignIn() {
                 if (!hasProfile) {
                   // If no return URL, go to preferences
                   router.push("/preferences");
+                } else if (profileData.type === 'Admin') {
+                  router.push("/dashboardAdmin");
                 } else if (profileData.type === 'Candidate') {
                   router.push("/dashboardCandidate");
                 } else if (profileData.type === 'Company') {
