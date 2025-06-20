@@ -262,6 +262,7 @@ const Post = require('../models/PostModel');
 const Feedback = require('../models/feedbackModel');
 const Bid = require('../models/BidModel');
 const Resume = require('../models/resumeSchema');
+const Profile = require('../models/ProfileModel');
 
 module.exports.getCounts = async () => {
   try {
@@ -273,6 +274,32 @@ module.exports.getCounts = async () => {
     const bidCount = await Bid.countDocuments();
     const resumeCount = await Resume.countDocuments();
 
+    // Agrégation pour compter toutes les compétences (hardSkills et softSkills)
+    const totalSkillsResult = await Profile.aggregate([
+      {
+        $project: {
+          totalHardSkills: { $size: "$skills" },
+          totalSoftSkills: { $size: "$softSkills" },
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalHardSkillsCount: { $sum: "$totalHardSkills" },
+          totalSoftSkillsCount: { $sum: "$totalSoftSkills" },
+          totalSkillsCount: { $sum: { $add: ["$totalHardSkills", "$totalSoftSkills"] } }
+        }
+      }
+    ]);
+
+    const totalHardSkillsCount = totalSkillsResult.length > 0 ? totalSkillsResult[0].totalHardSkillsCount : 0;
+    const totalSoftSkillsCount = totalSkillsResult.length > 0 ? totalSkillsResult[0].totalSoftSkillsCount : 0;
+    const totalSkillsCount = totalSkillsResult.length > 0 ? totalSkillsResult[0].totalSkillsCount : 0;
+
+    // Calcul des pourcentages
+    const hardSkillsPercentage = totalSkillsCount > 0 ? (totalHardSkillsCount / totalSkillsCount) * 100 : 0;
+    const softSkillsPercentage = totalSkillsCount > 0 ? (totalSoftSkillsCount / totalSkillsCount) * 100 : 0;
+
     // Calcul de la moyenne de analysis.overallScore dans JobAssessmentResult
     const avgOverallScoreResult = await JobAssessmentResult.aggregate([
       {
@@ -283,7 +310,6 @@ module.exports.getCounts = async () => {
       }
     ]);
 
-    // Vérification si des résultats sont trouvés, sinon on assigne 0
     const avgOverallScore = avgOverallScoreResult.length > 0 ? avgOverallScoreResult[0].avgOverallScore : 0;
 
     // Retourner les résultats
@@ -294,9 +320,15 @@ module.exports.getCounts = async () => {
       feedback: feedbackCount,
       bids: bidCount,
       resumes: resumeCount,
-      avgOverallScore: avgOverallScore,  // Ajout de la moyenne des scores
+      avgOverallScore: avgOverallScore,  // Moyenne des scores
+      totalSkills: totalSkillsCount,     // Nombre total de compétences
+      totalHardSkills: totalHardSkillsCount, // Nombre total de hard skills
+      totalSoftSkills: totalSoftSkillsCount, // Nombre total de soft skills
+      hardSkillsPercentage: hardSkillsPercentage, // Pourcentage de hard skills
+      softSkillsPercentage: softSkillsPercentage, // Pourcentage de soft skills
     };
   } catch (error) {
     throw new Error('Error fetching counts: ' + error.message);
   }
 };
+
