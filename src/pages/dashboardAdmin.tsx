@@ -152,6 +152,8 @@ interface User {
     isVerified: boolean;
     createdAt: string;
     lastLogin?: string;
+    ip?: string;
+    Localisation?: string;
     profile?: {
         firstName?: string;
         lastName?: string;
@@ -698,7 +700,6 @@ const DashboardAdmin = () => {
                 </Button>
             </StyledCard>
 
-
             <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
                 <Table>
                     <TableHead>
@@ -706,6 +707,7 @@ const DashboardAdmin = () => {
                             <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Role</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Location</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Joined</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Last Login</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
@@ -755,6 +757,27 @@ const DashboardAdmin = () => {
                                         size="small"
                                         icon={user.isVerified ? <CheckCircleIcon /> : <PendingIcon />}
                                     />
+                                </TableCell>
+                                <TableCell>
+                                    <Box>
+                                        {user.Localisation ? (
+                                            <>
+                                                <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                    <LocationIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                                    {user.Localisation}
+                                                </Typography>
+                                                {user.ip && (
+                                                    <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.7rem' }}>
+                                                        IP: {user.ip}
+                                                    </Typography>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <Typography variant="body2" sx={{ color: 'text.secondary', fontStyle: 'italic' }}>
+                                                No location data
+                                            </Typography>
+                                        )}
+                                    </Box>
                                 </TableCell>
                                 <TableCell>
                                     <Typography variant="body2">
