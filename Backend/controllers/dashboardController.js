@@ -30,3 +30,17 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (req, res) => {
     res.status(500).json({ message: error.message || "Erreur lors de la récupération des résultats d'évaluation des jobs" });
   }
 };
+
+const countsService = require('../services/dashboardService');
+
+// Fonction pour gérer la requête et envoyer les résultats
+module.exports.getCounts = async (req, res) => {
+  try {
+    // Appeler la fonction de service pour obtenir les résultats
+    const counts = await countsService.getCounts();
+    res.status(200).json({ success: true, data: counts });
+  } catch (error) {
+    // En cas d'erreur, renvoyer un message d'erreur
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

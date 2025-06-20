@@ -257,3 +257,46 @@ module.exports.getJobAssessmentResultsGroupedByJobId = async (page = 1, limit = 
     );
   }
 };
+
+const Post = require('../models/PostModel');
+const Feedback = require('../models/feedbackModel');
+const Bid = require('../models/BidModel');
+const Resume = require('../models/resumeSchema');
+
+module.exports.getCounts = async () => {
+  try {
+    // Comptage des documents dans chaque collection
+    const userCount = await User.countDocuments();
+    const postCount = await Post.countDocuments();
+    const jobAssessmentCount = await JobAssessmentResult.countDocuments();
+    const feedbackCount = await Feedback.countDocuments();
+    const bidCount = await Bid.countDocuments();
+    const resumeCount = await Resume.countDocuments();
+
+    // Calcul de la moyenne de analysis.overallScore dans JobAssessmentResult
+    const avgOverallScoreResult = await JobAssessmentResult.aggregate([
+      {
+        $group: {
+          _id: null,  // Pas besoin de grouper par un champ spécifique
+          avgOverallScore: { $avg: "$analysis.overallScore" },
+        }
+      }
+    ]);
+
+    // Vérification si des résultats sont trouvés, sinon on assigne 0
+    const avgOverallScore = avgOverallScoreResult.length > 0 ? avgOverallScoreResult[0].avgOverallScore : 0;
+
+    // Retourner les résultats
+    return {
+      users: userCount,
+      posts: postCount,
+      jobAssessments: jobAssessmentCount,
+      feedback: feedbackCount,
+      bids: bidCount,
+      resumes: resumeCount,
+      avgOverallScore: avgOverallScore,  // Ajout de la moyenne des scores
+    };
+  } catch (error) {
+    throw new Error('Error fetching counts: ' + error.message);
+  }
+};
