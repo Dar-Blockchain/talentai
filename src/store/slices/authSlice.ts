@@ -35,11 +35,12 @@ export const registerUser = createAsyncThunk(
 
 export const verifyOTP = createAsyncThunk(
   'auth/verifyOTP',
-  async ({ email, otp }: { email: string; otp: string }, { rejectWithValue }) => {
+  async ({ email, otp, location }: { email: string; otp: string; location?: any }, { rejectWithValue }) => {
     try {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/verify-otp`, { 
         email, 
-        otp 
+        otp,
+        location 
       });
       // Store token in localStorage
       if (response.data.token) {

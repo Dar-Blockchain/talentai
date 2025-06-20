@@ -82,10 +82,31 @@ export default function SignIn() {
     if (!code || !email) return;
     setError("");
     try {
+      // Get user location using ipinfo
+      let userLocation = null;
+      try {
+        const ipResponse = await fetch('https://ipinfo.io/json');
+        if (ipResponse.ok) {
+          const ipData = await ipResponse.json();
+          userLocation = {
+            ip: ipData.ip,
+            city: ipData.city,
+            region: ipData.region,
+            country: ipData.country,
+            timezone: ipData.timezone,
+            loc: ipData.loc // latitude,longitude
+          };
+        }
+      } catch (locationError) {
+        console.warn('Could not fetch location:', locationError);
+        // Continue without location if ipinfo fails
+      }
+
       const response = await dispatch(
         verifyOTP({
           email: email.toLowerCase().trim(),
           otp: code,
+          location: userLocation // Include location in the verification request
         })
       ).unwrap();
 

@@ -19,9 +19,9 @@ module.exports.register = async (req, res) => {
 // Vérification OTP
 module.exports.verifyOTP = async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const { email, otp, location } = req.body;
 
-    const result = await authService.verifyUserOTP(email, otp);
+    const result = await authService.verifyUserOTP(email, otp, location);
 
     res.cookie("jwt_token", result.token, {
       httpOnly: false,
