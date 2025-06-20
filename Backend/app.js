@@ -11,6 +11,7 @@ const http = require("http");
 const connectDB = require("./config/database");
 
 const authRouter = require("./routes/authRouter");
+const usersRouter = require("./routes/usersRouter");
 const agentIARouter = require("./routes/agentIARouter");
 const profileRouter = require("./routes/profileRouter");
 const evaluationRouter = require("./routes/evaluationRouter");
@@ -29,12 +30,12 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(blockPostmanRequests);
+//app.use(blockPostmanRequests);
 app.use(express.json());
 app.use(
   cors({
-   // origin: "https://app.talentai.bid", // Permet toutes les origines
-     origin:  "*", // Permet toutes les origines
+    //origin: "https://app.talentai.bid", // Permet toutes les origines
+      origin:  "*", // Permet toutes les origines
     methods: "GET, POST, PUT, DELETE, PATCH",
     allowedHeaders:
       "Origin, X-Requested-With, Content-Type, Accept, Authorization",
@@ -48,6 +49,7 @@ app.use(cookieParser());
 
 // Routes
 app.use("/auth", authRouter);
+app.use("/users", usersRouter);
 app.use("/profiles", profileRouter);
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use("/evaluation", evaluationRouter);
