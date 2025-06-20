@@ -787,10 +787,9 @@ Provide detailed, actionable feedback in JSON format only.`,
           experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
           ScoreTest: skill.confidenceScore,
           Levelconfirmed:
-            skill.demonstratedProficiency === 5 && skill.confidenceScore > 75
-              ? 5
-              : profLevel - 1,
-        })),
+          skill.demonstratedProficiency === 5 && skill.confidenceScore > 75
+            ? 5
+            : skill.demonstratedProficiency - 1,          })),
       });
     }
 
@@ -811,10 +810,9 @@ Provide detailed, actionable feedback in JSON format only.`,
             experienceLevel: getExperienceLevel(s.demonstratedProficiency),
             ScoreTest: s.confidenceScore,
             Levelconfirmed:
-              skill.demonstratedProficiency === 5 && skill.confidenceScore > 75
-                ? 5
-                : profLevel - 1,
-          })),
+            s.demonstratedProficiency === 5 && s.confidenceScore > 75
+              ? 5
+              : s.demonstratedProficiency - 1,            })),
         },
         { new: true }
       );

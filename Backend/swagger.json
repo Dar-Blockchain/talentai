@@ -110,6 +110,35 @@
                   "otp": {
                     "type": "string",
                     "example": "123456"
+                  },
+                  "location": {
+                    "type": "object",
+                    "properties": {
+                      "ip": {
+                        "type": "string",
+                        "example": "192.168.1.1"
+                      },
+                      "city": {
+                        "type": "string",
+                        "example": "New York"
+                      },
+                      "region": {
+                        "type": "string",
+                        "example": "NY"
+                      },
+                      "country": {
+                        "type": "string",
+                        "example": "US"
+                      },
+                      "timezone": {
+                        "type": "string",
+                        "example": "America/New_York"
+                      },
+                      "loc": {
+                        "type": "string",
+                        "example": "40.7128,-74.0060"
+                      }
+                    }
                   }
                 },
                 "required": ["email", "otp"]

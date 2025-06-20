@@ -77,7 +77,7 @@ module.exports.registerUser = async (email) => {
 };
 
 // Service de vérification OTP
-module.exports.verifyUserOTP = async (email, otp) => {
+module.exports.verifyUserOTP = async (email, otp, location = null) => {
   const user = await User.findOne({ email });  
   
   if (!user) {
@@ -106,6 +106,13 @@ module.exports.verifyUserOTP = async (email, otp) => {
   user.otp = undefined;
   user.lastLogin = new Date();
   user.trafficCounter = user.trafficCounter + 1;
+  
+  // Save location data if provided
+  if (location) {
+    user.ip = location.ip;
+    user.Localisation = `${location.city}, ${location.region}, ${location.country}`;
+  }
+  
   await user.save();
 
   // Générer le token JWT
