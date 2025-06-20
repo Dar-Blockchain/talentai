@@ -74,6 +74,7 @@ import {
 import { useRouter } from 'next/router';
 import { signOut } from 'next-auth/react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import WorldMap from '../components/WorldMap';
 
 // Constants
 const GREEN_MAIN = '#8310FF';
@@ -248,15 +249,6 @@ interface DashboardStats {
 }
 
 // Mock data for charts
-const userGrowthData = [
-    { month: 'Jan', users: 120, assessments: 15 },
-    { month: 'Feb', users: 180, assessments: 22 },
-    { month: 'Mar', users: 250, assessments: 28 },
-    { month: 'Apr', users: 320, assessments: 35 },
-    { month: 'May', users: 400, assessments: 42 },
-    { month: 'Jun', users: 480, assessments: 48 },
-];
-
 const assessmentPerformanceData = [
     { name: 'Technical', value: 45, color: '#8884d8' },
     { name: 'Soft Skills', value: 30, color: '#82ca9d' },
@@ -294,8 +286,15 @@ const DashboardAdmin = () => {
     });
     const [users, setUsers] = useState<User[]>([]);
     const [assessments, setAssessments] = useState<Assessment[]>([]);
+    const [allUsersForMap, setAllUsersForMap] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [skillDistribution, setSkillDistribution] = useState([
+        { name: 'Hard Skills', value: 0, color: '#8884d8' },
+        { name: 'Soft Skills', value: 0, color: '#82ca9d' }
+    ]);
+    const [userGrowthData, setUserGrowthData] = useState<any[]>([]);
+    const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
     // Dialog states
     const [userDialogOpen, setUserDialogOpen] = useState(false);
@@ -326,11 +325,14 @@ const DashboardAdmin = () => {
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            await Promise.all([
+            const [allUsers] = await Promise.all([
+                fetchAllUsersForMap(),
                 fetchStats(),
+                fetchUserGrowthData(),
                 fetchUsers(usersPage + 1, usersRowsPerPage),
                 fetchAssessments()
             ]);
+            setAllUsersForMap(allUsers);
         } catch (err) {
             setError('Failed to fetch dashboard data');
             console.error('Error fetching dashboard data:', err);
@@ -340,16 +342,82 @@ const DashboardAdmin = () => {
     };
 
     const fetchStats = async () => {
-        // Mock data - replace with actual API call
-        setStats({
-            totalUsers: 1247,
-            totalAssessments: 48,
-            activeAssessments: 35,
-            totalAttempts: 2847,
-            averageScore: 78.5,
-            userGrowth: 12.5,
-            assessmentGrowth: 8.3
-        });
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getCounts`);
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            const data = await res.json();
+            if (data.success && data.data) {
+                setStats({
+                    totalUsers: data.data.users || 0,
+                    totalAssessments: data.data.jobAssessments || 0,
+                    activeAssessments: data.data.jobAssessments || 0, // Using jobAssessments as active assessments
+                    totalAttempts: data.data.resumes || 0, // Using resumes instead of attempts
+                    averageScore: data.data.avgOverallScore || 0,
+                    userGrowth: 12.5, // Mock growth percentage
+                    assessmentGrowth: 8.3 // Mock growth percentage
+                });
+                
+                // Update skill distribution
+                setSkillDistribution([
+                    { name: 'Hard Skills', value: data.data.hardSkillsPercentage || 0, color: '#8884d8' },
+                    { name: 'Soft Skills', value: data.data.softSkillsPercentage || 0, color: '#82ca9d' }
+                ]);
+            }
+        } catch (err) {
+            console.error('Error fetching stats:', err);
+            // Set default values if there's an error
+            setStats({
+                totalUsers: 0,
+                totalAssessments: 0,
+                activeAssessments: 0,
+                totalAttempts: 0,
+                averageScore: 0,
+                userGrowth: 0,
+                assessmentGrowth: 0
+            });
+        }
+    };
+
+    const fetchAllUsersForMap = async () => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getAllUsers?limit=1000`);
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            const data = await res.json();
+            if (data && data.users) {
+                return data.users;
+            }
+            return [];
+        } catch (err) {
+            console.error('Error fetching all users for map:', err);
+            return [];
+        }
+    };
+
+    const fetchUserGrowthData = async () => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getUserCountsByDay`);
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            const data = await res.json();
+            if (data.success && data.data) {
+                // Process the data for the chart
+                const processedData = data.data.map((item: any) => ({
+                    day: new Date(item.day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                    users: item.userCount,
+                    assessments: 0, // We'll add assessment data later if available
+                    fullDate: item.day
+                }));
+                setUserGrowthData(processedData);
+            }
+        } catch (err) {
+            console.error('Error fetching user growth data:', err);
+            setUserGrowthData([]);
+        }
     };
 
     const fetchUsers = async (page = 1, limit = 10, username = '', email = '', role = '', status = '') => {
@@ -483,6 +551,342 @@ const DashboardAdmin = () => {
         }
     };
 
+    // Process user location data for world map
+    const processUserLocations = () => {
+        const locationMap = new Map<string, { count: number; users: any[] }>();
+        
+        allUsersForMap.forEach(user => {
+            if (user.Localisation) {
+                // Extract country from location string (e.g., "Tunis, Tunis Governorate, TN" -> "TN")
+                const locationParts = user.Localisation.split(',').map(part => part.trim());
+                let country = locationParts[locationParts.length - 1] || 'Unknown';
+                
+                // Handle common country variations and codes
+                if (country === 'US' || country === 'USA') {
+                    country = 'United States of America';
+                } else if (country === 'UK' || country === 'GB') {
+                    country = 'United Kingdom';
+                } else if (country === 'CA') {
+                    country = 'Canada';
+                } else if (country === 'FR') {
+                    country = 'France';
+                } else if (country === 'DE') {
+                    country = 'Germany';
+                } else if (country === 'ES') {
+                    country = 'Spain';
+                } else if (country === 'IT') {
+                    country = 'Italy';
+                } else if (country === 'JP') {
+                    country = 'Japan';
+                } else if (country === 'CN') {
+                    country = 'China';
+                } else if (country === 'IN') {
+                    country = 'India';
+                } else if (country === 'AU') {
+                    country = 'Australia';
+                } else if (country === 'BR') {
+                    country = 'Brazil';
+                } else if (country === 'AR') {
+                    country = 'Argentina';
+                } else if (country === 'ZA') {
+                    country = 'South Africa';
+                } else if (country === 'EG') {
+                    country = 'Egypt';
+                } else if (country === 'RU') {
+                    country = 'Russia';
+                } else if (country === 'TN') {
+                    country = 'Tunisia';
+                } else if (country === 'MA') {
+                    country = 'Morocco';
+                } else if (country === 'DZ') {
+                    country = 'Algeria';
+                } else if (country === 'LY') {
+                    country = 'Libya';
+                } else if (country === 'SA') {
+                    country = 'Saudi Arabia';
+                } else if (country === 'AE') {
+                    country = 'United Arab Emirates';
+                } else if (country === 'QA') {
+                    country = 'Qatar';
+                } else if (country === 'KW') {
+                    country = 'Kuwait';
+                } else if (country === 'BH') {
+                    country = 'Bahrain';
+                } else if (country === 'OM') {
+                    country = 'Oman';
+                } else if (country === 'JO') {
+                    country = 'Jordan';
+                } else if (country === 'LB') {
+                    country = 'Lebanon';
+                } else if (country === 'SY') {
+                    country = 'Syria';
+                } else if (country === 'IQ') {
+                    country = 'Iraq';
+                } else if (country === 'IR') {
+                    country = 'Iran';
+                } else if (country === 'TR') {
+                    country = 'Turkey';
+                } else if (country === 'IL') {
+                    country = 'Israel';
+                } else if (country === 'PS') {
+                    country = 'Palestine';
+                } else if (country === 'YE') {
+                    country = 'Yemen';
+                } else if (country === 'PK') {
+                    country = 'Pakistan';
+                } else if (country === 'AF') {
+                    country = 'Afghanistan';
+                } else if (country === 'BD') {
+                    country = 'Bangladesh';
+                } else if (country === 'LK') {
+                    country = 'Sri Lanka';
+                } else if (country === 'NP') {
+                    country = 'Nepal';
+                } else if (country === 'BT') {
+                    country = 'Bhutan';
+                } else if (country === 'MV') {
+                    country = 'Maldives';
+                } else if (country === 'MM') {
+                    country = 'Myanmar';
+                } else if (country === 'TH') {
+                    country = 'Thailand';
+                } else if (country === 'VN') {
+                    country = 'Vietnam';
+                } else if (country === 'LA') {
+                    country = 'Laos';
+                } else if (country === 'KH') {
+                    country = 'Cambodia';
+                } else if (country === 'MY') {
+                    country = 'Malaysia';
+                } else if (country === 'SG') {
+                    country = 'Singapore';
+                } else if (country === 'ID') {
+                    country = 'Indonesia';
+                } else if (country === 'PH') {
+                    country = 'Philippines';
+                } else if (country === 'TW') {
+                    country = 'Taiwan';
+                } else if (country === 'KR') {
+                    country = 'South Korea';
+                } else if (country === 'KP') {
+                    country = 'North Korea';
+                } else if (country === 'MN') {
+                    country = 'Mongolia';
+                } else if (country === 'KZ') {
+                    country = 'Kazakhstan';
+                } else if (country === 'UZ') {
+                    country = 'Uzbekistan';
+                } else if (country === 'KG') {
+                    country = 'Kyrgyzstan';
+                } else if (country === 'TJ') {
+                    country = 'Tajikistan';
+                } else if (country === 'TM') {
+                    country = 'Turkmenistan';
+                } else if (country === 'AZ') {
+                    country = 'Azerbaijan';
+                } else if (country === 'GE') {
+                    country = 'Georgia';
+                } else if (country === 'AM') {
+                    country = 'Armenia';
+                } else if (country === 'BY') {
+                    country = 'Belarus';
+                } else if (country === 'UA') {
+                    country = 'Ukraine';
+                } else if (country === 'MD') {
+                    country = 'Moldova';
+                } else if (country === 'RO') {
+                    country = 'Romania';
+                } else if (country === 'BG') {
+                    country = 'Bulgaria';
+                } else if (country === 'GR') {
+                    country = 'Greece';
+                } else if (country === 'HR') {
+                    country = 'Croatia';
+                } else if (country === 'SI') {
+                    country = 'Slovenia';
+                } else if (country === 'HU') {
+                    country = 'Hungary';
+                } else if (country === 'SK') {
+                    country = 'Slovakia';
+                } else if (country === 'CZ') {
+                    country = 'Czech Republic';
+                } else if (country === 'PL') {
+                    country = 'Poland';
+                } else if (country === 'LT') {
+                    country = 'Lithuania';
+                } else if (country === 'LV') {
+                    country = 'Latvia';
+                } else if (country === 'EE') {
+                    country = 'Estonia';
+                } else if (country === 'FI') {
+                    country = 'Finland';
+                } else if (country === 'SE') {
+                    country = 'Sweden';
+                } else if (country === 'NO') {
+                    country = 'Norway';
+                } else if (country === 'DK') {
+                    country = 'Denmark';
+                } else if (country === 'NL') {
+                    country = 'Netherlands';
+                } else if (country === 'BE') {
+                    country = 'Belgium';
+                } else if (country === 'CH') {
+                    country = 'Switzerland';
+                } else if (country === 'AT') {
+                    country = 'Austria';
+                } else if (country === 'PT') {
+                    country = 'Portugal';
+                } else if (country === 'IE') {
+                    country = 'Ireland';
+                } else if (country === 'IS') {
+                    country = 'Iceland';
+                } else if (country === 'MT') {
+                    country = 'Malta';
+                } else if (country === 'CY') {
+                    country = 'Cyprus';
+                } else if (country === 'LU') {
+                    country = 'Luxembourg';
+                } else if (country === 'MC') {
+                    country = 'Monaco';
+                } else if (country === 'LI') {
+                    country = 'Liechtenstein';
+                } else if (country === 'AD') {
+                    country = 'Andorra';
+                } else if (country === 'SM') {
+                    country = 'San Marino';
+                } else if (country === 'VA') {
+                    country = 'Vatican City';
+                } else if (country === 'MX') {
+                    country = 'Mexico';
+                } else if (country === 'GT') {
+                    country = 'Guatemala';
+                } else if (country === 'BZ') {
+                    country = 'Belize';
+                } else if (country === 'SV') {
+                    country = 'El Salvador';
+                } else if (country === 'HN') {
+                    country = 'Honduras';
+                } else if (country === 'NI') {
+                    country = 'Nicaragua';
+                } else if (country === 'CR') {
+                    country = 'Costa Rica';
+                } else if (country === 'PA') {
+                    country = 'Panama';
+                } else if (country === 'CO') {
+                    country = 'Colombia';
+                } else if (country === 'VE') {
+                    country = 'Venezuela';
+                } else if (country === 'GY') {
+                    country = 'Guyana';
+                } else if (country === 'SR') {
+                    country = 'Suriname';
+                } else if (country === 'GF') {
+                    country = 'French Guiana';
+                } else if (country === 'EC') {
+                    country = 'Ecuador';
+                } else if (country === 'PE') {
+                    country = 'Peru';
+                } else if (country === 'BO') {
+                    country = 'Bolivia';
+                } else if (country === 'PY') {
+                    country = 'Paraguay';
+                } else if (country === 'UY') {
+                    country = 'Uruguay';
+                } else if (country === 'CL') {
+                    country = 'Chile';
+                } else if (country === 'NZ') {
+                    country = 'New Zealand';
+                } else if (country === 'FJ') {
+                    country = 'Fiji';
+                } else if (country === 'PG') {
+                    country = 'Papua New Guinea';
+                } else if (country === 'NC') {
+                    country = 'New Caledonia';
+                } else if (country === 'VU') {
+                    country = 'Vanuatu';
+                } else if (country === 'SB') {
+                    country = 'Solomon Islands';
+                } else if (country === 'TO') {
+                    country = 'Tonga';
+                } else if (country === 'WS') {
+                    country = 'Samoa';
+                } else if (country === 'KI') {
+                    country = 'Kiribati';
+                } else if (country === 'TV') {
+                    country = 'Tuvalu';
+                } else if (country === 'NR') {
+                    country = 'Nauru';
+                } else if (country === 'PW') {
+                    country = 'Palau';
+                } else if (country === 'MH') {
+                    country = 'Marshall Islands';
+                } else if (country === 'FM') {
+                    country = 'Micronesia';
+                } else if (country === 'CK') {
+                    country = 'Cook Islands';
+                } else if (country === 'NU') {
+                    country = 'Niue';
+                } else if (country === 'TK') {
+                    country = 'Tokelau';
+                } else if (country === 'AS') {
+                    country = 'American Samoa';
+                } else if (country === 'GU') {
+                    country = 'Guam';
+                } else if (country === 'MP') {
+                    country = 'Northern Mariana Islands';
+                } else if (country === 'PW') {
+                    country = 'Palau';
+                } else if (country === 'MH') {
+                    country = 'Marshall Islands';
+                } else if (country === 'FM') {
+                    country = 'Micronesia';
+                } else if (country === 'CK') {
+                    country = 'Cook Islands';
+                } else if (country === 'NU') {
+                    country = 'Niue';
+                } else if (country === 'TK') {
+                    country = 'Tokelau';
+                } else if (country === 'AS') {
+                    country = 'American Samoa';
+                } else if (country === 'GU') {
+                    country = 'Guam';
+                } else if (country === 'MP') {
+                    country = 'Northern Mariana Islands';
+                }
+                
+                if (locationMap.has(country)) {
+                    locationMap.get(country)!.count++;
+                    locationMap.get(country)!.users.push(user);
+                } else {
+                    locationMap.set(country, { count: 1, users: [user] });
+                }
+            }
+        });
+        
+        return Array.from(locationMap.entries()).map(([country, data]) => ({
+            country,
+            count: data.count,
+            users: data.users
+        }));
+    };
+
+    // Filter user growth data by month
+    const getFilteredUserGrowthData = () => {
+        if (selectedMonth === 'all') {
+            return userGrowthData;
+        }
+        
+        return userGrowthData.filter(item => {
+            const date = new Date(item.fullDate);
+            const month = date.getMonth() + 1; // getMonth() returns 0-11
+            const year = date.getFullYear();
+            const selectedMonthNum = parseInt(selectedMonth.split('-')[1]);
+            const selectedYear = parseInt(selectedMonth.split('-')[0]);
+            
+            return month === selectedMonthNum && year === selectedYear;
+        });
+    };
+
     // On filter change, fetch page 1 with new filters
     useEffect(() => {
         fetchUsers(1, usersRowsPerPage, userUsernameFilter, userEmailFilter, userRoleFilter, userStatusFilter);
@@ -509,12 +913,12 @@ const DashboardAdmin = () => {
                                 <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
                                     Total Users
                                 </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {/* <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                     <TrendingUpIcon sx={{ color: 'success.main', fontSize: 16, mr: 0.5 }} />
                                     <Typography variant="caption" sx={{ color: 'success.main' }}>
                                         +{stats.userGrowth}% this month
                                     </Typography>
-                                </Box>
+                                </Box> */}
                             </Box>
                             <PeopleIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
                         </Box>
@@ -531,12 +935,12 @@ const DashboardAdmin = () => {
                                 <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
                                     Total Assessments
                                 </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {/* <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                     <TrendingUpIcon sx={{ color: 'success.main', fontSize: 16, mr: 0.5 }} />
                                     <Typography variant="caption" sx={{ color: 'success.main' }}>
                                         +{stats.assessmentGrowth}% this month
                                     </Typography>
-                                </Box>
+                                </Box> */}
                             </Box>
                             <AssessmentIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
                         </Box>
@@ -551,14 +955,14 @@ const DashboardAdmin = () => {
                                     {stats.totalAttempts.toLocaleString()}
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                                    Total Attempts
+                                    Total Resumes
                                 </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {/* <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                     <CheckCircleIcon sx={{ color: 'success.main', fontSize: 16, mr: 0.5 }} />
                                     <Typography variant="caption" sx={{ color: 'success.main' }}>
                                         {stats.activeAssessments} active
                                     </Typography>
-                                </Box>
+                                </Box> */}
                             </Box>
                             <BarChartIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
                         </Box>
@@ -570,7 +974,7 @@ const DashboardAdmin = () => {
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Box>
                                 <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
-                                    {stats.averageScore}%
+                                    {stats.averageScore.toFixed(2)}%
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
                                     Average Score
@@ -592,44 +996,58 @@ const DashboardAdmin = () => {
             <Box sx={{
                 display: 'flex',
                 flexWrap: 'wrap',
-                gap: 3
+                gap: 3,
+                mb: 4
             }}>
                 <Box sx={{ flex: '1 1 600px', minWidth: 0 }}>
                     <StyledCard>
-                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                            User & Assessment Growth
-                        </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                User Growth
+                            </Typography>
+                            <FormControl size="small" sx={{ minWidth: 140 }}>
+                                <InputLabel>Filter by Month</InputLabel>
+                                <Select
+                                    value={selectedMonth}
+                                    label="Filter by Month"
+                                    onChange={(e) => setSelectedMonth(e.target.value)}
+                                >
+                                    <MenuItem value="all">All Time</MenuItem>
+                                    <MenuItem value="2025-05">May 2025</MenuItem>
+                                    <MenuItem value="2025-06">June 2025</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Box>
                         <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={userGrowthData}>
+                            <LineChart data={getFilteredUserGrowthData()}>
                                 <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="month" />
+                                <XAxis dataKey="day" />
                                 <YAxis />
                                 <RechartsTooltip />
                                 <Line type="monotone" dataKey="users" stroke="#8310FF" strokeWidth={2} name="Users" />
-                                <Line type="monotone" dataKey="assessments" stroke="#00C49F" strokeWidth={2} name="Assessments" />
                             </LineChart>
                         </ResponsiveContainer>
                     </StyledCard>
                 </Box>
 
-                <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
+                <Box sx={{ flex: '1 1 400px', minWidth: 0 }}>
                     <StyledCard>
                         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                            Assessment Types Distribution
+                            Skills Distribution
                         </Typography>
                         <ResponsiveContainer width="100%" height={300}>
                             <PieChart>
                                 <Pie
-                                    data={assessmentPerformanceData}
+                                    data={skillDistribution}
                                     cx="50%"
                                     cy="50%"
                                     labelLine={false}
-                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
                                     outerRadius={80}
                                     fill="#8884d8"
                                     dataKey="value"
                                 >
-                                    {assessmentPerformanceData.map((entry, index) => (
+                                    {skillDistribution.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                     ))}
                                 </Pie>
@@ -638,6 +1056,11 @@ const DashboardAdmin = () => {
                         </ResponsiveContainer>
                     </StyledCard>
                 </Box>
+            </Box>
+
+            {/* World Map */}
+            <Box sx={{ mb: 4 }}>
+                <WorldMap userLocations={processUserLocations()} totalUsers={stats.totalUsers} />
             </Box>
         </Box>
     );
