@@ -1,22 +1,33 @@
 // usersService.js
 const User = require("../models/UserModel");
 
-module.exports.getAllUsers = async (page = 1, limit = 10) => {
+module.exports.getAllUsers = async (searchQuery, page = 1, limit = 10) => {
   try {
     const skip = (page - 1) * limit;
 
-    // Récupérer les utilisateurs avec pagination et peupler les champs 'profile' et 'post'
-    const users = await User.find()
+    // Construire la requête de recherche avec plusieurs critères
+    let query = {};
+    if (searchQuery.username || searchQuery.email || searchQuery.role) {
+      query = {
+        $and: [
+          searchQuery.username ? { username: { $regex: searchQuery.username, $options: 'i' } } : {},
+          searchQuery.email ? { email: { $regex: searchQuery.email, $options: 'i' } } : {},
+          searchQuery.role ? { role: { $regex: searchQuery.role, $options: 'i' } } : {},
+        ]
+      };
+    }
+
+    // Récupérer les utilisateurs avec pagination, recherche et population des champs 'profile' et 'post'
+    const users = await User.find(query)
       .skip(skip)
-      .limit(parseInt(limit)) // Limiter les résultats
-      .populate('profile')    // Peupler le champ 'profile'
-      .populate('post')       // Peupler le champ 'post'
+      .limit(parseInt(limit))
+      .populate('profile')
+      .populate('post')
       .exec();
 
-    // Récupérer le nombre total d'utilisateurs pour calculer le nombre total de pages
-    const totalUsers = await User.countDocuments();
+    // Compter le nombre total d'utilisateurs en fonction du filtre de recherche
+    const totalUsers = await User.countDocuments(query);
 
-    // Calculer le nombre total de pages
     const totalPages = Math.ceil(totalUsers / limit);
 
     return {
@@ -28,6 +39,6 @@ module.exports.getAllUsers = async (page = 1, limit = 10) => {
       },
     };
   } catch (error) {
-    throw new Error("Erreur lors de la récupération des utilisateurs");
+    throw new Error("Erreur lors de la récupération des utilisateurs : " + error.message);
   }
 };
