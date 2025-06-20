@@ -29,7 +29,9 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-    role: { type: String, enum: ["Company", "Candidat"] },
+    ip: String,
+    Localisation: String,
+    role: { type: String, enum: ["Company", "Candidat","Admin"] },
     profile: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Profile",
