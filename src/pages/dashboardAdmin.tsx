@@ -304,7 +304,7 @@ const DashboardAdmin = () => {
             if (email) params.append('email', email);
             if (role) params.append('role', role);
             if (status) params.append('status', status);
-            const res = await fetch(`http://localhost:5000/users/getAllUsers?${params.toString()}`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getAllUsers?${params.toString()}`);
             const data = await res.json();
             if (data && data.users) {
                 setUsers(data.users);
