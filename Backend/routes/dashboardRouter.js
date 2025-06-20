@@ -7,4 +7,6 @@ router.get("/getAllUsers", dashboardController.getAllUsers);
 
 router.get("/getAllJobAssessments", dashboardController.getAllJobAssessments);
 
+router.get("/job-assessment-results-grouped", dashboardController.getJobAssessmentResultsGroupedByJobId2);
+
 module.exports = router;

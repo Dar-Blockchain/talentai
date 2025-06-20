@@ -164,18 +164,42 @@ interface User {
 
 interface Assessment {
     _id: string;
-    title: string;
-    description: string;
-    type: 'technical' | 'soft' | 'personality';
-    status: 'active' | 'inactive' | 'draft';
-    totalQuestions: number;
-    duration: number; // in minutes
-    passingScore: number;
-    createdAt: string;
-    updatedAt: string;
-    totalAttempts: number;
+    jobName?: string;
+    jobDescription?: string;
+    numberOfAttempts: number;
     averageScore: number;
-    createdBy: string;
+    totalQuestions: number;
+    assessments: Array<{
+        _id: string;
+        condidateId: string;
+        companyId: string;
+        jobId: string;
+        timestamp: string;
+        assessmentType: string;
+        numberOfQuestions: number;
+        analysis: {
+            overallScore: number;
+            skillAnalysis: Array<{
+                skillName: string;
+                requiredLevel: number;
+                demonstratedExperienceLevel: number;
+                strengths: string[];
+                weaknesses: string[];
+                confidenceScore: number;
+                match: string;
+                levelGap: number;
+            }>;
+            recommendations: string[];
+            technicalLevel: string;
+            nextSteps: string[];
+            jobMatch: {
+                percentage: number;
+                status: string;
+                keyGaps: string[];
+            };
+            skillProgression: any[];
+        };
+    }>;
 }
 
 interface DashboardStats {
@@ -322,55 +346,36 @@ const DashboardAdmin = () => {
     };
 
     const fetchAssessments = async () => {
-        // Mock data - replace with actual API call
-        const mockAssessments: Assessment[] = [
-            {
-                _id: '1',
-                title: 'JavaScript Fundamentals',
-                description: 'Test knowledge of JavaScript basics and ES6 features',
-                type: 'technical',
-                status: 'active',
-                totalQuestions: 25,
-                duration: 30,
-                passingScore: 70,
-                createdAt: '2024-03-01T10:00:00Z',
-                updatedAt: '2024-06-10T14:30:00Z',
-                totalAttempts: 156,
-                averageScore: 82.5,
-                createdBy: 'admin_user'
-            },
-            {
-                _id: '2',
-                title: 'Communication Skills',
-                description: 'Evaluate communication and interpersonal skills',
-                type: 'soft',
-                status: 'active',
-                totalQuestions: 20,
-                duration: 25,
-                passingScore: 75,
-                createdAt: '2024-03-15T11:00:00Z',
-                updatedAt: '2024-06-12T09:15:00Z',
-                totalAttempts: 89,
-                averageScore: 76.2,
-                createdBy: 'admin_user'
-            },
-            {
-                _id: '3',
-                title: 'Personality Assessment',
-                description: 'Big Five personality traits evaluation',
-                type: 'personality',
-                status: 'active',
-                totalQuestions: 50,
-                duration: 45,
-                passingScore: 60,
-                createdAt: '2024-04-01T08:00:00Z',
-                updatedAt: '2024-06-08T16:20:00Z',
-                totalAttempts: 203,
-                averageScore: 71.8,
-                createdBy: 'admin_user'
+        try {
+            setLoading(true);
+            const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+            const apiUrl = `${baseUrl}dashboard/job-assessment-results-grouped`;
+            
+            const response = await fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        ];
-        setAssessments(mockAssessments);
+
+            const data = await response.json();
+            setAssessments(data.results || []);
+            
+            // Update pagination
+            if (data.pagination) {
+                setAssessmentsPage(data.pagination.currentPage - 1);
+                setAssessmentsRowsPerPage(data.pagination.totalResults > 0 ? data.pagination.totalResults : 10);
+            }
+        } catch (error) {
+            console.error('Error fetching assessments:', error);
+            setAssessments([]);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleLogout = async () => {
@@ -775,7 +780,7 @@ const DashboardAdmin = () => {
     const renderAssessments = () => (
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <SectionTitle>Assessment Management</SectionTitle>
+                <SectionTitle>Job Assessment Results</SectionTitle>
                 <Button
                     variant="contained"
                     startIcon={<AddIcon />}
@@ -791,26 +796,13 @@ const DashboardAdmin = () => {
             {/* Filter Card */}
             <StyledCard sx={{ mb: 3, p: { xs: 2, md: 3 }, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
                 <TextField
-                    label="Search by title"
+                    label="Search by job name"
                     variant="outlined"
                     size="small"
                     value={assessmentSearch}
                     onChange={e => setAssessmentSearch(e.target.value)}
                     sx={{ minWidth: 200 }}
                 />
-                <FormControl size="small" sx={{ minWidth: 140 }}>
-                    <InputLabel>Type</InputLabel>
-                    <Select
-                        value={assessmentTypeFilter}
-                        label="Type"
-                        onChange={e => setAssessmentTypeFilter(e.target.value)}
-                    >
-                        <MenuItem value="">All</MenuItem>
-                        <MenuItem value="technical">Technical</MenuItem>
-                        <MenuItem value="soft">Soft Skills</MenuItem>
-                        <MenuItem value="personality">Personality</MenuItem>
-                    </Select>
-                </FormControl>
 
                 <Button
                     variant="outlined"
@@ -822,23 +814,14 @@ const DashboardAdmin = () => {
                 </Button>
             </StyledCard>
 
-            <Tabs value={assessmentsTab} onChange={handleAssessmentsTabChange} sx={{ mb: 3 }}>
-                <Tab label="All Assessments" />
-                <Tab label="Technical" />
-                <Tab label="Soft Skills" />
-                <Tab label="Personality" />
-            </Tabs>
-
             <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
                 <Table>
                     <TableHead>
                         <TableRow sx={{ backgroundColor: 'grey.50' }}>
-                            <TableCell sx={{ fontWeight: 600 }}>Assessment</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Questions</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Duration</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Job</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Attempts</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Total Questions</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Avg Score</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
                         </TableRow>
@@ -846,9 +829,7 @@ const DashboardAdmin = () => {
                     <TableBody>
                         {assessments
                             .filter(assessment =>
-                                (!assessmentSearch || assessment.title.toLowerCase().includes(assessmentSearch.toLowerCase())) &&
-                                (!assessmentTypeFilter || assessment.type === assessmentTypeFilter) &&
-                                (!assessmentStatusFilter || assessment.status === assessmentStatusFilter)
+                                (!assessmentSearch || (assessment.jobName && assessment.jobName.toLowerCase().includes(assessmentSearch.toLowerCase())))
                             )
                             .slice(assessmentsPage * assessmentsRowsPerPage, assessmentsPage * assessmentsRowsPerPage + assessmentsRowsPerPage)
                             .map((assessment) => (
@@ -856,28 +837,22 @@ const DashboardAdmin = () => {
                                     <TableCell>
                                         <Box>
                                             <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                                {assessment.title}
+                                                {assessment.jobName || 'Unnamed Job'}
                                             </Typography>
                                             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                                {assessment.description}
+                                                Job ID: {assessment._id}
                                             </Typography>
                                         </Box>
                                     </TableCell>
                                     <TableCell>
-                                        <Chip
-                                            label={assessment.type}
-                                            color={getTypeColor(assessment.type) as any}
-                                            size="small"
-                                            sx={{ textTransform: 'capitalize' }}
-                                        />
+                                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                            {assessment.jobDescription || 'No description available'}
+                                        </Typography>
                                     </TableCell>
                                     <TableCell>
-                                        <Chip
-                                            label={assessment.status}
-                                            color={getStatusColor(assessment.status) as any}
-                                            size="small"
-                                            sx={{ textTransform: 'capitalize' }}
-                                        />
+                                        <Typography variant="body2">
+                                            {assessment.numberOfAttempts}
+                                        </Typography>
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="body2">
@@ -885,18 +860,8 @@ const DashboardAdmin = () => {
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
-                                        <Typography variant="body2">
-                                            {assessment.duration} min
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography variant="body2">
-                                            {assessment.totalAttempts}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
                                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                            {assessment.averageScore}%
+                                            {assessment.averageScore.toFixed(2)}%
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
@@ -912,14 +877,9 @@ const DashboardAdmin = () => {
                                                     <VisibilityIcon />
                                                 </IconButton>
                                             </Tooltip>
-                                            <Tooltip title="Edit Assessment">
+                                            <Tooltip title="View Assessments">
                                                 <IconButton size="small">
-                                                    <EditIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                            <Tooltip title="Delete Assessment">
-                                                <IconButton size="small" color="error">
-                                                    <DeleteIcon />
+                                                    <AssessmentIcon />
                                                 </IconButton>
                                             </Tooltip>
                                         </Stack>
@@ -932,9 +892,7 @@ const DashboardAdmin = () => {
                     rowsPerPageOptions={[5, 10, 25]}
                     component="div"
                     count={assessments.filter(assessment =>
-                        (!assessmentSearch || assessment.title.toLowerCase().includes(assessmentSearch.toLowerCase())) &&
-                        (!assessmentTypeFilter || assessment.type === assessmentTypeFilter) &&
-                        (!assessmentStatusFilter || assessment.status === assessmentStatusFilter)
+                        (!assessmentSearch || (assessment.jobName && assessment.jobName.toLowerCase().includes(assessmentSearch.toLowerCase())))
                     ).length}
                     rowsPerPage={assessmentsRowsPerPage}
                     page={assessmentsPage}
@@ -1106,7 +1064,7 @@ const DashboardAdmin = () => {
             fullWidth
         >
             <DialogTitle>
-                Assessment Details
+                Job Assessment Details
                 <IconButton
                     onClick={() => setAssessmentDialogOpen(false)}
                     sx={{ position: 'absolute', right: 8, top: 8 }}
@@ -1122,58 +1080,42 @@ const DashboardAdmin = () => {
                         gap: 3
                     }}>
                         <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
-                            <Typography variant="h6" sx={{ mb: 2 }}>Basic Information</Typography>
+                            <Typography variant="h6" sx={{ mb: 2 }}>Job Information</Typography>
                             <Stack spacing={2}>
                                 <Box>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Title</Typography>
-                                    <Typography variant="body1">{selectedAssessment.title}</Typography>
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Job Name</Typography>
+                                    <Typography variant="body1">{selectedAssessment.jobName || 'Unnamed Job'}</Typography>
                                 </Box>
                                 <Box>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Description</Typography>
-                                    <Typography variant="body1">{selectedAssessment.description}</Typography>
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Job Description</Typography>
+                                    <Typography variant="body1">{selectedAssessment.jobDescription || 'No description available'}</Typography>
                                 </Box>
                                 <Box>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Type</Typography>
-                                    <Chip
-                                        label={selectedAssessment.type}
-                                        color={getTypeColor(selectedAssessment.type) as any}
-                                        sx={{ textTransform: 'capitalize' }}
-                                    />
-                                </Box>
-                                <Box>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Status</Typography>
-                                    <Chip
-                                        label={selectedAssessment.status}
-                                        color={getStatusColor(selectedAssessment.status) as any}
-                                        sx={{ textTransform: 'capitalize' }}
-                                    />
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Job ID</Typography>
+                                    <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>{selectedAssessment._id}</Typography>
                                 </Box>
                             </Stack>
                         </Box>
                         <Box sx={{ flex: '1 1 300px', minWidth: 0 }}>
-                            <Typography variant="h6" sx={{ mb: 2 }}>Statistics</Typography>
+                            <Typography variant="h6" sx={{ mb: 2 }}>Assessment Statistics</Typography>
                             <Stack spacing={2}>
+                                <Box>
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Number of Attempts</Typography>
+                                    <Typography variant="body1">{selectedAssessment.numberOfAttempts}</Typography>
+                                </Box>
                                 <Box>
                                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>Total Questions</Typography>
                                     <Typography variant="body1">{selectedAssessment.totalQuestions}</Typography>
                                 </Box>
                                 <Box>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Duration</Typography>
-                                    <Typography variant="body1">{selectedAssessment.duration} minutes</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Passing Score</Typography>
-                                    <Typography variant="body1">{selectedAssessment.passingScore}%</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Total Attempts</Typography>
-                                    <Typography variant="body1">{selectedAssessment.totalAttempts}</Typography>
-                                </Box>
-                                <Box>
                                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>Average Score</Typography>
                                     <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                                        {selectedAssessment.averageScore}%
+                                        {selectedAssessment.averageScore.toFixed(2)}%
                                     </Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>Assessment Type</Typography>
+                                    <Typography variant="body1">Job Assessment</Typography>
                                 </Box>
                             </Stack>
                         </Box>
@@ -1183,7 +1125,7 @@ const DashboardAdmin = () => {
             <DialogActions>
                 <Button onClick={() => setAssessmentDialogOpen(false)}>Close</Button>
                 <Button variant="contained" sx={{ backgroundColor: GREEN_MAIN }}>
-                    Edit Assessment
+                    View All Assessments
                 </Button>
             </DialogActions>
         </Dialog>

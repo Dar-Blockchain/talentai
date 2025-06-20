@@ -221,7 +221,9 @@ module.exports.getJobAssessmentResultsGroupedByJobId2 = async (page = 1, limit =
         $group: {
           _id: "$jobId",
           assessments: { $push: "$$ROOT" },
-          assessmentCount: { $sum: 1 }
+          numberOfAttempts: { $sum: 1 },
+          totalScore: { $sum: "$analysis.overallScore" },
+          totalQuestions: { $sum: "$numberOfQuestions" }
         }
       },
       {
@@ -242,29 +244,26 @@ module.exports.getJobAssessmentResultsGroupedByJobId2 = async (page = 1, limit =
         }
       },
       {
-        $lookup: {
-          from: "profiles",
-          localField: "assessments.candidateId",
-          foreignField: "_id",
-          as: "candidateDetails"
-        }
-      },
-      {
-        $lookup: {
-          from: "profiles",
-          localField: "assessments.companyId",
-          foreignField: "_id",
-          as: "companyDetails"
+        $unwind: {
+          path: "$jobDetails",
+          preserveNullAndEmptyArrays: true
         }
       },
       {
         $project: {
           _id: 1,
-          assessments: 1,
-          assessmentCount: 1,
-          jobDetails: { $arrayElemAt: ["$jobDetails", 0] },
-          candidateDetails: 1,
-          companyDetails: 1
+          jobName: "$jobDetails.title",
+          jobDescription: "$jobDetails.description",
+          numberOfAttempts: 1,
+          averageScore: {
+            $cond: {
+              if: { $gt: ["$numberOfAttempts", 0] },
+              then: { $round: [{ $divide: ["$totalScore", "$numberOfAttempts"] }, 2] },
+              else: 0
+            }
+          },
+          totalQuestions: 1,
+          assessments: 1
         }
       }
     ]);
