@@ -542,6 +542,20 @@ module.exports.getJobAssessmentsBySkill = async (skillName) => {
         }
       },
       {
+        $lookup: {
+          from: "posts", // Joindre avec la collection Post pour obtenir les jobDetails
+          localField: "jobId", // Utiliser jobId dans JobAssessmentResult
+          foreignField: "_id", // Comparer avec _id dans Post
+          as: "jobDetails" // Stocker les détails du job dans ce champ
+        }
+      },
+      {
+        $unwind: {
+          path: "$jobDetails", // Décomposer les résultats du job
+          preserveNullAndEmptyArrays: true // Conserver les documents sans jobDetails
+        }
+      },
+      {
         $group: {
           _id: "$jobId", // Grouper par jobId pour chaque évaluation de travail
           candidates: {
@@ -551,14 +565,16 @@ module.exports.getJobAssessmentsBySkill = async (skillName) => {
               jobMatch: "$analysis.jobMatch" // Ajouter les détails de correspondance du travail
             }
           },
-          totalAssessments: { $sum: 1 } // Compter le nombre total d'évaluations pour ce job
+          totalAssessments: { $sum: 1 }, // Compter le nombre total d'évaluations pour ce job
+          jobDetails: { $first: "$jobDetails" } // Inclure les détails du job (jobDetails)
         }
       },
       {
         $project: {
           jobId: 1,
           candidates: 1,
-          totalAssessments: 1
+          totalAssessments: 1,
+          jobDetails: 1 // Inclure les jobDetails dans le projet final
         }
       }
     ]);
