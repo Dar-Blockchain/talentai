@@ -476,48 +476,43 @@ const DashboardAdmin = () => {
     };
 
     const fetchSkillsData = async () => {
-        // Using static JSON data for now - will replace with API call later
-        const mockSkillsData = [
-            { skill: 'JavaScript', count: 45 },
-            { skill: 'React', count: 38 },
-            { skill: 'Python', count: 32 },
-            { skill: 'Node.js', count: 28 },
-            { skill: 'SQL', count: 25 },
-            { skill: 'TypeScript', count: 22 },
-            { skill: 'AWS', count: 18 },
-            { skill: 'Docker', count: 15 },
-            { skill: 'MongoDB', count: 12 },
-            { skill: 'Git', count: 10 }
-        ];
-        
-        // Sort skills by count in descending order
-        const sortedSkills = mockSkillsData
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 10);
-            
-        setSkillsData(sortedSkills);
-        
-        // TODO: Replace with actual API call
-        // try {
-        //     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getSkillsCount`);
-        //     if (!res.ok) {
-        //         throw new Error(`HTTP error! status: ${res.status}`);
-        //     }
-        //     const data = await res.json();
-        //     if (data.success && data.data) {
-        //         const sortedSkills = data.data
-        //             .sort((a: any, b: any) => b.count - a.count)
-        //             .slice(0, 10)
-        //             .map((item: any) => ({
-        //                 skill: item.skill,
-        //                 count: item.count
-        //             }));
-        //         setSkillsData(sortedSkills);
-        //     }
-        // } catch (err) {
-        //     console.error('Error fetching skills data:', err);
-        //     setSkillsData(mockSkillsData);
-        // }
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getCounts`);
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            const data = await res.json();
+            if (data.success && data.data && data.data.topSkills) {
+                // Map the topSkills data to the expected format
+                const skillsData = data.data.topSkills.map((item: any) => ({
+                    skill: item._id,
+                    count: item.count
+                }));
+                
+                // Sort skills by count in descending order
+                const sortedSkills = skillsData
+                    .sort((a: any, b: any) => b.count - a.count)
+                    .slice(0, 10);
+                    
+                setSkillsData(sortedSkills);
+            }
+        } catch (err) {
+            console.error('Error fetching skills data:', err);
+            // Fallback to mock data if API fails
+            const fallbackSkillsData = [
+                { skill: 'JavaScript', count: 45 },
+                { skill: 'React', count: 38 },
+                { skill: 'Python', count: 32 },
+                { skill: 'Node.js', count: 28 },
+                { skill: 'SQL', count: 25 },
+                { skill: 'TypeScript', count: 22 },
+                { skill: 'AWS', count: 18 },
+                { skill: 'Docker', count: 15 },
+                { skill: 'MongoDB', count: 12 },
+                { skill: 'Git', count: 10 }
+            ];
+            setSkillsData(fallbackSkillsData);
+        }
     };
 
     const fetchUsers = async (page = 1, limit = 10, username = '', email = '', role = '', status = '') => {
@@ -1158,6 +1153,63 @@ const DashboardAdmin = () => {
                 </Box>
             </Box>
 
+            {/* Skills Bar Chart - Moved to top */}
+            <Box sx={{ mb: 4 }}>
+                <StyledCard>
+                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                        Top Skills by Usage
+                    </Typography>
+                    <ResponsiveContainer width="100%" height={400}>
+                        <BarChart
+                            data={skillsData}
+                            margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                        >
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                            <XAxis 
+                                dataKey="skill" 
+                                angle={-45}
+                                textAnchor="end"
+                                height={80}
+                                tick={{ fontSize: 12 }}
+                                interval={0}
+                            />
+                            <YAxis 
+                                tick={{ fontSize: 12 }}
+                                label={{ value: 'Number of Users', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' } }}
+                            />
+                            <RechartsTooltip 
+                                formatter={(value: any, name: any) => [value, 'Users']}
+                                labelFormatter={(label: any) => `Skill: ${label}`}
+                                contentStyle={{
+                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                    border: '1px solid #ccc',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                                }}
+                            />
+                            <Bar 
+                                dataKey="count" 
+                                radius={[4, 4, 0, 0]}
+                                fill="url(#skillGradient)"
+                            >
+                                {skillsData.map((entry, index) => (
+                                    <Cell 
+                                        key={`cell-${index}`} 
+                                        fill={`hsl(${200 + index * 25}, 80%, ${60 - index * 3}%)`}
+                                    />
+                                ))}
+                            </Bar>
+                            <defs>
+                                <linearGradient id="skillGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#8310FF" stopOpacity={0.8}/>
+                                    <stop offset="100%" stopColor="#8310FF" stopOpacity={0.4}/>
+                                </linearGradient>
+                            </defs>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </StyledCard>
+            </Box>
+
             {/* Charts */}
             <Box sx={{
                 display: 'flex',
@@ -1225,47 +1277,6 @@ const DashboardAdmin = () => {
                         </ResponsiveContainer>
                     </StyledCard>
                 </Box>
-            </Box>
-
-            {/* Skills Bar Chart */}
-            <Box sx={{ mb: 4 }}>
-                <StyledCard>
-                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                        Top Skills by Usage
-                    </Typography>
-                    <ResponsiveContainer width="100%" height={400}>
-                        <BarChart
-                            data={skillsData}
-                            layout="horizontal"
-                            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                        >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis type="number" />
-                            <YAxis 
-                                type="category" 
-                                dataKey="skill" 
-                                width={100}
-                                tick={{ fontSize: 12 }}
-                            />
-                            <RechartsTooltip 
-                                formatter={(value: any, name: any) => [value, 'Count']}
-                                labelFormatter={(label: any) => `Skill: ${label}`}
-                            />
-                            <Bar 
-                                dataKey="count" 
-                                fill="#8310FF"
-                                radius={[0, 4, 4, 0]}
-                            >
-                                {skillsData.map((entry, index) => (
-                                    <Cell 
-                                        key={`cell-${index}`} 
-                                        fill={`hsl(${240 + index * 20}, 70%, 60%)`}
-                                    />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </StyledCard>
             </Box>
 
             {/* World Map */}
