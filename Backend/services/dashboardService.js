@@ -500,55 +500,58 @@ module.exports.getUserCountsByLocation = async () => {
 
 module.exports.getJobAssessmentsBySkill = async (skillName) => {
   try {
-    // Aggregate to get assessments based on the given skillName
+    // Définir le filtre pour l'étape de match
+    const matchStage = skillName
+      ? { "analysis.skillAnalysis.skillName": skillName } // Si skillName est fourni, on filtre par compétence
+      : {}; // Si skillName n'est pas fourni, on ne filtre pas
+
+    // Récupérer les résultats d'évaluation pour le skillName donné (ou tous les résultats si skillName n'est pas fourni)
     const assessments = await JobAssessmentResult.aggregate([
       {
-        $unwind: "$analysis.skillAnalysis" // Unwind the skillAnalysis array
+        $unwind: "$analysis.skillAnalysis" // Décomposer la liste skillAnalysis dans chaque JobAssessmentResult
       },
       {
-        $match: {
-          "analysis.skillAnalysis.skillName": skillName // Filter by the skillName
-        }
+        $match: matchStage // Appliquer le filtre si skillName est fourni
       },
       {
         $lookup: {
-          from: "profiles", // Join with the Profile collection
-          localField: "condidateId", // Field from JobAssessmentResult
-          foreignField: "_id", // Field from Profile model
-          as: "candidateProfile" // Store the matched profile details in this field
+          from: "profiles", // Joindre avec la collection Profile
+          localField: "condidateId", // Utiliser condidateId dans JobAssessmentResult
+          foreignField: "_id", // Comparer avec _id dans Profile
+          as: "candidateProfile" // Stocker les détails du profil dans ce champ
         }
       },
       {
         $unwind: {
-          path: "$candidateProfile", // Unwind the candidateProfile array
-          preserveNullAndEmptyArrays: true // Preserve documents without a matching profile
+          path: "$candidateProfile", // Décomposer les résultats du profil
+          preserveNullAndEmptyArrays: true // Conserver les documents sans profil
         }
       },
       {
         $lookup: {
-          from: "users", // Join with the User collection
-          localField: "candidateProfile.userId", // Profile references User through userId
-          foreignField: "_id", // User references _id
-          as: "candidateDetails" // Store the matched user details
+          from: "users", // Joindre avec la collection User
+          localField: "candidateProfile.userId", // Profile fait référence à User via userId
+          foreignField: "_id", // User fait référence à _id
+          as: "candidateDetails" // Stocker les détails de l'utilisateur
         }
       },
       {
         $unwind: {
-          path: "$candidateDetails", // Unwind the candidateDetails array
-          preserveNullAndEmptyArrays: true // Preserve documents without a matching user
+          path: "$candidateDetails", // Décomposer les résultats de l'utilisateur
+          preserveNullAndEmptyArrays: true // Conserver les documents sans utilisateur
         }
       },
       {
         $group: {
-          _id: "$jobId", // Group by jobId
+          _id: "$jobId", // Grouper par jobId pour chaque évaluation de travail
           candidates: {
             $push: {
-              username: "$candidateDetails.username", // Get the username
-              email: "$candidateDetails.email", // Get the email
-              jobMatch: "$analysis.jobMatch" // Collect the job match details
+              username: "$candidateDetails.username", // Ajouter le username
+              email: "$candidateDetails.email", // Ajouter l'email
+              jobMatch: "$analysis.jobMatch" // Ajouter les détails de correspondance du travail
             }
           },
-          totalAssessments: { $sum: 1 } // Count the total number of assessments for this job
+          totalAssessments: { $sum: 1 } // Compter le nombre total d'évaluations pour ce job
         }
       },
       {
