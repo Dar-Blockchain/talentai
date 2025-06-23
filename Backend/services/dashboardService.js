@@ -431,3 +431,23 @@ module.exports.getCountsByDay = async () => {
     throw new Error('Error fetching counts by day: ' + error.message);
   }
 };
+module.exports.getUserCountsByLocation = async () => {
+  try {
+    // Agrégation pour compter les utilisateurs par localisation
+    const usersByLocation = await User.aggregate([
+      {
+        $group: {
+          _id: "$Localisation",  // Grouper par localisation
+          userCount: { $sum: 1 }  // Compter le nombre d'utilisateurs par localisation
+        }
+      },
+      {
+        $sort: { userCount: -1 }  // Trier les résultats par nombre d'utilisateurs, du plus grand au plus petit
+      }
+    ]);
+
+    return usersByLocation;
+  } catch (error) {
+    throw new Error('Error fetching user counts by location: ' + error.message);
+  }
+};
