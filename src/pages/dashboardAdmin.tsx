@@ -334,6 +334,9 @@ const DashboardAdmin = () => {
     // Add username and email filter state
     const [userUsernameFilter, setUserUsernameFilter] = useState('');
     const [userEmailFilter, setUserEmailFilter] = useState('');
+    
+    // Add skill search state for assessment results
+    const [skillSearch, setSkillSearch] = useState('');
 
     // Fetch data on component mount
     useEffect(() => {
@@ -344,15 +347,13 @@ const DashboardAdmin = () => {
         try {
             setAssessmentResultsLoading(true);
             
-            let url = '/api/JobAssessmentResult/getAllResults';
-            let method = 'GET';
-            let body = null;
+            const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/'}dashboard/getJobAssessmentsBySkill`;
+            const method = 'POST';
+            const body = skillName ? JSON.stringify({ skillName }) : JSON.stringify({});
             
-            if (skillName) {
-                url = `${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getJobAssessmentsBySkill`;
-                method = 'POST';
-                body = JSON.stringify({ skillName });
-            }
+            console.log('Making API call to:', url);
+            console.log('Method:', method);
+            console.log('Body:', body);
             
             const response = await fetch(url, {
                 method,
@@ -362,30 +363,63 @@ const DashboardAdmin = () => {
                 body
             });
 
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+
             if (!response.ok) {
-                throw new Error('Failed to fetch assessment results');
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
+            console.log('API Response data:', data);
             
-            if (data.success) {
-                setAssessmentResults(data.results || data.data || []);
-                
-                // Extract unique skills from all assessments
-                const skills = new Set<string>();
-                (data.results || data.data || []).forEach((result: any) => {
-                    result.analysis?.skillAnalysis?.forEach((skill: any) => {
-                        if (skill.skillName) {
-                            skills.add(skill.skillName);
+            if (data.success || data.assessments) {
+                // Handle the API structure
+                const results: any[] = [];
+                if (data.assessments) {
+                    console.log('Found assessments:', data.assessments.length);
+                    // Structure: data.assessments contains candidates
+                    data.assessments.forEach((assessment: any) => {
+                        if (assessment.candidates) {
+                            console.log('Assessment candidates:', assessment.candidates.length);
+                            assessment.candidates.forEach((candidate: any) => {
+                                results.push({
+                                    _id: `${assessment._id}_${candidate.username || candidate.candidateId}`,
+                                    assessmentId: assessment._id,
+                                    candidateId: candidate.candidateId,
+                                    username: candidate.username,
+                                    email: candidate.email,
+                                    jobTitle: assessment.jobDetails?.jobDetails?.title || 'Unknown Job',
+                                    jobMatch: candidate.jobMatch,
+                                    timestamp: new Date().toISOString(), // Fallback timestamp
+                                    analysis: {
+                                        overallScore: candidate.jobMatch?.percentage || 0,
+                                        skillAnalysis: [],
+                                        jobMatch: candidate.jobMatch
+                                    }
+                                });
+                            });
                         }
                     });
-                });
+                }
+                
+                console.log('Processed results:', results.length);
+                setAssessmentResults(results);
+                
+                // Add the searched skill to available skills
+                const skills = new Set<string>();
+                if (skillName) {
+                    skills.add(skillName);
+                }
+                
                 setAvailableSkills(Array.from(skills).sort());
             } else {
                 console.error('Failed to fetch assessment results:', data.message);
+                setAssessmentResults([]);
             }
         } catch (error) {
             console.error('Error fetching assessment results:', error);
+            setAssessmentResults([]);
         } finally {
             setAssessmentResultsLoading(false);
         }
@@ -399,6 +433,7 @@ const DashboardAdmin = () => {
 
     useEffect(() => {
         if (activeTab === 3) {
+            // Fetch all assessment results by default when tab is opened
             fetchAssessmentResults();
         }
     }, [activeTab]);
@@ -1980,13 +2015,10 @@ const DashboardAdmin = () => {
 
     const renderAssessmentResults = () => {
         const filteredResults = assessmentResults.filter((result) => {
-            if (assessmentResultsFilter.skill && !result.analysis?.skillAnalysis?.some((skill: any) => 
-                skill.skillName?.toLowerCase().includes(assessmentResultsFilter.skill.toLowerCase())
-            )) {
-                return false;
-            }
+            // Remove skill filtering since we don't have skillAnalysis in our data structure
+            // Only filter by score range
             if (assessmentResultsFilter.scoreRange) {
-                const score = result.analysis?.overallScore || 0;
+                const score = result.jobMatch?.percentage || result.analysis?.overallScore || 0;
                 const [min, max] = assessmentResultsFilter.scoreRange.split('-').map(Number);
                 if (score < min || score > max) {
                     return false;
@@ -2000,11 +2032,12 @@ const DashboardAdmin = () => {
             (assessmentResultsPage + 1) * assessmentResultsRowsPerPage
         );
 
-        const handleSkillSearch = (skillName: string) => {
-            if (skillName.trim()) {
-                fetchAssessmentResults(skillName.trim());
-            } else {
+        const handleSkillSearch = () => {
+            if (skillSearch.trim() === '') {
+                // If no skill is entered, fetch all results
                 fetchAssessmentResults();
+            } else {
+                fetchAssessmentResults(skillSearch.trim());
             }
         };
 
@@ -2024,10 +2057,11 @@ const DashboardAdmin = () => {
                             size="small"
                             sx={{ minWidth: 300 }}
                             placeholder="Enter skill name..."
+                            value={skillSearch}
+                            onChange={(e) => setSkillSearch(e.target.value)}
                             onKeyPress={(e) => {
                                 if (e.key === 'Enter') {
-                                    const target = e.target as HTMLInputElement;
-                                    handleSkillSearch(target.value);
+                                    handleSkillSearch();
                                 }
                             }}
                         />
@@ -2036,7 +2070,7 @@ const DashboardAdmin = () => {
                             onClick={() => {
                                 const input = document.querySelector('input[placeholder="Enter skill name..."]') as HTMLInputElement;
                                 if (input) {
-                                    handleSkillSearch(input.value);
+                                    handleSkillSearch();
                                 }
                             }}
                             sx={{ backgroundColor: GREEN_MAIN }}
@@ -2046,11 +2080,8 @@ const DashboardAdmin = () => {
                         <Button
                             variant="outlined"
                             onClick={() => {
+                                setSkillSearch('');
                                 fetchAssessmentResults();
-                                const input = document.querySelector('input[placeholder="Enter skill name..."]') as HTMLInputElement;
-                                if (input) {
-                                    input.value = '';
-                                }
                             }}
                             sx={{ borderColor: GREEN_MAIN, color: GREEN_MAIN }}
                         >
@@ -2060,49 +2091,7 @@ const DashboardAdmin = () => {
                 </StyledCard>
 
                 {/* Additional Filters */}
-                <StyledCard>
-                    <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-                        Additional Filters
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                        <FormControl sx={{ minWidth: 200 }}>
-                            <InputLabel>Filter by Skill</InputLabel>
-                            <Select
-                                value={assessmentResultsFilter.skill}
-                                onChange={(e) => setAssessmentResultsFilter(prev => ({ ...prev, skill: e.target.value }))}
-                                label="Filter by Skill"
-                            >
-                                <MenuItem value="">All Skills</MenuItem>
-                                {availableSkills.map((skill) => (
-                                    <MenuItem key={skill} value={skill}>{skill}</MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-
-                        <FormControl sx={{ minWidth: 200 }}>
-                            <InputLabel>Score Range</InputLabel>
-                            <Select
-                                value={assessmentResultsFilter.scoreRange}
-                                onChange={(e) => setAssessmentResultsFilter(prev => ({ ...prev, scoreRange: e.target.value }))}
-                                label="Score Range"
-                            >
-                                <MenuItem value="">All Scores</MenuItem>
-                                <MenuItem value="0-50">0-50%</MenuItem>
-                                <MenuItem value="51-70">51-70%</MenuItem>
-                                <MenuItem value="71-85">71-85%</MenuItem>
-                                <MenuItem value="86-100">86-100%</MenuItem>
-                            </Select>
-                        </FormControl>
-
-                        <Button
-                            variant="outlined"
-                            onClick={() => setAssessmentResultsFilter({ skill: '', scoreRange: '', dateRange: '' })}
-                            sx={{ borderColor: GREEN_MAIN, color: GREEN_MAIN }}
-                        >
-                            Clear Filters
-                        </Button>
-                    </Box>
-                </StyledCard>
+            
 
                 {/* Results Table */}
                 <StyledCard>
@@ -2117,11 +2106,11 @@ const DashboardAdmin = () => {
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
-                                    <TableCell sx={{ fontWeight: 600 }}>Candidate</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Username</TableCell>
                                     <TableCell sx={{ fontWeight: 600 }}>Job Title</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Overall Score</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Skills</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Job Match %</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Key Gaps</TableCell>
                                     <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
@@ -2138,59 +2127,61 @@ const DashboardAdmin = () => {
                                     paginatedResults.map((result) => (
                                         <TableRow key={result._id} hover>
                                             <TableCell>
-                                                <Box>
-                                                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                                        {result.candidateDetails?.username || result.condidateId || 'Unknown'}
-                                                    </Typography>
-                                                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                                        {result.candidateDetails?.email || 'No email'}
-                                                    </Typography>
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                                    {result.jobId?.title || 'Unknown Job'}
+                                                <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
+                                                    {result.username || 'Unknown'}
                                                 </Typography>
-                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                                    {result.jobId?.location || 'No location'}
+                                            </TableCell>
+
+                                            <TableCell>
+                                                <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
+                                                    {result.jobDetails.jobDetails.title || 'Unknown Job'}
                                                 </Typography>
                                             </TableCell>
                                             <TableCell>
                                                 <Chip
-                                                    label={`${result.analysis?.overallScore?.toFixed(1) || 0}%`}
-                                                    color={result.analysis?.overallScore >= 80 ? 'success' : 
-                                                           result.analysis?.overallScore >= 60 ? 'warning' : 'error'}
+                                                    label={`${result.jobMatch?.percentage?.toFixed(1) || result.analysis?.overallScore?.toFixed(1) || 0}%`}
+                                                    color={result.jobMatch?.percentage >= 80 ? 'success' : 
+                                                           result.jobMatch?.percentage >= 60 ? 'warning' : 'error'}
                                                     size="small"
                                                 />
                                             </TableCell>
                                             <TableCell>
-                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                    {result.analysis?.skillAnalysis?.slice(0, 3).map((skill: any, index: number) => (
-                                                        <Chip
-                                                            key={index}
-                                                            label={skill.skillName}
-                                                            size="small"
-                                                            variant="outlined"
-                                                            sx={{ fontSize: '0.7rem' }}
-                                                        />
-                                                    ))}
-                                                    {result.analysis?.skillAnalysis?.length > 3 && (
-                                                        <Chip
-                                                            label={`+${result.analysis.skillAnalysis.length - 3}`}
-                                                            size="small"
-                                                            variant="outlined"
-                                                            sx={{ fontSize: '0.7rem' }}
-                                                        />
-                                                    )}
-                                                </Box>
+                                                <Chip
+                                                    label={result.jobMatch?.status || 'Unknown'}
+                                                    color={result.jobMatch?.status === 'Good match' ? 'success' : 
+                                                           result.jobMatch?.status === 'Fair match' ? 'warning' : 'error'}
+                                                    size="small"
+                                                    variant="outlined"
+                                                />
                                             </TableCell>
                                             <TableCell>
-                                                <Typography variant="body2">
-                                                    {new Date(result.timestamp).toLocaleDateString()}
-                                                </Typography>
-                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                                    {new Date(result.timestamp).toLocaleTimeString()}
-                                                </Typography>
+                                                <Box sx={{ maxWidth: 300 }}>
+                                                    {result.jobMatch?.keyGaps?.slice(0, 2).map((gap: string, index: number) => (
+                                                        <Typography 
+                                                            key={index} 
+                                                            variant="caption" 
+                                                            sx={{ 
+                                                                display: 'block', 
+                                                                color: 'text.secondary',
+                                                                mb: 0.5,
+                                                                lineHeight: 1.2
+                                                            }}
+                                                        >
+                                                            • {gap}
+                                                        </Typography>
+                                                    ))}
+                                                    {result.jobMatch?.keyGaps?.length > 2 && (
+                                                        <Typography 
+                                                            variant="caption" 
+                                                            sx={{ 
+                                                                color: 'text.secondary',
+                                                                fontStyle: 'italic'
+                                                            }}
+                                                        >
+                                                            +{result.jobMatch.keyGaps.length - 2} more gaps
+                                                        </Typography>
+                                                    )}
+                                                </Box>
                                             </TableCell>
                                             <TableCell>
                                                 <IconButton
@@ -2223,6 +2214,14 @@ const DashboardAdmin = () => {
             </Box>
         );
     };
+
+    // Test API on component mount
+    useEffect(() => {
+        if (activeTab === 3) {
+            // Don't fetch anything initially - wait for user to search
+            setAssessmentResults([]);
+        }
+    }, [activeTab]);
 
     if (loading) {
         return (
