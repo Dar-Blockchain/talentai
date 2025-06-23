@@ -56,3 +56,14 @@ module.exports.getCountsByDay = async (req, res) => {
   }
 };
 
+// Fonction pour gérer la requête et envoyer les résultats
+module.exports.getUserCountsByLocation = async (req, res) => {
+  try {
+    // Appeler la fonction de service pour obtenir le nombre d'utilisateurs par localisation
+    const userCountsByLocation = await dashboardService.getUserCountsByLocation();
+    res.status(200).json({ success: true, data: userCountsByLocation });
+  } catch (error) {
+    // En cas d'erreur, renvoyer un message d'erreur
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
