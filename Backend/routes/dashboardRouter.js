@@ -11,7 +11,7 @@ router.get("/getUserCountsByDay", dashboardController.getCountsByDay);
 
 router.get("/getUserCountsByLocation", dashboardController.getUserCountsByLocation);
 
-router.get("/getJobAssessmentsBySkill", dashboardController.getJobAssessmentsBySkill);
+router.post("/getJobAssessmentsBySkill", dashboardController.getJobAssessmentsBySkill);
 
 router.get("/job-assessment-results-grouped", dashboardController.getJobAssessmentResultsGroupedByJobId);
 
