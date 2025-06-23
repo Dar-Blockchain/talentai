@@ -276,6 +276,17 @@ const DashboardAdmin = () => {
     const [usersRowsPerPage, setUsersRowsPerPage] = useState(10);
     const [assessmentsPage, setAssessmentsPage] = useState(0);
     const [assessmentsRowsPerPage, setAssessmentsRowsPerPage] = useState(10);
+    const [assessmentResultsTab, setAssessmentResultsTab] = useState(0);
+    const [assessmentResults, setAssessmentResults] = useState<any[]>([]);
+    const [assessmentResultsLoading, setAssessmentResultsLoading] = useState(false);
+    const [assessmentResultsPage, setAssessmentResultsPage] = useState(0);
+    const [assessmentResultsRowsPerPage, setAssessmentResultsRowsPerPage] = useState(10);
+    const [assessmentResultsFilter, setAssessmentResultsFilter] = useState({
+        skill: '',
+        scoreRange: '',
+        dateRange: ''
+    });
+    const [availableSkills, setAvailableSkills] = useState<string[]>([]);
 
     // Data state
     const [stats, setStats] = useState<DashboardStats>({
@@ -328,6 +339,69 @@ const DashboardAdmin = () => {
     useEffect(() => {
         fetchDashboardData();
     }, [usersPage, usersRowsPerPage]);
+
+    const fetchAssessmentResults = async (skillName?: string) => {
+        try {
+            setAssessmentResultsLoading(true);
+            
+            let url = '/api/JobAssessmentResult/getAllResults';
+            let method = 'GET';
+            let body = null;
+            
+            if (skillName) {
+                url = `${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getJobAssessmentsBySkill`;
+                method = 'POST';
+                body = JSON.stringify({ skillName });
+            }
+            
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch assessment results');
+            }
+
+            const data = await response.json();
+            
+            if (data.success) {
+                setAssessmentResults(data.results || data.data || []);
+                
+                // Extract unique skills from all assessments
+                const skills = new Set<string>();
+                (data.results || data.data || []).forEach((result: any) => {
+                    result.analysis?.skillAnalysis?.forEach((skill: any) => {
+                        if (skill.skillName) {
+                            skills.add(skill.skillName);
+                        }
+                    });
+                });
+                setAvailableSkills(Array.from(skills).sort());
+            } else {
+                console.error('Failed to fetch assessment results:', data.message);
+            }
+        } catch (error) {
+            console.error('Error fetching assessment results:', error);
+        } finally {
+            setAssessmentResultsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 2) {
+            fetchAssessments();
+        }
+    }, [activeTab]);
+
+    useEffect(() => {
+        if (activeTab === 3) {
+            fetchAssessmentResults();
+        }
+    }, [activeTab]);
 
     const fetchDashboardData = async () => {
         try {
@@ -592,6 +666,10 @@ const DashboardAdmin = () => {
         setAssessmentsTab(newValue);
     };
 
+    const handleAssessmentResultsTabChange = (event: React.SyntheticEvent, newValue: number) => {
+        setAssessmentResultsTab(newValue);
+    };
+
     const handlePageChange = (event: unknown, newPage: number) => {
         setPage(newPage);
     };
@@ -617,6 +695,15 @@ const DashboardAdmin = () => {
     const handleAssessmentsRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setAssessmentsRowsPerPage(parseInt(event.target.value, 10));
         setAssessmentsPage(0);
+    };
+
+    const handleAssessmentResultsPageChange = (event: unknown, newPage: number) => {
+        setAssessmentResultsPage(newPage);
+    };
+
+    const handleAssessmentResultsRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setAssessmentResultsRowsPerPage(parseInt(event.target.value, 10));
+        setAssessmentResultsPage(0);
     };
 
     const getRoleColor = (role: string) => {
@@ -1679,6 +1766,16 @@ const DashboardAdmin = () => {
                         </ListItemIcon>
                         <ListItemText primary="Assessments" />
                     </SidebarItem>
+
+                    <SidebarItem
+                        selected={activeTab === 3}
+                        onClick={() => setActiveTab(3)}
+                    >
+                        <ListItemIcon>
+                            <AssessmentIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Assessment Results" />
+                    </SidebarItem>
                 </List>
 
                 <Divider sx={{ my: 2 }} />
@@ -1881,6 +1978,252 @@ const DashboardAdmin = () => {
         </Dialog>
     );
 
+    const renderAssessmentResults = () => {
+        const filteredResults = assessmentResults.filter((result) => {
+            if (assessmentResultsFilter.skill && !result.analysis?.skillAnalysis?.some((skill: any) => 
+                skill.skillName?.toLowerCase().includes(assessmentResultsFilter.skill.toLowerCase())
+            )) {
+                return false;
+            }
+            if (assessmentResultsFilter.scoreRange) {
+                const score = result.analysis?.overallScore || 0;
+                const [min, max] = assessmentResultsFilter.scoreRange.split('-').map(Number);
+                if (score < min || score > max) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        const paginatedResults = filteredResults.slice(
+            assessmentResultsPage * assessmentResultsRowsPerPage,
+            (assessmentResultsPage + 1) * assessmentResultsRowsPerPage
+        );
+
+        const handleSkillSearch = (skillName: string) => {
+            if (skillName.trim()) {
+                fetchAssessmentResults(skillName.trim());
+            } else {
+                fetchAssessmentResults();
+            }
+        };
+
+        return (
+            <Box sx={{ width: '100%' }}>
+                <SectionTitle>Job Assessment Results</SectionTitle>
+
+                {/* Skill Search */}
+                <StyledCard>
+                    <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                        Search by Skill
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <TextField
+                            label="Search by specific skill (e.g., Node.js, React, Python)"
+                            variant="outlined"
+                            size="small"
+                            sx={{ minWidth: 300 }}
+                            placeholder="Enter skill name..."
+                            onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                    const target = e.target as HTMLInputElement;
+                                    handleSkillSearch(target.value);
+                                }
+                            }}
+                        />
+                        <Button
+                            variant="contained"
+                            onClick={() => {
+                                const input = document.querySelector('input[placeholder="Enter skill name..."]') as HTMLInputElement;
+                                if (input) {
+                                    handleSkillSearch(input.value);
+                                }
+                            }}
+                            sx={{ backgroundColor: GREEN_MAIN }}
+                        >
+                            Search
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            onClick={() => {
+                                fetchAssessmentResults();
+                                const input = document.querySelector('input[placeholder="Enter skill name..."]') as HTMLInputElement;
+                                if (input) {
+                                    input.value = '';
+                                }
+                            }}
+                            sx={{ borderColor: GREEN_MAIN, color: GREEN_MAIN }}
+                        >
+                            Show All
+                        </Button>
+                    </Box>
+                </StyledCard>
+
+                {/* Additional Filters */}
+                <StyledCard>
+                    <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                        Additional Filters
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                        <FormControl sx={{ minWidth: 200 }}>
+                            <InputLabel>Filter by Skill</InputLabel>
+                            <Select
+                                value={assessmentResultsFilter.skill}
+                                onChange={(e) => setAssessmentResultsFilter(prev => ({ ...prev, skill: e.target.value }))}
+                                label="Filter by Skill"
+                            >
+                                <MenuItem value="">All Skills</MenuItem>
+                                {availableSkills.map((skill) => (
+                                    <MenuItem key={skill} value={skill}>{skill}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+
+                        <FormControl sx={{ minWidth: 200 }}>
+                            <InputLabel>Score Range</InputLabel>
+                            <Select
+                                value={assessmentResultsFilter.scoreRange}
+                                onChange={(e) => setAssessmentResultsFilter(prev => ({ ...prev, scoreRange: e.target.value }))}
+                                label="Score Range"
+                            >
+                                <MenuItem value="">All Scores</MenuItem>
+                                <MenuItem value="0-50">0-50%</MenuItem>
+                                <MenuItem value="51-70">51-70%</MenuItem>
+                                <MenuItem value="71-85">71-85%</MenuItem>
+                                <MenuItem value="86-100">86-100%</MenuItem>
+                            </Select>
+                        </FormControl>
+
+                        <Button
+                            variant="outlined"
+                            onClick={() => setAssessmentResultsFilter({ skill: '', scoreRange: '', dateRange: '' })}
+                            sx={{ borderColor: GREEN_MAIN, color: GREEN_MAIN }}
+                        >
+                            Clear Filters
+                        </Button>
+                    </Box>
+                </StyledCard>
+
+                {/* Results Table */}
+                <StyledCard>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            Assessment Results ({filteredResults.length} total)
+                        </Typography>
+                        {assessmentResultsLoading && <CircularProgress size={24} />}
+                    </Box>
+
+                    <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+                        <Table>
+                            <TableHead>
+                                <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
+                                    <TableCell sx={{ fontWeight: 600 }}>Candidate</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Job Title</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Overall Score</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Skills</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {paginatedResults.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} sx={{ textAlign: 'center', py: 4 }}>
+                                            <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                                                {assessmentResultsLoading ? 'Loading...' : 'No assessment results found'}
+                                            </Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    paginatedResults.map((result) => (
+                                        <TableRow key={result._id} hover>
+                                            <TableCell>
+                                                <Box>
+                                                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                                        {result.candidateDetails?.username || result.condidateId || 'Unknown'}
+                                                    </Typography>
+                                                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                        {result.candidateDetails?.email || 'No email'}
+                                                    </Typography>
+                                                </Box>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                                    {result.jobId?.title || 'Unknown Job'}
+                                                </Typography>
+                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                    {result.jobId?.location || 'No location'}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={`${result.analysis?.overallScore?.toFixed(1) || 0}%`}
+                                                    color={result.analysis?.overallScore >= 80 ? 'success' : 
+                                                           result.analysis?.overallScore >= 60 ? 'warning' : 'error'}
+                                                    size="small"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                    {result.analysis?.skillAnalysis?.slice(0, 3).map((skill: any, index: number) => (
+                                                        <Chip
+                                                            key={index}
+                                                            label={skill.skillName}
+                                                            size="small"
+                                                            variant="outlined"
+                                                            sx={{ fontSize: '0.7rem' }}
+                                                        />
+                                                    ))}
+                                                    {result.analysis?.skillAnalysis?.length > 3 && (
+                                                        <Chip
+                                                            label={`+${result.analysis.skillAnalysis.length - 3}`}
+                                                            size="small"
+                                                            variant="outlined"
+                                                            sx={{ fontSize: '0.7rem' }}
+                                                        />
+                                                    )}
+                                                </Box>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Typography variant="body2">
+                                                    {new Date(result.timestamp).toLocaleDateString()}
+                                                </Typography>
+                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                    {new Date(result.timestamp).toLocaleTimeString()}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => {
+                                                        // Handle view details
+                                                        console.log('View assessment result:', result);
+                                                    }}
+                                                >
+                                                    <VisibilityIcon />
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+
+                    <TablePagination
+                        component="div"
+                        count={filteredResults.length}
+                        page={assessmentResultsPage}
+                        onPageChange={handleAssessmentResultsPageChange}
+                        rowsPerPage={assessmentResultsRowsPerPage}
+                        onRowsPerPageChange={handleAssessmentResultsRowsPerPageChange}
+                        rowsPerPageOptions={[5, 10, 25, 50]}
+                    />
+                </StyledCard>
+            </Box>
+        );
+    };
+
     if (loading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -1956,6 +2299,7 @@ const DashboardAdmin = () => {
                         {activeTab === 0 && renderDashboard()}
                         {activeTab === 1 && renderUsers()}
                         {activeTab === 2 && renderAssessments()}
+                        {activeTab === 3 && renderAssessmentResults()}
                     </Box>
                 </Box>
             </Box>
