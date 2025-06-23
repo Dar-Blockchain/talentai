@@ -498,25 +498,57 @@ module.exports.getUserCountsByLocation = async () => {
   }
 };
 
-// Fonction qui retourne tous les JobAssessmentResult par compétence
 module.exports.getJobAssessmentsBySkill = async (skillName) => {
   try {
-    const matchStage = skillName
-      ? { "analysis.skillAnalysis.skillName": skillName } // Filtre par compétence si skillName est fourni
-      : {}; // Aucun filtre si skillName n'est pas fourni
-
+    // Aggregate to get assessments based on the given skillName
     const assessments = await JobAssessmentResult.aggregate([
       {
-        $unwind: "$analysis.skillAnalysis" // Décompose la liste skillAnalysis dans chaque JobAssessmentResult
+        $unwind: "$analysis.skillAnalysis" // Unwind the skillAnalysis array
       },
       {
-        $match: matchStage // Applique le filtre si skillName est fourni
+        $match: {
+          "analysis.skillAnalysis.skillName": skillName // Filter by the skillName
+        }
+      },
+      {
+        $lookup: {
+          from: "profiles", // Join with the Profile collection
+          localField: "condidateId", // Field from JobAssessmentResult
+          foreignField: "_id", // Field from Profile model
+          as: "candidateProfile" // Store the matched profile details in this field
+        }
+      },
+      {
+        $unwind: {
+          path: "$candidateProfile", // Unwind the candidateProfile array
+          preserveNullAndEmptyArrays: true // Preserve documents without a matching profile
+        }
+      },
+      {
+        $lookup: {
+          from: "users", // Join with the User collection
+          localField: "candidateProfile.userId", // Profile references User through userId
+          foreignField: "_id", // User references _id
+          as: "candidateDetails" // Store the matched user details
+        }
+      },
+      {
+        $unwind: {
+          path: "$candidateDetails", // Unwind the candidateDetails array
+          preserveNullAndEmptyArrays: true // Preserve documents without a matching user
+        }
       },
       {
         $group: {
-          _id: "$jobId", // Regrouper par jobId pour chaque évaluation de travail
-          candidates: { $push: { candidateId: "$condidateId", jobMatch: "$analysis.jobMatch" } }, // Collecter les candidats et leur évaluation de correspondance
-          totalAssessments: { $sum: 1 }, // Compter le nombre total d'évaluations pour ce job
+          _id: "$jobId", // Group by jobId
+          candidates: {
+            $push: {
+              username: "$candidateDetails.username", // Get the username
+              email: "$candidateDetails.email", // Get the email
+              jobMatch: "$analysis.jobMatch" // Collect the job match details
+            }
+          },
+          totalAssessments: { $sum: 1 } // Count the total number of assessments for this job
         }
       },
       {
