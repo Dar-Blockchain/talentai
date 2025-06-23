@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { POST_STATUS } = require("../constants/postConstants");
 
 const salarySchema = new mongoose.Schema({
   min: { type: Number, required: true },
@@ -78,11 +79,20 @@ const postSchema = new mongoose.Schema({
   jobDetails: { type: jobDetailsSchema, required: true },
   skillAnalysis: { type: skillAnalysisSchema, required: true },
   linkedinPost: { type: linkedinPostSchema, required: true },
-  status: {
+  // status: {
+  //   type: String,
+  //   enum: ["drafts", "posted", "scheduled"],
+  //   default: "drafts",
+  // },
+
+  availableFrom: Number, 
+  availableUntil: Number, 
+    status: {
     type: String,
-    enum: ["drafts", "posted", "scheduled"],
-    default: "drafts",
+    enum: Object.values(POST_STATUS),
+    default: POST_STATUS.DRAFT,
   },
+
   createdAt: { type: Date, default: Date.now },
   user: {
     type: mongoose.Schema.Types.ObjectId,
