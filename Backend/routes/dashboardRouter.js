@@ -11,8 +11,9 @@ router.get("/getUserCountsByDay", dashboardController.getCountsByDay);
 
 router.get("/getUserCountsByLocation", dashboardController.getUserCountsByLocation);
 
+router.get("/job-assessment-results-grouped", dashboardController.getJobAssessmentResultsGroupedByJobId);
+
 router.post("/getJobAssessmentsBySkill", dashboardController.getJobAssessmentsBySkill);
 
-router.get("/job-assessment-results-grouped", dashboardController.getJobAssessmentResultsGroupedByJobId);
 
 module.exports = router;
