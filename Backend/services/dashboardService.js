@@ -327,6 +327,33 @@ module.exports.getCounts = async () => {
       ? (jobAssessmentWithScoreCount / jobAssessmentCount) * 100
       : 0;
 
+    // Récupérer les top skills de la plateforme (hardSkills et softSkills)
+    const topSkillsResult = await Profile.aggregate([
+      // Regrouper les compétences (hardSkills et softSkills)
+      {
+        $project: {
+          skills: 1,
+          softSkills: 1,
+        }
+      },
+      {
+        $unwind: "$skills" // "Déréférencer" les compétences des utilisateurs
+      },
+      {
+        $group: {
+          _id: "$skills.name", // Compter les compétences par leur nom
+          count: { $sum: 1 }, // Nombre d'occurrences
+          avgLevel: { $avg: "$skills.proficiencyLevel" }, // Moyenne du niveau de compétence
+        }
+      },
+      {
+        $sort: { count: -1, avgLevel: -1 } // Trier par fréquence, puis par niveau de maîtrise
+      },
+      {
+        $limit: 10 // Retourner les 10 top skills
+      }
+    ]);
+
     // Retourner les résultats
     return {
       users: userCount,
@@ -343,6 +370,7 @@ module.exports.getCounts = async () => {
       totalSoftSkills: totalSoftSkillsCount, // Nombre total de soft skills
       hardSkillsPercentage: hardSkillsPercentage, // Pourcentage de hard skills
       softSkillsPercentage: softSkillsPercentage, // Pourcentage de soft skills
+      topSkills: topSkillsResult, // Top 10 des compétences
     };
   } catch (error) {
     throw new Error('Error fetching counts: ' + error.message);
