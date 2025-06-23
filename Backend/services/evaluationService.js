@@ -11,9 +11,10 @@ const profileService = require("../services/profileService");
 const {
   generateJobQuestionsPrompts,
   analyzeJobTestResultsPrompts,
+  generateHRQuestionsPrompts,
 } = require("../prompts/evaluationPrompts");
 const { HttpError } = require("../utils/httpUtils");
-const { parseAndValidateAIResponse } = require("../parsers/AIResponseParser");
+const { parseAndValidateAIResponse, parseAIResponse } = require("../parsers/AIResponseParser");
 const {
   updateProfileWithNewSkills,
   findAlreadyProvenSkills,
@@ -21,9 +22,8 @@ const {
   updateUpgradedSkills,
   processSkillsData,
   processAnalysisData,
-  updateTodoListWithNewSkills
+  updateTodoListWithNewSkills,
 } = require("../utils/evaluationUtils");
-
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
@@ -182,7 +182,7 @@ exports.analyzeJobTestResults = async ({
   updateUpgradedSkills(profile.skills, analysis.skillAnalysis);
 
   // V. Process analysis for overallScore
-  processAnalysisData(analysis)
+  processAnalysisData(analysis);
 
   await profile.save();
 
@@ -211,3 +211,46 @@ exports.analyzeJobTestResults = async ({
   return { analysis };
 };
 
+module.exports.generateHRQuestions = async (profile) => {
+  try {
+    const userSkills = profile.skills;
+
+    const skillsListDetails = userSkills
+      .map((skill) => `- ${skill.name} (experienceLevel: ${skill.experienceLevel})`)
+      .join("\n");
+
+    const systemPrompt = generateHRQuestionsPrompts.getSystemPrompt();
+
+    const userPrompt =
+      generateHRQuestionsPrompts.getUserPrompt(skillsListDetails);
+    
+
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.6,
+      max_tokens: 1000,
+      stream: true,
+    });
+
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
+
+    let questions = await parseAIResponse(raw);
+
+    return questions;
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+
+    throw new HttpError(500, "Internal server error");
+  }
+};

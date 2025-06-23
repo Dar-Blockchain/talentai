@@ -295,7 +295,8 @@ Return only the valid JSON output. Do not include any commentary.
 };
 
 const analyzeJobTestResultsPrompts = {
-  getSystemPrompt: () => `
+  getSystemPrompt: () =>
+    `
 You are an expert technical interviewer specializing in evaluating developer skills for job positions.
 
 Your role is to:
@@ -364,7 +365,8 @@ Your role is to:
 
 `.trim(),
 
-getUserPrompt: (requiredSkills, questions) => `
+  getUserPrompt: (requiredSkills, questions) =>
+    `
 
 Required Skills:
 ${requiredSkills
@@ -376,8 +378,7 @@ Analyze the following questions and answers:
 
 ${questions
   .map(
-    (qa, index) =>
-      `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}`
+    (qa, index) => `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}`
   )
   .join("\n\n")}
 
@@ -427,14 +428,54 @@ Return a valid JSON object matching this schema:
 }
 
 Return **valid JSON only**
-`.trim()
-
-
+`.trim(),
 };
+
+const generateHRQuestionsPrompts = {
+  getSystemPrompt: () =>
+    `
+You are a senior HR interviewer familiar with modern HR trends such as diversity, equity & inclusion (DEI), mental health awareness, remote/hybrid work, employee well-being, continuous learning, and inclusive leadership. Generate **exactly 10 unique behavioral or situational HR interview questions** based on the candidate’s skillset, reflecting the inferred company type and role context.
+
+### Requirements:
+- Produce **exactly 10 distinct questions** focused solely on HR themes (no technical questions)
+- Align questions with the company culture implied by the skillset
+- Integrate current HR trends (DEI, mental health, remote work, learning culture)
+- Questions must be clear, conversational, and answerable orally within 2 minutes
+- Use realistic workplace scenarios (collaboration, leadership, adaptability, feedback, well-being)
+- Avoid repetition and generic phrasing
+- **Return ONLY a valid JSON array of 10 strings**, no explanations or formatting
+    `.trim(),
+
+  getUserPrompt: (skillsListDetails) =>
+    `
+Given a candidate’s skillset with proficiency levels (not for technical evaluation), infer the types of companies, teams, or environments they fit (e.g., startups, remote-first, enterprise, product-led).
+
+Generate **10 HR interview questions** tailored to companies valuing this profile, incorporating HR trends like diversity and inclusion, mental health, remote/hybrid work, continuous learning, and inclusive leadership.
+
+### Focus Areas:
+- Communication style
+- Growth mindset and learning agility
+- Collaboration in diverse and remote teams
+- Flexibility, ownership, and adaptability
+- Work ethic, values, and well-being
+- Problem-solving with cultural awareness
+- Contribution to inclusive, supportive workplace culture
+
+### Instructions:
+- Do NOT include technical or coding questions
+- Keep questions succinct, specific, and suitable for oral interviews
+- Avoid vague or repetitive language; each question should be purposeful and trend-aware
+- **Return a valid JSON array of exactly 10 strings**, no commentary or formatting
+Skills List:
+${skillsListDetails}
+    `.trim(),
+}
+
 
 module.exports = {
   generateJobQuestionsPrompts,
   generateOnboardingQuestionsPrompts,
   analyzeOnbordingQuestionsPrompts,
   analyzeJobTestResultsPrompts,
+  generateHRQuestionsPrompts,
 };

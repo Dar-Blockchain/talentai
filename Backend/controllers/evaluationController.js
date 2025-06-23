@@ -787,9 +787,10 @@ Provide detailed, actionable feedback in JSON format only.`,
           experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
           ScoreTest: skill.confidenceScore,
           Levelconfirmed:
-          skill.demonstratedProficiency === 5 && skill.confidenceScore > 75
-            ? 5
-            : skill.demonstratedProficiency - 1,          })),
+            skill.demonstratedProficiency === 5 && skill.confidenceScore > 75
+              ? 5
+              : skill.demonstratedProficiency - 1,
+        })),
       });
     }
 
@@ -810,9 +811,10 @@ Provide detailed, actionable feedback in JSON format only.`,
             experienceLevel: getExperienceLevel(s.demonstratedProficiency),
             ScoreTest: s.confidenceScore,
             Levelconfirmed:
-            s.demonstratedProficiency === 5 && s.confidenceScore > 75
-              ? 5
-              : s.demonstratedProficiency - 1,            })),
+              s.demonstratedProficiency === 5 && s.confidenceScore > 75
+                ? 5
+                : s.demonstratedProficiency - 1,
+          })),
         },
         { new: true }
       );
@@ -1551,6 +1553,39 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
       success: false,
       error: "Failed to analyze onboardingAnswers",
       details: error.message,
+    });
+  }
+};
+
+exports.generateHRQuestions = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      throw new HttpError(500, `User not found`);
+    }
+    if (!user.profile) {
+      throw new HttpError(500, `User has not profile.`);
+    }
+
+    const profile = await Profile.findById({ _id: user.profile._id });
+    if (!profile) {
+      throw new HttpError(500, `profile not found.`);
+    }
+
+    const questions = await evaluationservice.generateHRQuestions(profile);
+
+    res.status(200).json({
+      questions,
+    });
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(error.statusCode || 500).json({
+        error: error.message || "A HTTP error occurred.",
+      });
+    }
+
+    return res.status(500).json({
+      error: "An unexpected error occurred while generating HR questions.",
     });
   }
 };
