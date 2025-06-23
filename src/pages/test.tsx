@@ -57,7 +57,12 @@ const RecordingControls = styled(Box)(({ theme }) => ({
   borderRadius: '16px',
   backdropFilter: 'blur(10px)',
   border: '1px solid rgba(255, 255, 255, 0.1)',
-  minWidth: '300px',
+  minWidth: '280px', // Base width for mobile
+  maxWidth: '90%', // Limit width on mobile
+  [theme.breakpoints.up('sm')]: {
+    minWidth: '300px',
+    maxWidth: '300px',
+  },
 }));
 
 const RecordingButton = styled(Button)(({ theme }) => ({
@@ -97,10 +102,18 @@ const QuestionOverlay = styled(Box)(({ theme }) => ({
   position: 'absolute',
   bottom: 0,
   width: '100%',
-  background: 'linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent)',
+  background: 'linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.7), transparent)',
   color: '#fff',
-  padding: theme.spacing(3),
+  padding: theme.spacing(2, 1.5), // Responsive padding
   backdropFilter: 'blur(5px)',
+  minHeight: '80px', // Ensure minimum height on mobile
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  [theme.breakpoints.up('sm')]: {
+    padding: theme.spacing(3),
+    minHeight: 'auto',
+  },
 }));
 
 const NavigationBar = styled(Box)(({ theme }) => ({
@@ -108,8 +121,11 @@ const NavigationBar = styled(Box)(({ theme }) => ({
   backdropFilter: 'blur(10px)',
   borderTop: '1px solid rgba(255, 255, 255, 0.1)',
   display: 'flex',
-  justifyContent: 'space-between',
+  justifyContent: 'center', // Center the button on mobile
   alignItems: 'center',
+  [theme.breakpoints.up('sm')]: {
+    justifyContent: 'space-between',
+  },
 }));
 
 // Add new styled components for the guidelines modal
@@ -957,7 +973,8 @@ export default function Test() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        py: 4,
+        py: { xs: 1, sm: 4 }, // Responsive padding
+        px: { xs: 0, sm: 2 }, // Add horizontal padding on larger screens
       }}
     >
       {/* Add Test Limit Error Modal */}
@@ -1167,7 +1184,12 @@ export default function Test() {
       </GuidelinesModal>
 
       <StyledAppBar position="static" elevation={0}>
-        <Toolbar>
+        <Toolbar sx={{ 
+          flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
+          alignItems: { xs: 'stretch', sm: 'center' },
+          gap: { xs: 1, sm: 0 },
+          py: { xs: 1, sm: 0 },
+        }}>
           <Typography
             variant="h6"
             sx={{
@@ -1176,12 +1198,22 @@ export default function Test() {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               fontWeight: 700,
+              fontSize: { xs: '1rem', sm: '1.25rem' }, // Responsive font size
+              textAlign: { xs: 'center', sm: 'left' }, // Center on mobile
             }}
           >
             Skill Test ({current + 1}/{questions.length || '-'})
           </Typography>
           {hasStartedTest && (
-            <Typography variant="subtitle1" sx={{ color: '#fff', mr: 2 }}>
+            <Typography 
+              variant="subtitle1" 
+              sx={{ 
+                color: '#fff', 
+                mr: { xs: 0, sm: 2 },
+                fontSize: { xs: '0.875rem', sm: '1rem' }, // Responsive font size
+                textAlign: { xs: 'center', sm: 'left' }, // Center on mobile
+              }}
+            >
               {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')} min
             </Typography>
           )}
@@ -1197,7 +1229,10 @@ export default function Test() {
               borderColor: 'white',
               textTransform: 'none',
               borderRadius: 2,
-              px: 3,
+              px: { xs: 2, sm: 3 }, // Responsive padding
+              py: { xs: 0.5, sm: 1 }, // Responsive padding
+              fontSize: { xs: '0.875rem', sm: '1rem' }, // Responsive font size
+              width: { xs: '100%', sm: 'auto' }, // Full width on mobile
               '&:hover': { backgroundColor: 'red' },
             }}
           >
@@ -1221,12 +1256,14 @@ export default function Test() {
         maxWidth="md"
         sx={{
           flexGrow: 1,
-          py: 4,
+          py: { xs: 2, sm: 4 }, // Responsive padding
+          px: { xs: 1, sm: 2 }, // Add horizontal padding for mobile
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           background: 'transparent',
           boxShadow: 'none',
+          minHeight: { xs: '60vh', sm: 'auto' }, // Ensure minimum height on mobile
         }}
       >
         <Paper
@@ -1234,11 +1271,12 @@ export default function Test() {
           sx={{
             position: 'relative',
             width: '100%',
-            pt: '56.25%', // 16:9
-            borderRadius: 4,
+            pt: { xs: '75%', sm: '56.25%' }, // Responsive aspect ratio (4:3 on mobile, 16:9 on desktop)
+            borderRadius: { xs: 2, sm: 4 }, // Responsive border radius
             overflow: 'hidden',
             background: 'rgba(255,255,255,0.98)',
             boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
+            maxHeight: { xs: '70vh', sm: 'none' }, // Limit height on mobile
           }}
         >
           <video
@@ -1292,7 +1330,18 @@ export default function Test() {
           </RecordingControls>
 
           <QuestionOverlay>
-            <Typography variant="h6" sx={{ color: '#fff' }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                color: '#fff',
+                fontSize: { xs: '1rem', sm: '1.25rem' }, // Responsive font size
+                lineHeight: { xs: 1.3, sm: 1.4 }, // Responsive line height
+                textAlign: 'center',
+                px: { xs: 1, sm: 0 }, // Add horizontal padding on mobile
+                wordBreak: 'break-word', // Prevent text overflow
+                maxWidth: '100%',
+              }}
+            >
               {isGenerating ? (
                 <Box sx={{
                   display: 'flex',
@@ -1302,6 +1351,7 @@ export default function Test() {
                   background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
+                  flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
                 }}>
                   <span>Generating your interview questions</span>
                   <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
@@ -1327,9 +1377,12 @@ export default function Test() {
             textTransform: 'none',
             background: nextButtonDisabled ? 'rgba(255, 255, 255, 0.12)' : GREEN_MAIN,
             borderRadius: 2,
-            px: 4,
-            py: 1.5,
+            px: { xs: 3, sm: 4 }, // Responsive padding
+            py: { xs: 1, sm: 1.5 }, // Responsive padding
+            fontSize: { xs: '0.875rem', sm: '1rem' }, // Responsive font size
             fontWeight: 600,
+            width: { xs: '100%', sm: 'auto' }, // Full width on mobile
+            maxWidth: { xs: '300px', sm: 'none' }, // Max width on mobile
             boxShadow: '0 2px 8px 0 rgba(0,255,157,0.10)',
             '&:hover': {
               background: nextButtonDisabled ? 'rgba(255, 255, 255, 0.12)' : GREEN_MAIN,

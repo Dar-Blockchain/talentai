@@ -111,7 +111,7 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
 const ProfileHeader = styled(Box)(({ theme }) => ({
   background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
   color: "#000000",
-  padding: theme.spacing(8),
+  padding: theme.spacing(4, 2), // Reduced horizontal padding for mobile
   borderRadius: "32px",
   marginBottom: theme.spacing(6),
   position: "relative",
@@ -127,6 +127,13 @@ const ProfileHeader = styled(Box)(({ theme }) => ({
     background:
       "radial-gradient(circle at top right, rgba(0, 0, 0, 0.03) 0%, transparent 70%)",
     zIndex: 1,
+  },
+  // Responsive padding
+  [theme.breakpoints.up("sm")]: {
+    padding: theme.spacing(6, 4),
+  },
+  [theme.breakpoints.up("md")]: {
+    padding: theme.spacing(8),
   },
 }));
 
@@ -1435,12 +1442,16 @@ export default function DashboardCandidate() {
       sx={{
         minHeight: "100vh",
         color: GREEN_MAIN,
-        padding: theme.spacing(6),
+        padding: { xs: theme.spacing(2), sm: theme.spacing(4), md: theme.spacing(6) }, // Responsive padding
       }}
     >
       <Container maxWidth="lg">
         {/* Logout Button */}
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+        <Box sx={{ 
+          display: "flex", 
+          justifyContent: { xs: "center", sm: "flex-end" }, 
+          mb: 3 
+        }}>
           <Button
             onClick={handleLogout}
             startIcon={<LogoutIcon />}
@@ -1451,8 +1462,11 @@ export default function DashboardCandidate() {
               fontWeight: 600,
               borderRadius: "12px",
               textTransform: "none",
-              px: 3,
-              py: 1.2,
+              px: { xs: 2, sm: 3 }, // Responsive horizontal padding
+              py: { xs: 1, sm: 1.2 }, // Responsive vertical padding
+              fontSize: { xs: "0.875rem", sm: "1rem" }, // Responsive font size
+              width: { xs: "100%", sm: "auto" }, // Full width on mobile
+              maxWidth: { xs: "200px", sm: "none" }, // Max width on mobile
               boxShadow: "0 2px 8px rgba(0,255,157,0.15)",
               "&:hover": {
                 background: GREEN_MAIN,
@@ -1472,15 +1486,20 @@ export default function DashboardCandidate() {
                 justifyContent: "space-between",
                 alignItems: "flex-start",
                 mb: 3,
+                flexDirection: { xs: "column", sm: "row" }, // Stack vertically on mobile
+                gap: { xs: 2, sm: 0 }, // Add gap on mobile
               }}
             >
-              <Box>
+              <Box sx={{ flex: 1 }}>
                 <Typography
                   variant="h3"
                   sx={{
                     fontWeight: 700,
                     mb: 2,
                     color: "#191919",
+                    fontSize: { xs: "1.75rem", sm: "2.125rem", md: "3rem" }, // Responsive font size
+                    lineHeight: { xs: 1.2, sm: 1.3, md: 1.4 }, // Responsive line height
+                    wordBreak: "break-word", // Prevent text overflow
                   }}
                 >
                   Welcome back, {profile.userId.username}!
@@ -1489,7 +1508,11 @@ export default function DashboardCandidate() {
             </Box>
 
             {/* Action Buttons */}
-            <Stack direction="row" spacing={2} sx={{ mt: 4 }}>
+            <Stack 
+              direction={{ xs: "column", sm: "row" }} 
+              spacing={{ xs: 2, sm: 2 }} 
+              sx={{ mt: 4 }}
+            >
               <ActionButton
                 variant="contained"
                 startIcon={<PlayArrowIcon />}
@@ -1498,6 +1521,7 @@ export default function DashboardCandidate() {
                 sx={{
                   background: GREEN_MAIN,
                   color: "#000000",
+                  width: { xs: "100%", sm: "auto" }, // Full width on mobile
                   "&:hover": {
                     background: GREEN_MAIN,
                   },
@@ -1516,6 +1540,7 @@ export default function DashboardCandidate() {
                 sx={{
                   borderColor: "black",
                   color: "black",
+                  width: { xs: "100%", sm: "auto" }, // Full width on mobile
                   "&:hover": {
                     borderColor: GREEN_MAIN,
                     background: "rgba(0, 255, 157, 0.08)",
