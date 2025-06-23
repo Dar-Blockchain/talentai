@@ -246,6 +246,9 @@ interface DashboardStats {
     averageScore: number;
     userGrowth: number;
     assessmentGrowth: number;
+    totalSkills: number;
+    posts: number;
+    jobAssessmentsWithScorePercentage: number;
 }
 
 // Mock data for charts
@@ -282,7 +285,10 @@ const DashboardAdmin = () => {
         totalAttempts: 0,
         averageScore: 0,
         userGrowth: 0,
-        assessmentGrowth: 0
+        assessmentGrowth: 0,
+        totalSkills: 0,
+        posts: 0,
+        jobAssessmentsWithScorePercentage: 0
     });
     const [users, setUsers] = useState<User[]>([]);
     const [assessments, setAssessments] = useState<Assessment[]>([]);
@@ -293,6 +299,7 @@ const DashboardAdmin = () => {
         { name: 'Hard Skills', value: 0, color: '#8884d8' },
         { name: 'Soft Skills', value: 0, color: '#82ca9d' }
     ]);
+    const [skillsData, setSkillsData] = useState<Array<{ skill: string; count: number }>>([]);
     const [userGrowthData, setUserGrowthData] = useState<any[]>([]);
     const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
@@ -329,6 +336,7 @@ const DashboardAdmin = () => {
                 fetchAllUsersForMap(),
                 fetchStats(),
                 fetchUserGrowthData(),
+                fetchSkillsData(),
                 fetchUsers(usersPage + 1, usersRowsPerPage),
                 fetchAssessments()
             ]);
@@ -356,7 +364,10 @@ const DashboardAdmin = () => {
                     totalAttempts: data.data.resumes || 0, // Using resumes instead of attempts
                     averageScore: data.data.avgOverallScore || 0,
                     userGrowth: 12.5, // Mock growth percentage
-                    assessmentGrowth: 8.3 // Mock growth percentage
+                    assessmentGrowth: 8.3, // Mock growth percentage
+                    totalSkills: data.data.hardSkillsPercentage || 0,
+                    posts: data.data.posts || data.data.totalPosts || data.data.postsCreatedByDay?.reduce((total: number, item: any) => total + item.postCount, 0) || 0,
+                    jobAssessmentsWithScorePercentage: data.data.jobAssessmentsWithScorePercentage || 0
                 });
                 
                 // Update skill distribution
@@ -375,7 +386,10 @@ const DashboardAdmin = () => {
                 totalAttempts: 0,
                 averageScore: 0,
                 userGrowth: 0,
-                assessmentGrowth: 0
+                assessmentGrowth: 0,
+                totalSkills: 0,
+                posts: 0,
+                jobAssessmentsWithScorePercentage: 0
             });
         }
     };
@@ -459,6 +473,51 @@ const DashboardAdmin = () => {
             console.error('Error fetching user growth data:', err);
             setUserGrowthData([]);
         }
+    };
+
+    const fetchSkillsData = async () => {
+        // Using static JSON data for now - will replace with API call later
+        const mockSkillsData = [
+            { skill: 'JavaScript', count: 45 },
+            { skill: 'React', count: 38 },
+            { skill: 'Python', count: 32 },
+            { skill: 'Node.js', count: 28 },
+            { skill: 'SQL', count: 25 },
+            { skill: 'TypeScript', count: 22 },
+            { skill: 'AWS', count: 18 },
+            { skill: 'Docker', count: 15 },
+            { skill: 'MongoDB', count: 12 },
+            { skill: 'Git', count: 10 }
+        ];
+        
+        // Sort skills by count in descending order
+        const sortedSkills = mockSkillsData
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 10);
+            
+        setSkillsData(sortedSkills);
+        
+        // TODO: Replace with actual API call
+        // try {
+        //     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getSkillsCount`);
+        //     if (!res.ok) {
+        //         throw new Error(`HTTP error! status: ${res.status}`);
+        //     }
+        //     const data = await res.json();
+        //     if (data.success && data.data) {
+        //         const sortedSkills = data.data
+        //             .sort((a: any, b: any) => b.count - a.count)
+        //             .slice(0, 10)
+        //             .map((item: any) => ({
+        //                 skill: item.skill,
+        //                 count: item.count
+        //             }));
+        //         setSkillsData(sortedSkills);
+        //     }
+        // } catch (err) {
+        //     console.error('Error fetching skills data:', err);
+        //     setSkillsData(mockSkillsData);
+        // }
     };
 
     const fetchUsers = async (page = 1, limit = 10, username = '', email = '', role = '', status = '') => {
@@ -1031,6 +1090,72 @@ const DashboardAdmin = () => {
                         </Box>
                     </StatCard>
                 </Box>
+
+                <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
+                    <StatCard>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Box>
+                                <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
+                                    {stats.totalSkills.toLocaleString()}
+                                </Typography>
+                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                    Total Skills
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <WorkIcon sx={{ color: 'info.main', fontSize: 16, mr: 0.5 }} />
+                                    <Typography variant="caption" sx={{ color: 'info.main' }}>
+                                        Skills tracked
+                                    </Typography>
+                                </Box>
+                            </Box>
+                            <WorkIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
+                        </Box>
+                    </StatCard>
+                </Box>
+
+                <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
+                    <StatCard>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Box>
+                                <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
+                                    {stats.posts.toLocaleString()}
+                                </Typography>
+                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                    Total Posts
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <TrendingUpIcon sx={{ color: 'success.main', fontSize: 16, mr: 0.5 }} />
+                                    <Typography variant="caption" sx={{ color: 'success.main' }}>
+                                        Active content
+                                    </Typography>
+                                </Box>
+                            </Box>
+                            <BarChartIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
+                        </Box>
+                    </StatCard>
+                </Box>
+
+                <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
+                    <StatCard>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Box>
+                                <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
+                                    {stats.jobAssessmentsWithScorePercentage.toFixed(1)}%
+                                </Typography>
+                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                    Assessment Completion
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <CheckCircleIcon sx={{ color: 'success.main', fontSize: 16, mr: 0.5 }} />
+                                    <Typography variant="caption" sx={{ color: 'success.main' }}>
+                                        Completed assessments
+                                    </Typography>
+                                </Box>
+                            </Box>
+                            <AssessmentIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
+                        </Box>
+                    </StatCard>
+                </Box>
             </Box>
 
             {/* Charts */}
@@ -1100,6 +1225,47 @@ const DashboardAdmin = () => {
                         </ResponsiveContainer>
                     </StyledCard>
                 </Box>
+            </Box>
+
+            {/* Skills Bar Chart */}
+            <Box sx={{ mb: 4 }}>
+                <StyledCard>
+                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                        Top Skills by Usage
+                    </Typography>
+                    <ResponsiveContainer width="100%" height={400}>
+                        <BarChart
+                            data={skillsData}
+                            layout="horizontal"
+                            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" />
+                            <YAxis 
+                                type="category" 
+                                dataKey="skill" 
+                                width={100}
+                                tick={{ fontSize: 12 }}
+                            />
+                            <RechartsTooltip 
+                                formatter={(value: any, name: any) => [value, 'Count']}
+                                labelFormatter={(label: any) => `Skill: ${label}`}
+                            />
+                            <Bar 
+                                dataKey="count" 
+                                fill="#8310FF"
+                                radius={[0, 4, 4, 0]}
+                            >
+                                {skillsData.map((entry, index) => (
+                                    <Cell 
+                                        key={`cell-${index}`} 
+                                        fill={`hsl(${240 + index * 20}, 70%, 60%)`}
+                                    />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </StyledCard>
             </Box>
 
             {/* World Map */}
