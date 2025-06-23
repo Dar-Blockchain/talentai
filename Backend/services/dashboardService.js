@@ -303,9 +303,14 @@ module.exports.getCounts = async () => {
     // Calcul de la moyenne de analysis.overallScore dans JobAssessmentResult
     const avgOverallScoreResult = await JobAssessmentResult.aggregate([
       {
+        $match: {
+          "analysis.overallScore": { $ne: 0 } // Exclure les scores à 0
+        }
+      },
+      {
         $group: {
-          _id: null,  // Pas besoin de grouper par un champ spécifique
-          avgOverallScore: { $avg: "$analysis.overallScore" },
+          _id: null,
+          avgOverallScore: { $avg: "$analysis.overallScore" }
         }
       }
     ]);
