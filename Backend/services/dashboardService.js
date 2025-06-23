@@ -303,20 +303,37 @@ module.exports.getCounts = async () => {
     // Calcul de la moyenne de analysis.overallScore dans JobAssessmentResult
     const avgOverallScoreResult = await JobAssessmentResult.aggregate([
       {
+        $match: {
+          "analysis.overallScore": { $ne: 0 } // Exclure les scores à 0
+        }
+      },
+      {
         $group: {
-          _id: null,  // Pas besoin de grouper par un champ spécifique
-          avgOverallScore: { $avg: "$analysis.overallScore" },
+          _id: null,
+          avgOverallScore: { $avg: "$analysis.overallScore" }
         }
       }
     ]);
 
     const avgOverallScore = avgOverallScoreResult.length > 0 ? avgOverallScoreResult[0].avgOverallScore : 0;
 
+    // Compte le nombre de JobAssessmentResult avec overallScore > 0
+    const jobAssessmentWithScoreCount = await JobAssessmentResult.countDocuments({
+      "analysis.overallScore": { $gt: 0 }
+    });
+
+    // Calcule le pourcentage
+    const jobAssessmentWithScorePercentage = jobAssessmentCount > 0
+      ? (jobAssessmentWithScoreCount / jobAssessmentCount) * 100
+      : 0;
+
     // Retourner les résultats
     return {
       users: userCount,
       posts: postCount,
       jobAssessments: jobAssessmentCount,
+      jobAssessmentsWithScore: jobAssessmentWithScoreCount, // (optionnel, pour debug)
+      jobAssessmentsWithScorePercentage: jobAssessmentWithScorePercentage, // <-- AJOUTÉ
       feedback: feedbackCount,
       bids: bidCount,
       resumes: resumeCount,
@@ -331,6 +348,7 @@ module.exports.getCounts = async () => {
     throw new Error('Error fetching counts: ' + error.message);
   }
 };
+
 
 
 module.exports.getCountsByDay = async () => {
