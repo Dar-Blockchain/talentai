@@ -497,3 +497,38 @@ module.exports.getUserCountsByLocation = async () => {
     throw new Error('Error fetching user counts by location: ' + error.message);
   }
 };
+
+// Fonction qui retourne tous les JobAssessmentResult par compétence
+module.exports.getJobAssessmentsBySkill = async (skillName) => {
+  try {
+    // Récupérer les résultats d'évaluation pour le skillName donné
+    const assessments = await JobAssessmentResult.aggregate([
+      {
+        $unwind: "$analysis.skillAnalysis" // Décompose la liste skillAnalysis dans chaque JobAssessmentResult
+      },
+      {
+        $match: {
+          "analysis.skillAnalysis.skillName": skillName // Filtre les résultats en fonction du skillName
+        }
+      },
+      {
+        $group: {
+          _id: "$jobId", // Regrouper par jobId pour chaque évaluation de travail
+          candidates: { $push: { candidateId: "$condidateId", jobMatch: "$analysis.jobMatch" } }, // Collecter les candidats et leur évaluation de correspondance
+          totalAssessments: { $sum: 1 }, // Compter le nombre total d'évaluations pour ce job
+        }
+      },
+      {
+        $project: {
+          jobId: 1,
+          candidates: 1,
+          totalAssessments: 1
+        }
+      }
+    ]);
+
+    return assessments;
+  } catch (error) {
+    throw new Error("Erreur lors de la récupération des évaluations par compétence: " + error.message);
+  }
+};
