@@ -67,3 +67,21 @@ module.exports.getUserCountsByLocation = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Contrôleur qui renvoie tous les JobAssessmentResult pour un skill spécifique
+module.exports.getJobAssessmentsBySkill = async (req, res) => {
+  const { skillName } = req.body; // On récupère le nom de la compétence depuis les paramètres de l'URL
+
+  try {
+    const assessments = await dashboardService.getJobAssessmentsBySkill(skillName);
+    
+    if (!assessments || assessments.length === 0) {
+      return res.status(404).json({ message: "Aucune évaluation trouvée pour cette compétence." });
+    }
+
+    // Retourne les résultats des évaluations
+    return res.status(200).json({ assessments });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
