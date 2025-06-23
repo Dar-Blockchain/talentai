@@ -12,9 +12,13 @@ const {
   generateJobQuestionsPrompts,
   analyzeJobTestResultsPrompts,
   generateHRQuestionsPrompts,
+  analyzeHRAnswersPrompts,
 } = require("../prompts/evaluationPrompts");
 const { HttpError } = require("../utils/httpUtils");
-const { parseAndValidateAIResponse, parseAIResponse } = require("../parsers/AIResponseParser");
+const {
+  parseAndValidateAIResponse,
+  parseAIResponse,
+} = require("../parsers/AIResponseParser");
 const {
   updateProfileWithNewSkills,
   findAlreadyProvenSkills,
@@ -23,7 +27,11 @@ const {
   processSkillsData,
   processAnalysisData,
   updateTodoListWithNewSkills,
+  handleAddSoftSkills,
 } = require("../utils/evaluationUtils");
+const {
+  DEFAULT_SOFT_SKILL_CATEGORIES,
+} = require("../constants/profileConstants");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
@@ -216,14 +224,15 @@ module.exports.generateHRQuestions = async (profile) => {
     const userSkills = profile.skills;
 
     const skillsListDetails = userSkills
-      .map((skill) => `- ${skill.name} (experienceLevel: ${skill.experienceLevel})`)
+      .map(
+        (skill) => `- ${skill.name} (experienceLevel: ${skill.experienceLevel})`
+      )
       .join("\n");
 
     const systemPrompt = generateHRQuestionsPrompts.getSystemPrompt();
 
     const userPrompt =
       generateHRQuestionsPrompts.getUserPrompt(skillsListDetails);
-    
 
     const stream = await together.chat.completions.create({
       model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
@@ -253,4 +262,53 @@ module.exports.generateHRQuestions = async (profile) => {
 
     throw new HttpError(500, "Internal server error");
   }
+};
+
+exports.analyzeHRAnswers = async ({ questions, user }) => {
+  const profile = await Profile.findById(user.profile);
+  if (!profile)
+    throw new HttpError(404, "Aucun profil trouvé pour cet utilisateur.");
+
+  // for now , candidates are going to be tested on a default softSkill list
+  // possible optimization:  Enabling the companies to set their preferred softSkillList to test
+  const systemPrompt = analyzeHRAnswersPrompts.getSystemPrompt(
+    Object.values(DEFAULT_SOFT_SKILL_CATEGORIES)
+  );
+  const userPrompt = analyzeHRAnswersPrompts.getUserPrompt(
+    questions,
+    Object.values(DEFAULT_SOFT_SKILL_CATEGORIES)
+  );
+
+  const stream = await together.chat.completions.create({
+    model: "deepseek-ai/DeepSeek-V3",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    max_tokens: 2500,
+    temperature: 0.6,
+    stream: true,
+  });
+
+  let raw = "";
+  for await (const chunk of stream) {
+    const content = chunk.choices?.[0]?.delta?.content;
+    if (content) raw += content;
+  }
+
+  // I. parse AI response
+  let analysis = await parseAIResponse(raw);
+
+  // II.
+  // store softskills in the candidate's profile (if any are proven)
+  // update todoList : Pass HR Test : isCompleted
+  await  handleAddSoftSkills(
+    profile,
+    analysis.skillAnalysis
+  );
+
+  profile.quota++;
+  await profile.save();
+
+  return { analysis };
 };

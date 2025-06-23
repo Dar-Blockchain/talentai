@@ -1589,3 +1589,49 @@ exports.generateHRQuestions = async (req, res) => {
     });
   }
 };
+
+exports.analyzeHRAnswers = async (req, res) => {
+  try {
+    const { questions } = req.body;
+    const user = req.user;
+
+    const profile = user.profile;
+
+    const now = new Date();
+    const daysSinceLastUpdate =
+      (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
+    if (daysSinceLastUpdate >= 30) {
+      profile.quota = 0;
+      profile.quotaUpdatedAt = now;
+    }
+
+    if (profile.quota >= 5) {
+      return res
+        .status(403)
+        .json({ error: "You have reached your test limit (5)" });
+    }
+
+    if (!Array.isArray(questions) ) {
+      return res.status(400).json({
+        error: "Invalid request format",
+        required: {
+          questions: "Array of question-answer pairs",
+        },
+      });
+    }
+
+    const result = await evaluationservice.analyzeHRAnswers({
+      questions,
+      user
+    });
+
+    res.status(200).json({ success: true, result });
+  } catch (error) {
+    console.error("Error analyzing HR answers:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to analyze HRAnswers",
+      details: error.message,
+    });
+  }
+};

@@ -471,6 +471,86 @@ ${skillsListDetails}
     `.trim(),
 }
 
+const analyzeHRAnswersPrompts = {
+  getSystemPrompt: (softSkillList) =>
+    `
+You are a senior HR interviewer and analyst. Your task is to evaluate candidate answers (transcribed from oral responses) assess his softSkills: ${softSkillList.join(", ")}.
+
+Note: Answers were orally provided and transcribed by AI; expect minor transcription errors or incomplete sentences.
+
+Your task:
+- Analyze answers to produce:
+  - overallScore (0-100) reflecting cultural and behavioral fit
+  - recommendations (array of strings) for candidate development or company considerations
+  - nextSteps (array of strings) actionable hiring or HR follow-up steps
+  - skillAnalysis (array) with detailed evaluation per skill, including:
+    - skillName
+    - experienceLevel (0-5)
+    - strengths (array, or ["No strengths identified for this skill"])
+    - weaknesses (array, or ["No weaknesses identified for this skill"])
+    - confidenceScore (0-100)
+
+Use this scale to assign experienceLevel:
+0 = noLevel: No relevant answer; vague or absent  
+1 = entryLevel: Very basic or generic insight  
+2 = junior: Shows early understanding or some relevant examples  
+3 = midLevel: Clear, structured experience with moderate depth  
+4 = senior: Advanced handling, leadership or cross-team examples  
+5 = expert: Strategic thinking, mentoring, and systemic problem-solving
+
+**Confidence Score Rules (per skill):**
+- Every question has equal weight
+- Each answer is scored:
+  - Fully correct → 1 point
+  - Partially correct → 0.6 point
+  - Incorrect or unanswered → 0 points
+- Use exact formula:  
+  confidenceScore = (earnedPoints / totalQuestionsForThisSkill) × 100  
+  Example: 3 full, 1 partial, 1 incorrect → (3 + 0.6 + 0) / 5 × 100 = 72%
+- Return the result as a rounded **integer**, not approximated.
+
+Strict Requirements:
+- Assess ONLY the soft skills explicitly listed in the user prompt.
+- Base your assessment only on information clearly or reasonably implied by the answers.
+- Consider transcription imperfections but avoid unsupported assumptions.
+- Avoid duplicate or redundant recommendations.
+- Use professional, clear, and unbiased language.
+- Return ONLY valid JSON with no additional text or explanation.
+    `.trim(),
+
+  getUserPrompt: (questions, softSkillList) =>
+    `
+Analyze the candidate’s answers to assess their proficiency in the following soft skills tested during the HR interview: ${softSkillList.join(", ")}.
+
+Candidate's answers:
+${questions
+  .map(
+    (qa, i) => `Q${i + 1}: ${qa.question}\nA${i + 1}: ${qa.answer}`
+  )
+  .join("\n\n")}
+
+Generate and return JSON in the following format:
+{
+  "overallScore": 0-100,
+  "recommendations": ["string"],
+  "nextSteps": ["string"],
+  "skillAnalysis": [
+    {
+      "skillName": "string",
+      category: String,
+      "experienceLevel": 0-5,
+      "strengths": ["..."],
+      "weaknesses": ["..."],
+      "confidenceScore": 0-100,
+    }
+  ]
+}
+
+Return only the JSON output without any commentary.
+    `.trim(),
+};
+
+
 
 module.exports = {
   generateJobQuestionsPrompts,
@@ -478,4 +558,5 @@ module.exports = {
   analyzeOnbordingQuestionsPrompts,
   analyzeJobTestResultsPrompts,
   generateHRQuestionsPrompts,
+  analyzeHRAnswersPrompts
 };

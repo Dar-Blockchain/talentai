@@ -19,6 +19,6 @@ router.post('/generate-onboarding-questions', evaluationController.generateOnboa
 router.post('/analyze-onboarding-answers', evaluationController.analyzeOnboardingAnswers);
 
 router.get('/generate-hr-questions', evaluationController.generateHRQuestions);
-// router.post('/analyze-hr-answers', evaluationController.analyzeHRAnswers);
+router.post('/analyze-hr-answers', evaluationController.analyzeHRAnswers);
 
 module.exports = router; 
