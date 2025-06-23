@@ -501,15 +501,16 @@ module.exports.getUserCountsByLocation = async () => {
 // Fonction qui retourne tous les JobAssessmentResult par compétence
 module.exports.getJobAssessmentsBySkill = async (skillName) => {
   try {
-    // Récupérer les résultats d'évaluation pour le skillName donné
+    const matchStage = skillName
+      ? { "analysis.skillAnalysis.skillName": skillName } // Filtre par compétence si skillName est fourni
+      : {}; // Aucun filtre si skillName n'est pas fourni
+
     const assessments = await JobAssessmentResult.aggregate([
       {
         $unwind: "$analysis.skillAnalysis" // Décompose la liste skillAnalysis dans chaque JobAssessmentResult
       },
       {
-        $match: {
-          "analysis.skillAnalysis.skillName": skillName // Filtre les résultats en fonction du skillName
-        }
+        $match: matchStage // Applique le filtre si skillName est fourni
       },
       {
         $group: {
