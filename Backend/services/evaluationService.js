@@ -229,10 +229,18 @@ module.exports.generateHRQuestions = async (profile) => {
       )
       .join("\n");
 
-    const systemPrompt = generateHRQuestionsPrompts.getSystemPrompt();
+    const systemPrompt = generateHRQuestionsPrompts.getSystemPrompt(
+      Object.values(DEFAULT_SOFT_SKILL_CATEGORIES)
+    );
 
-    const userPrompt =
-      generateHRQuestionsPrompts.getUserPrompt(skillsListDetails);
+    console.log("sys: ", systemPrompt);
+
+    const userPrompt = generateHRQuestionsPrompts.getUserPrompt(
+      skillsListDetails,
+      Object.values(DEFAULT_SOFT_SKILL_CATEGORIES)
+    );
+
+    console.log("user: ", userPrompt);
 
     const stream = await together.chat.completions.create({
       model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
@@ -256,11 +264,11 @@ module.exports.generateHRQuestions = async (profile) => {
 
     let questions = await parseAIResponse(raw);
 
-    return questions;
+    return { questions, totalQuestions: questions.length };
   } catch (error) {
     if (error instanceof HttpError) throw error;
 
-    throw new HttpError(500, "Internal server error");
+    throw new HttpError(500, `Internal server error: ${error}`);
   }
 };
 
@@ -302,10 +310,7 @@ exports.analyzeHRAnswers = async ({ questions, user }) => {
   // II.
   // store softskills in the candidate's profile (if any are proven)
   // update todoList : Pass HR Test : isCompleted
-  await  handleAddSoftSkills(
-    profile,
-    analysis.skillAnalysis
-  );
+  await handleAddSoftSkills(profile, analysis.skillAnalysis);
 
   profile.quota++;
   await profile.save();
