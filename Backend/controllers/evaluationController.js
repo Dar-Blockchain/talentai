@@ -1574,9 +1574,9 @@ exports.generateHRQuestions = async (req, res) => {
 
     const questions = await evaluationservice.generateHRQuestions(profile);
 
-    res.status(200).json({
-      questions,
-    });
+    res.status(200).json(
+      questions
+    );
   } catch (error) {
     if (error instanceof HttpError) {
       return res.status(error.statusCode || 500).json({
