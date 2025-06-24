@@ -76,59 +76,29 @@ module.exports.registerUser = async (email) => {
   };
 };
 
-/// Service de vérification OTP
+// Service de vérification OTP
 module.exports.verifyUserOTP = async (email, otp, location = null) => {
-  const user = await require('../models/User').findOne({ email });
-
+  const user = await User.findOne({ email });  
+  
   if (!user) {
     throw new Error("Utilisateur non trouvé");
   }
 
-  if (user.isBanned) {
-    user.authHistory.push({
-      date: new Date(),
-      ip: location?.ip || '',
-      localisation: location ? `${location.city}, ${location.region}, ${location.country}` : '',
-      method: 'OTP',
-      status: 'Failed'
+  if (user && user.isBanned) {
+    return res.status(403).json({
+      message: "You are banned. Please check and contact support.",
     });
-    await user.save();
-    throw new Error("You are banned. Please check and contact support.");
   }
 
   if (!user.otp || !user.otp.code || !user.otp.expiresAt) {
-    user.authHistory.push({
-      date: new Date(),
-      ip: location?.ip || '',
-      localisation: location ? `${location.city}, ${location.region}, ${location.country}` : '',
-      method: 'OTP',
-      status: 'Failed'
-    });
-    await user.save();
     throw new Error("Aucun OTP trouvé");
   }
 
   if (user.otp.code !== otp) {
-    user.authHistory.push({
-      date: new Date(),
-      ip: location?.ip || '',
-      localisation: location ? `${location.city}, ${location.region}, ${location.country}` : '',
-      method: 'OTP',
-      status: 'Failed'
-    });
-    await user.save();
     throw new Error("Code OTP incorrect");
   }
 
   if (new Date() > user.otp.expiresAt) {
-    user.authHistory.push({
-      date: new Date(),
-      ip: location?.ip || '',
-      localisation: location ? `${location.city}, ${location.region}, ${location.country}` : '',
-      method: 'OTP',
-      status: 'Failed'
-    });
-    await user.save();
     throw new Error("Code OTP expiré");
   }
 
@@ -136,25 +106,18 @@ module.exports.verifyUserOTP = async (email, otp, location = null) => {
   user.otp = undefined;
   user.lastLogin = new Date();
   user.trafficCounter = user.trafficCounter + 1;
-
+  
+  // Save location data if provided
   if (location) {
     user.ip = location.ip;
     user.Localisation = `${location.city}, ${location.region}, ${location.country}`;
   }
-
-  // Ajouter historique (succès)
-  user.authHistory.push({
-    date: new Date(),
-    ip: location?.ip || '',
-    localisation: location ? `${location.city}, ${location.region}, ${location.country}` : '',
-    method: 'OTP',
-    status: 'Success'
-  });
-
+  
   await user.save();
 
   // Générer le token JWT
-  const token = require('../utils/jwt').generateToken(user._id);
+  const token = generateToken(user._id);
+  console.log(token);
   return {
     user,
     token,
