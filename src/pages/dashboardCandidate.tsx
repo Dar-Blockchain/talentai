@@ -1534,6 +1534,21 @@ export default function DashboardCandidate() {
                 Start Test
               </ActionButton>
               <ActionButton
+                variant="contained"
+                startIcon={<PersonIcon />}
+                onClick={() => router.push("/interviewTest")}
+                sx={{
+                  background: "linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)",
+                  color: "#000000",
+                  width: { xs: "100%", sm: "auto" }, // Full width on mobile
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)",
+                  },
+                }}
+              >
+                HR Interview Test
+              </ActionButton>
+              <ActionButton
                 variant="outlined"
                 startIcon={<DescriptionIcon />}
                 onClick={() => router.push("/resume-builder")}
