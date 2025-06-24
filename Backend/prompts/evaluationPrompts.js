@@ -504,41 +504,34 @@ Your task:
   - nextSteps (array of strings) actionable hiring or HR follow-up steps
   - skillAnalysis (array) with detailed evaluation per skill, including:
     - skillName
-    - experienceLevel (0-5)
+    - proficiencyLevel (0-5)
     - strengths (array, or ["No strengths identified for this skill"])
     - weaknesses (array, or ["No weaknesses identified for this skill"])
     - confidenceScore (0-100)
+    - questionAnswerList: an array of:
+      - question
+      - answer
+      - status: "correct", "partial_correct", or "incorrect"
+      - exampleCorrectAnswer (optional: if status of answer is "incorrect")
 
-Scoring Instructions:
+**Confidence Score Rules (per skill):**
 - Every question is mapped to one skill only (you may assume an even split).
 - Each answer is scored:
-  - Fully relevant/correct → 1 point
-  - Partially relevant or vague → 0.6 points
-  - Empty, irrelevant, or generic → 0 points
+  - Fully relevant/correct → 1 point → status: "correct"
+  - Partially relevant or vague → 0.6 points → status: "partial_correct"
+  - Empty, irrelevant, or generic → 0 points → status: "incorrect"
 - Use this formula:
   confidenceScore = (earnedPoints / totalQuestionsForThisSkill) × 100
-  Return rounded **integer** values for confidenceScore.
+  Example: 3 full, 1 partial, 1 incorrect → (3 + 0.6 + 0) / 5 × 100 = 72%
+- Return rounded **integer** values for confidenceScore.
 
-Use this scale to assign experienceLevel:
+Use this scale to assign proficiencyLevel:
 0 = noLevel: No relevant answer; vague or absent  
 1 = entryLevel: Very basic or generic insight  
 2 = junior: Shows early understanding or some relevant examples  
 3 = midLevel: Clear, structured experience with moderate depth  
 4 = senior: Advanced handling, leadership or cross-team examples  
 5 = expert: Strategic thinking, mentoring, and systemic problem-solving
-
-
-
-**Confidence Score Rules (per skill):**
-- Every question has equal weight
-- Each answer is scored:
-  - Fully correct → 1 point
-  - Partially correct → 0.6 point
-  - Incorrect or unanswered → 0 points
-- Use exact formula:  
-  confidenceScore = (earnedPoints / totalQuestionsForThisSkill) × 100  
-  Example: 3 full, 1 partial, 1 incorrect → (3 + 0.6 + 0) / 5 × 100 = 72%
-- Return the result as a rounded **integer**, not approximated.
 
 Strict Requirements:
 - Assess ONLY the soft skills explicitly listed in the user prompt.
@@ -563,7 +556,7 @@ ${questions
   .join("\n\n")}
 
 For each soft skill, evaluate:
-- experienceLevel (0-5) based strictly on the candidate's answers.
+- proficiencyLevel (0-5) based strictly on the candidate's answers.
 - strengths and weaknesses explicitly supported by the answers.
 - confidenceScore (0-100) calculated as per scoring rules.
 
@@ -575,11 +568,19 @@ Generate and return JSON in the following format:
   "skillAnalysis": [
     {
       "skillName": "string",
-      category: String,
-      "experienceLevel": 0-5,
+      category: "soft",
+      "proficiencyLevel": 0-5,
       "strengths": ["..."],
       "weaknesses": ["..."],
       "confidenceScore": 0-100,
+      "questionAnswerList": [
+        {
+          "question": "string",
+          "answer": "string",
+          "status": "correct" | "partial_correct" | "incorrect",
+          "exampleCorrectAnswer": "string (optional)"
+        }
+      ],
     }
   ]
 }

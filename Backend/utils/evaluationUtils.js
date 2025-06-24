@@ -1,5 +1,16 @@
+const InterviewDetails = require("../models/InterviewDetailsModel");
 const TodoList = require("../models/todoListModel");
+const { SKILL_TYPES, SKILL_LEVELS } = require("../constants/profileConstants");
+const {INTERVIEW_TYPES} = require("../constants/interviewDetailsConstants");
 const { getExperienceLevelLabel } = require("./skillUtils");
+
+
+const PROFICIENCY_TO_EXPERIENCE_VALUE = Object.fromEntries(
+  Object.values(SKILL_LEVELS).map((level) => [
+    level.proficiencyLevel,
+    level.experienceLevel,
+  ])
+);
 
 /**
  * Processes skill analysis data to assign the corresponding demonstratedExperienceLevel
@@ -257,6 +268,31 @@ async function updateTodoListWithNewSkills(todoList, analysis) {
   await todoList.save();
 }
 
+async function saveInterviewDetails(profile, overallScore, skillAnalysis) {
+  const details = skillAnalysis.map((skill) => ({
+    name: skill.skillName, 
+    type: SKILL_TYPES.SOFT,
+    proficiencyLevel: skill.proficiencyLevel, 
+    // experienceLevel : PROFICIENCY_TO_EXPERIENCE_VALUE[skill.proficiencyLevel],
+    confidenceScore : skill.confidenceScore , 
+    questionAnswerList: (skill.questionAnswerList || []).map((qa) => ({
+      question: qa.question,
+      answer: qa.answer || "unanswered",
+      status: qa.status,
+      exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
+    })),
+  }));
+
+  const interviewDetails = new InterviewDetails({
+    candidate: profile._id,
+    type: INTERVIEW_TYPES.HR, 
+    overallScore: overallScore,
+    skillDetails: details,
+  });
+
+  await interviewDetails.save();
+}
+
 module.exports = {
   processSkillsData,
   updateUpgradedSkills,
@@ -266,4 +302,5 @@ module.exports = {
   processAnalysisData,
   updateTodoListWithNewSkills,
   handleAddSoftSkills,
+  saveInterviewDetails
 };

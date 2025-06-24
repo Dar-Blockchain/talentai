@@ -34,7 +34,7 @@ const profileSchema = new mongoose.Schema(
         experienceLevel: String,
         NumberTestPassed: Number,
         ScoreTest: Number,
-        Levelconfirmed : { type: Number, default: 0 }
+        Levelconfirmed: { type: Number, default: 0 },
       },
     ],
 
@@ -43,12 +43,17 @@ const profileSchema = new mongoose.Schema(
       {
         name: String,
         category: String,
-        experienceLevel: String,
+        proficiencyLevel: Number, // 0-5
+        experienceLevel: String, // NoLevel , Entry Level..
         ScoreTest: Number,
       },
     ],
 
     todoList: { type: mongoose.Schema.Types.ObjectId, ref: "TodoList" },
+    //interviewDetails only for profile of type Candidate
+    interviewDetails: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "InterviewDetails" },
+    ],
 
     // Company details (if type is Company)
     companyDetails: {
@@ -111,6 +116,5 @@ profileSchema.post("save", async function (doc) {
     console.error("Error creating TodoList:", error);
   }
 });
-
 
 module.exports = mongoose.model("Profile", profileSchema);
