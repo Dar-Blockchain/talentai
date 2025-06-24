@@ -129,7 +129,7 @@ Example of Interview Questions by Proficiency Level – Non-Technical Skill:
 1 - Entry Level:
 - What is the purpose of a buyer persona, and how is it used in marketing?
 2 - Junior:
-- How would you analyze a competitor’s social media presence to inform your own campaign strategy?
+- How would you analyze a competitor's social media presence to inform your own campaign strategy?
 3 - Mid Level:
 - How would you design a content marketing strategy for a B2B SaaS company?
 4 - Senior:
@@ -175,7 +175,7 @@ You are a senior technical interviewer. Your task is to evaluate candidate answe
 Note: The answers were provided orally and transcribed by AI, so the text may contain transcription errors, incomplete sentences, or minor inaccuracies.
 
 Your task is to:
-- Analyze answers to determine the candidate’s **proficiency level** and **confidenceScore**.
+- Analyze answers to determine the candidate's **proficiency level** and **confidenceScore**.
 - Evaluate the skill with:
   - demonstratedExperienceLevel (0–5)
   - Strengths (array)
@@ -211,7 +211,7 @@ Confidence Score Calculation for the skill:
   - Questions 7 and 8: Senior (weight 4 each)
   - Questions 9 and 10: Expert (weight 5 each)
 - Total sum of weights = 30
-- Each question’s full correct answer adds to the confidence score:
+- Each question's full correct answer adds to the confidence score:
   - Weight 1 question (Q1, Q2): +3.33%
   - Weight 2 question (Q3, Q4): +6.67%
   - Weight 3 question (Q5, Q6): +10%
@@ -235,10 +235,10 @@ todoList REQUIREMENTS:
 - External links must be valid and accessible
 
 STRICT REQUIREMENTS:
-- Be objective and base your assessment only on the information clearly or reasonably implied in the candidate’s answers.
+- Be objective and base your assessment only on the information clearly or reasonably implied in the candidate's answers.
 - Do not infer or estimate knowledge that is not supported by the content.
 - However, consider that answers were transcribed from speech and may contain minor errors or incomplete sentences.
-- When evaluating, interpret the candidate’s intended meaning only if it can be reasonably and clearly inferred from the context, without making unsupported assumptions.
+- When evaluating, interpret the candidate's intended meaning only if it can be reasonably and clearly inferred from the context, without making unsupported assumptions.
 
 
 Respond strictly in JSON format only, without any additional explanations or text.
@@ -432,42 +432,82 @@ Return **valid JSON only**
 };
 
 const generateHRQuestionsPrompts = {
-  getSystemPrompt: (softSkillList) => {
+  getSystemPrompt: (softSkillList, formData) => {
     const skillCount = softSkillList.length;
     const minQuestionsPerSkill = Math.floor(10 / skillCount);
     const maxQuestionsPerSkill = Math.ceil(10 / skillCount);
 
-    return `
-You are a senior HR analyst. You will evaluate a candidate’s responses to behavioral and situational HR interview questions.
+    // Extract form data for personalization
+    const {
+      targetCompany,
+      companyIndustry,
+      companyCulture,
+      targetRole,
+      experienceLevel,
+      interviewFormat,
+      simulationGoal
+    } = formData || {};
 
-Your task is to generate **exactly 10 distinct HR interview questions** specifically designed to evaluate the following soft skills: ${softSkillList.join(
-      ", "
-    )}.
+    return `
+You are a senior HR analyst specializing in ${targetCompany || 'corporate'} interviews. You will evaluate a candidate's responses to behavioral and situational HR interview questions.
+
+Your task is to generate **exactly 10 distinct HR interview questions** specifically designed for:
+- **Target Company**: ${targetCompany || 'General corporate environment'}
+- **Role**: ${targetRole || 'Professional position'}
+- **Experience Level**: ${experienceLevel || 'Mid-level'}
+- **Interview Format**: ${interviewFormat || 'Behavioral interview'}
+- **Candidate Goal**: ${simulationGoal || 'Interview preparation'}
+
+${companyIndustry ? `- **Industry**: ${companyIndustry}` : ''}
+${companyCulture ? `- **Company Culture**: ${companyCulture}` : ''}
 
 The questions must:
 - Focus purely on soft skills (not technical or role-specific skills)
 - Reflect current HR values such as diversity & inclusion (DEI), psychological safety, remote/hybrid collaboration, mental well-being, continuous learning, and inclusive leadership
+- Be tailored to ${targetCompany || 'the target company'} culture and ${experienceLevel || 'experience level'} expectations
+- Be appropriate for ${interviewFormat || 'behavioral interview'} format
 - Be realistic and grounded in everyday work scenarios (e.g., team conflict, leadership under pressure, adapting to change)
 - Be suitable for oral interviews, answerable within 2 minutes
 - Be clearly phrased, non-redundant, and avoid vague or generic wording
+- Align with ${simulationGoal || 'interview preparation'} goals
 
 ### Requirements:
 - Produce **exactly 10 distinct questions** focused solely on HR themes (no technical questions)
 - Distribute the 10 questions as **evenly as possible** across the listed soft skills (e.g., ${minQuestionsPerSkill}–${maxQuestionsPerSkill} questions per skill)
-- Align questions with the company culture implied by the skillset
-- Integrate current HR trends
+- Tailor questions to ${targetCompany || 'the company'} culture and ${targetRole || 'role'} requirements
+- Consider ${experienceLevel || 'experience level'} expectations and challenges
+- Format questions appropriately for ${interviewFormat || 'interview format'}
+- Integrate current HR trends relevant to ${companyIndustry || 'the industry'}
 - Questions must be clear, conversational, and answerable orally within 2 minutes
-- Use realistic workplace scenarios
+- Use realistic workplace scenarios specific to ${targetCompany || 'the target environment'}
 - Avoid repetition and generic phrasing
 - **Return ONLY a valid JSON array of 10 strings**, no explanations or formatting
     `.trim();
   },
 
-  getUserPrompt: (skillsListDetails, softSkillList) =>
-    `
-Based on the candidate’s skill profile below, infer the type of workplace environment they fit (e.g., remote-first, collaborative, fast-paced, DEI-conscious, learning-driven).
+  getUserPrompt: (skillsListDetails, softSkillList, formData) => {
+    // Extract form data for personalization
+    const {
+      targetCompany,
+      companyIndustry,
+      companyCulture,
+      targetRole,
+      experienceLevel,
+      interviewFormat,
+      simulationGoal
+    } = formData || {};
 
-Use this to generate **10 behavioral/situational HR interview questions** that effectively evaluate the candidate on key soft skills, aligned with current workplace trends.
+    return `
+Based on the candidate's skill profile and interview preferences below, generate **10 behavioral/situational HR interview questions** that effectively evaluate the candidate on key soft skills, aligned with their specific target company and role.
+
+### Interview Context:
+- **Target Company**: ${targetCompany || 'General corporate environment'}
+- **Role**: ${targetRole || 'Professional position'}
+- **Experience Level**: ${experienceLevel || 'Mid-level'}
+- **Interview Format**: ${interviewFormat || 'Behavioral interview'}
+- **Candidate Goal**: ${simulationGoal || 'Interview preparation'}
+${companyIndustry ? `- **Industry**: ${companyIndustry}` : ''}
+${companyCulture ? `- **Company Culture**: ${companyCulture}` : ''}
 
 Candidate's skills Profile:
 ${skillsListDetails}
@@ -476,16 +516,24 @@ ${skillsListDetails}
 ${softSkillList.join(", ")}
 
 ### Instructions:
+- Tailor questions specifically for ${targetCompany || 'the target company'} culture and values
+- Consider ${experienceLevel || 'experience level'} expectations and typical challenges
+- Format questions appropriately for ${interviewFormat || 'interview format'} style
+- Focus on scenarios relevant to ${targetRole || 'the target role'}
 - Do NOT include technical or coding questions
 - Keep questions succinct, specific, and suitable for oral interviews
 - Avoid vague or repetitive language; each question should be purposeful and trend-aware
+- Align with ${simulationGoal || 'interview preparation'} objectives
 - Provide structured, insightful, and concise feedback that reflects:
-- How well each answer demonstrates the targeted soft skills.
-- Observations about emotional intelligence, communication tone, and cultural fit.
+  - How well each answer demonstrates the targeted soft skills
+  - Observations about emotional intelligence, communication tone, and cultural fit
+  - Relevance to ${targetCompany || 'company'} culture and ${targetRole || 'role'} requirements
 - **Return a valid JSON array of exactly 10 strings**, no commentary or formatting
+
 Skills List:
 ${skillsListDetails}
-    `.trim(),
+    `.trim();
+  },
 };
 
 const analyzeHRAnswersPrompts = {
@@ -546,7 +594,7 @@ Strict Requirements:
 
   getUserPrompt: (questions, softSkillList) =>
     `
-Analyze the candidate’s answers to assess their proficiency in the following soft skills tested during the HR interview: ${softSkillList.join(
+Analyze the candidate's answers to assess their proficiency in the following soft skills tested during the HR interview: ${softSkillList.join(
       ", "
     )}.
 

@@ -1,5 +1,6 @@
 const Post = require("../models/PostModel");
 const User = require("../models/UserModel");
+const JobAssessmentResult = require("../models/JobAssessmentResultModel");
 const AgentService = require("./AgentService");
 const { schedulePostMatchingAgenda } = require("../postMatchingAgenda");
 
@@ -178,6 +179,9 @@ module.exports.deletePost = async (postId, userId) => {
       throw new Error("Post not found or unauthorized");
     }
     
+    // Supprimer les évaluations de job associées au poste
+    await JobAssessmentResult.deleteMany({ jobId: postId });
+
     // Mettre à jour l'utilisateur en supprimant la référence au post
     await User.updateOne(
       { _id: userId }, // Chercher l'utilisateur par son ID

@@ -1,36 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-  ZoomableGroup,
-  Marker,
-} from 'react-simple-maps';
-import { Box, Typography, Paper, Chip, Tooltip as MuiTooltip } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
+import { Box, Typography, Paper, Chip, IconButton } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { LocationOn as LocationIcon } from '@mui/icons-material';
+import { LocationOn as LocationIcon, ZoomIn, ZoomOut } from '@mui/icons-material';
 
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  borderRadius: '20px',
-  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-  border: '1px solid rgba(131, 16, 255, 0.1)',
-  boxShadow: '0 8px 32px rgba(131,16,255,0.08)',
-  transition: 'all 0.3s ease',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: '0 12px 40px rgba(131,16,255,0.12)'
+// Dynamically import the entire map component with SSR disabled
+const WorldMapComponent = dynamic(
+  () => import('@/components/WorldMapComponent'),
+  { 
+    ssr: false,
+    loading: () => (
+      <Box sx={{ 
+        height: 500, 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)',
+        borderRadius: '16px',
+        border: '1px solid rgba(131, 16, 255, 0.1)'
+      }}>
+        <Typography variant="h6" sx={{ color: '#8310FF' }}>
+          Loading map...
+        </Typography>
+      </Box>
+    )
   }
-}));
-
-const MapContainer = styled(Box)(({ theme }) => ({
-  position: 'relative',
-  height: 500,
-  background: 'linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%)',
-  borderRadius: '16px',
-  overflow: 'hidden',
-  border: '1px solid rgba(131, 16, 255, 0.1)',
-}));
+) as any;
 
 interface UserLocation {
   country: string;
@@ -48,16 +43,54 @@ interface WorldMapProps {
   totalUsers: number;
 }
 
-const WorldMap: React.FC<WorldMapProps> = ({ userLocations, totalUsers }) => {
-  const [tooltipContent, setTooltipContent] = useState('');
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+// Country coordinates mapping
+const countryCoordinates: Record<string, [number, number]> = {
+  'United States': [39.8283, -98.5795],
+  'Canada': [56.1304, -106.3468],
+  'Mexico': [23.6345, -102.5528],
+  'Brazil': [-14.2350, -51.9253],
+  'Argentina': [-38.4161, -63.6167],
+  'Colombia': [4.5709, -74.2973],
+  'Peru': [-9.1900, -75.0152],
+  'Chile': [-35.6751, -71.5430],
+  'United Kingdom': [55.3781, -3.4360],
+  'France': [46.2276, 2.2137],
+  'Germany': [51.1657, 10.4515],
+  'Italy': [41.8719, 12.5674],
+  'Spain': [40.4637, -3.7492],
+  'Russia': [61.5240, 105.3188],
+  'China': [35.8617, 104.1954],
+  'India': [20.5937, 78.9629],
+  'Japan': [36.2048, 138.2529],
+  'South Korea': [35.9078, 127.7669],
+  'Thailand': [15.8700, 100.9925],
+  'Vietnam': [14.0583, 108.2772],
+  'Malaysia': [4.2105, 108.9758],
+  'Singapore': [1.3521, 103.8198],
+  'Indonesia': [-0.7893, 113.9213],
+  'Philippines': [12.8797, 121.7740],
+  'Pakistan': [30.3753, 69.3451],
+  'South Africa': [-30.5595, 22.9375],
+  'Egypt': [26.8206, 30.8025],
+  'Tunisia': [33.8869, 9.5375],
+  'Morocco': [31.7917, -7.0926],
+  'Algeria': [28.0339, 1.6596],
+  'Saudi Arabia': [23.8859, 45.0792],
+  'United Arab Emirates': [23.4241, 53.8478],
+  'Turkey': [38.9637, 35.2433],
+  'Israel': [31.0461, 34.8516],
+  'Australia': [-25.2744, 133.7751],
+  'New Zealand': [-40.9006, 174.8860],
 
-  // Enhanced country mapping for better matching
-  const countryMapping: Record<string, string> = {
-    'US': 'United States of America',
-    'USA': 'United States of America',
-    'United States': 'United States of America',
+};
+
+// Country name normalization
+const normalizeCountryName = (countryName: string): string => {
+  const normalized = countryName.trim();
+  const mapping: Record<string, string> = {
+    'US': 'United States',
+    'USA': 'United States',
+    'United States': 'United States',
     'UK': 'United Kingdom',
     'Great Britain': 'United Kingdom',
     'England': 'United Kingdom',
@@ -79,192 +112,44 @@ const WorldMap: React.FC<WorldMapProps> = ({ userLocations, totalUsers }) => {
     'TN': 'Tunisia',
     'MA': 'Morocco',
     'DZ': 'Algeria',
-    'LY': 'Libya',
     'SA': 'Saudi Arabia',
     'AE': 'United Arab Emirates',
-    'QA': 'Qatar',
-    'KW': 'Kuwait',
-    'BH': 'Bahrain',
-    'OM': 'Oman',
-    'JO': 'Jordan',
-    'LB': 'Lebanon',
-    'SY': 'Syria',
-    'IQ': 'Iraq',
-    'IR': 'Iran',
     'TR': 'Turkey',
     'IL': 'Israel',
-    'PS': 'Palestine',
-    'YE': 'Yemen',
     'PK': 'Pakistan',
-    'AF': 'Afghanistan',
-    'BD': 'Bangladesh',
-    'LK': 'Sri Lanka',
-    'NP': 'Nepal',
-    'BT': 'Bhutan',
-    'MV': 'Maldives',
-    'MM': 'Myanmar',
     'TH': 'Thailand',
     'VN': 'Vietnam',
-    'LA': 'Laos',
-    'KH': 'Cambodia',
     'MY': 'Malaysia',
     'SG': 'Singapore',
     'ID': 'Indonesia',
     'PH': 'Philippines',
-    'TW': 'Taiwan',
     'KR': 'South Korea',
-    'KP': 'North Korea',
-    'MN': 'Mongolia',
-    'KZ': 'Kazakhstan',
-    'UZ': 'Uzbekistan',
-    'KG': 'Kyrgyzstan',
-    'TJ': 'Tajikistan',
-    'TM': 'Turkmenistan',
-    'AZ': 'Azerbaijan',
-    'GE': 'Georgia',
-    'AM': 'Armenia',
-    'BY': 'Belarus',
-    'UA': 'Ukraine',
-    'MD': 'Moldova',
-    'RO': 'Romania',
-    'BG': 'Bulgaria',
-    'GR': 'Greece',
-    'HR': 'Croatia',
-    'SI': 'Slovenia',
-    'HU': 'Hungary',
-    'SK': 'Slovakia',
-    'CZ': 'Czech Republic',
-    'PL': 'Poland',
-    'LT': 'Lithuania',
-    'LV': 'Latvia',
-    'EE': 'Estonia',
-    'FI': 'Finland',
-    'SE': 'Sweden',
-    'NO': 'Norway',
-    'DK': 'Denmark',
-    'NL': 'Netherlands',
-    'BE': 'Belgium',
-    'CH': 'Switzerland',
-    'AT': 'Austria',
-    'PT': 'Portugal',
-    'IE': 'Ireland',
-    'IS': 'Iceland',
-    'MT': 'Malta',
-    'CY': 'Cyprus',
-    'LU': 'Luxembourg',
-    'MC': 'Monaco',
-    'LI': 'Liechtenstein',
-    'AD': 'Andorra',
-    'SM': 'San Marino',
-    'VA': 'Vatican City',
     'MX': 'Mexico',
-    'GT': 'Guatemala',
-    'BZ': 'Belize',
-    'SV': 'El Salvador',
-    'HN': 'Honduras',
-    'NI': 'Nicaragua',
-    'CR': 'Costa Rica',
-    'PA': 'Panama',
     'CO': 'Colombia',
-    'VE': 'Venezuela',
-    'GY': 'Guyana',
-    'SR': 'Suriname',
-    'GF': 'French Guiana',
-    'EC': 'Ecuador',
     'PE': 'Peru',
-    'BO': 'Bolivia',
-    'PY': 'Paraguay',
-    'UY': 'Uruguay',
     'CL': 'Chile',
     'NZ': 'New Zealand',
-    'FJ': 'Fiji',
-    'PG': 'Papua New Guinea',
-    'NC': 'New Caledonia',
-    'VU': 'Vanuatu',
-    'SB': 'Solomon Islands',
-    'TO': 'Tonga',
-    'WS': 'Samoa',
-    'KI': 'Kiribati',
-    'TV': 'Tuvalu',
-    'NR': 'Nauru',
-    'PW': 'Palau',
-    'MH': 'Marshall Islands',
-    'FM': 'Micronesia',
-    'CK': 'Cook Islands',
-    'NU': 'Niue',
-    'TK': 'Tokelau',
-    'AS': 'American Samoa',
-    'GU': 'Guam',
-    'MP': 'Northern Mariana Islands',
+  };
+  return mapping[normalized] || normalized;
+};
+
+const WorldMap: React.FC<WorldMapProps> = ({ userLocations, totalUsers }) => {
+  const [map, setMap] = useState<L.Map | null>(null);
+
+  const getMarkerColor = (count: number) => {
+    if (count >= 20) return '#8310FF';
+    if (count >= 10) return '#9C27B0';
+    if (count >= 5) return '#E1BEE7';
+    if (count >= 1) return '#F3E5F5';
+    return '#F8F9FA';
   };
 
-  const normalizeCountryName = (countryName: string): string => {
-    const normalized = countryName.trim();
-    return countryMapping[normalized] || normalized;
-  };
-
-  const getCountryColor = (geo: any) => {
-    const countryName = geo.properties.ADMIN || geo.properties.name;
-    const normalizedCountryName = normalizeCountryName(countryName);
-    
-    const countryData = userLocations.find(loc => 
-      normalizeCountryName(loc.country).toLowerCase() === normalizedCountryName.toLowerCase()
-    );
-    
-    if (countryData) {
-      const intensity = Math.min(countryData.count / 20, 1); // Normalize to 0-1
-      const baseColor = [131, 16, 255]; // Purple base
-      const alpha = 0.2 + intensity * 0.8;
-      return `rgba(${baseColor[0]}, ${baseColor[1]}, ${baseColor[2]}, ${alpha})`;
-    }
-    return '#f8f9fa';
-  };
-
-  const handleMouseMove = (event: React.MouseEvent) => {
-    setTooltipPosition({ x: event.clientX + 15, y: event.clientY - 15 });
-  };
-
-  const handleMouseLeave = () => {
-    setTooltipContent('');
-    setSelectedCountry(null);
-  };
-
-  const handleMouseEnter = (geo: any) => {
-    const countryName = geo.properties.ADMIN || geo.properties.name;
-    const normalizedCountryName = normalizeCountryName(countryName);
-    
-    const countryData = userLocations.find(loc => 
-      normalizeCountryName(loc.country).toLowerCase() === normalizedCountryName.toLowerCase()
-    );
-    
-    setSelectedCountry(countryName);
-    
-    if (countryData) {
-      setTooltipContent(`
-        <div style="padding: 12px; font-family: 'Inter', sans-serif;">
-          <div style="font-weight: 600; font-size: 14px; color: #8310FF; margin-bottom: 4px;">
-            ${countryName}
-          </div>
-          <div style="font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px;">
-            ${countryData.count} users
-          </div>
-          <div style="font-size: 12px; color: #666;">
-            ${countryData.users.length > 0 ? `${countryData.users[0].username} and ${countryData.count - 1} others` : 'No users'}
-          </div>
-        </div>
-      `);
-    } else {
-      setTooltipContent(`
-        <div style="padding: 12px; font-family: 'Inter', sans-serif;">
-          <div style="font-weight: 600; font-size: 14px; color: #8310FF; margin-bottom: 4px;">
-            ${countryName}
-          </div>
-          <div style="font-size: 12px; color: #666;">
-            No users registered yet
-          </div>
-        </div>
-      `);
-    }
+  const getMarkerRadius = (count: number) => {
+    if (count >= 20) return 12;
+    if (count >= 10) return 10;
+    if (count >= 5) return 8;
+    if (count >= 1) return 6;
+    return 4;
   };
 
   const getTopCountries = () => {
@@ -273,175 +158,28 @@ const WorldMap: React.FC<WorldMapProps> = ({ userLocations, totalUsers }) => {
       .slice(0, 5);
   };
 
+  const handleZoomIn = () => {
+    if (map) {
+      map.zoomIn();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (map) {
+      map.zoomOut();
+    }
+  };
+
   return (
-    <StyledPaper>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700, color: '#8310FF', display: 'flex', alignItems: 'center', gap: 1 }}>
-          <LocationIcon sx={{ fontSize: 28 }} />
-          Global User Distribution
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Chip 
-            label={`${userLocations.length} Countries`} 
-            color="primary" 
-            variant="outlined"
-            size="small"
-          />
-          <Chip 
-            label={`${totalUsers} Total Users`} 
-            color="secondary" 
-            variant="outlined"
-            size="small"
-          />
-        </Box>
-      </Box>
-      
-      <MapContainer>
-        <ComposableMap
-          projection="geoEqualEarth"
-          projectionConfig={{
-            scale: 147,
-            center: [0, 0]
-          }}
-        >
-          <ZoomableGroup>
-            <Geographies geography="/world-countries.json">
-              {({ geographies }) =>
-                geographies.map((geo) => {
-                  const countryName = geo.properties.ADMIN || geo.properties.name;
-                  const normalizedCountryName = normalizeCountryName(countryName);
-                  
-                  const countryData = userLocations.find(loc => 
-                    normalizeCountryName(loc.country).toLowerCase() === normalizedCountryName.toLowerCase()
-                  );
-                  
-                  return (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      fill={getCountryColor(geo)}
-                      stroke={selectedCountry === countryName ? '#8310FF' : '#ffffff'}
-                      strokeWidth={selectedCountry === countryName ? 2 : 0.5}
-                      style={{
-                        default: { outline: 'none' },
-                        hover: { 
-                          fill: countryData ? '#8310FF' : '#e8eaf6',
-                          outline: 'none',
-                          cursor: countryData ? 'pointer' : 'default',
-                          stroke: '#8310FF',
-                          strokeWidth: 1.5,
-                        },
-                        pressed: { outline: 'none' },
-                      }}
-                      onMouseEnter={() => handleMouseEnter(geo)}
-                      onMouseMove={handleMouseMove}
-                      onMouseLeave={handleMouseLeave}
-                    />
-                  );
-                })
-              }
-            </Geographies>
-          </ZoomableGroup>
-        </ComposableMap>
-        
-        {/* Enhanced Legend */}
-        <Box sx={{ 
-          position: 'absolute', 
-          bottom: 20, 
-          left: 20, 
-          background: 'rgba(255,255,255,0.95)', 
-          padding: 2.5, 
-          borderRadius: 3,
-          border: '1px solid rgba(131, 16, 255, 0.1)',
-          backdropFilter: 'blur(10px)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-        }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: '#8310FF' }}>
-            User Density
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ width: 24, height: 16, background: 'rgba(131, 16, 255, 0.2)', borderRadius: 1 }} />
-              <Typography variant="caption" sx={{ fontWeight: 500 }}>1-5 users</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ width: 24, height: 16, background: 'rgba(131, 16, 255, 0.5)', borderRadius: 1 }} />
-              <Typography variant="caption" sx={{ fontWeight: 500 }}>6-15 users</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ width: 24, height: 16, background: 'rgba(131, 16, 255, 0.8)', borderRadius: 1 }} />
-              <Typography variant="caption" sx={{ fontWeight: 500 }}>16-20 users</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ width: 24, height: 16, background: 'rgba(131, 16, 255, 1)', borderRadius: 1 }} />
-              <Typography variant="caption" sx={{ fontWeight: 500 }}>20+ users</Typography>
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Top Countries Panel */}
-        {getTopCountries().length > 0 && (
-          <Box sx={{ 
-            position: 'absolute', 
-            top: 20, 
-            right: 20, 
-            background: 'rgba(255,255,255,0.95)', 
-            padding: 2.5, 
-            borderRadius: 3,
-            border: '1px solid rgba(131, 16, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-            minWidth: 200
-          }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: '#8310FF' }}>
-              Top Countries
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {getTopCountries().map((location, index) => (
-                <Box key={location.country} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="caption" sx={{ fontWeight: 500, color: '#333' }}>
-                    {index + 1}. {location.country}
-                  </Typography>
-                  <Chip 
-                    label={location.count} 
-                    size="small" 
-                    sx={{ 
-                      background: 'rgba(131, 16, 255, 0.1)', 
-                      color: '#8310FF',
-                      fontWeight: 600,
-                      fontSize: '0.7rem'
-                    }} 
-                  />
-                </Box>
-              ))}
-            </Box>
-          </Box>
-        )}
-      </MapContainer>
-
-      {/* Enhanced Tooltip */}
-      {tooltipContent && (
-        <div
-          style={{
-            position: 'fixed',
-            top: tooltipPosition.y,
-            left: tooltipPosition.x,
-            background: 'rgba(255, 255, 255, 0.98)',
-            color: '#333',
-            padding: '0',
-            borderRadius: '12px',
-            fontSize: '12px',
-            pointerEvents: 'none',
-            zIndex: 1000,
-            maxWidth: '250px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-            border: '1px solid rgba(131, 16, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
-          }}
-          dangerouslySetInnerHTML={{ __html: tooltipContent }}
-        />
-      )}
-    </StyledPaper>
+    <WorldMapComponent
+      userLocations={userLocations}
+      totalUsers={totalUsers}
+      getMarkerColor={getMarkerColor}
+      getMarkerRadius={getMarkerRadius}
+      getTopCountries={getTopCountries}
+      handleZoomIn={handleZoomIn}
+      handleZoomOut={handleZoomOut}
+    />
   );
 };
 

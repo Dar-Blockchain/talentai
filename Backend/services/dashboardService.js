@@ -497,3 +497,114 @@ module.exports.getUserCountsByLocation = async () => {
     throw new Error('Error fetching user counts by location: ' + error.message);
   }
 };
+
+function normalizeSkillName(raw) {
+  if (!raw) return '';
+  const part = raw.split('.')[0];
+  return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+}
+
+module.exports.getJobAssessmentsBySkill = async (skillName) => {
+  try {
+    const normalizedSkill = skillName ? normalizeSkillName(skillName) : '';
+    const matchStage = skillName
+      ? { "analysis.skillAnalysis.skillName": normalizedSkill }
+      : {};
+
+    const assessments = await JobAssessmentResult.aggregate([
+      { $unwind: "$analysis.skillAnalysis" },
+      // Formatte skillName dans analysis.skillAnalysis
+      {
+        $addFields: {
+          "analysis.skillAnalysis.skillName": {
+            $concat: [
+              { $toUpper: { $substrCP: [ { $arrayElemAt: [ { $split: [ "$analysis.skillAnalysis.skillName", "." ] }, 0 ] }, 0, 1 ] } },
+              { $substrCP: [ { $arrayElemAt: [ { $split: [ "$analysis.skillAnalysis.skillName", "." ] }, 0 ] }, 1, { $subtract: [ { $strLenCP: { $arrayElemAt: [ { $split: [ "$analysis.skillAnalysis.skillName", "." ] }, 0 ] } }, 1 ] } ] }
+            ]
+          }
+        }
+      },
+      { $match: matchStage },
+      {
+        $lookup: {
+          from: "profiles",
+          localField: "condidateId",
+          foreignField: "_id",
+          as: "candidateProfile"
+        }
+      },
+      { $unwind: { path: "$candidateProfile", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "candidateProfile.userId",
+          foreignField: "_id",
+          as: "candidateDetails"
+        }
+      },
+      { $unwind: { path: "$candidateDetails", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "posts",
+          localField: "jobId",
+          foreignField: "_id",
+          as: "jobDetails"
+        }
+      },
+      { $unwind: { path: "$jobDetails", preserveNullAndEmptyArrays: true } },
+      // Format requiredSkills dans jobDetails.skillAnalysis
+      {
+        $addFields: {
+          "jobDetails.skillAnalysis.requiredSkills": {
+            $map: {
+              input: "$jobDetails.skillAnalysis.requiredSkills",
+              as: "skill",
+              in: {
+                $mergeObjects: [
+                  "$$skill",
+                  {
+                    name: {
+                      $concat: [
+                        { $toUpper: { $substrCP: [ { $arrayElemAt: [ { $split: [ "$$skill.name", "." ] }, 0 ] }, 0, 1 ] } },
+                        { $substrCP: [ { $arrayElemAt: [ { $split: [ "$$skill.name", "." ] }, 0 ] }, 1, { $subtract: [ { $strLenCP: { $arrayElemAt: [ { $split: [ "$$skill.name", "." ] }, 0 ] } }, 1 ] } ] }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: "$jobId",
+          candidates: {
+            $addToSet: {
+              username: "$candidateDetails.username",
+              email: "$candidateDetails.email",
+              jobMatch: "$analysis.jobMatch"
+            }
+          },
+          totalAssessments: { $sum: 1 },
+          jobDetails: { $first: "$jobDetails" }
+        }
+      },
+      {
+        $project: {
+          jobId: "$_id",
+          candidates: 1,
+          totalAssessments: 1,
+          jobDetails: 1
+        }
+      }
+    ]);
+
+    return assessments;
+  } catch (error) {
+    throw new Error("Erreur lors de la récupération des évaluations par compétence: " + error.message);
+  }
+};
+
+
+

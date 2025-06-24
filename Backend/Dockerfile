@@ -91,7 +91,7 @@ ENV TOGETHER_API_KEY=$TOGETHER_API_KEY
 COPY --from=builder /app ./
 
 # Install only production dependencies (for smaller image size)
-RUN npm install --production
+RUN npm install --force
 
 # Expose the port your Express app will run on
 EXPOSE $PORT
