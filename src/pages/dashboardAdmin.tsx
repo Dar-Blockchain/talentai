@@ -474,7 +474,7 @@ const DashboardAdmin = () => {
                     averageScore: data.data.avgOverallScore || 0,
                     userGrowth: 12.5, // Mock growth percentage
                     assessmentGrowth: 8.3, // Mock growth percentage
-                    totalSkills: data.data.hardSkillsPercentage || 0,
+                    totalSkills: data.data.totalSkills || 0,
                     posts: data.data.posts || data.data.totalPosts || data.data.postsCreatedByDay?.reduce((total: number, item: any) => total + item.postCount, 0) || 0,
                     jobAssessmentsWithScorePercentage: data.data.jobAssessmentsWithScorePercentage || 0
                 });
@@ -2132,11 +2132,11 @@ const DashboardAdmin = () => {
                                                 </Typography>
                                             </TableCell>
 
-                                            <TableCell>
+                                            {/* <TableCell>
                                                 <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
                                                     {result.jobDetails.jobDetails.title || 'Unknown Job'}
                                                 </Typography>
-                                            </TableCell>
+                                            </TableCell> */}
                                             <TableCell>
                                                 <Chip
                                                     label={`${result.jobMatch?.percentage?.toFixed(1) || result.analysis?.overallScore?.toFixed(1) || 0}%`}
