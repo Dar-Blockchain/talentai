@@ -28,6 +28,7 @@ const {
   processAnalysisData,
   updateTodoListWithNewSkills,
   handleAddSoftSkills,
+  saveInterviewDetails
 } = require("../utils/evaluationUtils");
 const {
   DEFAULT_SOFT_SKILL_CATEGORIES,
@@ -221,6 +222,7 @@ exports.analyzeJobTestResults = async ({
 
 module.exports.generateHRQuestions = async (profile, formData) => {
   try {
+
     const userSkills = profile.skills;
 
     const skillsListDetails = userSkills
@@ -230,7 +232,6 @@ module.exports.generateHRQuestions = async (profile, formData) => {
       .join("\n");
 
     const systemPrompt = generateHRQuestionsPrompts.getSystemPrompt(
-      Object.values(DEFAULT_SOFT_SKILL_CATEGORIES),
       formData
     );
 
@@ -238,7 +239,6 @@ module.exports.generateHRQuestions = async (profile, formData) => {
 
     const userPrompt = generateHRQuestionsPrompts.getUserPrompt(
       skillsListDetails,
-      Object.values(DEFAULT_SOFT_SKILL_CATEGORIES),
       formData
     );
 
@@ -295,7 +295,7 @@ exports.analyzeHRAnswers = async ({ questions, user }) => {
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    max_tokens: 2500,
+    max_tokens: 1500,
     temperature: 0.6,
     stream: true,
   });
@@ -313,6 +313,12 @@ exports.analyzeHRAnswers = async ({ questions, user }) => {
   // store softskills in the candidate's profile (if any are proven)
   // update todoList : Pass HR Test : isCompleted
   await handleAddSoftSkills(profile, analysis.skillAnalysis);
+
+  await saveInterviewDetails(
+    profile,
+    analysis.overallScore,
+    analysis.skillAnalysis
+  );
 
   profile.quota++;
   await profile.save();

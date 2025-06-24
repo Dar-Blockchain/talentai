@@ -432,10 +432,7 @@ Return **valid JSON only**
 };
 
 const generateHRQuestionsPrompts = {
-  getSystemPrompt: (softSkillList, formData) => {
-    const skillCount = softSkillList.length;
-    const minQuestionsPerSkill = Math.floor(10 / skillCount);
-    const maxQuestionsPerSkill = Math.ceil(10 / skillCount);
+  getSystemPrompt: (formData) => {
 
     // Extract form data for personalization
     const {
@@ -449,20 +446,19 @@ const generateHRQuestionsPrompts = {
     } = formData || {};
 
     return `
-You are a senior HR analyst specializing in ${targetCompany || 'corporate'} interviews. You will evaluate a candidate's responses to behavioral and situational HR interview questions.
+You are a senior HR analyst in working at ${targetCompany || 'corporate'}. You will evaluate a candidate's responses to behavioral and situational HR interview questions.
 
 Your task is to generate **exactly 10 distinct HR interview questions** specifically designed for:
 - **Target Company**: ${targetCompany || 'General corporate environment'}
 - **Role**: ${targetRole || 'Professional position'}
 - **Experience Level**: ${experienceLevel || 'Mid-level'}
-- **Interview Format**: ${interviewFormat || 'Behavioral interview'}
+- **Interview Format**: ${interviewFormat || 'Onsite HR Interview'}
 - **Candidate Goal**: ${simulationGoal || 'Interview preparation'}
 
 ${companyIndustry ? `- **Industry**: ${companyIndustry}` : ''}
 ${companyCulture ? `- **Company Culture**: ${companyCulture}` : ''}
 
 The questions must:
-- Focus purely on soft skills (not technical or role-specific skills)
 - Reflect current HR values such as diversity & inclusion (DEI), psychological safety, remote/hybrid collaboration, mental well-being, continuous learning, and inclusive leadership
 - Be tailored to ${targetCompany || 'the target company'} culture and ${experienceLevel || 'experience level'} expectations
 - Be appropriate for ${interviewFormat || 'behavioral interview'} format
@@ -473,7 +469,6 @@ The questions must:
 
 ### Requirements:
 - Produce **exactly 10 distinct questions** focused solely on HR themes (no technical questions)
-- Distribute the 10 questions as **evenly as possible** across the listed soft skills (e.g., ${minQuestionsPerSkill}–${maxQuestionsPerSkill} questions per skill)
 - Tailor questions to ${targetCompany || 'the company'} culture and ${targetRole || 'role'} requirements
 - Consider ${experienceLevel || 'experience level'} expectations and challenges
 - Format questions appropriately for ${interviewFormat || 'interview format'}
@@ -485,7 +480,7 @@ The questions must:
     `.trim();
   },
 
-  getUserPrompt: (skillsListDetails, softSkillList, formData) => {
+  getUserPrompt: (skillsListDetails, formData) => {
     // Extract form data for personalization
     const {
       targetCompany,
@@ -498,7 +493,7 @@ The questions must:
     } = formData || {};
 
     return `
-Based on the candidate's skill profile and interview preferences below, generate **10 behavioral/situational HR interview questions** that effectively evaluate the candidate on key soft skills, aligned with their specific target company and role.
+Based on the company's details and interview preferences below, generate **10 behavioral/situational HR interview questions**.
 
 ### Interview Context:
 - **Target Company**: ${targetCompany || 'General corporate environment'}
@@ -511,9 +506,6 @@ ${companyCulture ? `- **Company Culture**: ${companyCulture}` : ''}
 
 Candidate's skills Profile:
 ${skillsListDetails}
-
-### Soft Skills to Evaluate:
-${softSkillList.join(", ")}
 
 ### Instructions:
 - Tailor questions specifically for ${targetCompany || 'the target company'} culture and values
@@ -530,8 +522,6 @@ ${softSkillList.join(", ")}
   - Relevance to ${targetCompany || 'company'} culture and ${targetRole || 'role'} requirements
 - **Return a valid JSON array of exactly 10 strings**, no commentary or formatting
 
-Skills List:
-${skillsListDetails}
     `.trim();
   },
 };
@@ -552,41 +542,34 @@ Your task:
   - nextSteps (array of strings) actionable hiring or HR follow-up steps
   - skillAnalysis (array) with detailed evaluation per skill, including:
     - skillName
-    - experienceLevel (0-5)
+    - proficiencyLevel (0-5)
     - strengths (array, or ["No strengths identified for this skill"])
     - weaknesses (array, or ["No weaknesses identified for this skill"])
     - confidenceScore (0-100)
+    - questionAnswerList: an array of:
+      - question
+      - answer
+      - status: "correct", "partial_correct", or "incorrect"
+      - exampleCorrectAnswer (optional: if status of answer is "incorrect")
 
-Scoring Instructions:
+**Confidence Score Rules (per skill):**
 - Every question is mapped to one skill only (you may assume an even split).
 - Each answer is scored:
-  - Fully relevant/correct → 1 point
-  - Partially relevant or vague → 0.6 points
-  - Empty, irrelevant, or generic → 0 points
+  - Fully relevant/correct → 1 point → status: "correct"
+  - Partially relevant or vague → 0.6 points → status: "partial_correct"
+  - Empty, irrelevant, or generic → 0 points → status: "incorrect"
 - Use this formula:
   confidenceScore = (earnedPoints / totalQuestionsForThisSkill) × 100
-  Return rounded **integer** values for confidenceScore.
+  Example: 3 full, 1 partial, 1 incorrect → (3 + 0.6 + 0) / 5 × 100 = 72%
+- Return rounded **integer** values for confidenceScore.
 
-Use this scale to assign experienceLevel:
+Use this scale to assign proficiencyLevel:
 0 = noLevel: No relevant answer; vague or absent  
 1 = entryLevel: Very basic or generic insight  
 2 = junior: Shows early understanding or some relevant examples  
 3 = midLevel: Clear, structured experience with moderate depth  
 4 = senior: Advanced handling, leadership or cross-team examples  
 5 = expert: Strategic thinking, mentoring, and systemic problem-solving
-
-
-
-**Confidence Score Rules (per skill):**
-- Every question has equal weight
-- Each answer is scored:
-  - Fully correct → 1 point
-  - Partially correct → 0.6 point
-  - Incorrect or unanswered → 0 points
-- Use exact formula:  
-  confidenceScore = (earnedPoints / totalQuestionsForThisSkill) × 100  
-  Example: 3 full, 1 partial, 1 incorrect → (3 + 0.6 + 0) / 5 × 100 = 72%
-- Return the result as a rounded **integer**, not approximated.
 
 Strict Requirements:
 - Assess ONLY the soft skills explicitly listed in the user prompt.
@@ -611,7 +594,7 @@ ${questions
   .join("\n\n")}
 
 For each soft skill, evaluate:
-- experienceLevel (0-5) based strictly on the candidate's answers.
+- proficiencyLevel (0-5) based strictly on the candidate's answers.
 - strengths and weaknesses explicitly supported by the answers.
 - confidenceScore (0-100) calculated as per scoring rules.
 
@@ -623,11 +606,19 @@ Generate and return JSON in the following format:
   "skillAnalysis": [
     {
       "skillName": "string",
-      category: String,
-      "experienceLevel": 0-5,
+      category: "soft",
+      "proficiencyLevel": 0-5,
       "strengths": ["..."],
       "weaknesses": ["..."],
       "confidenceScore": 0-100,
+      "questionAnswerList": [
+        {
+          "question": "string",
+          "answer": "string",
+          "status": "correct" | "partial_correct" | "incorrect",
+          "exampleCorrectAnswer": "string (optional)"
+        }
+      ],
     }
   ]
 }
