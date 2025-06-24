@@ -48,6 +48,7 @@ const todoListSchema = new mongoose.Schema(
       type: [todosSchema],
       default: [
         { type: "Profile", title: "Upload CV", isCompleted: false },
+        { type: "Profile", title: "Pass HR Test", isCompleted: false },
         { type: "Skill", title: "Add Skill", isCompleted: false },
       ],
     },

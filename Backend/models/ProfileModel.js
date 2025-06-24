@@ -100,7 +100,7 @@ const profileSchema = new mongoose.Schema(
 
 profileSchema.post("save", async function (doc) {
   try {
-    if (!doc.todoList) {
+    if (doc.type === "Candidate" && !doc.todoList) {
       const todoList = await TodoList.create({ profile: doc._id });
 
       await mongoose.model("Profile").findByIdAndUpdate(doc._id, {
