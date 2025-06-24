@@ -2,6 +2,19 @@ const { calculateSkillMatchScore } = require("../services/matchingService");
 const JobPost = require("../models/PostModel");
 const Profile = require("../models/ProfileModel");
 
+function normalizeSkillName(name) {
+  if (!name) return "";
+  const part = name.split(".")[0].trim();
+  return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+}
+// Ajoute la fonction utilitaire au début du fichier :
+function normalizeSkillName(name) {
+  if (!name) return "";
+  const part = name.split(".")[0].trim();
+  return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+}
+
+// Ensuite dans ton controller :
 exports.matchCandidatesToJob = async (req, res) => {
   try {
     const { jobPostId } = req.params;
@@ -13,8 +26,6 @@ exports.matchCandidatesToJob = async (req, res) => {
       .select("userId skills companyDetails.name companyBid")
       .lean();
 
-   //   console.log("candidates",candidates)
-
     // 2. Récupérer l'annonce de poste et les compétences requises
     const jobPost = await JobPost.findById(jobPostId)
       .select("skillAnalysis.requiredSkills jobDetails.title")
@@ -24,46 +35,46 @@ exports.matchCandidatesToJob = async (req, res) => {
       return res.status(404).json({ error: "Job post not found" });
     }
 
-    // Log pour vérifier les compétences requises
-   // console.log("Job Post Skills:", jobPost.skillAnalysis.requiredSkills);
+    // Appliquer la normalisation sur requiredSkills (pour être sûr)
+    const requiredSkills = jobPost.skillAnalysis.requiredSkills.map(skill => ({
+      ...skill,
+      name: normalizeSkillName(skill.name)
+    }));
 
     // 3. Calculer les correspondances avec les informations supplémentaires
     const matches = candidates
       .map((candidate) => {
-        // Vérifier si userId existe avant de procéder
         if (!candidate.userId) {
-          console.log("Candidate without userId:", candidate);
           return null; // Ignorer ce candidat
         }
 
-        const score = calculateSkillMatchScore(
-          jobPost.skillAnalysis.requiredSkills,
-          candidate.skills
-        );
+        // Appliquer la normalisation sur les skills du candidat
+        const candidateSkills = candidate.skills.map(skill => ({
+          ...skill,
+          name: normalizeSkillName(skill.name)
+        }));
 
-        // Log pour vérifier chaque candidat et son score
-      //  console.log("Candidate:", candidate.userId.username, "Score:", score);
+        const score = calculateSkillMatchScore(
+          requiredSkills,
+          candidateSkills
+        );
 
         return {
           candidateId: candidate.userId,
-          name: candidate.userId?.username || "Anonymous", // S'assurer que username existe
+          name: candidate.userId?.username || "Anonymous",
           score,
           finalBid: candidate.companyBid?.finalBid || null,
           biddingCompany: candidate.companyBid?.company?.username || null,
-          matchedSkills: candidate.skills.filter((candidateSkill) =>
-            jobPost.skillAnalysis.requiredSkills.some(
-              (jobSkill) =>
-                jobSkill.name.toLowerCase() ===
-                candidateSkill.name.toLowerCase()
+          matchedSkills: candidateSkills.filter((candidateSkill) =>
+            requiredSkills.some(
+              (jobSkill) => jobSkill.name === candidateSkill.name
             )
           ),
-          requiredSkills: jobPost.skillAnalysis.requiredSkills,
+          requiredSkills,
         };
       })
-      .filter((match) => match !== null && match.score > 0) // Filtrer les candidats nulls
+      .filter((match) => match !== null && match.score > 0)
       .sort((a, b) => b.score - a.score);
-
-    //  console.log("matches",matches)
 
     // 4. Retourner la réponse
     res.json({
