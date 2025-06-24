@@ -13,7 +13,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
     }
 
     // S'assurer que le rôle utilisateur est bien défini
-    await User.findByIdAndUpdate(userId, { role: "Candidat" });
+    await User.findByIdAndUpdate(userId, { FirstName:profileData.FirstName,LastName:profileData.LastName,role: "Candidat" });
 
     // Recherche profil existant
     let profile = await Profile.findOne({ userId });
