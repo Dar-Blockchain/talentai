@@ -222,6 +222,7 @@ exports.analyzeJobTestResults = async ({
 
 module.exports.generateHRQuestions = async (profile, formData) => {
   try {
+
     const userSkills = profile.skills;
 
     const skillsListDetails = userSkills
@@ -231,7 +232,6 @@ module.exports.generateHRQuestions = async (profile, formData) => {
       .join("\n");
 
     const systemPrompt = generateHRQuestionsPrompts.getSystemPrompt(
-      Object.values(DEFAULT_SOFT_SKILL_CATEGORIES),
       formData
     );
 
@@ -239,7 +239,6 @@ module.exports.generateHRQuestions = async (profile, formData) => {
 
     const userPrompt = generateHRQuestionsPrompts.getUserPrompt(
       skillsListDetails,
-      Object.values(DEFAULT_SOFT_SKILL_CATEGORIES),
       formData
     );
 

@@ -432,10 +432,7 @@ Return **valid JSON only**
 };
 
 const generateHRQuestionsPrompts = {
-  getSystemPrompt: (softSkillList, formData) => {
-    const skillCount = softSkillList.length;
-    const minQuestionsPerSkill = Math.floor(10 / skillCount);
-    const maxQuestionsPerSkill = Math.ceil(10 / skillCount);
+  getSystemPrompt: (formData) => {
 
     // Extract form data for personalization
     const {
@@ -449,20 +446,19 @@ const generateHRQuestionsPrompts = {
     } = formData || {};
 
     return `
-You are a senior HR analyst specializing in ${targetCompany || 'corporate'} interviews. You will evaluate a candidate's responses to behavioral and situational HR interview questions.
+You are a senior HR analyst in working at ${targetCompany || 'corporate'}. You will evaluate a candidate's responses to behavioral and situational HR interview questions.
 
 Your task is to generate **exactly 10 distinct HR interview questions** specifically designed for:
 - **Target Company**: ${targetCompany || 'General corporate environment'}
 - **Role**: ${targetRole || 'Professional position'}
 - **Experience Level**: ${experienceLevel || 'Mid-level'}
-- **Interview Format**: ${interviewFormat || 'Behavioral interview'}
+- **Interview Format**: ${interviewFormat || 'Onsite HR Interview'}
 - **Candidate Goal**: ${simulationGoal || 'Interview preparation'}
 
 ${companyIndustry ? `- **Industry**: ${companyIndustry}` : ''}
 ${companyCulture ? `- **Company Culture**: ${companyCulture}` : ''}
 
 The questions must:
-- Focus purely on soft skills (not technical or role-specific skills)
 - Reflect current HR values such as diversity & inclusion (DEI), psychological safety, remote/hybrid collaboration, mental well-being, continuous learning, and inclusive leadership
 - Be tailored to ${targetCompany || 'the target company'} culture and ${experienceLevel || 'experience level'} expectations
 - Be appropriate for ${interviewFormat || 'behavioral interview'} format
@@ -473,7 +469,6 @@ The questions must:
 
 ### Requirements:
 - Produce **exactly 10 distinct questions** focused solely on HR themes (no technical questions)
-- Distribute the 10 questions as **evenly as possible** across the listed soft skills (e.g., ${minQuestionsPerSkill}–${maxQuestionsPerSkill} questions per skill)
 - Tailor questions to ${targetCompany || 'the company'} culture and ${targetRole || 'role'} requirements
 - Consider ${experienceLevel || 'experience level'} expectations and challenges
 - Format questions appropriately for ${interviewFormat || 'interview format'}
@@ -485,7 +480,7 @@ The questions must:
     `.trim();
   },
 
-  getUserPrompt: (skillsListDetails, softSkillList, formData) => {
+  getUserPrompt: (skillsListDetails, formData) => {
     // Extract form data for personalization
     const {
       targetCompany,
@@ -498,7 +493,7 @@ The questions must:
     } = formData || {};
 
     return `
-Based on the candidate's skill profile and interview preferences below, generate **10 behavioral/situational HR interview questions** that effectively evaluate the candidate on key soft skills, aligned with their specific target company and role.
+Based on the company's details and interview preferences below, generate **10 behavioral/situational HR interview questions**.
 
 ### Interview Context:
 - **Target Company**: ${targetCompany || 'General corporate environment'}
@@ -511,9 +506,6 @@ ${companyCulture ? `- **Company Culture**: ${companyCulture}` : ''}
 
 Candidate's skills Profile:
 ${skillsListDetails}
-
-### Soft Skills to Evaluate:
-${softSkillList.join(", ")}
 
 ### Instructions:
 - Tailor questions specifically for ${targetCompany || 'the target company'} culture and values
@@ -530,8 +522,6 @@ ${softSkillList.join(", ")}
   - Relevance to ${targetCompany || 'company'} culture and ${targetRole || 'role'} requirements
 - **Return a valid JSON array of exactly 10 strings**, no commentary or formatting
 
-Skills List:
-${skillsListDetails}
     `.trim();
   },
 };
