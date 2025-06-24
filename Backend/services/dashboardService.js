@@ -498,83 +498,104 @@ module.exports.getUserCountsByLocation = async () => {
   }
 };
 
+function normalizeSkillName(raw) {
+  if (!raw) return '';
+  const part = raw.split('.')[0];
+  return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+}
+
 module.exports.getJobAssessmentsBySkill = async (skillName) => {
   try {
-    // Définir le filtre pour l'étape de match
+    const normalizedSkill = skillName ? normalizeSkillName(skillName) : '';
     const matchStage = skillName
-      ? { "analysis.skillAnalysis.skillName": skillName } // Si skillName est fourni, on filtre par compétence
-      : {}; // Si skillName n'est pas fourni, on ne filtre pas
+      ? { "analysis.skillAnalysis.skillName": normalizedSkill }
+      : {};
 
-    // Récupérer les résultats d'évaluation pour le skillName donné (ou tous les résultats si skillName n'est pas fourni)
     const assessments = await JobAssessmentResult.aggregate([
+      { $unwind: "$analysis.skillAnalysis" },
+      // Formatte skillName dans analysis.skillAnalysis
       {
-        $unwind: "$analysis.skillAnalysis" // Décomposer la liste skillAnalysis dans chaque JobAssessmentResult
+        $addFields: {
+          "analysis.skillAnalysis.skillName": {
+            $concat: [
+              { $toUpper: { $substrCP: [ { $arrayElemAt: [ { $split: [ "$analysis.skillAnalysis.skillName", "." ] }, 0 ] }, 0, 1 ] } },
+              { $substrCP: [ { $arrayElemAt: [ { $split: [ "$analysis.skillAnalysis.skillName", "." ] }, 0 ] }, 1, { $subtract: [ { $strLenCP: { $arrayElemAt: [ { $split: [ "$analysis.skillAnalysis.skillName", "." ] }, 0 ] } }, 1 ] } ] }
+            ]
+          }
+        }
       },
-      {
-        $match: matchStage // Appliquer le filtre si skillName est fourni
-      },
+      { $match: matchStage },
       {
         $lookup: {
-          from: "profiles", // Joindre avec la collection Profile
-          localField: "condidateId", // Utiliser condidateId dans JobAssessmentResult
-          foreignField: "_id", // Comparer avec _id dans Profile
-          as: "candidateProfile" // Stocker les détails du profil dans ce champ
+          from: "profiles",
+          localField: "condidateId",
+          foreignField: "_id",
+          as: "candidateProfile"
         }
       },
-      {
-        $unwind: {
-          path: "$candidateProfile", // Décomposer les résultats du profil
-          preserveNullAndEmptyArrays: true // Conserver les documents sans profil
-        }
-      },
+      { $unwind: { path: "$candidateProfile", preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
-          from: "users", // Joindre avec la collection User
-          localField: "candidateProfile.userId", // Profile fait référence à User via userId
-          foreignField: "_id", // User fait référence à _id
-          as: "candidateDetails" // Stocker les détails de l'utilisateur
+          from: "users",
+          localField: "candidateProfile.userId",
+          foreignField: "_id",
+          as: "candidateDetails"
         }
       },
-      {
-        $unwind: {
-          path: "$candidateDetails", // Décomposer les résultats de l'utilisateur
-          preserveNullAndEmptyArrays: true // Conserver les documents sans utilisateur
-        }
-      },
+      { $unwind: { path: "$candidateDetails", preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
-          from: "posts", // Joindre avec la collection Post pour obtenir les jobDetails
-          localField: "jobId", // Utiliser jobId dans JobAssessmentResult
-          foreignField: "_id", // Comparer avec _id dans Post
-          as: "jobDetails" // Stocker les détails du job dans ce champ
+          from: "posts",
+          localField: "jobId",
+          foreignField: "_id",
+          as: "jobDetails"
         }
       },
+      { $unwind: { path: "$jobDetails", preserveNullAndEmptyArrays: true } },
+      // Format requiredSkills dans jobDetails.skillAnalysis
       {
-        $unwind: {
-          path: "$jobDetails", // Décomposer les résultats du job
-          preserveNullAndEmptyArrays: true // Conserver les documents sans jobDetails
+        $addFields: {
+          "jobDetails.skillAnalysis.requiredSkills": {
+            $map: {
+              input: "$jobDetails.skillAnalysis.requiredSkills",
+              as: "skill",
+              in: {
+                $mergeObjects: [
+                  "$$skill",
+                  {
+                    name: {
+                      $concat: [
+                        { $toUpper: { $substrCP: [ { $arrayElemAt: [ { $split: [ "$$skill.name", "." ] }, 0 ] }, 0, 1 ] } },
+                        { $substrCP: [ { $arrayElemAt: [ { $split: [ "$$skill.name", "." ] }, 0 ] }, 1, { $subtract: [ { $strLenCP: { $arrayElemAt: [ { $split: [ "$$skill.name", "." ] }, 0 ] } }, 1 ] } ] }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
         }
       },
       {
         $group: {
-          _id: "$jobId", // Grouper par jobId pour chaque évaluation de travail
+          _id: "$jobId",
           candidates: {
-            $push: {
-              username: "$candidateDetails.username", // Ajouter le username
-              email: "$candidateDetails.email", // Ajouter l'email
-              jobMatch: "$analysis.jobMatch" // Ajouter les détails de correspondance du travail
+            $addToSet: {
+              username: "$candidateDetails.username",
+              email: "$candidateDetails.email",
+              jobMatch: "$analysis.jobMatch"
             }
           },
-          totalAssessments: { $sum: 1 }, // Compter le nombre total d'évaluations pour ce job
-          jobDetails: { $first: "$jobDetails" } // Inclure les détails du job (jobDetails)
+          totalAssessments: { $sum: 1 },
+          jobDetails: { $first: "$jobDetails" }
         }
       },
       {
         $project: {
-          jobId: 1,
+          jobId: "$_id",
           candidates: 1,
           totalAssessments: 1,
-          jobDetails: 1 // Inclure les jobDetails dans le projet final
+          jobDetails: 1
         }
       }
     ]);
@@ -584,3 +605,6 @@ module.exports.getJobAssessmentsBySkill = async (skillName) => {
     throw new Error("Erreur lors de la récupération des évaluations par compétence: " + error.message);
   }
 };
+
+
+
