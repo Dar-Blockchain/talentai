@@ -1131,11 +1131,6 @@ Provide detailed, actionable feedback in JSON format only.`,
 //             recommendations: ["Please try the assessment again"],
 //             technicalLevel: "intermediate",
 //             nextSteps: ["Retry the assessment"],
-//             jobMatch: {
-//               percentage: 60,
-//               status: "partial",
-//               keyGaps: ["Assessment incomplete"],
-//             },
 //           },
 //         },
 //       });
@@ -1572,7 +1567,18 @@ exports.generateHRQuestions = async (req, res) => {
       throw new HttpError(500, `profile not found.`);
     }
 
-    const result = await evaluationservice.generateHRQuestions(profile);
+    // Extract form data from request body for personalization
+    const formData = {
+      targetCompany: req.body.targetCompany,
+      companyIndustry: req.body.companyIndustry,
+      companyCulture: req.body.companyCulture,
+      targetRole: req.body.targetRole,
+      experienceLevel: req.body.experienceLevel,
+      interviewFormat: req.body.interviewFormat,
+      simulationGoal: req.body.simulationGoal
+    };
+
+    const result = await evaluationservice.generateHRQuestions(profile, formData);
 
     res.status(200).json(
       result
