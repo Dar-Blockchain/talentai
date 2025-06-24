@@ -369,3 +369,53 @@ exports.getCompanyWithAssessments = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
+exports.getTotalCompanies = async (req, res) => {
+  try {
+    const total = await profileService.getTotalCompanies();
+    res.json({ totalCompanies: total });
+  } catch (error) {
+    console.error("Error getting total companies:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.getCompaniesWithActivePosts = async (req, res) => {
+  try {
+    const companies = await profileService.getCompaniesWithActivePosts();
+    res.json({ companiesWithActivePosts: companies });
+  } catch (error) {
+    console.error("Error getting companies with active posts:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.getTopHiringCompanies = async (req, res) => {
+  try {
+    const topCompanies = await profileService.getTopHiringCompanies();
+    res.json({ topHiringCompanies: topCompanies });
+  } catch (error) {
+    console.error("Error getting top hiring companies:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.getRecentActiveCompanies = async (req, res) => {
+  try {
+    const recentCompanies = await profileService.getRecentActiveCompanies();
+    res.json({ recentActiveCompanies: recentCompanies });
+  } catch (error) {
+    console.error("Error getting recent active companies:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.getTopIndustries = async (req, res) => {
+  try {
+    const industries = await profileService.getTopIndustries();
+    res.json({ topIndustries: industries });
+  } catch (error) {
+    console.error("Error getting top industries:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

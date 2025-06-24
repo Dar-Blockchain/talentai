@@ -46,4 +46,10 @@ router.delete('/deleteSoftSkills', profileController.deleteSoftSkill);
 
 router.get('/getCompanyWithAssessments/:jobId?', profileController.getCompanyWithAssessments);
 
+router.get("/company/stats/total", profileController.getTotalCompanies);
+router.get("/company/stats/active-posts", profileController.getCompaniesWithActivePosts);
+router.get("/company/stats/top-hiring", profileController.getTopHiringCompanies);
+router.get("/company/stats/recent-active", profileController.getRecentActiveCompanies);
+router.get("/company/stats/top-industries", profileController.getTopIndustries);
+
 module.exports = router; 

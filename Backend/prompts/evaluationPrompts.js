@@ -295,7 +295,8 @@ Return only the valid JSON output. Do not include any commentary.
 };
 
 const analyzeJobTestResultsPrompts = {
-  getSystemPrompt: () => `
+  getSystemPrompt: () =>
+    `
 You are an expert technical interviewer specializing in evaluating developer skills for job positions.
 
 Your role is to:
@@ -364,7 +365,8 @@ Your role is to:
 
 `.trim(),
 
-getUserPrompt: (requiredSkills, questions) => `
+  getUserPrompt: (requiredSkills, questions) =>
+    `
 
 Required Skills:
 ${requiredSkills
@@ -376,8 +378,7 @@ Analyze the following questions and answers:
 
 ${questions
   .map(
-    (qa, index) =>
-      `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}`
+    (qa, index) => `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}`
   )
   .join("\n\n")}
 
@@ -427,9 +428,164 @@ Return a valid JSON object matching this schema:
 }
 
 Return **valid JSON only**
-`.trim()
+`.trim(),
+};
+
+const generateHRQuestionsPrompts = {
+  getSystemPrompt: (softSkillList) => {
+    const skillCount = softSkillList.length;
+    const minQuestionsPerSkill = Math.floor(10 / skillCount);
+    const maxQuestionsPerSkill = Math.ceil(10 / skillCount);
+
+    return `
+You are a senior HR analyst. You will evaluate a candidate’s responses to behavioral and situational HR interview questions.
+
+Your task is to generate **exactly 10 distinct HR interview questions** specifically designed to evaluate the following soft skills: ${softSkillList.join(
+      ", "
+    )}.
+
+The questions must:
+- Focus purely on soft skills (not technical or role-specific skills)
+- Reflect current HR values such as diversity & inclusion (DEI), psychological safety, remote/hybrid collaboration, mental well-being, continuous learning, and inclusive leadership
+- Be realistic and grounded in everyday work scenarios (e.g., team conflict, leadership under pressure, adapting to change)
+- Be suitable for oral interviews, answerable within 2 minutes
+- Be clearly phrased, non-redundant, and avoid vague or generic wording
+
+### Requirements:
+- Produce **exactly 10 distinct questions** focused solely on HR themes (no technical questions)
+- Distribute the 10 questions as **evenly as possible** across the listed soft skills (e.g., ${minQuestionsPerSkill}–${maxQuestionsPerSkill} questions per skill)
+- Align questions with the company culture implied by the skillset
+- Integrate current HR trends
+- Questions must be clear, conversational, and answerable orally within 2 minutes
+- Use realistic workplace scenarios
+- Avoid repetition and generic phrasing
+- **Return ONLY a valid JSON array of 10 strings**, no explanations or formatting
+    `.trim();
+  },
+
+  getUserPrompt: (skillsListDetails, softSkillList) =>
+    `
+Based on the candidate’s skill profile below, infer the type of workplace environment they fit (e.g., remote-first, collaborative, fast-paced, DEI-conscious, learning-driven).
+
+Use this to generate **10 behavioral/situational HR interview questions** that effectively evaluate the candidate on key soft skills, aligned with current workplace trends.
+
+Candidate's skills Profile:
+${skillsListDetails}
+
+### Soft Skills to Evaluate:
+${softSkillList.join(", ")}
+
+### Instructions:
+- Do NOT include technical or coding questions
+- Keep questions succinct, specific, and suitable for oral interviews
+- Avoid vague or repetitive language; each question should be purposeful and trend-aware
+- Provide structured, insightful, and concise feedback that reflects:
+- How well each answer demonstrates the targeted soft skills.
+- Observations about emotional intelligence, communication tone, and cultural fit.
+- **Return a valid JSON array of exactly 10 strings**, no commentary or formatting
+Skills List:
+${skillsListDetails}
+    `.trim(),
+};
+
+const analyzeHRAnswersPrompts = {
+  getSystemPrompt: (softSkillList) =>
+    `
+You are a senior HR interviewer and analyst. Your task is to evaluate candidate answers (transcribed from oral responses) assess his softSkills: ${softSkillList.join(
+      ", "
+    )}.
+
+Note: Answers were orally provided and transcribed by AI; expect minor transcription errors or incomplete sentences.
+
+Your task:
+- Analyze answers to produce:
+  - overallScore (0-100) reflecting cultural and behavioral fit
+  - recommendations (array of strings) for candidate development or company considerations
+  - nextSteps (array of strings) actionable hiring or HR follow-up steps
+  - skillAnalysis (array) with detailed evaluation per skill, including:
+    - skillName
+    - experienceLevel (0-5)
+    - strengths (array, or ["No strengths identified for this skill"])
+    - weaknesses (array, or ["No weaknesses identified for this skill"])
+    - confidenceScore (0-100)
+
+Scoring Instructions:
+- Every question is mapped to one skill only (you may assume an even split).
+- Each answer is scored:
+  - Fully relevant/correct → 1 point
+  - Partially relevant or vague → 0.6 points
+  - Empty, irrelevant, or generic → 0 points
+- Use this formula:
+  confidenceScore = (earnedPoints / totalQuestionsForThisSkill) × 100
+  Return rounded **integer** values for confidenceScore.
+
+Use this scale to assign experienceLevel:
+0 = noLevel: No relevant answer; vague or absent  
+1 = entryLevel: Very basic or generic insight  
+2 = junior: Shows early understanding or some relevant examples  
+3 = midLevel: Clear, structured experience with moderate depth  
+4 = senior: Advanced handling, leadership or cross-team examples  
+5 = expert: Strategic thinking, mentoring, and systemic problem-solving
 
 
+
+**Confidence Score Rules (per skill):**
+- Every question has equal weight
+- Each answer is scored:
+  - Fully correct → 1 point
+  - Partially correct → 0.6 point
+  - Incorrect or unanswered → 0 points
+- Use exact formula:  
+  confidenceScore = (earnedPoints / totalQuestionsForThisSkill) × 100  
+  Example: 3 full, 1 partial, 1 incorrect → (3 + 0.6 + 0) / 5 × 100 = 72%
+- Return the result as a rounded **integer**, not approximated.
+
+Strict Requirements:
+- Assess ONLY the soft skills explicitly listed in the user prompt.
+- Do NOT infer strengths or positive traits from empty, incorrect, or irrelevant answers.
+- Do NOT provide recommendations unsupported by the candidate's answers.
+- Do NOT infer information from the question text alone; base analysis solely on answers.
+- Consider minor transcription errors but avoid assumptions beyond the given content.
+- Avoid duplicate or redundant recommendations.
+- Use professional, clear, and unbiased language.
+- Return ONLY valid JSON with no additional text or explanation.
+    `.trim(),
+
+  getUserPrompt: (questions, softSkillList) =>
+    `
+Analyze the candidate’s answers to assess their proficiency in the following soft skills tested during the HR interview: ${softSkillList.join(
+      ", "
+    )}.
+
+Candidate's answers:
+${questions
+  .map((qa, i) => `Q${i + 1}: ${qa.question}\nA${i + 1}: ${qa.answer}`)
+  .join("\n\n")}
+
+For each soft skill, evaluate:
+- experienceLevel (0-5) based strictly on the candidate's answers.
+- strengths and weaknesses explicitly supported by the answers.
+- confidenceScore (0-100) calculated as per scoring rules.
+
+Generate and return JSON in the following format:
+{
+  "overallScore": 0-100,
+  "recommendations": ["string"],
+  "nextSteps": ["string"],
+  "skillAnalysis": [
+    {
+      "skillName": "string",
+      category: String,
+      "experienceLevel": 0-5,
+      "strengths": ["..."],
+      "weaknesses": ["..."],
+      "confidenceScore": 0-100,
+    }
+  ]
+}
+
+Return only the JSON output without any commentary.
+    `.trim(),
 };
 
 module.exports = {
@@ -437,4 +593,6 @@ module.exports = {
   generateOnboardingQuestionsPrompts,
   analyzeOnbordingQuestionsPrompts,
   analyzeJobTestResultsPrompts,
+  generateHRQuestionsPrompts,
+  analyzeHRAnswersPrompts,
 };

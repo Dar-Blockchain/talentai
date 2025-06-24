@@ -1,3 +1,4 @@
+const TodoList = require("../models/todoListModel");
 const { getExperienceLevelLabel } = require("./skillUtils");
 
 /**
@@ -90,6 +91,43 @@ function updateProfileWithNewSkills(profile, skillAnalysis) {
       });
     }
   });
+}
+
+/**
+ * 1. Adds soft skills to the profile if they are not already present
+ * and their experienceLevel is greater than 0.
+ * 2. Update todoList: Pass HR Test => isCompleted
+ */
+async function handleAddSoftSkills(profile, skillAnalysis) {
+  let softSkillAdded = false;
+  skillAnalysis.forEach((softSkill) => {
+    const skillName = softSkill.skillName.toLowerCase();
+    const skillLevel = parseInt(softSkill.experienceLevel);
+
+    const existingSkill = profile.softSkills.find(
+      (s) => s.name.toLowerCase() === skillName
+    );
+
+    if (!existingSkill && skillLevel > 0) {
+      profile.softSkills.push({
+        name: softSkill.skillName,
+        experienceLevel: softSkill.experienceLevel,
+        ScoreTest: softSkill.confidenceScore,
+      });
+      softSkillAdded = true;
+    }
+  });
+
+  if (softSkillAdded) {
+    if (softSkillAdded) {
+      await profile.save();
+
+      await TodoList.updateOne(
+        { profile: profile._id, "todos.title": "Pass HR Test" },
+        { $set: { "todos.$.isCompleted": true } }
+      );
+    }
+  }
 }
 
 /**
@@ -227,4 +265,5 @@ module.exports = {
   mergeAlreadyProvenSkills,
   processAnalysisData,
   updateTodoListWithNewSkills,
+  handleAddSoftSkills,
 };
