@@ -1590,6 +1590,19 @@ exports.generateHRQuestions = async (req, res) => {
   }
 };
 
+/**
+ * Analyzes HR interview answers and updates the candidate's profile.
+ *
+ * @param {Object} req - Express request containing the candidate's answers.
+ * @param {Object} res - Express response.
+ *
+ * Process:
+ * 1. Evaluates the candidate’s soft skills based on HR answers.
+ * 2. Updates the profile with any validated soft skills (experienceLevel > 0).
+ * 3. Marks the "Pass HR Test" task as completed in the candidate's TodoList.
+ *
+ * @returns {Object} analysis of the questions/answers
+ */
 exports.analyzeHRAnswers = async (req, res) => {
   try {
     const { questions } = req.body;
