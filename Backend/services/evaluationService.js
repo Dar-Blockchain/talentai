@@ -11,9 +11,14 @@ const profileService = require("../services/profileService");
 const {
   generateJobQuestionsPrompts,
   analyzeJobTestResultsPrompts,
+  generateHRQuestionsPrompts,
+  analyzeHRAnswersPrompts,
 } = require("../prompts/evaluationPrompts");
 const { HttpError } = require("../utils/httpUtils");
-const { parseAndValidateAIResponse } = require("../parsers/AIResponseParser");
+const {
+  parseAndValidateAIResponse,
+  parseAIResponse,
+} = require("../parsers/AIResponseParser");
 const {
   updateProfileWithNewSkills,
   findAlreadyProvenSkills,
@@ -21,9 +26,13 @@ const {
   updateUpgradedSkills,
   processSkillsData,
   processAnalysisData,
-  updateTodoListWithNewSkills
+  updateTodoListWithNewSkills,
+  handleAddSoftSkills,
+  saveInterviewDetails
 } = require("../utils/evaluationUtils");
-
+const {
+  DEFAULT_SOFT_SKILL_CATEGORIES,
+} = require("../constants/profileConstants");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
@@ -182,7 +191,7 @@ exports.analyzeJobTestResults = async ({
   updateUpgradedSkills(profile.skills, analysis.skillAnalysis);
 
   // V. Process analysis for overallScore
-  processAnalysisData(analysis)
+  processAnalysisData(analysis);
 
   await profile.save();
 
@@ -211,3 +220,108 @@ exports.analyzeJobTestResults = async ({
   return { analysis };
 };
 
+module.exports.generateHRQuestions = async (profile, formData) => {
+  try {
+
+    const userSkills = profile.skills;
+
+    const skillsListDetails = userSkills
+      .map(
+        (skill) => `- ${skill.name} (experienceLevel: ${skill.experienceLevel})`
+      )
+      .join("\n");
+
+    const systemPrompt = generateHRQuestionsPrompts.getSystemPrompt(
+      formData
+    );
+
+    console.log("sys: ", systemPrompt);
+
+    const userPrompt = generateHRQuestionsPrompts.getUserPrompt(
+      skillsListDetails,
+      formData
+    );
+
+    console.log("user: ", userPrompt);
+
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.6,
+      max_tokens: 1000,
+      stream: true,
+    });
+
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
+
+    let questions = await parseAIResponse(raw);
+
+    return { questions, totalQuestions: questions.length };
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+
+    throw new HttpError(500, `Internal server error: ${error}`);
+  }
+};
+
+exports.analyzeHRAnswers = async ({ questions, user }) => {
+  const profile = await Profile.findById(user.profile);
+  if (!profile)
+    throw new HttpError(404, "Aucun profil trouvé pour cet utilisateur.");
+
+  // for now , candidates are going to be tested on a default softSkill list
+  // possible optimization:  Enabling the companies to set their preferred softSkillList to test
+  const systemPrompt = analyzeHRAnswersPrompts.getSystemPrompt(
+    Object.values(DEFAULT_SOFT_SKILL_CATEGORIES)
+  );
+  const userPrompt = analyzeHRAnswersPrompts.getUserPrompt(
+    questions,
+    Object.values(DEFAULT_SOFT_SKILL_CATEGORIES)
+  );
+
+  const stream = await together.chat.completions.create({
+    model: "deepseek-ai/DeepSeek-V3",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    max_tokens: 1500,
+    temperature: 0.6,
+    stream: true,
+  });
+
+  let raw = "";
+  for await (const chunk of stream) {
+    const content = chunk.choices?.[0]?.delta?.content;
+    if (content) raw += content;
+  }
+
+  // I. parse AI response
+  let analysis = await parseAIResponse(raw);
+
+  // II.
+  // store softskills in the candidate's profile (if any are proven)
+  // update todoList : Pass HR Test : isCompleted
+  await handleAddSoftSkills(profile, analysis.skillAnalysis);
+
+  await saveInterviewDetails(
+    profile,
+    analysis.overallScore,
+    analysis.skillAnalysis
+  );
+
+  profile.quota++;
+  await profile.save();
+
+  return { analysis };
+};

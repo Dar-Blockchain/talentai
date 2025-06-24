@@ -246,6 +246,9 @@ interface DashboardStats {
     averageScore: number;
     userGrowth: number;
     assessmentGrowth: number;
+    totalSkills: number;
+    posts: number;
+    jobAssessmentsWithScorePercentage: number;
 }
 
 // Mock data for charts
@@ -273,6 +276,17 @@ const DashboardAdmin = () => {
     const [usersRowsPerPage, setUsersRowsPerPage] = useState(10);
     const [assessmentsPage, setAssessmentsPage] = useState(0);
     const [assessmentsRowsPerPage, setAssessmentsRowsPerPage] = useState(10);
+    const [assessmentResultsTab, setAssessmentResultsTab] = useState(0);
+    const [assessmentResults, setAssessmentResults] = useState<any[]>([]);
+    const [assessmentResultsLoading, setAssessmentResultsLoading] = useState(false);
+    const [assessmentResultsPage, setAssessmentResultsPage] = useState(0);
+    const [assessmentResultsRowsPerPage, setAssessmentResultsRowsPerPage] = useState(10);
+    const [assessmentResultsFilter, setAssessmentResultsFilter] = useState({
+        skill: '',
+        scoreRange: '',
+        dateRange: ''
+    });
+    const [availableSkills, setAvailableSkills] = useState<string[]>([]);
 
     // Data state
     const [stats, setStats] = useState<DashboardStats>({
@@ -282,7 +296,10 @@ const DashboardAdmin = () => {
         totalAttempts: 0,
         averageScore: 0,
         userGrowth: 0,
-        assessmentGrowth: 0
+        assessmentGrowth: 0,
+        totalSkills: 0,
+        posts: 0,
+        jobAssessmentsWithScorePercentage: 0
     });
     const [users, setUsers] = useState<User[]>([]);
     const [assessments, setAssessments] = useState<Assessment[]>([]);
@@ -293,6 +310,7 @@ const DashboardAdmin = () => {
         { name: 'Hard Skills', value: 0, color: '#8884d8' },
         { name: 'Soft Skills', value: 0, color: '#82ca9d' }
     ]);
+    const [skillsData, setSkillsData] = useState<Array<{ skill: string; count: number }>>([]);
     const [userGrowthData, setUserGrowthData] = useState<any[]>([]);
     const [selectedMonth, setSelectedMonth] = useState<string>('all');
 
@@ -316,11 +334,109 @@ const DashboardAdmin = () => {
     // Add username and email filter state
     const [userUsernameFilter, setUserUsernameFilter] = useState('');
     const [userEmailFilter, setUserEmailFilter] = useState('');
+    
+    // Add skill search state for assessment results
+    const [skillSearch, setSkillSearch] = useState('');
 
     // Fetch data on component mount
     useEffect(() => {
         fetchDashboardData();
     }, [usersPage, usersRowsPerPage]);
+
+    const fetchAssessmentResults = async (skillName?: string) => {
+        try {
+            setAssessmentResultsLoading(true);
+            
+            const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/'}dashboard/getJobAssessmentsBySkill`;
+            const method = 'POST';
+            const body = skillName ? JSON.stringify({ skillName }) : JSON.stringify({});
+            
+            console.log('Making API call to:', url);
+            console.log('Method:', method);
+            console.log('Body:', body);
+            
+            const response = await fetch(url, {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body
+            });
+
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('API Response data:', data);
+            
+            if (data.success || data.assessments) {
+                // Handle the API structure
+                const results: any[] = [];
+                if (data.assessments) {
+                    console.log('Found assessments:', data.assessments.length);
+                    // Structure: data.assessments contains candidates
+                    data.assessments.forEach((assessment: any) => {
+                        if (assessment.candidates) {
+                            console.log('Assessment candidates:', assessment.candidates.length);
+                            assessment.candidates.forEach((candidate: any) => {
+                                results.push({
+                                    _id: `${assessment._id}_${candidate.username || candidate.candidateId}`,
+                                    assessmentId: assessment._id,
+                                    candidateId: candidate.candidateId,
+                                    username: candidate.username,
+                                    email: candidate.email,
+                                    jobTitle: assessment.jobDetails?.jobDetails?.title || 'Unknown Job',
+                                    jobMatch: candidate.jobMatch,
+                                    timestamp: new Date().toISOString(), // Fallback timestamp
+                                    analysis: {
+                                        overallScore: candidate.jobMatch?.percentage || 0,
+                                        skillAnalysis: [],
+                                        jobMatch: candidate.jobMatch
+                                    }
+                                });
+                            });
+                        }
+                    });
+                }
+                
+                console.log('Processed results:', results.length);
+                setAssessmentResults(results);
+                
+                // Add the searched skill to available skills
+                const skills = new Set<string>();
+                if (skillName) {
+                    skills.add(skillName);
+                }
+                
+                setAvailableSkills(Array.from(skills).sort());
+            } else {
+                console.error('Failed to fetch assessment results:', data.message);
+                setAssessmentResults([]);
+            }
+        } catch (error) {
+            console.error('Error fetching assessment results:', error);
+            setAssessmentResults([]);
+        } finally {
+            setAssessmentResultsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 2) {
+            fetchAssessments();
+        }
+    }, [activeTab]);
+
+    useEffect(() => {
+        if (activeTab === 3) {
+            // Fetch all assessment results by default when tab is opened
+            fetchAssessmentResults();
+        }
+    }, [activeTab]);
 
     const fetchDashboardData = async () => {
         try {
@@ -329,6 +445,7 @@ const DashboardAdmin = () => {
                 fetchAllUsersForMap(),
                 fetchStats(),
                 fetchUserGrowthData(),
+                fetchSkillsData(),
                 fetchUsers(usersPage + 1, usersRowsPerPage),
                 fetchAssessments()
             ]);
@@ -356,7 +473,10 @@ const DashboardAdmin = () => {
                     totalAttempts: data.data.resumes || 0, // Using resumes instead of attempts
                     averageScore: data.data.avgOverallScore || 0,
                     userGrowth: 12.5, // Mock growth percentage
-                    assessmentGrowth: 8.3 // Mock growth percentage
+                    assessmentGrowth: 8.3, // Mock growth percentage
+                    totalSkills: data.data.totalSkills || 0,
+                    posts: data.data.posts || data.data.totalPosts || data.data.postsCreatedByDay?.reduce((total: number, item: any) => total + item.postCount, 0) || 0,
+                    jobAssessmentsWithScorePercentage: data.data.jobAssessmentsWithScorePercentage || 0
                 });
                 
                 // Update skill distribution
@@ -375,7 +495,10 @@ const DashboardAdmin = () => {
                 totalAttempts: 0,
                 averageScore: 0,
                 userGrowth: 0,
-                assessmentGrowth: 0
+                assessmentGrowth: 0,
+                totalSkills: 0,
+                posts: 0,
+                jobAssessmentsWithScorePercentage: 0
             });
         }
     };
@@ -437,13 +560,13 @@ const DashboardAdmin = () => {
                     data.data.jobAssessmentsCreatedByDay.forEach((assessmentItem: any) => {
                         const existingDay = processedData.find((item: any) => item.fullDate === assessmentItem.day);
                         if (existingDay) {
-                            existingDay.assessments = assessmentItem.assessmentCount;
+                            existingDay.assessments = assessmentItem.jobAssessmentCount;
                         } else {
                             processedData.push({
                                 day: new Date(assessmentItem.day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
                                 users: 0,
                                 posts: 0,
-                                assessments: assessmentItem.assessmentCount,
+                                assessments: assessmentItem.jobAssessmentCount,
                                 fullDate: assessmentItem.day
                             });
                         }
@@ -458,6 +581,46 @@ const DashboardAdmin = () => {
         } catch (err) {
             console.error('Error fetching user growth data:', err);
             setUserGrowthData([]);
+        }
+    };
+
+    const fetchSkillsData = async () => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getCounts`);
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            const data = await res.json();
+            if (data.success && data.data && data.data.topSkills) {
+                // Map the topSkills data to the expected format
+                const skillsData = data.data.topSkills.map((item: any) => ({
+                    skill: item._id,
+                    count: item.count
+                }));
+                
+                // Sort skills by count in descending order
+                const sortedSkills = skillsData
+                    .sort((a: any, b: any) => b.count - a.count)
+                    .slice(0, 10);
+                    
+                setSkillsData(sortedSkills);
+            }
+        } catch (err) {
+            console.error('Error fetching skills data:', err);
+            // Fallback to mock data if API fails
+            const fallbackSkillsData = [
+                { skill: 'JavaScript', count: 45 },
+                { skill: 'React', count: 38 },
+                { skill: 'Python', count: 32 },
+                { skill: 'Node.js', count: 28 },
+                { skill: 'SQL', count: 25 },
+                { skill: 'TypeScript', count: 22 },
+                { skill: 'AWS', count: 18 },
+                { skill: 'Docker', count: 15 },
+                { skill: 'MongoDB', count: 12 },
+                { skill: 'Git', count: 10 }
+            ];
+            setSkillsData(fallbackSkillsData);
         }
     };
 
@@ -538,6 +701,10 @@ const DashboardAdmin = () => {
         setAssessmentsTab(newValue);
     };
 
+    const handleAssessmentResultsTabChange = (event: React.SyntheticEvent, newValue: number) => {
+        setAssessmentResultsTab(newValue);
+    };
+
     const handlePageChange = (event: unknown, newPage: number) => {
         setPage(newPage);
     };
@@ -563,6 +730,15 @@ const DashboardAdmin = () => {
     const handleAssessmentsRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setAssessmentsRowsPerPage(parseInt(event.target.value, 10));
         setAssessmentsPage(0);
+    };
+
+    const handleAssessmentResultsPageChange = (event: unknown, newPage: number) => {
+        setAssessmentResultsPage(newPage);
+    };
+
+    const handleAssessmentResultsRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setAssessmentResultsRowsPerPage(parseInt(event.target.value, 10));
+        setAssessmentResultsPage(0);
     };
 
     const getRoleColor = (role: string) => {
@@ -1031,6 +1207,129 @@ const DashboardAdmin = () => {
                         </Box>
                     </StatCard>
                 </Box>
+
+                <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
+                    <StatCard>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Box>
+                                <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
+                                    {stats.totalSkills.toLocaleString()}
+                                </Typography>
+                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                    Total Skills
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <WorkIcon sx={{ color: 'info.main', fontSize: 16, mr: 0.5 }} />
+                                    <Typography variant="caption" sx={{ color: 'info.main' }}>
+                                        Skills tracked
+                                    </Typography>
+                                </Box>
+                            </Box>
+                            <WorkIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
+                        </Box>
+                    </StatCard>
+                </Box>
+
+                <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
+                    <StatCard>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Box>
+                                <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
+                                    {stats.posts.toLocaleString()}
+                                </Typography>
+                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                    Total Posts
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <TrendingUpIcon sx={{ color: 'success.main', fontSize: 16, mr: 0.5 }} />
+                                    <Typography variant="caption" sx={{ color: 'success.main' }}>
+                                        Active content
+                                    </Typography>
+                                </Box>
+                            </Box>
+                            <BarChartIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
+                        </Box>
+                    </StatCard>
+                </Box>
+
+                <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
+                    <StatCard>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Box>
+                                <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
+                                    {stats.jobAssessmentsWithScorePercentage.toFixed(1)}%
+                                </Typography>
+                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
+                                    Assessment Completion
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <CheckCircleIcon sx={{ color: 'success.main', fontSize: 16, mr: 0.5 }} />
+                                    <Typography variant="caption" sx={{ color: 'success.main' }}>
+                                        Completed assessments
+                                    </Typography>
+                                </Box>
+                            </Box>
+                            <AssessmentIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
+                        </Box>
+                    </StatCard>
+                </Box>
+            </Box>
+
+            {/* Skills Bar Chart - Moved to top */}
+            <Box sx={{ mb: 4 }}>
+                <StyledCard>
+                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                        Top Skills by Usage
+                    </Typography>
+                    <ResponsiveContainer width="100%" height={400}>
+                        <BarChart
+                            data={skillsData}
+                            margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                        >
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                            <XAxis 
+                                dataKey="skill" 
+                                angle={-45}
+                                textAnchor="end"
+                                height={80}
+                                tick={{ fontSize: 12 }}
+                                interval={0}
+                            />
+                            <YAxis 
+                                tick={{ fontSize: 12 }}
+                                label={{ value: 'Number of Users', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' } }}
+                            />
+                            <RechartsTooltip 
+                                formatter={(value: any, name: any) => [value, 'Users']}
+                                labelFormatter={(label: any) => `Skill: ${label}`}
+                                contentStyle={{
+                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                    border: '1px solid #ccc',
+                                    borderRadius: '8px',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                                }}
+                            />
+                            <Bar 
+                                dataKey="count" 
+                                radius={[4, 4, 0, 0]}
+                                fill="url(#skillGradient)"
+                            >
+                                {skillsData.map((entry, index) => (
+                                    <Cell 
+                                        key={`cell-${index}`} 
+                                        fill={`hsl(${200 + index * 25}, 80%, ${60 - index * 3}%)`}
+                                    />
+                                ))}
+                            </Bar>
+                            <defs>
+                                <linearGradient id="skillGradient" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stopColor="#8310FF" stopOpacity={0.8}/>
+                                    <stop offset="100%" stopColor="#8310FF" stopOpacity={0.4}/>
+                                </linearGradient>
+                            </defs>
+                        </BarChart>
+                    </ResponsiveContainer>
+                </StyledCard>
             </Box>
 
             {/* Charts */}
@@ -1103,9 +1402,9 @@ const DashboardAdmin = () => {
             </Box>
 
             {/* World Map */}
-            {/* <Box sx={{ mb: 4 }}>
+            <Box sx={{ mb: 4 }}>
                 <WorldMap userLocations={processUserLocations()} totalUsers={stats.totalUsers} />
-            </Box> */}
+            </Box>
         </Box>
     );
 
@@ -1502,6 +1801,16 @@ const DashboardAdmin = () => {
                         </ListItemIcon>
                         <ListItemText primary="Assessments" />
                     </SidebarItem>
+
+                    <SidebarItem
+                        selected={activeTab === 3}
+                        onClick={() => setActiveTab(3)}
+                    >
+                        <ListItemIcon>
+                            <AssessmentIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Assessment Results" />
+                    </SidebarItem>
                 </List>
 
                 <Divider sx={{ my: 2 }} />
@@ -1704,6 +2013,216 @@ const DashboardAdmin = () => {
         </Dialog>
     );
 
+    const renderAssessmentResults = () => {
+        const filteredResults = assessmentResults.filter((result) => {
+            // Remove skill filtering since we don't have skillAnalysis in our data structure
+            // Only filter by score range
+            if (assessmentResultsFilter.scoreRange) {
+                const score = result.jobMatch?.percentage || result.analysis?.overallScore || 0;
+                const [min, max] = assessmentResultsFilter.scoreRange.split('-').map(Number);
+                if (score < min || score > max) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        const paginatedResults = filteredResults.slice(
+            assessmentResultsPage * assessmentResultsRowsPerPage,
+            (assessmentResultsPage + 1) * assessmentResultsRowsPerPage
+        );
+
+        const handleSkillSearch = () => {
+            if (skillSearch.trim() === '') {
+                // If no skill is entered, fetch all results
+                fetchAssessmentResults();
+            } else {
+                fetchAssessmentResults(skillSearch.trim());
+            }
+        };
+
+        return (
+            <Box sx={{ width: '100%' }}>
+                <SectionTitle>Job Assessment Results</SectionTitle>
+
+                {/* Skill Search */}
+                <StyledCard>
+                    <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                        Search by Skill
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <TextField
+                            label="Search by specific skill (e.g., Node.js, React, Python)"
+                            variant="outlined"
+                            size="small"
+                            sx={{ minWidth: 300 }}
+                            placeholder="Enter skill name..."
+                            value={skillSearch}
+                            onChange={(e) => setSkillSearch(e.target.value)}
+                            onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                    handleSkillSearch();
+                                }
+                            }}
+                        />
+                        <Button
+                            variant="contained"
+                            onClick={() => {
+                                const input = document.querySelector('input[placeholder="Enter skill name..."]') as HTMLInputElement;
+                                if (input) {
+                                    handleSkillSearch();
+                                }
+                            }}
+                            sx={{ backgroundColor: GREEN_MAIN }}
+                        >
+                            Search
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            onClick={() => {
+                                setSkillSearch('');
+                                fetchAssessmentResults();
+                            }}
+                            sx={{ borderColor: GREEN_MAIN, color: GREEN_MAIN }}
+                        >
+                            Show All
+                        </Button>
+                    </Box>
+                </StyledCard>
+
+                {/* Additional Filters */}
+            
+
+                {/* Results Table */}
+                <StyledCard>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            Assessment Results ({filteredResults.length} total)
+                        </Typography>
+                        {assessmentResultsLoading && <CircularProgress size={24} />}
+                    </Box>
+
+                    <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+                        <Table>
+                            <TableHead>
+                                <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
+                                    <TableCell sx={{ fontWeight: 600 }}>Username</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Job Title</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Job Match %</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Key Gaps</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {paginatedResults.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} sx={{ textAlign: 'center', py: 4 }}>
+                                            <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                                                {assessmentResultsLoading ? 'Loading...' : 'No assessment results found'}
+                                            </Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    paginatedResults.map((result) => (
+                                        <TableRow key={result._id} hover>
+                                            <TableCell>
+                                                <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
+                                                    {result.username || 'Unknown'}
+                                                </Typography>
+                                            </TableCell>
+
+                                             <TableCell>
+                                                <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
+                                                    {result.jobTitle || 'Unknown Job'}
+                                                </Typography>
+                                            </TableCell> 
+                                            <TableCell>
+                                                <Chip
+                                                    label={`${result.jobMatch?.percentage?.toFixed(1) || result.analysis?.overallScore?.toFixed(1) || 0}%`}
+                                                    color={result.jobMatch?.percentage >= 80 ? 'success' : 
+                                                           result.jobMatch?.percentage >= 60 ? 'warning' : 'error'}
+                                                    size="small"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={result.jobMatch?.status || 'Unknown'}
+                                                    color={result.jobMatch?.status === 'Good match' ? 'success' : 
+                                                           result.jobMatch?.status === 'Fair match' ? 'warning' : 'error'}
+                                                    size="small"
+                                                    variant="outlined"
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Box sx={{ maxWidth: 300 }}>
+                                                    {result.jobMatch?.keyGaps?.slice(0, 2).map((gap: string, index: number) => (
+                                                        <Typography 
+                                                            key={index} 
+                                                            variant="caption" 
+                                                            sx={{ 
+                                                                display: 'block', 
+                                                                color: 'text.secondary',
+                                                                mb: 0.5,
+                                                                lineHeight: 1.2
+                                                            }}
+                                                        >
+                                                            • {gap}
+                                                        </Typography>
+                                                    ))}
+                                                    {result.jobMatch?.keyGaps?.length > 2 && (
+                                                        <Typography 
+                                                            variant="caption" 
+                                                            sx={{ 
+                                                                color: 'text.secondary',
+                                                                fontStyle: 'italic'
+                                                            }}
+                                                        >
+                                                            +{result.jobMatch.keyGaps.length - 2} more gaps
+                                                        </Typography>
+                                                    )}
+                                                </Box>
+                                            </TableCell>
+                                            <TableCell>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => {
+                                                        // Handle view details
+                                                        console.log('View assessment result:', result);
+                                                    }}
+                                                >
+                                                    <VisibilityIcon />
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+
+                    <TablePagination
+                        component="div"
+                        count={filteredResults.length}
+                        page={assessmentResultsPage}
+                        onPageChange={handleAssessmentResultsPageChange}
+                        rowsPerPage={assessmentResultsRowsPerPage}
+                        onRowsPerPageChange={handleAssessmentResultsRowsPerPageChange}
+                        rowsPerPageOptions={[5, 10, 25, 50]}
+                    />
+                </StyledCard>
+            </Box>
+        );
+    };
+
+    // Test API on component mount
+    useEffect(() => {
+        if (activeTab === 3) {
+            // Don't fetch anything initially - wait for user to search
+            setAssessmentResults([]);
+        }
+    }, [activeTab]);
+
     if (loading) {
         return (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -1779,6 +2298,7 @@ const DashboardAdmin = () => {
                         {activeTab === 0 && renderDashboard()}
                         {activeTab === 1 && renderUsers()}
                         {activeTab === 2 && renderAssessments()}
+                        {activeTab === 3 && renderAssessmentResults()}
                     </Box>
                 </Box>
             </Box>

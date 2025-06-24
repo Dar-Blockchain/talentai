@@ -106,4 +106,42 @@ async function parseAndValidateAIResponse(raw) {
   }
 }
 
-module.exports = {parseAndValidateAIResponse}
+async function parseAIResponse(raw) {
+  let jsonStr;
+  let result;
+
+  try {
+    // Try to extract JSON inside triple backticks (```json ... ```)
+    const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    jsonStr = jsonMatch ? jsonMatch[1] : raw;
+
+    // Clean invisible characters and leading/trailing junk
+    jsonStr = jsonStr
+      .trim()
+      .replace(/[\u200B-\u200D\uFEFF]/g, "") // Remove zero-width chars
+      .replace(/^[^{\[]*/, "") // Remove any non-JSON preamble
+      .replace(/[^}\]]*$/, ""); // Remove any non-JSON suffix
+
+    try {
+      // First parse attempt
+      result = JSON.parse(jsonStr);
+    } catch (firstError) {
+      console.warn("First parse failed, retrying with cleanup:", firstError);
+
+      jsonStr = jsonStr
+        .replace(/,(\s*[}\]])/g, "$1") // Remove trailing commas
+        .replace(/'/g, '"')            // Replace single quotes
+        .replace(/\n/g, " ")           // Remove newlines
+        .replace(/\s+/g, " ");         // Collapse multiple spaces
+
+      result = JSON.parse(jsonStr);
+    }
+
+    return result;
+  } catch (err) {
+    console.error("Failed to parse AI response:", err);
+    throw new Error("AI response could not be parsed .");
+  }
+}
+
+module.exports = {parseAndValidateAIResponse, parseAIResponse}

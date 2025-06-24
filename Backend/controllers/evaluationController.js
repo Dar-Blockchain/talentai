@@ -787,9 +787,10 @@ Provide detailed, actionable feedback in JSON format only.`,
           experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
           ScoreTest: skill.confidenceScore,
           Levelconfirmed:
-          skill.demonstratedProficiency === 5 && skill.confidenceScore > 75
-            ? 5
-            : skill.demonstratedProficiency - 1,          })),
+            skill.demonstratedProficiency === 5 && skill.confidenceScore > 75
+              ? 5
+              : skill.demonstratedProficiency - 1,
+        })),
       });
     }
 
@@ -810,9 +811,10 @@ Provide detailed, actionable feedback in JSON format only.`,
             experienceLevel: getExperienceLevel(s.demonstratedProficiency),
             ScoreTest: s.confidenceScore,
             Levelconfirmed:
-            s.demonstratedProficiency === 5 && s.confidenceScore > 75
-              ? 5
-              : s.demonstratedProficiency - 1,            })),
+              s.demonstratedProficiency === 5 && s.confidenceScore > 75
+                ? 5
+                : s.demonstratedProficiency - 1,
+          })),
         },
         { new: true }
       );
@@ -1129,11 +1131,6 @@ Provide detailed, actionable feedback in JSON format only.`,
 //             recommendations: ["Please try the assessment again"],
 //             technicalLevel: "intermediate",
 //             nextSteps: ["Retry the assessment"],
-//             jobMatch: {
-//               percentage: 60,
-//               status: "partial",
-//               keyGaps: ["Assessment incomplete"],
-//             },
 //           },
 //         },
 //       });
@@ -1550,6 +1547,109 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to analyze onboardingAnswers",
+      details: error.message,
+    });
+  }
+};
+
+exports.generateHRQuestions = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      throw new HttpError(500, `User not found`);
+    }
+    if (!user.profile) {
+      throw new HttpError(500, `User has not profile.`);
+    }
+
+    const profile = await Profile.findById({ _id: user.profile._id });
+    if (!profile) {
+      throw new HttpError(500, `profile not found.`);
+    }
+
+    // Extract form data from request body for personalization
+    const formData = {
+      targetCompany: req.body.targetCompany,
+      companyIndustry: req.body.companyIndustry,
+      companyCulture: req.body.companyCulture,
+      targetRole: req.body.targetRole,
+      experienceLevel: req.body.experienceLevel,
+      interviewFormat: req.body.interviewFormat,
+      simulationGoal: req.body.simulationGoal
+    };
+
+    const result = await evaluationservice.generateHRQuestions(profile, formData);
+
+    res.status(200).json(
+      result
+    );
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(error.statusCode || 500).json({
+        error: error.message || "A HTTP error occurred.",
+      });
+    }
+
+    return res.status(500).json({
+      error: "An unexpected error occurred while generating HR questions.",
+    });
+  }
+};
+
+/**
+ * Analyzes HR interview answers and updates the candidate's profile.
+ *
+ * @param {Object} req - Express request containing the candidate's answers.
+ * @param {Object} res - Express response.
+ *
+ * Process:
+ * 1. Evaluates the candidate’s soft skills based on HR answers.
+ * 2. Updates the profile with any validated soft skills (experienceLevel > 0).
+ * 3. Marks the "Pass HR Test" task as completed in the candidate's TodoList.
+ *
+ * @returns {Object} analysis of the questions/answers
+ */
+exports.analyzeHRAnswers = async (req, res) => {
+  try {
+    const { questions } = req.body;
+    const user = req.user;
+
+    const profile = user.profile;
+
+    const now = new Date();
+    const daysSinceLastUpdate =
+      (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
+    if (daysSinceLastUpdate >= 30) {
+      profile.quota = 0;
+      profile.quotaUpdatedAt = now;
+    }
+
+    if (profile.quota >= 5) {
+      return res
+        .status(403)
+        .json({ error: "You have reached your test limit (5)" });
+    }
+
+    if (!Array.isArray(questions) ) {
+      return res.status(400).json({
+        error: "Invalid request format",
+        required: {
+          questions: "Array of question-answer pairs",
+        },
+      });
+    }
+
+    const result = await evaluationservice.analyzeHRAnswers({
+      questions,
+      user
+    });
+
+    res.status(200).json({ success: true, result });
+  } catch (error) {
+    console.error("Error analyzing HR answers:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to analyze HRAnswers",
       details: error.message,
     });
   }

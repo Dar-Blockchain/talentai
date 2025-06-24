@@ -19,6 +19,11 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -335,14 +340,12 @@ const Test = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { data: session } = useSession();
-  const { id } = router.query;
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isGenerating, setIsGenerating] = useState(true);
   const [current, setCurrent] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [timeLeft, setTimeLeft] = useState(120);
-  const [testedSkills, setTestedSkills] = useState<any[]>([]);
   const currentIndexRef = useRef(0);
   const [hasStartedTest, setHasStartedTest] = useState(false);
   const [transcriptions, setTranscriptions] = useState<{ [key: string]: string }>({});
@@ -356,6 +359,16 @@ const Test = () => {
   const [showFirstViolationModal, setShowFirstViolationModal] = useState(false);
   const violationHandledRef = useRef(false);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const [hrTestReason, setHrTestReason] = useState('');
+  const [targetCompany, setTargetCompany] = useState('');
+  const [customCompany, setCustomCompany] = useState('');
+  const [companyIndustry, setCompanyIndustry] = useState('');
+  const [companyCulture, setCompanyCulture] = useState('');
+  const [targetRole, setTargetRole] = useState('');
+  const [experienceLevel, setExperienceLevel] = useState('');
+  const [interviewFormat, setInterviewFormat] = useState('');
+  const [simulationGoal, setSimulationGoal] = useState('');
+  const [feedbackPreference, setFeedbackPreference] = useState('');
 
   // Add new state for button timer
   const [nextButtonDisabled, setNextButtonDisabled] = useState(true);
@@ -378,118 +391,69 @@ const Test = () => {
 
   // Transcription states
   const [isTranscribing, setIsTranscribing] = useState(false);
-  useEffect(() => {
-    if(!isAuthenticated && id){
-      router.push(`/signin?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`)
-    }
-  }, [isAuthenticated, id])
 
-
-  // Add useEffect for authentication and profile check
-  // useEffect(() => {
-  //   const checkAuthAndProfile = async () => {
-  //     const token = Cookies.get('api_token');
-  //     if (!token) {
-  //       console.log('No token found, redirecting to signin');
-  //       router.push(`/signin?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
-  //       return;
-  //     }
-
-  //     try {
-  //       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
-  //         headers: {
-  //           'Authorization': `Bearer ${token}`
-  //         }
-  //       });
-
-  //       // If profile exists and is valid, proceed with test
-  //       if (response.ok) {
-  //         const profileData = await response.json();
-  //         console.log('Profile data:', profileData);
-
-  //         if (profileData && profileData.type &&
-  //           ((profileData.type === 'Candidate') ||
-  //             (profileData.type === 'Company' && profileData.requiredSkills && profileData.requiredSkills.length > 0))) {
-  //           console.log('Profile is complete, proceeding with test');
-  //           setIsProfileComplete(true);
-  //           return;
-  //         }
-  //       }
-
-  //       console.log('Profile not found or invalid, redirecting to preferences');
-  //       router.push(`/preferences?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
-  //     } catch (error) {
-  //       console.error('Error checking profile:', error);
-  //       router.push(`/preferences?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
-  //     }
-  //   };
-
-  //   if (router.isReady && id) {
-  //     checkAuthAndProfile();
-  //   }
-  // }, [router.isReady, id]);
-
+ 
   // Fetch questions when profile is complete
-  useEffect(() => {
-    if (isProfileComplete && id) {
-      const fetchQuestions = async () => {
-        try {
-          setIsGenerating(true);
-          const token = Cookies.get('api_token');
-          if (!token) {
-            console.log('No token found, redirecting to signin');
-            router.push(`/signin?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
-            return;
-          }
+//   useEffect(() => {
+//     if (isProfileComplete && id) {
+//       const fetchQuestions = async () => {
+//         try {
+//           setIsGenerating(true);
+//           const token = Cookies.get('api_token');
+//           if (!token) {
+//             console.log('No token found, redirecting to signin');
+//             router.push(`/signin?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
+//             return;
+//           }
 
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/job/${id}/generate-technique-questions`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              jobId: id
-            })
-          });
+//           const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/job/${id}/generate-technique-questions`, {
+//             method: 'POST',
+//             headers: {
+//               'Authorization': `Bearer ${token}`,
+//               'Content-Type': 'application/json'
+//             },
+//             body: JSON.stringify({
+//               jobId: id
+//             })
+//           });
 
-          if (!response.ok) {
-            throw new Error('Failed to fetch questions');
-          }
+//           if (!response.ok) {
+//             throw new Error('Failed to fetch questions');
+//           }
 
-          const data: JobQuestionsResponse = await response.json();
-          setTestedSkills(data.testedSkills);
+//           const data: JobQuestionsResponse = await response.json();
+//           setTestedSkills(data.testedSkills);
 
-          const formattedQuestions: Question[] = data.questions.map((question, index) => {
-            const skillIndex = index % data.requiredSkills.length;
-            const skill = data.requiredSkills[skillIndex];
+//           const formattedQuestions: Question[] = data.questions.map((question, index) => {
+//             const skillIndex = index % data.requiredSkills.length;
+//             const skill = data.requiredSkills[skillIndex];
 
-            return {
-              id: `q_${index + 1}`,
-              text: question,
-              skill: skill.name,
-              level: skill.level
-            };
-          });
+//             return {
+//               id: `q_${index + 1}`,
+//               text: question,
+//               skill: skill.name,
+//               level: skill.level
+//             };
+//           });
 
-          setQuestions(formattedQuestions);
-          setTranscriptions(
-            formattedQuestions.reduce((acc: any, _: any, index: number) => ({
-              ...acc,
-              [index]: ''
-            }), {})
-          );
-        } catch (error) {
-          console.error('Error fetching questions:', error);
-          router.push('/');
-        } finally {
-          setIsGenerating(false);
-        }
-      };
+//           setQuestions(formattedQuestions);
+//           setTranscriptions(
+//             formattedQuestions.reduce((acc: any, _: any, index: number) => ({
+//               ...acc,
+//               [index]: ''
+//             }), {})
+//           );
+//         } catch (error) {
+//           console.error('Error fetching questions:', error);
+//           router.push('/');
+//         } finally {
+//           setIsGenerating(false);
+//         }
+//       };
 
-      fetchQuestions();
-    }
-  }, [isProfileComplete, id]);
+//       fetchQuestions();
+//     }
+//   }, [isProfileComplete, id]);
 
 
 
@@ -506,7 +470,6 @@ const Test = () => {
             } else {
               stopRecording();
               saveTestResults();
-              router.push('/report');
             }
           }
           return prev - 1;
@@ -757,38 +720,45 @@ const Test = () => {
     try {
       setIsGenerating(true);
       const token = Cookies.get('api_token');
-      if (!token) {
-        console.log('No token found, redirecting to signin');
-        router.push(`/signin?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
-        return;
-      }
+      
+      // Prepare the request body with all form data
+      const requestBody = {
+        targetCompany: targetCompany === 'Custom' ? customCompany : targetCompany,
+        companyIndustry: targetCompany === 'Custom' ? companyIndustry : null,
+        companyCulture: targetCompany === 'Custom' ? companyCulture : null,
+        targetRole,
+        experienceLevel,
+        interviewFormat,
+        simulationGoal,
+      };
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/job/${id}/generate-technique-questions`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/generate-hr-questions`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          jobId: id
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
         throw new Error('Failed to fetch questions');
       }
 
-      const data: JobQuestionsResponse = await response.json();
-      setTestedSkills(data.testedSkills);
-      const formattedQuestions: Question[] = data.questions.map((question, index) => {
-        const skillIndex = index % data.requiredSkills.length;
-        const skill = data.requiredSkills[skillIndex];
-
+      const data = await response.json();
+      
+      // Store the testInterview token (use api_token if no specific token provided)
+      const testInterviewToken = data.testInterviewToken || token;
+      localStorage.setItem('testInterview', testInterviewToken);
+      Cookies.set('testInterview', testInterviewToken, { expires: 7 });
+      
+      // Handle the HR questions API response format
+      const formattedQuestions: Question[] = data.questions.map((question: string, index: number) => {
         return {
           id: `q_${index + 1}`,
           text: question,
-          skill: skill.name,
-          level: skill.level
+          skill: 'Communication & Collaboration', // Default skill for HR questions
+          level: 'Intermediate' // Default level for HR questions
         };
       });
 
@@ -857,7 +827,6 @@ const Test = () => {
       setCurrent(c => c + 1);
     } else {
       saveTestResults();
-      router.push('/report');
     }
   };
 
@@ -881,11 +850,19 @@ const Test = () => {
 
       const testData = {
         results,
-        testedSkills,
+        testedSkills: ['Communication & Collaboration'], // Default for HR questions
         metadata: {
-          type: 'job',
-          jobId: id,
-          timestamp: new Date().toISOString()
+          type: 'hr_assessment',
+          timestamp: new Date().toISOString(),
+          hrTestReason: hrTestReason, // Include the user's reason
+          targetCompany,
+          customCompany,
+          companyIndustry,
+          companyCulture,
+          targetRole,
+          experienceLevel,
+          interviewFormat,
+          simulationGoal,
         }
       };
 
@@ -893,17 +870,15 @@ const Test = () => {
       localStorage.setItem('test_results', JSON.stringify(testData));
       Cookies.set('test_results', JSON.stringify(testData), { expires: 7 });
 
-      // Navigate to report page with job ID
+      // Navigate to report page
       router.push({
-        pathname: '/report',
-        query: { jobId: id }
+        pathname: '/reportInterviewTest',
       });
     } catch (error) {
       console.error('Error saving test results:', error);
       // Still redirect to report page even if saving fails
       router.push({
-        pathname: '/report',
-        query: { jobId: id }
+        pathname: '/reportInterviewTest',
       });
     }
   };
@@ -1041,7 +1016,7 @@ const Test = () => {
           </DialogTitle>
           <DialogContent>
             <Typography variant="body1" sx={{ color: 'black', mb: 2 }}>
-              You have attempted to leave or capture the test page more than once. For security reasons, your test has ended and you are being redirected to the dashboard.
+              You have attempted to leave or capture the assessment page more than once. For security reasons, your assessment has ended and you are being redirected to the dashboard.
             </Typography>
           </DialogContent>
         </SecurityModal>
@@ -1058,8 +1033,8 @@ const Test = () => {
           </DialogTitle>
           <DialogContent sx={{ pb: 0 }}>
             <Typography variant="body1" sx={{ color: 'black', mb: 2 }}>
-              For security reasons, leaving or capturing the test page is not allowed.<br />
-              <b>If you do this again, your test will end and you will be redirected.</b>
+              For security reasons, leaving or capturing the assessment page is not allowed.<br />
+              <b>If you do this again, your assessment will end and you will be redirected.</b>
             </Typography>
           </DialogContent>
           <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
@@ -1101,73 +1076,250 @@ const Test = () => {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}>
-              Important Test Guidelines
+              Tell Us About Your Goals
             </Typography>
           </DialogTitle>
           <DialogContent sx={{ padding: theme.spacing(4) }}>
             <Typography variant="body1" sx={{ color: '#000', mb: 3, opacity: 0.9 }}>
-              Please ensure you meet the following requirements before starting the test:
+              Let's personalize your HR interview simulation. Please answer a few questions to help us tailor the experience:
             </Typography>
 
-            <GuidelineItem>
-              <Box sx={{ color: GREEN_MAIN, mt: 0.5  }}>⏱️</Box>
-              <Box>
-                <Typography variant="subtitle1" sx={{ color: '#000',  fontWeight: 600, mb: 0.5 }}>
-                  Time Commitment
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#000' }}>
-                  Set aside 30 minutes of uninterrupted time. The test cannot be paused once started.
-                </Typography>
-              </Box>
-            </GuidelineItem>
+            {/* Company Selection */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ color: '#000', fontWeight: 600, mb: 2 }}>
+                Which company are you targeting for this HR interview simulation?
+              </Typography>
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <Select
+                  value={targetCompany}
+                  onChange={(e) => setTargetCompany(e.target.value)}
+                  displayEmpty
+                  sx={{
+                    borderRadius: '12px',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 0, 0, 0.2)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GREEN_MAIN,
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GREEN_MAIN,
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>Select a company</MenuItem>
+                  <MenuItem value="Google">Google</MenuItem>
+                  <MenuItem value="Meta">Meta</MenuItem>
+                  <MenuItem value="Amazon">Amazon</MenuItem>
+                  <MenuItem value="Airbnb">Airbnb</MenuItem>
+                  <MenuItem value="EY">EY</MenuItem>
+                  <MenuItem value="Custom">Custom</MenuItem>
+                </Select>
+              </FormControl>
 
-            <GuidelineItem>
-              <Box sx={{ color: GREEN_MAIN, mt: 0.5 }}>🔇</Box>
-              <Box>
-                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
-                  Quiet Environment
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#000' }}>
-                  Find a quiet room with no background noise. Background sounds can affect your test results.
-                </Typography>
-              </Box>
-            </GuidelineItem>
+              {/* Custom Company Fields */}
+              {targetCompany === 'Custom' && (
+                <Box sx={{ mb: 2 }}>
+                  <TextField
+                    fullWidth
+                    label="Company Name"
+                    value={customCompany}
+                    onChange={(e) => setCustomCompany(e.target.value)}
+                    sx={{ mb: 2 }}
+                  />
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel>Industry/Sector</InputLabel>
+                    <Select
+                      value={companyIndustry}
+                      onChange={(e) => setCompanyIndustry(e.target.value)}
+                      label="Industry/Sector"
+                    >
+                      <MenuItem value="Fintech">Fintech</MenuItem>
+                      <MenuItem value="Healthcare">Healthcare</MenuItem>
+                      <MenuItem value="Education">Education</MenuItem>
+                      <MenuItem value="E-commerce">E-commerce</MenuItem>
+                      <MenuItem value="Consulting">Consulting</MenuItem>
+                      <MenuItem value="AI">AI</MenuItem>
+                      <MenuItem value="Manufacturing">Manufacturing</MenuItem>
+                      <MenuItem value="Retail">Retail</MenuItem>
+                      <MenuItem value="Other">Other</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    fullWidth
+                    label="Company Culture/Values (e.g., fast-paced, collaborative, traditional)"
+                    value={companyCulture}
+                    onChange={(e) => setCompanyCulture(e.target.value)}
+                    placeholder="e.g., fast-paced, collaborative, mission-driven, innovation-focused"
+                  />
+                </Box>
+              )}
+            </Box>
 
-            <GuidelineItem>
-              <Box sx={{ color: GREEN_MAIN, mt: 0.5 }}>🎥</Box>
-              <Box>
-                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
-                  Camera and Microphone
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#000' }}>
-                  Ensure your camera and microphone are working properly. Test will use both for recording.
-                </Typography>
-              </Box>
-            </GuidelineItem>
+            {/* Target Role */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ color: '#000', fontWeight: 600, mb: 2 }}>
+                What role are you applying for?
+              </Typography>
+              <TextField
+                fullWidth
+                label="Role Title"
+                value={targetRole}
+                onChange={(e) => setTargetRole(e.target.value)}
+                placeholder="e.g., Software Engineer, Marketing Manager, Product Designer, Analyst"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    '& fieldset': {
+                      borderColor: 'rgba(0, 0, 0, 0.2)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: GREEN_MAIN,
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: GREEN_MAIN,
+                    },
+                  },
+                }}
+              />
+            </Box>
 
-            <GuidelineItem>
-              <Box sx={{ color: GREEN_MAIN, mt: 0.5 }}>👤</Box>
-              <Box>
-                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
-                  Individual Assessment
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#000' }}>
-                  Complete the test alone. No other people should be present or helping during the assessment.
-                </Typography>
-              </Box>
-            </GuidelineItem>
+            {/* Experience Level */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ color: '#000', fontWeight: 600, mb: 2 }}>
+                What level of experience are you aiming for in this role?
+              </Typography>
+              <FormControl fullWidth>
+                <Select
+                  value={experienceLevel}
+                  onChange={(e) => setExperienceLevel(e.target.value)}
+                  displayEmpty
+                  sx={{
+                    borderRadius: '12px',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 0, 0, 0.2)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GREEN_MAIN,
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GREEN_MAIN,
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>Select experience level</MenuItem>
+                  <MenuItem value="Entry-Level">Entry-Level</MenuItem>
+                  <MenuItem value="Mid-Level">Mid-Level</MenuItem>
+                  <MenuItem value="Senior">Senior</MenuItem>
+                  <MenuItem value="Leadership">Leadership</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
 
-            <GuidelineItem>
-              <Box sx={{ color: GREEN_MAIN, mt: 0.5 }}>💻</Box>
-              <Box>
-                <Typography variant="subtitle1" sx={{ color: '#000', fontWeight: 600, mb: 0.5 }}>
-                  Technical Setup
-                </Typography>
-                <Typography variant="body2" sx={{ color: '#000' }}>
-                  Use a stable internet connection. Close other applications that might use your camera or microphone.
-                </Typography>
-              </Box>
-            </GuidelineItem>
+            {/* Interview Format */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ color: '#000', fontWeight: 600, mb: 2 }}>
+                What type of interview format do you want to practice?
+              </Typography>
+              <FormControl fullWidth>
+                <Select
+                  value={interviewFormat}
+                  onChange={(e) => setInterviewFormat(e.target.value)}
+                  displayEmpty
+                  sx={{
+                    borderRadius: '12px',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 0, 0, 0.2)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GREEN_MAIN,
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GREEN_MAIN,
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>Select interview format</MenuItem>
+                  <MenuItem value="Phone Screen">Phone Screen</MenuItem>
+                  <MenuItem value="Onsite HR Interview">Onsite HR Interview</MenuItem>
+                  <MenuItem value="Behavioral Round">Behavioral Round</MenuItem>
+                  <MenuItem value="Cultural Fit">Cultural Fit</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Simulation Goal */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ color: '#000', fontWeight: 600, mb: 2 }}>
+                What is your current goal for this simulation?
+              </Typography>
+              <FormControl fullWidth>
+                <Select
+                  value={simulationGoal}
+                  onChange={(e) => setSimulationGoal(e.target.value)}
+                  displayEmpty
+                  sx={{
+                    borderRadius: '12px',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 0, 0, 0.2)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GREEN_MAIN,
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GREEN_MAIN,
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>Select your goal</MenuItem>
+                  <MenuItem value="Practice for a real interview">Practice for a real interview</MenuItem>
+                  <MenuItem value="Build confidence">Build confidence</MenuItem>
+                  <MenuItem value="Understand what HR looks for">Understand what HR looks for</MenuItem>
+                  <MenuItem value="Test my soft skills">Test my soft skills</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Feedback Preference */}
+            {/* <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" sx={{ color: '#000', fontWeight: 600, mb: 2 }}>
+                Would you like real-time feedback and scoring after each response or only at the end?
+              </Typography>
+              <FormControl fullWidth>
+                <Select
+                  value={feedbackPreference}
+                  onChange={(e) => setFeedbackPreference(e.target.value)}
+                  displayEmpty
+                  sx={{
+                    borderRadius: '12px',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(0, 0, 0, 0.2)',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GREEN_MAIN,
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GREEN_MAIN,
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled>Select feedback preference</MenuItem>
+                  <MenuItem value="Real-time feedback">Real-time feedback</MenuItem>
+                  <MenuItem value="End-of-simulation report">End-of-simulation report</MenuItem>
+                </Select>
+              </FormControl>
+            </Box> */}
+
+            <Box sx={{ 
+              background: 'rgba(131, 16, 255, 0.05)', 
+              padding: theme.spacing(2), 
+              borderRadius: '12px',
+              border: '1px solid rgba(131, 16, 255, 0.1)'
+            }}>
+              <Typography variant="body2" sx={{ color: '#000', opacity: 0.8 }}>
+                💡 <strong>Tip:</strong> The more specific you are, the better we can tailor the interview questions and feedback to your target role and company culture.
+              </Typography>
+            </Box>
           </DialogContent>
           <DialogActions sx={{
             padding: theme.spacing(3),
@@ -1181,11 +1333,12 @@ const Test = () => {
                 '&:hover': { color: '#000' }
               }}
             >
-              I'm Not Ready
+              Cancel
             </Button>
             <Button
               variant="contained"
               onClick={handleGuidelinesAccept}
+              disabled={!targetCompany || !targetRole || !experienceLevel || !interviewFormat || !simulationGoal  || (targetCompany === 'Custom' && (!customCompany || !companyIndustry))}
               sx={{
                 background: GREEN_MAIN,
                 color: '#000',
@@ -1196,10 +1349,14 @@ const Test = () => {
                 fontWeight: 500,
                 '&:hover': {
                   background: '#8310FF',
+                },
+                '&.Mui-disabled': {
+                  background: 'rgba(0, 0, 0, 0.1)',
+                  color: 'rgba(0, 0, 0, 0.3)',
                 }
               }}
             >
-              I Understand & I'm Ready
+              Start Assessment
             </Button>
           </DialogActions>
         </GuidelinesModal>
@@ -1223,7 +1380,7 @@ const Test = () => {
                 textAlign: { xs: 'center', sm: 'left' }, // Center on mobile
               }}
             >
-              Skill Test ({current + 1}/{questions.length || '-'})
+              HR Assessment ({current + 1}/{questions.length || '-'})
             </Typography>
             {hasStartedTest && (
               <Typography 
@@ -1257,7 +1414,7 @@ const Test = () => {
                 '&:hover': { backgroundColor: 'rgba(244,67,54,0.1)' },
               }}
             >
-              End Test
+              End Assessment
             </Button>
           </Toolbar>
           <LinearProgress
@@ -1339,7 +1496,7 @@ const Test = () => {
                   ? 'Connecting...'
                   : hasStartedTest
                     ? `Recording (${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')} min)`
-                    : 'Start Test'
+                    : 'Start Assessment'
                 }
               </RecordingButton>
               {hasStartedTest && (
@@ -1374,7 +1531,7 @@ const Test = () => {
                     WebkitTextFillColor: 'transparent',
                     flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
                   }}>
-                    <span>Generating your interview questions</span>
+                    <span>Generating your HR assessment questions</span>
                     <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
                       ...
                     </Box>
@@ -1422,7 +1579,7 @@ const Test = () => {
           >
             {current < questions.length - 1
               ? `Next Question${nextButtonDisabled ? ` (${buttonTimer}s)` : ''}`
-              : 'Finish Test'}
+              : 'Finish Assessment'}
           </Button>
         </NavigationBar>
       </Box>
@@ -1432,8 +1589,8 @@ const Test = () => {
 
 const DynamicContent = dynamic(() => Promise.resolve(Test), { ssr: false })
 
-const TestJob: React.FC = () => {
+const interviewTest: React.FC = () => {
   return <DynamicContent />
 }
 
-export default TestJob
+export default interviewTest

@@ -3,6 +3,7 @@ const User = require("../models/UserModel");
 const Post = require("../models/PostModel");
 const Agent = require("../models/AgentModel");
 const agentService = require("./AgentService");
+const { POST_STATUS } = require("../constants/postConstants");
 
 // Créer ou mettre à jour un profil utilisateur
 module.exports.createOrUpdateProfile = async (userId, profileData) => {
@@ -13,7 +14,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
     }
 
     // S'assurer que le rôle utilisateur est bien défini
-    await User.findByIdAndUpdate(userId, { role: "Candidat" });
+    await User.findByIdAndUpdate(userId, { FirstName:profileData.FirstName,LastName:profileData.LastName,role: "Candidat" });
 
     // Recherche profil existant
     let profile = await Profile.findOne({ userId });
@@ -520,3 +521,116 @@ module.exports.getCompanyProfileWithAssessments = async (id, jobId) => {
     );
   }
 };
+
+exports.getTotalCompanies = async () => {
+  return await Profile.countDocuments({ type: "Company" });
+};
+
+exports.getCompaniesWithActivePosts = async () => {
+  return await Post.aggregate([
+    { $match: { status: POST_STATUS.OPEN } },
+    {
+      $group: {
+        _id: "$user",
+        lastPostDate: { $max: "$createdAt" },
+        postCount: { $sum: 1 },
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "_id",
+        foreignField: "_id",
+        as: "user",
+      },
+    },
+    { $unwind: "$user" },
+    {
+      $lookup: {
+        from: "profiles",
+        localField: "_id",
+        foreignField: "userId",
+        as: "profile",
+      },
+    },
+    { $unwind: { path: "$profile", preserveNullAndEmptyArrays: true } },
+    { $match: { "profile.type": "Company" } },
+    {
+      $project: {
+        _id: 0,
+        userId: "$_id",
+        companyName: "$profile.companyDetails.name",
+        industry: "$profile.companyDetails.industry",
+        email: "$user.email",
+        lastPostDate: 1,
+        postCount: 1,
+      },
+    },
+    { $sort: { lastPostDate: -1 } },
+  ]);
+};
+
+exports.getTopHiringCompanies = async () => {
+  return await Post.aggregate([
+    { $match: { status: POST_STATUS.CLOSED } },
+    { $group: { _id: "$user", closedPostCount: { $sum: 1 } } },
+    { $sort: { closedPostCount: -1 } },
+    { $limit: 5 },
+    {
+      $lookup: {
+        from: "profiles",
+        localField: "_id",
+        foreignField: "userId",
+        as: "companyProfile",
+      },
+    },
+    { $unwind: "$companyProfile" },
+    {
+      $project: {
+        _id: 1,
+        companyName: "$companyProfile.companyDetails.name",
+        closedPostCount: 1,
+      },
+    },
+  ]);
+};
+
+exports.getRecentActiveCompanies = async () => {
+  return await Post.aggregate([
+    { $sort: { createdAt: -1 } },
+    { $limit: 10 },
+    {
+      $lookup: {
+        from: "profiles",
+        localField: "user",
+        foreignField: "userId",
+        as: "profile",
+      },
+    },
+    { $unwind: "$profile" },
+    { $match: { "profile.type": "Company" } },
+    {
+      $group: {
+        _id: "$user",
+        lastPostDate: { $first: "$createdAt" },
+        companyName: { $first: "$profile.companyDetails.name" },
+      },
+    },
+    { $sort: { lastPostDate: -1 } },
+  ]);
+};
+
+exports.getTopIndustries = async () => {
+  return await Profile.aggregate([
+    { $match: { type: "Company", "companyDetails.industry": { $ne: null } } },
+    {
+      $group: {
+        _id: "$companyDetails.industry",
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { count: -1 } },
+    { $limit: 5 },
+  ]);
+};
+

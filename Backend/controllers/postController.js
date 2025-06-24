@@ -1,3 +1,4 @@
+const { POST_STATUS } = require("../constants/postConstants");
 const postService = require("../services/postService");
 
 // Créer un nouveau post
@@ -115,7 +116,8 @@ exports.deletePost = async (req, res) => {
 exports.updatePostStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    if (!["drafts", "posted", "scheduled"].includes(status)) {
+
+    if (!Object.values(POST_STATUS).includes(status)) {
       throw new Error("Invalid status");
     }
 

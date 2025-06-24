@@ -7,6 +7,12 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    FirstName: {
+      type: String,
+    },
+    LastName: {
+      type: String,
+   },
     email: {
       type: String,
       required: true,
@@ -43,6 +49,15 @@ const userSchema = new mongoose.Schema(
       },
     ],
     trafficCounter: { type: Number, default: 0 },
+    authHistory: [
+      {
+        date: { type: Date, default: Date.now },
+        ip: String,
+        localisation: String,
+        method: { type: String, enum: ['OTP', 'Password', 'OAuth'], default: 'OTP' },
+        status: { type: String, enum: ['Success', 'Failed'], default: 'Success' }
+      }
+    ]
     //  pubkey: { type: String, default: null },
     //  privkey: { type: String, default: null },
     //  accountId: { type: String, default: null },

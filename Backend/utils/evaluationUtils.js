@@ -1,4 +1,16 @@
+const InterviewDetails = require("../models/InterviewDetailsModel");
+const TodoList = require("../models/todoListModel");
+const { SKILL_TYPES, SKILL_LEVELS } = require("../constants/profileConstants");
+const {INTERVIEW_TYPES} = require("../constants/interviewDetailsConstants");
 const { getExperienceLevelLabel } = require("./skillUtils");
+
+
+const PROFICIENCY_TO_EXPERIENCE_VALUE = Object.fromEntries(
+  Object.values(SKILL_LEVELS).map((level) => [
+    level.proficiencyLevel,
+    level.experienceLevel,
+  ])
+);
 
 /**
  * Processes skill analysis data to assign the corresponding demonstratedExperienceLevel
@@ -90,6 +102,43 @@ function updateProfileWithNewSkills(profile, skillAnalysis) {
       });
     }
   });
+}
+
+/**
+ * 1. Adds soft skills to the profile if they are not already present
+ * and their experienceLevel is greater than 0.
+ * 2. Update todoList: Pass HR Test => isCompleted
+ */
+async function handleAddSoftSkills(profile, skillAnalysis) {
+  let softSkillAdded = false;
+  skillAnalysis.forEach((softSkill) => {
+    const skillName = softSkill.skillName.toLowerCase();
+    const skillLevel = parseInt(softSkill.experienceLevel);
+
+    const existingSkill = profile.softSkills.find(
+      (s) => s.name.toLowerCase() === skillName
+    );
+
+    if (!existingSkill && skillLevel > 0) {
+      profile.softSkills.push({
+        name: softSkill.skillName,
+        experienceLevel: softSkill.experienceLevel,
+        ScoreTest: softSkill.confidenceScore,
+      });
+      softSkillAdded = true;
+    }
+  });
+
+  if (softSkillAdded) {
+    if (softSkillAdded) {
+      await profile.save();
+
+      await TodoList.updateOne(
+        { profile: profile._id, "todos.title": "Pass HR Test" },
+        { $set: { "todos.$.isCompleted": true } }
+      );
+    }
+  }
 }
 
 /**
@@ -219,6 +268,31 @@ async function updateTodoListWithNewSkills(todoList, analysis) {
   await todoList.save();
 }
 
+async function saveInterviewDetails(profile, overallScore, skillAnalysis) {
+  const details = skillAnalysis.map((skill) => ({
+    name: skill.skillName, 
+    type: SKILL_TYPES.SOFT,
+    proficiencyLevel: skill.proficiencyLevel, 
+    // experienceLevel : PROFICIENCY_TO_EXPERIENCE_VALUE[skill.proficiencyLevel],
+    confidenceScore : skill.confidenceScore , 
+    questionAnswerList: (skill.questionAnswerList || []).map((qa) => ({
+      question: qa.question,
+      answer: qa.answer || "unanswered",
+      status: qa.status,
+      exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
+    })),
+  }));
+
+  const interviewDetails = new InterviewDetails({
+    candidate: profile._id,
+    type: INTERVIEW_TYPES.HR, 
+    overallScore: overallScore,
+    skillDetails: details,
+  });
+
+  await interviewDetails.save();
+}
+
 module.exports = {
   processSkillsData,
   updateUpgradedSkills,
@@ -227,4 +301,6 @@ module.exports = {
   mergeAlreadyProvenSkills,
   processAnalysisData,
   updateTodoListWithNewSkills,
+  handleAddSoftSkills,
+  saveInterviewDetails
 };
