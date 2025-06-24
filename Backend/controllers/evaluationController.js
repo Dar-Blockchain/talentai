@@ -1572,10 +1572,10 @@ exports.generateHRQuestions = async (req, res) => {
       throw new HttpError(500, `profile not found.`);
     }
 
-    const questions = await evaluationservice.generateHRQuestions(profile);
+    const result = await evaluationservice.generateHRQuestions(profile);
 
     res.status(200).json(
-      questions
+      result
     );
   } catch (error) {
     if (error instanceof HttpError) {
