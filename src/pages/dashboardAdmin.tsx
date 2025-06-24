@@ -560,13 +560,13 @@ const DashboardAdmin = () => {
                     data.data.jobAssessmentsCreatedByDay.forEach((assessmentItem: any) => {
                         const existingDay = processedData.find((item: any) => item.fullDate === assessmentItem.day);
                         if (existingDay) {
-                            existingDay.assessments = assessmentItem.assessmentCount;
+                            existingDay.assessments = assessmentItem.jobAssessmentCount;
                         } else {
                             processedData.push({
                                 day: new Date(assessmentItem.day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
                                 users: 0,
                                 posts: 0,
-                                assessments: assessmentItem.assessmentCount,
+                                assessments: assessmentItem.jobAssessmentCount,
                                 fullDate: assessmentItem.day
                             });
                         }
@@ -2132,11 +2132,11 @@ const DashboardAdmin = () => {
                                                 </Typography>
                                             </TableCell>
 
-                                            {/* <TableCell>
+                                             <TableCell>
                                                 <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
-                                                    {result.jobDetails.jobDetails.title || 'Unknown Job'}
+                                                    {result.jobTitle || 'Unknown Job'}
                                                 </Typography>
-                                            </TableCell> */}
+                                            </TableCell> 
                                             <TableCell>
                                                 <Chip
                                                     label={`${result.jobMatch?.percentage?.toFixed(1) || result.analysis?.overallScore?.toFixed(1) || 0}%`}
