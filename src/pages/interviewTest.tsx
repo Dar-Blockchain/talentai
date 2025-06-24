@@ -705,21 +705,13 @@ const Test = () => {
     try {
       setIsGenerating(true);
       const token = Cookies.get('api_token');
-    //   if (!token) {
-    //     console.log('No token found, redirecting to signin');
-    //     router.push(`/signin?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
-    //     return;
-    //   }
-
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/generate-hr-questions`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        // body: JSON.stringify({
-        //   jobId: id
-        // })
+     
       });
 
       if (!response.ok) {
