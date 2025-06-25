@@ -268,7 +268,7 @@ async function updateTodoListWithNewSkills(todoList, analysis) {
   await todoList.save();
 }
 
-async function saveInterviewDetails(profile, overallScore, skillAnalysis) {
+async function saveInterviewDetails(profile, overallScore, skillAnalysis, formData) {
   const details = skillAnalysis.map((skill) => ({
     name: skill.skillName, 
     type: SKILL_TYPES.SOFT,
@@ -287,10 +287,12 @@ async function saveInterviewDetails(profile, overallScore, skillAnalysis) {
     candidate: profile._id,
     type: INTERVIEW_TYPES.HR, 
     overallScore: overallScore,
+    interviewContext: formData?formData: null,
     skillDetails: details,
   });
 
   await interviewDetails.save();
+  return interviewDetails._id; 
 }
 
 module.exports = {

@@ -532,7 +532,7 @@ const analyzeHRAnswersPrompts = {
 You are a senior HR interviewer and analyst. Your task is to evaluate a candidate’s oral interview responses (transcribed with possible minor errors or incomplete phrases) and extract the key soft skills being assessed.
 
 Your analysis must:
-1. **Infer the 3 soft skills most consistently evaluated across all questions** (e.g. communication, adaptability, collaboration).
+1. **Infer the 3 soft skills most consistently evaluated across all questions**.
 2. **Assess the candidate’s proficiency** in those 3 soft skills only.
 3. **Follow scoring and structuring instructions strictly**.
 
@@ -595,8 +595,8 @@ ${questions
 Generate and return JSON in the following format:
 {
   "overallScore": 0-100,
-  "recommendations": ["string"],
-  "nextSteps": ["string"],
+  "recommendations": ["string"],  // Actionable advice to help the candidate improve and pass the HR test at this company
+  "nextSteps": ["string"],        // Concrete steps the candidate should take next to strengthen their soft skills and readiness
   "skillAnalysis": [
     {
       "skillName": "string",
