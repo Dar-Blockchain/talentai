@@ -1611,7 +1611,7 @@ exports.generateHRQuestions = async (req, res) => {
  */
 exports.analyzeHRAnswers = async (req, res) => {
   try {
-    const { questions } = req.body;
+    const { questions, formData } = req.body;
     const user = req.user;
 
     const profile = user.profile;
@@ -1641,7 +1641,8 @@ exports.analyzeHRAnswers = async (req, res) => {
 
     const result = await evaluationservice.analyzeHRAnswers({
       questions,
-      user
+      user, 
+      formData
     });
 
     res.status(200).json({ success: true, result });

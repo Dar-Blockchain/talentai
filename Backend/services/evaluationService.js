@@ -271,7 +271,7 @@ module.exports.generateHRQuestions = async (profile, formData) => {
   }
 };
 
-exports.analyzeHRAnswers = async ({ questions, user }) => {
+exports.analyzeHRAnswers = async ({ questions, user, formData }) => {
   const profile = await Profile.findById(user.profile);
   if (!profile)
     throw new HttpError(404, "Aucun profil trouvé pour cet utilisateur.");
@@ -306,13 +306,20 @@ exports.analyzeHRAnswers = async ({ questions, user }) => {
   // update todoList : Pass HR Test : isCompleted
   await handleAddSoftSkills(profile, analysis.skillAnalysis);
 
-  await saveInterviewDetails(
+  const interviewId = await saveInterviewDetails(
     profile,
     analysis.overallScore,
-    analysis.skillAnalysis
+    analysis.skillAnalysis,
+    formData
   );
 
   profile.quota++;
+  
+  if(!profile.interviewDetails) {
+    profile.interviewDetails = [];
+
+  }
+  profile.interviewDetails.push(interviewId);
   await profile.save();
 
   return { analysis };

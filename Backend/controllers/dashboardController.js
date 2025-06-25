@@ -85,3 +85,20 @@ module.exports.getJobAssessmentsBySkill = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
+module.exports.downloadUserExcel = async (req, res) => {
+  try {
+    // Appeler le service pour générer le fichier Excel
+    const fileBuffer = await dashboardService.generateUserExcel();
+
+    // Définir les en-têtes de la réponse pour télécharger le fichier
+    res.setHeader("Content-Disposition", "attachment; filename=users.xlsx");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+    // Envoyer le fichier en réponse
+    res.send(fileBuffer);
+  } catch (error) {
+    res.status(500).json({ message: "Erreur interne du serveur", error: error.message });
+  }
+}
+

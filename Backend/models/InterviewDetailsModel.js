@@ -4,6 +4,7 @@ const {
   ANSWER_STATUS,
   INTERVIEW_TYPES,
 } = require("../constants/interviewDetailsConstants");
+const Profile = require("./ProfileModel");
 
 const questionAnswerSchema = new mongoose.Schema(
   {
@@ -40,13 +41,32 @@ const skillDetailsSchema = new mongoose.Schema(
       required: true,
     },
     experienceLevel: {
-      type: Number,
+      type: String,
       enum: Object.values(SKILL_LEVELS).map((lvl) => lvl.experienceLevel),
       required: false,
     },
 
     confidenceScore: { type: Number },
     questionAnswerList: [questionAnswerSchema],
+  },
+  { _id: false }
+);
+
+// Schema for interview context
+const interviewContextSchema = new mongoose.Schema(
+  {
+    targetCompany: { type: String },
+    companyIndustry: { type: String },
+    companyCulture: { type: String },
+    targetRole: { type: String },
+    // experienceLevel: {
+    //   type: String,
+    //   enum: Object.values(SKILL_LEVELS).map((lvl) => lvl.experienceLevel),
+    //   required: false,
+    // },
+    experienceLevel: { type: String },
+    interviewFormat: { type: String },
+    simulationGoal: { type: String },
   },
   { _id: false }
 );
@@ -73,27 +93,19 @@ const interviewDetailsSchema = new mongoose.Schema(
       enum: Object.values(INTERVIEW_TYPES),
       required: true,
     },
+
+    interviewContext: { type: interviewContextSchema, required: false },
+
     overallScore: { type: Number },
     skillDetails: {
       type: [skillDetailsSchema],
     },
+    createdAt: {
+      type: Number,
+      default: Date.now(),
+    },
   },
   { timestamps: true }
 );
-
-// interviewDetailsSchema.post("save", async function (doc) {
-//   try {
-//     await mongoose.model("Profile").findByIdAndUpdate(
-//       doc.candidate,
-//       {
-//         $setOnInsert: { interviewDetails: [doc._id] }, 
-//         $push: { interviewDetails: doc._id },
-//       },
-//       { upsert: true }
-//     );
-//   } catch (error) {
-//     console.error("Error creating:", error);
-//   }
-// });
 
 module.exports = mongoose.model("InterviewDetails", interviewDetailsSchema);

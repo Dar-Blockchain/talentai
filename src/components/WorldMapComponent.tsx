@@ -244,6 +244,9 @@ const countryCoordinates: Record<string, [number, number]> = {
   'American Samoa': [-14.2709, -170.1322],
   'Guam': [13.4443, 144.7937],
   'Northern Mariana Islands': [17.3308, 145.3847],
+  'Benin': [9.3075, 2.3158],
+  'Ivory Coast': [7.5395, -5.5471],
+  'Senegal': [14.6928, -14.0060],
 };
 
 // Country name normalization
@@ -394,6 +397,10 @@ const normalizeCountryName = (countryName: string): string => {
     'AS': 'American Samoa',
     'GU': 'Guam',
     'MP': 'Northern Mariana Islands',
+    'SN': 'Senegal',
+    'CI': 'Ivory Coast',
+    'BJ': 'Benin',
+    
   };
   return mapping[normalized] || normalized;
 };

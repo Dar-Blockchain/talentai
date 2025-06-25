@@ -15,5 +15,7 @@ router.get("/job-assessment-results-grouped", dashboardController.getJobAssessme
 
 router.post("/getJobAssessmentsBySkill", dashboardController.getJobAssessmentsBySkill);
 
+router.get("/downloadUserExcel", dashboardController.downloadUserExcel);
+
 
 module.exports = router;
