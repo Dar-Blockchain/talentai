@@ -77,6 +77,8 @@ import { useRouter } from 'next/router';
 import { signOut } from 'next-auth/react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import WorldMap from '../components/WorldMap';
+import AdminOnly from '../components/AdminOnly';
+import { selectProfile, getMyProfile } from '../store/slices/profileSlice';
 
 // Constants
 const GREEN_MAIN = '#8310FF';
@@ -283,6 +285,8 @@ const DashboardAdmin = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const router = useRouter();
+    const dispatch = useDispatch<AppDispatch>();
+    const { profile, loading: profileLoading } = useSelector(selectProfile);
 
     // State management
     const [drawerOpen, setDrawerOpen] = useState(!isMobile);
@@ -2495,74 +2499,76 @@ const DashboardAdmin = () => {
     }
 
     return (
-        <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#fff' }}>
-            {/* Sidebar with accent background and divider */}
-            <Box sx={{
-                position: 'relative',
-                // zIndex: 2,
-                // boxShadow: '2px 0 12px 0 rgba(131,16,255,0.07)',
-                bgcolor: '#fff',
-                // borderRight: '2px solid #ece6fa',
-            }}>
-                {renderSidebar()}
-            </Box>
-
-            <Box
-                component="main"
-                sx={{
-                    flexGrow: 1,
-                    minHeight: '100vh',
+        <AdminOnly>
+            <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#fff' }}>
+                {/* Sidebar with accent background and divider */}
+                <Box sx={{
+                    position: 'relative',
+                    // zIndex: 2,
+                    // boxShadow: '2px 0 12px 0 rgba(131,16,255,0.07)',
                     bgcolor: '#fff',
-                    p: { xs: 1, sm: 2, md: 4 },
-                    display: 'flex',
-                    flexDirection: 'column',
-                }}
-            >
-                {/* Mobile Header */}
-                {isMobile && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                        <IconButton
-                            onClick={() => setDrawerOpen(true)}
-                            sx={{ mr: 2 }}
-                        >
-                            <MenuIcon />
-                        </IconButton>
-                        <Typography variant="h6" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
-                            TalentAI Admin
-                        </Typography>
-                    </Box>
-                )}
+                    // borderRight: '2px solid #ece6fa',
+                }}>
+                    {renderSidebar()}
+                </Box>
 
-                {/* Content */}
                 <Box
+                    component="main"
                     sx={{
-                        flex: 1,
-                        width: '100%',
-                        maxWidth: { xs: '100%', sm: '98vw', md: '1200px', lg: '1400px', xl: '1600px' },
-                        mx: 'auto',
+                        flexGrow: 1,
+                        minHeight: '100vh',
+                        bgcolor: '#fff',
+                        p: { xs: 1, sm: 2, md: 4 },
                         display: 'flex',
                         flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minHeight: { xs: 'auto', md: 'calc(100vh - 48px)' },
-                        p: { xs: 0.5, sm: 2, md: 4 },
-                        bgcolor: '#fff',
                     }}
                 >
-                    <Box sx={{ width: '100%' }}>
-                        {activeTab === 0 && renderDashboard()}
-                        {activeTab === 1 && renderUsers()}
-                        {activeTab === 2 && renderAssessments()}
-                        {activeTab === 3 && renderAssessmentResults()}
-                        {activeTab === 4 && renderLogs()}
+                    {/* Mobile Header */}
+                    {isMobile && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <IconButton
+                                onClick={() => setDrawerOpen(true)}
+                                sx={{ mr: 2 }}
+                            >
+                                <MenuIcon />
+                            </IconButton>
+                            <Typography variant="h6" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
+                                TalentAI Admin
+                            </Typography>
+                        </Box>
+                    )}
+
+                    {/* Content */}
+                    <Box
+                        sx={{
+                            flex: 1,
+                            width: '100%',
+                            maxWidth: { xs: '100%', sm: '98vw', md: '1200px', lg: '1400px', xl: '1600px' },
+                            mx: 'auto',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minHeight: { xs: 'auto', md: 'calc(100vh - 48px)' },
+                            p: { xs: 0.5, sm: 2, md: 4 },
+                            bgcolor: '#fff',
+                        }}
+                    >
+                        <Box sx={{ width: '100%' }}>
+                            {activeTab === 0 && renderDashboard()}
+                            {activeTab === 1 && renderUsers()}
+                            {activeTab === 2 && renderAssessments()}
+                            {activeTab === 3 && renderAssessmentResults()}
+                            {activeTab === 4 && renderLogs()}
+                        </Box>
                     </Box>
                 </Box>
-            </Box>
 
-            {/* Dialogs */}
-            {renderUserDialog()}
-            {renderAssessmentDialog()}
-        </Box>
+                {/* Dialogs */}
+                {renderUserDialog()}
+                {renderAssessmentDialog()}
+            </Box>
+        </AdminOnly>
     );
 };
 

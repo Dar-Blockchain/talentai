@@ -116,7 +116,7 @@ export default function SignIn() {
         localStorage.removeItem("api_token");
         Cookies.remove("api_token");
 
-        // Then set the new token with a small delay to ensure it's set
+        // Then set the new token with a longer delay to ensure it's set
         localStorage.setItem("api_token", response.token);
         Cookies.set("api_token", response.token, {
           expires: 30, // 30 days
@@ -124,19 +124,28 @@ export default function SignIn() {
           sameSite: "lax",
         });
 
-        // Add a small delay before redirecting to ensure tokens are set
+        // Store token in localStorage
+        localStorage.setItem("api_token", response.token);
+        
+        // Check if there's a returnUrl in the query parameters
+        const returnUrl = router.query.returnUrl as string;
+        
+        // Add a longer delay to ensure token is properly set
         setTimeout(() => {
-          // Check if there's a returnUrl in the query parameters
-          const returnUrl = router.query.returnUrl as string;
-          // First check if user has a profile
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`,
-            {
-              headers: {
-                Authorization: `Bearer ${response.token}`,
-              },
-            }
-          )
+          // Double-check that token is set
+          const storedToken = localStorage.getItem("api_token");
+          if (!storedToken) {
+            console.error("Token not found in localStorage after setting");
+            setError("Authentication failed - token not stored");
+            return;
+          }
+          
+          // Check user profile to determine redirect
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
+            headers: {
+              Authorization: `Bearer ${response.token}`,
+            },
+          })
             .then((profileResponse) => {
               if (!profileResponse.ok) {
                 throw new Error("Profile check failed");
@@ -144,10 +153,17 @@ export default function SignIn() {
               return profileResponse.json();
             })
             .then((profileData) => {
-              const hasProfile =
-                profileData &&
-                profileData.type &&
+              console.log("Profile data received:", profileData);
+              
+              // Check if profileData exists and has the expected structure
+              const hasProfile = profileData && 
+                profileData.userId && 
+                profileData.userId.role && 
                 Object.keys(profileData).length > 0;
+              
+              console.log("Has profile:", hasProfile);
+              console.log("Profile type:", profileData?.userId?.role);
+              
               if (returnUrl) {
                 if (!hasProfile) {
                   // If no profile, go to preferences first with returnUrl
@@ -162,26 +178,64 @@ export default function SignIn() {
                 if (!hasProfile) {
                   // If no return URL, go to preferences
                   router.push("/preferences");
-                } else if (profileData.type === 'Admin') {
+                } else if (profileData.userId.role === 'Admin') {
+                  console.log("Redirecting to admin dashboard");
                   router.push("/dashboardAdmin");
-                } else if (profileData.type === 'Candidate') {
+                } else if (profileData.userId.role === 'Candidat') {
+                  console.log("Redirecting to candidate dashboard");
                   router.push("/dashboardCandidate");
-                } else if (profileData.type === 'Company') {
+                } else if (profileData.userId.role === 'Company') {
+                  console.log("Redirecting to company dashboard");
                   router.push("/dashboardCompany");
+                } else {
+                  console.log("Unknown role, going to preferences");
+                  router.push("/preferences");
                 }
               }
             })
-            .catch(() => {
-              // If profile check fails, go to preferences with returnUrl
-              if (returnUrl) {
-                router.push(
-                  `/preferences?returnUrl=${encodeURIComponent(returnUrl)}`
-                );
-              } else {
-                router.push(`/preferences`);
-              }
+            .catch((error) => {
+              console.error("Profile check error:", error);
+              // Retry once after a short delay
+              setTimeout(() => {
+                fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
+                  headers: {
+                    Authorization: `Bearer ${response.token}`,
+                  },
+                })
+                  .then((retryResponse) => {
+                    if (!retryResponse.ok) {
+                      throw new Error("Profile check retry failed");
+                    }
+                    return retryResponse.json();
+                  })
+                  .then((retryProfileData) => {
+                    console.log("Retry profile data:", retryProfileData);
+                    const hasProfile = retryProfileData && 
+                      retryProfileData.userId && 
+                      retryProfileData.userId.role && 
+                      Object.keys(retryProfileData).length > 0;
+                    
+                    if (hasProfile) {
+                      if (retryProfileData.userId.role === 'Admin') {
+                        router.push("/dashboardAdmin");
+                      } else if (retryProfileData.userId.role === 'Candidat') {
+                        router.push("/dashboardCandidate");
+                      } else if (retryProfileData.userId.role === 'Company') {
+                        router.push("/dashboardCompany");
+                      } else {
+                        router.push("/preferences");
+                      }
+                    } else {
+                      router.push("/preferences");
+                    }
+                  })
+                  .catch((retryError) => {
+                    console.error("Profile check retry error:", retryError);
+                    router.push("/preferences");
+                  });
+              }, 500);
             });
-        }, 100);
+        }, 500); // Increased delay to 500ms
       } else {
         setError("Verification successful but no token received");
       }
