@@ -29,10 +29,10 @@ const {
   updateTodoListWithNewSkills,
   handleAddSoftSkills,
   saveInterviewDetails,
+  saveInterviewDetailsForJob,
 } = require("../utils/evaluationUtils");
-const {
-  DEFAULT_SOFT_SKILL_CATEGORIES,
-} = require("../constants/profileConstants");
+
+const InterviewDetails = require("../models/InterviewDetailsModel");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
@@ -163,15 +163,10 @@ exports.analyzeJobTestResults = async ({
     if (content) raw += content;
   }
 
-  console.log("check raw: ", raw);
-
   let analysis = await parseAndValidateAIResponse(raw);
 
   // 0. process profeciencyLevel of each skill, depending on its requiredLevel and the condidenceScore (generated with AI)
   processSkillsData(analysis);
-
-  // I. Add new skills to profile
-  updateProfileWithNewSkills(profile, analysis.skillAnalysis);
 
   // II. Update the todoList with the new skills
   // await updateTodoListWithNewSkills(todoList, analysis )
@@ -181,6 +176,7 @@ exports.analyzeJobTestResults = async ({
     profile.skills,
     jobSkills
   );
+
   mergeAlreadyProvenSkills(
     analysis.skillAnalysis,
     alreadyProvenSkills,
@@ -190,12 +186,23 @@ exports.analyzeJobTestResults = async ({
   // IV. Update skills that are now at a higher level
   updateUpgradedSkills(profile.skills, analysis.skillAnalysis);
 
-  // V. Process analysis for overallScore
+  // V. Add new skills to profile
+  updateProfileWithNewSkills(profile, analysis.skillAnalysis);
+
+  // VI. Process analysis for overallScore
   processAnalysisData(analysis);
 
   await profile.save();
 
-  // VI. Save JobAssessmentResult
+  // VII. Save interview details
+  const interviewId = await saveInterviewDetailsForJob(
+    profile,
+    analysis.overallScore,
+    analysis.skillAnalysis,
+    jobId
+  );
+
+  // VIII. Save JobAssessmentResult
   const company = await profileService.getProfileByPostId(jobId);
   const jobAssessmentResult = new JobAssessmentResult({
     timestamp: new Date(),
@@ -205,6 +212,7 @@ exports.analyzeJobTestResults = async ({
     companyId: company._id,
     numberOfQuestions: questions.length,
     analysis,
+    interviewId: interviewId,
   });
 
   await jobAssessmentResult.save();
@@ -213,8 +221,18 @@ exports.analyzeJobTestResults = async ({
   company.assessmentResults.push(jobAssessmentResult._id);
   await company.save();
 
-  // VII. Update quota
+  await InterviewDetails.findByIdAndUpdate(interviewId, {
+    $set: { jobAssessmentResult: jobAssessmentResult._id },
+  });
+
+  // IX. Update quota
   profile.quota++;
+
+  // X. update profile with interview details
+  if (!profile.interviewDetails) {
+    profile.interviewDetails = [];
+  }
+  profile.interviewDetails.push(interviewId);
   await profile.save();
 
   return { analysis };
@@ -232,14 +250,10 @@ module.exports.generateHRQuestions = async (profile, formData) => {
 
     const systemPrompt = generateHRQuestionsPrompts.getSystemPrompt(formData);
 
-    console.log("sys: ", systemPrompt);
-
     const userPrompt = generateHRQuestionsPrompts.getUserPrompt(
       skillsListDetails,
       formData
     );
-
-    console.log("user: ", userPrompt);
 
     const stream = await together.chat.completions.create({
       model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
@@ -314,10 +328,9 @@ exports.analyzeHRAnswers = async ({ questions, user, formData }) => {
   );
 
   profile.quota++;
-  
-  if(!profile.interviewDetails) {
-    profile.interviewDetails = [];
 
+  if (!profile.interviewDetails) {
+    profile.interviewDetails = [];
   }
   profile.interviewDetails.push(interviewId);
   await profile.save();

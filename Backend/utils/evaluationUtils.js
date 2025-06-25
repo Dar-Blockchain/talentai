@@ -220,6 +220,7 @@ function processAnalysisData(analysis) {
 
   analysis.jobMatch.percentage = analysis.overallScore;
   analysis.jobMatch.status = status;
+  
 }
 
 async function updateTodoListWithNewSkills(todoList, analysis) {
@@ -295,6 +296,33 @@ async function saveInterviewDetails(profile, overallScore, skillAnalysis, formDa
   return interviewDetails._id; 
 }
 
+async function saveInterviewDetailsForJob(profile, overallScore, skillAnalysis, jobId) {
+  const details = skillAnalysis.map((skill) => ({
+    name: skill.skillName, 
+    type: SKILL_TYPES.HARD,
+    proficiencyLevel: skill.demonstratedExperienceLevel, 
+    // experienceLevel : PROFICIENCY_TO_EXPERIENCE_VALUE[skill.proficiencyLevel],
+    confidenceScore : skill.confidenceScore , 
+    questionAnswerList: (skill.questionAnswerList || []).map((qa) => ({
+      question: qa.question,
+      answer: qa.answer || "unanswered",
+      status: qa.status,
+      exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
+    })),
+  }));
+
+  const interviewDetails = new InterviewDetails({
+    candidate: profile._id,
+    post: jobId,
+    type: INTERVIEW_TYPES.POST, 
+    overallScore: overallScore,
+    skillDetails: details,
+  });
+
+  await interviewDetails.save();
+  return interviewDetails._id; 
+}
+
 module.exports = {
   processSkillsData,
   updateUpgradedSkills,
@@ -304,5 +332,6 @@ module.exports = {
   processAnalysisData,
   updateTodoListWithNewSkills,
   handleAddSoftSkills,
-  saveInterviewDetails
+  saveInterviewDetails,
+  saveInterviewDetailsForJob
 };
