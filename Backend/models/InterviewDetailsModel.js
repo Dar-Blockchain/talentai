@@ -38,7 +38,7 @@ const skillDetailsSchema = new mongoose.Schema(
     proficiencyLevel: {
       type: Number,
       enum: Object.values(SKILL_LEVELS).map((lvl) => lvl.proficiencyLevel),
-      required: true,
+      required: false,
     },
     experienceLevel: {
       type: String,
@@ -88,6 +88,14 @@ const interviewDetailsSchema = new mongoose.Schema(
       ref: "Post",
       required: false,
     },
+    
+    // jobAssessmentResult: only by interview of type : "post"
+    jobAssessmentResult: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "JobAssessmentResult",
+      required: false,
+    },
+
     type: {
       type: String,
       enum: Object.values(INTERVIEW_TYPES),

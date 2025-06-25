@@ -335,6 +335,27 @@ Your role is to:
 - Moderate match → 40–69
 - Strong match → 70+
 
+ **skillAnalysis rules**:
+- Each skill must include:
+  - skillName
+  - requiredLevel (1-5)         
+  - demonstratedExperienceLevel
+  - strengths (array, or ["No strengths identified for this skill"])
+  - weaknesses (array, or ["No weaknesses identified for this skill"])    
+  - confidenceScore (0-100)
+  - match: "Poor match" | "Moderate match" | "Strong match"
+  - levelGap: number (0–4)
+  - questionAnswerList: an array of question-answer pairs, with the following rules:
+    - question string,
+    - answer: string,
+    - status: "correct" | "partial_correct" | "incorrect",
+    - exampleCorrectAnswer: string (optional, only if status is "incorrect")
+  
+- Every interview question must appear in exactly one questionAnswerList  
+- No question may be omitted or repeated  
+- Each question must be assigned to the most relevant skill only
+
+
 **TodoList Rules**:
 - Each todo represents a skill and contains 1–2 personalized learning tasks. All tasks must follow these constraints:
 - \`todo.type\`: must be exactly \`"Skill"\`
@@ -382,7 +403,7 @@ ${questions
   )
   .join("\n\n")}
 
-Return a valid JSON object matching this schema:
+Return a valid JSON object with the following structure:
 
 {
   "overallScore": number,
@@ -399,7 +420,15 @@ Return a valid JSON object matching this schema:
       "weaknesses": [string], // or ["No weaknesses identified for this skill"]
       "confidenceScore": 0-100,
       "match": "Poor match" | "Moderate match" | "Strong match",
-      "levelGap": number
+      "levelGap": number,
+      "questionAnswerList": [
+        {
+          "question": string,
+          "answer": string,
+          "status": "correct" | "partial_correct" | "incorrect",
+          "exampleCorrectAnswer": string (optional, only if status is "incorrect")
+        }
+      ]
     }
   ],
   "jobMatch": {
@@ -433,7 +462,6 @@ Return **valid JSON only**
 
 const generateHRQuestionsPrompts = {
   getSystemPrompt: (formData) => {
-
     // Extract form data for personalization
     const {
       targetCompany,
@@ -442,39 +470,47 @@ const generateHRQuestionsPrompts = {
       targetRole,
       experienceLevel,
       interviewFormat,
-      simulationGoal
+      simulationGoal,
     } = formData || {};
 
     return `
-You are a senior HR analyst in working at ${targetCompany || 'corporate'}. You will evaluate a candidate's responses to behavioral and situational HR interview questions.
+You are a senior HR analyst in working at ${
+      targetCompany || "corporate"
+    }. You will evaluate a candidate's responses to behavioral and situational HR interview questions.
 
 Your task is to generate **exactly 10 distinct HR interview questions** specifically designed for:
-- **Target Company**: ${targetCompany || 'General corporate environment'}
-- **Role**: ${targetRole || 'Professional position'}
-- **Experience Level**: ${experienceLevel || 'Mid-level'}
-- **Interview Format**: ${interviewFormat || 'Onsite HR Interview'}
-- **Candidate Goal**: ${simulationGoal || 'Interview preparation'}
+- **Target Company**: ${targetCompany || "General corporate environment"}
+- **Role**: ${targetRole || "Professional position"}
+- **Experience Level**: ${experienceLevel || "Mid-level"}
+- **Interview Format**: ${interviewFormat || "Onsite HR Interview"}
+- **Candidate Goal**: ${simulationGoal || "Interview preparation"}
 
-${companyIndustry ? `- **Industry**: ${companyIndustry}` : ''}
-${companyCulture ? `- **Company Culture**: ${companyCulture}` : ''}
+${companyIndustry ? `- **Industry**: ${companyIndustry}` : ""}
+${companyCulture ? `- **Company Culture**: ${companyCulture}` : ""}
 
 The questions must:
 - Reflect current HR values such as diversity & inclusion (DEI), psychological safety, remote/hybrid collaboration, mental well-being, continuous learning, and inclusive leadership
-- Be tailored to ${targetCompany || 'the target company'} culture and ${experienceLevel || 'experience level'} expectations
-- Be appropriate for ${interviewFormat || 'behavioral interview'} format
+- Be tailored to ${targetCompany || "the target company"} culture and ${
+      experienceLevel || "experience level"
+    } expectations
+- Be appropriate for ${interviewFormat || "behavioral interview"} format
 - Be realistic and grounded in everyday work scenarios (e.g., team conflict, leadership under pressure, adapting to change)
 - Be suitable for oral interviews, answerable within 2 minutes
 - Be clearly phrased, non-redundant, and avoid vague or generic wording
-- Align with ${simulationGoal || 'interview preparation'} goals
+- Align with ${simulationGoal || "interview preparation"} goals
 
 ### Requirements:
 - Produce **exactly 10 distinct questions** focused solely on HR themes (no technical questions)
-- Tailor questions to ${targetCompany || 'the company'} culture and ${targetRole || 'role'} requirements
-- Consider ${experienceLevel || 'experience level'} expectations and challenges
-- Format questions appropriately for ${interviewFormat || 'interview format'}
-- Integrate current HR trends relevant to ${companyIndustry || 'the industry'}
+- Tailor questions to ${targetCompany || "the company"} culture and ${
+      targetRole || "role"
+    } requirements
+- Consider ${experienceLevel || "experience level"} expectations and challenges
+- Format questions appropriately for ${interviewFormat || "interview format"}
+- Integrate current HR trends relevant to ${companyIndustry || "the industry"}
 - Questions must be clear, conversational, and answerable orally within 2 minutes
-- Use realistic workplace scenarios specific to ${targetCompany || 'the target environment'}
+- Use realistic workplace scenarios specific to ${
+      targetCompany || "the target environment"
+    }
 - Avoid repetition and generic phrasing
 - **Return ONLY a valid JSON array of 10 strings**, no explanations or formatting
     `.trim();
@@ -489,37 +525,45 @@ The questions must:
       targetRole,
       experienceLevel,
       interviewFormat,
-      simulationGoal
+      simulationGoal,
     } = formData || {};
 
     return `
 Based on the company's details and interview preferences below, generate **10 behavioral/situational HR interview questions**.
 
 ### Interview Context:
-- **Target Company**: ${targetCompany || 'General corporate environment'}
-- **Role**: ${targetRole || 'Professional position'}
-- **Experience Level**: ${experienceLevel || 'Mid-level'}
-- **Interview Format**: ${interviewFormat || 'Behavioral interview'}
-- **Candidate Goal**: ${simulationGoal || 'Interview preparation'}
-${companyIndustry ? `- **Industry**: ${companyIndustry}` : ''}
-${companyCulture ? `- **Company Culture**: ${companyCulture}` : ''}
+- **Target Company**: ${targetCompany || "General corporate environment"}
+- **Role**: ${targetRole || "Professional position"}
+- **Experience Level**: ${experienceLevel || "Mid-level"}
+- **Interview Format**: ${interviewFormat || "Behavioral interview"}
+- **Candidate Goal**: ${simulationGoal || "Interview preparation"}
+${companyIndustry ? `- **Industry**: ${companyIndustry}` : ""}
+${companyCulture ? `- **Company Culture**: ${companyCulture}` : ""}
 
 Candidate's skills Profile:
 ${skillsListDetails}
 
 ### Instructions:
-- Tailor questions specifically for ${targetCompany || 'the target company'} culture and values
-- Consider ${experienceLevel || 'experience level'} expectations and typical challenges
-- Format questions appropriately for ${interviewFormat || 'interview format'} style
-- Focus on scenarios relevant to ${targetRole || 'the target role'}
+- Tailor questions specifically for ${
+      targetCompany || "the target company"
+    } culture and values
+- Consider ${
+      experienceLevel || "experience level"
+    } expectations and typical challenges
+- Format questions appropriately for ${
+      interviewFormat || "interview format"
+    } style
+- Focus on scenarios relevant to ${targetRole || "the target role"}
 - Do NOT include technical or coding questions
 - Keep questions succinct, specific, and suitable for oral interviews
 - Avoid vague or repetitive language; each question should be purposeful and trend-aware
-- Align with ${simulationGoal || 'interview preparation'} objectives
+- Align with ${simulationGoal || "interview preparation"} objectives
 - Provide structured, insightful, and concise feedback that reflects:
   - How well each answer demonstrates the targeted soft skills
   - Observations about emotional intelligence, communication tone, and cultural fit
-  - Relevance to ${targetCompany || 'company'} culture and ${targetRole || 'role'} requirements
+  - Relevance to ${targetCompany || "company"} culture and ${
+      targetRole || "role"
+    } requirements
 - **Return a valid JSON array of exactly 10 strings**, no commentary or formatting
 
     `.trim();
