@@ -611,20 +611,43 @@ const xlsx = require("xlsx");
 
 module.exports.generateUserExcel = async () => {
   try {
-    // Récupérer tous les utilisateurs
-    const users = await User.find({}).select("username FirstName LastName email role lastLogin ip Localisation ");
+    // Récupérer tous les utilisateurs et peupler leurs profils
+    const users = await User.find({})
+      .populate("profile")  // Peupler le champ profile avec les données associées
+      .select("username FirstName LastName email role lastLogin ip Localisation profile");  // Inclure le profil dans la sélection
     
-    // Convertir les utilisateurs en format JSON pour Excel
-    const usersData = users.map(user => ({
-      Username: user.username,
-      FirstName: user.FirstName,
-      LastName: user.LastName,
-      Email: user.email,
-      Role: user.role,
-      ip: user.ip,
-      Localisation: user.Localisation,
-      LastLogin: user.lastLogin ? user.lastLogin.toISOString() : 'N/A', // Format de date lisible
-    }));
+    // Convertir les utilisateurs et profils en format JSON pour Excel
+    const usersData = users.map(user => {
+      const profile = user.profile ? {
+        type: user.profile.type,
+        quota: user.profile.quota,
+        quotaUpdatedAt: user.profile.quotaUpdatedAt,
+        readyForMatch: user.profile.readyForMatch,
+        overallScore: user.profile.overallScore,
+        skills: user.profile.skills,
+        softSkills: user.profile.softSkills,
+        todoList: user.profile.todoList,
+        interviewDetails: user.profile.interviewDetails,
+        companyDetails: user.profile.companyDetails,
+        requiredSkills: user.profile.requiredSkills,
+        requiredExperienceLevel: user.profile.requiredExperienceLevel,
+        assessmentResults: user.profile.assessmentResults,
+        companyBid: user.profile.companyBid,
+        usersBidedByCompany: user.profile.usersBidedByCompany
+      } : {}; // Si le profil est null, on renvoie un objet vide
+
+      return {
+        Username: user.username,
+        FirstName: user.FirstName,
+        LastName: user.LastName,
+        Email: user.email,
+        Role: user.role,
+        ip: user.ip,
+        Localisation: user.Localisation,
+        LastLogin: user.lastLogin ? user.lastLogin.toISOString() : 'N/A', // Format de date lisible
+        ...profile // Inclure les champs du profil
+      };
+    });
 
     // Créer un classeur Excel
     const ws = xlsx.utils.json_to_sheet(usersData);
@@ -638,5 +661,5 @@ module.exports.generateUserExcel = async () => {
   } catch (error) {
     throw new Error("Erreur lors de la génération du fichier Excel: " + error.message);
   }
-}
+};
 
