@@ -475,6 +475,9 @@ const DashboardCompany = () => {
   const [editingSkillName, setEditingSkillName] = useState('');
   const [skillWarning, setSkillWarning] = useState('');
   const [updatedJobData, setUpdatedJobData] = useState<JobPost | undefined>(undefined);
+  // Add state for job details modal
+  const [jobDetailsModalOpen, setJobDetailsModalOpen] = useState(false);
+  const [selectedJobForDetails, setSelectedJobForDetails] = useState<any>(null);
 
   const isSalaryRangeValid = () => {
     return salaryRange.min > 0 && salaryRange.max > 0 && salaryRange.max >= salaryRange.min;
@@ -3392,6 +3395,17 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
     setNewSkillLevel("3");
   };
 
+  // Add handlers for job details modal
+  const handleViewJobDetails = (job: any) => {
+    setSelectedJobForDetails(job);
+    setJobDetailsModalOpen(true);
+  };
+
+  const handleCloseJobDetailsModal = () => {
+    setJobDetailsModalOpen(false);
+    setSelectedJobForDetails(null);
+  };
+
   return (
     <CompanyOnly>
       <Box sx={{
@@ -3765,6 +3779,21 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                             </Box>
                             {/* Actions */}
                             <Box sx={{ display: 'flex', gap: 2, mt: 'auto', pt: 2, borderTop: '1px solid rgba(2,226,255,0.08)' }}>
+                              <Button
+                                variant="outlined"
+                                fullWidth
+                                onClick={() => handleViewJobDetails(job)}
+                                sx={{
+                                  borderColor: 'rgba(0, 255, 157, 1)',
+                                  color: 'rgba(0, 255, 157, 1)',
+                                  '&:hover': {
+                                    borderColor: 'rgba(0, 255, 157, 1)',
+                                    backgroundColor: '#fff'
+                                  }
+                                }}
+                              >
+                                View Details
+                              </Button>
                               <Button
                                 variant="outlined"
                                 fullWidth
@@ -4488,6 +4517,431 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                 </Box>
               </motion.div>
             </DialogContent>
+          </Dialog>
+
+          {/* Job Details Modal */}
+          <Dialog
+            open={jobDetailsModalOpen}
+            onClose={handleCloseJobDetailsModal}
+            maxWidth="md"
+            fullWidth
+            PaperProps={{
+              sx: {
+                borderRadius: '16px',
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+                background: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(20px)',
+                maxHeight: '90vh',
+                overflow: 'hidden'
+              }
+            }}
+          >
+            <DialogTitle sx={{
+              borderBottom: '1px solid rgba(2,226,255,0.1)',
+              pb: 2,
+              background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+              color: 'white',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <WorkIcon sx={{ color: 'rgba(0, 255, 157, 1)', fontSize: 28 }} />
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Job Details
+                </Typography>
+              </Box>
+              <IconButton
+                onClick={handleCloseJobDetailsModal}
+                sx={{
+                  color: 'rgba(255,255,255,0.8)',
+                  '&:hover': {
+                    color: 'rgba(0, 255, 157, 1)'
+                  }
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+            
+            <DialogContent sx={{ 
+              mt: 2, 
+              p: 3,
+              overflowY: 'auto',
+              maxHeight: 'calc(90vh - 140px)'
+            }}>
+              {selectedJobForDetails && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {/* Job Header */}
+                  <Box sx={{ 
+                    background: 'linear-gradient(135deg, rgba(0, 255, 157, 0.1), rgba(2, 226, 255, 0.1))',
+                    borderRadius: '12px',
+                    p: 3,
+                    border: '1px solid rgba(0, 255, 157, 0.2)'
+                  }}>
+                    <Typography variant="h5" sx={{ 
+                      color: '#000000', 
+                      fontWeight: 700, 
+                      mb: 2,
+                      background: 'linear-gradient(90deg, #1e293b, #0f172a)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent'
+                    }}>
+                      {selectedJobForDetails.jobDetails.title}
+                    </Typography>
+                    
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                      <Chip
+                        icon={<LocationOnIcon sx={{ fontSize: 18 }} />}
+                        label={selectedJobForDetails.jobDetails.location}
+                        size="small"
+                        sx={{ backgroundColor: 'rgba(0, 255, 157, 1)', color: 'black', fontWeight: 600 }}
+                      />
+                      <Chip
+                        label={selectedJobForDetails.jobDetails.employmentType}
+                        size="small"
+                        sx={{ backgroundColor: 'rgba(0, 255, 157, 1)', color: 'black', fontWeight: 600 }}
+                      />
+                      <Chip
+                        label={`${selectedJobForDetails.jobDetails.salary.currency}${selectedJobForDetails.jobDetails.salary.min.toLocaleString()}-${selectedJobForDetails.jobDetails.salary.max.toLocaleString()}`}
+                        size="small"
+                        sx={{ backgroundColor: 'rgba(0, 255, 157, 1)', color: 'black', fontWeight: 600 }}
+                      />
+                      {/* <Chip
+                        label={selectedJobForDetails.jobDetails.experienceLevel}
+                        size="small"
+                        sx={{ backgroundColor: 'rgba(2, 226, 255, 1)', color: 'black', fontWeight: 600 }}
+                      /> */}
+                    </Box>
+                    
+                    {selectedJobForDetails.createdAt && (
+                      <Typography variant="caption" sx={{ color: 'rgba(0,0,0,0.6)', fontWeight: 500 }}>
+                        Posted: {new Date(selectedJobForDetails.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </Typography>
+                    )}
+                    
+                    {/* Job URL */}
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="caption" sx={{ color: 'rgba(0,0,0,0.6)', fontWeight: 500, display: 'block', mb: 1 }}>
+                        Public Job URL:
+                      </Typography>
+                      <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        borderRadius: '8px',
+                        p: 1.5,
+                        border: '1px solid rgba(0, 255, 157, 0.3)'
+                      }}>
+                        <LinkIcon sx={{ color: '#02E2FF', mr: 1, fontSize: 20 }} />
+                        <Typography
+                          sx={{ 
+                            color: '#02E2FF', 
+                            fontWeight: 600, 
+                            flex: 1, 
+                            wordBreak: 'break-all',
+                            fontSize: '0.875rem'
+                          }}
+                        >
+                          {typeof window !== 'undefined' && window.location.origin 
+                            ? `${window.location.origin}/testjob/${selectedJobForDetails._id}`
+                            : `https://app.talentai.bid/testjob/${selectedJobForDetails._id}`
+                          }
+                        </Typography>
+                        <Tooltip title="Copy URL">
+                          <IconButton
+                            onClick={() => {
+                              const url = typeof window !== 'undefined' && window.location.origin 
+                                ? `${window.location.origin}/testjob/${selectedJobForDetails._id}`
+                                : `https://app.talentai.bid/testjob/${selectedJobForDetails._id}`;
+                              navigator.clipboard.writeText(url);
+                              // You could add a success notification here
+                            }}
+                            sx={{ 
+                              color: '#02E2FF', 
+                              ml: 1,
+                              '&:hover': {
+                                color: '#00FFC3'
+                              }
+                            }}
+                            size="small"
+                          >
+                            <ContentCopyIcon sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  {/* Job Description */}
+                  <Box>
+                    <Typography variant="h6" sx={{ color: '#000000', fontWeight: 600, mb: 2 }}>
+                      Job Description
+                    </Typography>
+                    <Typography variant="body1" sx={{ 
+                      color: '#000000', 
+                      lineHeight: 1.6,
+                      whiteSpace: 'pre-wrap'
+                    }}>
+                      {selectedJobForDetails.jobDetails.description}
+                    </Typography>
+                  </Box>
+
+                  {/* Requirements */}
+                  {selectedJobForDetails.jobDetails.requirements && selectedJobForDetails.jobDetails.requirements.length > 0 && (
+                    <Box>
+                      <Typography variant="h6" sx={{ color: '#000000', fontWeight: 600, mb: 2 }}>
+                        Requirements
+                      </Typography>
+                      <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                        {selectedJobForDetails.jobDetails.requirements.map((req: string, index: number) => (
+                          <Typography 
+                            key={index} 
+                            component="li" 
+                            variant="body1" 
+                            sx={{ 
+                              color: '#000000', 
+                              mb: 1,
+                              lineHeight: 1.5
+                            }}
+                          >
+                            {req}
+                          </Typography>
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+
+                  {/* Responsibilities */}
+                  {selectedJobForDetails.jobDetails.responsibilities && selectedJobForDetails.jobDetails.responsibilities.length > 0 && (
+                    <Box>
+                      <Typography variant="h6" sx={{ color: '#000000', fontWeight: 600, mb: 2 }}>
+                        Responsibilities
+                      </Typography>
+                      <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                        {selectedJobForDetails.jobDetails.responsibilities.map((resp: string, index: number) => (
+                          <Typography 
+                            key={index} 
+                            component="li" 
+                            variant="body1" 
+                            sx={{ 
+                              color: '#000000', 
+                              mb: 1,
+                              lineHeight: 1.5
+                            }}
+                          >
+                            {resp}
+                          </Typography>
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+
+                  {/* Required Skills */}
+                  {selectedJobForDetails.skillAnalysis?.requiredSkills && selectedJobForDetails.skillAnalysis.requiredSkills.length > 0 && (
+                    <Box>
+                      <Typography variant="h6" sx={{ color: '#000000', fontWeight: 600, mb: 2 }}>
+                        Required Skills
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {selectedJobForDetails.skillAnalysis.requiredSkills.map((skill: any, idx: number) => (
+                          <Chip
+                            key={idx}
+                            label={`${skill.name} (${skill.level})`}
+                            size="medium"
+                            icon={<StarIcon sx={{ color: '#00FFC3', fontSize: 18 }} />}
+                            sx={{
+                              backgroundColor: 'rgba(0, 255, 157, 1)',
+                              color: 'white',
+                              fontWeight: 700,
+                              fontSize: '0.9rem',
+                              letterSpacing: 0.2,
+                              px: 1,
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+
+                  {/* Suggested Skills */}
+                  {selectedJobForDetails.skillAnalysis?.suggestedSkills && (
+                    <Box>
+                      <Typography variant="h6" sx={{ color: '#000000', fontWeight: 600, mb: 2 }}>
+                        Suggested Skills
+                      </Typography>
+                      
+                      {/* Technical Skills */}
+                      {selectedJobForDetails.skillAnalysis.suggestedSkills.technical && selectedJobForDetails.skillAnalysis.suggestedSkills.technical.length > 0 && (
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="subtitle1" sx={{ color: '#000000', fontWeight: 600, mb: 1 }}>
+                            Technical Skills
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                            {selectedJobForDetails.skillAnalysis.suggestedSkills.technical.map((skill: any, idx: number) => (
+                              <Chip
+                                key={idx}
+                                label={skill.name}
+                                size="small"
+                                sx={{
+                                  backgroundColor: 'rgba(2, 226, 255, 1)',
+                                  color: 'black',
+                                  fontWeight: 600,
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        </Box>
+                      )}
+
+                      {/* Frameworks */}
+                      {selectedJobForDetails.skillAnalysis.suggestedSkills.frameworks && selectedJobForDetails.skillAnalysis.suggestedSkills.frameworks.length > 0 && (
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="subtitle1" sx={{ color: '#000000', fontWeight: 600, mb: 1 }}>
+                            Frameworks
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                            {selectedJobForDetails.skillAnalysis.suggestedSkills.frameworks.map((skill: any, idx: number) => (
+                              <Chip
+                                key={idx}
+                                label={skill.name}
+                                size="small"
+                                sx={{
+                                  backgroundColor: 'rgba(2, 226, 255, 1)',
+                                  color: 'black',
+                                  fontWeight: 600,
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        </Box>
+                      )}
+
+                      {/* Tools */}
+                      {selectedJobForDetails.skillAnalysis.suggestedSkills.tools && selectedJobForDetails.skillAnalysis.suggestedSkills.tools.length > 0 && (
+                        <Box>
+                          <Typography variant="subtitle1" sx={{ color: '#000000', fontWeight: 600, mb: 1 }}>
+                            Tools
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                            {selectedJobForDetails.skillAnalysis.suggestedSkills.tools.map((skill: any, idx: number) => (
+                              <Chip
+                                key={idx}
+                                label={skill.name}
+                                size="small"
+                                sx={{
+                                  backgroundColor: 'rgba(2, 226, 255, 1)',
+                                  color: 'black',
+                                  fontWeight: 600,
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        </Box>
+                      )}
+                    </Box>
+                  )}
+
+                  {/* Skill Summary */}
+                  {selectedJobForDetails.skillAnalysis?.skillSummary && (
+                    <Box>
+                      <Typography variant="h6" sx={{ color: '#000000', fontWeight: 600, mb: 2 }}>
+                        Skill Summary
+                      </Typography>
+                      
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {selectedJobForDetails.skillAnalysis.skillSummary.mainTechnologies && selectedJobForDetails.skillAnalysis.skillSummary.mainTechnologies.length > 0 && (
+                          <Box>
+                            <Typography variant="subtitle1" sx={{ color: '#000000', fontWeight: 600, mb: 1 }}>
+                              Main Technologies
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                              {selectedJobForDetails.skillAnalysis.skillSummary.mainTechnologies.map((tech: string, idx: number) => (
+                                <Chip
+                                  key={idx}
+                                  label={tech}
+                                  size="small"
+                                  sx={{
+                                    backgroundColor: 'rgba(0, 255, 157, 0.8)',
+                                    color: 'black',
+                                    fontWeight: 600,
+                                  }}
+                                />
+                              ))}
+                            </Box>
+                          </Box>
+                        )}
+
+                        {selectedJobForDetails.skillAnalysis.skillSummary.complementarySkills && selectedJobForDetails.skillAnalysis.skillSummary.complementarySkills.length > 0 && (
+                          <Box>
+                            <Typography variant="subtitle1" sx={{ color: '#000000', fontWeight: 600, mb: 1 }}>
+                              Complementary Skills
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                              {selectedJobForDetails.skillAnalysis.skillSummary.complementarySkills.map((skill: string, idx: number) => (
+                                <Chip
+                                  key={idx}
+                                  label={skill}
+                                  size="small"
+                                  sx={{
+                                    backgroundColor: 'rgba(2, 226, 255, 0.8)',
+                                    color: 'black',
+                                    fontWeight: 600,
+                                  }}
+                                />
+                              ))}
+                            </Box>
+                          </Box>
+                        )}
+
+                        {selectedJobForDetails.skillAnalysis.skillSummary.stackComplexity && (
+                          <Box>
+                            <Typography variant="subtitle1" sx={{ color: '#000000', fontWeight: 600, mb: 1 }}>
+                              Stack Complexity
+                            </Typography>
+                            <Chip
+                              label={selectedJobForDetails.skillAnalysis.skillSummary.stackComplexity}
+                              size="small"
+                              sx={{
+                                backgroundColor: 'rgba(0, 255, 157, 1)',
+                                color: 'black',
+                                fontWeight: 600,
+                              }}
+                            />
+                          </Box>
+                        )}
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              )}
+            </DialogContent>
+            
+            <DialogActions sx={{ 
+              p: 3, 
+              borderTop: '1px solid rgba(2,226,255,0.1)',
+              background: 'rgba(255, 255, 255, 0.95)'
+            }}>
+              <Button
+                onClick={handleCloseJobDetailsModal}
+                variant="contained"
+                sx={{
+                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                  color: '#1E293B',
+                  fontWeight: 600,
+                  borderRadius: '8px',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+                  }
+                }}
+              >
+                Close
+              </Button>
+            </DialogActions>
           </Dialog>
 
           {/* Add Company Profiles Section */}
