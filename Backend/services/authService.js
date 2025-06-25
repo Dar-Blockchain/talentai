@@ -77,52 +77,62 @@ module.exports.registerUser = async (email) => {
 };
 
 // Service de vérification OTP
-module.exports.verifyUserOTP = async (email, otp, location = null) => {
-  const user = await User.findOne({ email });  
-  
-  if (!user) {
-    throw new Error("Utilisateur non trouvé");
-  }
+exports.verifyUserOTP = async (email, otp, location = null) => {
+  const user = await User.findOne({ email });
 
-  if (user && user.isBanned) {
-    return res.status(403).json({
-      message: "You are banned. Please check and contact support.",
+  if (!user) throw new Error("Utilisateur non trouvé");
+
+  // Fonction pour ajouter au log d'auth
+  const logAuth = (status) => {
+    user.authHistory.push({
+      date: new Date(),
+      ip: location?.ip || '',
+      localisation: location ? `${location.city}, ${location.region}, ${location.country}` : '',
+      method: 'OTP',
+      status,
     });
+  };
+
+  if (user.isBanned) {
+    logAuth('Failed');
+    await user.save();
+    throw new Error("Vous êtes banni. Merci de contacter le support.");
   }
 
   if (!user.otp || !user.otp.code || !user.otp.expiresAt) {
+    logAuth('Failed');
+    await user.save();
     throw new Error("Aucun OTP trouvé");
   }
 
   if (user.otp.code !== otp) {
+    logAuth('Failed');
+    await user.save();
     throw new Error("Code OTP incorrect");
   }
 
   if (new Date() > user.otp.expiresAt) {
+    logAuth('Failed');
+    await user.save();
     throw new Error("Code OTP expiré");
   }
 
+  // Authentification réussie
   user.isVerified = true;
   user.otp = undefined;
   user.lastLogin = new Date();
-  user.trafficCounter = user.trafficCounter + 1;
-  
-  // Save location data if provided
+  user.trafficCounter += 1;
   if (location) {
     user.ip = location.ip;
     user.Localisation = `${location.city}, ${location.region}, ${location.country}`;
   }
-  
+  logAuth('Success');
   await user.save();
 
-  // Générer le token JWT
   const token = generateToken(user._id);
-  console.log(token);
-  return {
-    user,
-    token,
-  };
+  return { user, token };
 };
+
 
 // Service de connexion avec Gmail
 module.exports.connectWithGmail = async (id_token) => {
