@@ -28,7 +28,7 @@ const {
   processAnalysisData,
   updateTodoListWithNewSkills,
   handleAddSoftSkills,
-  saveInterviewDetails
+  saveInterviewDetails,
 } = require("../utils/evaluationUtils");
 const {
   DEFAULT_SOFT_SKILL_CATEGORIES,
@@ -222,7 +222,6 @@ exports.analyzeJobTestResults = async ({
 
 module.exports.generateHRQuestions = async (profile, formData) => {
   try {
-
     const userSkills = profile.skills;
 
     const skillsListDetails = userSkills
@@ -231,9 +230,7 @@ module.exports.generateHRQuestions = async (profile, formData) => {
       )
       .join("\n");
 
-    const systemPrompt = generateHRQuestionsPrompts.getSystemPrompt(
-      formData
-    );
+    const systemPrompt = generateHRQuestionsPrompts.getSystemPrompt(formData);
 
     console.log("sys: ", systemPrompt);
 
@@ -281,13 +278,8 @@ exports.analyzeHRAnswers = async ({ questions, user }) => {
 
   // for now , candidates are going to be tested on a default softSkill list
   // possible optimization:  Enabling the companies to set their preferred softSkillList to test
-  const systemPrompt = analyzeHRAnswersPrompts.getSystemPrompt(
-    Object.values(DEFAULT_SOFT_SKILL_CATEGORIES)
-  );
-  const userPrompt = analyzeHRAnswersPrompts.getUserPrompt(
-    questions,
-    Object.values(DEFAULT_SOFT_SKILL_CATEGORIES)
-  );
+  const systemPrompt = analyzeHRAnswersPrompts.getSystemPrompt();
+  const userPrompt = analyzeHRAnswersPrompts.getUserPrompt(questions);
 
   const stream = await together.chat.completions.create({
     model: "deepseek-ai/DeepSeek-V3",
@@ -295,7 +287,7 @@ exports.analyzeHRAnswers = async ({ questions, user }) => {
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    max_tokens: 1500,
+    max_tokens: 2500,
     temperature: 0.6,
     stream: true,
   });

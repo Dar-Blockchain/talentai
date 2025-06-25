@@ -527,13 +527,15 @@ ${skillsListDetails}
 };
 
 const analyzeHRAnswersPrompts = {
-  getSystemPrompt: (softSkillList) =>
+  getSystemPrompt: () =>
     `
-You are a senior HR interviewer and analyst. Your task is to evaluate candidate answers (transcribed from oral responses) assess his softSkills: ${softSkillList.join(
-      ", "
-    )}.
+You are a senior HR interviewer and analyst. Your task is to evaluate a candidate’s oral interview responses (transcribed with possible minor errors or incomplete phrases) and extract the key soft skills being assessed.
 
-Note: Answers were orally provided and transcribed by AI; expect minor transcription errors or incomplete sentences.
+Your analysis must:
+1. **Infer the 3 soft skills most consistently evaluated across all questions** (e.g. communication, adaptability, collaboration).
+2. **Assess the candidate’s proficiency** in those 3 soft skills only.
+3. **Follow scoring and structuring instructions strictly**.
+
 
 Your task:
 - Analyze answers to produce:
@@ -571,32 +573,24 @@ Use this scale to assign proficiencyLevel:
 4 = senior: Advanced handling, leadership or cross-team examples  
 5 = expert: Strategic thinking, mentoring, and systemic problem-solving
 
-Strict Requirements:
-- Assess ONLY the soft skills explicitly listed in the user prompt.
-- Do NOT infer strengths or positive traits from empty, incorrect, or irrelevant answers.
-- Do NOT provide recommendations unsupported by the candidate's answers.
-- Do NOT infer information from the question text alone; base analysis solely on answers.
-- Consider minor transcription errors but avoid assumptions beyond the given content.
-- Avoid duplicate or redundant recommendations.
-- Use professional, clear, and unbiased language.
-- Return ONLY valid JSON with no additional text or explanation.
+###Strict Requirements:
+- Infer only 3 soft skills from the content of the questions
+- Never guess or assume skills not evidenced in answers
+- Never infer strengths or positive traits from empty, incorrect, or irrelevant answers.
+- Return **valid JSON only**(no extra explanation or notes)
     `.trim(),
 
-  getUserPrompt: (questions, softSkillList) =>
+  getUserPrompt: (questions) =>
     `
-Analyze the candidate's answers to assess their proficiency in the following soft skills tested during the HR interview: ${softSkillList.join(
-      ", "
-    )}.
+Analyze the following HR interview answers. Your job is to:
+1. **Determine which 3 soft skills are being tested** across the questions
+2. **Assess the candidate's proficiency** in each of those 3 soft skills
+3. **Score each answer** and assign appropriate feedback and skill metrics
 
 Candidate's answers:
 ${questions
   .map((qa, i) => `Q${i + 1}: ${qa.question}\nA${i + 1}: ${qa.answer}`)
   .join("\n\n")}
-
-For each soft skill, evaluate:
-- proficiencyLevel (0-5) based strictly on the candidate's answers.
-- strengths and weaknesses explicitly supported by the answers.
-- confidenceScore (0-100) calculated as per scoring rules.
 
 Generate and return JSON in the following format:
 {
@@ -623,7 +617,7 @@ Generate and return JSON in the following format:
   ]
 }
 
-Return only the JSON output without any commentary.
+Return **valid JSON only**
     `.trim(),
 };
 
