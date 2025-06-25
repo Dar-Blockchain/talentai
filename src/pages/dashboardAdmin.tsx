@@ -70,11 +70,15 @@ import {
     PieChart as PieChartIcon,
     ShowChart as ShowChartIcon,
     Logout as LogoutIcon,
+    ListAlt as ListAltIcon,
+    Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 import { signOut } from 'next-auth/react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import WorldMap from '../components/WorldMap';
+import AdminOnly from '../components/AdminOnly';
+import { selectProfile, getMyProfile } from '../store/slices/profileSlice';
 
 // Constants
 const GREEN_MAIN = '#8310FF';
@@ -251,6 +255,23 @@ interface DashboardStats {
     jobAssessmentsWithScorePercentage: number;
 }
 
+interface Log {
+    _id: string;
+    type: string;
+    method: string;
+    url: string;
+    ip: string;
+    referer: string;
+    statusCode: number;
+    user_id: string;
+    user_nom: string;
+    headers: string;
+    executionTime: number;
+    body: string;
+    timestamp: string;
+    __v: number;
+}
+
 // Mock data for charts
 const assessmentPerformanceData = [
     { name: 'Technical', value: 45, color: '#8884d8' },
@@ -264,6 +285,8 @@ const DashboardAdmin = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const router = useRouter();
+    const dispatch = useDispatch<AppDispatch>();
+    const { profile, loading: profileLoading } = useSelector(selectProfile);
 
     // State management
     const [drawerOpen, setDrawerOpen] = useState(!isMobile);
@@ -287,6 +310,13 @@ const DashboardAdmin = () => {
         dateRange: ''
     });
     const [availableSkills, setAvailableSkills] = useState<string[]>([]);
+
+    // Logs state management
+    const [logs, setLogs] = useState<Log[]>([]);
+    const [logsLoading, setLogsLoading] = useState(false);
+    const [logsError, setLogsError] = useState<string | null>(null);
+    const [logsPage, setLogsPage] = useState(0);
+    const [logsRowsPerPage, setLogsRowsPerPage] = useState(10);
 
     // Data state
     const [stats, setStats] = useState<DashboardStats>({
@@ -337,6 +367,48 @@ const DashboardAdmin = () => {
     
     // Add skill search state for assessment results
     const [skillSearch, setSkillSearch] = useState('');
+
+    // Fetch logs function
+    const fetchLogs = async () => {
+        try {
+            setLogsLoading(true);
+            setLogsError(null);
+            
+            const token = localStorage.getItem("api_token");
+            if (!token) {
+                setLogsError("Authentication token not found");
+                return;
+            }
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}logs/getAllLogs`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch logs: ${response.status}`);
+            }
+
+            const data = await response.json();
+            setLogs(data);
+        } catch (error) {
+            console.error("Error fetching logs:", error);
+            setLogsError(error instanceof Error ? error.message : "Failed to fetch logs");
+        } finally {
+            setLogsLoading(false);
+        }
+    };
+
+    // Logs pagination handlers
+    const handleLogsPageChange = (event: unknown, newPage: number) => {
+        setLogsPage(newPage);
+    };
+
+    const handleLogsRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setLogsRowsPerPage(parseInt(event.target.value, 10));
+        setLogsPage(0);
+    };
 
     // Fetch data on component mount
     useEffect(() => {
@@ -435,6 +507,13 @@ const DashboardAdmin = () => {
         if (activeTab === 3) {
             // Fetch all assessment results by default when tab is opened
             fetchAssessmentResults();
+        }
+    }, [activeTab]);
+
+    useEffect(() => {
+        if (activeTab === 4) {
+            // Fetch logs when logs tab is opened
+            fetchLogs();
         }
     }, [activeTab]);
 
@@ -1811,6 +1890,16 @@ const DashboardAdmin = () => {
                         </ListItemIcon>
                         <ListItemText primary="Assessment Results" />
                     </SidebarItem>
+
+                    <SidebarItem
+                        selected={activeTab === 4}
+                        onClick={() => setActiveTab(4)}
+                    >
+                        <ListItemIcon>
+                            <ListAltIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="System Logs" />
+                    </SidebarItem>
                 </List>
 
                 <Divider sx={{ my: 2 }} />
@@ -2215,6 +2304,176 @@ const DashboardAdmin = () => {
         );
     };
 
+    const renderLogs = () => {
+        return (
+            <Box sx={{ width: '100%' }}>
+                <StyledCard>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+                        <SectionTitle>System Logs</SectionTitle>
+                        <Button
+                            variant="outlined"
+                            onClick={fetchLogs}
+                            disabled={logsLoading}
+                            startIcon={logsLoading ? <CircularProgress size={16} /> : <RefreshIcon />}
+                            sx={{
+                                borderColor: GREEN_MAIN,
+                                color: GREEN_MAIN,
+                                "&:hover": {
+                                    borderColor: GREEN_MAIN,
+                                    background: "rgba(131, 16, 255, 0.08)",
+                                },
+                            }}
+                        >
+                            Refresh
+                        </Button>
+                    </Box>
+
+                    {logsError && (
+                        <Alert severity="error" sx={{ mb: 3, borderRadius: "12px" }}>
+                            {logsError}
+                        </Alert>
+                    )}
+
+                    {logsLoading ? (
+                        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                            <CircularProgress sx={{ color: GREEN_MAIN }} />
+                        </Box>
+                    ) : (
+                        <>
+                            <TableContainer component={Paper} sx={{ borderRadius: "12px", overflow: "hidden" }}>
+                                <Table sx={{ minWidth: 650 }} aria-label="logs table">
+                                    <TableHead>
+                                        <TableRow sx={{ backgroundColor: "rgba(131, 16, 255, 0.08)" }}>
+                                            <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>Type</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>Method</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>URL</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>Status</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>IP</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>User</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>Execution Time</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: GREEN_MAIN }}>Timestamp</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {logs
+                                            .slice(logsPage * logsRowsPerPage, logsPage * logsRowsPerPage + logsRowsPerPage)
+                                            .map((log) => (
+                                                <TableRow
+                                                    key={log._id}
+                                                    sx={{
+                                                        "&:nth-of-type(odd)": {
+                                                            backgroundColor: "rgba(0, 0, 0, 0.02)",
+                                                        },
+                                                        "&:hover": {
+                                                            backgroundColor: "rgba(131, 16, 255, 0.04)",
+                                                        },
+                                                    }}
+                                                >
+                                                    <TableCell>
+                                                        <Chip
+                                                            label={log.type}
+                                                            size="small"
+                                                            sx={{
+                                                                backgroundColor: log.type === "Auth" ? "rgba(76, 175, 80, 0.1)" : "rgba(33, 150, 243, 0.1)",
+                                                                color: log.type === "Auth" ? "#2e7d32" : "#1976d2",
+                                                                fontWeight: 500,
+                                                            }}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Chip
+                                                            label={log.method}
+                                                            size="small"
+                                                            sx={{
+                                                                backgroundColor: 
+                                                                    log.method === "GET" ? "rgba(76, 175, 80, 0.1)" :
+                                                                    log.method === "POST" ? "rgba(33, 150, 243, 0.1)" :
+                                                                    log.method === "PUT" ? "rgba(255, 152, 0, 0.1)" :
+                                                                    log.method === "DELETE" ? "rgba(244, 67, 54, 0.1)" :
+                                                                    "rgba(158, 158, 158, 0.1)",
+                                                                color: 
+                                                                    log.method === "GET" ? "#2e7d32" :
+                                                                    log.method === "POST" ? "#1976d2" :
+                                                                    log.method === "PUT" ? "#f57c00" :
+                                                                    log.method === "DELETE" ? "#d32f2f" :
+                                                                    "#616161",
+                                                                fontWeight: 500,
+                                                            }}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell sx={{ maxWidth: 200, wordBreak: "break-word" }}>
+                                                        <Tooltip title={log.url}>
+                                                            <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+                                                                {log.url.length > 30 ? `${log.url.substring(0, 30)}...` : log.url}
+                                                            </Typography>
+                                                        </Tooltip>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Chip
+                                                            label={log.statusCode}
+                                                            size="small"
+                                                            sx={{
+                                                                backgroundColor: 
+                                                                    log.statusCode >= 200 && log.statusCode < 300 ? "rgba(76, 175, 80, 0.1)" :
+                                                                    log.statusCode >= 400 && log.statusCode < 500 ? "rgba(255, 152, 0, 0.1)" :
+                                                                    log.statusCode >= 500 ? "rgba(244, 67, 54, 0.1)" :
+                                                                    "rgba(158, 158, 158, 0.1)",
+                                                                color: 
+                                                                    log.statusCode >= 200 && log.statusCode < 300 ? "#2e7d32" :
+                                                                    log.statusCode >= 400 && log.statusCode < 500 ? "#f57c00" :
+                                                                    log.statusCode >= 500 ? "#d32f2f" :
+                                                                    "#616161",
+                                                                fontWeight: 500,
+                                                            }}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+                                                            {log.ip}
+                                                        </Typography>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+                                                            {log.user_nom !== "N/A" ? log.user_nom : "Anonymous"}
+                                                        </Typography>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+                                                            {log.executionTime}ms
+                                                        </Typography>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Typography variant="body2" sx={{ fontSize: "0.875rem" }}>
+                                                            {new Date(log.timestamp).toLocaleString()}
+                                                        </Typography>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                            
+                            <TablePagination
+                                rowsPerPageOptions={[5, 10, 25, 50]}
+                                component="div"
+                                count={logs.length}
+                                rowsPerPage={logsRowsPerPage}
+                                page={logsPage}
+                                onPageChange={handleLogsPageChange}
+                                onRowsPerPageChange={handleLogsRowsPerPageChange}
+                                sx={{
+                                    "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+                                        color: "rgba(0, 0, 0, 0.7)",
+                                    },
+                                }}
+                            />
+                        </>
+                    )}
+                </StyledCard>
+            </Box>
+        );
+    };
+
     // Test API on component mount
     useEffect(() => {
         if (activeTab === 3) {
@@ -2240,73 +2499,76 @@ const DashboardAdmin = () => {
     }
 
     return (
-        <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#fff' }}>
-            {/* Sidebar with accent background and divider */}
-            <Box sx={{
-                position: 'relative',
-                // zIndex: 2,
-                // boxShadow: '2px 0 12px 0 rgba(131,16,255,0.07)',
-                bgcolor: '#fff',
-                // borderRight: '2px solid #ece6fa',
-            }}>
-                {renderSidebar()}
-            </Box>
-
-            <Box
-                component="main"
-                sx={{
-                    flexGrow: 1,
-                    minHeight: '100vh',
+        <AdminOnly>
+            <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#fff' }}>
+                {/* Sidebar with accent background and divider */}
+                <Box sx={{
+                    position: 'relative',
+                    // zIndex: 2,
+                    // boxShadow: '2px 0 12px 0 rgba(131,16,255,0.07)',
                     bgcolor: '#fff',
-                    p: { xs: 1, sm: 2, md: 4 },
-                    display: 'flex',
-                    flexDirection: 'column',
-                }}
-            >
-                {/* Mobile Header */}
-                {isMobile && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                        <IconButton
-                            onClick={() => setDrawerOpen(true)}
-                            sx={{ mr: 2 }}
-                        >
-                            <MenuIcon />
-                        </IconButton>
-                        <Typography variant="h6" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
-                            TalentAI Admin
-                        </Typography>
-                    </Box>
-                )}
+                    // borderRight: '2px solid #ece6fa',
+                }}>
+                    {renderSidebar()}
+                </Box>
 
-                {/* Content */}
                 <Box
+                    component="main"
                     sx={{
-                        flex: 1,
-                        width: '100%',
-                        maxWidth: { xs: '100%', sm: '98vw', md: '1200px', lg: '1400px', xl: '1600px' },
-                        mx: 'auto',
+                        flexGrow: 1,
+                        minHeight: '100vh',
+                        bgcolor: '#fff',
+                        p: { xs: 1, sm: 2, md: 4 },
                         display: 'flex',
                         flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minHeight: { xs: 'auto', md: 'calc(100vh - 48px)' },
-                        p: { xs: 0.5, sm: 2, md: 4 },
-                        bgcolor: '#fff',
                     }}
                 >
-                    <Box sx={{ width: '100%' }}>
-                        {activeTab === 0 && renderDashboard()}
-                        {activeTab === 1 && renderUsers()}
-                        {activeTab === 2 && renderAssessments()}
-                        {activeTab === 3 && renderAssessmentResults()}
+                    {/* Mobile Header */}
+                    {isMobile && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <IconButton
+                                onClick={() => setDrawerOpen(true)}
+                                sx={{ mr: 2 }}
+                            >
+                                <MenuIcon />
+                            </IconButton>
+                            <Typography variant="h6" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
+                                TalentAI Admin
+                            </Typography>
+                        </Box>
+                    )}
+
+                    {/* Content */}
+                    <Box
+                        sx={{
+                            flex: 1,
+                            width: '100%',
+                            maxWidth: { xs: '100%', sm: '98vw', md: '1200px', lg: '1400px', xl: '1600px' },
+                            mx: 'auto',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minHeight: { xs: 'auto', md: 'calc(100vh - 48px)' },
+                            p: { xs: 0.5, sm: 2, md: 4 },
+                            bgcolor: '#fff',
+                        }}
+                    >
+                        <Box sx={{ width: '100%' }}>
+                            {activeTab === 0 && renderDashboard()}
+                            {activeTab === 1 && renderUsers()}
+                            {activeTab === 2 && renderAssessments()}
+                            {activeTab === 3 && renderAssessmentResults()}
+                            {activeTab === 4 && renderLogs()}
+                        </Box>
                     </Box>
                 </Box>
-            </Box>
 
-            {/* Dialogs */}
-            {renderUserDialog()}
-            {renderAssessmentDialog()}
-        </Box>
+                {/* Dialogs */}
+                {renderUserDialog()}
+                {renderAssessmentDialog()}
+            </Box>
+        </AdminOnly>
     );
 };
 
