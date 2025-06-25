@@ -607,4 +607,36 @@ module.exports.getJobAssessmentsBySkill = async (skillName) => {
 };
 
 
+const xlsx = require("xlsx");
+
+module.exports.generateUserExcel = async () => {
+  try {
+    // Récupérer tous les utilisateurs
+    const users = await User.find({}).select("username FirstName LastName email role lastLogin ip Localisation ");
+    
+    // Convertir les utilisateurs en format JSON pour Excel
+    const usersData = users.map(user => ({
+      Username: user.username,
+      FirstName: user.FirstName,
+      LastName: user.LastName,
+      Email: user.email,
+      Role: user.role,
+      ip: user.ip,
+      Localisation: user.Localisation,
+      LastLogin: user.lastLogin ? user.lastLogin.toISOString() : 'N/A', // Format de date lisible
+    }));
+
+    // Créer un classeur Excel
+    const ws = xlsx.utils.json_to_sheet(usersData);
+    const wb = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(wb, ws, "Users");
+
+    // Générer un fichier Excel en mémoire
+    const fileBuffer = xlsx.write(wb, { bookType: "xlsx", type: "buffer" });
+
+    return fileBuffer;
+  } catch (error) {
+    throw new Error("Erreur lors de la génération du fichier Excel: " + error.message);
+  }
+}
 
