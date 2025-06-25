@@ -206,7 +206,7 @@ const getSteps = (userType: UserType, hasHederaExp: 'yes' | 'no' | '') => {
     const steps = ['Company Details', 'Required Skills', 'Experience Level', 'Review'];
     return steps;
   } else {
-    const steps = ['Select Skills'];
+    const steps = ['Personal Details', 'Select Skills'];
     if (hasHederaExp === 'yes') steps.push('Hedera QCM');
     steps.push('Rate Proficiency', 'Review');
     return steps;
@@ -232,6 +232,10 @@ export default function Preferences() {
   });
   const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
   const [experienceLevel, setExperienceLevel] = useState('');
+
+  // Candidate specific states
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
 
   // Step 1: skills + Hedera experience
   const [skills, setSkills] = useState<string[]>([]);
@@ -408,6 +412,8 @@ export default function Preferences() {
         // Create candidate profile without skills
         const profileData = {
           type: "Candidate",
+          FirstName: firstName,
+          LastName: lastName,
           skills: [] // Empty skills array
         };
 
@@ -576,6 +582,15 @@ export default function Preferences() {
         default:
           return true;
       }
+    } else if (userType === 'candidate') {
+      switch (currentStep) {
+        case 'Personal Details':
+          return firstName.trim() !== '' && lastName.trim() !== '';
+        case 'Select Skills':
+          return skills.length > 0;
+        default:
+          return true;
+      }
     }
     return true;
   };
@@ -692,6 +707,49 @@ export default function Preferences() {
               >
                 I'm a Company
               </Button>
+            </Box>
+          </Box>
+        )}
+
+        {/* Personal Details Step - Only for candidates */}
+        {currentStep === 'Personal Details' && userType === 'candidate' && (
+          <Box sx={{ py: 2 }}>
+            <Typography variant="h6" sx={{ color: 'black' }} gutterBottom>
+              Tell us about yourself
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <TextField
+                fullWidth
+                label="First Name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+                sx={{
+                  backgroundColor: 'white',
+                  color: 'black',
+                  '& .MuiInputBase-input': { color: 'grey' },
+                  '& .MuiInputLabel-root': { color: 'grey' },
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'black' }
+                }}
+              />
+              <TextField
+                fullWidth
+                label="Last Name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+                sx={{
+                  backgroundColor: 'white',
+                  color: 'black',
+                  '& .MuiInputBase-input': { color: 'grey' },
+                  '& .MuiInputLabel-root': { color: 'grey' },
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'black' }
+                }}
+              />
             </Box>
           </Box>
         )}
@@ -1107,6 +1165,13 @@ export default function Preferences() {
             ) : (
               <>
                 <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
+                  <strong>Personal Details:</strong>
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'black' }}>
+                  First Name: {firstName}<br />
+                  Last Name: {lastName}
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
                   <strong>Skills:</strong> {skills.join(', ')}
                 </Typography>
                 {hederaExp === 'yes' && (
@@ -1151,6 +1216,7 @@ export default function Preferences() {
             onClick={activeStep === steps.length - 1 ? handleStartTest : handleNext}
             disabled={
               activeStep === 0 && !userType ||
+              (currentStep === 'Personal Details' && (firstName.trim() === '' || lastName.trim() === '')) ||
               (currentStep === 'Select Skills' && skills.length === 0) ||
               (userType === 'company' && !isCurrentStepValid())
             }
