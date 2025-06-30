@@ -349,6 +349,33 @@ async function saveInterviewDetailsForOnboarding(profile, overallScore, skillAna
   return interviewDetails._id; 
 }
 
+async function saveInterviewDetailsForAddSkill(profile, overallScore, skillAnalysis, skillType) {
+  const details = skillAnalysis.map((skill) => ({
+    name: skill.skillName, 
+    type: skillType,
+    proficiencyLevel: skill.demonstratedProficiency, 
+    // experienceLevel : PROFICIENCY_TO_EXPERIENCE_VALUE[skill.proficiencyLevel],
+    confidenceScore : skill.confidenceScore , 
+    questionAnswerList: (skill.questionAnswerList || []).map((qa) => ({
+      question: qa.question,
+      answer: qa.answer || "unanswered",
+      status: qa.status,
+      exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
+    })),
+  }));
+
+
+  const interviewDetails = new InterviewDetails({
+    candidate: profile._id,
+    type: INTERVIEW_TYPES.SKILL, 
+    overallScore: overallScore,
+    skillDetails: details,
+  });
+
+  await interviewDetails.save();
+  return interviewDetails._id; 
+}
+
 module.exports = {
   processSkillsData,
   updateUpgradedSkills,
@@ -361,4 +388,5 @@ module.exports = {
   saveInterviewDetails,
   saveInterviewDetailsForJob,
   saveInterviewDetailsForOnboarding,
+  saveInterviewDetailsForAddSkill
 };
