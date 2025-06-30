@@ -2516,7 +2516,7 @@ export default function DashboardCandidate() {
             <Box>
               <StyledCard>
                 <SectionTitle>Interview Details</SectionTitle>
-                <InterviewDetailsTabs profileId={profile.userId._id} />
+                <InterviewDetailsTabs profile={profile} />
               </StyledCard>
             </Box>
           </Box>
@@ -2744,7 +2744,11 @@ const INTERVIEW_TYPES = [
   { label: 'Skill', value: 'skill' },
 ];
 
-function InterviewDetailsTabs({ profileId }: { profileId: string }) {
+type InterviewDetailsTabsProps = {
+  profile: any; // Replace 'any' with 'ProfileType' if available
+};
+
+function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
   const [tab, setTab] = useState('post');
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -2758,7 +2762,8 @@ function InterviewDetailsTabs({ profileId }: { profileId: string }) {
     setError(null);
     try {
       const token = localStorage.getItem('api_token');
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/?page=${pageNum+1}&limit=${limit}&type=${type}&profileId=${profileId}`;
+      const realProfileId = profile?._id;
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/?page=${pageNum+1}&limit=${limit}&type=${type}&profileId=${realProfileId}`;
       const res = await fetch(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -2771,7 +2776,7 @@ function InterviewDetailsTabs({ profileId }: { profileId: string }) {
     } finally {
       setLoading(false);
     }
-  }, [profileId]);
+  }, [profile]);
 
   useEffect(() => {
     fetchData(tab, page, rowsPerPage);
