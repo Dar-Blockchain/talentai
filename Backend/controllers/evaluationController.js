@@ -15,6 +15,10 @@ const Post = require("../models/PostModel");
 
 const postService = require("../services/postService");
 const evaluationservice = require("../services/evaluationService");
+const {
+  saveInterviewDetailsForOnboarding,
+  saveInterviewDetailsForAddSkill,
+} = require("../utils/evaluationUtils");
 
 // Configure the Together AI client
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
@@ -475,6 +479,7 @@ function getMasteryCategory(score) {
 
 const profileService = require("../services/profileService");
 const { HttpError } = require("../utils/httpUtils");
+const { SKILL_TYPES } = require("../constants/profileConstants");
 
 exports.analyzeProfileAnswers = async (req, res) => {
   try {
@@ -550,8 +555,16 @@ Based on this ${type} assessment, provide a detailed analysis in the following J
       "weaknesses": ["Needs improvement in conflict resolution"],
       "confidenceScore": 80,
       "improvement": "increased",
-      "subcategory": "conflict-resolution"  // optional, if applicable
-    }
+      "subcategory": "conflict-resolution",  // optional, if applicable
+      "questionAnswerList": [
+        {
+          "question": string,
+          "answer": string,
+          "status": "correct" | "partial_correct" | "incorrect",
+          "exampleCorrectAnswer": string (optional, only if status is "incorrect")
+        }
+      ]
+    },
   ],
   "generalAssessment": "Strong foundational knowledge with some areas for improvement",
   "recommendations": [
@@ -578,7 +591,7 @@ Provide detailed, actionable feedback in JSON format only.`,
         },
         { role: "user", content: prompt },
       ],
-      max_tokens: 1000,
+      max_tokens: 2500,
       temperature: 0.7,
       stream: true,
     });
@@ -666,6 +679,9 @@ Provide detailed, actionable feedback in JSON format only.`,
             strengths: Array.isArray(skill.strengths) ? skill.strengths : [],
             weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
             confidenceScore: score,
+            questionAnswerList: Array.isArray(skill.questionAnswerList)
+              ? skill.questionAnswerList
+              : [],
             improvement:
               demo > current
                 ? "increased"
@@ -770,12 +786,18 @@ Provide detailed, actionable feedback in JSON format only.`,
       },
     };
 
+    let skillType;
+    let interviewProfile;
+
     // 6. Save profile data based on assessment type
     if (type === "technical") {
       console.log("type", type);
+      skillType = SKILL_TYPES.HARD;
       const profileOverallScore = await profileService.getProfileByUserId(
         user._id
       );
+      interviewProfile = profileOverallScore;
+
       await profileService.createOrUpdateProfile(user._id, {
         overallScore:
           profileOverallScore.overallScore === 0
@@ -795,7 +817,9 @@ Provide detailed, actionable feedback in JSON format only.`,
     }
 
     if (type === "soft") {
+      skillType = SKILL_TYPES.SOFT;
       const profile = await Profile.findOne({ userId: user._id });
+      interviewProfile = profile;
       const newOverallScore =
         profile.overallScore === 0
           ? analysis.overallScore
@@ -824,9 +848,11 @@ Provide detailed, actionable feedback in JSON format only.`,
     // Après avoir reçu et parsé la réponse brute de GPT en "analysis"
     if (type === "technicalSkill") {
       //AddNewTechnicalSkill
+      skillType = SKILL_TYPES.HARD;
       const profileOverallScore = await profileService.getProfileByUserId(
         user._id
       );
+      interviewProfile = profileOverallScore;
 
       function proficiencyFromConfidenceScore(score) {
         if (score >= 0 && score <= 20) return 1;
@@ -908,6 +934,21 @@ Provide detailed, actionable feedback in JSON format only.`,
         });
       }
     }
+
+    // Save interview details and update profile with interview ID
+    const interviewId = await saveInterviewDetailsForAddSkill(
+      interviewProfile,
+      analysis.overallScore,
+      analysis.skillAnalysis,
+      skillType
+    );
+
+    if (!interviewProfile.interviewDetails) {
+      interviewProfile.interviewDetails = [];
+    }
+
+    interviewProfile.interviewDetails.push(interviewId);
+    await interviewProfile.save();
 
     // 7. Return the response
     res.status(200).json({
@@ -1406,7 +1447,7 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
         },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 1000,
+      max_tokens: 2500,
       temperature: 0.7,
       stream: true,
     });
@@ -1505,6 +1546,18 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
       analysis.skillAnalysis[0].demonstratedExperienceLevel =
         demonstratedExperienceLevel;
 
+      // save interview details and update profile with interview ID
+      const interviewId = await saveInterviewDetailsForOnboarding(
+        profile,
+        overallScore,
+        analysis.skillAnalysis
+      );
+      if (!profile.interviewDetails) {
+        profile.interviewDetails = [];
+      }
+      profile.interviewDetails.push(interviewId);
+      await profile.save();
+
       // add skill to profile if experienceLevel is proven
       if (demonstratedExperienceLevel > 0) {
         profile.skills = [
@@ -1575,14 +1628,15 @@ exports.generateHRQuestions = async (req, res) => {
       targetRole: req.body.targetRole,
       experienceLevel: req.body.experienceLevel,
       interviewFormat: req.body.interviewFormat,
-      simulationGoal: req.body.simulationGoal
+      simulationGoal: req.body.simulationGoal,
     };
 
-    const result = await evaluationservice.generateHRQuestions(profile, formData);
-
-    res.status(200).json(
-      result
+    const result = await evaluationservice.generateHRQuestions(
+      profile,
+      formData
     );
+
+    res.status(200).json(result);
   } catch (error) {
     if (error instanceof HttpError) {
       return res.status(error.statusCode || 500).json({
@@ -1630,7 +1684,7 @@ exports.analyzeHRAnswers = async (req, res) => {
         .json({ error: "You have reached your test limit (5)" });
     }
 
-    if (!Array.isArray(questions) ) {
+    if (!Array.isArray(questions)) {
       return res.status(400).json({
         error: "Invalid request format",
         required: {
@@ -1641,8 +1695,8 @@ exports.analyzeHRAnswers = async (req, res) => {
 
     const result = await evaluationservice.analyzeHRAnswers({
       questions,
-      user, 
-      formData
+      user,
+      formData,
     });
 
     res.status(200).json({ success: true, result });
