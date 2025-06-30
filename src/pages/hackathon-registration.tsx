@@ -13,12 +13,20 @@ import {
   Alert,
   Avatar,
   Snackbar,
+  Divider,
+  Fade,
+  Stepper,
+  Step,
+  StepLabel,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
 import Cookies from 'js-cookie';
+import PersonIcon from '@mui/icons-material/Person';
+import EmailIcon from '@mui/icons-material/Email';
+import WorkIcon from '@mui/icons-material/Work';
 
 interface TeamMember {
   name: string;
@@ -36,6 +44,10 @@ const HackathonRegistration = () => {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [leaderFirstName, setLeaderFirstName] = useState('');
+  const [leaderLastName, setLeaderLastName] = useState('');
+  const steps = ['Leader Info', 'Project Info', 'Team Members'];
+  const [activeStep, setActiveStep] = useState(0);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -48,20 +60,6 @@ const HackathonRegistration = () => {
   if (!mounted || !isAuthenticated) {
     return null;
   }
-
-  // Logout handler
-  const handleLogout = () => {
-    localStorage.clear();
-    sessionStorage.clear();
-    // Remove all cookies
-    Object.keys(Cookies.get()).forEach(function(cookieName) {
-      Cookies.remove(cookieName);
-    });
-    setSnackbarOpen(true);
-    setTimeout(() => {
-      router.push('/signin');
-    }, 1200);
-  };
 
   const handleAddMember = () => {
     if (!newMember.name || !newMember.role) {
@@ -77,27 +75,47 @@ const HackathonRegistration = () => {
     setTeamMembers(teamMembers.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
-    if (!projectName || !projectDescription || teamMembers.length === 0) {
+  const handleNext = () => {
+    // Validation per step
+    if (activeStep === 0 && (!leaderFirstName || !leaderLastName)) {
+      setError('Please fill in leader first and last name');
+      return;
+    }
+    if (activeStep === 1 && (!projectName || !projectDescription)) {
+      setError('Please fill in project name and description');
+      return;
+    }
+    if (activeStep === 2 && teamMembers.length === 0) {
+      setError('Please add at least one team member');
+      return;
+    }
+    setError('');
+    setActiveStep((prev) => prev + 1);
+  };
+
+  const handleBack = () => {
+    setError('');
+    setActiveStep((prev) => prev - 1);
+  };
+
+  const handleStepSubmit = () => {
+    if (!leaderFirstName || !leaderLastName || !projectName || !projectDescription || teamMembers.length === 0) {
       setError('Please fill all required fields');
       return;
     }
-
     try {
-      // Store project data in localStorage
       const projectData = {
+        leaderFirstName,
+        leaderLastName,
         projectName,
         projectDescription,
         teamMembers,
         progress: 0,
         submissionStatus: 'Not Submitted',
-        deadlineDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+        deadlineDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         createdAt: new Date().toISOString()
       };
-
       localStorage.setItem('hackathonProject', JSON.stringify(projectData));
-
-      // Redirect to hackathon dashboard
       router.push('/hackathon-dashboard');
     } catch (err) {
       setError('Failed to save project data. Please try again.');
@@ -105,188 +123,255 @@ const HackathonRegistration = () => {
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 4, mb: 0 }}>
-        <Button
-          variant="outlined"
-          color="error"
-          size="small"
-          sx={{ borderColor: '#F44336', color: '#F44336', fontWeight: 600, '&:hover': { bgcolor: '#FFEBEE', borderColor: '#D32F2F', color: '#D32F2F' } }}
-          onClick={handleLogout}
-          disabled={snackbarOpen}
-        >
-          Logout
-        </Button>
-      </Box>
-      <Box sx={{ mt: 8, mb: 4 }}>
-        <Typography variant="h4" component="h1" align="center" sx={{ color: '#2E3A59', fontWeight: 700, mb: 2, letterSpacing: 0.2 }}>
-          Hackathon Registration
-        </Typography>
-        <Typography variant="subtitle1" align="center" sx={{ color: '#8F9BB3', mb: 2 }}>
-          Register your project and team for the hackathon
-        </Typography>
-      </Box>
-
-      <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 3, border: '1px solid #EDF1F7', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
-
-        {/* Project Info Section */}
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" sx={{ color: '#2E3A59', fontWeight: 600, mb: 2 }}>
-            Project Info
-          </Typography>
-          <Stack spacing={2}>
-            <TextField
-              label="Project Name"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              fullWidth
-              required
-              variant="outlined"
-            />
-            <TextField
-              label="Project Description"
-              value={projectDescription}
-              onChange={(e) => setProjectDescription(e.target.value)}
-              multiline
-              rows={4}
-              fullWidth
-              required
-              variant="outlined"
-            />
-          </Stack>
-        </Box>
-
-        {/* Team Members Section */}
+    <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
+      <Fade in timeout={600}>
         <Box>
-          <Typography variant="h6" sx={{ color: '#2E3A59', fontWeight: 600, mb: 2 }}>
-            Team Members
-          </Typography>
-
-          {/* Add Member Row */}
-          <Paper sx={{ p: 2, mb: 3, borderRadius: 2, bgcolor: '#F7F9FC', border: '1px solid #EDF1F7' }}>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
-              <TextField
-                label="Name"
-                value={newMember.name}
-                onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-                size="small"
-                fullWidth
-                variant="outlined"
-              />
-              <TextField
-                label="Email (Optional)"
-                type="email"
-                value={newMember.email}
-                onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
-                size="small"
-                fullWidth
-                variant="outlined"
-              />
-              <TextField
-                label="Role"
-                value={newMember.role}
-                onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
-                size="small"
-                fullWidth
-                variant="outlined"
-              />
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'flex-end', sm: 'center' } }}>
-                <IconButton 
-                  onClick={handleAddMember}
-                  sx={{ 
-                    bgcolor: '#2196F3',
-                    color: '#fff',
-                    border: '1px solid #2196F3',
-                    '&:hover': { bgcolor: '#1976D2', borderColor: '#1976D2' },
-                    transition: 'all 0.2s',
-                    boxShadow: '0 2px 8px rgba(33,150,243,0.08)'
-                  }}
-                >
-                  <AddIcon />
-                </IconButton>
+          <Box sx={{ mt: 1, mb: 2, textAlign: 'center' }}>
+            <Typography variant="h5" component="h1" sx={{ color: '#5E35B1', fontWeight: 800, mb: 0.5, letterSpacing: 0.3, fontSize: { xs: '1.3rem', sm: '1.7rem' } }}>
+              Hackathon Registration
+            </Typography>
+            <Typography variant="subtitle2" sx={{ color: '#7C7C7C', mb: 1, fontWeight: 500, fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>
+              Register your project and team for the hackathon
+            </Typography>
+          </Box>
+          <Paper elevation={1} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, border: '1px solid #EDE7F6', background: 'linear-gradient(135deg, #F3E5F5 0%, #E3F2FD 100%)', boxShadow: '0 2px 8px rgba(103,58,183,0.05)' }}>
+            <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 2 }}>
+              {steps.map((label) => (
+                <Step key={label}>
+                  <StepLabel>{label}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+            {error && (
+              <Alert severity="error" sx={{ mb: 2, fontSize: '0.95rem' }}>
+                {error}
+              </Alert>
+            )}
+            {/* Step Content */}
+            {activeStep === 0 && (
+              <Box>
+                <Typography variant="subtitle1" sx={{ color: '#4527A0', fontWeight: 700, mb: 1, letterSpacing: 0.1, fontSize: { xs: '1rem', sm: '1.1rem' } }}>
+                  Leader Info
+                </Typography>
+                <Stack spacing={1.2} direction={{ xs: 'column', sm: 'row', md: 'column' }}>
+                  <TextField
+                    label="Leader First Name"
+                    value={leaderFirstName}
+                    onChange={(e) => setLeaderFirstName(e.target.value)}
+                    fullWidth
+                    required
+                    variant="outlined"
+                    size="small"
+                    sx={{ bgcolor: '#fff', borderRadius: 1 }}
+                  />
+                  <TextField
+                    label="Leader Last Name"
+                    value={leaderLastName}
+                    onChange={(e) => setLeaderLastName(e.target.value)}
+                    fullWidth
+                    required
+                    variant="outlined"
+                    size="small"
+                    sx={{ bgcolor: '#fff', borderRadius: 1 }}
+                  />
+                </Stack>
               </Box>
-            </Stack>
-          </Paper>
-
-          {/* Team Members List */}
-          <Stack spacing={2}>
-            {teamMembers.map((member, index) => (
-              <Paper
-                key={index}
-                sx={{
-                  p: 2,
-                  border: '1px solid #EDF1F7',
-                  borderRadius: 2,
+            )}
+            {activeStep === 1 && (
+              <Box>
+                <Typography variant="subtitle1" sx={{ color: '#4527A0', fontWeight: 700, mb: 1, letterSpacing: 0.1, fontSize: { xs: '1rem', sm: '1.1rem' } }}>
+                  Project Info
+                </Typography>
+                <Stack spacing={1.2}>
+                  <TextField
+                    label="Project Name"
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    fullWidth
+                    required
+                    variant="outlined"
+                    size="small"
+                    sx={{ bgcolor: '#fff', borderRadius: 1 }}
+                  />
+                  <TextField
+                    label="Project Description"
+                    value={projectDescription}
+                    onChange={(e) => setProjectDescription(e.target.value)}
+                    multiline
+                    rows={3}
+                    fullWidth
+                    required
+                    variant="outlined"
+                    size="small"
+                    sx={{ bgcolor: '#fff', borderRadius: 1 }}
+                  />
+                </Stack>
+              </Box>
+            )}
+            {activeStep === 2 && (
+              <Box>
+                <Typography variant="subtitle1" sx={{ color: '#4527A0', fontWeight: 700, mb: 1, letterSpacing: 0.1, fontSize: { xs: '1rem', sm: '1.1rem' } }}>
+                  Team Members
+                </Typography>
+                <Paper sx={{
+                  p: 1.2,
+                  mb: 2,
+                  borderRadius: 1.5,
+                  bgcolor: '#F3E5F5',
+                  border: '1px solid #E1BEE7',
+                  boxShadow: '0 1px 4px rgba(103,58,183,0.04)',
                   display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: 1,
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  bgcolor: '#FAFAFA',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar sx={{ bgcolor: '#E3F2FD', color: '#2196F3', width: 36, height: 36, fontWeight: 600 }}>
-                    {member.name[0]?.toUpperCase()}
-                  </Avatar>
-                  <Box>
-                    <Typography variant="subtitle2" sx={{ color: '#2E3A59', fontWeight: 600 }}>
-                      {member.name}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#8F9BB3' }}>
-                      {member.role}
-                    </Typography>
-                    {member.email && (
-                      <Typography variant="body2" sx={{ color: '#8F9BB3' }}>
-                        {member.email}
-                      </Typography>
-                    )}
+                }}>
+                  <TextField
+                    label="Name"
+                    value={newMember.name}
+                    onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
+                    size="small"
+                    fullWidth
+                    variant="outlined"
+                    sx={{ bgcolor: '#fff', borderRadius: 1 }}
+                    InputProps={{ startAdornment: <PersonIcon sx={{ color: '#B39DDB', mr: 0.5, fontSize: 18 }} /> }}
+                  />
+                  <TextField
+                    label="Email (Optional)"
+                    type="email"
+                    value={newMember.email}
+                    onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
+                    size="small"
+                    fullWidth
+                    variant="outlined"
+                    sx={{ bgcolor: '#fff', borderRadius: 1 }}
+                    InputProps={{ startAdornment: <EmailIcon sx={{ color: '#B39DDB', mr: 0.5, fontSize: 18 }} /> }}
+                  />
+                  <TextField
+                    label="Role"
+                    value={newMember.role}
+                    onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
+                    size="small"
+                    fullWidth
+                    variant="outlined"
+                    sx={{ bgcolor: '#fff', borderRadius: 1 }}
+                    InputProps={{ startAdornment: <WorkIcon sx={{ color: '#B39DDB', mr: 0.5, fontSize: 18 }} /> }}
+                  />
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'flex-end', sm: 'center' } }}>
+                    <IconButton 
+                      onClick={handleAddMember}
+                      size="small"
+                      sx={{ 
+                        bgcolor: '#7C4DFF',
+                        color: '#fff',
+                        border: '1px solid #7C4DFF',
+                        '&:hover': { bgcolor: '#5E35B1', borderColor: '#5E35B1' },
+                        transition: 'all 0.2s',
+                        boxShadow: '0 1px 4px rgba(103,58,183,0.08)'
+                      }}
+                    >
+                      <AddIcon sx={{ fontSize: 18 }} />
+                    </IconButton>
                   </Box>
-                </Box>
-                <IconButton 
-                  onClick={() => handleRemoveMember(index)}
+                </Paper>
+                <Divider sx={{ my: 1.2, borderColor: '#D1C4E9' }} />
+                <Stack spacing={1.2}>
+                  {teamMembers.map((member, index) => (
+                    <Paper
+                      key={index}
+                      sx={{
+                        p: 1.2,
+                        border: '1px solid #E1BEE7',
+                        borderRadius: 1.5,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        bgcolor: '#fff',
+                        boxShadow: '0 2px 8px rgba(103,58,183,0.04)',
+                        transition: 'box-shadow 0.2s',
+                        '&:hover': {
+                          boxShadow: '0 4px 16px rgba(103,58,183,0.10)',
+                          borderColor: '#7C4DFF',
+                        },
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
+                        <Avatar sx={{ bgcolor: '#EDE7F6', color: '#7C4DFF', width: 32, height: 32, fontWeight: 700, fontSize: 16 }}>
+                          {member.name[0]?.toUpperCase()}
+                        </Avatar>
+                        <Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7 }}>
+                            <PersonIcon sx={{ color: '#7C4DFF', fontSize: 16 }} />
+                            <Typography variant="subtitle2" sx={{ color: '#4527A0', fontWeight: 700, fontSize: '0.98rem' }}>
+                              {member.name}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7, mt: 0.2 }}>
+                            <WorkIcon sx={{ color: '#8F9BB3', fontSize: 14 }} />
+                            <Typography variant="body2" sx={{ color: '#8F9BB3', fontWeight: 500, fontSize: '0.92rem' }}>
+                              {member.role}
+                            </Typography>
+                          </Box>
+                          {member.email && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7, mt: 0.2 }}>
+                              <EmailIcon sx={{ color: '#8F9BB3', fontSize: 14 }} />
+                              <Typography variant="body2" sx={{ color: '#8F9BB3', fontSize: '0.92rem' }}>
+                                {member.email}
+                              </Typography>
+                            </Box>
+                          )}
+                        </Box>
+                      </Box>
+                      <IconButton 
+                        onClick={() => handleRemoveMember(index)}
+                        size="small"
+                        sx={{ color: '#F44336', '&:hover': { bgcolor: '#FFEBEE' } }}
+                      >
+                        <DeleteIcon sx={{ fontSize: 18 }} />
+                      </IconButton>
+                    </Paper>
+                  ))}
+                </Stack>
+              </Box>
+            )}
+            {/* Stepper Navigation */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+              <Button
+                disabled={activeStep === 0}
+                onClick={handleBack}
+                size="small"
+                sx={{ minWidth: 90 }}
+              >
+                Back
+              </Button>
+              {activeStep < steps.length - 1 ? (
+                <Button
+                  variant="contained"
+                  onClick={handleNext}
                   size="small"
-                  sx={{ color: '#F44336', '&:hover': { bgcolor: '#FFEBEE' } }}
+                  sx={{ minWidth: 90, bgcolor: '#7C4DFF', '&:hover': { bgcolor: '#5E35B1' } }}
                 >
-                  <DeleteIcon />
-                </IconButton>
-              </Paper>
-            ))}
-          </Stack>
+                  Next
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  onClick={handleStepSubmit}
+                  size="small"
+                  sx={{ minWidth: 90, bgcolor: '#7C4DFF', '&:hover': { bgcolor: '#5E35B1' } }}
+                >
+                  Register
+                </Button>
+              )}
+            </Box>
+          </Paper>
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={1200}
+            message="Logged out successfully"
+            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          />
         </Box>
-
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            sx={{
-              mt: 4,
-              bgcolor: '#673AB7',
-              '&:hover': { bgcolor: '#5E35B1' },
-              py: 1.5,
-              px: 4,
-              fontSize: '1.1rem',
-              minWidth: '200px',
-              borderRadius: 2,
-              boxShadow: '0 2px 8px rgba(103,58,183,0.08)',
-              transition: 'all 0.2s',
-            }}
-          >
-            Register Project
-          </Button>
-        </Box>
-      </Paper>
-
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={1200}
-        message="Logged out successfully"
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      />
+      </Fade>
     </Container>
   );
 };
