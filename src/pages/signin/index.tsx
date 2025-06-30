@@ -129,6 +129,7 @@ export default function SignIn() {
         
         // Check if there's a returnUrl in the query parameters
         const returnUrl = router.query.returnUrl as string;
+        const isHackathon = router.query.source === 'hackathon';
         
         // Add a longer delay to ensure token is properly set
         setTimeout(() => {
@@ -163,6 +164,12 @@ export default function SignIn() {
               
               console.log("Has profile:", hasProfile);
               console.log("Profile type:", profileData?.userId?.role);
+              
+              if (isHackathon) {
+                // If coming from hackathon URL, go to hackathon registration
+                router.push('/hackathon-registration');
+                return;
+              }
               
               if (returnUrl) {
                 if (!hasProfile) {
@@ -254,6 +261,18 @@ export default function SignIn() {
   useEffect(() => {
     console.log("userType", userType);
   }, [userType]);
+
+  useEffect(() => {
+    if (router.isReady) {
+      // Check for hackathon parameter
+      const isHackathon = router.query.source === 'hackathon';
+      if (isHackathon) {
+        // Store hackathon status in localStorage
+        localStorage.setItem('isHackathonParticipant', 'true');
+      }
+    }
+  }, [router.isReady, router.query]);
+
   return (
     <Box
       sx={{

@@ -48,6 +48,8 @@ import {
   TableHead,
   TableRow,
   TablePagination,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
@@ -72,6 +74,7 @@ import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CandidateOnly from "../components/CandidateOnly";
+import { useCallback } from 'react';
 const GREEN_MAIN = "#8310FF";
 
 // Styled Components
@@ -2508,99 +2511,14 @@ export default function DashboardCandidate() {
                 </Box>
               </StyledCard>
             </Box>
-            {/* <Box>
+
+            {/* Interview Details Section */}
+            <Box>
               <StyledCard>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <SectionTitle>To-Do List</SectionTitle>
-                  <Button
-                    variant="contained"
-                    startIcon={<PlayArrowIcon />}
-                    onClick={generateTodoList}
-                    sx={{
-                      background: GREEN_MAIN,
-                      color: "#000000",
-                      "&:hover": {
-                        background: "rgba(0, 255, 157, 0.9)",
-                      },
-                    }}
-                  >
-                    Generate
-                  </Button>
-                </Box>
-
-                <Box>
-                  {todos?.data?.length > 0 &&
-                    todos.data.map((item, index) => (
-                      <Accordion
-                        key={index}
-                        disableGutters
-                        elevation={0}
-                        sx={{
-                          mb: 2,
-                          border: "1px solid #ddd",
-                          borderRadius: "4px",
-                          "&::before": { display: "none" },
-                        }}
-                      >
-                        <AccordionSummary
-                          expandIcon={
-                            item.tasks.length > 0 ? <ExpandMoreIcon /> : null
-                          }
-                          sx={{
-                            display: "flex",
-                            bgcolor: "#f9f9f9",
-                            alignItems: "center",
-                            borderRadius: "4px",
-                          }}
-                        >
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <Checkbox
-                              checked={item.isCompleted}
-                              sx={{ color: GREEN_MAIN, mr: 1 }}
-                            />
-                            <Typography sx={{ fontWeight: 500 }}>
-                              {item.title}
-                            </Typography>
-                          </Box>
-                        </AccordionSummary>
-
-                        {item?.tasks?.length > 0 && (
-                          <AccordionDetails>
-                            <Box
-                              component="ul"
-                              sx={{ listStyle: "none", p: 0, m: 0 }}
-                            >
-                              {item.tasks.map((task: any, i: any) => (
-                                <Box
-                                  key={i}
-                                  component="li"
-                                  sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    mb: 1,
-                                  }}
-                                >
-                                  <Checkbox
-                                    checked={task.isCompleted}
-                                    sx={{ color: GREEN_MAIN, mr: 1 }}
-                                  />
-                                  <Typography>{task.title}</Typography>
-                                </Box>
-                              ))}
-                            </Box>
-                          </AccordionDetails>
-                        )}
-                      </Accordion>
-                    ))}
-                </Box>
+                <SectionTitle>Interview Details</SectionTitle>
+                <InterviewDetailsTabs profileId={profile.userId._id} />
               </StyledCard>
-            </Box> */}
+            </Box>
           </Box>
 
           {/* Add Skill Dialog */}
@@ -2816,5 +2734,165 @@ export default function DashboardCandidate() {
         </Container>
       </Box>
     </CandidateOnly>
+  );
+}
+
+const INTERVIEW_TYPES = [
+  { label: 'Post', value: 'post' },
+  { label: 'Onboarding', value: 'onboarding' },
+  { label: 'HR', value: 'hr' },
+  { label: 'Skill', value: 'skill' },
+];
+
+function InterviewDetailsTabs({ profileId }: { profileId: string }) {
+  const [tab, setTab] = useState('post');
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(2);
+  const [total, setTotal] = useState(0);
+
+  const fetchData = useCallback(async (type: string, pageNum: number, limit: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = localStorage.getItem('api_token');
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/?page=${pageNum+1}&limit=${limit}&type=${type}&profileId=${profileId}`;
+      const res = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error('Failed to fetch interview details');
+      const json = await res.json();
+      setData(json.results || []);
+      setTotal(json.total || 0);
+    } catch (e: any) {
+      setError(e.message || 'Error fetching data');
+    } finally {
+      setLoading(false);
+    }
+  }, [profileId]);
+
+  useEffect(() => {
+    fetchData(tab, page, rowsPerPage);
+  }, [tab, page, rowsPerPage, fetchData]);
+
+  const handleTabChange = (_: any, newValue: string) => {
+    setTab(newValue);
+    setPage(0);
+  };
+  const handleChangePage = (_: any, newPage: number) => setPage(newPage);
+  const handleChangeRowsPerPage = (e: any) => {
+    setRowsPerPage(parseInt(e.target.value, 10));
+    setPage(0);
+  };
+
+  // Add modal state and handler inside InterviewDetailsTabs
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsRow, setDetailsRow] = useState<any>(null);
+  const handleOpenDetails = (row: any) => {
+    setDetailsRow(row);
+    setDetailsOpen(true);
+  };
+  const handleCloseDetails = () => {
+    setDetailsOpen(false);
+    setDetailsRow(null);
+  };
+
+  return (
+    <Box>
+      <Tabs value={tab} onChange={handleTabChange} sx={{ mb: 2 }}>
+        {INTERVIEW_TYPES.map((t) => (
+          <Tab key={t.value} label={t.label} value={t.value} />
+        ))}
+      </Tabs>
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress color="primary" />
+        </Box>
+      ) : error ? (
+        <Alert severity="error">{error}</Alert>
+      ) : (
+        <>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Type</TableCell>
+                <TableCell>Overall Score</TableCell>
+                <TableCell>Post Name</TableCell>
+                <TableCell>Details</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} align="center">No data</TableCell>
+                </TableRow>
+              ) : (
+                data.map((row: any, idx: number) => {
+                  return (
+                    <TableRow key={row._id || row.id}>
+                      <TableCell>{row.type || '-'}</TableCell>
+                      <TableCell>{row.overallScore ?? '-'}</TableCell>
+                      <TableCell>{row.post?.jobDetails?.title || '-'}</TableCell>
+                      <TableCell>
+                        <Button variant="outlined" size="small" onClick={() => handleOpenDetails(row)}>
+                          Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+          <TablePagination
+            component="div"
+            count={total}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[2, 5, 10]}
+          />
+        </>
+      )}
+      {/* Details Modal */}
+      <Dialog open={detailsOpen} onClose={handleCloseDetails} maxWidth="md" fullWidth>
+        <DialogTitle>Interview Questions & Answers</DialogTitle>
+        <DialogContent dividers>
+          {detailsRow && Array.isArray(detailsRow.skillDetails) ? (
+            detailsRow.skillDetails.map((s: any, i: number) => (
+              <Box key={i} sx={{ mb: 3 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                  {s.name || '-'}
+                </Typography>
+                {Array.isArray(s.questionAnswerList) && s.questionAnswerList.length > 0 ? (
+                  s.questionAnswerList.map((qa: any, idx: number) => (
+                    <Box key={idx} sx={{ mb: 1, pl: 2 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        Q{idx + 1}: {qa.question || '-'}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', ml: 2 }}>
+                        A{idx + 1}: {qa.answer || '-'}
+                      </Typography>
+                    </Box>
+                  ))
+                ) : (
+                  <Typography variant="body2" sx={{ color: 'text.secondary', pl: 2 }}>
+                    No questions/answers.
+                  </Typography>
+                )}
+              </Box>
+            ))
+          ) : (
+            <Typography>No details available.</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDetails}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 }

@@ -16,7 +16,8 @@ exports.getAllInterviewDetails = async ({ page = 1, limit = 10, sort = "-created
       .populate("candidate", "firstName lastName email")
       .populate("company", "name")
       .populate("post", "title")
-      .populate("jobAssessmentResult"),
+      .populate("jobAssessmentResult")
+      .populate("post"),
     InterviewDetails.countDocuments(query)
   ]);
 
