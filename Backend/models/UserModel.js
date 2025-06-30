@@ -30,6 +30,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isHaker: {
+      type: Boolean,
+      default: false,
+    },
     warnings: { type: Number, default: 0 }, // au lieu de warning
     lastLogin: {
       type: Date,
@@ -41,6 +45,10 @@ const userSchema = new mongoose.Schema(
     profile: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Profile",
+    },
+    project: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Project",
     },
     post: [
       {
