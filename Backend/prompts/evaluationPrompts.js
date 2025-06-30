@@ -193,6 +193,12 @@ Your task is to:
         - dueDate: timestamp in milliseconds
         - isCompleted: false
     }
+- questionAnswerList: an array of question-answer pairs, with the following rules:
+    - question string,
+    - answer: string,
+    - status: "correct" | "partial_correct" | "incorrect",
+    - exampleCorrectAnswer: string (optional, only if status is "incorrect")        
+
 - Provide a comprehensive, skill analysis.
 - Offer actionable recommendations for improvement.
 
@@ -260,8 +266,8 @@ Generate and return JSON in the following format:
   "overallScore": 0-100,
   "technicalLevel":"string",
   "generalAssassment":"string",
-  "recommendations":[...],
-  "nextSteps":[...],
+  "recommendations":[...], // Must NOT be empty and each item must contain meaningful advice or suggestions.
+  "nextSteps":[...],  // Must NOT be empty and each item must contain actionable steps or plans.
   "skillAnalysis": [
     {
       "skillName": "${skillName}",
@@ -285,7 +291,15 @@ Generate and return JSON in the following format:
             "isCompleted": false,
           }
         ]
-      }
+      },
+      "questionAnswerList": [
+        {
+          "question": string,
+          "answer": string,
+          "status": "correct" | "partial_correct" | "incorrect",
+          "exampleCorrectAnswer": string (optional, only if status is "incorrect")
+        }
+      ]
     }
   ],
 }

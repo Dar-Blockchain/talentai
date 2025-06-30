@@ -15,6 +15,9 @@ const Post = require("../models/PostModel");
 
 const postService = require("../services/postService");
 const evaluationservice = require("../services/evaluationService");
+const {
+  saveInterviewDetailsForOnboarding,
+} = require("../utils/evaluationUtils");
 
 // Configure the Together AI client
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
@@ -1406,7 +1409,7 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
         },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 1000,
+      max_tokens: 2500,
       temperature: 0.7,
       stream: true,
     });
@@ -1505,6 +1508,18 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
       analysis.skillAnalysis[0].demonstratedExperienceLevel =
         demonstratedExperienceLevel;
 
+      // save interview details and update profile with interview ID
+      const interviewId = await saveInterviewDetailsForOnboarding(
+        profile,
+        overallScore,
+        analysis.skillAnalysis
+      );
+      if (!profile.interviewDetails) {
+        profile.interviewDetails = [];
+      }
+      profile.interviewDetails.push(interviewId);
+      await profile.save();
+
       // add skill to profile if experienceLevel is proven
       if (demonstratedExperienceLevel > 0) {
         profile.skills = [
@@ -1575,14 +1590,15 @@ exports.generateHRQuestions = async (req, res) => {
       targetRole: req.body.targetRole,
       experienceLevel: req.body.experienceLevel,
       interviewFormat: req.body.interviewFormat,
-      simulationGoal: req.body.simulationGoal
+      simulationGoal: req.body.simulationGoal,
     };
 
-    const result = await evaluationservice.generateHRQuestions(profile, formData);
-
-    res.status(200).json(
-      result
+    const result = await evaluationservice.generateHRQuestions(
+      profile,
+      formData
     );
+
+    res.status(200).json(result);
   } catch (error) {
     if (error instanceof HttpError) {
       return res.status(error.statusCode || 500).json({
@@ -1630,7 +1646,7 @@ exports.analyzeHRAnswers = async (req, res) => {
         .json({ error: "You have reached your test limit (5)" });
     }
 
-    if (!Array.isArray(questions) ) {
+    if (!Array.isArray(questions)) {
       return res.status(400).json({
         error: "Invalid request format",
         required: {
@@ -1641,8 +1657,8 @@ exports.analyzeHRAnswers = async (req, res) => {
 
     const result = await evaluationservice.analyzeHRAnswers({
       questions,
-      user, 
-      formData
+      user,
+      formData,
     });
 
     res.status(200).json({ success: true, result });
