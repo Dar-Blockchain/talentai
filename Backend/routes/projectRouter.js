@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const projectController = require("../controllers/project.controller");
+const projectController = require("../controllers/projectContoller");
 
 router.post("/addProject", projectController.createProject); // Créer un projet
 router.get("/getAllProjects", projectController.getAllProjects); // Récupérer tous les projets

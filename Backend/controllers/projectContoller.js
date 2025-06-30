@@ -1,4 +1,4 @@
-const projectService = require("../services/project.service");
+const projectService = require("../services/projectService");
 
 // Créer un projet
 const createProject = async (req, res) => {
