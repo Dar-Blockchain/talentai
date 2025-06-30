@@ -718,3 +718,56 @@ module.exports.generateUserExcelWithAssessmentZero = async () => {
 };
 
 
+module.exports.generateUserExcelWithAssessmentAbove50 = async () => {
+  try {
+    // Récupérer tous les résultats d'évaluation avec un overallScore >= 50
+    const assessments = await JobAssessmentResult.find({ "analysis.overallScore": { $gte: 50 } })
+      .populate({
+        path: "condidateId", // Peupler le profil du candidat (user)
+        select: "userId", // Sélectionner uniquement le userId pour récupérer l'utilisateur
+      })
+      .populate({
+        path: "companyId", // Peupler le profil de l'entreprise (user)
+        select: "userId", // Sélectionner uniquement le userId pour récupérer l'entreprise
+      });
+
+    // Filtrer les utilisateurs à partir des résultats d'évaluation
+    const users = [];
+    assessments.forEach((assessment) => {
+      if (assessment.condidateId && assessment.condidateId.userId) {
+        users.push(assessment.condidateId.userId);
+      }
+    });
+
+    // Récupérer les utilisateurs associés aux résultats d'évaluation
+    const populatedUsers = await User.find({ _id: { $in: users } })
+      .select("username FirstName LastName email role lastLogin ip Localisation");
+
+    // Convertir les utilisateurs en format JSON pour Excel
+    const usersData = populatedUsers.map(user => {
+      return {
+        UserID: user._id.toString(), // Récupérer l'ID de l'utilisateur et le convertir en chaîne de caractères
+        Username: user.username,
+        FirstName: user.FirstName,
+        LastName: user.LastName,
+        Email: user.email,
+        Role: user.role,
+        ip: user.ip,
+        Localisation: user.Localisation,
+        LastLogin: user.lastLogin ? user.lastLogin.toISOString() : 'N/A', // Format de date lisible
+      };
+    });
+
+    // Créer un classeur Excel
+    const ws = xlsx.utils.json_to_sheet(usersData);
+    const wb = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(wb, ws, "Users >= 50"); // Nom de la feuille raccourci
+
+    // Générer un fichier Excel en mémoire
+    const fileBuffer = xlsx.write(wb, { bookType: "xlsx", type: "buffer" });
+
+    return fileBuffer;
+  } catch (error) {
+    throw new Error("Erreur lors de la génération du fichier Excel: " + error.message);
+  }
+};

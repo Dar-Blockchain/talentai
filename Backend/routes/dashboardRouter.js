@@ -19,4 +19,6 @@ router.get("/downloadUserExcel", dashboardController.downloadUserExcel);
 
 router.get("/download-users-with-assessment-zero", dashboardController.downloadUserExcelWithAssessmentZero);
 
+router.get("/download-users-with-assessment-Above50", dashboardController.downloadUserExcelWithAssessmentAbove50);
+
 module.exports = router;

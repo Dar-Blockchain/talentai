@@ -117,3 +117,19 @@ module.exports.downloadUserExcelWithAssessmentZero = async (req, res) => {
     res.status(500).json({ message: "Erreur interne du serveur", error: error.message });
   }
 };
+
+module.exports.downloadUserExcelWithAssessmentAbove50 = async (req, res) => {
+  try {
+    // Appeler le service pour générer le fichier Excel des utilisateurs avec un overallScore de 0
+    const fileBuffer = await dashboardService.generateUserExcelWithAssessmentAbove50();
+
+    // Définir les en-têtes de la réponse pour télécharger le fichier
+    res.setHeader("Content-Disposition", "attachment; filename=users_with_score_0.xlsx");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+    // Envoyer le fichier en réponse
+    res.send(fileBuffer);
+  } catch (error) {
+    res.status(500).json({ message: "Erreur interne du serveur", error: error.message });
+  }
+};
