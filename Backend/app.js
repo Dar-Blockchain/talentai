@@ -61,6 +61,7 @@ app.use("/matching", matchingRoutes);
 app.use("/resume", resumeRouter);
 app.use("/todo", todoRouter);
 app.use("/logs", logRoutes);
+app.use("/interviewDetails", logRoutes);
 
 app.get('/some-route', (req, res) => {
   res.json('Route accessible');
