@@ -2758,13 +2758,13 @@ function InterviewDetailsTabs({ profileId }: { profileId: string }) {
     setError(null);
     try {
       const token = localStorage.getItem('api_token');
-      const url = `http://localhost:5000/interviewDetails/?page=${pageNum+1}&limit=${limit}&type=${type}&profileId=${profileId}`;
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/?page=${pageNum+1}&limit=${limit}&type=${type}&profileId=${profileId}`;
       const res = await fetch(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!res.ok) throw new Error('Failed to fetch interview details');
       const json = await res.json();
-      setData(json.data || []);
+      setData(json.results || []);
       setTotal(json.total || 0);
     } catch (e: any) {
       setError(e.message || 'Error fetching data');
@@ -2787,6 +2787,18 @@ function InterviewDetailsTabs({ profileId }: { profileId: string }) {
     setPage(0);
   };
 
+  // Add modal state and handler inside InterviewDetailsTabs
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsRow, setDetailsRow] = useState<any>(null);
+  const handleOpenDetails = (row: any) => {
+    setDetailsRow(row);
+    setDetailsOpen(true);
+  };
+  const handleCloseDetails = () => {
+    setDetailsOpen(false);
+    setDetailsRow(null);
+  };
+
   return (
     <Box>
       <Tabs value={tab} onChange={handleTabChange} sx={{ mb: 2 }}>
@@ -2805,28 +2817,32 @@ function InterviewDetailsTabs({ profileId }: { profileId: string }) {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>ID</TableCell>
                 <TableCell>Type</TableCell>
-                <TableCell>Date</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Score</TableCell>
+                <TableCell>Overall Score</TableCell>
+                <TableCell>Post Name</TableCell>
+                <TableCell>Details</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center">No data</TableCell>
+                  <TableCell colSpan={4} align="center">No data</TableCell>
                 </TableRow>
               ) : (
-                data.map((row: any) => (
-                  <TableRow key={row._id || row.id}>
-                    <TableCell>{row._id || row.id}</TableCell>
-                    <TableCell>{row.type}</TableCell>
-                    <TableCell>{row.date ? new Date(row.date).toLocaleString() : '-'}</TableCell>
-                    <TableCell>{row.status || '-'}</TableCell>
-                    <TableCell>{row.score ?? '-'}</TableCell>
-                  </TableRow>
-                ))
+                data.map((row: any, idx: number) => {
+                  return (
+                    <TableRow key={row._id || row.id}>
+                      <TableCell>{row.type || '-'}</TableCell>
+                      <TableCell>{row.overallScore ?? '-'}</TableCell>
+                      <TableCell>{row.post?.jobDetails?.title || '-'}</TableCell>
+                      <TableCell>
+                        <Button variant="outlined" size="small" onClick={() => handleOpenDetails(row)}>
+                          Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
@@ -2841,6 +2857,42 @@ function InterviewDetailsTabs({ profileId }: { profileId: string }) {
           />
         </>
       )}
+      {/* Details Modal */}
+      <Dialog open={detailsOpen} onClose={handleCloseDetails} maxWidth="md" fullWidth>
+        <DialogTitle>Interview Questions & Answers</DialogTitle>
+        <DialogContent dividers>
+          {detailsRow && Array.isArray(detailsRow.skillDetails) ? (
+            detailsRow.skillDetails.map((s: any, i: number) => (
+              <Box key={i} sx={{ mb: 3 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                  {s.name || '-'}
+                </Typography>
+                {Array.isArray(s.questionAnswerList) && s.questionAnswerList.length > 0 ? (
+                  s.questionAnswerList.map((qa: any, idx: number) => (
+                    <Box key={idx} sx={{ mb: 1, pl: 2 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        Q{idx + 1}: {qa.question || '-'}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', ml: 2 }}>
+                        A{idx + 1}: {qa.answer || '-'}
+                      </Typography>
+                    </Box>
+                  ))
+                ) : (
+                  <Typography variant="body2" sx={{ color: 'text.secondary', pl: 2 }}>
+                    No questions/answers.
+                  </Typography>
+                )}
+              </Box>
+            ))
+          ) : (
+            <Typography>No details available.</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDetails}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
