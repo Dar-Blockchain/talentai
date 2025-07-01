@@ -135,7 +135,7 @@ module.exports.generateProjectQuestions = async (
         questionsCount
       );
       pitchQuestion =
-        "You have up to 7 minutes to deliver your business pitch and provide additional details about your project.";
+        "You have up to " + PITCH_DURATION + " minutes to deliver your business pitch and provide additional details about your project.";
     }
 
     const stream = await together.chat.completions.create({
