@@ -1,9 +1,15 @@
 const express = require("express");
 const router = express.Router();
-const { requireAuthUser } = require("../middleware/authMiddleware");
 const interviewDetailsController = require("../controllers/interviewDetailsController");
 
-router.use(requireAuthUser);
+// Importez les middlewares
+const { controledAcces } = require('../middleware/controledAcces'); 
+const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
+const { requireAuthUser } = require("../middleware/authMiddleware");
+
+
+router.use(requireAuthUser,controledAcces('Candidat'), authLogMiddleware("InterviewDetails"));
+
 
 router.get("/", interviewDetailsController.getAll);
 
