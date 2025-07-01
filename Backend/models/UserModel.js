@@ -46,10 +46,12 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Profile",
     },
-    project: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Project",
-    },
+    project: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Project",
+      },
+    ],
     post: [
       {
         type: mongoose.Schema.Types.ObjectId,
