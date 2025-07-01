@@ -4,7 +4,7 @@ const projectService = require("../services/projectService");
 module.exports.createProject = async (req, res) => {
   try {
     const data = req.body;
-    data.leaderId = "6862af00e704e223cf63fccc"
+    data.leaderId = req.user._id
     const newProject = await projectService.createProject(data);
     res.status(201).json(newProject);
   } catch (error) {
@@ -16,6 +16,16 @@ module.exports.createProject = async (req, res) => {
 module.exports.getAllProjects = async (req, res) => {
   try {
     const projects = await projectService.getAllProjects();
+    res.status(200).json(projects);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Récupérer tous les projets
+module.exports.getMyProjects = async (req, res) => {
+  try {
+    const projects = await projectService.getMyProjects(req.user._id);
     res.status(200).json(projects);
   } catch (error) {
     res.status(400).json({ message: error.message });
