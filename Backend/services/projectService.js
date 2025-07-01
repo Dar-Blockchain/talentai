@@ -69,6 +69,17 @@ module.exports.getMyProjects = async (userId) => {
     throw new Error("Erreur lors de la récupération des projets");
   }
 };
+
+module.exports.getNumberProjects = async (userId) => {
+  try {
+    const projects = await Project.find({ leaderId: userId });
+    if (!projects) throw new Error("Projet non trouvé");
+    return projects.length;
+  } catch (error) {
+    throw new Error("Erreur lors de la récupération du projet");
+  }
+};
+
 // Récupération d'un projet par son ID
 module.exports.getProjectById = async (id) => {
   try {
