@@ -1,15 +1,37 @@
-const Project = require("../models/project.model");
+const Project = require("../models/projectModel");
+const User = require("../models/UserModel");
 
 // Création d'un projet
 const createProject = async (data) => {
-  try {
-    const project = new Project(data);
-    await project.save();
-    return project;
-  } catch (error) {
-    throw new Error("Erreur lors de la création du projet");
-  }
-};
+    try {
+      // Créer un projet avec les données fournies
+      const project = new Project({
+        Name: data.Name,
+        description: data.description,
+        team: data.team.map(email => ({ email, validated: false })), // Ajouter les membres avec un statut validé à false
+        leaderId: data.leaderId, // Vous devez avoir l'ID du leader (assurez-vous de le récupérer quelque part)
+      });
+      await project.save(); // Sauvegarder le projet dans la base de données
+  
+      // Mettre à jour l'utilisateur leader avec ses informations et ajouter l'ID du projet à sa liste de projets
+      await User.findByIdAndUpdate(
+        data.leaderId, 
+        { 
+          FirstName: data.FirstName,
+          LastName: data.LastName,
+          isHaker: true,
+          role: "Candidat",
+          $push: { project: project._id } // Ajouter l'ID du projet à la liste des projets de l'utilisateur
+        }
+      );
+  
+      return project; // Retourner le projet créé
+    } catch (error) {
+      console.error("Erreur lors de la création du projet:", error);
+      throw new Error("Erreur lors de la création du projet");
+    }
+  };
+  
 
 // Récupération de tous les projets
 const getAllProjects = async () => {
