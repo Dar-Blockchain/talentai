@@ -156,3 +156,52 @@ module.exports.sendOTP = async (email, otp) => {
     return false;
   }
 };
+
+// Générateur du template HTML avec lien d’activation
+const getActivationTemplate = (activationLink) => `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <title>Activation de compte équipe</title>
+    <style>
+      body { font-family: 'Segoe UI', Arial, sans-serif; background: #F7FAFC; }
+      .container { max-width: 600px; margin: 40px auto; background: #FFF; border-radius: 8px; box-shadow: 0 4px 6px #0001; padding: 32px; }
+      .header { text-align: center; color: #2B6CB0; font-size: 2rem; margin-bottom: 16px;}
+      .btn { background: #2B6CB0; color: #fff; padding: 16px 32px; border-radius: 6px; text-decoration: none; font-size: 18px; display: inline-block; margin: 24px 0; }
+      .footer { text-align: center; color: #888; font-size: 14px; margin-top: 32px;}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">Activation de votre compte équipe - TalenIA</div>
+      <p>Bonjour,</p>
+      <p>Merci de rejoindre le projet sur TalenIA. Cliquez sur le bouton ci-dessous pour activer votre compte :</p>
+      <p style="text-align:center;">
+        <a href="${activationLink}" class="btn">Activer mon compte</a>
+      </p>
+      <p>Si vous n'êtes pas à l'origine de cette invitation, ignorez ce message.</p>
+      <div class="footer">© ${new Date().getFullYear()} TalenIA</div>
+    </div>
+  </body>
+  </html>
+`;
+
+// Fonction d’envoi d’email d’activation
+module.exports.sendActivationMail = async (to, activationLink) => {
+  const mailOptions = {
+    from: '"TalenIA" <contact@talentai.bid>',
+    to,
+    subject: "Activation de votre compte équipe - TalenIA",
+    html: getActivationTemplate(activationLink),
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Email d'activation envoyé à ${to}`);
+    return true;
+  } catch (error) {
+    console.error("❌ Échec d'envoi:", error.message);
+    return false;
+  }
+};
