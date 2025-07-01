@@ -1491,16 +1491,26 @@ const DashboardAdmin = () => {
         <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <SectionTitle>User Management</SectionTitle>
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    sx={{
-                        backgroundColor: GREEN_MAIN,
-                        '&:hover': { backgroundColor: '#6a0dad' }
-                    }}
-                >
-                    Add User
-                </Button>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => handleDownloadExcel('downloadUserExcel', 'users.xlsx')}
+                  >
+                    Download All Users Excel
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={() => handleDownloadExcel('download-users-with-assessment-zero', 'users_with_score_0.xlsx')}
+                  >
+                    Download Users with Assessment 0
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={() => handleDownloadExcel('download-users-with-assessment-Above50', 'users_with_score_above_50.xlsx')}
+                  >
+                    Download Users with Assessment ≥ 50
+                  </Button>
+                </Box>
             </Box>
 
             {/* Filter Card */}
@@ -2481,6 +2491,28 @@ const DashboardAdmin = () => {
             setAssessmentResults([]);
         }
     }, [activeTab]);
+
+    // Add this function inside DashboardAdmin component
+    const handleDownloadExcel = async (endpoint: string, filename: string) => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/';
+        const response = await fetch(`${baseUrl.replace(/\/+$/, '')}/dashboard/${endpoint}`, {
+          method: 'GET',
+        });
+        if (!response.ok) throw new Error('Failed to download file');
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        alert('Error downloading file: ' + (error instanceof Error ? error.message : error));
+      }
+    };
 
     if (loading) {
         return (
