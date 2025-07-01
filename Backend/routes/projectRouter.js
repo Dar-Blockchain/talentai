@@ -4,7 +4,7 @@ const projectController = require("../controllers/projectContoller");
 const { requireAuthUser } = require('../middleware/authMiddleware');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
-//router.use(requireAuthUser, authLogMiddleware("Project"));
+router.use(requireAuthUser, authLogMiddleware("Project"));
 
 router.post("/addProject", projectController.createProject); // Créer un projet
 router.get("/getAllProjects", projectController.getAllProjects); // Récupérer tous les projets
