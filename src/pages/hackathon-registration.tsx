@@ -52,7 +52,7 @@ const HackathonRegistration = () => {
   const [newMember, setNewMember] = useState<TeamMember>({ name: '', email: '', role: '' });
   const [error, setError] = useState('');
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
   const [mounted, setMounted] = useState(false);
   const [leaderFirstName, setLeaderFirstName] = useState('');
   const [leaderLastName, setLeaderLastName] = useState('');
@@ -115,12 +115,30 @@ const HackathonRegistration = () => {
     setActiveStep((prev) => prev - 1);
   };
 
-  const handleStepSubmit = () => {
+  const handleStepSubmit = async () => {
     if (!leaderFirstName || !leaderLastName || !projectName || !projectDescription || teamMembers.length === 0) {
       setError('Please fill all required fields');
       return;
     }
     try {
+      const token = localStorage.getItem('api_token');
+      const res = await fetch('http://localhost:5000/project/addProject', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          FirstName: leaderFirstName,
+          LastName: leaderLastName,
+          Name: projectName,
+          description: projectDescription,
+          team: teamMembers.map(m => m.email),
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      // Save to localStorage as before
       const projectData = {
         leaderFirstName,
         leaderLastName,
@@ -133,9 +151,11 @@ const HackathonRegistration = () => {
         createdAt: new Date().toISOString()
       };
       localStorage.setItem('hackathonProject', JSON.stringify(projectData));
-      router.push('/hackathon-dashboard');
-    } catch (err) {
-      setError('Failed to save project data. Please try again.');
+      setSnackbar({ open: true, message: 'Project registered successfully!', severity: 'success' });
+      setTimeout(() => router.push('/hackathon-dashboard'), 1000);
+    } catch (err: any) {
+      setError('Failed to register project: ' + (err?.message || err));
+      setSnackbar({ open: true, message: 'Failed to register project: ' + (err?.message || err), severity: 'error' });
     }
   };
 
@@ -200,10 +220,12 @@ const HackathonRegistration = () => {
             <RegistrationNavigation activeStep={activeStep} steps={steps} handleBack={handleBack} handleNext={handleNext} handleStepSubmit={handleStepSubmit} />
           </Paper>
           <Snackbar
-            open={snackbarOpen}
-            autoHideDuration={1200}
-            message="Logged out successfully"
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            open={snackbar.open}
+            autoHideDuration={4000}
+            onClose={() => setSnackbar(s => ({ ...s, open: false }))}
+            message={snackbar.message}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            ContentProps={{ style: { background: snackbar.severity === 'success' ? '#43a047' : '#d32f2f', color: '#fff' } }}
           />
         </Box>
       </Fade>

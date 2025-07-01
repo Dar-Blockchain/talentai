@@ -60,6 +60,7 @@ const HackathonDashboard = () => {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [mounted, setMounted] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -125,6 +126,28 @@ const HackathonDashboard = () => {
     router.push('/signin');
   };
 
+  const handleSubmitProjectToBackend = async () => {
+    if (!projectData) return;
+    try {
+      const res = await fetch('http://localhost:5000/project/addProject', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          FirstName: projectData.teamMembers[0]?.name || 'Leader',
+          LastName: projectData.teamMembers[0]?.role || 'Leader',
+          Name: projectData.projectName,
+          description: projectData.projectDescription,
+          team: projectData.teamMembers.map(m => m.email || ''),
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setSnackbar({ open: true, message: 'Project submitted successfully!', severity: 'success' });
+    } catch (err: any) {
+      setSnackbar({ open: true, message: 'Error submitting project: ' + (err?.message || err), severity: 'error' });
+    }
+  };
+
   return (
     <Box >
       {/* Blurred floating gradient blobs for depth */}
@@ -166,11 +189,27 @@ const HackathonDashboard = () => {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <QuickActions />
               <ProjectDetails projectDescription={projectData.projectDescription} />
+              <Button
+                variant="contained"
+                color="primary"
+                sx={{ mt: 2, width: 'fit-content' }}
+                onClick={handleSubmitProjectToBackend}
+              >
+                Submit Project to Backend
+              </Button>
             </Box>
             <TeamMembers teamMembers={projectData.teamMembers} />
           </Box>
         </Box>
       </Container>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar(s => ({ ...s, open: false }))}
+        message={snackbar.message}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        ContentProps={{ style: { background: snackbar.severity === 'success' ? '#43a047' : '#d32f2f', color: '#fff' } }}
+      />
     </Box>
   );
 };
