@@ -122,13 +122,12 @@ const HackathonRegistration = () => {
     }
     try {
       const token = localStorage.getItem('api_token');
-      const res = await fetch('http://localhost:5000/project/addProject', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/addProject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        credentials: 'include',
         body: JSON.stringify({
           FirstName: leaderFirstName,
           LastName: leaderLastName,

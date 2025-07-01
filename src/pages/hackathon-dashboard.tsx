@@ -60,7 +60,6 @@ const HackathonDashboard = () => {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [mounted, setMounted] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -142,9 +141,7 @@ const HackathonDashboard = () => {
         }),
       });
       if (!res.ok) throw new Error(await res.text());
-      setSnackbar({ open: true, message: 'Project submitted successfully!', severity: 'success' });
     } catch (err: any) {
-      setSnackbar({ open: true, message: 'Error submitting project: ' + (err?.message || err), severity: 'error' });
     }
   };
 
@@ -202,14 +199,6 @@ const HackathonDashboard = () => {
           </Box>
         </Box>
       </Container>
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar(s => ({ ...s, open: false }))}
-        message={snackbar.message}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        ContentProps={{ style: { background: snackbar.severity === 'success' ? '#43a047' : '#d32f2f', color: '#fff' } }}
-      />
     </Box>
   );
 };
