@@ -79,6 +79,12 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 import WorldMap from '../components/WorldMap';
 import AdminOnly from '../components/AdminOnly';
 import { selectProfile, getMyProfile } from '../store/slices/profileSlice';
+import AdminWorldMap from '../components/dashboard-admin/AdminWorldMap';
+import AdminSkillsDistribution from '../components/dashboard-admin/AdminSkillsDistribution';
+import AdminGrowthAnalytics from '../components/dashboard-admin/AdminGrowthAnalytics';
+import AdminHeader from '../components/dashboard-admin/AdminHeader';
+import AdminStatsCards from '../components/dashboard-admin/AdminStatsCards';
+import AdminSkillsBarChart from '../components/dashboard-admin/AdminSkillsBarChart';
 
 // Constants
 const GREEN_MAIN = '#8310FF';
@@ -1190,300 +1196,26 @@ const DashboardAdmin = () => {
 
     const renderDashboard = () => (
         <Box>
-            <SectionTitle>Dashboard Overview</SectionTitle>
-
-            {/* Stats Cards */}
-            <Box sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 3,
-                mb: 4
-            }}>
-                <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
-                    <StatCard>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Box>
-                                <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
-                                    {stats.totalUsers.toLocaleString()}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                                    Total Users
-                                </Typography>
-                                {/* <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <TrendingUpIcon sx={{ color: 'success.main', fontSize: 16, mr: 0.5 }} />
-                                    <Typography variant="caption" sx={{ color: 'success.main' }}>
-                                        +{stats.userGrowth}% this month
-                                    </Typography>
-                                </Box> */}
-                            </Box>
-                            <PeopleIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
-                        </Box>
-                    </StatCard>
-                </Box>
-
-                <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
-                    <StatCard>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Box>
-                                <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
-                                    {stats.totalAssessments}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                                    Total Assessments
-                                </Typography>
-                                {/* <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <TrendingUpIcon sx={{ color: 'success.main', fontSize: 16, mr: 0.5 }} />
-                                    <Typography variant="caption" sx={{ color: 'success.main' }}>
-                                        +{stats.assessmentGrowth}% this month
-                                    </Typography>
-                                </Box> */}
-                            </Box>
-                            <AssessmentIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
-                        </Box>
-                    </StatCard>
-                </Box>
-
-                <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
-                    <StatCard>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Box>
-                                <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
-                                    {stats.totalAttempts.toLocaleString()}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                                    Total Resumes
-                                </Typography>
-                                {/* <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <CheckCircleIcon sx={{ color: 'success.main', fontSize: 16, mr: 0.5 }} />
-                                    <Typography variant="caption" sx={{ color: 'success.main' }}>
-                                        {stats.activeAssessments} active
-                                    </Typography>
-                                </Box> */}
-                            </Box>
-                            <BarChartIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
-                        </Box>
-                    </StatCard>
-                </Box>
-
-                <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
-                    <StatCard>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Box>
-                                <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
-                                    {stats.averageScore.toFixed(2)}%
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                                    Average Score
-                                </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <StarIcon sx={{ color: 'warning.main', fontSize: 16, mr: 0.5 }} />
-                                    <Typography variant="caption" sx={{ color: 'warning.main' }}>
-                                        Good performance
-                                    </Typography>
-                                </Box>
-                            </Box>
-                            <ShowChartIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
-                        </Box>
-                    </StatCard>
-                </Box>
-
-                <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
-                    <StatCard>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Box>
-                                <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
-                                    {stats.totalSkills.toLocaleString()}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                                    Total Skills
-                                </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <WorkIcon sx={{ color: 'info.main', fontSize: 16, mr: 0.5 }} />
-                                    <Typography variant="caption" sx={{ color: 'info.main' }}>
-                                        Skills tracked
-                                    </Typography>
-                                </Box>
-                            </Box>
-                            <WorkIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
-                        </Box>
-                    </StatCard>
-                </Box>
-
-                <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
-                    <StatCard>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Box>
-                                <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
-                                    {stats.posts.toLocaleString()}
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                                    Total Posts
-                                </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <TrendingUpIcon sx={{ color: 'success.main', fontSize: 16, mr: 0.5 }} />
-                                    <Typography variant="caption" sx={{ color: 'success.main' }}>
-                                        Active content
-                                    </Typography>
-                                </Box>
-                            </Box>
-                            <BarChartIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
-                        </Box>
-                    </StatCard>
-                </Box>
-
-                <Box sx={{ flex: '1 1 250px', minWidth: 0 }}>
-                    <StatCard>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <Box>
-                                <Typography variant="h4" sx={{ fontWeight: 700, color: GREEN_MAIN }}>
-                                    {stats.jobAssessmentsWithScorePercentage.toFixed(1)}%
-                                </Typography>
-                                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1 }}>
-                                    Assessment Completion
-                                </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <CheckCircleIcon sx={{ color: 'success.main', fontSize: 16, mr: 0.5 }} />
-                                    <Typography variant="caption" sx={{ color: 'success.main' }}>
-                                        Completed assessments
-                                    </Typography>
-                                </Box>
-                            </Box>
-                            <AssessmentIcon sx={{ fontSize: 48, color: GREEN_MAIN, opacity: 0.7 }} />
-                        </Box>
-                    </StatCard>
-                </Box>
-            </Box>
-
-            {/* Skills Bar Chart - Moved to top */}
-            <Box sx={{ mb: 4 }}>
-                <StyledCard>
-                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                        Top Skills by Usage
-                    </Typography>
-                    <ResponsiveContainer width="100%" height={400}>
-                        <BarChart
-                            data={skillsData}
-                            margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                        >
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                            <XAxis 
-                                dataKey="skill" 
-                                angle={-45}
-                                textAnchor="end"
-                                height={80}
-                                tick={{ fontSize: 12 }}
-                                interval={0}
-                            />
-                            <YAxis 
-                                tick={{ fontSize: 12 }}
-                                label={{ value: 'Number of Users', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' } }}
-                            />
-                            <RechartsTooltip 
-                                formatter={(value: any, name: any) => [value, 'Users']}
-                                labelFormatter={(label: any) => `Skill: ${label}`}
-                                contentStyle={{
-                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                    border: '1px solid #ccc',
-                                    borderRadius: '8px',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                                }}
-                            />
-                            <Bar 
-                                dataKey="count" 
-                                radius={[4, 4, 0, 0]}
-                                fill="url(#skillGradient)"
-                            >
-                                {skillsData.map((entry, index) => (
-                                    <Cell 
-                                        key={`cell-${index}`} 
-                                        fill={`hsl(${200 + index * 25}, 80%, ${60 - index * 3}%)`}
-                                    />
-                                ))}
-                            </Bar>
-                            <defs>
-                                <linearGradient id="skillGradient" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stopColor="#8310FF" stopOpacity={0.8}/>
-                                    <stop offset="100%" stopColor="#8310FF" stopOpacity={0.4}/>
-                                </linearGradient>
-                            </defs>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </StyledCard>
-            </Box>
-
-            {/* Charts */}
-            <Box sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 3,
-                mb: 4
-            }}>
+            <AdminHeader />
+            <AdminStatsCards stats={stats} />
+            <AdminSkillsBarChart skillsData={skillsData} />
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
                 <Box sx={{ flex: '1 1 600px', minWidth: 0 }}>
-                    <StyledCard>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                Growth Analytics
-                            </Typography>
-                            <FormControl size="small" sx={{ minWidth: 140 }}>
-                                <InputLabel>Filter by Month</InputLabel>
-                                <Select
-                                    value={selectedMonth}
-                                    label="Filter by Month"
-                                    onChange={(e) => setSelectedMonth(e.target.value)}
-                                >
-                                    <MenuItem value="all">All Time</MenuItem>
-                                    <MenuItem value="2025-04">April 2025</MenuItem>
-                                    <MenuItem value="2025-05">May 2025</MenuItem>
-                                    <MenuItem value="2025-06">June 2025</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Box>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={getFilteredUserGrowthData()}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="day" />
-                                <YAxis />
-                                <RechartsTooltip />
-                                <Line type="monotone" dataKey="users" stroke="#8310FF" strokeWidth={2} name="Users" />
-                                <Line type="monotone" dataKey="posts" stroke="#00C49F" strokeWidth={2} name="Posts" />
-                                <Line type="monotone" dataKey="assessments" stroke="#FFBB28" strokeWidth={2} name="Assessments" />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </StyledCard>
+                    <AdminGrowthAnalytics
+                        userGrowthData={userGrowthData}
+                        selectedMonth={selectedMonth}
+                        setSelectedMonth={setSelectedMonth}
+                        getFilteredUserGrowthData={getFilteredUserGrowthData}
+                    />
                 </Box>
-
                 <Box sx={{ flex: '1 1 400px', minWidth: 0 }}>
-                    <StyledCard>
-                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                            Skills Distribution
-                        </Typography>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie
-                                    data={skillDistribution}
-                                    cx="50%"
-                                    cy="50%"
-                                    labelLine={false}
-                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
-                                    outerRadius={80}
-                                    fill="#8884d8"
-                                    dataKey="value"
-                                >
-                                    {skillDistribution.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <RechartsTooltip />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </StyledCard>
+                    <AdminSkillsDistribution skillDistribution={skillDistribution} />
                 </Box>
             </Box>
-
-            {/* World Map */}
-            <Box sx={{ mb: 4 }}>
-                <WorldMap userLocations={processUserLocations()} totalUsers={stats.totalUsers} />
-            </Box>
+            <AdminWorldMap
+                userLocations={processUserLocations()}
+                totalUsers={stats.totalUsers}
+            />
         </Box>
     );
 
