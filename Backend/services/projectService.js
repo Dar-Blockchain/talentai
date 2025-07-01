@@ -6,7 +6,7 @@ module.exports.createProject = async (data) => {
     try {
       // Créer un projet avec les données fournies
       const project = new Project({
-        Name: data.Name,
+        name: data.Name,
         description: data.description,
         team: data.team.map(email => ({ email, validated: false })), // Ajouter les membres avec un statut validé à false
         leaderId: data.leaderId, // Vous devez avoir l'ID du leader (assurez-vous de le récupérer quelque part)
