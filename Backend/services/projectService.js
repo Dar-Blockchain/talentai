@@ -4,6 +4,7 @@ require("dotenv").config();
 const {
   PROJECT_ASSESSMENT_TYPE,
   TECHNICAL_ASSESSMENT_QUESTIONS_COUNT,
+  BUSINESS_ASSESSMENT_QUESTIONS_COUNT,
 } = require("../constants/projectConstants");
 const Project = require("../models/projectModel");
 const User = require("../models/UserModel");
@@ -12,37 +13,42 @@ const { HttpError } = require("../utils/httpUtils");
 
 const {
   generateTechnicalQuestionsPrompts,
+  generateBusinessQuestionsPrompts,
 } = require("../prompts/projectPrompts");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
 // Création d'un projet
 module.exports.createProject = async (data) => {
-  try {
-    // Créer un projet avec les données fournies
-    const project = new Project({
-      Name: data.Name,
-      description: data.description,
-      team: data.team.map((email) => ({ email, validated: false })), // Ajouter les membres avec un statut validé à false
-      leaderId: data.leaderId, // Vous devez avoir l'ID du leader (assurez-vous de le récupérer quelque part)
-    });
-    await project.save(); // Sauvegarder le projet dans la base de données
-
-    // Mettre à jour l'utilisateur leader avec ses informations et ajouter l'ID du projet à sa liste de projets
-    await User.findByIdAndUpdate(data.leaderId, {
-      FirstName: data.FirstName,
-      LastName: data.LastName,
-      isHaker: true,
-      role: "Candidat",
-      $push: { project: project._id }, // Ajouter l'ID du projet à la liste des projets de l'utilisateur
-    });
-
-    return project; // Retourner le projet créé
-  } catch (error) {
-    console.error("Erreur lors de la création du projet:", error);
-    throw new Error("Erreur lors de la création du projet");
-  }
-};
+    try {
+      // Créer un projet avec les données fournies
+      const project = new Project({
+        name: data.Name,
+        description: data.description,
+        team: data.team.map(email => ({ email, validated: false })), // Ajouter les membres avec un statut validé à false
+        leaderId: data.leaderId, // Vous devez avoir l'ID du leader (assurez-vous de le récupérer quelque part)
+      });
+      await project.save(); // Sauvegarder le projet dans la base de données
+  
+      // Mettre à jour l'utilisateur leader avec ses informations et ajouter l'ID du projet à sa liste de projets
+      await User.findByIdAndUpdate(
+        data.leaderId, 
+        { 
+          FirstName: data.FirstName,
+          LastName: data.LastName,
+          isHaker: true,
+          role: "Candidat",
+          $push: { project: project._id } // Ajouter l'ID du projet à la liste des projets de l'utilisateur
+        }
+      );
+  
+      return project; // Retourner le projet créé
+    } catch (error) {
+      console.error("Erreur lors de la création du projet:", error);
+      throw new Error("Erreur lors de la création du projet");
+    }
+  };
+  
 
 // Récupération de tous les projets
 module.exports.getAllProjects = async () => {
@@ -63,6 +69,17 @@ module.exports.getMyProjects = async (userId) => {
     throw new Error("Erreur lors de la récupération des projets");
   }
 };
+
+module.exports.getNumberProjects = async (userId) => {
+  try {
+    const projects = await Project.find({ leaderId: userId });
+    if (!projects) throw new Error("Projet non trouvé");
+    return projects.length;
+  } catch (error) {
+    throw new Error("Erreur lors de la récupération du projet");
+  }
+};
+
 // Récupération d'un projet par son ID
 module.exports.getProjectById = async (id) => {
   try {
@@ -105,7 +122,6 @@ module.exports.generateProjectQuestions = async (
     let userPrompt = "";
     let pitchQuestion = "";
 
-    console.log("hey: ", TECHNICAL_ASSESSMENT_QUESTIONS_COUNT)
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
       questionsCount = TECHNICAL_ASSESSMENT_QUESTIONS_COUNT;
       systemPrompt = generateTechnicalQuestionsPrompts.getSystemPrompt(
@@ -118,6 +134,20 @@ module.exports.generateProjectQuestions = async (
       );
       pitchQuestion =
         "You have up to 7 minutes to deliver your technical pitch and provide additional details about your project.";
+    }
+
+    if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
+      questionsCount = BUSINESS_ASSESSMENT_QUESTIONS_COUNT;
+      systemPrompt = generateBusinessQuestionsPrompts.getSystemPrompt(
+        projectName,
+        questionsCount
+      );
+      userPrompt = generateBusinessQuestionsPrompts.getUserPrompt(
+        projectName,
+        questionsCount
+      );
+      pitchQuestion =
+        "You have up to 7 minutes to deliver your business pitch and provide additional details about your project.";
     }
 
     const stream = await together.chat.completions.create({

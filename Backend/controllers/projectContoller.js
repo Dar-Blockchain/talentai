@@ -36,6 +36,16 @@ module.exports.getMyProjects = async (req, res) => {
   }
 };
 
+// Récupérer Nombre des projets 
+module.exports.getNumberProjects = async (req, res) => {
+  try {
+    const project = await projectService.getNumberProjects(req.user._id);    
+    res.status(200).json(project);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 // Récupérer un projet par ID
 module.exports.getProjectById = async (req, res) => {
   try {

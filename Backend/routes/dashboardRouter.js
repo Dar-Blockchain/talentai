@@ -1,7 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const dashboardController = require("../controllers/dashboardController");
+
+// Importez les middlewares
 const { requireAuthUser } = require("../middleware/authMiddleware");
+const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
+const { controledAcces } = require('../middleware/controledAcces'); // Importez le middleware
+
+
+router.use(requireAuthUser,controledAcces('Admin'), authLogMiddleware("Dashboard"));
+
 
 router.get("/getAllUsers", dashboardController.getAllUsers);
 
