@@ -34,11 +34,20 @@ import QuickActions from '@/components/dashboard-hackathon/QuickActions';
 import ProjectDetails from '@/components/dashboard-hackathon/ProjectDetails';
 import TeamMembers from '@/components/dashboard-hackathon/TeamMembers';
 
-
 interface TeamMember {
   name: string;
-  email?: string;
+  email: string;
   role: string;
+}
+
+interface ProjectAPIData {
+  _id: string;
+  Name: string;
+  description: string;
+  team: { email: string; validated?: boolean; _id?: string }[];
+  leaderId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface ProjectData {
@@ -60,7 +69,6 @@ const HackathonDashboard = () => {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [mounted, setMounted] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -71,19 +79,40 @@ const HackathonDashboard = () => {
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
-    const loadProjectData = () => {
+    const fetchProjects = async () => {
       try {
-        const storedData = localStorage.getItem('hackathonProject');
-        if (storedData) {
-          setProjectData(JSON.parse(storedData));
+        const token = localStorage.getItem('api_token');
+        const res = await fetch('http://localhost:5000/project/getMyProjects', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) throw new Error('Failed to fetch projects');
+        const data: ProjectAPIData[] = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          // Sort by createdAt descending and pick the most recent
+          const sorted = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          const latest = sorted[0];
+          // Map API team to required TeamMember[]
+          const teamMembers: TeamMember[] = latest.team.map((member, idx) => ({
+            name: member.email.split('@')[0] || `Member${idx+1}`,
+            email: member.email,
+            role: 'Member',
+          }));
+          setProjectData({
+            projectName: latest.Name,
+            projectDescription: latest.description,
+            teamMembers,
+            createdAt: latest.createdAt,
+          });
+        } else {
+          setProjectData(null);
         }
       } catch (error) {
-        console.error('Error loading project data:', error);
+        setProjectData(null);
       } finally {
         setLoading(false);
       }
     };
-    loadProjectData();
+    fetchProjects();
   }, []);
 
   if (!mounted || !isAuthenticated) {
@@ -126,27 +155,6 @@ const HackathonDashboard = () => {
     router.push('/signin');
   };
 
-  const handleSubmitProjectToBackend = async () => {
-    if (!projectData) return;
-    try {
-      const res = await fetch('http://localhost:5000/project/addProject', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          FirstName: projectData.teamMembers[0]?.name || 'Leader',
-          LastName: projectData.teamMembers[0]?.role || 'Leader',
-          Name: projectData.projectName,
-          description: projectData.projectDescription,
-          team: projectData.teamMembers.map(m => m.email || ''),
-        }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      setSnackbar({ open: true, message: 'Project submitted successfully!', severity: 'success' });
-    } catch (err: any) {
-      setSnackbar({ open: true, message: 'Error submitting project: ' + (err?.message || err), severity: 'error' });
-    }
-  };
 
   return (
     <Box >
@@ -189,27 +197,12 @@ const HackathonDashboard = () => {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <QuickActions />
               <ProjectDetails projectDescription={projectData.projectDescription} />
-              <Button
-                variant="contained"
-                color="primary"
-                sx={{ mt: 2, width: 'fit-content' }}
-                onClick={handleSubmitProjectToBackend}
-              >
-                Submit Project to Backend
-              </Button>
+          
             </Box>
             <TeamMembers teamMembers={projectData.teamMembers} />
           </Box>
         </Box>
       </Container>
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar(s => ({ ...s, open: false }))}
-        message={snackbar.message}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        ContentProps={{ style: { background: snackbar.severity === 'success' ? '#43a047' : '#d32f2f', color: '#fff' } }}
-      />
     </Box>
   );
 };

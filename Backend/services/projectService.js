@@ -1,5 +1,22 @@
+const { Together } = require("together-ai");
+require("dotenv").config();
+
+const {
+  PROJECT_ASSESSMENT_TYPE,
+  TECHNICAL_ASSESSMENT_QUESTIONS_COUNT,
+  BUSINESS_ASSESSMENT_QUESTIONS_COUNT,
+} = require("../constants/projectConstants");
 const Project = require("../models/projectModel");
 const User = require("../models/UserModel");
+const { parseAIResponse } = require("../parsers/AIResponseParser");
+const { HttpError } = require("../utils/httpUtils");
+
+const {
+  generateTechnicalQuestionsPrompts,
+  generateBusinessQuestionsPrompts,
+} = require("../prompts/projectPrompts");
+
+const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
 // Création d'un projet
 module.exports.createProject = async (data) => {
@@ -85,3 +102,72 @@ module.exports.deleteProject = async (id) => {
   }
 };
 
+module.exports.generateProjectQuestions = async (
+  projectName,
+  assessmentType
+) => {
+  try {
+    let systemPrompt = "";
+    let userPrompt = "";
+    let pitchQuestion = "";
+
+    if (assessmentType == PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
+      questionsCount = TECHNICAL_ASSESSMENT_QUESTIONS_COUNT;
+      systemPrompt = generateTechnicalQuestionsPrompts.getSystemPrompt(
+        projectName,
+        questionsCount
+      );
+      userPrompt = generateTechnicalQuestionsPrompts.getUserPrompt(
+        projectName,
+        questionsCount
+      );
+      pitchQuestion =
+        "You have up to 7 minutes to deliver your technical pitch and provide additional details about your project.";
+    }
+
+    if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
+      questionsCount = BUSINESS_ASSESSMENT_QUESTIONS_COUNT;
+      systemPrompt = generateBusinessQuestionsPrompts.getSystemPrompt(
+        projectName,
+        questionsCount
+      );
+      userPrompt = generateBusinessQuestionsPrompts.getUserPrompt(
+        projectName,
+        questionsCount
+      );
+      pitchQuestion =
+        "You have up to 7 minutes to deliver your business pitch and provide additional details about your project.";
+    }
+
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 1000,
+      stream: true,
+    });
+
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
+
+    let questions = await parseAIResponse(raw);
+
+    questions.push(pitchQuestion);
+
+    return { questions, totalQuestions: questions.length };
+  } catch (error) {
+    console.error("Error generating project questions:", error);
+    if (error instanceof HttpError) throw error;
+
+    throw new HttpError(500, `Internal server error: ${error}`);
+  }
+};
