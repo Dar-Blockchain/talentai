@@ -5,6 +5,8 @@ const {
   PROJECT_ASSESSMENT_TYPE,
   TECHNICAL_ASSESSMENT_QUESTIONS_COUNT,
   BUSINESS_ASSESSMENT_QUESTIONS_COUNT,
+  PITCH_DURATION,
+  QUESTION_DURATION,
 } = require("../constants/projectConstants");
 const Project = require("../models/projectModel");
 const User = require("../models/UserModel");
@@ -111,14 +113,15 @@ module.exports.generateProjectQuestions = async (
       questionsCount = TECHNICAL_ASSESSMENT_QUESTIONS_COUNT;
       systemPrompt = generateTechnicalQuestionsPrompts.getSystemPrompt(
         projectName,
-        questionsCount
+        questionsCount, 
+        QUESTION_DURATION
       );
       userPrompt = generateTechnicalQuestionsPrompts.getUserPrompt(
         projectName,
         questionsCount
       );
       pitchQuestion =
-        "You have up to 7 minutes to deliver your technical pitch and provide additional details about your project.";
+        "You have up to " + PITCH_DURATION + " minutes to deliver your technical pitch and provide additional details about your project.";
     }
 
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {

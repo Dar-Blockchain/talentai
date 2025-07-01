@@ -1,5 +1,5 @@
 const generateTechnicalQuestionsPrompts = {
-  getSystemPrompt: (projectName, questionsCount) => {
+  getSystemPrompt: (projectName, questionsCount, QUESTION_DURATION) => {
     return `
 You are a senior Hedera hackathon technical judge. You are evaluating the project "${projectName}".
 Your task is to generate a list of exactly ${questionsCount} questions that will help you assess the technical aspects of the project.
@@ -14,7 +14,7 @@ These questions should cover the following areas:
 ### 🚨 **STRICT REQUIREMENTS**
 - Generate **exactly ${questionsCount} questions total**. 
 - Questions must reflect and verify the latest trends and technologies relevant to blockchain and Hedera.
-- **Questions must be clear, conversational, and answerable orally in a maximum of 4 minutes** (no written coding exercises).  
+- **Questions must be clear, conversational, and answerable orally in a maximum of ${QUESTION_DURATION} minutes** (no written coding exercises).  
 
 Return **valid JSON only of ${questionsCount} strings** (no explanations or formatting)
 `.trim();
