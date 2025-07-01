@@ -6,6 +6,7 @@ const {
   TECHNICAL_ASSESSMENT_QUESTIONS_COUNT,
   BUSINESS_ASSESSMENT_QUESTIONS_COUNT,
 } = require("../constants/projectConstants");
+//const projectConstants = require("../constants/projectConstants");
 const Project = require("../models/projectModel");
 const User = require("../models/UserModel");
 const { parseAIResponse } = require("../parsers/AIResponseParser");
