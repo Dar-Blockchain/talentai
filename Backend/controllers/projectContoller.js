@@ -4,9 +4,10 @@ const Project = require("../models/projectModel");
 const { HttpError } = require("../utils/httpUtils");
 
 // Créer un projet
-const createProject = async (req, res) => {
+module.exports.createProject = async (req, res) => {
   try {
     const data = req.body;
+    data.leaderId = "6862af00e704e223cf63fccc"
     const newProject = await projectService.createProject(data);
     res.status(201).json(newProject);
   } catch (error) {
@@ -15,7 +16,7 @@ const createProject = async (req, res) => {
 };
 
 // Récupérer tous les projets
-const getAllProjects = async (req, res) => {
+module.exports.getAllProjects = async (req, res) => {
   try {
     const projects = await projectService.getAllProjects();
     res.status(200).json(projects);
@@ -25,7 +26,7 @@ const getAllProjects = async (req, res) => {
 };
 
 // Récupérer un projet par ID
-const getProjectById = async (req, res) => {
+module.exports.getProjectById = async (req, res) => {
   try {
     const project = await projectService.getProjectById(req.params.id);
     res.status(200).json(project);
@@ -35,7 +36,7 @@ const getProjectById = async (req, res) => {
 };
 
 // Mettre à jour un projet
-const updateProject = async (req, res) => {
+module.exports.updateProject = async (req, res) => {
   try {
     const updatedProject = await projectService.updateProject(req.params.id, req.body);
     res.status(200).json(updatedProject);
@@ -45,7 +46,7 @@ const updateProject = async (req, res) => {
 };
 
 // Supprimer un projet
-const deleteProject = async (req, res) => {
+module.exports.deleteProject = async (req, res) => {
   try {
     const deletedProject = await projectService.deleteProject(req.params.id);
     res.status(200).json({ message: "Projet supprimé avec succès", project: deletedProject });
