@@ -1,4 +1,7 @@
 const projectService = require("../services/projectService");
+const Profile = require("../models/ProfileModel");
+const Project = require("../models/projectModel");
+const { HttpError } = require("../utils/httpUtils");
 
 // Créer un projet
 const createProject = async (req, res) => {
@@ -48,6 +51,50 @@ const deleteProject = async (req, res) => {
     res.status(200).json({ message: "Projet supprimé avec succès", project: deletedProject });
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+exports.generateProjectQuestions = async (req, res) => {
+  try {
+    const user = req.user;
+    const projectId = req.params.projectId;
+    if (!user) {
+      throw new HttpError(500, `User not found`);
+    }
+    if (!user.profile) {
+      throw new HttpError(500, `User has not profile.`);
+    }
+
+    const profile = await Profile.findById({ _id: user.profile._id });
+    if (!profile) {
+      throw new HttpError(500, `profile not found.`);
+    }
+
+    // project verification
+    if (!projectId) {
+      throw new HttpError(400, `Project ID is required.`);
+    }
+    const project = await Project.findById(projectId);
+    if (!project) {
+      throw new HttpError(404, `Project with ID ${projectId} not found.`);
+    }
+
+    const result = await projectService.generateProjectQuestions(
+      profile,
+      project
+    );
+
+    res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return res.status(error.statusCode || 500).json({
+        error: error.message || "A HTTP error occurred.",
+      });
+    }
+
+    return res.status(500).json({
+      error: "An unexpected error occurred while generating Project questions.",
+    });
   }
 };
 
