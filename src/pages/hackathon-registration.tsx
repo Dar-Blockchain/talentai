@@ -23,10 +23,13 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
-import Cookies from 'js-cookie';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import WorkIcon from '@mui/icons-material/Work';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import GroupAddIcon from '@mui/icons-material/GroupAdd';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import { keyframes } from '@mui/system';
 
 interface TeamMember {
   name: string;
@@ -48,6 +51,13 @@ const HackathonRegistration = () => {
   const [leaderLastName, setLeaderLastName] = useState('');
   const steps = ['Leader Info', 'Project Info', 'Team Members'];
   const [activeStep, setActiveStep] = useState(0);
+
+  // Animated gradient blob keyframes
+  const blobAnimation = keyframes`
+    0% { transform: scale(1) translateY(0px); }
+    50% { transform: scale(1.1) translateY(20px); }
+    100% { transform: scale(1) translateY(0px); }
+  `;
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -123,37 +133,122 @@ const HackathonRegistration = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
+    <Container sx={{ mt: 4 }} >
+      {/* Blurred floating gradient blobs for depth */}
+      <Box sx={{
+        position: 'absolute',
+        top: -80,
+        left: -100,
+        width: 220,
+        height: 220,
+        zIndex: 0,
+        filter: 'blur(60px)',
+        opacity: 0.5,
+        background: 'radial-gradient(circle at 30% 30%, #7C4DFF 0%, #E040FB 80%)',
+        animation: `${blobAnimation} 8s ease-in-out infinite`,
+      }} />
+      <Box sx={{
+        position: 'absolute',
+        bottom: -60,
+        right: -80,
+        width: 180,
+        height: 180,
+        zIndex: 0,
+        filter: 'blur(50px)',
+        opacity: 0.4,
+        background: 'radial-gradient(circle at 70% 70%, #00B8D4 0%, #7C4DFF 80%)',
+        animation: `${blobAnimation} 10s ease-in-out infinite`,
+      }} />
+      {/* Visually rich header with illustration and glassmorphism */}
+      <Box
+        sx={{
+          position: 'relative',
+          mb: 3,
+          borderRadius: 4,
+          overflow: 'hidden',
+          boxShadow: '0 8px 32px 0 rgba(94,53,177,0.13)',
+          background: 'linear-gradient(120deg, #7C4DFF 0%, #5E35B1 100%)',
+          minHeight: 140,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: { xs: 2, sm: 4 },
+          py: { xs: 2, sm: 3 },
+          backdropFilter: 'blur(8px)',
+          border: '1.5px solid #fff3',
+        }}
+      >
+        <Box sx={{ zIndex: 2 }}>
+          <Typography  sx={{ color: '#fff', fontWeight: 900, letterSpacing: 0.5, mb: 0.5, fontFamily: 'Nunito, Quicksand, Arial Rounded MT Bold, Arial, sans-serif', fontSize: { xs: 'rem', sm: '2.5rem' } }}>
+            Hackathon Registration
+          </Typography>
+        
+        </Box>
+        {/* Abstract SVG illustration */}
+        <Box sx={{ display: { xs: 'none', sm: 'block' }, zIndex: 1 }}>
+          <svg width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="55" cy="55" r="50" fill="url(#paint0_radial)" fillOpacity="0.7" />
+            <ellipse cx="55" cy="55" rx="30" ry="12" fill="#fff" fillOpacity="0.13" />
+            <defs>
+              <radialGradient id="paint0_radial" cx="0" cy="0" r="1" gradientTransform="translate(55 55) scale(50)" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#E040FB" />
+                <stop offset="1" stopColor="#7C4DFF" />
+              </radialGradient>
+            </defs>
+          </svg>
+        </Box>
+      </Box>
       <Fade in timeout={600}>
         <Box>
-          <Box sx={{ mt: 1, mb: 2, textAlign: 'center' }}>
-            <Typography variant="h5" component="h1" sx={{ color: '#5E35B1', fontWeight: 800, mb: 0.5, letterSpacing: 0.3, fontSize: { xs: '1.3rem', sm: '1.7rem' } }}>
-              Hackathon Registration
-            </Typography>
-            <Typography variant="subtitle2" sx={{ color: '#7C7C7C', mb: 1, fontWeight: 500, fontSize: { xs: '0.95rem', sm: '1.1rem' } }}>
-              Register your project and team for the hackathon
-            </Typography>
-          </Box>
-          <Paper elevation={1} sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2, border: '1px solid #EDE7F6', background: 'linear-gradient(135deg, #F3E5F5 0%, #E3F2FD 100%)', boxShadow: '0 2px 8px rgba(103,58,183,0.05)' }}>
-            <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 2 }}>
-              {steps.map((label) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                </Step>
-              ))}
-            </Stepper>
+          {/* Glassmorphism Card */}
+          <Paper elevation={0} sx={{
+            mt: 2,
+            p: { xs: 2.5, sm: 3.5 },
+            borderRadius: 4,
+            border: '1.5px solid #EDE7F6',
+            background: 'rgba(255,255,255,0.65)',
+            boxShadow: '0 8px 32px 0 rgba(94,53,177,0.13)',
+            position: 'relative',
+            overflow: 'hidden',
+            backdropFilter: 'blur(12px)',
+          }}>
+            {/* Stepper with animated gradient progress bar */}
+            <Box sx={{ position: 'relative', mb: 3, pb: 1 }}>
+              <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 1.5, '& .MuiStepIcon-root': { color: '#D1C4E9' }, '& .MuiStepIcon-root.Mui-active': { color: '#7C4DFF' }, '& .MuiStepIcon-root.Mui-completed': { color: '#5E35B1' }, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif' }}>
+                {steps.map((label, idx) => (
+                  <Step key={label}>
+                    <StepLabel icon={idx === 0 ? <PersonIcon /> : idx === 1 ? <AssignmentIcon /> : <GroupAddIcon />}>{label}</StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+              {/* Animated gradient progress bar */}
+              <Box sx={{
+                position: 'absolute',
+                left: 0,
+                bottom: 0,
+                width: `${((activeStep + 1) / steps.length) * 100}%`,
+                height: 5,
+                borderRadius: 2,
+                background: 'linear-gradient(90deg, #E040FB 0%, #7C4DFF 100%)',
+                transition: 'width 0.5s cubic-bezier(0.4,0,0.2,1)',
+                zIndex: 2,
+                boxShadow: '0 2px 8px #7C4DFF33',
+              }} />
+              <Box sx={{ position: 'absolute', left: 0, bottom: 0, width: '100%', height: 5, borderRadius: 2, background: '#EDE7F6', zIndex: 1 }} />
+            </Box>
             {error && (
               <Alert severity="error" sx={{ mb: 2, fontSize: '0.95rem' }}>
                 {error}
               </Alert>
             )}
+            <Divider sx={{ mb: 2, borderColor: '#D1C4E9' }} />
             {/* Step Content */}
             {activeStep === 0 && (
               <Box>
-                <Typography variant="subtitle1" sx={{ color: '#4527A0', fontWeight: 700, mb: 1, letterSpacing: 0.1, fontSize: { xs: '1rem', sm: '1.1rem' } }}>
+                <Typography variant="subtitle1" sx={{ color: '#4527A0', fontWeight: 700, mb: 1, letterSpacing: 0.1, fontSize: { xs: '1.13rem', sm: '1.22rem' }, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif' }}>
                   Leader Info
                 </Typography>
-                <Stack spacing={1.2} direction={{ xs: 'column', sm: 'row', md: 'column' }}>
+                <Stack spacing={2} direction={{ xs: 'column', sm: 'row', md: 'column' }}>
                   <TextField
                     label="Leader First Name"
                     value={leaderFirstName}
@@ -161,8 +256,19 @@ const HackathonRegistration = () => {
                     fullWidth
                     required
                     variant="outlined"
-                    size="small"
-                    sx={{ bgcolor: '#fff', borderRadius: 1 }}
+                    size="medium"
+                    sx={{
+                      bgcolor: '#fff',
+                      borderRadius: 2,
+                      boxShadow: '0 1px 4px #7C4DFF11',
+                      transition: 'box-shadow 0.2s, border-color 0.2s',
+                      '&:hover': { boxShadow: '0 2px 8px #7C4DFF22' },
+                      '& .MuiOutlinedInput-root.Mui-focused': {
+                        boxShadow: '0 0 0 3px #E040FB44',
+                        borderColor: '#7C4DFF',
+                      },
+                    }}
+                    helperText="Enter the first name of the team leader"
                   />
                   <TextField
                     label="Leader Last Name"
@@ -171,18 +277,29 @@ const HackathonRegistration = () => {
                     fullWidth
                     required
                     variant="outlined"
-                    size="small"
-                    sx={{ bgcolor: '#fff', borderRadius: 1 }}
+                    size="medium"
+                    sx={{
+                      bgcolor: '#fff',
+                      borderRadius: 2,
+                      boxShadow: '0 1px 4px #7C4DFF11',
+                      transition: 'box-shadow 0.2s, border-color 0.2s',
+                      '&:hover': { boxShadow: '0 2px 8px #7C4DFF22' },
+                      '& .MuiOutlinedInput-root.Mui-focused': {
+                        boxShadow: '0 0 0 3px #E040FB44',
+                        borderColor: '#7C4DFF',
+                      },
+                    }}
+                    helperText="Enter the last name of the team leader"
                   />
                 </Stack>
               </Box>
             )}
             {activeStep === 1 && (
               <Box>
-                <Typography variant="subtitle1" sx={{ color: '#4527A0', fontWeight: 700, mb: 1, letterSpacing: 0.1, fontSize: { xs: '1rem', sm: '1.1rem' } }}>
+                <Typography variant="subtitle1" sx={{ color: '#4527A0', fontWeight: 700, mb: 1, letterSpacing: 0.1, fontSize: { xs: '1.13rem', sm: '1.22rem' }, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif' }}>
                   Project Info
                 </Typography>
-                <Stack spacing={1.2}>
+                <Stack spacing={2}>
                   <TextField
                     label="Project Name"
                     value={projectName}
@@ -190,8 +307,19 @@ const HackathonRegistration = () => {
                     fullWidth
                     required
                     variant="outlined"
-                    size="small"
-                    sx={{ bgcolor: '#fff', borderRadius: 1 }}
+                    size="medium"
+                    sx={{
+                      bgcolor: '#fff',
+                      borderRadius: 2,
+                      boxShadow: '0 1px 4px #7C4DFF11',
+                      transition: 'box-shadow 0.2s, border-color 0.2s',
+                      '&:hover': { boxShadow: '0 2px 8px #7C4DFF22' },
+                      '& .MuiOutlinedInput-root.Mui-focused': {
+                        boxShadow: '0 0 0 3px #E040FB44',
+                        borderColor: '#7C4DFF',
+                      },
+                    }}
+                    helperText="Give your project a unique name"
                   />
                   <TextField
                     label="Project Description"
@@ -202,119 +330,170 @@ const HackathonRegistration = () => {
                     fullWidth
                     required
                     variant="outlined"
-                    size="small"
-                    sx={{ bgcolor: '#fff', borderRadius: 1 }}
+                    size="medium"
+                    sx={{
+                      bgcolor: '#fff',
+                      borderRadius: 2,
+                      boxShadow: '0 1px 4px #7C4DFF11',
+                      transition: 'box-shadow 0.2s, border-color 0.2s',
+                      '&:hover': { boxShadow: '0 2px 8px #7C4DFF22' },
+                      '& .MuiOutlinedInput-root.Mui-focused': {
+                        boxShadow: '0 0 0 3px #E040FB44',
+                        borderColor: '#7C4DFF',
+                      },
+                    }}
+                    helperText="Describe your project in a few sentences"
                   />
                 </Stack>
               </Box>
             )}
             {activeStep === 2 && (
               <Box>
-                <Typography variant="subtitle1" sx={{ color: '#4527A0', fontWeight: 700, mb: 1, letterSpacing: 0.1, fontSize: { xs: '1rem', sm: '1.1rem' } }}>
+                <Typography variant="subtitle1" sx={{ color: '#4527A0', fontWeight: 700, mb: 1, letterSpacing: 0.1, fontSize: { xs: '1.13rem', sm: '1.22rem' }, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif' }}>
                   Team Members
                 </Typography>
                 <Paper sx={{
-                  p: 1.2,
+                  p: 1.5,
                   mb: 2,
-                  borderRadius: 1.5,
+                  borderRadius: 2,
                   bgcolor: '#F3E5F5',
-                  border: '1px solid #E1BEE7',
-                  boxShadow: '0 1px 4px rgba(103,58,183,0.04)',
+                  border: '1.5px solid #E1BEE7',
+                  boxShadow: '0 2px 8px #7C4DFF11',
                   display: 'flex',
                   flexDirection: { xs: 'column', sm: 'row' },
-                  gap: 1,
+                  gap: 1.5,
                   alignItems: 'center',
+                  transition: 'box-shadow 0.2s',
+                  '&:hover': { boxShadow: '0 4px 16px #7C4DFF22' },
                 }}>
                   <TextField
                     label="Name"
                     value={newMember.name}
                     onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-                    size="small"
+                    size="medium"
                     fullWidth
                     variant="outlined"
-                    sx={{ bgcolor: '#fff', borderRadius: 1 }}
-                    InputProps={{ startAdornment: <PersonIcon sx={{ color: '#B39DDB', mr: 0.5, fontSize: 18 }} /> }}
+                    sx={{
+                      bgcolor: '#fff',
+                      borderRadius: 2,
+                      boxShadow: '0 1px 4px #7C4DFF11',
+                      transition: 'box-shadow 0.2s, border-color 0.2s',
+                      '&:hover': { boxShadow: '0 2px 8px #7C4DFF22' },
+                      '& .MuiOutlinedInput-root.Mui-focused': {
+                        boxShadow: '0 0 0 3px #E040FB44',
+                        borderColor: '#7C4DFF',
+                      },
+                    }}
+                    InputProps={{ startAdornment: <PersonIcon sx={{ color: '#B39DDB', mr: 0.5, fontSize: 20 }} /> }}
+                    helperText="Full name of the member"
                   />
                   <TextField
                     label="Email (Optional)"
                     type="email"
                     value={newMember.email}
                     onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
-                    size="small"
+                    size="medium"
                     fullWidth
                     variant="outlined"
-                    sx={{ bgcolor: '#fff', borderRadius: 1 }}
-                    InputProps={{ startAdornment: <EmailIcon sx={{ color: '#B39DDB', mr: 0.5, fontSize: 18 }} /> }}
+                    sx={{
+                      bgcolor: '#fff',
+                      borderRadius: 2,
+                      boxShadow: '0 1px 4px #7C4DFF11',
+                      transition: 'box-shadow 0.2s, border-color 0.2s',
+                      '&:hover': { boxShadow: '0 2px 8px #7C4DFF22' },
+                      '& .MuiOutlinedInput-root.Mui-focused': {
+                        boxShadow: '0 0 0 3px #E040FB44',
+                        borderColor: '#7C4DFF',
+                      },
+                    }}
+                    InputProps={{ startAdornment: <EmailIcon sx={{ color: '#B39DDB', mr: 0.5, fontSize: 20 }} /> }}
+                    helperText="Contact email (optional)"
                   />
                   <TextField
                     label="Role"
                     value={newMember.role}
                     onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
-                    size="small"
+                    size="medium"
                     fullWidth
                     variant="outlined"
-                    sx={{ bgcolor: '#fff', borderRadius: 1 }}
-                    InputProps={{ startAdornment: <WorkIcon sx={{ color: '#B39DDB', mr: 0.5, fontSize: 18 }} /> }}
+                    sx={{
+                      bgcolor: '#fff',
+                      borderRadius: 2,
+                      boxShadow: '0 1px 4px #7C4DFF11',
+                      transition: 'box-shadow 0.2s, border-color 0.2s',
+                      '&:hover': { boxShadow: '0 2px 8px #7C4DFF22' },
+                      '& .MuiOutlinedInput-root.Mui-focused': {
+                        boxShadow: '0 0 0 3px #E040FB44',
+                        borderColor: '#7C4DFF',
+                      },
+                    }}
+                    InputProps={{ startAdornment: <WorkIcon sx={{ color: '#B39DDB', mr: 0.5, fontSize: 20 }} /> }}
+                    helperText="e.g. Developer, Designer, PM"
                   />
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'flex-end', sm: 'center' } }}>
                     <IconButton 
                       onClick={handleAddMember}
-                      size="small"
+                      size="medium"
                       sx={{ 
-                        bgcolor: '#7C4DFF',
+                        bgcolor: 'linear-gradient(90deg, #E040FB 0%, #7C4DFF 100%)',
                         color: '#fff',
-                        border: '1px solid #7C4DFF',
-                        '&:hover': { bgcolor: '#5E35B1', borderColor: '#5E35B1' },
+                        border: '1.5px solid #7C4DFF',
+                        boxShadow: '0 2px 8px #7C4DFF22',
                         transition: 'all 0.2s',
-                        boxShadow: '0 1px 4px rgba(103,58,183,0.08)'
+                        '&:hover': {
+                          bgcolor: 'linear-gradient(90deg, #7C4DFF 0%, #E040FB 100%)',
+                          borderColor: '#E040FB',
+                          transform: 'scale(1.08)',
+                          boxShadow: '0 4px 16px #E040FB33',
+                        },
                       }}
                     >
-                      <AddIcon sx={{ fontSize: 18 }} />
+                      <AddIcon sx={{ fontSize: 22 }} />
                     </IconButton>
                   </Box>
                 </Paper>
-                <Divider sx={{ my: 1.2, borderColor: '#D1C4E9' }} />
-                <Stack spacing={1.2}>
+                <Divider sx={{ my: 1.5, borderColor: '#D1C4E9' }} />
+                <Stack spacing={1.5}>
                   {teamMembers.map((member, index) => (
                     <Paper
                       key={index}
                       sx={{
-                        p: 1.2,
-                        border: '1px solid #E1BEE7',
-                        borderRadius: 1.5,
+                        p: 1.5,
+                        border: '1.5px solid #E1BEE7',
+                        borderRadius: 2,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         bgcolor: '#fff',
-                        boxShadow: '0 2px 8px rgba(103,58,183,0.04)',
-                        transition: 'box-shadow 0.2s',
+                        boxShadow: '0 2px 8px #7C4DFF11',
+                        transition: 'box-shadow 0.2s, border-color 0.2s',
                         '&:hover': {
-                          boxShadow: '0 4px 16px rgba(103,58,183,0.10)',
+                          boxShadow: '0 4px 16px #7C4DFF22',
                           borderColor: '#7C4DFF',
                         },
                       }}
                     >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
-                        <Avatar sx={{ bgcolor: '#EDE7F6', color: '#7C4DFF', width: 32, height: 32, fontWeight: 700, fontSize: 16 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Avatar sx={{ bgcolor: '#EDE7F6', color: '#7C4DFF', width: 36, height: 36, fontWeight: 700, fontSize: 18, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif' }}>
                           {member.name[0]?.toUpperCase()}
                         </Avatar>
                         <Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7 }}>
-                            <PersonIcon sx={{ color: '#7C4DFF', fontSize: 16 }} />
-                            <Typography variant="subtitle2" sx={{ color: '#4527A0', fontWeight: 700, fontSize: '0.98rem' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <PersonIcon sx={{ color: '#7C4DFF', fontSize: 18 }} />
+                            <Typography variant="subtitle2" sx={{ color: '#4527A0', fontWeight: 700, fontSize: '1.05rem', fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif' }}>
                               {member.name}
                             </Typography>
                           </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7, mt: 0.2 }}>
-                            <WorkIcon sx={{ color: '#8F9BB3', fontSize: 14 }} />
-                            <Typography variant="body2" sx={{ color: '#8F9BB3', fontWeight: 500, fontSize: '0.92rem' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.2 }}>
+                            <WorkIcon sx={{ color: '#8F9BB3', fontSize: 16 }} />
+                            <Typography variant="body2" sx={{ color: '#8F9BB3', fontWeight: 500, fontSize: '0.98rem', fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif' }}>
                               {member.role}
                             </Typography>
                           </Box>
                           {member.email && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.7, mt: 0.2 }}>
-                              <EmailIcon sx={{ color: '#8F9BB3', fontSize: 14 }} />
-                              <Typography variant="body2" sx={{ color: '#8F9BB3', fontSize: '0.92rem' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.2 }}>
+                              <EmailIcon sx={{ color: '#8F9BB3', fontSize: 16 }} />
+                              <Typography variant="body2" sx={{ color: '#8F9BB3', fontSize: '0.98rem', fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif' }}>
                                 {member.email}
                               </Typography>
                             </Box>
@@ -323,23 +502,34 @@ const HackathonRegistration = () => {
                       </Box>
                       <IconButton 
                         onClick={() => handleRemoveMember(index)}
-                        size="small"
-                        sx={{ color: '#F44336', '&:hover': { bgcolor: '#FFEBEE' } }}
+                        size="medium"
+                        sx={{ color: '#F44336', '&:hover': { bgcolor: '#FFEBEE', transform: 'scale(1.08)' } }}
                       >
-                        <DeleteIcon sx={{ fontSize: 18 }} />
+                        <DeleteIcon sx={{ fontSize: 22 }} />
                       </IconButton>
                     </Paper>
                   ))}
                 </Stack>
               </Box>
             )}
-            {/* Stepper Navigation */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+            <Divider sx={{ mt: 3, mb: 2, borderColor: '#D1C4E9' }} />
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
               <Button
                 disabled={activeStep === 0}
                 onClick={handleBack}
-                size="small"
-                sx={{ minWidth: 90 }}
+                size="medium"
+                sx={{
+                  minWidth: 100,
+                  fontWeight: 700,
+                  color: '#7C4DFF',
+                  border: '1.5px solid #7C4DFF',
+                  bgcolor: '#fff',
+                  fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif',
+                  borderRadius: 2,
+                  boxShadow: '0 1px 4px #7C4DFF11',
+                  transition: 'all 0.2s',
+                  '&:hover': { bgcolor: '#F3E5F5', transform: 'scale(1.05)' },
+                }}
               >
                 Back
               </Button>
@@ -347,8 +537,22 @@ const HackathonRegistration = () => {
                 <Button
                   variant="contained"
                   onClick={handleNext}
-                  size="small"
-                  sx={{ minWidth: 90, bgcolor: '#7C4DFF', '&:hover': { bgcolor: '#5E35B1' } }}
+                  size="medium"
+                  sx={{
+                    minWidth: 100,
+                    fontWeight: 700,
+                    bgcolor: 'linear-gradient(90deg, #E040FB 0%, #7C4DFF 100%)',
+                    color: '#fff',
+                    fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif',
+                    borderRadius: 2,
+                    boxShadow: '0 2px 8px #7C4DFF22',
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      bgcolor: 'linear-gradient(90deg, #7C4DFF 0%, #E040FB 100%)',
+                      transform: 'scale(1.08)',
+                      boxShadow: '0 4px 16px #E040FB33',
+                    },
+                  }}
                 >
                   Next
                 </Button>
@@ -356,8 +560,22 @@ const HackathonRegistration = () => {
                 <Button
                   variant="contained"
                   onClick={handleStepSubmit}
-                  size="small"
-                  sx={{ minWidth: 90, bgcolor: '#7C4DFF', '&:hover': { bgcolor: '#5E35B1' } }}
+                  size="medium"
+                  sx={{
+                    minWidth: 100,
+                    fontWeight: 700,
+                    bgcolor: 'linear-gradient(90deg, #E040FB 0%, #7C4DFF 100%)',
+                    color: '#fff',
+                    fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif',
+                    borderRadius: 2,
+                    boxShadow: '0 2px 8px #7C4DFF22',
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      bgcolor: 'linear-gradient(90deg, #7C4DFF 0%, #E040FB 100%)',
+                      transform: 'scale(1.08)',
+                      boxShadow: '0 4px 16px #E040FB33',
+                    },
+                  }}
                 >
                   Register
                 </Button>
