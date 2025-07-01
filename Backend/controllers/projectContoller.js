@@ -63,12 +63,10 @@ module.exports.updateProject = async (req, res) => {
 module.exports.deleteProject = async (req, res) => {
   try {
     const deletedProject = await projectService.deleteProject(req.params.id);
-    res
-      .status(200)
-      .json({
-        message: "Projet supprimé avec succès",
-        project: deletedProject,
-      });
+    res.status(200).json({
+      message: "Projet supprimé avec succès",
+      project: deletedProject,
+    });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -82,8 +80,14 @@ module.exports.generateProjectQuestions = async (req, res) => {
     if (!user) {
       throw new HttpError(500, `User not found`);
     }
-    if (!assessmentType) {
-      throw new HttpError(400, `Assessment type is required.`);
+    if (
+      !assessmentType ||
+      !Object.values(PROJECT_ASSESSMENT_TYPE).includes(assessmentType)
+    ) {
+      throw new HttpError(
+        400,
+        `Assessment type is required and must have a valid value `
+      );
     }
 
     // project verification
