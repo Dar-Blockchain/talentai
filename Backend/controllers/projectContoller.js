@@ -1,7 +1,7 @@
 const projectService = require("../services/projectService");
 
 // Créer un projet
-const createProject = async (req, res) => {
+module.exports.createProject = async (req, res) => {
   try {
     const data = req.body;
     data.leaderId = req.user._id
@@ -13,7 +13,7 @@ const createProject = async (req, res) => {
 };
 
 // Récupérer tous les projets
-const getAllProjects = async (req, res) => {
+module.exports.getAllProjects = async (req, res) => {
   try {
     const projects = await projectService.getAllProjects();
     res.status(200).json(projects);
@@ -23,7 +23,7 @@ const getAllProjects = async (req, res) => {
 };
 
 // Récupérer un projet par ID
-const getProjectById = async (req, res) => {
+module.exports.getProjectById = async (req, res) => {
   try {
     const project = await projectService.getProjectById(req.params.id);
     res.status(200).json(project);
@@ -33,7 +33,7 @@ const getProjectById = async (req, res) => {
 };
 
 // Mettre à jour un projet
-const updateProject = async (req, res) => {
+module.exports.updateProject = async (req, res) => {
   try {
     const updatedProject = await projectService.updateProject(req.params.id, req.body);
     res.status(200).json(updatedProject);
@@ -43,7 +43,7 @@ const updateProject = async (req, res) => {
 };
 
 // Supprimer un projet
-const deleteProject = async (req, res) => {
+module.exports.deleteProject = async (req, res) => {
   try {
     const deletedProject = await projectService.deleteProject(req.params.id);
     res.status(200).json({ message: "Projet supprimé avec succès", project: deletedProject });
@@ -52,10 +52,3 @@ const deleteProject = async (req, res) => {
   }
 };
 
-module.exports = {
-  createProject,
-  getAllProjects,
-  getProjectById,
-  updateProject,
-  deleteProject,
-};
