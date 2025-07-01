@@ -19,37 +19,70 @@ const {
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
+const crypto = require("crypto");
+const { sendActivationEmail } = require("../utils/mailing");
+
 // Création d'un projet
-module.exports.createProject = async (data) => {
-    try {
-      // Créer un projet avec les données fournies
-      const project = new Project({
-        name: data.Name,
-        description: data.description,
-        team: data.team.map(email => ({ email, validated: false })), // Ajouter les membres avec un statut validé à false
-        leaderId: data.leaderId, // Vous devez avoir l'ID du leader (assurez-vous de le récupérer quelque part)
-      });
-      await project.save(); // Sauvegarder le projet dans la base de données
-  
-      // Mettre à jour l'utilisateur leader avec ses informations et ajouter l'ID du projet à sa liste de projets
-      await User.findByIdAndUpdate(
-        data.leaderId, 
-        { 
-          FirstName: data.FirstName,
-          LastName: data.LastName,
-          isHaker: true,
-          role: "Candidat",
-          $push: { project: project._id } // Ajouter l'ID du projet à la liste des projets de l'utilisateur
-        }
-      );
-  
-      return project; // Retourner le projet créé
-    } catch (error) {
-      console.error("Erreur lors de la création du projet:", error);
-      throw new Error("Erreur lors de la création du projet");
+module.exports.createProject = async (data, baseUrl) => {
+  try {
+    // Génère un token unique pour chaque membre et ajoute validated: false par défaut
+    const teamWithTokens = data.team.map((member) => {
+      const activationToken = crypto.randomBytes(32).toString("hex");
+      return {
+        ...member, // Inclut les données du membre
+        validated: false, // Ajoute validated par défaut
+        activationToken, // Ajoute le token d'activation
+      };
+    });
+
+    // Créer un projet avec les données fournies
+    const project = new Project({
+      name: data.Name,
+      description: data.description,
+      team: teamWithTokens,
+      leaderId: data.leaderId, // Vous devez avoir l'ID du leader (assurez-vous de le récupérer quelque part)
+    });
+    await project.save(); // Sauvegarder le projet dans la base de données
+
+    // Envoie un mail à chaque membre
+    for (const member of teamWithTokens) {
+      const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${member.activationToken}`;
+      await sendActivationEmail(member.email, link);
     }
-  };
-  
+
+    // Mettre à jour l'utilisateur leader avec ses informations et ajouter l'ID du projet à sa liste de projets
+    await User.findByIdAndUpdate(data.leaderId, {
+      FirstName: data.FirstName,
+      LastName: data.LastName,
+      isHaker: true,
+      role: "Candidat",
+      $push: { project: project._id }, // Ajouter l'ID du projet à la liste des projets de l'utilisateur
+    });
+
+    return project; // Retourner le projet créé
+  } catch (error) {
+    console.error("Erreur lors de la création du projet:", error);
+    throw new Error("Erreur lors de la création du projet");
+  }
+};
+
+
+// Activation du compte membre
+module.exports.activateTeamMember = async (projectId, token) => {
+  const project = await Project.findById(projectId);
+  if (!project) throw new Error("Projet introuvable");
+
+  const member = project.team.find(
+    (m) => m.activationToken === token && !m.validated
+  );
+  if (!member) throw new Error("Lien invalide ou déjà activé");
+
+  member.validated = true;
+  member.activationToken = undefined; // On supprime le token après activation
+  await project.save();
+
+  return member;
+};
 
 // Récupération de tous les projets
 module.exports.getAllProjects = async () => {
