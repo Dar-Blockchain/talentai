@@ -4,7 +4,7 @@ const projectService = require("../services/projectService");
 module.exports.createProject = async (req, res) => {
   try {
     const data = req.body;
-    data.leaderId = "6862af00e704e223cf63fccc"
+    data.leaderId = req.user._id
     const newProject = await projectService.createProject(data);
     res.status(201).json(newProject);
   } catch (error) {
