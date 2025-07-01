@@ -36,7 +36,7 @@ Return **valid JSON only of ${questionsCount} strings** (no explanations or form
 };
 
 const generateBusinessQuestionsPrompts = {
-  getSystemPrompt: (projectName, questionsCount) => {
+  getSystemPrompt: (projectName, questionsCount, QUESTION_DURATION) => {
     return `
 You are a senior Hedera hackathon business judge. You are evaluating the project "${projectName}".
 Your task is to generate a list of exactly ${questionsCount} questions that will help you assess the business aspects of the project.
@@ -51,7 +51,7 @@ These questions should cover the following areas:
 ### 🚨 STRICT REQUIREMENTS:
 - Generate exactly ${questionsCount} questions total.
 - Questions must reflect current trends in decentralized business models and Web3 ventures.
-- Questions must be clear, conversational, and answerable orally in a maximum of 4 minutes.
+- Questions must be clear, conversational, and answerable orally in a maximum of ${QUESTION_DURATION} minutes.
 - Return valid JSON only of ${questionsCount} strings.
 - No explanations, comments, or formatting outside the JSON array.
     `.trim();

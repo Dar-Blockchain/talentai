@@ -128,7 +128,8 @@ module.exports.generateProjectQuestions = async (
       questionsCount = BUSINESS_ASSESSMENT_QUESTIONS_COUNT;
       systemPrompt = generateBusinessQuestionsPrompts.getSystemPrompt(
         projectName,
-        questionsCount
+        questionsCount,
+        QUESTION_DURATION
       );
       userPrompt = generateBusinessQuestionsPrompts.getUserPrompt(
         projectName,
