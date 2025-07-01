@@ -69,7 +69,24 @@ const HackathonRegistration = () => {
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/signin');
+      return;
     }
+    // Check if user already has a project
+    const checkExistingProject = async () => {
+      try {
+        const token = localStorage.getItem('api_token');
+        const res = await fetch('http://localhost:5000/project/getMyProjects', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            router.push('/hackathon-dashboard');
+          }
+        }
+      } catch (e) { /* ignore */ }
+    };
+    checkExistingProject();
   }, [isAuthenticated, router]);
 
   useEffect(() => { setMounted(true); }, []);
