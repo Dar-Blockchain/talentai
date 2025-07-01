@@ -119,3 +119,60 @@ module.exports.generateProjectQuestions = async (req, res) => {
     });
   }
 };
+
+exports.analyzeAnswers = async (req, res) => {
+  try {
+    const { questions } = req.body;
+    const projectId = req.params.id;
+    const assessmentType = req.params.assessmentType.trim();
+    const user = req.user;
+
+    const profile = await Profile.findById(user.profile);
+    if (!profile)
+      throw new HttpError(404, "profile not found.");
+
+    const now = new Date();
+    const daysSinceLastUpdate =
+      (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
+    if (daysSinceLastUpdate >= 30) {
+      profile.quota = 0;
+      profile.quotaUpdatedAt = now;
+    }
+
+    if (profile.quota >= 5) {
+      return res
+        .status(403)
+        .json({ error: "You have reached your test limit (5)" });
+    }
+
+    if (!Array.isArray(questions)) {
+      return res.status(400).json({
+        error: "Invalid request format",
+        required: {
+          questions: "Array of question-answer pairs",
+        },
+      });
+    }
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      throw new HttpError(404, "project not found");
+    }
+
+    const result = await projectService.analyzeAnswers({
+      questions,
+      profile,
+      project,
+      assessmentType,
+    });
+
+    res.status(200).json({ success: true, result });
+  } catch (error) {
+    console.error("Error analyzing project answers:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to analyze project answers",
+      details: error.message,
+    });
+  }
+};

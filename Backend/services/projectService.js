@@ -16,6 +16,7 @@ const { HttpError } = require("../utils/httpUtils");
 const {
   generateTechnicalQuestionsPrompts,
   generateBusinessQuestionsPrompts,
+  analyzeTechnicalAnswersPrompts,
 } = require("../prompts/projectPrompts");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
@@ -113,7 +114,7 @@ module.exports.generateProjectQuestions = async (
       questionsCount = TECHNICAL_ASSESSMENT_QUESTIONS_COUNT;
       systemPrompt = generateTechnicalQuestionsPrompts.getSystemPrompt(
         projectName,
-        questionsCount, 
+        questionsCount,
         QUESTION_DURATION
       );
       userPrompt = generateTechnicalQuestionsPrompts.getUserPrompt(
@@ -121,7 +122,9 @@ module.exports.generateProjectQuestions = async (
         questionsCount
       );
       pitchQuestion =
-        "You have up to " + PITCH_DURATION + " minutes to deliver your technical pitch and provide additional details about your project.";
+        "You have up to " +
+        PITCH_DURATION +
+        " minutes to deliver your technical pitch and provide additional details about your project.";
     }
 
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
@@ -136,7 +139,9 @@ module.exports.generateProjectQuestions = async (
         questionsCount
       );
       pitchQuestion =
-        "You have up to " + PITCH_DURATION + " minutes to deliver your business pitch and provide additional details about your project.";
+        "You have up to " +
+        PITCH_DURATION +
+        " minutes to deliver your business pitch and provide additional details about your project.";
     }
 
     const stream = await together.chat.completions.create({
@@ -171,3 +176,74 @@ module.exports.generateProjectQuestions = async (
     throw new HttpError(500, `Internal server error: ${error}`);
   }
 };
+
+// exports.analyzeAnswers = async ({
+//   questions,
+//   profile,
+//   project,
+//   assessmentType,
+// }) => {
+//   let systemPrompt = "";
+//   let userPrompt = "";
+//   if (assessmentType == PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
+//     systemPrompt = analyzeTechnicalAnswersPrompts.getSystemPrompt(
+//       projectName,
+//       questions
+//     );
+//     userPrompt = analyzeTechnicalAnswersPrompts.getUserPrompt(
+//       projectName,
+//       questions
+//     );
+//   }
+
+//   // if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
+//   //   systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
+//   //     projectName,
+//   //     questionsCount,
+//   //     QUESTION_DURATION
+//   //   );
+//   //   userPrompt = analyzeBusinessAnswersPrompts.getUserPrompt(
+//   //     projectName,
+//   //     questionsCount
+//   //   );
+//   // }
+
+//   const stream = await together.chat.completions.create({
+//     model: "deepseek-ai/DeepSeek-V3",
+//     messages: [
+//       { role: "system", content: systemPrompt },
+//       { role: "user", content: userPrompt },
+//     ],
+//     max_tokens: 2500,
+//     temperature: 0.6,
+//     stream: true,
+//   });
+
+//   let raw = "";
+//   for await (const chunk of stream) {
+//     const content = chunk.choices?.[0]?.delta?.content;
+//     if (content) raw += content;
+//   }
+
+//   // I. parse AI response
+//   let analysis = await parseAIResponse(raw);
+
+  
+
+//   const interviewId = await saveInterviewDetails(
+//     profile,
+//     analysis.overallScore,
+//     analysis.skillAnalysis,
+//     formData
+//   );
+
+//   profile.quota++;
+
+//   if (!profile.interviewDetails) {
+//     profile.interviewDetails = [];
+//   }
+//   profile.interviewDetails.push(interviewId);
+//   await profile.save();
+
+//   return { analysis };
+// };
