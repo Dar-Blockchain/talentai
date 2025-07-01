@@ -4,15 +4,27 @@ const Project = require("../models/projectModel");
 const { HttpError } = require("../utils/httpUtils");
 const { PROJECT_ASSESSMENT_TYPE } = require("../constants/projectConstants");
 
+
 // Créer un projet
 module.exports.createProject = async (req, res) => {
   try {
+    const baseUrl = process.env.BASE_URL || "http://localhost:3000"; // Adapte selon ton env
     const data = req.body;
     data.leaderId = req.user._id;
-    const newProject = await projectService.createProject(data);
+    const newProject = await projectService.createProject(data,baseUrl);
     res.status(201).json(newProject);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+module.exports.activateTeamMember = async (req, res) => {
+  try {
+    const { projectId, token } = req.query;
+    const member = await projectService.activateTeamMember(projectId, token);
+    res.send(`Activation réussie pour ${member.email}`);
+  } catch (err) {
+    res.status(400).send(err.message);
   }
 };
 

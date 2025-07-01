@@ -13,6 +13,9 @@ router.use(requireAuthUser,controledAcces('Candidat'), authLogMiddleware("Projec
 // Créer un projet
 router.post("/addProject", projectController.createProject); 
 
+//activate Team Member
+router.get("/activate", projectController.activateTeamMember);
+
 // Récupérer tous les projets
 router.get("/getAllProjects", projectController.getAllProjects); 
 
