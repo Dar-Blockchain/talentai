@@ -332,16 +332,16 @@ interface JobQuestionsResponse {
 const Test = () => {
   const theme = useTheme();
   const router = useRouter();
+  const { id, type, projectId } = router.query;
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { data: session } = useSession();
-  const { id } = router.query;
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isGenerating, setIsGenerating] = useState(true);
   const [current, setCurrent] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(120);
+  const [timeLeft, setTimeLeft] = useState(240);
   const [testedSkills, setTestedSkills] = useState<any[]>([]);
   const currentIndexRef = useRef(0);
   const [hasStartedTest, setHasStartedTest] = useState(false);
@@ -378,54 +378,10 @@ const Test = () => {
 
   // Transcription states
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const { type, projectId } = router.query;
 
   // Question selection logic
   const [invalidType, setInvalidType] = useState(false);
-  const [loadingQuestions, setLoadingQuestions] = useState(true);
   const [fetchError, setFetchError] = useState('');
-
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      if (!type) return;
-      let url = '';
-      if (projectId) {
-        url = `${process.env.NEXT_PUBLIC_API_BASE_URL}projectproject/generateQuestions/${projectId}/${type}`;
-      } else {
-        // fallback or error
-        return;
-      }
-      try {
-        setLoadingQuestions(true);
-        setFetchError('');
-        const token = localStorage.getItem('api_token');
-        const res = await fetch(url, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (!res.ok) throw new Error('Failed to fetch questions');
-        const data = await res.json();
-        if (Array.isArray(data.questions) && data.questions.length > 0) {
-          setQuestions(data.questions.map((question: string) => ({
-            id: uuidv4(),
-            text: question,
-            skill: '',
-            level: ''
-          })));
-          setInvalidType(false);
-        } else {
-          setQuestions([]);
-          setInvalidType(true);
-        }
-      } catch (e) {
-        setFetchError('Failed to fetch questions.');
-        setQuestions([]);
-        setInvalidType(true);
-      } finally {
-        setLoadingQuestions(false);
-      }
-    };
-    fetchQuestions();
-  }, [type, projectId]);
 
   useEffect(() => {
     if(!isAuthenticated && id){
@@ -442,7 +398,12 @@ const Test = () => {
           if (prev <= 1) {
             if (current < questions.length - 1) {
               setCurrent(c => c + 1);
-              return 120; // Reset timer to 120 seconds (2 minutes)
+              // If next is last question, set to 300, else 240
+              if (current + 1 === questions.length - 1) {
+                return 300;
+              } else {
+                return 240;
+              }
             } else {
               stopRecording();
               saveTestResults();
@@ -459,9 +420,13 @@ const Test = () => {
   // Reset timer when question changes
   useEffect(() => {
     currentIndexRef.current = current;
-    setTimeLeft(120); // Reset to 120 seconds (2 minutes)
+    if (current === questions.length - 1) {
+      setTimeLeft(300); // Last question: 5 minutes
+    } else {
+      setTimeLeft(240); // Others: 4 minutes
+    }
     setCurrentTranscript(''); // Clear current transcript
-  }, [current]);
+  }, [current, questions.length]);
 
   // Initialize camera
   useEffect(() => {
@@ -699,46 +664,33 @@ const Test = () => {
       const token = Cookies.get('api_token');
       if (!token) {
         console.log('No token found, redirecting to signin');
-        router.push(`/signin?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`);
+        router.push(`/signin?returnUrl=${encodeURIComponent(router.asPath)}`);
         return;
       }
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/job/${id}/generate-technique-questions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          jobId: id
-        })
+      if (!projectId || !type) {
+        throw new Error('Missing project or type');
+      }
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}project/generateQuestions/${projectId}/${type}`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-
       if (!response.ok) {
         throw new Error('Failed to fetch questions');
       }
-
-      const data: JobQuestionsResponse = await response.json();
-      setTestedSkills(data.testedSkills);
-      const formattedQuestions: Question[] = data.questions.map((question, index) => {
-        const skillIndex = index % data.requiredSkills.length;
-        const skill = data.requiredSkills[skillIndex];
-
-        return {
-          id: `q_${index + 1}`,
+      const data = await response.json();
+      if (Array.isArray(data.questions) && data.questions.length > 0) {
+        setQuestions(data.questions.map((question: string) => ({
+          id: uuidv4(),
           text: question,
-          skill: skill.name,
-          level: skill.level
-        };
-      });
-
-      setQuestions(formattedQuestions);
-      setTranscriptions(
-        formattedQuestions.reduce((acc: any, _: any, index: number) => ({
-          ...acc,
-          [index]: ''
-        }), {})
-      );
+          skill: '',
+          level: ''
+        })));
+        setInvalidType(false);
+      } else {
+        setQuestions([]);
+        setInvalidType(true);
+      }
       setGuidelinesAccepted(true);
       setShowGuidelines(false);
     } catch (error) {
@@ -782,7 +734,7 @@ const Test = () => {
 
       setIsRecording(true);
       setHasStartedTest(true);
-      setTimeLeft(120); // Start with 120 seconds (2 minutes)
+      setTimeLeft(240); // Start with 240 seconds (4 minutes)
     } catch (error) {
       console.error('Recording setup error:', error);
       setIsRecording(false);
@@ -806,7 +758,7 @@ const Test = () => {
     if (hasStartedTest) {
       saveTestResults();
     }
-    router.push('/dashboardCandidate');
+    router.push('/hackathon-dashboard');
   };
 
   // Function to save test results
@@ -860,7 +812,7 @@ const Test = () => {
         setShowSecurityModal(true);
         stopRecording();
         setTimeout(() => {
-          router.push('/dashboardCandidate');
+          router.push('/hackathon-dashboard');
         }, 2000); // Give time for modal to show
       }
       return next;
@@ -943,18 +895,13 @@ const Test = () => {
     }
   }, [current]);
 
-  if (loadingQuestions) {
-    return <div style={{ padding: 40, textAlign: 'center' }}>Loading questions...</div>;
-  }
   if (fetchError) {
     return <div style={{ padding: 40, textAlign: 'center', color: 'red' }}>{fetchError}</div>;
   }
   if (!type || !projectId) {
     return <div style={{ padding: 40, textAlign: 'center', color: 'red' }}>Missing project or type.</div>;
   }
-  if (invalidType || !questions.length) {
-    return <div style={{ padding: 40, textAlign: 'center', color: 'red' }}>No questions found for this interview.</div>;
-  }
+  
 
   if(!isAuthenticated){
     return null
