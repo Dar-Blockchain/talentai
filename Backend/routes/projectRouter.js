@@ -11,5 +11,6 @@ router.get("/getAllProjects", projectController.getAllProjects); // Récupérer 
 router.get("/getProjectById/:id", projectController.getProjectById); // Récupérer un projet par ID
 router.put("/updateProject/:id", projectController.updateProject); // Mettre à jour un projet
 router.delete("/deleteProject/:id", projectController.deleteProject); // Supprimer un projet
+router.get("/generateQuestions/:id/:assessmentType", projectController.generateProjectQuestions);
 
 module.exports = router;
