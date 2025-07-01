@@ -43,6 +43,15 @@ module.exports.getAllProjects = async () => {
   }
 };
 
+// Récupération des projets de l'utilisateur connecté
+module.exports.getMyProjects = async (userId) => {
+  try {
+    const projects = await Project.find({ leaderId: userId });
+    return projects;
+  } catch (error) {
+    throw new Error("Erreur lors de la récupération des projets");
+  }
+};
 // Récupération d'un projet par son ID
 module.exports.getProjectById = async (id) => {
   try {

@@ -22,6 +22,16 @@ module.exports.getAllProjects = async (req, res) => {
   }
 };
 
+// Récupérer tous les projets
+module.exports.getMyProjects = async (req, res) => {
+  try {
+    const projects = await projectService.getMyProjects(req.user._id);
+    res.status(200).json(projects);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 // Récupérer un projet par ID
 module.exports.getProjectById = async (req, res) => {
   try {
