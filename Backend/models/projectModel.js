@@ -16,6 +16,7 @@ const ProjectSchema = new mongoose.Schema(
           type: Boolean,
           default: false, // Le champ `validated` pour chaque membre
         },
+        activationToken: String, // Ajoute ce champ
       },
     ],
     leaderId: {
