@@ -2,10 +2,15 @@
 const router = require('express').Router();
 const resumeController= require('../controllers/resumeController');
 const hederaNFTController = require('../controllers/hederaNFTController');
-const { requireAuthUser } = require('../middleware/authMiddleware');
 
-// Routes protégées par authentification
-router.use(requireAuthUser);
+// Importez les middlewares
+const { requireAuthUser } = require('../middleware/authMiddleware');
+const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
+const { controledAcces } = require('../middleware/controledAcces'); // Importez le middleware
+
+
+router.use(requireAuthUser,controledAcces('Candidat'), authLogMiddleware("Resume"));
+
 
 router.post('/createResume', resumeController.createResume);
 router.post('/regenerate', resumeController.regenerate);

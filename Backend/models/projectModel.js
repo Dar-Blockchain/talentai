@@ -2,8 +2,9 @@ const mongoose = require("mongoose");
 
 const ProjectSchema = new mongoose.Schema(
   {
-    Name: String,
+    name: String,
     description: String,
+    track: String,
     team: [
       {
         email: {
@@ -15,6 +16,7 @@ const ProjectSchema = new mongoose.Schema(
           type: Boolean,
           default: false, // Le champ `validated` pour chaque membre
         },
+        activationToken: String, // Ajoute ce champ
       },
     ],
     leaderId: {

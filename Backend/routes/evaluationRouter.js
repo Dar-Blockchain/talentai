@@ -2,10 +2,14 @@ const express = require('express');
 const router = express.Router();
 const evaluationController  = require('../controllers/evaluationController');
 
+// Importez les middlewares
 const { requireAuthUser } = require('../middleware/authMiddleware');
+const { controledAcces } = require('../middleware/controledAcces'); // Importez le middleware
+const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
+
 
 // Routes protégées par authentification
-router.use(requireAuthUser);
+router.use(requireAuthUser,controledAcces('Candidat'), authLogMiddleware("Evaluation"));
 
 
 router.post('/generate-questions', evaluationController.generateQuestions);

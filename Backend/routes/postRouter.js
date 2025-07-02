@@ -1,10 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const { requireAuthUser } = require("../middleware/authMiddleware");
-const postController = require("../controllers/postController");
 
-// Routes protégées par authentification
-router.use(requireAuthUser);
+// Importez les middlewares
+const postController = require("../controllers/postController");
+const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
+const { controledAcces } = require('../middleware/controledAcces'); // Importez le middleware
+
+
+router.use(requireAuthUser,controledAcces('Company'), authLogMiddleware("Post"));
+
 
 // Route pour créer un post
 router.post("/save-post", postController.createPost);

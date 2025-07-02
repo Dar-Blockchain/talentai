@@ -55,6 +55,7 @@ interface ProjectData {
   projectDescription: string;
   teamMembers: TeamMember[];
   createdAt: string;
+  _id: string;
 }
 
 const blobAnimation = keyframes`
@@ -102,6 +103,7 @@ const HackathonDashboard = () => {
             projectDescription: latest.description,
             teamMembers,
             createdAt: latest.createdAt,
+            _id: latest._id,
           });
         } else {
           setProjectData(null);
@@ -195,7 +197,7 @@ const HackathonDashboard = () => {
           <StatsCards projectData={projectData} />
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <QuickActions />
+              <QuickActions projectId={projectData && (projectData as any)._id} />
               <ProjectDetails projectDescription={projectData.projectDescription} />
           
             </Box>
