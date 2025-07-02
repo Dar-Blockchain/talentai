@@ -36,6 +36,7 @@ router.delete("/deleteProject/:id", projectController.deleteProject);
 
 // Générer des questions pour un projet
 router.get("/generateQuestions/:id/:assessmentType", projectController.generateProjectQuestions);
+router.post("/analyzeAnswers/:id/:assessmentType", projectController.analyzeAnswers);
 
 // Récupérer le nombre de projets de l'utilisateur connecté
 router.get("/getNumberProjects", projectController.getNumberProjects);

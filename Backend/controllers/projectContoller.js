@@ -3,7 +3,7 @@ const Profile = require("../models/ProfileModel");
 const Project = require("../models/projectModel");
 const { HttpError } = require("../utils/httpUtils");
 const { PROJECT_ASSESSMENT_TYPE } = require("../constants/projectConstants");
-
+const ProjectAssessment = require("../models/projectAssessmentModel");
 
 // Créer un projet
 module.exports.createProject = async (req, res) => {
@@ -11,7 +11,7 @@ module.exports.createProject = async (req, res) => {
     const baseUrl = process.env.BASE_URL || "http://localhost:3000"; // Adapte selon ton env
     const data = req.body;
     data.leaderId = req.user._id;
-    const newProject = await projectService.createProject(data,baseUrl);
+    const newProject = await projectService.createProject(data, baseUrl);
     res.status(201).json(newProject);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -48,10 +48,10 @@ module.exports.getMyProjects = async (req, res) => {
   }
 };
 
-// Récupérer Nombre des projets 
+// Récupérer Nombre des projets
 module.exports.getNumberProjects = async (req, res) => {
   try {
-    const project = await projectService.getNumberProjects(req.user._id);    
+    const project = await projectService.getNumberProjects(req.user._id);
     res.status(200).json(project);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -85,12 +85,10 @@ module.exports.updateProject = async (req, res) => {
 module.exports.deleteProject = async (req, res) => {
   try {
     const deletedProject = await projectService.deleteProject(req.params.id);
-    res
-      .status(200)
-      .json({
-        message: "Projet supprimé avec succès",
-        project: deletedProject,
-      });
+    res.status(200).json({
+      message: "Projet supprimé avec succès",
+      project: deletedProject,
+    });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -104,8 +102,14 @@ module.exports.generateProjectQuestions = async (req, res) => {
     if (!user) {
       throw new HttpError(500, `User not found`);
     }
-    if (!assessmentType) {
-      throw new HttpError(400, `Assessment type is required.`);
+    if (
+      !assessmentType ||
+      !Object.values(PROJECT_ASSESSMENT_TYPE).includes(assessmentType)
+    ) {
+      throw new HttpError(
+        400,
+        `Assessment type is required and must have a valid value `
+      );
     }
 
     // project verification
@@ -117,7 +121,7 @@ module.exports.generateProjectQuestions = async (req, res) => {
       throw new HttpError(404, `Project with ID ${projectId} not found.`);
     }
 
-    const projectName = project.Name;
+    const projectName = project.name;
 
     const result = await projectService.generateProjectQuestions(
       projectName,
@@ -134,6 +138,76 @@ module.exports.generateProjectQuestions = async (req, res) => {
 
     return res.status(500).json({
       error: "An unexpected error occurred while generating Project questions.",
+    });
+  }
+};
+
+exports.analyzeAnswers = async (req, res) => {
+  try {
+    const { questions } = req.body;
+    const projectId = req.params.id;
+    const assessmentType = req.params.assessmentType.trim();
+    const user = req.user;
+
+    const profile = await Profile.findById(user.profile);
+    if (!profile) {
+      return res.status(404).json({
+        error: "profile not found",
+      });
+    }
+
+    const now = new Date();
+    const daysSinceLastUpdate =
+      (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
+    if (daysSinceLastUpdate >= 30) {
+      profile.quota = 0;
+      profile.quotaUpdatedAt = now;
+    }
+
+    if (profile.quota >= 5) {
+      return res
+        .status(403)
+        .json({ error: "You have reached your test limit (5)" });
+    }
+
+    if (!Array.isArray(questions)) {
+      return res.status(400).json({
+        error: "Invalid request format",
+        required: {
+          questions: "Array of question-answer pairs",
+        },
+      });
+    }
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({
+        error: "project not found",
+      });
+    }
+
+    let projectAssessment = await ProjectAssessment.findOne({
+      project: project._id,
+    });
+
+    if (projectAssessment && projectAssessment.technicalData) {
+      return res.status(400).json({
+        error: "technical Assessment already exists for the project",
+      });
+    }
+
+    const result = await projectService.analyzeAnswers({
+      questions,
+      profile,
+      project,
+      projectAssessment,
+      assessmentType,
+    });
+
+    res.status(200).json({ success: true, result });
+  } catch (error) {
+    return res.status(500).json({
+      error: `An unexpected error occurred while analyzing project answers: ${error}`,
     });
   }
 };
