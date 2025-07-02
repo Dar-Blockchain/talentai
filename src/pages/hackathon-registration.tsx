@@ -56,6 +56,7 @@ const HackathonRegistration = () => {
   const [mounted, setMounted] = useState(false);
   const [leaderFirstName, setLeaderFirstName] = useState('');
   const [leaderLastName, setLeaderLastName] = useState('');
+  const [track, setTrack] = useState('');
   const steps = ['Leader Info', 'Project Info', 'Team Members'];
   const [activeStep, setActiveStep] = useState(0);
 
@@ -151,6 +152,7 @@ const HackathonRegistration = () => {
           Name: projectName,
           description: projectDescription,
           team: teamMembers.map(m => m.email),
+          track,
         }),
       });
       if (!res.ok) throw new Error(await res.text());
@@ -161,17 +163,18 @@ const HackathonRegistration = () => {
         projectName,
         projectDescription,
         teamMembers,
+        track,
         progress: 0,
         submissionStatus: 'Not Submitted',
         deadlineDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         createdAt: new Date().toISOString()
       };
       localStorage.setItem('hackathonProject', JSON.stringify(projectData));
-      setSnackbar({ open: true, message: 'Project registered successfully!', severity: 'success' });
+      // setSnackbar({ open: true, message: 'Project registered successfully!', severity: 'success' });
       setTimeout(() => router.push('/hackathon-dashboard'), 1000);
     } catch (err: any) {
       setError('Failed to register project: ' + (err?.message || err));
-      setSnackbar({ open: true, message: 'Failed to register project: ' + (err?.message || err), severity: 'error' });
+      // setSnackbar({ open: true, message: 'Failed to register project: ' + (err?.message || err), severity: 'error' });
     }
   };
 
@@ -228,7 +231,14 @@ const HackathonRegistration = () => {
               <LeaderInfoStep leaderFirstName={leaderFirstName} leaderLastName={leaderLastName} setLeaderFirstName={setLeaderFirstName} setLeaderLastName={setLeaderLastName} />
             )}
             {activeStep === 1 && (
-              <ProjectInfoStep projectName={projectName} projectDescription={projectDescription} setProjectName={setProjectName} setProjectDescription={setProjectDescription} />
+              <ProjectInfoStep 
+                projectName={projectName} 
+                projectDescription={projectDescription} 
+                setProjectName={setProjectName} 
+                setProjectDescription={setProjectDescription}
+                track={track}
+                setTrack={setTrack}
+              />
             )}
             {activeStep === 2 && (
               <TeamMembersStep newMember={newMember} setNewMember={setNewMember} teamMembers={teamMembers} handleAddMember={handleAddMember} handleRemoveMember={handleRemoveMember} />

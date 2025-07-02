@@ -11,6 +11,8 @@ interface User {
     updatedAt: string;
     role: string;
     profile: string;
+    FirstName?: string;
+    LastName?: string;
 }
 
 interface CompanyDetails {
