@@ -139,7 +139,7 @@ const getEmailTemplate = (otp) => `
     </body>
     </html>
 `;
-module.exports.sendOTP = async (email, otp) => {
+const sendOTP = async (email, otp) => {
   const mailOptions = {
     from: '"TalenIA" <contact@talentai.bid>',
     to: email,
@@ -208,4 +208,4 @@ const sendActivationEmail = async (to, activationLink) => {
 };
 
 // Exporter la fonction
-module.exports = { sendActivationEmail };
+module.exports = { sendActivationEmail , sendOTP };
