@@ -20,7 +20,7 @@ module.exports.createProject = async (req, res) => {
 
 module.exports.activateTeamMember = async (req, res) => {
   try {
-    const { projectId, token } = req.query;
+    const { projectId, token } = req.body;
     const member = await projectService.activateTeamMember(projectId, token);
     res.send(`Activation réussie pour ${member.email}`);
   } catch (err) {

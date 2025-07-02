@@ -57,8 +57,29 @@ const ProjectActivatePage = () => {
   const userLastName = profile?.userId?.LastName || '';
   const userFullName = userFirstName || userLastName ? `${userFirstName} ${userLastName}`.trim() : 'Your Name';
 
-  const handleJoin = () => {
-    // TODO: Handle join/accept logic
+  const handleJoin = async () => {
+    if (!projectId || !token) {
+      window.alert('Missing projectId or token.');
+      return;
+    }
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/';
+      const url = `${apiBase}project/activate`;
+      const token = localStorage.getItem('api_token');
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ projectId, token }),
+      });
+      if (!res.ok) throw new Error('Activation failed');
+      window.alert('Project activated successfully!');
+      // Optionally redirect or update UI here
+    } catch (err) {
+      window.alert('Failed to activate project.');
+    }
   };
 
   return (
