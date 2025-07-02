@@ -78,20 +78,38 @@ module.exports.createProject = async (data, baseUrl) => {
 
 // Activation du compte membre
 module.exports.activateTeamMember = async (projectId, token) => {
-  const project = await Project.findById(projectId);
-  if (!project) throw new Error("Projet introuvable");
+  try {
+    // Trouver le projet
+    const project = await Project.findById(projectId);
+    if (!project) {
+      console.error("Projet introuvable");
+      throw new Error("Project not found");
+    }
 
-  const member = project.team.find(
-    (m) => m.activationToken === token && !m.validated
-  );
-  if (!member) throw new Error("Lien invalide ou déjà activé");
+    // Trouver le membre en utilisant le token d'activation
+    const member = project.team.find(
+      (m) => m.activationToken === token && !m.validated
+    );
+    if (!member) {
+      console.error("Lien invalide ou déjà activé");
+      throw new Error("Invalid link or already activated");
+    }
 
-  member.validated = true;
-  member.activationToken = undefined; // On supprime le token après activation
-  await project.save();
+    // Mettre à jour le statut du membre
+    member.validated = true;
+    member.activationToken = undefined;  // Supprimer le token après activation
 
-  return member;
+    // Sauvegarder le projet avec le membre mis à jour
+    await project.save();
+
+    // Retourner les informations du membre activé
+    return member;
+  } catch (error) {
+    console.error("Erreur lors de l'activation du membre:", error);
+    throw error; // Rejeter l'erreur pour être capturée ailleurs
+  }
 };
+
 
 // Récupération de tous les projets
 module.exports.getAllProjects = async () => {
