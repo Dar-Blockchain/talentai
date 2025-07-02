@@ -391,7 +391,8 @@ export default function Preferences() {
           size: companyDetails.size,
           location: companyDetails.location,
           requiredSkills: requiredSkills,
-          requiredExperienceLevel: experienceLevel
+          requiredExperienceLevel: experienceLevel,
+          hederaExperience: hederaExp === 'yes' ? hedQcm : undefined
         };
 
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/createOrUpdateCompanyProfile`, {
@@ -409,12 +410,16 @@ export default function Preferences() {
 
         return true;
       } else {
-        // Create candidate profile without skills
+        // Create candidate profile with all filled data
         const profileData = {
           type: "Candidate",
           FirstName: firstName,
           LastName: lastName,
-          skills: [] // Empty skills array
+          skills: skills.map(skill => ({ skill })), // array of objects for backend
+          proficiencyLevels: Object.entries(proficiency)
+            .filter(([skill]) => skills.includes(skill))
+            .map(([skill, level]) => ({ skill, level })),
+          hederaExperience: hederaExp === 'yes' ? hedQcm : undefined
         };
 
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/createOrUpdateProfile`, {
@@ -1213,46 +1218,50 @@ export default function Preferences() {
           >
             Back
           </Button>
-          <Button
-            variant="contained"
-            onClick={activeStep === steps.length - 1 ? handleStartTest : handleNext}
-            disabled={
-              activeStep === 0 && !userType ||
-              (currentStep === 'Personal Details' && (firstName.trim() === '' || lastName.trim() === '')) ||
-              (currentStep === 'Select Skills' && skills.length === 0) ||
-              (userType === 'company' && !isCurrentStepValid())
-            }
-            sx={{
-              background: GREEN_MAIN,
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-              '&:hover': {
-                background: GREEN_MAIN
+          {activeStep === steps.length - 1 && callbackUrl ? (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={async () => {
+                const success = await handleCreateOrUpdateProfile();
+                if (success) {
+                  router.push(decodeURIComponent(callbackUrl as string));
+                }
+              }}
+              sx={{ background: GREEN_MAIN, borderRadius: 2, textTransform: 'none', fontWeight: 600, '&:hover': { background: GREEN_MAIN } }}
+            >
+              Go to Activate
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              onClick={activeStep === steps.length - 1 ? handleStartTest : handleNext}
+              disabled={
+                activeStep === 0 && !userType ||
+                (currentStep === 'Personal Details' && (firstName.trim() === '' || lastName.trim() === '')) ||
+                (currentStep === 'Select Skills' && skills.length === 0) ||
+                (userType === 'company' && !isCurrentStepValid())
               }
-            }}
-          >
-            {activeStep === steps.length - 1
-              ? (userType === 'company'
-                ? 'Go to Dashboard'
-                : (router.query.returnUrl
-                  ? 'Continue to Test'
-                  : 'Start Test'))
-              : 'Next'}
-          </Button>
+              sx={{
+                background: GREEN_MAIN,
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                '&:hover': {
+                  background: GREEN_MAIN
+                }
+              }}
+            >
+              {activeStep === steps.length - 1
+                ? (userType === 'company'
+                  ? 'Go to Dashboard'
+                  : (router.query.returnUrl
+                    ? 'Continue to Test'
+                    : 'Start Test'))
+                : 'Next'}
+            </Button>
+          )}
         </Box>
-
-        {/* At the end of the page, show the button if callbackUrl exists */}
-        {callbackUrl && (
-          <Button
-            variant="contained"
-            color="primary"
-            sx={{ mt: 4 }}
-            onClick={() => router.push(callbackUrl as string)}
-          >
-            Return to Invitation
-          </Button>
-        )}
       </Card>
     </Box>
   );

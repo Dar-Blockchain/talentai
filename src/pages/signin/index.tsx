@@ -127,8 +127,10 @@ export default function SignIn() {
         // Store token in localStorage
         localStorage.setItem("api_token", response.token);
         
-        // Check if there's a returnUrl in the query parameters
+        // Check if there's a callbackUrl or returnUrl in the query parameters
+        const callbackUrl = router.query.callbackUrl as string;
         const returnUrl = router.query.returnUrl as string;
+        const redirectUrl = callbackUrl || returnUrl;
         const isHackathon = router.query.source === 'hackathon';
         
         // Add a longer delay to ensure token is properly set
@@ -171,12 +173,18 @@ export default function SignIn() {
                 return;
               }
               
-              if (returnUrl) {
+              if (callbackUrl) {
+                if (!hasProfile) {
+                  // If no profile, go to preferences first with callbackUrl
+                  router.push(`/preferences?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+                } else {
+                  // If profile exists, go to callbackUrl
+                  router.push(decodeURIComponent(callbackUrl));
+                }
+              } else if (returnUrl) {
                 if (!hasProfile) {
                   // If no profile, go to preferences first with returnUrl
-                  router.push(
-                    `/preferences?returnUrl=${encodeURIComponent(returnUrl)}`
-                  );
+                  router.push(`/preferences?returnUrl=${encodeURIComponent(returnUrl)}`);
                 } else {
                   // If profile exists, go to returnUrl
                   router.push(decodeURIComponent(returnUrl));

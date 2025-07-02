@@ -78,6 +78,10 @@ const profileSchema = new mongoose.Schema(
       { type: mongoose.Schema.Types.ObjectId, ref: "JobAssessmentResult" },
     ],
 
+    projectAssessments: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "ProjectAssessment" },
+    ],
+
     // Bid received by user (if type is Candidate)
     companyBid: {
       finalBid: Number,
