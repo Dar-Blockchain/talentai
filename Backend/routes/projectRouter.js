@@ -14,7 +14,7 @@ router.use(requireAuthUser ,authLogMiddleware("Project"));
 router.post("/addProject", projectController.createProject); 
 
 //activate Team Member
-router.get("/activate", projectController.activateTeamMember);
+router.post("/activate", projectController.activateTeamMember);
 
 // Récupérer tous les projets
 router.get("/getAllProjects", projectController.getAllProjects); 
