@@ -19,12 +19,21 @@ const ProjectActivatePage = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { profile, loading } = useSelector(selectProfile);
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const { projectId, token } = router.query;
   const [projectName, setProjectName] = useState('Hackathon Project');
   const [senderName, setSenderName] = useState('John Doe');
 
   useEffect(() => {
-    dispatch(getMyProfile());
+    // If not authenticated, redirect to signin with callback to this page
+    if (isAuthenticated === false) {
+      const callbackUrl = `/projects/activate?projectId=${projectId}&token=${token}`;
+      router.replace(`/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+      return;
+    }
+    if (isAuthenticated) {
+      dispatch(getMyProfile());
+    }
     // Fetch project name by projectId
     const fetchProject = async () => {
       if (!projectId) return;
@@ -41,7 +50,7 @@ const ProjectActivatePage = () => {
       }
     };
     fetchProject();
-  }, [dispatch, projectId, token]);
+  }, [dispatch, isAuthenticated, projectId, token, router]);
 
   // Get user's name from profile
   const userFirstName = profile?.userId?.FirstName || '';
