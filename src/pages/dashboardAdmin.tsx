@@ -370,7 +370,7 @@ const DashboardAdmin = () => {
     // Add username and email filter state
     const [userUsernameFilter, setUserUsernameFilter] = useState('');
     const [userEmailFilter, setUserEmailFilter] = useState('');
-    
+
     // Add skill search state for assessment results
     const [skillSearch, setSkillSearch] = useState('');
 
@@ -379,7 +379,7 @@ const DashboardAdmin = () => {
         try {
             setLogsLoading(true);
             setLogsError(null);
-            
+
             const token = localStorage.getItem("api_token");
             if (!token) {
                 setLogsError("Authentication token not found");
@@ -424,19 +424,24 @@ const DashboardAdmin = () => {
     const fetchAssessmentResults = async (skillName?: string) => {
         try {
             setAssessmentResultsLoading(true);
-            
+
             const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/'}dashboard/getJobAssessmentsBySkill`;
             const method = 'POST';
             const body = skillName ? JSON.stringify({ skillName }) : JSON.stringify({});
-            
+
             console.log('Making API call to:', url);
             console.log('Method:', method);
             console.log('Body:', body);
-            
+            const token = localStorage.getItem("api_token");
+            if (!token) {
+                setLogsError("Authentication token not found");
+                return;
+            }
             const response = await fetch(url, {
                 method,
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`, // <-- pass token here
                 },
                 body
             });
@@ -450,7 +455,7 @@ const DashboardAdmin = () => {
 
             const data = await response.json();
             console.log('API Response data:', data);
-            
+
             if (data.success || data.assessments) {
                 // Handle the API structure
                 const results: any[] = [];
@@ -480,16 +485,16 @@ const DashboardAdmin = () => {
                         }
                     });
                 }
-                
+
                 console.log('Processed results:', results.length);
                 setAssessmentResults(results);
-                
+
                 // Add the searched skill to available skills
                 const skills = new Set<string>();
                 if (skillName) {
                     skills.add(skillName);
                 }
-                
+
                 setAvailableSkills(Array.from(skills).sort());
             } else {
                 console.error('Failed to fetch assessment results:', data.message);
@@ -545,7 +550,16 @@ const DashboardAdmin = () => {
 
     const fetchStats = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getCounts`);
+            const token = localStorage.getItem("api_token");
+            if (!token) {
+                setLogsError("Authentication token not found");
+                return;
+            }
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getCounts`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`, // <-- pass token here
+                },
+            });
             if (!res.ok) {
                 throw new Error(`HTTP error! status: ${res.status}`);
             }
@@ -563,7 +577,7 @@ const DashboardAdmin = () => {
                     posts: data.data.posts || data.data.totalPosts || data.data.postsCreatedByDay?.reduce((total: number, item: any) => total + item.postCount, 0) || 0,
                     jobAssessmentsWithScorePercentage: data.data.jobAssessmentsWithScorePercentage || 0
                 });
-                
+
                 // Update skill distribution
                 setSkillDistribution([
                     { name: 'Hard Skills', value: data.data.hardSkillsPercentage || 0, color: '#8884d8' },
@@ -590,7 +604,16 @@ const DashboardAdmin = () => {
 
     const fetchAllUsersForMap = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getAllUsers?limit=1000`);
+            const token = localStorage.getItem("api_token");
+            if (!token) {
+                setLogsError("Authentication token not found");
+                return;
+            }
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getAllUsers?limit=1000`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`, // <-- pass token here
+                },
+            });
             if (!res.ok) {
                 throw new Error(`HTTP error! status: ${res.status}`);
             }
@@ -607,7 +630,16 @@ const DashboardAdmin = () => {
 
     const fetchUserGrowthData = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getUserCountsByDay`);
+            const token = localStorage.getItem("api_token");
+            if (!token) {
+                setLogsError("Authentication token not found");
+                return;
+            }
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getUserCountsByDay`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`, // <-- pass token here
+                },
+            });
             if (!res.ok) {
                 throw new Error(`HTTP error! status: ${res.status}`);
             }
@@ -660,7 +692,7 @@ const DashboardAdmin = () => {
 
                 // Sort by date
                 processedData.sort((a: any, b: any) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime());
-                
+
                 setUserGrowthData(processedData);
             }
         } catch (err) {
@@ -671,7 +703,16 @@ const DashboardAdmin = () => {
 
     const fetchSkillsData = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getCounts`);
+            const token = localStorage.getItem("api_token");
+            if (!token) {
+                setLogsError("Authentication token not found");
+                return;
+            }
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getCounts`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`, // <-- pass token here
+                },
+            });
             if (!res.ok) {
                 throw new Error(`HTTP error! status: ${res.status}`);
             }
@@ -682,12 +723,12 @@ const DashboardAdmin = () => {
                     skill: item._id,
                     count: item.count
                 }));
-                
+
                 // Sort skills by count in descending order
                 const sortedSkills = skillsData
                     .sort((a: any, b: any) => b.count - a.count)
                     .slice(0, 10);
-                    
+
                 setSkillsData(sortedSkills);
             }
         } catch (err) {
@@ -712,6 +753,11 @@ const DashboardAdmin = () => {
     const fetchUsers = async (page = 1, limit = 10, username = '', email = '', role = '', status = '') => {
         try {
             setLoading(true);
+            const token = localStorage.getItem("api_token");
+            if (!token) {
+                setLogsError("Authentication token not found");
+                return;
+            }
             const params = new URLSearchParams({
                 page: String(page),
                 limit: String(limit),
@@ -720,7 +766,11 @@ const DashboardAdmin = () => {
             if (email) params.append('email', email);
             if (role) params.append('role', role);
             if (status) params.append('status', status);
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getAllUsers?${params.toString()}`);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}dashboard/getAllUsers?${params.toString()}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`, // <-- pass token here
+                },
+            });
             const data = await res.json();
             if (data && data.users) {
                 setUsers(data.users);
@@ -742,11 +792,16 @@ const DashboardAdmin = () => {
             setLoading(true);
             const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
             const apiUrl = `${baseUrl}dashboard/job-assessment-results-grouped`;
-            
+            const token = localStorage.getItem("api_token");
+            if (!token) {
+                setLogsError("Authentication token not found");
+                return;
+            }
             const response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`, // <-- pass token here
                 },
             });
 
@@ -756,7 +811,7 @@ const DashboardAdmin = () => {
 
             const data = await response.json();
             setAssessments(data.results || []);
-            
+
             // Update pagination
             if (data.pagination) {
                 setAssessmentsPage(data.pagination.currentPage - 1);
@@ -856,13 +911,13 @@ const DashboardAdmin = () => {
     // Process user location data for world map
     const processUserLocations = () => {
         const locationMap = new Map<string, { count: number; users: any[] }>();
-        
+
         allUsersForMap.forEach(user => {
             if (user.Localisation) {
                 // Extract country from location string (e.g., "Tunis, Tunis Governorate, TN" -> "TN")
                 const locationParts = user.Localisation.split(',').map(part => part.trim());
                 let country = locationParts[locationParts.length - 1] || 'Unknown';
-                
+
                 // Handle common country variations and codes
                 if (country === 'US' || country === 'USA') {
                     country = 'United States of America';
@@ -1155,7 +1210,7 @@ const DashboardAdmin = () => {
                 } else if (country === 'MP') {
                     country = 'Northern Mariana Islands';
                 }
-                
+
                 if (locationMap.has(country)) {
                     locationMap.get(country)!.count++;
                     locationMap.get(country)!.users.push(user);
@@ -1164,7 +1219,7 @@ const DashboardAdmin = () => {
                 }
             }
         });
-        
+
         return Array.from(locationMap.entries()).map(([country, data]) => ({
             country,
             count: data.count,
@@ -1177,14 +1232,14 @@ const DashboardAdmin = () => {
         if (selectedMonth === 'all') {
             return userGrowthData;
         }
-        
+
         return userGrowthData.filter(item => {
             const date = new Date(item.fullDate);
             const month = date.getMonth() + 1; // getMonth() returns 0-11
             const year = date.getFullYear();
             const selectedMonthNum = parseInt(selectedMonth.split('-')[1]);
             const selectedYear = parseInt(selectedMonth.split('-')[0]);
-            
+
             return month === selectedMonthNum && year === selectedYear;
         });
     };
@@ -1224,24 +1279,24 @@ const DashboardAdmin = () => {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <SectionTitle>User Management</SectionTitle>
                 <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => handleDownloadExcel('downloadUserExcel', 'users.xlsx')}
-                  >
-                    Download All Users Excel
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    onClick={() => handleDownloadExcel('download-users-with-assessment-zero', 'users_with_score_0.xlsx')}
-                  >
-                    Download Users with Assessment 0
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    onClick={() => handleDownloadExcel('download-users-with-assessment-Above50', 'users_with_score_above_50.xlsx')}
-                  >
-                    Download Users with Assessment ≥ 50
-                  </Button>
+                    <Button
+                        variant="outlined"
+                        onClick={() => handleDownloadExcel('downloadUserExcel', 'users.xlsx')}
+                    >
+                        Download All Users Excel
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        onClick={() => handleDownloadExcel('download-users-with-assessment-zero', 'users_with_score_0.xlsx')}
+                    >
+                        Download Users with Assessment 0
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        onClick={() => handleDownloadExcel('download-users-with-assessment-Above50', 'users_with_score_above_50.xlsx')}
+                    >
+                        Download Users with Assessment ≥ 50
+                    </Button>
                 </Box>
             </Box>
 
@@ -1472,9 +1527,9 @@ const DashboardAdmin = () => {
                     <TableBody>
                         {assessments
                             .filter(assessment =>
-                                (!assessmentSearch || 
-                                 (assessment.jobId?.title && assessment.jobId.title.toLowerCase().includes(assessmentSearch.toLowerCase())) ||
-                                 (assessment.jobName && assessment.jobName.toLowerCase().includes(assessmentSearch.toLowerCase())))
+                            (!assessmentSearch ||
+                                (assessment.jobId?.title && assessment.jobId.title.toLowerCase().includes(assessmentSearch.toLowerCase())) ||
+                                (assessment.jobName && assessment.jobName.toLowerCase().includes(assessmentSearch.toLowerCase())))
                             )
                             .slice(assessmentsPage * assessmentsRowsPerPage, assessmentsPage * assessmentsRowsPerPage + assessmentsRowsPerPage)
                             .map((assessment) => (
@@ -1499,9 +1554,9 @@ const DashboardAdmin = () => {
                                             {assessment.jobId?.description || assessment.jobDescription || 'No description available'}
                                         </Typography>
                                         {assessment.jobId?.employmentType && (
-                                            <Chip 
-                                                label={assessment.jobId.employmentType} 
-                                                size="small" 
+                                            <Chip
+                                                label={assessment.jobId.employmentType}
+                                                size="small"
                                                 sx={{ mt: 1, textTransform: 'capitalize' }}
                                             />
                                         )}
@@ -1549,9 +1604,9 @@ const DashboardAdmin = () => {
                     rowsPerPageOptions={[5, 10, 25]}
                     component="div"
                     count={assessments.filter(assessment =>
-                        (!assessmentSearch || 
-                         (assessment.jobId?.title && assessment.jobId.title.toLowerCase().includes(assessmentSearch.toLowerCase())) ||
-                         (assessment.jobName && assessment.jobName.toLowerCase().includes(assessmentSearch.toLowerCase())))
+                    (!assessmentSearch ||
+                        (assessment.jobId?.title && assessment.jobId.title.toLowerCase().includes(assessmentSearch.toLowerCase())) ||
+                        (assessment.jobName && assessment.jobName.toLowerCase().includes(assessmentSearch.toLowerCase())))
                     ).length}
                     rowsPerPage={assessmentsRowsPerPage}
                     page={assessmentsPage}
@@ -1782,9 +1837,9 @@ const DashboardAdmin = () => {
                                 {selectedAssessment.jobId?.employmentType && (
                                     <Box>
                                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>Employment Type</Typography>
-                                        <Chip 
-                                            label={selectedAssessment.jobId.employmentType} 
-                                            size="small" 
+                                        <Chip
+                                            label={selectedAssessment.jobId.employmentType}
+                                            size="small"
                                             sx={{ textTransform: 'capitalize' }}
                                         />
                                     </Box>
@@ -1922,7 +1977,7 @@ const DashboardAdmin = () => {
                 </StyledCard>
 
                 {/* Additional Filters */}
-            
+
 
                 {/* Results Table */}
                 <StyledCard>
@@ -1963,24 +2018,24 @@ const DashboardAdmin = () => {
                                                 </Typography>
                                             </TableCell>
 
-                                             <TableCell>
+                                            <TableCell>
                                                 <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
                                                     {result.jobTitle || 'Unknown Job'}
                                                 </Typography>
-                                            </TableCell> 
+                                            </TableCell>
                                             <TableCell>
                                                 <Chip
                                                     label={`${result.jobMatch?.percentage?.toFixed(1) || result.analysis?.overallScore?.toFixed(1) || 0}%`}
-                                                    color={result.jobMatch?.percentage >= 80 ? 'success' : 
-                                                           result.jobMatch?.percentage >= 60 ? 'warning' : 'error'}
+                                                    color={result.jobMatch?.percentage >= 80 ? 'success' :
+                                                        result.jobMatch?.percentage >= 60 ? 'warning' : 'error'}
                                                     size="small"
                                                 />
                                             </TableCell>
                                             <TableCell>
                                                 <Chip
                                                     label={result.jobMatch?.status || 'Unknown'}
-                                                    color={result.jobMatch?.status === 'Good match' ? 'success' : 
-                                                           result.jobMatch?.status === 'Fair match' ? 'warning' : 'error'}
+                                                    color={result.jobMatch?.status === 'Good match' ? 'success' :
+                                                        result.jobMatch?.status === 'Fair match' ? 'warning' : 'error'}
                                                     size="small"
                                                     variant="outlined"
                                                 />
@@ -1988,11 +2043,11 @@ const DashboardAdmin = () => {
                                             <TableCell>
                                                 <Box sx={{ maxWidth: 300 }}>
                                                     {result.jobMatch?.keyGaps?.slice(0, 2).map((gap: string, index: number) => (
-                                                        <Typography 
-                                                            key={index} 
-                                                            variant="caption" 
-                                                            sx={{ 
-                                                                display: 'block', 
+                                                        <Typography
+                                                            key={index}
+                                                            variant="caption"
+                                                            sx={{
+                                                                display: 'block',
                                                                 color: 'text.secondary',
                                                                 mb: 0.5,
                                                                 lineHeight: 1.2
@@ -2002,9 +2057,9 @@ const DashboardAdmin = () => {
                                                         </Typography>
                                                     ))}
                                                     {result.jobMatch?.keyGaps?.length > 2 && (
-                                                        <Typography 
-                                                            variant="caption" 
-                                                            sx={{ 
+                                                        <Typography
+                                                            variant="caption"
+                                                            sx={{
                                                                 color: 'text.secondary',
                                                                 fontStyle: 'italic'
                                                             }}
@@ -2127,18 +2182,18 @@ const DashboardAdmin = () => {
                                                             label={log.method}
                                                             size="small"
                                                             sx={{
-                                                                backgroundColor: 
+                                                                backgroundColor:
                                                                     log.method === "GET" ? "rgba(76, 175, 80, 0.1)" :
-                                                                    log.method === "POST" ? "rgba(33, 150, 243, 0.1)" :
-                                                                    log.method === "PUT" ? "rgba(255, 152, 0, 0.1)" :
-                                                                    log.method === "DELETE" ? "rgba(244, 67, 54, 0.1)" :
-                                                                    "rgba(158, 158, 158, 0.1)",
-                                                                color: 
+                                                                        log.method === "POST" ? "rgba(33, 150, 243, 0.1)" :
+                                                                            log.method === "PUT" ? "rgba(255, 152, 0, 0.1)" :
+                                                                                log.method === "DELETE" ? "rgba(244, 67, 54, 0.1)" :
+                                                                                    "rgba(158, 158, 158, 0.1)",
+                                                                color:
                                                                     log.method === "GET" ? "#2e7d32" :
-                                                                    log.method === "POST" ? "#1976d2" :
-                                                                    log.method === "PUT" ? "#f57c00" :
-                                                                    log.method === "DELETE" ? "#d32f2f" :
-                                                                    "#616161",
+                                                                        log.method === "POST" ? "#1976d2" :
+                                                                            log.method === "PUT" ? "#f57c00" :
+                                                                                log.method === "DELETE" ? "#d32f2f" :
+                                                                                    "#616161",
                                                                 fontWeight: 500,
                                                             }}
                                                         />
@@ -2155,16 +2210,16 @@ const DashboardAdmin = () => {
                                                             label={log.statusCode}
                                                             size="small"
                                                             sx={{
-                                                                backgroundColor: 
+                                                                backgroundColor:
                                                                     log.statusCode >= 200 && log.statusCode < 300 ? "rgba(76, 175, 80, 0.1)" :
-                                                                    log.statusCode >= 400 && log.statusCode < 500 ? "rgba(255, 152, 0, 0.1)" :
-                                                                    log.statusCode >= 500 ? "rgba(244, 67, 54, 0.1)" :
-                                                                    "rgba(158, 158, 158, 0.1)",
-                                                                color: 
+                                                                        log.statusCode >= 400 && log.statusCode < 500 ? "rgba(255, 152, 0, 0.1)" :
+                                                                            log.statusCode >= 500 ? "rgba(244, 67, 54, 0.1)" :
+                                                                                "rgba(158, 158, 158, 0.1)",
+                                                                color:
                                                                     log.statusCode >= 200 && log.statusCode < 300 ? "#2e7d32" :
-                                                                    log.statusCode >= 400 && log.statusCode < 500 ? "#f57c00" :
-                                                                    log.statusCode >= 500 ? "#d32f2f" :
-                                                                    "#616161",
+                                                                        log.statusCode >= 400 && log.statusCode < 500 ? "#f57c00" :
+                                                                            log.statusCode >= 500 ? "#d32f2f" :
+                                                                                "#616161",
                                                                 fontWeight: 500,
                                                             }}
                                                         />
@@ -2194,7 +2249,7 @@ const DashboardAdmin = () => {
                                     </TableBody>
                                 </Table>
                             </TableContainer>
-                            
+
                             <TablePagination
                                 rowsPerPageOptions={[5, 10, 25, 50]}
                                 component="div"
@@ -2226,24 +2281,24 @@ const DashboardAdmin = () => {
 
     // Add this function inside DashboardAdmin component
     const handleDownloadExcel = async (endpoint: string, filename: string) => {
-      try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/';
-        const response = await fetch(`${baseUrl.replace(/\/+$/, '')}/dashboard/${endpoint}`, {
-          method: 'GET',
-        });
-        if (!response.ok) throw new Error('Failed to download file');
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-      } catch (error) {
-        alert('Error downloading file: ' + (error instanceof Error ? error.message : error));
-      }
+        try {
+            const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/';
+            const response = await fetch(`${baseUrl.replace(/\/+$/, '')}/dashboard/${endpoint}`, {
+                method: 'GET',
+            });
+            if (!response.ok) throw new Error('Failed to download file');
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            alert('Error downloading file: ' + (error instanceof Error ? error.message : error));
+        }
     };
 
     if (loading) {

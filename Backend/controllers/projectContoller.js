@@ -186,21 +186,14 @@ exports.analyzeAnswers = async (req, res) => {
       });
     }
 
-    let projectAssessment = await ProjectAssessment.findOne({
-      project: project._id,
-    });
-
-    if (projectAssessment && projectAssessment.technicalData) {
-      return res.status(400).json({
-        error: "technical Assessment already exists for the project",
-      });
-    }
+    
 
     const result = await projectService.analyzeAnswers({
       questions,
       profile,
+      user, 
       project,
-      projectAssessment,
+      
       assessmentType,
     });
 
