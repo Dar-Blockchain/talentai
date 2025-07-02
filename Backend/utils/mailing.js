@@ -163,7 +163,7 @@ const getActivationTemplate = (activationLink) => `
   <html>
   <head>
     <meta charset="utf-8">
-    <title>Activation de compte équipe</title>
+    <title>Team Account Activation</title>
     <style>
       body { font-family: 'Segoe UI', Arial, sans-serif; background: #F7FAFC; }
       .container { max-width: 600px; margin: 40px auto; background: #FFF; border-radius: 8px; box-shadow: 0 4px 6px #0001; padding: 32px; }
@@ -174,21 +174,22 @@ const getActivationTemplate = (activationLink) => `
   </head>
   <body>
     <div class="container">
-      <div class="header">Activation de votre compte équipe - TalenIA</div>
-      <p>Bonjour,</p>
-      <p>Merci de rejoindre le projet sur TalenIA. Cliquez sur le bouton ci-dessous pour activer votre compte :</p>
+      <div class="header">Activate Your Team Account - TalenIA</div>
+      <p>Hello,</p>
+      <p>Thank you for joining the project on TalenIA. Please click the button below to activate your account:</p>
       <p style="text-align:center;">
-        <a href="${activationLink}" class="btn">Activer mon compte</a>
+        <a href="${activationLink}" class="btn">Activate My Account</a>
       </p>
-      <p>Si vous n'êtes pas à l'origine de cette invitation, ignorez ce message.</p>
+      <p>If you did not request this invitation, please ignore this message.</p>
       <div class="footer">© ${new Date().getFullYear()} TalenIA</div>
     </div>
   </body>
   </html>
 `;
 
+
 // Fonction d’envoi d’email d’activation
-module.exports.sendActivationMail = async (to, activationLink) => {
+const sendActivationEmail = async (to, activationLink) => {
   const mailOptions = {
     from: '"TalenIA" <contact@talentai.bid>',
     to,
@@ -205,3 +206,6 @@ module.exports.sendActivationMail = async (to, activationLink) => {
     return false;
   }
 };
+
+// Exporter la fonction
+module.exports = { sendActivationEmail };
