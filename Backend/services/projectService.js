@@ -123,7 +123,8 @@ module.exports.getNumberProjects = async (userId) => {
 // Récupération d'un projet par son ID
 module.exports.getProjectById = async (id) => {
   try {
-    const project = await Project.findById(id);
+    const project = await Project.findById(id).populate('leaderId'); // ← Ajoute le populate ici
+
     if (!project) throw new Error("Projet non trouvé");
     return project;
   } catch (error) {
