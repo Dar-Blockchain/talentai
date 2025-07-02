@@ -8,9 +8,11 @@ const {
   PITCH_DURATION,
   QUESTION_DURATION,
 } = require("../constants/projectConstants");
-//const projectConstants = require("../constants/projectConstants");
+
 const Project = require("../models/projectModel");
 const User = require("../models/UserModel");
+const ProjectAssessment = require("../models/projectAssessmentModel");
+
 const { parseAIResponse } = require("../parsers/AIResponseParser");
 const { HttpError } = require("../utils/httpUtils");
 
@@ -36,9 +38,9 @@ module.exports.createProject = async (data, baseUrl) => {
       }
       const activationToken = crypto.randomBytes(32).toString("hex");
       return {
-        email: email,  // L'email du membre
-        validated: false,  // Mis à false par défaut
-        activationToken,  // Le token d'activation généré
+        email: email, // L'email du membre
+        validated: false, // Mis à false par défaut
+        activationToken, // Le token d'activation généré
       };
     });
 
@@ -47,7 +49,7 @@ module.exports.createProject = async (data, baseUrl) => {
       name: data.Name,
       track: data.track,
       description: data.description,
-      team: teamWithTokens,  // Ajout des membres de l'équipe avec les emails transformés
+      team: teamWithTokens, // Ajout des membres de l'équipe avec les emails transformés
       leaderId: data.leaderId, // Assurez-vous que l'ID du leader est passé correctement
     });
     await project.save(); // Sauvegarder le projet dans la base de données
@@ -55,7 +57,7 @@ module.exports.createProject = async (data, baseUrl) => {
     // Envoie un mail à chaque membre de l'équipe
     for (const member of teamWithTokens) {
       const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${member.activationToken}`;
-      await sendActivationEmail(member.email, link);  // Envoi de l'email d'activation
+      await sendActivationEmail(member.email, link); // Envoi de l'email d'activation
     }
 
     // Mettre à jour l'utilisateur leader avec ses informations et ajouter l'ID du projet à sa liste de projets
@@ -73,8 +75,6 @@ module.exports.createProject = async (data, baseUrl) => {
     throw new Error("Erreur lors de la création du projet");
   }
 };
-
-
 
 // Activation du compte membre
 module.exports.activateTeamMember = async (projectId, token) => {
@@ -232,73 +232,91 @@ module.exports.generateProjectQuestions = async (
   }
 };
 
-// exports.analyzeAnswers = async ({
-//   questions,
-//   profile,
-//   project,
-//   assessmentType,
-// }) => {
-//   let systemPrompt = "";
-//   let userPrompt = "";
-//   if (assessmentType == PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
-//     systemPrompt = analyzeTechnicalAnswersPrompts.getSystemPrompt(
-//       projectName,
-//       questions
-//     );
-//     userPrompt = analyzeTechnicalAnswersPrompts.getUserPrompt(
-//       projectName,
-//       questions
-//     );
-//   }
-
-//   // if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
-//   //   systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
-//   //     projectName,
-//   //     questionsCount,
-//   //     QUESTION_DURATION
-//   //   );
-//   //   userPrompt = analyzeBusinessAnswersPrompts.getUserPrompt(
-//   //     projectName,
-//   //     questionsCount
-//   //   );
-//   // }
-
-//   const stream = await together.chat.completions.create({
-//     model: "deepseek-ai/DeepSeek-V3",
-//     messages: [
-//       { role: "system", content: systemPrompt },
-//       { role: "user", content: userPrompt },
-//     ],
-//     max_tokens: 2500,
-//     temperature: 0.6,
-//     stream: true,
-//   });
-
-//   let raw = "";
-//   for await (const chunk of stream) {
-//     const content = chunk.choices?.[0]?.delta?.content;
-//     if (content) raw += content;
-//   }
-
-//   // I. parse AI response
-//   let analysis = await parseAIResponse(raw);
-
+exports.analyzeAnswers = async ({
+  questions,
+  profile,
+  project,
+  projectAssessment, 
+  assessmentType,
+}) => {
   
 
-//   const interviewId = await saveInterviewDetails(
-//     profile,
-//     analysis.overallScore,
-//     analysis.skillAnalysis,
-//     formData
-//   );
+  let systemPrompt = "";
+  let userPrompt = "";
+  const projectName = project.name;
+  if (assessmentType == PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
+    systemPrompt = analyzeTechnicalAnswersPrompts.getSystemPrompt(
+      projectName,
+      questions
+    );
+    userPrompt = analyzeTechnicalAnswersPrompts.getUserPrompt(
+      projectName,
+      questions
+    );
+  }
 
-//   profile.quota++;
+  // if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
+  //   systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
+  //     projectName,
+  //     questionsCount,
+  //     QUESTION_DURATION
+  //   );
+  //   userPrompt = analyzeBusinessAnswersPrompts.getUserPrompt(
+  //     projectName,
+  //     questionsCount
+  //   );
+  // }
 
-//   if (!profile.interviewDetails) {
-//     profile.interviewDetails = [];
-//   }
-//   profile.interviewDetails.push(interviewId);
-//   await profile.save();
+  const stream = await together.chat.completions.create({
+    model: "deepseek-ai/DeepSeek-V3",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    max_tokens: 2500,
+    temperature: 0.7,
+    stream: true,
+  });
 
-//   return { analysis };
-// };
+  let raw = "";
+  for await (const chunk of stream) {
+    const content = chunk.choices?.[0]?.delta?.content;
+    if (content) raw += content;
+  }
+
+  // I. parse AI response
+  let analysis = await parseAIResponse(raw);
+
+  console.log("Analysis:", analysis);
+
+  if (!projectAssessment) {
+    projectAssessment = new ProjectAssessment({
+      project: project._id,
+      leaderProfile: profile._id,
+      technicalData: analysis.technicalData,
+    });
+    profile.projectAssessments.push(projectAssessment._id);
+    await projectAssessment.save();
+    await profile.save();
+  } else {
+    projectAssessment.technicalData = analysis.technicalData;
+    await projectAssessment.save();
+  }
+
+  // const interviewId = await saveInterviewDetails(
+  //   profile,
+  //   analysis.overallScore,
+  //   analysis.skillAnalysis,
+  //   formData
+  // );
+
+  // profile.quota++;
+
+  // if (!profile.interviewDetails) {
+  //   profile.interviewDetails = [];
+  // }
+  // profile.interviewDetails.push(interviewId);
+  // await profile.save();
+
+  return { analysis };
+};

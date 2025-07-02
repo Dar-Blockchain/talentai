@@ -24,6 +24,13 @@ const ProjectSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
+    leaderProfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Profile",
+      required: true,
+    },
+
     assessments: [
       {
         type: mongoose.Schema.Types.ObjectId,

@@ -66,9 +66,16 @@ const techStackSchema = new mongoose.Schema(
 
 const TechnicalDataSchema = new mongoose.Schema(
   {
+    track: String,
     techStack: [techStackSchema],
     architecture: architectureSchema,
-    scalabilityApproach: scalabilityApproachSchema
+    scalabilityApproach: scalabilityApproachSchema,
+    overallScore: Number,
+    summary: String,
+    createdAt: {
+      type: Number,
+      default: Date.now(),
+    },
   },
   { _id: false }
 );
@@ -88,38 +95,21 @@ const BusinessDataSchema = new mongoose.Schema(
 
 const ProjectAssessmentSchema = new mongoose.Schema(
   {
+    leaderProfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Profile",
+      required: true,
+    },
+
     project: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",
       required: true,
     },
 
-    type: {
-      type: String,
-      enum: Object.values(PROJECT_ASSESSMENT_TYPE),
-      required: true,
-    },
-
     technicalData: TechnicalDataSchema,
 
     businessData: BusinessDataSchema,
-
-    summary: {
-      type: String, // general summary of the analysis
-      required: true,
-    },
-
-    scoreOutOf100: {
-      type: Number,
-      min: 0,
-      max: 100,
-      required: true,
-    },
-
-    analyzedAt: {
-      type: Number,
-      default: Date.now(), // timestamp of when the assessment was made
-    },
   },
   {
     timestamps: true,
