@@ -8,7 +8,7 @@ const { controledAcces } = require('../middleware/controledAcces');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 
-router.use(requireAuthUser,controledAcces('Candidat'), authLogMiddleware("Project"));
+router.use(requireAuthUser ,authLogMiddleware("Project"));
 
 // Créer un projet
 router.post("/addProject", projectController.createProject); 
