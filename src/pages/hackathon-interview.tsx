@@ -407,7 +407,10 @@ const Test = () => {
             } else {
               stopRecording();
               saveTestResults();
-              router.push('/report');
+              router.push({
+                pathname: '/hackathonreport',
+                query: { type, projectId }
+              });
             }
           }
           return prev - 1;
@@ -749,7 +752,10 @@ const Test = () => {
       setCurrent(c => c + 1);
     } else {
       saveTestResults();
-      router.push('/report');
+      router.push({
+        pathname: '/hackathonreport',
+        query: { type, projectId }
+      });
     }
   };
 
@@ -787,15 +793,15 @@ const Test = () => {
 
       // Navigate to report page with job ID
       router.push({
-        pathname: '/report',
-        query: { jobId: id }
+        pathname: '/hackathonreport',
+        query: { type, projectId }
       });
     } catch (error) {
       console.error('Error saving test results:', error);
       // Still redirect to report page even if saving fails
       router.push({
-        pathname: '/report',
-        query: { jobId: id }
+        pathname: '/hackathonreport',
+        query: { type, projectId }
       });
     }
   };
