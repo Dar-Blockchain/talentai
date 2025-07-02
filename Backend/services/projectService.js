@@ -86,10 +86,14 @@ module.exports.activateTeamMember = async (projectId, token) => {
       throw new Error("Project not found");
     }
 
+    // Afficher les membres pour vérifier les tokens
+    console.log("Project team:", project.team);
+
     // Trouver le membre en utilisant le token d'activation
     const member = project.team.find(
       (m) => m.activationToken === token && !m.validated
     );
+
     if (!member) {
       console.error("Lien invalide ou déjà activé");
       throw new Error("Invalid link or already activated");
@@ -97,10 +101,12 @@ module.exports.activateTeamMember = async (projectId, token) => {
 
     // Mettre à jour le statut du membre
     member.validated = true;
-    member.activationToken = undefined;  // Supprimer le token après activation
+    member.activationToken = undefined; // Supprimer le token après activation
 
     // Sauvegarder le projet avec le membre mis à jour
     await project.save();
+
+    console.log("Membre activé:", member);
 
     // Retourner les informations du membre activé
     return member;
@@ -109,6 +115,7 @@ module.exports.activateTeamMember = async (projectId, token) => {
     throw error; // Rejeter l'erreur pour être capturée ailleurs
   }
 };
+
 
 
 // Récupération de tous les projets
