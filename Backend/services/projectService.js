@@ -126,7 +126,7 @@ module.exports.getNumberProjects = async (userId) => {
 // Récupération d'un projet par son ID
 module.exports.getProjectById = async (id) => {
   try {
-    const project = await Project.findById(id).populate('leaderId'); // ← Ajoute le populate ici
+    const project = await Project.findById(id).populate("leaderId"); // ← Ajoute le populate ici
 
     if (!project) throw new Error("Projet non trouvé");
     return project;
@@ -236,12 +236,10 @@ module.exports.generateProjectQuestions = async (
 exports.analyzeAnswers = async ({
   questions,
   profile,
+  user,
   project,
-  projectAssessment, 
   assessmentType,
 }) => {
-  
-
   let systemPrompt = "";
   let userPrompt = "";
   const projectName = project.name;
@@ -256,17 +254,17 @@ exports.analyzeAnswers = async ({
     );
   }
 
-  // if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
-  //   systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
-  //     projectName,
-  //     questionsCount,
-  //     QUESTION_DURATION
-  //   );
-  //   userPrompt = analyzeBusinessAnswersPrompts.getUserPrompt(
-  //     projectName,
-  //     questionsCount
-  //   );
-  // }
+  if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
+    systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
+      projectName,
+      questionsCount,
+      QUESTION_DURATION
+    );
+    userPrompt = analyzeBusinessAnswersPrompts.getUserPrompt(
+      projectName,
+      questionsCount
+    );
+  }
 
   const stream = await together.chat.completions.create({
     model: "deepseek-ai/DeepSeek-V3",
@@ -290,15 +288,19 @@ exports.analyzeAnswers = async ({
 
   console.log("Analysis:", analysis);
 
+  let projectAssessment = await ProjectAssessment.findOne({
+    project: project._id,
+  });
+  
+
   if (!projectAssessment) {
     projectAssessment = new ProjectAssessment({
       project: project._id,
-      leaderProfile: profile._id,
+      user: user._id,
       technicalData: analysis.technicalData,
     });
-    profile.projectAssessments.push(projectAssessment._id);
+    // profile.projectAssessments.push(projectAssessment._id);
     await projectAssessment.save();
-    await profile.save();
   } else {
     projectAssessment.technicalData = analysis.technicalData;
     await projectAssessment.save();

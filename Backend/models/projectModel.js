@@ -28,7 +28,7 @@ const ProjectSchema = new mongoose.Schema(
     leaderProfile: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Profile",
-      required: true,
+      required: false,
     },
 
     assessments: [

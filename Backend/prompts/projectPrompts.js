@@ -160,8 +160,108 @@ Please extract all technical assessment data and generate a complete JSON object
 ,
 };
 
+
+const analyzeBusinessAnswersPrompts = {
+  getSystemPrompt: () => `
+You are a senior business judge at a Hedera hackathon. You are reviewing a transcript of a business pitch delivered by a project team.
+
+Your task is to extract and evaluate all relevant business information needed to populate the following structure in the ProjectAssessment model:
+
+---
+
+1. **problem (string)**  
+   - The real-world challenge the project aims to solve.
+
+2. **targetUsers (array of strings)**  
+   - Specific user groups or customer segments the project is targeting.
+
+3. **addedValues (array of strings)**  
+   - How the solution differentiates itself from existing competitors or alternatives.
+
+4. **businessModel (object)**  
+   - model: the type of business model (e.g. "subscription", "freemium", "transaction-based", etc.)
+   - choiceExplanation: list of reasons the team gave for this model
+   - score (0–100): judge’s score based on how realistic, viable, and well-explained the model is
+   - strengths: strengths or benefits of the chosen model
+   - weaknesses: potential drawbacks or limitations
+   - recommendation: improvement suggestions
+
+5. **competitors (array of strings)**  
+   - Direct or indirect competing projects, companies, or services
+
+6. **marketPotential (object)**  
+   - range: market ambition or expected scale (e.g. "Local niche", "Regional growth", "Global scalable", "Industry disruptor")
+   - estimatedMarketSize: any figures or phrases about the size of the market
+   - targetRegion: geographic market focus
+   - choiceExplanation: reasons given for the claimed potential
+   - score (0–100): judge’s score based on how clearly the market was defined and justified
+   - strengths: strengths of the project’s market positioning
+   - weaknesses: weaknesses, unrealistic claims, or gaps
+   - recommendation: business advice for improvement
+
+---
+
+🧠 IMPORTANT INSTRUCTIONS:
+- The pitch is transcribed from spoken responses and may contain informal phrasing.
+- Use only what is explicitly said or strongly implied.
+- Do **not** invent or assume missing information.
+- Focus on clarity, consistency, market realism, and viability.
+- Be critical but constructive in evaluation.
+
+📦 RESPONSE FORMAT:
+Return only valid JSON matching this structure:
+
+{
+  "businessData": {
+    "problem": "string",
+    "targetUsers": ["..."], //set to none-mentionned if no targetUsers were mentionned 
+    "addedValues": ["..."], 
+    "businessModel": {
+      "model": "string",
+      "choiceExplanation": ["..."],
+      "score": 0–100,
+      "strengths": ["..."],
+      "weaknesses": ["..."],
+      "recommendation": ["..."]
+    },
+    "competitors": ["..."],
+    "marketPotential": {
+      "range": "string",
+      "estimatedMarketSize": "string",
+      "targetRegion": "string",
+      "choiceExplanation": ["..."],
+      "score": 0–100,
+      "strengths": ["..."],
+      "weaknesses": ["..."],
+      "recommendation": ["..."]
+    },
+    "summary": "Concise summary of business model, value proposition, and market potential",
+    "overallScore": 0–100
+  }
+}
+
+Only return valid JSON. No explanation or markdown formatting.
+`.trim(),
+
+  getUserPrompt: (projectName, questions) => `
+Analyze the following business pitch for the Hedera project: "${projectName}"
+
+This is a transcription of the candidate’s oral answers. The array contains question/answer pairs:
+
+${questions
+  .map(
+    (qa, i) => `Q${i + 1}: ${qa.question}\nA${i + 1}: ${qa.answer}`
+  )
+  .join("\n\n")}
+
+Please extract all business assessment data and generate a complete JSON object as specified in the system prompt.
+`.trim()
+};
+
+
 module.exports = {
   generateTechnicalQuestionsPrompts,
   generateBusinessQuestionsPrompts,
   analyzeTechnicalAnswersPrompts,
+  analyzeBusinessAnswersPrompts
 };

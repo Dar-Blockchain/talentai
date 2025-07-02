@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const { PROJECT_ASSESSMENT_TYPE } = require("../constants/projectConstants");
+//------------------ technicalData related Schemas---------------------
 
 const architectureSchema = new mongoose.Schema(
   {
@@ -64,6 +64,42 @@ const techStackSchema = new mongoose.Schema(
   { _id: false }
 );
 
+//------------------ BusinessData related Schemas---------------------
+
+const businessModelSchema = new mongoose.Schema(
+  {
+    model: {
+      type: String,
+      required: true,
+    },
+    choiceExplanation: [String], // given by the project team lead
+
+    score: { type: Number, min: 0, max: 100 }, // if correctly used: score out of 100
+    strengths: [{ type: String }],
+    weaknesses: [{ type: String }],
+    recommendation: [{ type: String }],
+  },
+  { _id: false }
+);
+
+const marketPotentialSchema = new mongoose.Schema(
+  {
+    range: String,
+    estimatedMarketSize: String, // e.g. "$2B globally", "500K users in MENA", etc.
+    targetRegion: String,
+
+    choiceExplanation: [String], // given by the project team lead
+
+    score: { type: Number, min: 0, max: 100 }, // if correctly used: score out of 100
+    strengths: [{ type: String }],
+    weaknesses: [{ type: String }],
+    recommendation: [{ type: String }],
+  },
+  { _id: false }
+);
+
+//------------------ TechnicalData AND BusinessData Schemas-------------
+
 const TechnicalDataSchema = new mongoose.Schema(
   {
     track: String,
@@ -83,22 +119,35 @@ const TechnicalDataSchema = new mongoose.Schema(
 const BusinessDataSchema = new mongoose.Schema(
   {
     problem: String,
-    targetUsers: String,
-    valueProposition: String,
-    businessModel: String,
+    targetUsers: [String],
+    addedValues: [String], // how the project differentiates itself from existing solutions
+    businessModel: businessModelSchema,
     competitors: [String],
-    marketPotential: String,
-    otherInsights: String,
+    marketPotential: marketPotentialSchema,
+    overallScore: Number,
+    summary: String, // Concise summary of the business model and market potential
+    createdAt: {
+      type: Number,
+      default: Date.now(),
+    },
   },
   { _id: false }
 );
+
+//------------------ MAIN Schema ------------------------------
 
 const ProjectAssessmentSchema = new mongoose.Schema(
   {
     leaderProfile: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Profile",
-      required: true,
+      required: false,
+    },
+
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
     },
 
     project: {
