@@ -44,7 +44,7 @@ module.exports.createProject = async (data, baseUrl) => {
       };
     });
 
-    // Créer un projet avec les données fournies
+    // Créer un projet .
     const project = new Project({
       name: data.Name,
       track: data.track,
@@ -126,7 +126,8 @@ module.exports.getNumberProjects = async (userId) => {
 // Récupération d'un projet par son ID
 module.exports.getProjectById = async (id) => {
   try {
-    const project = await Project.findById(id);
+    const project = await Project.findById(id).populate('leaderId'); // ← Ajoute le populate ici
+
     if (!project) throw new Error("Projet non trouvé");
     return project;
   } catch (error) {

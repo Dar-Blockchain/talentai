@@ -595,6 +595,8 @@ export default function Preferences() {
     return true;
   };
 
+  const { callbackUrl } = router.query;
+
   return (
     <Box sx={{
       minHeight: '100vh',
@@ -1239,6 +1241,18 @@ export default function Preferences() {
               : 'Next'}
           </Button>
         </Box>
+
+        {/* At the end of the page, show the button if callbackUrl exists */}
+        {callbackUrl && (
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ mt: 4 }}
+            onClick={() => router.push(callbackUrl as string)}
+          >
+            Return to Invitation
+          </Button>
+        )}
       </Card>
     </Box>
   );
