@@ -25,29 +25,34 @@ const { sendActivationEmail } = require("../utils/mailing");
 // Création d'un projet
 module.exports.createProject = async (data, baseUrl) => {
   try {
-    // Génère un token unique pour chaque membre et ajoute validated: false par défaut
-    const teamWithTokens = data.team.map((member) => {
+    // Si l'équipe contient des emails sous forme de tableau de chaînes,
+    // on doit les transformer en objets avec les clés nécessaires
+    const teamWithTokens = data.team.map((email) => {
+      if (!email) {
+        throw new Error("L'email est requis pour chaque membre de l'équipe.");
+      }
       const activationToken = crypto.randomBytes(32).toString("hex");
       return {
-        ...member, // Inclut les données du membre
-        validated: false, // Ajoute validated par défaut
-        activationToken, // Ajoute le token d'activation
+        email: email,  // L'email du membre
+        validated: false,  // Mis à false par défaut
+        activationToken,  // Le token d'activation généré
       };
     });
 
     // Créer un projet avec les données fournies
     const project = new Project({
       name: data.Name,
+      track: data.track,
       description: data.description,
-      team: teamWithTokens,
-      leaderId: data.leaderId, // Vous devez avoir l'ID du leader (assurez-vous de le récupérer quelque part)
+      team: teamWithTokens,  // Ajout des membres de l'équipe avec les emails transformés
+      leaderId: data.leaderId, // Assurez-vous que l'ID du leader est passé correctement
     });
     await project.save(); // Sauvegarder le projet dans la base de données
 
-    // Envoie un mail à chaque membre
+    // Envoie un mail à chaque membre de l'équipe
     for (const member of teamWithTokens) {
       const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${member.activationToken}`;
-      await sendActivationEmail(member.email, link);
+      await sendActivationEmail(member.email, link);  // Envoi de l'email d'activation
     }
 
     // Mettre à jour l'utilisateur leader avec ses informations et ajouter l'ID du projet à sa liste de projets
@@ -65,6 +70,7 @@ module.exports.createProject = async (data, baseUrl) => {
     throw new Error("Erreur lors de la création du projet");
   }
 };
+
 
 
 // Activation du compte membre
