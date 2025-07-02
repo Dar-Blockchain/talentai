@@ -4,8 +4,9 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import React from 'react';
 
 interface ProjectData {
-  projectName: string;
+  name: string;
   createdAt: string;
+  track?: string;
 }
 
 interface HeroHeaderProps {
@@ -33,8 +34,13 @@ const HeroHeader: React.FC<HeroHeaderProps> = ({ projectData, handleLogout }) =>
     <Box sx={{ zIndex: 2 }}>
       <Typography variant="h4" sx={{ color: '#fff', fontWeight: 900, letterSpacing: 0.5, mb: 0.5, fontFamily: 'Nunito, Quicksand, Arial Rounded MT Bold, Arial, sans-serif', fontSize: { xs: '1.5rem', sm: '2.2rem' } }}>
         <EmojiEventsIcon sx={{ fontSize: 36, mr: 1, verticalAlign: 'middle', color: '#FFD600' }} />
-        {projectData.projectName}
+        {projectData.name}
       </Typography>
+      {projectData.track && (
+        <Typography variant="subtitle2" sx={{ color: '#fff', fontWeight: 700, mb: 0.5, fontSize: { xs: '1.08rem', sm: '1.18rem' }, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', letterSpacing: 0.2 }}>
+          Track: {projectData.track}
+        </Typography>
+      )}
       <Typography variant="subtitle1" sx={{ color: '#E1BEE7', fontWeight: 500, fontSize: { xs: '1.05rem', sm: '1.15rem' }, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif' }}>
         Last updated: {new Date(projectData.createdAt).toLocaleDateString()}
       </Typography>

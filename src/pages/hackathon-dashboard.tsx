@@ -42,20 +42,22 @@ interface TeamMember {
 
 interface ProjectAPIData {
   _id: string;
-  Name: string;
+  name: string;
   description: string;
   team: { email: string; validated?: boolean; _id?: string }[];
   leaderId: string;
   createdAt: string;
   updatedAt: string;
+  track?: string;
 }
 
 interface ProjectData {
-  projectName: string;
+  name: string;
   projectDescription: string;
   teamMembers: TeamMember[];
   createdAt: string;
   _id: string;
+  track?: string;
 }
 
 const blobAnimation = keyframes`
@@ -99,11 +101,12 @@ const HackathonDashboard = () => {
             role: 'Member',
           }));
           setProjectData({
-            projectName: latest.Name,
+            name: latest.name,
             projectDescription: latest.description,
             teamMembers,
             createdAt: latest.createdAt,
             _id: latest._id,
+            track: latest.track,
           });
         } else {
           setProjectData(null);
@@ -198,8 +201,7 @@ const HackathonDashboard = () => {
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <QuickActions projectId={projectData && (projectData as any)._id} />
-              <ProjectDetails projectDescription={projectData.projectDescription} />
-          
+              <ProjectDetails projectDescription={projectData.projectDescription} track={projectData.track} />
             </Box>
             <TeamMembers teamMembers={projectData.teamMembers} />
           </Box>
