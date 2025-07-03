@@ -58,6 +58,7 @@ interface ProjectData {
   createdAt: string;
   _id: string;
   track?: string;
+  assessment?: any;
 }
 
 const blobAnimation = keyframes`
@@ -160,6 +161,11 @@ const HackathonDashboard = () => {
     router.push('/signin');
   };
 
+  // After projectData is loaded, extract assessment if available
+  // For demo, let's mock assessment as an object on projectData (replace with real data as needed)
+  const assessment = projectData?.assessment || null;
+  const hasBusinessData = !!assessment?.businessData;
+  const hasTechnicalData = !!assessment?.technicalData;
 
   return (
     <Box >
@@ -200,7 +206,11 @@ const HackathonDashboard = () => {
           <StatsCards projectData={projectData} />
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <QuickActions projectId={projectData && (projectData as any)._id} />
+              <QuickActions
+                projectId={projectData && (projectData as any)._id}
+                disableBusiness={hasBusinessData}
+                disableTechnical={hasTechnicalData}
+              />
               <ProjectDetails projectDescription={projectData.projectDescription} track={projectData.track} />
             </Box>
             <TeamMembers teamMembers={projectData.teamMembers} />
