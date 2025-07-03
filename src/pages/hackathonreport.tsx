@@ -499,6 +499,7 @@ export default function hackathonreport() {
   const [assessmentType, setAssessmentType] = useState<string>('technical');
   const hasRun = useRef(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [businessAlreadyAssessed, setBusinessAlreadyAssessed] = useState(false);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -552,6 +553,12 @@ export default function hackathonreport() {
             errorMessage = errorJson.message || errorJson.error || errorText;
           } catch {
             errorMessage = errorText || 'Failed to analyze project answers';
+          }
+          // Custom handling for business already assessed error
+          if (errorMessage && errorMessage.toLowerCase().includes('business data already asssessed')) {
+            setBusinessAlreadyAssessed(true);
+            setError('Business evaluation for this project has already been submitted. You cannot submit another.');
+            return;
           }
           throw new Error(`Failed to analyze project answers: ${errorMessage}`);
         }
@@ -672,6 +679,15 @@ export default function hackathonreport() {
         </Button>
       </Box>
     );
+  }
+
+  let businessData: any = undefined;
+  if (results?.analysis && typeof results.analysis === 'object' && 'businessData' in results.analysis) {
+    businessData = (results.analysis as any).businessData;
+  } else if (results && typeof results === 'object' && 'businessData' in results) {
+    businessData = (results as any).businessData;
+  } else if (results && typeof results === 'object' && 'assessment' in results && (results as any).assessment?.businessData) {
+    businessData = (results as any).assessment.businessData;
   }
 
   return (
@@ -803,6 +819,49 @@ export default function hackathonreport() {
             <Typography variant="body1" sx={{ color: '#fff', textAlign: 'center' }}>
               No results available. Please complete the assessment first.
             </Typography>
+          )}
+
+          {assessmentType === 'business' && businessData && (
+            <Box sx={{ mt: 4, p: 3, borderRadius: 3, background: 'rgba(255,255,255,0.95)', boxShadow: '0 4px 24px #FFD60022' }}>
+              <Typography variant="h5" sx={{ color: '#7C4DFF', fontWeight: 900, mb: 2 }}>
+                Business Evaluation
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Problem</Typography>
+              <Typography sx={{ mb: 2 }}>{businessData.problem}</Typography>
+
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Target Users</Typography>
+              <Typography sx={{ mb: 2 }}>{businessData.targetUsers?.join(', ')}</Typography>
+
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Added Values</Typography>
+              <Typography sx={{ mb: 2 }}>{businessData.addedValues?.join(', ')}</Typography>
+
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Business Model</Typography>
+              <Typography sx={{ mb: 1 }}>Model: {businessData.businessModel?.model}</Typography>
+              <Typography sx={{ mb: 1 }}>Explanation: {businessData.businessModel?.choiceExplanation?.join(', ')}</Typography>
+              <Typography sx={{ mb: 1 }}>Strengths: {businessData.businessModel?.strengths?.join(', ')}</Typography>
+              <Typography sx={{ mb: 1 }}>Weaknesses: {businessData.businessModel?.weaknesses?.join(', ')}</Typography>
+              <Typography sx={{ mb: 1 }}>Recommendations: {businessData.businessModel?.recommendation?.join(', ')}</Typography>
+              <Typography sx={{ mb: 2 }}>Score: {businessData.businessModel?.score}</Typography>
+
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Competitors</Typography>
+              <Typography sx={{ mb: 2 }}>{businessData.competitors?.join(', ')}</Typography>
+
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Market Potential</Typography>
+              <Typography sx={{ mb: 1 }}>Range: {businessData.marketPotential?.range}</Typography>
+              <Typography sx={{ mb: 1 }}>Estimated Market Size: {businessData.marketPotential?.estimatedMarketSize}</Typography>
+              <Typography sx={{ mb: 1 }}>Target Region: {businessData.marketPotential?.targetRegion}</Typography>
+              <Typography sx={{ mb: 1 }}>Explanation: {businessData.marketPotential?.choiceExplanation?.join(', ')}</Typography>
+              <Typography sx={{ mb: 1 }}>Strengths: {businessData.marketPotential?.strengths?.join(', ')}</Typography>
+              <Typography sx={{ mb: 1 }}>Weaknesses: {businessData.marketPotential?.weaknesses?.join(', ')}</Typography>
+              <Typography sx={{ mb: 1 }}>Recommendations: {businessData.marketPotential?.recommendation?.join(', ')}</Typography>
+              <Typography sx={{ mb: 2 }}>Score: {businessData.marketPotential?.score}</Typography>
+
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Summary</Typography>
+              <Typography sx={{ mb: 2 }}>{businessData.summary}</Typography>
+
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Overall Score</Typography>
+              <Typography sx={{ mb: 2 }}>{businessData.overallScore}</Typography>
+            </Box>
           )}
 
           <Box sx={{
