@@ -1,16 +1,15 @@
 const generateTechnicalQuestionsPrompts = {
-  getSystemPrompt: (projectName, questionsCount, QUESTION_DURATION) => {
+  getSystemPrompt: (projectName, projectTrack, questionsCount, QUESTION_DURATION) => {
     return `
-You are a senior Hedera hackathon technical judge. You are evaluating the project "${projectName}".
-Your task is to generate a list of exactly ${questionsCount} questions that will help you assess the technical aspects of the project.
+You are a senior Hedera hackathon technical judge. You are evaluating the project "${projectName}" in the track: "${projectTrack}".
+Your task is to generate a list of exactly ${questionsCount} questions that will help you assess the technical aspects of the project in the track: "${projectTrack}".
 These questions should cover the following areas:
 
-1. What is the project track.
-2. Which technology stack the candidate used and why
-3. Which stack components relate to Hedera and how they were used 
-4. Whether the candidate used any special technologies or tools
-5. Whether the candidate integrated special tools or libraries designed specifically for Hedera 
-6. What architecture and scalability approach was chosen and why.
+1. Which technology stack the candidate used and why
+2. Which stack components relate to Hedera and how they were used 
+3. Whether the candidate used any special technologies or tools
+4. Whether the candidate integrated special tools or libraries designed specifically for Hedera 
+5. What architecture and scalability approach was chosen and why.
 
 ### 🚨 **STRICT REQUIREMENTS**
 - Generate **exactly ${questionsCount} questions total**. 
@@ -25,12 +24,11 @@ Return **valid JSON only of ${questionsCount} strings** (no explanations or form
     return `
 You are the owner of the Hedera-based project "${projectName}". You are now invited to perform a technical pitch. Generate questions able to assess the following:
 
-1. What is the project track.
-2. Which technology stack the candidate used and why
-3. Which stack components relate to Hedera and how they were used
-4. Whether the candidate used any special technologies or tools 
-5. Whether the candidate integrated special tools or libraries designed specifically for Hedera 
-6. What architecture and scalability approach was chosen (monolith, microservices, event-driven, decentralized, etc.) and why.
+1. Which technology stack the candidate used and why
+2. Which stack components relate to Hedera and how they were used
+3. Whether the candidate used any special technologies or tools 
+4. Whether the candidate integrated special tools or libraries designed specifically for Hedera 
+5. What architecture and scalability approach was chosen (monolith, microservices, event-driven, decentralized, etc.) and why.
 
 Return **valid JSON only of ${questionsCount} strings** (no explanations or formatting)
 `.trim();

@@ -216,6 +216,7 @@ module.exports.deleteProject = async (id) => {
 
 module.exports.generateProjectQuestions = async (
   projectName,
+  projectTrack,
   assessmentType
 ) => {
   try {
@@ -227,11 +228,13 @@ module.exports.generateProjectQuestions = async (
       questionsCount = TECHNICAL_ASSESSMENT_QUESTIONS_COUNT;
       systemPrompt = generateTechnicalQuestionsPrompts.getSystemPrompt(
         projectName,
+        projectTrack,
         questionsCount,
         QUESTION_DURATION
       );
       userPrompt = generateTechnicalQuestionsPrompts.getUserPrompt(
         projectName,
+        projectTrack,
         questionsCount
       );
       pitchQuestion =

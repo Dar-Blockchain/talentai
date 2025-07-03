@@ -122,9 +122,11 @@ module.exports.generateProjectQuestions = async (req, res) => {
     }
 
     const projectName = project.name;
+    const projectTrack = project.track;
 
     const result = await projectService.generateProjectQuestions(
       projectName,
+      projectTrack,
       assessmentType
     );
 
