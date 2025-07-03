@@ -247,6 +247,9 @@ const countryCoordinates: Record<string, [number, number]> = {
   'Benin': [9.3075, 2.3158],
   'Ivory Coast': [7.5395, -5.5471],
   'Senegal': [14.6928, -14.0060],
+  'Mali': [12.6392, -8.0029],
+'Guinea': [9.9456, -9.6966],
+
 };
 
 // Country name normalization
@@ -261,6 +264,8 @@ const normalizeCountryName = (countryName: string): string => {
     'Great Britain': 'United Kingdom',
     'England': 'United Kingdom',
     'GB': 'United Kingdom',
+    'ML': 'Mali',
+    'GN': 'Guinea',
     'CA': 'Canada',
     'FR': 'France',
     'DE': 'Germany',
