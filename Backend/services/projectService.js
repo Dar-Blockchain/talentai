@@ -29,7 +29,7 @@ const { sendActivationEmail } = require("../utils/mailing");
 
 // Création d'un projet
 const crypto = require("crypto");
-const secret = process.env.Net_Secret; 
+const secret = process.env.Net_Secret;
 
 module.exports.createProject = async (data, baseUrl) => {
   try {
@@ -47,12 +47,12 @@ module.exports.createProject = async (data, baseUrl) => {
       }
 
       // Générer un token unique pour chaque membre
-      const activationToken = crypto.randomBytes(20).toString('hex');  // Générer un token unique
+      const activationToken = crypto.randomBytes(20).toString("hex"); // Générer un token unique
 
       return {
         email,
         validated: false,
-        activationToken,  // Ajouter le token dans les données du membre
+        activationToken, // Ajouter le token dans les données du membre
       };
     });
 
@@ -112,7 +112,7 @@ module.exports.activateTeamMember = async (projectId, token) => {
     console.log("Project found:", project);
 
     // Chercher le membre correspondant à ce token
-    const member = project.team.find(m => m.activationToken === token);
+    const member = project.team.find((m) => m.activationToken === token);
     console.log("Member found:", member);
 
     if (!member) {
@@ -128,7 +128,7 @@ module.exports.activateTeamMember = async (projectId, token) => {
 
     // Mettre à jour le membre comme validé
     member.validated = true;
-    member.activationToken = null;  // Supprimer le token une fois activé
+    member.activationToken = null; // Supprimer le token une fois activé
 
     // Sauvegarder le projet avec le membre mis à jour
     await project.save();
@@ -142,10 +142,6 @@ module.exports.activateTeamMember = async (projectId, token) => {
     throw error; // Rejeter l'erreur pour être capturée ailleurs
   }
 };
-
-
-
-
 
 // Récupération de tous les projets
 module.exports.getAllProjects = async () => {
@@ -345,7 +341,6 @@ exports.analyzeAnswers = async ({
   let projectAssessment = await ProjectAssessment.findOne({
     project: project._id,
   });
-  
 
   if (!projectAssessment) {
     projectAssessment = new ProjectAssessment({
