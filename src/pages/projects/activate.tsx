@@ -38,9 +38,9 @@ const ProjectActivatePage = () => {
     const fetchProject = async () => {
       if (!projectId) return;
       try {
-        const token1 = localStorage.getItem('api_token');
+        const token = localStorage.getItem('api_token');
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/getProjectById/${projectId}`, {
-          headers: token1 ? { Authorization: `Bearer ${token1}` } : {},
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (!res.ok) throw new Error('Failed to fetch project');
         const data = await res.json();
@@ -65,12 +65,12 @@ const ProjectActivatePage = () => {
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/';
       const url = `${apiBase}project/activate`;
-      const token = localStorage.getItem('api_token');
+      const token1 = localStorage.getItem('api_token');
       const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token1}`,
         },
         body: JSON.stringify({ projectId, token }),
       });
