@@ -65,12 +65,12 @@ const ProjectActivatePage = () => {
     try {
       const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/';
       const url = `${apiBase}project/activate`;
-      const token = localStorage.getItem('api_token');
+      const token1 = localStorage.getItem('api_token');
       const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token1}`,
         },
         body: JSON.stringify({ projectId, token }),
       });
