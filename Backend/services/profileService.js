@@ -486,7 +486,11 @@ module.exports.getCompanyBids = async (companyId) => {
 
 module.exports.getCompanyProfileWithAssessments = async (id, jobId) => {
   try {
-    const profile = await Profile.findById(id)
+    const mongoose = require('mongoose');
+    // Ensure id is a string or ObjectId, not Buffer
+    const safeId = Buffer.isBuffer(id) ? new mongoose.Types.ObjectId(id.toString('hex')) : id;
+
+    const profile = await Profile.findById(safeId)
       .where("type")
       .equals("Company")
       .populate({

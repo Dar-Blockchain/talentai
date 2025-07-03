@@ -38,9 +38,9 @@ const ProjectActivatePage = () => {
     const fetchProject = async () => {
       if (!projectId) return;
       try {
-        const token = localStorage.getItem('api_token');
+        const token1 = localStorage.getItem('api_token');
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/getProjectById/${projectId}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          headers: token1 ? { Authorization: `Bearer ${token1}` } : {},
         });
         if (!res.ok) throw new Error('Failed to fetch project');
         const data = await res.json();
