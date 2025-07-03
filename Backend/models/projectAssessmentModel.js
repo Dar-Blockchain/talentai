@@ -138,11 +138,11 @@ const BusinessDataSchema = new mongoose.Schema(
 
 const ProjectAssessmentSchema = new mongoose.Schema(
   {
-    leaderProfile: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Profile",
-      required: false,
-    },
+    // leaderProfile: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "Profile",
+    //   required: false,
+    // },
 
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -158,7 +158,7 @@ const ProjectAssessmentSchema = new mongoose.Schema(
 
     technicalData: TechnicalDataSchema,
 
-    businessData: BusinessDataSchema,
+    businessData:  BusinessDataSchema, 
   },
   {
     timestamps: true,

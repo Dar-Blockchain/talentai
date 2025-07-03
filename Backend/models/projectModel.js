@@ -32,12 +32,10 @@ const ProjectSchema = new mongoose.Schema(
       required: false,
     },
 
-    assessments: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "projectAssessment",
-      },
-    ],
+    assessment: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "projectAssessment",
+    },
   },
   { timestamps: true }
 );
