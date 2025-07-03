@@ -9,7 +9,7 @@ const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 
 // Routes protégées par authentification
-router.use(controledAcces('Candidat'), authLogMiddleware("Evaluation"));
+router.use(requireAuthUser,controledAcces('Candidat'), authLogMiddleware("Evaluation"));
 
 
 router.post('/generate-questions', evaluationController.generateQuestions);
