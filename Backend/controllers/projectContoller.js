@@ -148,7 +148,6 @@ exports.analyzeAnswers = async (req, res) => {
     const projectId = req.params.id;
     const assessmentType = req.params.assessmentType.trim();
     const user = req.user;
-    
 
     if (!Array.isArray(questions)) {
       return res.status(400).json({
@@ -166,10 +165,36 @@ exports.analyzeAnswers = async (req, res) => {
       });
     }
 
+    let projectAssessment = await ProjectAssessment.findOne({
+      project: project._id,
+    });
+
+    switch (assessmentType) {
+      case PROJECT_ASSESSMENT_TYPE.TECHNICAL:
+        if (projectAssessment && projectAssessment.technicalData) {
+          return res.status(400).json({
+            message: "Technical data already asssessed for this project",
+          });
+        }
+        break;
+      case PROJECT_ASSESSMENT_TYPE.BUSINESS:
+        if (projectAssessment && projectAssessment.businessData) {
+          return res.status(400).json({
+            message: "Business data already asssessed for this project",
+          });
+        }
+        break;
+      default:
+        return res.status(400).json({
+          error: "Invalid assessment type",
+        });
+    }
+
     const result = await projectService.analyzeAnswers({
       questions,
-      user, 
+      user,
       project,
+      projectAssessment,
       assessmentType,
     });
 

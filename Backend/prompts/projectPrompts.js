@@ -76,13 +76,11 @@ Return **valid JSON only of ${questionsCount} strings** (no commentary or format
 };
 
 const analyzeTechnicalAnswersPrompts = {
-  getSystemPrompt: () => `
-You are a senior technical judge at a Hedera hackathon. You are reviewing a transcript of a technical pitch delivered by a project team.
-
+  getSystemPrompt: (projectName) => `
+You are a senior technical judge at a Hedera hackathon. You are reviewing a transcript of a technical pitch delivered by a project team of the project: "${projectName}".
 Your task is to extract and evaluate all relevant technical data needed to populate the following structure in the ProjectAssessment model:
 
 ---
-2. **track (string)** // the project track (e.g. "DeFi", "NFTs", "Gaming", etc.)
 1. **techStack (array)**  
    For each technology mentioned:
    - title: string (technology or tool name)
@@ -97,7 +95,7 @@ Your task is to extract and evaluate all relevant technical data needed to popul
      * How well the technology aligns with the project track and benefits it
      * The clarity and detail of the explanation given
 
-2. **architecture (object)**
+3. **architecture (object)**
    - title: architecture name (e.g. "monolith", "microservices", "event-driven", "decentralized")
    - type: technical category of architecture
    - choiceExplanation: list of reasons given by the team
@@ -108,7 +106,7 @@ Your task is to extract and evaluate all relevant technical data needed to popul
      * How well the technology aligns with the project track and benefits it
      * The clarity and detail of the explanation given
 
-3. **scalabilityApproach (object)**
+4. **scalabilityApproach (object)**
    - strategy: name or description of the scalability strategy
    - choiceExplanation: reasons given by the team
    - strengths
@@ -144,8 +142,8 @@ No explanations. Output must be valid JSON only.
 `.trim()
 ,
 
-  getUserPrompt: (projectName, questions) => `
-Analyze the following technical pitch for the Hedera project: "${projectName}"
+  getUserPrompt: (projectName, questions, projectTrack) => `
+Analyze the following technical pitch for the Hedera project: "${projectName}" in the track: "${projectTrack}"
 
 This is a transcription of the candidate’s oral answers. The array contains question/answer pairs:
 

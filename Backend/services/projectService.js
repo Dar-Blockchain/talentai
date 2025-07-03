@@ -21,6 +21,7 @@ const {
   generateTechnicalQuestionsPrompts,
   generateBusinessQuestionsPrompts,
   analyzeTechnicalAnswersPrompts,
+  analyzeBusinessAnswersPrompts,
 } = require("../prompts/projectPrompts");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
@@ -29,7 +30,7 @@ const { sendActivationEmail } = require("../utils/mailing");
 
 // Création d'un projet
 const crypto = require("crypto");
-const secret = process.env.Net_Secret; 
+const secret = process.env.Net_Secret;
 
 module.exports.createProject = async (data, baseUrl) => {
   try {
@@ -47,12 +48,12 @@ module.exports.createProject = async (data, baseUrl) => {
       }
 
       // Générer un token unique pour chaque membre
-      const activationToken = crypto.randomBytes(20).toString('hex');  // Générer un token unique
+      const activationToken = crypto.randomBytes(20).toString("hex"); // Générer un token unique
 
       return {
         email,
         validated: false,
-        activationToken,  // Ajouter le token dans les données du membre
+        activationToken, // Ajouter le token dans les données du membre
       };
     });
 
@@ -112,7 +113,7 @@ module.exports.activateTeamMember = async (projectId, token) => {
     console.log("Project found:", project);
 
     // Chercher le membre correspondant à ce token
-    const member = project.team.find(m => m.activationToken === token);
+    const member = project.team.find((m) => m.activationToken === token);
     console.log("Member found:", member);
 
     if (!member) {
@@ -128,7 +129,7 @@ module.exports.activateTeamMember = async (projectId, token) => {
 
     // Mettre à jour le membre comme validé
     member.validated = true;
-    member.activationToken = null;  // Supprimer le token une fois activé
+    member.activationToken = null; // Supprimer le token une fois activé
 
     // Sauvegarder le projet avec le membre mis à jour
     await project.save();
@@ -142,10 +143,6 @@ module.exports.activateTeamMember = async (projectId, token) => {
     throw error; // Rejeter l'erreur pour être capturée ailleurs
   }
 };
-
-
-
-
 
 // Récupération de tous les projets
 module.exports.getAllProjects = async () => {
@@ -289,91 +286,85 @@ module.exports.generateProjectQuestions = async (
 
 exports.analyzeAnswers = async ({
   questions,
-  profile,
   user,
   project,
+  projectAssessment,
   assessmentType,
 }) => {
-  let systemPrompt = "";
-  let userPrompt = "";
-  const projectName = project.name;
-  if (assessmentType == PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
-    systemPrompt = analyzeTechnicalAnswersPrompts.getSystemPrompt(
-      projectName,
-      questions
-    );
-    userPrompt = analyzeTechnicalAnswersPrompts.getUserPrompt(
-      projectName,
-      questions
-    );
-  }
+  try {
+    let systemPrompt = "";
+    let userPrompt = "";
+    const projectName = project.name;
+    const projectTrack = project.track;
 
-  if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
-    systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
-      projectName,
-      questionsCount,
-      QUESTION_DURATION
-    );
-    userPrompt = analyzeBusinessAnswersPrompts.getUserPrompt(
-      projectName,
-      questionsCount
-    );
-  }
+    // I. Set the prompts according to the analysis to be done (technical or business)
+    if (assessmentType == PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
+      systemPrompt = analyzeTechnicalAnswersPrompts.getSystemPrompt(
+        projectName,
+        questions
+      );
+      userPrompt = analyzeTechnicalAnswersPrompts.getUserPrompt(
+        projectName,
+        questions
+      );
+    }
 
-  const stream = await together.chat.completions.create({
-    model: "deepseek-ai/DeepSeek-V3",
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-    max_tokens: 2500,
-    temperature: 0.7,
-    stream: true,
-  });
+    if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
+      systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
+        projectName,
+        questions
+      );
+      userPrompt = analyzeBusinessAnswersPrompts.getUserPrompt(
+        projectName,
+        questions
+      );
+    }
 
-  let raw = "";
-  for await (const chunk of stream) {
-    const content = chunk.choices?.[0]?.delta?.content;
-    if (content) raw += content;
-  }
-
-  // I. parse AI response
-  let analysis = await parseAIResponse(raw);
-
-  console.log("Analysis:", analysis);
-
-  let projectAssessment = await ProjectAssessment.findOne({
-    project: project._id,
-  });
-  
-
-  if (!projectAssessment) {
-    projectAssessment = new ProjectAssessment({
-      project: project._id,
-      user: user._id,
-      technicalData: analysis.technicalData,
+    // II. Send the prompt to the AI
+    const stream = await together.chat.completions.create({
+      model: "deepseek-ai/DeepSeek-V3",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      max_tokens: 2500,
+      temperature: 0.7,
+      stream: true,
     });
-    // profile.projectAssessments.push(projectAssessment._id);
+
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
+
+    // III. parse AI response
+    let analysis = await parseAIResponse(raw);
+
+    console.log("Analysis:", analysis);
+
+    // IV. Store the projectAssessment in the project model
+    if (!projectAssessment) {
+      projectAssessment = new ProjectAssessment({
+        project: project._id,
+        user: user._id,
+      });
+
+      project.assessments = [projectAssessment._id];
+      await project.save();
+    }
+
+    if (assessmentType === PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
+      projectAssessment.technicalData = analysis.technicalData;
+    } else if (assessmentType === PROJECT_ASSESSMENT_TYPE.BUSINESS) {
+      projectAssessment.businessData = analysis.businessData;
+    }
+
     await projectAssessment.save();
-  } else {
-    projectAssessment.technicalData = analysis.technicalData;
-    await projectAssessment.save();
+
+    return { analysis };
+  } catch (error) {
+    console.error("Error analyzing answers:", error);
+    throw new Error(`Error analyzing answers: ${error}`);
   }
-
-  // const interviewId = await saveInterviewDetails(
-  //   profile,
-  //   analysis.overallScore,
-  //   analysis.skillAnalysis,
-  //   formData
-  // );
-
-  // profile.quota++;
-
-  // if (!profile.interviewDetails) {
-  //   profile.interviewDetails = [];
-  // }
-  // profile.interviewDetails.push(interviewId);
-  // await profile.save();
-
-  return { analysis };
 };
