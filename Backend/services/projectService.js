@@ -147,7 +147,12 @@ module.exports.activateTeamMember = async (projectId, token) => {
 // Récupération de tous les projets
 module.exports.getAllProjects = async () => {
   try {
-    const projects = await Project.find();
+    const projects = await Project.find()
+      .populate("leaderId")
+      .populate({
+        path: "assessment",
+        model: "ProjectAssessment",
+      });
     return projects;
   } catch (error) {
     throw new Error("Erreur lors de la récupération des projets");

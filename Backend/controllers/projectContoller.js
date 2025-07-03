@@ -198,7 +198,23 @@ exports.analyzeAnswers = async (req, res) => {
       assessmentType,
     });
 
-    res.status(200).json({ success: true, result });
+    // After analyzeAnswers, re-fetch the project with population
+    const populatedProject = await Project.findById(projectId)
+      .populate({ path: 'leaderId', model: 'User', as: 'leader' })
+      .populate({
+        path: 'assessment',
+        model: 'ProjectAssessment',
+        populate: { path: 'user', model: 'User' }
+      });
+
+    res.status(200).json({
+      success: true,
+      result,
+      project: {
+        ...populatedProject.toObject(),
+        leader: populatedProject.leaderId, // alias leaderId as leader
+      }
+    });
   } catch (error) {
     return res.status(500).json({
       error: `An unexpected error occurred while analyzing project answers: ${error}`,
