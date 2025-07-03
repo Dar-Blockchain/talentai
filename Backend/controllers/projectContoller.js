@@ -148,27 +148,7 @@ exports.analyzeAnswers = async (req, res) => {
     const projectId = req.params.id;
     const assessmentType = req.params.assessmentType.trim();
     const user = req.user;
-
-    const profile = await Profile.findById(user.profile);
-    if (!profile) {
-      return res.status(404).json({
-        error: "profile not found",
-      });
-    }
-
-    const now = new Date();
-    const daysSinceLastUpdate =
-      (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
-    if (daysSinceLastUpdate >= 30) {
-      profile.quota = 0;
-      profile.quotaUpdatedAt = now;
-    }
-
-    if (profile.quota >= 5) {
-      return res
-        .status(403)
-        .json({ error: "You have reached your test limit (5)" });
-    }
+    
 
     if (!Array.isArray(questions)) {
       return res.status(400).json({
@@ -186,14 +166,10 @@ exports.analyzeAnswers = async (req, res) => {
       });
     }
 
-    
-
     const result = await projectService.analyzeAnswers({
       questions,
-      profile,
       user, 
       project,
-      
       assessmentType,
     });
 
