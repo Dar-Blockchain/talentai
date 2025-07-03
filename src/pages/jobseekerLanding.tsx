@@ -34,13 +34,15 @@ const JobSeekerLanding: React.FC = () => {
           textAlign: 'center',
         }}
       >
-        <Image
-          src="/F6S_Top_Company_AI (Artificial Intelligence).png"
-          alt="F6S Top Company AI"
-          width={500}
-          height={200}
-          style={{ borderRadius: 24, background: '#fff', boxShadow: '0 2px 32px #8310FF22', width: '100%', height: 'auto', maxWidth: 500, display: 'block', marginBottom: 24 }}
-        />
+        <a href="https://www.f6s.com/talentai.bid" target="_blank" rel="noopener noreferrer">
+          <Image
+            src="/F6S_Top_Company_AI (Artificial Intelligence).png"
+            alt="F6S Top Company AI"
+            width={500}
+            height={200}
+            style={{ borderRadius: 24, background: '#fff', boxShadow: '0 2px 32px #8310FF22', width: '100%', height: 'auto', maxWidth: 500, display: 'block', marginBottom: 24, cursor: 'pointer' }}
+          />
+        </a>
         <Typography variant="h5" sx={{ fontWeight: 700, color: '#8310FF', mb: 1 }}>
           F6S Top Company AI (Artificial Intelligence)
         </Typography>
