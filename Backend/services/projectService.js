@@ -350,7 +350,7 @@ exports.analyzeAnswers = async ({
         user: user._id,
       });
 
-      project.assessments = [projectAssessment._id];
+      project.assessment = projectAssessment._id;
       await project.save();
     }
 
