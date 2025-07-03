@@ -51,6 +51,17 @@ interface ProjectAPIData {
   track?: string;
 }
 
+interface Assessment {
+  _id: string;
+  user: string;
+  project: string;
+  technicalData?: any; // You can further type this if needed
+  createdAt: string;
+  updatedAt: string;
+  __v?: number;
+  businessData?: any;
+}
+
 interface ProjectData {
   name: string;
   projectDescription: string;
@@ -58,7 +69,7 @@ interface ProjectData {
   createdAt: string;
   _id: string;
   track?: string;
-  assessment?: any;
+  assessment?: Assessment;
 }
 
 const blobAnimation = keyframes`
@@ -108,6 +119,7 @@ const HackathonDashboard = () => {
             createdAt: latest.createdAt,
             _id: latest._id,
             track: latest.track,
+            assessment: (latest as any).assessment,
           });
         } else {
           setProjectData(null);
@@ -166,6 +178,8 @@ const HackathonDashboard = () => {
   const assessment = projectData?.assessment || null;
   const hasBusinessData = !!assessment?.businessData;
   const hasTechnicalData = !!assessment?.technicalData;
+console.log(projectData,'akakkakaapapapappa')
+console.log(!!assessment?.technicalData,'akakkakaapapapappa')
 
   return (
     <Box >
