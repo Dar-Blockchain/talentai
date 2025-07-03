@@ -25,38 +25,33 @@ const {
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
-const { sendActivationEmail } = require("../utils/mailing");
-
 // Création d'un projet
+const { sendActivationEmail } = require("../utils/mailing");
 const crypto = require("crypto");
-const secret = process.env.Net_Secret;
+const EXPIRATION_HOURS = 24;
 
 module.exports.createProject = async (data, baseUrl) => {
   try {
-    // Vérifier que l'email est fourni
     if (!data.team || data.team.length === 0) {
       throw new Error("L'équipe doit avoir des membres.");
     }
 
-    console.log("Team emails:", data.team);
-
-    // Créer des tokens uniques pour chaque membre
     const teamWithTokens = data.team.map((email) => {
       if (!email) {
         throw new Error("L'email est requis pour chaque membre de l'équipe.");
       }
 
-      // Générer un token unique pour chaque membre
-      const activationToken = crypto.randomBytes(20).toString("hex"); // Générer un token unique
+      const activationToken = crypto.randomBytes(20).toString("hex");
+      const expiresAt = new Date(Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000); // 24h
 
       return {
         email,
         validated: false,
-        activationToken, // Ajouter le token dans les données du membre
+        activationToken,
+        expiresAt,
       };
     });
 
-    // Créer un projet
     const project = new Project({
       name: data.Name,
       track: data.track,
@@ -65,18 +60,13 @@ module.exports.createProject = async (data, baseUrl) => {
       leaderId: data.leaderId,
     });
 
-    // Sauvegarder le projet dans la base de données
     await project.save();
-    console.log("Project created:", project);
 
-    // Envoyer un email à chaque membre avec le lien d'activation
     for (const member of teamWithTokens) {
       const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${member.activationToken}`;
-      console.log("Sending activation email to:", member.email, "Link:", link);
       await sendActivationEmail(member.email, link);
     }
 
-    // Mettre à jour l'utilisateur leader
     await User.findByIdAndUpdate(data.leaderId, {
       FirstName: data.FirstName,
       LastName: data.LastName,
@@ -94,54 +84,43 @@ module.exports.createProject = async (data, baseUrl) => {
 
 module.exports.activateTeamMember = async (projectId, token) => {
   try {
-    console.log("Activating project with ID:", projectId);
-    console.log("Received token:", token);
-
-    // Vérification que le token est valide
     if (!token) {
       throw new Error("Token manquant");
     }
 
-    // Trouver le projet
     const project = await Project.findById(projectId);
     if (!project) {
-      console.error("Projet introuvable");
       throw new Error("Project not found");
     }
 
-    console.log("Project found:", project);
-
-    // Chercher le membre correspondant à ce token
     const member = project.team.find((m) => m.activationToken === token);
-    console.log("Member found:", member);
 
     if (!member) {
-      console.error("Lien invalide ou déjà activé");
-      throw new Error("Invalid link or already activated");
+      throw new Error("Lien invalide ou déjà activé");
     }
 
-    // Si le membre est déjà validé, retourner une erreur
+    // Vérifier la date d'expiration
+    if (!member.expiresAt || member.expiresAt < new Date()) {
+      throw new Error("Le lien d'activation a expiré. Demandez un nouvel envoi.");
+    }
+
     if (member.validated) {
-      console.error("Membre déjà validé");
-      throw new Error("Member already validated");
+      throw new Error("Membre déjà validé");
     }
 
-    // Mettre à jour le membre comme validé
     member.validated = true;
-    member.activationToken = null; // Supprimer le token une fois activé
+    member.activationToken = null;
+    member.expiresAt = null; // (optionnel : nettoyage du champ)
 
-    // Sauvegarder le projet avec le membre mis à jour
     await project.save();
 
-    console.log("Membre activé:", member);
-
-    // Retourner les informations du membre activé
     return member;
   } catch (error) {
     console.error("Erreur lors de l'activation du membre:", error);
-    throw error; // Rejeter l'erreur pour être capturée ailleurs
+    throw error;
   }
 };
+
 
 // Récupération de tous les projets
 module.exports.getAllProjects = async () => {
