@@ -35,6 +35,10 @@ const ProjectSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "projectAssessment",
     },
+    createdAt: {
+      type: Number,
+      default: Date.now(),
+    },
   },
   { timestamps: true }
 );

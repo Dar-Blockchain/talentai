@@ -145,13 +145,40 @@ module.exports.activateTeamMember = async (projectId, token) => {
 };
 
 // Récupération de tous les projets
-module.exports.getAllProjects = async () => {
+module.exports.getAllProjects = async (
+  page,
+  limit,
+  sort,
+  track,
+  leaderId
+) => {
   try {
-    const projects = await Project.find().populate("leaderId").populate({
-      path: "assessment",
-      model: "ProjectAssessment",
-    });
-    return projects;
+    const query = {};
+    if (track && track.trim() !== "") query.track = track;
+    if (leaderId) query.leaderId = leaderId;
+    const skip = (page - 1) * limit;
+
+    
+
+    const [projects, total] = await Promise.all([
+      Project.find(query)
+        // .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate("leaderId")
+        .populate({
+          path: "assessment",
+          model: "ProjectAssessment",
+        }),
+      Project.countDocuments(query),
+    ]);
+    return {
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      projects,
+      totalPages: Math.ceil(total / limit),
+    };
   } catch (error) {
     throw new Error("Erreur lors de la récupération des projets");
   }
