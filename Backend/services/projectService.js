@@ -29,7 +29,7 @@ const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 // Création d'un projet
 const { sendActivationEmail } = require("../utils/mailing");
 const crypto = require("crypto");
-const EXPIRATION_HOURS = 1;
+const EXPIRATION_HOURS = 24;
 
 module.exports.createProject = async (data, baseUrl) => {
   try {
@@ -43,7 +43,7 @@ module.exports.createProject = async (data, baseUrl) => {
       }
 
       const activationToken = crypto.randomBytes(20).toString("hex");
-      const expiresAt = new Date(Date.now() + EXPIRATION_HOURS * 1000); // 24h
+      const expiresAt = new Date(Date.now() + EXPIRATION_HOURS 60 * 60 * 1000); // 24h
 
       return {
         email,
