@@ -28,6 +28,21 @@ module.exports.activateTeamMember = async (req, res) => {
   }
 };
 
+// 3. Réinviter un membre dont le lien d'activation a expiré
+module.exports.resendTeamInvitation = async (req, res) => {
+  const { projectId } = req.params;
+  const { email } = req.body;
+  const baseUrl = req.protocol + '://' + req.get('host'); // Récupérer l'URL de base de l'application
+
+  try {
+    const result = await projectService.resendTeamInvitation(projectId, email, baseUrl);
+    res.status(200).json(result); // Retourne la réussite de la réinvitation
+  } catch (error) {
+    console.error("Erreur lors de la réinvitation du membre :", error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
 // Récupérer tous les projets
 module.exports.getAllProjects = async (req, res) => {
   try {
