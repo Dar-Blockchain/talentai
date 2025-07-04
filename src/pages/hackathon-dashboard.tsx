@@ -38,6 +38,7 @@ interface TeamMember {
   name: string;
   email: string;
   role: string;
+  validated?: boolean;
 }
 
 interface ProjectAPIData {
@@ -97,9 +98,10 @@ const HackathonDashboard = () => {
     const fetchProjects = async () => {
       try {
         const token = localStorage.getItem('api_token');
-        const res = await fetch('http://localhost:5000/project/getMyProjects', {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/getMyProjects`
+          , {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
         if (!res.ok) throw new Error('Failed to fetch projects');
         const data: ProjectAPIData[] = await res.json();
         if (Array.isArray(data) && data.length > 0) {
@@ -108,9 +110,10 @@ const HackathonDashboard = () => {
           const latest = sorted[0];
           // Map API team to required TeamMember[]
           const teamMembers: TeamMember[] = latest.team.map((member, idx) => ({
-            name: member.email.split('@')[0] || `Member${idx+1}`,
+            name: member.email.split('@')[0] || `Member${idx + 1}`,
             email: member.email,
             role: 'Member',
+            validated: member.validated,
           }));
           setProjectData({
             name: latest.name,
@@ -167,7 +170,7 @@ const HackathonDashboard = () => {
   const handleLogout = () => {
     localStorage.clear();
     sessionStorage.clear();
-    Object.keys(Cookies.get()).forEach(function(cookieName) {
+    Object.keys(Cookies.get()).forEach(function (cookieName) {
       Cookies.remove(cookieName);
     });
     router.push('/signin');
@@ -178,8 +181,8 @@ const HackathonDashboard = () => {
   const assessment = projectData?.assessment || null;
   const hasBusinessData = !!assessment?.businessData;
   const hasTechnicalData = !!assessment?.technicalData;
-console.log(projectData,'akakkakaapapapappa')
-console.log(!!assessment?.technicalData,'akakkakaapapapappa')
+  console.log(projectData, 'akakkakaapapapappa')
+  console.log(!!assessment?.technicalData, 'akakkakaapapapappa')
 
   return (
     <Box >

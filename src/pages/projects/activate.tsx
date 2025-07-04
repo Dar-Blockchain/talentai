@@ -75,8 +75,8 @@ const ProjectActivatePage = () => {
         body: JSON.stringify({ projectId, token }),
       });
       if (!res.ok) throw new Error('Activation failed');
-      window.alert('Project activated successfully!');
-      // Optionally redirect or update UI here
+      // Redirect to preferences page after successful activation
+      router.push('/dashboardCandidate');
     } catch (err) {
       window.alert('Failed to activate project.');
     }
@@ -128,7 +128,7 @@ const ProjectActivatePage = () => {
             You&apos;ve Been Invited!
           </Typography>
           <Typography variant="subtitle1" fontWeight={400} textAlign="center" sx={{ color: '#5e5e7a', mb: 1 }}>
-            <b>{userFullName}</b> has invited you to join the hackathon project <b>{projectName}</b>.
+            You has invited you to join the hackathon project <b>{projectName}</b>.
           </Typography>
           <Typography variant="body2" textAlign="center" sx={{ color: '#7b7b8b', mb: 2 }}>
             Accept the invitation to collaborate and make an impact.<br />
