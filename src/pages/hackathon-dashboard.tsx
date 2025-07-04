@@ -230,7 +230,7 @@ const HackathonDashboard = () => {
               />
               <ProjectDetails projectDescription={projectData.projectDescription} track={projectData.track} />
             </Box>
-            <TeamMembers teamMembers={projectData.teamMembers} />
+            <TeamMembers teamMembers={projectData.teamMembers} projectId={projectData._id} />
           </Box>
         </Box>
       </Container>
