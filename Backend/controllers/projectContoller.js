@@ -31,13 +31,14 @@ module.exports.activateTeamMember = async (req, res) => {
 // Récupérer tous les projets
 module.exports.getAllProjects = async (req, res) => {
   try {
-    const { page, limit, sort, track, leaderId } = req.query;
+    const { page, limit, sort, track, leaderId, name } = req.query;
     const projects = await projectService.getAllProjects(
       page,
       limit,
       sort,
       track,
-      leaderId
+      leaderId, 
+      name
     );
     res.status(200).json(projects);
   } catch (error) {

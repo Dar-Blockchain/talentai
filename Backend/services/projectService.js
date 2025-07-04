@@ -102,7 +102,9 @@ module.exports.activateTeamMember = async (projectId, token) => {
 
     // Vérifier la date d'expiration
     if (!member.expiresAt || member.expiresAt < new Date()) {
-      throw new Error("Le lien d'activation a expiré. Demandez un nouvel envoi.");
+      throw new Error(
+        "Le lien d'activation a expiré. Demandez un nouvel envoi."
+      );
     }
 
     if (member.validated) {
@@ -122,14 +124,14 @@ module.exports.activateTeamMember = async (projectId, token) => {
   }
 };
 
-
 // Récupération de tous les projets
 module.exports.getAllProjects = async (
   page,
   limit,
   sort,
   track,
-  leaderId
+  leaderId,
+  name
 ) => {
   try {
     const query = {};
@@ -137,11 +139,12 @@ module.exports.getAllProjects = async (
     if (leaderId) query.leaderId = leaderId;
     const skip = (page - 1) * limit;
 
-    
+    if (name && name.trim() !== "")
+      query.name = { $regex: name, $options: "i" };
 
     const [projects, total] = await Promise.all([
       Project.find(query)
-        // .sort(sort)
+        .sort(sort)
         .skip(skip)
         .limit(parseInt(limit))
         .populate("leaderId")
