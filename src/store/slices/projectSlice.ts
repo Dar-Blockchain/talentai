@@ -241,7 +241,7 @@ const projectSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(getAllProjects.fulfilled, (state, action: PayloadAction<{ projects: Project[]; total: number }>) => {
+      .addCase(getAllProjects.fulfilled, (state, action: PayloadAction<{ projects: Project[]; total: number, totalPages: number }>) => {
         state.loading = false;
         state.projects = action.payload.projects;
         state.total = action.payload.total;
