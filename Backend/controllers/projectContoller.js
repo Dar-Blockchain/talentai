@@ -28,6 +28,21 @@ module.exports.activateTeamMember = async (req, res) => {
   }
 };
 
+// 4. Ajouter un membre à l'équipe
+module.exports.addMemberToTeam = async (req, res) => {
+  const { projectId,email } = req.body;  // Email du nouveau membre
+  const baseUrl = req.protocol + '://' + req.get('host');  // URL de base de l'application
+
+  try {
+    const result = await projectService.addMemberToTeam(projectId, email, baseUrl);
+    res.status(200).json(result);  // Retourner le succès
+  } catch (error) {
+    console.error("Erreur lors de l'ajout du membre :", error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+
 // 3. Réinviter un membre dont le lien d'activation a expiré
 module.exports.resendTeamInvitation = async (req, res) => {
   const { projectId,email } = req.body;

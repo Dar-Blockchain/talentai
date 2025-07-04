@@ -10,11 +10,18 @@ interface TeamMember {
   validated?: boolean;
 }
 
-const TeamMembers: React.FC<{ teamMembers: TeamMember[]; onInvite?: (email: string) => void }> = ({ teamMembers, onInvite }) => {
+interface TeamMembersProps {
+  teamMembers: TeamMember[];
+  onInvite?: (email: string) => void;
+  projectId: string;
+}
+
+const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projectId }) => {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMsg, setSnackbarMsg] = useState('');
 
   const validateEmail = (value: string) => {
     if (!value) return 'Email is required';
@@ -30,16 +37,52 @@ const TeamMembers: React.FC<{ teamMembers: TeamMember[]; onInvite?: (email: stri
     setEmail('');
     setEmailError('');
   };
-  const handleSend = () => {
+  const handleSend = async () => {
     const error = validateEmail(email);
     setEmailError(error);
     if (error) return;
-    if (onInvite) onInvite(email);
-    else console.log('Invited:', email);
-    handleClose();
-    setSnackbarOpen(true);
+    try {
+      const token = localStorage.getItem('api_token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/addMemberToTeam`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ projectId, email }),
+      });
+      if (!res.ok) throw new Error('Failed to add team member');
+      setSnackbarMsg('Team member added!');
+      setSnackbarOpen(true);
+      handleClose();
+    } catch (err) {
+      setSnackbarMsg('Failed to add team member.');
+      setSnackbarOpen(true);
+    }
   };
   const handleSnackbarClose = () => setSnackbarOpen(false);
+
+  const resendInvitation = async (email: string) => {
+    try {
+      const token = localStorage.getItem('api_token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/resendTeamInvitation`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ projectId, email }),
+      });
+      if (!res.ok) throw new Error('Failed to resend invitation');
+      setSnackbarMsg('Invitation resent!');
+      setSnackbarOpen(true);
+    } catch (err) {
+      setSnackbarMsg('Failed to resend invitation.');
+      setSnackbarOpen(true);
+    }
+  };
 
   return (
     <Card sx={{ boxShadow: '0 2px 8px #7C4DFF11', bgcolor: '#FFFFFF', border: '1.5px solid #EDE7F6', borderRadius: 3, transition: 'box-shadow 0.2s', '&:hover': { boxShadow: '0 4px 16px #7C4DFF22' } }}>
@@ -106,8 +149,8 @@ const TeamMembers: React.FC<{ teamMembers: TeamMember[]; onInvite?: (email: stri
         </DialogActions>
       </Dialog>
       <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleSnackbarClose} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-        <Alert onClose={handleSnackbarClose} severity="success" sx={{ width: '100%', fontWeight: 600, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif' }}>
-          Invitation sent!
+        <Alert onClose={handleSnackbarClose} severity={snackbarMsg.includes('Failed') ? 'error' : 'success'} sx={{ width: '100%', fontWeight: 600, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif' }}>
+          {snackbarMsg}
         </Alert>
       </Snackbar>
       <Divider sx={{ borderColor: '#EDE7F6' }} />
@@ -143,12 +186,24 @@ const TeamMembers: React.FC<{ teamMembers: TeamMember[]; onInvite?: (email: stri
                       sx={{ ml: 1, fontWeight: 700, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', borderRadius: 1 }}
                     />
                   ) : (
-                    <Chip
-                      label="Pending"
-                      color="warning"
-                      size="small"
-                      sx={{ ml: 1, fontWeight: 700, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', borderRadius: 1 }}
-                    />
+                    <>
+                      <Chip
+                        label="Pending"
+                        color="warning"
+                        size="small"
+                        sx={{ ml: 1, fontWeight: 700, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', borderRadius: 1 }}
+                      />
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        sx={{ ml: 1, textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
+                        onClick={() => resendInvitation(member.email || '')}
+                        disabled={!member.email}
+                      >
+                        Resend Invitation
+                      </Button>
+                    </>
                   )}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -158,7 +213,6 @@ const TeamMembers: React.FC<{ teamMembers: TeamMember[]; onInvite?: (email: stri
                   {member.email && (
                     <Box sx={{ ml: 1, px: 1, py: 0.2, bgcolor: '#E3F2FD', borderRadius: 1, fontSize: '0.8rem', color: '#2196F3', fontWeight: 600, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif' }}>
                       {member.email}
-
                     </Box>
                   )}
                 </Box>

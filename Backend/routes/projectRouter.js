@@ -19,6 +19,9 @@ router.post("/activate", projectController.activateTeamMember);
 //activate Team Member
 router.post("/resendTeamInvitation", projectController.resendTeamInvitation);
 
+//add Member To Team Team 
+router.post("/addMemberToTeam", projectController.addMemberToTeam);
+
 // Récupérer tous les projets
 router.get("/getAllProjects", projectController.getAllProjects); 
 

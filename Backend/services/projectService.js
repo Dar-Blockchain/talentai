@@ -87,38 +87,24 @@ module.exports.createProject = async (data, baseUrl) => {
 
 module.exports.activateTeamMember = async (projectId, token) => {
   try {
-    if (!token) {
-      throw new Error("Token manquant");
-    }
-
     const project = await Project.findById(projectId);
-    if (!project) {
-      throw new Error("Project not found");
-    }
+    if (!project) throw new Error("Project not found");
 
     const member = project.team.find((m) => m.activationToken === token);
+    if (!member) throw new Error("Lien invalide ou déjà activé");
 
-    if (!member) {
-      throw new Error("Lien invalide ou déjà activé");
-    }
-
-    // Vérifier la date d'expiration
-    if (!member.expiresAt || member.expiresAt < new Date()) {
+    if (!member.expiresAt || member.expiresAt < new Date())
       throw new Error(
         "Le lien d'activation a expiré. Demandez un nouvel envoi."
       );
-    }
 
-    if (member.validated) {
-      throw new Error("Membre déjà validé");
-    }
+    if (member.validated) throw new Error("Membre déjà validé");
 
     member.validated = true;
     member.activationToken = null;
-    member.expiresAt = null; // (optionnel : nettoyage du champ)
+    member.expiresAt = null;
 
     await project.save();
-
     return member;
   } catch (error) {
     console.error("Erreur lors de l'activation du membre:", error);
@@ -126,32 +112,73 @@ module.exports.activateTeamMember = async (projectId, token) => {
   }
 };
 
+module.exports.addMemberToTeam = async (projectId, newMemberEmail, baseUrl) =>{
+  const project = await Project.findById(projectId);
+  if (!project) throw new Error("Projet introuvable");
+
+  // Vérifier si le membre existe déjà dans l'équipe
+  const existingMember = project.team.find((m) => m.email === newMemberEmail);
+  if (existingMember) throw new Error("Le membre existe déjà dans l'équipe");
+
+  // Générer un nouveau token et une nouvelle expiration
+  const activationToken = crypto.randomBytes(20).toString("hex");
+  const expiresAt = new Date(Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000); // 24 heures d'expiration
+
+  // Ajouter le nouveau membre à l'équipe
+  const newMember = {
+    email: newMemberEmail,
+    validated: false,
+    activationToken,
+    expiresAt,
+  };
+  project.team.push(newMember);
+
+  // Sauvegarder le projet avec le nouveau membre
+  await project.save();
+
+  // Générer et envoyer le lien d'activation
+  const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${activationToken}`;
+  await sendActivationEmail(newMemberEmail, link);
+
+  return { success: true, message: "Membre ajouté avec succès et invitation envoyée." };
+}
+
+
 // 3. Réinvitation d’un membre
 module.exports.resendTeamInvitation = async (
   projectId,
   memberEmail,
   baseUrl
 ) => {
-  const project = await Project.findById(projectId);
-  if (!project) throw new Error("Projet introuvable");
+  try {
+    const project = await Project.findById(projectId);
+    if (!project) throw new Error("Projet introuvable");
+console.log("project",project)
+    const member = project.team.find((m) => m.email === memberEmail);
+    if (!member) throw new Error("Membre introuvable");
+    console.log('member',member)
 
-  const member = project.team.find((m) => m.email === memberEmail);
-  if (!member) throw new Error("Membre introuvable");
+    if (member.validated)
+      throw new Error("Ce membre a déjà validé son invitation.");
 
-  if (member.validated)
-    throw new Error("Ce membre a déjà validé son invitation.");
+    // Nouveau token + nouvelle expiration
+    member.activationToken = crypto.randomBytes(20).toString("hex");
+    member.expiresAt = new Date(Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000);
+    console.log("membermember",member)
 
-  // Nouveau token + nouvelle expiration
-  member.activationToken = crypto.randomBytes(20).toString("hex");
-  member.expiresAt = new Date(Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000);
+    await project.save();
+    console.log("projectproject",project)
 
-  await project.save();
+    // Envoi du mail
+    const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${member.activationToken}`;
+    await sendActivationEmail(member.email, link);
+    console.log("link",link)
 
-  // Envoi du mail
-  const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${member.activationToken}`;
-  await sendActivationEmail(member.email, link);
-
-  return { success: true, message: "Nouvelle invitation envoyée." };
+    return { success: true, message: "Nouvelle invitation envoyée." };
+  } catch (error) {
+    console.error("Erreur lors de l'activation du membre:", error);
+    throw error;
+  }
 };
 
 // Récupération de tous les projets
