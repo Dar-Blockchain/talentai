@@ -45,13 +45,14 @@ module.exports.resendTeamInvitation = async (req, res) => {
 // Récupérer tous les projets
 module.exports.getAllProjects = async (req, res) => {
   try {
-    const { page, limit, sort, track, leaderId } = req.query;
+    const { page, limit, sort, track, leaderId, name } = req.query;
     const projects = await projectService.getAllProjects(
       page,
       limit,
       sort,
       track,
-      leaderId
+      leaderId, 
+      name
     );
     res.status(200).json(projects);
   } catch (error) {
@@ -242,5 +243,15 @@ exports.analyzeAnswers = async (req, res) => {
     return res.status(500).json({
       error: `An unexpected error occurred while analyzing project answers: ${error}`,
     });
+  }
+};
+
+// Get all available project tracks from the database
+module.exports.getProjectTracks = async (req, res) => {
+  try {
+    const tracks = await projectService.getAllTracks();
+    res.status(200).json({ tracks });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch project tracks", error: error.message });
   }
 };

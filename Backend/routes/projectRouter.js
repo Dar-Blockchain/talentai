@@ -44,4 +44,7 @@ router.post("/analyzeAnswers/:id/:assessmentType", projectController.analyzeAnsw
 // Récupérer le nombre de projets de l'utilisateur connecté
 router.get("/getNumberProjects", projectController.getNumberProjects);
 
+// Get all available project tracks
+router.get("/tracks", projectController.getProjectTracks);
+
 module.exports = router;

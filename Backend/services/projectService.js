@@ -150,16 +150,26 @@ console.log("project",project)
 };
 
 // Récupération de tous les projets
-module.exports.getAllProjects = async (page, limit, sort, track, leaderId) => {
+module.exports.getAllProjects = async (
+  page,
+  limit,
+  sort,
+  track,
+  leaderId,
+  name
+) => {
   try {
     const query = {};
     if (track && track.trim() !== "") query.track = track;
     if (leaderId) query.leaderId = leaderId;
     const skip = (page - 1) * limit;
 
+    if (name && name.trim() !== "")
+      query.name = { $regex: name, $options: "i" };
+
     const [projects, total] = await Promise.all([
       Project.find(query)
-        // .sort(sort)
+        .sort(sort)
         .skip(skip)
         .limit(parseInt(limit))
         .populate("leaderId")
@@ -400,4 +410,10 @@ exports.analyzeAnswers = async ({
     console.error("Error analyzing answers:", error);
     throw new Error(`Error analyzing answers: ${error}`);
   }
+};
+
+module.exports.getAllTracks = async () => {
+  // Returns an array of unique, non-empty tracks from all projects
+  const tracks = await Project.distinct("track", { track: { $ne: null, $ne: "" } });
+  return tracks;
 };
