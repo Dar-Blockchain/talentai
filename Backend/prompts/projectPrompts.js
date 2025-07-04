@@ -74,45 +74,51 @@ Return **valid JSON only of ${questionsCount} strings** (no commentary or format
 };
 
 const analyzeTechnicalAnswersPrompts = {
-  getSystemPrompt: (projectName) => `
-You are a senior technical judge at a Hedera hackathon. You are reviewing a transcript of a technical pitch delivered by a project team of the project: "${projectName}".
-Your task is to extract and evaluate all relevant technical data needed to populate the following structure in the ProjectAssessment model:
+  getSystemPrompt: (projectName, projectTrack) => `
+You are a senior technical judge at a Hedera hackathon. You are reviewing a transcript of a technical pitch delivered by a project team of the project: "${projectName}" in the track: "${projectTrack}".
+Your task is to extract and evaluate all relevant technical data needed to populate the following structure in the ProjectAssessment model, with a special focus on how well each major technical choice (tech stack, architecture, scalability) serves the selected track:
 
 ---
 1. **techStack (array)**  
    For each technology mentioned:
    - title: string (technology or tool name)
    - componentType: one of ["coreTechnology", "integrationTool", "hederaService"]
-   - choiceExplanation: list of reasons given by the team
+   - choiceExplanation: list of reasons given by the team // main influence on the score
    - complexity: "Beginner", "Intermediate", or "Advanced"
    - modernity: "outdated", "average", "modern", or "cutting-edge"
    - strengths: key technical advantages
    - weaknesses: limitations or incorrect usage
    - recommendation: concrete improvement tips
-   - score (0–100): calculate the score considering:
-     * How well the technology aligns with the project track and benefits it
-     * The clarity and detail of the explanation given
+    - score (0–100), using these rules:
+     * ≥ 75: Very well aligned with project goals and ${projectTrack}track, AND explanation is **deep**, **clear**, **specific**, and **technically justified**
+     * 50–74: Moderate to good alignment and usage, but explanation lacks depth or clarity
+     * 25–49: Vague or superficial explanation, or partially misused technology
+     * ≤ 25: Poorly explained, misaligned, or mentioned without justification
 
 3. **architecture (object)**
    - title: architecture name (e.g. "monolith", "microservices", "event-driven", "decentralized")
    - type: technical category of architecture
-   - choiceExplanation: list of reasons given by the team
+   - choiceExplanation: list of reasons given by the team // main influence on the score
    - strengths
    - weaknesses
    - recommendation
-   - score (0–100): calculate the score considering:
-     * How well the technology aligns with the project track and benefits it
-     * The clarity and detail of the explanation given
+   - score (0–100), using these rules:
+     * ≥ 75: Architecture is well-aligned with the project's goals and ${projectTrack} track. Explanation is **clear, specific, and technically justified**, with consideration of performance, modularity, and integration.  
+     * 50–74: Moderate to good alignment and usage, but explanation lacks depth or clarity
+     * 25–49: Vague or superficial explanation, or partially misused architecture
+     * ≤ 25: Poorly explained, misaligned, or mentioned without justification
 
 4. **scalabilityApproach (object)**
    - strategy: name or description of the scalability strategy
-   - choiceExplanation: reasons given by the team
+   - choiceExplanation: reasons given by the team // main influence on the score
    - strengths
    - weaknesses
    - recommendation
-   - score (0–100): calculate the score considering:
-     * How well the technology aligns with the project track and benefits it
-     * The clarity and detail of the explanation given
+   - score (0–100), using these rules:
+     * ≥ 75: Very well aligned with project goals and ${projectTrack} track, AND explanation is **deep**, **clear**, **specific**, and **technically justified**
+     * 50–74: Basic or implied scalability plan (e.g., mentions of cloud deployment, modularity), but lacks justification. May not directly address volume, decentralization, or infrastructure growth.  
+     * 25–49: Scalability approach is vague or disconnected from the project's ${projectTrack}. No clear scaling mechanisms or bottleneck considerations are discussed.  
+     * ≤ 25: No meaningful scalability plan. Answer reflects misunderstanding of scaling needs in Web3, or wrongly assumes scalability is "automatic" due to using blockchain.
 
 ---
 
@@ -121,13 +127,17 @@ IMPORTANT:
 - Do not guess missing values. If a component was not mentioned, exclude it.
 - Never guess or assume not evidenced in answers.
 - Be objective. Focus only on information explicitly present or reasonably implied in the pitch.
+- Do NOT reward name-dropping tech without explanation — such items get < 10.
+- “We used it because it’s popular” or “We didn’t have time” ≠ valid justification.
+- A vague or half-finished integration should not score over 50o.
+- Focus on **depth**, **clarity**, and **alignment** with the project track.
+- Only give high scores if the answer shows real understanding and engineering intent.
 
 RESPONSE FORMAT:
 Return only valid JSON matching this structure:
 
 {
   "technicalData": {
-    "track": "string",
     "techStack": [...],
     "architecture": {...},
     "scalabilityApproach": {...},
@@ -140,7 +150,7 @@ No explanations. Output must be valid JSON only.
 `.trim()
 ,
 
-  getUserPrompt: (projectName, questions, projectTrack) => `
+  getUserPrompt: (projectName, projectTrack, questions) => `
 Analyze the following technical pitch for the Hedera project: "${projectName}" in the track: "${projectTrack}"
 
 This is a transcription of the candidate’s oral answers. The array contains question/answer pairs:

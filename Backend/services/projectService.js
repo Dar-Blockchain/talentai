@@ -43,7 +43,9 @@ module.exports.createProject = async (data, baseUrl) => {
       }
 
       const activationToken = crypto.randomBytes(20).toString("hex");
-      const expiresAt = new Date(Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000); // 24h
+      const expiresAt = new Date(
+        Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000
+      ); // 24h
 
       return {
         email,
@@ -125,14 +127,19 @@ module.exports.activateTeamMember = async (projectId, token) => {
 };
 
 // 3. Réinvitation d’un membre
-module.exports.resendTeamInvitation = async (projectId, memberEmail, baseUrl) => {
+module.exports.resendTeamInvitation = async (
+  projectId,
+  memberEmail,
+  baseUrl
+) => {
   const project = await Project.findById(projectId);
   if (!project) throw new Error("Projet introuvable");
 
   const member = project.team.find((m) => m.email === memberEmail);
   if (!member) throw new Error("Membre introuvable");
 
-  if (member.validated) throw new Error("Ce membre a déjà validé son invitation.");
+  if (member.validated)
+    throw new Error("Ce membre a déjà validé son invitation.");
 
   // Nouveau token + nouvelle expiration
   member.activationToken = crypto.randomBytes(20).toString("hex");
@@ -145,7 +152,7 @@ module.exports.resendTeamInvitation = async (projectId, memberEmail, baseUrl) =>
   await sendActivationEmail(member.email, link);
 
   return { success: true, message: "Nouvelle invitation envoyée." };
-}
+};
 
 // Récupération de tous les projets
 module.exports.getAllProjects = async (
@@ -167,7 +174,6 @@ module.exports.getAllProjects = async (
 
     const [projects, total] = await Promise.all([
       Project.find(query)
-        .sort(sort)
         .skip(skip)
         .limit(parseInt(limit))
         .populate("leaderId")
@@ -177,6 +183,20 @@ module.exports.getAllProjects = async (
         }),
       Project.countDocuments(query),
     ]);
+
+    if (sort) {
+      const sortField = sort.replace(/^[-+]/, "");
+      const isDescending = sort.startsWith("-");
+
+      projects.sort((a, b) => {
+        const aVal = a[sortField];
+        const bVal = b[sortField];
+        if (aVal < bVal) return isDescending ? 1 : -1;
+        if (aVal > bVal) return isDescending ? -1 : 1;
+        return 0;
+      });
+    }
+
     return {
       total,
       page: parseInt(page),
@@ -342,13 +362,16 @@ exports.analyzeAnswers = async ({
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
       systemPrompt = analyzeTechnicalAnswersPrompts.getSystemPrompt(
         projectName,
-        questions
+        projectTrack
       );
       userPrompt = analyzeTechnicalAnswersPrompts.getUserPrompt(
         projectName,
+        projectTrack,
         questions
       );
     }
+    console.log("System prompt:", systemPrompt);
+    console.log("User prompt:", userPrompt);
 
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
       systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
@@ -369,7 +392,7 @@ exports.analyzeAnswers = async ({
         { role: "user", content: userPrompt },
       ],
       max_tokens: 2500,
-      temperature: 0.7,
+      temperature: 0.9,
       stream: true,
     });
 
@@ -412,6 +435,8 @@ exports.analyzeAnswers = async ({
 
 module.exports.getAllTracks = async () => {
   // Returns an array of unique, non-empty tracks from all projects
-  const tracks = await Project.distinct("track", { track: { $ne: null, $ne: "" } });
+  const tracks = await Project.distinct("track", {
+    track: { $ne: null, $ne: "" },
+  });
   return tracks;
 };

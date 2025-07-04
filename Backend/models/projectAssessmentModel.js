@@ -102,7 +102,6 @@ const marketPotentialSchema = new mongoose.Schema(
 
 const TechnicalDataSchema = new mongoose.Schema(
   {
-    track: String,
     techStack: [techStackSchema],
     architecture: architectureSchema,
     scalabilityApproach: scalabilityApproachSchema,
