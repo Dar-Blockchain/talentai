@@ -17,6 +17,7 @@ const ProjectSchema = new mongoose.Schema(
           default: false, // Le champ `validated` pour chaque membre
         },
         activationToken: String, // Ajoute ce champ
+        expiresAt: Date,  // <--- AJOUTER ce champ si pas déjà présent
       },
     ],
     leaderId: {

@@ -51,6 +51,17 @@ interface ProjectAPIData {
   track?: string;
 }
 
+interface Assessment {
+  _id: string;
+  user: string;
+  project: string;
+  technicalData?: any; // You can further type this if needed
+  createdAt: string;
+  updatedAt: string;
+  __v?: number;
+  businessData?: any;
+}
+
 interface ProjectData {
   name: string;
   projectDescription: string;
@@ -58,6 +69,7 @@ interface ProjectData {
   createdAt: string;
   _id: string;
   track?: string;
+  assessment?: Assessment;
 }
 
 const blobAnimation = keyframes`
@@ -107,6 +119,7 @@ const HackathonDashboard = () => {
             createdAt: latest.createdAt,
             _id: latest._id,
             track: latest.track,
+            assessment: (latest as any).assessment,
           });
         } else {
           setProjectData(null);
@@ -160,6 +173,13 @@ const HackathonDashboard = () => {
     router.push('/signin');
   };
 
+  // After projectData is loaded, extract assessment if available
+  // For demo, let's mock assessment as an object on projectData (replace with real data as needed)
+  const assessment = projectData?.assessment || null;
+  const hasBusinessData = !!assessment?.businessData;
+  const hasTechnicalData = !!assessment?.technicalData;
+console.log(projectData,'akakkakaapapapappa')
+console.log(!!assessment?.technicalData,'akakkakaapapapappa')
 
   return (
     <Box >
@@ -200,7 +220,11 @@ const HackathonDashboard = () => {
           <StatsCards projectData={projectData} />
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <QuickActions projectId={projectData && (projectData as any)._id} />
+              <QuickActions
+                projectId={projectData && (projectData as any)._id}
+                disableBusiness={hasBusinessData}
+                disableTechnical={hasTechnicalData}
+              />
               <ProjectDetails projectDescription={projectData.projectDescription} track={projectData.track} />
             </Box>
             <TeamMembers teamMembers={projectData.teamMembers} />
