@@ -112,6 +112,38 @@ module.exports.activateTeamMember = async (projectId, token) => {
   }
 };
 
+module.exports.addMemberToTeam = async (projectId, newMemberEmail, baseUrl) =>{
+  const project = await Project.findById(projectId);
+  if (!project) throw new Error("Projet introuvable");
+
+  // Vérifier si le membre existe déjà dans l'équipe
+  const existingMember = project.team.find((m) => m.email === newMemberEmail);
+  if (existingMember) throw new Error("Le membre existe déjà dans l'équipe");
+
+  // Générer un nouveau token et une nouvelle expiration
+  const activationToken = crypto.randomBytes(20).toString("hex");
+  const expiresAt = new Date(Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000); // 24 heures d'expiration
+
+  // Ajouter le nouveau membre à l'équipe
+  const newMember = {
+    email: newMemberEmail,
+    validated: false,
+    activationToken,
+    expiresAt,
+  };
+  project.team.push(newMember);
+
+  // Sauvegarder le projet avec le nouveau membre
+  await project.save();
+
+  // Générer et envoyer le lien d'activation
+  const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${activationToken}`;
+  await sendActivationEmail(newMemberEmail, link);
+
+  return { success: true, message: "Membre ajouté avec succès et invitation envoyée." };
+}
+
+
 // 3. Réinvitation d’un membre
 module.exports.resendTeamInvitation = async (
   projectId,
