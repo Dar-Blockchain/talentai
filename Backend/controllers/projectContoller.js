@@ -30,8 +30,7 @@ module.exports.activateTeamMember = async (req, res) => {
 
 // 3. Réinviter un membre dont le lien d'activation a expiré
 module.exports.resendTeamInvitation = async (req, res) => {
-  const { projectId } = req.params;
-  const { email } = req.body;
+  const { projectId,email } = req.body;
   const baseUrl = req.protocol + '://' + req.get('host'); // Récupérer l'URL de base de l'application
 
   try {
