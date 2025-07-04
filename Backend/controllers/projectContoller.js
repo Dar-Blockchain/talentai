@@ -28,10 +28,32 @@ module.exports.activateTeamMember = async (req, res) => {
   }
 };
 
+// 3. Réinviter un membre dont le lien d'activation a expiré
+module.exports.resendTeamInvitation = async (req, res) => {
+  const { projectId,email } = req.body;
+  const baseUrl = req.protocol + '://' + req.get('host'); // Récupérer l'URL de base de l'application
+
+  try {
+    const result = await projectService.resendTeamInvitation(projectId, email, baseUrl);
+    res.status(200).json(result); // Retourne la réussite de la réinvitation
+  } catch (error) {
+    console.error("Erreur lors de la réinvitation du membre :", error);
+    res.status(400).json({ error: error.message });
+  }
+};
+
 // Récupérer tous les projets
 module.exports.getAllProjects = async (req, res) => {
   try {
-    const projects = await projectService.getAllProjects();
+    const { page, limit, sort, track, leaderId, name } = req.query;
+    const projects = await projectService.getAllProjects(
+      page,
+      limit,
+      sort,
+      track,
+      leaderId, 
+      name
+    );
     res.status(200).json(projects);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -122,9 +144,11 @@ module.exports.generateProjectQuestions = async (req, res) => {
     }
 
     const projectName = project.name;
+    const projectTrack = project.track;
 
     const result = await projectService.generateProjectQuestions(
       projectName,
+      projectTrack,
       assessmentType
     );
 
@@ -200,11 +224,11 @@ exports.analyzeAnswers = async (req, res) => {
 
     // After analyzeAnswers, re-fetch the project with population
     const populatedProject = await Project.findById(projectId)
-      .populate({ path: 'leaderId', model: 'User', as: 'leader' })
+      .populate({ path: "leaderId", model: "User", as: "leader" })
       .populate({
-        path: 'assessment',
-        model: 'ProjectAssessment',
-        populate: { path: 'user', model: 'User' }
+        path: "assessment",
+        model: "ProjectAssessment",
+        populate: { path: "user", model: "User" },
       });
 
     res.status(200).json({
@@ -213,7 +237,7 @@ exports.analyzeAnswers = async (req, res) => {
       project: {
         ...populatedProject.toObject(),
         leader: populatedProject.leaderId, // alias leaderId as leader
-      }
+      },
     });
   } catch (error) {
     return res.status(500).json({

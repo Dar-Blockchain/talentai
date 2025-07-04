@@ -102,7 +102,9 @@ module.exports.activateTeamMember = async (projectId, token) => {
 
     // Vérifier la date d'expiration
     if (!member.expiresAt || member.expiresAt < new Date()) {
-      throw new Error("Le lien d'activation a expiré. Demandez un nouvel envoi.");
+      throw new Error(
+        "Le lien d'activation a expiré. Demandez un nouvel envoi."
+      );
     }
 
     if (member.validated) {
@@ -122,15 +124,66 @@ module.exports.activateTeamMember = async (projectId, token) => {
   }
 };
 
+// 3. Réinvitation d’un membre
+module.exports.resendTeamInvitation = async (projectId, memberEmail, baseUrl) => {
+  const project = await Project.findById(projectId);
+  if (!project) throw new Error("Projet introuvable");
+
+  const member = project.team.find((m) => m.email === memberEmail);
+  if (!member) throw new Error("Membre introuvable");
+
+  if (member.validated) throw new Error("Ce membre a déjà validé son invitation.");
+
+  // Nouveau token + nouvelle expiration
+  member.activationToken = crypto.randomBytes(20).toString("hex");
+  member.expiresAt = new Date(Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000);
+
+  await project.save();
+
+  // Envoi du mail
+  const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${member.activationToken}`;
+  await sendActivationEmail(member.email, link);
+
+  return { success: true, message: "Nouvelle invitation envoyée." };
+}
 
 // Récupération de tous les projets
-module.exports.getAllProjects = async () => {
+module.exports.getAllProjects = async (
+  page,
+  limit,
+  sort,
+  track,
+  leaderId,
+  name
+) => {
   try {
-    const projects = await Project.find().populate("leaderId").populate({
-      path: "assessment",
-      model: "ProjectAssessment",
-    });
-    return projects;
+    const query = {};
+    if (track && track.trim() !== "") query.track = track;
+    if (leaderId) query.leaderId = leaderId;
+    const skip = (page - 1) * limit;
+
+    if (name && name.trim() !== "")
+      query.name = { $regex: name, $options: "i" };
+
+    const [projects, total] = await Promise.all([
+      Project.find(query)
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate("leaderId")
+        .populate({
+          path: "assessment",
+          model: "ProjectAssessment",
+        }),
+      Project.countDocuments(query),
+    ]);
+    return {
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      projects,
+      totalPages: Math.ceil(total / limit),
+    };
   } catch (error) {
     throw new Error("Erreur lors de la récupération des projets");
   }
@@ -195,6 +248,7 @@ module.exports.deleteProject = async (id) => {
 
 module.exports.generateProjectQuestions = async (
   projectName,
+  projectTrack,
   assessmentType
 ) => {
   try {
@@ -206,11 +260,13 @@ module.exports.generateProjectQuestions = async (
       questionsCount = TECHNICAL_ASSESSMENT_QUESTIONS_COUNT;
       systemPrompt = generateTechnicalQuestionsPrompts.getSystemPrompt(
         projectName,
+        projectTrack,
         questionsCount,
         QUESTION_DURATION
       );
       userPrompt = generateTechnicalQuestionsPrompts.getUserPrompt(
         projectName,
+        projectTrack,
         questionsCount
       );
       pitchQuestion =
