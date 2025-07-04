@@ -43,7 +43,7 @@ module.exports.createProject = async (data, baseUrl) => {
       }
 
       const activationToken = crypto.randomBytes(20).toString("hex");
-      const expiresAt = new Date(Date.now() + EXPIRATION_HOURS 60 * 60 * 1000); // 24h
+      const expiresAt = new Date(Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000); // 24h
 
       return {
         email,
