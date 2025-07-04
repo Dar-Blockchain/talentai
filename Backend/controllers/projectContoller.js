@@ -245,3 +245,13 @@ exports.analyzeAnswers = async (req, res) => {
     });
   }
 };
+
+// Get all available project tracks from the database
+module.exports.getProjectTracks = async (req, res) => {
+  try {
+    const tracks = await projectService.getAllTracks();
+    res.status(200).json({ tracks });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch project tracks", error: error.message });
+  }
+};

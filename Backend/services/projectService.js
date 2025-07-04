@@ -409,3 +409,9 @@ exports.analyzeAnswers = async ({
     throw new Error(`Error analyzing answers: ${error}`);
   }
 };
+
+module.exports.getAllTracks = async () => {
+  // Returns an array of unique, non-empty tracks from all projects
+  const tracks = await Project.distinct("track", { track: { $ne: null, $ne: "" } });
+  return tracks;
+};
