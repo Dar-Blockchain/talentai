@@ -20,6 +20,13 @@ import {
   Paper,
   CircularProgress,
   Pagination,
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  TablePagination,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -34,11 +41,12 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
 import CodeIcon from '@mui/icons-material/Code';
 import { useDispatch, useSelector } from 'react-redux';
-import { getAllProjects, selectTotalProjects, selectTotalPages } from '../store/slices/projectSlice';
+import { getAllProjects, selectTotalProjects, selectTotalPages, getProjectStats, selectProjectStats } from '../store/slices/projectSlice';
 import { RootState } from '../store/store';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 
 const initialForm = { innovation: '', usability: '', technical: '', impact: '', comments: '' };
 
@@ -47,6 +55,7 @@ const JuryDashboard = () => {
   const { projects, loading, error } = useSelector((state: RootState) => state.project);
   const totalProjects = useSelector(selectTotalProjects);
   const totalPages = useSelector(selectTotalPages);
+  const stats = useSelector(selectProjectStats);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
@@ -56,8 +65,41 @@ const JuryDashboard = () => {
   const [sort, setSort] = useState<string>('createdAt');
   const [page, setPage] = useState(1);
   const projectsPerPage = 6;
-  const [assessmentModalOpen, setAssessmentModalOpen] = useState(false);
-  const [assessmentProject, setAssessmentProject] = useState<any>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [detailsProject, setDetailsProject] = useState<any>(null);
+
+  // --- Enhanced Stats ---
+  const pendingCount = projects.filter((p: any) => p.status !== 'Evaluated').length;
+  const allScores = projects.map((p: any) => p.assessment?.technicalData?.overallScore || p.assessment?.businessData?.overallScore).filter(Boolean);
+  const avgScore = typeof stats?.averageScore === 'number' ? stats.averageScore.toFixed(2) : (allScores.length ? (allScores.reduce((a: any, b: any) => a + b, 0) / allScores.length).toFixed(2) : 'N/A');
+  const evaluatedCount = stats?.evaluatedProjects ?? projects.filter((p: any) => p.status === 'Evaluated').length;
+
+  // --- Bar Chart: Projects per Track ---
+  const projectsPerTrack = Array.from(new Set(projects.map((p: any) => p.track))).map(track => ({
+    track,
+    count: projects.filter((p: any) => p.track === track).length
+  }));
+
+  // --- Pie Chart: Evaluation Status ---
+  const statusPieData = [
+    { name: 'Evaluated', value: evaluatedCount, color: '#43e97b' },
+    { name: 'Pending', value: pendingCount, color: '#7C4DFF' },
+  ];
+
+  // --- Line Chart: Submissions Over Time ---
+  const submissionsByDate = projects.reduce((acc: any, p: any) => {
+    const date = p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'Unknown';
+    acc[date] = (acc[date] || 0) + 1;
+    return acc;
+  }, {});
+  const lineChartData = Object.entries(submissionsByDate).map(([date, count]) => ({ date, count }));
+
+  // --- DataTable State ---
+  const [rowsPerPage, setRowsPerPage] = useState(6);
+  const [tablePage, setTablePage] = useState(0);
+  const handleChangePage = (_: any, newPage: number) => setTablePage(newPage);
+  const handleChangeRowsPerPage = (e: any) => { setRowsPerPage(parseInt(e.target.value, 10)); setTablePage(0); };
+  const paginatedProjects = projects.slice(tablePage * rowsPerPage, tablePage * rowsPerPage + rowsPerPage);
 
   useEffect(() => {
     const params = {
@@ -68,25 +110,26 @@ const JuryDashboard = () => {
       sort
     }
     dispatch(getAllProjects(params) as any);
+    dispatch(getProjectStats() as any);
   }, [dispatch, search, page, trackFilter, sort]);  
   
   useEffect(() => {
-    console.log(assessmentProject, "assessmentProject")
-  }, [assessmentProject]);
+    console.log(detailsProject, "detailsProject")
+  }, [detailsProject]);
 
   // Track list for filter
   const tracks = ['All', ...Array.from(new Set(projects.map((p: any) => p.track)))];
 
   useEffect(() => { if (page > totalPages) setPage(1); }, [totalPages]);
 
-  // Global stats
-  const uniqueTracks = Array.from(new Set(projects.map((p: any) => p.track))).length;
-  // For average score, you may need to adjust this if you have scores in your backend
-  const avgScore = 'N/A';
+  // Global stats (prefer backend stats, fallback to computed)
+  const uniqueTracks = stats?.totalTracks ?? Array.from(new Set(projects.map((p: any) => p.track))).length;
+  const totalProjectsStat = stats?.totalProjects ?? totalProjects;
+  const totalTeamMembers = stats?.totalTeamMembers ?? projects.reduce((acc: number, p: any) => acc + (Array.isArray(p.team) ? p.team.length : 0), 0);
 
   const handleExpand = (id: string) => setExpanded(expanded === id ? null : id);
-  const handleOpenModal = (project: any) => { setSelectedProject(project); setModalOpen(true); };
-  const handleCloseModal = () => { setModalOpen(false); setForm(initialForm); };
+  const handleOpenDetails = (project: any) => { setDetailsProject(project); setDetailsModalOpen(true); };
+  const handleCloseDetails = () => { setDetailsModalOpen(false); setDetailsProject(null); };
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name as string]: value }));
@@ -94,7 +137,21 @@ const JuryDashboard = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Submit logic here (API call)
-    handleCloseModal();
+    handleCloseDetails();
+  };
+
+  // Helper to calculate project score
+  const getProjectScore = (project: any) => {
+    const tech = project.assessment?.technicalData?.overallScore;
+    const biz = project.assessment?.businessData?.overallScore;
+    if (typeof tech === 'number' && typeof biz === 'number') {
+      return ((tech + biz) / 2).toFixed(2);
+    } else if (typeof tech === 'number') {
+      return tech.toFixed(2);
+    } else if (typeof biz === 'number') {
+      return biz.toFixed(2);
+    }
+    return 'N/A';
   };
 
   return (
@@ -108,7 +165,7 @@ const JuryDashboard = () => {
           </Typography>
         </Toolbar>
       </AppBar>
-      {/* Global Stats */}
+      {/* Enhanced Global Stats */}
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} mb={5} justifyContent="center" alignItems="stretch">
         <Paper
           sx={{
@@ -127,7 +184,7 @@ const JuryDashboard = () => {
           }}
         >
           <EmojiEventsIcon sx={{ fontSize: 36, mb: 1, color: '#FFD600' }} />
-          <Typography variant="h3" fontWeight={900} sx={{ lineHeight: 1 }}>{totalProjects}</Typography>
+          <Typography variant="h3" fontWeight={900} sx={{ lineHeight: 1 }}>{totalProjectsStat}</Typography>
           <Typography variant="subtitle2" sx={{ opacity: 0.9, fontWeight: 500 }}>Total Projects</Typography>
         </Paper>
         <Paper
@@ -169,6 +226,20 @@ const JuryDashboard = () => {
           <StarIcon sx={{ fontSize: 32, mb: 1, color: '#FFD600' }} />
           <Typography variant="h3" fontWeight={900} sx={{ lineHeight: 1 }}>{avgScore}</Typography>
           <Typography variant="subtitle2" sx={{ opacity: 0.9, fontWeight: 500 }}>Average Score</Typography>
+        </Paper>
+        <Paper
+          sx={{ flex: 1, minWidth: 220, p: 3, borderRadius: 4, background: 'linear-gradient(120deg, #00B8D4 0%, #43e97b 100%)', color: '#fff', boxShadow: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'transform 0.2s', '&:hover': { transform: 'scale(1.04)', boxShadow: 8 } }}
+        >
+          <CheckCircleIcon sx={{ fontSize: 32, mb: 1, color: '#fff' }} />
+          <Typography variant="h3" fontWeight={900} sx={{ lineHeight: 1 }}>{evaluatedCount}</Typography>
+          <Typography variant="subtitle2" sx={{ opacity: 0.9, fontWeight: 500 }}>Evaluated Projects</Typography>
+        </Paper>
+        <Paper
+          sx={{ flex: 1, minWidth: 220, p: 3, borderRadius: 4, background: 'linear-gradient(120deg, #FFD600 0%, #7C4DFF 100%)', color: '#222', boxShadow: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', transition: 'transform 0.2s', '&:hover': { transform: 'scale(1.04)', boxShadow: 8 } }}
+        >
+          <BusinessCenterIcon sx={{ fontSize: 32, mb: 1, color: '#7C4DFF' }} />
+          <Typography variant="h3" fontWeight={900} sx={{ lineHeight: 1 }}>{totalTeamMembers}</Typography>
+          <Typography variant="subtitle2" sx={{ opacity: 0.9, fontWeight: 500 }}>Total Team Members</Typography>
         </Paper>
       </Stack>
       {/* Filters/Search/Sort + Pagination */}
@@ -218,6 +289,92 @@ const JuryDashboard = () => {
           </Paper>
         </Box>
       </Stack>
+      {/* Charts Section */}
+      <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} mb={5}>
+        {/* Bar Chart: Projects per Track */}
+        <Paper sx={{ flex: 2, p: 3, borderRadius: 4, minWidth: 320, mb: { xs: 3, md: 0 } }}>
+          <Typography variant="h6" fontWeight={700} mb={2}>Projects per Track</Typography>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={projectsPerTrack} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="track" />
+              <YAxis allowDecimals={false} />
+              <RechartsTooltip />
+              <Bar dataKey="count" fill="#7C4DFF" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </Paper>
+        {/* Pie Chart: Evaluation Status */}
+        <Paper sx={{ flex: 1, p: 3, borderRadius: 4, minWidth: 240 }}>
+          <Typography variant="h6" fontWeight={700} mb={2}>Evaluation Status</Typography>
+          <ResponsiveContainer width="100%" height={260}>
+            <PieChart>
+              <Pie data={statusPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                {statusPieData.map((entry, idx) => <Cell key={entry.name} fill={entry.color} />)}
+              </Pie>
+              <RechartsTooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </Paper>
+        {/* Line Chart: Submissions Over Time */}
+        <Paper sx={{ flex: 2, p: 3, borderRadius: 4, minWidth: 320 }}>
+          <Typography variant="h6" fontWeight={700} mb={2}>Project Submissions Over Time</Typography>
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={lineChartData} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis allowDecimals={false} />
+              <RechartsTooltip />
+              <Line type="monotone" dataKey="count" stroke="#00B8D4" strokeWidth={3} dot={{ r: 5 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </Paper>
+      </Stack>
+      {/* DataTable: Modern, sortable, paginated */}
+      <Paper sx={{ borderRadius: 4, p: 2, mb: 4 }}>
+        <Typography variant="h6" fontWeight={700} mb={2}>Projects Table</Typography>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Track</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Score</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Team</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Created</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {paginatedProjects.map((project: any) => (
+                <TableRow key={project._id} hover>
+                  <TableCell>{project.name}</TableCell>
+                  <TableCell>{project.track}</TableCell>
+                  <TableCell>
+                    <Chip label={project.assessment ? 'Evaluated' : 'Pending'} color={project.assessment ? 'success' : 'warning'} size="small" />
+                  </TableCell>
+                  <TableCell>{getProjectScore(project)}</TableCell>
+                  <TableCell>{Array.isArray(project.team) ? project.team.length : 0}</TableCell>
+                  <TableCell>{project.createdAt ? new Date(project.createdAt).toLocaleDateString() : ''}</TableCell>
+                  <TableCell>
+                    <Button size="small" variant="outlined" onClick={() => handleOpenDetails(project)}>View Details</Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          rowsPerPageOptions={[6, 12, 24]}
+          component="div"
+          count={projects.length}
+          rowsPerPage={rowsPerPage}
+          page={tablePage}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
+      </Paper>
       {/* Loading/Error State */}
       {loading && <Box sx={{ display: 'flex', justifyContent: 'center', my: 6 }}><CircularProgress /></Box>}
       {error && <Box sx={{ color: 'red', textAlign: 'center', my: 2 }}>{error}</Box>}
@@ -239,8 +396,7 @@ const JuryDashboard = () => {
                   </Typography>
                 </Box>
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <Button variant="contained" onClick={() => handleOpenModal(project)} sx={{ fontWeight: 700 }}>Evaluate</Button>
-                  <Button variant="outlined" onClick={() => { setAssessmentProject(project); setAssessmentModalOpen(true); }} sx={{ fontWeight: 700 }}>Assessment</Button>
+                  <Button variant="outlined" onClick={() => handleOpenDetails(project)} sx={{ fontWeight: 700 }}>View Details</Button>
                   <IconButton onClick={() => handleExpand(project._id)}>
                     {expanded === project._id ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                   </IconButton>
@@ -254,231 +410,36 @@ const JuryDashboard = () => {
           </Card>
         ))}
       </Stack>}
-      {/* Assessment Modal */}
-      <Dialog open={assessmentModalOpen} onClose={() => setAssessmentModalOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Project Assessment</DialogTitle>
+      {/* Details Modal: Show AI assessment results only */}
+      <Dialog open={detailsModalOpen} onClose={handleCloseDetails} maxWidth="md" fullWidth>
+        <DialogTitle>Project Assessment Details</DialogTitle>
         <DialogContent>
-          {assessmentProject && assessmentProject.assessment ? (
+          {detailsProject && detailsProject.assessment ? (
             <Box>
-              <Typography variant="h5" fontWeight={900} mb={3} textAlign="center">{assessmentProject.name}</Typography>
-              <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
-                {/* Technical Data */}
-                <Box flex={1} minWidth={0}>
-                  <Paper elevation={2} sx={{ p: 3, borderRadius: 3, height: '100%' }}>
-                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <CodeIcon color="primary" />
-                        <Typography variant="h6" fontWeight={700} color="primary.main">Technical</Typography>
-                      </Stack>
-                      {assessmentProject.assessment.technicalData && (
-                        <Chip
-                          label={`${assessmentProject.assessment.technicalData.overallScore ?? 'N/A'}/100`}
-                          sx={{
-                            fontSize: 22,
-                            fontWeight: 900,
-                            bgcolor: '#7C4DFF',
-                            color: '#fff',
-                            px: 2,
-                            py: 1,
-                            borderRadius: 2,
-                          }}
-                        />
-                      )}
-                    </Box>
-                    {assessmentProject.assessment.technicalData ? (
-                      <>
-                        <Typography variant="body2" mb={2} color="text.secondary">{assessmentProject.assessment.technicalData.summary ?? 'No summary provided.'}</Typography>
-                        <Typography variant="subtitle2" fontWeight={700} mt={2} mb={1}>Tech Stack</Typography>
-                        <Stack spacing={1} mb={2}>
-                          {assessmentProject.assessment.technicalData.techStack?.map((t: any, i: number) => (
-                            <Paper key={i} sx={{ p: 1, borderRadius: 2, bgcolor: '#f7faff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <Box>
-                                <Typography variant="body2"><b>{t.title}</b> ({t.componentType}) - {t.complexity}, {t.modernity}</Typography>
-                              </Box>
-                              <Chip label={`Score: ${t.score ?? 'N/A'}/100`} size="small" sx={{ bgcolor: '#00B8D4', color: '#fff', fontWeight: 700, ml: 2 }} />
-                            </Paper>
-                          ))}
-                        </Stack>
-                        <Typography variant="subtitle2" fontWeight={700} mt={2}>Architecture</Typography>
-
-                        <Paper elevation={0} sx={{ p: 2, mb: 2, bgcolor: '#f7faff', borderRadius: 2 }}>
-                          <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              <Typography variant="body2" color="text.secondary">{assessmentProject.assessment.technicalData.architecture?.title} ({assessmentProject.assessment.technicalData.architecture?.type})</Typography>
-                            </Stack>
-                            {assessmentProject.assessment.technicalData.architecture?.score !== undefined && (
-                              <Chip label={`Score: ${assessmentProject.assessment.technicalData.architecture.score}/100`} size="small" sx={{ bgcolor: '#00B8D4', color: '#fff', fontWeight: 700 }} />
-                            )}
-                          </Box>
-                          {assessmentProject.assessment.technicalData.architecture?.strengths?.length > 0 && (
-                            <Typography variant="body2" color="success.main" mb={0.5}><b>Strengths:</b> {assessmentProject.assessment.technicalData.architecture.strengths.join(', ')}</Typography>
-                          )}
-                          {assessmentProject.assessment.technicalData.architecture?.weaknesses?.length > 0 && (
-                            <Typography variant="body2" color="error.main" mb={0.5}><b>Weaknesses:</b> {assessmentProject.assessment.technicalData.architecture.weaknesses.join(', ')}</Typography>
-                          )}
-                          {assessmentProject.assessment.technicalData.architecture?.recommendation?.length > 0 && (
-                            <Typography variant="body2" color="#7C4DFF"><b>Recommendations:</b> {assessmentProject.assessment.technicalData.architecture.recommendation.join(', ')}</Typography>
-                          )}
-                        </Paper>
-                        <Typography variant="subtitle2" fontWeight={700} mt={2}>Scalability Approach</Typography>
-                        <Paper elevation={0} sx={{ p: 2, mb: 2, bgcolor: '#f7faff', borderRadius: 2 }}>
-                          <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              <Typography variant="body2" color="text.secondary">{assessmentProject.assessment.technicalData.scalabilityApproach?.strategy}</Typography>
-                            </Stack>
-                            {assessmentProject.assessment.technicalData.scalabilityApproach?.score !== undefined && (
-                              <Chip label={`Score: ${assessmentProject.assessment.technicalData.scalabilityApproach.score}/100`} size="small" sx={{ bgcolor: '#00B8D4', color: '#fff', fontWeight: 700 }} />
-                            )}
-                          </Box>
-                          {assessmentProject.assessment.technicalData.scalabilityApproach?.strengths?.length > 0 && (
-                            <Typography variant="body2" color="success.main" mb={0.5}><b>Strengths:</b> {assessmentProject.assessment.technicalData.scalabilityApproach.strengths.join(', ')}</Typography>
-                          )}
-                          {assessmentProject.assessment.technicalData.scalabilityApproach?.weaknesses?.length > 0 && (
-                            <Typography variant="body2" color="error.main" mb={0.5}><b>Weaknesses:</b> {assessmentProject.assessment.technicalData.scalabilityApproach.weaknesses.join(', ')}</Typography>
-                          )}
-                          {assessmentProject.assessment.technicalData.scalabilityApproach?.recommendation?.length > 0 && (
-                            <Typography variant="body2" color="#00B8D4"><b>Recommendations:</b> {assessmentProject.assessment.technicalData.scalabilityApproach.recommendation.join(', ')}</Typography>
-                          )}
-                        </Paper>
-                      </>
-                    ) : (
-                      <Typography color="text.secondary">No technical data available.</Typography>
-                    )}
-                  </Paper>
+              <Typography variant="h5" sx={{ mt: 1, mb: 2 }}>
+                Combined Score: <b>{getProjectScore(detailsProject)}</b>
+              </Typography>
+              <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>Technical Test</Typography>
+              {detailsProject.assessment.technicalData ? (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2">Track: {detailsProject.assessment.technicalData.track}</Typography>
+                  <Typography variant="body2">Overall Score: {detailsProject.assessment.technicalData.overallScore ?? 'N/A'}</Typography>
+                  <Typography variant="body2">Summary: {detailsProject.assessment.technicalData.summary ?? 'N/A'}</Typography>
                 </Box>
-                {/* Business Data */}
-                <Box flex={1} minWidth={0} mt={{ xs: 3, md: 0 }}>
-                  <Paper elevation={2} sx={{ p: 3, borderRadius: 3, height: '100%' }}>
-                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <BusinessCenterIcon color="secondary" />
-                        <Typography variant="h6" fontWeight={700} color="secondary.main">Business</Typography>
-                      </Stack>
-                      {assessmentProject.assessment.businessData && (
-                        <Chip
-                          label={`${assessmentProject.assessment.businessData.overallScore ?? 'N/A'}/100`}
-                          sx={{
-                            fontSize: 22,
-                            fontWeight: 900,
-                            bgcolor: '#00B8D4',
-                            color: '#fff',
-                            px: 2,
-                            py: 1,
-                            borderRadius: 2,
-                          }}
-                        />
-                      )}
-                    </Box>
-                    {assessmentProject.assessment.businessData ? (
-                      <>
-                        <Typography variant="subtitle2" color="text.secondary" mb={1}><b>Problem:</b> {assessmentProject.assessment.businessData.problem}</Typography>
-                        <Typography variant="body2" mb={2} color="text.secondary">{assessmentProject.assessment.businessData.summary ?? 'No summary provided.'}</Typography>
-                        <Typography variant="subtitle2" fontWeight={700} mt={2} mb={1}>Business Model</Typography>
-                        <Paper sx={{ p: 2, borderRadius: 2, bgcolor: '#f7faff', mb: 2 }}>
-                          <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-                            <Typography variant="body2"><b>{assessmentProject.assessment.businessData.businessModel?.model}</b></Typography>
-                            {assessmentProject.assessment.businessData.businessModel?.score !== undefined && (
-                              <Chip label={`Score: ${assessmentProject.assessment.businessData.businessModel.score}/100`} size="small" sx={{ bgcolor: '#00B8D4', color: '#fff', fontWeight: 700 }} />
-                            )}
-                          </Box>
-                          {assessmentProject.assessment.businessData.businessModel?.strengths?.length > 0 && (
-                            <Typography variant="body2" color="success.main" mb={0.5}><b>Strengths:</b> {assessmentProject.assessment.businessData.businessModel.strengths.join(', ')}</Typography>
-                          )}
-                          {assessmentProject.assessment.businessData.businessModel?.weaknesses?.length > 0 && (
-                            <Typography variant="body2" color="error.main" mb={0.5}><b>Weaknesses:</b> {assessmentProject.assessment.businessData.businessModel.weaknesses.join(', ')}</Typography>
-                          )}
-                          {assessmentProject.assessment.businessData.businessModel?.recommendation?.length > 0 && (
-                            <Typography variant="body2" color="#00B8D4"><b>Recommendations:</b> {assessmentProject.assessment.businessData.businessModel.recommendation.join(', ')}</Typography>
-                          )}
-                        </Paper>
-                        <Typography variant="subtitle2" fontWeight={700} mt={2}>Market Potential</Typography>
-                        <Paper sx={{ p: 2, borderRadius: 2, bgcolor: '#f7faff', mb: 2 }}>
-                          <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-                            <Typography variant="body2">{assessmentProject.assessment.businessData.marketPotential?.range} - {assessmentProject.assessment.businessData.marketPotential?.estimatedMarketSize} ({assessmentProject.assessment.businessData.marketPotential?.targetRegion})</Typography>
-                            {assessmentProject.assessment.businessData.marketPotential?.score !== undefined && (
-                              <Chip label={`Score: ${assessmentProject.assessment.businessData.marketPotential.score}/100`} size="small" sx={{ bgcolor: '#00B8D4', color: '#fff', fontWeight: 700 }} />
-                            )}
-                          </Box>
-                          {assessmentProject.assessment.businessData.marketPotential?.strengths?.length > 0 && (
-                            <Typography variant="body2" color="success.main" mb={0.5}><b>Strengths:</b> {assessmentProject.assessment.businessData.marketPotential.strengths.join(', ')}</Typography>
-                          )}
-                          {assessmentProject.assessment.businessData.marketPotential?.weaknesses?.length > 0 && (
-                            <Typography variant="body2" color="error.main" mb={0.5}><b>Weaknesses:</b> {assessmentProject.assessment.businessData.marketPotential.weaknesses.join(', ')}</Typography>
-                          )}
-                          {assessmentProject.assessment.businessData.marketPotential?.recommendation?.length > 0 && (
-                            <Typography variant="body2" color="#00B8D4"><b>Recommendations:</b> {assessmentProject.assessment.businessData.marketPotential.recommendation.join(', ')}</Typography>
-                          )}
-                        </Paper>
-                      </>
-                    ) : (
-                      <Typography color="text.secondary">No business data available.</Typography>
-                    )}
-                  </Paper>
+              ) : <Typography variant="body2">No technical test data.</Typography>}
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>Business Test</Typography>
+              {detailsProject.assessment.businessData ? (
+                <Box>
+                  <Typography variant="subtitle2">Problem: {detailsProject.assessment.businessData.problem}</Typography>
+                  <Typography variant="body2">Overall Score: {detailsProject.assessment.businessData.overallScore ?? 'N/A'}</Typography>
+                  <Typography variant="body2">Summary: {detailsProject.assessment.businessData.summary ?? 'N/A'}</Typography>
                 </Box>
-              </Stack>
+              ) : <Typography variant="body2">No business test data.</Typography>}
             </Box>
-          ) : (
-            <Typography>No assessment data available for this project.</Typography>
-          )}
+          ) : <Typography>No AI assessment data available for this project.</Typography>}
         </DialogContent>
       </Dialog>
-      {/* Evaluation Modal */}
-      <Modal open={modalOpen} onClose={handleCloseModal}>
-        <Box sx={{ maxWidth: 400, mx: 'auto', mt: 8, bgcolor: '#fff', borderRadius: 3, boxShadow: 4, p: 4 }}>
-          <Typography variant="h6" fontWeight={700} mb={2}>
-            Evaluate: {selectedProject?.name}
-          </Typography>
-          <form onSubmit={handleSubmit}>
-            <Stack spacing={2}>
-              <TextField
-                label="Innovation (1-10)"
-                name="innovation"
-                type="number"
-                inputProps={{ min: 1, max: 10 }}
-                value={form.innovation}
-                onChange={handleFormChange}
-                required
-              />
-              <TextField
-                label="Usability (1-10)"
-                name="usability"
-                type="number"
-                inputProps={{ min: 1, max: 10 }}
-                value={form.usability}
-                onChange={handleFormChange}
-                required
-              />
-              <TextField
-                label="Technical Complexity (1-10)"
-                name="technical"
-                type="number"
-                inputProps={{ min: 1, max: 10 }}
-                value={form.technical}
-                onChange={handleFormChange}
-                required
-              />
-              <TextField
-                label="Impact (1-10)"
-                name="impact"
-                type="number"
-                inputProps={{ min: 1, max: 10 }}
-                value={form.impact}
-                onChange={handleFormChange}
-                required
-              />
-              <TextField
-                label="Comments"
-                name="comments"
-                multiline
-                minRows={2}
-                value={form.comments}
-                onChange={handleFormChange}
-              />
-              <Button type="submit" variant="contained" sx={{ fontWeight: 700 }}>Submit Evaluation</Button>
-            </Stack>
-          </form>
-        </Box>
-      </Modal>
     </Box>
   );
 };

@@ -110,6 +110,15 @@ export interface Project {
   // Optionally add more fields as needed
 }
 
+// Project stats type
+export interface ProjectStats {
+  totalProjects: number;
+  totalTracks: number;
+  averageScore: number;
+  evaluatedProjects: number;
+  totalTeamMembers: number;
+}
+
 interface ProjectState {
   projects: Project[];
   currentProject: Project | null;
@@ -117,6 +126,7 @@ interface ProjectState {
   error: string | null;
   total: number;
   totalPages: number;
+  stats: ProjectStats | null;
 }
 
 const initialState: ProjectState = {
@@ -126,6 +136,7 @@ const initialState: ProjectState = {
   error: null,
   total: 0,
   totalPages: 0,
+  stats: null,
 };
 
 // Filters for getAllProjects
@@ -230,6 +241,27 @@ export const addProject = createAsyncThunk<Project, Partial<Project>>(
   }
 );
 
+// Thunk to fetch project stats
+export const getProjectStats = createAsyncThunk<ProjectStats, void, { rejectValue: string }>(
+  'projects/getProjectStats',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('api_token');
+      if (!token) return rejectWithValue('No authentication token found');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/ProjectStats`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!res.ok) throw new Error('Failed to fetch project stats');
+      return await res.json();
+    } catch (err: any) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
 const projectSlice = createSlice({
   name: "projects",
   initialState,
@@ -288,6 +320,9 @@ const projectSlice = createSlice({
       .addCase(addProject.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      .addCase(getProjectStats.fulfilled, (state, action: PayloadAction<ProjectStats>) => {
+        state.stats = action.payload;
       });
   },
 });
@@ -296,3 +331,4 @@ export default projectSlice.reducer;
 
 export const selectTotalProjects = (state: { project: ProjectState }) => state.project.total;
 export const selectTotalPages = (state: { project: ProjectState }) => state.project.totalPages;
+export const selectProjectStats = (state: { project: ProjectState }) => state.project.stats;
