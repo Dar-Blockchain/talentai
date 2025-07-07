@@ -49,7 +49,7 @@ The questions must be able to uncover:
 3. **Competitors**
 4. **Timing , Value Proposition and Innovation**  
 5. **Business Model**  
-6. **Market Potential & Scalability**  
+6. **Market Potential & Scalability**  (question also includes range, estimatedMarketSize and targetRegion)
 
 ### 🚨 STRICT REQUIREMENTS:
 - Generate exactly ${questionsCount} questions total.
@@ -82,7 +82,7 @@ The questions must be able to uncover:
 3. **Competitors**
 4. **Timing , Value Proposition and Innovation**  
 5. **Business Model**  
-6. **Market Potential & Scalability**  
+6. **Market Potential & Scalability** (question also includes range, estimatedMarketSize and targetRegion)
 
 Return **valid JSON only of ${questionsCount} strings** (no commentary or formatting).
     `.trim();

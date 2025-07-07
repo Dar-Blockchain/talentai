@@ -413,8 +413,7 @@ exports.analyzeAnswers = async ({
         questions
       );
     }
-    console.log("System prompt:", systemPrompt);
-    console.log("User prompt:", userPrompt);
+    
 
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
       systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
@@ -456,6 +455,8 @@ exports.analyzeAnswers = async ({
         project: project._id,
         user: user._id,
       });
+
+      await projectAssessment.save();
 
       project.assessment = projectAssessment._id;
       await project.save();
