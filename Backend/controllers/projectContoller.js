@@ -270,3 +270,13 @@ module.exports.getProjectTracks = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch project tracks", error: error.message });
   }
 };
+
+// Controller to fetch project stats
+module.exports.getProjectStats = async (req, res) => {
+  try {
+    const stats = await projectService.getProjectStats();
+    res.status(200).json(stats);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

@@ -470,3 +470,49 @@ module.exports.getAllTracks = async () => {
   });
   return tracks;
 };
+
+module.exports.getProjectStats = async () => {
+  try {
+    // 1. Total Projects
+    const totalProjects = await Project.countDocuments();
+
+    // 2. Total Number of Tracks (distinct track names)
+    const distinctTracks = await Project.distinct("track");
+    const totalTracks = distinctTracks.length;
+
+    // 3. Average Score
+    const totalScores = await ProjectAssessment.aggregate([
+      { $lookup: {
+        from: "projects", 
+        localField: "project", 
+        foreignField: "_id", 
+        as: "projectDetails"
+      }},
+      { $unwind: "$projectDetails" },
+      { $group: { 
+        _id: null, 
+        averageScore: { $avg: "$technicalData.overallScore" } 
+      }}
+    ]);
+    const averageScore = totalScores.length ? totalScores[0].averageScore : 0;
+
+    // 4. Evaluated Projects (projects that have an assessment)
+    const evaluatedProjects = await Project.countDocuments({ assessment: { $ne: null } });
+
+    // 5. Total Team Members
+    const totalTeamMembers = await Project.aggregate([
+      { $unwind: "$team" },
+      { $count: "totalTeamMembers" }
+    ]);
+
+    return {
+      totalProjects,
+      totalTracks,
+      averageScore,
+      evaluatedProjects,
+      totalTeamMembers: totalTeamMembers.length ? totalTeamMembers[0].totalTeamMembers : 0
+    };
+  } catch (error) {
+    throw new Error("Error fetching project statistics: " + error.message);
+  }
+};

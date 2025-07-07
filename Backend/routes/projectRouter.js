@@ -50,4 +50,6 @@ router.get("/getNumberProjects", projectController.getNumberProjects);
 // Get all available project tracks
 router.get("/tracks", projectController.getProjectTracks);
 
+router.get("/ProjectStats", projectController.getProjectStats);
+
 module.exports = router;
