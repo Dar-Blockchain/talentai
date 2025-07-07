@@ -9,6 +9,8 @@ const {
   PITCH_DURATION,
   QUESTION_DURATION,
   PROJECT_STATUS,
+  BUSINESS_QUESTION_DURATION,
+  BUSINESS_PITCH_DURATION,
 } = require("../constants/projectConstants");
 
 const Project = require("../models/projectModel");
@@ -113,7 +115,7 @@ module.exports.activateTeamMember = async (projectId, token) => {
   }
 };
 
-module.exports.addMemberToTeam = async (projectId, newMemberEmail, baseUrl) =>{
+module.exports.addMemberToTeam = async (projectId, newMemberEmail, baseUrl) => {
   const project = await Project.findById(projectId);
   if (!project) throw new Error("Projet introuvable");
 
@@ -141,9 +143,11 @@ module.exports.addMemberToTeam = async (projectId, newMemberEmail, baseUrl) =>{
   const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${activationToken}`;
   await sendActivationEmail(newMemberEmail, link);
 
-  return { success: true, message: "Membre ajouté avec succès et invitation envoyée." };
-}
-
+  return {
+    success: true,
+    message: "Membre ajouté avec succès et invitation envoyée.",
+  };
+};
 
 // 3. Réinvitation d’un membre
 module.exports.resendTeamInvitation = async (
@@ -154,10 +158,10 @@ module.exports.resendTeamInvitation = async (
   try {
     const project = await Project.findById(projectId);
     if (!project) throw new Error("Projet introuvable");
-console.log("project",project)
+    console.log("project", project);
     const member = project.team.find((m) => m.email === memberEmail);
     if (!member) throw new Error("Membre introuvable");
-    console.log('member',member)
+    console.log("member", member);
 
     if (member.validated)
       throw new Error("Ce membre a déjà validé son invitation.");
@@ -165,15 +169,15 @@ console.log("project",project)
     // Nouveau token + nouvelle expiration
     member.activationToken = crypto.randomBytes(20).toString("hex");
     member.expiresAt = new Date(Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000);
-    console.log("membermember",member)
+    console.log("membermember", member);
 
     await project.save();
-    console.log("projectproject",project)
+    console.log("projectproject", project);
 
     // Envoi du mail
     const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${member.activationToken}`;
     await sendActivationEmail(member.email, link);
-    console.log("link",link)
+    console.log("link", link);
 
     return { success: true, message: "Nouvelle invitation envoyée." };
   } catch (error) {
@@ -294,15 +298,15 @@ module.exports.deleteProject = async (id) => {
   }
 };
 
-module.exports.generateProjectQuestions = async (
-  projectName,
-  projectTrack,
-  assessmentType
-) => {
+module.exports.generateProjectQuestions = async (project, assessmentType) => {
   try {
     let systemPrompt = "";
     let userPrompt = "";
     let pitchQuestion = "";
+
+    const projectName = project.name;
+    const projectTrack = project.track;
+    const projectDescription = project.description;
 
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
       questionsCount = TECHNICAL_ASSESSMENT_QUESTIONS_COUNT;
@@ -328,16 +332,18 @@ module.exports.generateProjectQuestions = async (
       systemPrompt = generateBusinessQuestionsPrompts.getSystemPrompt(
         projectName,
         questionsCount,
-        QUESTION_DURATION
+        BUSINESS_QUESTION_DURATION
       );
       userPrompt = generateBusinessQuestionsPrompts.getUserPrompt(
         projectName,
+        projectDescription,
         questionsCount
       );
       pitchQuestion =
-        "You have up to " +
-        PITCH_DURATION +
-        " minutes to deliver your business pitch and provide additional details about your project.";
+        "In the next " +
+        BUSINESS_PITCH_DURATION +
+        " minutes, give us the big picture: what's your project, who’s it for, and why will it make a difference?";
+
     }
 
     const stream = await together.chat.completions.create({
@@ -362,7 +368,16 @@ module.exports.generateProjectQuestions = async (
 
     let questions = await parseAIResponse(raw);
 
-    questions.push(pitchQuestion);
+    console.log("check : ", questions);
+
+    if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
+      
+      questions = [pitchQuestion, ...questions];
+    }
+
+    if (assessmentType == PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
+      questions.push(pitchQuestion);
+    }
 
     return { questions, totalQuestions: questions.length };
   } catch (error) {
@@ -482,27 +497,33 @@ module.exports.getProjectStats = async () => {
 
     // 3. Average Score
     const totalScores = await ProjectAssessment.aggregate([
-      { $lookup: {
-        from: "projects", 
-        localField: "project", 
-        foreignField: "_id", 
-        as: "projectDetails"
-      }},
+      {
+        $lookup: {
+          from: "projects",
+          localField: "project",
+          foreignField: "_id",
+          as: "projectDetails",
+        },
+      },
       { $unwind: "$projectDetails" },
-      { $group: { 
-        _id: null, 
-        averageScore: { $avg: "$technicalData.overallScore" } 
-      }}
+      {
+        $group: {
+          _id: null,
+          averageScore: { $avg: "$technicalData.overallScore" },
+        },
+      },
     ]);
     const averageScore = totalScores.length ? totalScores[0].averageScore : 0;
 
     // 4. Evaluated Projects (projects that have an assessment)
-    const evaluatedProjects = await Project.countDocuments({ assessment: { $ne: null } });
+    const evaluatedProjects = await Project.countDocuments({
+      assessment: { $ne: null },
+    });
 
     // 5. Total Team Members
     const totalTeamMembers = await Project.aggregate([
       { $unwind: "$team" },
-      { $count: "totalTeamMembers" }
+      { $count: "totalTeamMembers" },
     ]);
 
     return {
@@ -510,7 +531,9 @@ module.exports.getProjectStats = async () => {
       totalTracks,
       averageScore,
       evaluatedProjects,
-      totalTeamMembers: totalTeamMembers.length ? totalTeamMembers[0].totalTeamMembers : 0
+      totalTeamMembers: totalTeamMembers.length
+        ? totalTeamMembers[0].totalTeamMembers
+        : 0,
     };
   } catch (error) {
     throw new Error("Error fetching project statistics: " + error.message);

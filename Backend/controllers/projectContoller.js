@@ -158,12 +158,10 @@ module.exports.generateProjectQuestions = async (req, res) => {
       throw new HttpError(404, `Project with ID ${projectId} not found.`);
     }
 
-    const projectName = project.name;
-    const projectTrack = project.track;
+    
 
     const result = await projectService.generateProjectQuestions(
-      projectName,
-      projectTrack,
+      project,
       assessmentType
     );
 
