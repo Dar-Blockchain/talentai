@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const { PROJECT_STATUS } = require("../constants/projectConstants");
+
 
 //------------------ technicalData related Schemas---------------------
 
@@ -157,7 +159,13 @@ const ProjectAssessmentSchema = new mongoose.Schema(
 
     technicalData: TechnicalDataSchema,
 
-    businessData:  BusinessDataSchema, 
+    businessData: BusinessDataSchema,
+
+    status: {
+      type: String,
+      enum: Object.values(PROJECT_STATUS),
+      default: PROJECT_STATUS.PENDING,
+    },
   },
   {
     timestamps: true,
