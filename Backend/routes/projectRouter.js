@@ -54,4 +54,6 @@ router.get("/ProjectStats", projectController.getProjectStats);
 
 router.get("/getProjectTracks", projectController.getProjectsByTrack);
 
+router.get("/getProjectsCreatedPerDay", projectController.getProjectsCreatedPerDay);
+
 module.exports = router;

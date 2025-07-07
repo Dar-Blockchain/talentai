@@ -289,3 +289,12 @@ module.exports.getProjectsByTrack = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+module.exports.getProjectsCreatedPerDay = async (req, res) => {
+  try {
+    const projectsCreatedPerDay = await projectService.getProjectsCreatedPerDay();
+    res.status(200).json(projectsCreatedPerDay);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

@@ -539,3 +539,44 @@ module.exports.getProjectsByTrack = async () => {
     throw new Error("Error fetching tracks with count: " + error.message);
   }
 };
+
+const moment = require("moment");
+
+module.exports.getProjectsCreatedPerDay = async () => {
+  try {
+    const projectsPerDay = await Project.aggregate([
+      {
+        $addFields: {
+          // Ensure the createdAt field is in date format (convert it if it's not already)
+          createdAtDate: { $toDate: "$createdAt" }
+        }
+      },
+      {
+        $project: {
+          // Format the createdAtDate field to only keep the date (without time)
+          date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAtDate" } }
+        }
+      },
+      {
+        $group: {
+          _id: "$date",  // Group by the formatted date
+          count: { $sum: 1 }  // Count the number of projects created on each day
+        }
+      },
+      {
+        $sort: { _id: 1 }  // Sort by date in ascending order
+      },
+      {
+        $project: {
+          date: "$_id",  // Rename _id to date
+          count: 1,  // Include count field
+          _id: 0  // Exclude _id field from result
+        }
+      }
+    ]);
+
+    return projectsPerDay;
+  } catch (error) {
+    throw new Error("Error fetching projects created per day: " + error.message);
+  }
+};
