@@ -208,26 +208,26 @@ exports.analyzeAnswers = async (req, res) => {
       project: project._id,
     });
 
-    switch (assessmentType) {
-      case PROJECT_ASSESSMENT_TYPE.TECHNICAL:
-        if (projectAssessment && projectAssessment.technicalData) {
-          return res.status(400).json({
-            message: "Technical data already asssessed for this project",
-          });
-        }
-        break;
-      case PROJECT_ASSESSMENT_TYPE.BUSINESS:
-        if (projectAssessment && projectAssessment.businessData) {
-          return res.status(400).json({
-            message: "Business data already asssessed for this project",
-          });
-        }
-        break;
-      default:
-        return res.status(400).json({
-          error: "Invalid assessment type",
-        });
-    }
+    // switch (assessmentType) {
+    //   case PROJECT_ASSESSMENT_TYPE.TECHNICAL:
+    //     if (projectAssessment && projectAssessment.technicalData) {
+    //       return res.status(400).json({
+    //         message: "Technical data already asssessed for this project",
+    //       });
+    //     }
+    //     break;
+    //   case PROJECT_ASSESSMENT_TYPE.BUSINESS:
+    //     if (projectAssessment && projectAssessment.businessData) {
+    //       return res.status(400).json({
+    //         message: "Business data already asssessed for this project",
+    //       });
+    //     }
+    //     break;
+    //   default:
+    //     return res.status(400).json({
+    //       error: "Invalid assessment type",
+    //     });
+    // }
 
     const result = await projectService.analyzeAnswers({
       questions,
@@ -268,5 +268,15 @@ module.exports.getProjectTracks = async (req, res) => {
     res.status(200).json({ tracks });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch project tracks", error: error.message });
+  }
+};
+
+// Controller to fetch project stats
+module.exports.getProjectStats = async (req, res) => {
+  try {
+    const stats = await projectService.getProjectStats();
+    res.status(200).json(stats);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

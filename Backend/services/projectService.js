@@ -201,7 +201,6 @@ module.exports.getAllProjects = async (
 
     const [projects, total] = await Promise.all([
       Project.find(query)
-        .sort(sort)
         .skip(skip)
         .limit(parseInt(limit))
         .populate("leaderId")
@@ -211,6 +210,20 @@ module.exports.getAllProjects = async (
         }),
       Project.countDocuments(query),
     ]);
+
+    if (sort) {
+      const sortField = sort.replace(/^[-+]/, "");
+      const isDescending = sort.startsWith("-");
+
+      projects.sort((a, b) => {
+        const aVal = a[sortField];
+        const bVal = b[sortField];
+        if (aVal < bVal) return isDescending ? 1 : -1;
+        if (aVal > bVal) return isDescending ? -1 : 1;
+        return 0;
+      });
+    }
+
     return {
       total,
       page: parseInt(page),
@@ -376,13 +389,16 @@ exports.analyzeAnswers = async ({
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
       systemPrompt = analyzeTechnicalAnswersPrompts.getSystemPrompt(
         projectName,
-        questions
+        projectTrack
       );
       userPrompt = analyzeTechnicalAnswersPrompts.getUserPrompt(
         projectName,
+        projectTrack,
         questions
       );
     }
+    console.log("System prompt:", systemPrompt);
+    console.log("User prompt:", userPrompt);
 
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
       systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
@@ -403,7 +419,7 @@ exports.analyzeAnswers = async ({
         { role: "user", content: userPrompt },
       ],
       max_tokens: 2500,
-      temperature: 0.7,
+      temperature: 0.9,
       stream: true,
     });
 
@@ -446,6 +462,54 @@ exports.analyzeAnswers = async ({
 
 module.exports.getAllTracks = async () => {
   // Returns an array of unique, non-empty tracks from all projects
-  const tracks = await Project.distinct("track", { track: { $ne: null, $ne: "" } });
+  const tracks = await Project.distinct("track", {
+    track: { $ne: null, $ne: "" },
+  });
   return tracks;
+};
+
+module.exports.getProjectStats = async () => {
+  try {
+    // 1. Total Projects
+    const totalProjects = await Project.countDocuments();
+
+    // 2. Total Number of Tracks (distinct track names)
+    const distinctTracks = await Project.distinct("track");
+    const totalTracks = distinctTracks.length;
+
+    // 3. Average Score
+    const totalScores = await ProjectAssessment.aggregate([
+      { $lookup: {
+        from: "projects", 
+        localField: "project", 
+        foreignField: "_id", 
+        as: "projectDetails"
+      }},
+      { $unwind: "$projectDetails" },
+      { $group: { 
+        _id: null, 
+        averageScore: { $avg: "$technicalData.overallScore" } 
+      }}
+    ]);
+    const averageScore = totalScores.length ? totalScores[0].averageScore : 0;
+
+    // 4. Evaluated Projects (projects that have an assessment)
+    const evaluatedProjects = await Project.countDocuments({ assessment: { $ne: null } });
+
+    // 5. Total Team Members
+    const totalTeamMembers = await Project.aggregate([
+      { $unwind: "$team" },
+      { $count: "totalTeamMembers" }
+    ]);
+
+    return {
+      totalProjects,
+      totalTracks,
+      averageScore,
+      evaluatedProjects,
+      totalTeamMembers: totalTeamMembers.length ? totalTeamMembers[0].totalTeamMembers : 0
+    };
+  } catch (error) {
+    throw new Error("Error fetching project statistics: " + error.message);
+  }
 };

@@ -37,12 +37,29 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
     setEmail('');
     setEmailError('');
   };
-  const handleSend = () => {
+  const handleSend = async () => {
     const error = validateEmail(email);
     setEmailError(error);
     if (error) return;
-    resendInvitation(email);
-    handleClose();
+    try {
+      const token = localStorage.getItem('api_token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/addMemberToTeam`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ projectId, email }),
+      });
+      if (!res.ok) throw new Error('Failed to add team member');
+      setSnackbarMsg('Team member added!');
+      setSnackbarOpen(true);
+      handleClose();
+    } catch (err) {
+      setSnackbarMsg('Failed to add team member.');
+      setSnackbarOpen(true);
+    }
   };
   const handleSnackbarClose = () => setSnackbarOpen(false);
 
