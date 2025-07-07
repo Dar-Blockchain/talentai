@@ -519,23 +519,23 @@ module.exports.getProjectStats = async () => {
 
 module.exports.getProjectsByTrack = async () => {
   try {
-    const projectsByTrack = await Project.aggregate([
+    const tracksWithCount = await Project.aggregate([
       {
         $group: {
-          _id: "$track",   // Group by track name
-          count: { $sum: 1 }  // Count the number of projects for each track
+          _id: "$track",  // Group by track name
+          count: { $sum: 1 }  // Count how many projects for each track
         }
       },
       {
         $project: {
           track: "$_id",  // Rename _id to track
-          count: 1,  // Include count field
-          _id: 0  // Exclude _id field from the result
+          count: 1,  // Include count
+          _id: 0  // Exclude _id field from result
         }
       }
     ]);
-    return projectsByTrack;
+    return tracksWithCount;
   } catch (error) {
-    throw new Error("Error fetching projects by track: " + error.message);
+    throw new Error("Error fetching tracks with count: " + error.message);
   }
 };
