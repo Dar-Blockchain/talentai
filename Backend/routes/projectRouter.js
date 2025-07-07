@@ -52,4 +52,6 @@ router.get("/tracks", projectController.getProjectTracks);
 
 router.get("/ProjectStats", projectController.getProjectStats);
 
+router.get("/getProjectTracks", projectController.getProjectTracks);
+
 module.exports = router;

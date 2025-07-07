@@ -513,3 +513,26 @@ module.exports.getProjectStats = async () => {
     throw new Error("Error fetching project statistics: " + error.message);
   }
 };
+
+module.exports.getProjectsByTrack = async () => {
+  try {
+    const projectsByTrack = await Project.aggregate([
+      {
+        $group: {
+          _id: "$track",   // Group by track name
+          count: { $sum: 1 }  // Count the number of projects for each track
+        }
+      },
+      {
+        $project: {
+          track: "$_id",  // Rename _id to track
+          count: 1,  // Include count field
+          _id: 0  // Exclude _id field from the result
+        }
+      }
+    ]);
+    return projectsByTrack;
+  } catch (error) {
+    throw new Error("Error fetching projects by track: " + error.message);
+  }
+};

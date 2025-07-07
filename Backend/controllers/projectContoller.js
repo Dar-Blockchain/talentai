@@ -280,3 +280,12 @@ module.exports.getProjectStats = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+module.exports.getProjectsByTrack = async (req, res) => {
+  try {
+    const projectsByTrack = await projectService.getProjectsByTrack();
+    res.status(200).json(projectsByTrack);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
