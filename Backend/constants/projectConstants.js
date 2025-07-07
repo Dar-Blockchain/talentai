@@ -6,6 +6,12 @@ const PROJECT_ASSESSMENT_TYPE = Object.freeze({
   BUSINESS: "business",
 });
 
+const PROJECT_STATUS = Object.freeze({
+  PENDING: "pending",
+  IN_PROGRESS: "inProgress",
+  DONE: "done",
+});
+
 const PITCH_DURATION = 5; // in minutes
 const QUESTION_DURATION = 4; // in minutes
 
@@ -15,4 +21,5 @@ module.exports = {
   PROJECT_ASSESSMENT_TYPE,
   PITCH_DURATION,
   QUESTION_DURATION,
+  PROJECT_STATUS,
 };

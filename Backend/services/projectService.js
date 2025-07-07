@@ -8,6 +8,7 @@ const {
   BUSINESS_ASSESSMENT_QUESTIONS_COUNT,
   PITCH_DURATION,
   QUESTION_DURATION,
+  PROJECT_STATUS,
 } = require("../constants/projectConstants");
 
 const Project = require("../models/projectModel");
@@ -447,8 +448,10 @@ exports.analyzeAnswers = async ({
 
     if (assessmentType === PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
       projectAssessment.technicalData = analysis.technicalData;
+      projectAssessment.status = PROJECT_STATUS.IN_PROGRESS;
     } else if (assessmentType === PROJECT_ASSESSMENT_TYPE.BUSINESS) {
       projectAssessment.businessData = analysis.businessData;
+      projectAssessment.status = PROJECT_STATUS.IN_PROGRESS;
     }
 
     await projectAssessment.save();
