@@ -113,7 +113,7 @@ module.exports.activateTeamMember = async (projectId, token) => {
   }
 };
 
-module.exports.addMemberToTeam = async (projectId, newMemberEmail, baseUrl) =>{
+module.exports.addMemberToTeam = async (projectId, newMemberEmail, baseUrl) => {
   const project = await Project.findById(projectId);
   if (!project) throw new Error("Projet introuvable");
 
@@ -141,9 +141,11 @@ module.exports.addMemberToTeam = async (projectId, newMemberEmail, baseUrl) =>{
   const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${activationToken}`;
   await sendActivationEmail(newMemberEmail, link);
 
-  return { success: true, message: "Membre ajouté avec succès et invitation envoyée." };
-}
-
+  return {
+    success: true,
+    message: "Membre ajouté avec succès et invitation envoyée.",
+  };
+};
 
 // 3. Réinvitation d’un membre
 module.exports.resendTeamInvitation = async (
@@ -154,10 +156,10 @@ module.exports.resendTeamInvitation = async (
   try {
     const project = await Project.findById(projectId);
     if (!project) throw new Error("Projet introuvable");
-console.log("project",project)
+    console.log("project", project);
     const member = project.team.find((m) => m.email === memberEmail);
     if (!member) throw new Error("Membre introuvable");
-    console.log('member',member)
+    console.log("member", member);
 
     if (member.validated)
       throw new Error("Ce membre a déjà validé son invitation.");
@@ -165,15 +167,15 @@ console.log("project",project)
     // Nouveau token + nouvelle expiration
     member.activationToken = crypto.randomBytes(20).toString("hex");
     member.expiresAt = new Date(Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000);
-    console.log("membermember",member)
+    console.log("membermember", member);
 
     await project.save();
-    console.log("projectproject",project)
+    console.log("projectproject", project);
 
     // Envoi du mail
     const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${member.activationToken}`;
     await sendActivationEmail(member.email, link);
-    console.log("link",link)
+    console.log("link", link);
 
     return { success: true, message: "Nouvelle invitation envoyée." };
   } catch (error) {
@@ -482,27 +484,33 @@ module.exports.getProjectStats = async () => {
 
     // 3. Average Score
     const totalScores = await ProjectAssessment.aggregate([
-      { $lookup: {
-        from: "projects", 
-        localField: "project", 
-        foreignField: "_id", 
-        as: "projectDetails"
-      }},
+      {
+        $lookup: {
+          from: "projects",
+          localField: "project",
+          foreignField: "_id",
+          as: "projectDetails",
+        },
+      },
       { $unwind: "$projectDetails" },
-      { $group: { 
-        _id: null, 
-        averageScore: { $avg: "$technicalData.overallScore" } 
-      }}
+      {
+        $group: {
+          _id: null,
+          averageScore: { $avg: "$technicalData.overallScore" },
+        },
+      },
     ]);
     const averageScore = totalScores.length ? totalScores[0].averageScore : 0;
 
     // 4. Evaluated Projects (projects that have an assessment)
-    const evaluatedProjects = await Project.countDocuments({ assessment: { $ne: null } });
+    const evaluatedProjects = await Project.countDocuments({
+      assessment: { $ne: null },
+    });
 
     // 5. Total Team Members
     const totalTeamMembers = await Project.aggregate([
       { $unwind: "$team" },
-      { $count: "totalTeamMembers" }
+      { $count: "totalTeamMembers" },
     ]);
 
     return {
@@ -510,7 +518,9 @@ module.exports.getProjectStats = async () => {
       totalTracks,
       averageScore,
       evaluatedProjects,
-      totalTeamMembers: totalTeamMembers.length ? totalTeamMembers[0].totalTeamMembers : 0
+      totalTeamMembers: totalTeamMembers.length
+        ? totalTeamMembers[0].totalTeamMembers
+        : 0,
     };
   } catch (error) {
     throw new Error("Error fetching project statistics: " + error.message);
@@ -522,17 +532,17 @@ module.exports.getProjectsByTrack = async () => {
     const tracksWithCount = await Project.aggregate([
       {
         $group: {
-          _id: "$track",  // Group by track name
-          count: { $sum: 1 }  // Count how many projects for each track
-        }
+          _id: "$track", // Group by track name
+          count: { $sum: 1 }, // Count how many projects for each track
+        },
       },
       {
         $project: {
-          track: "$_id",  // Rename _id to track
-          count: 1,  // Include count
-          _id: 0  // Exclude _id field from result
-        }
-      }
+          track: "$_id", // Rename _id to track
+          count: 1, // Include count
+          _id: 0, // Exclude _id field from result
+        },
+      },
     ]);
     return tracksWithCount;
   } catch (error) {
@@ -548,35 +558,39 @@ module.exports.getProjectsCreatedPerDay = async () => {
       {
         $addFields: {
           // Ensure the createdAt field is in date format (convert it if it's not already)
-          createdAtDate: { $toDate: "$createdAt" }
-        }
+          createdAtDate: { $toDate: "$createdAt" },
+        },
       },
       {
         $project: {
           // Format the createdAtDate field to only keep the date (without time)
-          date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAtDate" } }
-        }
+          date: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAtDate" },
+          },
+        },
       },
       {
         $group: {
-          _id: "$date",  // Group by the formatted date
-          count: { $sum: 1 }  // Count the number of projects created on each day
-        }
+          _id: "$date", // Group by the formatted date
+          count: { $sum: 1 }, // Count the number of projects created on each day
+        },
       },
       {
-        $sort: { _id: 1 }  // Sort by date in ascending order
+        $sort: { _id: 1 }, // Sort by date in ascending order
       },
       {
         $project: {
-          date: "$_id",  // Rename _id to date
-          count: 1,  // Include count field
-          _id: 0  // Exclude _id field from result
-        }
-      }
+          date: "$_id", // Rename _id to date
+          count: 1, // Include count field
+          _id: 0, // Exclude _id field from result
+        },
+      },
     ]);
 
     return projectsPerDay;
   } catch (error) {
-    throw new Error("Error fetching projects created per day: " + error.message);
+    throw new Error(
+      "Error fetching projects created per day: " + error.message
+    );
   }
 };
