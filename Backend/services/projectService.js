@@ -8,6 +8,7 @@ const {
   BUSINESS_ASSESSMENT_QUESTIONS_COUNT,
   PITCH_DURATION,
   QUESTION_DURATION,
+  PROJECT_STATUS,
 } = require("../constants/projectConstants");
 
 const Project = require("../models/projectModel");
@@ -447,8 +448,10 @@ exports.analyzeAnswers = async ({
 
     if (assessmentType === PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
       projectAssessment.technicalData = analysis.technicalData;
+      projectAssessment.status = PROJECT_STATUS.IN_PROGRESS;
     } else if (assessmentType === PROJECT_ASSESSMENT_TYPE.BUSINESS) {
       projectAssessment.businessData = analysis.businessData;
+      projectAssessment.status = PROJECT_STATUS.IN_PROGRESS;
     }
 
     await projectAssessment.save();
@@ -511,5 +514,28 @@ module.exports.getProjectStats = async () => {
     };
   } catch (error) {
     throw new Error("Error fetching project statistics: " + error.message);
+  }
+};
+
+module.exports.getProjectsByTrack = async () => {
+  try {
+    const tracksWithCount = await Project.aggregate([
+      {
+        $group: {
+          _id: "$track",  // Group by track name
+          count: { $sum: 1 }  // Count how many projects for each track
+        }
+      },
+      {
+        $project: {
+          track: "$_id",  // Rename _id to track
+          count: 1,  // Include count
+          _id: 0  // Exclude _id field from result
+        }
+      }
+    ]);
+    return tracksWithCount;
+  } catch (error) {
+    throw new Error("Error fetching tracks with count: " + error.message);
   }
 };
