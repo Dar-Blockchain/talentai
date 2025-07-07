@@ -30,26 +30,33 @@ module.exports.activateTeamMember = async (req, res) => {
 
 // 4. Ajouter un membre à l'équipe
 module.exports.addMemberToTeam = async (req, res) => {
-  const { projectId,email } = req.body;  // Email du nouveau membre
-  const baseUrl = req.protocol + '://' + req.get('host');  // URL de base de l'application
+  const { projectId, email } = req.body; // Email du nouveau membre
+  const baseUrl = req.protocol + "://" + req.get("host"); // URL de base de l'application
 
   try {
-    const result = await projectService.addMemberToTeam(projectId, email, baseUrl);
-    res.status(200).json(result);  // Retourner le succès
+    const result = await projectService.addMemberToTeam(
+      projectId,
+      email,
+      baseUrl
+    );
+    res.status(200).json(result); // Retourner le succès
   } catch (error) {
     console.error("Erreur lors de l'ajout du membre :", error);
     res.status(400).json({ error: error.message });
   }
 };
 
-
 // 3. Réinviter un membre dont le lien d'activation a expiré
 module.exports.resendTeamInvitation = async (req, res) => {
-  const { projectId,email } = req.body;
-  const baseUrl = req.protocol + '://' + req.get('host'); // Récupérer l'URL de base de l'application
+  const { projectId, email } = req.body;
+  const baseUrl = req.protocol + "://" + req.get("host"); // Récupérer l'URL de base de l'application
 
   try {
-    const result = await projectService.resendTeamInvitation(projectId, email, baseUrl);
+    const result = await projectService.resendTeamInvitation(
+      projectId,
+      email,
+      baseUrl
+    );
     res.status(200).json(result); // Retourne la réussite de la réinvitation
   } catch (error) {
     console.error("Erreur lors de la réinvitation du membre :", error);
@@ -66,7 +73,7 @@ module.exports.getAllProjects = async (req, res) => {
       limit,
       sort,
       track,
-      leaderId, 
+      leaderId,
       name
     );
     res.status(200).json(projects);
@@ -271,7 +278,12 @@ module.exports.getProjectTracks = async (req, res) => {
     const tracks = await projectService.getAllTracks();
     res.status(200).json({ tracks });
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch project tracks", error: error.message });
+    res
+      .status(500)
+      .json({
+        message: "Failed to fetch project tracks",
+        error: error.message,
+      });
   }
 };
 
@@ -280,6 +292,25 @@ module.exports.getProjectStats = async (req, res) => {
   try {
     const stats = await projectService.getProjectStats();
     res.status(200).json(stats);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports.getProjectsByTrack = async (req, res) => {
+  try {
+    const projectsByTrack = await projectService.getProjectsByTrack();
+    res.status(200).json(projectsByTrack);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports.getProjectsCreatedPerDay = async (req, res) => {
+  try {
+    const projectsCreatedPerDay =
+      await projectService.getProjectsCreatedPerDay();
+    res.status(200).json(projectsCreatedPerDay);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
