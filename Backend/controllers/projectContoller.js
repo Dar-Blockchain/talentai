@@ -311,3 +311,12 @@ module.exports.getProjectsCreatedPerDay = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+module.exports.getProjectsCountByStatus = async (req, res) => {
+  try {
+    const projectsCountByStatus = await projectService.getProjectsCountByStatus();
+    res.status(200).json(projectsCountByStatus);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

@@ -594,3 +594,29 @@ module.exports.getProjectsCreatedPerDay = async () => {
     );
   }
 };
+
+module.exports.getProjectsCountByStatus = async () => {
+  try {
+    const projectsByStatus = await ProjectAssessment.aggregate([
+      {
+        $group: {
+          _id: "$status",  // Group by the status field
+          count: { $sum: 1 }  // Count the number of projects with each status
+        }
+      },
+      {
+        $project: {
+          status: "$_id",  // Rename _id to status
+          count: 1,  // Include count
+          _id: 0  // Exclude _id from the result
+        }
+      },
+      {
+        $sort: { status: 1 }  // Sort by status (optional, you can customize sorting)
+      }
+    ]);
+    return projectsByStatus;
+  } catch (error) {
+    throw new Error("Error fetching projects count by status: " + error.message);
+  }
+};
