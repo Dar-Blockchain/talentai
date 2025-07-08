@@ -149,7 +149,7 @@ module.exports.addMemberToTeam = async (projectId, newMemberEmail, baseUrl) => {
   };
 };
 
-// 3. Réinvitation d’un membre
+// 3. Réinvitation d'un membre
 module.exports.resendTeamInvitation = async (
   projectId,
   memberEmail,
@@ -342,7 +342,7 @@ module.exports.generateProjectQuestions = async (project, assessmentType) => {
       pitchQuestion =
         "In the next " +
         BUSINESS_PITCH_DURATION +
-        " minutes, give us the big picture: what's your project, who’s it for, and why will it make a difference?";
+        " minutes, give us the big picture: what's your project, who's it for, and why will it make a difference?";
 
     }
 
@@ -449,6 +449,10 @@ exports.analyzeAnswers = async ({
 
     console.log("Analysis:", analysis);
 
+    /// III.-1 Manage Scores in the analysis
+    
+
+
     // IV. Store the projectAssessment in the project model
     if (!projectAssessment) {
       projectAssessment = new ProjectAssessment({
@@ -466,6 +470,7 @@ exports.analyzeAnswers = async ({
       projectAssessment.technicalData = analysis.technicalData;
       projectAssessment.status = PROJECT_STATUS.IN_PROGRESS;
     } else if (assessmentType === PROJECT_ASSESSMENT_TYPE.BUSINESS) {
+      analysis.businessData.overallScore = handleBusinessOverallScore(analysis.businessData);
       projectAssessment.businessData = analysis.businessData;
       projectAssessment.status = PROJECT_STATUS.IN_PROGRESS;
     }
@@ -565,6 +570,7 @@ module.exports.getProjectsByTrack = async () => {
 };
 
 const moment = require("moment");
+const { handleBusinessOverallScore } = require("../utils/projectUtils");
 
 module.exports.getProjectsCreatedPerDay = async () => {
   try {
@@ -608,3 +614,5 @@ module.exports.getProjectsCreatedPerDay = async () => {
     );
   }
 };
+
+
