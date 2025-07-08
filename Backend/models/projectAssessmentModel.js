@@ -100,6 +100,19 @@ const marketPotentialSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const innovationSchema = new mongoose.Schema(
+
+  {
+    innovationAspects: [String], // how the project is innovative
+    addedValues: [String], // how the project differentiates itself from existing solutions
+    score: { type: Number, min: 0, max: 100 }, // if correctly used: score out of 100
+    strengths: [{ type: String }],
+    weaknesses: [{ type: String }],
+    recommendation: [{ type: String }],
+  },
+  { _id: false }
+);
+
 //------------------ TechnicalData AND BusinessData Schemas-------------
 
 const TechnicalDataSchema = new mongoose.Schema(
@@ -121,7 +134,7 @@ const BusinessDataSchema = new mongoose.Schema(
   {
     problem: String,
     targetUsers: [String],
-    addedValues: [String], // how the project differentiates itself from existing solutions
+    innovation: innovationSchema, // how the project is innovative
     businessModel: businessModelSchema,
     competitors: [String],
     marketPotential: marketPotentialSchema,

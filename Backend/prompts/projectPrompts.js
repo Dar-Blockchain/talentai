@@ -200,7 +200,15 @@ Your task is to extract and evaluate all relevant business information needed to
 3. **addedValues (array of strings)**  
    - How the solution differentiates itself from existing competitors or alternatives.
 
-4. **businessModel (object)**  
+4. **innovation (object)**  
+   - innovationAspects: Concrete features or mechanisms in the product that are technically, functionally, or strategically innovative.
+   - addedValues: How these innovations enhance differentiation, user appeal, or market relevance.  
+   - score (0–100): Judge’s rating of the innovation’s originality, forward-thinking nature, and practical impact within the Web3/Hedera ecosystem.  
+   - strengths: Key positive aspects of the innovation, such as creativity, vision, or alignment with market needs.  
+   - weaknesses: Potential drawbacks, limitations, or missed innovation opportunities.  
+   - recommendation: Specific advice to improve or expand the project’s innovative elements.
+
+5. **businessModel (object)**  
    - model: the type of business model (e.g. "subscription", "freemium", "transaction-based", etc.)
    - choiceExplanation: list of reasons the team gave for this model
    - score (0–100): judge's score based on how realistic, viable, and well-explained the model is
@@ -208,10 +216,10 @@ Your task is to extract and evaluate all relevant business information needed to
    - weaknesses: potential drawbacks or limitations
    - recommendation: improvement suggestions
 
-5. **competitors (array of strings)**  
+6. **competitors (array of strings)**  
    - Direct or indirect competing projects, companies, or services
 
-6. **marketPotential (object)**  
+7. **marketPotential (object)**  
    - range: market ambition or expected scale (e.g. "Local niche", "Regional growth", "Global scalable", "Industry disruptor")
    - estimatedMarketSize: any figures or phrases about the size of the market
    - targetRegion: geographic market focus
@@ -237,7 +245,14 @@ Return only valid JSON matching this structure:
   "businessData": {
     "problem": "string",
     "targetUsers": ["..."], //set to none-mentionned if no targetUsers were mentionned 
-    "addedValues": ["..."], 
+    "innovation": {
+      "innovationAspects": ["..."],
+      "addedValues": ["..."],
+      "score": 0–100,
+      "strengths": ["..."],
+      "weaknesses": ["..."],
+      "recommendation": ["..."]
+    },,
     "businessModel": {
       "model": "string",
       "choiceExplanation": ["..."],
