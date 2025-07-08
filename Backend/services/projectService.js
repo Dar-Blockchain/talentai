@@ -9,6 +9,8 @@ const {
   PITCH_DURATION,
   QUESTION_DURATION,
   PROJECT_STATUS,
+  BUSINESS_QUESTION_DURATION,
+  BUSINESS_PITCH_DURATION,
 } = require("../constants/projectConstants");
 
 const Project = require("../models/projectModel");
@@ -296,15 +298,15 @@ module.exports.deleteProject = async (id) => {
   }
 };
 
-module.exports.generateProjectQuestions = async (
-  projectName,
-  projectTrack,
-  assessmentType
-) => {
+module.exports.generateProjectQuestions = async (project, assessmentType) => {
   try {
     let systemPrompt = "";
     let userPrompt = "";
     let pitchQuestion = "";
+
+    const projectName = project.name;
+    const projectTrack = project.track;
+    const projectDescription = project.description;
 
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
       questionsCount = TECHNICAL_ASSESSMENT_QUESTIONS_COUNT;
@@ -330,16 +332,18 @@ module.exports.generateProjectQuestions = async (
       systemPrompt = generateBusinessQuestionsPrompts.getSystemPrompt(
         projectName,
         questionsCount,
-        QUESTION_DURATION
+        BUSINESS_QUESTION_DURATION
       );
       userPrompt = generateBusinessQuestionsPrompts.getUserPrompt(
         projectName,
+        projectDescription,
         questionsCount
       );
       pitchQuestion =
-        "You have up to " +
-        PITCH_DURATION +
-        " minutes to deliver your business pitch and provide additional details about your project.";
+        "In the next " +
+        BUSINESS_PITCH_DURATION +
+        " minutes, give us the big picture: what's your project, who’s it for, and why will it make a difference?";
+
     }
 
     const stream = await together.chat.completions.create({
@@ -364,7 +368,16 @@ module.exports.generateProjectQuestions = async (
 
     let questions = await parseAIResponse(raw);
 
-    questions.push(pitchQuestion);
+    console.log("check : ", questions);
+
+    if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
+      
+      questions = [pitchQuestion, ...questions];
+    }
+
+    if (assessmentType == PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
+      questions.push(pitchQuestion);
+    }
 
     return { questions, totalQuestions: questions.length };
   } catch (error) {
@@ -400,8 +413,7 @@ exports.analyzeAnswers = async ({
         questions
       );
     }
-    console.log("System prompt:", systemPrompt);
-    console.log("User prompt:", userPrompt);
+    
 
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
       systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
@@ -443,6 +455,8 @@ exports.analyzeAnswers = async ({
         project: project._id,
         user: user._id,
       });
+
+      await projectAssessment.save();
 
       project.assessment = projectAssessment._id;
       await project.save();

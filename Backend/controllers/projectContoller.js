@@ -165,12 +165,10 @@ module.exports.generateProjectQuestions = async (req, res) => {
       throw new HttpError(404, `Project with ID ${projectId} not found.`);
     }
 
-    const projectName = project.name;
-    const projectTrack = project.track;
+    
 
     const result = await projectService.generateProjectQuestions(
-      projectName,
-      projectTrack,
+      project,
       assessmentType
     );
 
@@ -215,26 +213,32 @@ exports.analyzeAnswers = async (req, res) => {
       project: project._id,
     });
 
-    // switch (assessmentType) {
-    //   case PROJECT_ASSESSMENT_TYPE.TECHNICAL:
-    //     if (projectAssessment && projectAssessment.technicalData) {
-    //       return res.status(400).json({
-    //         message: "Technical data already asssessed for this project",
-    //       });
-    //     }
-    //     break;
-    //   case PROJECT_ASSESSMENT_TYPE.BUSINESS:
-    //     if (projectAssessment && projectAssessment.businessData) {
-    //       return res.status(400).json({
-    //         message: "Business data already asssessed for this project",
-    //       });
-    //     }
-    //     break;
-    //   default:
-    //     return res.status(400).json({
-    //       error: "Invalid assessment type",
-    //     });
-    // }
+    switch (assessmentType) {
+      case PROJECT_ASSESSMENT_TYPE.TECHNICAL:
+        if (projectAssessment && !projectAssessment.businessData) {
+          return res.status(400).json({
+            message: "Business Assessment must take place before Technical assessment",
+          });
+        }
+        if (projectAssessment && projectAssessment.technicalData) {
+          return res.status(400).json({
+            message: "Technical data already asssessed for this project",
+          });
+        }
+
+        break;
+      case PROJECT_ASSESSMENT_TYPE.BUSINESS:
+        if (projectAssessment && projectAssessment.businessData) {
+          return res.status(400).json({
+            message: "Business data already asssessed for this project",
+          });
+        }
+        break;
+      default:
+        return res.status(400).json({
+          error: "Invalid assessment type",
+        });
+    }
 
     const result = await projectService.analyzeAnswers({
       questions,
