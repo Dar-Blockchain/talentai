@@ -672,10 +672,16 @@ module.exports.getProjectsCountByStatus = async () => {
   try {
     const projectsByStatus = await ProjectAssessment.aggregate([
       {
+        $addFields: {
+          // Remplacez les valeurs null de 'status' par 'PENDING'
+          status: { $ifNull: ["$status", "pending"] }
+        }
+      },
+      {
         $group: {
-          _id: "$status", // Group by the status field
-          count: { $sum: 1 }, // Count the number of projects with each status
-        },
+          _id: "$status",  // Group by the status field (which is now guaranteed to be non-null)
+          count: { $sum: 1 }  // Count the number of projects with each status
+        }
       },
       {
         $project: {
@@ -695,3 +701,4 @@ module.exports.getProjectsCountByStatus = async () => {
     );
   }
 };
+
