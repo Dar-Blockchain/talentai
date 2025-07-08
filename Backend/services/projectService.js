@@ -467,6 +467,7 @@ exports.analyzeAnswers = async ({
     }
 
     if (assessmentType === PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
+      analysis.technicalData.overallScore = handleTechnicalOverallScore(analysis.technicalData);
       projectAssessment.technicalData = analysis.technicalData;
       projectAssessment.status = PROJECT_STATUS.IN_PROGRESS;
     } else if (assessmentType === PROJECT_ASSESSMENT_TYPE.BUSINESS) {
@@ -570,7 +571,7 @@ module.exports.getProjectsByTrack = async () => {
 };
 
 const moment = require("moment");
-const { handleBusinessOverallScore } = require("../utils/projectUtils");
+const { handleBusinessOverallScore, handleTechnicalOverallScore } = require("../utils/projectUtils");
 
 module.exports.getProjectsCreatedPerDay = async () => {
   try {
