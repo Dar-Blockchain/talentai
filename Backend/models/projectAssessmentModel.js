@@ -156,6 +156,7 @@ const ProjectAssessmentSchema = new mongoose.Schema(
       ref: "Project",
       required: true,
     },
+    overallScore: Number,
 
     technicalData: TechnicalDataSchema,
 

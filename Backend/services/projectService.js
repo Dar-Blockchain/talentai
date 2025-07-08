@@ -255,6 +255,10 @@ module.exports.getAllProjects = async (
           aVal = a.assessment?.businessData?.overallScore || 0;
           bVal = b.assessment?.businessData?.overallScore || 0;
         } 
+        else if (sortField === "overallScore") {
+          aVal = a.assessment?.overallScore || 0;
+          bVal = b.assessment?.overallScore || 0;
+        } 
         // Sinon, tri par un autre champ
         else {
           aVal = a[sortField];
