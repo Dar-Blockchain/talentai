@@ -187,6 +187,25 @@ module.exports.resendTeamInvitation = async (
 };
 
 // Récupération de tous les projets
+// Récupérer tous les projets
+module.exports.getAllProjects = async (req, res) => {
+  try {
+    const { page, limit, sort, track, leaderId, name } = req.query;
+    const projects = await projectService.getAllProjects(
+      page,
+      limit,
+      sort,
+      track,
+      leaderId,
+      name
+    );
+    res.status(200).json(projects);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Récupération de tous les projets avec tri par overallScore dans TechnicalDataSchema et BusinessDataSchema
 module.exports.getAllProjects = async (
   page,
   limit,
@@ -204,25 +223,44 @@ module.exports.getAllProjects = async (
     if (name && name.trim() !== "")
       query.name = { $regex: name, $options: "i" };
 
+    // Récupérer les projets et le total avec population du champ assessment
     const [projects, total] = await Promise.all([
       Project.find(query)
         .skip(skip)
         .limit(parseInt(limit))
         .populate("leaderId")
         .populate({
-          path: "assessment",
-          model: "ProjectAssessment",
+          path: "assessment",   // Utilisation de populate pour inclure le champ 'assessment'
+          model: "ProjectAssessment",   // Assurez-vous que le modèle ProjectAssessment est correctement spécifié
         }),
       Project.countDocuments(query),
     ]);
 
+    // Si un tri est demandé
     if (sort) {
       const sortField = sort.replace(/^[-+]/, "");
       const isDescending = sort.startsWith("-");
 
+      // Tri selon les nouveaux critères
       projects.sort((a, b) => {
-        const aVal = a[sortField];
-        const bVal = b[sortField];
+        let aVal, bVal;
+        
+        // Si on veut trier par overallScore dans TechnicalDataSchema
+        if (sortField === "overallScoreTechnical") {
+          aVal = a.assessment?.technicalData?.overallScore || 0;
+          bVal = b.assessment?.technicalData?.overallScore || 0;
+        }
+        // Si on veut trier par overallScore dans BusinessDataSchema
+        else if (sortField === "overallScoreBusiness") {
+          aVal = a.assessment?.businessData?.overallScore || 0;
+          bVal = b.assessment?.businessData?.overallScore || 0;
+        } 
+        // Sinon, tri par un autre champ
+        else {
+          aVal = a[sortField];
+          bVal = b[sortField];
+        }
+
         if (aVal < bVal) return isDescending ? 1 : -1;
         if (aVal > bVal) return isDescending ? -1 : 1;
         return 0;
@@ -240,6 +278,7 @@ module.exports.getAllProjects = async (
     throw new Error("Erreur lors de la récupération des projets");
   }
 };
+
 
 // Récupération des projets de l'utilisateur connecté
 module.exports.getMyProjects = async (userId) => {
@@ -616,4 +655,28 @@ module.exports.getProjectsCreatedPerDay = async () => {
   }
 };
 
-
+module.exports.getProjectsCountByStatus = async () => {
+  try {
+    const projectsByStatus = await ProjectAssessment.aggregate([
+      {
+        $group: {
+          _id: "$status",  // Group by the status field
+          count: { $sum: 1 }  // Count the number of projects with each status
+        }
+      },
+      {
+        $project: {
+          status: "$_id",  // Rename _id to status
+          count: 1,  // Include count
+          _id: 0  // Exclude _id from the result
+        }
+      },
+      {
+        $sort: { status: 1 }  // Sort by status (optional, you can customize sorting)
+      }
+    ]);
+    return projectsByStatus;
+  } catch (error) {
+    throw new Error("Error fetching projects count by status: " + error.message);
+  }
+};
