@@ -1,6 +1,11 @@
 const { Together } = require("together-ai");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
+const {
+  handleBusinessOverallScore,
+  handleTechnicalOverallScore,
+  handleAssessmentOverallScore,
+} = require("../utils/projectUtils");
 
 const {
   PROJECT_ASSESSMENT_TYPE,
@@ -230,8 +235,8 @@ module.exports.getAllProjects = async (
         .limit(parseInt(limit))
         .populate("leaderId")
         .populate({
-          path: "assessment",   // Utilisation de populate pour inclure le champ 'assessment'
-          model: "ProjectAssessment",   // Assurez-vous que le modèle ProjectAssessment est correctement spécifié
+          path: "assessment", // Utilisation de populate pour inclure le champ 'assessment'
+          model: "ProjectAssessment", // Assurez-vous que le modèle ProjectAssessment est correctement spécifié
         }),
       Project.countDocuments(query),
     ]);
@@ -244,7 +249,7 @@ module.exports.getAllProjects = async (
       // Tri selon les nouveaux critères
       projects.sort((a, b) => {
         let aVal, bVal;
-        
+
         // Si on veut trier par overallScore dans TechnicalDataSchema
         if (sortField === "overallScoreTechnical") {
           aVal = a.assessment?.technicalData?.overallScore || 0;
@@ -254,11 +259,10 @@ module.exports.getAllProjects = async (
         else if (sortField === "overallScoreBusiness") {
           aVal = a.assessment?.businessData?.overallScore || 0;
           bVal = b.assessment?.businessData?.overallScore || 0;
-        } 
-        else if (sortField === "overallScore") {
+        } else if (sortField === "overallScore") {
           aVal = a.assessment?.overallScore || 0;
           bVal = b.assessment?.overallScore || 0;
-        } 
+        }
         // Sinon, tri par un autre champ
         else {
           aVal = a[sortField];
@@ -282,7 +286,6 @@ module.exports.getAllProjects = async (
     throw new Error("Erreur lors de la récupération des projets");
   }
 };
-
 
 // Récupération des projets de l'utilisateur connecté
 module.exports.getMyProjects = async (userId) => {
@@ -386,7 +389,6 @@ module.exports.generateProjectQuestions = async (project, assessmentType) => {
         "In the next " +
         BUSINESS_PITCH_DURATION +
         " minutes, give us the big picture: what's your project, who's it for, and why will it make a difference?";
-
     }
 
     const stream = await together.chat.completions.create({
@@ -411,10 +413,7 @@ module.exports.generateProjectQuestions = async (project, assessmentType) => {
 
     let questions = await parseAIResponse(raw);
 
-    console.log("check : ", questions);
-
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
-      
       questions = [pitchQuestion, ...questions];
     }
 
@@ -456,7 +455,6 @@ exports.analyzeAnswers = async ({
         questions
       );
     }
-    
 
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
       systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
@@ -493,8 +491,6 @@ exports.analyzeAnswers = async ({
     console.log("Analysis:", analysis);
 
     /// III.-1 Manage Scores in the analysis
-    
-
 
     // IV. Store the projectAssessment in the project model
     if (!projectAssessment) {
@@ -510,13 +506,27 @@ exports.analyzeAnswers = async ({
     }
 
     if (assessmentType === PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
-      analysis.technicalData.overallScore = handleTechnicalOverallScore(analysis.technicalData);
+      analysis.technicalData.overallScore = handleTechnicalOverallScore(
+        analysis.technicalData
+      );
       projectAssessment.technicalData = analysis.technicalData;
       projectAssessment.status = PROJECT_STATUS.IN_PROGRESS;
     } else if (assessmentType === PROJECT_ASSESSMENT_TYPE.BUSINESS) {
-      analysis.businessData.overallScore = handleBusinessOverallScore(analysis.businessData);
+      analysis.businessData.overallScore = handleBusinessOverallScore(
+        analysis.businessData
+      );
       projectAssessment.businessData = analysis.businessData;
       projectAssessment.status = PROJECT_STATUS.IN_PROGRESS;
+    }
+
+    // calculate assessment overall score
+    // for now , we calculate the assessment overallScore after the technical assessment
+    // will be chaged after integrating code assessment
+    if (assessmentType === PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
+      projectAssessment.overallScore = handleAssessmentOverallScore(
+        analysis.technicalData.overallScore,
+        projectAssessment.businessData.overallScore
+      );
     }
 
     await projectAssessment.save();
@@ -614,7 +624,6 @@ module.exports.getProjectsByTrack = async () => {
 };
 
 const moment = require("moment");
-const { handleBusinessOverallScore, handleTechnicalOverallScore } = require("../utils/projectUtils");
 
 module.exports.getProjectsCreatedPerDay = async () => {
   try {
@@ -676,18 +685,20 @@ module.exports.getProjectsCountByStatus = async () => {
       },
       {
         $project: {
-          status: "$_id",  // Rename _id to status
-          count: 1,  // Include count
-          _id: 0  // Exclude _id from the result
-        }
+          status: "$_id", // Rename _id to status
+          count: 1, // Include count
+          _id: 0, // Exclude _id from the result
+        },
       },
       {
-        $sort: { status: 1 }  // Sort by status (optional, you can customize sorting)
-      }
+        $sort: { status: 1 }, // Sort by status (optional, you can customize sorting)
+      },
     ]);
     return projectsByStatus;
   } catch (error) {
-    throw new Error("Error fetching projects count by status: " + error.message);
+    throw new Error(
+      "Error fetching projects count by status: " + error.message
+    );
   }
 };
 

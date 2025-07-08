@@ -4,6 +4,10 @@ const {
   TECHNICAL_OVERALL_SCORE_WEIGHTS,
 } = require("../constants/projectConstants");
 
+const {
+  ASSESSMENT_OVERALL_SCORE_WEIGHTS,
+} = require("../constants/projectConstants");
+
 /**
  * Calculates the overallScore for businessData by assigning weights to each component score.
  * @param {Object} businessData - The businessData object containing innovation, businessModel, marketPotential.
@@ -47,18 +51,18 @@ function handleBusinessOverallScore(
 
 /**
  * Calculates the overallScore for technicalData by assigning weights to each component score.
- * 
+ *
  * The technical overall score is a weighted sum of:
  *   - techStack: The weighted average score of all techStack items, where each item's weight is determined by its componentType (coreTechnology, integrationTool, hederaService).
  *   - architecture: The score of the architecture component.
  *   - scalabilityApproach: The score of the scalabilityApproach component.
- * 
+ *
  * The weights for each component are defined in TECHNICAL_OVERALL_SCORE_WEIGHTS.
  * The weights for techStack component types are defined in TECH_TYPE_WEIGHTS.
- * 
+ *
  * @param {Object} technicalData - The technicalData object containing techStack, architecture, scalabilityApproach.
  * @returns {number} The calculated overallScore (0-100, rounded to 2 decimals)
- * 
+ *
  * Example:
  *   handleTechnicalOverallScore({
  *     techStack: [
@@ -132,4 +136,27 @@ function handleTechnicalOverallScore(technicalData) {
   return Math.round(Math.max(0, Math.min(100, overallScore)) * 100) / 100;
 }
 
-module.exports = { handleBusinessOverallScore, handleTechnicalOverallScore };
+function handleAssessmentOverallScore(technicalOverallScore, businessOverallScore) {
+  let technicalScore = technicalOverallScore
+    ? Number(technicalOverallScore)
+    : 0;
+
+  let businessScore = businessOverallScore
+    ? Number(businessOverallScore)
+    : 0;
+
+  const techWeight = ASSESSMENT_OVERALL_SCORE_WEIGHTS.TECHNICAL;
+  const bizWeight = ASSESSMENT_OVERALL_SCORE_WEIGHTS.BUSINESS;
+  const totalWeight = techWeight + bizWeight;
+
+  const weightedSum =
+    (technicalScore * techWeight + businessScore * bizWeight) / totalWeight;
+
+  return Math.round(weightedSum * 100) / 100;
+}
+
+module.exports = {
+  handleBusinessOverallScore,
+  handleTechnicalOverallScore,
+  handleAssessmentOverallScore,
+};
