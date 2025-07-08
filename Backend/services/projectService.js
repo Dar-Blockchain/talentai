@@ -665,7 +665,7 @@ module.exports.getProjectsCountByStatus = async () => {
       {
         $addFields: {
           // Remplacez les valeurs null de 'status' par 'PENDING'
-          status: { $ifNull: ["$status", "PENDING"] }
+          status: { $ifNull: ["$status", "pending"] }
         }
       },
       {
