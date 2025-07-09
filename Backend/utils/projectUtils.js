@@ -2,6 +2,11 @@ const {
   BUSINESS_OVERALL_SCORE_WEIGHTS,
   TECH_TYPE_WEIGHTS,
   TECHNICAL_OVERALL_SCORE_WEIGHTS,
+  PROJECT_ASSESSMENT_TYPE,
+  ELIGIBILITY_REQUIREMENTS,
+  ELIGIBILITY_STATUS,
+  ELIGIBILITY_CHECKS_STATUS,
+  MIN_TRACK_ALIGNMENT_SCORE,
 } = require("../constants/projectConstants");
 
 const {
@@ -136,14 +141,15 @@ function handleTechnicalOverallScore(technicalData) {
   return Math.round(Math.max(0, Math.min(100, overallScore)) * 100) / 100;
 }
 
-function handleAssessmentOverallScore(technicalOverallScore, businessOverallScore) {
+function handleAssessmentOverallScore(
+  technicalOverallScore,
+  businessOverallScore
+) {
   let technicalScore = technicalOverallScore
     ? Number(technicalOverallScore)
     : 0;
 
-  let businessScore = businessOverallScore
-    ? Number(businessOverallScore)
-    : 0;
+  let businessScore = businessOverallScore ? Number(businessOverallScore) : 0;
 
   const techWeight = ASSESSMENT_OVERALL_SCORE_WEIGHTS.TECHNICAL;
   const bizWeight = ASSESSMENT_OVERALL_SCORE_WEIGHTS.BUSINESS;
@@ -155,8 +161,47 @@ function handleAssessmentOverallScore(technicalOverallScore, businessOverallScor
   return Math.round(weightedSum * 100) / 100;
 }
 
+/**
+ * Updates the eligibility status of a project assessment based on the business track alignment score.
+ *
+ * This function  evaluates the trackAlignment score from the analysis. 
+ *    - If the score meets or exceeds the minimum required (MIN_TRACK_ALIGNMENT_SCORE), the TRACK_MATCH eligibility check is marked as approved.
+ *    - Otherwise, it is marked as not approved. The assessment is then saved.
+ *
+ * @param {Object} assessment - The ProjectAssessment mongoose document to update.
+ * @param {Object} analysis - The analysis object containing businessData and trackAlignment score.
+ * @param {string} assessmentType - The type of assessment (should be PROJECT_ASSESSMENT_TYPE.BUSINESS).
+ * @returns {Promise<void>}
+ */
+async function handleEligibility(assessment, analysis, assessmentType) {
+  if (
+    assessmentType === PROJECT_ASSESSMENT_TYPE.BUSINESS &&
+    assessment.businessData &&
+    assessment.businessData.trackAlignment &&
+    typeof analysis.businessData.trackAlignment.score === "number"
+  ) {
+    if (
+      analysis.businessData.trackAlignment.score >= MIN_TRACK_ALIGNMENT_SCORE
+    ) {
+      assessment.eligibility.checks.map((check) => {
+        if (check.type === ELIGIBILITY_REQUIREMENTS.TRACK_MATCH) {
+          check.status = ELIGIBILITY_CHECKS_STATUS.IS_APPROVED;
+        }
+      });
+    } else {
+      assessment.eligibility.checks.map((check) => {
+        if (check.type === ELIGIBILITY_REQUIREMENTS.TRACK_MATCH) {
+          check.status = ELIGIBILITY_CHECKS_STATUS.IS_NOT_APPROVED;
+        }
+      });
+    }
+  }
+  await assessment.save();
+}
+
 module.exports = {
   handleBusinessOverallScore,
   handleTechnicalOverallScore,
   handleAssessmentOverallScore,
+  handleEligibility,
 };

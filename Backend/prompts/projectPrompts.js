@@ -1,5 +1,10 @@
 const generateTechnicalQuestionsPrompts = {
-  getSystemPrompt: (projectName, projectTrack, questionsCount, QUESTION_DURATION) => {
+  getSystemPrompt: (
+    projectName,
+    projectTrack,
+    questionsCount,
+    QUESTION_DURATION
+  ) => {
     return `
 You are a senior Hedera hackathon technical judge. You are evaluating the project "${projectName}" in the track: "${projectTrack}".
 Your task is to generate a list of exactly ${questionsCount} questions that will help you assess the technical aspects of the project in the track: "${projectTrack}".
@@ -36,7 +41,12 @@ Return **valid JSON only of ${questionsCount} strings** (no explanations or form
 };
 
 const generateBusinessQuestionsPrompts = {
-  getSystemPrompt: (projectName, projectTrack, questionsCount, QUESTION_DURATION) => {
+  getSystemPrompt: (
+    projectName,
+    projectTrack,
+    questionsCount,
+    QUESTION_DURATION
+  ) => {
     return `
 You are a senior Hedera hackathon business judge. You are evaluating the project "${projectName}".
 
@@ -63,7 +73,12 @@ Return **valid JSON only of ${questionsCount} strings** (no commentary or format
     `.trim();
   },
 
-  getUserPrompt: (projectName, projectTrack, projectDescription, questionsCount) => {
+  getUserPrompt: (
+    projectName,
+    projectTrack,
+    projectDescription,
+    questionsCount
+  ) => {
     return `
 You are preparing to interview the team of the Hedera-based project "${projectName}" as part of a business pitch evaluation during a hackathon.
 
@@ -90,7 +105,8 @@ Return **valid JSON only of ${questionsCount} strings** (no commentary or format
 };
 
 const analyzeTechnicalAnswersPrompts = {
-  getSystemPrompt: (projectName, projectTrack) => `
+  getSystemPrompt: (projectName, projectTrack) =>
+    `
 You are a senior technical judge at a Hedera hackathon. You are reviewing a transcript of a technical pitch delivered by a project team of the project: "${projectName}" in the track: "${projectTrack}".
 Your task is to extract and evaluate all relevant technical data needed to populate the following structure in the ProjectAssessment model, with a special focus on how well each major technical choice (tech stack, architecture, scalability) serves the selected track:
 
@@ -165,31 +181,27 @@ Return only valid JSON matching this structure:
 Judgment-based summary (3–5 sentences) from the perspective of a business jury
 
 No explanations. Output must be valid JSON only.
-`.trim()
-,
-
-  getUserPrompt: (projectName, projectTrack, questions) => `
+`.trim(),
+  getUserPrompt: (projectName, projectTrack, questions) =>
+    `
 Analyze the following technical pitch for the Hedera project: "${projectName}" in the track: "${projectTrack}"
 
 This is a transcription of the candidate's oral answers. The array contains question/answer pairs:
 
 ${questions
-  .map(
-    (qa, i) => `Q${i + 1}: ${qa.question}\nA${i + 1}: ${qa.answer}`
-  )
+  .map((qa, i) => `Q${i + 1}: ${qa.question}\nA${i + 1}: ${qa.answer}`)
   .join("\n\n")}
 
 Please extract all technical assessment data and generate a complete JSON object as specified in the system prompt.
-`.trim()
-,
+`.trim(),
 };
 
-
 const analyzeBusinessAnswersPrompts = {
-  getSystemPrompt: () => `
+  getSystemPrompt: (projectName, projectTrack) =>
+    `
 You are a senior business judge at a Hedera hackathon. You are reviewing a transcript of a business pitch delivered by a project team.
 
-Your task is to extract and evaluate all relevant business information needed to populate the following structure in the ProjectAssessment model:
+Your task is to evaluate all relevant business information needed to populate the following structure in the ProjectAssessment model:
 
 ---
 
@@ -199,18 +211,36 @@ Your task is to extract and evaluate all relevant business information needed to
 2. **targetUsers (array of strings)**  
    - Specific user groups or customer segments the project is targeting.
 
-3. **addedValues (array of strings)**  
-   - How the solution differentiates itself from existing competitors or alternatives.
-
-4. **innovation (object)**  
-   - innovationAspects: Concrete features or mechanisms in the product that are technically, functionally, or strategically innovative.
-   - addedValues: How these innovations enhance differentiation, user appeal, or market relevance.  
-   - score (0–100): Judge’s rating of the innovation’s originality, forward-thinking nature, and practical impact within the Web3/Hedera ecosystem.  
+3. **innovation (object)**  
+   - addedValues: How the solution differentiates itself from existing competitors or alternatives.
+   - mentionnedInnovationAspects: Features or mechanisms the team claims are innovative.
+   - approvedInnovationAspects: Features the judge agrees are truly innovative.
+   - explanation: Team's explanation of their innovation.
+   - judgement: Judge's comments on the innovation.
+   - score (0–100): Judge’s rating of the innovation’s originality, forward-thinking nature, and practical impact within the Web3/Hedera ecosystem. 
    - strengths: Key positive aspects of the innovation, such as creativity, vision, or alignment with market needs.  
    - weaknesses: Potential drawbacks, limitations, or missed innovation opportunities.  
    - recommendation: Specific advice to improve or expand the project’s innovative elements.
 
-5. **businessModel (object)**  
+4. **trackAlignment (object)**
+   - track: "${projectTrack}" The track the project is aligned with.
+   - explanation: Team's explanation of how the project fits the track "${projectTrack}".
+   - judgement: Judge's comments on the alignment with the track "${projectTrack}".
+   - score (0–100): Judge’s score for alignment with the track "${projectTrack}".  
+   - strengths: Strengths of the alignment.
+   - weaknesses: Weaknesses or gaps.
+   - recommendation: Suggestions for better alignment.
+
+
+5. **hederaEcosystemImpact (object)**
+   - explanation: Team's explanation of the impact.
+   - judgement: Judge's evaluation, including whether the judge truly believes that the explanation provided by the team will genuinely impact the Hedera ecosystem.
+   - score (0–100): Judge’s score for impact on the Hedera ecosystem, reflecting not just the explanation but also whether the judge is genuinely convinced that the project will have a real impact.
+   - strengths: Strengths of the impact approved by the judge.
+   - weaknesses: Weaknesses or gaps of the impact approved by the judge.
+   - recommendation: Suggestions for greater impact approved by the judge.
+
+6. **businessModel (object)**  
    - model: the type of business model (e.g. "subscription", "freemium", "transaction-based", etc.)
    - choiceExplanation: list of reasons the team gave for this model
    - score (0–100): judge's score based on how realistic, viable, and well-explained the model is
@@ -218,10 +248,10 @@ Your task is to extract and evaluate all relevant business information needed to
    - weaknesses: potential drawbacks or limitations
    - recommendation: improvement suggestions
 
-6. **competitors (array of strings)**  
+7. **competitors (array of strings)**  
    - Direct or indirect competing projects, companies, or services
 
-7. **marketPotential (object)**  
+8. **marketPotential (object)**  
    - range: market ambition or expected scale (e.g. "Local niche", "Regional growth", "Global scalable", "Industry disruptor")
    - estimatedMarketSize: any figures or phrases about the size of the market
    - targetRegion: geographic market focus
@@ -233,32 +263,94 @@ Your task is to extract and evaluate all relevant business information needed to
 
 ---
 
-🧠 IMPORTANT INSTRUCTIONS:
+# Score calculation guidelines:
+  - **Track alignment (business level) score:**
+    - **Score 90–100 (Exceptional business alignment):** The project’s business model, value proposition, and go-to-market strategy are directly and fully mapped to the specific business goals, requirements, and focus areas of the track. The team provides highly detailed, explicit, and convincing justification, with concrete examples and clear evidence of intentional business fit. No generic or aspirational statements are accepted. All claims are substantiated.
+    - **Score 75–89 (Strong business alignment):** The project is well-aligned with the track at the business level, with most objectives and features relevant and justified, but there may be minor gaps or some lack of detail. Any missing or weak justification must result in a score below 90.
+    - **Score 40–74 (Partial/Moderate business alignment):** The project shows some business connection to the track, but the alignment is incomplete, weak, or only somewhat relevant. Justification is vague, generic, or lacks concrete business fit. Any generic, copy-pasted, or aspirational claims must be penalized.
+    - **Score 20–39 (Poor business alignment):** The project’s business connection to the track is superficial, tangential, or only briefly mentioned, with little or no justification or evidence. Any mention that is not directly relevant or is only loosely related must be scored in this range.
+    - **Score below 20 (No business alignment):** The project does not address the track’s business goals, requirements, or focus areas at all, or the justification is missing, irrelevant, or entirely generic.
+  - **Hedera ecosystem impact score:**
+    - **Score 90–100 (Exceptional impact):** The project provides highly specific, significant, and well-justified benefits to the Hedera ecosystem, with clear evidence and examples.
+    - **Score 75–89 (Strong impact):** The project provides strong and relevant benefits to the Hedera ecosystem, but with minor gaps or less detail.
+    - **Score 40–74 (Moderate impact):** The project provides some benefit to the Hedera ecosystem, but the impact is moderate, with vague or generic justification.
+    - **Score 20–39 (Minimal impact):** The project provides minimal or weak benefit to the Hedera ecosystem, with little justification or evidence.
+    - **Score below 20 (No meaningful impact):** The project does not provide any clear benefit to the Hedera ecosystem, or the justification is missing, irrelevant, or entirely generic.
+
+---
+
+🧠 STRICT REQUIREMENTS:
 - The pitch is transcribed from spoken responses and may contain informal phrasing.
 - Use only what is explicitly said or strongly implied.
 - Do **not** invent or assume missing information.
 - Focus on clarity, consistency, market realism, and viability.
 - Be critical but constructive in evaluation.
+- Be strict:
+  - **Innovation** must be truly original and out of the box. Common features or trends are not approved.
+  - **innovation score** must be based only on how truly innovative the *approved innovations* are (if no innovation is approved, the score is below 10).
+  - **Track alignment (business level)** evaluation must be extremely strict and based solely on explicit, detailed, and specific evidence that the project’s business model, value proposition, and market approach directly address the business goals, requirements, and focus areas of the track "${projectTrack}". Do not accept vague, generic, or aspirational claims. Only award high scores if the team provides clear, concrete, and comprehensive justification that demonstrates a deep understanding of the business intent of the track and shows that their solution is purpose-built for it from a business perspective (not just technical features). Penalize any lack of detail, missing evidence, or superficial alignment.
+    - Only award high scores if the team’s explanation is specific, detailed, and demonstrates a strong, intentional business fit with the track. Generic or aspirational claims are not sufficient for strong alignment.
+  - **Hedera ecosystem impact**: 
+    - The project must provide clear, explicit, and concrete evidence of how it benefits, strengthens, or advances the Hedera ecosystem (such as growing the user base, enabling new use cases, supporting ecosystem partners, or driving adoption of Hedera services).
+    - Do **not** award high scores for generic claims like "uses Hedera" or "built on Hedera"—the impact must be specific, significant, and well-justified.
+    - Penalize vague, superficial, or unsubstantiated claims of ecosystem impact.
+    - Only award high scores if the team’s explanation is specific, detailed, and demonstrates a real, intentional, and valuable contribution to the Hedera ecosystem.
+- If a field is not mentioned, leave it empty or as an empty array.
 
-📦 RESPONSE FORMAT:
-Return only valid JSON matching this structure:
+Only return valid JSON. No explanation or markdown formatting.
+`.trim(),
+
+  getUserPrompt: (projectName,
+    projectTrack,
+    questions) =>
+    `
+Analyze the following business pitch for the Hedera project: "${projectName}" in the track: "${projectTrack}"
+
+This is a transcription of the candidate's oral answers. The array contains question/answer pairs:
+
+${questions
+  .map((qa, i) => `Q${i + 1}: ${qa.question}\nA${i + 1}: ${qa.answer}`)
+  .join("\n\n")}
+
+RESPONSE FORMAT:
+Extract all business assessment data and generate a complete JSON object as specified in the system prompt.
 
 {
   "businessData": {
     "problem": "string",
-    "targetUsers": ["..."], //set to none-mentionned if no targetUsers were mentionned 
+    "targetUsers": ["..."],
     "innovation": {
-      "innovationAspects": ["..."],
       "addedValues": ["..."],
-      "score": 0–100,
+      "mentionnedInnovationAspects": ["..."], // list of innovation aspects mentioned by the team
+      "approvedInnovationAspects": ["..."], // list of innovation aspects approved by the judge
+      "explanation": ["..."], // team explanation
+      "judgement": ["..."], // Judge’s reasoning for accepting/rejecting each innovation claim
+      "score": 0, 
       "strengths": ["..."],
       "weaknesses": ["..."],
       "recommendation": ["..."]
-    },,
+    },
+    "trackAlignment": {
+      "track": "string",
+      "explanation": ["..."],
+      "judgement": ["..."],
+      "score": 0,
+      "strengths": ["..."],
+      "weaknesses": ["..."],
+      "recommendation": ["..."]
+    },
+    "hederaEcosystemImpact": {
+      "explanation": ["..."],
+      "judgement": ["..."],
+      "score": 0,
+      "strengths": ["..."],
+      "weaknesses": ["..."],
+      "recommendation": ["..."]
+    },
     "businessModel": {
       "model": "string",
       "choiceExplanation": ["..."],
-      "score": 0–100,
+      "score": 0,
       "strengths": ["..."],
       "weaknesses": ["..."],
       "recommendation": ["..."]
@@ -269,38 +361,23 @@ Return only valid JSON matching this structure:
       "estimatedMarketSize": "string",
       "targetRegion": "string",
       "choiceExplanation": ["..."],
-      "score": 0–100,
+      "score": 0,
       "strengths": ["..."],
       "weaknesses": ["..."],
       "recommendation": ["..."]
     },
-    "summary": "Judgment-based summary (3–5 sentences) from the perspective of a business jury. Reflect on the overall business viability, value proposition, innovation potential, and market opportunity. Mention standout strengths, potential risks or gaps, and provide an overall impression of the project's readiness and potential for impact.",
-    "overallScore": 0–100
+    "summary": "Judgment-based summary (2–3 sentences) from the perspective of a business jury. Reflect on the overall business viability, value proposition, innovation potential, and market opportunity. Mention standout strengths, potential risks or gaps, and provide an overall impression of the project's readiness and potential for impact.",
+    "overallScore": 0
   }
 }
 
-Only return valid JSON. No explanation or markdown formatting.
+
 `.trim(),
-
-  getUserPrompt: (projectName, questions) => `
-Analyze the following business pitch for the Hedera project: "${projectName}"
-
-This is a transcription of the candidate's oral answers. The array contains question/answer pairs:
-
-${questions
-  .map(
-    (qa, i) => `Q${i + 1}: ${qa.question}\nA${i + 1}: ${qa.answer}`
-  )
-  .join("\n\n")}
-
-Please extract all business assessment data and generate a complete JSON object as specified in the system prompt.
-`.trim()
 };
-
 
 module.exports = {
   generateTechnicalQuestionsPrompts,
   generateBusinessQuestionsPrompts,
   analyzeTechnicalAnswersPrompts,
-  analyzeBusinessAnswersPrompts
+  analyzeBusinessAnswersPrompts,
 };

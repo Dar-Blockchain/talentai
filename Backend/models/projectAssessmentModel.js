@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const {
   PROJECT_STATUS,
   ELIGIBILITY_REQUIREMENTS,
+  ELIGIBILITY_STATUS,
+  ELIGIBILITY_CHECKS_STATUS,
 } = require("../constants/projectConstants");
 
 //------------------ technicalData related Schemas---------------------
@@ -190,10 +192,11 @@ const eligibilityCheckSchema = new mongoose.Schema(
     type: {
       type: String,
       enum: Object.values(ELIGIBILITY_REQUIREMENTS),
-      required: true,
+      required: false,
     },
     status: {
-      type: Boolean,
+      type: String,
+      enum: Object.values(ELIGIBILITY_CHECKS_STATUS),
       required: true,
     },
   },
@@ -230,7 +233,12 @@ const ProjectAssessmentSchema = new mongoose.Schema(
     eligibility: {
       checks: {
         type: [eligibilityCheckSchema],
-        default: [],
+        default: function () {
+          return Object.values(ELIGIBILITY_REQUIREMENTS).map((type) => ({
+            type,
+            status: ELIGIBILITY_CHECKS_STATUS.IS_NOT_CHECKED,
+          }));
+        },
       },
       isEligible: {
         type: Boolean,
