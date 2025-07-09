@@ -25,10 +25,19 @@ function handleBusinessOverallScore(
     innovation: BUSINESS_OVERALL_SCORE_WEIGHTS.INNOVATION,
     businessModel: BUSINESS_OVERALL_SCORE_WEIGHTS.BUSINESS_MODEL,
     marketPotential: BUSINESS_OVERALL_SCORE_WEIGHTS.MARKET_POTENTIAL,
+    hederaEcosystemImpact:
+      BUSINESS_OVERALL_SCORE_WEIGHTS.HEDERA_ECOSYSTEM_IMPACT,
+    trackAlignment: BUSINESS_OVERALL_SCORE_WEIGHTS.TRACK_ALIGNMENT,
   }
 ) {
   if (!businessData) return 0;
-  const { innovation, businessModel, marketPotential } = businessData;
+  const {
+    innovation,
+    businessModel,
+    marketPotential,
+    hederaEcosystemImpact,
+    trackAlignment,
+  } = businessData;
 
   // Extract scores, defaulting to 0 if missing
   const innovationScore =
@@ -44,11 +53,23 @@ function handleBusinessOverallScore(
       ? marketPotential.score
       : 0;
 
+  const hederaEcosystemImpactScore =
+    hederaEcosystemImpact && typeof hederaEcosystemImpact.score === "number"
+      ? hederaEcosystemImpact.score
+      : 0;
+
+  const trackAlignmentScore =
+    trackAlignment && typeof trackAlignment.score === "number"
+      ? trackAlignment.score
+      : 0;
+
   // Weighted sum
   const overallScore =
     innovationScore * weights.innovation +
     businessModelScore * weights.businessModel +
-    marketPotentialScore * weights.marketPotential;
+    marketPotentialScore * weights.marketPotential +
+    hederaEcosystemImpactScore * weights.hederaEcosystemImpact +
+    trackAlignmentScore * weights.trackAlignment;
 
   // Clamp to 0-100 and round
   return Math.round(Math.max(0, Math.min(100, overallScore)) * 100) / 100;
@@ -164,7 +185,7 @@ function handleAssessmentOverallScore(
 /**
  * Updates the eligibility status of a project assessment based on the business track alignment score.
  *
- * This function  evaluates the trackAlignment score from the analysis. 
+ * This function  evaluates the trackAlignment score from the analysis.
  *    - If the score meets or exceeds the minimum required (MIN_TRACK_ALIGNMENT_SCORE), the TRACK_MATCH eligibility check is marked as approved.
  *    - Otherwise, it is marked as not approved. The assessment is then saved.
  *

@@ -297,7 +297,7 @@ Your task is to evaluate all relevant business information needed to populate th
     - Only award high scores if the team’s explanation is specific, detailed, and demonstrates a real, intentional, and valuable contribution to the Hedera ecosystem.
 - If a field is not mentioned, leave it empty or as an empty array.
 
-Only return valid JSON. No explanation or markdown formatting.
+Return **valid JSON only**(no extra explanation or notes)
 `.trim(),
 
   getUserPrompt: (projectName,
@@ -324,7 +324,7 @@ Extract all business assessment data and generate a complete JSON object as spec
       "mentionnedInnovationAspects": ["..."], // list of innovation aspects mentioned by the team
       "approvedInnovationAspects": ["..."], // list of innovation aspects approved by the judge
       "explanation": ["..."], // team explanation
-      "judgement": ["..."], // Judge’s reasoning for accepting/rejecting each innovation claim
+      "judgement": ["..."], // Judge’s reasoning for accepting/rejecting each innovation claim seperately. 
       "score": 0, 
       "strengths": ["..."],
       "weaknesses": ["..."],
@@ -367,10 +367,10 @@ Extract all business assessment data and generate a complete JSON object as spec
       "recommendation": ["..."]
     },
     "summary": "Judgment-based summary (2–3 sentences) from the perspective of a business jury. Reflect on the overall business viability, value proposition, innovation potential, and market opportunity. Mention standout strengths, potential risks or gaps, and provide an overall impression of the project's readiness and potential for impact.",
-    "overallScore": 0
   }
 }
 
+Return **valid JSON only**(no extra explanation or notes)
 
 `.trim(),
 };
