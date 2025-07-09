@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
-const { PROJECT_STATUS } = require("../constants/projectConstants");
-
+const {
+  PROJECT_STATUS,
+  ELIGIBILITY_REQUIREMENTS,
+} = require("../constants/projectConstants");
 
 //------------------ technicalData related Schemas---------------------
 
@@ -101,11 +103,44 @@ const marketPotentialSchema = new mongoose.Schema(
 );
 
 const innovationSchema = new mongoose.Schema(
-
   {
-    innovationAspects: [String], // how the project is innovative
     addedValues: [String], // how the project differentiates itself from existing solutions
+
+    mentionnedInnovationAspects: [String], // how the project is innovative
+    approvedInnovationAspects: [String], // approved by the juge
+
+    explanation: [String], // explanation from the project team lead
+    judgement: [String], // given by the juge
+
     score: { type: Number, min: 0, max: 100 }, // if correctly used: score out of 100
+    strengths: [{ type: String }],
+    weaknesses: [{ type: String }],
+    recommendation: [{ type: String }],
+  },
+  { _id: false }
+);
+
+const trackAlignmentSchema = new mongoose.Schema(
+  {
+    track: {
+      type: String,
+      required: true,
+    },
+    explanation: [String], // explanation from the project team lead
+    judgement: [String], // judgement given by the judge
+    score: { type: Number, min: 0, max: 100 }, // score given by the judge
+    strengths: [{ type: String }],
+    weaknesses: [{ type: String }],
+    recommendation: [{ type: String }],
+  },
+  { _id: false }
+);
+
+const hederaEcosystemImpactSchema = new mongoose.Schema(
+  {
+    explanation: [String],
+    judgement: [String],
+    score: { type: Number, min: 0, max: 100 }, // score given by the judge
     strengths: [{ type: String }],
     weaknesses: [{ type: String }],
     recommendation: [{ type: String }],
@@ -135,6 +170,8 @@ const BusinessDataSchema = new mongoose.Schema(
     problem: String,
     targetUsers: [String],
     innovation: innovationSchema, // how the project is innovative
+    trackAlignment: trackAlignmentSchema, // how the project is aligned with the track
+    hederaEcosystemImpact: hederaEcosystemImpactSchema, // how the project benefits the Hedera ecosystem
     businessModel: businessModelSchema,
     competitors: [String],
     marketPotential: marketPotentialSchema,
@@ -148,16 +185,25 @@ const BusinessDataSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const eligibilityCheckSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: Object.values(ELIGIBILITY_REQUIREMENTS),
+      required: true,
+    },
+    status: {
+      type: Boolean,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
 //------------------ MAIN Schema ------------------------------
 
 const ProjectAssessmentSchema = new mongoose.Schema(
   {
-    // leaderProfile: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Profile",
-    //   required: false,
-    // },
-
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -180,10 +226,19 @@ const ProjectAssessmentSchema = new mongoose.Schema(
       enum: Object.values(PROJECT_STATUS),
       default: PROJECT_STATUS.PENDING,
     },
+
+    eligibility: {
+      checks: {
+        type: [eligibilityCheckSchema],
+        default: [],
+      },
+      isEligible: {
+        type: Boolean,
+        default: false,
+      },
+    },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 const ProjectAssessment = mongoose.model(

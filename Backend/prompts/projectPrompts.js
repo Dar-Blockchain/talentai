@@ -36,7 +36,7 @@ Return **valid JSON only of ${questionsCount} strings** (no explanations or form
 };
 
 const generateBusinessQuestionsPrompts = {
-  getSystemPrompt: (projectName, questionsCount, QUESTION_DURATION) => {
+  getSystemPrompt: (projectName, projectTrack, questionsCount, QUESTION_DURATION) => {
     return `
 You are a senior Hedera hackathon business judge. You are evaluating the project "${projectName}".
 
@@ -44,16 +44,16 @@ Generate exactly ${questionsCount} tailored and insightful business questions th
 
 The questions must be able to uncover:
 
-1. **Problem & Market Need**  
-2. **Target Users**  
-3. **Competitors**
-4. **Timing , Value Proposition and Innovation**  
-5. **Business Model**  
-6. **Market Potential & Scalability**  (question also includes range, estimatedMarketSize and targetRegion)
+1. **Problem, Market Need & Target Users** (the real-world challenge the project aims to solve, who the specific user groups or customer segments are, and require the candidate to explicitly list the target users)
+2. **Innovation & Differentiation** (including added values, how the project is innovative, what sets it apart from existing solutions, and how it compares to competitors)  
+3. **Track Alignment** (how the project aligns with the chosen track: "${projectTrack}" and its relevance)  
+4. **Hedera Ecosystem Impact** (how the project benefits or impacts the Hedera ecosystem)  
+5. **Business Model** (including model type and reasoning behind the choice)  
+6. **Market Potential, Scalability & Growth** (including market range, estimated market size, target region, and how the project plans to scale to meet future demand)  
 
 ### 🚨 STRICT REQUIREMENTS:
 - Generate exactly ${questionsCount} questions total.
-- Include one question that explicitly invites the team to discuss **competitors**.
+- Include one question that focuses on innovation while also asking about competitors and how the project differentiates itself from them.
 - Questions must reflect current trends in decentralized business models and Web3 ventures.
 - Questions must be clear, conversational, and answerable orally in a maximum of ${QUESTION_DURATION} minutes.
 - Return valid JSON only of ${questionsCount} strings.
@@ -63,7 +63,7 @@ Return **valid JSON only of ${questionsCount} strings** (no commentary or format
     `.trim();
   },
 
-  getUserPrompt: (projectName, projectDescription, questionsCount) => {
+  getUserPrompt: (projectName, projectTrack, projectDescription, questionsCount) => {
     return `
 You are preparing to interview the team of the Hedera-based project "${projectName}" as part of a business pitch evaluation during a hackathon.
 
@@ -77,12 +77,12 @@ Your questions must draw directly from the provided description:
 
 The questions must be able to uncover:
 
-1. **Problem & Market Need**  
-2. **Target Users**  
-3. **Competitors**
-4. **Timing , Value Proposition and Innovation**  
-5. **Business Model**  
-6. **Market Potential & Scalability** (question also includes range, estimatedMarketSize and targetRegion)
+1. **Problem, Market Need & Target Users** (the real-world challenge the project aims to solve, who the specific user groups or customer segments are, and require the candidate to explicitly list the target users)
+2. **Innovation & Differentiation** (including added values, how the project is innovative, what sets it apart from existing solutions, and how it compares to competitors)  
+3. **Track Alignment** (how the project aligns with the chosen track: "${projectTrack}" and its relevance)  
+4. **Hedera Ecosystem Impact** (how the project benefits or impacts the Hedera ecosystem)  
+5. **Business Model** (including model type and reasoning behind the choice)  
+6. **Market Potential, Scalability & Growth** (including market range, estimated market size, target region, and how the project plans to scale to meet future demand)  
 
 Return **valid JSON only of ${questionsCount} strings** (no commentary or formatting).
     `.trim();

@@ -387,11 +387,13 @@ module.exports.generateProjectQuestions = async (project, assessmentType) => {
       questionsCount = BUSINESS_ASSESSMENT_QUESTIONS_COUNT;
       systemPrompt = generateBusinessQuestionsPrompts.getSystemPrompt(
         projectName,
+        projectTrack, 
         questionsCount,
         BUSINESS_QUESTION_DURATION
       );
       userPrompt = generateBusinessQuestionsPrompts.getUserPrompt(
         projectName,
+        projectTrack,
         projectDescription,
         questionsCount
       );
