@@ -510,7 +510,6 @@ exports.analyzeAnswers = async ({
         analysis.technicalData
       );
       projectAssessment.technicalData = analysis.technicalData;
-      projectAssessment.status = PROJECT_STATUS.IN_PROGRESS;
     } else if (assessmentType === PROJECT_ASSESSMENT_TYPE.BUSINESS) {
       analysis.businessData.overallScore = handleBusinessOverallScore(
         analysis.businessData
@@ -519,7 +518,7 @@ exports.analyzeAnswers = async ({
       projectAssessment.status = PROJECT_STATUS.IN_PROGRESS;
     }
 
-    // calculate assessment overall score
+    // FINALIZE assessment: update overallScore + update status to done
     // for now , we calculate the assessment overallScore after the technical assessment
     // will be chaged after integrating code assessment
     if (assessmentType === PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
@@ -527,6 +526,7 @@ exports.analyzeAnswers = async ({
         analysis.technicalData.overallScore,
         projectAssessment.businessData.overallScore
       );
+      projectAssessment.status = PROJECT_STATUS.DONE;
     }
 
     await projectAssessment.save();
