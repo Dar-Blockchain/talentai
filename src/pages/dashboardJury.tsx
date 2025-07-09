@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Box,
-  Stack,
-  Typography,
-  AppBar,
-  Toolbar,
-} from "@mui/material";
+import { Box, Stack, Typography, AppBar, Toolbar } from "@mui/material";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -29,13 +23,13 @@ import {
 } from "../store/slices/projectSlice";
 import { RootState } from "../store/store";
 
-import TopTechnicalProjectsTable from '../components/dashboard-jury/TopTechnicalProjectsTable';
-import TopBusinessProjectsTable from '../components/dashboard-jury/TopBusinessProjectsTable';
-import StatsCards from '../components/dashboard-jury/StatsCards';
-import ChartsSection from '../components/dashboard-jury/ChartsSection';
-import ProjectsTable from '../components/dashboard-jury/ProjectsTable';
-import DetailsModal from '../components/dashboard-jury/DetailsModal';
-import TeamModal from '../components/dashboard-jury/TeamModal';
+import TopTechnicalProjectsTable from "../components/dashboard-jury/TopTechnicalProjectsTable";
+import TopBusinessProjectsTable from "../components/dashboard-jury/TopBusinessProjectsTable";
+import StatsCards from "../components/dashboard-jury/StatsCards";
+import ChartsSection from "../components/dashboard-jury/ChartsSection";
+import ProjectsTable from "../components/dashboard-jury/ProjectsTable";
+import DetailsModal from "../components/dashboard-jury/DetailsModal";
+import TeamModal from "../components/dashboard-jury/TeamModal";
 
 const JuryDashboard = () => {
   const dispatch = useDispatch();
@@ -84,7 +78,7 @@ const JuryDashboard = () => {
   const projectsPerTrack = projectsByTrack.length
     ? projectsByTrack
     : Array.from(new Set(projects.map((p: any) => p.track))).map((track) => ({
-    track,
+        track,
         count: projects.filter((p: any) => p.track === track).length,
       }));
 
@@ -103,8 +97,8 @@ const JuryDashboard = () => {
             name: item.status,
             value: Number(item.count),
             color: statusColors[item.status] || "#8884d8",
-      }))
-    : [];
+          }))
+        : [];
 
     // Helper to check if PieChart data is empty or all values are zero
     const isDataEmpty =
@@ -118,13 +112,13 @@ const JuryDashboard = () => {
   const lineChartData = projectsCreatedPerDay.length
     ? projectsCreatedPerDay
     : (() => {
-    const submissionsByDate = projects.reduce((acc: any, p: any) => {
+        const submissionsByDate = projects.reduce((acc: any, p: any) => {
           const date = p.createdAt
             ? new Date(p.createdAt).toLocaleDateString()
             : "Unknown";
-      acc[date] = (acc[date] || 0) + 1;
-      return acc;
-    }, {});
+          acc[date] = (acc[date] || 0) + 1;
+          return acc;
+        }, {});
         return Object.entries(submissionsByDate).map(([date, count]) => ({
           date,
           count,
@@ -170,7 +164,7 @@ const JuryDashboard = () => {
     const params = {
       page: topTechPage + 1,
       limit: topTechRowsPerPage,
-      sort: '-overallScoreTechnical',
+      sort: "-overallScoreTechnical",
     };
     dispatch(getTopTechnicalProjects(params) as any);
   }, [dispatch, topTechPage, topTechRowsPerPage]);
@@ -180,13 +174,13 @@ const JuryDashboard = () => {
     const params = {
       page: topBizPage + 1,
       limit: topBizRowsPerPage,
-      sort: '-overallScoreBusiness',
+      sort: "-overallScoreBusiness",
     };
     dispatch(getTopBusinessProjects(params) as any);
   }, [dispatch, topBizPage, topBizRowsPerPage]);
 
   // Track list for filter (prefer API, fallback to computed)
-  const tracks : string[] = [
+  const tracks: string[] = [
     "All",
     ...(tracksFromApi.length
       ? tracksFromApi
@@ -218,7 +212,6 @@ const JuryDashboard = () => {
     setDetailsModalOpen(false);
     setDetailsProject(null);
   };
-
 
   const handleOpenTeamModal = (project: any) => {
     setTeamMembers(
@@ -269,7 +262,7 @@ const JuryDashboard = () => {
         lineChartData={lineChartData}
       />
       {/* Top Projects Tables */}
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} mb={5}>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={3} mb={5}>
         <TopTechnicalProjectsTable
           data={topTechnicalProjects.data}
           loading={topTechnicalProjects.loading}
@@ -278,7 +271,10 @@ const JuryDashboard = () => {
           rowsPerPage={topTechRowsPerPage}
           total={topTechnicalProjects.total}
           onPageChange={(_, newPage) => setTopTechPage(newPage)}
-          onRowsPerPageChange={e => { setTopTechRowsPerPage(parseInt(e.target.value, 10)); setTopTechPage(0); }}
+          onRowsPerPageChange={(e) => {
+            setTopTechRowsPerPage(parseInt(e.target.value, 10));
+            setTopTechPage(0);
+          }}
           onOpenDetails={handleOpenDetails}
         />
         <TopBusinessProjectsTable
@@ -289,7 +285,10 @@ const JuryDashboard = () => {
           rowsPerPage={topBizRowsPerPage}
           total={topBusinessProjects.total}
           onPageChange={(_, newPage) => setTopBizPage(newPage)}
-          onRowsPerPageChange={e => { setTopBizRowsPerPage(parseInt(e.target.value, 10)); setTopBizPage(0); }}
+          onRowsPerPageChange={(e) => {
+            setTopBizRowsPerPage(parseInt(e.target.value, 10));
+            setTopBizPage(0);
+          }}
           onOpenDetails={handleOpenDetails}
         />
       </Stack>
@@ -309,7 +308,10 @@ const JuryDashboard = () => {
         rowsPerPage={mainRowsPerPage}
         total={mainTotal}
         onPageChange={(_, newPage) => setMainPage(newPage)}
-        onRowsPerPageChange={e => { setMainRowsPerPage(parseInt(e.target.value, 10)); setMainPage(0); }}
+        onRowsPerPageChange={(e) => {
+          setMainRowsPerPage(parseInt(e.target.value, 10));
+          setMainPage(0);
+        }}
         onOpenTeamModal={handleOpenTeamModal}
         onOpenDetails={handleOpenDetails}
       />
@@ -329,4 +331,4 @@ const JuryDashboard = () => {
   );
 };
 
-export default JuryDashboard; 
+export default JuryDashboard;
