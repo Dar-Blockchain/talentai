@@ -585,10 +585,10 @@ module.exports.getProjectStats = async () => {
     ]);
     const averageScore = totalScores.length ? totalScores[0].averageScore : 0;
 
-    // 4. Evaluated Projects (projects that have an assessment)
-//    const evaluatedProjects = await Project.countDocuments({
-  //    assessment: { $ne: null },
-    //});
+    // 4. Evaluated Projects (with assessment.status === "done")
+    const evaluatedProjects = await ProjectAssessment.countDocuments({
+      status: "done"
+    });
 
     // 5. Total Team Members
     const totalTeamMembers = await Project.aggregate([
