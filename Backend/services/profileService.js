@@ -637,4 +637,3 @@ exports.getTopIndustries = async () => {
     { $limit: 5 },
   ]);
 };
-

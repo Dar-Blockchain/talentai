@@ -157,10 +157,12 @@ Return only valid JSON matching this structure:
     "techStack": [...],
     "architecture": {...},
     "scalabilityApproach": {...},
-    "summary": "Concise general summary of the project's technical implementation and strengths/weaknesses",
+    "summary": "Expert evaluation (3–5 sentences) from the perspective of a senior technical jury. Summarize the project's technical implementation, including the appropriateness of the tech stack, architectural design, scalability strategy, and integration with Hedera services. Highlight key technical strengths, potential weaknesses or risks, and overall feasibility and innovation. Focus on clarity, depth, and actionable insights.",
     "overallScore": 0–100
   },
 }
+
+Judgment-based summary (3–5 sentences) from the perspective of a business jury
 
 No explanations. Output must be valid JSON only.
 `.trim()
@@ -272,7 +274,7 @@ Return only valid JSON matching this structure:
       "weaknesses": ["..."],
       "recommendation": ["..."]
     },
-    "summary": "Concise summary of business model, value proposition, and market potential",
+    "summary": "Judgment-based summary (3–5 sentences) from the perspective of a business jury. Reflect on the overall business viability, value proposition, innovation potential, and market opportunity. Mention standout strengths, potential risks or gaps, and provide an overall impression of the project's readiness and potential for impact.",
     "overallScore": 0–100
   }
 }
