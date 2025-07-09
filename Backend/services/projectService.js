@@ -203,23 +203,6 @@ module.exports.resendTeamInvitation = async (
 };
 
 // Récupération de tous les projets
-// Récupérer tous les projets
-module.exports.getAllProjects = async (req, res) => {
-  try {
-    const { page, limit, sort, track, leaderId, name } = req.query;
-    const projects = await projectService.getAllProjects(
-      page,
-      limit,
-      sort,
-      track,
-      leaderId,
-      name
-    );
-    res.status(200).json(projects);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
 
 // Récupération de tous les projets avec tri par overallScore dans TechnicalDataSchema et BusinessDataSchema
 module.exports.getAllProjects = async (
@@ -248,9 +231,20 @@ module.exports.getAllProjects = async (
         .populate({
           path: "assessment", // Utilisation de populate pour inclure le champ 'assessment'
           model: "ProjectAssessment", // Assurez-vous que le modèle ProjectAssessment est correctement spécifié
+          select: "status", // Nous sélectionnons uniquement le champ status ici
         }),
       Project.countDocuments(query),
     ]);
+
+    // Ajouter le status à chaque projet
+    projects.forEach((project) => {
+      // Si l'évaluation (assessment) existe, ajouter le status
+      if (project.assessment) {
+        project.status = project.assessment.status;
+      } else {
+        project.status = "Pending"; // Valeur par défaut si pas d'évaluation associée
+      }
+    });
 
     // Si un tri est demandé
     if (sort) {
@@ -297,6 +291,7 @@ module.exports.getAllProjects = async (
     throw new Error("Erreur lors de la récupération des projets");
   }
 };
+
 
 // Récupération des projets de l'utilisateur connecté
 module.exports.getMyProjects = async (userId) => {
@@ -595,9 +590,9 @@ module.exports.getProjectStats = async () => {
     ]);
     const averageScore = totalScores.length ? totalScores[0].averageScore : 0;
 
-    // 4. Evaluated Projects (projects that have an assessment)
-    const evaluatedProjects = await Project.countDocuments({
-      assessment: { $ne: null },
+    // 4. Evaluated Projects (with assessment.status === "done")
+    const evaluatedProjects = await ProjectAssessment.countDocuments({
+      status: "done"
     });
 
     // 5. Total Team Members
