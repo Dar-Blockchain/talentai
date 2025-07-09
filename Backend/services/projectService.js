@@ -73,6 +73,16 @@ module.exports.createProject = async (data, baseUrl) => {
 
     await project.save();
 
+    // create assessment for project (default status: pending)
+    const projectAssessment = new ProjectAssessment({
+      project: project._id,
+      user: data.leaderId,
+    });
+    await projectAssessment.save();
+    project.assessment = projectAssessment._id;
+    await project.save();
+    
+
     for (const member of teamWithTokens) {
       const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${member.activationToken}`;
       await sendActivationEmail(member.email, link);
@@ -674,14 +684,14 @@ module.exports.getProjectsCountByStatus = async () => {
       {
         $addFields: {
           // Remplacez les valeurs null de 'status' par 'PENDING'
-          status: { $ifNull: ["$status", "pending"] }
-        }
+          status: { $ifNull: ["$status", "pending"] },
+        },
       },
       {
         $group: {
-          _id: "$status",  // Group by the status field (which is now guaranteed to be non-null)
-          count: { $sum: 1 }  // Count the number of projects with each status
-        }
+          _id: "$status", // Group by the status field (which is now guaranteed to be non-null)
+          count: { $sum: 1 }, // Count the number of projects with each status
+        },
       },
       {
         $project: {
@@ -701,4 +711,3 @@ module.exports.getProjectsCountByStatus = async () => {
     );
   }
 };
-
