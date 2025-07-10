@@ -5,6 +5,7 @@ const {
   handleBusinessOverallScore,
   handleTechnicalOverallScore,
   handleAssessmentOverallScore,
+  handleEligibility,
 } = require("../utils/projectUtils");
 
 const {
@@ -395,11 +396,13 @@ module.exports.generateProjectQuestions = async (project, assessmentType) => {
       questionsCount = BUSINESS_ASSESSMENT_QUESTIONS_COUNT;
       systemPrompt = generateBusinessQuestionsPrompts.getSystemPrompt(
         projectName,
+        projectTrack, 
         questionsCount,
         BUSINESS_QUESTION_DURATION
       );
       userPrompt = generateBusinessQuestionsPrompts.getUserPrompt(
         projectName,
+        projectTrack,
         projectDescription,
         questionsCount
       );
@@ -477,22 +480,24 @@ exports.analyzeAnswers = async ({
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
       systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
         projectName,
-        questions
+        projectTrack
       );
       userPrompt = analyzeBusinessAnswersPrompts.getUserPrompt(
         projectName,
+        projectTrack,
         questions
       );
     }
 
     // II. Send the prompt to the AI
+    
     const stream = await together.chat.completions.create({
       model: "deepseek-ai/DeepSeek-V3",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 2500,
+      max_tokens: 3500,
       temperature: 0.9,
       stream: true,
     });
@@ -503,7 +508,7 @@ exports.analyzeAnswers = async ({
       if (content) raw += content;
     }
 
-    // III. parse AI response
+    // III. parse AI response 
     let analysis = await parseAIResponse(raw);
 
     console.log("Analysis:", analysis);
@@ -546,8 +551,13 @@ exports.analyzeAnswers = async ({
       );
       projectAssessment.status = PROJECT_STATUS.DONE;
     }
-
     await projectAssessment.save();
+    
+
+    // V. Handle eligibility
+    await handleEligibility(projectAssessment, analysis, assessmentType);
+
+
 
     return { analysis };
   } catch (error) {
