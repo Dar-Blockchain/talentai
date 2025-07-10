@@ -324,3 +324,89 @@ module.exports.getProjectsCountByStatus = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+const PDFDocument = require("pdfkit");
+const fs = require("fs");
+const path = require("path");
+
+module.exports.exportProjectPdf = async (req, res) => {
+  try {
+    const projectId = req.params.projectId;
+
+    // Récupère le projet et son évaluation associés directement via populate
+    const project = await Project.findById(projectId)
+      .populate("assessment")  // Peupler directement l'évaluation
+      .populate("leaderId");   // Si vous voulez aussi peupler les informations du leader du projet
+    if (!project) throw new Error("Project not found");
+
+    // Générer le PDF
+    const exportDir = path.join(__dirname, "../exports");
+    if (!fs.existsSync(exportDir)) fs.mkdirSync(exportDir);
+
+    const filePath = path.join(exportDir, `${project.name.replace(/[^a-z0-9]/gi, '_')}_assessment.pdf`);
+    const doc = new PDFDocument();
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
+
+    // Titre du projet
+    doc.fontSize(18).text(`Project: ${project.name}`, { underline: true });
+    doc.fontSize(12).text(`Description: ${project.description || "N/A"}`);
+    doc.text(`Track: ${project.track || "N/A"}`);
+    doc.moveDown();
+
+    // Évaluation du projet
+    if (project.assessment) {
+      doc.fontSize(14).text("Assessment", { underline: true });
+      doc.fontSize(12).text(`Overall Score: ${project.assessment.overallScore ?? "N/A"}`);
+
+      // Données techniques
+      if (project.assessment.technicalData) {
+        doc.moveDown().text("Technical Data", { underline: true });
+        doc.text(`- Architecture Score: ${project.assessment.technicalData.architecture?.score ?? "N/A"}`);
+        doc.text(`- Scalability Score: ${project.assessment.technicalData.scalabilityApproach?.score ?? "N/A"}`);
+      }
+
+      // Données commerciales
+      if (project.assessment.businessData) {
+        doc.moveDown().text("Business Data", { underline: true });
+        doc.text(`- Business Model Score: ${project.assessment.businessData.businessModel?.score ?? "N/A"}`);
+        doc.text(`- Market Potential Score: ${project.assessment.businessData.marketPotential?.score ?? "N/A"}`);
+      }
+
+      doc.moveDown().text("Eligibility", { underline: true });
+      doc.text(`Eligibility Status: ${project.assessment.eligibility?.isEligible ? "Eligible" : "Not Eligible"}`);
+    } else {
+      doc.text("No assessment data available.");
+    }
+
+    // Membres de l'équipe
+    doc.moveDown().text("Team", { underline: true });
+    (project.team || []).forEach(member => {
+      doc.text(`- ${member.email} (${member.validated ? "Validated" : "Not Validated"})`);
+    });
+
+    // Finalisation du PDF
+    doc.end();
+
+    stream.on('finish', () => {
+      // Envoi du fichier PDF pour téléchargement
+      res.download(filePath, (err) => {
+        if (err) {
+          console.error("Error sending PDF:", err);
+          res.status(500).send("Error sending PDF");
+        }
+        // Optionnel: Supprimer le fichier après envoi
+        fs.unlink(filePath, () => {});
+      });
+    });
+
+    stream.on('error', (err) => {
+      console.error("Error during PDF generation:", err);
+      res.status(500).send("Error generating PDF");
+    });
+
+  } catch (error) {
+    console.error("Error generating or sending PDF:", error);
+    res.status(500).send("Failed to generate PDF");
+  }
+};
