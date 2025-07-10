@@ -243,7 +243,7 @@ Your task is to evaluate all relevant business information needed to populate th
 6. **businessModel (object)**  
    - model: the type of business model (e.g. "subscription", "freemium", "transaction-based", etc.)
    - choiceExplanation: list of reasons the team gave for this model
-   - score (0–100): judge's score based on how realistic, viable, and well-explained the model is
+   - score (0–100): judge's score
    - strengths: strengths or benefits of the chosen model
    - weaknesses: potential drawbacks or limitations
    - recommendation: improvement suggestions
@@ -256,7 +256,7 @@ Your task is to evaluate all relevant business information needed to populate th
    - estimatedMarketSize: any figures or phrases about the size of the market
    - targetRegion: geographic market focus
    - choiceExplanation: reasons given for the claimed potential
-   - score (0–100): judge's score based on how clearly the market was defined and justified
+   - score (0–100): judge's score
    - strengths: strengths of the project's market positioning
    - weaknesses: weaknesses, unrealistic claims, or gaps
    - recommendation: business advice for improvement
@@ -275,7 +275,6 @@ Your task is to evaluate all relevant business information needed to populate th
   - **Explicitly reject or penalize any claim that is a platform feature, industry standard, or incremental improvement.**
   - *Do not* accept as innovation anything that is trendy, copy-pasted, or widely available in the ecosystem.
   - **Approved innovations must be clearly justified as unique and impactful. If no such innovation is present, the score must be below 10.**
-
 
 #### Track Alignment (STRICT)
 - **Only approve as strong track alignment if the project’s business model, value proposition, and go-to-market strategy are directly and specifically mapped to the explicit business goals, requirements, and focus areas of the track "${projectTrack}".**
@@ -314,6 +313,20 @@ Your task is to evaluate all relevant business information needed to populate th
 - **40–74:** Moderate impact; justification is vague or generic.
 - **20–39:** Minimal impact; little justification or evidence.
 - **Below 20:** No meaningful impact; justification is missing, irrelevant, or entirely generic.
+
+#### Market Potential Scoring Rubric (STRICT)
+- **90–100:** Reserved for projects with an exceptionally detailed, data-driven, and realistic market analysis, including clear, specific evidence of market size, competition, user acquisition, and growth strategy. No significant gaps.
+- **75–89:** Strong, well-justified market analysis with most elements present and supported by evidence; only minor gaps or missing details.
+- **40–74:** Moderate market understanding; analysis is somewhat generic, lacks detail, or is missing key evidence.
+- **20–39:** Weak market analysis; superficial, vague, or missing most justification and evidence.
+- **Below 20:** No meaningful market analysis; justification is missing, irrelevant, or entirely generic.
+
+#### Business Model Scoring Rubric (STRICT)
+- **90–100:** Only for projects with a highly detailed, realistic, and well-justified business model, including clear revenue streams, cost structure, customer segments, and go-to-market strategy, all tailored to the track and supported by evidence.
+- **75–89:** Strong and relevant business model with most elements well-justified, but minor gaps or less detail.
+- **40–74:** Moderate business model; justification is vague, generic, or lacks detail in some areas.
+- **20–39:** Minimal business model; little justification or evidence, or only superficial description.
+- **Below 20:** No meaningful business model; justification is missing, irrelevant, or entirely generic.
 ---
 
 
