@@ -117,13 +117,15 @@ function handleTechnicalOverallScore(technicalData) {
     technicalData.techStack.length > 0
   ) {
     const typeWeights = {
-      coreTechnology: TECH_TYPE_WEIGHTS.CORE_TECHNOLOGY,
+      hederaCoreTech: TECH_TYPE_WEIGHTS.HEDERA_CORE_TECH,
+      otherCoreTech: TECH_TYPE_WEIGHTS.OTHER_CORE_TECH,
       integrationTool: TECH_TYPE_WEIGHTS.INTEGRATION_TOOL,
       hederaService: TECH_TYPE_WEIGHTS.HEDERA_SERVICE,
     };
     let weightedSum = 0;
     let totalWeight = 0;
     for (const item of technicalData.techStack) {
+      console.log("componentType", item);
       const type = item.componentType;
       const score = typeof item.score === "number" ? item.score : 0;
       const weight = typeWeights[type] || 0;

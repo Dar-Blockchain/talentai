@@ -1,3 +1,5 @@
+const { TECH_STACK_TYPES } = require("../constants/projectConstants");
+
 const generateTechnicalQuestionsPrompts = {
   getSystemPrompt: (
     projectName,
@@ -69,7 +71,7 @@ The questions must be able to uncover:
 - Return valid JSON only of ${questionsCount} strings.
 - No explanations, comments, or formatting outside the JSON array.
 
-Return **valid JSON only of ${questionsCount} strings** (no commentary or formatting).
+Return **valid JSON only of exactly ${questionsCount} strings** (no commentary or formatting).
     `.trim();
   },
 
@@ -82,12 +84,12 @@ Return **valid JSON only of ${questionsCount} strings** (no commentary or format
     return `
 You are preparing to interview the team of the Hedera-based project "${projectName}" as part of a business pitch evaluation during a hackathon.
 
+Generate ${questionsCount} sharp, business-focused interview questions.
+
 Here is the project description provided by team leader:
 """
 ${projectDescription}
 """
-
-Generate ${questionsCount} sharp, business-focused interview.
 Your questions must draw directly from the provided description:
 
 The questions must be able to uncover:
@@ -99,7 +101,7 @@ The questions must be able to uncover:
 5. **Business Model** (including model type and reasoning behind the choice)  
 6. **Market Potential, Scalability & Growth** (including market range, estimated market size, target region, and how the project plans to scale to meet future demand)  
 
-Return **valid JSON only of ${questionsCount} strings** (no commentary or formatting).
+Return **valid JSON only of exactly ${questionsCount} strings** (no commentary or formatting).
     `.trim();
   },
 };
@@ -112,20 +114,32 @@ Your task is to extract and evaluate all relevant technical data needed to popul
 
 ---
 1. **techStack (array)**  
-   For each technology mentioned:
-   - title: string (technology or tool name)
-   - componentType: one of ["coreTechnology", "integrationTool", "hederaService"]
-   - choiceExplanation: list of reasons given by the team // main influence on the score
-   - complexity: "Beginner", "Intermediate", or "Advanced"
-   - modernity: "outdated", "average", "modern", or "cutting-edge"
-   - strengths: key technical advantages
-   - weaknesses: limitations or incorrect usage
-   - recommendation: concrete improvement tips
-    - score (0–100), using these rules:
-     * ≥ 75: Very well aligned with project goals and ${projectTrack}track, AND explanation is **deep**, **clear**, **specific**, and **technically justified**
-     * 50–74: Moderate to good alignment and usage, but explanation lacks depth or clarity
-     * 25–49: Vague or superficial explanation, or partially misused technology
-     * ≤ 25: Poorly explained, misaligned, or mentioned without justification
+   For each distinct technology or tool explicitly mentioned in the transcript, extract and evaluate the following fields as a single object:
+   - "title": (string) The exact name of the technology or tool.
+   - "componentType": (string) Choose one of: ${Object.values(TECH_STACK_TYPES).join(", ")}. Select the most appropriate type based on the technology's primary role in the project.
+   - "choiceExplanation": (array of strings) All explicit reasons or justifications the team gave for choosing this technology. Only include what is stated or clearly implied.
+   - "complexity": (string) One of: "Beginner", "Intermediate", "Advanced". Assess based on the technology's learning curve and usage in the project.
+   - "modernity": (string) One of: "outdated", "average", "modern", "cutting-edge". Judge based on current industry standards and the context provided.
+   - "strengths": (array of strings) List the main technical advantages or benefits as described or implied by the team.
+   - "weaknesses": (array of strings) List any limitations, risks, or incorrect usages mentioned or implied.
+   - "recommendation": (array of strings) Provide concrete, actionable improvement tips for this technology choice, based on the transcript.
+   - "score": (integer, 0–100) Assign a score using these rules:
+     * 75–100: Technology is highly aligned with project goals and the ${projectTrack} track, and the explanation is deep, clear, specific, and technically justified.
+     * 50–74: Good alignment and usage, but explanation lacks depth or clarity.
+     * 25–49: Vague or superficial explanation, or partially misused technology.
+     * 0–24: Poorly explained, misaligned, or mentioned without justification.
+
+   Strict instructions for optimal AI processing:
+   - Only include technologies/tools that are explicitly mentioned or clearly described in the transcript.
+   - Do NOT guess or invent any field. If a field is not mentioned or cannot be reasonably inferred, omit it from the object.
+   - Do NOT reward name-dropping without explanation; such entries should receive a low score (<10).
+   - For "componentType", use the following mapping:
+     - ${TECH_STACK_TYPES.HEDERA_CORE_TECH}: Core Hedera protocol technologies and SDKs (e.g., Hedera SDK, network protocol).
+     - ${TECH_STACK_TYPES.HEDERA_SERVICE}: Hedera network services (e.g., Hedera Consensus Service (HCS), Hedera Token Service (HTS)).
+     - ${TECH_STACK_TYPES.OTHER_CORE_TECH}: Fundamental non-Hedera technologies essential to project logic (e.g., Node.js, Solidity, Rust, Java, MongoDB).
+     - ${TECH_STACK_TYPES.INTEGRATION_TOOL}: Supporting or auxiliary tools (e.g., React, IPFS, Chainlink, off-chain storage, DevOps/CI tools).
+   - For "choiceExplanation", only include direct statements or clear justifications from the team.
+   - For "score", strictly follow the rubric above and do not inflate scores for vague or incomplete answers.
 
 3. **architecture (object)**
    - title: architecture name (e.g. "monolith", "microservices", "event-driven", "decentralized")
