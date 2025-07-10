@@ -49,7 +49,7 @@ module.exports.connectWithGmail = async (req, res) => {
     // Créer un cookie avec le token JWT
     res.cookie("jwt_token", result.token, {
       httpOnly: false,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 5 * 365 * 24 * 60 * 60 * 1000, // 5 ans
     });
 
     res.status(200).json({
