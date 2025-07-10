@@ -15,14 +15,16 @@ import profileReducer from './slices/profileSlice';
 import bidReducer from './slices/bidSlice';
 import todoReducer from './slices/todoSlice';
 import userReducer from './slices/userSlice';
-  
+import projectReducer from './slices/projectSlice';
+
 const rootReducer = combineReducers({
   user: userReducer,
 
   auth: authReducer,
   profile: profileReducer,
   bid: bidReducer,
-  todo: todoReducer
+  todo: todoReducer,
+  project: projectReducer
 });
 
 const persistConfig = {

@@ -214,66 +214,75 @@ module.exports.getAllProjects = async (
 ) => {
   try {
     const query = {};
-    const options = {
-      skip: (page - 1) * limit,
-      limit: parseInt(limit),
-      populate: [
-        { path: 'leaderId' },
-        {
-          path: 'assessment',
-          model: 'ProjectAssessment',
-        },
-      ],
-    };
 
-    if (track && track.trim() !== '') query.track = track;
+    if (track && track.trim() !== "") query.track = track;
     if (leaderId) query.leaderId = leaderId;
-    if (name && name.trim() !== '') {
-      query.name = { $regex: name, $options: 'i' };
+    if (name && name.trim() !== "")
+      query.name = { $regex: name, $options: "i" };
+
+    // Récupérer les projets sans la pagination au début, juste pour trier
+    const projects = await Project.find(query)
+      .populate("leaderId")
+      .populate({
+        path: "assessment",
+        model: "ProjectAssessment",
+      });
+
+    // Si un tri est demandé
+    if (sort) {
+      const sortField = sort.replace(/^[-+]/, "");
+      const isDescending = sort.startsWith("-");
+
+      // Tri selon les nouveaux critères
+      projects.sort((a, b) => {
+        let aVal, bVal;
+
+        if (sortField === "overallScoreTechnical") {
+          aVal = a.assessment?.technicalData?.overallScore || 0;
+          bVal = b.assessment?.technicalData?.overallScore || 0;
+        } else if (sortField === "overallScoreBusiness") {
+          aVal = a.assessment?.businessData?.overallScore || 0;
+          bVal = b.assessment?.businessData?.overallScore || 0;
+        } else if (sortField === "overallScore") {
+          aVal = a.assessment?.overallScore || 0;
+          bVal = b.assessment?.overallScore || 0;
+        } else {
+          aVal = a[sortField];
+          bVal = b[sortField];
+        }
+
+        if (aVal < bVal) return isDescending ? 1 : -1;
+        if (aVal > bVal) return isDescending ? -1 : 1;
+        return 0;
+      });
     }
 
-    // Récupérer les projets et le total en une seule requête avec des jointures optimisées
-    const [projects, total] = await Promise.all([
-      Project.aggregate([
-        { $match: query }, // Filtrage par les critères donnés
-        {
-          $lookup: {
-            from: 'projectassessments', // Nom de la collection 'ProjectAssessment'
-            localField: 'assessment',  // Associe le champ 'assessment' à la collection 'projectassessments'
-            foreignField: '_id',
-            as: 'assessmentDetails',
-          },
-        },
-        { $unwind: { path: '$assessmentDetails', preserveNullAndEmptyArrays: true } },
-        {
-          $addFields: {
-            status: { $ifNull: ['$assessmentDetails.status', 'Pending'] }, // Si assessment est absent, "Pending"
-          },
-        },
-        ...(sort
-          ? [
-              {
-                $sort: {
-                  [sort.replace(/^[-+]/, '')]: sort.startsWith('-') ? -1 : 1,
-                },
-              },
-            ]
-          : []),
-      ]).exec(),
-      Project.countDocuments(query),
-    ]);
+    // Appliquer la pagination sur les projets triés
+    const skip = (page - 1) * limit;
+    const paginatedProjects = projects.slice(skip, skip + limit);
+    const total = projects.length;
+
+    // Ajouter le status à chaque projet
+    paginatedProjects.forEach((project) => {
+      if (project.assessment) {
+        project.status = project.assessment.status;
+      } else {
+        project.status = "Pending"; // Valeur par défaut si pas d'évaluation associée
+      }
+    });
 
     return {
       total,
       page: parseInt(page),
       limit: parseInt(limit),
-      projects,
+      projects: paginatedProjects,
       totalPages: Math.ceil(total / limit),
     };
   } catch (error) {
-    throw new Error('Erreur lors de la récupération des projets');
+    throw new Error("Erreur lors de la récupération des projets");
   }
 };
+
 
 
 
@@ -689,5 +698,28 @@ module.exports.getProjectsCountByStatus = async () => {
     throw new Error(
       "Error fetching projects count by status: " + error.message
     );
+  }
+};
+
+// services/pdfService.js
+const { generateProjectPdf } = require("../utils/genPdf");
+
+module.exports.generatePdfForProject = async (projectId) => {
+  try {
+    // Récupère le projet et l'évaluation associés
+    const project = await Project.findById(projectId).populate("assessment");
+    if (!project) throw new Error("Project not found");
+
+    // Récupère l'évaluation liée au projet
+    const assessment = project.assessment
+      ? await ProjectAssessment.findById(project.assessment._id)
+      : null;
+
+    // Génère le PDF en utilisant la fonction utilitaire
+    const filePath = await generateProjectPdf(project, assessment);
+    return filePath;
+
+  } catch (err) {
+    throw new Error(`Failed to generate PDF: ${err.message}`);
   }
 };

@@ -13,6 +13,8 @@ router.use(requireAuthUser ,authLogMiddleware("Project"));
 // Créer un projet
 router.post("/addProject", projectController.createProject); 
 
+router.get("/:projectId/export-pdf", projectController.exportProjectPdf);
+
 //activate Team Member
 router.post("/activate", projectController.activateTeamMember);
 
@@ -62,5 +64,6 @@ router.get("/getProjectsCreatedPerDay", projectController.getProjectsCreatedPerD
 
 // Get all available project Count By Status
 router.get("/getProjectsCountByStatus", projectController.getProjectsCountByStatus);
+
 
 module.exports = router;
