@@ -214,35 +214,19 @@ module.exports.getAllProjects = async (
 ) => {
   try {
     const query = {};
+
     if (track && track.trim() !== "") query.track = track;
     if (leaderId) query.leaderId = leaderId;
-    const skip = (page - 1) * limit;
-
     if (name && name.trim() !== "")
       query.name = { $regex: name, $options: "i" };
 
-    // Récupérer les projets et le total avec population du champ assessment
-    const [projects, total] = await Promise.all([
-      Project.find(query)
-        .skip(skip)
-        .limit(parseInt(limit))
-        .populate("leaderId")
-        .populate({
-          path: "assessment", // Utilisation de populate pour inclure le champ 'assessment'
-          model: "ProjectAssessment", // Assurez-vous que le modèle ProjectAssessment est correctement spécifié
-        }),
-      Project.countDocuments(query),
-    ]);
-
-    // Ajouter le status à chaque projet
-    projects.forEach((project) => {
-      // Si l'évaluation (assessment) existe, ajouter le status
-      if (project.assessment) {
-        project.status = project.assessment.status;
-      } else {
-        project.status = "Pending"; // Valeur par défaut si pas d'évaluation associée
-      }
-    });
+    // Récupérer les projets sans la pagination au début, juste pour trier
+    const projects = await Project.find(query)
+      .populate("leaderId")
+      .populate({
+        path: "assessment",
+        model: "ProjectAssessment",
+      });
 
     // Si un tri est demandé
     if (sort) {
@@ -253,21 +237,16 @@ module.exports.getAllProjects = async (
       projects.sort((a, b) => {
         let aVal, bVal;
 
-        // Si on veut trier par overallScore dans TechnicalDataSchema
         if (sortField === "overallScoreTechnical") {
           aVal = a.assessment?.technicalData?.overallScore || 0;
           bVal = b.assessment?.technicalData?.overallScore || 0;
-        }
-        // Si on veut trier par overallScore dans BusinessDataSchema
-        else if (sortField === "overallScoreBusiness") {
+        } else if (sortField === "overallScoreBusiness") {
           aVal = a.assessment?.businessData?.overallScore || 0;
           bVal = b.assessment?.businessData?.overallScore || 0;
         } else if (sortField === "overallScore") {
           aVal = a.assessment?.overallScore || 0;
           bVal = b.assessment?.overallScore || 0;
-        }
-        // Sinon, tri par un autre champ
-        else {
+        } else {
           aVal = a[sortField];
           bVal = b[sortField];
         }
@@ -278,17 +257,33 @@ module.exports.getAllProjects = async (
       });
     }
 
+    // Appliquer la pagination sur les projets triés
+    const skip = (page - 1) * limit;
+    const paginatedProjects = projects.slice(skip, skip + limit);
+    const total = projects.length;
+
+    // Ajouter le status à chaque projet
+    paginatedProjects.forEach((project) => {
+      if (project.assessment) {
+        project.status = project.assessment.status;
+      } else {
+        project.status = "Pending"; // Valeur par défaut si pas d'évaluation associée
+      }
+    });
+
     return {
       total,
       page: parseInt(page),
       limit: parseInt(limit),
-      projects,
+      projects: paginatedProjects,
       totalPages: Math.ceil(total / limit),
     };
   } catch (error) {
     throw new Error("Erreur lors de la récupération des projets");
   }
 };
+
+
 
 
 // Récupération des projets de l'utilisateur connecté
