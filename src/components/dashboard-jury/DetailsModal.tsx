@@ -1,12 +1,22 @@
 import React from 'react';
-import { Dialog, DialogTitle, DialogContent, IconButton, Typography, Box, Divider, Card, CardContent, Paper, Tooltip, Chip, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, IconButton, Typography, Box, Divider, Card, CardContent, Paper, Tooltip, Chip } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import StarIcon from '@mui/icons-material/Star';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ScienceIcon from '@mui/icons-material/Science';
 import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import DescriptionIcon from '@mui/icons-material/Description';
+import BuildIcon from '@mui/icons-material/Build';
+import LayersIcon from '@mui/icons-material/Layers';
+import GroupIcon from '@mui/icons-material/Group';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import BusinessIcon from '@mui/icons-material/Business';
+import PublicIcon from '@mui/icons-material/Public';
+import ArticleIcon from '@mui/icons-material/Article';
+import ConstructionIcon from '@mui/icons-material/Construction';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
 
 interface DetailsModalProps {
   open: boolean;
@@ -94,120 +104,107 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ open, onClose, detailsProje
                       <Box sx={{ ml: 'auto' }}>{renderScoreChip(detailsProject.assessment.technicalData?.overallScore)}</Box>
                     </Box>
                     <Divider sx={{ mb: 2 }} />
-                    <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>Track: <span style={{ fontWeight: 400 }}>{detailsProject.assessment.technicalData?.track || 'No data'}</span></Typography>
-                    <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>Summary:</Typography>
+                    <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }} fontSize={'20px'}><ArticleIcon sx={{ mr: 1, fontSize: 25, verticalAlign: 'middle' }} />Summary</Typography>
                     <Typography variant="body2" sx={{ mb: 2 }}>{detailsProject.assessment.technicalData?.summary || 'No summary provided.'}</Typography>
-                    <Accordion elevation={0} sx={{ mb: 1, background: 'transparent' }}>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography fontWeight={700}>Tech Stack</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        {Array.isArray(detailsProject.assessment.technicalData?.techStack) && detailsProject.assessment.technicalData.techStack.length > 0 ? (
-                          detailsProject.assessment.technicalData.techStack.map((stack: any, idx: number) => (
-                            <Box key={idx} sx={{ mb: 2 }}>
-                              <Typography variant="subtitle2">{stack.title} ({stack.componentType})</Typography>
-                              <Typography variant="body2">Complexity: {stack.complexity}, Modernity: {stack.modernity}</Typography>
-                              {stack.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(stack.score)}</Typography>}
-                              {stack.choiceExplanation && stack.choiceExplanation.length > 0 && (
-                                <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                  {stack.choiceExplanation.map((ex: string, i: number) => <li key={i}><Typography variant="body2">{ex}</Typography></li>)}
-                                </Box>
-                              )}
-                              {stack.strengths && stack.strengths.length > 0 && (
-                                <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                  <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
-                                  {stack.strengths.map((s: string, i: number) => <li key={i}><Typography variant="body2">{s}</Typography></li>)}
-                                </Box>
-                              )}
-                              {stack.weaknesses && stack.weaknesses.length > 0 && (
-                                <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                  <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
-                                  {stack.weaknesses.map((w: string, i: number) => <li key={i}><Typography variant="body2">{w}</Typography></li>)}
-                                </Box>
-                              )}
-                              {stack.recommendation && stack.recommendation.length > 0 && (
-                                <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                  <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
-                                  {stack.recommendation.map((r: string, i: number) => <li key={i}><Typography variant="body2">{r}</Typography></li>)}
-                                </Box>
-                              )}
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <Typography variant="subtitle2" fontWeight={700} fontSize={'20px'}><ConstructionIcon sx={{ mr: 1, fontSize: 25, verticalAlign: 'middle' }} />Tech Stack</Typography>
+                      {Array.isArray(detailsProject.assessment.technicalData?.techStack) && detailsProject.assessment.technicalData.techStack.length > 0 ? (
+                        detailsProject.assessment.technicalData.techStack.map((stack: any, idx: number) => (
+                          <Card sx={{ mb: 2, p: 2, borderRadius: 2, boxShadow: 1, background: '#f0f4ff' }} key={idx}>
+                            <Typography variant="body2">{stack.title} ({stack.componentType})</Typography>
+                            <Typography variant="body2">Complexity: {stack.complexity}, Modernity: {stack.modernity}</Typography>
+                            {stack.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(stack.score)}</Typography>}
+                            {stack.choiceExplanation && stack.choiceExplanation.length > 0 && (
+                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                                {stack.choiceExplanation.map((ex: string, i: number) => <li key={i}><Typography variant="body2">{ex}</Typography></li>)}
+                              </Box>
+                            )}
+                            {stack.strengths && stack.strengths.length > 0 && (
+                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                                <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
+                                {stack.strengths.map((s: string, i: number) => <li key={i}><Typography variant="body2">{s}</Typography></li>)}
+                              </Box>
+                            )}
+                            {stack.weaknesses && stack.weaknesses.length > 0 && (
+                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                                <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
+                                {stack.weaknesses.map((w: string, i: number) => <li key={i}><Typography variant="body2">{w}</Typography></li>)}
+                              </Box>
+                            )}
+                            {stack.recommendation && stack.recommendation.length > 0 && (
+                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                                <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
+                                {stack.recommendation.map((r: string, i: number) => <li key={i}><Typography variant="body2">{r}</Typography></li>)}
+                              </Box>
+                            )}
+                          </Card>
+                        ))
+                      ) : <Typography variant="body2">No tech stack data.</Typography>}
+                    </Box>
+                    <Box mt={3} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <Typography variant="subtitle2" fontWeight={700} fontSize={'20px'}><AccountTreeIcon sx={{ mr: 1, fontSize: 25, verticalAlign: 'middle' }} />Architecture</Typography>
+                      {detailsProject.assessment.technicalData?.architecture ? (
+                        <Box>
+                          <Typography variant="body2">{detailsProject.assessment.technicalData.architecture.title} ({detailsProject.assessment.technicalData.architecture.type})</Typography>
+                          {detailsProject.assessment.technicalData.architecture.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(detailsProject.assessment.technicalData.architecture.score)}</Typography>}
+                          {detailsProject.assessment.technicalData.architecture.choiceExplanation && detailsProject.assessment.technicalData.architecture.choiceExplanation.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              {detailsProject.assessment.technicalData.architecture.choiceExplanation.map((ex: string, i: number) => <li key={i}><Typography variant="body2">{ex}</Typography></li>)}
                             </Box>
-                          ))
-                        ) : <Typography variant="body2">No tech stack data.</Typography>}
-                      </AccordionDetails>
-                    </Accordion>
-                    <Accordion elevation={0} sx={{ mb: 1, background: 'transparent' }}>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography fontWeight={700}>Architecture</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        {detailsProject.assessment.technicalData?.architecture ? (
-                          <Box>
-                            <Typography variant="subtitle2">{detailsProject.assessment.technicalData.architecture.title} ({detailsProject.assessment.technicalData.architecture.type})</Typography>
-                            {detailsProject.assessment.technicalData.architecture.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(detailsProject.assessment.technicalData.architecture.score)}</Typography>}
-                            {detailsProject.assessment.technicalData.architecture.choiceExplanation && detailsProject.assessment.technicalData.architecture.choiceExplanation.length > 0 && (
-                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                {detailsProject.assessment.technicalData.architecture.choiceExplanation.map((ex: string, i: number) => <li key={i}><Typography variant="body2">{ex}</Typography></li>)}
-                              </Box>
-                            )}
-                            {detailsProject.assessment.technicalData.architecture.strengths && detailsProject.assessment.technicalData.architecture.strengths.length > 0 && (
-                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
-                                {detailsProject.assessment.technicalData.architecture.strengths.map((s: string, i: number) => <li key={i}><Typography variant="body2">{s}</Typography></li>)}
-                              </Box>
-                            )}
-                            {detailsProject.assessment.technicalData.architecture.weaknesses && detailsProject.assessment.technicalData.architecture.weaknesses.length > 0 && (
-                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
-                                {detailsProject.assessment.technicalData.architecture.weaknesses.map((w: string, i: number) => <li key={i}><Typography variant="body2">{w}</Typography></li>)}
-                              </Box>
-                            )}
-                            {detailsProject.assessment.technicalData.architecture.recommendation && detailsProject.assessment.technicalData.architecture.recommendation.length > 0 && (
-                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
-                                {detailsProject.assessment.technicalData.architecture.recommendation.map((r: string, i: number) => <li key={i}><Typography variant="body2">{r}</Typography></li>)}
-                              </Box>
-                            )}
-                          </Box>
-                        ) : <Typography variant="body2">No architecture data.</Typography>}
-                      </AccordionDetails>
-                    </Accordion>
-                    <Accordion elevation={0} sx={{ mb: 1, background: 'transparent' }}>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography fontWeight={700}>Scalability Approach</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        {detailsProject.assessment.technicalData?.scalabilityApproach ? (
-                          <Box>
-                            <Typography variant="subtitle2">{detailsProject.assessment.technicalData.scalabilityApproach.strategy}</Typography>
-                            {detailsProject.assessment.technicalData.scalabilityApproach.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(detailsProject.assessment.technicalData.scalabilityApproach.score)}</Typography>}
-                            {detailsProject.assessment.technicalData.scalabilityApproach.choiceExplanation && detailsProject.assessment.technicalData.scalabilityApproach.choiceExplanation.length > 0 && (
-                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                {detailsProject.assessment.technicalData.scalabilityApproach.choiceExplanation.map((ex: string, i: number) => <li key={i}><Typography variant="body2">{ex}</Typography></li>)}
-                              </Box>
-                            )}
-                            {detailsProject.assessment.technicalData.scalabilityApproach.strengths && detailsProject.assessment.technicalData.scalabilityApproach.strengths.length > 0 && (
-                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
-                                {detailsProject.assessment.technicalData.scalabilityApproach.strengths.map((s: string, i: number) => <li key={i}><Typography variant="body2">{s}</Typography></li>)}
-                              </Box>
-                            )}
-                            {detailsProject.assessment.technicalData.scalabilityApproach.weaknesses && detailsProject.assessment.technicalData.scalabilityApproach.weaknesses.length > 0 && (
-                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
-                                {detailsProject.assessment.technicalData.scalabilityApproach.weaknesses.map((w: string, i: number) => <li key={i}><Typography variant="body2">{w}</Typography></li>)}
-                              </Box>
-                            )}
-                            {detailsProject.assessment.technicalData.scalabilityApproach.recommendation && detailsProject.assessment.technicalData.scalabilityApproach.recommendation.length > 0 && (
-                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
-                                {detailsProject.assessment.technicalData.scalabilityApproach.recommendation.map((r: string, i: number) => <li key={i}><Typography variant="body2">{r}</Typography></li>)}
-                              </Box>
-                            )}
-                          </Box>
-                        ) : <Typography variant="body2">No scalability data.</Typography>}
-                      </AccordionDetails>
-                    </Accordion>
+                          )}
+                          {detailsProject.assessment.technicalData.architecture.strengths && detailsProject.assessment.technicalData.architecture.strengths.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
+                              {detailsProject.assessment.technicalData.architecture.strengths.map((s: string, i: number) => <li key={i}><Typography variant="body2">{s}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.technicalData.architecture.weaknesses && detailsProject.assessment.technicalData.architecture.weaknesses.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
+                              {detailsProject.assessment.technicalData.architecture.weaknesses.map((w: string, i: number) => <li key={i}><Typography variant="body2">{w}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.technicalData.architecture.recommendation && detailsProject.assessment.technicalData.architecture.recommendation.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
+                              {detailsProject.assessment.technicalData.architecture.recommendation.map((r: string, i: number) => <li key={i}><Typography variant="body2">{r}</Typography></li>)}
+                            </Box>
+                          )}
+                        </Box>
+                      ) : <Typography variant="body2">No architecture data.</Typography>}
+                    </Box>
+                    <Box my={3} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <Typography variant="subtitle2" fontWeight={700} fontSize={'20px'}><ShowChartIcon sx={{ mr: 1, fontSize: 25, verticalAlign: 'middle' }} />Scalability Approach</Typography>
+                      {detailsProject.assessment.technicalData?.scalabilityApproach ? (
+                        <Box>
+                          <Typography variant="body2">{detailsProject.assessment.technicalData.scalabilityApproach.strategy}</Typography>
+                          {detailsProject.assessment.technicalData.scalabilityApproach.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(detailsProject.assessment.technicalData.scalabilityApproach.score)}</Typography>}
+                          {detailsProject.assessment.technicalData.scalabilityApproach.choiceExplanation && detailsProject.assessment.technicalData.scalabilityApproach.choiceExplanation.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              {detailsProject.assessment.technicalData.scalabilityApproach.choiceExplanation.map((ex: string, i: number) => <li key={i}><Typography variant="body2">{ex}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.technicalData.scalabilityApproach.strengths && detailsProject.assessment.technicalData.scalabilityApproach.strengths.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
+                              {detailsProject.assessment.technicalData.scalabilityApproach.strengths.map((s: string, i: number) => <li key={i}><Typography variant="body2">{s}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.technicalData.scalabilityApproach.weaknesses && detailsProject.assessment.technicalData.scalabilityApproach.weaknesses.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
+                              {detailsProject.assessment.technicalData.scalabilityApproach.weaknesses.map((w: string, i: number) => <li key={i}><Typography variant="body2">{w}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.technicalData.scalabilityApproach.recommendation && detailsProject.assessment.technicalData.scalabilityApproach.recommendation.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
+                              {detailsProject.assessment.technicalData.scalabilityApproach.recommendation.map((r: string, i: number) => <li key={i}><Typography variant="body2">{r}</Typography></li>)}
+                            </Box>
+                          )}
+                        </Box>
+                      ) : <Typography variant="body2">No scalability data.</Typography>}
+                    </Box>
                     <Typography variant="caption" sx={{ color: 'text.secondary', mt: 2 }}>Created: {detailsProject.assessment.technicalData?.createdAt ? new Date(detailsProject.assessment.technicalData.createdAt).toLocaleString() : 'No date'}</Typography>
                   </CardContent>
                 </Paper>
@@ -220,101 +217,90 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ open, onClose, detailsProje
                       <Box sx={{ ml: 'auto' }}>{renderScoreChip(detailsProject.assessment.businessData?.overallScore)}</Box>
                     </Box>
                     <Divider sx={{ mb: 2 }} />
-                    <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>Problem: <span style={{ fontWeight: 400 }}>{detailsProject.assessment.businessData?.problem || 'No data'}</span></Typography>
-                    <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>Summary:</Typography>
+                    <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }} fontSize={'20px'}><ArticleIcon sx={{ mr: 1, fontSize: 25, verticalAlign: 'middle' }} />Summary</Typography>
                     <Typography variant="body2" sx={{ mb: 2 }}>{detailsProject.assessment.businessData?.summary || 'No summary provided.'}</Typography>
-                    <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>Target Users:</Typography>
-                    {Array.isArray(detailsProject.assessment.businessData?.targetUsers) && detailsProject.assessment.businessData.targetUsers.length > 0 ? (
-                      <Box component="ul" sx={{ pl: 3, mb: 2 }}>
-                        {detailsProject.assessment.businessData.targetUsers.map((u: string, i: number) => <li key={i}><Typography variant="body2">{u}</Typography></li>)}
-                      </Box>
-                    ) : <Typography variant="body2" sx={{ mb: 2 }}>No data</Typography>}
-                    <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>Added Values:</Typography>
-                    {Array.isArray(detailsProject.assessment.businessData?.addedValues) && detailsProject.assessment.businessData.addedValues.length > 0 ? (
-                      <Box component="ul" sx={{ pl: 3, mb: 2 }}>
-                        {detailsProject.assessment.businessData.addedValues.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
-                      </Box>
-                    ) : <Typography variant="body2" sx={{ mb: 2 }}>No data</Typography>}
-                    <Accordion elevation={0} sx={{ mb: 1, background: 'transparent' }}>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography fontWeight={700}>Business Model</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        {detailsProject.assessment.businessData?.businessModel ? (
-                          <Box>
-                            <Typography variant="subtitle2">{detailsProject.assessment.businessData.businessModel.model}</Typography>
-                            {detailsProject.assessment.businessData.businessModel.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(detailsProject.assessment.businessData.businessModel.score)}</Typography>}
-                            {detailsProject.assessment.businessData.businessModel.choiceExplanation && detailsProject.assessment.businessData.businessModel.choiceExplanation.length > 0 && (
-                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                {detailsProject.assessment.businessData.businessModel.choiceExplanation.map((ex: string, i: number) => <li key={i}><Typography variant="body2">{ex}</Typography></li>)}
-                              </Box>
-                            )}
-                            {detailsProject.assessment.businessData.businessModel.strengths && detailsProject.assessment.businessData.businessModel.strengths.length > 0 && (
-                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
-                                {detailsProject.assessment.businessData.businessModel.strengths.map((s: string, i: number) => <li key={i}><Typography variant="body2">{s}</Typography></li>)}
-                              </Box>
-                            )}
-                            {detailsProject?.assessment?.businessData?.businessModel?.weaknesses && detailsProject?.assessment?.businessData?.businessModel?.weaknesses.length > 0 && (
-                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
-                                {detailsProject.assessment.businessData.businessModel.weaknesses.map((w: string, i: number) => <li key={i}><Typography variant="body2">{w}</Typography></li>)}
-                              </Box>
-                            )}
-                            {detailsProject.assessment.businessData.businessModel.recommendation && detailsProject.assessment.businessData.businessModel.recommendation.length > 0 && (
-                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
-                                {detailsProject.assessment.businessData.businessModel.recommendation.map((r: string, i: number) => <li key={i}><Typography variant="body2">{r}</Typography></li>)}
-                              </Box>
-                            )}
-                          </Box>
-                        ) : <Typography variant="body2">No business model data.</Typography>}
-                      </AccordionDetails>
-                    </Accordion>
-                    <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>Competitors:</Typography>
-                    {Array.isArray(detailsProject.assessment.businessData?.competitors) && detailsProject.assessment.businessData.competitors.length > 0 ? (
-                      <Box component="ul" sx={{ pl: 3, mb: 2 }}>
-                        {detailsProject.assessment.businessData.competitors.map((c: string, i: number) => <li key={i}><Typography variant="body2">{c}</Typography></li>)}
-                      </Box>
-                    ) : <Typography variant="body2" sx={{ mb: 2 }}>No data</Typography>}
-                    <Accordion elevation={0} sx={{ mb: 1, background: 'transparent' }}>
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography fontWeight={700}>Market Potential</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        {detailsProject.assessment.businessData?.marketPotential ? (
-                          <Box>
-                            <Typography variant="body2">Range: {detailsProject.assessment.businessData.marketPotential.range}</Typography>
-                            <Typography variant="body2">Estimated Market Size: {detailsProject.assessment.businessData.marketPotential.estimatedMarketSize}</Typography>
-                            <Typography variant="body2">Target Region: {detailsProject.assessment.businessData.marketPotential.targetRegion}</Typography>
-                            {detailsProject.assessment.businessData.marketPotential.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(detailsProject.assessment.businessData.marketPotential.score)}</Typography>}
-                            {detailsProject.assessment.businessData.marketPotential.choiceExplanation && detailsProject.assessment.businessData.marketPotential.choiceExplanation.length > 0 && (
-                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                {detailsProject.assessment.businessData.marketPotential.choiceExplanation.map((ex: string, i: number) => <li key={i}><Typography variant="body2">{ex}</Typography></li>)}
-                              </Box>
-                            )}
-                            {detailsProject.assessment.businessData.marketPotential.strengths && detailsProject.assessment.businessData.marketPotential.strengths.length > 0 && (
-                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
-                                {detailsProject.assessment.businessData.marketPotential.strengths.map((s: string, i: number) => <li key={i}><Typography variant="body2">{s}</Typography></li>)}
-                              </Box>
-                            )}
-                            {detailsProject.assessment.businessData.marketPotential.weaknesses && detailsProject.assessment.businessData.marketPotential.weaknesses.length > 0 && (
-                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
-                                {detailsProject.assessment.businessData.marketPotential.weaknesses.map((w: string, i: number) => <li key={i}><Typography variant="body2">{w}</Typography></li>)}
-                              </Box>
-                            )}
-                            {detailsProject.assessment.businessData.marketPotential.recommendation && detailsProject.assessment.businessData.marketPotential.recommendation.length > 0 && (
-                              <Box component="ul" sx={{ pl: 3, mb: 0 }}>
-                                <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
-                                {detailsProject.assessment.businessData.marketPotential.recommendation.map((r: string, i: number) => <li key={i}><Typography variant="body2">{r}</Typography></li>)}
-                              </Box>
-                            )}
-                          </Box>
-                        ) : <Typography variant="body2">No market potential data.</Typography>}
-                      </AccordionDetails>
-                    </Accordion>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <Typography variant="subtitle2" fontWeight={700} fontSize={'20px'}><BusinessIcon sx={{ mr: 1, fontSize: 25, verticalAlign: 'middle' }} />Business Model</Typography>
+                      {detailsProject.assessment.businessData?.businessModel ? (
+                        <Box>
+                          <Typography variant="subtitle2">{detailsProject.assessment.businessData.businessModel.model}</Typography>
+                          {detailsProject.assessment.businessData.businessModel.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(detailsProject.assessment.businessData.businessModel.score)}</Typography>}
+                          {detailsProject.assessment.businessData.businessModel.choiceExplanation && detailsProject.assessment.businessData.businessModel.choiceExplanation.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              {detailsProject.assessment.businessData.businessModel.choiceExplanation.map((ex: string, i: number) => <li key={i}><Typography variant="body2">{ex}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.businessModel.strengths && detailsProject.assessment.businessData.businessModel.strengths.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
+                              {detailsProject.assessment.businessData.businessModel.strengths.map((s: string, i: number) => <li key={i}><Typography variant="body2">{s}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject?.assessment?.businessData?.businessModel?.weaknesses && detailsProject?.assessment?.businessData?.businessModel?.weaknesses.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
+                              {detailsProject.assessment.businessData.businessModel.weaknesses.map((w: string, i: number) => <li key={i}><Typography variant="body2">{w}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.businessModel.recommendation && detailsProject.assessment.businessData.businessModel.recommendation.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
+                              {detailsProject.assessment.businessData.businessModel.recommendation.map((r: string, i: number) => <li key={i}><Typography variant="body2">{r}</Typography></li>)}
+                            </Box>
+                          )}
+                        </Box>
+                      ) : <Typography variant="body2">No business model data.</Typography>}
+                      <Typography variant="subtitle2" fontWeight={700} fontSize={'20px'}><PublicIcon sx={{ mr: 1, fontSize: 25, verticalAlign: 'middle' }} />Market Potential</Typography>
+                      {detailsProject.assessment.businessData?.marketPotential ? (
+                        <Box>
+                          <Typography variant="body2">Range: {detailsProject.assessment.businessData.marketPotential.range}</Typography>
+                          <Typography variant="body2">Estimated Market Size: {detailsProject.assessment.businessData.marketPotential.estimatedMarketSize}</Typography>
+                          <Typography variant="body2">Target Region: {detailsProject.assessment.businessData.marketPotential.targetRegion}</Typography>
+                          {detailsProject.assessment.businessData.marketPotential.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(detailsProject.assessment.businessData.marketPotential.score)}</Typography>}
+                          {detailsProject.assessment.businessData.marketPotential.choiceExplanation && detailsProject.assessment.businessData.marketPotential.choiceExplanation.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              {detailsProject.assessment.businessData.marketPotential.choiceExplanation.map((ex: string, i: number) => <li key={i}><Typography variant="body2">{ex}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.marketPotential.strengths && detailsProject.assessment.businessData.marketPotential.strengths.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
+                              {detailsProject.assessment.businessData.marketPotential.strengths.map((s: string, i: number) => <li key={i}><Typography variant="body2">{s}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.marketPotential.weaknesses && detailsProject.assessment.businessData.marketPotential.weaknesses.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
+                              {detailsProject.assessment.businessData.marketPotential.weaknesses.map((w: string, i: number) => <li key={i}><Typography variant="body2">{w}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.marketPotential.recommendation && detailsProject.assessment.businessData.marketPotential.recommendation.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
+                              {detailsProject.assessment.businessData.marketPotential.recommendation.map((r: string, i: number) => <li key={i}><Typography variant="body2">{r}</Typography></li>)}
+                            </Box>
+                          )}
+                        </Box>
+                      ) : <Typography variant="body2">No market potential data.</Typography>}
+                      <Typography variant="subtitle2" fontWeight={700} fontSize={'20px'}><GroupIcon sx={{ mr: 1, fontSize: 25, verticalAlign: 'middle' }} />Target Users</Typography>
+                      {Array.isArray(detailsProject.assessment.businessData?.targetUsers) && detailsProject.assessment.businessData.targetUsers.length > 0 ? (
+                        <Box component="ul" sx={{ pl: 3, mb: 2 }}>
+                          {detailsProject.assessment.businessData.targetUsers.map((u: string, i: number) => <li key={i}><Typography variant="body2">{u}</Typography></li>)}
+                        </Box>
+                      ) : <Typography variant="body2" sx={{ mb: 2 }}>No data</Typography>}
+                      <Typography variant="subtitle2" fontWeight={700} fontSize={'20px'}><AddCircleIcon sx={{ mr: 1, fontSize: 25, verticalAlign: 'middle' }} />Added Values</Typography>
+                      {Array.isArray(detailsProject.assessment.businessData?.addedValues) && detailsProject.assessment.businessData.addedValues.length > 0 ? (
+                        <Box component="ul" sx={{ pl: 3, mb: 2 }}>
+                          {detailsProject.assessment.businessData.addedValues.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                        </Box>
+                      ) : <Typography variant="body2" sx={{ mb: 2 }}>No data</Typography>}
+                      <Typography variant="subtitle2" fontWeight={700} fontSize={'20px'}><BusinessIcon sx={{ mr: 1, fontSize: 25, verticalAlign: 'middle' }} />Competitors</Typography>
+                      {Array.isArray(detailsProject.assessment.businessData?.competitors) && detailsProject.assessment.businessData.competitors.length > 0 ? (
+                        <Box component="ul" sx={{ pl: 3, mb: 2 }}>
+                          {detailsProject.assessment.businessData.competitors.map((c: string, i: number) => <li key={i}><Typography variant="body2">{c}</Typography></li>)}
+                        </Box>
+                      ) : <Typography variant="body2" sx={{ mb: 2 }}>No data</Typography>}
+                    </Box>
                     <Typography variant="caption" sx={{ color: 'text.secondary', mt: 2 }}>Created: {detailsProject.assessment.businessData?.createdAt ? new Date(detailsProject.assessment.businessData.createdAt).toLocaleString() : 'No date'}</Typography>
                   </CardContent>
                 </Paper>
