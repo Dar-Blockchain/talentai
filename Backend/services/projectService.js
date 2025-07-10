@@ -5,7 +5,6 @@ const {
   handleBusinessOverallScore,
   handleTechnicalOverallScore,
   handleAssessmentOverallScore,
-  handleEligibility,
 } = require("../utils/projectUtils");
 
 const {
@@ -215,70 +214,54 @@ module.exports.getAllProjects = async (
 ) => {
   try {
     const query = {};
-    if (track && track.trim() !== "") query.track = track;
+    const options = {
+      skip: (page - 1) * limit,
+      limit: parseInt(limit),
+      populate: [
+        { path: 'leaderId' },
+        {
+          path: 'assessment',
+          model: 'ProjectAssessment',
+        },
+      ],
+    };
+
+    if (track && track.trim() !== '') query.track = track;
     if (leaderId) query.leaderId = leaderId;
-    const skip = (page - 1) * limit;
+    if (name && name.trim() !== '') {
+      query.name = { $regex: name, $options: 'i' };
+    }
 
-    if (name && name.trim() !== "")
-      query.name = { $regex: name, $options: "i" };
-
-    // Récupérer les projets et le total avec population du champ assessment
+    // Récupérer les projets et le total en une seule requête avec des jointures optimisées
     const [projects, total] = await Promise.all([
-      Project.find(query)
-        .skip(skip)
-        .limit(parseInt(limit))
-        .populate("leaderId")
-        .populate({
-          path: "assessment", // Utilisation de populate pour inclure le champ 'assessment'
-          model: "ProjectAssessment", // Assurez-vous que le modèle ProjectAssessment est correctement spécifié
-          select: "status", // Nous sélectionnons uniquement le champ status ici
-        }),
+      Project.aggregate([
+        { $match: query }, // Filtrage par les critères donnés
+        {
+          $lookup: {
+            from: 'projectassessments', // Nom de la collection 'ProjectAssessment'
+            localField: 'assessment',  // Associe le champ 'assessment' à la collection 'projectassessments'
+            foreignField: '_id',
+            as: 'assessmentDetails',
+          },
+        },
+        { $unwind: { path: '$assessmentDetails', preserveNullAndEmptyArrays: true } },
+        {
+          $addFields: {
+            status: { $ifNull: ['$assessmentDetails.status', 'Pending'] }, // Si assessment est absent, "Pending"
+          },
+        },
+        ...(sort
+          ? [
+              {
+                $sort: {
+                  [sort.replace(/^[-+]/, '')]: sort.startsWith('-') ? -1 : 1,
+                },
+              },
+            ]
+          : []),
+      ]).exec(),
       Project.countDocuments(query),
     ]);
-
-    // Ajouter le status à chaque projet
-    projects.forEach((project) => {
-      // Si l'évaluation (assessment) existe, ajouter le status
-      if (project.assessment) {
-        project.status = project.assessment.status;
-      } else {
-        project.status = "Pending"; // Valeur par défaut si pas d'évaluation associée
-      }
-    });
-
-    // Si un tri est demandé
-    if (sort) {
-      const sortField = sort.replace(/^[-+]/, "");
-      const isDescending = sort.startsWith("-");
-
-      // Tri selon les nouveaux critères
-      projects.sort((a, b) => {
-        let aVal, bVal;
-
-        // Si on veut trier par overallScore dans TechnicalDataSchema
-        if (sortField === "overallScoreTechnical") {
-          aVal = a.assessment?.technicalData?.overallScore || 0;
-          bVal = b.assessment?.technicalData?.overallScore || 0;
-        }
-        // Si on veut trier par overallScore dans BusinessDataSchema
-        else if (sortField === "overallScoreBusiness") {
-          aVal = a.assessment?.businessData?.overallScore || 0;
-          bVal = b.assessment?.businessData?.overallScore || 0;
-        } else if (sortField === "overallScore") {
-          aVal = a.assessment?.overallScore || 0;
-          bVal = b.assessment?.overallScore || 0;
-        }
-        // Sinon, tri par un autre champ
-        else {
-          aVal = a[sortField];
-          bVal = b[sortField];
-        }
-
-        if (aVal < bVal) return isDescending ? 1 : -1;
-        if (aVal > bVal) return isDescending ? -1 : 1;
-        return 0;
-      });
-    }
 
     return {
       total,
@@ -288,9 +271,10 @@ module.exports.getAllProjects = async (
       totalPages: Math.ceil(total / limit),
     };
   } catch (error) {
-    throw new Error("Erreur lors de la récupération des projets");
+    throw new Error('Erreur lors de la récupération des projets');
   }
 };
+
 
 
 // Récupération des projets de l'utilisateur connecté
@@ -383,13 +367,11 @@ module.exports.generateProjectQuestions = async (project, assessmentType) => {
       questionsCount = BUSINESS_ASSESSMENT_QUESTIONS_COUNT;
       systemPrompt = generateBusinessQuestionsPrompts.getSystemPrompt(
         projectName,
-        projectTrack, 
         questionsCount,
         BUSINESS_QUESTION_DURATION
       );
       userPrompt = generateBusinessQuestionsPrompts.getUserPrompt(
         projectName,
-        projectTrack,
         projectDescription,
         questionsCount
       );
@@ -467,17 +449,15 @@ exports.analyzeAnswers = async ({
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
       systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
         projectName,
-        projectTrack
+        questions
       );
       userPrompt = analyzeBusinessAnswersPrompts.getUserPrompt(
         projectName,
-        projectTrack,
         questions
       );
     }
 
     // II. Send the prompt to the AI
-    
     const stream = await together.chat.completions.create({
       model: "deepseek-ai/DeepSeek-V3",
       messages: [
@@ -485,7 +465,7 @@ exports.analyzeAnswers = async ({
         { role: "user", content: userPrompt },
       ],
       max_tokens: 3500,
-      temperature: 0.7,
+      temperature: 0.9,
       stream: true,
     });
 
@@ -495,7 +475,7 @@ exports.analyzeAnswers = async ({
       if (content) raw += content;
     }
 
-    // III. parse AI response 
+    // III. parse AI response
     let analysis = await parseAIResponse(raw);
 
     console.log("Analysis:", analysis);
@@ -538,13 +518,8 @@ exports.analyzeAnswers = async ({
       );
       projectAssessment.status = PROJECT_STATUS.DONE;
     }
+
     await projectAssessment.save();
-    
-
-    // V. Handle eligibility
-    await handleEligibility(projectAssessment, analysis, assessmentType);
-
-
 
     return { analysis };
   } catch (error) {
