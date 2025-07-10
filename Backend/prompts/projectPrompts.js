@@ -243,7 +243,7 @@ Your task is to evaluate all relevant business information needed to populate th
 6. **businessModel (object)**  
    - model: the type of business model (e.g. "subscription", "freemium", "transaction-based", etc.)
    - choiceExplanation: list of reasons the team gave for this model
-   - score (0–100): judge's score based on how realistic, viable, and well-explained the model is
+   - score (0–100): judge's score
    - strengths: strengths or benefits of the chosen model
    - weaknesses: potential drawbacks or limitations
    - recommendation: improvement suggestions
@@ -256,46 +256,79 @@ Your task is to evaluate all relevant business information needed to populate th
    - estimatedMarketSize: any figures or phrases about the size of the market
    - targetRegion: geographic market focus
    - choiceExplanation: reasons given for the claimed potential
-   - score (0–100): judge's score based on how clearly the market was defined and justified
+   - score (0–100): judge's score
    - strengths: strengths of the project's market positioning
    - weaknesses: weaknesses, unrealistic claims, or gaps
    - recommendation: business advice for improvement
 
 ---
 
-# Score calculation guidelines:
-  - **Track alignment (business level) score:**
-    - **Score 90–100 (Exceptional business alignment):** The project’s business model, value proposition, and go-to-market strategy are directly and fully mapped to the specific business goals, requirements, and focus areas of the track. The team provides highly detailed, explicit, and convincing justification, with concrete examples and clear evidence of intentional business fit. No generic or aspirational statements are accepted. All claims are substantiated.
-    - **Score 75–89 (Strong business alignment):** The project is well-aligned with the track at the business level, with most objectives and features relevant and justified, but there may be minor gaps or some lack of detail. Any missing or weak justification must result in a score below 90.
-    - **Score 40–74 (Partial/Moderate business alignment):** The project shows some business connection to the track, but the alignment is incomplete, weak, or only somewhat relevant. Justification is vague, generic, or lacks concrete business fit. Any generic, copy-pasted, or aspirational claims must be penalized.
-    - **Score 20–39 (Poor business alignment):** The project’s business connection to the track is superficial, tangential, or only briefly mentioned, with little or no justification or evidence. Any mention that is not directly relevant or is only loosely related must be scored in this range.
-    - **Score below 20 (No business alignment):** The project does not address the track’s business goals, requirements, or focus areas at all, or the justification is missing, irrelevant, or entirely generic.
-  - **Hedera ecosystem impact score:**
-    - **Score 90–100 (Exceptional impact):** The project provides highly specific, significant, and well-justified benefits to the Hedera ecosystem, with clear evidence and examples.
-    - **Score 75–89 (Strong impact):** The project provides strong and relevant benefits to the Hedera ecosystem, but with minor gaps or less detail.
-    - **Score 40–74 (Moderate impact):** The project provides some benefit to the Hedera ecosystem, but the impact is moderate, with vague or generic justification.
-    - **Score 20–39 (Minimal impact):** The project provides minimal or weak benefit to the Hedera ecosystem, with little justification or evidence.
-    - **Score below 20 (No meaningful impact):** The project does not provide any clear benefit to the Hedera ecosystem, or the justification is missing, irrelevant, or entirely generic.
+### STRICT EVALUATION REQUIREMENTS
+
+- **Use only what is explicitly said or strongly implied. Do not invent or assume missing information.**
+- **Be critical but constructive.**
+- **If a field is not mentioned, leave it empty or as an empty array.**
+
+#### Innovation (STRICT)
+- **Only approve as innovation what is truly novel, original, and not a standard feature or common practice in Web3 or Hedera.**
+  - *Examples of features NOT considered innovative (score below 40):* "Non-custodial data ownership", "Hedera Consensus Service for audit trails", "using Hedera", "blockchain for transparency", or any generic/industry-standard capability.
+  - **Explicitly reject or penalize any claim that is a platform feature, industry standard, or incremental improvement.**
+  - *Do not* accept as innovation anything that is trendy, copy-pasted, or widely available in the ecosystem.
+  - **Approved innovations must be clearly justified as unique and impactful. If no such innovation is present, the score must be below 10.**
+
+#### Track Alignment (STRICT)
+- **Only approve as strong track alignment if the project’s business model, value proposition, and go-to-market strategy are directly and specifically mapped to the explicit business goals, requirements, and focus areas of the track "${projectTrack}".**
+  - *Do NOT approve as strong alignment:* Superficial references to the track (“we fit the DeFi track because we use tokens”), generic business strategies, or aspirational statements without concrete evidence.
+  - **Require detailed, concrete, and evidence-based justification for any claim of alignment.**
+  - **Penalize any lack of detail, missing evidence, or superficial alignment.**
+  - **If the explanation does not demonstrate deep, intentional business fit with the track, score below 40.**
+
+#### Hedera Ecosystem Impact (STRICT)
+- **Only approve as strong ecosystem impact if the project provides clear, explicit, and concrete evidence of significant, well-justified benefits to the Hedera ecosystem.**
+  - *Do NOT approve as strong impact:* Statements that merely mention using Hedera services, generic claims (“we help grow the ecosystem”), or features standard for any Hedera project (e.g., “using HCS for audit trails”).
+  - **Require the project to demonstrate specific, significant, and well-justified benefits (e.g., enabling new use cases, driving adoption, supporting ecosystem partners, expanding the user base).**
+  - **If the explanation is generic, superficial, or unsubstantiated, score below 40.**
 
 ---
+### SCORING RUBRICS (STRICT)
 
-🧠 STRICT REQUIREMENTS:
-- The pitch is transcribed from spoken responses and may contain informal phrasing.
-- Use only what is explicitly said or strongly implied.
-- Do **not** invent or assume missing information.
-- Focus on clarity, consistency, market realism, and viability.
-- Be critical but constructive in evaluation.
-- Be strict:
-  - **Innovation** must be truly original and out of the box. Common features or trends are not approved.
-  - **innovation score** must be based only on how truly innovative the *approved innovations* are (if no innovation is approved, the score is below 10).
-  - **Track alignment (business level)** evaluation must be extremely strict and based solely on explicit, detailed, and specific evidence that the project’s business model, value proposition, and market approach directly address the business goals, requirements, and focus areas of the track "${projectTrack}". Do not accept vague, generic, or aspirational claims. Only award high scores if the team provides clear, concrete, and comprehensive justification that demonstrates a deep understanding of the business intent of the track and shows that their solution is purpose-built for it from a business perspective (not just technical features). Penalize any lack of detail, missing evidence, or superficial alignment.
-    - Only award high scores if the team’s explanation is specific, detailed, and demonstrates a strong, intentional business fit with the track. Generic or aspirational claims are not sufficient for strong alignment.
-  - **Hedera ecosystem impact**: 
-    - The project must provide clear, explicit, and concrete evidence of how it benefits, strengthens, or advances the Hedera ecosystem (such as growing the user base, enabling new use cases, supporting ecosystem partners, or driving adoption of Hedera services).
-    - Do **not** award high scores for generic claims like "uses Hedera" or "built on Hedera"—the impact must be specific, significant, and well-justified.
-    - Penalize vague, superficial, or unsubstantiated claims of ecosystem impact.
-    - Only award high scores if the team’s explanation is specific, detailed, and demonstrates a real, intentional, and valuable contribution to the Hedera ecosystem.
-- If a field is not mentioned, leave it empty or as an empty array.
+#### Innovation Scoring Rubric (STRICT)
+- **90–100:** Only for groundbreaking, original, and out-of-the-box features new to Web3/Hedera/industry, with clear evidence and justification.
+- **75–89:** Strong, somewhat original, but not groundbreaking; minor gaps allowed.
+- **40–74:** Only incremental, trendy, or industry-standard features; generic or weak justification.
+- **20–39:** Superficial, minor variations, or loosely related to innovation.
+- **Below 20:** No clear, original, or impactful innovation; or justification is missing/irrelevant/generic.
+- **Below 10:** No approved innovation.
+
+#### Track Alignment (STRICT)
+- **90–100:** Only if the business model, value proposition, and go-to-market strategy are directly and fully mapped to the track’s specific business goals, with highly detailed, explicit, and convincing justification.
+- **75–89:** Well-aligned with most objectives and features relevant and justified, but minor gaps allowed.
+- **40–74:** Partial or moderate alignment; justification is vague, generic, or lacks detail.
+- **20–39:** Poor alignment; superficial or tangential connection, with little or no justification.
+- **Below 20:** No business alignment; missing, irrelevant, or entirely generic justification.
+
+#### Hedera Ecosystem Impact (STRICT)
+- **90–100:** Highly specific, significant, and well-justified benefits to the Hedera ecosystem, with clear evidence and examples.
+- **75–89:** Strong and relevant benefits, but minor gaps or less detail.
+- **40–74:** Moderate impact; justification is vague or generic.
+- **20–39:** Minimal impact; little justification or evidence.
+- **Below 20:** No meaningful impact; justification is missing, irrelevant, or entirely generic.
+
+#### Market Potential Scoring Rubric (STRICT)
+- **90–100:** Reserved for projects with an exceptionally detailed, data-driven, and realistic market analysis, including clear, specific evidence of market size, competition, user acquisition, and growth strategy. No significant gaps.
+- **75–89:** Strong, well-justified market analysis with most elements present and supported by evidence; only minor gaps or missing details.
+- **40–74:** Moderate market understanding; analysis is somewhat generic, lacks detail, or is missing key evidence.
+- **20–39:** Weak market analysis; superficial, vague, or missing most justification and evidence.
+- **Below 20:** No meaningful market analysis; justification is missing, irrelevant, or entirely generic.
+
+#### Business Model Scoring Rubric (STRICT)
+- **90–100:** Only for projects with a highly detailed, realistic, and well-justified business model, including clear revenue streams, cost structure, customer segments, and go-to-market strategy, all tailored to the track and supported by evidence.
+- **75–89:** Strong and relevant business model with most elements well-justified, but minor gaps or less detail.
+- **40–74:** Moderate business model; justification is vague, generic, or lacks detail in some areas.
+- **20–39:** Minimal business model; little justification or evidence, or only superficial description.
+- **Below 20:** No meaningful business model; justification is missing, irrelevant, or entirely generic.
+---
+
 
 Return **valid JSON only**(no extra explanation or notes)
 `.trim(),
