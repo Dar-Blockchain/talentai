@@ -465,7 +465,7 @@ exports.analyzeAnswers = async ({
         { role: "user", content: userPrompt },
       ],
       max_tokens: 3500,
-      temperature: 0.9,
+      temperature: 0.7,
       stream: true,
     });
 
