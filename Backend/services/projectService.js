@@ -5,7 +5,6 @@ const {
   handleBusinessOverallScore,
   handleTechnicalOverallScore,
   handleAssessmentOverallScore,
-  handleEligibility,
 } = require("../utils/projectUtils");
 
 const {
@@ -214,50 +213,36 @@ module.exports.getAllProjects = async (
   name
 ) => {
   try {
-    console.log("Début de la récupération des projets");
-
     const query = {};
     if (track && track.trim() !== "") query.track = track;
     if (leaderId) query.leaderId = leaderId;
     const skip = (page - 1) * limit;
 
-    if (name && name.trim() !== "") query.name = { $regex: name, $options: "i" };
-
-    console.log("Requête de recherche des projets :", query);
+    if (name && name.trim() !== "")
+      query.name = { $regex: name, $options: "i" };
 
     // Récupérer les projets et le total avec population du champ assessment
-    let [projects, total] = await Promise.all([  // Change 'const' to 'let'
+    const [projects, total] = await Promise.all([
       Project.find(query)
         .skip(skip)
         .limit(parseInt(limit))
         .populate("leaderId")
         .populate({
-          path: "assessment",
-          model: "ProjectAssessment",
+          path: "assessment", // Utilisation de populate pour inclure le champ 'assessment'
+          model: "ProjectAssessment", // Assurez-vous que le modèle ProjectAssessment est correctement spécifié
         }),
       Project.countDocuments(query),
     ]);
 
-    console.log("Projets récupérés :", projects);
-    console.log("Total des projets :", total);
-
-    // Ajouter le status et toutes les données de l'évaluation à chaque projet
+    // Ajouter le status à chaque projet
     projects.forEach((project) => {
+      // Si l'évaluation (assessment) existe, ajouter le status
       if (project.assessment) {
-        console.log(`Évaluation trouvée pour le projet : ${project.name}`);
-        project.assessmentData = project.assessment;
+        project.status = project.assessment.status;
       } else {
-        console.log(`Aucune évaluation trouvée pour le projet : ${project.name}`);
-        project.assessmentData = null;
+        project.status = "Pending"; // Valeur par défaut si pas d'évaluation associée
       }
     });
-
-    // Filtrer les projets dont overallScore est null
-    projects = projects.filter((project) => {
-      return project.assessmentData?.overallScore !== null && project.assessmentData?.overallScore !== undefined;
-    });
-
-    console.log("Projets après filtrage (overallScore non null) :", projects);
 
     // Si un tri est demandé
     if (sort) {
@@ -268,16 +253,21 @@ module.exports.getAllProjects = async (
       projects.sort((a, b) => {
         let aVal, bVal;
 
+        // Si on veut trier par overallScore dans TechnicalDataSchema
         if (sortField === "overallScoreTechnical") {
           aVal = a.assessment?.technicalData?.overallScore || 0;
           bVal = b.assessment?.technicalData?.overallScore || 0;
-        } else if (sortField === "overallScoreBusiness") {
+        }
+        // Si on veut trier par overallScore dans BusinessDataSchema
+        else if (sortField === "overallScoreBusiness") {
           aVal = a.assessment?.businessData?.overallScore || 0;
           bVal = b.assessment?.businessData?.overallScore || 0;
         } else if (sortField === "overallScore") {
           aVal = a.assessment?.overallScore || 0;
           bVal = b.assessment?.overallScore || 0;
-        } else {
+        }
+        // Sinon, tri par un autre champ
+        else {
           aVal = a[sortField];
           bVal = b[sortField];
         }
@@ -296,14 +286,9 @@ module.exports.getAllProjects = async (
       totalPages: Math.ceil(total / limit),
     };
   } catch (error) {
-    console.error("Erreur lors de la récupération des projets :", error);
     throw new Error("Erreur lors de la récupération des projets");
   }
 };
-
-
-
-
 
 
 // Récupération des projets de l'utilisateur connecté
@@ -396,13 +381,11 @@ module.exports.generateProjectQuestions = async (project, assessmentType) => {
       questionsCount = BUSINESS_ASSESSMENT_QUESTIONS_COUNT;
       systemPrompt = generateBusinessQuestionsPrompts.getSystemPrompt(
         projectName,
-        projectTrack, 
         questionsCount,
         BUSINESS_QUESTION_DURATION
       );
       userPrompt = generateBusinessQuestionsPrompts.getUserPrompt(
         projectName,
-        projectTrack,
         projectDescription,
         questionsCount
       );
@@ -480,24 +463,22 @@ exports.analyzeAnswers = async ({
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
       systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
         projectName,
-        projectTrack
+        questions
       );
       userPrompt = analyzeBusinessAnswersPrompts.getUserPrompt(
         projectName,
-        projectTrack,
         questions
       );
     }
 
     // II. Send the prompt to the AI
-    
     const stream = await together.chat.completions.create({
       model: "deepseek-ai/DeepSeek-V3",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 3500,
+      max_tokens: 2500,
       temperature: 0.9,
       stream: true,
     });
@@ -508,7 +489,7 @@ exports.analyzeAnswers = async ({
       if (content) raw += content;
     }
 
-    // III. parse AI response 
+    // III. parse AI response
     let analysis = await parseAIResponse(raw);
 
     console.log("Analysis:", analysis);
@@ -551,13 +532,8 @@ exports.analyzeAnswers = async ({
       );
       projectAssessment.status = PROJECT_STATUS.DONE;
     }
+
     await projectAssessment.save();
-    
-
-    // V. Handle eligibility
-    await handleEligibility(projectAssessment, analysis, assessmentType);
-
-
 
     return { analysis };
   } catch (error) {
