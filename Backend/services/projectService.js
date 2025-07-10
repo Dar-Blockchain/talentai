@@ -213,37 +213,50 @@ module.exports.getAllProjects = async (
   name
 ) => {
   try {
+    console.log("Début de la récupération des projets");
+
     const query = {};
     if (track && track.trim() !== "") query.track = track;
     if (leaderId) query.leaderId = leaderId;
     const skip = (page - 1) * limit;
 
-    if (name && name.trim() !== "")
-      query.name = { $regex: name, $options: "i" };
+    if (name && name.trim() !== "") query.name = { $regex: name, $options: "i" };
+
+    console.log("Requête de recherche des projets :", query);
 
     // Récupérer les projets et le total avec population du champ assessment
-    const [projects, total] = await Promise.all([
+    let [projects, total] = await Promise.all([  // Change 'const' to 'let'
       Project.find(query)
         .skip(skip)
         .limit(parseInt(limit))
         .populate("leaderId")
         .populate({
-          path: "assessment", // Utilisation de populate pour inclure le champ 'assessment'
-          model: "ProjectAssessment", // Assurez-vous que le modèle ProjectAssessment est correctement spécifié
-          select: "status", // Nous sélectionnons uniquement le champ status ici
+          path: "assessment",
+          model: "ProjectAssessment",
         }),
       Project.countDocuments(query),
     ]);
 
-    // Ajouter le status à chaque projet
+    console.log("Projets récupérés :", projects);
+    console.log("Total des projets :", total);
+
+    // Ajouter le status et toutes les données de l'évaluation à chaque projet
     projects.forEach((project) => {
-      // Si l'évaluation (assessment) existe, ajouter le status
       if (project.assessment) {
-        project.status = project.assessment.status;
+        console.log(`Évaluation trouvée pour le projet : ${project.name}`);
+        project.assessmentData = project.assessment;
       } else {
-        project.status = "Pending"; // Valeur par défaut si pas d'évaluation associée
+        console.log(`Aucune évaluation trouvée pour le projet : ${project.name}`);
+        project.assessmentData = null;
       }
     });
+
+    // Filtrer les projets dont overallScore est null
+    projects = projects.filter((project) => {
+      return project.assessmentData?.overallScore !== null && project.assessmentData?.overallScore !== undefined;
+    });
+
+    console.log("Projets après filtrage (overallScore non null) :", projects);
 
     // Si un tri est demandé
     if (sort) {
@@ -254,21 +267,16 @@ module.exports.getAllProjects = async (
       projects.sort((a, b) => {
         let aVal, bVal;
 
-        // Si on veut trier par overallScore dans TechnicalDataSchema
         if (sortField === "overallScoreTechnical") {
           aVal = a.assessment?.technicalData?.overallScore || 0;
           bVal = b.assessment?.technicalData?.overallScore || 0;
-        }
-        // Si on veut trier par overallScore dans BusinessDataSchema
-        else if (sortField === "overallScoreBusiness") {
+        } else if (sortField === "overallScoreBusiness") {
           aVal = a.assessment?.businessData?.overallScore || 0;
           bVal = b.assessment?.businessData?.overallScore || 0;
         } else if (sortField === "overallScore") {
           aVal = a.assessment?.overallScore || 0;
           bVal = b.assessment?.overallScore || 0;
-        }
-        // Sinon, tri par un autre champ
-        else {
+        } else {
           aVal = a[sortField];
           bVal = b[sortField];
         }
@@ -287,9 +295,14 @@ module.exports.getAllProjects = async (
       totalPages: Math.ceil(total / limit),
     };
   } catch (error) {
+    console.error("Erreur lors de la récupération des projets :", error);
     throw new Error("Erreur lors de la récupération des projets");
   }
 };
+
+
+
+
 
 
 // Récupération des projets de l'utilisateur connecté
