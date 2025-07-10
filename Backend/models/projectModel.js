@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { Team } = require("../constants/projectConstants");
 
 const ProjectSchema = new mongoose.Schema(
   {
@@ -39,6 +40,15 @@ const ProjectSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+ProjectSchema.pre("save", function (next) {
+  if (this.team.length > Team) {
+    next(new Error("A team cannot have more than 5 members"));
+  } else {
+    next();
+  }
+});
+
 
 const Project = mongoose.model("Project", ProjectSchema);
 module.exports = Project;

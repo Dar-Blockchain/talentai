@@ -5,6 +5,7 @@ const {
   handleBusinessOverallScore,
   handleTechnicalOverallScore,
   handleAssessmentOverallScore,
+  handleEligibility,
 } = require("../utils/projectUtils");
 
 const {
@@ -202,23 +203,6 @@ module.exports.resendTeamInvitation = async (
 };
 
 // Récupération de tous les projets
-// Récupérer tous les projets
-module.exports.getAllProjects = async (req, res) => {
-  try {
-    const { page, limit, sort, track, leaderId, name } = req.query;
-    const projects = await projectService.getAllProjects(
-      page,
-      limit,
-      sort,
-      track,
-      leaderId,
-      name
-    );
-    res.status(200).json(projects);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
 
 // Récupération de tous les projets avec tri par overallScore dans TechnicalDataSchema et BusinessDataSchema
 module.exports.getAllProjects = async (
@@ -230,26 +214,50 @@ module.exports.getAllProjects = async (
   name
 ) => {
   try {
+    console.log("Début de la récupération des projets");
+
     const query = {};
     if (track && track.trim() !== "") query.track = track;
     if (leaderId) query.leaderId = leaderId;
     const skip = (page - 1) * limit;
 
-    if (name && name.trim() !== "")
-      query.name = { $regex: name, $options: "i" };
+    if (name && name.trim() !== "") query.name = { $regex: name, $options: "i" };
+
+    console.log("Requête de recherche des projets :", query);
 
     // Récupérer les projets et le total avec population du champ assessment
-    const [projects, total] = await Promise.all([
+    let [projects, total] = await Promise.all([  // Change 'const' to 'let'
       Project.find(query)
         .skip(skip)
         .limit(parseInt(limit))
         .populate("leaderId")
         .populate({
-          path: "assessment", // Utilisation de populate pour inclure le champ 'assessment'
-          model: "ProjectAssessment", // Assurez-vous que le modèle ProjectAssessment est correctement spécifié
+          path: "assessment",
+          model: "ProjectAssessment",
         }),
       Project.countDocuments(query),
     ]);
+
+    console.log("Projets récupérés :", projects);
+    console.log("Total des projets :", total);
+
+    // Ajouter le status et toutes les données de l'évaluation à chaque projet
+    projects.forEach((project) => {
+      if (project.assessment) {
+        console.log(`Évaluation trouvée pour le projet : ${project.name}`);
+        project.assessmentData = project.assessment;
+      } else {
+        console.log(`Aucune évaluation trouvée pour le projet : ${project.name}`);
+        project.assessmentData = null;
+      }
+    });
+
+    // Filtrer les projets dont overallScore est null
+    projects = projects.filter((project) => {
+      return project.assessmentData?.overallScore !== null && project.assessmentData?.overallScore !== undefined;
+    });
+
+    console.log("Projets après filtrage (overallScore non null) :", projects);
 
     // Si un tri est demandé
     if (sort) {
@@ -260,21 +268,16 @@ module.exports.getAllProjects = async (
       projects.sort((a, b) => {
         let aVal, bVal;
 
-        // Si on veut trier par overallScore dans TechnicalDataSchema
         if (sortField === "overallScoreTechnical") {
           aVal = a.assessment?.technicalData?.overallScore || 0;
           bVal = b.assessment?.technicalData?.overallScore || 0;
-        }
-        // Si on veut trier par overallScore dans BusinessDataSchema
-        else if (sortField === "overallScoreBusiness") {
+        } else if (sortField === "overallScoreBusiness") {
           aVal = a.assessment?.businessData?.overallScore || 0;
           bVal = b.assessment?.businessData?.overallScore || 0;
         } else if (sortField === "overallScore") {
           aVal = a.assessment?.overallScore || 0;
           bVal = b.assessment?.overallScore || 0;
-        }
-        // Sinon, tri par un autre champ
-        else {
+        } else {
           aVal = a[sortField];
           bVal = b[sortField];
         }
@@ -293,9 +296,15 @@ module.exports.getAllProjects = async (
       totalPages: Math.ceil(total / limit),
     };
   } catch (error) {
+    console.error("Erreur lors de la récupération des projets :", error);
     throw new Error("Erreur lors de la récupération des projets");
   }
 };
+
+
+
+
+
 
 // Récupération des projets de l'utilisateur connecté
 module.exports.getMyProjects = async (userId) => {
@@ -387,11 +396,13 @@ module.exports.generateProjectQuestions = async (project, assessmentType) => {
       questionsCount = BUSINESS_ASSESSMENT_QUESTIONS_COUNT;
       systemPrompt = generateBusinessQuestionsPrompts.getSystemPrompt(
         projectName,
+        projectTrack, 
         questionsCount,
         BUSINESS_QUESTION_DURATION
       );
       userPrompt = generateBusinessQuestionsPrompts.getUserPrompt(
         projectName,
+        projectTrack,
         projectDescription,
         questionsCount
       );
@@ -469,22 +480,24 @@ exports.analyzeAnswers = async ({
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
       systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
         projectName,
-        questions
+        projectTrack
       );
       userPrompt = analyzeBusinessAnswersPrompts.getUserPrompt(
         projectName,
+        projectTrack,
         questions
       );
     }
 
     // II. Send the prompt to the AI
+    
     const stream = await together.chat.completions.create({
       model: "deepseek-ai/DeepSeek-V3",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 2500,
+      max_tokens: 3500,
       temperature: 0.9,
       stream: true,
     });
@@ -495,7 +508,7 @@ exports.analyzeAnswers = async ({
       if (content) raw += content;
     }
 
-    // III. parse AI response
+    // III. parse AI response 
     let analysis = await parseAIResponse(raw);
 
     console.log("Analysis:", analysis);
@@ -538,8 +551,13 @@ exports.analyzeAnswers = async ({
       );
       projectAssessment.status = PROJECT_STATUS.DONE;
     }
-
     await projectAssessment.save();
+    
+
+    // V. Handle eligibility
+    await handleEligibility(projectAssessment, analysis, assessmentType);
+
+
 
     return { analysis };
   } catch (error) {
