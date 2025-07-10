@@ -44,7 +44,6 @@ export interface TechStack {
 }
 
 export interface TechnicalData {
-  track: string;
   techStack: TechStack[];
   architecture: Architecture;
   scalabilityApproach: ScalabilityApproach;
@@ -77,7 +76,9 @@ export interface MarketPotential {
 export interface BusinessData {
   problem: string;
   targetUsers: string[];
-  addedValues: string[];
+  innovation?: Innovation;
+  trackAlignment?: TrackAlignment;
+  hederaEcosystemImpact?: HederaEcosystemImpact;
   businessModel: BusinessModel;
   competitors: string[];
   marketPotential: MarketPotential;
@@ -86,12 +87,25 @@ export interface BusinessData {
   createdAt?: number;
 }
 
+// Add eligibility types
+export interface EligibilityCheck {
+  type: string;
+  status: string;
+}
+
+export interface Eligibility {
+  checks: EligibilityCheck[];
+  isEligible: boolean;
+}
+
+// Update ProjectAssessmentRef to include eligibility
 export interface ProjectAssessmentRef {
   _id: string;
   user?: string; // ObjectId as string
   project: string; // ObjectId as string
   technicalData?: TechnicalData;
   businessData?: BusinessData;
+  eligibility?: Eligibility;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -460,6 +474,38 @@ export const getTopBusinessProjects = createAsyncThunk<TopProjectsResponse, GetT
     }
   }
 );
+
+// Add missing interfaces for innovation, trackAlignment, hederaEcosystemImpact
+export interface Innovation {
+  addedValues: string[];
+  mentionnedInnovationAspects?: string[];
+  approvedInnovationAspects?: string[];
+  explanation?: string[];
+  judgement?: string[];
+  score?: number;
+  strengths?: string[];
+  weaknesses?: string[];
+  recommendation?: string[];
+}
+
+export interface TrackAlignment {
+  track: string;
+  explanation?: string[];
+  judgement?: string[];
+  score?: number;
+  strengths?: string[];
+  weaknesses?: string[];
+  recommendation?: string[];
+}
+
+export interface HederaEcosystemImpact {
+  explanation?: string[];
+  judgement?: string[];
+  score?: number;
+  strengths?: string[];
+  weaknesses?: string[];
+  recommendation?: string[];
+}
 
 const projectSlice = createSlice({
   name: "projects",

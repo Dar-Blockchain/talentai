@@ -300,6 +300,136 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ open, onClose, detailsProje
                           {detailsProject.assessment.businessData.competitors.map((c: string, i: number) => <li key={i}><Typography variant="body2">{c}</Typography></li>)}
                         </Box>
                       ) : <Typography variant="body2" sx={{ mb: 2 }}>No data</Typography>}
+                      {/* Innovation Section */}
+                      {detailsProject.assessment.businessData?.innovation && (
+                        <Box mt={2}>
+                          <Typography variant="subtitle2" fontWeight={700} fontSize={'20px'}><AddCircleIcon sx={{ mr: 1, fontSize: 25, verticalAlign: 'middle' }} />Innovation</Typography>
+                          {detailsProject.assessment.businessData.innovation.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(detailsProject.assessment.businessData.innovation.score)}</Typography>}
+                          {detailsProject.assessment.businessData.innovation.addedValues && detailsProject.assessment.businessData.innovation.addedValues.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Added Values:</Typography>
+                              {detailsProject.assessment.businessData.innovation.addedValues.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.innovation.mentionnedInnovationAspects && detailsProject.assessment.businessData.innovation.mentionnedInnovationAspects.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Mentioned Aspects:</Typography>
+                              {detailsProject.assessment.businessData.innovation.mentionnedInnovationAspects.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.innovation.approvedInnovationAspects && detailsProject.assessment.businessData.innovation.approvedInnovationAspects.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Approved Aspects:</Typography>
+                              {detailsProject.assessment.businessData.innovation.approvedInnovationAspects.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.innovation.explanation && detailsProject.assessment.businessData.innovation.explanation.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Explanation:</Typography>
+                              {detailsProject.assessment.businessData.innovation.explanation.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.innovation.judgement && detailsProject.assessment.businessData.innovation.judgement.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Judgement:</Typography>
+                              {detailsProject.assessment.businessData.innovation.judgement.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.innovation.strengths && detailsProject.assessment.businessData.innovation.strengths.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
+                              {detailsProject.assessment.businessData.innovation.strengths.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.innovation.weaknesses && detailsProject.assessment.businessData.innovation.weaknesses.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
+                              {detailsProject.assessment.businessData.innovation.weaknesses.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.innovation.recommendation && detailsProject.assessment.businessData.innovation.recommendation.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
+                              {detailsProject.assessment.businessData.innovation.recommendation.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                        </Box>
+                      )}
+                      {/* Track Alignment Section */}
+                      {detailsProject.assessment.businessData?.trackAlignment && (
+                        <Box mt={2}>
+                          <Typography variant="subtitle2" fontWeight={700} fontSize={'20px'}><LayersIcon sx={{ mr: 1, fontSize: 25, verticalAlign: 'middle' }} />Track Alignment</Typography>
+                          <Typography variant="body2">Track: {detailsProject.assessment.businessData.trackAlignment.track}</Typography>
+                          {detailsProject.assessment.businessData.trackAlignment.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(detailsProject.assessment.businessData.trackAlignment.score)}</Typography>}
+                          {detailsProject.assessment.businessData.trackAlignment.explanation && detailsProject.assessment.businessData.trackAlignment.explanation.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Explanation:</Typography>
+                              {detailsProject.assessment.businessData.trackAlignment.explanation.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.trackAlignment.judgement && detailsProject.assessment.businessData.trackAlignment.judgement.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Judgement:</Typography>
+                              {detailsProject.assessment.businessData.trackAlignment.judgement.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.trackAlignment.strengths && detailsProject.assessment.businessData.trackAlignment.strengths.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
+                              {detailsProject.assessment.businessData.trackAlignment.strengths.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.trackAlignment.weaknesses && detailsProject.assessment.businessData.trackAlignment.weaknesses.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
+                              {detailsProject.assessment.businessData.trackAlignment.weaknesses.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.trackAlignment.recommendation && detailsProject.assessment.businessData.trackAlignment.recommendation.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
+                              {detailsProject.assessment.businessData.trackAlignment.recommendation.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                        </Box>
+                      )}
+                      {/* Hedera Ecosystem Impact Section */}
+                      {detailsProject.assessment.businessData?.hederaEcosystemImpact && (
+                        <Box mt={2}>
+                          <Typography variant="subtitle2" fontWeight={700} fontSize={'20px'}><ScienceIcon sx={{ mr: 1, fontSize: 25, verticalAlign: 'middle' }} />Hedera Ecosystem Impact</Typography>
+                          {detailsProject.assessment.businessData.hederaEcosystemImpact.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(detailsProject.assessment.businessData.hederaEcosystemImpact.score)}</Typography>}
+                          {detailsProject.assessment.businessData.hederaEcosystemImpact.explanation && detailsProject.assessment.businessData.hederaEcosystemImpact.explanation.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Explanation:</Typography>
+                              {detailsProject.assessment.businessData.hederaEcosystemImpact.explanation.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.hederaEcosystemImpact.judgement && detailsProject.assessment.businessData.hederaEcosystemImpact.judgement.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Judgement:</Typography>
+                              {detailsProject.assessment.businessData.hederaEcosystemImpact.judgement.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.hederaEcosystemImpact.strengths && detailsProject.assessment.businessData.hederaEcosystemImpact.strengths.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
+                              {detailsProject.assessment.businessData.hederaEcosystemImpact.strengths.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.hederaEcosystemImpact.weaknesses && detailsProject.assessment.businessData.hederaEcosystemImpact.weaknesses.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
+                              {detailsProject.assessment.businessData.hederaEcosystemImpact.weaknesses.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                          {detailsProject.assessment.businessData.hederaEcosystemImpact.recommendation && detailsProject.assessment.businessData.hederaEcosystemImpact.recommendation.length > 0 && (
+                            <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                              <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
+                              {detailsProject.assessment.businessData.hederaEcosystemImpact.recommendation.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                            </Box>
+                          )}
+                        </Box>
+                      )}
                     </Box>
                     <Typography variant="caption" sx={{ color: 'text.secondary', mt: 2 }}>Created: {detailsProject.assessment.businessData?.createdAt ? new Date(detailsProject.assessment.businessData.createdAt).toLocaleString() : 'No date'}</Typography>
                   </CardContent>
@@ -312,6 +442,37 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ open, onClose, detailsProje
               <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>Combined Score</Typography>
               {renderScoreChip(detailsProject.assessment.overallScore)}
             </Paper>
+            {/* Eligibility Section */}
+            {detailsProject.assessment.eligibility && (
+              <Paper elevation={1} sx={{ p: 2, borderRadius: 3, mt: 2, background: '#f3f7f9' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <WarningAmberIcon sx={{ color: detailsProject.assessment.eligibility.isEligible ? '#43e97b' : '#e53935', mr: 1 }} />
+                  <Typography variant="h6" fontWeight={800} sx={{ mr: 2 }}>Eligibility</Typography>
+                  <Chip
+                    label={detailsProject.assessment.eligibility.isEligible ? 'Eligible' : 'Not Eligible'}
+                    color={detailsProject.assessment.eligibility.isEligible ? 'success' : 'error'}
+                    sx={{ fontWeight: 700, fontSize: 15, borderRadius: 2, ml: 1 }}
+                  />
+                </Box>
+                {Array.isArray(detailsProject.assessment.eligibility.checks) && detailsProject.assessment.eligibility.checks.length > 0 ? (
+                  <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                    {detailsProject.assessment.eligibility.checks.map((check: any, idx: number) => (
+                      <li key={idx}>
+                        <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
+                          <DescriptionIcon sx={{ fontSize: 18, mr: 1, color: '#7C4DFF' }} />
+                          <b>{check.type}:</b>&nbsp;
+                          <span style={{ color: check.status === 'IS_ELIGIBLE' ? '#43e97b' : check.status === 'IS_NOT_ELIGIBLE' ? '#e53935' : '#ff9800', fontWeight: 600 }}>
+                            {check.status.replace(/_/g, ' ').toLowerCase()}
+                          </span>
+                        </Typography>
+                      </li>
+                    ))}
+                  </Box>
+                ) : (
+                  <Typography variant="body2">No eligibility checks available.</Typography>
+                )}
+              </Paper>
+            )}
           </Box>
         )}
       </DialogContent>
