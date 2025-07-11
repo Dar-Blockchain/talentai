@@ -5,6 +5,7 @@ const {
   handleBusinessOverallScore,
   handleTechnicalOverallScore,
   handleAssessmentOverallScore,
+  handleEligibility,
 } = require("../utils/projectUtils");
 
 const {
@@ -530,6 +531,8 @@ exports.analyzeAnswers = async ({
     }
 
     await projectAssessment.save();
+
+    await handleEligibility(projectAssessment, analysis, assessmentType);
 
     return { analysis };
   } catch (error) {

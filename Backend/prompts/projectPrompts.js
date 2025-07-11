@@ -368,50 +368,50 @@ Extract all business assessment data and generate a complete JSON object as spec
 
 {
   "businessData": {
-    "problem": "string",
-    "targetUsers": ["..."],
+    "problem": "string", // REQUIRED, if not mentionned , set to none-mentioned
+    "targetUsers": ["..."], // REQUIRED, if not mentionned , set to none-mentioned
     "innovation": {
       "addedValues": ["..."],
       "mentionnedInnovationAspects": ["..."], // list of innovation aspects mentioned by the team
       "approvedInnovationAspects": ["..."], // list of innovation aspects approved by the judge
-      "explanation": ["..."], // team explanation
-      "judgement": ["..."], // Judge’s reasoning for accepting/rejecting each innovation claim seperately. 
+      "explanation": ["..."], // team explanation, if not mentionned , set to none-mentioned
+      "judgement": ["..."], // Judge’s reasoning for accepting/rejecting each innovation claim seperately. If no explaination given , set to no-answer-given
       "score": 0, 
       "strengths": ["..."],
       "weaknesses": ["..."],
       "recommendation": ["..."]
     },
     "trackAlignment": {
-      "track": "string",
-      "explanation": ["..."],
-      "judgement": ["..."],
+      "track": "string", // REQUIRED, if not mentionned , set to none-mentioned
+      "explanation": ["..."], // team explanation, if not mentionned , set to none-mentioned
+      "judgement": ["..."], // Judge’s reasoning. If no explaination given , set to no-answer-given
       "score": 0,
       "strengths": ["..."],
       "weaknesses": ["..."],
       "recommendation": ["..."]
     },
     "hederaEcosystemImpact": {
-      "explanation": ["..."],
-      "judgement": ["..."],
+      "explanation": ["..."], // team explanation, if not mentionned , set to none-mentioned
+      "judgement": ["..."], // Judge’s reasoning. If no explaination given , set to no-answer-given
       "score": 0,
       "strengths": ["..."],
       "weaknesses": ["..."],
       "recommendation": ["..."]
     },
     "businessModel": {
-      "model": "string",
-      "choiceExplanation": ["..."],
+      "model": "string", // REQUIRED, if not mentionned , set to none-mentioned
+      "choiceExplanation": ["..."], // team explanation, if not mentionned , set to none-mentioned
       "score": 0,
       "strengths": ["..."],
       "weaknesses": ["..."],
       "recommendation": ["..."]
     },
-    "competitors": ["..."],
+    "competitors": ["..."], // REQUIRED, if not mentionned , set to none-mentioned
     "marketPotential": {
-      "range": "string",
-      "estimatedMarketSize": "string",
-      "targetRegion": "string",
-      "choiceExplanation": ["..."],
+      "range": "string", // REQUIRED, if not mentionned , set to none-mentioned
+      "estimatedMarketSize": "string", // REQUIRED, if not mentionned , set to none-mentioned
+      "targetRegion": "string", // REQUIRED, if not mentionned , set to none-mentioned
+      "choiceExplanation": ["..."], // team explanation, if not mentionned , set to none-mentioned
       "score": 0,
       "strengths": ["..."],
       "weaknesses": ["..."],
