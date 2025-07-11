@@ -197,28 +197,33 @@ function handleAssessmentOverallScore(
  * @returns {Promise<void>}
  */
 async function handleEligibility(assessment, analysis, assessmentType) {
-  if (
-    assessmentType === PROJECT_ASSESSMENT_TYPE.BUSINESS &&
-    assessment.businessData &&
-    assessment.businessData.trackAlignment &&
-    typeof analysis.businessData.trackAlignment.score === "number"
-  ) {
+  // handle eligibility for business assessment
+  if (assessmentType === PROJECT_ASSESSMENT_TYPE.BUSINESS) {
     if (
-      analysis.businessData.trackAlignment.score >= MIN_TRACK_ALIGNMENT_SCORE
+      assessment.businessData &&
+      assessment.businessData.trackAlignment &&
+      typeof analysis.businessData.trackAlignment.score === "number"
     ) {
-      assessment.eligibility.checks.map((check) => {
-        if (check.type === ELIGIBILITY_REQUIREMENTS.TRACK_MATCH) {
-          check.status = ELIGIBILITY_CHECKS_STATUS.IS_APPROVED;
-        }
-      });
-    } else {
-      assessment.eligibility.checks.map((check) => {
-        if (check.type === ELIGIBILITY_REQUIREMENTS.TRACK_MATCH) {
-          check.status = ELIGIBILITY_CHECKS_STATUS.IS_NOT_APPROVED;
-        }
-      });
+      if (
+        analysis.businessData.trackAlignment.score >= MIN_TRACK_ALIGNMENT_SCORE
+      ) {
+        assessment.eligibility.checks.map((check) => {
+          if (check.type === ELIGIBILITY_REQUIREMENTS.TRACK_MATCH) {
+            check.status = ELIGIBILITY_CHECKS_STATUS.IS_APPROVED;
+          }
+        });
+      } else {
+        assessment.eligibility.checks.map((check) => {
+          if (check.type === ELIGIBILITY_REQUIREMENTS.TRACK_MATCH) {
+            check.status = ELIGIBILITY_CHECKS_STATUS.IS_NOT_APPROVED;
+          }
+        });
+      }
     }
   }
+  // handle eligibility for code assessment 
+  //(to be handled when integrating code assessment)
+
   await assessment.save();
 }
 
