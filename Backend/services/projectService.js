@@ -5,6 +5,7 @@ const {
   handleBusinessOverallScore,
   handleTechnicalOverallScore,
   handleAssessmentOverallScore,
+  handleEligibility,
 } = require("../utils/projectUtils");
 
 const {
@@ -458,10 +459,11 @@ exports.analyzeAnswers = async ({
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
       systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
         projectName,
-        questions
+        projectTrack
       );
       userPrompt = analyzeBusinessAnswersPrompts.getUserPrompt(
         projectName,
+        projectTrack,
         questions
       );
     }
@@ -473,7 +475,7 @@ exports.analyzeAnswers = async ({
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 3500,
+      max_tokens: 4000,
       temperature: 0.7,
       stream: true,
     });
@@ -529,6 +531,8 @@ exports.analyzeAnswers = async ({
     }
 
     await projectAssessment.save();
+
+    await handleEligibility(projectAssessment, analysis, assessmentType);
 
     return { analysis };
   } catch (error) {

@@ -129,17 +129,23 @@ Your task is to extract and evaluate all relevant technical data needed to popul
      * 25–49: Vague or superficial explanation, or partially misused technology.
      * 0–24: Poorly explained, misaligned, or mentioned without justification.
 
-   Strict instructions for optimal AI processing:
-   - Only include technologies/tools that are explicitly mentioned or clearly described in the transcript.
-   - Do NOT guess or invent any field. If a field is not mentioned or cannot be reasonably inferred, omit it from the object.
+   Strict instructions:
+   - Only include technologies/tools that are explicitly mentioned AND clearly described in the transcript.
    - Do NOT reward name-dropping without explanation; such entries should receive a low score (<10).
    - For "componentType", use the following mapping:
-     - ${TECH_STACK_TYPES.HEDERA_CORE_TECH}: Core Hedera protocol technologies and SDKs (e.g., Hedera SDK, network protocol).
+     - ${TECH_STACK_TYPES.HEDERA_TOOLING}: Core Hedera protocol technologies and SDKs (e.g., Hedera SDK, network protocol).
      - ${TECH_STACK_TYPES.HEDERA_SERVICE}: Hedera network services (e.g., Hedera Consensus Service (HCS), Hedera Token Service (HTS)).
-     - ${TECH_STACK_TYPES.OTHER_CORE_TECH}: Fundamental non-Hedera technologies essential to project logic (e.g., Node.js, Solidity, Rust, Java, MongoDB).
+     - ${TECH_STACK_TYPES.CORE_TECH}: Fundamental non-Hedera technologies essential to project logic (e.g., Node.js, Solidity, Rust, Java, MongoDB).
      - ${TECH_STACK_TYPES.INTEGRATION_TOOL}: Supporting or auxiliary tools (e.g., React, IPFS, Chainlink, off-chain storage, DevOps/CI tools).
+     - ${TECH_STACK_TYPES.INFRASTRUCTURE}: Infrastructure tools (e.g., AWS, GCP, Azure, Docker, Kubernetes).
    - For "choiceExplanation", only include direct statements or clear justifications from the team.
-   - For "score", strictly follow the rubric above and do not inflate scores for vague or incomplete answers.
+   - For "score", strictly follow the rubric below and do not inflate scores for vague or incomplete answers.
+
+   Tech Stack Scoring Rubric:
+   - 75–100: Technology is highly aligned with project goals and the "${projectTrack}" track, and the explanation is deep, clear, specific, and technically justified. The team provides strong, relevant reasons for the choice, and demonstrates understanding of the technology's role and impact.
+   - 50–74: Good alignment and usage, but the explanation lacks depth or clarity. The technology is appropriate, but the justification is somewhat generic, incomplete, or only partially addresses the project's needs.
+   - 25–49: Vague or superficial explanation, or partially misused technology. The technology may be relevant, but the team fails to provide a clear rationale, or the usage is questionable for the project context.
+   - 0–24: Poorly explained, misaligned, or mentioned without justification. Name-dropping without any explanation, or use of a technology that does not fit the project or track, should be scored in this range (typically <10).
 
 3. **architecture (object)**
    - title: architecture name (e.g. "monolith", "microservices", "event-driven", "decentralized")
@@ -168,16 +174,14 @@ Your task is to extract and evaluate all relevant technical data needed to popul
 
 ---
 
-IMPORTANT:
-- The answers is transcribed from spoken answers and may contain minor errors or informal phrasing. Evaluate based on context, not strict grammar.
+STRICT REQUIREMENTS:
+- The answers are transcribed from spoken answers and may contain minor errors or informal phrasing. Evaluate based on context, not strict grammar.
 - Do not guess missing values. If a component was not mentioned, exclude it.
 - Never guess or assume not evidenced in answers.
 - Be objective. Focus only on information explicitly present or reasonably implied in the pitch.
 - Do NOT reward name-dropping tech without explanation — such items get < 10.
 - "We used it because it's popular" or "We didn't have time" ≠ valid justification.
-- A vague or half-finished integration should not score over 50o.
 - Focus on **depth**, **clarity**, and **alignment** with the project track.
-- Only give high scores if the answer shows real understanding and engineering intent.
 
 RESPONSE FORMAT:
 Return only valid JSON matching this structure:
@@ -364,50 +368,50 @@ Extract all business assessment data and generate a complete JSON object as spec
 
 {
   "businessData": {
-    "problem": "string",
-    "targetUsers": ["..."],
+    "problem": "string", // REQUIRED, if not mentionned , set to none-mentioned
+    "targetUsers": ["..."], // REQUIRED, if not mentionned , set to none-mentioned
     "innovation": {
       "addedValues": ["..."],
       "mentionnedInnovationAspects": ["..."], // list of innovation aspects mentioned by the team
       "approvedInnovationAspects": ["..."], // list of innovation aspects approved by the judge
-      "explanation": ["..."], // team explanation
-      "judgement": ["..."], // Judge’s reasoning for accepting/rejecting each innovation claim seperately. 
+      "explanation": ["..."], // team explanation, if not mentionned , set to none-mentioned
+      "judgement": ["..."], // Judge’s reasoning for accepting/rejecting each innovation claim seperately. If no explaination given , set to no-answer-given
       "score": 0, 
       "strengths": ["..."],
       "weaknesses": ["..."],
       "recommendation": ["..."]
     },
     "trackAlignment": {
-      "track": "string",
-      "explanation": ["..."],
-      "judgement": ["..."],
+      "track": "string", // REQUIRED, if not mentionned , set to none-mentioned
+      "explanation": ["..."], // team explanation, if not mentionned , set to none-mentioned
+      "judgement": ["..."], // Judge’s reasoning. If no explaination given , set to no-answer-given
       "score": 0,
       "strengths": ["..."],
       "weaknesses": ["..."],
       "recommendation": ["..."]
     },
     "hederaEcosystemImpact": {
-      "explanation": ["..."],
-      "judgement": ["..."],
+      "explanation": ["..."], // team explanation, if not mentionned , set to none-mentioned
+      "judgement": ["..."], // Judge’s reasoning. If no explaination given , set to no-answer-given
       "score": 0,
       "strengths": ["..."],
       "weaknesses": ["..."],
       "recommendation": ["..."]
     },
     "businessModel": {
-      "model": "string",
-      "choiceExplanation": ["..."],
+      "model": "string", // REQUIRED, if not mentionned , set to none-mentioned
+      "choiceExplanation": ["..."], // team explanation, if not mentionned , set to none-mentioned
       "score": 0,
       "strengths": ["..."],
       "weaknesses": ["..."],
       "recommendation": ["..."]
     },
-    "competitors": ["..."],
+    "competitors": ["..."], // REQUIRED, if not mentionned , set to none-mentioned
     "marketPotential": {
-      "range": "string",
-      "estimatedMarketSize": "string",
-      "targetRegion": "string",
-      "choiceExplanation": ["..."],
+      "range": "string", // REQUIRED, if not mentionned , set to none-mentioned
+      "estimatedMarketSize": "string", // REQUIRED, if not mentionned , set to none-mentioned
+      "targetRegion": "string", // REQUIRED, if not mentionned , set to none-mentioned
+      "choiceExplanation": ["..."], // team explanation, if not mentionned , set to none-mentioned
       "score": 0,
       "strengths": ["..."],
       "weaknesses": ["..."],

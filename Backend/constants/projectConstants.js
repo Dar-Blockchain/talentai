@@ -22,10 +22,11 @@ const BUSINESS_QUESTION_DURATION = 2; // in minutes
 const BUSINESS_PITCH_DURATION = 3; // in minutes
 
 const TECH_STACK_TYPES = Object.freeze({
-  HEDERA_CORE_TECH: "hederaCoreTech",
+  HEDERA_TOOLING: "hederaTooling",
   HEDERA_SERVICE: "hederaService",
-  OTHER_CORE_TECH: "otherCoreTech",
+  CORE_TECH: "coreTech",
   INTEGRATION_TOOL: "integrationTool",
+  INFRASTRUCTURE: "infrastructure",
 });
 
 const BUSINESS_OVERALL_SCORE_WEIGHTS = {
@@ -43,10 +44,11 @@ const TECHNICAL_OVERALL_SCORE_WEIGHTS = {
 };
 
 const TECH_TYPE_WEIGHTS = {
-  HEDERA_CORE_TECH: 0.35,
   HEDERA_SERVICE: 0.3,
-  OTHER_CORE_TECH: 0.25,
-  INTEGRATION_TOOL: 0.1,
+  HEDERA_TOOLING: 0.2,
+  CORE_TECH: 0.25,
+  INTEGRATION_TOOL: 0.15,
+  INFRASTRUCTURE: 0.1,
 };
 
 const ASSESSMENT_OVERALL_SCORE_WEIGHTS = {
