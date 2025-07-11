@@ -15,7 +15,12 @@ interface ProjectData {
   createdAt: string;
 }
 
-const StatsCards: React.FC<{ projectData: ProjectData }> = ({ projectData }) => (
+interface StatsCardsProps {
+  projectData: ProjectData;
+  availableMeetings: number;
+}
+
+const StatsCards: React.FC<StatsCardsProps> = ({ projectData, availableMeetings }) => (
   <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2, mb: 3 }}>
     <Card sx={{ boxShadow: '0 4px 16px #7C4DFF11', bgcolor: '#FFFFFF', border: '1.5px solid #EDE7F6', borderRadius: 3, transition: 'box-shadow 0.2s', '&:hover': { boxShadow: '0 8px 32px #7C4DFF22' } }}>
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
@@ -56,7 +61,7 @@ const StatsCards: React.FC<{ projectData: ProjectData }> = ({ projectData }) => 
           <Box sx={{ ml: 2 }}>
             <Typography sx={{ color: '#8F9BB3' }} variant="body2">AI Meetings</Typography>
             <Typography variant="h6" sx={{ color: '#2E3A59', fontWeight: 700 }}>
-              2 Available
+              {availableMeetings} Available
             </Typography>
           </Box>
         </Box>

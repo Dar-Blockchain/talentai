@@ -6,27 +6,10 @@ import {
   Typography,
   Button,
   CircularProgress,
-  Avatar,
-  Paper,
-  Divider,
-  IconButton,
-  Card,
-  CardContent,
-  CardHeader,
-  Tooltip,
-  Badge,
-  Snackbar,
 } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
-import BusinessIcon from '@mui/icons-material/Business';
-import CodeIcon from '@mui/icons-material/Code';
-import PersonIcon from '@mui/icons-material/Person';
-import SettingsIcon from '@mui/icons-material/Settings';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import WorkIcon from '@mui/icons-material/Work';
 import Cookies from 'js-cookie';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import { keyframes } from '@mui/system';
 import HeroHeader from '@/components/dashboard-hackathon/HeroHeader';
 import StatsCards from '@/components/dashboard-hackathon/StatsCards';
@@ -181,8 +164,7 @@ const HackathonDashboard = () => {
   const assessment = projectData?.assessment || null;
   const hasBusinessData = !!assessment?.businessData;
   const hasTechnicalData = !!assessment?.technicalData;
-  console.log(projectData, 'akakkakaapapapappa')
-  console.log(!!assessment?.technicalData, 'akakkakaapapapappa')
+  const availableMeetings = (!hasBusinessData ? 1 : 0) + (!hasTechnicalData ? 1 : 0);
 
   return (
     <Box >
@@ -220,7 +202,7 @@ const HackathonDashboard = () => {
           backdropFilter: 'blur(10px)',
           p: { xs: 2, sm: 4 },
         }}>
-          <StatsCards projectData={projectData} />
+          <StatsCards projectData={projectData} availableMeetings={availableMeetings} />
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <QuickActions
