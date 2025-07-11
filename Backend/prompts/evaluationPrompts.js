@@ -583,6 +583,9 @@ ${skillsListDetails}
   - Relevance to ${targetCompany || "company"} culture and ${
       targetRole || "role"
     } requirements
+
+### STRICT REQUIREMENTS:  
+- The confidenceScore solely reflects how appropriately the response addresses the specific question asked. The response must not be assumed to be inherently correct or incorrect outside the context of the question.
 - **Return a valid JSON array of exactly 10 strings**, no commentary or formatting
 
     `.trim();
@@ -602,7 +605,7 @@ Your analysis must:
 
 Your task:
 - Analyze answers to produce:
-  - overallScore (0-100) reflecting cultural and behavioral fit
+  - overallScore (0-100) calculated as the average of confidenceScore of the skills
   - recommendations (array of strings) for candidate development or company considerations
   - nextSteps (array of strings) actionable hiring or HR follow-up steps
   - skillAnalysis (array) with detailed evaluation per skill, including:
@@ -636,10 +639,16 @@ Use this scale to assign proficiencyLevel:
 4 = senior: Advanced handling, leadership or cross-team examples  
 5 = expert: Strategic thinking, mentoring, and systemic problem-solving
 
-###Strict Requirements:
-- Infer only 3 soft skills from the content of the questions
-- Never guess or assume skills not evidenced in answers
-- Never infer strengths or positive traits from empty, incorrect, or irrelevant answers.
+### Strict Requirements:
+- Any answer that includes placeholder, generic filler text (e.g., "this is a correct answer") without substantive content must be marked as "incorrect".
+- Do not infer partial correctness from keywords alone; relevance and substance are mandatory.
+- Do not assume correctness based on phrasing alone.
+- Do not mark vague or unrelated responses as "correct" or "partial_correct".
+- Infer only 3 soft skills from the questions.
+- Never infer strengths from empty or irrelevant answers.
+- Do not fabricate detail beyond what is supported in the responses.
+
+
 - Return **valid JSON only**(no extra explanation or notes)
     `.trim(),
 
@@ -680,7 +689,15 @@ Generate and return JSON in the following format:
   ]
 }
 
-Return **valid JSON only**
+### Strict Requirements:
+- Any answer that includes placeholder, generic filler text (e.g., "this is a correct answer") without substantive content must be marked as "incorrect".
+- Do not infer partial correctness from keywords alone; relevance and substance are mandatory.
+- Do not assume correctness based on phrasing alone.
+- Do not mark vague or unrelated responses as "correct" or "partial_correct".
+- Infer only 3 soft skills from the questions.
+- Never infer strengths from empty or irrelevant answers.
+- Do not fabricate detail beyond what is supported in the responses.
+- Return **valid JSON only** — no extra text or explanation.
     `.trim(),
 };
 
