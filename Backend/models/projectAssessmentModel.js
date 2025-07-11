@@ -4,6 +4,7 @@ const {
   ELIGIBILITY_REQUIREMENTS,
   ELIGIBILITY_STATUS,
   ELIGIBILITY_CHECKS_STATUS,
+  TECH_STACK_TYPES,
 } = require("../constants/projectConstants");
 
 //------------------ technicalData related Schemas---------------------
@@ -43,7 +44,7 @@ const techStackSchema = new mongoose.Schema(
     title: String,
     componentType: {
       type: String,
-      enum: ["coreTechnology", "integrationTool", "hederaService"],
+      enum: Object.values(TECH_STACK_TYPES),
       required: true,
     },
 

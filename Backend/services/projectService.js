@@ -700,3 +700,26 @@ module.exports.getProjectsCountByStatus = async () => {
     );
   }
 };
+
+// services/pdfService.js
+const { generateProjectPdf } = require("../utils/genPdf");
+
+module.exports.generatePdfForProject = async (projectId) => {
+  try {
+    // Récupère le projet et l'évaluation associés
+    const project = await Project.findById(projectId).populate("assessment");
+    if (!project) throw new Error("Project not found");
+
+    // Récupère l'évaluation liée au projet
+    const assessment = project.assessment
+      ? await ProjectAssessment.findById(project.assessment._id)
+      : null;
+
+    // Génère le PDF en utilisant la fonction utilitaire
+    const filePath = await generateProjectPdf(project, assessment);
+    return filePath;
+
+  } catch (err) {
+    throw new Error(`Failed to generate PDF: ${err.message}`);
+  }
+};
