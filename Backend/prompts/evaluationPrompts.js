@@ -513,8 +513,11 @@ The questions must:
 - Be clearly phrased, non-redundant, and avoid vague or generic wording
 - Align with ${simulationGoal || "interview preparation"} goals
 
-### Requirements:
+### STRICT REQUIREMENTS:
 - Produce **exactly 10 distinct questions** focused solely on HR themes (no technical questions)
+- Questions must be **brief**, **clear**, **simply formulated**, and **target only one aspect or competency per question** (no complex, multi-part, or compound questions)
+- Questions must be **conversational** and **answerable orally within 2 minutes**
+- **All questions must be appropriate for and within the specified experience level: ${experienceLevel || "Mid-level"}**
 - Tailor questions to ${targetCompany || "the company"} culture and ${
       targetRole || "role"
     } requirements
@@ -569,6 +572,8 @@ ${skillsListDetails}
     } style
 - Focus on scenarios relevant to ${targetRole || "the target role"}
 - Do NOT include technical or coding questions
+- Keep questions **brief**, **clear**, **simply formulated**, and ensure each question **targets only one aspect or competency** (no complex, multi-part, or compound questions)
+- **All questions must be appropriate for and within the specified experience level: ${experienceLevel || "Mid-level"}**
 - Keep questions succinct, specific, and suitable for oral interviews
 - Avoid vague or repetitive language; each question should be purposeful and trend-aware
 - Align with ${simulationGoal || "interview preparation"} objectives
