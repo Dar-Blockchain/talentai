@@ -340,10 +340,10 @@ module.exports.exportProjectPdf = async (req, res) => {
     if (!project) throw new Error("Project not found");
 
     // Générer le PDF
-    const exportDir = path.join(__dirname, "../exports");
+    const exportDir = path.join(__dirname, "../public");
     if (!fs.existsSync(exportDir)) fs.mkdirSync(exportDir);
 
-    const filePath = path.join(exportDir, `${project.name.replace(/[^a-z0-9]/gi, '_')}_assessment.pdf`);
+    const filePath = path.join(exportDir, `${project.name.replace(/[^a-z0-9]/gi, '_')}_PdfAssessment.pdf`);
     const doc = new PDFDocument();
     const stream = fs.createWriteStream(filePath);
     doc.pipe(stream);

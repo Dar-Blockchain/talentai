@@ -1,4 +1,4 @@
-import { Box, Typography, Stack, TextField } from '@mui/material';
+import { Box, Typography, Stack, TextField, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
 import React from 'react';
 
 const ProjectInfoStep: React.FC<{
@@ -14,27 +14,34 @@ const ProjectInfoStep: React.FC<{
       Project Info
     </Typography>
     <Stack spacing={2}>
-      <TextField
-        label="Track"
-        value={track}
-        onChange={e => setTrack(e.target.value)}
-        fullWidth
-        required
-        variant="outlined"
-        size="medium"
-        sx={{
-          bgcolor: '#fff',
-          borderRadius: 2,
-          boxShadow: '0 1px 4px #7C4DFF11',
-          transition: 'box-shadow 0.2s, border-color 0.2s',
-          '&:hover': { boxShadow: '0 2px 8px #7C4DFF22' },
-          '& .MuiOutlinedInput-root.Mui-focused': {
-            boxShadow: '0 0 0 3px #E040FB44',
-            borderColor: '#7C4DFF',
-          },
-        }}
-        helperText="Which track or theme does your project belong to?"
-      />
+      <FormControl fullWidth required>
+        <InputLabel id="track-label">Track</InputLabel>
+        <Select
+          labelId="track-label"
+          value={track}
+          label="Track"
+          onChange={e => setTrack(e.target.value)}
+          sx={{
+            bgcolor: '#fff',
+            borderRadius: 2,
+            boxShadow: '0 1px 4px #7C4DFF11',
+            transition: 'box-shadow 0.2s, border-color 0.2s',
+            '&:hover': { boxShadow: '0 2px 8px #7C4DFF22' },
+          }}
+        >
+          <MenuItem value="">Select a track</MenuItem>
+          <MenuItem value="DeFi">DeFi (Decentralized Finance)</MenuItem>
+          <MenuItem value="NFTs & Digital Assets">NFTs & Digital Assets</MenuItem>
+          <MenuItem value="DAOs & Governance">DAOs & Governance</MenuItem>
+          <MenuItem value="Blockchain Infrastructure">Blockchain Infrastructure</MenuItem>
+          <MenuItem value="Identity & Privacy">Identity & Privacy</MenuItem>
+          <MenuItem value="Web3 Social">Web3 Social</MenuItem>
+          <MenuItem value="Gaming & Metaverse">Gaming & Metaverse</MenuItem>
+          <MenuItem value="Layer 2 & Scalability">Layer 2 & Scalability</MenuItem>
+          <MenuItem value="Security & Auditing">Security & Auditing</MenuItem>
+          <MenuItem value="Sustainability & Social Impact">Sustainability & Social Impact</MenuItem>
+        </Select>
+      </FormControl>
       <TextField
         label="Project Name"
         value={projectName}
@@ -49,10 +56,6 @@ const ProjectInfoStep: React.FC<{
           boxShadow: '0 1px 4px #7C4DFF11',
           transition: 'box-shadow 0.2s, border-color 0.2s',
           '&:hover': { boxShadow: '0 2px 8px #7C4DFF22' },
-          '& .MuiOutlinedInput-root.Mui-focused': {
-            boxShadow: '0 0 0 3px #E040FB44',
-            borderColor: '#7C4DFF',
-          },
         }}
         helperText="Give your project a unique name"
       />
@@ -72,10 +75,6 @@ const ProjectInfoStep: React.FC<{
           boxShadow: '0 1px 4px #7C4DFF11',
           transition: 'box-shadow 0.2s, border-color 0.2s',
           '&:hover': { boxShadow: '0 2px 8px #7C4DFF22' },
-          '& .MuiOutlinedInput-root.Mui-focused': {
-            boxShadow: '0 0 0 3px #E040FB44',
-            borderColor: '#7C4DFF',
-          },
         }}
         helperText="Describe your project in a few sentences"
       />

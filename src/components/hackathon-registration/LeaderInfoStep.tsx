@@ -26,10 +26,6 @@ const LeaderInfoStep: React.FC<{
           boxShadow: '0 1px 4px #7C4DFF11',
           transition: 'box-shadow 0.2s, border-color 0.2s',
           '&:hover': { boxShadow: '0 2px 8px #7C4DFF22' },
-          '& .MuiOutlinedInput-root.Mui-focused': {
-            boxShadow: '0 0 0 3px #E040FB44',
-            borderColor: '#7C4DFF',
-          },
         }}
         helperText="Enter the first name of the team leader"
       />
@@ -47,10 +43,6 @@ const LeaderInfoStep: React.FC<{
           boxShadow: '0 1px 4px #7C4DFF11',
           transition: 'box-shadow 0.2s, border-color 0.2s',
           '&:hover': { boxShadow: '0 2px 8px #7C4DFF22' },
-          '& .MuiOutlinedInput-root.Mui-focused': {
-            boxShadow: '0 0 0 3px #E040FB44',
-            borderColor: '#7C4DFF',
-          },
         }}
         helperText="Enter the last name of the team leader"
       />
