@@ -18,7 +18,7 @@ const ProjectSchema = new mongoose.Schema(
           default: false, // Le champ `validated` pour chaque membre
         },
         activationToken: String, // Ajoute ce champ
-        expiresAt: Date,  // <--- AJOUTER ce champ si pas déjà présent
+        expiresAt: Date, // <--- AJOUTER ce champ si pas déjà présent
       },
     ],
     leaderId: {
@@ -32,10 +32,9 @@ const ProjectSchema = new mongoose.Schema(
       ref: "Profile",
       required: false,
     },
-
     assessment: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "projectAssessment",
+      ref: "ProjectAssessment", // Ensure this matches the model name exactly
     },
   },
   { timestamps: true }
@@ -48,7 +47,6 @@ ProjectSchema.pre("save", function (next) {
     next();
   }
 });
-
 
 const Project = mongoose.model("Project", ProjectSchema);
 module.exports = Project;
