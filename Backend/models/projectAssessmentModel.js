@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const {
   PROJECT_STATUS,
   ELIGIBILITY_REQUIREMENTS,
-  ELIGIBILITY_STATUS,
   ELIGIBILITY_CHECKS_STATUS,
   TECH_STACK_TYPES,
 } = require("../constants/projectConstants");
