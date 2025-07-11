@@ -458,10 +458,11 @@ exports.analyzeAnswers = async ({
     if (assessmentType == PROJECT_ASSESSMENT_TYPE.BUSINESS) {
       systemPrompt = analyzeBusinessAnswersPrompts.getSystemPrompt(
         projectName,
-        questions
+        projectTrack
       );
       userPrompt = analyzeBusinessAnswersPrompts.getUserPrompt(
         projectName,
+        projectTrack,
         questions
       );
     }
