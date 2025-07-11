@@ -579,7 +579,7 @@ export default function hackathonreport() {
       analyzeResults();
     }
   }, [router.isReady, router.query.from, router.query.type, router.query.skill, router.query.subcategory, router.query.proficiency]);
-  const goHome = () => router.push('/dashboardCandidate');
+  const goHome = () => router.push('/hackathon-dashboard');
 
   const handleFeedbackOpen = () => {
     setFeedbackOpen(true);
@@ -593,7 +593,7 @@ export default function hackathonreport() {
     try {
       console.log('Feedback submitted:', feedbackData);
       handleFeedbackClose();
-      router.push('/dashboardCandidate');
+      router.push('/hackathon-dashboard');
     } catch (error) {
       console.error('Error submitting feedback:', error);
     }
@@ -601,7 +601,7 @@ export default function hackathonreport() {
 
   const handleSkipFeedback = () => {
     handleFeedbackClose();
-    router.push('/dashboardCandidate');
+    router.push('/hackathon-dashboard');
   };
 
   if (loading || analyzing) {
