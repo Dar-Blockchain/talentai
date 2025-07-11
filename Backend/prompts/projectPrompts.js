@@ -120,9 +120,9 @@ Your task is to extract and evaluate all relevant technical data needed to popul
    - "choiceExplanation": (array of strings) All explicit reasons or justifications the team gave for choosing this technology. Only include what is stated or clearly implied.
    - "complexity": (string) One of: "Beginner", "Intermediate", "Advanced". Assess based on the technology's learning curve and usage in the project.
    - "modernity": (string) One of: "outdated", "average", "modern", "cutting-edge". Judge based on current industry standards and the context provided.
-   - "strengths": (array of strings) List the main technical advantages or benefits as described or implied by the team.
-   - "weaknesses": (array of strings) List any limitations, risks, or incorrect usages mentioned or implied.
-   - "recommendation": (array of strings) Provide concrete, actionable improvement tips for this technology choice, based on the transcript.
+   - "strengths": (array of strings): must not be empty. List the main technical advantages or benefits as described or implied by the team.
+   - "weaknesses": (array of strings): must not be empty. List any limitations, risks, or incorrect usages mentioned or implied.
+   - "recommendation": (array of strings): must not be empty Provide concrete, actionable improvement tips for this technology choice, based on the transcript.
    - "score": (integer, 0–100) Assign a score using these rules:
      * 75–100: Technology is highly aligned with project goals and the ${projectTrack} track, and the explanation is deep, clear, specific, and technically justified.
      * 50–74: Good alignment and usage, but explanation lacks depth or clarity.

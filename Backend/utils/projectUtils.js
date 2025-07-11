@@ -7,6 +7,7 @@ const {
   ELIGIBILITY_STATUS,
   ELIGIBILITY_CHECKS_STATUS,
   MIN_TRACK_ALIGNMENT_SCORE,
+  TECH_STACK_TYPES,
 } = require("../constants/projectConstants");
 
 const {
@@ -75,95 +76,6 @@ function handleBusinessOverallScore(
   return Math.round(Math.max(0, Math.min(100, overallScore)) * 100) / 100;
 }
 
-/**
- * Calculates the overallScore for technicalData by assigning weights to each component score.
- *
- * The technical overall score is a weighted sum of:
- *   - techStack: The weighted average score of all techStack items, where each item's weight is determined by its componentType (coreTechnology, integrationTool, hederaService).
- *   - architecture: The score of the architecture component.
- *   - scalabilityApproach: The score of the scalabilityApproach component.
- *
- * The weights for each component are defined in TECHNICAL_OVERALL_SCORE_WEIGHTS.
- * The weights for techStack component types are defined in TECH_TYPE_WEIGHTS.
- *
- * @param {Object} technicalData - The technicalData object containing techStack, architecture, scalabilityApproach.
- * @returns {number} The calculated overallScore (0-100, rounded to 2 decimals)
- *
- * Example:
- *   handleTechnicalOverallScore({
- *     techStack: [
- *       { componentType: "coreTechnology", score: 80 },
- *       { componentType: "integrationTool", score: 70 },
- *       { componentType: "hederaService", score: 90 }
- *     ],
- *     architecture: { score: 85 },
- *     scalabilityApproach: { score: 75 }
- *   });
- *   // => 82.34 (for example, depending on weights)
- */
-function handleTechnicalOverallScore(technicalData) {
-  const weights = {
-    techStack: TECHNICAL_OVERALL_SCORE_WEIGHTS.TECH_STACK,
-    architecture: TECHNICAL_OVERALL_SCORE_WEIGHTS.ARCHITECTURE,
-    scalabilityApproach: TECHNICAL_OVERALL_SCORE_WEIGHTS.SCALABILITY_APPROACH,
-  };
-  if (!technicalData) return 0;
-
-  // I. techStack: average score of all techStack items (weighted)
-  let techStackScore = 0;
-
-  if (
-    Array.isArray(technicalData.techStack) &&
-    technicalData.techStack.length > 0
-  ) {
-    const typeWeights = {
-      hederaCoreTech: TECH_TYPE_WEIGHTS.HEDERA_CORE_TECH,
-      otherCoreTech: TECH_TYPE_WEIGHTS.OTHER_CORE_TECH,
-      integrationTool: TECH_TYPE_WEIGHTS.INTEGRATION_TOOL,
-      hederaService: TECH_TYPE_WEIGHTS.HEDERA_SERVICE,
-    };
-    let weightedSum = 0;
-    let totalWeight = 0;
-    for (const item of technicalData.techStack) {
-      console.log("componentType", item);
-      const type = item.componentType;
-      const score = typeof item.score === "number" ? item.score : 0;
-      const weight = typeWeights[type] || 0;
-      weightedSum += score * weight;
-      totalWeight += weight;
-    }
-    // Avoid division by zero
-    techStackScore = totalWeight > 0 ? weightedSum / totalWeight : 0;
-  }
-
-  // II. architecture: score field
-  let architectureScore = 0;
-  if (
-    technicalData.architecture &&
-    typeof technicalData.architecture.score === "number"
-  ) {
-    architectureScore = technicalData.architecture.score;
-  }
-
-  // III. scalabilityApproach: score field
-  let scalabilityScore = 0;
-  if (
-    technicalData.scalabilityApproach &&
-    typeof technicalData.scalabilityApproach.score === "number"
-  ) {
-    scalabilityScore = technicalData.scalabilityApproach.score;
-  }
-
-  // Weighted sum
-  const overallScore =
-    techStackScore * weights.techStack +
-    architectureScore * weights.architecture +
-    scalabilityScore * weights.scalabilityApproach;
-
-  // Clamp to 0-100 and round
-  return Math.round(Math.max(0, Math.min(100, overallScore)) * 100) / 100;
-}
-
 function handleAssessmentOverallScore(
   technicalOverallScore,
   businessOverallScore
@@ -182,6 +94,87 @@ function handleAssessmentOverallScore(
     (technicalScore * techWeight + businessScore * bizWeight) / totalWeight;
 
   return Math.round(weightedSum * 100) / 100;
+}
+
+function calculateTechStackScore(techStack = []) {
+  if (!Array.isArray(techStack) || techStack.length === 0)
+    return { score: 0, isValid: false };
+
+  const typeWeights = {
+    [TECH_STACK_TYPES.HEDERA_TOOLING]: TECH_TYPE_WEIGHTS.HEDERA_TOOLING,
+    [TECH_STACK_TYPES.HEDERA_SERVICE]: TECH_TYPE_WEIGHTS.HEDERA_SERVICE,
+    [TECH_STACK_TYPES.CORE_TECH]: TECH_TYPE_WEIGHTS.CORE_TECH,
+    [TECH_STACK_TYPES.INTEGRATION_TOOL]: TECH_TYPE_WEIGHTS.INTEGRATION_TOOL,
+    [TECH_STACK_TYPES.INFRASTRUCTURE]: TECH_TYPE_WEIGHTS.INFRASTRUCTURE,
+  };
+
+  // Group scores by componentType
+  const scoresByType = {};
+  const countsByType = {};
+
+  for (const item of techStack) {
+    const type = item.componentType;
+    const score = typeof item.score === "number" ? item.score : 0;
+
+    if (!scoresByType[type]) {
+      scoresByType[type] = 0;
+      countsByType[type] = 0;
+    }
+    scoresByType[type] += score;
+    countsByType[type] += 1;
+  }
+
+  // Calculate average score per type
+  const avgScoresByType = {};
+  for (const type in scoresByType) {
+    avgScoresByType[type] = scoresByType[type] / countsByType[type];
+  }
+
+  // Calculate weighted average of the averages
+  let weightedSum = 0;
+  let totalWeight = 0;
+
+  for (const type in avgScoresByType) {
+    const weight = typeWeights[type] || 0;
+    weightedSum += avgScoresByType[type] * weight;
+    totalWeight += weight;
+  }
+
+  const isValid = totalWeight > 0;
+  const score = isValid ? weightedSum / totalWeight : 0;
+
+  return score;
+}
+
+function handleTechnicalOverallScore(technicalData) {
+  if (!technicalData) return 0;
+
+  const categoryWeights = {
+    techStack: TECHNICAL_OVERALL_SCORE_WEIGHTS.TECH_STACK,
+    architecture: TECHNICAL_OVERALL_SCORE_WEIGHTS.ARCHITECTURE,
+    scalability: TECHNICAL_OVERALL_SCORE_WEIGHTS.SCALABILITY_APPROACH,
+  };
+
+  const techStackScore = calculateTechStackScore(technicalData.techStack);
+
+  const hasArchitecture = typeof technicalData.architecture?.score === "number";
+  const architectureScore = hasArchitecture
+    ? technicalData.architecture.score
+    : 0;
+
+  const hasScalability =
+    typeof technicalData.scalabilityApproach?.score === "number";
+  const scalabilityScore = hasScalability
+    ? technicalData.scalabilityApproach.score
+    : 0;
+
+  let finalScore = 0;
+  finalScore =
+    architectureScore * categoryWeights.architecture +
+    scalabilityScore * categoryWeights.scalability +
+    techStackScore * categoryWeights.techStack;
+
+  return Math.round(Math.max(0, Math.min(100, finalScore)) * 100) / 100;
 }
 
 /**
@@ -221,7 +214,7 @@ async function handleEligibility(assessment, analysis, assessmentType) {
       }
     }
   }
-  // handle eligibility for code assessment 
+  // handle eligibility for code assessment
   //(to be handled when integrating code assessment)
 
   await assessment.save();
