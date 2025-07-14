@@ -62,6 +62,28 @@ export default function SignIn() {
 
   const email = watchEmail("email");
   const code = watchCode("code");
+  const checkExistingProject = async () => {
+    try {
+      const token = localStorage.getItem('api_token');
+      const res = await fetch('http://localhost:5000/project/getMyProjects', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          router.push('/hackathon-dashboard');
+          setVerifying(false);
+
+          return;
+        }
+      }else{
+        router.push('/hackathon-registration');
+        setVerifying(false);
+        return
+
+      }
+    } catch (e) { /* ignore */ }
+  };
 
   const onEmailSubmit = async (data: EmailFormData) => {
     const emailToSend = data.email.toLowerCase().trim();
@@ -160,7 +182,7 @@ export default function SignIn() {
               }
               return profileResponse.json();
             })
-            .then((profileData) => {
+            .then(async (profileData) => {
               console.log("Profile data received:", profileData);
               
               // Check if profileData exists and has the expected structure
@@ -173,8 +195,7 @@ export default function SignIn() {
               console.log("Profile type:", profileData?.userId?.role);
               
               if (isHackathon) {
-                setVerifying(false);
-                router.push('/hackathon-registration');
+                await checkExistingProject()
                 return;
               }
               
