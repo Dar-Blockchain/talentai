@@ -30,6 +30,7 @@ const {
   handleAddSoftSkills,
   saveInterviewDetails,
   saveInterviewDetailsForJob,
+  handleHROverallScore,
 } = require("../utils/evaluationUtils");
 
 const InterviewDetails = require("../models/InterviewDetailsModel");
@@ -314,6 +315,10 @@ exports.analyzeHRAnswers = async ({ questions, user, formData }) => {
 
   // I. parse AI response
   let analysis = await parseAIResponse(raw);
+
+  console.log("old value", analysis.overallScore);
+  analysis.overallScore = handleHROverallScore(analysis.skillAnalysis);
+  console.log("new value", analysis.overallScore);
 
   // II.
   // store softskills in the candidate's profile (if any are proven)

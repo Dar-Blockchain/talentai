@@ -343,3 +343,4 @@ ${result.linkedinPost.hashtags.map((tag) => "#" + tag).join(" ")}`;
     res.status(500).json({ error: "Failed to process job post request" });
   }
 };
+

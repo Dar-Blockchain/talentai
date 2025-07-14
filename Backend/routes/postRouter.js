@@ -38,4 +38,6 @@ router.delete("/deletePost/:id", postController.deletePost);
 // Nouvelle route pour récupérer 3 posts par les 3 premiers skills du profil utilisateur
 router.get("/adsPost", postController.getPostsByUserTopSkills);
 
+router.get("/DetailsPost/:id", postController.getPostById);
+
 module.exports = router;
