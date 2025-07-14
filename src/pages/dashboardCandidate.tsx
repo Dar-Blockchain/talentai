@@ -25,7 +25,6 @@ import {
   TextField,
   Divider,
   Paper,
-  Grid,
   Stack,
   MenuItem,
   RadioGroup,
@@ -51,6 +50,7 @@ import {
   Tabs,
   Tab,
 } from "@mui/material";
+import Grid from "@mui/material/Grid";
 import { styled } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
@@ -75,6 +75,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CandidateOnly from "../components/CandidateOnly";
 import { useCallback } from 'react';
+import Link from "next/link";
 const GREEN_MAIN = "#8310FF";
 
 // Styled Components
@@ -1405,6 +1406,25 @@ export default function DashboardCandidate() {
     }
   };
 
+  // Static JSON for ads preview
+  const adsPosts = [
+    {
+      _id: '1',
+      title: 'Frontend Developer at TechCorp',
+      description: 'Join our dynamic team to build modern web applications using React and TypeScript. Great benefits and growth opportunities.',
+    },
+    {
+      _id: '2',
+      title: 'AI Research Intern',
+      description: 'Work with cutting-edge AI models and contribute to real-world projects. Ideal for students and recent graduates passionate about machine learning.',
+    },
+    {
+      _id: '3',
+      title: 'Remote Product Designer',
+      description: 'Shape the user experience for our next-gen SaaS platform. Fully remote, flexible hours, and a creative team environment.',
+    },
+  ];
+
   if (loading) {
     return (
       <Container
@@ -2239,6 +2259,32 @@ export default function DashboardCandidate() {
               </Box>
             </Container>
           </ProfileHeader>
+
+          {/* Ads Block - Show 3 posts as ads */}
+          <StyledCard sx={{ mb: 4, background: '#f8fafc', border: '2px dashed #8310FF' }}>
+            <SectionTitle sx={{ color: '#8310FF', fontSize: '1.5rem', mb: 2 }}>Recommended Opportunities</SectionTitle>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
+              {adsPosts.map((post) => (
+                <Box key={post._id} sx={{ flex: 1, minWidth: 0, display: 'flex' }}>
+                  <Paper elevation={2} sx={{ p: 2, borderRadius: 3, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#fff' }}>
+                    <Typography variant="h6" sx={{ color: '#8310FF', fontWeight: 700, mb: 1, minHeight: 48 }}>
+                      {post.title || 'Untitled Post'}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#333', mb: 2, minHeight: 60 }}>
+                      {post.description ? post.description.slice(0, 90) + (post.description.length > 90 ? '...' : '') : 'No description.'}
+                    </Typography>
+                    <Box sx={{ mt: 'auto' }}>
+                      <Link href={`/testjob/${post._id}`} passHref legacyBehavior>
+                        <Button variant="contained" sx={{ background: '#8310FF', color: '#fff', borderRadius: 2, textTransform: 'none', fontWeight: 600, width: '100%' }}>
+                          Learn More
+                        </Button>
+                      </Link>
+                    </Box>
+                  </Paper>
+                </Box>
+              ))}
+            </Box>
+          </StyledCard>
 
           {/* User Information */}
           <Box
