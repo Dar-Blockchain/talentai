@@ -145,7 +145,7 @@ const ProfileHeader = styled(Box)(({ theme }) => ({
 const StatCard = styled(Paper)(({ theme }) => ({
   background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.grey[100]} 100%)`,
   padding: theme.spacing(3),
-  borderRadius: theme.shape.borderRadius * 3,
+  borderRadius: Number(theme.shape.borderRadius) * 3,
   border: `1px solid ${theme.palette.divider}`,
   boxShadow: `
     0 6px 20px rgba(0, 0, 0, 0.05),
@@ -185,7 +185,7 @@ const SkillChip = styled(Chip)(({ theme }) => ({
 }));
 
 const ActionButton = styled(Button)(({ theme }) => ({
-  borderRadius: theme.shape.borderRadius * 2.5,
+  borderRadius: Number(theme.shape.borderRadius) * 2.5,
   textTransform: "none",
   fontWeight: 600,
   fontSize: "1rem", // base font size (mobile)
@@ -2802,6 +2802,7 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(2);
   const [total, setTotal] = useState(0);
+  const router = useRouter();
 
   const fetchData = useCallback(async (type: string, pageNum: number, limit: number) => {
     setLoading(true);
@@ -2836,18 +2837,6 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
   const handleChangeRowsPerPage = (e: any) => {
     setRowsPerPage(parseInt(e.target.value, 10));
     setPage(0);
-  };
-
-  // Add modal state and handler inside InterviewDetailsTabs
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [detailsRow, setDetailsRow] = useState<any>(null);
-  const handleOpenDetails = (row: any) => {
-    setDetailsRow(row);
-    setDetailsOpen(true);
-  };
-  const handleCloseDetails = () => {
-    setDetailsOpen(false);
-    setDetailsRow(null);
   };
 
   return (
@@ -2887,7 +2876,7 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
                       <TableCell>{row.overallScore ?? '-'}</TableCell>
                       <TableCell>{row.post?.jobDetails?.title || '-'}</TableCell>
                       <TableCell>
-                        <Button variant="outlined" size="small" onClick={() => handleOpenDetails(row)}>
+                        <Button variant="outlined" size="small" onClick={() => router.push(`/candidate/interview/${row._id || row.id}`)}>
                           Details
                         </Button>
                       </TableCell>
@@ -2908,42 +2897,6 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
           />
         </>
       )}
-      {/* Details Modal */}
-      <Dialog open={detailsOpen} onClose={handleCloseDetails} maxWidth="md" fullWidth>
-        <DialogTitle>Interview Questions & Answers</DialogTitle>
-        <DialogContent dividers>
-          {detailsRow && Array.isArray(detailsRow.skillDetails) ? (
-            detailsRow.skillDetails.map((s: any, i: number) => (
-              <Box key={i} sx={{ mb: 3 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                  {s.name || '-'}
-                </Typography>
-                {Array.isArray(s.questionAnswerList) && s.questionAnswerList.length > 0 ? (
-                  s.questionAnswerList.map((qa: any, idx: number) => (
-                    <Box key={idx} sx={{ mb: 1, pl: 2 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        Q{idx + 1}: {qa.question || '-'}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary', ml: 2 }}>
-                        A{idx + 1}: {qa.answer || '-'}
-                      </Typography>
-                    </Box>
-                  ))
-                ) : (
-                  <Typography variant="body2" sx={{ color: 'text.secondary', pl: 2 }}>
-                    No questions/answers.
-                  </Typography>
-                )}
-              </Box>
-            ))
-          ) : (
-            <Typography>No details available.</Typography>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDetails}>Close</Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 }
