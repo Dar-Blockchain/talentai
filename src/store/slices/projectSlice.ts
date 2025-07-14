@@ -507,6 +507,26 @@ export interface HederaEcosystemImpact {
   recommendation?: string[];
 }
 
+export const downloadProjectPdf = createAsyncThunk<Blob, any, { rejectValue: string }>(
+  'projects/downloadProjectPdf',
+  async (projectId, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('api_token');
+      if (!token) return rejectWithValue('No authentication token found');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/${projectId}/export-pdf`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) throw new Error('Failed to download PDF');
+      const blob = await res.blob();
+      return blob;
+    } catch (err: any) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
 const projectSlice = createSlice({
   name: "projects",
   initialState,

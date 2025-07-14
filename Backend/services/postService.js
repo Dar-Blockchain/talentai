@@ -208,3 +208,31 @@ module.exports.updatePostStatus = async (postId, userId, status) => {
     throw new Error(`Error updating post status: ${error.message}`);
   }
 };
+
+
+module.exports.getPostsByUserTopSkills = async (userId, limitPerSkill = 1, nbSkills = 3) => {
+  // On récupère le profil et ses skills
+  const user = await User.findById(userId).populate({
+    path: 'profile',
+    select: 'skills', // on suppose que c'est comme ça dans ton profil
+  });
+  if (!user || !user.profile || !user.profile.skills || user.profile.skills.length === 0) {
+    throw new Error("Aucune compétence trouvée pour cet utilisateur.");
+  }
+
+  // On prend les 3 premiers skills
+  const topSkills = user.profile.skills.slice(0, nbSkills).map(skill => skill.name);
+
+  // Pour chaque skill, on récupère les posts qui matchent
+  let results = [];
+  for (const skill of topSkills) {
+    const posts = await Post.find({ "skillAnalysis.requiredSkills.name": skill })
+      .sort({ createdAt: -1 })
+      .limit(limitPerSkill);
+    results.push(...posts);
+  }
+
+  return results;
+};
+
+

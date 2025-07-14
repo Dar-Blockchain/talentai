@@ -17,6 +17,12 @@ import ArticleIcon from '@mui/icons-material/Article';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
+import Button from '@mui/material/Button';
+import { useDispatch } from 'react-redux';
+import { useState } from 'react';
+import { downloadProjectPdf } from '@/store/slices/projectSlice';
+import DownloadIcon from '@mui/icons-material/Download';
+import CircularProgress from '@mui/material/CircularProgress';
 
 interface DetailsModalProps {
   open: boolean;
@@ -80,6 +86,27 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ open, onClose, detailsProje
     );
   };
 
+  const dispatch = useDispatch<any>();
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    if (!detailsProject?._id) return;
+    setDownloading(true);
+    try {
+      const blob = await dispatch(downloadProjectPdf(detailsProject._id)).unwrap();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${detailsProject?.name || 'project'}-report.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
@@ -89,6 +116,31 @@ const DetailsModal: React.FC<DetailsModalProps> = ({ open, onClose, detailsProje
         </IconButton>
       </DialogTitle>
       <DialogContent>
+        <Button
+          variant="contained"
+          startIcon={downloading ? <CircularProgress size={20} color="inherit" /> : <DownloadIcon />}
+          onClick={handleDownloadPDF}
+          disabled={downloading}
+          sx={{
+            mb: 2,
+            background: 'linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)',
+            color: '#fff',
+            fontWeight: 700,
+            boxShadow: '0 4px 16px 0 rgba(124,77,255,0.15)',
+            borderRadius: 3,
+            px: 3,
+            py: 1.2,
+            textTransform: 'none',
+            fontSize: 16,
+            transition: 'background 0.2s, box-shadow 0.2s',
+            '&:hover': {
+              background: 'linear-gradient(90deg, #6b0cd6 0%, #00acc1 100%)',
+              boxShadow: '0 8px 32px 0 rgba(124,77,255,0.22)',
+            },
+          }}
+        >
+          {downloading ? 'Downloading...' : 'Download Report as PDF'}
+        </Button>
         {detailsProject && (
           <Box>
             <Typography variant="h5" sx={{ mt: 1, mb: 1, fontWeight: 800 }}>{detailsProject.name}</Typography>
