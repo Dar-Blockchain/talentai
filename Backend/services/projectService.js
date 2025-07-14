@@ -82,7 +82,6 @@ module.exports.createProject = async (data, baseUrl) => {
     await projectAssessment.save();
     project.assessment = projectAssessment._id;
     await project.save();
-    
 
     for (const member of teamWithTokens) {
       const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${member.activationToken}`;
@@ -203,8 +202,6 @@ module.exports.resendTeamInvitation = async (
 };
 
 // Récupération de tous les projets
-
-// Récupération de tous les projets avec tri par overallScore dans TechnicalDataSchema et BusinessDataSchema
 module.exports.getAllProjects = async (
   page,
   limit,
@@ -214,77 +211,125 @@ module.exports.getAllProjects = async (
   name
 ) => {
   try {
-    const query = {};
+    page = parseInt(page) || 1;
+    limit = parseInt(limit) || 10;
 
-    if (track && track.trim() !== "") query.track = track;
-    if (leaderId) query.leaderId = leaderId;
-    if (name && name.trim() !== "")
-      query.name = { $regex: name, $options: "i" };
+    const match = {};
+    if (track && track.trim() !== "") match.track = track;
+    if (leaderId) match.leaderId = leaderId;
+    if (name && name.trim() !== "") {
+      match.name = { $regex: name, $options: "i" };
+    }
 
-    // Récupérer les projets sans la pagination au début, juste pour trier
-    const projects = await Project.find(query)
-      .populate("leaderId")
-      .populate({
-        path: "assessment",
-        model: "ProjectAssessment",
-      });
+    // Prepare sort field and order
+    let sortField = "createdAt"; // default sort
+    let sortOrder = -1; // descending by default
 
-    // Si un tri est demandé
+    let filterTechnicalData = false;
+    let filterBusinessData = false;
+    let filterOverallScore = false;
     if (sort) {
-      const sortField = sort.replace(/^[-+]/, "");
-      const isDescending = sort.startsWith("-");
+      const rawField = sort.replace(/^[-+]/, "");
+      sortOrder = sort.startsWith("-") ? -1 : 1;
 
-      // Tri selon les nouveaux critères
-      projects.sort((a, b) => {
-        let aVal, bVal;
+      // Handle specific nested fields
+      if (rawField === "overallScoreTechnical") {
+        sortField = "assessment.technicalData.overallScore";
+        filterTechnicalData = true;
+      } else if (rawField === "overallScoreBusiness") {
+        sortField = "assessment.businessData.overallScore";
+        filterBusinessData = true;
+      } else if (rawField === "overallScore") {
+        sortField = "assessment.overallScore";
+        filterOverallScore = true; 
+      } else {
+        sortField = rawField;
+      }
+    }
 
-        if (sortField === "overallScoreTechnical") {
-          aVal = a.assessment?.technicalData?.overallScore || 0;
-          bVal = b.assessment?.technicalData?.overallScore || 0;
-        } else if (sortField === "overallScoreBusiness") {
-          aVal = a.assessment?.businessData?.overallScore || 0;
-          bVal = b.assessment?.businessData?.overallScore || 0;
-        } else if (sortField === "overallScore") {
-          aVal = a.assessment?.overallScore || 0;
-          bVal = b.assessment?.overallScore || 0;
-        } else {
-          aVal = a[sortField];
-          bVal = b[sortField];
+    const pipeline = [
+      { $match: match },
+      {
+        $lookup: {
+          from: "projectassessments",
+          localField: "assessment",
+          foreignField: "_id",
+          as: "assessment",
+        },
+      },
+      { $unwind: { path: "$assessment", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "leaderId",
+          foreignField: "_id",
+          as: "leaderId",
+        },
+      },
+      { $unwind: { path: "$leaderId", preserveNullAndEmptyArrays: true } },
+    ];
+
+    // If sorting by overallScoreTechnical, only return projects that have technicalData
+    if (filterTechnicalData) {
+      pipeline.push({
+        $match: {
+          "assessment.technicalData.overallScore": { $exists: true, $ne: null }
         }
-
-        if (aVal < bVal) return isDescending ? 1 : -1;
-        if (aVal > bVal) return isDescending ? -1 : 1;
-        return 0;
       });
     }
 
-    // Appliquer la pagination sur les projets triés
-    const skip = (page - 1) * limit;
-    const paginatedProjects = projects.slice(skip, skip + limit);
-    const total = projects.length;
+    // If sorting by overallScoreBusiness, only return projects that have businessData
+    else if (filterBusinessData) {
+      pipeline.push({
+        $match: {
+          "assessment.businessData.overallScore": { $exists: true, $ne: null }
+        }
+      });
+    }
 
-    // Ajouter le status à chaque projet
+    // If sorting by overallScore, only return projects that have overallScore
+    else if (filterOverallScore) {
+      pipeline.push({
+        $match: {
+          "assessment.overallScore": { $exists: true, $ne: null }
+        }
+      });
+    }
+
+    pipeline.push({
+      $sort: {
+        [sortField]: sortOrder,
+      },
+    });
+
+    // Count total before pagination
+    const countPipeline = [...pipeline, { $count: "total" }];
+    const countResult = await Project.aggregate(countPipeline);
+    const total = countResult.length > 0 ? countResult[0].total : 0;
+
+    // Add pagination
+    pipeline.push({ $skip: (page - 1) * limit });
+    pipeline.push({ $limit: limit });
+
+    // Fetch paginated results
+    const paginatedProjects = await Project.aggregate(pipeline);
+
+    // Add status to each project
     paginatedProjects.forEach((project) => {
-      if (project.assessment) {
-        project.status = project.assessment.status;
-      } else {
-        project.status = "Pending"; // Valeur par défaut si pas d'évaluation associée
-      }
+      project.status = project.assessment?.status || "Pending";
     });
 
     return {
       total,
-      page: parseInt(page),
-      limit: parseInt(limit),
+      page,
+      limit,
       projects: paginatedProjects,
       totalPages: Math.ceil(total / limit),
     };
   } catch (error) {
-    throw new Error("Erreur lors de la récupération des projets");
+    throw new Error(`Erreur lors de la récupération des projets: ${error}`);
   }
 };
-
-
 
 
 // Récupération des projets de l'utilisateur connecté
@@ -580,7 +625,7 @@ module.exports.getProjectStats = async () => {
 
     // 4. Evaluated Projects (with assessment.status === "done")
     const evaluatedProjects = await ProjectAssessment.countDocuments({
-      status: "done"
+      status: "done",
     });
 
     // 5. Total Team Members
@@ -705,11 +750,13 @@ module.exports.getProjectsCountByStatus = async () => {
   }
 };
 
-
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
-const { createExportDirIfNeeded, generateFilePath } = require("../utils/genPdf");
+const {
+  createExportDirIfNeeded,
+  generateFilePath,
+} = require("../utils/genPdf");
 
 module.exports.exportProjectPdfService = async (projectId) => {
   const project = await Project.findById(projectId)
@@ -738,29 +785,53 @@ module.exports.exportProjectPdfService = async (projectId) => {
   // Évaluation du projet
   if (project.assessment) {
     doc.fontSize(14).text("Assessment", { underline: true });
-    doc.fontSize(12).text(`Overall Score: ${project.assessment.overallScore ?? "N/A"}`);
+    doc
+      .fontSize(12)
+      .text(`Overall Score: ${project.assessment.overallScore ?? "N/A"}`);
 
     if (project.assessment.technicalData) {
       doc.moveDown().text("Technical Data", { underline: true });
-      doc.text(`- Architecture Score: ${project.assessment.technicalData.architecture?.score ?? "N/A"}`);
-      doc.text(`- Scalability Score: ${project.assessment.technicalData.scalabilityApproach?.score ?? "N/A"}`);
+      doc.text(
+        `- Architecture Score: ${
+          project.assessment.technicalData.architecture?.score ?? "N/A"
+        }`
+      );
+      doc.text(
+        `- Scalability Score: ${
+          project.assessment.technicalData.scalabilityApproach?.score ?? "N/A"
+        }`
+      );
     }
 
     if (project.assessment.businessData) {
       doc.moveDown().text("Business Data", { underline: true });
-      doc.text(`- Business Model Score: ${project.assessment.businessData.businessModel?.score ?? "N/A"}`);
-      doc.text(`- Market Potential Score: ${project.assessment.businessData.marketPotential?.score ?? "N/A"}`);
+      doc.text(
+        `- Business Model Score: ${
+          project.assessment.businessData.businessModel?.score ?? "N/A"
+        }`
+      );
+      doc.text(
+        `- Market Potential Score: ${
+          project.assessment.businessData.marketPotential?.score ?? "N/A"
+        }`
+      );
     }
 
     doc.moveDown().text("Eligibility", { underline: true });
-    doc.text(`Eligibility Status: ${project.assessment.eligibility?.isEligible ? "Eligible" : "Not Eligible"}`);
+    doc.text(
+      `Eligibility Status: ${
+        project.assessment.eligibility?.isEligible ? "Eligible" : "Not Eligible"
+      }`
+    );
   } else {
     doc.text("No assessment data available.");
   }
 
   doc.moveDown().text("Team", { underline: true });
-  (project.team || []).forEach(member => {
-    doc.text(`- ${member.email} (${member.validated ? "Validated" : "Not Validated"})`);
+  (project.team || []).forEach((member) => {
+    doc.text(
+      `- ${member.email} (${member.validated ? "Validated" : "Not Validated"})`
+    );
   });
 
   doc.end();
