@@ -410,30 +410,3 @@ module.exports.exportProjectPdf = async (req, res) => {
     res.status(500).send("Failed to generate PDF");
   }
 };
-
-const { exportProjectPdfService } = require("../services/projectService");
-const { deleteFileAfterSend } = require("../utils/genPdf");
-
-module.exports.exportProjectPdfController = async (req, res) => {
-  try {
-    const projectId = req.params.projectId;
-
-    // Appel du service pour générer le PDF
-    const filePath = await exportProjectPdfService(projectId);
-
-    // Envoi du fichier PDF pour téléchargement
-    res.download(filePath, (err) => {
-      if (err) {
-        console.error("Error sending PDF:", err);
-        res.status(500).send("Error sending PDF");
-      }
-      // Supprimer le fichier après l'envoi
-      deleteFileAfterSend(filePath);
-    });
-
-  } catch (error) {
-    console.error("Error generating or sending PDF:", error);
-    res.status(500).send("Failed to generate PDF");
-  }
-};
-
