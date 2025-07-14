@@ -1,13 +1,23 @@
-import { Box, Button, Divider } from '@mui/material';
+import { Box, Button, Divider, CircularProgress } from '@mui/material';
 import React from 'react';
 
-const RegistrationNavigation: React.FC<{
+interface RegistrationNavigationProps {
   activeStep: number;
   steps: string[];
   handleBack: () => void;
   handleNext: () => void;
   handleStepSubmit: () => void;
-}> = ({ activeStep, steps, handleBack, handleNext, handleStepSubmit }) => (
+  loading?: boolean;
+}
+
+const RegistrationNavigation: React.FC<RegistrationNavigationProps> = ({
+  activeStep,
+  steps,
+  handleBack,
+  handleNext,
+  handleStepSubmit,
+  loading = false,
+}) => (
   <>
     <Divider sx={{ mt: 3, mb: 2, borderColor: '#D1C4E9' }} />
     <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
@@ -58,6 +68,7 @@ const RegistrationNavigation: React.FC<{
           variant="contained"
           onClick={handleStepSubmit}
           size="medium"
+          disabled={loading}
           sx={{
             minWidth: 100,
             fontWeight: 700,
@@ -74,7 +85,7 @@ const RegistrationNavigation: React.FC<{
             },
           }}
         >
-          Register
+          {loading ? <CircularProgress size={22} sx={{ color: '#fff' }} /> : 'Register'}
         </Button>
       )}
     </Box>

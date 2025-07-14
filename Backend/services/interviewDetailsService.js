@@ -30,3 +30,13 @@ exports.getAllInterviewDetails = async ({ page = 1, limit = 10, sort = "-created
   };
 };
 
+
+module.exports.getInterviewDetailsById = async (id) => {
+  const interview = await InterviewDetails.findById(id)
+    .populate("candidate", "firstName lastName email") // adapte les champs si besoin
+    .populate("company", "name email")
+    .populate("post")
+    .populate("jobAssessmentResult");
+  if (!interview) throw new Error("InterviewDetails non trouvée !");
+  return interview;
+};

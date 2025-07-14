@@ -13,4 +13,7 @@ router.use(requireAuthUser,controledAcces('Candidat'), authLogMiddleware("Interv
 
 router.get("/", interviewDetailsController.getAll);
 
+router.get("/getInterviewDetailsById/:id", interviewDetailsController.getInterviewDetailsById);
+
+
 module.exports = router;
