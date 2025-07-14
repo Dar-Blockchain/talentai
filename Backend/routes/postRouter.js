@@ -8,7 +8,7 @@ const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 const { controledAcces } = require('../middleware/controledAcces'); // Importez le middleware
 
 
-router.use(requireAuthUser,controledAcces('Company'), authLogMiddleware("Post"));
+router.use(requireAuthUser, authLogMiddleware("Post"));
 
 
 // Route pour créer un post
@@ -34,5 +34,8 @@ router.patch("/updatePostStatus/:id", postController.updatePostStatus);
 
 // Route pour supprimer un post
 router.delete("/deletePost/:id", postController.deletePost);
+
+// Nouvelle route pour récupérer 3 posts par les 3 premiers skills du profil utilisateur
+router.get("/adsPost", postController.getPostsByUserTopSkills);
 
 module.exports = router;
