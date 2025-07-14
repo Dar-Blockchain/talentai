@@ -27,6 +27,7 @@ import {
 import { registerUser, verifyOTP } from "../../store/slices/authSlice";
 import type { RootState, AppDispatch } from "../../store/store";
 import Cookies from "js-cookie";
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
 type EmailFormData = { email: string };
 type CodeFormData = { code: string };
@@ -38,6 +39,8 @@ export default function SignIn() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
+  const [isHackathon, setIsHackathon] = useState(false);
+  const [verifying, setVerifying] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const { isLoading, error: reduxError } = useSelector(
@@ -81,6 +84,7 @@ export default function SignIn() {
   const onVerifySubmit = async (data: CodeFormData) => {
     if (!code || !email) return;
     setError("");
+    setVerifying(true);
     try {
       // Get user location using ipinfo
       let userLocation = null;
@@ -140,6 +144,7 @@ export default function SignIn() {
           if (!storedToken) {
             console.error("Token not found in localStorage after setting");
             setError("Authentication failed - token not stored");
+            setVerifying(false);
             return;
           }
           
@@ -168,7 +173,7 @@ export default function SignIn() {
               console.log("Profile type:", profileData?.userId?.role);
               
               if (isHackathon) {
-                // If coming from hackathon URL, go to hackathon registration
+                setVerifying(false);
                 router.push('/hackathon-registration');
                 return;
               }
@@ -176,33 +181,42 @@ export default function SignIn() {
               if (callbackUrl) {
                 if (!hasProfile) {
                   // If no profile, go to preferences first with callbackUrl
+                  setVerifying(false);
                   router.push(`/preferences?callbackUrl=${encodeURIComponent(callbackUrl)}`);
                 } else {
                   // If profile exists, go to callbackUrl
+                  setVerifying(false);
                   router.push(decodeURIComponent(callbackUrl));
                 }
               } else if (returnUrl) {
                 if (!hasProfile) {
                   // If no profile, go to preferences first with returnUrl
+                  setVerifying(false);
                   router.push(`/preferences?returnUrl=${encodeURIComponent(returnUrl)}`);
                 } else {
                   // If profile exists, go to returnUrl
+                  setVerifying(false);
                   router.push(decodeURIComponent(returnUrl));
                 }
               } else {
                 if (!hasProfile) {
                   // If no return URL, go to preferences
+                  setVerifying(false);
                   router.push("/preferences");
                 } else if (profileData.userId.role === 'Admin') {
+                  setVerifying(false);
                   console.log("Redirecting to admin dashboard");
                   router.push("/dashboardAdmin");
                 } else if (profileData.userId.role === 'Candidat') {
+                  setVerifying(false);
                   console.log("Redirecting to candidate dashboard");
                   router.push("/dashboardCandidate");
                 } else if (profileData.userId.role === 'Company') {
+                  setVerifying(false);
                   console.log("Redirecting to company dashboard");
                   router.push("/dashboardCompany");
                 } else {
+                  setVerifying(false);
                   console.log("Unknown role, going to preferences");
                   router.push("/preferences");
                 }
@@ -232,20 +246,26 @@ export default function SignIn() {
                     
                     if (hasProfile) {
                       if (retryProfileData.userId.role === 'Admin') {
+                        setVerifying(false);
                         router.push("/dashboardAdmin");
                       } else if (retryProfileData.userId.role === 'Candidat') {
+                        setVerifying(false);
                         router.push("/dashboardCandidate");
                       } else if (retryProfileData.userId.role === 'Company') {
+                        setVerifying(false);
                         router.push("/dashboardCompany");
                       } else {
+                        setVerifying(false);
                         router.push("/preferences");
                       }
                     } else {
+                      setVerifying(false);
                       router.push("/preferences");
                     }
                   })
                   .catch((retryError) => {
                     console.error("Profile check retry error:", retryError);
+                    setVerifying(false);
                     router.push("/preferences");
                   });
               }, 500);
@@ -253,9 +273,11 @@ export default function SignIn() {
         }, 500); // Increased delay to 500ms
       } else {
         setError("Verification successful but no token received");
+        setVerifying(false);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Verification failed");
+      setVerifying(false);
     }
   };
 
@@ -273,8 +295,9 @@ export default function SignIn() {
   useEffect(() => {
     if (router.isReady) {
       // Check for hackathon parameter
-      const isHackathon = router.query.source === 'hackathon';
-      if (isHackathon) {
+      const isHackathonParam = router.query.source === 'hackathon';
+      setIsHackathon(isHackathonParam);
+      if (isHackathonParam) {
         // Store hackathon status in localStorage
         localStorage.setItem('isHackathonParticipant', 'true');
       }
@@ -291,6 +314,36 @@ export default function SignIn() {
         flexDirection: "column",
       }}
     >
+      {/* Hackathon Banner */}
+      {isHackathon && (
+        <Box
+          sx={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            py: 2.5,
+            mb: 2,
+            background: 'linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)',
+            color: '#fff',
+            borderRadius: 0,
+            boxShadow: '0 4px 24px #7C4DFF22',
+            fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif',
+            position: 'relative',
+            zIndex: 2,
+          }}
+        >
+          <EmojiEventsIcon sx={{ fontSize: 32, mr: 2, color: '#FFD600' }} />
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: 0.5, color: '#fff', mb: 0.2 }}>
+              Welcome to the TalentAI Hackathon!
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#fff', opacity: 0.92, fontWeight: 500 }}>
+              Sign in below to join the hackathon and access exclusive features.
+            </Typography>
+          </Box>
+        </Box>
+      )}
       {/* Main Content */}
       <Container
         maxWidth="sm"
@@ -372,7 +425,9 @@ export default function SignIn() {
               lineHeight: 1.6,
             }}
           >
-            Sign in to access your recruitment dashboard
+            {isHackathon
+              ? 'Sign in to join the hackathon, submit your project, and access exclusive resources!'
+              : 'Sign in to access your recruitment dashboard'}
           </Typography>
 
           {error && (
@@ -476,17 +531,19 @@ export default function SignIn() {
                       size="small"
                       sx={{
                         background: userType === "company" ? "rgba(41, 210, 145, 0.83)" : "rgba(131, 16, 255, 0.83)",
-                        color: "white",
+                        color: "#fff", // Always white text
+                        fontWeight: 700, // Bold for clarity
                         padding: "5px",
                         "&:hover": {
-                          background: "rgba(2, 0, 0, 0.1)",
+                          background: userType === "company" ? "rgba(41, 210, 145, 0.93)" : "rgba(131, 16, 255, 0.93)",
+                          color: "#fff",
                         },
                       }}
                     >
                       {loading || isLoading ? (
-                        <CircularProgress size={16} />
+                        <CircularProgress size={16} sx={{ color: '#fff' }} />
                       ) : (
-                        "Get Code"
+                        "GET CODE"
                       )}
                     </Button>
                   </InputAdornment>
@@ -521,7 +578,7 @@ export default function SignIn() {
               fullWidth
               type="submit"
               variant="contained"
-              disabled={loading || isLoading || !showVerification || !code}
+              disabled={verifying || loading || isLoading || !showVerification || !code}
               sx={{
                 py: 1.5,
                 textTransform: "none",
@@ -537,11 +594,8 @@ export default function SignIn() {
                 },
               }}
             >
-              {loading || isLoading ? (
-                <CircularProgress
-                  size={24}
-                  sx={{ color: "rgba(0, 0, 0, 0.7)" }}
-                />
+              {verifying ? (
+                <CircularProgress size={24} sx={{ color: '#fff' }} />
               ) : (
                 "Verify"
               )}

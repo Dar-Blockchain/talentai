@@ -18,6 +18,8 @@ import {
   Stepper,
   Step,
   StepLabel,
+  Backdrop,
+  CircularProgress,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -59,6 +61,8 @@ const HackathonRegistration = () => {
   const [track, setTrack] = useState('');
   const steps = ['Leader Info', 'Project Info', 'Team Members'];
   const [activeStep, setActiveStep] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [checkingProject, setCheckingProject] = useState(true);
 
   // Animated gradient blob keyframes
   const blobAnimation = keyframes`
@@ -72,8 +76,8 @@ const HackathonRegistration = () => {
       router.push('/signin');
       return;
     }
-    // Check if user already has a project
     const checkExistingProject = async () => {
+      setCheckingProject(true);
       try {
         const token = localStorage.getItem('api_token');
         const res = await fetch('http://localhost:5000/project/getMyProjects', {
@@ -83,9 +87,11 @@ const HackathonRegistration = () => {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
             router.push('/hackathon-dashboard');
+            return;
           }
         }
       } catch (e) { /* ignore */ }
+      setCheckingProject(false);
     };
     checkExistingProject();
   }, [isAuthenticated, router]);
@@ -94,6 +100,52 @@ const HackathonRegistration = () => {
 
   if (!mounted || !isAuthenticated) {
     return null;
+  }
+
+  if (checkingProject) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '60vh',
+          position: 'relative',
+          // Remove background color
+          animation: 'fadeIn 0.7s',
+        }}
+      >
+        {/* Blurred gradient blob behind spinner */}
+        <Box
+          sx={{
+            position: 'absolute',
+            width: 180,
+            height: 180,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, #7C4DFF 0%, #E040FB 80%)',
+            filter: 'blur(60px)',
+            opacity: 0.35,
+            zIndex: 0,
+          }}
+        />
+        <CircularProgress
+          size={60}
+          thickness={4.5}
+          sx={{
+            color: '#7C4DFF',
+            zIndex: 1,
+          }}
+        />
+        {/* Fade-in animation keyframes */}
+        <style jsx global>{`
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+        `}</style>
+      </Box>
+    );
   }
 
   const handleAddMember = () => {
@@ -138,6 +190,7 @@ const HackathonRegistration = () => {
       setError('Please fill all required fields');
       return;
     }
+    setLoading(true);
     try {
       const token = localStorage.getItem('api_token');
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/addProject`, {
@@ -156,7 +209,6 @@ const HackathonRegistration = () => {
         }),
       });
       if (!res.ok) throw new Error(await res.text());
-      // Save to localStorage as before
       const projectData = {
         leaderFirstName,
         leaderLastName,
@@ -170,11 +222,11 @@ const HackathonRegistration = () => {
         createdAt: new Date().toISOString()
       };
       localStorage.setItem('hackathonProject', JSON.stringify(projectData));
-      // setSnackbar({ open: true, message: 'Project registered successfully!', severity: 'success' });
-      setTimeout(() => router.push('/hackathon-dashboard'), 1000);
+      router.push('/hackathon-dashboard');
     } catch (err: any) {
       setError('Failed to register project: ' + (err?.message || err));
-      // setSnackbar({ open: true, message: 'Failed to register project: ' + (err?.message || err), severity: 'error' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -206,6 +258,11 @@ const HackathonRegistration = () => {
         animation: `${blobAnimation} 10s ease-in-out infinite`,
       }} />
       <RegistrationHeader />
+      {loading && (
+        <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={loading}>
+          <CircularProgress color="inherit" />
+        </Backdrop>
+      )}
       <Fade in timeout={600}>
         <Box>
           <Paper elevation={0} sx={{
@@ -243,7 +300,7 @@ const HackathonRegistration = () => {
             {activeStep === 2 && (
               <TeamMembersStep newMember={newMember} setNewMember={setNewMember} teamMembers={teamMembers} handleAddMember={handleAddMember} handleRemoveMember={handleRemoveMember} />
             )}
-            <RegistrationNavigation activeStep={activeStep} steps={steps} handleBack={handleBack} handleNext={handleNext} handleStepSubmit={handleStepSubmit} />
+            <RegistrationNavigation activeStep={activeStep} steps={steps} handleBack={handleBack} handleNext={handleNext} handleStepSubmit={handleStepSubmit} loading={loading} />
           </Paper>
           <Snackbar
             open={snackbar.open}
