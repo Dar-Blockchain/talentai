@@ -1,9 +1,8 @@
 const InterviewDetails = require("../models/InterviewDetailsModel");
 const TodoList = require("../models/todoListModel");
 const { SKILL_TYPES, SKILL_LEVELS } = require("../constants/profileConstants");
-const {INTERVIEW_TYPES} = require("../constants/interviewDetailsConstants");
+const { INTERVIEW_TYPES } = require("../constants/interviewDetailsConstants");
 const { getExperienceLevelLabel } = require("./skillUtils");
-
 
 const PROFICIENCY_TO_EXPERIENCE_VALUE = Object.fromEntries(
   Object.values(SKILL_LEVELS).map((level) => [
@@ -220,7 +219,6 @@ function processAnalysisData(analysis) {
 
   analysis.jobMatch.percentage = analysis.overallScore;
   analysis.jobMatch.status = status;
-  
 }
 
 async function updateTodoListWithNewSkills(todoList, analysis) {
@@ -269,13 +267,18 @@ async function updateTodoListWithNewSkills(todoList, analysis) {
   await todoList.save();
 }
 
-async function saveInterviewDetails(profile, overallScore, skillAnalysis, formData) {
+async function saveInterviewDetails(
+  profile,
+  overallScore,
+  skillAnalysis,
+  formData
+) {
   const details = skillAnalysis.map((skill) => ({
-    name: skill.skillName, 
+    name: skill.skillName,
     type: SKILL_TYPES.SOFT,
-    proficiencyLevel: skill.proficiencyLevel, 
+    proficiencyLevel: skill.proficiencyLevel,
     // experienceLevel : PROFICIENCY_TO_EXPERIENCE_VALUE[skill.proficiencyLevel],
-    confidenceScore : skill.confidenceScore , 
+    confidenceScore: skill.confidenceScore,
     questionAnswerList: (skill.questionAnswerList || []).map((qa) => ({
       question: qa.question,
       answer: qa.answer || "unanswered",
@@ -286,23 +289,28 @@ async function saveInterviewDetails(profile, overallScore, skillAnalysis, formDa
 
   const interviewDetails = new InterviewDetails({
     candidate: profile._id,
-    type: INTERVIEW_TYPES.HR, 
+    type: INTERVIEW_TYPES.HR,
     overallScore: overallScore,
-    interviewContext: formData?formData: null,
+    interviewContext: formData ? formData : null,
     skillDetails: details,
   });
 
   await interviewDetails.save();
-  return interviewDetails._id; 
+  return interviewDetails._id;
 }
 
-async function saveInterviewDetailsForJob(profile, overallScore, skillAnalysis, jobId) {
+async function saveInterviewDetailsForJob(
+  profile,
+  overallScore,
+  skillAnalysis,
+  jobId
+) {
   const details = skillAnalysis.map((skill) => ({
-    name: skill.skillName, 
+    name: skill.skillName,
     type: SKILL_TYPES.HARD,
-    proficiencyLevel: skill.demonstratedExperienceLevel, 
+    proficiencyLevel: skill.demonstratedExperienceLevel,
     // experienceLevel : PROFICIENCY_TO_EXPERIENCE_VALUE[skill.proficiencyLevel],
-    confidenceScore : skill.confidenceScore , 
+    confidenceScore: skill.confidenceScore,
     questionAnswerList: (skill.questionAnswerList || []).map((qa) => ({
       question: qa.question,
       answer: qa.answer || "unanswered",
@@ -314,22 +322,26 @@ async function saveInterviewDetailsForJob(profile, overallScore, skillAnalysis, 
   const interviewDetails = new InterviewDetails({
     candidate: profile._id,
     post: jobId,
-    type: INTERVIEW_TYPES.POST, 
+    type: INTERVIEW_TYPES.POST,
     overallScore: overallScore,
     skillDetails: details,
   });
 
   await interviewDetails.save();
-  return interviewDetails._id; 
+  return interviewDetails._id;
 }
 
-async function saveInterviewDetailsForOnboarding(profile, overallScore, skillAnalysis) {
+async function saveInterviewDetailsForOnboarding(
+  profile,
+  overallScore,
+  skillAnalysis
+) {
   const details = skillAnalysis.map((skill) => ({
-    name: skill.skillName, 
+    name: skill.skillName,
     type: SKILL_TYPES.HARD,
-    proficiencyLevel: skill.demonstratedExperienceLevel, 
+    proficiencyLevel: skill.demonstratedExperienceLevel,
     // experienceLevel : PROFICIENCY_TO_EXPERIENCE_VALUE[skill.proficiencyLevel],
-    confidenceScore : skill.confidenceScore , 
+    confidenceScore: skill.confidenceScore,
     questionAnswerList: (skill.questionAnswerList || []).map((qa) => ({
       question: qa.question,
       answer: qa.answer || "unanswered",
@@ -340,22 +352,27 @@ async function saveInterviewDetailsForOnboarding(profile, overallScore, skillAna
 
   const interviewDetails = new InterviewDetails({
     candidate: profile._id,
-    type: INTERVIEW_TYPES.ONBOARDING, 
+    type: INTERVIEW_TYPES.ONBOARDING,
     overallScore: overallScore,
     skillDetails: details,
   });
 
   await interviewDetails.save();
-  return interviewDetails._id; 
+  return interviewDetails._id;
 }
 
-async function saveInterviewDetailsForAddSkill(profile, overallScore, skillAnalysis, skillType) {
+async function saveInterviewDetailsForAddSkill(
+  profile,
+  overallScore,
+  skillAnalysis,
+  skillType
+) {
   const details = skillAnalysis.map((skill) => ({
-    name: skill.skillName, 
+    name: skill.skillName,
     type: skillType,
-    proficiencyLevel: skill.demonstratedProficiency, 
+    proficiencyLevel: skill.demonstratedProficiency,
     // experienceLevel : PROFICIENCY_TO_EXPERIENCE_VALUE[skill.proficiencyLevel],
-    confidenceScore : skill.confidenceScore , 
+    confidenceScore: skill.confidenceScore,
     questionAnswerList: (skill.questionAnswerList || []).map((qa) => ({
       question: qa.question,
       answer: qa.answer || "unanswered",
@@ -364,16 +381,31 @@ async function saveInterviewDetailsForAddSkill(profile, overallScore, skillAnaly
     })),
   }));
 
-
   const interviewDetails = new InterviewDetails({
     candidate: profile._id,
-    type: INTERVIEW_TYPES.SKILL, 
+    type: INTERVIEW_TYPES.SKILL,
     overallScore: overallScore,
     skillDetails: details,
   });
 
   await interviewDetails.save();
-  return interviewDetails._id; 
+  return interviewDetails._id;
+}
+
+/**
+ * Calculates the overallScore for HR analysis as the average of confidenceScores of the skills.
+ * @param {Array} skillAnalysis - Array of skill analysis objects, each with a confidenceScore property.
+ * @returns {number} The average confidenceScore (0-100, rounded to nearest integer)
+ */
+function handleHROverallScore(skillAnalysis) {
+  if (!Array.isArray(skillAnalysis) || skillAnalysis.length === 0) return 0;
+  const total = skillAnalysis.reduce(
+    (sum, skill) =>
+      sum +
+      (typeof skill.confidenceScore === "number" ? skill.confidenceScore : 0),
+    0
+  );
+  return Math.round(total / skillAnalysis.length);
 }
 
 module.exports = {
@@ -388,5 +420,6 @@ module.exports = {
   saveInterviewDetails,
   saveInterviewDetailsForJob,
   saveInterviewDetailsForOnboarding,
-  saveInterviewDetailsForAddSkill
+  saveInterviewDetailsForAddSkill,
+  handleHROverallScore,
 };

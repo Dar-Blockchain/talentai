@@ -513,8 +513,11 @@ The questions must:
 - Be clearly phrased, non-redundant, and avoid vague or generic wording
 - Align with ${simulationGoal || "interview preparation"} goals
 
-### Requirements:
+### STRICT REQUIREMENTS:
 - Produce **exactly 10 distinct questions** focused solely on HR themes (no technical questions)
+- Questions must be **brief**, **clear**, **simply formulated**, and **target only one aspect or competency per question** (no complex, multi-part, or compound questions)
+- Questions must be **conversational** and **answerable orally within 2 minutes**
+- **All questions must be appropriate for and within the specified experience level: ${experienceLevel || "Mid-level"}**
 - Tailor questions to ${targetCompany || "the company"} culture and ${
       targetRole || "role"
     } requirements
@@ -569,6 +572,8 @@ ${skillsListDetails}
     } style
 - Focus on scenarios relevant to ${targetRole || "the target role"}
 - Do NOT include technical or coding questions
+- Keep questions **brief**, **clear**, **simply formulated**, and ensure each question **targets only one aspect or competency** (no complex, multi-part, or compound questions)
+- **All questions must be appropriate for and within the specified experience level: ${experienceLevel || "Mid-level"}**
 - Keep questions succinct, specific, and suitable for oral interviews
 - Avoid vague or repetitive language; each question should be purposeful and trend-aware
 - Align with ${simulationGoal || "interview preparation"} objectives
@@ -578,6 +583,9 @@ ${skillsListDetails}
   - Relevance to ${targetCompany || "company"} culture and ${
       targetRole || "role"
     } requirements
+
+### STRICT REQUIREMENTS:  
+- The confidenceScore solely reflects how appropriately the response addresses the specific question asked. The response must not be assumed to be inherently correct or incorrect outside the context of the question.
 - **Return a valid JSON array of exactly 10 strings**, no commentary or formatting
 
     `.trim();
@@ -597,7 +605,7 @@ Your analysis must:
 
 Your task:
 - Analyze answers to produce:
-  - overallScore (0-100) reflecting cultural and behavioral fit
+  - overallScore (0-100) calculated as the average of confidenceScore of the skills
   - recommendations (array of strings) for candidate development or company considerations
   - nextSteps (array of strings) actionable hiring or HR follow-up steps
   - skillAnalysis (array) with detailed evaluation per skill, including:
@@ -631,10 +639,16 @@ Use this scale to assign proficiencyLevel:
 4 = senior: Advanced handling, leadership or cross-team examples  
 5 = expert: Strategic thinking, mentoring, and systemic problem-solving
 
-###Strict Requirements:
-- Infer only 3 soft skills from the content of the questions
-- Never guess or assume skills not evidenced in answers
-- Never infer strengths or positive traits from empty, incorrect, or irrelevant answers.
+### Strict Requirements:
+- Any answer that includes placeholder, generic filler text (e.g., "this is a correct answer") without substantive content must be marked as "incorrect".
+- Do not infer partial correctness from keywords alone; relevance and substance are mandatory.
+- Do not assume correctness based on phrasing alone.
+- Do not mark vague or unrelated responses as "correct" or "partial_correct".
+- Infer only 3 soft skills from the questions.
+- Never infer strengths from empty or irrelevant answers.
+- Do not fabricate detail beyond what is supported in the responses.
+
+
 - Return **valid JSON only**(no extra explanation or notes)
     `.trim(),
 
@@ -675,7 +689,15 @@ Generate and return JSON in the following format:
   ]
 }
 
-Return **valid JSON only**
+### Strict Requirements:
+- Any answer that includes placeholder, generic filler text (e.g., "this is a correct answer") without substantive content must be marked as "incorrect".
+- Do not infer partial correctness from keywords alone; relevance and substance are mandatory.
+- Do not assume correctness based on phrasing alone.
+- Do not mark vague or unrelated responses as "correct" or "partial_correct".
+- Infer only 3 soft skills from the questions.
+- Never infer strengths from empty or irrelevant answers.
+- Do not fabricate detail beyond what is supported in the responses.
+- Return **valid JSON only** — no extra text or explanation.
     `.trim(),
 };
 
