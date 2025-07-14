@@ -46,7 +46,7 @@ export default function CandidateInterviewDetailPage() {
                 });
                 if (!res.ok) throw new Error('Failed to fetch interview details');
                 const json = await res.json();
-                setData(json);
+                setData(json.data);
             } catch (e: any) {
                 setError(e.message || 'Error fetching data');
             } finally {
@@ -98,51 +98,80 @@ export default function CandidateInterviewDetailPage() {
                                 </Typography>
                             )}
                         </Box>
+                        {/* Job Details Section */}
+                        {data.post?.jobDetails && (
+                            <Box sx={{ mb: 4, p: 3, background: '#f8fafc', borderRadius: 3, border: '1px solid #eee' }}>
+                                <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
+                                    Job Details
+                                </Typography>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>{data.post.jobDetails.title}</Typography>
+                                <Typography variant="body2" sx={{ mb: 1 }}>{data.post.jobDetails.description}</Typography>
+                                <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
+                                    <Chip label={data.post.jobDetails.location} color="primary" variant="outlined" />
+                                    <Chip label={data.post.jobDetails.employmentType} color="secondary" variant="outlined" />
+                                    <Chip label={data.post.jobDetails.experienceLevel} color="success" variant="outlined" />
+                                </Stack>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Salary:</Typography>
+                                <Typography variant="body2" sx={{ mb: 2 }}>{data.post.jobDetails.salary ? `${data.post.jobDetails.salary.min} - ${data.post.jobDetails.salary.max} ${data.post.jobDetails.salary.currency}` : '-'}</Typography>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Requirements:</Typography>
+                                <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                    {data.post.jobDetails.requirements?.map((req: string, idx: number) => (
+                                        <li key={idx} style={{ color: '#333', marginBottom: 4 }}>{req}</li>
+                                    ))}
+                                </ul>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Responsibilities:</Typography>
+                                <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                    {data.post.jobDetails.responsibilities?.map((resp: string, idx: number) => (
+                                        <li key={idx} style={{ color: '#333', marginBottom: 4 }}>{resp}</li>
+                                    ))}
+                                </ul>
+                            </Box>
+                        )}
                         {/* Skill Analysis Section */}
-                        {data.skillAnalysis && (
+                        {data.post?.skillAnalysis && (
                             <Box sx={{ mb: 4, p: 3, background: '#f8fafc', borderRadius: 3, border: '1px solid #eee' }}>
                                 <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
                                     Skill Analysis
                                 </Typography>
-                                {data.skillAnalysis.skillSummary && (
+                                {data.post.skillAnalysis.skillSummary && (
                                     <>
                                         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Main Technologies:</Typography>
                                         <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-                                            {data.skillAnalysis.skillSummary.mainTechnologies?.map((tech: string, idx: number) => (
+                                            {data.post.skillAnalysis.skillSummary.mainTechnologies?.map((tech: string, idx: number) => (
                                                 <Chip key={idx} label={tech} color="primary" variant="outlined" />
                                             ))}
                                         </Stack>
                                         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Complementary Skills:</Typography>
                                         <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-                                            {data.skillAnalysis.skillSummary.complementarySkills?.map((skill: string, idx: number) => (
+                                            {data.post.skillAnalysis.skillSummary.complementarySkills?.map((skill: string, idx: number) => (
                                                 <Chip key={idx} label={skill} color="secondary" variant="outlined" />
                                             ))}
                                         </Stack>
                                         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Learning Path:</Typography>
                                         <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-                                            {data.skillAnalysis.skillSummary.learningPath?.map((lp: string, idx: number) => (
+                                            {data.post.skillAnalysis.skillSummary.learningPath?.map((lp: string, idx: number) => (
                                                 <Chip key={idx} label={lp} color="success" variant="outlined" />
                                             ))}
                                         </Stack>
                                         <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Stack Complexity:</Typography>
-                                        <Chip label={data.skillAnalysis.skillSummary.stackComplexity} color="default" variant="outlined" />
+                                        <Chip label={data.post.skillAnalysis.skillSummary.stackComplexity} color="default" variant="outlined" />
                                     </>
                                 )}
-                                {data.skillAnalysis.requiredSkills && (
+                                {data.post.skillAnalysis.requiredSkills && (
                                     <>
                                         <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Required Skills:</Typography>
                                         <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-                                            {data.skillAnalysis.requiredSkills.map((skill: any) => (
+                                            {data.post.skillAnalysis.requiredSkills.map((skill: any) => (
                                                 <Chip key={skill._id} label={`${skill.name} (${skill.level})`} color="primary" variant="outlined" />
                                             ))}
                                         </Stack>
                                     </>
                                 )}
-                                {data.skillAnalysis.suggestedSkills && (
+                                {data.post.skillAnalysis.suggestedSkills && (
                                     <>
                                         <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Suggested Skills:</Typography>
                                         <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-                                            {Object.entries(data.skillAnalysis.suggestedSkills).map(([cat, arr]) => (
+                                            {Object.entries(data.post.skillAnalysis.suggestedSkills).map(([cat, arr]) => (
                                                 (arr as any[]).map((sugg, idx) => (
                                                     <Chip key={sugg._id || idx} label={`${sugg.name}${sugg.priority ? ` (${sugg.priority})` : ''}`} color="info" variant="outlined" />
                                                 ))
@@ -153,45 +182,120 @@ export default function CandidateInterviewDetailPage() {
                             </Box>
                         )}
                         {/* LinkedIn Post Section */}
-                        {data.linkedinPost && data.linkedinPost.formattedContent && (
+                        {/* {data.post?.linkedinPost && data.post.linkedinPost.formattedContent && (
                             <Box sx={{ mb: 4, p: 3, background: '#f3f0ff', borderRadius: 3, border: '1px solid #eee' }}>
                                 <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
                                     LinkedIn Post Preview
                                 </Typography>
                                 <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
-                                    {data.linkedinPost.formattedContent.headline}
+                                    {data.post.linkedinPost.formattedContent.headline}
                                 </Typography>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
-                                    {data.linkedinPost.formattedContent.introduction}
+                                    {data.post.linkedinPost.formattedContent.introduction}
                                 </Typography>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
-                                    {data.linkedinPost.formattedContent.companyPitch}
+                                    {data.post.linkedinPost.formattedContent.companyPitch}
                                 </Typography>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
-                                    {data.linkedinPost.formattedContent.roleOverview}
+                                    {data.post.linkedinPost.formattedContent.roleOverview}
                                 </Typography>
-                                {data.linkedinPost.formattedContent.keyPoints && (
+                                {data.post.linkedinPost.formattedContent.keyPoints && (
                                     <ul style={{ margin: 0, paddingLeft: 20 }}>
-                                        {data.linkedinPost.formattedContent.keyPoints.map((point: string, idx: number) => (
+                                        {data.post.linkedinPost.formattedContent.keyPoints.map((point: string, idx: number) => (
                                             <li key={idx} style={{ color: '#333', marginBottom: 4 }}>{point}</li>
                                         ))}
                                     </ul>
                                 )}
                                 <Typography variant="body2" sx={{ mb: 1 }}>
-                                    {data.linkedinPost.formattedContent.skillsRequired}
+                                    {data.post.linkedinPost.formattedContent.skillsRequired}
                                 </Typography>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
-                                    {data.linkedinPost.formattedContent.benefitsSection}
+                                    {data.post.linkedinPost.formattedContent.benefitsSection}
                                 </Typography>
                                 <Typography variant="body2" sx={{ mb: 1, color: GREEN_MAIN, fontWeight: 600 }}>
-                                    {data.linkedinPost.formattedContent.callToAction}
+                                    {data.post.linkedinPost.formattedContent.callToAction}
                                 </Typography>
-                                {data.linkedinPost.hashtags && (
+                                {data.post.linkedinPost.hashtags && (
                                     <Stack direction="row" spacing={1} flexWrap="wrap" mt={2}>
-                                        {data.linkedinPost.hashtags.map((tag: string, idx: number) => (
+                                        {data.post.linkedinPost.hashtags.map((tag: string, idx: number) => (
                                             <Chip key={idx} label={tag} color="secondary" variant="outlined" />
                                         ))}
                                     </Stack>
+                                )}
+                            </Box>
+                        )} */}
+                        {/* Assessment Result Section */}
+                        {data.jobAssessmentResult?.analysis && (
+                            <Box sx={{ mb: 4, p: 3, background: '#e6f7fa', borderRadius: 3, border: '1px solid #b2ebf2' }}>
+                                <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
+                                    Assessment Analysis
+                                </Typography>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                                    Overall Score: <Chip label={data.jobAssessmentResult.analysis.overallScore} color="success" size="small" />
+                                </Typography>
+                                {data.jobAssessmentResult.analysis.technicalLevel && (
+                                    <Typography variant="body2" sx={{ mb: 1 }}>
+                                        Technical Level: {data.jobAssessmentResult.analysis.technicalLevel}
+                                    </Typography>
+                                )}
+                                {data.jobAssessmentResult.analysis.jobMatch && (
+                                    <Typography variant="body2" sx={{ mb: 1 }}>
+                                        Job Match: {data.jobAssessmentResult.analysis.jobMatch.status} ({data.jobAssessmentResult.analysis.jobMatch.percentage}%)
+                                    </Typography>
+                                )}
+                                {Array.isArray(data.jobAssessmentResult.analysis.skillAnalysis) && data.jobAssessmentResult.analysis.skillAnalysis.length > 0 && (
+                                    <>
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Skill Analysis:</Typography>
+                                        {data.jobAssessmentResult.analysis.skillAnalysis.map((skill: any, idx: number) => (
+                                            <Box key={idx} sx={{ mb: 2, pl: 2 }}>
+                                                <Typography variant="body2" sx={{ fontWeight: 600 }}>{skill.skillName} (Required: {skill.requiredLevel}, Demonstrated: {skill.demonstratedExperienceLevel})</Typography>
+                                                <Typography variant="body2" sx={{ color: 'green', mb: 0.5 }}>Strengths:</Typography>
+                                                <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                                    {skill.strengths?.map((str: string, i: number) => (
+                                                        <li key={i} style={{ color: '#388e3c' }}>{str}</li>
+                                                    ))}
+                                                </ul>
+                                                <Typography variant="body2" sx={{ color: 'red', mb: 0.5 }}>Weaknesses:</Typography>
+                                                <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                                    {skill.weaknesses?.map((w: string, i: number) => (
+                                                        <li key={i} style={{ color: '#d32f2f' }}>{w}</li>
+                                                    ))}
+                                                </ul>
+                                                <Typography variant="body2" sx={{ mb: 0.5 }}>Confidence Score: {skill.confidenceScore}</Typography>
+                                                <Typography variant="body2" sx={{ mb: 0.5 }}>Match: {skill.match}</Typography>
+                                            </Box>
+                                        ))}
+                                    </>
+                                )}
+                                {Array.isArray(data.jobAssessmentResult.analysis.recommendations) && data.jobAssessmentResult.analysis.recommendations.length > 0 && (
+                                    <>
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Recommendations:</Typography>
+                                        <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                            {data.jobAssessmentResult.analysis.recommendations.map((rec: string, idx: number) => (
+                                                <li key={idx} style={{ color: '#1976d2' }}>{rec}</li>
+                                            ))}
+                                        </ul>
+                                    </>
+                                )}
+                                {Array.isArray(data.jobAssessmentResult.analysis.nextSteps) && data.jobAssessmentResult.analysis.nextSteps.length > 0 && (
+                                    <>
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Next Steps:</Typography>
+                                        <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                            {data.jobAssessmentResult.analysis.nextSteps.map((step: string, idx: number) => (
+                                                <li key={idx} style={{ color: '#388e3c' }}>{step}</li>
+                                            ))}
+                                        </ul>
+                                    </>
+                                )}
+                                {Array.isArray(data.jobAssessmentResult.analysis.jobMatch?.keyGaps) && data.jobAssessmentResult.analysis.jobMatch.keyGaps.length > 0 && (
+                                    <>
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Key Gaps:</Typography>
+                                        <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                            {data.jobAssessmentResult.analysis.jobMatch.keyGaps.map((gap: string, idx: number) => (
+                                                <li key={idx} style={{ color: '#d32f2f' }}>{gap}</li>
+                                            ))}
+                                        </ul>
+                                    </>
                                 )}
                             </Box>
                         )}

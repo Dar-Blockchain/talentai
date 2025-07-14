@@ -848,7 +848,7 @@ export default function DashboardCandidate() {
   //   try {
   //     setLogsLoading(true);
   //     setLogsError(null);
-      
+
   //     const token = localStorage.getItem("api_token");
   //     if (!token) {
   //       setLogsError("Authentication token not found");
@@ -1502,10 +1502,10 @@ export default function DashboardCandidate() {
       >
         <Container maxWidth="lg">
           {/* Logout Button */}
-          <Box sx={{ 
-            display: "flex", 
-            justifyContent: { xs: "center", sm: "flex-end" }, 
-            mb: 3 
+          <Box sx={{
+            display: "flex",
+            justifyContent: { xs: "center", sm: "flex-end" },
+            mb: 3
           }}>
             <Button
               onClick={handleLogout}
@@ -1563,9 +1563,9 @@ export default function DashboardCandidate() {
               </Box>
 
               {/* Action Buttons */}
-              <Stack 
-                direction={{ xs: "column", sm: "row" }} 
-                spacing={{ xs: 2, sm: 2 }} 
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={{ xs: 2, sm: 2 }}
                 sx={{ mt: 4 }}
               >
                 <ActionButton
@@ -2599,14 +2599,14 @@ export default function DashboardCandidate() {
             </Box>
 
             {/* Interview Details Section */}
-            <Box>
-              <StyledCard>
-                <SectionTitle>Interview Details</SectionTitle>
-                <InterviewDetailsTabs profile={profile} />
-              </StyledCard>
-            </Box>
-          </Box>
 
+          </Box>
+          <Box>
+            <StyledCard>
+              <SectionTitle>Interview Details</SectionTitle>
+              <InterviewDetailsTabs profile={profile} />
+            </StyledCard>
+          </Box>
           {/* Add Skill Dialog */}
           <Dialog
             open={addSkillDialogOpen}
@@ -2850,7 +2850,7 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
     try {
       const token = localStorage.getItem('api_token');
       const realProfileId = profile?._id;
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/?page=${pageNum+1}&limit=${limit}&type=${type}&profileId=${realProfileId}`;
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/?page=${pageNum + 1}&limit=${limit}&type=${type}&profileId=${realProfileId}`;
       const res = await fetch(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -2880,7 +2880,7 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
   };
 
   return (
-    <Box>
+    <>
       <Tabs value={tab} onChange={handleTabChange} sx={{ mb: 2 }}>
         {INTERVIEW_TYPES.map((t) => (
           <Tab key={t.value} label={t.label} value={t.value} />
@@ -2894,38 +2894,40 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
         <Alert severity="error">{error}</Alert>
       ) : (
         <>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Type</TableCell>
-                <TableCell>Overall Score</TableCell>
-                <TableCell>Post Name</TableCell>
-                <TableCell>Details</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.length === 0 ? (
+          <Box >
+            <Table size="small" sx={{ minWidth: 900 }}>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={4} align="center">No data</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell>Overall Score</TableCell>
+                  <TableCell>Post Name</TableCell>
+                  <TableCell>Details</TableCell>
                 </TableRow>
-              ) : (
-                data.map((row: any, idx: number) => {
-                  return (
-                    <TableRow key={row._id || row.id}>
-                      <TableCell>{row.type || '-'}</TableCell>
-                      <TableCell>{row.overallScore ?? '-'}</TableCell>
-                      <TableCell>{row.post?.jobDetails?.title || '-'}</TableCell>
-                      <TableCell>
-                        <Button variant="outlined" size="small" onClick={() => router.push(`/candidate/interview/${row._id || row.id}`)}>
-                          Details
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {data.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">No data</TableCell>
+                  </TableRow>
+                ) : (
+                  data.map((row: any, idx: number) => {
+                    return (
+                      <TableRow key={row._id || row.id}>
+                        <TableCell>{row.type || '-'}</TableCell>
+                        <TableCell>{row.overallScore ?? '-'}</TableCell>
+                        <TableCell>{row.post?.jobDetails?.title || '-'}</TableCell>
+                        <TableCell>
+                          <Button variant="outlined" size="small" onClick={() => router.push(`/candidate/interview/${row._id || row.id}`)}>
+                            Details
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </Box>
           <TablePagination
             component="div"
             count={total}
@@ -2937,6 +2939,6 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
           />
         </>
       )}
-    </Box>
+    </>
   );
 }
