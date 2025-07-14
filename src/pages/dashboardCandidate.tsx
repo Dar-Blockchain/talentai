@@ -1425,6 +1425,36 @@ export default function DashboardCandidate() {
     },
   ];
 
+  // Ads API state
+  const [adLoading, setAdLoading] = useState(false);
+  const [adError, setAdError] = useState<string | null>(null);
+  const [adPost, setAdPost] = useState<any[]>([]);
+
+  useEffect(() => {
+    setAdLoading(true);
+    setAdError(null);
+    const token = localStorage.getItem("api_token");
+    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+    fetch(`${apiBase}post/adsPost`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch ad post");
+        return res.json();
+      })
+      .then((json) => {
+        if (json.success && Array.isArray(json.data)) {
+          setAdPost(json.data);
+        } else if (json.success && json.data) {
+          setAdPost([json.data]);
+        } else {
+          setAdError("No ad data available");
+        }
+      })
+      .catch((e) => setAdError(e.message || "Error fetching ad post"))
+      .finally(() => setAdLoading(false));
+  }, []);
+
   if (loading) {
     return (
       <Container
@@ -2260,29 +2290,39 @@ export default function DashboardCandidate() {
             </Container>
           </ProfileHeader>
 
-          {/* Ads Block - Show 3 posts as ads */}
+          {/* Ads Block - Show API ad post */}
           <StyledCard sx={{ mb: 4, background: '#f8fafc', border: '2px dashed #8310FF' }}>
             <SectionTitle sx={{ color: '#8310FF', fontSize: '1.5rem', mb: 2 }}>Recommended Opportunities</SectionTitle>
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
-              {adsPosts.map((post) => (
-                <Box key={post._id} sx={{ flex: 1, minWidth: 0, display: 'flex' }}>
-                  <Paper elevation={2} sx={{ p: 2, borderRadius: 3, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#fff' }}>
-                    <Typography variant="h6" sx={{ color: '#8310FF', fontWeight: 700, mb: 1, minHeight: 48 }}>
-                      {post.title || 'Untitled Post'}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#333', mb: 2, minHeight: 60 }}>
-                      {post.description ? post.description.slice(0, 90) + (post.description.length > 90 ? '...' : '') : 'No description.'}
-                    </Typography>
-                    <Box sx={{ mt: 'auto' }}>
-                      <Link href={`/testjob/${post._id}`} passHref legacyBehavior>
-                        <Button variant="contained" sx={{ background: '#8310FF', color: '#fff', borderRadius: 2, textTransform: 'none', fontWeight: 600, width: '100%' }}>
-                          Learn More
-                        </Button>
-                      </Link>
-                    </Box>
-                  </Paper>
+              {adLoading ? (
+                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120 }}>
+                  <CircularProgress size={32} sx={{ color: '#8310FF' }} />
                 </Box>
-              ))}
+              ) : adError ? (
+                <Box sx={{ flex: 1, color: '#c62828', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120 }}>
+                  <Typography>{adError}</Typography>
+                </Box>
+              ) : adPost && adPost.length > 0 ? (
+                adPost.map((ad: any) => (
+                  <Box key={ad._id} sx={{ flex: 1, minWidth: 0, display: 'flex' }}>
+                    <Paper elevation={2} sx={{ p: 2, borderRadius: 3, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#fff' }}>
+                      <Typography variant="h6" sx={{ color: '#8310FF', fontWeight: 700, mb: 1, minHeight: 48 }}>
+                        {ad.jobDetails?.title || 'Untitled Post'}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#333', mb: 2, minHeight: 60 }}>
+                        {ad.jobDetails?.description ? ad.jobDetails.description.slice(0, 90) + (ad.jobDetails.description.length > 90 ? '...' : '') : 'No description.'}
+                      </Typography>
+                      <Box sx={{ mt: 'auto' }}>
+                        <Link href={`/testjob/${ad._id}`} passHref legacyBehavior>
+                          <Button variant="contained" sx={{ background: '#8310FF', color: '#fff', borderRadius: 2, textTransform: 'none', fontWeight: 600, width: '100%' }}>
+                            Learn More
+                          </Button>
+                        </Link>
+                      </Box>
+                    </Paper>
+                  </Box>
+                ))
+              ) : null}
             </Box>
           </StyledCard>
 

@@ -92,7 +92,109 @@ export default function CandidateInterviewDetailPage() {
               <Typography variant="subtitle1" sx={{ color: '#191919', fontWeight: 600 }}>
                 Date: {data.createdAt ? new Date(data.createdAt).toLocaleString() : '-'}
               </Typography>
+              {data.post?.jobDetails?.status && (
+                <Typography variant="subtitle1" sx={{ color: '#191919', fontWeight: 600 }}>
+                  Status: <Chip label={data.post.jobDetails.status} color="default" size="small" />
+                </Typography>
+              )}
             </Box>
+            {/* Skill Analysis Section */}
+            {data.skillAnalysis && (
+              <Box sx={{ mb: 4, p: 3, background: '#f8fafc', borderRadius: 3, border: '1px solid #eee' }}>
+                <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
+                  Skill Analysis
+                </Typography>
+                {data.skillAnalysis.skillSummary && (
+                  <>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Main Technologies:</Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
+                      {data.skillAnalysis.skillSummary.mainTechnologies?.map((tech: string, idx: number) => (
+                        <Chip key={idx} label={tech} color="primary" variant="outlined" />
+                      ))}
+                    </Stack>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Complementary Skills:</Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
+                      {data.skillAnalysis.skillSummary.complementarySkills?.map((skill: string, idx: number) => (
+                        <Chip key={idx} label={skill} color="secondary" variant="outlined" />
+                      ))}
+                    </Stack>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Learning Path:</Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
+                      {data.skillAnalysis.skillSummary.learningPath?.map((lp: string, idx: number) => (
+                        <Chip key={idx} label={lp} color="success" variant="outlined" />
+                      ))}
+                    </Stack>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Stack Complexity:</Typography>
+                    <Chip label={data.skillAnalysis.skillSummary.stackComplexity} color="default" variant="outlined" />
+                  </>
+                )}
+                {data.skillAnalysis.requiredSkills && (
+                  <>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Required Skills:</Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
+                      {data.skillAnalysis.requiredSkills.map((skill: any) => (
+                        <Chip key={skill._id} label={`${skill.name} (${skill.level})`} color="primary" variant="outlined" />
+                      ))}
+                    </Stack>
+                  </>
+                )}
+                {data.skillAnalysis.suggestedSkills && (
+                  <>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Suggested Skills:</Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
+                      {Object.entries(data.skillAnalysis.suggestedSkills).map(([cat, arr]) => (
+                        (arr as any[]).map((sugg, idx) => (
+                          <Chip key={sugg._id || idx} label={`${sugg.name}${sugg.priority ? ` (${sugg.priority})` : ''}`} color="info" variant="outlined" />
+                        ))
+                      ))}
+                    </Stack>
+                  </>
+                )}
+              </Box>
+            )}
+            {/* LinkedIn Post Section */}
+            {data.linkedinPost && data.linkedinPost.formattedContent && (
+              <Box sx={{ mb: 4, p: 3, background: '#f3f0ff', borderRadius: 3, border: '1px solid #eee' }}>
+                <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
+                  LinkedIn Post Preview
+                </Typography>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                  {data.linkedinPost.formattedContent.headline}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  {data.linkedinPost.formattedContent.introduction}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  {data.linkedinPost.formattedContent.companyPitch}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  {data.linkedinPost.formattedContent.roleOverview}
+                </Typography>
+                {data.linkedinPost.formattedContent.keyPoints && (
+                  <ul style={{ margin: 0, paddingLeft: 20 }}>
+                    {data.linkedinPost.formattedContent.keyPoints.map((point: string, idx: number) => (
+                      <li key={idx} style={{ color: '#333', marginBottom: 4 }}>{point}</li>
+                    ))}
+                  </ul>
+                )}
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  {data.linkedinPost.formattedContent.skillsRequired}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  {data.linkedinPost.formattedContent.benefitsSection}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 1, color: GREEN_MAIN, fontWeight: 600 }}>
+                  {data.linkedinPost.formattedContent.callToAction}
+                </Typography>
+                {data.linkedinPost.hashtags && (
+                  <Stack direction="row" spacing={1} flexWrap="wrap" mt={2}>
+                    {data.linkedinPost.hashtags.map((tag: string, idx: number) => (
+                      <Chip key={idx} label={tag} color="secondary" variant="outlined" />
+                    ))}
+                  </Stack>
+                )}
+              </Box>
+            )}
             <Divider sx={{ mb: 3 }} />
             <Typography variant="h6" sx={{ fontWeight: 700, color: GREEN_MAIN, mb: 2 }}>
               Interview Q&A Details
