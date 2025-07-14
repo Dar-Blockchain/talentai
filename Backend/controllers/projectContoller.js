@@ -325,84 +325,64 @@ module.exports.getProjectsCountByStatus = async (req, res) => {
   }
 };
 
-const PDFDocument = require("pdfkit");
-const fs = require("fs");
-const path = require("path");
+const puppeteer = require('puppeteer');
+const ejs = require('ejs');
+const fs = require('fs');
+const path = require('path');
+
+// Helpers
+function renderScoreClass(score) {
+  if (score === undefined || score === null) return "grey";
+  if (score < 50) return "red";
+  if (score < 80) return "yellow";
+  return "green";
+}
+function renderScoreText(score) {
+  if (score === undefined || score === null) return "N/A";
+  return score + "%";
+}
 
 module.exports.exportProjectPdf = async (req, res) => {
   try {
     const projectId = req.params.projectId;
-
-    // Récupère le projet et son évaluation associés directement via populate
     const project = await Project.findById(projectId)
-      .populate("assessment")  // Peupler directement l'évaluation
-      .populate("leaderId");   // Si vous voulez aussi peupler les informations du leader du projet
-    if (!project) throw new Error("Project not found");
+      .populate("assessment")
+      .populate("leaderId");
+    if (!project || !project.assessment) throw new Error("Project or assessment not found");
 
-    // Générer le PDF
+    // Render le HTML depuis EJS
+    const html = await ejs.renderFile(
+      path.join(__dirname, "../views/project-pdf.ejs"),
+      {
+        project: project.toObject(), // simplifie la sérialisation
+        assessment: project.assessment,
+        renderScoreClass,
+        renderScoreText,
+      }
+    );
+
+    // Chemin de sortie
     const exportDir = path.join(__dirname, "../public");
     if (!fs.existsSync(exportDir)) fs.mkdirSync(exportDir);
-
     const filePath = path.join(exportDir, `${project.name.replace(/[^a-z0-9]/gi, '_')}_PdfAssessment.pdf`);
-    const doc = new PDFDocument();
-    const stream = fs.createWriteStream(filePath);
-    doc.pipe(stream);
 
-    // Titre du projet
-    doc.fontSize(18).text(`Project: ${project.name}`, { underline: true });
-    doc.fontSize(12).text(`Description: ${project.description || "N/A"}`);
-    doc.text(`Track: ${project.track || "N/A"}`);
-    doc.moveDown();
-
-    // Évaluation du projet
-    if (project.assessment) {
-      doc.fontSize(14).text("Assessment", { underline: true });
-      doc.fontSize(12).text(`Overall Score: ${project.assessment.overallScore ?? "N/A"}`);
-
-      // Données techniques
-      if (project.assessment.technicalData) {
-        doc.moveDown().text("Technical Data", { underline: true });
-        doc.text(`- Architecture Score: ${project.assessment.technicalData.architecture?.score ?? "N/A"}`);
-        doc.text(`- Scalability Score: ${project.assessment.technicalData.scalabilityApproach?.score ?? "N/A"}`);
-      }
-
-      // Données commerciales
-      if (project.assessment.businessData) {
-        doc.moveDown().text("Business Data", { underline: true });
-        doc.text(`- Business Model Score: ${project.assessment.businessData.businessModel?.score ?? "N/A"}`);
-        doc.text(`- Market Potential Score: ${project.assessment.businessData.marketPotential?.score ?? "N/A"}`);
-      }
-
-      doc.moveDown().text("Eligibility", { underline: true });
-      doc.text(`Eligibility Status: ${project.assessment.eligibility?.isEligible ? "Eligible" : "Not Eligible"}`);
-    } else {
-      doc.text("No assessment data available.");
-    }
-
-    // Membres de l'équipe
-    doc.moveDown().text("Team", { underline: true });
-    (project.team || []).forEach(member => {
-      doc.text(`- ${member.email} (${member.validated ? "Validated" : "Not Validated"})`);
+    // Générer PDF avec Puppeteer
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'], // option utile en prod
     });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "networkidle0" });
+    await page.pdf({ path: filePath, format: "A4", printBackground: true });
+    await browser.close();
 
-    // Finalisation du PDF
-    doc.end();
-
-    stream.on('finish', () => {
-      // Envoi du fichier PDF pour téléchargement
-      res.download(filePath, (err) => {
-        if (err) {
-          console.error("Error sending PDF:", err);
-          res.status(500).send("Error sending PDF");
-        }
-        // Optionnel: Supprimer le fichier après envoi
-        fs.unlink(filePath, () => {});
-      });
-    });
-
-    stream.on('error', (err) => {
-      console.error("Error during PDF generation:", err);
-      res.status(500).send("Error generating PDF");
+    // Envoyer le fichier PDF pour téléchargement
+    res.download(filePath, (err) => {
+      if (err) {
+        console.error("Error sending PDF:", err);
+        res.status(500).send("Error sending PDF");
+      }
+      fs.unlink(filePath, () => {});
     });
 
   } catch (error) {
