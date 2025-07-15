@@ -590,7 +590,7 @@ Analyze both the answers and the progression from their current proficiency leve
 Provide detailed, actionable feedback in JSON format only.
 
 #STRICT REQUIREMENTS FOR RECOMMENDATIONS:
- "recommendation": (array of strings, required):  
+ "recommendations": (array of strings, required):  
  -must be an array of strings.
  -Provide at least **two specific, actionable improvement tips** for the technology's use in this project.  
  - Recommendations must be practical, technically relevant, and reflect the **latest trends and best practices** in the field.
