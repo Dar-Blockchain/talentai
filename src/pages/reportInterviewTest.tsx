@@ -533,6 +533,17 @@ export default function Report() {
           console.log('Extracted questions:', questions);
           console.log('Extracted answers:', answers);
 
+          // Extract interview context fields from formData if present
+          const {
+            targetCompany,
+            companyIndustry,
+            companyCulture,
+            targetRole,
+            experienceLevel,
+            interviewFormat,
+            simulationGoal,
+          } = testData.metadata || {};
+
           const hrResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/analyze-hr-answers`, {
             method: 'POST',
             headers: {
@@ -540,7 +551,14 @@ export default function Report() {
               'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify({
-              questions: testData.results
+              questions: testData.results,
+              targetCompany,
+              companyIndustry,
+              companyCulture,
+              targetRole,
+              experienceLevel,
+              interviewFormat,
+              simulationGoal,
             })
           });
 
