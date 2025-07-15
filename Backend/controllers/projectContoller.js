@@ -8,7 +8,7 @@ const ProjectAssessment = require("../models/projectAssessmentModel");
 // Créer un projet
 module.exports.createProject = async (req, res) => {
   try {
-    const baseUrl = process.env.BASE_URL || "http://localhost:3000"; // Adapte selon ton env
+    const baseUrl = process.env.BASE_URL ; // Adapte selon ton env
     const data = req.body;
     data.leaderId = req.user._id;
     const newProject = await projectService.createProject(data, baseUrl);
