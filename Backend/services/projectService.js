@@ -43,21 +43,26 @@ const EXPIRATION_HOURS = 24;
 module.exports.createProject = async (data, baseUrl) => {
   try {
     if (!data.team || data.team.length === 0) {
-      throw new Error("L'équipe doit avoir des membres.");
+      throw new Error("The team must have at least one member.");
     }
 
-    const teamWithTokens = data.team.map((email) => {
-      if (!email) {
-        throw new Error("L'email est requis pour chaque membre de l'équipe.");
+    const teamWithTokens = data.team.map((member) => {
+      if (!member.email) {
+        throw new Error("Email is required for each team member.");
       }
-
+      if (!member.role) {
+        throw new Error("Role is required for each team member.");
+      }
+    
       const activationToken = crypto.randomBytes(20).toString("hex");
       const expiresAt = new Date(
         Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000
       ); // 24h
-
+    
       return {
-        email,
+        email: member.email,
+        userName: member.userName,
+        role: member.role,
         validated: false,
         activationToken,
         expiresAt,
@@ -98,10 +103,11 @@ module.exports.createProject = async (data, baseUrl) => {
 
     return project;
   } catch (error) {
-    console.error("Erreur lors de la création du projet:", error);
-    throw new Error("Erreur lors de la création du projet");
+    console.error("Error while creating the project:", error);
+    throw new Error("An error occurred while creating the project.");
   }
 };
+
 
 module.exports.activateTeamMember = async (projectId, token) => {
   try {
