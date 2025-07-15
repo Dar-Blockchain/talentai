@@ -146,7 +146,7 @@ function calculateTechStackScore(techStack = []) {
 }
 
 function handleTechnicalOverallScore(technicalData) {
-  if (!technicalData) return 0;
+  if (!technicalData || !technicalData.techStack || technicalData.techStack.length === 0) return 0;
 
   const categoryWeights = {
     techStack: TECHNICAL_OVERALL_SCORE_WEIGHTS.TECH_STACK,
