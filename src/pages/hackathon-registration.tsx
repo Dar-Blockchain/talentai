@@ -80,7 +80,9 @@ const HackathonRegistration = () => {
       setCheckingProject(true);
       try {
         const token = localStorage.getItem('api_token');
-        const res = await fetch('http://localhost:5000/project/getMyProjects', {
+        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/'}project/getMyProjects'`;
+
+        const res = await fetch(url, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (res.ok) {
