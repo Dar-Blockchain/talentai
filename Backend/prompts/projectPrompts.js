@@ -122,7 +122,15 @@ Your task is to extract and evaluate all relevant technical data needed to popul
    - "modernity": (string) One of: "outdated", "average", "modern", "cutting-edge". Judge based on current industry standards and the context provided.
    - "strengths": (array of strings): must not be empty. List the main technical advantages or benefits as described or implied by the team.
    - "weaknesses": (array of strings): must not be empty. List any limitations, risks, or incorrect usages mentioned or implied.
-   - "recommendation": (array of strings): must not be empty Provide concrete, actionable improvement tips for this technology choice, based on the transcript.
+   - "recommendation": (array of strings, required):  
+      Provide at least **two specific, actionable improvement tips** for the technology's use in this project.  
+      - Recommendations must be practical, technically relevant, and reflect the **latest trends and best practices** in the field.
+      - At least **one external resource** (doc, course, guide, etc.) per technology is required, and it should be up-to-date and reputable.
+      - **Do not provide vague advice.**  
+      Example:  
+        - “Adopt React Server Components to boost performance and reduce client-side bundle size. Detailed guide and best practices: https://react.dev/reference/react-server/components”
+        - “Use TypeScript 5.x to enhance type safety and leverage new language features. Official release notes and migration tips: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html”
+
    - "score": (integer, 0–100) Assign a score using these rules:
      * 75–100: Technology is highly aligned with project goals and the ${projectTrack} track, and the explanation is deep, clear, specific, and technically justified.
      * 50–74: Good alignment and usage, but explanation lacks depth or clarity.

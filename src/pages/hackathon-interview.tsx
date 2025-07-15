@@ -382,6 +382,7 @@ const Test = () => {
   // Question selection logic
   const [invalidType, setInvalidType] = useState(false);
   const [fetchError, setFetchError] = useState('');
+  const [showLoaderModal, setShowLoaderModal] = useState(false);
 
   useEffect(() => {
     if(!isAuthenticated && id){
@@ -663,6 +664,7 @@ const Test = () => {
 
   const handleGuidelinesAccept = async () => {
     try {
+      setShowLoaderModal(true);
       setIsGenerating(true);
       const token = Cookies.get('api_token');
       if (!token) {
@@ -701,6 +703,7 @@ const Test = () => {
       router.push('/');
     } finally {
       setIsGenerating(false);
+      setShowLoaderModal(false);
     }
   };
 
@@ -1081,7 +1084,7 @@ const Test = () => {
             justifyContent: 'space-between'
           }}>
             <Button
-              onClick={() => router.push('/dashboardCandidate')}
+              onClick={() => router.push('/hackathon-dashboard')}
               sx={{
                 color: '#000',
                 '&:hover': { color: '#000' }
@@ -1109,6 +1112,19 @@ const Test = () => {
             </Button>
           </DialogActions>
         </GuidelinesModal>
+
+        {/* Loader Modal for Test Preparation */}
+        <Dialog open={showLoaderModal} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 2 } }}>
+          <DialogTitle sx={{ textAlign: 'center', fontWeight: 700, color: '#7C4DFF', fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', pb: 0 }}>
+            Preparing Your Test
+          </DialogTitle>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 3 }}>
+            <CircularProgress sx={{ color: '#7C4DFF', mb: 2 }} />
+            <Typography variant="body1" sx={{ color: '#333', fontWeight: 500, textAlign: 'center' }}>
+              Please wait while we prepare your questions and environment...
+            </Typography>
+          </DialogContent>
+        </Dialog>
 
         <StyledAppBar position="static" elevation={0}>
           <Toolbar sx={{ 

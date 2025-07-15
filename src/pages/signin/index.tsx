@@ -328,7 +328,7 @@ export default function SignIn() {
   return (
     <Box
       sx={{
-        mt: { xs: 3, sm: 4, md: 5 },
+        mt: isHackathon ? 0 : { xs: 3, sm: 4, md: 5 },
         minHeight: "100vh",
         background: "white",
         display: "flex",
@@ -623,7 +623,7 @@ export default function SignIn() {
             </Button>
 
 
-            <Box sx={{ textAlign: 'center', mt: 2 }}>
+            {!isHackathon && <Box sx={{ textAlign: 'center', mt: 2 }}>
               <Button
                 startIcon={<ArrowBackIcon />}
                 onClick={() => router.push('/')}
@@ -639,6 +639,7 @@ export default function SignIn() {
                 Back to Landing Page
               </Button>
             </Box>
+            }
           </Box>
 
           {/* <Divider
