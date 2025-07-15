@@ -2,6 +2,9 @@ import { Card, CardHeader, Divider, CardContent, Box, Avatar, Typography, Toolti
 import EmailIcon from '@mui/icons-material/Email';
 import VerifiedIcon from '@mui/icons-material/CheckCircle';
 import React, { useState } from 'react';
+import GroupIcon from '@mui/icons-material/Group';
+import CelebrationIcon from '@mui/icons-material/Celebration';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 interface TeamMember {
   name: string;
@@ -85,21 +88,34 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
   };
 
   return (
-    <Card sx={{ boxShadow: '0 2px 8px #7C4DFF11', bgcolor: '#FFFFFF', border: '1.5px solid #EDE7F6', borderRadius: 3, transition: 'box-shadow 0.2s', '&:hover': { boxShadow: '0 4px 16px #7C4DFF22' } }}>
+    <Card sx={{
+      boxShadow: '0 2px 12px #7C4DFF22',
+      bgcolor: '#fff',
+      border: 'none',
+      borderRadius: 4,
+      overflow: 'hidden',
+      position: 'relative',
+      px: 0,
+      py: 0,
+      minHeight: 180,
+      transition: 'box-shadow 0.2s',
+      '&:hover': { boxShadow: '0 6px 24px #7C4DFF33' },
+    }}>
       <CardHeader
-        title="Team Members"
-        titleTypographyProps={{
-          variant: 'subtitle1',
-          fontWeight: 700,
+        avatar={<GroupIcon sx={{ color: '#7C4DFF', fontSize: 28, ml: 1 }} />}
+        title={<span style={{
           color: '#7C4DFF',
-          fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif'
-        }}
-        sx={{ pb: 1 }}
+          fontWeight: 800,
+          fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif',
+          letterSpacing: 0.5,
+          fontSize: '1.15rem',
+        }}>Team Members</span>}
+        sx={{ pb: 1, pl: 2, bgcolor: 'transparent', zIndex: 2 }}
         action={
           <Button
             variant="contained"
             size="small"
-            sx={{ bgcolor: '#7C4DFF', textTransform: 'none', fontWeight: 700, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', boxShadow: 'none', '&:hover': { bgcolor: '#5E35B1' } }}
+            sx={{ bgcolor: '#7C4DFF', textTransform: 'none', fontWeight: 700, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', borderRadius: 2, px: 2, fontSize: '0.98rem', boxShadow: 'none', '&:hover': { bgcolor: '#5E35B1' } }}
             onClick={handleOpen}
           >
             Invite
@@ -157,69 +173,85 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
       <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
         {teamMembers.map((member, index) => (
           <Box key={index}>
-            <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{
+              p: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderRadius: 2,
+              background: '#fff',
+              boxShadow: '0 1px 4px #7C4DFF11',
+              mb: 1,
+              transition: 'box-shadow 0.15s, transform 0.15s',
+              '&:hover': {
+                boxShadow: '0 2px 8px #7C4DFF22',
+                transform: 'scale(1.01)',
+              },
+            }}>
               <Tooltip title={member.email || ''} placement="top" arrow>
                 <Avatar
                   sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: 'linear-gradient(135deg, #7C4DFF 0%, #2196F3 100%)',
-                    color: '#fff',
+                    width: 44,
+                    height: 44,
+                    bgcolor: '#EDE7F6',
+                    color: '#7C4DFF',
                     fontSize: '1.1rem',
                     fontWeight: 700,
                     fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif',
-                    boxShadow: '0 2px 8px #7C4DFF33',
+                    boxShadow: '0 1px 4px #7C4DFF22',
                   }}
                 >
                   {member.name[0].toUpperCase()}
                 </Avatar>
               </Tooltip>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="subtitle2" sx={{ color: '#2E3A59', fontWeight: 700, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif' }} noWrap>
-                  {member.name}
-                  {Boolean(member.validated) ? (
-                    <Chip
-                      label="Validated"
-                      color="success"
-                      size="small"
-                      icon={<VerifiedIcon sx={{ color: 'white !important' }} />}
-                      sx={{ ml: 1, fontWeight: 700, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', borderRadius: 1 }}
-                    />
-                  ) : (
-                    <>
-                      <Chip
-                        label="Pending"
-                        color="warning"
-                        size="small"
-                        sx={{ ml: 1, fontWeight: 700, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', borderRadius: 1 }}
-                      />
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="primary"
-                        sx={{ ml: 1, textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
-                        onClick={() => resendInvitation(member.email || '')}
-                        disabled={!member.email}
-                      >
-                        Resend Invitation
-                      </Button>
-                    </>
-                  )}
-                </Typography>
+              <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', ml: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2" sx={{ color: '#8F9BB3', fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif' }} noWrap>
+                  <Typography variant="subtitle1" sx={{ color: '#2E3A59', fontWeight: 700, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', fontSize: '1.05rem' }} noWrap>
+                    {member.name}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#8F9BB3', fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', fontWeight: 600, fontSize: '0.98rem' }} noWrap>
                     {member.role}
                   </Typography>
-                  {member.email && (
-                    <Box sx={{ ml: 1, px: 1, py: 0.2, bgcolor: '#E3F2FD', borderRadius: 1, fontSize: '0.8rem', color: '#2196F3', fontWeight: 600, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif' }}>
-                      {member.email}
-                    </Box>
-                  )}
                 </Box>
+                {member.email && (
+                  <Typography variant="body2" sx={{ color: '#2196F3', fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', fontWeight: 500, fontSize: '0.92rem', mt: 0.2 }} noWrap>
+                    {member.email}
+                  </Typography>
+                )}
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1, minWidth: 120 }}>
+                {Boolean(member.validated) ? (
+                  <Chip
+                    label="Validated"
+                    color="success"
+                    size="small"
+                    icon={<VerifiedIcon sx={{ color: 'white !important' }} />}
+                    sx={{ fontWeight: 700, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', borderRadius: 1, px: 1, fontSize: '0.92rem' }}
+                  />
+                ) : (
+                  <>
+                    <Chip
+                      label="Pending"
+                      color="warning"
+                      size="small"
+                      sx={{ fontWeight: 700, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', borderRadius: 1, px: 1, fontSize: '0.92rem', mb: 0.5 }}
+                    />
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="primary"
+                      sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, borderColor: '#7C4DFF', color: '#7C4DFF', fontSize: '0.95rem', px: 1.5, '&:hover': { borderColor: '#5E35B1', color: '#5E35B1' } }}
+                      onClick={() => resendInvitation(member.email || '')}
+                      disabled={!member.email}
+                    >
+                      Resend
+                    </Button>
+                  </>
+                )}
               </Box>
             </Box>
             {index < teamMembers.length - 1 && (
-              <Divider sx={{ borderColor: '#EDE7F6' }} />
+              <Divider sx={{ borderColor: '#EDE7F6', mx: 2 }} />
             )}
           </Box>
         ))}
