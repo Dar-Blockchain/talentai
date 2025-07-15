@@ -952,7 +952,8 @@ Provide detailed, actionable feedback in JSON format only.
       interviewProfile,
       analysis.overallScore,
       analysis.skillAnalysis,
-      skillType
+      skillType,
+      analysis.recommendations
     );
 
     if (!interviewProfile.interviewDetails) {
