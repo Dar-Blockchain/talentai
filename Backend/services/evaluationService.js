@@ -329,7 +329,8 @@ exports.analyzeHRAnswers = async ({ questions, user, formData }) => {
     profile,
     analysis.overallScore,
     analysis.skillAnalysis,
-    formData
+    formData,
+    analysis.recommendations
   );
 
   profile.quota++;
