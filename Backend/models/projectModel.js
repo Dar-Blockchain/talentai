@@ -19,6 +19,8 @@ const ProjectSchema = new mongoose.Schema(
         },
         activationToken: String, // Ajoute ce champ
         expiresAt: Date, // <--- AJOUTER ce champ si pas déjà présent
+        userName : String ,
+        role: { type: String, enum: ["Business","Technical"] },
       },
     ],
     leaderId: {

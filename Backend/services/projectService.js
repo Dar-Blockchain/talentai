@@ -46,23 +46,29 @@ module.exports.createProject = async (data, baseUrl) => {
       throw new Error("L'équipe doit avoir des membres.");
     }
 
-    const teamWithTokens = data.team.map((email) => {
-      if (!email) {
+    const teamWithTokens = data.team.map((member) => {
+      if (!member.email) {
         throw new Error("L'email est requis pour chaque membre de l'équipe.");
       }
-
+      if (!member.role) {
+        throw new Error("Le rôle est requis pour chaque membre de l'équipe.");
+      }
+    
       const activationToken = crypto.randomBytes(20).toString("hex");
       const expiresAt = new Date(
         Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000
       ); // 24h
-
+    
       return {
-        email,
+        email: member.email,
+        userName: member.userName,
+        role: member.role,
         validated: false,
         activationToken,
         expiresAt,
       };
     });
+    
 
     const project = new Project({
       name: data.Name,
