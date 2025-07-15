@@ -487,7 +487,103 @@ const HackathonDashboard = () => {
             <Box>
               <Typography variant="h6" sx={{ mb: 2 }}>Summary</Typography>
               <Typography sx={{ mb: 2 }}>{assessment.technicalData.summary || 'No summary provided.'}</Typography>
-              {/* Add more technical details as needed */}
+              {/* Tech Stack */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 2, mb: 1 }}><strong>Tech Stack</strong></Typography>
+              {Array.isArray(assessment.technicalData.techStack) && assessment.technicalData.techStack.length > 0 ? (
+                assessment.technicalData.techStack.map((stack: any, idx: number) => (
+                  <Box key={idx} sx={{ mb: 2, p: 2, background: '#f0f4ff', borderRadius: 2 }}>
+                    <Typography variant="body2">{stack.title} ({stack.componentType})</Typography>
+                    <Typography variant="body2">Complexity: {stack.complexity}, Modernity: {stack.modernity}</Typography>
+                    {stack.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(stack.score)}</Typography>}
+                    {stack.choiceExplanation && stack.choiceExplanation.length > 0 && (
+                      <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                        {stack.choiceExplanation.map((ex: string, i: number) => <li key={i}><Typography variant="body2">{ex}</Typography></li>)}
+                      </Box>
+                    )}
+                    {stack.strengths && stack.strengths.length > 0 && (
+                      <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                        <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
+                        {stack.strengths.map((s: string, i: number) => <li key={i}><Typography variant="body2">{s}</Typography></li>)}
+                      </Box>
+                    )}
+                    {stack.weaknesses && stack.weaknesses.length > 0 && (
+                      <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                        <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
+                        {stack.weaknesses.map((w: string, i: number) => <li key={i}><Typography variant="body2">{w}</Typography></li>)}
+                      </Box>
+                    )}
+                    {stack.recommendation && stack.recommendation.length > 0 && (
+                      <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                        <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
+                        {stack.recommendation.map((r: string, i: number) => <li key={i}><Typography variant="body2">{r}</Typography></li>)}
+                      </Box>
+                    )}
+                  </Box>
+                ))
+              ) : <Typography variant="body2">No tech stack data.</Typography>}
+              {/* Architecture */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 2, mb: 1 }}><strong>Architecture</strong></Typography>
+              {assessment.technicalData.architecture ? (
+                <Box>
+                  <Typography variant="body2">{assessment.technicalData.architecture.title} ({assessment.technicalData.architecture.type})</Typography>
+                  {assessment.technicalData.architecture.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(assessment.technicalData.architecture.score)}</Typography>}
+                  {assessment.technicalData.architecture.choiceExplanation && assessment.technicalData.architecture.choiceExplanation.length > 0 && (
+                    <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                      {assessment.technicalData.architecture.choiceExplanation.map((ex: string, i: number) => <li key={i}><Typography variant="body2">{ex}</Typography></li>)}
+                    </Box>
+                  )}
+                  {assessment.technicalData.architecture.strengths && assessment.technicalData.architecture.strengths.length > 0 && (
+                    <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                      <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
+                      {assessment.technicalData.architecture.strengths.map((s: string, i: number) => <li key={i}><Typography variant="body2">{s}</Typography></li>)}
+                    </Box>
+                  )}
+                  {assessment.technicalData.architecture.weaknesses && assessment.technicalData.architecture.weaknesses.length > 0 && (
+                    <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                      <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
+                      {assessment.technicalData.architecture.weaknesses.map((w: string, i: number) => <li key={i}><Typography variant="body2">{w}</Typography></li>)}
+                    </Box>
+                  )}
+                  {assessment.technicalData.architecture.recommendation && assessment.technicalData.architecture.recommendation.length > 0 && (
+                    <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                      <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
+                      {assessment.technicalData.architecture.recommendation.map((r: string, i: number) => <li key={i}><Typography variant="body2">{r}</Typography></li>)}
+                    </Box>
+                  )}
+                </Box>
+              ) : <Typography variant="body2">No architecture data.</Typography>}
+              {/* Scalability Approach */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 2, mb: 1 }}><strong>Scalability Approach</strong></Typography>
+              {assessment.technicalData.scalabilityApproach ? (
+                <Box>
+                  <Typography variant="body2">{assessment.technicalData.scalabilityApproach.strategy}</Typography>
+                  {assessment.technicalData.scalabilityApproach.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(assessment.technicalData.scalabilityApproach.score)}</Typography>}
+                  {assessment.technicalData.scalabilityApproach.choiceExplanation && assessment.technicalData.scalabilityApproach.choiceExplanation.length > 0 && (
+                    <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                      {assessment.technicalData.scalabilityApproach.choiceExplanation.map((ex: string, i: number) => <li key={i}><Typography variant="body2">{ex}</Typography></li>)}
+                    </Box>
+                  )}
+                  {assessment.technicalData.scalabilityApproach.strengths && assessment.technicalData.scalabilityApproach.strengths.length > 0 && (
+                    <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                      <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
+                      {assessment.technicalData.scalabilityApproach.strengths.map((s: string, i: number) => <li key={i}><Typography variant="body2">{s}</Typography></li>)}
+                    </Box>
+                  )}
+                  {assessment.technicalData.scalabilityApproach.weaknesses && assessment.technicalData.scalabilityApproach.weaknesses.length > 0 && (
+                    <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                      <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
+                      {assessment.technicalData.scalabilityApproach.weaknesses.map((w: string, i: number) => <li key={i}><Typography variant="body2">{w}</Typography></li>)}
+                    </Box>
+                  )}
+                  {assessment.technicalData.scalabilityApproach.recommendation && assessment.technicalData.scalabilityApproach.recommendation.length > 0 && (
+                    <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                      <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
+                      {assessment.technicalData.scalabilityApproach.recommendation.map((r: string, i: number) => <li key={i}><Typography variant="body2">{r}</Typography></li>)}
+                    </Box>
+                  )}
+                </Box>
+              ) : <Typography variant="body2">No scalability data.</Typography>}
+              <Typography variant="caption" sx={{ color: 'text.secondary', mt: 2 }}>Created: {assessment.technicalData.createdAt ? new Date(assessment.technicalData.createdAt).toLocaleString() : 'No date'}</Typography>
             </Box>
           ) : (
             <Typography>No technical report available.</Typography>
@@ -505,7 +601,93 @@ const HackathonDashboard = () => {
             <Box>
               <Typography variant="h6" sx={{ mb: 2 }}>Summary</Typography>
               <Typography sx={{ mb: 2 }}>{assessment.businessData.summary || 'No summary provided.'}</Typography>
-              {/* Add more business details as needed */}
+              {/* Business Model */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 2, mb: 1 }}><strong>Business Model</strong></Typography>
+              {assessment.businessData.businessModel ? (
+                <Box>
+                  <Typography variant="subtitle2">{assessment.businessData.businessModel.model}</Typography>
+                  {assessment.businessData.businessModel.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(assessment.businessData.businessModel.score)}</Typography>}
+                  {assessment.businessData.businessModel.choiceExplanation && assessment.businessData.businessModel.choiceExplanation.length > 0 && (
+                    <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                      {assessment.businessData.businessModel.choiceExplanation.map((ex: string, i: number) => <li key={i}><Typography variant="body2">{ex}</Typography></li>)}
+                    </Box>
+                  )}
+                  {assessment.businessData.businessModel.strengths && assessment.businessData.businessModel.strengths.length > 0 && (
+                    <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                      <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
+                      {assessment.businessData.businessModel.strengths.map((s: string, i: number) => <li key={i}><Typography variant="body2">{s}</Typography></li>)}
+                    </Box>
+                  )}
+                  {assessment.businessData.businessModel.weaknesses && assessment.businessData.businessModel.weaknesses.length > 0 && (
+                    <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                      <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
+                      {assessment.businessData.businessModel.weaknesses.map((w: string, i: number) => <li key={i}><Typography variant="body2">{w}</Typography></li>)}
+                    </Box>
+                  )}
+                  {assessment.businessData.businessModel.recommendation && assessment.businessData.businessModel.recommendation.length > 0 && (
+                    <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                      <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
+                      {assessment.businessData.businessModel.recommendation.map((r: string, i: number) => <li key={i}><Typography variant="body2">{r}</Typography></li>)}
+                    </Box>
+                  )}
+                </Box>
+              ) : <Typography variant="body2">No business model data.</Typography>}
+              {/* Market Potential */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 2, mb: 1 }}><strong>Market Potential</strong></Typography>
+              {assessment.businessData.marketPotential ? (
+                <Box>
+                  <Typography variant="body2">Range: {assessment.businessData.marketPotential.range}</Typography>
+                  <Typography variant="body2">Estimated Market Size: {assessment.businessData.marketPotential.estimatedMarketSize}</Typography>
+                  <Typography variant="body2">Target Region: {assessment.businessData.marketPotential.targetRegion}</Typography>
+                  {assessment.businessData.marketPotential.score !== undefined && <Typography variant="body2">Score: {renderScoreChip(assessment.businessData.marketPotential.score)}</Typography>}
+                  {assessment.businessData.marketPotential.choiceExplanation && assessment.businessData.marketPotential.choiceExplanation.length > 0 && (
+                    <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                      {assessment.businessData.marketPotential.choiceExplanation.map((ex: string, i: number) => <li key={i}><Typography variant="body2">{ex}</Typography></li>)}
+                    </Box>
+                  )}
+                  {assessment.businessData.marketPotential.strengths && assessment.businessData.marketPotential.strengths.length > 0 && (
+                    <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                      <Typography variant="body2" fontWeight={700}>Strengths:</Typography>
+                      {assessment.businessData.marketPotential.strengths.map((s: string, i: number) => <li key={i}><Typography variant="body2">{s}</Typography></li>)}
+                    </Box>
+                  )}
+                  {assessment.businessData.marketPotential.weaknesses && assessment.businessData.marketPotential.weaknesses.length > 0 && (
+                    <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                      <Typography variant="body2" fontWeight={700}>Weaknesses:</Typography>
+                      {assessment.businessData.marketPotential.weaknesses.map((w: string, i: number) => <li key={i}><Typography variant="body2">{w}</Typography></li>)}
+                    </Box>
+                  )}
+                  {assessment.businessData.marketPotential.recommendation && assessment.businessData.marketPotential.recommendation.length > 0 && (
+                    <Box component="ul" sx={{ pl: 3, mb: 0 }}>
+                      <Typography variant="body2" fontWeight={700}>Recommendations:</Typography>
+                      {assessment.businessData.marketPotential.recommendation.map((r: string, i: number) => <li key={i}><Typography variant="body2">{r}</Typography></li>)}
+                    </Box>
+                  )}
+                </Box>
+              ) : <Typography variant="body2">No market potential data.</Typography>}
+              {/* Target Users */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 2, mb: 1 }}><strong>Target Users</strong></Typography>
+              {Array.isArray(assessment.businessData.targetUsers) && assessment.businessData.targetUsers.length > 0 ? (
+                <Box component="ul" sx={{ pl: 3, mb: 2 }}>
+                  {assessment.businessData.targetUsers.map((u: string, i: number) => <li key={i}><Typography variant="body2">{u}</Typography></li>)}
+                </Box>
+              ) : <Typography variant="body2" sx={{ mb: 2 }}>No data</Typography>}
+              {/* Added Values */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 2, mb: 1 }}><strong>Added Values</strong></Typography>
+              {Array.isArray(assessment.businessData.addedValues) && assessment.businessData.addedValues.length > 0 ? (
+                <Box component="ul" sx={{ pl: 3, mb: 2 }}>
+                  {assessment.businessData.addedValues.map((v: string, i: number) => <li key={i}><Typography variant="body2">{v}</Typography></li>)}
+                </Box>
+              ) : <Typography variant="body2" sx={{ mb: 2 }}>No data</Typography>}
+              {/* Competitors */}
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 2, mb: 1 }}><strong>Competitors</strong></Typography>
+              {Array.isArray(assessment.businessData.competitors) && assessment.businessData.competitors.length > 0 ? (
+                <Box component="ul" sx={{ pl: 3, mb: 2 }}>
+                  {assessment.businessData.competitors.map((c: string, i: number) => <li key={i}><Typography variant="body2">{c}</Typography></li>)}
+                </Box>
+              ) : <Typography variant="body2" sx={{ mb: 2 }}>No data</Typography>}
+              {/* Innovation, Track Alignment, Hedera Ecosystem Impact, etc. */}
+              {/* ...copy structure from DetailsModal as needed... */}
             </Box>
           ) : (
             <Typography>No business report available.</Typography>

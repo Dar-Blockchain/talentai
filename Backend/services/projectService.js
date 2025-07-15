@@ -104,7 +104,7 @@ module.exports.createProject = async (data, baseUrl) => {
     return project;
   } catch (error) {
     console.error("Error while creating the project:", error);
-    throw new Error("An error occurred while creating the project.");
+    throw new Error(error.message);
   }
 };
 
