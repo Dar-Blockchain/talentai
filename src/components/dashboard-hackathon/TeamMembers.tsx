@@ -111,16 +111,6 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
           fontSize: '1.15rem',
         }}>Team Members</span>}
         sx={{ pb: 1, pl: 2, bgcolor: 'transparent', zIndex: 2 }}
-        action={
-          <Button
-            variant="contained"
-            size="small"
-            sx={{ bgcolor: '#7C4DFF', textTransform: 'none', fontWeight: 700, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', borderRadius: 2, px: 2, fontSize: '0.98rem', boxShadow: 'none', '&:hover': { bgcolor: '#5E35B1' } }}
-            onClick={handleOpen}
-          >
-            Invite
-          </Button>
-        }
       />
       <Dialog open={open} onClose={handleClose} PaperProps={{ sx: { borderRadius: 3, p: 1, minWidth: 350 } }}>
         <Box display="flex" flexDirection="column" alignItems="center" pt={3}>
@@ -255,6 +245,35 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
             )}
           </Box>
         ))}
+        {/* Modern Invite Button */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 1 }}>
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<EmailIcon />}
+            sx={{
+              background: 'linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)',
+              color: '#fff',
+              fontWeight: 800,
+              fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif',
+              borderRadius: 3,
+              px: 4,
+              py: 1.5,
+              fontSize: '1.08rem',
+              boxShadow: '0 4px 16px #7C4DFF22',
+              textTransform: 'none',
+              letterSpacing: 0.2,
+              transition: 'background 0.2s, box-shadow 0.2s',
+              '&:hover': {
+                background: 'linear-gradient(90deg, #6b0cd6 0%, #00acc1 100%)',
+                boxShadow: '0 8px 32px #7C4DFF33',
+              },
+            }}
+            onClick={handleOpen}
+          >
+            Invite Team Member
+          </Button>
+        </Box>
       </CardContent>
     </Card>
   );
