@@ -85,7 +85,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ projectId, disableBusiness,
                 }
               }}
               onClick={() => !disableTechnical && goToInterview('technical')}
-              disabled={disableTechnical}
+              disabled={disableTechnical || !disableBusiness}
             >
               Technical Meeting
             </Button>
