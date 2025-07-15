@@ -314,7 +314,7 @@ export default function CandidateInterviewDetailPage() {
                                     )}
                                 </Box>
                             )}
-                            {data.type === 'onboarding' && Array.isArray(data.recommendations) && data.recommendations.length > 0 && (
+                            {((data.type === 'onboarding' || data.type === 'hr') && Array.isArray(data.recommendations) && data.recommendations.length > 0) && (
                                 <Box sx={{ mb: 4, p: 3, background: '#f3f0ff', borderRadius: 3, border: '1px solid #eee' }}>
                                     <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
                                         Recommendations
