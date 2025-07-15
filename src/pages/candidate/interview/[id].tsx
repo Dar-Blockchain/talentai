@@ -314,6 +314,31 @@ export default function CandidateInterviewDetailPage() {
                                     )}
                                 </Box>
                             )}
+                            {data.type === 'onboarding' && Array.isArray(data.recommendations) && data.recommendations.length > 0 && (
+                                <Box sx={{ mb: 4, p: 3, background: '#f3f0ff', borderRadius: 3, border: '1px solid #eee' }}>
+                                    <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
+                                        Recommendations
+                                    </Typography>
+                                    <ul style={{ margin: 0, paddingLeft: 20 }}>
+                                        {data.recommendations.map((rec: string, idx: number) => {
+                                            // Regex to find URLs
+                                            const urlRegex = /(https?:\/\/[^\s]+)/g;
+                                            const parts = rec.split(urlRegex);
+                                            return (
+                                                <li key={idx} style={{ color: '#1976d2', marginBottom: 4 }}>
+                                                    {parts.map((part, i) =>
+                                                        urlRegex.test(part) ? (
+                                                            <a key={i} href={part} target="_blank" rel="noopener noreferrer" style={{ color: '#1565c0', textDecoration: 'underline', wordBreak: 'break-all' }}>{part}</a>
+                                                        ) : (
+                                                            <span key={i}>{part}</span>
+                                                        )
+                                                    )}
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                </Box>
+                            )}
                             <Divider sx={{ mb: 3 }} />
                             <Typography variant="h6" sx={{ fontWeight: 700, color: GREEN_MAIN, mb: 2 }}>
                                 Interview Q&A Details

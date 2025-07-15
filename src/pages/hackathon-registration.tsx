@@ -206,7 +206,7 @@ const HackathonRegistration = () => {
           LastName: leaderLastName,
           Name: projectName,
           description: projectDescription,
-          team: teamMembers.map(m => m.email),
+          team: teamMembers, // send full objects
           track,
         }),
       });
