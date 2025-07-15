@@ -108,6 +108,7 @@ const interviewDetailsSchema = new mongoose.Schema(
     skillDetails: {
       type: [skillDetailsSchema],
     },
+    recommendations: { type: [String] },
     createdAt: {
       type: Number,
       default: Date.now(),
