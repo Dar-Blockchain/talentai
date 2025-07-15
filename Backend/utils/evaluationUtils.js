@@ -271,8 +271,10 @@ async function saveInterviewDetails(
   profile,
   overallScore,
   skillAnalysis,
-  formData
+  formData,
+  recommendations
 ) {
+  console.log("check : recommendations", recommendations);
   const details = skillAnalysis.map((skill) => ({
     name: skill.skillName,
     type: SKILL_TYPES.SOFT,
@@ -293,6 +295,7 @@ async function saveInterviewDetails(
     overallScore: overallScore,
     interviewContext: formData ? formData : null,
     skillDetails: details,
+    recommendations: recommendations,
   });
 
   await interviewDetails.save();
@@ -355,6 +358,7 @@ async function saveInterviewDetailsForOnboarding(
     type: INTERVIEW_TYPES.ONBOARDING,
     overallScore: overallScore,
     skillDetails: details,
+    recommendations: recommendations,
   });
 
   await interviewDetails.save();

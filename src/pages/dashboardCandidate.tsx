@@ -25,7 +25,6 @@ import {
   TextField,
   Divider,
   Paper,
-  Grid,
   Stack,
   MenuItem,
   RadioGroup,
@@ -51,6 +50,7 @@ import {
   Tabs,
   Tab,
 } from "@mui/material";
+import Grid from "@mui/material/Grid";
 import { styled } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
@@ -75,6 +75,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CandidateOnly from "../components/CandidateOnly";
 import { useCallback } from 'react';
+import Link from "next/link";
 const GREEN_MAIN = "#8310FF";
 
 // Styled Components
@@ -144,7 +145,7 @@ const ProfileHeader = styled(Box)(({ theme }) => ({
 const StatCard = styled(Paper)(({ theme }) => ({
   background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.grey[100]} 100%)`,
   padding: theme.spacing(3),
-  borderRadius: theme.shape.borderRadius * 3,
+  borderRadius: Number(theme.shape.borderRadius) * 3,
   border: `1px solid ${theme.palette.divider}`,
   boxShadow: `
     0 6px 20px rgba(0, 0, 0, 0.05),
@@ -184,7 +185,7 @@ const SkillChip = styled(Chip)(({ theme }) => ({
 }));
 
 const ActionButton = styled(Button)(({ theme }) => ({
-  borderRadius: theme.shape.borderRadius * 2.5,
+  borderRadius: Number(theme.shape.borderRadius) * 2.5,
   textTransform: "none",
   fontWeight: 600,
   fontSize: "1rem", // base font size (mobile)
@@ -847,7 +848,7 @@ export default function DashboardCandidate() {
   //   try {
   //     setLogsLoading(true);
   //     setLogsError(null);
-      
+
   //     const token = localStorage.getItem("api_token");
   //     if (!token) {
   //       setLogsError("Authentication token not found");
@@ -1405,6 +1406,55 @@ export default function DashboardCandidate() {
     }
   };
 
+  // Static JSON for ads preview
+  const adsPosts = [
+    {
+      _id: '1',
+      title: 'Frontend Developer at TechCorp',
+      description: 'Join our dynamic team to build modern web applications using React and TypeScript. Great benefits and growth opportunities.',
+    },
+    {
+      _id: '2',
+      title: 'AI Research Intern',
+      description: 'Work with cutting-edge AI models and contribute to real-world projects. Ideal for students and recent graduates passionate about machine learning.',
+    },
+    {
+      _id: '3',
+      title: 'Remote Product Designer',
+      description: 'Shape the user experience for our next-gen SaaS platform. Fully remote, flexible hours, and a creative team environment.',
+    },
+  ];
+
+  // Ads API state
+  const [adLoading, setAdLoading] = useState(false);
+  const [adError, setAdError] = useState<string | null>(null);
+  const [adPost, setAdPost] = useState<any[]>([]);
+
+  useEffect(() => {
+    setAdLoading(true);
+    setAdError(null);
+    const token = localStorage.getItem("api_token");
+    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+    fetch(`${apiBase}post/adsPost`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch ad post");
+        return res.json();
+      })
+      .then((json) => {
+        if (json.success && Array.isArray(json.data)) {
+          setAdPost(json.data);
+        } else if (json.success && json.data) {
+          setAdPost([json.data]);
+        } else {
+          setAdError("No ad data available");
+        }
+      })
+      .catch((e) => setAdError(e.message || "Error fetching ad post"))
+      .finally(() => setAdLoading(false));
+  }, []);
+
   if (loading) {
     return (
       <Container
@@ -1452,10 +1502,10 @@ export default function DashboardCandidate() {
       >
         <Container maxWidth="lg">
           {/* Logout Button */}
-          <Box sx={{ 
-            display: "flex", 
-            justifyContent: { xs: "center", sm: "flex-end" }, 
-            mb: 3 
+          <Box sx={{
+            display: "flex",
+            justifyContent: { xs: "center", sm: "flex-end" },
+            mb: 3
           }}>
             <Button
               onClick={handleLogout}
@@ -1513,9 +1563,9 @@ export default function DashboardCandidate() {
               </Box>
 
               {/* Action Buttons */}
-              <Stack 
-                direction={{ xs: "column", sm: "row" }} 
-                spacing={{ xs: 2, sm: 2 }} 
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={{ xs: 2, sm: 2 }}
                 sx={{ mt: 4 }}
               >
                 <ActionButton
@@ -2240,6 +2290,42 @@ export default function DashboardCandidate() {
             </Container>
           </ProfileHeader>
 
+          {/* Ads Block - Show API ad post */}
+          <StyledCard sx={{ mb: 4, background: '#f8fafc', border: '2px dashed #8310FF' }}>
+            <SectionTitle sx={{ color: '#8310FF', fontSize: '1.5rem', mb: 2 }}>Recommended Opportunities</SectionTitle>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
+              {adLoading ? (
+                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120 }}>
+                  <CircularProgress size={32} sx={{ color: '#8310FF' }} />
+                </Box>
+              ) : adError ? (
+                <Box sx={{ flex: 1, color: '#c62828', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120 }}>
+                  <Typography>{adError}</Typography>
+                </Box>
+              ) : adPost && adPost.length > 0 ? (
+                adPost.map((ad: any) => (
+                  <Box key={ad._id} sx={{ flex: 1, minWidth: 0, display: 'flex' }}>
+                    <Paper elevation={2} sx={{ p: 2, borderRadius: 3, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#fff' }}>
+                      <Typography variant="h6" sx={{ color: '#8310FF', fontWeight: 700, mb: 1, minHeight: 48 }}>
+                        {ad.jobDetails?.title || 'Untitled Post'}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#333', mb: 2, minHeight: 60 }}>
+                        {ad.jobDetails?.description ? ad.jobDetails.description.slice(0, 90) + (ad.jobDetails.description.length > 90 ? '...' : '') : 'No description.'}
+                      </Typography>
+                      <Box sx={{ mt: 'auto' }}>
+                        <Link href={`/testjob/${ad._id}`} passHref legacyBehavior>
+                          <Button variant="contained" sx={{ background: '#8310FF', color: '#fff', borderRadius: 2, textTransform: 'none', fontWeight: 600, width: '100%' }}>
+                            Learn More
+                          </Button>
+                        </Link>
+                      </Box>
+                    </Paper>
+                  </Box>
+                ))
+              ) : null}
+            </Box>
+          </StyledCard>
+
           {/* User Information */}
           <Box
             sx={{
@@ -2513,14 +2599,14 @@ export default function DashboardCandidate() {
             </Box>
 
             {/* Interview Details Section */}
-            <Box>
-              <StyledCard>
-                <SectionTitle>Interview Details</SectionTitle>
-                <InterviewDetailsTabs profile={profile} />
-              </StyledCard>
-            </Box>
-          </Box>
 
+          </Box>
+          <Box>
+            <StyledCard>
+              <SectionTitle>Interview Details</SectionTitle>
+              <InterviewDetailsTabs profile={profile} />
+            </StyledCard>
+          </Box>
           {/* Add Skill Dialog */}
           <Dialog
             open={addSkillDialogOpen}
@@ -2756,6 +2842,7 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(2);
   const [total, setTotal] = useState(0);
+  const router = useRouter();
 
   const fetchData = useCallback(async (type: string, pageNum: number, limit: number) => {
     setLoading(true);
@@ -2763,7 +2850,7 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
     try {
       const token = localStorage.getItem('api_token');
       const realProfileId = profile?._id;
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/?page=${pageNum+1}&limit=${limit}&type=${type}&profileId=${realProfileId}`;
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/?page=${pageNum + 1}&limit=${limit}&type=${type}&profileId=${realProfileId}`;
       const res = await fetch(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -2792,20 +2879,8 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
     setPage(0);
   };
 
-  // Add modal state and handler inside InterviewDetailsTabs
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [detailsRow, setDetailsRow] = useState<any>(null);
-  const handleOpenDetails = (row: any) => {
-    setDetailsRow(row);
-    setDetailsOpen(true);
-  };
-  const handleCloseDetails = () => {
-    setDetailsOpen(false);
-    setDetailsRow(null);
-  };
-
   return (
-    <Box>
+    <>
       <Tabs value={tab} onChange={handleTabChange} sx={{ mb: 2 }}>
         {INTERVIEW_TYPES.map((t) => (
           <Tab key={t.value} label={t.label} value={t.value} />
@@ -2819,38 +2894,40 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
         <Alert severity="error">{error}</Alert>
       ) : (
         <>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Type</TableCell>
-                <TableCell>Overall Score</TableCell>
-                <TableCell>Post Name</TableCell>
-                <TableCell>Details</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.length === 0 ? (
+          <Box >
+            <Table size="small" sx={{ minWidth: 900 }}>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={4} align="center">No data</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell>Overall Score</TableCell>
+                  <TableCell>Post Name</TableCell>
+                  <TableCell>Details</TableCell>
                 </TableRow>
-              ) : (
-                data.map((row: any, idx: number) => {
-                  return (
-                    <TableRow key={row._id || row.id}>
-                      <TableCell>{row.type || '-'}</TableCell>
-                      <TableCell>{row.overallScore ?? '-'}</TableCell>
-                      <TableCell>{row.post?.jobDetails?.title || '-'}</TableCell>
-                      <TableCell>
-                        <Button variant="outlined" size="small" onClick={() => handleOpenDetails(row)}>
-                          Details
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {data.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">No data</TableCell>
+                  </TableRow>
+                ) : (
+                  data.map((row: any, idx: number) => {
+                    return (
+                      <TableRow key={row._id || row.id}>
+                        <TableCell>{row.type || '-'}</TableCell>
+                        <TableCell>{row.overallScore ?? '-'}</TableCell>
+                        <TableCell>{row.post?.jobDetails?.title || '-'}</TableCell>
+                        <TableCell>
+                          <Button variant="outlined" size="small" onClick={() => router.push(`/candidate/interview/${row._id || row.id}`)}>
+                            Details
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </Box>
           <TablePagination
             component="div"
             count={total}
@@ -2862,42 +2939,6 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
           />
         </>
       )}
-      {/* Details Modal */}
-      <Dialog open={detailsOpen} onClose={handleCloseDetails} maxWidth="md" fullWidth>
-        <DialogTitle>Interview Questions & Answers</DialogTitle>
-        <DialogContent dividers>
-          {detailsRow && Array.isArray(detailsRow.skillDetails) ? (
-            detailsRow.skillDetails.map((s: any, i: number) => (
-              <Box key={i} sx={{ mb: 3 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                  {s.name || '-'}
-                </Typography>
-                {Array.isArray(s.questionAnswerList) && s.questionAnswerList.length > 0 ? (
-                  s.questionAnswerList.map((qa: any, idx: number) => (
-                    <Box key={idx} sx={{ mb: 1, pl: 2 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        Q{idx + 1}: {qa.question || '-'}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary', ml: 2 }}>
-                        A{idx + 1}: {qa.answer || '-'}
-                      </Typography>
-                    </Box>
-                  ))
-                ) : (
-                  <Typography variant="body2" sx={{ color: 'text.secondary', pl: 2 }}>
-                    No questions/answers.
-                  </Typography>
-                )}
-              </Box>
-            ))
-          ) : (
-            <Typography>No details available.</Typography>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDetails}>Close</Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+    </>
   );
 }
