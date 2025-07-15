@@ -355,6 +355,7 @@ async function saveInterviewDetailsForOnboarding(
     type: INTERVIEW_TYPES.ONBOARDING,
     overallScore: overallScore,
     skillDetails: details,
+    recommendations: recommendations,
   });
 
   await interviewDetails.save();

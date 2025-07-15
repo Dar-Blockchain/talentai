@@ -1562,7 +1562,8 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
       const interviewId = await saveInterviewDetailsForOnboarding(
         profile,
         overallScore,
-        analysis.skillAnalysis
+        analysis.skillAnalysis,
+        analysis.recommendations
       );
       if (!profile.interviewDetails) {
         profile.interviewDetails = [];
