@@ -1,21 +1,12 @@
-/**
- * Notification Model - Mongoose Schema
- * Gère les notifications envoyées aux utilisateurs.
- * 
- * @module models/Notification
- */
+// Notification Model - Mongoose Schema
+// Gère les notifications envoyées aux utilisateurs.
 
 const mongoose = require('mongoose');
 
-/**
- * Enumération des types de notifications.
- * Modifie cette liste selon les besoins métiers.
- */
+// Liste des types de notifications possibles
 const NOTIFICATION_TYPES = ['info', 'success', 'warning', 'error', 'custom'];
 
-/**
- * Schéma Mongoose pour la notification utilisateur.
- */
+// Schéma Mongoose pour les notifications
 const NotificationSchema = new mongoose.Schema(
   {
     content: {
@@ -66,33 +57,21 @@ const NotificationSchema = new mongoose.Schema(
   }
 );
 
-// Index composé pour les requêtes les plus courantes (par destinataire, date, non lue)
+// Index composé pour optimiser les requêtes fréquentes
 NotificationSchema.index({ recipient: 1, read: 1, createdAt: -1 });
 
-/**
- * Méthode d'instance pour marquer une notification comme lue.
- */
+// Méthode pour marquer la notification comme lue
 NotificationSchema.methods.markAsRead = function() {
   this.read = true;
   return this.save();
 };
 
-/**
- * Méthode statique pour récupérer les notifications non lues d'un utilisateur.
- * @param {ObjectId} userId 
- * @returns {Promise<Array>}
- */
+// Méthode statique pour récupérer les notifications non lues par utilisateur
 NotificationSchema.statics.findUnreadByUser = function(userId) {
   return this.find({ recipient: userId, read: false }).sort({ createdAt: -1 });
 };
 
-/**
- * Modèle Notification
- */
+// Modèle Notification
 const Notification = mongoose.model('Notification', NotificationSchema);
 
-module.exports = {
-  Notification,
-  NotificationSchema,
-  NOTIFICATION_TYPES,
-};
+module.exports =  Notification;
