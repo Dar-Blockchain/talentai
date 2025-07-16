@@ -16,7 +16,7 @@ const {
   QUESTION_DURATION,
   PROJECT_STATUS,
   BUSINESS_QUESTION_DURATION,
-  BUSINESS_PITCH_DURATION,EXPIRATION_HOURS
+  BUSINESS_PITCH_DURATION,
 } = require("../constants/projectConstants");
 
 const Project = require("../models/projectModel");
@@ -38,6 +38,7 @@ const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 // Création d'un projet
 const { sendActivationEmail } = require("../utils/mailing");
 const crypto = require("crypto");
+const EXPIRATION_HOURS = 24;
 
 module.exports.createProject = async (data, baseUrl) => {
   try {
