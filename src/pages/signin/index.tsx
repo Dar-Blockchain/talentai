@@ -65,7 +65,8 @@ export default function SignIn() {
   const checkExistingProject = async () => {
     try {
       const token = localStorage.getItem('api_token');
-      const res = await fetch('http://localhost:5000/project/getMyProjects', {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+      const res = await fetch(`${baseUrl}project/getMyProjects`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) {
@@ -76,7 +77,7 @@ export default function SignIn() {
 
           return;
         }
-      }else{
+      } else {
         router.push('/hackathon-registration');
         setVerifying(false);
         return
@@ -152,13 +153,13 @@ export default function SignIn() {
 
         // Store token in localStorage
         localStorage.setItem("api_token", response.token);
-        
+
         // Check if there's a callbackUrl or returnUrl in the query parameters
         const callbackUrl = router.query.callbackUrl as string;
         const returnUrl = router.query.returnUrl as string;
         const redirectUrl = callbackUrl || returnUrl;
         const isHackathon = router.query.source === 'hackathon';
-        
+
         // Add a longer delay to ensure token is properly set
         setTimeout(() => {
           // Double-check that token is set
@@ -169,7 +170,7 @@ export default function SignIn() {
             setVerifying(false);
             return;
           }
-          
+
           // Check user profile to determine redirect
           fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
             headers: {
@@ -184,21 +185,23 @@ export default function SignIn() {
             })
             .then(async (profileData) => {
               console.log("Profile data received:", profileData);
-              
+
               // Check if profileData exists and has the expected structure
-              const hasProfile = profileData && 
-                profileData.userId && 
-                profileData.userId.role && 
+              const hasProfile = profileData &&
+                profileData.userId &&
+                profileData.userId.role &&
                 Object.keys(profileData).length > 0;
-              
+
               console.log("Has profile:", hasProfile);
               console.log("Profile type:", profileData?.userId?.role);
-              
+
               if (isHackathon) {
-                await checkExistingProject()
+                await checkExistingProject();
+                setVerifying(false);
+                router.push('/hackathon-registration');
                 return;
               }
-              
+
               if (callbackUrl) {
                 if (!hasProfile) {
                   // If no profile, go to preferences first with callbackUrl
@@ -260,11 +263,11 @@ export default function SignIn() {
                   })
                   .then((retryProfileData) => {
                     console.log("Retry profile data:", retryProfileData);
-                    const hasProfile = retryProfileData && 
-                      retryProfileData.userId && 
-                      retryProfileData.userId.role && 
+                    const hasProfile = retryProfileData &&
+                      retryProfileData.userId &&
+                      retryProfileData.userId.role &&
                       Object.keys(retryProfileData).length > 0;
-                    
+
                     if (hasProfile) {
                       if (retryProfileData.userId.role === 'Admin') {
                         setVerifying(false);
