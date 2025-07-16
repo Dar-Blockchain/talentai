@@ -614,8 +614,8 @@ Your analysis must:
 
 Your task:
 - Analyze answers to produce:
-  - overallScore (0-100) calculated as the average of confidenceScore of the skills
-  - recommendations (array of strings) for candidate development or company considerations
+  - overallScore (0-100) 
+  - recommendations (array of strings) 
   - nextSteps (array of strings) actionable hiring or HR follow-up steps
   - skillAnalysis (array) with detailed evaluation per skill, including:
     - skillName
@@ -627,7 +627,7 @@ Your task:
       - question
       - answer
       - status: "correct", "partial_correct", or "incorrect"
-      - exampleCorrectAnswer (optional: if status of answer is "incorrect")
+      - exampleCorrectAnswer (required if status of answer is "incorrect" or "partial_correct")
 
 **Confidence Score Rules (per skill):**
 - Every question is mapped to one skill only (you may assume an even split).
@@ -657,6 +657,17 @@ Use this scale to assign proficiencyLevel:
 - Never infer strengths from empty or irrelevant answers.
 - Do not fabricate detail beyond what is supported in the responses.
 
+#STRICT REQUIREMENTS FOR RECOMMENDATIONS:
+ "recommendations": (array of strings, required):  
+ -must be an array of strings.
+ -Provide at least **two specific, actionable improvement tips**.  
+ - Recommendations must be practical, relevant, and reflect the **latest trends and best practices** in the field.
+ - At least **one external resource** (doc, course, guide, etc.) is required, and it should be up-to-date and reputable.
+ - **Do not provide vague advice.**  
+ - Example:  
+      - “Focus on advanced team management techniques to handle diverse team dynamics. Recommended resource: 'Managing Teams: Pocket Mentor' by Harvard Business Review Press.”
+      - “Develop a deeper understanding of different work styles and perspectives to enhance collaboration. Suggested learning resource: 'The Five Dysfunctions of a Team: A Leadership Fable' by Patrick Lencioni.”
+
 
 - Return **valid JSON only**(no extra explanation or notes)
     `.trim(),
@@ -676,7 +687,7 @@ ${questions
 Generate and return JSON in the following format:
 {
   "overallScore": 0-100,
-  "recommendations": ["string"],  // Actionable advice to help the candidate improve and pass the HR test at this company
+  "recommendations": ["string"],  
   "nextSteps": ["string"],        // Concrete steps the candidate should take next to strengthen their soft skills and readiness
   "skillAnalysis": [
     {
@@ -691,7 +702,7 @@ Generate and return JSON in the following format:
           "question": "string",
           "answer": "string",
           "status": "correct" | "partial_correct" | "incorrect",
-          "exampleCorrectAnswer": "string (optional)"
+          "exampleCorrectAnswer": "string" (required if status is "incorrect" or "partial_correct")
         }
       ],
     }
@@ -699,10 +710,10 @@ Generate and return JSON in the following format:
 }
 
 ### Strict Requirements:
-- Any answer that includes placeholder, generic filler text (e.g., "this is a correct answer") without substantive content must be marked as "incorrect".
-- Do not infer partial correctness from keywords alone; relevance and substance are mandatory.
-- Do not assume correctness based on phrasing alone.
-- Do not mark vague or unrelated responses as "correct" or "partial_correct".
+- Any answer containing placeholders, boilerplate, or non-substantive filler (e.g., "this is a correct answer") must be marked as "incorrect" — regardless of context and it reduces the confidence score drastically.
+- Do not infer correctness or partial correctness based solely on keywords. An answer must contain relevant, contextual content that meaningfully addresses the question.
+- Phrasing or sentence structure that appears professional or formal does not imply correctness. Only substance and relevance determine answer quality.
+- Any answer that is vague, off-topic, or loosely related to the question must not be labeled as "correct" or "partial_correct".
 - Infer only 3 soft skills from the questions.
 - Never infer strengths from empty or irrelevant answers.
 - Do not fabricate detail beyond what is supported in the responses.
