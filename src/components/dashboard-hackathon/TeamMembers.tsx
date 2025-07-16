@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import GroupIcon from '@mui/icons-material/Group';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CircularProgress from '@mui/material/CircularProgress';
 
 interface TeamMember {
   name: string;
@@ -25,6 +26,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
   const [emailError, setEmailError] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
+  const [sendingInvite, setSendingInvite] = useState(false);
 
   const validateEmail = (value: string) => {
     if (!value) return 'Email is required';
@@ -44,6 +46,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
     const error = validateEmail(email);
     setEmailError(error);
     if (error) return;
+    setSendingInvite(true);
     try {
       const token = localStorage.getItem('api_token');
       const headers: Record<string, string> = {
@@ -62,6 +65,8 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
     } catch (err) {
       setSnackbarMsg('Failed to add team member.');
       setSnackbarOpen(true);
+    } finally {
+      setSendingInvite(false);
     }
   };
   const handleSnackbarClose = () => setSnackbarOpen(false);
@@ -149,8 +154,14 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, pt: 1, justifyContent: 'center' }}>
           <Button onClick={handleClose} color="secondary" sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}>Cancel</Button>
-          <Button onClick={handleSend} variant="contained" sx={{ bgcolor: '#7C4DFF', textTransform: 'none', fontWeight: 700, borderRadius: 2, boxShadow: 'none', '&:hover': { bgcolor: '#5E35B1' } }} disabled={!email || !!emailError} endIcon={<EmailIcon />}>
-            Send Invite
+          <Button
+            onClick={handleSend}
+            variant="contained"
+            sx={{ bgcolor: '#7C4DFF', textTransform: 'none', fontWeight: 700, borderRadius: 2, boxShadow: 'none', '&:hover': { bgcolor: '#5E35B1' } }}
+            disabled={!email || !!emailError || sendingInvite}
+            endIcon={!sendingInvite ? <EmailIcon /> : null}
+          >
+            {sendingInvite ? <CircularProgress size={24} sx={{ color: '#fff' }} /> : 'Send Invite'}
           </Button>
         </DialogActions>
       </Dialog>
