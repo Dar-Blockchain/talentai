@@ -200,7 +200,8 @@ exports.analyzeJobTestResults = async ({
     profile,
     analysis.overallScore,
     analysis.skillAnalysis,
-    jobId
+    jobId, 
+    analysis.recommendations
   );
 
   // VIII. Save JobAssessmentResult

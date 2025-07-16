@@ -306,7 +306,8 @@ async function saveInterviewDetailsForJob(
   profile,
   overallScore,
   skillAnalysis,
-  jobId
+  jobId, 
+  recommendations
 ) {
   const details = skillAnalysis.map((skill) => ({
     name: skill.skillName,
@@ -328,6 +329,7 @@ async function saveInterviewDetailsForJob(
     type: INTERVIEW_TYPES.POST,
     overallScore: overallScore,
     skillDetails: details,
+    recommendations: recommendations,
   });
 
   await interviewDetails.save();
