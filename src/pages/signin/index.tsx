@@ -76,6 +76,10 @@ export default function SignIn() {
           setVerifying(false);
 
           return;
+        }else{
+          router.push('/hackathon-registration');
+          setVerifying(false);
+          return
         }
       } else {
         router.push('/hackathon-registration');
@@ -197,8 +201,6 @@ export default function SignIn() {
 
               if (isHackathon) {
                 await checkExistingProject();
-                setVerifying(false);
-                router.push('/hackathon-registration');
                 return;
               }
 
