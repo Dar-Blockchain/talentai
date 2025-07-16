@@ -8,7 +8,7 @@ const ProjectAssessment = require("../models/projectAssessmentModel");
 // Créer un projet
 module.exports.createProject = async (req, res) => {
   try {
-    const baseUrl = "http://localhost:3000" ; // Adapte selon ton env
+    const baseUrl = process.env.BASE_URL ; // Adapte selon ton env
     const data = req.body;
     data.leaderId = req.user._id;
     const newProject = await projectService.createProject(data, baseUrl);
@@ -49,7 +49,7 @@ module.exports.addMemberToTeam = async (req, res) => {
 // 3. Réinviter un membre dont le lien d'activation a expiré
 module.exports.resendTeamInvitation = async (req, res) => {
   const { projectId, email } = req.body;
-  const baseUrl = req.protocol + "://" + req.get("host"); // Récupérer l'URL de base de l'application
+  const baseUrl = process.env.BASE_URL; // Récupérer l'URL de base de l'application
 
   try {
     const result = await projectService.resendTeamInvitation(
