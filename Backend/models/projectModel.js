@@ -10,7 +10,6 @@ const ProjectSchema = new mongoose.Schema(
       {
         email: {
           type: String,
-          required: true,
           match: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/, // Validation d'email
         },
         validated: {
@@ -43,12 +42,21 @@ const ProjectSchema = new mongoose.Schema(
 );
 
 ProjectSchema.pre("save", function (next) {
+  // Vérifie la taille max de la team
   if (this.team.length > Team) {
-    next(new Error("A team cannot have more than 5 members"));
-  } else {
-    next();
+    return next(new Error("A team cannot have more than 5 members"));
   }
+
+  // Vérifie l'unicité des emails dans la team
+  const emails = this.team.map(m => m.email.toLowerCase());
+  const uniqueEmails = new Set(emails);
+  if (emails.length !== uniqueEmails.size) {
+    return next(new Error("Each team member must have a unique email address."));
+  }
+
+  next();
 });
+
 
 const Project = mongoose.model("Project", ProjectSchema);
 module.exports = Project;

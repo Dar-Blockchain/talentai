@@ -47,23 +47,7 @@
               <b><%= stack.title %></b> (<%= stack.componentType %>)
               <span class="chip <%= renderScoreClass(stack.score) %>"><%= renderScoreText(stack.score) %></span>
             </div>
-            <div>Complexity: <%= stack.complexity %>, Modernity: <%= stack.modernity %></div>
-            <% if(stack.choiceExplanation && stack.choiceExplanation.length) { %>
-              <div class="list-title">Choice Explanation:</div>
-              <ul><% stack.choiceExplanation.forEach(e => { %><li><%= e %></li><% }) %></ul>
-            <% } %>
-            <% if(stack.strengths && stack.strengths.length) { %>
-              <div class="list-title">Strengths:</div>
-              <ul><% stack.strengths.forEach(e => { %><li><%= e %></li><% }) %></ul>
-            <% } %>
-            <% if(stack.weaknesses && stack.weaknesses.length) { %>
-              <div class="list-title">Weaknesses:</div>
-              <ul><% stack.weaknesses.forEach(e => { %><li><%= e %></li><% }) %></ul>
-            <% } %>
-            <% if(stack.recommendation && stack.recommendation.length) { %>
-              <div class="list-title">Recommendations:</div>
-              <ul><% stack.recommendation.forEach(e => { %><li><%= e %></li><% }) %></ul>
-            <% } %>
+            <div>Complexity: <%= stack.complexity %>, Modernity: <%= stack.modernity %></div>            
           </div>
         <% }) %>
       <% } %>
