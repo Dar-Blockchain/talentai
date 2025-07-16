@@ -31,7 +31,7 @@ module.exports.activateTeamMember = async (req, res) => {
 // 4. Ajouter un membre à l'équipe
 module.exports.addMemberToTeam = async (req, res) => {
   const { projectId, email } = req.body; // Email du nouveau membre
-  const baseUrl = req.protocol + "://" + req.get("host"); // URL de base de l'application
+  const baseUrl =  process.env.BASE_URL ; // URL de base de l'application
 
   try {
     const result = await projectService.addMemberToTeam(
