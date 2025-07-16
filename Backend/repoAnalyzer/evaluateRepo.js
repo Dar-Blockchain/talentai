@@ -104,6 +104,7 @@ const analyzeRepo = async (owner, repo, selectedTemplate = 'auto', hackathonCrit
             let teamPass = true;
             if (hackathonCriteria.maxTeamSize) {
                 const contributors = repoData.contributors ? repoData.contributors.length : 1;
+                console.log("contributors", contributors);
                 if (contributors > hackathonCriteria.maxTeamSize) {
                     eligibilityResults.maxTeamSize = `FAIL (${contributors}/${hackathonCriteria.maxTeamSize})`;
                     teamPass = false;

@@ -1,4 +1,5 @@
 const IntelligentProjectAnalyzer = require('../repoAnalyzer/intelligentAnalyzer');
+const RepoAnalysis = require('../models/RepoAnalysisModel');
 
 exports.analyzeGithubRepo = async (req, res) => {
   const { repoUrl } = req.body;
@@ -20,6 +21,8 @@ exports.analyzeGithubRepo = async (req, res) => {
     if (!result) {
       return res.status(500).json({ success: false, error: 'Analysis failed' });
     }
+    // Save analysis to DB
+    await RepoAnalysis.create({ repoUrl, owner, repo, analysis: result });
     res.json({ success: true, result });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
