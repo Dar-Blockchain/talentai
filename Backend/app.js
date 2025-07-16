@@ -24,6 +24,7 @@ const todoRouter = require("./routes/todoRouter");
 const feedbackRouter = require("./routes/feedbackRoutes");
 const logRoutes = require("./routes/logRoutes");
 const interviewDetailsRouter = require("./routes/interviewDetailsRouter");
+const repoAnalyzerRouter = require("./routes/repoAnalyzerRouter");
 require("dotenv").config();
 
 const app = express();
@@ -65,6 +66,7 @@ app.use("/resume", resumeRouter);
 app.use("/todo", todoRouter);
 app.use("/logs", logRoutes);
 app.use("/interviewDetails", interviewDetailsRouter);
+app.use("/repo-analyzer", repoAnalyzerRouter);
 
 app.get("/some-route", (req, res) => {
   res.json("Route accessible");
