@@ -57,23 +57,7 @@
             <span class="material-icons icon">account_tree</span>
             <b>Architecture</b> (<%= assessment.technicalData.architecture.type %>)
             <span class="chip <%= renderScoreClass(assessment.technicalData.architecture.score) %>"><%= renderScoreText(assessment.technicalData.architecture.score) %></span>
-          </div>
-          <% if(assessment.technicalData.architecture.choiceExplanation && assessment.technicalData.architecture.choiceExplanation.length) { %>
-            <div class="list-title">Choice Explanation:</div>
-            <ul><% assessment.technicalData.architecture.choiceExplanation.forEach(e => { %><li><%= e %></li><% }) %></ul>
-          <% } %>
-          <% if(assessment.technicalData.architecture.strengths && assessment.technicalData.architecture.strengths.length) { %>
-            <div class="list-title">Strengths:</div>
-            <ul><% assessment.technicalData.architecture.strengths.forEach(e => { %><li><%= e %></li><% }) %></ul>
-          <% } %>
-          <% if(assessment.technicalData.architecture.weaknesses && assessment.technicalData.architecture.weaknesses.length) { %>
-            <div class="list-title">Weaknesses:</div>
-            <ul><% assessment.technicalData.architecture.weaknesses.forEach(e => { %><li><%= e %></li><% }) %></ul>
-          <% } %>
-          <% if(assessment.technicalData.architecture.recommendation && assessment.technicalData.architecture.recommendation.length) { %>
-            <div class="list-title">Recommendations:</div>
-            <ul><% assessment.technicalData.architecture.recommendation.forEach(e => { %><li><%= e %></li><% }) %></ul>
-          <% } %>
+          </div>         
         </div>
       <% } %>
       <% if(assessment.technicalData && assessment.technicalData.scalabilityApproach) { %>
@@ -82,23 +66,7 @@
             <span class="material-icons icon">show_chart</span>
             <b>Scalability Approach</b>
             <span class="chip <%= renderScoreClass(assessment.technicalData.scalabilityApproach.score) %>"><%= renderScoreText(assessment.technicalData.scalabilityApproach.score) %></span>
-          </div>
-          <% if(assessment.technicalData.scalabilityApproach.choiceExplanation && assessment.technicalData.scalabilityApproach.choiceExplanation.length) { %>
-            <div class="list-title">Choice Explanation:</div>
-            <ul><% assessment.technicalData.scalabilityApproach.choiceExplanation.forEach(e => { %><li><%= e %></li><% }) %></ul>
-          <% } %>
-          <% if(assessment.technicalData.scalabilityApproach.strengths && assessment.technicalData.scalabilityApproach.strengths.length) { %>
-            <div class="list-title">Strengths:</div>
-            <ul><% assessment.technicalData.scalabilityApproach.strengths.forEach(e => { %><li><%= e %></li><% }) %></ul>
-          <% } %>
-          <% if(assessment.technicalData.scalabilityApproach.weaknesses && assessment.technicalData.scalabilityApproach.weaknesses.length) { %>
-            <div class="list-title">Weaknesses:</div>
-            <ul><% assessment.technicalData.scalabilityApproach.weaknesses.forEach(e => { %><li><%= e %></li><% }) %></ul>
-          <% } %>
-          <% if(assessment.technicalData.scalabilityApproach.recommendation && assessment.technicalData.scalabilityApproach.recommendation.length) { %>
-            <div class="list-title">Recommendations:</div>
-            <ul><% assessment.technicalData.scalabilityApproach.recommendation.forEach(e => { %><li><%= e %></li><% }) %></ul>
-          <% } %>
+          </div>          
         </div>
       <% } %>
     </div>
@@ -134,15 +102,7 @@
         </ul>
       <% } %>
     </div>
-    <!-- Team -->
-    <div class="section team">
-      <div class="section-title"><span class="material-icons icon">group</span>Team</div>
-      <ul>
-        <% project.team.forEach(member => { %>
-          <li><%= member.email %> (<%= member.validated ? 'Validé' : 'Non validé' %>)</li>
-        <% }) %>
-      </ul>
-    </div>
+    <!-- Team -->    
   </div>
 </body>
 </html>
