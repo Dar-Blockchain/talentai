@@ -27,6 +27,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [sendingInvite, setSendingInvite] = useState(false);
+  const [resendingIndex, setResendingIndex] = useState<number | null>(null);
 
   const validateEmail = (value: string) => {
     if (!value) return 'Email is required';
@@ -71,7 +72,8 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
   };
   const handleSnackbarClose = () => setSnackbarOpen(false);
 
-  const resendInvitation = async (email: string) => {
+  const resendInvitation = async (email: string, idx: number) => {
+    setResendingIndex(idx);
     try {
       const token = localStorage.getItem('api_token');
       const headers: Record<string, string> = {
@@ -89,6 +91,8 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
     } catch (err) {
       setSnackbarMsg('Failed to resend invitation.');
       setSnackbarOpen(true);
+    } finally {
+      setResendingIndex(null);
     }
   };
 
@@ -242,10 +246,11 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
                       variant="outlined"
                       color="primary"
                       sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2, borderColor: '#7C4DFF', color: '#7C4DFF', fontSize: '0.95rem', px: 1.5, '&:hover': { borderColor: '#5E35B1', color: '#5E35B1' } }}
-                      onClick={() => resendInvitation(member.email || '')}
-                      disabled={!member.email}
+                      onClick={() => resendInvitation(member.email || '', index)}
+                      disabled={!member.email || resendingIndex === index}
+                      startIcon={resendingIndex === index ? <CircularProgress size={18} sx={{ color: '#7C4DFF' }} /> : null}
                     >
-                      Resend
+                      {resendingIndex === index ? 'Resending...' : 'Resend'}
                     </Button>
                   </>
                 )}
