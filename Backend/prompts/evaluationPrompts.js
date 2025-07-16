@@ -479,6 +479,16 @@ Return a valid JSON object with the following structure:
   ]
 }
 
+#STRICT REQUIREMENTS FOR RECOMMENDATIONS:
+ - recommendations: (array of strings, required):  
+      Provide at least **two specific, actionable improvement tips** for the technology's use.  
+      - Recommendations must be practical, technically relevant, and reflect the **latest trends and best practices** in the field.
+      - At least **one external resource** (doc, course, guide, etc.) per technology is required, and it should be up-to-date and reputable.
+      - **Do not provide vague advice.**  
+      Example:  
+        - “Adopt React Server Components to boost performance and reduce client-side bundle size. Detailed guide and best practices: https://react.dev/reference/react-server/components”
+        - “Use TypeScript 5.x to enhance type safety and leverage new language features. Official release notes and migration tips: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html”
+
 Return **valid JSON only**
 `.trim(),
 };
