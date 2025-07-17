@@ -61,7 +61,7 @@ module.exports.createProject = async (data, baseUrl) => {
     
       return {
         email: member.email,
-        userName: member.userName,
+        name: member.name,
         role: member.role,
         validated: false,
         activationToken,
