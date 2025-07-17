@@ -96,7 +96,7 @@ const blobAnimation = keyframes`
 const steps = [
   { label: 'Register', icon: <RocketLaunchIcon /> },
   { label: 'Submit Project', icon: <AssignmentTurnedInIcon /> },
-  { label: 'Book Meetings', icon: <EventAvailableIcon /> },
+  { label: 'Evaluation Meetings', icon: <EventAvailableIcon /> },
   { label: 'Await Results', icon: <EmojiEventsIcon /> },
 ];
 
@@ -130,7 +130,7 @@ function GlassStepIcon(props: any) {
   const icons = [
     <RocketLaunchIcon fontSize="inherit" />, // Register
     <AssignmentTurnedInIcon fontSize="inherit" />, // Submit
-    <EventAvailableIcon fontSize="inherit" />, // Book Meetings
+    <EventAvailableIcon fontSize="inherit" />, // Evaluation Meetings
     <EmojiEventsIcon fontSize="inherit" />, // Await Results
   ];
   return (
@@ -839,7 +839,7 @@ const HackathonDashboard = () => {
                     {hasBusinessData && hasTechnicalData ? '0' : availableMeetings}
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#2E3A59', fontWeight: 700 }}>
-                    {hasBusinessData && hasTechnicalData ? 'All Meetings Booked' : `Meetings Left`}
+                    {hasBusinessData && hasTechnicalData ? 'Meetings Completed' : `Meetings Left`}
                   </Typography>
                 </Box>
                 {/* Project Status */}
