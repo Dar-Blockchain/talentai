@@ -54,6 +54,12 @@ interface TeamMember {
   validated?: boolean;
 }
 
+interface Leader {
+  FirstName: string;
+  LastName: string;
+  // add other fields if needed
+}
+
 interface ProjectAPIData {
   _id: string;
   name: string;
@@ -85,6 +91,7 @@ interface ProjectData {
   _id: string;
   track?: string;
   assessment?: Assessment;
+  leaderId?: Leader;
 }
 
 const blobAnimation = keyframes`
@@ -197,6 +204,7 @@ const HackathonDashboard = () => {
             _id: latest._id,
             track: latest.track,
             assessment: (latest as any).assessment,
+            leaderId: (latest as any).leaderId,
           });
         } else {
           setProjectData(null);
@@ -424,7 +432,9 @@ const HackathonDashboard = () => {
                 Leader
               </Typography>
               <Typography variant="body1" sx={{ color: '#2E3A59', fontWeight: 700, fontSize: '1.08rem' }}>
-                {projectData.teamMembers && projectData.teamMembers.length > 0 ? projectData.teamMembers[0].name : 'N/A'}
+                {projectData.leaderId && projectData.leaderId.FirstName && projectData.leaderId.LastName
+                  ? `${projectData.leaderId.FirstName} ${projectData.leaderId.LastName}`
+                  : 'N/A'}
               </Typography>
             </Box>
           </Box>
