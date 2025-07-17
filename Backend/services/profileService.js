@@ -14,7 +14,11 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
     }
 
     // S'assurer que le rôle utilisateur est bien défini
-    await User.findByIdAndUpdate(userId, { FirstName:profileData.FirstName,LastName:profileData.LastName,role: "Candidat" });
+    await User.findByIdAndUpdate(userId, {
+      FirstName: profileData.FirstName,
+      LastName: profileData.LastName,
+      role: "Candidat",
+    });
 
     // Recherche profil existant
     let profile = await Profile.findOne({ userId });
@@ -27,6 +31,16 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
         skills: profileData.skills || [],
         overallScore: profileData.overallScore || 0,
       });
+
+      if (
+        profileData.skills.length === 1 &&
+        typeof profileData.skills[0]?.skill === "string"
+      ) {
+        console.log("heyaa: ", profile);
+        profile.skills = [];
+        await profile.save();
+        console.log("heybb: ", profile);
+      }
     } else {
       // Mise à jour overallScore si fourni
       if (typeof profileData.overallScore === "number") {
@@ -51,6 +65,16 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
             profile.skills.push(newSkill);
           }
         });
+
+        if (
+          profileData.skills.length === 1 &&
+          typeof profileData.skills[0]?.skill === "string"
+        ) {
+          console.log("hey11: ", profile);
+          profile.skills = [];
+          await profile.save();
+          console.log("hey22: ", profile);
+        }
       }
 
       // Mise à jour du type de profil si fourni
@@ -486,9 +510,11 @@ module.exports.getCompanyBids = async (companyId) => {
 
 module.exports.getCompanyProfileWithAssessments = async (id, jobId) => {
   try {
-    const mongoose = require('mongoose');
+    const mongoose = require("mongoose");
     // Ensure id is a string or ObjectId, not Buffer
-    const safeId = Buffer.isBuffer(id) ? new mongoose.Types.ObjectId(id.toString('hex')) : id;
+    const safeId = Buffer.isBuffer(id)
+      ? new mongoose.Types.ObjectId(id.toString("hex"))
+      : id;
 
     const profile = await Profile.findById(safeId)
       .where("type")
