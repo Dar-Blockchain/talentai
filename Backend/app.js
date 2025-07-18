@@ -10,6 +10,9 @@ const blockPostmanRequests = require("./middleware/blockPostmanRequests");
 const http = require("http");
 const connectDB = require("./config/database");
 
+// Ajout Socket.IO
+const socketIo = require("socket.io");
+
 const authRouter = require("./routes/authRouter");
 const projectRouter = require("./routes/projectRouter");
 const dashboardRouter = require("./routes/dashboardRouter");
@@ -24,6 +27,7 @@ const todoRouter = require("./routes/todoRouter");
 const feedbackRouter = require("./routes/feedbackRoutes");
 const logRoutes = require("./routes/logRoutes");
 const interviewDetailsRouter = require("./routes/interviewDetailsRouter");
+const notificationRouter = require("./routes/notificationRouter");
 require("dotenv").config();
 
 const app = express();
@@ -65,6 +69,7 @@ app.use("/resume", resumeRouter);
 app.use("/todo", todoRouter);
 app.use("/logs", logRoutes);
 app.use("/interviewDetails", interviewDetailsRouter);
+app.use("/notification", notificationRouter);
 
 app.get("/some-route", (req, res) => {
   res.json("Route accessible");
@@ -76,6 +81,31 @@ app.get("/", (req, res) => {
 
 // Démarrage du serveur HTTP
 const server = http.createServer(app);
+
+// Initialisation de Socket.IO
+const io = socketIo(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+// Gestion des connexions Socket.IO
+io.on('connection', (socket) => {
+  console.log('Utilisateur connecté à Socket.IO :', socket.id);
+  // L'utilisateur doit rejoindre sa room (userId)
+  socket.on('join', (userId) => {
+    socket.join(userId);
+    console.log(`Utilisateur ${userId} a rejoint sa room.`);
+  });
+  socket.on('disconnect', () => {
+    console.log('Utilisateur déconnecté de Socket.IO :', socket.id);
+  });
+});
+
+// Exporter io pour l'utiliser dans les contrôleurs/services
+module.exports.io = io;
+
 server.listen(process.env.PORT, () => {
   console.log(
     `Le serveur est en cours d'exécution sur le port ${process.env.PORT}`
