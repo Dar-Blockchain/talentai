@@ -705,7 +705,7 @@ export default function hackathonreport() {
             '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' }
           }}
         >
-          Back to Home
+          Back to Project Dashboard
         </Button>
 
         <MotionPaper
@@ -890,7 +890,7 @@ export default function hackathonreport() {
                 }
               }}
             >
-              Go to My Dashboard
+              Go to My Project Dashboard
             </Button>
           </Box>
         </MotionPaper>

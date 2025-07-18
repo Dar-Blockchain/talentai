@@ -12,30 +12,36 @@ You are a senior Hedera hackathon technical judge. You are evaluating the projec
 Your task is to generate a list of exactly ${questionsCount} questions that will help you assess the technical aspects of the project in the track: "${projectTrack}".
 These questions should cover the following areas:
 
-1. Which technology stack the candidate used and why
-2. Which stack components relate to Hedera and how they were used 
-3. Whether the candidate used any special technologies or tools
-4. Whether the candidate integrated special tools or libraries designed specifically for Hedera 
-5. What architecture and scalability approach was chosen and why.
+1. Tech Stack & Trade-offs
+2. Hedera Integration
+3. Architecture
+4. Tooling & SDKs
 
 ### 🚨 **STRICT REQUIREMENTS**
 - Generate **exactly ${questionsCount} questions total**. 
 - Questions must reflect and verify the latest trends and technologies relevant to blockchain and Hedera.
 - **Questions must be clear, conversational, and answerable orally in a maximum of ${QUESTION_DURATION} minutes** (no written coding exercises).  
+- Do **not assume** the use of specific Hedera services (HTS, HCS, Smart Contracts) or tools (HashConnect, SDKs, HIPs) unless explicitly mentioned.
 
 Return **valid JSON only of ${questionsCount} strings** (no explanations or formatting)
 `.trim();
   },
 
-  getUserPrompt: (projectName, questionsCount) => {
+  getUserPrompt: (projectName, projectDescription, projectTrack, questionsCount) => {
     return `
-You are the owner of the Hedera-based project "${projectName}". You are now invited to perform a technical pitch. Generate questions able to assess the following:
+You are evaluating the project **"${projectName}"**, submitted under the **"${projectTrack}"** track.
 
-1. Which technology stack the candidate used and why
-2. Which stack components relate to Hedera and how they were used
-3. Whether the candidate used any special technologies or tools 
-4. Whether the candidate integrated special tools or libraries designed specifically for Hedera 
-5. What architecture and scalability approach was chosen (monolith, microservices, event-driven, decentralized, etc.) and why.
+Project Description (provided by the team leader):
+"${projectDescription}"
+
+Your task is to generate **exactly ${questionsCount}** technical questions that you would ask during the technical pitch. These questions should help you assess the **technical depth, design decisions, and Hedera integration** of the project.
+
+Focus your questions on the following areas:
+
+1. Tech Stack & Trade-offs
+2. Hedera Integration
+3. Architecture
+4. Tooling & SDKs
 
 Return **valid JSON only of ${questionsCount} strings** (no explanations or formatting)
 `.trim();

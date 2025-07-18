@@ -54,11 +54,17 @@ interface TeamMember {
   validated?: boolean;
 }
 
+interface Leader {
+  FirstName: string;
+  LastName: string;
+  // add other fields if needed
+}
+
 interface ProjectAPIData {
   _id: string;
   name: string;
   description: string;
-  team: { email: string; validated?: boolean; _id?: string }[];
+  team: { name?: string; role?: string; email: string; validated?: boolean; _id?: string }[];
   leaderId: string;
   createdAt: string;
   updatedAt: string;
@@ -85,6 +91,7 @@ interface ProjectData {
   _id: string;
   track?: string;
   assessment?: Assessment;
+  leaderId?: Leader;
 }
 
 const blobAnimation = keyframes`
@@ -96,7 +103,7 @@ const blobAnimation = keyframes`
 const steps = [
   { label: 'Register', icon: <RocketLaunchIcon /> },
   { label: 'Submit Project', icon: <AssignmentTurnedInIcon /> },
-  { label: 'Book Meetings', icon: <EventAvailableIcon /> },
+  { label: 'Evaluation Meetings', icon: <EventAvailableIcon /> },
   { label: 'Await Results', icon: <EmojiEventsIcon /> },
 ];
 
@@ -130,7 +137,7 @@ function GlassStepIcon(props: any) {
   const icons = [
     <RocketLaunchIcon fontSize="inherit" />, // Register
     <AssignmentTurnedInIcon fontSize="inherit" />, // Submit
-    <EventAvailableIcon fontSize="inherit" />, // Book Meetings
+    <EventAvailableIcon fontSize="inherit" />, // Evaluation Meetings
     <EmojiEventsIcon fontSize="inherit" />, // Await Results
   ];
   return (
@@ -142,6 +149,7 @@ function GlassStepIcon(props: any) {
 
 const HackathonDashboard = () => {
   const router = useRouter();
+  const { id } = router.query;
   const [loading, setLoading] = useState(true);
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
@@ -162,6 +170,9 @@ const HackathonDashboard = () => {
   const overallScore = assessment?.overallScore;
   useEffect(() => {
     if (!isAuthenticated) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('postLoginRedirect', window.location.pathname + window.location.search);
+      }
       router.push('/signin/?source=hackathon');
     }
   }, [isAuthenticated, router]);
@@ -169,34 +180,45 @@ const HackathonDashboard = () => {
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchProject = async () => {
       try {
         const token = localStorage.getItem('api_token');
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/getMyProjects`
-          , {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          });
-        if (!res.ok) throw new Error('Failed to fetch projects');
-        const data: ProjectAPIData[] = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          // Sort by createdAt descending and pick the most recent
-          const sorted = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          const latest = sorted[0];
+        let project: ProjectAPIData | null = null;
+        if (id) {
+          // Fetch by id from URL
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/getProjectById/${id}`,
+            { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+          if (!res.ok) throw new Error('Failed to fetch project by id');
+          project = await res.json();
+        } else {
+          // Default: fetch my projects and pick latest
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/getMyProjects`,
+            { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+          if (!res.ok) throw new Error('Failed to fetch projects');
+          const data: ProjectAPIData[] = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            // Sort by createdAt descending and pick the most recent
+            const sorted = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            project = sorted[0];
+          }
+        }
+        if (project) {
           // Map API team to required TeamMember[]
-          const teamMembers: TeamMember[] = latest.team.map((member, idx) => ({
-            name: member.email.split('@')[0] || `Member${idx + 1}`,
+          const teamMembers: TeamMember[] = project.team.map((member, idx) => ({
+            name: member?.name || member.email.split('@')[0] || `Member${idx + 1}`,
             email: member.email,
-            role: 'Member',
+            role: member?.role ? member.role : 'Member',
             validated: member.validated,
           }));
           setProjectData({
-            name: latest.name,
-            projectDescription: latest.description,
+            name: project.name,
+            projectDescription: project.description,
             teamMembers,
-            createdAt: latest.createdAt,
-            _id: latest._id,
-            track: latest.track,
-            assessment: (latest as any).assessment,
+            createdAt: project.createdAt,
+            _id: project._id,
+            track: project.track,
+            assessment: (project as any).assessment,
+            leaderId: (project as any).leaderId,
           });
         } else {
           setProjectData(null);
@@ -207,8 +229,8 @@ const HackathonDashboard = () => {
         setLoading(false);
       }
     };
-    fetchProjects();
-  }, []);
+    fetchProject();
+  }, [id]);
 
   if (!mounted || !isAuthenticated) {
     return null;
@@ -372,22 +394,22 @@ const HackathonDashboard = () => {
             display: 'flex',
             alignItems: 'stretch',
             borderRadius: 4,
-            boxShadow: '0 6px 32px 0 rgba(124,77,255,0.13)',
-            background: 'rgba(255,255,255,0.98)',
+            boxShadow: '0 2px 12px 0 rgba(124,77,255,0.08)',
+            background: '#fff',
             p: 0,
             mb: 2,
             overflow: 'hidden',
-            borderLeft: '8px solid #7C4DFF',
+            borderLeft: '6px solid #7C4DFF',
             transition: 'box-shadow 0.2s, transform 0.2s',
             '&:hover': {
-              boxShadow: '0 12px 40px 0 rgba(124,77,255,0.18)',
+              boxShadow: '0 6px 24px 0 rgba(124,77,255,0.13)',
               transform: 'translateY(-2px) scale(1.01)',
             },
           }}>
             {/* Project Icon */}
             <Box sx={{ display: 'flex', alignItems: 'center', px: 3, py: { xs: 2, sm: 3 }, bgcolor: 'transparent' }}>
-              <Avatar sx={{ bgcolor: '#7C4DFF', width: 56, height: 56, boxShadow: '0 2px 8px #7C4DFF33' }}>
-                <AssignmentTurnedInIcon sx={{ fontSize: 32, color: '#fff' }} />
+              <Avatar sx={{ bgcolor: '#F3F6FD', width: 56, height: 56, boxShadow: '0 2px 8px #7C4DFF11' }}>
+                <AssignmentTurnedInIcon sx={{ fontSize: 32, color: '#7C4DFF' }} />
               </Avatar>
             </Box>
             {/* Project Info */}
@@ -395,11 +417,11 @@ const HackathonDashboard = () => {
               <Typography variant="h5" sx={{ fontWeight: 900, color: '#7C4DFF', mb: 0.5, letterSpacing: 0.2 }}>
                 {projectData.name}
               </Typography>
-              <Typography variant="body1" sx={{ color: '#4527A0', mb: 1.2, fontSize: '1.08rem', fontWeight: 500 }}>
+              <Typography variant="body1" sx={{ color: '#2E3A59', mb: 1.2, fontSize: '1.08rem', fontWeight: 500 }}>
                 {projectData.projectDescription}
               </Typography>
               {projectData.track && (
-                <Box sx={{ display: 'inline-flex', alignItems: 'center', bgcolor: '#E1F5FE', color: '#00B8D4', px: 1.5, py: 0.5, borderRadius: 2, fontWeight: 700, fontSize: '0.98rem', mb: 0.5 }}>
+                <Box sx={{ display: 'inline-flex', alignItems: 'center', bgcolor: '#F3F6FD', color: '#7C4DFF', px: 1.5, py: 0.5, borderRadius: 2, fontWeight: 700, fontSize: '0.98rem', mb: 0.5 }}>
                   <RocketLaunchIcon sx={{ fontSize: 18, mr: 1 }} />
                   Track: {projectData.track}
                 </Box>
@@ -416,15 +438,17 @@ const HackathonDashboard = () => {
               </Box>
             </Box>
             {/* Leader Info */}
-            <Box sx={{ minWidth: 210, bgcolor: '#F3E5F5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', px: 3, py: { xs: 2, sm: 3 }, borderLeft: '1.5px solid #E1BEE7' }}>
-              <Avatar sx={{ bgcolor: '#00B8D4', width: 44, height: 44, mb: 1 }}>
+            <Box sx={{ minWidth: 210, bgcolor: '#F3F6FD', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', px: 3, py: { xs: 2, sm: 3 }, borderLeft: '1.5px solid #E1BEE7' }}>
+              <Avatar sx={{ bgcolor: '#7C4DFF', width: 44, height: 44, mb: 1 }}>
                 <PersonIcon sx={{ color: '#fff', fontSize: 28 }} />
               </Avatar>
               <Typography variant="subtitle2" sx={{ color: '#7C4DFF', fontWeight: 700, mb: 0.2, letterSpacing: 0.2 }}>
                 Leader
               </Typography>
-              <Typography variant="body1" sx={{ color: '#4527A0', fontWeight: 700, fontSize: '1.08rem' }}>
-                {projectData.teamMembers && projectData.teamMembers.length > 0 ? projectData.teamMembers[0].name : 'N/A'}
+              <Typography variant="body1" sx={{ color: '#2E3A59', fontWeight: 700, fontSize: '1.08rem' }}>
+                {projectData.leaderId && projectData.leaderId.FirstName && projectData.leaderId.LastName
+                  ? `${projectData.leaderId.FirstName} ${projectData.leaderId.LastName}`
+                  : 'N/A'}
               </Typography>
             </Box>
           </Box>
@@ -441,38 +465,37 @@ const HackathonDashboard = () => {
             p: 0,
             mb: 2,
             borderRadius: 5,
-            background: 'rgba(255,255,255,0.25)',
-            boxShadow: '0 8px 32px 0 rgba(124,77,255,0.18)',
-            backdropFilter: 'blur(12px)',
-            border: '1.5px solid rgba(124,77,255,0.10)',
+            background: '#fff',
+            boxShadow: '0 2px 12px #7C4DFF11',
+            border: '1.5px solid #E3EAFD',
             overflow: 'hidden',
           }}>
             {/* Technical Score */}
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
-              <ScienceIcon sx={{ color: '#7C4DFF', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #7C4DFF33)' }} />
+              <ScienceIcon sx={{ color: '#2196F3', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #2196F311)' }} />
               <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#7C4DFF', letterSpacing: 0.2 }}>Technical Score</Typography>
               {renderScoreChip(techScore)}
-              <Button size="small" variant="outlined" sx={{ mt: 2, fontWeight: 700, borderRadius: 2 }} onClick={() => setOpenTechModal(true)} disabled={!hasTechnicalData}>
+              <Button size="small" variant="outlined" sx={{ mt: 2, fontWeight: 700, borderRadius: 2, color: '#7C4DFF', borderColor: '#E3EAFD', background: '#F7F8FA', '&:hover': { background: '#F3F6FD', borderColor: '#7C4DFF' } }} onClick={() => setOpenTechModal(true)} disabled={!hasTechnicalData}>
                 View Technical Report
               </Button>
             </Box>
             <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E3EAFD', borderRightWidth: 2 }} />
             {/* Business Score */}
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
-              <BusinessCenterIcon sx={{ color: '#00B8D4', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #00B8D433)' }} />
-              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#00B8D4', letterSpacing: 0.2 }}>Business Score</Typography>
+              <BusinessCenterIcon sx={{ color: '#FFB300', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #FFB30011)' }} />
+              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#7C4DFF', letterSpacing: 0.2 }}>Business Score</Typography>
               {renderScoreChip(bizScore)}
-              <Button size="small" variant="outlined" sx={{ mt: 2, fontWeight: 700, borderRadius: 2 }} onClick={() => setOpenBizModal(true)} disabled={!hasBusinessData}>
+              <Button size="small" variant="outlined" sx={{ mt: 2, fontWeight: 700, borderRadius: 2, color: '#7C4DFF', borderColor: '#E3EAFD', background: '#F7F8FA', '&:hover': { background: '#F3F6FD', borderColor: '#7C4DFF' } }} onClick={() => setOpenBizModal(true)} disabled={!hasBusinessData}>
                 View Business Report
               </Button>
             </Box>
             <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E0F7FA', borderRightWidth: 2 }} />
             {/* Overall Score */}
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
-              <TrendingUpIcon sx={{ color: '#FFD600', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #FFD60033)' }} />
-              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#FFD600', letterSpacing: 0.2 }}>Overall Score</Typography>
+              <TrendingUpIcon sx={{ color: '#00BFAE', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #00BFAE11)' }} />
+              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#7C4DFF', letterSpacing: 0.2 }}>Overall Score</Typography>
               {renderScoreChip(overallScore)}
-              <Button size="small" variant="contained" sx={{ mt: 2, fontWeight: 700, borderRadius: 2, background: 'linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)', color: '#fff', boxShadow: '0 2px 8px #7C4DFF22', '&:hover': { background: 'linear-gradient(90deg, #6b0cd6 0%, #00acc1 100%)' } }} onClick={() => setOpenFullModal(true)}>
+              <Button size="small" variant="contained" sx={{ mt: 2, fontWeight: 700, borderRadius: 2, background: '#7C4DFF', color: '#fff', boxShadow: '0 2px 8px #7C4DFF22', '&:hover': { background: '#5E35B1' } }} onClick={() => setOpenFullModal(true)}>
                 View Full Report
               </Button>
             </Box>
@@ -789,9 +812,10 @@ const HackathonDashboard = () => {
             {/* Stats/Analytics */}
             <Box sx={{
               borderRadius: 5,
-              background: 'rgba(255,255,255,0.25)',
+              background: '#fff',
               boxShadow: '0 8px 32px 0 rgba(124,77,255,0.13)',
-              backdropFilter: 'blur(12px)',
+              border: '1.5px solid #E3EAFD',
+              backdropFilter: 'blur(8px)',
               p: 3,
               mb: 1,
               display: 'flex',
@@ -811,15 +835,15 @@ const HackathonDashboard = () => {
                   alignItems: 'center',
                   p: 2,
                   borderRadius: 4,
-                  background: 'linear-gradient(120deg, #E3EAFD 0%, #F3E5F5 100%)',
-                  boxShadow: '0 2px 8px #7C4DFF11',
+                  background: '#F3F6FD',
+                  boxShadow: '0 2px 8px #7C4DFF08',
                   mb: { xs: 2, md: 0 },
                 }}>
                   <AccessTimeIcon sx={{ color: '#7C4DFF', fontSize: 36, mb: 1 }} />
                   <Typography variant="h4" sx={{ fontWeight: 900, color: '#7C4DFF', mb: 0.5 }}>
                     {Math.max(0, Math.ceil((new Date(projectData.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000)))}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#4527A0', fontWeight: 700 }}>Days Left</Typography>
+                  <Typography variant="body2" sx={{ color: '#2E3A59', fontWeight: 700 }}>Days Left</Typography>
                 </Box>
                 {/* Meetings Left */}
                 <Box sx={{
@@ -830,16 +854,16 @@ const HackathonDashboard = () => {
                   alignItems: 'center',
                   p: 2,
                   borderRadius: 4,
-                  background: 'linear-gradient(120deg, #E0F7FA 0%, #E1F5FE 100%)',
-                  boxShadow: '0 2px 8px #00B8D411',
+                  background: '#F3F6FD',
+                  boxShadow: '0 2px 8px #00B8D408',
                   mb: { xs: 2, md: 0 },
                 }}>
-                  <EventAvailableIcon sx={{ color: '#00B8D4', fontSize: 36, mb: 1 }} />
-                  <Typography variant="h4" sx={{ fontWeight: 900, color: '#00B8D4', mb: 0.5 }}>
+                  <EventAvailableIcon sx={{ color: '#7C4DFF', fontSize: 36, mb: 1 }} />
+                  <Typography variant="h4" sx={{ fontWeight: 900, color: '#7C4DFF', mb: 0.5 }}>
                     {hasBusinessData && hasTechnicalData ? '0' : availableMeetings}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#00838F', fontWeight: 700 }}>
-                    {hasBusinessData && hasTechnicalData ? 'All Meetings Booked' : `Meetings Left`}
+                  <Typography variant="body2" sx={{ color: '#2E3A59', fontWeight: 700 }}>
+                    {hasBusinessData && hasTechnicalData ? 'Meetings Completed' : `Meetings Left`}
                   </Typography>
                 </Box>
                 {/* Project Status */}
@@ -851,15 +875,15 @@ const HackathonDashboard = () => {
                   alignItems: 'center',
                   p: 2,
                   borderRadius: 4,
-                  background: 'linear-gradient(120deg, #FFFDE7 0%, #FFF8E1 100%)',
-                  boxShadow: '0 2px 8px #FFD60011',
+                  background: '#F3F6FD',
+                  boxShadow: '0 2px 8px #FFD60008',
                   mb: { xs: 2, md: 0 },
                 }}>
-                  <EmojiEventsIcon sx={{ color: '#FFD600', fontSize: 36, mb: 1 }} />
-                  <Typography variant="h4" sx={{ fontWeight: 900, color: '#FFD600', mb: 0.5, textShadow: '0 1px 4px #FFD60022' }}>
+                  <EmojiEventsIcon sx={{ color: '#7C4DFF', fontSize: 36, mb: 1 }} />
+                  <Typography variant="h4" sx={{ fontWeight: 900, color: '#7C4DFF', mb: 0.5, textShadow: '0 1px 4px #7C4DFF11' }}>
                     {hasBusinessData && hasTechnicalData ? '✔' : '…'}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#B28900', fontWeight: 700 }}>
+                  <Typography variant="body2" sx={{ color: '#2E3A59', fontWeight: 700 }}>
                     {hasBusinessData && hasTechnicalData ? 'Project Complete!' : 'In Progress'}
                   </Typography>
                 </Box>
@@ -880,5 +904,4 @@ const HackathonDashboard = () => {
     </Box>
   );
 };
-
 export default HackathonDashboard; 

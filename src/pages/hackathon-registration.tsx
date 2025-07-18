@@ -80,7 +80,7 @@ const HackathonRegistration = () => {
       setCheckingProject(true);
       try {
         const token = localStorage.getItem('api_token');
-        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/'}project/getMyProjects'`;
+        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/'}project/getMyProjects`;
 
         const res = await fetch(url, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -211,6 +211,7 @@ const HackathonRegistration = () => {
         }),
       });
       if (!res.ok) throw new Error(await res.text());
+      const createdProject = await res.json();
       const projectData = {
         leaderFirstName,
         leaderLastName,
@@ -224,7 +225,8 @@ const HackathonRegistration = () => {
         createdAt: new Date().toISOString()
       };
       localStorage.setItem('hackathonProject', JSON.stringify(projectData));
-      router.push('/hackathon-dashboard');
+      // After successful registration, redirect to the new dashboard route
+      router.push(`/hackathon-dashboard/${createdProject._id}`);
     } catch (err: any) {
       setError('Failed to register project: ' + (err?.message || err));
     } finally {
