@@ -10,7 +10,7 @@ const profileSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["Candidate", "Company"],
+      enum: ["Candidate", "Company","jury"],
       required: true,
     },
 
