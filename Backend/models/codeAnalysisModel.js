@@ -74,7 +74,7 @@ const StructureSchema = new mongoose.Schema({
   allFiles: [String],         // <-- Added to match intelligentAnalyzer.js
   allDirectories: [String],   // <-- Added to match intelligentAnalyzer.js
   fileContents: mongoose.Schema.Types.Mixed,
-  analysis: mongoose.Schema.Types.Mixed
+  // analysis: mongoose.Schema.Types.Mixed
 }, { _id: false });
 
 // Main analysis schema
@@ -87,7 +87,7 @@ const AnalysisSchema = new mongoose.Schema({
   structure: StructureSchema
 }, { _id: false });
 
-const RepoAnalysisSchema = new mongoose.Schema({
+const CodeAnalysisSchema = new mongoose.Schema({
   repoUrl: { type: String, required: true },
   owner: { type: String, required: true },
   repo: { type: String, required: true },
@@ -95,4 +95,4 @@ const RepoAnalysisSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('RepoAnalysis', RepoAnalysisSchema);
+module.exports = mongoose.model('CodeAnalysis', CodeAnalysisSchema);
