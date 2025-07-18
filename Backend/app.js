@@ -9,9 +9,7 @@ const blockPostmanRequests = require("./middleware/blockPostmanRequests");
 
 const http = require("http");
 const connectDB = require("./config/database");
-
-// Ajout Socket.IO
-const socketIo = require("socket.io");
+const socket = require("./socket");
 
 const authRouter = require("./routes/authRouter");
 const projectRouter = require("./routes/projectRouter");
@@ -36,7 +34,7 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(blockPostmanRequests);
+//app.use(blockPostmanRequests);
 app.use(express.json());
 app.use(
   cors({
@@ -82,29 +80,18 @@ app.get("/", (req, res) => {
 // Démarrage du serveur HTTP
 const server = http.createServer(app);
 
-// Initialisation de Socket.IO
-const io = socketIo(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  }
-});
-
-// Gestion des connexions Socket.IO
-io.on('connection', (socket) => {
-  console.log('Utilisateur connecté à Socket.IO :', socket.id);
-  // L'utilisateur doit rejoindre sa room (userId)
-  socket.on('join', (userId) => {
-    socket.join(userId);
+// Initialisation centralisée de Socket.IO
+const io = socket.init(server);
+io.on('connection', (sock) => {
+  console.log('Utilisateur connecté à Socket.IO :', sock.id);
+  sock.on('join', (userId) => {
+    sock.join(userId);
     console.log(`Utilisateur ${userId} a rejoint sa room.`);
   });
-  socket.on('disconnect', () => {
-    console.log('Utilisateur déconnecté de Socket.IO :', socket.id);
+  sock.on('disconnect', () => {
+    console.log('Utilisateur déconnecté de Socket.IO :', sock.id);
   });
 });
-
-// Exporter io pour l'utiliser dans les contrôleurs/services
-module.exports.io = io;
 
 server.listen(process.env.PORT, () => {
   console.log(
