@@ -88,7 +88,7 @@ const HackathonRegistration = () => {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            router.push('/hackathon-dashboard');
+            router.push(`/hackathon/projects/${data[0]._id}`);
             return;
           }
         }
@@ -226,7 +226,7 @@ const HackathonRegistration = () => {
       };
       localStorage.setItem('hackathonProject', JSON.stringify(projectData));
       // After successful registration, redirect to the new dashboard route
-      router.push(`/hackathon-dashboard/${createdProject._id}`);
+      router.push(`/hackathon/projects/${createdProject._id}`);
     } catch (err: any) {
       setError('Failed to register project: ' + (err?.message || err));
     } finally {
