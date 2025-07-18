@@ -170,6 +170,9 @@ const HackathonDashboard = () => {
   const overallScore = assessment?.overallScore;
   useEffect(() => {
     if (!isAuthenticated) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('postLoginRedirect', window.location.pathname + window.location.search);
+      }
       router.push('/signin/?source=hackathon');
     }
   }, [isAuthenticated, router]);
