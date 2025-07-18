@@ -204,13 +204,8 @@ const HackathonDashboard = () => {
         }
         if (project) {
           // Map API team to required TeamMember[]
-<<<<<<< HEAD:src/pages/hackathon-dashboard.tsx
-          const teamMembers: TeamMember[] = latest.team.map((member, idx) => ({
-            name: member?.name ||member.email.split('@')[0] || `Member${idx + 1}`,
-=======
           const teamMembers: TeamMember[] = project.team.map((member, idx) => ({
-            name: member.email.split('@')[0] || `Member${idx + 1}`,
->>>>>>> 3331cb876cb3cb12c5f211b96e416317b994740e:src/pages/hackathon-dashboard/[id].tsx
+            name: member?.name || member.email.split('@')[0] || `Member${idx + 1}`,
             email: member.email,
             role: member?.role ? member.role : 'Member',
             validated: member.validated,
