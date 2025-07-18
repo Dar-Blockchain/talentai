@@ -64,7 +64,7 @@ interface ProjectAPIData {
   _id: string;
   name: string;
   description: string;
-  team: { email: string; validated?: boolean; _id?: string }[];
+  team: { name?: string; role?: string; email: string; validated?: boolean; _id?: string }[];
   leaderId: string;
   createdAt: string;
   updatedAt: string;
@@ -191,9 +191,9 @@ const HackathonDashboard = () => {
           const latest = sorted[0];
           // Map API team to required TeamMember[]
           const teamMembers: TeamMember[] = latest.team.map((member, idx) => ({
-            name: member.email.split('@')[0] || `Member${idx + 1}`,
+            name: member?.name ||member.email.split('@')[0] || `Member${idx + 1}`,
             email: member.email,
-            role: 'Member',
+            role: member?.role ? member.role : 'Member',
             validated: member.validated,
           }));
           setProjectData({
