@@ -424,6 +424,7 @@ module.exports.generateProjectQuestions = async (project, assessmentType) => {
       );
       userPrompt = generateTechnicalQuestionsPrompts.getUserPrompt(
         projectName,
+        projectDescription,
         projectTrack,
         questionsCount
       );
