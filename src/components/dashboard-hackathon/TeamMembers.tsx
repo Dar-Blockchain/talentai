@@ -23,7 +23,10 @@ interface TeamMembersProps {
 const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projectId }) => {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [role, setRole] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [nameError, setNameError] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [sendingInvite, setSendingInvite] = useState(false);
@@ -41,12 +44,17 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
   const handleClose = () => {
     setOpen(false);
     setEmail('');
+    setName('');
+    setRole('');
     setEmailError('');
+    setNameError('');
   };
   const handleSend = async () => {
     const error = validateEmail(email);
     setEmailError(error);
-    if (error) return;
+    const nameErr = !name.trim() ? 'Name is required' : '';
+    setNameError(nameErr);
+    if (error || nameErr) return;
     setSendingInvite(true);
     try {
       const token = localStorage.getItem('api_token');
@@ -57,7 +65,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/addMemberToTeam`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ projectId, email }),
+        body: JSON.stringify({ projectId, email, name, role: role || 'Member' }),
       });
       if (!res.ok) throw new Error('Failed to add team member');
       setSnackbarMsg('Team member added!');
@@ -133,6 +141,21 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
         </Box>
         <DialogContent sx={{ pt: 0 }}>
           <TextField
+            margin="dense"
+            label="Name"
+            type="text"
+            fullWidth
+            value={name}
+            onChange={e => {
+              setName(e.target.value);
+              setNameError(!e.target.value.trim() ? 'Name is required' : '');
+            }}
+            variant="outlined"
+            error={!!nameError}
+            helperText={nameError}
+            sx={{ borderRadius: 2, bgcolor: '#F3F6FD', mb: 2 }}
+          />
+          <TextField
             autoFocus
             margin="dense"
             label="Email Address"
@@ -154,6 +177,17 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
               ),
             }}
             sx={{ borderRadius: 2, bgcolor: '#F3F6FD' }}
+          />
+          <TextField
+            margin="dense"
+            label="Role"
+            type="text"
+            fullWidth
+            value={role}
+            onChange={e => setRole(e.target.value)}
+            variant="outlined"
+            helperText="Optional (defaults to 'Member')"
+            sx={{ borderRadius: 2, bgcolor: '#F3F6FD', mt: 2 }}
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, pt: 1, justifyContent: 'center' }}>
@@ -215,7 +249,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
                     {member.name}
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#8F9BB3', fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', fontWeight: 600, fontSize: '0.98rem' }} noWrap>
-                    {member.role}
+                    {'('+member.role+')'}
                   </Typography>
                 </Box>
                 {member.email && (
