@@ -72,7 +72,7 @@ export default function SignIn() {
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          router.push('/hackathon-dashboard');
+          router.push(`/hackathon/projects/${data[0]._id}`);
           setVerifying(false);
 
           return;

@@ -767,7 +767,7 @@ const Test = () => {
     if (hasStartedTest) {
       saveTestResults();
     }
-    router.push('/hackathon-dashboard');
+    router.push(`/hackathon/projects/${projectId}`);
   };
 
   // Function to save test results
@@ -821,7 +821,7 @@ const Test = () => {
         setShowSecurityModal(true);
         stopRecording();
         setTimeout(() => {
-          router.push('/hackathon-dashboard');
+          router.push(`/hackathon/projects/${projectId}`);
         }, 2000); // Give time for modal to show
       }
       return next;
@@ -1084,7 +1084,7 @@ const Test = () => {
             justifyContent: 'space-between'
           }}>
             <Button
-              onClick={() => router.push('/hackathon-dashboard')}
+              onClick={() => router.push(`/hackathon/projects/${projectId}`)}
               sx={{
                 color: '#000',
                 '&:hover': { color: '#000' }
