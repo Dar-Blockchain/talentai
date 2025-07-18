@@ -64,7 +64,7 @@ interface ProjectAPIData {
   _id: string;
   name: string;
   description: string;
-  team: { email: string; validated?: boolean; _id?: string }[];
+  team: { name?: string; role?: string; email: string; validated?: boolean; _id?: string }[];
   leaderId: string;
   createdAt: string;
   updatedAt: string;
@@ -149,6 +149,7 @@ function GlassStepIcon(props: any) {
 
 const HackathonDashboard = () => {
   const router = useRouter();
+  const { id } = router.query;
   const [loading, setLoading] = useState(true);
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
@@ -169,6 +170,9 @@ const HackathonDashboard = () => {
   const overallScore = assessment?.overallScore;
   useEffect(() => {
     if (!isAuthenticated) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('postLoginRedirect', window.location.pathname + window.location.search);
+      }
       router.push('/signin/?source=hackathon');
     }
   }, [isAuthenticated, router]);
@@ -176,35 +180,45 @@ const HackathonDashboard = () => {
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchProject = async () => {
       try {
         const token = localStorage.getItem('api_token');
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/getMyProjects`
-          , {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          });
-        if (!res.ok) throw new Error('Failed to fetch projects');
-        const data: ProjectAPIData[] = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          // Sort by createdAt descending and pick the most recent
-          const sorted = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          const latest = sorted[0];
+        let project: ProjectAPIData | null = null;
+        if (id) {
+          // Fetch by id from URL
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/getProjectById/${id}`,
+            { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+          if (!res.ok) throw new Error('Failed to fetch project by id');
+          project = await res.json();
+        } else {
+          // Default: fetch my projects and pick latest
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/getMyProjects`,
+            { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+          if (!res.ok) throw new Error('Failed to fetch projects');
+          const data: ProjectAPIData[] = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            // Sort by createdAt descending and pick the most recent
+            const sorted = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            project = sorted[0];
+          }
+        }
+        if (project) {
           // Map API team to required TeamMember[]
-          const teamMembers: TeamMember[] = latest.team.map((member, idx) => ({
-            name: member.email.split('@')[0] || `Member${idx + 1}`,
+          const teamMembers: TeamMember[] = project.team.map((member, idx) => ({
+            name: member?.name || member.email.split('@')[0] || `Member${idx + 1}`,
             email: member.email,
-            role: 'Member',
+            role: member?.role ? member.role : 'Member',
             validated: member.validated,
           }));
           setProjectData({
-            name: latest.name,
-            projectDescription: latest.description,
+            name: project.name,
+            projectDescription: project.description,
             teamMembers,
-            createdAt: latest.createdAt,
-            _id: latest._id,
-            track: latest.track,
-            assessment: (latest as any).assessment,
-            leaderId: (latest as any).leaderId,
+            createdAt: project.createdAt,
+            _id: project._id,
+            track: project.track,
+            assessment: (project as any).assessment,
+            leaderId: (project as any).leaderId,
           });
         } else {
           setProjectData(null);
@@ -215,8 +229,8 @@ const HackathonDashboard = () => {
         setLoading(false);
       }
     };
-    fetchProjects();
-  }, []);
+    fetchProject();
+  }, [id]);
 
   if (!mounted || !isAuthenticated) {
     return null;
@@ -890,5 +904,4 @@ const HackathonDashboard = () => {
     </Box>
   );
 };
-
 export default HackathonDashboard; 
