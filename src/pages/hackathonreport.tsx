@@ -724,7 +724,7 @@ export default function hackathonreport() {
               fontWeight: 700
             }}
           >
-            {assessmentType === 'technical' ? 'Technical' : 'Soft Skills'} Assessment Results
+           Meeting Results
           </Typography>
 
           {results ? (

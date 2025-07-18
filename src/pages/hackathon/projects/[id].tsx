@@ -46,6 +46,9 @@ import DialogActions from '@mui/material/DialogActions';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import clsx from 'clsx';
 import { styled } from '@mui/material/styles';
+import { useDispatch } from 'react-redux';
+import { getMyProfile } from '@/store/slices/profileSlice';
+import type { AppDispatch } from '@/store/store';
 
 interface TeamMember {
   name: string;
@@ -57,6 +60,7 @@ interface TeamMember {
 interface Leader {
   FirstName: string;
   LastName: string;
+  email: string;
   // add other fields if needed
 }
 
@@ -148,11 +152,16 @@ function GlassStepIcon(props: any) {
 }
 
 const HackathonDashboard = () => {
+  // All hooks at the top, before any return!
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const { id } = router.query;
   const [loading, setLoading] = useState(true);
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const user = useSelector((state: RootState) => state.auth.user);
+  const profile = useSelector((state: RootState) => state.profile.profile);
+  const profileLoading = useSelector((state: RootState) => state.profile.loading);
   const [mounted, setMounted] = useState(false);
   // --- Modal State ---
   const [openTechModal, setOpenTechModal] = useState(false);
@@ -176,6 +185,12 @@ const HackathonDashboard = () => {
       router.push('/signin/?source=hackathon');
     }
   }, [isAuthenticated, router]);
+
+  useEffect(() => {
+    if (!profile && !profileLoading && isAuthenticated) {
+      void dispatch(getMyProfile());
+    }
+  }, [profile, profileLoading, isAuthenticated, dispatch]);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -232,6 +247,7 @@ const HackathonDashboard = () => {
     fetchProject();
   }, [id]);
 
+  // Only after all hooks:
   if (!mounted || !isAuthenticated) {
     return null;
   }
@@ -272,7 +288,7 @@ const HackathonDashboard = () => {
     router.push('/signin/?source=hackathon');
   };
 
- 
+
 
   // --- Score Chip Helper ---
   const renderScoreChip = (score: number | undefined | null) => {
@@ -333,6 +349,11 @@ const HackathonDashboard = () => {
 
 
   // --- Main Render ---
+  // Determine current user email from Redux only
+  const currentUserEmail = user?.email;
+  console.log(currentUserEmail,"lalalala")
+  const isTeamMember = !!(currentUserEmail && projectData && projectData.teamMembers.some(member => member.email === currentUserEmail));
+  const isLeader = !!(currentUserEmail && projectData && projectData.leaderId && projectData.leaderId.email === currentUserEmail);
   return (
     <Box sx={{ bgcolor: 'linear-gradient(120deg, #F3E5F5 0%, #E1F5FE 100%)', minHeight: '100vh', pb: 6 }}>
       {/* Banner */}
@@ -428,7 +449,7 @@ const HackathonDashboard = () => {
               )}
               <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Tooltip title="Copy Project ID">
-                  <IconButton size="small" onClick={() => {navigator.clipboard.writeText(projectData._id)}}>
+                  <IconButton size="small" onClick={() => { navigator.clipboard.writeText(projectData._id) }}>
                     <ContentCopyIcon sx={{ fontSize: 18, color: '#7C4DFF' }} />
                   </IconButton>
                 </Tooltip>
@@ -799,16 +820,19 @@ const HackathonDashboard = () => {
           {/* Left: Quick Actions & Stats */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {/* Quick Actions */}
-            <Box sx={{ borderRadius: 4, background: 'linear-gradient(120deg, #E1F5FE 0%, #F3E5F5 100%)', boxShadow: '0 2px 12px #7C4DFF22', p: 3, mb: 2 }}>
-              <Typography variant="h6" sx={{ color: '#7C4DFF', fontWeight: 800, mb: 2, letterSpacing: 0.2 }}>
-                Quick Actions
-              </Typography>
-              <QuickActions
-                projectId={projectData && (projectData as any)._id}
-                disableBusiness={hasBusinessData}
-                disableTechnical={hasTechnicalData}
-              />
-            </Box>
+            {(isLeader || isTeamMember) && (
+              <Box sx={{ borderRadius: 4, background: 'linear-gradient(120deg, #E1F5FE 0%, #F3E5F5 100%)', boxShadow: '0 2px 12px #7C4DFF22', p: 3, mb: 2 }}>
+                <Typography variant="h6" sx={{ color: '#7C4DFF', fontWeight: 800, mb: 2, letterSpacing: 0.2 }}>
+                  Quick Actions
+                </Typography>
+                <QuickActions
+                  projectId={projectData && (projectData as any)._id}
+                  disableBusiness={hasBusinessData}
+                  disableTechnical={hasTechnicalData}
+                />
+              </Box>
+            )}
+
             {/* Stats/Analytics */}
             <Box sx={{
               borderRadius: 5,

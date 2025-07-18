@@ -68,6 +68,9 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.error = null;
       state.token = null;
+    },
+    setUser: (state, action) => {
+      state.user = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -94,6 +97,10 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = null;
         state.token = action.payload.token;
+        if (action.payload.user) {
+          state.user = action.payload.user;
+          state.isAuthenticated = true;
+        }
       })
       .addCase(verifyOTP.rejected, (state, action) => {
         state.isLoading = false;
@@ -102,5 +109,5 @@ const authSlice = createSlice({
   }
 });
 
-export const { clearError, logout } = authSlice.actions;
+export const { clearError, logout, setUser } = authSlice.actions;
 export default authSlice.reducer; 
