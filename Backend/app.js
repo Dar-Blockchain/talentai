@@ -68,6 +68,7 @@ app.use("/resume", resumeRouter);
 app.use("/todo", todoRouter);
 app.use("/logs", logRoutes);
 app.use("/interviewDetails", interviewDetailsRouter);
+app.use("/repo-analyzer", repoAnalyzerRouter);
 app.use("/notification", notificationRouter);
 
 app.get("/some-route", (req, res) => {
