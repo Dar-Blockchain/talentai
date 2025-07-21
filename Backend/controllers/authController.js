@@ -30,7 +30,6 @@ module.exports.verifyOTP = async (req, res) => {
     });
 
     if (result.user && result.user.profile) {
-
       const profile = await Profile.findById(result.user.profile);
       if (!profile){
         profile = null; 
@@ -48,6 +47,7 @@ module.exports.verifyOTP = async (req, res) => {
       message: "Email vérifié avec succès",
       user: result.user,
       token: result.token,
+      profile: null
     });
   } catch (error) {
     res.status(400).json({ message: error.message });
