@@ -1,4 +1,5 @@
 const authService = require("../services/authService");
+const Profile = require("../models/ProfileModel");
 
 // Route d'inscription
 module.exports.register = async (req, res) => {
@@ -27,6 +28,21 @@ module.exports.verifyOTP = async (req, res) => {
       httpOnly: false,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+
+    if (result.user && result.user.profile) {
+
+      const profile = await Profile.findById(result.user.profile);
+      if (!profile){
+        profile = null; 
+      }
+
+      return res.status(200).json({
+        message: "Email vérifié avec succès",
+        user: result.user,
+        token: result.token,
+        profile: profile,
+      });
+    }
     // Créer la session avec le token
     res.status(200).json({
       message: "Email vérifié avec succès",
