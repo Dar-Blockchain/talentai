@@ -232,8 +232,18 @@ const JuryDashboard = () => {
   // Navbar logout handler
   const handleLogout = () => {
     dispatch(logout());
-    router.push("/signin");
+    router.replace('/signin?source=hackathon');
   };
+
+  // Restrict access to jury only
+  useEffect(() => {
+    if (user && user.role !== 'jury') {
+      router.replace('/signin?source=hackathon');
+    }
+    if (!user) {
+      router.replace('/signin?source=hackathon');
+    }
+  }, [user, router]);
 
   return (
     <Box
