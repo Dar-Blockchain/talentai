@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Stack, Typography, AppBar, Toolbar } from "@mui/material";
+import { Box, Stack, Typography, AppBar, Toolbar, Button, Avatar } from "@mui/material";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -22,6 +22,8 @@ import {
   selectTopBusinessProjects,
 } from "../store/slices/projectSlice";
 import { RootState } from "../store/store";
+import { logout } from "../store/slices/authSlice";
+import { useRouter } from "next/router";
 
 import TopTechnicalProjectsTable from "../components/dashboard-jury/TopTechnicalProjectsTable";
 import TopBusinessProjectsTable from "../components/dashboard-jury/TopBusinessProjectsTable";
@@ -33,6 +35,8 @@ import TeamModal from "../components/dashboard-jury/TeamModal";
 
 const JuryDashboard = () => {
   const dispatch = useDispatch();
+  const router = useRouter();
+  const user = useSelector((state: RootState) => state.auth.user);
   const { projects, loading, error } = useSelector(
     (state: RootState) => state.project
   );
@@ -225,6 +229,12 @@ const JuryDashboard = () => {
     setTeamMembers([]);
   };
 
+  // Navbar logout handler
+  const handleLogout = () => {
+    dispatch(logout());
+    router.push("/signin");
+  };
+
   return (
     <Box
       sx={{
@@ -233,19 +243,105 @@ const JuryDashboard = () => {
         p: { xs: 1, md: 4 },
       }}
     >
-      {/* Header */}
+      {/* Jury Navbar */}
       <AppBar
         position="static"
         elevation={0}
-        sx={{ bgcolor: "rgba(124,77,255,0.07)", color: "#7C4DFF", mb: 4 }}
+        sx={{
+          bgcolor: "rgba(255,255,255,0.7)",
+          color: "#191919",
+          boxShadow: "0 4px 24px 0 rgba(124,77,255,0.10)",
+          mb: 3,
+          borderRadius: 3,
+          backdropFilter: "blur(16px)",
+          px: { xs: 1, sm: 3 },
+          py: 1,
+        }}
       >
-        <Toolbar>
-          <EmojiEventsIcon sx={{ mr: 2, fontSize: 32 }} />
-          <Typography variant="h4" fontWeight={900} sx={{ letterSpacing: 0.5 }}>
-            Jury Project Evaluation
-          </Typography>
+        <Toolbar
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            minHeight: { xs: 56, sm: 72 },
+            px: 0,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box
+              component="img"
+              src="/logo.svg"
+              alt="TalentAI Logo"
+              sx={{ height: { xs: 28, sm: 32 }, mr: 1, cursor: "pointer", transition: "transform 0.2s", '&:hover': { transform: 'scale(1.07)' } }}
+              onClick={() => router.push("/")}
+            />
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 800,
+                letterSpacing: 0.5,
+                fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif',
+                color: "#7C4DFF",
+                textShadow: "0 2px 8px #7C4DFF11",
+                display: { xs: "none", sm: "block" },
+              }}
+            >
+              Hackathon Jury Dashboard
+            </Typography>
+          </Box>
+          {user && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 2 } }}>
+              <Avatar
+                sx={{
+                  bgcolor: "linear-gradient(135deg, #7C4DFF 60%, #00B8D4 100%)",
+                  color: "#fff",
+                  width: 44,
+                  height: 44,
+                  fontWeight: 700,
+                  fontSize: 22,
+                  boxShadow: "0 2px 8px #7C4DFF22",
+                  border: "2px solid #fff",
+                }}
+              >
+                {user.FirstName?.[0] || user.firstName?.[0] || user.firstname?.[0] || user.email?.[0] || "U"}
+              </Avatar>
+              <Box sx={{ textAlign: "right", minWidth: 120 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#222", fontSize: 17, lineHeight: 1.1 }}>
+                  {user.LastName || user.lastName || user.lastname || ""} {user.FirstName || user.firstName || user.firstname || ""}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: 13 }}>
+                  {user.email}
+                </Typography>
+              </Box>
+              <Box sx={{ mx: 1, height: 36, borderLeft: "1.5px solid #E0E0E0" }} />
+              <Button
+                variant="contained"
+                sx={{
+                  background: "linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)",
+                  color: "#fff",
+                  fontWeight: 700,
+                  borderRadius: 2,
+                  px: 3,
+                  py: 1.2,
+                  boxShadow: "0 2px 8px #00B8D422",
+                  textTransform: "none",
+                  fontSize: 16,
+                  letterSpacing: 0.2,
+                  transition: "background 0.2s, box-shadow 0.2s",
+                  '&:hover': {
+                    background: "linear-gradient(90deg, #00B8D4 0%, #7C4DFF 100%)",
+                    boxShadow: "0 4px 16px #00B8D433",
+                  },
+                }}
+                onClick={handleLogout}
+              >
+                Logout
+              </Button>
+            </Box>
+          )}
         </Toolbar>
       </AppBar>
+      {/* Header - removed duplicate Jury Project Evaluation */}
       {/* Enhanced Global Stats */}
       <StatsCards
         totalProjects={totalProjectsStat}
