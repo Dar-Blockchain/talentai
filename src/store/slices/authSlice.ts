@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 interface AuthState {
+  profile: any | null;
   user: any | null;
   isLoading: boolean;
   error: string | null;
@@ -10,6 +11,7 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
+  profile: null,
   user: null,
   isLoading: false,
   error: null,
@@ -64,7 +66,9 @@ const authSlice = createSlice({
       state.error = null;
     },
     logout: (state) => {
+      state.profile = null;
       state.user = null;
+      state.isLoading = false;
       state.isAuthenticated = false;
       state.error = null;
       state.token = null;
@@ -98,6 +102,7 @@ const authSlice = createSlice({
         state.error = null;
         state.token = action.payload.token;
         if (action.payload.user) {
+          state.profile = action.payload.profile;
           state.user = action.payload.user;
           state.isAuthenticated = true;
         }
