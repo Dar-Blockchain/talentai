@@ -22,7 +22,7 @@ const JobSeekerLanding: React.FC = () => {
       <Box
         sx={{
           display: 'flex',
-          flexDirection: 'column',
+          flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
           py: { xs: 4, md: 6 },
@@ -30,6 +30,7 @@ const JobSeekerLanding: React.FC = () => {
           borderRadius: 4,
           my: 4,
           mx: 2,
+          gap: 4,
           boxShadow: '0 4px 32px 0 rgba(44, 62, 80, 0.08)',
           textAlign: 'center',
         }}
@@ -40,15 +41,27 @@ const JobSeekerLanding: React.FC = () => {
             alt="F6S Top Company AI"
             width={500}
             height={200}
-            style={{ borderRadius: 24, background: '#fff', boxShadow: '0 2px 32px #8310FF22', width: '100%', height: 'auto', maxWidth: 500, display: 'block', marginBottom: 24, cursor: 'pointer' }}
+            style={{ borderRadius: 24, background: '#fff', boxShadow: '0 2px 32px #8310FF22', width: '100%', height: 'auto', maxWidth: 500, display: 'block', cursor: 'pointer' }}
           />
         </a>
-        <Typography variant="h5" sx={{ fontWeight: 700, color: '#8310FF', mb: 1 }}>
+        {/* <Typography variant="h5" sx={{ fontWeight: 700, color: '#8310FF', mb: 1 }}>
           F6S Top Company AI (Artificial Intelligence)
         </Typography>
         <Typography variant="body1" sx={{ color: '#222', maxWidth: 480 }}>
           TalentAI is recognized as a top AI company by F6S. Our platform empowers candidates with AI-driven career tools, smart matching, and verified skills for the future of work.
-        </Typography>
+        </Typography> */}
+          <Image
+            src="/images/partners/nvidia4.png" // Replace with your actual image path
+            alt="Partner Badge"
+            width={180}
+            height={90}
+            style={{
+              // marginTop: 24,
+              borderRadius: 12,
+              background: '#fff',
+              boxShadow: '0 2px 16px rgba(0, 0, 0, 0.05)',
+            }}
+          />
       </Box>
 
       <FeaturesSection type="jobseeker" color="#8310FF" />
