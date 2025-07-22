@@ -894,6 +894,7 @@ module.exports.exportProjectPdfService = async (projectId) => {
 
 const CodeAnalysis = require("../models/codeAnalysisModel");
 module.exports.analyzeRepo = async (
+  githubLink,
   owner,
   repo,
   selectedTemplate = "auto",
@@ -902,7 +903,7 @@ module.exports.analyzeRepo = async (
 ) => {
 
   // Load hackathon criteria from constants
-  let { HEDERA_HACKATHON_CRITERIA, OTHER_HACKATHON_CRITERIA } = require("../constants/hackathonConstants");
+  let { HEDERA_HACKATHON_CRITERIA, OTHER_HACKATHON_CRITERIA, CRITERIA_WEIGHTS } = require("../constants/hackathonConstants");
   let hackathonCriteria; 
   console.log("checkout : ", hackathonName);
   
@@ -1206,7 +1207,7 @@ module.exports.analyzeRepo = async (
 
   // Display intelligent analysis results
   if (intelligentAnalysis) {
-    console.log(section("🧠 INTELLIGENT ANALYSIS RESULTS", "🧠", "cyan"));
+    console.log("🧠 INTELLIGENT ANALYSIS RESULTS", "🧠", "cyan");
 
     // Project Purpose with clear conclusion
     console.log("\n🎯 PROJECT PURPOSE:");
@@ -1433,7 +1434,7 @@ module.exports.analyzeRepo = async (
     githubLink,
     owner,
     repo,
-    analysis: result,
+    // analysis: result,
     criteriaResults: res1.criteriaResults,
     feedbacks:res1.feedbacks,
     // res.intelligentAnalysis data are already present in the analysis:result

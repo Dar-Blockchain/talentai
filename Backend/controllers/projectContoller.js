@@ -956,11 +956,13 @@ module.exports.analyzeRepo = async (req, res) => {
   const repo = req.body.repo;
   const selectedTemplate = req.body.selectedTemplate || "auto";
   const hackathonName = req.body.hackathonName; 
+  const githubLink = req.body.githubLink; 
   console.log("222222: ", req.body);
 
   try {
     // Delegate to projectService for modular code
     const result = await projectService.analyzeRepo(
+      githubLink,
       owner,
       repo,
       selectedTemplate,

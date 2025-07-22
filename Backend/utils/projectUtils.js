@@ -12,7 +12,7 @@ const {
 const {
   ASSESSMENT_OVERALL_SCORE_WEIGHTS,
 } = require("../constants/projectConstants");
-const { loadProjectTemplates, detectProjectTypeFromRepo } = require("../helpers/projectHelpers");
+const { loadProjectTemplates, detectProjectTypeFromRepo, evaluateProjectStructure, evaluateCodeQuality, evaluateSecurityAndPerformance, evaluateModernPractices } = require("../helpers/projectHelpers");
 
 /**
  * Calculates the overallScore for businessData by assigning weights to each component score.
@@ -227,15 +227,21 @@ const getComprehensiveCodeAnalysis = async (repoData, selectedTemplate = 'auto')
   
   const templates = loadProjectTemplates();
   let projectType;
+
+  console.log("daaaaaaa: ", templates);
   
-  if (selectedTemplate === 'auto') {
+  if (selectedTemplate.trim() === 'auto') {
+      console.log("this1 entered...", );
       projectType = await detectProjectTypeFromRepo(repoData);
       console.log(`[getComprehensiveCodeAnalysis] Auto-detected project type: ${projectType}`);
+      
   } else {
+    console.log("this2 entered...", );
       projectType = selectedTemplate;
       console.log(`[getComprehensiveCodeAnalysis] Using selected template: ${projectType}`);
   }
   
+  console.log(`________: ${projectType}`);
   const template = templates[projectType] || templates['custom'];
   const templateFiles = template.files || [];
   
