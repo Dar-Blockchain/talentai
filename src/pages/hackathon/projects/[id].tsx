@@ -53,6 +53,9 @@ import { styled } from '@mui/material/styles';
 import { getMyProfile } from '@/store/slices/profileSlice';
 import { logout } from '@/store/slices/authSlice';
 import LogoutIcon from '@mui/icons-material/Logout';
+import { TextField } from '@mui/material';
+import CodeIcon from '@mui/icons-material/Code';
+import { evaluateProjectCode } from '@/store/slices/projectSlice';
 
 
 interface TeamMember {
@@ -156,6 +159,23 @@ function GlassStepIcon(props: any) {
   );
 }
 
+// --- Github Link Validation Function ---
+function validateGithubLink(link: string): boolean {
+  // Accepts: https://github.com/user/repo or http://github.com/user/repo or github.com/user/repo
+  // Optionally with .git at the end, and optional trailing slash
+  // Does not accept github.com/user or github.com/user/repo/extra
+  // Only public repo URLs
+  const regex = /^(https?:\/\/)?(www\.)?github\.com\/[\w.-]+\/[\w.-]+(\/)?(\.git)?$/i;
+  // Remove trailing slash for .git check
+  let normalized = link.trim();
+  if (normalized.endsWith('/')) normalized = normalized.slice(0, -1);
+  // Remove .git for trailing slash check
+  if (normalized.endsWith('.git')) normalized = normalized.slice(0, -4);
+  // Now check if it matches the pattern
+  const match = /^((https?:\/\/)?(www\.)?github\.com\/[\w.-]+\/[\w.-]+)$/.test(normalized);
+  return match;
+}
+
 const HackathonDashboard = () => {
   // All hooks at the top, before any return!
   const router = useRouter();
@@ -173,6 +193,12 @@ const HackathonDashboard = () => {
   const [openTechModal, setOpenTechModal] = useState(false);
   const [openBizModal, setOpenBizModal] = useState(false);
   const [openFullModal, setOpenFullModal] = useState(false);
+  const [openCodeEvalModal, setOpenCodeEvalModal] = useState(false);
+  const [githubLink, setGithubLink] = useState('');
+  const [codeQualityScore, setCodeQualityScore] = useState<number | null>(null);
+  const [evaluating, setEvaluating] = useState(false);
+  const [codeEvalMessage, setCodeEvalMessage] = useState('');
+  const [githubLinkError, setGithubLinkError] = useState('');
   // After projectData is loaded, extract assessment if available
   // For demo, let's mock assessment as an object on projectData (replace with real data as needed)
   const assessment = projectData?.assessment || null;
@@ -183,6 +209,34 @@ const HackathonDashboard = () => {
   const techScore = assessment?.technicalData?.overallScore;
   const bizScore = assessment?.businessData?.overallScore;
   const overallScore = assessment?.overallScore;
+  const handleCodeEvalSubmit = async () => {
+    if(!projectData?._id){
+      return;
+    }
+    if (!githubLink) {
+      setGithubLinkError('Please enter a valid GitHub repository URL'); 
+      return;
+    }
+    if (!validateGithubLink(githubLink)) {
+      setGithubLinkError('Please enter a valid GitHub repository URL (e.g. https://github.com/user/repo)');
+      return;
+    }
+
+    setEvaluating(true);
+    setCodeEvalMessage('Evaluating code quality. This may take a moment...');
+    try {
+      const result = await dispatch(evaluateProjectCode({ projectId: projectData._id, githubLink })).unwrap();
+      setCodeQualityScore(result.codeQualityScore);
+      setCodeEvalMessage('Code evaluation complete!');
+    } catch (error) {
+      setCodeEvalMessage('Code evaluation failed. Please try again.');
+      console.error(error);
+    } finally {
+      setEvaluating(false);
+      setTimeout(() => setCodeEvalMessage(''), 2500);
+      setOpenCodeEvalModal(false);
+    }
+  };
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/signin/?source=hackathon');
@@ -579,7 +633,20 @@ const HackathonDashboard = () => {
                 View Business Report
               </Button>
             </Box>
+
             <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E0F7FA', borderRightWidth: 2 }} />
+            {/* Code Quality Score */}
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
+              <CodeIcon sx={{ color: '#333', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #33333311)' }} />
+              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#7C4DFF', letterSpacing: 0.2 }}>Code Quality</Typography>
+              {renderScoreChip(codeQualityScore)}
+              <Button size="small" variant="contained" sx={{ mt: 2, fontWeight: 700, borderRadius: 2, background: '#333', color: '#fff', boxShadow: '0 2px 8px #33333322', '&:hover': { background: '#000' } }} onClick={() => setOpenCodeEvalModal(true)}
+                disabled={!!codeQualityScore || evaluating}
+              >
+                Evaluate Code
+              </Button>
+            </Box>
+                        <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E0F7FA', borderRightWidth: 2 }} />
             {/* Overall Score */}
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
               <TrendingUpIcon sx={{ color: '#00BFAE', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #00BFAE11)' }} />
@@ -592,6 +659,43 @@ const HackathonDashboard = () => {
           </Box>
         </Container>
       )}
+      {/* Code Evaluation Modal */}
+      <Dialog open={openCodeEvalModal} onClose={() => setOpenCodeEvalModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Evaluate Code Quality</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>
+            Enter the public URL of your GitHub repository. Our AI will analyze your code for best practices, complexity, and maintainability.
+          </Typography>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="github-link"
+            label="GitHub Repository URL"
+            type="url"
+            fullWidth
+            variant="outlined"
+            value={githubLink}
+            onChange={(e) => setGithubLink(e.target.value)}
+            disabled={evaluating}
+          />
+          {githubLinkError && (
+            <Typography sx={{ mt: 2, color: evaluating ? '#7C4DFF' : '#d32f2f', fontWeight: 600 }}>
+              {githubLinkError}
+            </Typography>
+          )}
+          {codeEvalMessage && (
+            <Typography sx={{ mt: 2, color: evaluating ? '#7C4DFF' : '#d32f2f', fontWeight: 600 }}>
+              {codeEvalMessage}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenCodeEvalModal(false)} disabled={evaluating}>Cancel</Button>
+          <Button onClick={handleCodeEvalSubmit} variant="contained" disabled={evaluating || !!codeQualityScore}>
+            {evaluating ? <CircularProgress size={24} /> : 'Evaluate'}
+          </Button>
+        </DialogActions>
+      </Dialog>
       {/* Technical Report Modal */}
       <Dialog open={openTechModal} onClose={() => setOpenTechModal(false)} maxWidth="md" fullWidth>
         <DialogTitle>Technical Report Details</DialogTitle>
@@ -898,6 +1002,7 @@ const HackathonDashboard = () => {
                   projectId={projectData && (projectData as any)._id}
                   disableBusiness={hasBusinessData}
                   disableTechnical={hasTechnicalData}
+                  onEvaluateCode={() => setOpenCodeEvalModal(true)}
                 />
               </Box>
             )}
