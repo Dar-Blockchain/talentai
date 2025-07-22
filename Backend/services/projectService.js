@@ -351,7 +351,11 @@ module.exports.getAllProjects = async (
 module.exports.getMyProjects = async (userId) => {
   try {
     const projects = await Project.find({ leaderId: userId }).populate([
-      { path: "assessment", model: "ProjectAssessment" },
+      { 
+        path: "assessment", 
+        model: "ProjectAssessment",
+        populate: { path: "codeAnalysis", model: "CodeAnalysis" }
+      },
       { path: "leaderId", model: "User" },
       { path: "leaderProfile", model: "Profile" },
     ]);
