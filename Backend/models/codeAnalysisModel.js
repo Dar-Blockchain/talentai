@@ -88,7 +88,7 @@ const AnalysisSchema = new mongoose.Schema({
 }, { _id: false });
 
 const CodeAnalysisSchema = new mongoose.Schema({
-  repoUrl: { type: String, required: true },
+  githubLink: { type: String, required: true },
   owner: { type: String, required: true },
   repo: { type: String, required: true },
   analysis: { type: AnalysisSchema, required: true },

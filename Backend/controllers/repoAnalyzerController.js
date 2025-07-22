@@ -5,16 +5,16 @@ const ProjectAssessment = require("../models/projectAssessmentModel");
 const {analyzeRepo} = require("../repoAnalyzer/evaluateRepo");
 
 exports.analyzeGithubRepo = async (req, res) => {
-  const { repoUrl } = req.body;
+  const { githubLink } = req.body;
   const { projectId } = req.params;
-  if (!repoUrl) {
+  if (!githubLink) {
     return res
       .status(400)
-      .json({ success: false, error: "repoUrl is required" });
+      .json({ success: false, error: "githubLink is required" });
   }
 
   // Parse owner and repo from URL
-  const match = repoUrl.match(/github.com[/:]([^/]+)\/([^/.]+)/);
+  const match = githubLink.match(/github.com[/:]([^/]+)\/([^/.]+)/);
   if (!match) {
     return res
       .status(400)
@@ -37,7 +37,7 @@ exports.analyzeGithubRepo = async (req, res) => {
 
     // Save analysis to DB
     const codeAnalysis = await CodeAnalysis.create({
-      repoUrl,
+      githubLink,
       owner,
       repo,
       analysis: result,

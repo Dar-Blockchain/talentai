@@ -1382,7 +1382,7 @@ module.exports.analyzeRepo = async (
 
   //***** */
   const codeAnalysis = await CodeAnalysis.create({
-    repoUrl,
+    githubLink,
     owner,
     repo,
     analysis: result,
