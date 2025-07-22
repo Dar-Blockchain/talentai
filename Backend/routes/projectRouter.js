@@ -65,5 +65,7 @@ router.get("/getProjectsCreatedPerDay", projectController.getProjectsCreatedPerD
 // Get all available project Count By Status
 router.get("/getProjectsCountByStatus", projectController.getProjectsCountByStatus);
 
+router.post('/analyze-code/:projectId', projectController.analyzeRepo);
+
 
 module.exports = router;

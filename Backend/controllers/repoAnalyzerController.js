@@ -2,6 +2,8 @@ const IntelligentProjectAnalyzer = require("../repoAnalyzer/intelligentAnalyzer"
 const CodeAnalysis = require("../models/codeAnalysisModel");
 const ProjectAssessment = require("../models/projectAssessmentModel");
 
+const {analyzeRepo} = require("../repoAnalyzer/evaluateRepo");
+
 exports.analyzeGithubRepo = async (req, res) => {
   const { repoUrl } = req.body;
   const { projectId } = req.params;
@@ -27,18 +29,41 @@ exports.analyzeGithubRepo = async (req, res) => {
     if (!result) {
       return res.status(500).json({ success: false, error: "Analysis failed" });
     }
+
+    const res1 = await analyzeRepo(owner, repo, 'auto', hackathonCriteria= null);
+    if (!res1) {
+      return res1.status(500).json({ success: false, error: "Analysis failed" });
+    }
+
     // Save analysis to DB
-    // await RepoAnalysis.create({ repoUrl, owner, repo, analysis: result });
     const codeAnalysis = await CodeAnalysis.create({
       repoUrl,
       owner,
       repo,
       analysis: result,
+      criteriaResults: res1.criteriaResults,
+      feedbacks:res1.feedbacks,
+      // res.intelligentAnalysis data are already present in the analysis:result
+      finalScore: res1.finalScore,
+      comprehensiveAnalysis: res1.comprehensiveAnalysis,
+      contributors: res1.contributors,
+      totalCommits: res1.totalCommits,
+      firstCommit: res1.firstCommit,
+      lastCommit: res1.lastCommit,
+      startDateCheck: res1.startDateCheck,
+      deadlineCheck: res1.deadlineCheck,
+      maxTeamSizeCheck: res1.maxTeamSizeCheck,
+      mustBeOriginalCheck: res1.mustBeOriginalCheck,
+      demoRequiredCheck: res1.demoRequiredCheck,
     });
+
+    console.log("check code: ", codeAnalysis._id);
 
     let projectAssessment = await ProjectAssessment.findOne({project: projectId});
     projectAssessment.codeAnalysis = codeAnalysis._id;
     await projectAssessment.save();
+
+    console.log("check assessment: ", projectAssessment._id);
 
 
     res.json({ success: true, result, codeAnalysis });

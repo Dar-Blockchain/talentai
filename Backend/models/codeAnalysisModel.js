@@ -92,6 +92,16 @@ const CodeAnalysisSchema = new mongoose.Schema({
   owner: { type: String, required: true },
   repo: { type: String, required: true },
   analysis: { type: AnalysisSchema, required: true },
+  
+  contributors: [{ type: String }], // or use an object if you want more details per contributor
+  totalCommits: { type: Number },
+  firstCommit: { type: Date },
+  lastCommit: { type: Date },
+  startDateCheck: { type: String }, // e.g., 'PASS' or 'FAIL'
+  deadlineCheck: { type: String },
+  maxTeamSizeCheck: { type: String },
+  mustBeOriginalCheck: { type: String },
+  demoRequiredCheck: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 
