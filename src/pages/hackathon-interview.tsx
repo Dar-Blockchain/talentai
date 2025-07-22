@@ -36,6 +36,10 @@ const NEXTJS_QUESTIONS: string[] = [];
 // Add this after imports
 const GREEN_MAIN = '#8310FF';
 
+// --- ElevenLabs TTS Integration ---
+const ELEVENLABS_API_KEY = 'sk_86e3c8c1382571c4275b45c665474ff9ff8fd1eca35d4edc'; // WARNING: Exposed in frontend! For demo only.
+const ELEVENLABS_VOICE_ID = 'EXAVITQu4vr4xnSDxMaL'; // Rachel (most natural female voice)
+
 // --- Styled Components ---
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
   backdropFilter: 'blur(10px)',
@@ -376,6 +380,9 @@ const Test = () => {
   // MediaRecorder references
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
+  // Prevent double stopRecording
+  const stoppedRef = useRef(false);
+
   // Transcription states
   const [isTranscribing, setIsTranscribing] = useState(false);
 
@@ -383,6 +390,14 @@ const Test = () => {
   const [invalidType, setInvalidType] = useState(false);
   const [fetchError, setFetchError] = useState('');
   const [showLoaderModal, setShowLoaderModal] = useState(false);
+
+  // Add new state for TTS
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Add new state for warning modal
+  const [showFullscreenWarning, setShowFullscreenWarning] = useState(false);
 
   useEffect(() => {
     if(!isAuthenticated && id){
@@ -631,31 +646,77 @@ const Test = () => {
     }
   };
 
+  // Enter fullscreen
+  const enterFullscreen = () => {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if ((elem as any).webkitRequestFullscreen) {
+      (elem as any).webkitRequestFullscreen();
+    } else if ((elem as any).msRequestFullscreen) {
+      (elem as any).msRequestFullscreen();
+    }
+  };
+
+  // Exit fullscreen
+  const exitFullscreen = () => {
+    // Only exit if in fullscreen and document is active
+    const isFullscreen = !!(
+      document.fullscreenElement ||
+      (document as any).webkitFullscreenElement ||
+      (document as any).mozFullScreenElement ||
+      (document as any).msFullscreenElement
+    );
+    // @ts-ignore: document.hasFocus exists in browsers
+    const isActive = typeof document.hasFocus === 'function' ? document.hasFocus() : true;
+    if (!isFullscreen || !isActive) return;
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if ((document as any).webkitExitFullscreen) {
+      (document as any).webkitExitFullscreen();
+    } else if ((document as any).msExitFullscreen) {
+      (document as any).msExitFullscreen();
+    }
+  };
+
   // Update stopRecording function
   const stopRecording = () => {
+    if (stoppedRef.current) return;
+    stoppedRef.current = true;
+    exitFullscreen();
     // Close WebSocket connection
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
+    try {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    } catch (e) { /* ignore */ }
 
     // Stop audio context
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
+    try {
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+    } catch (e) { /* ignore */ }
 
     // Disconnect processor
-    if (processorRef.current) {
-      processorRef.current.disconnect();
-      processorRef.current = null;
-    }
+    try {
+      if (processorRef.current) {
+        processorRef.current.disconnect();
+        processorRef.current = null;
+      }
+    } catch (e) { /* ignore */ }
 
     // Stop audio tracks
-    if (audioStreamRef.current) {
-      audioStreamRef.current.getTracks().forEach(track => track.stop());
-      audioStreamRef.current = null;
-    }
+    try {
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach(track => {
+          try { track.stop(); } catch (e) { /* ignore */ }
+        });
+        audioStreamRef.current = null;
+      }
+    } catch (e) { /* ignore */ }
 
     setIsRecording(false);
     setHasStartedTest(false);
@@ -709,12 +770,14 @@ const Test = () => {
 
   // Modify startTest function
   const startTest = async () => {
+    stoppedRef.current = false;
     if (!guidelinesAccepted) {
       setShowGuidelines(true);
       return;
     }
 
     try {
+      enterFullscreen();
       // Initialize transcriptions for all questions
       setTranscriptions(
         questions.reduce((acc: any, _: any, index: number) => ({
@@ -763,6 +826,7 @@ const Test = () => {
   };
 
   const goHome = () => {
+    exitFullscreen();
     streamRef.current?.getTracks().forEach(t => t.stop());
     if (hasStartedTest) {
       saveTestResults();
@@ -904,6 +968,120 @@ const Test = () => {
     }
   }, [current]);
 
+  // Fetch TTS audio from ElevenLabs when question changes
+  useEffect(() => {
+    const fetchTTS = async () => {
+      if (!questions[current]?.text) return;
+      setIsSpeaking(false);
+      setAudioUrl(null);
+      try {
+        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`, {
+          method: 'POST',
+          headers: {
+            'xi-api-key': ELEVENLABS_API_KEY,
+            'Content-Type': 'application/json',
+            'Accept': 'audio/mpeg',
+          },
+          body: JSON.stringify({
+            text: questions[current].text,
+            voice_settings: {
+              stability: 0.3, // more expressive
+              similarity_boost: 0.85, // closer to real
+              style: 1.0, // more natural prosody (if supported)
+              use_speaker_boost: true
+            },
+          }),
+        });
+        if (!response.ok) throw new Error('TTS fetch failed');
+        const audioBlob = await response.blob();
+        const url = URL.createObjectURL(audioBlob);
+        setAudioUrl(url);
+      } catch (e) {
+        console.error('TTS error', e);
+      }
+    };
+    if (questions.length > 0 && !isGenerating) {
+      fetchTTS();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, questions, isGenerating]);
+
+  // Play audio when audioUrl changes
+  useEffect(() => {
+    if (audioUrl && audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play();
+      setIsSpeaking(true);
+      audioRef.current.onended = () => setIsSpeaking(false);
+    }
+  }, [audioUrl]);
+
+  // Listen for fullscreenchange: if test is running and fullscreen is exited, show warning and allow re-entering fullscreen
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isFullscreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
+      if (hasStartedTest && !isFullscreen) {
+        setShowFullscreenWarning(true);
+      }
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, [hasStartedTest]);
+
+  // Pause timer when fullscreen is exited
+  const [isPaused, setIsPaused] = useState(false);
+  useEffect(() => {
+    if (showFullscreenWarning) {
+      setIsPaused(true);
+    } else {
+      setIsPaused(false);
+    }
+  }, [showFullscreenWarning]);
+
+  // Modify timer effect to pause when isPaused is true
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (hasStartedTest && timeLeft > 0 && !isPaused) {
+      timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            if (current < questions.length - 1) {
+              setCurrent(c => c + 1);
+              // If next is last question, set to 300, else 240
+              if (current + 1 === questions.length - 1) {
+                return 300;
+              } else {
+                return 240;
+              }
+            } else {
+              stopRecording();
+              saveTestResults();
+              router.push({
+                pathname: '/hackathonreport',
+                query: { type, projectId }
+              });
+            }
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [current, timeLeft, questions.length, hasStartedTest, router, isPaused]);
+
   if (fetchError) {
     return <div style={{ padding: 40, textAlign: 'center', color: 'red' }}>{fetchError}</div>;
   }
@@ -928,6 +1106,53 @@ const Test = () => {
         px: { xs: 0, sm: 2 }, // Add horizontal padding on larger screens
       }}
     >
+      {/* No avatar, only audio will play */}
+      {audioUrl && (
+        <audio ref={audioRef} src={audioUrl} />
+      )}
+      {/* Fullscreen warning modal */}
+      <Dialog open={showFullscreenWarning} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 2 } }}>
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 700, color: '#7C4DFF', fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', pb: 0 }}>
+          Fullscreen Required
+        </DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 3 }}>
+          <Typography variant="body1" sx={{ color: '#333', fontWeight: 500, textAlign: 'center' }}>
+            You exited fullscreen mode (e.g., by pressing Escape).<br />
+            Please re-enter fullscreen to continue your test.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setShowFullscreenWarning(false);
+              // Try to re-enter fullscreen
+              const elem = document.documentElement;
+              if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+              } else if ((elem as any).webkitRequestFullscreen) {
+                (elem as any).webkitRequestFullscreen();
+              } else if ((elem as any).msRequestFullscreen) {
+                (elem as any).msRequestFullscreen();
+              }
+            }}
+            sx={{ background: '#8310FF', color: '#fff', borderRadius: 2, px: 4, textTransform: 'none', fontWeight: 600 }}
+          >
+            Re-enter Fullscreen and Continue Test
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setShowFullscreenWarning(false);
+              stopRecording();
+              router.push(`/hackathon/projects/${projectId}`);
+            }}
+            sx={{ borderColor: '#8310FF', color: '#8310FF', borderRadius: 2, px: 4, textTransform: 'none', fontWeight: 600, ml: 2 }}
+          >
+            End Test
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Box
         sx={{
           width: '100%',
