@@ -62,7 +62,7 @@ module.exports.fetchRepoData = async (owner, repo) => {
 };
 
 module.exports.loadProjectTemplates = () => {
-    const templatePath = path.join(__dirname, 'projectTemplates.json');
+    const templatePath = path.join(__dirname, '..', '..', 'templates', 'projectTemplates.json');
     if (fs.existsSync(templatePath)) {
         return JSON.parse(fs.readFileSync(templatePath, 'utf8'));
     }
