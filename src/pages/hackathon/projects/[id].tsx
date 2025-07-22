@@ -10,10 +10,15 @@ import {
   LinearProgress,
   IconButton,
   Chip,
-  Divider
+  Divider,
+  AppBar,
+  Toolbar,
+  Avatar,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store/store';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '@/store/store';
 import Cookies from 'js-cookie';
 import { keyframes } from '@mui/system';
 import HeroHeader from '@/components/dashboard-hackathon/HeroHeader';
@@ -26,7 +31,6 @@ import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
-import Avatar from '@mui/material/Avatar';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import PersonIcon from '@mui/icons-material/Person';
 import GroupIcon from '@mui/icons-material/Group';
@@ -46,9 +50,10 @@ import DialogActions from '@mui/material/DialogActions';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import clsx from 'clsx';
 import { styled } from '@mui/material/styles';
-import { useDispatch } from 'react-redux';
 import { getMyProfile } from '@/store/slices/profileSlice';
-import type { AppDispatch } from '@/store/store';
+import { logout } from '@/store/slices/authSlice';
+import LogoutIcon from '@mui/icons-material/Logout';
+
 
 interface TeamMember {
   name: string;
@@ -155,11 +160,12 @@ const HackathonDashboard = () => {
   // All hooks at the top, before any return!
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { id } = router.query;
   const [loading, setLoading] = useState(true);
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-  const user = useSelector((state: RootState) => state.auth.user);
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const profile = useSelector((state: RootState) => state.profile.profile);
   const profileLoading = useSelector((state: RootState) => state.profile.loading);
   const [mounted, setMounted] = useState(false);
@@ -179,9 +185,6 @@ const HackathonDashboard = () => {
   const overallScore = assessment?.overallScore;
   useEffect(() => {
     if (!isAuthenticated) {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('postLoginRedirect', window.location.pathname + window.location.search);
-      }
       router.push('/signin/?source=hackathon');
     }
   }, [isAuthenticated, router]);
@@ -280,12 +283,8 @@ const HackathonDashboard = () => {
   }
 
   const handleLogout = () => {
-    localStorage.clear();
-    sessionStorage.clear();
-    Object.keys(Cookies.get()).forEach(function (cookieName) {
-      Cookies.remove(cookieName);
-    });
-    router.push('/signin/?source=hackathon');
+    dispatch(logout());
+    router.replace('/signin?source=hackathon');
   };
 
 
@@ -356,58 +355,128 @@ const HackathonDashboard = () => {
   const isLeader = !!(currentUserEmail && projectData && projectData.leaderId && projectData.leaderId.email === currentUserEmail);
   return (
     <Box sx={{ bgcolor: 'linear-gradient(120deg, #F3E5F5 0%, #E1F5FE 100%)', minHeight: '100vh', pb: 6 }}>
-      {/* Banner */}
-      <Box sx={{
-        width: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: 3,
-        mb: 3,
-        background: 'linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)',
-        color: '#fff',
-        borderRadius: 0,
-        boxShadow: '0 4px 24px #7C4DFF22',
-        fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif',
-        position: 'relative',
-        zIndex: 2,
-        overflow: 'hidden',
-      }}>
-        {/* Logout Button */}
-        <Button
-          variant="outlined"
-          onClick={handleLogout}
+      {/* Navbar */}
+      <AppBar
+        position="static"
+        elevation={0}
+        sx={{
+          bgcolor: "rgba(255,255,255,0.7)",
+          color: "#191919",
+          boxShadow: "0 4px 24px 0 rgba(124,77,255,0.10)",
+          mb: 3,
+          borderRadius: 3,
+          backdropFilter: "blur(16px)",
+          width: 'unset',
+          mx: { xs: 1, sm: 4 },
+          mt: 2,
+          px: { xs: 1, sm: 3 },
+          py: 1,
+        }}
+      >
+        <Toolbar
           sx={{
-            position: 'absolute',
-            top: 16,
-            right: 24,
-            borderColor: '#fff',
-            color: '#fff',
-            fontWeight: 700,
-            borderWidth: 2,
-            '&:hover': { borderColor: '#FFD600', color: '#FFD600', background: 'rgba(255,255,255,0.08)' },
-            textTransform: 'none',
-            fontSize: '1rem',
-            px: 2.5,
-            py: 0.7,
-            zIndex: 10,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            minHeight: { xs: 56, sm: 72 },
+            px: '0 !important',
           }}
         >
-          Logout
-        </Button>
-        <CelebrationIcon sx={{ fontSize: 40, mr: 2, color: '#FFD600', animation: 'spin 2.5s linear infinite' }} />
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 900, letterSpacing: 0.5, color: '#fff', mb: 0.2 }}>
-            TalentAI Hackathon
-          </Typography>
-          <Typography variant="body1" sx={{ color: '#fff', opacity: 0.92, fontWeight: 500 }}>
-            Welcome! Track your project, team, and progress below. Good luck!
-          </Typography>
-        </Box>
-        <style jsx global>{`
-          @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
-        `}</style>
-      </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box
+              component="img"
+              src="/logo.svg"
+              alt="TalentAI Logo"
+              sx={{ height: { xs: 28, sm: 32 }, mr: 1, cursor: "pointer", transition: "transform 0.2s", '&:hover': { transform: 'scale(1.07)' } }}
+              onClick={() => router.push("/")}
+            />
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 800,
+                fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif',
+                color: "#7C4DFF",
+                textShadow: "0 2px 8px #7C4DFF11",
+                display: { xs: "none", sm: "block" },
+              }}
+            >
+              Project Dashboard
+            </Typography>
+          </Box>
+          {user && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 2 } }}>
+              <Avatar
+                sx={{
+                  bgcolor: "linear-gradient(135deg, #7C4DFF 60%, #00B8D4 100%)",
+                  color: "#fff",
+                  width: 44,
+                  height: 44,
+                  fontWeight: 700,
+                  fontSize: 22,
+                  boxShadow: "0 2px 8px #7C4DFF22",
+                  border: "2px solid #fff",
+                }}
+              >
+                {user.FirstName?.[0] || user.firstName?.[0] || user.email?.[0] || "U"}
+              </Avatar>
+              {!isMobile && (
+                <>
+                  <Box sx={{ textAlign: "right", minWidth: 120 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#222", fontSize: 17, lineHeight: 1.1 }}>
+                      {user.FirstName || user.firstName || ""} {user.LastName || user.lastName || ""}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: 13 }}>
+                      {user.email}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mx: 1, height: 36, borderLeft: "1.5px solid #E0E0E0" }} />
+                </>
+              )}
+              {isMobile ? (
+                <IconButton 
+                  onClick={handleLogout}
+                  sx={{
+                    background: "linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)",
+                    color: "#fff",
+                    width: 44, height: 44,
+                    '&:hover': {
+                      background: "linear-gradient(90deg, #00B8D4 0%, #7C4DFF 100%)",
+                    }
+                  }}
+                >
+                  <LogoutIcon />
+                </IconButton>
+              ) : (
+                <Button
+                  variant="contained"
+                  startIcon={<LogoutIcon />}
+                  sx={{
+                    background: "linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)",
+                    color: "#fff",
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    px: 3,
+                    py: 1.2,
+                    boxShadow: "0 2px 8px #00B8D422",
+                    textTransform: "none",
+                    fontSize: 16,
+                    letterSpacing: 0.2,
+                    transition: "background 0.2s, box-shadow 0.2s",
+                    '&:hover': {
+                      background: "linear-gradient(90deg, #00B8D4 0%, #7C4DFF 100%)",
+                      boxShadow: "0 4px 16px #00B8D433",
+                    },
+                  }}
+                  onClick={handleLogout}
+                >
+                  Logout
+                </Button>
+              )}
+            </Box>
+          )}
+        </Toolbar>
+      </AppBar>
+      {/* Banner - REPLACED WITH NAVBAR */}
       {/* Project Summary Card */}
       {projectData && (
         <Container maxWidth="lg" sx={{ mb: 3, zIndex: 2, position: 'relative' }}>
