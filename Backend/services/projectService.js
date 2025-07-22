@@ -379,9 +379,23 @@ module.exports.getNumberProjects = async (userId) => {
 // Récupération d'un projet par son ID
 module.exports.getProjectById = async (id) => {
   try {
-    const project = await Project.findById(id).populate("leaderId"); // ← Ajoute le populate ici
+    let project = await Project.findById(id)
+      .populate([
+        { 
+          path: "assessment", 
+          model: "ProjectAssessment",
+          populate: { path: "codeAnalysis", model: "CodeAnalysis" }
+        },
+        { path: "leaderId", model: "User" }
+      ]);
 
     if (!project) throw new Error("Projet non trouvé");
+
+    if (project && project.leaderId) {
+      project = project.toObject();
+      project.leader = project.leaderId;
+      delete project.leaderId;
+    }
     return project;
   } catch (error) {
     throw new Error("Erreur lors de la récupération du projet");
