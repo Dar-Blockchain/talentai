@@ -955,7 +955,8 @@ module.exports.analyzeRepo = async (req, res) => {
   const owner = req.body.owner; 
   const repo = req.body.repo;
   const selectedTemplate = req.body.selectedTemplate || "auto";
-  const hackathonCriteria = req.body.hackathonCriteria || null; 
+  const hackathonName = req.body.hackathonName; 
+  console.log("222222: ", req.body);
 
   try {
     // Delegate to projectService for modular code
@@ -963,7 +964,7 @@ module.exports.analyzeRepo = async (req, res) => {
       owner,
       repo,
       selectedTemplate,
-      hackathonCriteria,
+      hackathonName,
       projectId
     );
 

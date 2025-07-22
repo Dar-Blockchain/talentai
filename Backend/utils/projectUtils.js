@@ -12,6 +12,7 @@ const {
 const {
   ASSESSMENT_OVERALL_SCORE_WEIGHTS,
 } = require("../constants/projectConstants");
+const { loadProjectTemplates, detectProjectTypeFromRepo } = require("../helpers/projectHelpers");
 
 /**
  * Calculates the overallScore for businessData by assigning weights to each component score.

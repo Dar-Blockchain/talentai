@@ -872,38 +872,61 @@ module.exports.analyzeRepo = async (
   owner,
   repo,
   selectedTemplate = "auto",
-  hackathonCriteria = null, 
+  hackathonName ,
   projectId
 ) => {
 
+  // Load hackathon criteria from constants
+  let { HEDERA_HACKATHON_CRITERIA, OTHER_HACKATHON_CRITERIA } = require("../constants/hackathonConstants");
+  let hackathonCriteria; 
+  console.log("checkout : ", hackathonName);
+  
+  switch (hackathonName) {
+    case "HederaHacks":
+      hackathonCriteria = HEDERA_HACKATHON_CRITERIA;
+      break;
+    case "otherHacks":
+      hackathonCriteria = OTHER_HACKATHON_CRITERIA;
+      break;
+    default:
+      hackathonCriteria = null;
+      break;
+  }
+
+  console.log("check out: ", hackathonCriteria);
+
   const repoData = await fetchRepoData(owner, repo);  // Ensure fetchRepoData is working correctly
+
+  let eligibilityResults = {};
+  let eligible = true;
 
   // Display contributors and commits
   const numContributors = repoData.contributors
     ? repoData.contributors.length
     : 0;
   const numCommits = repoData.commits ? repoData.commits.length : 0;
-  console.log(
-    colorize(`👥 Contributors (${numContributors}): `, "magenta") +
-      colorize(repoData.contributors.map((c) => c.login).join(", "), "white")
-  );
-  console.log(colorize(`🔢 Total commits: ${numCommits}`, "magenta"));
+  // console.log(
+  //   colorize(`👥 Contributors (${numContributors}): `, "magenta") +
+  //     colorize(repoData.contributors.map((c) => c.login).join(", "), "white")
+  // );
+  // console.log(colorize(`🔢 Total commits: ${numCommits}`, "magenta"));
+  
 
   if (repoData.commits && repoData.commits.length > 0) {
     const firstCommit = repoData.commits[repoData.commits.length - 1];
     const lastCommit = repoData.commits[0];
-    console.log(
-      colorize(
-        `📅 First commit: ${firstCommit.date} by ${firstCommit.author}`,
-        "magenta"
-      )
-    );
-    console.log(
-      colorize(
-        `📅 Last commit: ${lastCommit.date} by ${lastCommit.author}`,
-        "magenta"
-      )
-    );
+    // console.log(
+    //   colorize(
+    //     `📅 First commit: ${firstCommit.date} by ${firstCommit.author}`,
+    //     "magenta"
+    //   )
+    // );
+    // console.log(
+    //   colorize(
+    //     `📅 Last commit: ${lastCommit.date} by ${lastCommit.author}`,
+    //     "magenta"
+    //   )
+    // );
   }
   // 1. Date check (repo creation and last commit)
   let datePass = true;
@@ -1018,35 +1041,35 @@ module.exports.analyzeRepo = async (
     eligible = eligible && demoPass;
   }
   // Print results
-  Object.entries(eligibilityResults).forEach(([k, v]) => {
-    const status = v.startsWith("PASS")
-      ? colorize("✅", "green")
-      : v.startsWith("N/A")
-      ? colorize("ℹ️", "blue")
-      : v.startsWith("ERROR")
-      ? colorize("❌", "red")
-      : colorize("❌", "red");
-    console.log(
-      `${status} ${colorize(k, "yellow")}: ${colorize(
-        v,
-        v.startsWith("PASS")
-          ? "green"
-          : v.startsWith("ERROR")
-          ? "red"
-          : "yellow"
-      )}`
-    );
-  });
-  console.log(
-    colorize(
-      `\n${
-        eligible
-          ? "🎉 ELIGIBLE for hackathon judging!"
-          : "🚫 NOT ELIGIBLE for hackathon judging."
-      }`,
-      eligible ? "green" : "red"
-    )
-  );
+  // Object.entries(eligibilityResults).forEach(([k, v]) => {
+  //   const status = v.startsWith("PASS")
+  //     ? colorize("✅", "green")
+  //     : v.startsWith("N/A")
+  //     ? colorize("ℹ️", "blue")
+  //     : v.startsWith("ERROR")
+  //     ? colorize("❌", "red")
+  //     : colorize("❌", "red");
+  //   console.log(
+  //     `${status} ${colorize(k, "yellow")}: ${colorize(
+  //       v,
+  //       v.startsWith("PASS")
+  //         ? "green"
+  //         : v.startsWith("ERROR")
+  //         ? "red"
+  //         : "yellow"
+  //     )}`
+  //   );
+  // });
+  // console.log(
+  //   colorize(
+  //     `\n${
+  //       eligible
+  //         ? "🎉 ELIGIBLE for hackathon judging!"
+  //         : "🚫 NOT ELIGIBLE for hackathon judging."
+  //     }`,
+  //     eligible ? "green" : "red"
+  //   )
+  // );
 
   ////
   let score = 0;
@@ -1142,7 +1165,7 @@ module.exports.analyzeRepo = async (
       );
       llmFeasibility = response.choices[0].message.content;
       console.log(section("LLM HACKATHON FEASIBILITY JUDGMENT", "🤖", "blue"));
-      console.log(colorize(llmFeasibility, "white"));
+      // console.log(colorize(llmFeasibility, "white"));
     } catch (e) {
       console.warn("LLM feasibility check failed:", e.message);
     }
@@ -1325,24 +1348,24 @@ module.exports.analyzeRepo = async (
 
     // Intelligent Insights
     console.log("\n💡 INTELLIGENT INSIGHTS:");
-    intelligentAnalysis.insights.forEach((insight, index) => {
-      const emoji =
-        insight.category === "strength"
-          ? colorize("✅", "green")
-          : insight.category === "improvement"
-          ? colorize("⚠️", "yellow")
-          : insight.category === "understanding"
-          ? colorize("🧠", "cyan")
-          : insight.category === "information"
-          ? colorize("📊", "magenta")
-          : colorize("💡", "green");
-      console.log(
-        `   ${emoji} ${insight.title} (${Math.round(
-          insight.confidence * 100
-        )}% confidence)`
-      );
-      console.log(`      ${insight.message}`);
-    });
+    // intelligentAnalysis.insights.forEach((insight, index) => {
+    //   const emoji =
+    //     insight.category === "strength"
+    //       ? colorize("✅", "green")
+    //       : insight.category === "improvement"
+    //       ? colorize("⚠️", "yellow")
+    //       : insight.category === "understanding"
+    //       ? colorize("🧠", "cyan")
+    //       : insight.category === "information"
+    //       ? colorize("📊", "magenta")
+    //       : colorize("💡", "green");
+    //   console.log(
+    //     `   ${emoji} ${insight.title} (${Math.round(
+    //       insight.confidence * 100
+    //     )}% confidence)`
+    //   );
+    //   console.log(`      ${insight.message}`);
+    // });
   }
 
   // Get comprehensive code analysis for detailed feedback
