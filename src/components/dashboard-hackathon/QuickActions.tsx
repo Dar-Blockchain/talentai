@@ -3,14 +3,16 @@ import BusinessIcon from '@mui/icons-material/Business';
 import CodeIcon from '@mui/icons-material/Code';
 import React from 'react';
 import { useRouter } from 'next/router';
+import GitHubIcon from '@mui/icons-material/GitHub';
 
 interface QuickActionsProps {
   projectId?: string;
   disableBusiness?: boolean;
   disableTechnical?: boolean;
+  onEvaluateCode: () => void;
 }
 
-const QuickActions: React.FC<QuickActionsProps> = ({ projectId, disableBusiness, disableTechnical }) => {
+const QuickActions: React.FC<QuickActionsProps> = ({ projectId, disableBusiness, disableTechnical, onEvaluateCode }) => {
   const router = useRouter();
   const goToInterview = (type: string) => {
     let url = `/hackathon-interview?type=${type}`;
@@ -90,6 +92,32 @@ const QuickActions: React.FC<QuickActionsProps> = ({ projectId, disableBusiness,
               Technical Meeting
             </Button>
           </span>
+        </Tooltip>
+        <Tooltip title="Evaluate your project's code quality from a GitHub repository">
+          <Button
+            variant="outlined"
+            startIcon={<GitHubIcon sx={{ color: '#333' }} />}
+            size="small"
+            sx={{
+              borderColor: '#333',
+              color: '#333',
+              fontWeight: 700,
+              borderRadius: 2,
+              fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif',
+              boxShadow: '0 1px 4px #33333322',
+              transition: 'all 0.2s',
+              '&:hover': {
+                borderColor: '#000',
+                bgcolor: 'rgba(51, 51, 51, 0.04)',
+                color: '#000',
+                boxShadow: '0 2px 8px #33333344',
+                transform: 'scale(1.05)',
+              },
+            }}
+            onClick={onEvaluateCode}
+          >
+            Evaluate Code
+          </Button>
         </Tooltip>
       </CardContent>
     </Card>

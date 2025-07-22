@@ -25,6 +25,7 @@ const todoRouter = require("./routes/todoRouter");
 const feedbackRouter = require("./routes/feedbackRoutes");
 const logRoutes = require("./routes/logRoutes");
 const interviewDetailsRouter = require("./routes/interviewDetailsRouter");
+const repoAnalyzerRouter = require("./routes/repoAnalyzerRouter");
 const notificationRouter = require("./routes/notificationRouter");
 require("dotenv").config();
 
@@ -67,6 +68,7 @@ app.use("/resume", resumeRouter);
 app.use("/todo", todoRouter);
 app.use("/logs", logRoutes);
 app.use("/interviewDetails", interviewDetailsRouter);
+app.use("/repo-analyzer", repoAnalyzerRouter);
 app.use("/notification", notificationRouter);
 
 app.get("/some-route", (req, res) => {
