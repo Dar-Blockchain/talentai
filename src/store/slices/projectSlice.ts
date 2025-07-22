@@ -507,6 +507,35 @@ export interface HederaEcosystemImpact {
   recommendation?: string[];
 }
 
+export const evaluateProjectCode = createAsyncThunk<
+  { codeQualityScore: number },
+  { projectId: string; githubLink: string },
+  { rejectValue: string }
+>(
+  'projects/evaluateProjectCode',
+  async ({ projectId, githubLink }, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('api_token');
+      if (!token) return rejectWithValue('No authentication token found');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}repo-analyzer/analyze/${projectId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ githubLink, template: 'auto' }),
+      });
+      if (!response.ok) {
+        const error = await response.text();
+        return rejectWithValue(error || 'Failed to evaluate code');
+      }
+      return await response.json();
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to evaluate code');
+    }
+  }
+);
+
 export const downloadProjectPdf = createAsyncThunk<Blob, any, { rejectValue: string }>(
   'projects/downloadProjectPdf',
   async (projectId, { rejectWithValue }) => {
