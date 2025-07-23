@@ -162,7 +162,7 @@ const getActivationTemplate = (activationLink, project) => `
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Invitation à confirmer votre contribution au projet – ${project.name}</title>
+    <title>Invitation to Confirm Your Contribution to – ${project.name}</title>
   </head>
   <body style="font-family: Arial, sans-serif; margin:0; padding:0; background-color:#F7FAFC;">
     <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F7FAFC;">
@@ -173,30 +173,31 @@ const getActivationTemplate = (activationLink, project) => `
             <tr>
               <td style="background-color:#2B6CB0; color:#ffffff; text-align:center; padding:32px 20px 20px 20px;">
                 <img src="https://talentai.bid/image/logo.svg" alt="TalenIA Logo" width="64" height="64" style="display:block; margin:0 auto 12px auto;" onerror="this.style.display='none'" />
-                <h1 style="margin:0; font-size:24px;">Confirmation de votre contribution au projet <strong>${project.name}</strong></h1>
+                <h1 style="margin:0; font-size:24px;">Confirm your contribution to project <strong>${project.name}</strong></h1>
               </td>
             </tr>
 
             <!-- Content -->
             <tr>
               <td style="padding:36px 32px 24px 32px; color:#2D3748;">
-                <p style="font-size:16px; margin:18px 0;">Bonjour,</p>
+                <p style="font-size:16px; margin:18px 0;">Hello,</p>
                 <p style="font-size:16px; margin:18px 0;">
-                 Afin de valider votre rôle de contributeur et de vous permettre de suivre l’évaluation du projet <strong>${project.name}</strong> sur TalentAI, veuillez confirmer votre participation en cliquant sur le bouton ci-dessous.
+                 
+                  To validate your role as a contributor and access the project <strong>${project.name}</strong>'s evaluation on TalenIA, please confirm your participation by clicking the button below.
                  </p>
 
                 <table align="center" cellpadding="0" cellspacing="0" role="presentation" style="margin:32px auto 18px auto;">
                   <tr>
                     <td bgcolor="#2B6CB0" style="padding:14px 24px; text-align:center;">
                       <a href="${activationLink}" target="_blank" style="color:#ffffff; font-size:16px; font-weight:bold; text-decoration:none; display:inline-block;">
-                        Confirmer
+                        Confirm
                       </a>
                     </td>
                   </tr>
                 </table>
 
                 <p style="font-size:14px; color:#4A5568; margin-top:18px;">
-                  Si vous n'êtes pas concerné·e par ce projet, vous pouvez ignorer ce message.
+                  If you are not involved in this project, you may safely ignore this message.
                 </p>
               </td>
             </tr>
@@ -204,9 +205,9 @@ const getActivationTemplate = (activationLink, project) => `
             <!-- Footer -->
             <tr>
               <td style="text-align:center; color:#718096; font-size:14px; background-color:#F7FAFC; padding:20px 10px 16px 10px;">
-                Besoin d'aide ? Contactez-nous à 
+                Need help? Contact us at 
                 <a href="mailto:support@talentai.bid" style="color:#2B6CB0; text-decoration:none;">support@talentai.bid</a><br/>
-                <span style="display:block; margin-top:8px;">&copy; ${new Date().getFullYear()} TalenIA. Tous droits réservés.</span>
+o                <span style="display:block; margin-top:8px;">&copy; ${new Date().getFullYear()} TalenIA. All rights reserved.</span>
               </td>
             </tr>
           </table>
@@ -223,7 +224,7 @@ const sendActivationEmail = async (to, activationLink, project) => {
   const mailOptions = {
     from: '"TalenIA" <contact@talentai.bid>',
     to,
-    subject: `Confirmation contributeur - Projet: ${project.name} `,
+    subject: `Confirm your contributor role – Project: ${project.name}`,
     html: getActivationTemplate(activationLink, project),
   };
 
