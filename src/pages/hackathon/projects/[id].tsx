@@ -50,14 +50,11 @@ import DialogActions from '@mui/material/DialogActions';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import clsx from 'clsx';
 import { styled } from '@mui/material/styles';
-import { getMyProfile } from '@/store/slices/profileSlice';
 import { logout } from '@/store/slices/authSlice';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { TextField } from '@mui/material';
 import CodeIcon from '@mui/icons-material/Code';
 import { evaluateProjectCode } from '@/store/slices/projectSlice';
-
-
 interface TeamMember {
   name: string;
   email: string;
@@ -77,7 +74,7 @@ interface ProjectAPIData {
   name: string;
   description: string;
   team: { name?: string; role?: string; email: string; validated?: boolean; _id?: string }[];
-  leaderId: string;
+  leader: string;
   createdAt: string;
   updatedAt: string;
   track?: string;
@@ -93,6 +90,7 @@ interface Assessment {
   __v?: number;
   businessData?: any;
   overallScore?: number;
+  codeAnalysis?: any; // Add codeAnalysis field
 }
 
 interface ProjectData {
@@ -103,7 +101,7 @@ interface ProjectData {
   _id: string;
   track?: string;
   assessment?: Assessment;
-  leaderId?: Leader;
+  leader?: Leader;
 }
 
 const blobAnimation = keyframes`
@@ -186,14 +184,13 @@ const HackathonDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
-  const profile = useSelector((state: RootState) => state.profile.profile);
-  const profileLoading = useSelector((state: RootState) => state.profile.loading);
   const [mounted, setMounted] = useState(false);
   // --- Modal State ---
   const [openTechModal, setOpenTechModal] = useState(false);
   const [openBizModal, setOpenBizModal] = useState(false);
   const [openFullModal, setOpenFullModal] = useState(false);
   const [openCodeEvalModal, setOpenCodeEvalModal] = useState(false);
+  const [openCodeAnalysisModal, setOpenCodeAnalysisModal] = useState(false); // NEW: code analysis modal
   const [githubLink, setGithubLink] = useState('');
   const [codeQualityScore, setCodeQualityScore] = useState<number | null>(null);
   const [evaluating, setEvaluating] = useState(false);
@@ -204,11 +201,15 @@ const HackathonDashboard = () => {
   const assessment = projectData?.assessment || null;
   const hasBusinessData = !!assessment?.businessData;
   const hasTechnicalData = !!assessment?.technicalData;
+  const hasCodeAnalysis = !!assessment?.codeAnalysis;
   const availableMeetings = (!hasBusinessData ? 1 : 0) + (!hasTechnicalData ? 1 : 0);
   // --- Extracted Scores ---
   const techScore = assessment?.technicalData?.overallScore;
   const bizScore = assessment?.businessData?.overallScore;
   const overallScore = assessment?.overallScore;
+  // If codeAnalysis exists, prefer its score for code quality
+  const codeAnalysisScore = assessment?.codeAnalysis?.overallScore ?? codeQualityScore;
+
   const handleCodeEvalSubmit = async () => {
     if(!projectData?._id){
       return;
@@ -243,12 +244,6 @@ const HackathonDashboard = () => {
     }
   }, [isAuthenticated, router]);
 
-  useEffect(() => {
-    if (!profile && !profileLoading && isAuthenticated) {
-      void dispatch(getMyProfile());
-    }
-  }, [profile, profileLoading, isAuthenticated, dispatch]);
-
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
@@ -262,18 +257,7 @@ const HackathonDashboard = () => {
             { headers: token ? { Authorization: `Bearer ${token}` } : {} });
           if (!res.ok) throw new Error('Failed to fetch project by id');
           project = await res.json();
-        } else {
-          // Default: fetch my projects and pick latest
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/getMyProjects`,
-            { headers: token ? { Authorization: `Bearer ${token}` } : {} });
-          if (!res.ok) throw new Error('Failed to fetch projects');
-          const data: ProjectAPIData[] = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            // Sort by createdAt descending and pick the most recent
-            const sorted = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-            project = sorted[0];
-          }
-        }
+        } 
         if (project) {
           // Map API team to required TeamMember[]
           const teamMembers: TeamMember[] = project.team.map((member, idx) => ({
@@ -290,7 +274,7 @@ const HackathonDashboard = () => {
             _id: project._id,
             track: project.track,
             assessment: (project as any).assessment,
-            leaderId: (project as any).leaderId,
+            leader: (project as any).leader,
           });
         } else {
           setProjectData(null);
@@ -340,8 +324,6 @@ const HackathonDashboard = () => {
     dispatch(logout());
     router.replace('/signin?source=hackathon');
   };
-
-
 
   // --- Score Chip Helper ---
   const renderScoreChip = (score: number | undefined | null) => {
@@ -399,14 +381,280 @@ const HackathonDashboard = () => {
     );
   };
 
+  // --- Code Analysis Modal Content Helper ---
+  // This modal displays all details from the codeAnalysisModel.js schema.
 
+
+  // Helper to render a list of strings
+  const renderStringList = (arr: string[] | undefined) =>
+    Array.isArray(arr) && arr.length > 0 ? (
+      <Box component="ul" sx={{ pl: 3, mb: 1 }}>
+        {arr.map((item, idx) => (
+          <li key={idx}>
+            <Typography variant="body2">{item}</Typography>
+          </li>
+        ))}
+      </Box>
+    ) : null;
+
+  // Helper to render an object as key-value pairs
+  const renderObjectDetails = (obj: any) =>
+    obj && typeof obj === 'object' ? (
+      <Box component="ul" sx={{ pl: 3, mb: 1 }}>
+        {Object.entries(obj).map(([key, value]) => (
+          <li key={key}>
+            <Typography variant="body2">
+              <strong>{key}:</strong> {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+            </Typography>
+          </li>
+        ))}
+      </Box>
+    ) : null;
+
+  const renderProjectPurpose = (purpose: any) => {
+    if (!purpose) return null;
+    return (
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Project Purpose</Typography>
+        {purpose.domain && <Typography variant="body2"><strong>Domain:</strong> {purpose.domain}</Typography>}
+        {purpose.type && <Typography variant="body2"><strong>Type:</strong> {purpose.type}</Typography>}
+        {purpose.complexity && <Typography variant="body2"><strong>Complexity:</strong> {purpose.complexity}</Typography>}
+        {purpose.target && <Typography variant="body2"><strong>Target:</strong> {purpose.target}</Typography>}
+        {typeof purpose.confidence === 'number' && <Typography variant="body2"><strong>Confidence:</strong> {purpose.confidence}</Typography>}
+        {purpose.description && <Typography variant="body2"><strong>Description:</strong> {purpose.description}</Typography>}
+        {renderStringList(purpose.features)}
+        {renderStringList(purpose.technologies)}
+        {renderStringList(purpose.keyFiles)}
+        {purpose.conclusion && <Typography variant="body2"><strong>Conclusion:</strong> {purpose.conclusion}</Typography>}
+      </Box>
+    );
+  };
+
+  const renderArchitecture = (architecture: any) => {
+    if (!architecture) return null;
+    return (
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Architecture</Typography>
+        {architecture.pattern && <Typography variant="body2"><strong>Pattern:</strong> {architecture.pattern}</Typography>}
+        {renderStringList(architecture.layers)}
+        {renderStringList(architecture.patterns)}
+        {typeof architecture.quality === 'number' && <Typography variant="body2"><strong>Quality:</strong> {architecture.quality}</Typography>}
+        {renderStringList(architecture.strengths)}
+        {renderStringList(architecture.weaknesses)}
+        {architecture.structure && (
+          <Box sx={{ mt: 1 }}>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>Structure:</Typography>
+            {renderStringList(architecture.structure.rootFiles)}
+            {architecture.structure.srcStructure && (
+              <Box sx={{ pl: 2 }}>
+                <Typography variant="body2" sx={{ fontWeight: 700 }}>srcStructure:</Typography>
+                {renderStringList(architecture.structure.srcStructure.components)}
+                {renderStringList(architecture.structure.srcStructure.services)}
+                {renderStringList(architecture.structure.srcStructure.utils)}
+                {renderStringList(architecture.structure.srcStructure.types)}
+                {renderStringList(architecture.structure.srcStructure.hooks)}
+                {renderStringList(architecture.structure.srcStructure.pages)}
+                {renderStringList(architecture.structure.srcStructure.assets)}
+              </Box>
+            )}
+            {renderStringList(architecture.structure.configFiles)}
+            {renderStringList(architecture.structure.documentation)}
+            {renderStringList(architecture.structure.testing)}
+            {renderStringList(architecture.structure.deployment)}
+          </Box>
+        )}
+      </Box>
+    );
+  };
+
+  const renderCoherence = (coherence: any) => {
+    if (!coherence) return null;
+    return (
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Coherence</Typography>
+        {typeof coherence.consistency === 'number' && <Typography variant="body2"><strong>Consistency:</strong> {coherence.consistency}</Typography>}
+        {typeof coherence.naming === 'number' && <Typography variant="body2"><strong>Naming:</strong> {coherence.naming}</Typography>}
+        {typeof coherence.structure === 'number' && <Typography variant="body2"><strong>Structure:</strong> {coherence.structure}</Typography>}
+        {typeof coherence.patterns === 'number' && <Typography variant="body2"><strong>Patterns:</strong> {coherence.patterns}</Typography>}
+      </Box>
+    );
+  };
+
+  const renderSecurity = (security: any) => {
+    if (!security) return null;
+    return (
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Security</Typography>
+        {renderStringList(security.issues)}
+        {renderStringList(security.recommendations)}
+        {typeof security.score === 'number' && <Typography variant="body2"><strong>Score:</strong> {security.score}</Typography>}
+      </Box>
+    );
+  };
+
+  const renderTesting = (testing: any) => {
+    if (!testing) return null;
+    return (
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Testing</Typography>
+        {renderStringList(testing.coverage)}
+        {renderStringList(testing.issues)}
+        {renderStringList(testing.recommendations)}
+        {typeof testing.score === 'number' && <Typography variant="body2"><strong>Score:</strong> {testing.score}</Typography>}
+      </Box>
+    );
+  };
+
+  const renderDocumentation = (documentation: any) => {
+    if (!documentation) return null;
+    return (
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Documentation</Typography>
+        {renderStringList(documentation.files)}
+        {renderStringList(documentation.issues)}
+        {renderStringList(documentation.recommendations)}
+        {typeof documentation.score === 'number' && <Typography variant="body2"><strong>Score:</strong> {documentation.score}</Typography>}
+      </Box>
+    );
+  };
+
+  const renderMaintainability = (maintainability: any) => {
+    if (!maintainability) return null;
+    return (
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Maintainability</Typography>
+        {renderStringList(maintainability.issues)}
+        {renderStringList(maintainability.recommendations)}
+        {typeof maintainability.score === 'number' && <Typography variant="body2"><strong>Score:</strong> {maintainability.score}</Typography>}
+      </Box>
+    );
+  };
+
+  const renderDependencies = (dependencies: any) => {
+    if (!dependencies) return null;
+    return (
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Dependencies</Typography>
+        {renderStringList(dependencies.list)}
+        {renderStringList(dependencies.issues)}
+        {renderStringList(dependencies.recommendations)}
+        {typeof dependencies.score === 'number' && <Typography variant="body2"><strong>Score:</strong> {dependencies.score}</Typography>}
+      </Box>
+    );
+  };
+
+  const renderPerformance = (performance: any) => {
+    if (!performance) return null;
+    return (
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Performance</Typography>
+        {renderStringList(performance.issues)}
+        {renderStringList(performance.recommendations)}
+        {typeof performance.score === 'number' && <Typography variant="body2"><strong>Score:</strong> {performance.score}</Typography>}
+      </Box>
+    );
+  };
+
+  const renderOtherSections = (codeAnalysis: any) => {
+    // Render any additional fields not covered above
+    const knownKeys = [
+      'summary', 'overallScore', 'metrics', 'issues', 'recommendations', 'createdAt',
+      'projectPurpose', 'architecture', 'coherence', 'security', 'testing', 'documentation',
+      'maintainability', 'dependencies', 'performance'
+    ];
+    return Object.entries(codeAnalysis)
+      .filter(([key]) => !knownKeys.includes(key))
+      .map(([key, value]) => (
+        <Box key={key} sx={{ mb: 2 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>{key.charAt(0).toUpperCase() + key.slice(1)}</Typography>
+          {typeof value === 'object' ? renderObjectDetails(value) : <Typography variant="body2">{String(value)}</Typography>}
+        </Box>
+      ));
+  };
+
+  const renderCodeAnalysisModalContent = (codeAnalysis: any) => {
+    if (!codeAnalysis) {
+      return <Typography>No code analysis available.</Typography>;
+    }
+    return (
+      <Box>
+        <Typography variant="h6" sx={{ mb: 2 }}>Code Analysis Report</Typography>
+        {codeAnalysis.summary && (
+          <Typography sx={{ mb: 2 }}>{codeAnalysis.summary}</Typography>
+        )}
+        {typeof codeAnalysis.overallScore === 'number' && (
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Overall Code Quality Score</Typography>
+            {renderScoreChip(codeAnalysis.overallScore)}
+          </Box>
+        )}
+        {codeAnalysis.metrics && (
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Metrics</Typography>
+            <Box component="ul" sx={{ pl: 3 }}>
+              {Object.entries(codeAnalysis.metrics).map(([key, value]) => (
+                <li key={key}>
+                  <Typography variant="body2">
+                    <strong>{key}:</strong> {typeof value === 'number' ? value.toFixed(2) : String(value)}
+                  </Typography>
+                </li>
+              ))}
+            </Box>
+          </Box>
+        )}
+        {Array.isArray(codeAnalysis.issues) && codeAnalysis.issues.length > 0 && (
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Detected Issues</Typography>
+            <Box component="ul" sx={{ pl: 3 }}>
+              {codeAnalysis.issues.map((issue: any, idx: number) => (
+                <li key={idx}>
+                  <Typography variant="body2">
+                    {issue.description || issue}
+                  </Typography>
+                </li>
+              ))}
+            </Box>
+          </Box>
+        )}
+        {Array.isArray(codeAnalysis.recommendations) && codeAnalysis.recommendations.length > 0 && (
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Recommendations</Typography>
+            <Box component="ul" sx={{ pl: 3 }}>
+              {codeAnalysis.recommendations.map((rec: any, idx: number) => (
+                <li key={idx}>
+                  <Typography variant="body2">
+                    {rec}
+                  </Typography>
+                </li>
+              ))}
+            </Box>
+          </Box>
+        )}
+        {renderProjectPurpose(codeAnalysis.projectPurpose)}
+        {renderArchitecture(codeAnalysis.architecture)}
+        {renderCoherence(codeAnalysis.coherence)}
+        {renderSecurity(codeAnalysis.security)}
+        {renderTesting(codeAnalysis.testing)}
+        {renderDocumentation(codeAnalysis.documentation)}
+        {renderMaintainability(codeAnalysis.maintainability)}
+        {renderDependencies(codeAnalysis.dependencies)}
+        {renderPerformance(codeAnalysis.performance)}
+        {renderOtherSections(codeAnalysis)}
+        {codeAnalysis.createdAt && (
+          <Typography variant="caption" sx={{ color: 'text.secondary', mt: 2 }}>
+            Created: {new Date(codeAnalysis.createdAt).toLocaleString()}
+          </Typography>
+        )}
+      </Box>
+    );
+  };
 
   // --- Main Render ---
   // Determine current user email from Redux only
   const currentUserEmail = user?.email;
-  console.log(currentUserEmail,"lalalala")
+  // console.log(currentUserEmail,"lalalala")
   const isTeamMember = !!(currentUserEmail && projectData && projectData.teamMembers.some(member => member.email === currentUserEmail));
-  const isLeader = !!(currentUserEmail && projectData && projectData.leaderId && projectData.leaderId.email === currentUserEmail);
+  const isLeader = !!(currentUserEmail && projectData && projectData.leader && projectData.leader.email === currentUserEmail);
   return (
     <Box sx={{ bgcolor: 'linear-gradient(120deg, #F3E5F5 0%, #E1F5FE 100%)', minHeight: '100vh', pb: 6 }}>
       {/* Navbar */}
@@ -590,8 +838,8 @@ const HackathonDashboard = () => {
                 Leader
               </Typography>
               <Typography variant="body1" sx={{ color: '#2E3A59', fontWeight: 700, fontSize: '1.08rem' }}>
-                {projectData.leaderId && projectData.leaderId.FirstName && projectData.leaderId.LastName
-                  ? `${projectData.leaderId.FirstName} ${projectData.leaderId.LastName}`
+                {projectData.leader && projectData.leader.FirstName && projectData.leader.LastName
+                  ? `${projectData.leader.FirstName} ${projectData.leader.LastName}`
                   : 'N/A'}
               </Typography>
             </Box>
@@ -639,14 +887,43 @@ const HackathonDashboard = () => {
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
               <CodeIcon sx={{ color: '#333', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #33333311)' }} />
               <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#7C4DFF', letterSpacing: 0.2 }}>Code Quality</Typography>
-              {renderScoreChip(codeQualityScore)}
-              <Button size="small" variant="contained" sx={{ mt: 2, fontWeight: 700, borderRadius: 2, background: '#333', color: '#fff', boxShadow: '0 2px 8px #33333322', '&:hover': { background: '#000' } }} onClick={() => setOpenCodeEvalModal(true)}
-                disabled={!!codeQualityScore || evaluating}
-              >
-                Evaluate Code
-              </Button>
+              {renderScoreChip(codeAnalysisScore)}
+              <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                <Button
+                  size="small"
+                  variant="contained"
+                  sx={{
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    background: '#333',
+                    color: '#fff',
+                    boxShadow: '0 2px 8px #33333322',
+                    '&:hover': { background: '#000' }
+                  }}
+                  onClick={() => setOpenCodeEvalModal(true)}
+                  disabled={!!codeAnalysisScore || evaluating}
+                >
+                  Evaluate Code
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    color: '#7C4DFF',
+                    borderColor: '#E3EAFD',
+                    background: '#F7F8FA',
+                    '&:hover': { background: '#F3F6FD', borderColor: '#7C4DFF' }
+                  }}
+                  onClick={() => setOpenCodeAnalysisModal(true)}
+                  disabled={!hasCodeAnalysis}
+                >
+                  View Code Analysis
+                </Button>
+              </Box>
             </Box>
-                        <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E0F7FA', borderRightWidth: 2 }} />
+            <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E0F7FA', borderRightWidth: 2 }} />
             {/* Overall Score */}
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
               <TrendingUpIcon sx={{ color: '#00BFAE', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #00BFAE11)' }} />
@@ -694,6 +971,16 @@ const HackathonDashboard = () => {
           <Button onClick={handleCodeEvalSubmit} variant="contained" disabled={evaluating || !!codeQualityScore}>
             {evaluating ? <CircularProgress size={24} /> : 'Evaluate'}
           </Button>
+        </DialogActions>
+      </Dialog>
+      {/* Code Analysis Modal */}
+      <Dialog open={openCodeAnalysisModal} onClose={() => setOpenCodeAnalysisModal(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Code Analysis Details</DialogTitle>
+        <DialogContent dividers>
+          {renderCodeAnalysisModalContent(assessment?.codeAnalysis)}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenCodeAnalysisModal(false)}>Close</Button>
         </DialogActions>
       </Dialog>
       {/* Technical Report Modal */}
