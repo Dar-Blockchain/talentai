@@ -350,7 +350,7 @@ module.exports.getAllProjects = async (
 // Récupération des projets de l'utilisateur connecté
 module.exports.getMyProjects = async (userId) => {
   try {
-    const projects = await Project.find({ leaderId: userId }).populate([
+    let projects = await Project.find({ leaderId: userId }).populate([
       { 
         path: "assessment", 
         model: "ProjectAssessment",
@@ -359,6 +359,17 @@ module.exports.getMyProjects = async (userId) => {
       { path: "leaderId", model: "User" },
       { path: "leaderProfile", model: "Profile" },
     ]);
+
+    // Rename leaderId to leader in each project
+    projects = projects.map((project) => {
+      // Convert to plain object if it's a Mongoose document
+      const projObj = project.toObject ? project.toObject() : project;
+      if (projObj.leaderId) {
+        projObj.leader = projObj.leaderId;
+        delete projObj.leaderId;
+      }
+      return projObj;
+    });
 
     return projects;
   } catch (error) {
@@ -379,9 +390,23 @@ module.exports.getNumberProjects = async (userId) => {
 // Récupération d'un projet par son ID
 module.exports.getProjectById = async (id) => {
   try {
-    const project = await Project.findById(id).populate("leaderId"); // ← Ajoute le populate ici
+    let project = await Project.findById(id)
+      .populate([
+        { 
+          path: "assessment", 
+          model: "ProjectAssessment",
+          populate: { path: "codeAnalysis", model: "CodeAnalysis" }
+        },
+        { path: "leaderId", model: "User" }
+      ]);
 
     if (!project) throw new Error("Projet non trouvé");
+
+    if (project && project.leaderId) {
+      project = project.toObject();
+      project.leader = project.leaderId;
+      delete project.leaderId;
+    }
     return project;
   } catch (error) {
     throw new Error("Erreur lors de la récupération du projet");
