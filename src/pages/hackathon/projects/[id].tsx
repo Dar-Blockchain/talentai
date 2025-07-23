@@ -211,7 +211,7 @@ const HackathonDashboard = () => {
   const bizScore = assessment?.businessData?.overallScore;
   const overallScore = assessment?.overallScore;
   // If codeAnalysis exists, prefer its score for code quality
-  const codeAnalysisScore = assessment?.codeAnalysis?.overallScore ?? codeQualityScore;
+  const codeAnalysisScore = assessment?.codeAnalysis.analysis.quality.overall ?? codeQualityScore;
 
   const handleCodeEvalSubmit = async () => {
     if(!projectData?._id){
@@ -221,7 +221,7 @@ const HackathonDashboard = () => {
       setGithubLinkError('Please enter a valid GitHub repository URL'); 
       return;
     }
-    if (!validateGithubLink(githubLink)) {
+    if (!validateGithubLink(githubLink)) {isProjectComplete
       setGithubLinkError('Please enter a valid GitHub repository URL (e.g. https://github.com/user/repo)');
       return;
     }
@@ -330,7 +330,7 @@ const HackathonDashboard = () => {
 
   // --- Score Chip Helper ---
   const renderScoreChip = (score: number | undefined | null) => {
-    if (score === undefined || score === null) {
+    if (score == null) {
       return (
         <Chip
           label="N/A"
@@ -390,6 +390,8 @@ const HackathonDashboard = () => {
   // console.log(currentUserEmail,"lalalala")
   const isTeamMember = !!(currentUserEmail && projectData && projectData.teamMembers.some(member => member.email === currentUserEmail));
   const isLeader = !!(currentUserEmail && projectData && projectData.leader && projectData.leader.email === currentUserEmail);
+  // Change the logic for project complete:
+  const isProjectComplete = hasBusinessData && hasTechnicalData && hasCodeAnalysis;
   return (
     <Box sx={{ bgcolor: 'linear-gradient(120deg, #F3E5F5 0%, #E1F5FE 100%)', minHeight: '100vh', pb: 6 }}>
       {/* Navbar */}
@@ -1023,6 +1025,7 @@ const HackathonDashboard = () => {
                   disableBusiness={hasBusinessData}
                   disableTechnical={hasTechnicalData}
                   onEvaluateCode={() => setOpenCodeEvalModal(true)}
+                  disableEvaluateCode={hasCodeAnalysis}
                 />
               </Box>
             )}
@@ -1099,17 +1102,42 @@ const HackathonDashboard = () => {
                 }}>
                   <EmojiEventsIcon sx={{ color: '#7C4DFF', fontSize: 36, mb: 1 }} />
                   <Typography variant="h4" sx={{ fontWeight: 900, color: '#7C4DFF', mb: 0.5, textShadow: '0 1px 4px #7C4DFF11' }}>
-                    {hasBusinessData && hasTechnicalData ? '✔' : '…'}
+                    {isProjectComplete ? '✔' : '…'}
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#2E3A59', fontWeight: 700 }}>
-                    {hasBusinessData && hasTechnicalData ? 'Project Complete!' : 'In Progress'}
+                    {isProjectComplete ? 'Project Complete!' : 'In Progress'}
+                  </Typography>
+                </Box>
+                {/* Code Evaluation Status */}
+                <Box sx={{
+                  flex: 1,
+                  minWidth: 180,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  p: 2,
+                  borderRadius: 4,
+                  background: '#F3F6FD',
+                  boxShadow: '0 2px 8px #33333308',
+                  mb: { xs: 2, md: 0 },
+                }}>
+                  {hasCodeAnalysis ? (
+                    <CheckCircleIcon sx={{ color: '#43e97b', fontSize: 36, mb: 1 }} />
+                  ) : (
+                    <WarningAmberIcon sx={{ color: '#e53935', fontSize: 36, mb: 1 }} />
+                  )}
+                  <Typography variant="h4" sx={{ fontWeight: 900, color: hasCodeAnalysis ? '#43e97b' : '#e53935', mb: 0.5 }}>
+                    {hasCodeAnalysis ? '✔' : '…'}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#2E3A59', fontWeight: 700 }}>
+                    {hasCodeAnalysis ? 'Code Evaluated' : 'Code Not Evaluated'}
                   </Typography>
                 </Box>
               </Box>
             </Box>
           </Box>
           {/* Right: Team Members */}
-          <TeamMembers teamMembers={projectData.teamMembers} projectId={projectData._id} />
+          <TeamMembers teamMembers={projectData.teamMembers} projectId={projectData._id} isOwner={isLeader} />
         </Box>
       </Container>
       {/* Footer */}
