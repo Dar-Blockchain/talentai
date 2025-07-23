@@ -96,7 +96,7 @@ module.exports.createProject = async (data, baseUrl) => {
 
     for (const member of teamWithTokens) {
       const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${member.activationToken}`;
-      await sendActivationEmail(member.email, link);
+      await sendActivationEmail(member.email, link, project);
     }
 
     await User.findByIdAndUpdate(data.leaderId, {
