@@ -7,12 +7,9 @@ const fs = require("fs");
  * @returns {Object} - { found: boolean, filePath: string, mimeType: string }
  */
 const getImage = (imageName) => {
-
   const imagesDir = path.join(__dirname, "../images");
   const allowedExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"];
   const ext = path.extname(imageName.trim()).toLowerCase();
-
-  console.log("check ext: ", ext);
 
   if (!allowedExtensions.includes(ext)) {
     return { found: false, filePath: null, mimeType: null };
@@ -20,17 +17,13 @@ const getImage = (imageName) => {
 
   const filePath = path.join(imagesDir, imageName.trim());
 
-  console.log("lifePath:",filePath);
-
   // Check if the file exists using an absolute path and log for debugging
   try {
     const resolvedPath = path.resolve(filePath);
-    console.log("Resolved file path:", resolvedPath);
     if (!fs.existsSync(resolvedPath) || !fs.statSync(resolvedPath).isFile()) {
       return { found: false, filePath: null, mimeType: null };
     }
   } catch (err) {
-    console.error("Error checking file existence:", err);
     return { found: false, filePath: null, mimeType: null };
   }
 

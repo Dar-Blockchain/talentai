@@ -1,15 +1,8 @@
 const imageService = require("../services/imageService");
-const path = require("path");
-const fs = require("fs");
 
-/**
- * Controller to handle GET /:image
- * Serves an image file from the public/images directory.
- */
 module.exports.getImage = (req, res) => {
   const imageName = req.params.image;
 
-  // Use the service to get image info
   const { found, filePath, mimeType } = imageService.getImage(imageName);
 
   console.log("found: ", found, "filePath: ", filePath, "mimeType: ", mimeType);
