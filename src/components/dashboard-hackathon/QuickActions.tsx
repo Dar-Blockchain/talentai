@@ -10,9 +10,10 @@ interface QuickActionsProps {
   disableBusiness?: boolean;
   disableTechnical?: boolean;
   onEvaluateCode: () => void;
+  disableEvaluateCode?: boolean;
 }
 
-const QuickActions: React.FC<QuickActionsProps> = ({ projectId, disableBusiness, disableTechnical, onEvaluateCode }) => {
+const QuickActions: React.FC<QuickActionsProps> = ({ projectId, disableBusiness, disableTechnical, onEvaluateCode, disableEvaluateCode }) => {
   const router = useRouter();
   const goToInterview = (type: string) => {
     let url = `/hackathon-interview?type=${type}`;
@@ -115,6 +116,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ projectId, disableBusiness,
               },
             }}
             onClick={onEvaluateCode}
+            disabled={disableEvaluateCode}
           >
             Evaluate Code
           </Button>

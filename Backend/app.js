@@ -27,6 +27,8 @@ const logRoutes = require("./routes/logRoutes");
 const interviewDetailsRouter = require("./routes/interviewDetailsRouter");
 const repoAnalyzerRouter = require("./routes/repoAnalyzerRouter");
 const notificationRouter = require("./routes/notificationRouter");
+const imageRouter = require("./routes/imageRouter");
+
 require("dotenv").config();
 
 const app = express();
@@ -70,6 +72,7 @@ app.use("/logs", logRoutes);
 app.use("/interviewDetails", interviewDetailsRouter);
 app.use("/repo-analyzer", repoAnalyzerRouter);
 app.use("/notification", notificationRouter);
+app.use("/image", imageRouter);
 
 app.get("/some-route", (req, res) => {
   res.json("Route accessible");

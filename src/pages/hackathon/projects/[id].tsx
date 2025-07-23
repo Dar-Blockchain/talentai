@@ -50,13 +50,13 @@ import DialogActions from '@mui/material/DialogActions';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import clsx from 'clsx';
 import { styled } from '@mui/material/styles';
-import { getMyProfile } from '@/store/slices/profileSlice';
 import { logout } from '@/store/slices/authSlice';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { TextField } from '@mui/material';
 import CodeIcon from '@mui/icons-material/Code';
 import { evaluateProjectCode } from '@/store/slices/projectSlice';
 
+import CodeAnalysisModal from '@/components/dashboard-hackathon/CodeAnalysisModal';
 
 interface TeamMember {
   name: string;
@@ -77,7 +77,7 @@ interface ProjectAPIData {
   name: string;
   description: string;
   team: { name?: string; role?: string; email: string; validated?: boolean; _id?: string }[];
-  leaderId: string;
+  leader: string;
   createdAt: string;
   updatedAt: string;
   track?: string;
@@ -93,6 +93,7 @@ interface Assessment {
   __v?: number;
   businessData?: any;
   overallScore?: number;
+  codeAnalysis?: any; // Add codeAnalysis field
 }
 
 interface ProjectData {
@@ -103,7 +104,7 @@ interface ProjectData {
   _id: string;
   track?: string;
   assessment?: Assessment;
-  leaderId?: Leader;
+  leader?: Leader;
 }
 
 const blobAnimation = keyframes`
@@ -186,14 +187,13 @@ const HackathonDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
-  const profile = useSelector((state: RootState) => state.profile.profile);
-  const profileLoading = useSelector((state: RootState) => state.profile.loading);
   const [mounted, setMounted] = useState(false);
   // --- Modal State ---
   const [openTechModal, setOpenTechModal] = useState(false);
   const [openBizModal, setOpenBizModal] = useState(false);
   const [openFullModal, setOpenFullModal] = useState(false);
   const [openCodeEvalModal, setOpenCodeEvalModal] = useState(false);
+  const [openCodeAnalysisModal, setOpenCodeAnalysisModal] = useState(false); // NEW: code analysis modal
   const [githubLink, setGithubLink] = useState('');
   const [codeQualityScore, setCodeQualityScore] = useState<number | null>(null);
   const [evaluating, setEvaluating] = useState(false);
@@ -204,11 +204,15 @@ const HackathonDashboard = () => {
   const assessment = projectData?.assessment || null;
   const hasBusinessData = !!assessment?.businessData;
   const hasTechnicalData = !!assessment?.technicalData;
+  const hasCodeAnalysis = !!assessment?.codeAnalysis;
   const availableMeetings = (!hasBusinessData ? 1 : 0) + (!hasTechnicalData ? 1 : 0);
   // --- Extracted Scores ---
   const techScore = assessment?.technicalData?.overallScore;
   const bizScore = assessment?.businessData?.overallScore;
   const overallScore = assessment?.overallScore;
+  // If codeAnalysis exists, prefer its score for code quality
+  const codeAnalysisScore = assessment?.codeAnalysis.analysis.quality.overall ?? codeQualityScore;
+
   const handleCodeEvalSubmit = async () => {
     if(!projectData?._id){
       return;
@@ -217,7 +221,7 @@ const HackathonDashboard = () => {
       setGithubLinkError('Please enter a valid GitHub repository URL'); 
       return;
     }
-    if (!validateGithubLink(githubLink)) {
+    if (!validateGithubLink(githubLink)) {isProjectComplete
       setGithubLinkError('Please enter a valid GitHub repository URL (e.g. https://github.com/user/repo)');
       return;
     }
@@ -243,12 +247,6 @@ const HackathonDashboard = () => {
     }
   }, [isAuthenticated, router]);
 
-  useEffect(() => {
-    if (!profile && !profileLoading && isAuthenticated) {
-      void dispatch(getMyProfile());
-    }
-  }, [profile, profileLoading, isAuthenticated, dispatch]);
-
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
@@ -262,18 +260,7 @@ const HackathonDashboard = () => {
             { headers: token ? { Authorization: `Bearer ${token}` } : {} });
           if (!res.ok) throw new Error('Failed to fetch project by id');
           project = await res.json();
-        } else {
-          // Default: fetch my projects and pick latest
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/getMyProjects`,
-            { headers: token ? { Authorization: `Bearer ${token}` } : {} });
-          if (!res.ok) throw new Error('Failed to fetch projects');
-          const data: ProjectAPIData[] = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            // Sort by createdAt descending and pick the most recent
-            const sorted = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-            project = sorted[0];
-          }
-        }
+        } 
         if (project) {
           // Map API team to required TeamMember[]
           const teamMembers: TeamMember[] = project.team.map((member, idx) => ({
@@ -290,7 +277,7 @@ const HackathonDashboard = () => {
             _id: project._id,
             track: project.track,
             assessment: (project as any).assessment,
-            leaderId: (project as any).leaderId,
+            leader: (project as any).leader,
           });
         } else {
           setProjectData(null);
@@ -341,11 +328,9 @@ const HackathonDashboard = () => {
     router.replace('/signin?source=hackathon');
   };
 
-
-
   // --- Score Chip Helper ---
   const renderScoreChip = (score: number | undefined | null) => {
-    if (score === undefined || score === null) {
+    if (score == null) {
       return (
         <Chip
           label="N/A"
@@ -399,14 +384,14 @@ const HackathonDashboard = () => {
     );
   };
 
-
-
   // --- Main Render ---
   // Determine current user email from Redux only
   const currentUserEmail = user?.email;
-  console.log(currentUserEmail,"lalalala")
+  // console.log(currentUserEmail,"lalalala")
   const isTeamMember = !!(currentUserEmail && projectData && projectData.teamMembers.some(member => member.email === currentUserEmail));
-  const isLeader = !!(currentUserEmail && projectData && projectData.leaderId && projectData.leaderId.email === currentUserEmail);
+  const isLeader = !!(currentUserEmail && projectData && projectData.leader && projectData.leader.email === currentUserEmail);
+  // Change the logic for project complete:
+  const isProjectComplete = hasBusinessData && hasTechnicalData && hasCodeAnalysis;
   return (
     <Box sx={{ bgcolor: 'linear-gradient(120deg, #F3E5F5 0%, #E1F5FE 100%)', minHeight: '100vh', pb: 6 }}>
       {/* Navbar */}
@@ -590,8 +575,8 @@ const HackathonDashboard = () => {
                 Leader
               </Typography>
               <Typography variant="body1" sx={{ color: '#2E3A59', fontWeight: 700, fontSize: '1.08rem' }}>
-                {projectData.leaderId && projectData.leaderId.FirstName && projectData.leaderId.LastName
-                  ? `${projectData.leaderId.FirstName} ${projectData.leaderId.LastName}`
+                {projectData.leader && projectData.leader.FirstName && projectData.leader.LastName
+                  ? `${projectData.leader.FirstName} ${projectData.leader.LastName}`
                   : 'N/A'}
               </Typography>
             </Box>
@@ -639,14 +624,45 @@ const HackathonDashboard = () => {
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
               <CodeIcon sx={{ color: '#333', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #33333311)' }} />
               <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#7C4DFF', letterSpacing: 0.2 }}>Code Quality</Typography>
-              {renderScoreChip(codeQualityScore)}
-              <Button size="small" variant="contained" sx={{ mt: 2, fontWeight: 700, borderRadius: 2, background: '#333', color: '#fff', boxShadow: '0 2px 8px #33333322', '&:hover': { background: '#000' } }} onClick={() => setOpenCodeEvalModal(true)}
-                disabled={!!codeQualityScore || evaluating}
-              >
-                Evaluate Code
-              </Button>
+              {renderScoreChip(codeAnalysisScore)}
+              <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                {!hasCodeAnalysis && (
+                  <Button
+                    size="small"
+                    variant="contained"
+                    sx={{
+                      fontWeight: 700,
+                      borderRadius: 2,
+                      background: '#333',
+                      color: '#fff',
+                      boxShadow: '0 2px 8px #33333322',
+                      '&:hover': { background: '#000' }
+                    }}
+                    onClick={() => setOpenCodeEvalModal(true)}
+                    disabled={!!codeAnalysisScore || evaluating}
+                  >
+                    Evaluate Code
+                  </Button>
+                )}
+                <Button
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    color: '#7C4DFF',
+                    borderColor: '#E3EAFD',
+                    background: '#F7F8FA',
+                    '&:hover': { background: '#F3F6FD', borderColor: '#7C4DFF' }
+                  }}
+                  onClick={() => setOpenCodeAnalysisModal(true)}
+                  disabled={!hasCodeAnalysis}
+                >
+                  View Code Analysis
+                </Button>
+              </Box>
             </Box>
-                        <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E0F7FA', borderRightWidth: 2 }} />
+            <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E0F7FA', borderRightWidth: 2 }} />
             {/* Overall Score */}
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
               <TrendingUpIcon sx={{ color: '#00BFAE', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #00BFAE11)' }} />
@@ -696,6 +712,12 @@ const HackathonDashboard = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      {/* Code Analysis Modal */}
+      <CodeAnalysisModal
+        open={openCodeAnalysisModal}
+        onClose={() => setOpenCodeAnalysisModal(false)}
+        analysis={assessment?.codeAnalysis?.analysis}
+      />
       {/* Technical Report Modal */}
       <Dialog open={openTechModal} onClose={() => setOpenTechModal(false)} maxWidth="md" fullWidth>
         <DialogTitle>Technical Report Details</DialogTitle>
@@ -1003,6 +1025,7 @@ const HackathonDashboard = () => {
                   disableBusiness={hasBusinessData}
                   disableTechnical={hasTechnicalData}
                   onEvaluateCode={() => setOpenCodeEvalModal(true)}
+                  disableEvaluateCode={hasCodeAnalysis}
                 />
               </Box>
             )}
@@ -1079,17 +1102,42 @@ const HackathonDashboard = () => {
                 }}>
                   <EmojiEventsIcon sx={{ color: '#7C4DFF', fontSize: 36, mb: 1 }} />
                   <Typography variant="h4" sx={{ fontWeight: 900, color: '#7C4DFF', mb: 0.5, textShadow: '0 1px 4px #7C4DFF11' }}>
-                    {hasBusinessData && hasTechnicalData ? '✔' : '…'}
+                    {isProjectComplete ? '✔' : '…'}
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#2E3A59', fontWeight: 700 }}>
-                    {hasBusinessData && hasTechnicalData ? 'Project Complete!' : 'In Progress'}
+                    {isProjectComplete ? 'Project Complete!' : 'In Progress'}
+                  </Typography>
+                </Box>
+                {/* Code Evaluation Status */}
+                <Box sx={{
+                  flex: 1,
+                  minWidth: 180,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  p: 2,
+                  borderRadius: 4,
+                  background: '#F3F6FD',
+                  boxShadow: '0 2px 8px #33333308',
+                  mb: { xs: 2, md: 0 },
+                }}>
+                  {hasCodeAnalysis ? (
+                    <CheckCircleIcon sx={{ color: '#43e97b', fontSize: 36, mb: 1 }} />
+                  ) : (
+                    <WarningAmberIcon sx={{ color: '#e53935', fontSize: 36, mb: 1 }} />
+                  )}
+                  <Typography variant="h4" sx={{ fontWeight: 900, color: hasCodeAnalysis ? '#43e97b' : '#e53935', mb: 0.5 }}>
+                    {hasCodeAnalysis ? '✔' : '…'}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#2E3A59', fontWeight: 700 }}>
+                    {hasCodeAnalysis ? 'Code Evaluated' : 'Code Not Evaluated'}
                   </Typography>
                 </Box>
               </Box>
             </Box>
           </Box>
           {/* Right: Team Members */}
-          <TeamMembers teamMembers={projectData.teamMembers} projectId={projectData._id} />
+          <TeamMembers teamMembers={projectData.teamMembers} projectId={projectData._id} isOwner={isLeader} />
         </Box>
       </Container>
       {/* Footer */}

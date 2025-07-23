@@ -116,7 +116,7 @@ export interface Project {
   description: string;
   track: string;
   team: ProjectTeamMember[];
-  leaderId: string;
+  leader: string;
   leaderProfile?: string;
   assessment: ProjectAssessmentRef;
   createdAt?: string;
@@ -523,7 +523,7 @@ export const evaluateProjectCode = createAsyncThunk<
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ githubLink, template: 'auto' }),
+        body: JSON.stringify({ githubLink, template: 'auto', hackathonName: 'HederaHacks' }),
       });
       if (!response.ok) {
         const error = await response.text();
