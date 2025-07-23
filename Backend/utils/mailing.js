@@ -157,94 +157,6 @@ const sendOTP = async (email, otp) => {
   }
 };
 
-// Générateur du template HTML avec lien d’activation
-// const getActivationTemplate = (activationLink, projet) => `
-//     <!DOCTYPE html>
-//     <html>
-//     <head>
-//       <meta charset="utf-8">
-//       <title>Confirmation de votre role en tant que contributeur au projet ${projet.name} </title>
-//       <style>
-//         body { font-family: 'Segoe UI', Arial, sans-serif; background: #F7FAFC; margin: 0; padding: 0; }
-//         .container { max-width: 600px; margin: 40px auto; background: #FFF; border-radius: 12px; box-shadow: 0 8px 32px #0002; padding: 0; overflow: hidden; }
-//         .header {
-//           background: linear-gradient(135deg, #2B6CB0 0%, #1A365D 100%);
-//           color: #fff;
-//           text-align: center;
-//           padding: 32px 20px 20px 20px;
-//         }
-//         .logo {
-//           display: block;
-//           margin: 0 auto 12px auto;
-//           width: 64px;
-//           height: 64px;
-//         }
-//         .header-title {
-//           font-size: 2rem;
-//           font-weight: 700;
-//           margin: 0 0 8px 0;
-//           letter-spacing: 1px;
-//         }
-//         .header-desc {
-//           font-size: 1.1rem;
-//           opacity: 0.95;
-//           margin: 0;
-//         }
-//         .content { padding: 36px 32px 24px 32px; color: #2D3748; }
-//         .content p { margin: 18px 0; font-size: 1.08rem; }
-//         .btn {
-//           background: linear-gradient(90deg, #4299E1 0%, #2B6CB0 100%);
-//           color: #fff;
-//           padding: 18px 40px;
-//           border-radius: 8px;
-//           text-decoration: none;
-//           font-size: 1.15rem;
-//           font-weight: 600;
-//           display: inline-block;
-//           margin: 32px 0 18px 0;
-//           box-shadow: 0 2px 8px #4299e133;
-//           transition: background 0.2s, box-shadow 0.2s;
-//         }
-//         .btn:hover {
-//           background: linear-gradient(90deg, #2B6CB0 0%, #4299E1 100%);
-//           box-shadow: 0 4px 16px #2B6CB044;
-//         }
-//         .footer {
-//           text-align: center;
-//           color: #718096;
-//           font-size: 14px;
-//           background: #F7FAFC;
-//           padding: 20px 10px 16px 10px;
-//           border-radius: 0 0 12px 12px;
-//         }
-//         .footer a { color: #2B6CB0; text-decoration: none; }
-//         .footer a:hover { text-decoration: underline; }
-//       </style>
-//     </head>
-//     <body>
-//       <div class="container">
-//         <div class="header">
-//           <img src="https://talentai.bid/logo.svg" alt="TalenIA Logo" class="logo" onerror="this.style.display='none'"/>
-//           <div class="header-title">Confirmation de contribution au projet&nbsp;<strong>${project.name}</strong></div>
-//           <div class="header-desc">Bienvenue chez TalenIA !</div>
-//         </div>
-//         <div class="content">
-//           <p>Bonjour,</p>
-//           <p>Pour confirmer votre contribution au projet ${project.name}, veuillez cliquez sur le bouton ci-dessous :</p>
-//           <p style="text-align:center;">
-//             <a href="${activationLink}" class="btn">Confirmer</a>
-//           </p>
-//           <p style="font-size:0.98rem;color:#4A5568;">Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer ce message.</p>
-//         </div>
-//         <div class="footer">
-//           Besoin d'aide ? Contactez-nous à <a href="mailto:support@talentai.bid">support@talentai.bid</a><br/>
-//           <span style="display:block;margin-top:8px;">&copy; ${new Date().getFullYear()} TalenIA. Tous droits réservés.</span>
-//         </div>
-//       </div>
-//     </body>
-//     </html>
-//   `;
-
 const getActivationTemplate = (activationLink, project) => `
 <!DOCTYPE html>
 <html>
@@ -260,7 +172,7 @@ const getActivationTemplate = (activationLink, project) => `
             <!-- Header -->
             <tr>
               <td style="background-color:#2B6CB0; color:#ffffff; text-align:center; padding:32px 20px 20px 20px;">
-                <img src="https://talentai.bid/logo.svg" alt="TalenIA Logo" width="64" height="64" style="display:block; margin:0 auto 12px auto;" onerror="this.style.display='none'" />
+                <img src="https://talentai.bid/image/logo.svg" alt="TalenIA Logo" width="64" height="64" style="display:block; margin:0 auto 12px auto;" onerror="this.style.display='none'" />
                 <h1 style="margin:0; font-size:24px;">Confirmation de votre contribution au projet <strong>${project.name}</strong></h1>
               </td>
             </tr>
