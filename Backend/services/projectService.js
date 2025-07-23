@@ -142,7 +142,7 @@ module.exports.activateTeamMember = async (projectId, token) => {
 };
 
 module.exports.addMemberToTeam = async (projectId, member, baseUrl) => {
-  const project = await Project.findById(projectId);
+  const project = await Project.findById(projectId).populate("leaderId");
   if (!project) throw new Error("Projet introuvable");
 
   // Vérifier si le membre existe déjà dans l'équipe
@@ -152,6 +152,7 @@ module.exports.addMemberToTeam = async (projectId, member, baseUrl) => {
   if (!member.email || !member.role) {
     throw new Error("Email et rôle sont requis pour chaque membre.");
   }
+
 
   // Générer un nouveau token et une nouvelle expiration
   const activationToken = crypto.randomBytes(20).toString("hex");
@@ -172,7 +173,7 @@ module.exports.addMemberToTeam = async (projectId, member, baseUrl) => {
 
   // Générer et envoyer le lien d'activation
   const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${activationToken}`;
-  await sendActivationEmail(member.email, link);
+  await sendActivationEmail(member.email, link,project );
 
   return {
     success: true,
@@ -190,7 +191,7 @@ module.exports.resendTeamInvitation = async (
     const project = await Project.findById(projectId);
     if (!project) throw new Error("Projet introuvable");
     console.log("project", project);
-    const member = project.team.find((m) => m.email === memberEmail);
+    const member = project.team.find((m) => m.email === memberEmail.trim());
     if (!member) throw new Error("Membre introuvable");
     console.log("member", member);
 
@@ -207,7 +208,7 @@ module.exports.resendTeamInvitation = async (
 
     // Envoi du mail
     const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${member.activationToken}`;
-    await sendActivationEmail(member.email, link);
+    await sendActivationEmail(member.email, link, project);
     console.log("link", link);
 
     return { success: true, message: "Nouvelle invitation envoyée." };
