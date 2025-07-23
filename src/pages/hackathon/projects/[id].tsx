@@ -55,6 +55,15 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { TextField } from '@mui/material';
 import CodeIcon from '@mui/icons-material/Code';
 import { evaluateProjectCode } from '@/store/slices/projectSlice';
+import WebAssetIcon from '@mui/icons-material/WebAsset';
+import CategoryIcon from '@mui/icons-material/Category';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import VerifiedIcon from '@mui/icons-material/Verified';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import DescriptionIcon from '@mui/icons-material/Description';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import InfoIcon from '@mui/icons-material/Info';
+
 interface TeamMember {
   name: string;
   email: string;
@@ -397,14 +406,26 @@ const HackathonDashboard = () => {
       </Box>
     ) : null;
 
-  // Helper to render an object as key-value pairs
+  // Helper to render an object as key-value pairs (never as JSON)
   const renderObjectDetails = (obj: any) =>
     obj && typeof obj === 'object' ? (
       <Box component="ul" sx={{ pl: 3, mb: 1 }}>
         {Object.entries(obj).map(([key, value]) => (
           <li key={key}>
             <Typography variant="body2">
-              <strong>{key}:</strong> {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+              <strong>{key}:</strong> {Array.isArray(value)
+                ? (
+                  <Box component="ul" sx={{ pl: 3, mb: 1 }}>
+                    {value.map((item, idx) => (
+                      <li key={idx}>
+                        <Typography variant="body2">{typeof item === 'object' ? renderObjectDetails(item) : String(item)}</Typography>
+                      </li>
+                    ))}
+                  </Box>
+                )
+                : value && typeof value === 'object'
+                  ? renderObjectDetails(value)
+                  : String(value)}
             </Typography>
           </li>
         ))}
@@ -414,18 +435,116 @@ const HackathonDashboard = () => {
   const renderProjectPurpose = (purpose: any) => {
     if (!purpose) return null;
     return (
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Project Purpose</Typography>
-        {purpose.domain && <Typography variant="body2"><strong>Domain:</strong> {purpose.domain}</Typography>}
-        {purpose.type && <Typography variant="body2"><strong>Type:</strong> {purpose.type}</Typography>}
-        {purpose.complexity && <Typography variant="body2"><strong>Complexity:</strong> {purpose.complexity}</Typography>}
-        {purpose.target && <Typography variant="body2"><strong>Target:</strong> {purpose.target}</Typography>}
-        {typeof purpose.confidence === 'number' && <Typography variant="body2"><strong>Confidence:</strong> {purpose.confidence}</Typography>}
-        {purpose.description && <Typography variant="body2"><strong>Description:</strong> {purpose.description}</Typography>}
-        {renderStringList(purpose.features)}
-        {renderStringList(purpose.technologies)}
-        {renderStringList(purpose.keyFiles)}
-        {purpose.conclusion && <Typography variant="body2"><strong>Conclusion:</strong> {purpose.conclusion}</Typography>}
+      <Box sx={{
+        mb: 3,
+        p: 3,
+        bgcolor: '#F3F6FD',
+        borderRadius: 3,
+        boxShadow: '0 2px 8px #7C4DFF11',
+        border: '1.5px solid #E3EAFD'
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <WebAssetIcon sx={{ color: '#7C4DFF', mr: 1 }} />
+          <Typography variant="h6" sx={{ fontWeight: 900, color: '#7C4DFF' }}>
+            Project Purpose
+          </Typography>
+        </Box>
+        {/* Key-value pairs */}
+        {/* <Box sx={{ mb: 2, display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Domain: </Typography>
+            <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{purpose.domain || 'N/A'}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Type: </Typography>
+            <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{purpose.type || 'N/A'}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Complexity: </Typography>
+            <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{purpose.complexity || 'N/A'}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Target: </Typography>
+            <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{purpose.target || 'N/A'}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Confidence: </Typography>
+            <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{typeof purpose.confidence === 'number' ? `${purpose.confidence * 100}%` : 'N/A'}</Typography>
+          </Box>
+        </Box> */}
+        {/* Description */}
+        {purpose.description && (
+          <Box sx={{
+            mb: 2,
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 1.5,
+            p: 2.2,
+            bgcolor: '#F7F8FA',
+            borderLeft: '5px solid #7C4DFF',
+            borderRadius: 2,
+            boxShadow: '0 1px 4px #7C4DFF11',
+          }}>
+            <DescriptionIcon sx={{ color: '#7C4DFF', mt: 0.5, fontSize: 28 }} />
+            <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '1.08rem', lineHeight: 1.7, color: '#2E3A59', wordBreak: 'break-word' }}>
+              {purpose.description}
+            </Typography>
+          </Box>
+        )}
+        {/* Features */}
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#7C4DFF', mb: 1 }}>
+            Features
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {Array.isArray(purpose.features) && purpose.features.length > 0 ? (
+              purpose.features.map((feature: string, idx: number) => (
+                <Chip key={idx} icon={<DoneAllIcon sx={{ color: '#7C4DFF' }} />} label={feature} sx={{ bgcolor: '#F3E5F5', color: '#7C4DFF', fontWeight: 700 }} />
+              ))
+            ) : (
+              <Chip label="N/A" sx={{ bgcolor: '#E0E0E0', color: '#757575', fontWeight: 700 }} />
+            )}
+          </Box>
+        </Box>
+        {/* Technologies */}
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#00B8D4', mb: 1 }}>
+            Technologies
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {Array.isArray(purpose.technologies) && purpose.technologies.length > 0 ? (
+              purpose.technologies.map((tech: string, idx: number) => (
+                <Chip key={idx} icon={<CodeIcon sx={{ color: '#00B8D4' }} />} label={tech} sx={{ bgcolor: '#E0F7FA', color: '#00B8D4', fontWeight: 700 }} />
+              ))
+            ) : (
+              <Chip label="N/A" sx={{ bgcolor: '#E0E0E0', color: '#757575', fontWeight: 700 }} />
+            )}
+          </Box>
+        </Box>
+        {/* Key Files */}
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#4527A0', mb: 1 }}>
+            Key Files
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {Array.isArray(purpose.keyFiles) && purpose.keyFiles.length > 0 ? (
+              purpose.keyFiles.map((file: string, idx: number) => (
+                <Chip key={idx} icon={<DescriptionIcon sx={{ color: '#4527A0' }} />} label={file} sx={{ bgcolor: '#EDE7F6', color: '#4527A0', fontWeight: 700 }} />
+              ))
+            ) : (
+              <Chip label="N/A" sx={{ bgcolor: '#E0E0E0', color: '#757575', fontWeight: 700 }} />
+            )}
+          </Box>
+        </Box>
+        {/* Conclusion */}
+        <Box sx={{ mt: 2, p: 2, bgcolor: '#E8F5E9', borderRadius: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#388E3C', mb: 1 }}>
+            Conclusion
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#388E3C', fontWeight: 600 }}>
+            {purpose.conclusion || 'N/A'}
+          </Typography>
+        </Box>
       </Box>
     );
   };
@@ -433,36 +552,143 @@ const HackathonDashboard = () => {
   const renderArchitecture = (architecture: any) => {
     if (!architecture) return null;
     return (
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Architecture</Typography>
-        {architecture.pattern && <Typography variant="body2"><strong>Pattern:</strong> {architecture.pattern}</Typography>}
-        {renderStringList(architecture.layers)}
-        {renderStringList(architecture.patterns)}
-        {typeof architecture.quality === 'number' && <Typography variant="body2"><strong>Quality:</strong> {architecture.quality}</Typography>}
-        {renderStringList(architecture.strengths)}
-        {renderStringList(architecture.weaknesses)}
-        {architecture.structure && (
-          <Box sx={{ mt: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>Structure:</Typography>
-            {renderStringList(architecture.structure.rootFiles)}
-            {architecture.structure.srcStructure && (
-              <Box sx={{ pl: 2 }}>
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>srcStructure:</Typography>
-                {renderStringList(architecture.structure.srcStructure.components)}
-                {renderStringList(architecture.structure.srcStructure.services)}
-                {renderStringList(architecture.structure.srcStructure.utils)}
-                {renderStringList(architecture.structure.srcStructure.types)}
-                {renderStringList(architecture.structure.srcStructure.hooks)}
-                {renderStringList(architecture.structure.srcStructure.pages)}
-                {renderStringList(architecture.structure.srcStructure.assets)}
-              </Box>
+      <Box sx={{ mb: 3, p: 3, bgcolor: '#F3F6FD', borderRadius: 3, boxShadow: '0 2px 8px #7C4DFF11', border: '1.5px solid #E3EAFD' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <CategoryIcon sx={{ color: '#7C4DFF', mr: 1 }} />
+          <Typography variant="h6" sx={{ fontWeight: 900, color: '#7C4DFF' }}>Architecture</Typography>
+        </Box>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Pattern: </Typography>
+          <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{architecture.pattern || 'N/A'}</Typography>
+        </Box>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Quality: </Typography>
+          <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{architecture.quality !== undefined ? architecture.quality : 'N/A'}</Typography>
+        </Box>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#7C4DFF', mb: 1 }}>Layers</Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {Array.isArray(architecture.layers) && architecture.layers.length > 0 ? (
+              architecture.layers.map((layer: string, idx: number) => (
+                <Chip key={idx} label={layer} sx={{ bgcolor: '#E1F5FE', color: '#7C4DFF', fontWeight: 700 }} />
+              ))
+            ) : (
+              <Chip label="N/A" sx={{ bgcolor: '#E0E0E0', color: '#757575', fontWeight: 700 }} />
             )}
-            {renderStringList(architecture.structure.configFiles)}
-            {renderStringList(architecture.structure.documentation)}
-            {renderStringList(architecture.structure.testing)}
-            {renderStringList(architecture.structure.deployment)}
           </Box>
-        )}
+        </Box>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#00B8D4', mb: 1 }}>Patterns</Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {Array.isArray(architecture.patterns) && architecture.patterns.length > 0 ? (
+              architecture.patterns.map((pattern: string, idx: number) => (
+                <Chip key={idx} label={pattern} sx={{ bgcolor: '#E0F7FA', color: '#00B8D4', fontWeight: 700 }} />
+              ))
+            ) : (
+              <Chip label="N/A" sx={{ bgcolor: '#E0E0E0', color: '#757575', fontWeight: 700 }} />
+            )}
+          </Box>
+        </Box>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#388E3C', mb: 1 }}>Strengths</Typography>
+          <Box component="ul" sx={{ pl: 3, mb: 1 }}>
+            {Array.isArray(architecture.strengths) && architecture.strengths.length > 0 ? (
+              architecture.strengths.map((s: string, idx: number) => (
+                <li key={idx}><Typography variant="body2" sx={{ color: '#388E3C' }}>{s}</Typography></li>
+              ))
+            ) : (
+              <li><Typography variant="body2">N/A</Typography></li>
+            )}
+          </Box>
+        </Box>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#E65100', mb: 1 }}>Weaknesses</Typography>
+          <Box component="ul" sx={{ pl: 3, mb: 1 }}>
+            {Array.isArray(architecture.weaknesses) && architecture.weaknesses.length > 0 ? (
+              architecture.weaknesses.map((w: string, idx: number) => (
+                <li key={idx}><Typography variant="body2" sx={{ color: '#E65100' }}>{w}</Typography></li>
+              ))
+            ) : (
+              <li><Typography variant="body2">N/A</Typography></li>
+            )}
+          </Box>
+        </Box>
+        {/* Structure */}
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#4527A0', mb: 1 }}>Structure</Typography>
+          {architecture.structure && (
+            <Box sx={{ pl: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', mt: 1 }}>Root Files:</Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                {Array.isArray(architecture.structure.rootFiles) && architecture.structure.rootFiles.length > 0 ? (
+                  architecture.structure.rootFiles.map((file: string, idx: number) => (
+                    <Chip key={idx} label={file} sx={{ bgcolor: '#EDE7F6', color: '#4527A0', fontWeight: 700 }} />
+                  ))
+                ) : (
+                  <Chip label="N/A" sx={{ bgcolor: '#E0E0E0', color: '#757575', fontWeight: 700 }} />
+                )}
+              </Box>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', mt: 1 }}>Config Files:</Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                {Array.isArray(architecture.structure.configFiles) && architecture.structure.configFiles.length > 0 ? (
+                  architecture.structure.configFiles.map((file: string, idx: number) => (
+                    <Chip key={idx} label={file} sx={{ bgcolor: '#EDE7F6', color: '#4527A0', fontWeight: 700 }} />
+                  ))
+                ) : (
+                  <Chip label="N/A" sx={{ bgcolor: '#E0E0E0', color: '#757575', fontWeight: 700 }} />
+                )}
+              </Box>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', mt: 1 }}>Documentation:</Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                {Array.isArray(architecture.structure.documentation) && architecture.structure.documentation.length > 0 ? (
+                  architecture.structure.documentation.map((file: string, idx: number) => (
+                    <Chip key={idx} label={file} sx={{ bgcolor: '#EDE7F6', color: '#4527A0', fontWeight: 700 }} />
+                  ))
+                ) : (
+                  <Chip label="N/A" sx={{ bgcolor: '#E0E0E0', color: '#757575', fontWeight: 700 }} />
+                )}
+              </Box>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', mt: 1 }}>Testing:</Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                {Array.isArray(architecture.structure.testing) && architecture.structure.testing.length > 0 ? (
+                  architecture.structure.testing.map((file: string, idx: number) => (
+                    <Chip key={idx} label={file} sx={{ bgcolor: '#EDE7F6', color: '#4527A0', fontWeight: 700 }} />
+                  ))
+                ) : (
+                  <Chip label="N/A" sx={{ bgcolor: '#E0E0E0', color: '#757575', fontWeight: 700 }} />
+                )}
+              </Box>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', mt: 1 }}>Deployment:</Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                {Array.isArray(architecture.structure.deployment) && architecture.structure.deployment.length > 0 ? (
+                  architecture.structure.deployment.map((file: string, idx: number) => (
+                    <Chip key={idx} label={file} sx={{ bgcolor: '#EDE7F6', color: '#4527A0', fontWeight: 700 }} />
+                  ))
+                ) : (
+                  <Chip label="N/A" sx={{ bgcolor: '#E0E0E0', color: '#757575', fontWeight: 700 }} />
+                )}
+              </Box>
+              {/* srcStructure */}
+              {architecture.structure.srcStructure && (
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', mt: 1 }}>srcStructure:</Typography>
+                  {Object.entries(architecture.structure.srcStructure).map(([k, v]) => (
+                    <Box key={k} sx={{ mb: 1, ml: 2 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>{k}: </Typography>
+                      {Array.isArray(v) && v.length > 0 ? (
+                        v.map((item: string, idx: number) => (
+                          <Chip key={idx} label={item} sx={{ bgcolor: '#EDE7F6', color: '#4527A0', fontWeight: 700, ml: 1 }} />
+                        ))
+                      ) : (
+                        <Chip label="None" sx={{ bgcolor: '#E0E0E0', color: '#757575', fontWeight: 700, ml: 1 }} />
+                      )}
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </Box>
+          )}
+        </Box>
       </Box>
     );
   };
@@ -470,12 +696,67 @@ const HackathonDashboard = () => {
   const renderCoherence = (coherence: any) => {
     if (!coherence) return null;
     return (
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Coherence</Typography>
-        {typeof coherence.consistency === 'number' && <Typography variant="body2"><strong>Consistency:</strong> {coherence.consistency}</Typography>}
-        {typeof coherence.naming === 'number' && <Typography variant="body2"><strong>Naming:</strong> {coherence.naming}</Typography>}
-        {typeof coherence.structure === 'number' && <Typography variant="body2"><strong>Structure:</strong> {coherence.structure}</Typography>}
-        {typeof coherence.patterns === 'number' && <Typography variant="body2"><strong>Patterns:</strong> {coherence.patterns}</Typography>}
+      <Box sx={{ mb: 3, p: 3, bgcolor: '#F3F6FD', borderRadius: 3, boxShadow: '0 2px 8px #7C4DFF11', border: '1.5px solid #E3EAFD' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <BarChartIcon sx={{ color: '#7C4DFF', mr: 1 }} />
+          <Typography variant="h6" sx={{ fontWeight: 900, color: '#7C4DFF' }}>Coherence</Typography>
+        </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Consistency: </Typography>
+            <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{coherence.consistency !== undefined ? coherence.consistency : 'N/A'}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Naming: </Typography>
+            <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{coherence.naming !== undefined ? coherence.naming : 'N/A'}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Structure: </Typography>
+            <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{coherence.structure !== undefined ? coherence.structure : 'N/A'}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Patterns: </Typography>
+            <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{coherence.patterns !== undefined ? coherence.patterns : 'N/A'}</Typography>
+          </Box>
+        </Box>
+      </Box>
+    );
+  };
+
+  const renderQuality = (quality: any) => {
+    if (!quality) return null;
+    return (
+      <Box sx={{ mb: 3, p: 3, bgcolor: '#F3F6FD', borderRadius: 3, boxShadow: '0 2px 8px #7C4DFF11', border: '1.5px solid #E3EAFD' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <StarIcon sx={{ color: '#7C4DFF', mr: 1 }} />
+          <Typography variant="h6" sx={{ fontWeight: 900, color: '#7C4DFF' }}>Quality</Typography>
+        </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Overall: </Typography>
+            <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{quality.overall !== undefined ? quality.overall : 'N/A'}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Maintainability: </Typography>
+            <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{quality.maintainability !== undefined ? quality.maintainability : 'N/A'}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Readability: </Typography>
+            <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{quality.readability !== undefined ? quality.readability : 'N/A'}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Performance: </Typography>
+            <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{quality.performance !== undefined ? quality.performance : 'N/A'}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Security: </Typography>
+            <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{quality.security !== undefined ? quality.security : 'N/A'}</Typography>
+          </Box>
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>Testability: </Typography>
+            <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>{quality.testability !== undefined ? quality.testability : 'N/A'}</Typography>
+          </Box>
+        </Box>
       </Box>
     );
   };
@@ -565,50 +846,89 @@ const HackathonDashboard = () => {
     return Object.entries(codeAnalysis)
       .filter(([key]) => !knownKeys.includes(key))
       .map(([key, value]) => (
-        <Box key={key} sx={{ mb: 2 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>{key.charAt(0).toUpperCase() + key.slice(1)}</Typography>
-          {typeof value === 'object' ? renderObjectDetails(value) : <Typography variant="body2">{String(value)}</Typography>}
+        <Box key={key} sx={{ mb: 2, p: 2, bgcolor: '#F7F8FA', borderRadius: 2, border: '1.5px solid #E3EAFD' }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: '#7C4DFF' }}>{key.charAt(0).toUpperCase() + key.slice(1)}</Typography>
+          {Array.isArray(value) ? (
+            <Box component="ul" sx={{ pl: 3, mb: 1 }}>
+              {value.map((item, idx) => (
+                <li key={idx}>
+                  <Typography variant="body2">{typeof item === 'object' ? JSON.stringify(item, null, 2) : String(item)}</Typography>
+                </li>
+              ))}
+            </Box>
+          ) : value && typeof value === 'object' ? (
+            <Box component="ul" sx={{ pl: 3, mb: 1 }}>
+              {Object.entries(value).map(([k, v]) => (
+                <li key={k}>
+                  <Typography variant="body2"><strong>{k}:</strong> {typeof v === 'object' ? JSON.stringify(v, null, 2) : String(v)}</Typography>
+                </li>
+              ))}
+            </Box>
+          ) : (
+            <Typography variant="body2">{String(value)}</Typography>
+          )}
         </Box>
       ));
   };
 
-  const renderCodeAnalysisModalContent = (codeAnalysis: any) => {
-    if (!codeAnalysis) {
+  const renderCodeAnalysisModalContent = (analysis: any) => {
+    if (!analysis) {
       return <Typography>No code analysis available.</Typography>;
     }
+    const hasAnySection = !!(
+      analysis.summary ||
+      analysis.metrics ||
+      (Array.isArray(analysis.issues) && analysis.issues.length > 0) ||
+      (Array.isArray(analysis.recommendations) && analysis.recommendations.length > 0) ||
+      analysis.projectPurpose ||
+      analysis.architecture ||
+      analysis.coherence ||
+      analysis.quality ||
+      analysis.security ||
+      analysis.testing ||
+      analysis.documentation ||
+      analysis.maintainability ||
+      analysis.dependencies ||
+      analysis.performance
+    );
     return (
       <Box>
-        <Typography variant="h6" sx={{ mb: 2 }}>Code Analysis Report</Typography>
-        {codeAnalysis.summary && (
-          <Typography sx={{ mb: 2 }}>{codeAnalysis.summary}</Typography>
-        )}
-        {typeof codeAnalysis.overallScore === 'number' && (
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Overall Code Quality Score</Typography>
-            {renderScoreChip(codeAnalysis.overallScore)}
+        <Typography variant="h5" sx={{ mb: 3, fontWeight: 900, color: '#7C4DFF', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <CodeIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+          Code Analysis Report
+        </Typography>
+        {analysis.summary && (
+          <Box sx={{ mb: 3, p: 2.5, bgcolor: '#F3F6FD', borderRadius: 2, border: '1.5px solid #E3EAFD' }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: '#7C4DFF', display: 'flex', alignItems: 'center', gap: 1 }}>
+              <InfoIcon sx={{ color: '#7C4DFF' }} /> Summary
+            </Typography>
+            <Typography>{analysis.summary}</Typography>
           </Box>
         )}
-        {codeAnalysis.metrics && (
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Metrics</Typography>
-            <Box component="ul" sx={{ pl: 3 }}>
-              {Object.entries(codeAnalysis.metrics).map(([key, value]) => (
-                <li key={key}>
-                  <Typography variant="body2">
-                    <strong>{key}:</strong> {typeof value === 'number' ? value.toFixed(2) : String(value)}
-                  </Typography>
-                </li>
+        {analysis.metrics && (
+          <Box sx={{ mb: 3, p: 2, bgcolor: '#F7F8FA', borderRadius: 2, border: '1.5px solid #E3EAFD' }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: '#4527A0', display: 'flex', alignItems: 'center', gap: 1 }}>
+              <BarChartIcon sx={{ color: '#4527A0' }} /> Metrics
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5 }}>
+              {Object.entries(analysis.metrics).map(([key, value]) => (
+                <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700 }}>{key}:</Typography>
+                  <Typography variant="body2">{typeof value === 'number' ? value.toFixed(2) : String(value)}</Typography>
+                </Box>
               ))}
             </Box>
           </Box>
         )}
-        {Array.isArray(codeAnalysis.issues) && codeAnalysis.issues.length > 0 && (
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Detected Issues</Typography>
+        {Array.isArray(analysis.issues) && analysis.issues.length > 0 && (
+          <Box sx={{ mb: 3, p: 2, bgcolor: '#FFF3E0', borderRadius: 2, border: '1.5px solid #FFB300' }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: '#E65100', display: 'flex', alignItems: 'center', gap: 1 }}>
+              <WarningAmberIcon sx={{ color: '#E65100' }} /> Detected Issues
+            </Typography>
             <Box component="ul" sx={{ pl: 3 }}>
-              {codeAnalysis.issues.map((issue: any, idx: number) => (
+              {analysis.issues.map((issue: any, idx: number) => (
                 <li key={idx}>
-                  <Typography variant="body2">
+                  <Typography variant="body2" color="error">
                     {issue.description || issue}
                   </Typography>
                 </li>
@@ -616,13 +936,15 @@ const HackathonDashboard = () => {
             </Box>
           </Box>
         )}
-        {Array.isArray(codeAnalysis.recommendations) && codeAnalysis.recommendations.length > 0 && (
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Recommendations</Typography>
+        {Array.isArray(analysis.recommendations) && analysis.recommendations.length > 0 && (
+          <Box sx={{ mb: 3, p: 2, bgcolor: '#E3F2FD', borderRadius: 2, border: '1.5px solid #64B5F6' }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1, color: '#0277BD', display: 'flex', alignItems: 'center', gap: 1 }}>
+              <InfoIcon sx={{ color: '#0277BD' }} /> Recommendations
+            </Typography>
             <Box component="ul" sx={{ pl: 3 }}>
-              {codeAnalysis.recommendations.map((rec: any, idx: number) => (
+              {analysis.recommendations.map((rec: any, idx: number) => (
                 <li key={idx}>
-                  <Typography variant="body2">
+                  <Typography variant="body2" color="primary">
                     {rec}
                   </Typography>
                 </li>
@@ -630,19 +952,24 @@ const HackathonDashboard = () => {
             </Box>
           </Box>
         )}
-        {renderProjectPurpose(codeAnalysis.projectPurpose)}
-        {renderArchitecture(codeAnalysis.architecture)}
-        {renderCoherence(codeAnalysis.coherence)}
-        {renderSecurity(codeAnalysis.security)}
-        {renderTesting(codeAnalysis.testing)}
-        {renderDocumentation(codeAnalysis.documentation)}
-        {renderMaintainability(codeAnalysis.maintainability)}
-        {renderDependencies(codeAnalysis.dependencies)}
-        {renderPerformance(codeAnalysis.performance)}
-        {renderOtherSections(codeAnalysis)}
-        {codeAnalysis.createdAt && (
-          <Typography variant="caption" sx={{ color: 'text.secondary', mt: 2 }}>
-            Created: {new Date(codeAnalysis.createdAt).toLocaleString()}
+        {renderProjectPurpose(analysis.projectPurpose)}
+        {renderArchitecture(analysis.architecture)}
+        {renderCoherence(analysis.coherence)}
+        {renderQuality(analysis.quality)}
+        {renderSecurity(analysis.security)}
+        {renderTesting(analysis.testing)}
+        {renderDocumentation(analysis.documentation)}
+        {renderMaintainability(analysis.maintainability)}
+        {renderDependencies(analysis.dependencies)}
+        {renderPerformance(analysis.performance)}
+        {!hasAnySection && (
+          <Typography sx={{ color: 'text.secondary', fontStyle: 'italic', mt: 2 }}>
+            No code analysis data available.
+          </Typography>
+        )}
+        {analysis.createdAt && (
+          <Typography variant="caption" sx={{ color: 'text.secondary', mt: 2, display: 'block', textAlign: 'right' }}>
+            Created: {new Date(analysis.createdAt).toLocaleString()}
           </Typography>
         )}
       </Box>
@@ -977,7 +1304,7 @@ const HackathonDashboard = () => {
       <Dialog open={openCodeAnalysisModal} onClose={() => setOpenCodeAnalysisModal(false)} maxWidth="md" fullWidth>
         <DialogTitle>Code Analysis Details</DialogTitle>
         <DialogContent dividers>
-          {renderCodeAnalysisModalContent(assessment?.codeAnalysis)}
+          {renderCodeAnalysisModalContent(assessment?.codeAnalysis.analysis)}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenCodeAnalysisModal(false)}>Close</Button>
