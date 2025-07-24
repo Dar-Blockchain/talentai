@@ -33,11 +33,14 @@ module.exports.addMemberToTeam = async (req, res) => {
   const { projectId, email, name, role } = req.body;
   const baseUrl = process.env.BASE_URL;
 
+  const sender = req.user; 
+
   try {
     const result = await projectService.addMemberToTeam(
       projectId,
       { email, name, role },
-      baseUrl
+      baseUrl, 
+      sender.email
     );
     res.status(200).json(result);
   } catch (error) {
@@ -49,13 +52,16 @@ module.exports.addMemberToTeam = async (req, res) => {
 // 3. Réinviter un membre dont le lien d'activation a expiré
 module.exports.resendTeamInvitation = async (req, res) => {
   const { projectId, email } = req.body;
+  const sender = req.user; 
+
   const baseUrl = process.env.BASE_URL; // Récupérer l'URL de base de l'application
 
   try {
     const result = await projectService.resendTeamInvitation(
       projectId,
       email,
-      baseUrl
+      baseUrl, 
+      sender.email
     );
     res.status(200).json(result); // Retourne la réussite de la réinvitation
   } catch (error) {
