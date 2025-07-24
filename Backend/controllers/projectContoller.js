@@ -8,10 +8,13 @@ const ProjectAssessment = require("../models/projectAssessmentModel");
 // Créer un projet
 module.exports.createProject = async (req, res) => {
   try {
+    const sender = req.user; 
+
     const baseUrl = process.env.BASE_URL; // Adapte selon ton env
     const data = req.body;
     data.leaderId = req.user._id;
-    const newProject = await projectService.createProject(data, baseUrl);
+
+    const newProject = await projectService.createProject(data, baseUrl, sender.email );
     res.status(201).json(newProject);
   } catch (error) {
     res.status(400).json({ message: error.message });

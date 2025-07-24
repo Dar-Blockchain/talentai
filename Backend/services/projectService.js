@@ -46,11 +46,21 @@ const { sendActivationEmail } = require("../utils/mailing");
 const crypto = require("crypto");
 
 
-module.exports.createProject = async (data, baseUrl) => {
+module.exports.createProject = async (data, baseUrl, senderEmail) => {
   try {
     if (!data.team || data.team.length === 0) {
       throw new Error("The team must have at least one member.");
     }
+
+    const project = new Project({
+      name: data.Name,
+      track: data.track,
+      description: data.description,
+      team: [],
+      leaderId: data.leaderId,
+    });
+
+    await project.save();
 
     const teamWithTokens = data.team.map((member) => {
       if (!member.email) {
@@ -60,7 +70,8 @@ module.exports.createProject = async (data, baseUrl) => {
         throw new Error("Role is required for each team member.");
       }
 
-      const activationToken = crypto.randomBytes(20).toString("hex");
+      const activationToken = generateMemberToken(member.email, senderEmail,  project._id);
+      
       const expiresAt = new Date(
         Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000
       ); // 24h
@@ -75,16 +86,6 @@ module.exports.createProject = async (data, baseUrl) => {
       };
     });
 
-    const project = new Project({
-      name: data.Name,
-      track: data.track,
-      description: data.description,
-      team: teamWithTokens,
-      leaderId: data.leaderId,
-    });
-
-    await project.save();
-
     // create assessment for project (default status: pending)
     const projectAssessment = new ProjectAssessment({
       project: project._id,
@@ -95,7 +96,7 @@ module.exports.createProject = async (data, baseUrl) => {
     await project.save();
 
     for (const member of teamWithTokens) {
-      const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${member.activationToken}`;
+      const link = `${baseUrl}/projects/activate?token=${member.activationToken}`;
       await sendActivationEmail(member.email, link, project);
     }
 
