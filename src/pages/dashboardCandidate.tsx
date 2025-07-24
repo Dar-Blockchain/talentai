@@ -13,7 +13,6 @@ import {
   Typography,
   Card,
   Chip,
-  Rating,
   Button,
   IconButton,
   Dialog,
@@ -23,7 +22,6 @@ import {
   Alert,
   CircularProgress,
   TextField,
-  Divider,
   Paper,
   Stack,
   MenuItem,
@@ -32,47 +30,35 @@ import {
   Radio,
   FormControl,
   FormLabel,
-  Select,
-  InputLabel,
-  Slider,
   Autocomplete,
   useTheme,
   Tooltip,
-  Checkbox,
   Snackbar,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   TablePagination,
   Tabs,
   Tab,
 } from "@mui/material";
-import Grid from "@mui/material/Grid";
 import { styled } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
-import StarIcon from "@mui/icons-material/Star";
 import PersonIcon from "@mui/icons-material/Person";
 import EmailIcon from "@mui/icons-material/Email";
 import WorkIcon from "@mui/icons-material/Work";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
 import LogoutIcon from "@mui/icons-material/Logout";
 import DescriptionIcon from "@mui/icons-material/Description";
-import InfoIcon from "@mui/icons-material/Info";
 import { useRouter } from "next/router";
 import Cookies from "js-cookie";
 import { signOut } from "next-auth/react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { toast } from "react-hot-toast";
-import { generateTodos, fetchTodos } from "@/store/slices/todoSlice";
-import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import RefreshIcon from "@mui/icons-material/Refresh";
+import { generateTodos } from "@/store/slices/todoSlice";
 import CandidateOnly from "../components/CandidateOnly";
 import { useCallback } from 'react';
 import Link from "next/link";
@@ -297,45 +283,6 @@ const softSkillNames = [
   "Time Management",
 ];
 
-// Update the calculation function to handle both technical and soft skills
-const calculateSkillPercentage = (
-  profile: any,
-  type: "technical" | "soft"
-): number => {
-  if (!profile) return 0;
-
-  if (type === "technical") {
-    const technicalSkills =
-      profile.skills?.filter(
-        (skill: any) => !softSkillNames.includes(skill.name)
-      ) || [];
-    if (technicalSkills.length === 0) return 0;
-
-    const totalScore = technicalSkills.reduce((sum: number, skill: any) => {
-      return sum + (skill.proficiencyLevel / 5) * 100;
-    }, 0);
-
-    return totalScore / technicalSkills.length;
-  } else {
-    // For soft skills
-    if (!profile.softSkills?.length) return 0;
-
-    const totalScore = profile.softSkills.reduce((sum: any, skill: any) => {
-      // Convert experienceLevel to number
-      const proficiencyMap: { [key: string]: number } = {
-        "Entry Level": 1,
-        Junior: 2,
-        "Mid Level": 3,
-        Senior: 4,
-        Expert: 5,
-      };
-      const proficiencyLevel = proficiencyMap[skill.experienceLevel] || 1;
-      return sum + (proficiencyLevel / 5) * 100;
-    }, 0);
-
-    return totalScore / profile.softSkills.length;
-  }
-};
 
 // Add helper function to map proficiency to experience level
 const getExperienceLevelFromProficiency = (
@@ -357,46 +304,7 @@ const getExperienceLevelFromProficiency = (
   }
 };
 
-const CandidateCard = styled(Box)(({ theme }) => ({
-  background: "rgba(30, 41, 59, 0.7)",
-  backdropFilter: "blur(10px)",
-  borderRadius: "16px",
-  padding: theme.spacing(3),
-  border: "1px solid rgba(255,255,255,0.1)",
-  transition: "all 0.3s ease",
-  "&:hover": {
-    transform: "translateY(-4px)",
-    boxShadow: "0 8px 24px rgba(2,226,255,0.15)",
-    border: "1px solid rgba(2,226,255,0.3)",
-  },
-}));
 
-const SkillBar = styled(Box)(({ theme }) => ({
-  height: "4px",
-  background: "rgba(255,255,255,0.1)",
-  borderRadius: "2px",
-  overflow: "hidden",
-  "& .bar": {
-    height: "100%",
-    background: "linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)",
-    transition: "width 0.3s ease",
-  },
-}));
-
-const AvatarWrapper = styled(Box)(({ theme }) => ({
-  position: "relative",
-  "&::after": {
-    content: '""',
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: "12px",
-    height: "12px",
-    background: "#22c55e",
-    borderRadius: "50%",
-    border: "2px solid rgba(30, 41, 59, 0.7)",
-  },
-}));
 
 const ScoreCircle = styled(Box)(({ theme }) => ({
   position: "relative",
@@ -786,14 +694,6 @@ const skillCategories = {
   ],
 };
 
-// Category color map
-const categoryColors: Record<string, string> = {
-  Development: "#0ea5e9",
-  Marketing: "#f59e42",
-  QA: "#a21caf",
-  Business: "#22c55e",
-  Other: "#64748b",
-};
 
 export default function DashboardCandidate() {
   const router = useRouter();
@@ -830,12 +730,6 @@ export default function DashboardCandidate() {
     skill: any;
   } | null>(null);
 
-  // Logs state management (commented out - moved to admin dashboard)
-  // const [logs, setLogs] = useState<Log[]>([]);
-  // const [logsLoading, setLogsLoading] = useState(false);
-  // const [logsError, setLogsError] = useState<string | null>(null);
-  // const [page, setPage] = useState(0);
-  // const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const theme = useTheme();
   const generateTodoList = () => {
@@ -846,52 +740,9 @@ export default function DashboardCandidate() {
     // dispatch(fetchTodos());
   }, [dispatch]);
 
-  // Fetch logs function (commented out - moved to admin dashboard)
-  // const fetchLogs = async () => {
-  //   try {
-  //     setLogsLoading(true);
-  //     setLogsError(null);
-
-  //     const token = localStorage.getItem("api_token");
-  //     if (!token) {
-  //       setLogsError("Authentication token not found");
-  //       return;
-  //     }
-
-  //     const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}logs/getAllLogs`, {
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-
-  //     if (!response.ok) {
-  //       throw new Error(`Failed to fetch logs: ${response.status}`);
-  //     }
-
-  //     const data = await response.json();
-  //     setLogs(data);
-  //   } catch (error) {
-  //     console.error("Error fetching logs:", error);
-  //     setLogsError(error instanceof Error ? error.message : "Failed to fetch logs");
-  //   } finally {
-  //     setLogsLoading(false);
-  //   }
-  // };
-
-  // Fetch logs on component mount
   useEffect(() => {
     // fetchLogs(); // Commented out - logs functionality moved to admin dashboard
   }, []);
-
-  // Pagination handlers (commented out - moved to admin dashboard)
-  // const handleChangePage = (event: unknown, newPage: number) => {
-  //   setPage(newPage);
-  // };
-
-  // const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   setRowsPerPage(parseInt(event.target.value, 10));
-  //   setPage(0);
-  // };
 
   useEffect(() => {
     if (profile) {
@@ -1117,7 +968,6 @@ export default function DashboardCandidate() {
       const token = Cookies.get("api_token");
       const selectedSkill = newSkill.name;
 
-      // Check if skill already exists (case-insensitive)
       const isDuplicate = profile?.skills?.some(
         (skill: any) => skill.name.toLowerCase() === selectedSkill.toLowerCase()
       );
@@ -1153,62 +1003,7 @@ export default function DashboardCandidate() {
     setNewSkill((prev) => ({ ...prev, name: value || "" }));
   };
 
-  const matchingCandidates: MatchingCandidate[] = [
-    {
-      id: "1",
-      name: "Alex Thompson",
-      matchScore: 95,
-      location: "New York, USA",
-      role: "Full Stack Developer",
-      skills: [
-        { name: "React", proficiencyLevel: 5 },
-        { name: "TypeScript", proficiencyLevel: 4 },
-        { name: "Node.js", proficiencyLevel: 4 },
-      ],
-      experienceLevel: "Senior",
-      description:
-        "Passionate developer with 5+ years of experience in full-stack development and a focus on React ecosystems.",
-      avatarUrl: "https://i.pravatar.cc/150?img=1",
-      availability: "Available in 2 weeks",
-      expectedSalary: "$120k - $150k",
-    },
-    {
-      id: "2",
-      name: "Sarah Chen",
-      matchScore: 88,
-      location: "San Francisco, USA",
-      role: "Machine Learning Engineer",
-      skills: [
-        { name: "Python", proficiencyLevel: 5 },
-        { name: "TensorFlow", proficiencyLevel: 4 },
-        { name: "AWS", proficiencyLevel: 3 },
-      ],
-      experienceLevel: "Mid Level",
-      description:
-        "ML engineer specializing in computer vision and deep learning applications.",
-      avatarUrl: "https://i.pravatar.cc/150?img=5",
-      availability: "Immediately available",
-      expectedSalary: "$100k - $130k",
-    },
-    {
-      id: "3",
-      name: "James Wilson",
-      matchScore: 85,
-      location: "London, UK",
-      role: "Frontend Developer",
-      skills: [
-        { name: "React", proficiencyLevel: 4 },
-        { name: "Vue.js", proficiencyLevel: 5 },
-        { name: "UI/UX", proficiencyLevel: 4 },
-      ],
-      experienceLevel: "Senior",
-      description:
-        "Frontend specialist with a strong focus on creating beautiful and accessible user interfaces.",
-      avatarUrl: "https://i.pravatar.cc/150?img=3",
-      availability: "Available in 1 month",
-      expectedSalary: "£70k - £90k",
-    },
-  ];
+
 
   const softSkills: Skill[] = [
     {
@@ -1409,26 +1204,6 @@ export default function DashboardCandidate() {
     }
   };
 
-  // Static JSON for ads preview
-  const adsPosts = [
-    {
-      _id: '1',
-      title: 'Frontend Developer at TechCorp',
-      description: 'Join our dynamic team to build modern web applications using React and TypeScript. Great benefits and growth opportunities.',
-    },
-    {
-      _id: '2',
-      title: 'AI Research Intern',
-      description: 'Work with cutting-edge AI models and contribute to real-world projects. Ideal for students and recent graduates passionate about machine learning.',
-    },
-    {
-      _id: '3',
-      title: 'Remote Product Designer',
-      description: 'Shape the user experience for our next-gen SaaS platform. Fully remote, flexible hours, and a creative team environment.',
-    },
-  ];
-
-  // Ads API state
   const [adLoading, setAdLoading] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
   const [adPost, setAdPost] = useState<any[]>([]);

@@ -19,7 +19,6 @@ import {
 } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '@/store/store';
-import { keyframes } from '@mui/system';
 import QuickActions from '@/components/dashboard-hackathon/QuickActions';
 import TeamMembers from '@/components/dashboard-hackathon/TeamMembers';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
@@ -42,7 +41,6 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import clsx from 'clsx';
 import { styled } from '@mui/material/styles';
 import { logout } from '@/store/slices/authSlice';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -51,61 +49,6 @@ import CodeIcon from '@mui/icons-material/Code';
 import { evaluateProjectCode, getProjectById } from '@/store/slices/projectSlice';
 import CodeAnalysisModal from '@/components/dashboard-hackathon/CodeAnalysisModal';
 import { validateGithubLink } from '@/utils/functions';
-
-interface TeamMember {
-  name: string;
-  email: string;
-  role: string;
-  validated?: boolean;
-}
-
-interface Leader {
-  FirstName: string;
-  LastName: string;
-  email: string;
-  // add other fields if needed
-}
-
-interface ProjectAPIData {
-  _id: string;
-  name: string;
-  description: string;
-  team: { name?: string; role?: string; email: string; validated?: boolean; _id?: string }[];
-  leader: string;
-  createdAt: string;
-  updatedAt: string;
-  track?: string;
-}
-
-interface Assessment {
-  _id: string;
-  user: string;
-  project: string;
-  technicalData?: any; // You can further type this if needed
-  createdAt: string;
-  updatedAt: string;
-  __v?: number;
-  businessData?: any;
-  overallScore?: number;
-  codeAnalysis?: any; // Add codeAnalysis field
-}
-
-interface currentProject {
-  name: string;
-  projectDescription: string;
-  teamMembers: TeamMember[];
-  createdAt: string;
-  _id: string;
-  track?: string;
-  assessment?: Assessment;
-  leader?: Leader;
-}
-
-const blobAnimation = keyframes`
-  0% { transform: scale(1) translateY(0px); }
-  50% { transform: scale(1.1) translateY(20px); }
-  100% { transform: scale(1) translateY(0px); }
-`;
 
 const steps = [
   { label: 'Register', icon: <RocketLaunchIcon /> },
@@ -180,7 +123,11 @@ const HackathonDashboard = () => {
   const techScore = assessment?.technicalData?.overallScore;
   const bizScore = assessment?.businessData?.overallScore;
   const overallScore = assessment?.overallScore;
-  const codeAnalysisScore = assessment?.codeAnalysis.analysis.quality.overall ?? codeQualityScore;
+  const codeAnalysisScore =
+  assessment?.codeAnalysis?.analysis?.quality?.overall != null
+    ? assessment.codeAnalysis.analysis.quality.overall
+    : codeQualityScore;
+  const [mounted, setMounted] = useState(false);
 
   const handleCodeEvalSubmit = async () => {
     if(!currentProject?._id){
@@ -221,6 +168,11 @@ const HackathonDashboard = () => {
     dispatch(getProjectById(id)).unwrap();
     }
   }, [id]);
+  useEffect(() => {
+  setMounted(true);
+}, []);
+
+if (!mounted) return null;
 
   if (typeof loading === 'undefined' || loading) {
     return (
@@ -313,7 +265,6 @@ const HackathonDashboard = () => {
   // --- Main Render ---
   // Determine current user email from Redux only
   const currentUserEmail = user?.email;
-  // console.log(currentUserEmail,"lalalala")
   const isTeamMember = !!(currentUserEmail && currentProject && currentProject.team.some(member => member.email === currentUserEmail));
   const isLeader = !!(currentUserEmail && currentProject && currentProject.leader && currentProject.leader.email === currentUserEmail);
   // Change the logic for project complete:
