@@ -2,7 +2,9 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 
 // Types based on backend projectModel
 export interface ProjectTeamMember {
-  email: string;
+  name: string;
+  email?: string;
+  role: string;
   validated?: boolean;
   activationToken?: string;
 }
@@ -85,6 +87,7 @@ export interface BusinessData {
   overallScore?: number;
   summary?: string;
   createdAt?: number;
+  addedValues?: any;
 }
 
 // Add eligibility types
@@ -105,7 +108,9 @@ export interface ProjectAssessmentRef {
   project: string; // ObjectId as string
   technicalData?: TechnicalData;
   businessData?: BusinessData;
+  codeAnalysis?: any;
   eligibility?: Eligibility;
+  overallScore?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -116,7 +121,7 @@ export interface Project {
   description: string;
   track: string;
   team: ProjectTeamMember[];
-  leader: string;
+  leader: any;
   leaderProfile?: string;
   assessment: ProjectAssessmentRef;
   createdAt?: string;
@@ -192,7 +197,7 @@ interface ProjectState {
 const initialState: ProjectState = {
   projects: [],
   currentProject: null,
-  loading: false,
+  loading: true,
   error: null,
   total: 0,
   totalPages: 0,
@@ -264,7 +269,7 @@ export const getProjectById = createAsyncThunk<Project, string>(
         return rejectWithValue('No authentication token found');
       }
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/projects/${id}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}project/getProjectById/${id}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
