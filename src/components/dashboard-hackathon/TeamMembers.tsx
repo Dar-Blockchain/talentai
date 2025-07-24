@@ -15,9 +15,9 @@ interface TeamMember {
 }
 
 interface TeamMembersProps {
-  teamMembers: TeamMember[];
+  teamMembers: TeamMember[] | undefined;
   onInvite?: (email: string) => void;
-  projectId: string;
+  projectId: string | undefined;
   isOwner?: boolean;
 }
 
@@ -213,7 +213,22 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
       </Snackbar>
       <Divider sx={{ borderColor: '#EDE7F6' }} />
       <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
-        {teamMembers.map((member, index) => (
+        {!teamMembers || teamMembers.length === 0 ? (
+  <Box sx={{ textAlign: 'center', py: 6 }}>
+    <Typography
+      variant="subtitle1"
+      sx={{
+        color: '#8F9BB3',
+        fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif',
+        fontWeight: 600,
+        fontSize: '1rem',
+      }}
+    >
+      No team members found.
+    </Typography>
+  </Box>
+) : (
+        teamMembers.map((member, index) => (
           <Box key={index}>
             <Box sx={{
               p: 2,
@@ -297,7 +312,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
               <Divider sx={{ borderColor: '#EDE7F6', mx: 2 }} />
             )}
           </Box>
-        ))}
+        )))}
         {/* Modern Invite Button */}
         {isOwner && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 1 }}>

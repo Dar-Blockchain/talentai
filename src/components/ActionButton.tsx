@@ -16,7 +16,7 @@ const StyledButton = styled('button')<{ disabled?: boolean }>(({ theme, disabled
   fontWeight: 600,
   transition: 'background 0.15s',
   width: '100%',
-  justifyContent: 'flex-start',
+  justifyContent: 'center',
   opacity: disabled ? 0.6 : 1,
   boxShadow: 'none',
   '&:hover': {

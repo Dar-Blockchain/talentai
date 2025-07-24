@@ -19,12 +19,8 @@ import {
 } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '@/store/store';
-import Cookies from 'js-cookie';
 import { keyframes } from '@mui/system';
-import HeroHeader from '@/components/dashboard-hackathon/HeroHeader';
-import StatsCards from '@/components/dashboard-hackathon/StatsCards';
 import QuickActions from '@/components/dashboard-hackathon/QuickActions';
-import ProjectDetails from '@/components/dashboard-hackathon/ProjectDetails';
 import TeamMembers from '@/components/dashboard-hackathon/TeamMembers';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import Stepper from '@mui/material/Stepper';
@@ -33,9 +29,7 @@ import StepLabel from '@mui/material/StepLabel';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import PersonIcon from '@mui/icons-material/Person';
-import GroupIcon from '@mui/icons-material/Group';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import CelebrationIcon from '@mui/icons-material/Celebration';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import ScienceIcon from '@mui/icons-material/Science';
@@ -54,9 +48,9 @@ import { logout } from '@/store/slices/authSlice';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { TextField } from '@mui/material';
 import CodeIcon from '@mui/icons-material/Code';
-import { evaluateProjectCode } from '@/store/slices/projectSlice';
-
+import { evaluateProjectCode, getProjectById } from '@/store/slices/projectSlice';
 import CodeAnalysisModal from '@/components/dashboard-hackathon/CodeAnalysisModal';
+import { validateGithubLink } from '@/utils/functions';
 
 interface TeamMember {
   name: string;
@@ -96,7 +90,7 @@ interface Assessment {
   codeAnalysis?: any; // Add codeAnalysis field
 }
 
-interface ProjectData {
+interface currentProject {
   name: string;
   projectDescription: string;
   teamMembers: TeamMember[];
@@ -160,35 +154,14 @@ function GlassStepIcon(props: any) {
   );
 }
 
-// --- Github Link Validation Function ---
-function validateGithubLink(link: string): boolean {
-  // Accepts: https://github.com/user/repo or http://github.com/user/repo or github.com/user/repo
-  // Optionally with .git at the end, and optional trailing slash
-  // Does not accept github.com/user or github.com/user/repo/extra
-  // Only public repo URLs
-  const regex = /^(https?:\/\/)?(www\.)?github\.com\/[\w.-]+\/[\w.-]+(\/)?(\.git)?$/i;
-  // Remove trailing slash for .git check
-  let normalized = link.trim();
-  if (normalized.endsWith('/')) normalized = normalized.slice(0, -1);
-  // Remove .git for trailing slash check
-  if (normalized.endsWith('.git')) normalized = normalized.slice(0, -4);
-  // Now check if it matches the pattern
-  const match = /^((https?:\/\/)?(www\.)?github\.com\/[\w.-]+\/[\w.-]+)$/.test(normalized);
-  return match;
-}
-
 const HackathonDashboard = () => {
-  // All hooks at the top, before any return!
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { id } = router.query;
-  const [loading, setLoading] = useState(true);
-  const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
-  const [mounted, setMounted] = useState(false);
-  // --- Modal State ---
+  const { currentProject, loading } = useSelector((state: RootState) => state.project);
   const [openTechModal, setOpenTechModal] = useState(false);
   const [openBizModal, setOpenBizModal] = useState(false);
   const [openFullModal, setOpenFullModal] = useState(false);
@@ -199,22 +172,18 @@ const HackathonDashboard = () => {
   const [evaluating, setEvaluating] = useState(false);
   const [codeEvalMessage, setCodeEvalMessage] = useState('');
   const [githubLinkError, setGithubLinkError] = useState('');
-  // After projectData is loaded, extract assessment if available
-  // For demo, let's mock assessment as an object on projectData (replace with real data as needed)
-  const assessment = projectData?.assessment || null;
+  const assessment = currentProject?.assessment || null;
   const hasBusinessData = !!assessment?.businessData;
   const hasTechnicalData = !!assessment?.technicalData;
   const hasCodeAnalysis = !!assessment?.codeAnalysis;
   const availableMeetings = (!hasBusinessData ? 1 : 0) + (!hasTechnicalData ? 1 : 0);
-  // --- Extracted Scores ---
   const techScore = assessment?.technicalData?.overallScore;
   const bizScore = assessment?.businessData?.overallScore;
   const overallScore = assessment?.overallScore;
-  // If codeAnalysis exists, prefer its score for code quality
   const codeAnalysisScore = assessment?.codeAnalysis.analysis.quality.overall ?? codeQualityScore;
 
   const handleCodeEvalSubmit = async () => {
-    if(!projectData?._id){
+    if(!currentProject?._id){
       return;
     }
     if (!githubLink) {
@@ -229,7 +198,7 @@ const HackathonDashboard = () => {
     setEvaluating(true);
     setCodeEvalMessage('Evaluating code quality. This may take a moment...');
     try {
-      const result = await dispatch(evaluateProjectCode({ projectId: projectData._id, githubLink })).unwrap();
+      const result = await dispatch(evaluateProjectCode({ projectId: currentProject._id, githubLink })).unwrap();
       setCodeQualityScore(result.codeQualityScore);
       setCodeEvalMessage('Code evaluation complete!');
     } catch (error) {
@@ -247,56 +216,13 @@ const HackathonDashboard = () => {
     }
   }, [isAuthenticated, router]);
 
-  useEffect(() => { setMounted(true); }, []);
-
   useEffect(() => {
-    const fetchProject = async () => {
-      try {
-        const token = localStorage.getItem('api_token');
-        let project: ProjectAPIData | null = null;
-        if (id) {
-          // Fetch by id from URL
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/getProjectById/${id}`,
-            { headers: token ? { Authorization: `Bearer ${token}` } : {} });
-          if (!res.ok) throw new Error('Failed to fetch project by id');
-          project = await res.json();
-        } 
-        if (project) {
-          // Map API team to required TeamMember[]
-          const teamMembers: TeamMember[] = project.team.map((member, idx) => ({
-            name: member?.name || member.email.split('@')[0] || `Member${idx + 1}`,
-            email: member.email,
-            role: member?.role ? member.role : 'Member',
-            validated: member.validated,
-          }));
-          setProjectData({
-            name: project.name,
-            projectDescription: project.description,
-            teamMembers,
-            createdAt: project.createdAt,
-            _id: project._id,
-            track: project.track,
-            assessment: (project as any).assessment,
-            leader: (project as any).leader,
-          });
-        } else {
-          setProjectData(null);
-        }
-      } catch (error) {
-        setProjectData(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProject();
+    if(typeof id === 'string' && id){
+    dispatch(getProjectById(id)).unwrap();
+    }
   }, [id]);
 
-  // Only after all hooks:
-  if (!mounted || !isAuthenticated) {
-    return null;
-  }
-
-  if (loading) {
+  if (typeof loading === 'undefined' || loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <CircularProgress sx={{ color: '#8310FF' }} />
@@ -304,7 +230,7 @@ const HackathonDashboard = () => {
     );
   }
 
-  if (!projectData) {
+  if (!currentProject && !loading) {
     return (
       <Container>
         <Box sx={{ mt: 8, textAlign: 'center' }}>
@@ -388,8 +314,8 @@ const HackathonDashboard = () => {
   // Determine current user email from Redux only
   const currentUserEmail = user?.email;
   // console.log(currentUserEmail,"lalalala")
-  const isTeamMember = !!(currentUserEmail && projectData && projectData.teamMembers.some(member => member.email === currentUserEmail));
-  const isLeader = !!(currentUserEmail && projectData && projectData.leader && projectData.leader.email === currentUserEmail);
+  const isTeamMember = !!(currentUserEmail && currentProject && currentProject.team.some(member => member.email === currentUserEmail));
+  const isLeader = !!(currentUserEmail && currentProject && currentProject.leader && currentProject.leader.email === currentUserEmail);
   // Change the logic for project complete:
   const isProjectComplete = hasBusinessData && hasTechnicalData && hasCodeAnalysis;
   return (
@@ -517,7 +443,7 @@ const HackathonDashboard = () => {
       </AppBar>
       {/* Banner - REPLACED WITH NAVBAR */}
       {/* Project Summary Card */}
-      {projectData && (
+      {currentProject && (
         <Container maxWidth="lg" sx={{ mb: 3, zIndex: 2, position: 'relative' }}>
           <Box sx={{
             display: 'flex',
@@ -544,25 +470,25 @@ const HackathonDashboard = () => {
             {/* Project Info */}
             <Box sx={{ flex: 1, py: { xs: 2, sm: 3 }, pr: { xs: 2, sm: 4 }, pl: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <Typography variant="h5" sx={{ fontWeight: 900, color: '#7C4DFF', mb: 0.5, letterSpacing: 0.2 }}>
-                {projectData.name}
+                {currentProject.name}
               </Typography>
               <Typography variant="body1" sx={{ color: '#2E3A59', mb: 1.2, fontSize: '1.08rem', fontWeight: 500 }}>
-                {projectData.projectDescription}
+                {currentProject.description}
               </Typography>
-              {projectData.track && (
+              {currentProject.track && (
                 <Box sx={{ display: 'inline-flex', alignItems: 'center', bgcolor: '#F3F6FD', color: '#7C4DFF', px: 1.5, py: 0.5, borderRadius: 2, fontWeight: 700, fontSize: '0.98rem', mb: 0.5 }}>
                   <RocketLaunchIcon sx={{ fontSize: 18, mr: 1 }} />
-                  Track: {projectData.track}
+                  Track: {currentProject.track}
                 </Box>
               )}
               <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Tooltip title="Copy Project ID">
-                  <IconButton size="small" onClick={() => { navigator.clipboard.writeText(projectData._id) }}>
+                  <IconButton size="small" onClick={() => { navigator.clipboard.writeText(currentProject._id) }}>
                     <ContentCopyIcon sx={{ fontSize: 18, color: '#7C4DFF' }} />
                   </IconButton>
                 </Tooltip>
                 <Typography variant="caption" sx={{ color: '#7C4DFF', fontWeight: 700 }}>
-                  Project ID: {projectData._id.slice(0, 8)}...{projectData._id.slice(-4)}
+                  Project ID: {currentProject._id.slice(0, 8)}...{currentProject._id.slice(-4)}
                 </Typography>
               </Box>
             </Box>
@@ -575,8 +501,8 @@ const HackathonDashboard = () => {
                 Leader
               </Typography>
               <Typography variant="body1" sx={{ color: '#2E3A59', fontWeight: 700, fontSize: '1.08rem' }}>
-                {projectData.leader && projectData.leader.FirstName && projectData.leader.LastName
-                  ? `${projectData.leader.FirstName} ${projectData.leader.LastName}`
+                {currentProject.leader && currentProject.leader.FirstName && currentProject.leader.LastName
+                  ? `${currentProject.leader.FirstName} ${currentProject.leader.LastName}`
                   : 'N/A'}
               </Typography>
             </Box>
@@ -624,7 +550,7 @@ const HackathonDashboard = () => {
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
               <CodeIcon sx={{ color: '#333', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #33333311)' }} />
               <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#7C4DFF', letterSpacing: 0.2 }}>Code Quality</Typography>
-              {renderScoreChip(codeAnalysisScore)}
+              {renderScoreChip(codeAnalysisScore*10)}
               <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                 {!hasCodeAnalysis && (
                   <Button
@@ -966,7 +892,7 @@ const HackathonDashboard = () => {
           <Stepper
             alternativeLabel
             activeStep={
-              projectData && projectData.teamMembers.length > 0 && projectData.projectDescription ?
+              currentProject && currentProject.team.length > 0 && currentProject.description ?
                 (hasBusinessData && hasTechnicalData ? 3 : (hasBusinessData || hasTechnicalData ? 2 : 1)) : 0
             }
             connector={null}
@@ -990,7 +916,7 @@ const HackathonDashboard = () => {
           <LinearProgress
             variant="determinate"
             value={
-              projectData && projectData.teamMembers.length > 0 && projectData.projectDescription ?
+              currentProject && currentProject.team.length > 0 && currentProject.description ?
                 (hasBusinessData && hasTechnicalData ? 100 : (hasBusinessData || hasTechnicalData ? 66 : 33)) : 0
             }
             sx={{
@@ -1021,7 +947,7 @@ const HackathonDashboard = () => {
                   Quick Actions
                 </Typography>
                 <QuickActions
-                  projectId={projectData && (projectData as any)._id}
+                  projectId={currentProject && (currentProject as any)._id}
                   disableBusiness={hasBusinessData}
                   disableTechnical={hasTechnicalData}
                   onEvaluateCode={() => setOpenCodeEvalModal(true)}
@@ -1062,7 +988,7 @@ const HackathonDashboard = () => {
                 }}>
                   <AccessTimeIcon sx={{ color: '#7C4DFF', fontSize: 36, mb: 1 }} />
                   <Typography variant="h4" sx={{ fontWeight: 900, color: '#7C4DFF', mb: 0.5 }}>
-                    {Math.max(0, Math.ceil((new Date(projectData.createdAt).getTime() + 7 * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000)))}
+                    {Math.max(0, Math.ceil((new Date(currentProject?.createdAt || '').getTime() + 7 * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000)))}
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#2E3A59', fontWeight: 700 }}>Days Left</Typography>
                 </Box>
@@ -1137,7 +1063,7 @@ const HackathonDashboard = () => {
             </Box>
           </Box>
           {/* Right: Team Members */}
-          <TeamMembers teamMembers={projectData.teamMembers} projectId={projectData._id} isOwner={isLeader} />
+          <TeamMembers teamMembers={currentProject?.team} projectId={currentProject?._id} isOwner={isLeader} />
         </Box>
       </Container>
       {/* Footer */}

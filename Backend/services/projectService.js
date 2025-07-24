@@ -1293,3 +1293,33 @@ module.exports.analyzeRepo = async (
     intelligentAnalysis,
   };
 };
+
+module.exports.getTeamMemberProjects = async (email) => {
+  try {
+    const projects = await Project.find({
+      team: {
+        $elemMatch: {
+          email: email,
+          validated: true,
+        },
+      },
+    });
+    return projects;
+  } catch (error) {
+    throw error;
+  }
+};
+
+module.exports.getLeaderProjects = async (leaderId) => {
+  try {
+    const projects = await Project.find({
+      leaderId: leaderId
+    });
+    return projects;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+
