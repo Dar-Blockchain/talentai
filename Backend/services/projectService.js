@@ -1465,5 +1465,16 @@ module.exports.getTeamMemberProjects = async (email) => {
   }
 };
 
+module.exports.getLeaderProjects = async (leaderId) => {
+  try {
+    const projects = await Project.find({
+      leaderId: leaderId
+    });
+    return projects;
+  } catch (error) {
+    throw error;
+  }
+};
+
 
 
