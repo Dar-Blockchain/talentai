@@ -180,7 +180,10 @@ const HackathonDashboard = () => {
   const techScore = assessment?.technicalData?.overallScore;
   const bizScore = assessment?.businessData?.overallScore;
   const overallScore = assessment?.overallScore;
-  const codeAnalysisScore = assessment?.codeAnalysis.analysis.quality.overall ?? codeQualityScore;
+  const codeAnalysisScore =
+  assessment?.codeAnalysis?.analysis?.quality?.overall != null
+    ? assessment.codeAnalysis.analysis.quality.overall
+    : codeQualityScore;
 
   const handleCodeEvalSubmit = async () => {
     if(!currentProject?._id){
