@@ -67,5 +67,6 @@ router.get("/getProjectsCountByStatus", projectController.getProjectsCountByStat
 
 router.post('/analyze-code/:projectId', projectController.analyzeRepo);
 
+router.get('/teamMemberProjects', projectController.getTeamMemberProjects);
 
 module.exports = router;
