@@ -985,7 +985,6 @@ exports.getTeamMemberProjects = async (req, res) => {
   try {
     
     const user = req.user;
-    console.log("check user: ", user);
     const result = await projectService.getTeamMemberProjects(user.email);
 
     res.status(200).json({
@@ -995,6 +994,23 @@ exports.getTeamMemberProjects = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       error: `An unexpected error occurred while getting teamMemberProjects: ${error}`,
+    });
+  }
+};
+
+exports.getLeaderProjects = async (req, res) => {
+  try {
+    
+    const user = req.user;
+    const result = await projectService.getLeaderProjects(user.id);
+
+    res.status(200).json({
+      success: true,
+      result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: `An unexpected error occurred while getting leaderProjects: ${error}`,
     });
   }
 };
