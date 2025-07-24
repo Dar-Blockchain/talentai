@@ -14,12 +14,14 @@ const fetchRepoData = async (owner, repo) => {
         const data = response.data;
         // Contributors
         let contributors = [];
+        let contribRes; 
         try {
             const contribRes = await axios.get(`https://api.github.com/repos/${owner}/${repo}/contributors?per_page=100`, { headers });
             contributors = contribRes.data.map(c => ({ login: c.login, contributions: c.contributions }));
         } catch (e) {
             console.warn('Could not fetch contributors:', e.message);
         }
+
         // Commits
         let commits = [];
         try {

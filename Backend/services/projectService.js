@@ -1,6 +1,9 @@
 const { Together } = require("together-ai");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
+
+let { HEDERA_HACKATHON_CRITERIA, OTHER_HACKATHON_CRITERIA, CRITERIA_WEIGHTS } = require("../constants/hackathonConstants");
+
 const {
   handleBusinessOverallScore,
   handleTechnicalOverallScore,
@@ -902,8 +905,7 @@ module.exports.analyzeRepo = async (
   hackathonName,
   projectId
 ) => {
-  // Load hackathon criteria from constants
-  let { HEDERA_HACKATHON_CRITERIA, OTHER_HACKATHON_CRITERIA, CRITERIA_WEIGHTS } = require("../constants/hackathonConstants");
+  
   let hackathonCriteria; 
   console.log("checkout : ", hackathonName);
   
@@ -1226,8 +1228,6 @@ module.exports.analyzeRepo = async (
     repo
   );
 
-  // Print/Display code analysis and intelligent analysis as before (omitted for brevity)
-
   // Compose all results into res1
   const res1 = {
     repoName: repoData.name,
@@ -1235,7 +1235,7 @@ module.exports.analyzeRepo = async (
     feedbacks,
     finalScore,
     comprehensiveAnalysis,
-    intelligentAnalysis,
+    analysis: intelligentAnalysis,
     contributors: repoData.contributors,
     totalCommits: numCommits,
     firstCommit,
@@ -1254,13 +1254,13 @@ module.exports.analyzeRepo = async (
     githubLink,
     owner,
     repo,
-    // analysis: result,
+    analysis: res1.analysis,
     criteriaResults: res1.criteriaResults,
     feedbacks:res1.feedbacks,
     // res.intelligentAnalysis data are already present in the analysis:result
     finalScore: res1.finalScore,
     comprehensiveAnalysis: res1.comprehensiveAnalysis,
-    contributors: res1.contributors,
+    // contributors: res1.contributors,
     totalCommits: res1.totalCommits,
     firstCommit: res1.firstCommit,
     lastCommit: res1.lastCommit,
