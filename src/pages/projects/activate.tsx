@@ -6,7 +6,6 @@ import UsersIcon from "@/components/icons/UsersIcon";
 import VerifiedIcon from "@/components/icons/VerifiedIcon";
 import FeedBackIcon from "@/components/icons/FeedBackIcon";
 import { useDispatch, useSelector } from "react-redux";
-import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
 import { logout } from "@/store/slices/authSlice";
 import { AppDispatch, RootState } from "@/store/store";
 
@@ -18,6 +17,12 @@ const ProjectActivatePage = () => {
   );
   const { projectId, token } = router.query;
   const [projectName, setProjectName] = useState("Hackathon Project");
+  const [mounted, setMounted] = useState(false);
+  const [isInviter, setIsInviter] = useState();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated === false) {
@@ -27,6 +32,7 @@ const ProjectActivatePage = () => {
     }
 
     const fetchProject = async () => {
+      console.log(isAuthenticated, "isAuthentoicted ....")
       if (!projectId) return;
       try {
         const token = localStorage.getItem("api_token");
@@ -46,6 +52,10 @@ const ProjectActivatePage = () => {
 
     fetchProject();
   }, [dispatch, isAuthenticated, projectId, token, router]);
+
+  useEffect(() => {
+    
+  }, [isAuthenticated])
 
   const handleJoin = async () => {
     if (!projectId || !token) {
@@ -78,6 +88,8 @@ const ProjectActivatePage = () => {
     router.replace(`/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
     return;
   };
+
+if (!mounted) return null; // or a loader
 
   return (
     <Box
