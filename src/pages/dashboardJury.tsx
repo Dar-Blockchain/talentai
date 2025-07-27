@@ -235,7 +235,6 @@ const JuryDashboard = () => {
     router.replace('/signin?source=hackathon');
   };
 
-  // Restrict access to jury only
   useEffect(() => {
     if (user && user.role !== 'jury') {
       router.replace('/signin?source=hackathon');
