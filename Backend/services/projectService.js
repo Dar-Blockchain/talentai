@@ -47,13 +47,23 @@ const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 // Création d'un projet
 const { sendActivationEmail } = require("../utils/mailing");
 const crypto = require("crypto");
-const EXPIRATION_HOURS = 24;
 
-module.exports.createProject = async (data, baseUrl) => {
+
+module.exports.createProject = async (data, baseUrl, senderEmail) => {
   try {
     if (!data.team || data.team.length === 0) {
       throw new Error("The team must have at least one member.");
     }
+
+    const project = new Project({
+      name: data.Name,
+      track: data.track,
+      description: data.description,
+      team: [],
+      leaderId: data.leaderId,
+    });
+
+    await project.save();
 
     const teamWithTokens = data.team.map((member) => {
       if (!member.email) {
@@ -63,7 +73,8 @@ module.exports.createProject = async (data, baseUrl) => {
         throw new Error("Role is required for each team member.");
       }
 
-      const activationToken = crypto.randomBytes(20).toString("hex");
+      const activationToken = generateMemberToken(member.email, senderEmail,  project._id);
+      
       const expiresAt = new Date(
         Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000
       ); // 24h
@@ -78,16 +89,6 @@ module.exports.createProject = async (data, baseUrl) => {
       };
     });
 
-    const project = new Project({
-      name: data.Name,
-      track: data.track,
-      description: data.description,
-      team: teamWithTokens,
-      leaderId: data.leaderId,
-    });
-
-    await project.save();
-
     // create assessment for project (default status: pending)
     const projectAssessment = new ProjectAssessment({
       project: project._id,
@@ -98,7 +99,7 @@ module.exports.createProject = async (data, baseUrl) => {
     await project.save();
 
     for (const member of teamWithTokens) {
-      const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${member.activationToken}`;
+      const link = `${baseUrl}/projects/activate?token=${member.activationToken}`;
       await sendActivationEmail(member.email, link, project);
     }
 
@@ -144,7 +145,7 @@ module.exports.activateTeamMember = async (projectId, token) => {
   }
 };
 
-module.exports.addMemberToTeam = async (projectId, member, baseUrl) => {
+module.exports.addMemberToTeam = async (projectId, member, baseUrl, senderEmail) => {
   const project = await Project.findById(projectId).populate("leaderId");
   if (!project) throw new Error("Projet introuvable");
 
@@ -158,7 +159,8 @@ module.exports.addMemberToTeam = async (projectId, member, baseUrl) => {
 
 
   // Générer un nouveau token et une nouvelle expiration
-  const activationToken = crypto.randomBytes(20).toString("hex");
+  const activationToken = generateMemberToken(member.email, senderEmail,  projectId);
+
   const expiresAt = new Date(Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000); // 24h
 
   // Ajouter le nouveau membre à l'équipe, structure identique à la création
@@ -175,7 +177,7 @@ module.exports.addMemberToTeam = async (projectId, member, baseUrl) => {
   await project.save();
 
   // Générer et envoyer le lien d'activation
-  const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${activationToken}`;
+  const link = `${baseUrl}/projects/activate?token=${activationToken}`;
   await sendActivationEmail(member.email, link,project );
 
   return {
@@ -188,7 +190,8 @@ module.exports.addMemberToTeam = async (projectId, member, baseUrl) => {
 module.exports.resendTeamInvitation = async (
   projectId,
   memberEmail,
-  baseUrl
+  baseUrl, 
+  senderEmail
 ) => {
   try {
     const project = await Project.findById(projectId);
@@ -202,17 +205,19 @@ module.exports.resendTeamInvitation = async (
       throw new Error("Ce membre a déjà validé son invitation.");
 
     // Nouveau token + nouvelle expiration
-    member.activationToken = crypto.randomBytes(20).toString("hex");
+
+    const activationToken = generateMemberToken(member.email, senderEmail,  projectId);
+
+    member.activationToken = activationToken; 
     member.expiresAt = new Date(Date.now() + EXPIRATION_HOURS * 60 * 60 * 1000);
-    console.log("membermember", member);
 
     await project.save();
-    console.log("projectproject", project);
+    
 
     // Envoi du mail
-    const link = `${baseUrl}/projects/activate?projectId=${project._id}&token=${member.activationToken}`;
+    const link = `${baseUrl}/projects/activate?token=${activationToken}`;
     await sendActivationEmail(member.email, link, project);
-    console.log("link", link);
+    
 
     return { success: true, message: "Nouvelle invitation envoyée." };
   } catch (error) {
@@ -897,6 +902,8 @@ module.exports.exportProjectPdfService = async (projectId) => {
 
 
 const CodeAnalysis = require("../models/codeAnalysisModel");
+const { generateMemberToken, verifyMemberToken } = require("../utils/generateToken");
+const { EXPIRATION_HOURS } = require("../constants/jwtConstants");
 module.exports.analyzeRepo = async (
   githubLink,
   owner,
@@ -1317,6 +1324,21 @@ module.exports.getLeaderProjects = async (leaderId) => {
     });
     return projects;
   } catch (error) {
+    throw error;
+  }
+};
+
+module.exports.decodeMemberToken = async (token) => {
+  try {
+    const { valid, data, error } = verifyMemberToken(token);
+
+    if (!valid) {
+      throw new Error (`invalid or expired token. ${error}` ); 
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Erreur lors de l'activation du membre:", error);
     throw error;
   }
 };

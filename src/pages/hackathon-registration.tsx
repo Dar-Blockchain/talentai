@@ -44,6 +44,7 @@ import TeamMembersStep from '@/components/hackathon-registration/TeamMembersStep
 import RegistrationNavigation from '@/components/hackathon-registration/RegistrationNavigation';
 import { logout } from '@/store/slices/authSlice';
 import LogoutIcon from '@mui/icons-material/Logout';
+import { isValidName } from '@/utils/functions';
 
 
 interface TeamMember {
@@ -182,6 +183,10 @@ const HackathonRegistration = () => {
     // Validation per step
     if (activeStep === 0 && (!leaderFirstName || !leaderLastName)) {
       setError('Please fill in leader first and last name');
+      return;
+    }
+    if(!isValidName(leaderFirstName) || !isValidName(leaderLastName)){
+      setError('Please enter a valid first name and last name (letters only, at least 2 characters).');
       return;
     }
     if (activeStep === 1 && (!projectName || !projectDescription)) {

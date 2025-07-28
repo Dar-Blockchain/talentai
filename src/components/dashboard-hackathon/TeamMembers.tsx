@@ -3,8 +3,6 @@ import EmailIcon from '@mui/icons-material/Email';
 import VerifiedIcon from '@mui/icons-material/CheckCircle';
 import React, { useState } from 'react';
 import GroupIcon from '@mui/icons-material/Group';
-import CelebrationIcon from '@mui/icons-material/Celebration';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CircularProgress from '@mui/material/CircularProgress';
 
 interface TeamMember {
@@ -293,7 +291,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
                       size="small"
                       sx={{ fontWeight: 700, fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', borderRadius: 1, px: 1, fontSize: '0.92rem', mb: 0.5 }}
                     />
-                    <Button
+                    {isOwner && <Button
                       size="small"
                       variant="outlined"
                       color="primary"
@@ -303,7 +301,7 @@ const TeamMembers: React.FC<TeamMembersProps> = ({ teamMembers, onInvite, projec
                       startIcon={resendingIndex === index ? <CircularProgress size={18} sx={{ color: '#7C4DFF' }} /> : null}
                     >
                       {resendingIndex === index ? 'Resending...' : 'Resend'}
-                    </Button>
+                    </Button>}
                   </>
                 )}
               </Box>

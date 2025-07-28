@@ -8,10 +8,13 @@ const ProjectAssessment = require("../models/projectAssessmentModel");
 // Créer un projet
 module.exports.createProject = async (req, res) => {
   try {
+    const sender = req.user; 
+
     const baseUrl = process.env.BASE_URL; // Adapte selon ton env
     const data = req.body;
     data.leaderId = req.user._id;
-    const newProject = await projectService.createProject(data, baseUrl);
+
+    const newProject = await projectService.createProject(data, baseUrl, sender.email );
     res.status(201).json(newProject);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -33,11 +36,14 @@ module.exports.addMemberToTeam = async (req, res) => {
   const { projectId, email, name, role } = req.body;
   const baseUrl = process.env.BASE_URL;
 
+  const sender = req.user; 
+
   try {
     const result = await projectService.addMemberToTeam(
       projectId,
       { email, name, role },
-      baseUrl
+      baseUrl, 
+      sender.email
     );
     res.status(200).json(result);
   } catch (error) {
@@ -49,13 +55,16 @@ module.exports.addMemberToTeam = async (req, res) => {
 // 3. Réinviter un membre dont le lien d'activation a expiré
 module.exports.resendTeamInvitation = async (req, res) => {
   const { projectId, email } = req.body;
+  const sender = req.user; 
+
   const baseUrl = process.env.BASE_URL; // Récupérer l'URL de base de l'application
 
   try {
     const result = await projectService.resendTeamInvitation(
       projectId,
       email,
-      baseUrl
+      baseUrl, 
+      sender.email
     );
     res.status(200).json(result); // Retourne la réussite de la réinvitation
   } catch (error) {
@@ -1015,5 +1024,19 @@ exports.getLeaderProjects = async (req, res) => {
     return res.status(500).json({
       error: `An unexpected error occurred while getting leaderProjects: ${error}`,
     });
+  }
+};
+
+module.exports.decodeMemberToken = async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    const result = await projectService.decodeMemberToken(
+      token
+    );
+    res.status(200).json(result); 
+  } catch (error) {
+    console.error("error by decoding memberToken :", error);
+    res.status(400).json({ error: error.message });
   }
 };

@@ -178,6 +178,21 @@ interface TopProjectsState {
   error: string | null;
 }
 
+
+interface InvitationData {
+  memberEmail: string
+  senderEmail: string
+  projectId: string
+  exp: number;
+  iat: number;
+}
+
+interface InvitationState {
+  loading: boolean
+  error: string | null
+  data: InvitationData | null
+}
+
 interface ProjectState {
   projects: Project[];
   currentProject: Project | null;
@@ -192,6 +207,7 @@ interface ProjectState {
   projectsCountByStatus: ProjectsCountByStatus[];
   topTechnicalProjects: TopProjectsState;
   topBusinessProjects: TopProjectsState;
+  invitationData: InvitationState;
 }
 
 const initialState: ProjectState = {
@@ -208,6 +224,7 @@ const initialState: ProjectState = {
   projectsCountByStatus: [],
   topTechnicalProjects: { data: [], total: 0, totalPages: 0, loading: false, error: null },
   topBusinessProjects: { data: [], total: 0, totalPages: 0, loading: false, error: null },
+  invitationData: {loading: false, error: null, data: null}
 };
 
 // Filters for getAllProjects
@@ -480,6 +497,23 @@ export const getTopBusinessProjects = createAsyncThunk<TopProjectsResponse, GetT
   }
 );
 
+// Async thunk to decode token
+export const decodeInvitationToken = createAsyncThunk<
+  InvitationData,
+  string,
+  { rejectValue: string }
+>('invitation/decodeInvitationToken', async (token, { rejectWithValue }) => {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/memberTokenData/${token}`)
+    if (!res.ok) throw new Error('Failed to fetch top business projects');
+      return await res.json();
+  } catch (error: any) {
+    const message =
+      error.response?.data?.message || error.message || 'Failed to decode token'
+    return rejectWithValue(message)
+  }
+})
+
 // Add missing interfaces for innovation, trackAlignment, hederaEcosystemImpact
 export interface Innovation {
   addedValues: string[];
@@ -662,6 +696,18 @@ const projectSlice = createSlice({
       .addCase(getTopBusinessProjects.rejected, (state, action) => {
         state.topBusinessProjects.loading = false;
         state.topBusinessProjects.error = action.payload as string;
+      })
+      .addCase(decodeInvitationToken.pending, state => {
+        state.invitationData.loading = true
+        state.invitationData.error = null
+      })
+      .addCase(decodeInvitationToken.fulfilled, (state, action) => {
+        state.invitationData.loading = false
+        state.invitationData.data = action.payload
+      })
+      .addCase(decodeInvitationToken.rejected, (state, action) => {
+        state.invitationData.loading = false
+        state.invitationData.error = action.payload || 'Unknown error'
       });
   },
 });
@@ -677,3 +723,4 @@ export const selectProjectsCreatedPerDay = (state: { project: ProjectState }) =>
 export const selectProjectsCountByStatus = (state: { project: ProjectState }) => state.project.projectsCountByStatus;
 export const selectTopTechnicalProjects = (state: { project: ProjectState }) => state.project.topTechnicalProjects;
 export const selectTopBusinessProjects = (state: { project: ProjectState }) => state.project.topBusinessProjects;
+export const selectInvitationData = (state: { project: ProjectState }) => state.project.invitationData;
