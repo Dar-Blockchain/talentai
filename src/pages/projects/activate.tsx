@@ -57,7 +57,9 @@ const ProjectActivatePage = () => {
   }, [dispatch, isAuthenticated, data, token, router]);
 
   useEffect(() => {
-    dispatch(decodeInvitationToken(token) as any);
+    if(typeof token === 'string'){
+      dispatch(decodeInvitationToken(token) as any);
+    }
   }, [token]);
 
   const handleJoin = async () => {
