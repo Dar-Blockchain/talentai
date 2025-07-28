@@ -57,18 +57,23 @@ const steps = [
     icon: <RocketLaunchIcon /> 
   },
   { 
-    label: 'Project Submission', 
-    subtitle: 'Technical Documentation',
-    icon: <AssignmentTurnedInIcon /> 
+    label: 'Business Evaluation', 
+    subtitle: 'Business Model & Market',
+    icon: <BusinessCenterIcon /> 
   },
   { 
-    label: 'Technical Assessment', 
-    subtitle: 'Code Quality & Architecture',
-    icon: <EventAvailableIcon /> 
+    label: 'Technical Evaluation', 
+    subtitle: 'Architecture & Tech Stack',
+    icon: <ScienceIcon /> 
   },
   { 
-    label: 'Final Evaluation', 
-    subtitle: 'Results & Rankings',
+    label: 'Code Evaluation', 
+    subtitle: 'Code Quality & Analysis',
+    icon: <CodeIcon /> 
+  },
+  { 
+    label: 'Results Announcement', 
+    subtitle: 'Final Rankings & Awards',
     icon: <EmojiEventsIcon /> 
   },
 ];
@@ -131,10 +136,11 @@ const GlassStepIconRoot = styled('div', {
 function GlassStepIcon(props: any) {
   const { active, completed, icon } = props;
   const icons = [
-    <RocketLaunchIcon fontSize="inherit" />, // Register
-    <AssignmentTurnedInIcon fontSize="inherit" />, // Submit
-    <EventAvailableIcon fontSize="inherit" />, // Evaluation Meetings
-    <EmojiEventsIcon fontSize="inherit" />, // Await Results
+    <RocketLaunchIcon fontSize="inherit" />, // Project Registration
+    <BusinessCenterIcon fontSize="inherit" />, // Business Evaluation
+    <ScienceIcon fontSize="inherit" />, // Technical Evaluation
+    <CodeIcon fontSize="inherit" />, // Code Evaluation
+    <EmojiEventsIcon fontSize="inherit" />, // Results Announcement
   ];
   return (
     <GlassStepIconRoot active={active} completed={completed}>
@@ -928,7 +934,9 @@ if (!mounted) return null;
             alternativeLabel
             activeStep={
               currentProject && currentProject.team?.length > 0 && currentProject.description ?
-                (hasBusinessData && hasTechnicalData ? 3 : (hasBusinessData || hasTechnicalData ? 2 : 1)) : 0
+                (hasBusinessData && hasTechnicalData && hasCodeAnalysis ? 4 : 
+                 hasBusinessData && hasTechnicalData ? 3 : 
+                 hasBusinessData || hasTechnicalData ? 2 : 1) : 0
             }
             connector={null}
             sx={{
@@ -1028,11 +1036,14 @@ if (!mounted) return null;
               >
                 {(() => {
                   const progress = currentProject && currentProject.team?.length > 0 && currentProject.description ?
-                    (hasBusinessData && hasTechnicalData ? 100 : (hasBusinessData || hasTechnicalData ? 66 : 33)) : 0;
+                    (hasBusinessData && hasTechnicalData && hasCodeAnalysis ? 100 : 
+                     hasBusinessData && hasTechnicalData ? 80 : 
+                     hasBusinessData || hasTechnicalData ? 60 : 20) : 0;
                   console.log('Progress calculation:', {
                     hasDescription: !!currentProject?.description,
                     hasBusinessData,
                     hasTechnicalData,
+                    hasCodeAnalysis,
                     progress
                   });
                   return Math.round(progress);
@@ -1054,7 +1065,9 @@ if (!mounted) return null;
                   height: '100%',
                   width: `${(() => {
                     const progress = currentProject && currentProject.team?.length > 0 && currentProject.description ?
-                      (hasBusinessData && hasTechnicalData ? 100 : (hasBusinessData || hasTechnicalData ? 66 : 33)) : 0;
+                      (hasBusinessData && hasTechnicalData && hasCodeAnalysis ? 100 : 
+                       hasBusinessData && hasTechnicalData ? 80 : 
+                       hasBusinessData || hasTechnicalData ? 60 : 20) : 0;
                     console.log('Custom progress bar width:', progress);
                     return progress;
                   })()}%`,
