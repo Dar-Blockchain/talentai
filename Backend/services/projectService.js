@@ -86,6 +86,10 @@ module.exports.createProject = async (data, baseUrl, senderEmail) => {
       };
     });
 
+    // Add team members to the project
+    project.team = teamWithTokens;
+    await project.save();
+
     // create assessment for project (default status: pending)
     const projectAssessment = new ProjectAssessment({
       project: project._id,
