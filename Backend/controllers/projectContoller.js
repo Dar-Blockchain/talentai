@@ -1023,3 +1023,17 @@ exports.getLeaderProjects = async (req, res) => {
     });
   }
 };
+
+module.exports.decodeMemberToken = async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    const result = await projectService.decodeMemberToken(
+      token
+    );
+    res.status(200).json(result); 
+  } catch (error) {
+    console.error("error by decoding memberToken :", error);
+    res.status(400).json({ error: error.message });
+  }
+};

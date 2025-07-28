@@ -1483,5 +1483,20 @@ module.exports.getLeaderProjects = async (leaderId) => {
   }
 };
 
+module.exports.decodeMemberToken = async (token) => {
+  try {
+    const { valid, data } = verifyMemberToken(token);
+
+    if (valid != true) {
+      throw new Error("invalid token");
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Erreur lors de l'activation du membre:", error);
+    throw error;
+  }
+};
+
 
 

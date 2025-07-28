@@ -70,4 +70,6 @@ router.post('/analyze-code/:projectId', projectController.analyzeRepo);
 router.get('/teamMemberProjects', projectController.getTeamMemberProjects);
 router.get('/leaderProjects', projectController.getLeaderProjects);
 
+router.get('/memberTokenData', projectController.decodeMemberToken);
+
 module.exports = router;
