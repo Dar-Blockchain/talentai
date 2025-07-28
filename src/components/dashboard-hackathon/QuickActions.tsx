@@ -116,7 +116,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({ projectId, disableBusiness,
               },
             }}
             onClick={onEvaluateCode}
-            disabled={disableEvaluateCode}
+            disabled={disableEvaluateCode || !disableTechnical}
           >
             Evaluate Code
           </Button>
