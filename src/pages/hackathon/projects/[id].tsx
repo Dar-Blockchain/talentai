@@ -137,7 +137,7 @@ const HackathonDashboard = () => {
       setGithubLinkError('Please enter a valid GitHub repository URL'); 
       return;
     }
-    if (!validateGithubLink(githubLink)) {isProjectComplete
+    if (!validateGithubLink(githubLink)) {
       setGithubLinkError('Please enter a valid GitHub repository URL (e.g. https://github.com/user/repo)');
       return;
     }
@@ -148,13 +148,22 @@ const HackathonDashboard = () => {
       const result = await dispatch(evaluateProjectCode({ projectId: currentProject._id, githubLink })).unwrap();
       setCodeQualityScore(result.codeQualityScore);
       setCodeEvalMessage('Code evaluation complete!');
+      
+      // Refresh the project data to get the updated assessment
+      await dispatch(getProjectById(currentProject._id));
+      
+      // Show success message and open code analysis modal after a short delay
+      setTimeout(() => {
+        setCodeEvalMessage('');
+        setOpenCodeEvalModal(false);
+        // Open the code analysis modal to show the results
+        setOpenCodeAnalysisModal(true);
+      }, 1500);
     } catch (error) {
       setCodeEvalMessage('Code evaluation failed. Please try again.');
       console.error(error);
     } finally {
       setEvaluating(false);
-      setTimeout(() => setCodeEvalMessage(''), 2500);
-      setOpenCodeEvalModal(false);
     }
   };
   useEffect(() => {
