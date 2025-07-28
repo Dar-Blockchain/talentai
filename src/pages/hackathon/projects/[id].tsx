@@ -537,6 +537,17 @@ if (!mounted) return null;
             border: '1.5px solid #E3EAFD',
             overflow: 'hidden',
           }}>
+                        {/* Business Score */}
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
+              <BusinessCenterIcon sx={{ color: '#FFB300', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #FFB30011)' }} />
+              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#7C4DFF', letterSpacing: 0.2 }}>Business Score</Typography>
+              {renderScoreChip(bizScore)}
+              <Button size="small" variant="outlined" sx={{ mt: 2, fontWeight: 700, borderRadius: 2, color: '#7C4DFF', borderColor: '#E3EAFD', background: '#F7F8FA', '&:hover': { background: '#F3F6FD', borderColor: '#7C4DFF' } }} onClick={() => setOpenBizModal(true)} disabled={!hasBusinessData}>
+                View Business Report
+              </Button>
+            </Box>
+                        <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E3EAFD', borderRightWidth: 2 }} />
+
             {/* Technical Score */}
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
               <ScienceIcon sx={{ color: '#2196F3', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #2196F311)' }} />
@@ -546,23 +557,14 @@ if (!mounted) return null;
                 View Technical Report
               </Button>
             </Box>
-            <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E3EAFD', borderRightWidth: 2 }} />
-            {/* Business Score */}
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
-              <BusinessCenterIcon sx={{ color: '#FFB300', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #FFB30011)' }} />
-              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#7C4DFF', letterSpacing: 0.2 }}>Business Score</Typography>
-              {renderScoreChip(bizScore)}
-              <Button size="small" variant="outlined" sx={{ mt: 2, fontWeight: 700, borderRadius: 2, color: '#7C4DFF', borderColor: '#E3EAFD', background: '#F7F8FA', '&:hover': { background: '#F3F6FD', borderColor: '#7C4DFF' } }} onClick={() => setOpenBizModal(true)} disabled={!hasBusinessData}>
-                View Business Report
-              </Button>
-            </Box>
+
 
             <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E0F7FA', borderRightWidth: 2 }} />
             {/* Code Quality Score */}
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
               <CodeIcon sx={{ color: '#333', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #33333311)' }} />
               <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#7C4DFF', letterSpacing: 0.2 }}>Code Quality</Typography>
-              {renderScoreChip(codeAnalysisScore*10)}
+              {renderScoreChip(codeAnalysisScore ? codeAnalysisScore*10 : codeAnalysisScore)}
               <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                 {!hasCodeAnalysis && (
                   <Button
@@ -577,12 +579,12 @@ if (!mounted) return null;
                       '&:hover': { background: '#000' }
                     }}
                     onClick={() => setOpenCodeEvalModal(true)}
-                    disabled={!!codeAnalysisScore || evaluating}
+                    disabled={!!codeAnalysisScore || evaluating || !hasTechnicalData}
                   >
                     Evaluate Code
                   </Button>
                 )}
-                <Button
+                {hasCodeAnalysis && <Button
                   size="small"
                   variant="outlined"
                   sx={{
@@ -597,7 +599,7 @@ if (!mounted) return null;
                   disabled={!hasCodeAnalysis}
                 >
                   View Code Analysis
-                </Button>
+                </Button>}
               </Box>
             </Box>
             <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E0F7FA', borderRightWidth: 2 }} />
