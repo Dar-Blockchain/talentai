@@ -1025,7 +1025,7 @@ exports.getLeaderProjects = async (req, res) => {
 };
 
 module.exports.decodeMemberToken = async (req, res) => {
-  const { token } = req.body;
+  const { token } = req.params;
 
   try {
     const result = await projectService.decodeMemberToken(

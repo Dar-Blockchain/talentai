@@ -8,7 +8,7 @@ const { controledAcces } = require('../middleware/controledAcces');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 // ---- routes NOT PROTECTED with auth middleware ----
-router.get('/memberTokenData', projectController.decodeMemberToken);
+router.get('/memberTokenData/:token', projectController.decodeMemberToken);
 
 router.use(requireAuthUser ,authLogMiddleware("Project"));
 
