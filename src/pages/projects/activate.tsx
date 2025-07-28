@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { Box, Typography, Paper, Fade } from "@mui/material";
+import { Box, Typography, Paper, Fade, CircularProgress } from "@mui/material";
 import ActionButton from "@/components/ActionButton";
 import UsersIcon from "@/components/icons/UsersIcon";
 import VerifiedIcon from "@/components/icons/VerifiedIcon";
@@ -8,7 +8,10 @@ import FeedBackIcon from "@/components/icons/FeedBackIcon";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "@/store/slices/authSlice";
 import { AppDispatch, RootState } from "@/store/store";
-
+import {
+selectInvitationData,
+decodeInvitationToken
+} from "@/store/slices/projectSlice";
 const ProjectActivatePage = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
@@ -18,7 +21,8 @@ const ProjectActivatePage = () => {
   const { projectId, token } = router.query;
   const [projectName, setProjectName] = useState("Hackathon Project");
   const [mounted, setMounted] = useState(false);
-  const [isInviter, setIsInviter] = useState();
+  const {loading, error, data} = useSelector(selectInvitationData);
+  const [loadingJoin, setLoadingJoin] = useState<boolean>(false)
 
   useEffect(() => {
     setMounted(true);
@@ -26,43 +30,43 @@ const ProjectActivatePage = () => {
 
   useEffect(() => {
     if (isAuthenticated === false) {
-      const callbackUrl = `/projects/activate?projectId=${projectId}&token=${token}`;
+      const callbackUrl = `/projects/activate?token=${token}`;
       router.replace(`/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
       return;
     }
 
     const fetchProject = async () => {
-      console.log(isAuthenticated, "isAuthentoicted ....")
-      if (!projectId) return;
+      if (!data?.projectId) return;
       try {
         const token = localStorage.getItem("api_token");
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}project/getProjectById/${projectId}`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}project/getProjectById/${data.projectId}`,
           {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           }
         );
         if (!res.ok) throw new Error("Failed to fetch project");
-        const data = await res.json();
-        setProjectName(data.name || data.Name || "Hackathon Project");
+        const resData = await res.json();
+        setProjectName(resData.name || resData.Name || "Hackathon Project");
       } catch (err) {
         setProjectName("Hackathon Project");
       }
     };
 
     fetchProject();
-  }, [dispatch, isAuthenticated, projectId, token, router]);
+  }, [dispatch, isAuthenticated, data, token, router]);
 
   useEffect(() => {
-    
-  }, [isAuthenticated])
+    dispatch(decodeInvitationToken(token) as any);
+  }, [token]);
 
   const handleJoin = async () => {
-    if (!projectId || !token) {
+    if (!data?.projectId || !token) {
       window.alert("Missing projectId or token.");
       return;
     }
     try {
+      setLoadingJoin(true)
       const apiBase =
         process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/";
       const url = `${apiBase}project/activate`;
@@ -73,23 +77,30 @@ const ProjectActivatePage = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token1}`,
         },
-        body: JSON.stringify({ projectId, token }),
+        body: JSON.stringify({ projectId: data.projectId, token }),
       });
       if (!res.ok) throw new Error("Activation failed");
       router.push("/dashboardCandidate");
+      setLoadingJoin(false)
     } catch (err) {
+      setLoadingJoin(false)
       window.alert("Failed to activate project.");
     }
   };
 
   const handleLogout = () => {
     dispatch(logout());
-    const callbackUrl = `/projects/activate?projectId=${projectId}&token=${token}`;
+    const callbackUrl = `/projects/activate?token=${token}`;
     router.replace(`/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
     return;
   };
 
-if (!mounted) return null; // or a loader
+  if (!mounted) return null; // or a loader
+  if(loading) return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress sx={{ color: '#8310FF' }} />
+      </Box>
+    ); 
 
   return (
     <Box
@@ -104,7 +115,7 @@ if (!mounted) return null; // or a loader
       }}
     >
       {/* If Authenticated, show user info and logout */}
-      {isAuthenticated && (
+      {data && isAuthenticated && (user.email !== data.memberEmail) && (
         <Box
           sx={{
             backgroundColor: "#ffffff",
@@ -165,7 +176,7 @@ if (!mounted) return null; // or a loader
       )}
 
       {/* Glassmorphism Card, centered */}
-      {!isAuthenticated && (
+      {data && isAuthenticated && (user.email === data.memberEmail)  && (
         <Fade in timeout={600}>
           <Paper
             elevation={6}
@@ -224,6 +235,7 @@ if (!mounted) return null; // or a loader
               label="Accept Invitation"
               tooltip="Join this hackathon project"
               onClick={handleJoin}
+              loading={loadingJoin}
             />
           </Paper>
         </Fade>
