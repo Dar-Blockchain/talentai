@@ -1485,10 +1485,10 @@ module.exports.getLeaderProjects = async (leaderId) => {
 
 module.exports.decodeMemberToken = async (token) => {
   try {
-    const { valid, data } = verifyMemberToken(token);
+    const { valid, data, error } = verifyMemberToken(token);
 
-    if (valid != true) {
-      throw new Error("invalid token");
+    if (!valid) {
+      throw new Error (`invalid or expired token. ${error}` ); 
     }
     
     return data;
