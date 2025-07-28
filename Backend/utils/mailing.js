@@ -172,7 +172,7 @@ const getActivationTemplate = (activationLink, project) => `
             <!-- Header -->
             <tr>
               <td style="background-color:#2B6CB0; color:#ffffff; text-align:center; padding:32px 20px 20px 20px;">
-                <img src="http://localhost:5000/talentaifavicon.ico" alt="TalenIA Logo" width="64" height="64" style="display:block; margin:0 auto 12px auto;" onerror="this.style.display='none'" />
+                <img src="https://talentai.bid/images/talentaifavicon.ico" alt="TalenIA Logo" width="64" height="64" style="display:block; margin:0 auto 12px auto;" onerror="this.style.display='none'" />
                 <h1 style="margin:0; font-size:24px;">Confirm your contribution to project <strong>${project.name}</strong></h1>
               </td>
             </tr>
