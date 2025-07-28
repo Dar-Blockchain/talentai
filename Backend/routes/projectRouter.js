@@ -7,10 +7,12 @@ const { requireAuthUser } = require('../middleware/authMiddleware');
 const { controledAcces } = require('../middleware/controledAcces');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
+// ---- routes NOT PROTECTED with auth middleware ----
+router.get('/memberTokenData', projectController.decodeMemberToken);
 
 router.use(requireAuthUser ,authLogMiddleware("Project"));
 
-// Créer un projet
+//---- routes PROTECTED with auth middleware ---
 router.post("/addProject", projectController.createProject); 
 
 router.get("/:projectId/export-pdf", projectController.exportProjectPdf);
@@ -70,6 +72,6 @@ router.post('/analyze-code/:projectId', projectController.analyzeRepo);
 router.get('/teamMemberProjects', projectController.getTeamMemberProjects);
 router.get('/leaderProjects', projectController.getLeaderProjects);
 
-router.get('/memberTokenData', projectController.decodeMemberToken);
+
 
 module.exports = router;
