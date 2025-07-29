@@ -72,10 +72,13 @@ export default function SignIn() {
       setVerifying(false);
     };
     try {
+      console.log(userData);
       if (userData.role === "jury") {
         return redirect("/dashboardJury");
       }
-
+      // if (userData.email === "hatemazaiez1@gmail.com") {
+      //   return redirect("/dashboardJury");
+      // }
       const token = localStorage.getItem("api_token");
       const baseUrl =
         process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";

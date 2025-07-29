@@ -1000,11 +1000,11 @@ const Test = () => {
         console.error('TTS error', e);
       }
     };
-    if (questions.length > 0 && !isGenerating) {
+    if (hasStartedTest && questions.length > 0 && !isGenerating) {
       fetchTTS();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, questions, isGenerating]);
+  }, [current, questions, isGenerating, hasStartedTest]);
 
   // Play audio when audioUrl changes
   useEffect(() => {
@@ -1547,7 +1547,7 @@ const Test = () => {
             variant="contained"
             endIcon={<ArrowForwardIcon />}
             onClick={handleNext}
-            disabled={isGenerating || (current > 0 && nextButtonDisabled)}
+            disabled={!hasStartedTest || isGenerating || (current > 0 && nextButtonDisabled)}
             sx={{
               textTransform: 'none',
               background: nextButtonDisabled ? 'rgba(255, 255, 255, 0.12)' : GREEN_MAIN,
