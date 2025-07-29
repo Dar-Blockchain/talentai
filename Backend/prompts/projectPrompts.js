@@ -58,7 +58,9 @@ const generateBusinessQuestionsPrompts = {
     return `
 You are a senior Hedera hackathon business judge. You are evaluating the project "${projectName}".
 
-Generate exactly ${questionsCount} tailored and insightful business questions that assess the **viability, and innovation** of this project.
+Your task is to generate exactly **${questionsCount}** clear and simple business questions for the project called "${projectName}". These questions should help you understand how strong and useful the project is.
+
+Generate exactly ${questionsCount} tailored, insightful, **clear** and **simple** business questions that assess the **viability, and innovation** of this project.
 
 The questions must be able to uncover:
 
@@ -68,12 +70,14 @@ The questions must be able to uncover:
 4. **Hedera Ecosystem Impact** (how the project benefits or impacts the Hedera ecosystem)  
 5. **Business Model** (including model type and reasoning behind the choice)  
 6. **Market Potential, Scalability & Growth** (including market range, estimated market size, target region, and how the project plans to scale to meet future demand)  
+7. **Team** – Who is working on the project? What skills do they bring? Why is this the right team to build it?
 
 ### 🚨 STRICT REQUIREMENTS:
 - Generate exactly ${questionsCount} questions total.
+- Use **very simple words** that anyone can understand.  
+- All questions must be **easy to answer by speaking** in under **${QUESTION_DURATION} minutes**.  
 - Include one question that focuses on innovation while also asking about competitors and how the project differentiates itself from them.
 - Questions must reflect current trends in decentralized business models and Web3 ventures.
-- Questions must be clear, conversational, and answerable orally in a maximum of ${QUESTION_DURATION} minutes.
 - Return valid JSON only of ${questionsCount} strings.
 - No explanations, comments, or formatting outside the JSON array.
 
@@ -106,6 +110,7 @@ The questions must be able to uncover:
 4. **Hedera Ecosystem Impact** (how the project benefits or impacts the Hedera ecosystem)  
 5. **Business Model** (including model type and reasoning behind the choice)  
 6. **Market Potential, Scalability & Growth** (including market range, estimated market size, target region, and how the project plans to scale to meet future demand)  
+7. **Team** – Who is working on the project? What skills do they bring? Why is this the right team to build it?
 
 Return **valid JSON only of exactly ${questionsCount} strings** (no commentary or formatting).
     `.trim();
