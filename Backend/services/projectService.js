@@ -316,6 +316,9 @@ module.exports.getAllProjects = async (
                 $project: {
                   _id: 1,
                   "analysis.overallScore": 1,
+                  "analysis.projectPurpose":1, 
+                  "analysis.architecture":1, 
+
                 },
               },
             ],
