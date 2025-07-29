@@ -152,6 +152,8 @@ module.exports.generateProjectQuestions = async (req, res) => {
     const user = req.user;
     const projectId = req.params.id;
     const assessmentType = req.params.assessmentType.trim();
+    const { page = 1, limit = 10 } = req.query;  // Paramètres de pagination
+
     if (!user) {
       throw new HttpError(500, `User not found`);
     }
@@ -161,11 +163,11 @@ module.exports.generateProjectQuestions = async (req, res) => {
     ) {
       throw new HttpError(
         400,
-        `Assessment type is required and must have a valid value `
+        `Assessment type is required and must have a valid value`
       );
     }
 
-    // project verification
+    // Vérification du projet
     if (!projectId) {
       throw new HttpError(400, `Project ID is required.`);
     }
@@ -179,7 +181,20 @@ module.exports.generateProjectQuestions = async (req, res) => {
       assessmentType
     );
 
-    res.status(200).json(result);
+    // Pagination
+    const questions = result.questions;
+    const totalQuestions = result.totalQuestions;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedQuestions = questions.slice(startIndex, endIndex);
+
+    res.status(200).json({
+      questions: paginatedQuestions,
+      totalQuestions,
+      page,
+      limit,
+      totalPages: Math.ceil(totalQuestions / limit), // Nombre total de pages
+    });
   } catch (error) {
     if (error instanceof HttpError) {
       return res.status(error.statusCode || 500).json({
@@ -192,6 +207,7 @@ module.exports.generateProjectQuestions = async (req, res) => {
     });
   }
 };
+
 
 exports.analyzeAnswers = async (req, res) => {
   try {
