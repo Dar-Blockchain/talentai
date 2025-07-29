@@ -1050,6 +1050,18 @@ const Test = () => {
       setIsPaused(false);
     }
   }, [showFullscreenWarning]);
+  useEffect(() => {
+  const handleCopy = (e: ClipboardEvent) => e.preventDefault();
+  const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+
+  document.addEventListener('copy', handleCopy);
+  document.addEventListener('contextmenu', handleContextMenu);
+
+  return () => {
+    document.removeEventListener('copy', handleCopy);
+    document.removeEventListener('contextmenu', handleContextMenu);
+  };
+}, []);
 
   // Modify timer effect to pause when isPaused is true
   useEffect(() => {
@@ -1502,27 +1514,39 @@ const Test = () => {
                 variant="h6" 
                 sx={{ 
                   color: '#fff',
-                  fontSize: { xs: '1rem', sm: '1.25rem' }, // Responsive font size
-                  lineHeight: { xs: 1.3, sm: 1.4 }, // Responsive line height
+                  fontSize: { xs: '1rem', sm: '1.25rem' },
+                  lineHeight: { xs: 1.3, sm: 1.4 },
                   textAlign: 'center',
-                  px: { xs: 1, sm: 0 }, // Add horizontal padding on mobile
-                  wordBreak: 'break-word', // Prevent text overflow
+                  px: { xs: 1, sm: 0 },
+                  wordBreak: 'break-word',
                   maxWidth: '100%',
+                  userSelect: 'none',
+                  pointerEvents: 'none',
                 }}
               >
                 {isGenerating ? (
-                  <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    justifyContent: 'center',
-                    background: GREEN_MAIN,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
-                  }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      justifyContent: 'center',
+                      background: GREEN_MAIN,
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      userSelect: 'none',
+                    }}
+                  >
                     <span>Generating your interview questions</span>
-                    <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
+                    <Box
+                      component="span"
+                      sx={{
+                        display: 'inline-block',
+                        animation: 'dots 1.4s infinite',
+                        userSelect: 'none',
+                      }}
+                    >
                       ...
                     </Box>
                   </Box>
