@@ -207,6 +207,7 @@ interface ProjectState {
   projectsCountByStatus: ProjectsCountByStatus[];
   topTechnicalProjects: TopProjectsState;
   topBusinessProjects: TopProjectsState;
+  topCodeValidationProjects: TopProjectsState;
   invitationData: InvitationState;
 }
 
@@ -224,6 +225,7 @@ const initialState: ProjectState = {
   projectsCountByStatus: [],
   topTechnicalProjects: { data: [], total: 0, totalPages: 0, loading: false, error: null },
   topBusinessProjects: { data: [], total: 0, totalPages: 0, loading: false, error: null },
+  topCodeValidationProjects: { data: [], total: 0, totalPages: 0, loading: false, error: null },
   invitationData: {loading: false, error: null, data: null}
 };
 
@@ -497,6 +499,37 @@ export const getTopBusinessProjects = createAsyncThunk<TopProjectsResponse, GetT
   }
 );
 
+// Thunk to fetch top projects by code validation score
+export const getTopCodeValidationProjects = createAsyncThunk<TopProjectsResponse, GetTopProjectsParams | void, { rejectValue: string }>(
+  'projects/getTopCodeValidationProjects',
+  async (params, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('api_token');
+      if (!token) return rejectWithValue('No authentication token found');
+      let query = '';
+      if (params) {
+        const q = new URLSearchParams();
+        if (params.page !== undefined) q.append('page', String(params.page));
+        if (params.limit !== undefined) q.append('limit', String(params.limit));
+        if (params.sort) q.append('sort', params.sort);
+        if (params.track) q.append('track', params.track);
+        if (params.name) q.append('name', params.name);
+        query = '?' + q.toString();
+      }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}project/getAllProjects${query}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!res.ok) throw new Error('Failed to fetch top code validation projects');
+      return await res.json();
+    } catch (err: any) {
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
 // Async thunk to decode token
 export const decodeInvitationToken = createAsyncThunk<
   InvitationData,
@@ -697,6 +730,20 @@ const projectSlice = createSlice({
         state.topBusinessProjects.loading = false;
         state.topBusinessProjects.error = action.payload as string;
       })
+      .addCase(getTopCodeValidationProjects.pending, (state) => {
+        state.topCodeValidationProjects.loading = true;
+        state.topCodeValidationProjects.error = null;
+      })
+      .addCase(getTopCodeValidationProjects.fulfilled, (state, action: PayloadAction<TopProjectsResponse>) => {
+        state.topCodeValidationProjects.loading = false;
+        state.topCodeValidationProjects.data = action.payload.projects;
+        state.topCodeValidationProjects.total = action.payload.total;
+        state.topCodeValidationProjects.totalPages = action.payload.totalPages;
+      })
+      .addCase(getTopCodeValidationProjects.rejected, (state, action) => {
+        state.topCodeValidationProjects.loading = false;
+        state.topCodeValidationProjects.error = action.payload as string;
+      })
       .addCase(decodeInvitationToken.pending, state => {
         state.invitationData.loading = true
         state.invitationData.error = null
@@ -723,4 +770,5 @@ export const selectProjectsCreatedPerDay = (state: { project: ProjectState }) =>
 export const selectProjectsCountByStatus = (state: { project: ProjectState }) => state.project.projectsCountByStatus;
 export const selectTopTechnicalProjects = (state: { project: ProjectState }) => state.project.topTechnicalProjects;
 export const selectTopBusinessProjects = (state: { project: ProjectState }) => state.project.topBusinessProjects;
+export const selectTopCodeValidationProjects = (state: { project: ProjectState }) => state.project.topCodeValidationProjects;
 export const selectInvitationData = (state: { project: ProjectState }) => state.project.invitationData;
