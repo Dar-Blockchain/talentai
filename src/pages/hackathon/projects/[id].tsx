@@ -51,10 +51,31 @@ import CodeAnalysisModal from '@/components/dashboard-hackathon/CodeAnalysisModa
 import { validateGithubLink } from '@/utils/functions';
 
 const steps = [
-  { label: 'Register', icon: <RocketLaunchIcon /> },
-  { label: 'Submit Project', icon: <AssignmentTurnedInIcon /> },
-  { label: 'Evaluation Meetings', icon: <EventAvailableIcon /> },
-  { label: 'Await Results', icon: <EmojiEventsIcon /> },
+  { 
+    label: 'Project Registration', 
+    subtitle: 'Team Formation & Setup',
+    icon: <RocketLaunchIcon /> 
+  },
+  { 
+    label: 'Business Evaluation', 
+    subtitle: 'Business Model & Market',
+    icon: <BusinessCenterIcon /> 
+  },
+  { 
+    label: 'Technical Evaluation', 
+    subtitle: 'Architecture & Tech Stack',
+    icon: <ScienceIcon /> 
+  },
+  { 
+    label: 'Code Evaluation', 
+    subtitle: 'Code Quality & Analysis',
+    icon: <CodeIcon /> 
+  },
+  { 
+    label: 'Results Announcement', 
+    subtitle: 'Final Rankings & Awards',
+    icon: <EmojiEventsIcon /> 
+  },
 ];
 
 // --- Custom Step Icon ---
@@ -65,30 +86,61 @@ const GlassStepIconRoot = styled('div', {
   completed?: boolean;
 }>(({ active, completed }) => ({
   background: active || completed
-    ? 'linear-gradient(120deg, #7C4DFF 0%, #00B8D4 100%)'
-    : 'linear-gradient(120deg, #E3EAFD 0%, #E0F7FA 100%)',
+    ? 'linear-gradient(135deg, #7C4DFF 0%, #00B8D4 50%, #8310FF 100%)'
+    : 'linear-gradient(135deg, #F3E5F5 0%, #E1F5FE 100%)',
   color: active || completed ? '#fff' : '#7C4DFF',
-  boxShadow: active || completed ? '0 4px 16px #7C4DFF33' : '0 2px 8px #E3EAFD',
-  width: 48,
-  height: 48,
+  boxShadow: active || completed 
+    ? '0 6px 20px rgba(124,77,255,0.4), 0 4px 12px rgba(0,184,212,0.3)' 
+    : '0 3px 12px rgba(124,77,255,0.15)',
+  width: 56,
+  height: 56,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   borderRadius: '50%',
-  fontSize: 28,
-  border: active ? '2.5px solid #FFD600' : '2px solid #E3EAFD',
-  transition: 'all 0.2s',
+  fontSize: 32,
+  border: active 
+    ? '3px solid #FFD600' 
+    : completed 
+      ? '2px solid #7C4DFF' 
+      : '2px solid rgba(124,77,255,0.2)',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   position: 'relative',
   zIndex: 1,
+  transform: active ? 'scale(1.1)' : 'scale(1)',
+  '&:hover': {
+    transform: 'scale(1.05)',
+    boxShadow: active || completed 
+      ? '0 8px 24px rgba(124,77,255,0.5), 0 6px 16px rgba(0,184,212,0.4)' 
+      : '0 4px 16px rgba(124,77,255,0.25)',
+  },
+  '&::before': active || completed ? {
+    content: '""',
+    position: 'absolute',
+    top: '-2px',
+    left: '-2px',
+    right: '-2px',
+    bottom: '-2px',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #FFD600 0%, #FFA000 100%)',
+    zIndex: -1,
+    animation: 'pulse 2s infinite',
+  } : {},
+  '@keyframes pulse': {
+    '0%': { opacity: 0.8, transform: 'scale(1)' },
+    '50%': { opacity: 0.4, transform: 'scale(1.05)' },
+    '100%': { opacity: 0.8, transform: 'scale(1)' },
+  },
 }));
 
 function GlassStepIcon(props: any) {
   const { active, completed, icon } = props;
   const icons = [
-    <RocketLaunchIcon fontSize="inherit" />, // Register
-    <AssignmentTurnedInIcon fontSize="inherit" />, // Submit
-    <EventAvailableIcon fontSize="inherit" />, // Evaluation Meetings
-    <EmojiEventsIcon fontSize="inherit" />, // Await Results
+    <RocketLaunchIcon fontSize="inherit" />, // Project Registration
+    <BusinessCenterIcon fontSize="inherit" />, // Business Evaluation
+    <ScienceIcon fontSize="inherit" />, // Technical Evaluation
+    <CodeIcon fontSize="inherit" />, // Code Evaluation
+    <EmojiEventsIcon fontSize="inherit" />, // Results Announcement
   ];
   return (
     <GlassStepIconRoot active={active} completed={completed}>
@@ -137,7 +189,7 @@ const HackathonDashboard = () => {
       setGithubLinkError('Please enter a valid GitHub repository URL'); 
       return;
     }
-    if (!validateGithubLink(githubLink)) {isProjectComplete
+    if (!validateGithubLink(githubLink)) {
       setGithubLinkError('Please enter a valid GitHub repository URL (e.g. https://github.com/user/repo)');
       return;
     }
@@ -148,13 +200,22 @@ const HackathonDashboard = () => {
       const result = await dispatch(evaluateProjectCode({ projectId: currentProject._id, githubLink })).unwrap();
       setCodeQualityScore(result.codeQualityScore);
       setCodeEvalMessage('Code evaluation complete!');
+      
+      // Refresh the project data to get the updated assessment
+      await dispatch(getProjectById(currentProject._id));
+      
+      // Show success message and open code analysis modal after a short delay
+      setTimeout(() => {
+        setCodeEvalMessage('');
+        setOpenCodeEvalModal(false);
+        // Open the code analysis modal to show the results
+        setOpenCodeAnalysisModal(true);
+      }, 1500);
     } catch (error) {
       setCodeEvalMessage('Code evaluation failed. Please try again.');
       console.error(error);
     } finally {
       setEvaluating(false);
-      setTimeout(() => setCodeEvalMessage(''), 2500);
-      setOpenCodeEvalModal(false);
     }
   };
   useEffect(() => {
@@ -476,6 +537,17 @@ if (!mounted) return null;
             border: '1.5px solid #E3EAFD',
             overflow: 'hidden',
           }}>
+                        {/* Business Score */}
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
+              <BusinessCenterIcon sx={{ color: '#FFB300', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #FFB30011)' }} />
+              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#7C4DFF', letterSpacing: 0.2 }}>Business Score</Typography>
+              {renderScoreChip(bizScore)}
+              <Button size="small" variant="outlined" sx={{ mt: 2, fontWeight: 700, borderRadius: 2, color: '#7C4DFF', borderColor: '#E3EAFD', background: '#F7F8FA', '&:hover': { background: '#F3F6FD', borderColor: '#7C4DFF' } }} onClick={() => setOpenBizModal(true)} disabled={!hasBusinessData}>
+                View Business Report
+              </Button>
+            </Box>
+                        <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E3EAFD', borderRightWidth: 2 }} />
+
             {/* Technical Score */}
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
               <ScienceIcon sx={{ color: '#2196F3', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #2196F311)' }} />
@@ -485,23 +557,14 @@ if (!mounted) return null;
                 View Technical Report
               </Button>
             </Box>
-            <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E3EAFD', borderRightWidth: 2 }} />
-            {/* Business Score */}
-            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
-              <BusinessCenterIcon sx={{ color: '#FFB300', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #FFB30011)' }} />
-              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#7C4DFF', letterSpacing: 0.2 }}>Business Score</Typography>
-              {renderScoreChip(bizScore)}
-              <Button size="small" variant="outlined" sx={{ mt: 2, fontWeight: 700, borderRadius: 2, color: '#7C4DFF', borderColor: '#E3EAFD', background: '#F7F8FA', '&:hover': { background: '#F3F6FD', borderColor: '#7C4DFF' } }} onClick={() => setOpenBizModal(true)} disabled={!hasBusinessData}>
-                View Business Report
-              </Button>
-            </Box>
+
 
             <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E0F7FA', borderRightWidth: 2 }} />
             {/* Code Quality Score */}
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4, px: 2, gap: 1 }}>
               <CodeIcon sx={{ color: '#333', fontSize: 44, mb: 1, filter: 'drop-shadow(0 2px 8px #33333311)' }} />
               <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#7C4DFF', letterSpacing: 0.2 }}>Code Quality</Typography>
-              {renderScoreChip(codeAnalysisScore*10)}
+              {renderScoreChip(codeAnalysisScore ? codeAnalysisScore*10 : codeAnalysisScore)}
               <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                 {!hasCodeAnalysis && (
                   <Button
@@ -516,12 +579,12 @@ if (!mounted) return null;
                       '&:hover': { background: '#000' }
                     }}
                     onClick={() => setOpenCodeEvalModal(true)}
-                    disabled={!!codeAnalysisScore || evaluating}
+                    disabled={!!codeAnalysisScore || evaluating || !hasTechnicalData}
                   >
                     Evaluate Code
                   </Button>
                 )}
-                <Button
+                {hasCodeAnalysis && <Button
                   size="small"
                   variant="outlined"
                   sx={{
@@ -536,7 +599,7 @@ if (!mounted) return null;
                   disabled={!hasCodeAnalysis}
                 >
                   View Code Analysis
-                </Button>
+                </Button>}
               </Box>
             </Box>
             <Divider orientation="vertical" flexItem sx={{ mx: 0, borderColor: '#E0F7FA', borderRightWidth: 2 }} />
@@ -834,56 +897,219 @@ if (!mounted) return null;
         <Box sx={{
           mb: 2,
           mt: 1,
-          px: 2,
-          py: 2,
-          borderRadius: 3,
-          background: 'linear-gradient(120deg, #F3E5F5 0%, #E1F5FE 100%)',
-          boxShadow: '0 2px 12px #7C4DFF22',
+          px: { xs: 2, md: 4 },
+          py: { xs: 3, md: 4 },
+          borderRadius: 4,
+          background: 'linear-gradient(135deg, #F3E5F5 0%, #E1F5FE 50%, #F8F9FF 100%)',
+          boxShadow: '0 8px 32px 0 rgba(124,77,255,0.15), 0 4px 16px 0 rgba(0,184,212,0.1)',
+          border: '1px solid rgba(124,77,255,0.1)',
+          backdropFilter: 'blur(10px)',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '2px',
+            background: 'linear-gradient(90deg, #7C4DFF 0%, #00B8D4 50%, #8310FF 100%)',
+          }
         }}>
+          <Typography 
+            variant="h5" 
+            sx={{ 
+              textAlign: 'center', 
+              mb: 3, 
+              fontWeight: 800,
+              background: 'linear-gradient(135deg, #7C4DFF 0%, #00B8D4 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontSize: { xs: '1.5rem', md: '1.75rem' },
+              letterSpacing: 0.5,
+            }}
+          >
+            Project Development Progress
+          </Typography>
+          
           <Stepper
             alternativeLabel
             activeStep={
-              currentProject && currentProject.team.length > 0 && currentProject.description ?
-                (hasBusinessData && hasTechnicalData ? 3 : (hasBusinessData || hasTechnicalData ? 2 : 1)) : 0
+              currentProject && currentProject.team?.length > 0 && currentProject.description ?
+                (hasBusinessData && hasTechnicalData && hasCodeAnalysis ? 4 : 
+                 hasBusinessData && hasTechnicalData ? 3 : 
+                 hasBusinessData || hasTechnicalData ? 2 : 1) : 0
             }
             connector={null}
             sx={{
-              pb: 2,
+              pb: 3,
+              '& .MuiStepLabel-root': {
+                alignItems: 'center',
+              },
               '& .MuiStepLabel-label': {
                 fontWeight: 700,
-                fontSize: '1.08rem',
+                fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
                 color: '#4527A0',
                 opacity: 0.95,
-                letterSpacing: 0.2,
+                letterSpacing: 0.3,
+                textAlign: 'center',
+                lineHeight: 1.3,
+                mt: 1,
+              },
+              '& .MuiStepLabel-labelContainer': {
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 0.5,
               },
             }}
           >
             {steps.map((step, idx) => (
               <Step key={step.label}>
-                <StepLabel StepIconComponent={GlassStepIcon}>{step.label}</StepLabel>
+                <StepLabel 
+                  StepIconComponent={GlassStepIcon}
+                  sx={{
+                    '& .MuiStepLabel-labelContainer': {
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 0.5,
+                    }
+                  }}
+                >
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        fontWeight: 700,
+                        fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
+                        color: '#4527A0',
+                        letterSpacing: 0.3,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {step.label}
+                    </Typography>
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        fontWeight: 500,
+                        fontSize: { xs: '0.7rem', sm: '0.8rem' },
+                        color: '#666',
+                        opacity: 0.8,
+                        textAlign: 'center',
+                        maxWidth: '120px',
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {step.subtitle}
+                    </Typography>
+                  </Box>
+                </StepLabel>
               </Step>
             ))}
           </Stepper>
-          <LinearProgress
-            variant="determinate"
-            value={
-              currentProject && currentProject.team.length > 0 && currentProject.description ?
-                (hasBusinessData && hasTechnicalData ? 100 : (hasBusinessData || hasTechnicalData ? 66 : 33)) : 0
-            }
-            sx={{
-              mt: 3,
-              height: 16,
-              borderRadius: 8,
-              background: 'linear-gradient(90deg, #F3E5F5 0%, #E1F5FE 100%)',
-              boxShadow: '0 2px 12px #7C4DFF22',
-              overflow: 'hidden',
-              '& .MuiLinearProgress-bar': {
-                background: 'linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)',
-                borderRadius: 8,
-                boxShadow: '0 4px 16px 0 rgba(124,77,255,0.13)',
-              },
-            }}
-          />
+          
+          <Box sx={{ mt: 4, px: { xs: 1, md: 2 } }}>
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              mb: 2,
+              px: 1
+            }}>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  fontWeight: 600, 
+                  color: '#7C4DFF',
+                  fontSize: { xs: '0.8rem', sm: '0.9rem' }
+                }}
+              >
+                Progress
+              </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  fontWeight: 700, 
+                  color: '#4527A0',
+                  fontSize: { xs: '0.8rem', sm: '0.9rem' }
+                }}
+              >
+                {(() => {
+                  const progress = currentProject && currentProject.team?.length > 0 && currentProject.description ?
+                    (hasBusinessData && hasTechnicalData && hasCodeAnalysis ? 100 : 
+                     hasBusinessData && hasTechnicalData ? 80 : 
+                     hasBusinessData || hasTechnicalData ? 60 : 20) : 0;
+                  console.log('Progress calculation:', {
+                    hasDescription: !!currentProject?.description,
+                    hasBusinessData,
+                    hasTechnicalData,
+                    hasCodeAnalysis,
+                    progress
+                  });
+                  return Math.round(progress);
+                })()}%
+              </Typography>
+            </Box>
+            <Box sx={{ position: 'relative', width: '100%' }}>
+              {/* Custom Progress Bar */}
+              <Box sx={{
+                height: 12,
+                borderRadius: 6,
+                backgroundColor: '#F3E5F5',
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                overflow: 'hidden',
+                position: 'relative',
+                width: '100%',
+              }}>
+                <Box sx={{
+                  height: '100%',
+                  width: `${(() => {
+                    const progress = currentProject && currentProject.team?.length > 0 && currentProject.description ?
+                      (hasBusinessData && hasTechnicalData && hasCodeAnalysis ? 100 : 
+                       hasBusinessData && hasTechnicalData ? 80 : 
+                       hasBusinessData || hasTechnicalData ? 60 : 20) : 0;
+                    console.log('Custom progress bar width:', progress);
+                    return progress;
+                  })()}%`,
+                  background: 'linear-gradient(90deg, #7C4DFF 0%, #00B8D4 50%, #8310FF 100%)',
+                  borderRadius: 6,
+                  boxShadow: '0 2px 8px 0 rgba(124,77,255,0.3)',
+                  position: 'relative',
+                  transition: 'width 0.5s ease-in-out',
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+                    animation: 'shimmer 2s infinite',
+                  },
+                  '@keyframes shimmer': {
+                    '0%': { transform: 'translateX(-100%)' },
+                    '100%': { transform: 'translateX(100%)' },
+                  },
+                }} />
+              </Box>
+              {/* Debug info - remove this after fixing */}
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  position: 'absolute', 
+                  top: -20, 
+                  right: 0, 
+                  color: 'red', 
+                  fontSize: '10px',
+                  fontWeight: 'bold'
+                }}
+              >
+              
+              </Typography>
+            </Box>
+          </Box>
         </Box>
       </Container>
       {/* Main Content Grid */}

@@ -1,5 +1,6 @@
 import { ReactNode, useState } from 'react';
 import Tooltip from '@mui/material/Tooltip';
+import CircularProgress from '@mui/material/CircularProgress';
 import { styled } from '@mui/material/styles';
 
 const StyledButton = styled('button')<{ disabled?: boolean }>(({ theme, disabled }) => ({
@@ -7,7 +8,7 @@ const StyledButton = styled('button')<{ disabled?: boolean }>(({ theme, disabled
   alignItems: 'center',
   gap: '10px',
   padding: '10px 15px',
-  backgroundColor: disabled ? '#222' : '#222',
+  backgroundColor: '#222',
   border: 'none',
   borderRadius: '8px',
   color: disabled ? 'rgba(255,255,255,0.5)' : '#fff',
@@ -21,13 +22,9 @@ const StyledButton = styled('button')<{ disabled?: boolean }>(({ theme, disabled
   boxShadow: 'none',
   '&:hover': {
     backgroundColor: disabled ? '#222' : '#333',
-    transform: 'none',
-    boxShadow: 'none',
   },
   '&:active': {
     backgroundColor: '#181818',
-    transform: 'none',
-    boxShadow: 'none',
   },
   '& svg': {
     width: '18px',
@@ -43,7 +40,8 @@ type ActionButtonProps = {
   onClick: () => void;
   className?: string;
   disabled?: boolean;
-}
+  loading?: boolean;
+};
 
 export default function ActionButton({ 
   icon, 
@@ -51,23 +49,16 @@ export default function ActionButton({
   tooltip, 
   onClick, 
   className,
-  disabled = false 
+  disabled = false,
+  loading = false
 }: ActionButtonProps) {
   const [open, setOpen] = useState(false);
 
-  const handleTooltipClose = () => {
-    setOpen(false);
-  };
-
-  const handleTooltipOpen = () => {
-    if (!disabled) {
-      setOpen(true);
-    }
-  };
+  const handleTooltipClose = () => setOpen(false);
+  const handleTooltipOpen = () => !disabled && setOpen(true);
 
   const handleClick = () => {
-    if (!disabled) {
-      // Hide tooltip when button is clicked
+    if (!disabled && !loading) {
       setOpen(false);
       onClick();
     }
@@ -83,20 +74,24 @@ export default function ActionButton({
       open={open}
       onClose={handleTooltipClose}
       onOpen={handleTooltipOpen}
-      disableFocusListener={disabled}
-      disableHoverListener={disabled}
-      disableTouchListener={disabled}
+      disableFocusListener={disabled || loading}
+      disableHoverListener={disabled || loading}
+      disableTouchListener={disabled || loading}
     >
       <StyledButton 
         onClick={handleClick} 
         className={className}
-        disabled={disabled}
+        disabled={disabled || loading}
         onMouseEnter={handleTooltipOpen}
         onMouseLeave={handleTooltipClose}
       >
-        {icon}
+        {loading ? (
+          <CircularProgress size={18} color="inherit" />
+        ) : (
+          icon
+        )}
         {label}
       </StyledButton>
     </Tooltip>
   );
-} 
+}

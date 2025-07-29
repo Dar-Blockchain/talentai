@@ -86,6 +86,10 @@ module.exports.createProject = async (data, baseUrl, senderEmail) => {
       };
     });
 
+    // Add team members to the project
+    project.team = teamWithTokens;
+    await project.save();
+
     // create assessment for project (default status: pending)
     const projectAssessment = new ProjectAssessment({
       project: project._id,
@@ -1479,6 +1483,21 @@ module.exports.getLeaderProjects = async (leaderId) => {
     });
     return projects;
   } catch (error) {
+    throw error;
+  }
+};
+
+module.exports.decodeMemberToken = async (token) => {
+  try {
+    const { valid, data, error } = verifyMemberToken(token);
+
+    if (!valid) {
+      throw new Error (`invalid or expired token. ${error}` ); 
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Erreur lors de l'activation du membre:", error);
     throw error;
   }
 };
