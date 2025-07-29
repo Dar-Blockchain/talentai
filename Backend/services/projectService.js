@@ -626,17 +626,6 @@ exports.analyzeAnswers = async ({
       projectAssessment.status = PROJECT_STATUS.IN_PROGRESS;
     }
 
-    // FINALIZE assessment: update overallScore + update status to done
-    // for now , we calculate the assessment overallScore after the technical assessment
-    // will be chaged after integrating code assessment
-    if (assessmentType === PROJECT_ASSESSMENT_TYPE.TECHNICAL) {
-      projectAssessment.overallScore = handleAssessmentOverallScore(
-        analysis.technicalData.overallScore,
-        projectAssessment.businessData.overallScore
-      );
-      projectAssessment.status = PROJECT_STATUS.DONE;
-    }
-
     await projectAssessment.save();
 
     await handleEligibility(projectAssessment, analysis, assessmentType);

@@ -96,6 +96,35 @@ function handleAssessmentOverallScore(
   return Math.round(weightedSum * 100) / 100;
 }
 
+function handleAssessmentFinalOverallScore(
+  technicalOverallScore,
+  businessOverallScore, 
+  codeOverallScore
+) {
+
+  console.log("technicalOverallScore: ", technicalOverallScore);
+  console.log("businessOverallScore: ", businessOverallScore);
+  console.log("codeOverallScore: ", codeOverallScore);
+
+  let technicalScore = technicalOverallScore
+    ? Number(technicalOverallScore)
+    : 0;
+
+  let businessScore = businessOverallScore ? Number(businessOverallScore) : 0;
+
+  let codeScore = codeOverallScore ? Number(codeOverallScore) : 0;
+
+  const techWeight = ASSESSMENT_OVERALL_SCORE_WEIGHTS.TECHNICAL;
+  const bizWeight = ASSESSMENT_OVERALL_SCORE_WEIGHTS.BUSINESS;
+  const codeWeight = ASSESSMENT_OVERALL_SCORE_WEIGHTS.CODE;
+  const totalWeight = techWeight + bizWeight + codeWeight;
+
+  const weightedSum =
+    (technicalScore * techWeight + businessScore * bizWeight + codeScore * codeWeight) / totalWeight;
+
+  return Math.round(weightedSum * 100) / 100;
+}
+
 function calculateTechStackScore(techStack = []) {
   if (!Array.isArray(techStack) || techStack.length === 0)
     return { score: 0, isValid: false };
@@ -698,6 +727,7 @@ module.exports = {
   calculateFunctionalityScore,
   calculateInnovationScore,
   calculateUserExperienceScore,
+  handleAssessmentFinalOverallScore,
   
 
 };
