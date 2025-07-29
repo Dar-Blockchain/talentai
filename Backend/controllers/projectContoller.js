@@ -964,15 +964,18 @@ module.exports.analyzeRepo = async (req, res) => {
   const owner = req.body.owner; 
   const repo = req.body.repo;
   const selectedTemplate = req.body.selectedTemplate || "auto";
-  const hackathonCriteria = req.body.hackathonCriteria || null; 
+  const hackathonName = req.body.hackathonName; 
+  const githubLink = req.body.githubLink; 
+  console.log("222222: ", req.body);
 
   try {
     // Delegate to projectService for modular code
     const result = await projectService.analyzeRepo(
+      githubLink,
       owner,
       repo,
       selectedTemplate,
-      hackathonCriteria,
+      hackathonName,
       projectId
     );
 

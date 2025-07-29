@@ -12,6 +12,7 @@ const {
 const {
   ASSESSMENT_OVERALL_SCORE_WEIGHTS,
 } = require("../constants/projectConstants");
+const { loadProjectTemplates, detectProjectTypeFromRepo, evaluateProjectStructure, evaluateCodeQuality, evaluateSecurityAndPerformance, evaluateModernPractices } = require("../helpers/projectHelpers");
 
 /**
  * Calculates the overallScore for businessData by assigning weights to each component score.
@@ -91,6 +92,35 @@ function handleAssessmentOverallScore(
 
   const weightedSum =
     (technicalScore * techWeight + businessScore * bizWeight) / totalWeight;
+
+  return Math.round(weightedSum * 100) / 100;
+}
+
+function handleAssessmentFinalOverallScore(
+  technicalOverallScore,
+  businessOverallScore, 
+  codeOverallScore
+) {
+
+  console.log("technicalOverallScore: ", technicalOverallScore);
+  console.log("businessOverallScore: ", businessOverallScore);
+  console.log("codeOverallScore: ", codeOverallScore);
+
+  let technicalScore = technicalOverallScore
+    ? Number(technicalOverallScore)
+    : 0;
+
+  let businessScore = businessOverallScore ? Number(businessOverallScore) : 0;
+
+  let codeScore = codeOverallScore ? Number(codeOverallScore) : 0;
+
+  const techWeight = ASSESSMENT_OVERALL_SCORE_WEIGHTS.TECHNICAL;
+  const bizWeight = ASSESSMENT_OVERALL_SCORE_WEIGHTS.BUSINESS;
+  const codeWeight = ASSESSMENT_OVERALL_SCORE_WEIGHTS.CODE;
+  const totalWeight = techWeight + bizWeight + codeWeight;
+
+  const weightedSum =
+    (technicalScore * techWeight + businessScore * bizWeight + codeScore * codeWeight) / totalWeight;
 
   return Math.round(weightedSum * 100) / 100;
 }
@@ -226,15 +256,21 @@ const getComprehensiveCodeAnalysis = async (repoData, selectedTemplate = 'auto')
   
   const templates = loadProjectTemplates();
   let projectType;
+
+  console.log("daaaaaaa: ", templates);
   
-  if (selectedTemplate === 'auto') {
+  if (selectedTemplate.trim() === 'auto') {
+      console.log("this1 entered...", );
       projectType = await detectProjectTypeFromRepo(repoData);
       console.log(`[getComprehensiveCodeAnalysis] Auto-detected project type: ${projectType}`);
+      
   } else {
+    console.log("this2 entered...", );
       projectType = selectedTemplate;
       console.log(`[getComprehensiveCodeAnalysis] Using selected template: ${projectType}`);
   }
   
+  console.log(`________: ${projectType}`);
   const template = templates[projectType] || templates['custom'];
   const templateFiles = template.files || [];
   
@@ -691,6 +727,7 @@ module.exports = {
   calculateFunctionalityScore,
   calculateInnovationScore,
   calculateUserExperienceScore,
+  handleAssessmentFinalOverallScore,
   
 
 };

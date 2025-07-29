@@ -36,6 +36,9 @@ class IntelligentProjectAnalyzer {
             
             // 6. Generate intelligent insights
             const insights = await this.generateInsights(repoStructure, purposeAnalysis, architectureAnalysis, coherenceAnalysis, qualityAnalysis);
+
+            const overallScore= qualityAnalysis.overall * 10; 
+            console.log("check overall: ", overallScore);
             
             return {
                 projectPurpose: purposeAnalysis,
@@ -43,7 +46,8 @@ class IntelligentProjectAnalyzer {
                 coherence: coherenceAnalysis,
                 quality: qualityAnalysis,
                 insights: insights,
-                structure: repoStructure
+                structure: repoStructure, 
+                overallScore
             };
             
         } catch (error) {
