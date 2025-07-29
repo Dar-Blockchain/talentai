@@ -18,8 +18,10 @@ import {
   selectProjectsCountByStatus,
   getTopTechnicalProjects,
   getTopBusinessProjects,
+  getTopCodeValidationProjects,
   selectTopTechnicalProjects,
   selectTopBusinessProjects,
+  selectTopCodeValidationProjects,
 } from "../store/slices/projectSlice";
 import { RootState } from "../store/store";
 import { logout } from "../store/slices/authSlice";
@@ -27,10 +29,12 @@ import { useRouter } from "next/router";
 
 import TopTechnicalProjectsTable from "../components/dashboard-jury/TopTechnicalProjectsTable";
 import TopBusinessProjectsTable from "../components/dashboard-jury/TopBusinessProjectsTable";
+import TopCodeValidationProjectsTable from "../components/dashboard-jury/TopCodeValidationProjectsTable";
 import StatsCards from "../components/dashboard-jury/StatsCards";
 import ChartsSection from "../components/dashboard-jury/ChartsSection";
 import ProjectsTable from "../components/dashboard-jury/ProjectsTable";
 import DetailsModal from "../components/dashboard-jury/DetailsModal";
+import CodeValidationDetailsModal from "../components/dashboard-jury/CodeValidationDetailsModal";
 import TeamModal from "../components/dashboard-jury/TeamModal";
 
 const JuryDashboard = () => {
@@ -53,6 +57,8 @@ const JuryDashboard = () => {
   const [page, setPage] = useState(1);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [detailsProject, setDetailsProject] = useState<any>(null);
+  const [codeValidationDetailsModalOpen, setCodeValidationDetailsModalOpen] = useState(false);
+  const [codeValidationDetailsProject, setCodeValidationDetailsProject] = useState<any>(null);
   const [teamModalOpen, setTeamModalOpen] = useState(false);
   const [teamMembers, setTeamMembers] = useState<string[]>([]);
   const [statusPieData, setStatusPieData] = useState<any>([]);
@@ -70,10 +76,10 @@ const JuryDashboard = () => {
     typeof stats?.averageScore === "number"
       ? stats.averageScore.toFixed(2)
       : allScores.length
-      ? (
+        ? (
           allScores.reduce((a: any, b: any) => a + b, 0) / allScores.length
         ).toFixed(2)
-      : "N/A";
+        : "N/A";
   const evaluatedCount =
     stats?.evaluatedProjects ??
     projects.filter((p: any) => p.status === "Evaluated").length;
@@ -82,9 +88,9 @@ const JuryDashboard = () => {
   const projectsPerTrack = projectsByTrack.length
     ? projectsByTrack
     : Array.from(new Set(projects.map((p: any) => p.track))).map((track) => ({
-        track,
-        count: projects.filter((p: any) => p.track === track).length,
-      }));
+      track,
+      count: projects.filter((p: any) => p.track === track).length,
+    }));
 
   // --- Pie Chart: Evaluation Status (prefer API, fallback to computed) ---
   const statusColors: Record<string, string> = {
@@ -98,10 +104,10 @@ const JuryDashboard = () => {
     const statusData =
       projectsCountByStatus && Object.keys(projectsCountByStatus).length
         ? projectsCountByStatus.map((item) => ({
-            name: item.status,
-            value: Number(item.count),
-            color: statusColors[item.status] || "#8884d8",
-          }))
+          name: item.status,
+          value: Number(item.count),
+          color: statusColors[item.status] || "#8884d8",
+        }))
         : [];
 
     // Helper to check if PieChart data is empty or all values are zero
@@ -116,21 +122,22 @@ const JuryDashboard = () => {
   const lineChartData = projectsCreatedPerDay.length
     ? projectsCreatedPerDay
     : (() => {
-        const submissionsByDate = projects.reduce((acc: any, p: any) => {
-          const date = p.createdAt
-            ? new Date(p.createdAt).toLocaleDateString()
-            : "Unknown";
-          acc[date] = (acc[date] || 0) + 1;
-          return acc;
-        }, {});
-        return Object.entries(submissionsByDate).map(([date, count]) => ({
-          date,
-          count,
-        }));
-      })();
+      const submissionsByDate = projects.reduce((acc: any, p: any) => {
+        const date = p.createdAt
+          ? new Date(p.createdAt).toLocaleDateString()
+          : "Unknown";
+        acc[date] = (acc[date] || 0) + 1;
+        return acc;
+      }, {});
+      return Object.entries(submissionsByDate).map(([date, count]) => ({
+        date,
+        count,
+      }));
+    })();
 
   const topTechnicalProjects = useSelector(selectTopTechnicalProjects);
   const topBusinessProjects = useSelector(selectTopBusinessProjects);
+  const topCodeValidationProjects = useSelector(selectTopCodeValidationProjects);
 
   // Pagination state for top technical projects
   const [topTechPage, setTopTechPage] = useState(0);
@@ -138,6 +145,9 @@ const JuryDashboard = () => {
   // Pagination state for top business projects
   const [topBizPage, setTopBizPage] = useState(0);
   const [topBizRowsPerPage, setTopBizRowsPerPage] = useState(5);
+  // Pagination state for top code validation projects
+  const [topCodePage, setTopCodePage] = useState(0);
+  const [topCodeRowsPerPage, setTopCodeRowsPerPage] = useState(5);
 
   // Pagination state for main projects table
   const [mainPage, setMainPage] = useState(0);
@@ -183,6 +193,16 @@ const JuryDashboard = () => {
     dispatch(getTopBusinessProjects(params) as any);
   }, [dispatch, topBizPage, topBizRowsPerPage]);
 
+  // Fetch top code validation projects with its own pagination
+  useEffect(() => {
+    const params = {
+      page: topCodePage + 1,
+      limit: topCodeRowsPerPage,
+      sort: "-overallScoreCode",
+    };
+    dispatch(getTopCodeValidationProjects(params) as any);
+  }, [dispatch, topCodePage, topCodeRowsPerPage]);
+
   // Track list for filter (prefer API, fallback to computed)
   const tracks: string[] = [
     "All",
@@ -215,6 +235,15 @@ const JuryDashboard = () => {
   const handleCloseDetails = () => {
     setDetailsModalOpen(false);
     setDetailsProject(null);
+  };
+
+  const handleOpenCodeValidationDetails = (project: any) => {
+    setCodeValidationDetailsProject(project);
+    setCodeValidationDetailsModalOpen(true);
+  };
+  const handleCloseCodeValidationDetails = () => {
+    setCodeValidationDetailsModalOpen(false);
+    setCodeValidationDetailsProject(null);
   };
 
   const handleOpenTeamModal = (project: any) => {
@@ -396,7 +425,22 @@ const JuryDashboard = () => {
           }}
           onOpenDetails={handleOpenDetails}
         />
+
       </Stack>
+              <TopCodeValidationProjectsTable
+          data={topCodeValidationProjects.data}
+          loading={topCodeValidationProjects.loading}
+          error={topCodeValidationProjects.error}
+          page={topCodePage}
+          rowsPerPage={topCodeRowsPerPage}
+          total={topCodeValidationProjects.total}
+          onPageChange={(_, newPage) => setTopCodePage(newPage)}
+          onRowsPerPageChange={(e) => {
+            setTopCodeRowsPerPage(parseInt(e.target.value, 10));
+            setTopCodePage(0);
+          }}
+          onOpenDetails={handleOpenCodeValidationDetails}
+        />
       {/* Projects Table */}
       <ProjectsTable
         projects={mainProjects}
@@ -425,6 +469,12 @@ const JuryDashboard = () => {
         open={detailsModalOpen}
         onClose={handleCloseDetails}
         detailsProject={detailsProject}
+      />
+      {/* Code Validation Details Modal */}
+      <CodeValidationDetailsModal
+        open={codeValidationDetailsModalOpen}
+        onClose={handleCloseCodeValidationDetails}
+        detailsProject={codeValidationDetailsProject}
       />
       {/* Team Modal */}
       <TeamModal
