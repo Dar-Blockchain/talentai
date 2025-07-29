@@ -29,6 +29,7 @@ import Cookies from 'js-cookie';
 import { RootState } from '@/store/store';
 import { useSelector } from 'react-redux';
 import dynamic from 'next/dynamic';
+import AvatarCanvas from '@/components/AvatarCanvas';
 
 // Remove hardcoded questions
 const NEXTJS_QUESTIONS: string[] = [];
@@ -37,7 +38,7 @@ const NEXTJS_QUESTIONS: string[] = [];
 const GREEN_MAIN = '#8310FF';
 
 // --- ElevenLabs TTS Integration ---
-const ELEVENLABS_API_KEY = 'sk_86e3c8c1382571c4275b45c665474ff9ff8fd1eca35d4edc'; // WARNING: Exposed in frontend! For demo only.
+const ELEVENLABS_API_KEY = 'sk_d8d6651ea8192e9b1ff3c4dc1d47b4ee1308edc2e480f2f4'; // WARNING: Exposed in frontend! For demo only.
 const ELEVENLABS_VOICE_ID = 'EXAVITQu4vr4xnSDxMaL'; // Rachel (most natural female voice)
 
 // --- Styled Components ---
@@ -49,24 +50,26 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
 
 const RecordingControls = styled(Box)(({ theme }) => ({
   position: 'absolute',
-  top: 16,
+  bottom: theme.spacing(2), // Moved even lower
   left: '50%',
   transform: 'translateX(-50%)',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  gap: 2,
+  gap: theme.spacing(2),
   zIndex: 2,
-  background: 'rgba(0, 0, 0, 0.5)',
-  padding: theme.spacing(2),
-  borderRadius: '16px',
-  backdropFilter: 'blur(10px)',
+  background: 'rgba(0, 0, 0, 0.9)', // Darker background for better contrast
+  padding: theme.spacing(2.5),
+  borderRadius: '20px',
+  backdropFilter: 'blur(15px)',
   border: '1px solid rgba(255, 255, 255, 0.1)',
-  minWidth: '280px', // Base width for mobile
-  maxWidth: '90%', // Limit width on mobile
+  minWidth: '280px',
+  maxWidth: '90%',
+  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
   [theme.breakpoints.up('sm')]: {
-    minWidth: '300px',
-    maxWidth: '300px',
+    minWidth: '320px',
+    maxWidth: '320px',
+    bottom: theme.spacing(3), // Slightly higher on desktop but still at bottom
   },
 }));
 
@@ -86,20 +89,27 @@ const TranscriptDisplay = styled(Typography)(({ theme }) => ({
   color: '#fff',
   textAlign: 'center',
   maxWidth: '90%',
-  background: 'rgba(0, 0, 0, 0.6)',
-  padding: theme.spacing(2),
-  borderRadius: '12px',
-  backdropFilter: 'blur(5px)',
+  background: 'rgba(0, 0, 0, 0.8)',
+  padding: theme.spacing(2.5),
+  borderRadius: '16px',
+  backdropFilter: 'blur(10px)',
   border: '1px solid rgba(255, 255, 255, 0.1)',
-  marginTop: theme.spacing(1),
+  marginTop: theme.spacing(2),
   maxHeight: '150px',
   overflowY: 'auto',
+  fontSize: '0.95rem',
+  lineHeight: 1.5,
+  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
   '&::-webkit-scrollbar': {
-    width: '6px',
+    width: '8px',
   },
   '&::-webkit-scrollbar-thumb': {
-    background: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: '3px',
+    background: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: '4px',
+  },
+  '&::-webkit-scrollbar-track': {
+    background: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: '4px',
   },
 }));
 
@@ -126,11 +136,13 @@ const NavigationBar = styled(Box)(({ theme }) => ({
   backdropFilter: 'blur(10px)',
   borderTop: '1px solid rgba(255, 255, 255, 0.1)',
   display: 'flex',
-  justifyContent: 'center', // Center the buttons on mobile
+  justifyContent: 'center',
   alignItems: 'center',
-  gap: theme.spacing(2), // Add gap between buttons
+  gap: theme.spacing(2),
+  marginBottom: theme.spacing(2), // Add margin to account for circular camera
   [theme.breakpoints.up('sm')]: {
     justifyContent: 'space-between',
+    marginBottom: 0,
   },
 }));
 
@@ -183,6 +195,51 @@ const FirstViolationModal = styled(Dialog)(({ theme }) => ({
     border: '1px solid rgba(255, 255, 255, 0.1)',
     maxWidth: '600px',
     margin: theme.spacing(2),
+  },
+}));
+
+// Add styled components for the new layout
+const CircularCamera = styled(Box)(({ theme }) => ({
+  position: 'fixed',
+  bottom: theme.spacing(3),
+  right: theme.spacing(3),
+  width: '10vw',
+  height: '10vw',
+  minWidth: '80px',
+  minHeight: '80px',
+  maxWidth: '150px',
+  maxHeight: '150px',
+  borderRadius: '50%',
+  overflow: 'hidden',
+  zIndex: 1000,
+  border: '3px solid #8310FF',
+  boxShadow: '0 8px 32px rgba(131, 16, 255, 0.3)',
+  backgroundColor: '#000',
+  '& video': {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    transform: 'scaleX(-1)',
+  },
+  [theme.breakpoints.down('sm')]: {
+    width: '15vw',
+    height: '15vw',
+    bottom: theme.spacing(2),
+    right: theme.spacing(2),
+  },
+}));
+
+const MainCanvas = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  width: '100%',
+  height: '70vh',
+  borderRadius: theme.spacing(3),
+  overflow: 'hidden',
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+  [theme.breakpoints.down('sm')]: {
+    height: '60vh',
+    borderRadius: theme.spacing(2),
   },
 }));
 
@@ -395,6 +452,12 @@ const Test = () => {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+  
+  // Add new state for greeting control
+  const [shouldPlayGreeting, setShouldPlayGreeting] = useState(false);
+  
+  // Add new state for avatar question speaking
+  const [shouldSpeakQuestion, setShouldSpeakQuestion] = useState(false);
 
   // Add new state for warning modal
   const [showFullscreenWarning, setShowFullscreenWarning] = useState(false);
@@ -765,6 +828,11 @@ const Test = () => {
     } finally {
       setIsGenerating(false);
       setShowLoaderModal(false);
+      // Trigger greeting AFTER the loader modal closes with a small delay
+      setTimeout(() => {
+        console.log('Guidelines accepted and loader finished - triggering avatar greeting');
+        setShouldPlayGreeting(true);
+      }, 500); // Small delay to ensure UI has updated
     }
   };
 
@@ -804,6 +872,11 @@ const Test = () => {
       setIsRecording(true);
       setHasStartedTest(true);
       setTimeLeft(240); // Start with 240 seconds (4 minutes)
+      
+      // Trigger avatar to speak the first question
+      setTimeout(() => {
+        setShouldSpeakQuestion(true);
+      }, 1000); // Give time for test to start properly
     } catch (error) {
       console.error('Recording setup error:', error);
       setIsRecording(false);
@@ -974,7 +1047,14 @@ const Test = () => {
       if (!questions[current]?.text) return;
       setIsSpeaking(false);
       setAudioUrl(null);
+      
+      // Remove delay for first question since avatar will handle it
+      if (current === 0 && shouldSpeakQuestion) {
+        return; // Let avatar handle first question TTS
+      }
+      
       try {
+        if(hasStartedTest){
         const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`, {
           method: 'POST',
           headers: {
@@ -992,29 +1072,35 @@ const Test = () => {
             },
           }),
         });
-        if (!response.ok) throw new Error('TTS fetch failed');
+        if (!response.ok) {
+          console.warn('TTS fetch failed:', response.status, response.statusText);
+          return; // Fail silently instead of throwing
+        }
         const audioBlob = await response.blob();
         const url = URL.createObjectURL(audioBlob);
         setAudioUrl(url);
+      }
       } catch (e) {
         console.error('TTS error', e);
+        // Fail silently to not interrupt the interview flow
       }
+      
     };
     if (questions.length > 0 && !isGenerating) {
       fetchTTS();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, questions, isGenerating]);
+  }, [current, questions, isGenerating, shouldSpeakQuestion,hasStartedTest]);
 
   // Play audio when audioUrl changes
   useEffect(() => {
-    if (audioUrl && audioRef.current) {
+    if (audioUrl && audioRef.current && hasStartedTest) {
       audioRef.current.currentTime = 0;
       audioRef.current.play();
       setIsSpeaking(true);
       audioRef.current.onended = () => setIsSpeaking(false);
     }
-  }, [audioUrl]);
+  }, [audioUrl,hasStartedTest]);
 
   // Listen for fullscreenchange: if test is running and fullscreen is exited, show warning and allow re-entering fullscreen
   useEffect(() => {
@@ -1095,17 +1181,25 @@ const Test = () => {
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: { xs: 1, sm: 4 }, // Responsive padding
-        px: { xs: 0, sm: 2 }, // Add horizontal padding on larger screens
-      }}
-    >
+    <>
+      <style jsx global>{`
+        @keyframes dots {
+          0%, 20% { content: '.'; }
+          40% { content: '..'; }
+          60%, 100% { content: '...'; }
+        }
+      `}</style>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          py: { xs: 1, sm: 4 }, // Responsive padding
+          px: { xs: 0, sm: 2 }, // Add horizontal padding on larger screens
+        }}
+      >
       {/* No avatar, only audio will play */}
       {audioUrl && (
         <audio ref={audioRef} src={audioUrl} />
@@ -1421,51 +1515,29 @@ const Test = () => {
         </StyledAppBar>
 
         <Container
-          maxWidth="md"
+          maxWidth="lg"
           sx={{
             flexGrow: 1,
-            py: { xs: 2, sm: 4 }, // Responsive padding
-            px: { xs: 1, sm: 2 }, // Add horizontal padding for mobile
+            py: { xs: 2, sm: 4 },
+            px: { xs: 1, sm: 2 },
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'transparent',
-            boxShadow: 'none',
-            minHeight: { xs: '60vh', sm: 'auto' }, // Ensure minimum height on mobile
+            minHeight: { xs: '60vh', sm: 'auto' },
           }}
         >
-          <Paper
-            elevation={12}
-            sx={{
-              position: 'relative',
-              width: '100%',
-              pt: { xs: '75%', sm: '56.25%' }, // Responsive aspect ratio (4:3 on mobile, 16:9 on desktop)
-              borderRadius: { xs: 2, sm: 4 }, // Responsive border radius
-              overflow: 'hidden',
-              background: 'rgba(255,255,255,0.98)',
-              boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
-              maxHeight: { xs: '70vh', sm: 'none' }, // Limit height on mobile
-            }}
-          >
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                transform: 'scaleX(-1)',
-                borderRadius: '24px',
-                boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
-                border: '2px solid #e0f7fa',
-              }}
+          {/* Main Three.js Canvas Area */}
+          <MainCanvas>
+            <AvatarCanvas 
+              isSpeaking={isSpeaking} 
+              shouldPlayGreeting={shouldPlayGreeting}
+              shouldSpeakQuestion={shouldSpeakQuestion}
+              firstQuestionText={questions[0]?.text || ""}
+              hasStartedTest={hasStartedTest}
             />
-
+            
+            {/* Recording Controls Overlay */}
             <RecordingControls>
               <RecordingButton
                 variant="contained"
@@ -1490,23 +1562,31 @@ const Test = () => {
                 }
               </RecordingButton>
               {hasStartedTest && (
-                <VoiceActivityIndicator isActive={currentTranscript.length > 0}>
-                  <VoiceWaves />
-                  <VoiceIcon />
-                </VoiceActivityIndicator>
+                <>
+                  <VoiceActivityIndicator isActive={currentTranscript.length > 0}>
+                    <VoiceWaves />
+                    <VoiceIcon />
+                  </VoiceActivityIndicator>
+                  {currentTranscript && (
+                    <TranscriptDisplay variant="body2">
+                      {currentTranscript}
+                    </TranscriptDisplay>
+                  )}
+                </>
               )}
             </RecordingControls>
 
+            {/* Question Overlay */}
             <QuestionOverlay>
               <Typography 
                 variant="h6" 
                 sx={{ 
                   color: '#fff',
-                  fontSize: { xs: '1rem', sm: '1.25rem' }, // Responsive font size
-                  lineHeight: { xs: 1.3, sm: 1.4 }, // Responsive line height
+                  fontSize: { xs: '1rem', sm: '1.25rem' },
+                  lineHeight: { xs: 1.3, sm: 1.4 },
                   textAlign: 'center',
-                  px: { xs: 1, sm: 0 }, // Add horizontal padding on mobile
-                  wordBreak: 'break-word', // Prevent text overflow
+                  px: { xs: 1, sm: 0 },
+                  wordBreak: 'break-word',
                   maxWidth: '100%',
                 }}
               >
@@ -1519,7 +1599,7 @@ const Test = () => {
                     background: GREEN_MAIN,
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
+                    flexDirection: { xs: 'column', sm: 'row' },
                   }}>
                     <span>Generating your interview questions</span>
                     <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
@@ -1529,7 +1609,17 @@ const Test = () => {
                 ) : questions[current]?.text}
               </Typography>
             </QuestionOverlay>
-          </Paper>
+          </MainCanvas>
+
+          {/* Circular Camera in Bottom Right */}
+          <CircularCamera>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+            />
+          </CircularCamera>
         </Container>
 
         <NavigationBar>
@@ -1572,8 +1662,9 @@ const Test = () => {
               : 'Finish Test'}
           </Button>
         </NavigationBar>
+        </Box>
       </Box>
-    </Box>
+    </>
   );
 }
 
