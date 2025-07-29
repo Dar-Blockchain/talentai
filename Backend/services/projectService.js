@@ -257,6 +257,7 @@ module.exports.getAllProjects = async (
     let filterTechnicalData = false;
     let filterBusinessData = false;
     let filterOverallScore = false;
+    let filterCodeData = false;
     if (sort) {
       const rawField = sort.replace(/^[-+]/, "");
       sortOrder = sort.startsWith("-") ? -1 : 1;
@@ -268,7 +269,11 @@ module.exports.getAllProjects = async (
       } else if (rawField === "overallScoreBusiness") {
         sortField = "assessment.businessData.overallScore";
         filterBusinessData = true;
-      } else if (rawField === "overallScore") {
+      } else if (rawField === "overallScoreCode") {
+        sortField = "assessment.codeAnalysis.analysis.overallScore";
+        filterCodeData = true;
+      }
+      else if (rawField === "overallScore") {
         sortField = "assessment.overallScore";
         filterOverallScore = true;
       } else {
@@ -276,7 +281,7 @@ module.exports.getAllProjects = async (
       }
     }
 
-    const pipeline = [
+    let pipeline = [
       { $match: match },
       {
         $lookup: {
@@ -296,7 +301,36 @@ module.exports.getAllProjects = async (
         },
       },
       { $unwind: { path: "$leaderId", preserveNullAndEmptyArrays: true } },
+      
     ];
+
+    if (filterCodeData) {
+      pipeline.push(
+        {
+          $lookup: {
+            from: "codeanalyses",
+            let: { codeAnalysisId: "$assessment.codeAnalysis" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$_id", "$$codeAnalysisId"] } } },
+              {
+                $project: {
+                  _id: 1,
+                  "analysis.overallScore": 1,
+                },
+              },
+            ],
+            as: "assessment.codeAnalysis",
+          },
+        },
+        {
+          $unwind: {
+            path: "$assessment.codeAnalysis",
+            preserveNullAndEmptyArrays: true,
+          },
+        }
+      );
+    }
+
 
     // If sorting by overallScoreTechnical, only return projects that have technicalData
     if (filterTechnicalData) {
@@ -312,6 +346,15 @@ module.exports.getAllProjects = async (
       pipeline.push({
         $match: {
           "assessment.businessData.overallScore": { $exists: true, $ne: null },
+        },
+      });
+    }
+
+    // If sorting by overallScoreCode, only return projects that have codeAnalysis
+    if (filterCodeData) {
+      pipeline.push({
+        $match: {
+          "assessment.codeAnalysis.analysis.overallScore": { $exists: true, $ne: null },
         },
       });
     }
