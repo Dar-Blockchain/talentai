@@ -14,9 +14,10 @@ interface FBXAvatarProps {
     accessories?: string;
     skin?: string;
   };
-  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3';
+  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3' | 'japan';
   sinda1AvatarType?: 'dressproblond' | 'winterblond' | 'problond';
   sinda2AvatarType?: 'dressproblack' | 'problack' | 'winterblack';
+  japanAvatarType?: 'casualjapan' | 'projapan' | 'winterjapan';
   onLoad?: () => void;
 }
 
@@ -43,7 +44,7 @@ const getClothingCategory = (materialName: string, meshName: string): string | n
   return null;
 };
 
-function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', onLoad }: {
+function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', japanAvatarType = 'casualjapan', onLoad }: {
   clothingColor: string;
   selectedOutfit?: {
     tshirt?: string;
@@ -52,9 +53,10 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
     accessories?: string;
     skin?: string;
   };
-  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3';
+  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3' | 'japan';
   sinda1AvatarType?: 'dressproblond' | 'winterblond' | 'problond';
   sinda2AvatarType?: 'dressproblack' | 'problack' | 'winterblack';
+  japanAvatarType?: 'casualjapan' | 'projapan' | 'winterjapan';
   onLoad?: () => void;
 }) {
   const meshRef = useRef<THREE.Group>(null);
@@ -99,12 +101,28 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
              avatarPath = '/Avatars/dressproblack.fbx';
          }
          break;
-       case 'sinda3':
-         avatarPath = '/Avatars/final.fbx';
-         break;
-       default:
-         avatarPath = '/Avatars/dressproblond.fbx';
-     }
+             case 'sinda3':
+        avatarPath = '/Avatars/final.fbx';
+        break;
+      case 'japan':
+        // Japan has multiple options
+        switch (japanAvatarType) {
+          case 'casualjapan':
+            avatarPath = '/Avatars/casualjapan.fbx';
+            break;
+          case 'projapan':
+            avatarPath = '/Avatars/projapan.fbx';
+            break;
+          case 'winterjapan':
+            avatarPath = '/Avatars/winterjapan.fbx';
+            break;
+          default:
+            avatarPath = '/Avatars/casualjapan.fbx';
+        }
+        break;
+      default:
+        avatarPath = '/Avatars/dressproblond.fbx';
+    }
      
      loader.load(
        avatarPath,
@@ -477,7 +495,7 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
         setLoading(false);
       }
     );
-     }, [clothingColor, selectedOutfit, sindaCategory, sinda1AvatarType, sinda2AvatarType, onLoad]);
+     }, [clothingColor, selectedOutfit, sindaCategory, sinda1AvatarType, sinda2AvatarType, japanAvatarType, onLoad]);
 
   if (loading) {
     return (
@@ -500,7 +518,7 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
   ) : null;
 }
 
-export default function FBXAvatar({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', onLoad }: FBXAvatarProps) {
+export default function FBXAvatar({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', japanAvatarType = 'casualjapan', onLoad }: FBXAvatarProps) {
   return (
     <div style={{ width: '100%', height: '400px', position: 'relative' }}>
       <Canvas
@@ -528,6 +546,7 @@ export default function FBXAvatar({ clothingColor = '#4A90E2', selectedOutfit, s
           sindaCategory={sindaCategory}
           sinda1AvatarType={sinda1AvatarType}
           sinda2AvatarType={sinda2AvatarType}
+          japanAvatarType={japanAvatarType}
           onLoad={onLoad}
         />
         

@@ -1,25 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  Avatar,
-  Chip,
-  Paper,
-  IconButton,
-  Stack,
-  Divider,
-  useTheme,
-  useMediaQuery,
+    Box,
+    Container,
+    Typography,
+    Card,
+    CardContent,
+    Button,
+    Avatar,
+    Chip,
+    Paper,
+    IconButton,
+    Stack,
+    Divider,
+    useTheme,
+    useMediaQuery,
 } from '@mui/material';
 import {
-  CheckCircle as CheckCircleIcon,
-  ArrowBack as ArrowBackIcon,
-  Save as SaveIcon,
-  Refresh as RefreshIcon,
+    CheckCircle as CheckCircleIcon,
+    ArrowBack as ArrowBackIcon,
+    Save as SaveIcon,
+    Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
@@ -27,17 +27,17 @@ import FBXAvatar from '../components/FBXAvatar';
 
 // Clothing item types
 interface ClothingItem {
-  id: string;
-  name: string;
-  category: 'tshirt' | 'pants' | 'shoes' | 'accessories';
-  color: string;
-  image: string;
-  price?: number;
+    id: string;
+    name: string;
+    category: 'tshirt' | 'pants' | 'shoes' | 'accessories';
+    color: string;
+    image: string;
+    price?: number;
 }
 
 // Sample clothing data
 const clothingItems: ClothingItem[] = [
-  // T-Shirts
+    // T-Shirts
   { id: 'tshirt-1', name: 'Classic White', category: 'tshirt', color: '#FFFFFF', image: '👕' },
   { id: 'tshirt-2', name: 'Ocean Blue', category: 'tshirt', color: '#2196F3', image: '👕' },
   { id: 'tshirt-3', name: 'Midnight Black', category: 'tshirt', color: '#000000', image: '👕' },
@@ -51,35 +51,35 @@ const clothingItems: ClothingItem[] = [
   { id: 'tshirt-11', name: 'Turquoise', category: 'tshirt', color: '#00BCD4', image: '👕' },
   { id: 'tshirt-12', name: 'Lime Green', category: 'tshirt', color: '#8BC34A', image: '👕' },
 
-  // Accessories
-  { id: 'acc-1', name: 'Black Cap', category: 'accessories', color: '#000000', image: '🧢' },
-  { id: 'acc-2', name: 'Sunglasses', category: 'accessories', color: '#000000', image: '🕶️' },
-  { id: 'acc-3', name: 'Watch', category: 'accessories', color: '#FFD700', image: '⌚' },
-  { id: 'acc-4', name: 'Backpack', category: 'accessories', color: '#795548', image: '🎒' },
-  { id: 'acc-5', name: 'Necklace', category: 'accessories', color: '#FFD700', image: '📿' },
+    // Accessories
+    { id: 'acc-1', name: 'Black Cap', category: 'accessories', color: '#000000', image: '🧢' },
+    { id: 'acc-2', name: 'Sunglasses', category: 'accessories', color: '#000000', image: '🕶️' },
+    { id: 'acc-3', name: 'Watch', category: 'accessories', color: '#FFD700', image: '⌚' },
+    { id: 'acc-4', name: 'Backpack', category: 'accessories', color: '#795548', image: '🎒' },
+    { id: 'acc-5', name: 'Necklace', category: 'accessories', color: '#FFD700', image: '📿' },
 ];
 
 // Color options for pants
 const pantsColors = [
-  { name: 'Blue', color: '#1976D2' },
-  { name: 'Black', color: '#212121' },
-  { name: 'Gray', color: '#757575' },
-  { name: 'White', color: '#FAFAFA' },
-  { name: 'Green', color: '#4CAF50' },
-
+    { name: 'Blue', color: '#1976D2' },
+    { name: 'Black', color: '#212121' },
+    { name: 'Gray', color: '#757575' },
+    { name: 'White', color: '#FAFAFA' },
+    { name: 'Green', color: '#4CAF50' },
+   
 ];
 
 // Color options for skin
 const skinColors = [
-  { name: 'White', color: '#FFFFFF' },
-  { name: 'Light', color: '#FFDBB4' },
-  { name: 'Fair', color: '#F1C27D' },
-  { name: 'Medium', color: '#E6B17A' },
-  { name: 'Olive', color: '#D4A574' },
-  { name: 'Tan', color: '#C68642' },
-  { name: 'Dark', color: '#8D5524' },
-  { name: 'Deep', color: '#5D4037' },
-  { name: 'Very Dark', color: '#3E2723' },
+    { name: 'White', color: '#FFFFFF' },
+    { name: 'Light', color: '#FFDBB4' },
+    { name: 'Fair', color: '#F1C27D' },
+    { name: 'Medium', color: '#E6B17A' },
+    { name: 'Olive', color: '#D4A574' },
+    { name: 'Tan', color: '#C68642' },
+    { name: 'Dark', color: '#8D5524' },
+    { name: 'Deep', color: '#5D4037' },
+    { name: 'Very Dark', color: '#3E2723' },
 ];
 
 const categories = [
@@ -92,100 +92,101 @@ const categories = [
 ];
 
 export default function AvatarCustomizer() {
-  const router = useRouter();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const router = useRouter();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const [selectedCategory, setSelectedCategory] = useState('tshirt');
-  const [selectedItems, setSelectedItems] = useState<Record<string, string>>({
-    tshirt: 'tshirt-1',
-    pants: 'pants-1',
-    shoes: 'shoes-1',
-    accessories: '',
-  });
-  const [customPantsColor, setCustomPantsColor] = useState('#1976D2');
-  const [customShoesColor, setCustomShoesColor] = useState('#000000');
-  const [customSkinColor, setCustomSkinColor] = useState('#FFDBB4');
-  const [isUpdatingOutfit, setIsUpdatingOutfit] = useState(false);
-  const [selectedSindaCategory, setSelectedSindaCategory] = useState<'sinda1' | 'sinda2' | 'sinda3'>('sinda1'); // 'sinda1', 'sinda2', or 'sinda3'
+    const [selectedCategory, setSelectedCategory] = useState('tshirt');
+    const [selectedItems, setSelectedItems] = useState<Record<string, string>>({
+        tshirt: 'tshirt-1',
+        pants: 'pants-1',
+        shoes: 'shoes-1',
+        accessories: '',
+    });
+    const [customPantsColor, setCustomPantsColor] = useState('#1976D2');
+    const [customShoesColor, setCustomShoesColor] = useState('#000000');
+    const [customSkinColor, setCustomSkinColor] = useState('#FFDBB4');
+    const [isUpdatingOutfit, setIsUpdatingOutfit] = useState(false);
+  const [selectedSindaCategory, setSelectedSindaCategory] = useState<'sinda1' | 'sinda2' | 'sinda3' | 'japan'>('sinda1'); // 'sinda1', 'sinda2', 'sinda3', or 'japan'
   const [selectedSinda1Avatar, setSelectedSinda1Avatar] = useState<'dressproblond' | 'winterblond' | 'problond'>('dressproblond'); // 'dressproblond', 'winterblond', or 'problond' for Sinda 1
   const [selectedSinda2Avatar, setSelectedSinda2Avatar] = useState<'dressproblack' | 'problack' | 'winterblack'>('dressproblack'); // 'dressproblack', 'problack', or 'winterblack' for Sinda 2
+  const [selectedJapanAvatar, setSelectedJapanAvatar] = useState<'casualjapan' | 'projapan' | 'winterjapan'>('casualjapan'); // 'casualjapan', 'projapan', or 'winterjapan' for Japan
   const [isNavbarCollapsed, setIsNavbarCollapsed] = useState(false);
 
 
 
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
-  };
+    const handleCategoryChange = (category: string) => {
+        setSelectedCategory(category);
+    };
 
-  const handleItemSelect = (itemId: string, category: string) => {
-    setIsUpdatingOutfit(true);
-    setSelectedItems(prev => ({
-      ...prev,
-      [category]: itemId,
-    }));
+    const handleItemSelect = (itemId: string, category: string) => {
+        setIsUpdatingOutfit(true);
+        setSelectedItems(prev => ({
+            ...prev,
+            [category]: itemId,
+        }));
 
-    // Simulate outfit update delay for better UX
-    setTimeout(() => {
-      setIsUpdatingOutfit(false);
-    }, 500);
-  };
+        // Simulate outfit update delay for better UX
+        setTimeout(() => {
+            setIsUpdatingOutfit(false);
+        }, 500);
+    };
 
-  const handleSave = () => {
-    // Save avatar configuration
-    localStorage.setItem('avatarConfig', JSON.stringify(selectedItems));
-    // You can also send this to your backend
-    console.log('Avatar saved:', selectedItems);
-  };
+    const handleSave = () => {
+        // Save avatar configuration
+        localStorage.setItem('avatarConfig', JSON.stringify(selectedItems));
+        // You can also send this to your backend
+        console.log('Avatar saved:', selectedItems);
+    };
 
-  const handleReset = () => {
-    setSelectedItems({
-      tshirt: 'tshirt-1',
-      pants: 'pants-1',
-      shoes: 'shoes-1',
-      accessories: '',
-    });
-  };
+    const handleReset = () => {
+        setSelectedItems({
+            tshirt: 'tshirt-1',
+            pants: 'pants-1',
+            shoes: 'shoes-1',
+            accessories: '',
+        });
+    };
 
-  const getSelectedItemsForCategory = () => {
-    if (selectedCategory === 'pants' || selectedCategory === 'shoes') {
-      return []; // No items to show for pants/shoes, only color picker
-    }
-    return clothingItems.filter(item => item.category === selectedCategory);
-  };
+    const getSelectedItemsForCategory = () => {
+        if (selectedCategory === 'pants' || selectedCategory === 'shoes') {
+            return []; // No items to show for pants/shoes, only color picker
+        }
+        return clothingItems.filter(item => item.category === selectedCategory);
+    };
 
-  const getSelectedItem = (category: string) => {
-    const itemId = selectedItems[category];
-    const item = clothingItems.find(item => item.id === itemId);
+    const getSelectedItem = (category: string) => {
+        const itemId = selectedItems[category];
+        const item = clothingItems.find(item => item.id === itemId);
 
-    // For pants, use custom color if available
-    if (category === 'pants' && item) {
-      return {
-        ...item,
-        color: customPantsColor
-      };
-    }
+        // For pants, use custom color if available
+        if (category === 'pants' && item) {
+            return {
+                ...item,
+                color: customPantsColor
+            };
+        }
 
-    // For shoes, use custom color if available
-    if (category === 'shoes' && item) {
-      return {
-        ...item,
-        color: customShoesColor
-      };
-    }
+        // For shoes, use custom color if available
+        if (category === 'shoes' && item) {
+            return {
+                ...item,
+                color: customShoesColor
+            };
+        }
 
-    return item;
-  };
+        return item;
+    };
 
-  return (
-    <>
-      <Head>
-        <title>Avatar Customizer - TalentAI</title>
-        <meta name="description" content="Customize your avatar with different clothing options" />
-      </Head>
+    return (
+        <>
+            <Head>
+                <title>Avatar Customizer - TalentAI</title>
+                <meta name="description" content="Customize your avatar with different clothing options" />
+            </Head>
 
-      <Box sx={{
-        minHeight: '100vh',
+                  <Box sx={{ 
+        minHeight: '100vh', 
         // background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
         position: 'relative',
         overflow: 'hidden'
@@ -206,7 +207,7 @@ export default function AvatarCustomizer() {
           backgroundSize: '100% 100%',
           pointerEvents: 'none'
         }} />
-
+        
         <Container maxWidth="xl" sx={{ py: { xs: 1, md: 2 },  mb: { xs: 1, md: 2 }, position: 'relative', zIndex: 1, height: '100vh' }}>
           {/* T-Shirt Colors Navbar */}
           <Box sx={{
@@ -364,9 +365,9 @@ export default function AvatarCustomizer() {
             </Box>
           </Box>
 
-          <Box sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', md: 'row' }, 
             height: { 
               xs: 'auto', 
               md: isNavbarCollapsed ? 'calc(100vh - 120px)' : 'calc(100vh - 200px)' 
@@ -375,7 +376,7 @@ export default function AvatarCustomizer() {
             transition: 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
           }}>
             {/* Avatar Preview - Left Side (70%) */}
-            <Box sx={{
+            <Box sx={{ 
               flex: { xs: '1', md: '0 0 70%' },
               height: { xs: '350px', sm: '400px', md: '100%' },
               minHeight: { xs: '350px', sm: '400px', md: '500px' }
@@ -394,7 +395,7 @@ export default function AvatarCustomizer() {
                   justifyContent: 'center',
                 }}
               >
-                <FBXAvatar
+                <FBXAvatar 
                   clothingColor={getSelectedItem('tshirt')?.color || '#4A90E2'}
                   selectedOutfit={{
                     tshirt: getSelectedItem('tshirt')?.color,
@@ -406,6 +407,7 @@ export default function AvatarCustomizer() {
                   sindaCategory={selectedSindaCategory}
                   sinda1AvatarType={selectedSinda1Avatar}
                   sinda2AvatarType={selectedSinda2Avatar}
+                  japanAvatarType={selectedJapanAvatar}
                   onLoad={() => {
                     console.log('FBX model loaded successfully');
                     console.log('Sinda category:', selectedSindaCategory);
@@ -416,7 +418,7 @@ export default function AvatarCustomizer() {
                     console.log('Skin color:', customSkinColor);
                   }}
                 />
-
+                
                 {/* Outfit Update Loading Overlay */}
                 {isUpdatingOutfit && (
                   <Box
@@ -460,7 +462,7 @@ export default function AvatarCustomizer() {
             </Box>
 
             {/* Right Side - Avatar Selection Sidebar (30%) */}
-            <Box sx={{
+            <Box sx={{ 
               flex: { xs: '1', md: '0 0 30%' },
               height: { xs: 'auto', md: '100%' },
               display: 'flex',
@@ -470,22 +472,22 @@ export default function AvatarCustomizer() {
               overflow: { xs: 'visible', md: 'auto' }
             }}>
               {/* Avatar Selection Panel */}
-              <Box sx={{
+              <Box sx={{ 
                 background: 'rgba(0,0,0,0.8)',
                 backdropFilter: 'blur(20px)',
                 border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: { xs: 2, md: 4 },
-                p: { xs: 2, md: 3 },
+                  p: { xs: 2, md: 3 }, 
                 height: 'fit-content'
-              }}>
-                <Typography variant="h6" sx={{
-                  color: 'white',
-                  fontWeight: 'bold',
-                  mb: { xs: 2, md: 3 },
-                  fontSize: { xs: '1rem', md: '1.25rem' }
                 }}>
+                  <Typography variant="h6" sx={{ 
+                    color: 'white', 
+                    fontWeight: 'bold', 
+                  mb: { xs: 2, md: 3 },
+                    fontSize: { xs: '1rem', md: '1.25rem' }
+                  }}>
                   Avatar Selection
-                </Typography>
+                  </Typography>
 
                 {/* Sinda Category Selection */}
                 <Box sx={{ mb: { xs: 2, md: 3 } }}>
@@ -562,7 +564,7 @@ export default function AvatarCustomizer() {
                         setIsUpdatingOutfit(true);
                         setTimeout(() => setIsUpdatingOutfit(false), 500);
                       }}
-                      sx={{
+                              sx={{
                         justifyContent: 'flex-start',
                         height: { xs: '36px', md: '40px' },
                         fontSize: { xs: '0.8rem', md: '0.85rem' },
@@ -573,7 +575,7 @@ export default function AvatarCustomizer() {
                           ? 'none'
                           : '1px solid rgba(255,255,255,0.3)',
                         color: selectedSindaCategory === 'sinda3' ? 'white' : 'rgba(255,255,255,0.8)',
-                        '&:hover': {
+                                '&:hover': {
                           background: selectedSindaCategory === 'sinda3'
                             ? 'linear-gradient(45deg, #1976D2, #2196F3)'
                             : 'rgba(255,255,255,0.1)',
@@ -582,8 +584,36 @@ export default function AvatarCustomizer() {
                     >
                       Sinda 3
                     </Button>
+                    <Button
+                      size="medium"
+                      variant={selectedSindaCategory === 'japan' ? "contained" : "outlined"}
+                      onClick={() => {
+                        setSelectedSindaCategory('japan');
+                        setIsUpdatingOutfit(true);
+                        setTimeout(() => setIsUpdatingOutfit(false), 500);
+                      }}
+                                  sx={{
+                        justifyContent: 'flex-start',
+                        height: { xs: '36px', md: '40px' },
+                        fontSize: { xs: '0.8rem', md: '0.85rem' },
+                        background: selectedSindaCategory === 'japan'
+                          ? 'linear-gradient(45deg, #FF5722, #E64A19)'
+                          : 'transparent',
+                        border: selectedSindaCategory === 'japan'
+                          ? 'none'
+                          : '1px solid rgba(255,255,255,0.3)',
+                        color: selectedSindaCategory === 'japan' ? 'white' : 'rgba(255,255,255,0.8)',
+                        '&:hover': {
+                          background: selectedSindaCategory === 'japan'
+                            ? 'linear-gradient(45deg, #E64A19, #FF5722)'
+                            : 'rgba(255,255,255,0.1)',
+                        },
+                      }}
+                    >
+                      Japan
+                    </Button>
                   </Box>
-                </Box>
+                                </Box>
 
                 {/* Sinda 1 Style Selection */}
                 {selectedSindaCategory === 'sinda1' && (
@@ -605,7 +635,7 @@ export default function AvatarCustomizer() {
                           setIsUpdatingOutfit(true);
                           setTimeout(() => setIsUpdatingOutfit(false), 500);
                         }}
-                        sx={{
+                                    sx={{
                           justifyContent: 'flex-start',
                           height: { xs: '32px', md: '36px' },
                           fontSize: { xs: '0.75rem', md: '0.8rem' },
@@ -633,7 +663,7 @@ export default function AvatarCustomizer() {
                           setIsUpdatingOutfit(true);
                           setTimeout(() => setIsUpdatingOutfit(false), 500);
                         }}
-                        sx={{
+                                    sx={{
                           justifyContent: 'flex-start',
                           height: { xs: '32px', md: '36px' },
                           fontSize: { xs: '0.75rem', md: '0.8rem' },
@@ -661,7 +691,7 @@ export default function AvatarCustomizer() {
                           setIsUpdatingOutfit(true);
                           setTimeout(() => setIsUpdatingOutfit(false), 500);
                         }}
-                        sx={{
+                                    sx={{
                           justifyContent: 'flex-start',
                           height: { xs: '32px', md: '36px' },
                           fontSize: { xs: '0.75rem', md: '0.8rem' },
@@ -681,9 +711,9 @@ export default function AvatarCustomizer() {
                       >
                         Casual
                       </Button>
-                    </Box>
-                  </Box>
-                )}
+                          </Box>
+                      </Box>
+                    )}
 
                 {/* Sinda 2 Style Selection */}
                 {selectedSindaCategory === 'sinda2' && (
@@ -733,7 +763,7 @@ export default function AvatarCustomizer() {
                           setIsUpdatingOutfit(true);
                           setTimeout(() => setIsUpdatingOutfit(false), 500);
                         }}
-                        sx={{
+                              sx={{
                           justifyContent: 'flex-start',
                           height: { xs: '32px', md: '36px' },
                           fontSize: { xs: '0.75rem', md: '0.8rem' },
@@ -744,7 +774,7 @@ export default function AvatarCustomizer() {
                             ? 'none'
                             : '1px solid rgba(255,255,255,0.2)',
                           color: selectedSinda2Avatar === 'problack' ? 'white' : 'rgba(255,255,255,0.7)',
-                          '&:hover': {
+                                '&:hover': {
                             background: selectedSinda2Avatar === 'problack'
                               ? 'linear-gradient(45deg, #5D4037, #795548)'
                               : 'rgba(255,255,255,0.1)',
@@ -756,11 +786,11 @@ export default function AvatarCustomizer() {
                       <Button
                         size="medium"
                         variant={selectedSinda2Avatar === 'winterblack' ? "contained" : "outlined"}
-                        onClick={() => {
+                              onClick={() => {
                           setSelectedSinda2Avatar('winterblack');
-                          setIsUpdatingOutfit(true);
-                          setTimeout(() => setIsUpdatingOutfit(false), 500);
-                        }}
+                                setIsUpdatingOutfit(true);
+                                setTimeout(() => setIsUpdatingOutfit(false), 500);
+                              }}
                         sx={{
                           justifyContent: 'flex-start',
                           height: { xs: '32px', md: '36px' },
@@ -784,14 +814,114 @@ export default function AvatarCustomizer() {
                     </Box>
                   </Box>
                 )}
+
+                {/* Japan Style Selection */}
+                {selectedSindaCategory === 'japan' && (
+                  <Box sx={{ mb: { xs: 2, md: 3 } }}>
+                    <Typography variant="body2" sx={{
+                      color: 'rgba(255,255,255,0.7)',
+                      fontWeight: 'bold',
+                      mb: { xs: 1.5, md: 2 },
+                      fontSize: { xs: '0.8rem', md: '0.85rem' }
+                    }}>
+                      Japan Style:
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.8, md: 1 } }}>
+                      <Button
+                        size="medium"
+                        variant={selectedJapanAvatar === 'casualjapan' ? "contained" : "outlined"}
+                        onClick={() => {
+                          setSelectedJapanAvatar('casualjapan');
+                          setIsUpdatingOutfit(true);
+                          setTimeout(() => setIsUpdatingOutfit(false), 500);
+                        }}
+                                    sx={{
+                          justifyContent: 'flex-start',
+                          height: { xs: '32px', md: '36px' },
+                          fontSize: { xs: '0.75rem', md: '0.8rem' },
+                          background: selectedJapanAvatar === 'casualjapan'
+                            ? 'linear-gradient(45deg, #FF9800, #F57C00)'
+                            : 'transparent',
+                          border: selectedJapanAvatar === 'casualjapan'
+                            ? 'none'
+                            : '1px solid rgba(255,255,255,0.2)',
+                          color: selectedJapanAvatar === 'casualjapan' ? 'white' : 'rgba(255,255,255,0.7)',
+                          '&:hover': {
+                            background: selectedJapanAvatar === 'casualjapan'
+                              ? 'linear-gradient(45deg, #F57C00, #FF9800)'
+                              : 'rgba(255,255,255,0.1)',
+                          },
+                        }}
+                      >
+                        Casual
+                      </Button>
+                      <Button
+                        size="medium"
+                        variant={selectedJapanAvatar === 'projapan' ? "contained" : "outlined"}
+                        onClick={() => {
+                          setSelectedJapanAvatar('projapan');
+                          setIsUpdatingOutfit(true);
+                          setTimeout(() => setIsUpdatingOutfit(false), 500);
+                        }}
+                                    sx={{
+                          justifyContent: 'flex-start',
+                          height: { xs: '32px', md: '36px' },
+                          fontSize: { xs: '0.75rem', md: '0.8rem' },
+                          background: selectedJapanAvatar === 'projapan'
+                            ? 'linear-gradient(45deg, #E91E63, #C2185B)'
+                            : 'transparent',
+                          border: selectedJapanAvatar === 'projapan'
+                            ? 'none'
+                            : '1px solid rgba(255,255,255,0.2)',
+                          color: selectedJapanAvatar === 'projapan' ? 'white' : 'rgba(255,255,255,0.7)',
+                          '&:hover': {
+                            background: selectedJapanAvatar === 'projapan'
+                              ? 'linear-gradient(45deg, #C2185B, #E91E63)'
+                              : 'rgba(255,255,255,0.1)',
+                          },
+                        }}
+                      >
+                        Professional
+                      </Button>
+                      <Button
+                        size="medium"
+                        variant={selectedJapanAvatar === 'winterjapan' ? "contained" : "outlined"}
+                        onClick={() => {
+                          setSelectedJapanAvatar('winterjapan');
+                          setIsUpdatingOutfit(true);
+                          setTimeout(() => setIsUpdatingOutfit(false), 500);
+                        }}
+                                    sx={{
+                          justifyContent: 'flex-start',
+                          height: { xs: '32px', md: '36px' },
+                          fontSize: { xs: '0.75rem', md: '0.8rem' },
+                          background: selectedJapanAvatar === 'winterjapan'
+                            ? 'linear-gradient(45deg, #00BCD4, #0097A7)'
+                            : 'transparent',
+                          border: selectedJapanAvatar === 'winterjapan'
+                            ? 'none'
+                            : '1px solid rgba(255,255,255,0.2)',
+                          color: selectedJapanAvatar === 'winterjapan' ? 'white' : 'rgba(255,255,255,0.7)',
+                          '&:hover': {
+                            background: selectedJapanAvatar === 'winterjapan'
+                              ? 'linear-gradient(45deg, #0097A7, #00BCD4)'
+                              : 'rgba(255,255,255,0.1)',
+                          },
+                        }}
+                      >
+                        Winter
+                      </Button>
+                      </Box>
+                    </Box>
+                  )}
               </Box>
 
-
-            </Box>
-          </Box>
-        </Container>
+                                    
+                        </Box>
+                    </Box>
+                </Container>
         
-      </Box>
-    </>
-  );
-}
+            </Box>
+        </>
+    );
+} 
