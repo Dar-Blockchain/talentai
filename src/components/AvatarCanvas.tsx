@@ -40,8 +40,170 @@ const AvatarModel: React.FC<AvatarModelProps> = ({
   const [isCurrentlySpeaking, setIsCurrentlySpeaking] = useState(false);
   const [hasPlayedGreeting, setHasPlayedGreeting] = useState(false);
 
-  // ----------- MOUTH ANIMATION HELPERS -------------
-  const startBackgroundMouthAnimation = (mesh: any) => {
+     // ----------- OUTFIT CONTROL -------------
+   const toggleOutfit = (outfitName: string, visible: boolean) => {
+     if (!fbx) {
+       console.log('FBX model not loaded yet');
+       return;
+     }
+
+     let found = false;
+     fbx.traverse((child: any) => {
+       if (child.isMesh && child.name === outfitName) {
+         child.visible = visible;
+         found = true;
+         console.log(`Outfit "${outfitName}" ${visible ? 'enabled' : 'disabled'}`);
+       }
+     });
+
+     if (!found) {
+       console.log(`Outfit "${outfitName}" not found`);
+       console.log('Available meshes:', getAllMeshNames());
+     }
+   };
+
+   const enableOutfit = (outfitName: string) => {
+     toggleOutfit(outfitName, true);
+   };
+
+   const disableOutfit = (outfitName: string) => {
+     toggleOutfit(outfitName, false);
+   };
+
+   const getAllMeshNames = () => {
+     if (!fbx) return [];
+     const meshNames: string[] = [];
+     fbx.traverse((child: any) => {
+       if (child.isMesh) {
+         meshNames.push(child.name);
+       }
+     });
+     return meshNames;
+   };
+
+   // Function to analyze a specific mesh in detail
+   const analyzeMesh = (meshName: string) => {
+     if (!fbx) {
+       console.log('FBX model not loaded yet');
+       return;
+     }
+
+     let targetMesh: any = null;
+     fbx.traverse((child: any) => {
+       if (child.isMesh && child.name === meshName) {
+         targetMesh = child;
+       }
+     });
+
+     if (!targetMesh) {
+       console.log(`Mesh "${meshName}" not found`);
+       return;
+     }
+
+     console.log(`=== DETAILED ANALYSIS OF "${meshName}" ===`);
+     console.log('Mesh object:', targetMesh);
+     console.log('Properties:', {
+       name: targetMesh.name,
+       type: targetMesh.type,
+       visible: targetMesh.visible,
+       position: targetMesh.position,
+       rotation: targetMesh.rotation,
+       scale: targetMesh.scale,
+       uuid: targetMesh.uuid,
+       id: targetMesh.id
+     });
+
+     // Geometry details
+     if (targetMesh.geometry) {
+       console.log('Geometry:', {
+         type: targetMesh.geometry.type,
+         verticesCount: targetMesh.geometry.attributes?.position?.count || 'Unknown',
+         hasNormals: !!targetMesh.geometry.attributes?.normal,
+         hasUV: !!targetMesh.geometry.attributes?.uv,
+         boundingBox: targetMesh.geometry.boundingBox,
+         boundingSphere: targetMesh.geometry.boundingSphere
+       });
+     }
+
+     // Material details
+     if (targetMesh.material) {
+       if (Array.isArray(targetMesh.material)) {
+         console.log(`Materials (${targetMesh.material.length} materials):`, targetMesh.material.map((mat: any, i: number) => ({
+           index: i,
+           name: mat.name || 'Unnamed',
+           type: mat.type,
+           color: mat.color,
+           transparent: mat.transparent,
+           opacity: mat.opacity,
+           map: mat.map ? mat.map.name || 'Has texture' : 'No texture'
+         })));
+       } else {
+         console.log('Material:', {
+           name: targetMesh.material.name || 'Unnamed',
+           type: targetMesh.material.type,
+           color: targetMesh.material.color,
+           transparent: targetMesh.material.transparent,
+           opacity: targetMesh.material.opacity,
+           map: targetMesh.material.map ? targetMesh.material.map.name || 'Has texture' : 'No texture'
+         });
+       }
+     }
+
+     // Morph targets
+     if (targetMesh.morphTargetInfluences) {
+       console.log('Morph Targets:', {
+         count: targetMesh.morphTargetInfluences.length,
+         influences: targetMesh.morphTargetInfluences,
+         dictionary: targetMesh.morphTargetDictionary
+       });
+     }
+
+     // Children
+     if (targetMesh.children && targetMesh.children.length > 0) {
+       console.log('Children:', targetMesh.children.map((child: any) => ({
+         name: child.name,
+         type: child.type,
+         visible: child.visible
+       })));
+     }
+
+     // Parent
+     if (targetMesh.parent) {
+       console.log('Parent:', {
+         name: targetMesh.parent.name,
+         type: targetMesh.parent.type
+       });
+     }
+
+     console.log('=== END ANALYSIS ===');
+   };
+
+   // Expose outfit control functions globally for testing
+   useEffect(() => {
+     if (fbx) {
+       (window as any).avatarOutfitControl = {
+         enable: enableOutfit,
+         disable: disableOutfit,
+         toggle: toggleOutfit,
+         listMeshes: getAllMeshNames,
+         analyze: analyzeMesh
+       };
+       console.log('Outfit control functions available globally:');
+       console.log('avatarOutfitControl.enable("meshName")');
+       console.log('avatarOutfitControl.disable("meshName")');
+       console.log('avatarOutfitControl.toggle("meshName", true/false)');
+       console.log('avatarOutfitControl.listMeshes()');
+       console.log('avatarOutfitControl.analyze("meshName")');
+       
+       // Automatically analyze Wolf3D_Outfit_Top if it exists
+       setTimeout(() => {
+         analyzeMesh("Wolf3D_Outfit_Top");
+       }, 500);
+     }
+   }, [fbx]);
+
+   // ----------- MOUTH ANIMATION HELPERS -------------
+   const startBackgroundMouthAnimation = (mesh: any) => {
     stopBackgroundMouthAnimation();
     if (!mesh) return;
     let mouthOpen = false;
@@ -210,46 +372,119 @@ const AvatarModel: React.FC<AvatarModelProps> = ({
     }
   };
 
-  // Find speech mesh (Wolf3D_Head or fallback)
-  useEffect(() => {
-    if (fbx) {
-      let wolf3dHead: any = null;
+     // Find speech mesh (Wolf3D_Head or fallback)
+   useEffect(() => {
+     if (fbx) {
+       console.log('=== FBX MODEL ANALYSIS ===');
+       
+       // Log all meshes
+       const meshes: string[] = [];
+       const allTextures: string[] = [];
+       const outfitTextures: string[] = [];
+       let wolf3dHead: any = null;
 
-      fbx.traverse((child: any) => {
-        if (
-          child.isMesh &&
-          child.name === 'Wolf3D_Head' &&
-          child.morphTargetInfluences &&
-          child.morphTargetInfluences.length > 0
-        ) {
-          wolf3dHead = child;
-        }
-      });
+       // Define body parts to exclude from outfit analysis
+       const bodyParts = ['Wolf3D_Head', 'Wolf3D_Body', 'Wolf3D_Skin', 'Wolf3D_Face', 'Wolf3D_Eyes', 'Wolf3D_Teeth', 'Wolf3D_Hair'];
 
-      if (wolf3dHead) {
-        setSpeechMesh(wolf3dHead);
-        setTimeout(() => startBackgroundMouthAnimation(wolf3dHead), 1000);
-      } else {
-        // Fallback: any mesh with morph targets
-        let fallbackMesh: any = null;
-        fbx.traverse((child: any) => {
-          if (
-            child.isMesh &&
-            child.morphTargetInfluences &&
-            child.morphTargetInfluences.length > 0 &&
-            !fallbackMesh
-          ) {
-            fallbackMesh = child;
-          }
-        });
+       fbx.traverse((child: any) => {
+         // Log mesh names
+         if (child.isMesh) {
+           meshes.push(child.name);
+           
+           const isOutfit = !bodyParts.includes(child.name) && 
+                           (child.name.includes('Outfit') || 
+                            child.name.includes('Top') || 
+                            child.name.includes('Bottom') || 
+                            child.name.includes('Shirt') || 
+                            child.name.includes('Pants') || 
+                            child.name.includes('Shoes') || 
+                            child.name.includes('Hat') || 
+                            child.name.includes('Accessory'));
 
-        if (fallbackMesh) {
-          setSpeechMesh(fallbackMesh);
-          setTimeout(() => startBackgroundMouthAnimation(fallbackMesh), 1000);
-        }
-      }
-    }
-  }, [fbx]);
+           console.log(`${isOutfit ? '👔 OUTFIT' : '👤 BODY'}: ${child.name}`, {
+             hasMorphTargets: !!child.morphTargetInfluences,
+             morphTargetCount: child.morphTargetInfluences?.length || 0,
+             hasGeometry: !!child.geometry,
+             hasMaterial: !!child.material
+           });
+           
+           // Check for Wolf3D_Head
+           if (
+             child.name === 'Wolf3D_Head' &&
+             child.morphTargetInfluences &&
+             child.morphTargetInfluences.length > 0
+           ) {
+             wolf3dHead = child;
+           }
+           
+           // Log materials and textures
+           if (child.material) {
+             if (Array.isArray(child.material)) {
+               child.material.forEach((mat: any, index: number) => {
+                 console.log(`  MATERIAL[${index}]:`, mat.name || 'Unnamed');
+                 if (mat.map) {
+                   const textureName = mat.map.name || mat.map.image?.src || 'Unnamed texture';
+                   allTextures.push(textureName);
+                   if (isOutfit) {
+                     outfitTextures.push(textureName);
+                     console.log(`    👔 OUTFIT TEXTURE: ${textureName}`);
+                   } else {
+                     console.log(`    👤 BODY TEXTURE: ${textureName}`);
+                   }
+                 }
+               });
+             } else {
+               console.log(`  MATERIAL:`, child.material.name || 'Unnamed');
+               if (child.material.map) {
+                 const textureName = child.material.map.name || child.material.map.image?.src || 'Unnamed texture';
+                 allTextures.push(textureName);
+                 if (isOutfit) {
+                   outfitTextures.push(textureName);
+                   console.log(`    👔 OUTFIT TEXTURE: ${textureName}`);
+                 } else {
+                   console.log(`    👤 BODY TEXTURE: ${textureName}`);
+                 }
+               }
+             }
+           }
+         }
+         
+         // Log other object types
+         if (!child.isMesh) {
+           console.log(`OTHER: ${child.name} (${child.type})`);
+         }
+       });
+
+       console.log('=== SUMMARY ===');
+       console.log('All mesh names:', meshes);
+       console.log('All texture names:', [...new Set(allTextures)]);
+       console.log('👔 OUTFIT TEXTURES ONLY:', [...new Set(outfitTextures)]);
+       console.log('==================');
+
+       if (wolf3dHead) {
+         setSpeechMesh(wolf3dHead);
+         setTimeout(() => startBackgroundMouthAnimation(wolf3dHead), 1000);
+       } else {
+         // Fallback: any mesh with morph targets
+         let fallbackMesh: any = null;
+         fbx.traverse((child: any) => {
+           if (
+             child.isMesh &&
+             child.morphTargetInfluences &&
+             child.morphTargetInfluences.length > 0 &&
+             !fallbackMesh
+           ) {
+             fallbackMesh = child;
+           }
+         });
+
+         if (fallbackMesh) {
+           setSpeechMesh(fallbackMesh);
+           setTimeout(() => startBackgroundMouthAnimation(fallbackMesh), 1000);
+         }
+       }
+     }
+   }, [fbx]);
 
   // Trigger speech when greeting should play (only once)
   useEffect(() => {
