@@ -98,6 +98,9 @@ export default function AvatarCustomizer() {
     const [customShoesColor, setCustomShoesColor] = useState('#000000');
     const [customSkinColor, setCustomSkinColor] = useState('#FFDBB4');
     const [isUpdatingOutfit, setIsUpdatingOutfit] = useState(false);
+    const [selectedSindaCategory, setSelectedSindaCategory] = useState<'sinda1' | 'sinda2' | 'sinda3'>('sinda1'); // 'sinda1', 'sinda2', or 'sinda3'
+    const [selectedSinda1Avatar, setSelectedSinda1Avatar] = useState<'dressproblond' | 'winterblond' | 'problond'>('dressproblond'); // 'dressproblond', 'winterblond', or 'problond' for Sinda 1
+    const [selectedSinda2Avatar, setSelectedSinda2Avatar] = useState<'dressproblack' | 'problack' | 'winterblack'>('dressproblack'); // 'dressproblack', 'problack', or 'winterblack' for Sinda 2
 
 
 
@@ -225,15 +228,21 @@ export default function AvatarCustomizer() {
                   clothingColor={getSelectedItem('tshirt')?.color || '#4A90E2'}
                   selectedOutfit={{
                     tshirt: getSelectedItem('tshirt')?.color,
-                    pants: getSelectedItem('pants')?.color,
-                    shoes: getSelectedItem('shoes')?.color,
+                    pants: customPantsColor,
+                    shoes: customShoesColor,
                     accessories: getSelectedItem('accessories')?.color,
                     skin: customSkinColor,
                   }}
+                  sindaCategory={selectedSindaCategory}
+                  sinda1AvatarType={selectedSinda1Avatar}
+                  sinda2AvatarType={selectedSinda2Avatar}
                   onLoad={() => {
                     console.log('FBX model loaded successfully');
-                    console.log('Current pants color:', getSelectedItem('pants')?.color);
+                    console.log('Sinda category:', selectedSindaCategory);
+                    console.log('Sinda 1 avatar type:', selectedSinda1Avatar);
+                    console.log('Sinda 2 avatar type:', selectedSinda2Avatar);
                     console.log('Custom pants color:', customPantsColor);
+                    console.log('Custom shoes color:', customShoesColor);
                     console.log('Skin color:', customSkinColor);
                   }}
                 />
@@ -360,6 +369,309 @@ export default function AvatarCustomizer() {
                   }}>
                     {categories.find(c => c.id === selectedCategory)?.name}
                   </Typography>
+                  
+                  {/* Sinda Avatar Selector */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    gap: 1, 
+                    mb: 2
+                  }}>
+                    {/* Main Sinda Category Selection */}
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <Typography variant="body2" sx={{ 
+                        color: 'rgba(255,255,255,0.8)', 
+                        fontWeight: 'bold',
+                        fontSize: { xs: '0.8rem', md: '0.9rem' }
+                      }}>
+                        Sinda Avatar:
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        <Button
+                          size="small"
+                          variant={selectedSindaCategory === 'sinda1' ? "contained" : "outlined"}
+                          onClick={() => {
+                            setSelectedSindaCategory('sinda1');
+                            setIsUpdatingOutfit(true);
+                            setTimeout(() => setIsUpdatingOutfit(false), 500);
+                          }}
+                          sx={{
+                            minWidth: '70px',
+                            height: '32px',
+                            fontSize: '0.75rem',
+                            background: selectedSindaCategory === 'sinda1' 
+                              ? 'linear-gradient(45deg, #FF69B4, #FF1493)' 
+                              : 'transparent',
+                            border: selectedSindaCategory === 'sinda1' 
+                              ? 'none' 
+                              : '1px solid rgba(255,255,255,0.3)',
+                            color: selectedSindaCategory === 'sinda1' ? 'white' : 'rgba(255,255,255,0.8)',
+                            '&:hover': {
+                              background: selectedSindaCategory === 'sinda1' 
+                                ? 'linear-gradient(45deg, #FF1493, #FF69B4)' 
+                                : 'rgba(255,255,255,0.1)',
+                            },
+                          }}
+                        >
+                          Sinda 1
+                        </Button>
+                        <Button
+                          size="small"
+                          variant={selectedSindaCategory === 'sinda2' ? "contained" : "outlined"}
+                          onClick={() => {
+                            setSelectedSindaCategory('sinda2');
+                            setIsUpdatingOutfit(true);
+                            setTimeout(() => setIsUpdatingOutfit(false), 500);
+                          }}
+                          sx={{
+                            minWidth: '70px',
+                            height: '32px',
+                            fontSize: '0.75rem',
+                            background: selectedSindaCategory === 'sinda2' 
+                              ? 'linear-gradient(45deg, #4CAF50, #45a049)' 
+                              : 'transparent',
+                            border: selectedSindaCategory === 'sinda2' 
+                              ? 'none' 
+                              : '1px solid rgba(255,255,255,0.3)',
+                            color: selectedSindaCategory === 'sinda2' ? 'white' : 'rgba(255,255,255,0.8)',
+                            '&:hover': {
+                              background: selectedSindaCategory === 'sinda2' 
+                                ? 'linear-gradient(45deg, #45a049, #4CAF50)' 
+                                : 'rgba(255,255,255,0.1)',
+                            },
+                          }}
+                        >
+                          Sinda 2
+                        </Button>
+                        <Button
+                          size="small"
+                          variant={selectedSindaCategory === 'sinda3' ? "contained" : "outlined"}
+                          onClick={() => {
+                            setSelectedSindaCategory('sinda3');
+                            setIsUpdatingOutfit(true);
+                            setTimeout(() => setIsUpdatingOutfit(false), 500);
+                          }}
+                          sx={{
+                            minWidth: '70px',
+                            height: '32px',
+                            fontSize: '0.75rem',
+                            background: selectedSindaCategory === 'sinda3' 
+                              ? 'linear-gradient(45deg, #2196F3, #1976D2)' 
+                              : 'transparent',
+                            border: selectedSindaCategory === 'sinda3' 
+                              ? 'none' 
+                              : '1px solid rgba(255,255,255,0.3)',
+                            color: selectedSindaCategory === 'sinda3' ? 'white' : 'rgba(255,255,255,0.8)',
+                            '&:hover': {
+                              background: selectedSindaCategory === 'sinda3' 
+                                ? 'linear-gradient(45deg, #1976D2, #2196F3)' 
+                                : 'rgba(255,255,255,0.1)',
+                            },
+                          }}
+                        >
+                          Sinda 3
+                        </Button>
+                      </Box>
+                    </Box>
+
+                    {/* Sinda 1 Sub-Selection */}
+                    {selectedSindaCategory === 'sinda1' && (
+                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', ml: 2, flexWrap: 'wrap' }}>
+                        <Typography variant="body2" sx={{ 
+                          color: 'rgba(255,255,255,0.7)', 
+                          fontWeight: 'bold',
+                          fontSize: { xs: '0.7rem', md: '0.8rem' }
+                        }}>
+                          Style:
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                          <Button
+                            size="small"
+                            variant={selectedSinda1Avatar === 'dressproblond' ? "contained" : "outlined"}
+                            onClick={() => {
+                              setSelectedSinda1Avatar('dressproblond');
+                              setIsUpdatingOutfit(true);
+                              setTimeout(() => setIsUpdatingOutfit(false), 500);
+                            }}
+                            sx={{
+                              minWidth: '65px',
+                              height: '28px',
+                              fontSize: '0.7rem',
+                              background: selectedSinda1Avatar === 'dressproblond' 
+                                ? 'linear-gradient(45deg, #9C27B0, #7B1FA2)' 
+                                : 'transparent',
+                              border: selectedSinda1Avatar === 'dressproblond' 
+                                ? 'none' 
+                                : '1px solid rgba(255,255,255,0.2)',
+                              color: selectedSinda1Avatar === 'dressproblond' ? 'white' : 'rgba(255,255,255,0.7)',
+                              '&:hover': {
+                                background: selectedSinda1Avatar === 'dressproblond' 
+                                  ? 'linear-gradient(45deg, #7B1FA2, #9C27B0)' 
+                                  : 'rgba(255,255,255,0.1)',
+                              },
+                            }}
+                          >
+                            Dress
+                          </Button>
+                          <Button
+                            size="small"
+                            variant={selectedSinda1Avatar === 'winterblond' ? "contained" : "outlined"}
+                            onClick={() => {
+                              setSelectedSinda1Avatar('winterblond');
+                              setIsUpdatingOutfit(true);
+                              setTimeout(() => setIsUpdatingOutfit(false), 500);
+                            }}
+                            sx={{
+                              minWidth: '65px',
+                              height: '28px',
+                              fontSize: '0.7rem',
+                              background: selectedSinda1Avatar === 'winterblond' 
+                                ? 'linear-gradient(45deg, #00BCD4, #0097A7)' 
+                                : 'transparent',
+                              border: selectedSinda1Avatar === 'winterblond' 
+                                ? 'none' 
+                                : '1px solid rgba(255,255,255,0.2)',
+                              color: selectedSinda1Avatar === 'winterblond' ? 'white' : 'rgba(255,255,255,0.7)',
+                              '&:hover': {
+                                background: selectedSinda1Avatar === 'winterblond' 
+                                  ? 'linear-gradient(45deg, #0097A7, #00BCD4)' 
+                                  : 'rgba(255,255,255,0.1)',
+                              },
+                            }}
+                          >
+                            Winter
+                          </Button>
+                          <Button
+                            size="small"
+                            variant={selectedSinda1Avatar === 'problond' ? "contained" : "outlined"}
+                            onClick={() => {
+                              setSelectedSinda1Avatar('problond');
+                              setIsUpdatingOutfit(true);
+                              setTimeout(() => setIsUpdatingOutfit(false), 500);
+                            }}
+                            sx={{
+                              minWidth: '65px',
+                              height: '28px',
+                              fontSize: '0.7rem',
+                              background: selectedSinda1Avatar === 'problond' 
+                                ? 'linear-gradient(45deg, #FF9800, #F57C00)' 
+                                : 'transparent',
+                              border: selectedSinda1Avatar === 'problond' 
+                                ? 'none' 
+                                : '1px solid rgba(255,255,255,0.2)',
+                              color: selectedSinda1Avatar === 'problond' ? 'white' : 'rgba(255,255,255,0.7)',
+                              '&:hover': {
+                                background: selectedSinda1Avatar === 'problond' 
+                                  ? 'linear-gradient(45deg, #F57C00, #FF9800)' 
+                                  : 'rgba(255,255,255,0.1)',
+                              },
+                            }}
+                          >
+                            Casual
+                          </Button>
+                        </Box>
+                      </Box>
+                    )}
+
+                    {/* Sinda 2 Sub-Selection */}
+                    {selectedSindaCategory === 'sinda2' && (
+                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', ml: 2, flexWrap: 'wrap' }}>
+                        <Typography variant="body2" sx={{ 
+                          color: 'rgba(255,255,255,0.7)', 
+                          fontWeight: 'bold',
+                          fontSize: { xs: '0.7rem', md: '0.8rem' }
+                        }}>
+                          Style:
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                          <Button
+                            size="small"
+                            variant={selectedSinda2Avatar === 'dressproblack' ? "contained" : "outlined"}
+                            onClick={() => {
+                              setSelectedSinda2Avatar('dressproblack');
+                              setIsUpdatingOutfit(true);
+                              setTimeout(() => setIsUpdatingOutfit(false), 500);
+                            }}
+                            sx={{
+                              minWidth: '65px',
+                              height: '28px',
+                              fontSize: '0.7rem',
+                              background: selectedSinda2Avatar === 'dressproblack' 
+                                ? 'linear-gradient(45deg, #424242, #212121)' 
+                                : 'transparent',
+                              border: selectedSinda2Avatar === 'dressproblack' 
+                                ? 'none' 
+                                : '1px solid rgba(255,255,255,0.2)',
+                              color: selectedSinda2Avatar === 'dressproblack' ? 'white' : 'rgba(255,255,255,0.7)',
+                              '&:hover': {
+                                background: selectedSinda2Avatar === 'dressproblack' 
+                                  ? 'linear-gradient(45deg, #212121, #424242)' 
+                                  : 'rgba(255,255,255,0.1)',
+                              },
+                            }}
+                          >
+                            Dress
+                          </Button>
+                          <Button
+                            size="small"
+                            variant={selectedSinda2Avatar === 'problack' ? "contained" : "outlined"}
+                            onClick={() => {
+                              setSelectedSinda2Avatar('problack');
+                              setIsUpdatingOutfit(true);
+                              setTimeout(() => setIsUpdatingOutfit(false), 500);
+                            }}
+                            sx={{
+                              minWidth: '65px',
+                              height: '28px',
+                              fontSize: '0.7rem',
+                              background: selectedSinda2Avatar === 'problack' 
+                                ? 'linear-gradient(45deg, #795548, #5D4037)' 
+                                : 'transparent',
+                              border: selectedSinda2Avatar === 'problack' 
+                                ? 'none' 
+                                : '1px solid rgba(255,255,255,0.2)',
+                              color: selectedSinda2Avatar === 'problack' ? 'white' : 'rgba(255,255,255,0.7)',
+                              '&:hover': {
+                                background: selectedSinda2Avatar === 'problack' 
+                                  ? 'linear-gradient(45deg, #5D4037, #795548)' 
+                                  : 'rgba(255,255,255,0.1)',
+                              },
+                            }}
+                          >
+                            Casual
+                          </Button>
+                          <Button
+                            size="small"
+                            variant={selectedSinda2Avatar === 'winterblack' ? "contained" : "outlined"}
+                            onClick={() => {
+                              setSelectedSinda2Avatar('winterblack');
+                              setIsUpdatingOutfit(true);
+                              setTimeout(() => setIsUpdatingOutfit(false), 500);
+                            }}
+                            sx={{
+                              minWidth: '65px',
+                              height: '28px',
+                              fontSize: '0.7rem',
+                              background: selectedSinda2Avatar === 'winterblack' 
+                                ? 'linear-gradient(45deg, #607D8B, #455A64)' 
+                                : 'transparent',
+                              border: selectedSinda2Avatar === 'winterblack' 
+                                ? 'none' 
+                                : '1px solid rgba(255,255,255,0.2)',
+                              color: selectedSinda2Avatar === 'winterblack' ? 'white' : 'rgba(255,255,255,0.7)',
+                              '&:hover': {
+                                background: selectedSinda2Avatar === 'winterblack' 
+                                  ? 'linear-gradient(45deg, #455A64, #607D8B)' 
+                                  : 'rgba(255,255,255,0.1)',
+                              },
+                            }}
+                          >
+                            Winter
+                          </Button>
+                        </Box>
+                      </Box>
+                    )}
+                  </Box>
                 </Box>
 
                                                   {/* Clothing Items Grid - Vertical Layout */}

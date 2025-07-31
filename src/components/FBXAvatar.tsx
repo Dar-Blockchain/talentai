@@ -14,6 +14,9 @@ interface FBXAvatarProps {
     accessories?: string;
     skin?: string;
   };
+  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3';
+  sinda1AvatarType?: 'dressproblond' | 'winterblond' | 'problond';
+  sinda2AvatarType?: 'dressproblack' | 'problack' | 'winterblack';
   onLoad?: () => void;
 }
 
@@ -40,7 +43,7 @@ const getClothingCategory = (materialName: string, meshName: string): string | n
   return null;
 };
 
-function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, onLoad }: {
+function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', onLoad }: {
   clothingColor: string;
   selectedOutfit?: {
     tshirt?: string;
@@ -49,6 +52,9 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, onLoad }: {
     accessories?: string;
     skin?: string;
   };
+  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3';
+  sinda1AvatarType?: 'dressproblond' | 'winterblond' | 'problond';
+  sinda2AvatarType?: 'dressproblack' | 'problack' | 'winterblack';
   onLoad?: () => void;
 }) {
   const meshRef = useRef<THREE.Group>(null);
@@ -58,8 +64,50 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, onLoad }: {
   useEffect(() => {
     // Load the FBX model
     const loader = new FBXLoader();
-    loader.load(
-      '/final.fbx',
+         // Determine which avatar to load based on Sinda category
+     let avatarPath;
+     switch (sindaCategory) {
+       case 'sinda1':
+         // Sinda 1 has multiple options
+         switch (sinda1AvatarType) {
+           case 'dressproblond':
+             avatarPath = '/Avatars/dressproblond.fbx';
+             break;
+           case 'winterblond':
+             avatarPath = '/Avatars/winterblond.fbx';
+             break;
+           case 'problond':
+             avatarPath = '/Avatars/problond.fbx';
+             break;
+           default:
+             avatarPath = '/Avatars/dressproblond.fbx';
+         }
+         break;
+       case 'sinda2':
+         // Sinda 2 has multiple options
+         switch (sinda2AvatarType) {
+           case 'dressproblack':
+             avatarPath = '/Avatars/dressproblack.fbx';
+             break;
+           case 'problack':
+             avatarPath = '/Avatars/problack.fbx';
+             break;
+           case 'winterblack':
+             avatarPath = '/Avatars/winterblack.fbx';
+             break;
+           default:
+             avatarPath = '/Avatars/dressproblack.fbx';
+         }
+         break;
+       case 'sinda3':
+         avatarPath = '/Avatars/final.fbx';
+         break;
+       default:
+         avatarPath = '/Avatars/dressproblond.fbx';
+     }
+     
+     loader.load(
+       avatarPath,
       (object: THREE.Group) => {
         // Scale and position the model
         object.scale.setScalar(0.01); // Adjust scale as needed
@@ -429,7 +477,7 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, onLoad }: {
         setLoading(false);
       }
     );
-  }, [clothingColor, selectedOutfit, onLoad]);
+     }, [clothingColor, selectedOutfit, sindaCategory, sinda1AvatarType, sinda2AvatarType, onLoad]);
 
   if (loading) {
     return (
@@ -452,7 +500,7 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, onLoad }: {
   ) : null;
 }
 
-export default function FBXAvatar({ clothingColor = '#4A90E2', selectedOutfit, onLoad }: FBXAvatarProps) {
+export default function FBXAvatar({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', onLoad }: FBXAvatarProps) {
   return (
     <div style={{ width: '100%', height: '400px', position: 'relative' }}>
       <Canvas
@@ -477,6 +525,9 @@ export default function FBXAvatar({ clothingColor = '#4A90E2', selectedOutfit, o
         <FBXModel 
           clothingColor={clothingColor} 
           selectedOutfit={selectedOutfit} 
+          sindaCategory={sindaCategory}
+          sinda1AvatarType={sinda1AvatarType}
+          sinda2AvatarType={sinda2AvatarType}
           onLoad={onLoad}
         />
         
