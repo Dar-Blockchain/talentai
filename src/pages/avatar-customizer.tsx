@@ -107,10 +107,11 @@ export default function AvatarCustomizer() {
     const [customShoesColor, setCustomShoesColor] = useState('#000000');
     const [customSkinColor, setCustomSkinColor] = useState('#FFDBB4');
     const [isUpdatingOutfit, setIsUpdatingOutfit] = useState(false);
-  const [selectedSindaCategory, setSelectedSindaCategory] = useState<'sinda1' | 'sinda2' | 'sinda3' | 'japan'>('sinda1'); // 'sinda1', 'sinda2', 'sinda3', or 'japan'
+  const [selectedSindaCategory, setSelectedSindaCategory] = useState<'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian'>('sinda1'); // 'sinda1', 'sinda2', 'sinda3', 'japan', or 'tunisian'
   const [selectedSinda1Avatar, setSelectedSinda1Avatar] = useState<'dressproblond' | 'winterblond' | 'problond'>('dressproblond'); // 'dressproblond', 'winterblond', or 'problond' for Sinda 1
   const [selectedSinda2Avatar, setSelectedSinda2Avatar] = useState<'dressproblack' | 'problack' | 'winterblack'>('dressproblack'); // 'dressproblack', 'problack', or 'winterblack' for Sinda 2
   const [selectedJapanAvatar, setSelectedJapanAvatar] = useState<'casualjapan' | 'projapan' | 'winterjapan'>('casualjapan'); // 'casualjapan', 'projapan', or 'winterjapan' for Japan
+  const [selectedTunisianAvatar, setSelectedTunisianAvatar] = useState<'casualtunisian' | 'dresstunisian' | 'protunisian'>('casualtunisian'); // 'casualtunisian', 'dresstunisian', or 'protunisian' for Tunisian
   const [isNavbarCollapsed, setIsNavbarCollapsed] = useState(false);
 
 
@@ -395,7 +396,7 @@ export default function AvatarCustomizer() {
                   justifyContent: 'center',
                 }}
               >
-                <FBXAvatar 
+                                <FBXAvatar
                   clothingColor={getSelectedItem('tshirt')?.color || '#4A90E2'}
                   selectedOutfit={{
                     tshirt: getSelectedItem('tshirt')?.color,
@@ -408,6 +409,7 @@ export default function AvatarCustomizer() {
                   sinda1AvatarType={selectedSinda1Avatar}
                   sinda2AvatarType={selectedSinda2Avatar}
                   japanAvatarType={selectedJapanAvatar}
+                  tunisianAvatarType={selectedTunisianAvatar}
                   onLoad={() => {
                     console.log('FBX model loaded successfully');
                     console.log('Sinda category:', selectedSindaCategory);
@@ -609,11 +611,39 @@ export default function AvatarCustomizer() {
                             : 'rgba(255,255,255,0.1)',
                         },
                       }}
-                    >
+                                        >
                       Japan
                     </Button>
+                    <Button
+                      size="medium"
+                      variant={selectedSindaCategory === 'tunisian' ? "contained" : "outlined"}
+                      onClick={() => {
+                        setSelectedSindaCategory('tunisian');
+                        setIsUpdatingOutfit(true);
+                        setTimeout(() => setIsUpdatingOutfit(false), 500);
+                      }}
+                      sx={{
+                        justifyContent: 'flex-start',
+                        height: { xs: '36px', md: '40px' },
+                        fontSize: { xs: '0.8rem', md: '0.85rem' },
+                        background: selectedSindaCategory === 'tunisian'
+                          ? 'linear-gradient(45deg, #8BC34A, #689F38)'
+                          : 'transparent',
+                        border: selectedSindaCategory === 'tunisian'
+                          ? 'none'
+                          : '1px solid rgba(255,255,255,0.3)',
+                        color: selectedSindaCategory === 'tunisian' ? 'white' : 'rgba(255,255,255,0.8)',
+                        '&:hover': {
+                          background: selectedSindaCategory === 'tunisian'
+                            ? 'linear-gradient(45deg, #689F38, #8BC34A)'
+                            : 'rgba(255,255,255,0.1)',
+                        },
+                      }}
+                    >
+                      Tunisian
+                    </Button>
                   </Box>
-                                </Box>
+                </Box>
 
                 {/* Sinda 1 Style Selection */}
                 {selectedSindaCategory === 'sinda1' && (
@@ -911,13 +941,113 @@ export default function AvatarCustomizer() {
                       >
                         Winter
                       </Button>
-                      </Box>
+                                          </Box>
+                  </Box>
+                )}
+
+                {/* Tunisian Style Selection */}
+                {selectedSindaCategory === 'tunisian' && (
+                  <Box sx={{ mb: { xs: 2, md: 3 } }}>
+                    <Typography variant="body2" sx={{
+                      color: 'rgba(255,255,255,0.7)',
+                      fontWeight: 'bold',
+                      mb: { xs: 1.5, md: 2 },
+                      fontSize: { xs: '0.8rem', md: '0.85rem' }
+                    }}>
+                      Tunisian Style:
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.8, md: 1 } }}>
+                      <Button
+                        size="medium"
+                        variant={selectedTunisianAvatar === 'casualtunisian' ? "contained" : "outlined"}
+                        onClick={() => {
+                          setSelectedTunisianAvatar('casualtunisian');
+                          setIsUpdatingOutfit(true);
+                          setTimeout(() => setIsUpdatingOutfit(false), 500);
+                        }}
+                        sx={{
+                          justifyContent: 'flex-start',
+                          height: { xs: '32px', md: '36px' },
+                          fontSize: { xs: '0.75rem', md: '0.8rem' },
+                          background: selectedTunisianAvatar === 'casualtunisian'
+                            ? 'linear-gradient(45deg, #8BC34A, #689F38)'
+                            : 'transparent',
+                          border: selectedTunisianAvatar === 'casualtunisian'
+                            ? 'none'
+                            : '1px solid rgba(255,255,255,0.2)',
+                          color: selectedTunisianAvatar === 'casualtunisian' ? 'white' : 'rgba(255,255,255,0.7)',
+                          '&:hover': {
+                            background: selectedTunisianAvatar === 'casualtunisian'
+                              ? 'linear-gradient(45deg, #689F38, #8BC34A)'
+                              : 'rgba(255,255,255,0.1)',
+                          },
+                        }}
+                      >
+                        Casual
+                      </Button>
+                      <Button
+                        size="medium"
+                        variant={selectedTunisianAvatar === 'dresstunisian' ? "contained" : "outlined"}
+                        onClick={() => {
+                          setSelectedTunisianAvatar('dresstunisian');
+                          setIsUpdatingOutfit(true);
+                          setTimeout(() => setIsUpdatingOutfit(false), 500);
+                        }}
+                        sx={{
+                          justifyContent: 'flex-start',
+                          height: { xs: '32px', md: '36px' },
+                          fontSize: { xs: '0.75rem', md: '0.8rem' },
+                          background: selectedTunisianAvatar === 'dresstunisian'
+                            ? 'linear-gradient(45deg, #673AB7, #512DA8)'
+                            : 'transparent',
+                          border: selectedTunisianAvatar === 'dresstunisian'
+                            ? 'none'
+                            : '1px solid rgba(255,255,255,0.2)',
+                          color: selectedTunisianAvatar === 'dresstunisian' ? 'white' : 'rgba(255,255,255,0.7)',
+                          '&:hover': {
+                            background: selectedTunisianAvatar === 'dresstunisian'
+                              ? 'linear-gradient(45deg, #512DA8, #673AB7)'
+                              : 'rgba(255,255,255,0.1)',
+                          },
+                        }}
+                      >
+                        Dress
+                      </Button>
+                      <Button
+                        size="medium"
+                        variant={selectedTunisianAvatar === 'protunisian' ? "contained" : "outlined"}
+                        onClick={() => {
+                          setSelectedTunisianAvatar('protunisian');
+                          setIsUpdatingOutfit(true);
+                          setTimeout(() => setIsUpdatingOutfit(false), 500);
+                        }}
+                        sx={{
+                          justifyContent: 'flex-start',
+                          height: { xs: '32px', md: '36px' },
+                          fontSize: { xs: '0.75rem', md: '0.8rem' },
+                          background: selectedTunisianAvatar === 'protunisian'
+                            ? 'linear-gradient(45deg, #795548, #5D4037)'
+                            : 'transparent',
+                          border: selectedTunisianAvatar === 'protunisian'
+                            ? 'none'
+                            : '1px solid rgba(255,255,255,0.2)',
+                          color: selectedTunisianAvatar === 'protunisian' ? 'white' : 'rgba(255,255,255,0.7)',
+                          '&:hover': {
+                            background: selectedTunisianAvatar === 'protunisian'
+                              ? 'linear-gradient(45deg, #5D4037, #795548)'
+                              : 'rgba(255,255,255,0.1)',
+                          },
+                        }}
+                      >
+                        Professional
+                      </Button>
                     </Box>
-                  )}
+                  </Box>
+                )}
               </Box>
 
-                                    
-                        </Box>
+
+            </Box>
                     </Box>
                 </Container>
         

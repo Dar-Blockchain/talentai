@@ -14,10 +14,11 @@ interface FBXAvatarProps {
     accessories?: string;
     skin?: string;
   };
-  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3' | 'japan';
+  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian';
   sinda1AvatarType?: 'dressproblond' | 'winterblond' | 'problond';
   sinda2AvatarType?: 'dressproblack' | 'problack' | 'winterblack';
   japanAvatarType?: 'casualjapan' | 'projapan' | 'winterjapan';
+  tunisianAvatarType?: 'casualtunisian' | 'dresstunisian' | 'protunisian';
   onLoad?: () => void;
 }
 
@@ -44,7 +45,7 @@ const getClothingCategory = (materialName: string, meshName: string): string | n
   return null;
 };
 
-function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', japanAvatarType = 'casualjapan', onLoad }: {
+function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', japanAvatarType = 'casualjapan', tunisianAvatarType = 'casualtunisian', onLoad }: {
   clothingColor: string;
   selectedOutfit?: {
     tshirt?: string;
@@ -53,10 +54,11 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
     accessories?: string;
     skin?: string;
   };
-  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3' | 'japan';
+  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian';
   sinda1AvatarType?: 'dressproblond' | 'winterblond' | 'problond';
   sinda2AvatarType?: 'dressproblack' | 'problack' | 'winterblack';
   japanAvatarType?: 'casualjapan' | 'projapan' | 'winterjapan';
+  tunisianAvatarType?: 'casualtunisian' | 'dresstunisian' | 'protunisian';
   onLoad?: () => void;
 }) {
   const meshRef = useRef<THREE.Group>(null);
@@ -118,6 +120,22 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
             break;
           default:
             avatarPath = '/Avatars/casualjapan.fbx';
+        }
+        break;
+      case 'tunisian':
+        // Tunisian has multiple options
+        switch (tunisianAvatarType) {
+          case 'casualtunisian':
+            avatarPath = '/Avatars/casualtunisian.fbx';
+            break;
+          case 'dresstunisian':
+            avatarPath = '/Avatars/dresstunisian.fbx';
+            break;
+          case 'protunisian':
+            avatarPath = '/Avatars/protunisian.fbx';
+            break;
+          default:
+            avatarPath = '/Avatars/casualtunisian.fbx';
         }
         break;
       default:
@@ -495,7 +513,7 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
         setLoading(false);
       }
     );
-     }, [clothingColor, selectedOutfit, sindaCategory, sinda1AvatarType, sinda2AvatarType, japanAvatarType, onLoad]);
+     }, [clothingColor, selectedOutfit, sindaCategory, sinda1AvatarType, sinda2AvatarType, japanAvatarType, tunisianAvatarType, onLoad]);
 
   if (loading) {
     return (
@@ -518,7 +536,7 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
   ) : null;
 }
 
-export default function FBXAvatar({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', japanAvatarType = 'casualjapan', onLoad }: FBXAvatarProps) {
+export default function FBXAvatar({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', japanAvatarType = 'casualjapan', tunisianAvatarType = 'casualtunisian', onLoad }: FBXAvatarProps) {
   return (
     <div style={{ width: '100%', height: '400px', position: 'relative' }}>
       <Canvas
@@ -547,6 +565,7 @@ export default function FBXAvatar({ clothingColor = '#4A90E2', selectedOutfit, s
           sinda1AvatarType={sinda1AvatarType}
           sinda2AvatarType={sinda2AvatarType}
           japanAvatarType={japanAvatarType}
+          tunisianAvatarType={tunisianAvatarType}
           onLoad={onLoad}
         />
         
