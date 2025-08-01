@@ -86,8 +86,12 @@ class PostStepsService {
       const existingSteps = post.post_Steps || [];
       const newSteps = [...new Set([...existingSteps, ...stepIds])];
       
-      post.post_Steps = newSteps;
-      await post.save();
+      // Mettre à jour seulement le champ post_Steps sans toucher aux autres champs
+      await Post.findByIdAndUpdate(
+        postId,
+        { post_Steps: newSteps },
+        { new: true, runValidators: false }
+      );
       
       return { success: true };
     } catch (error) {
@@ -105,8 +109,14 @@ class PostStepsService {
       }
 
       // Retirer la référence
-      post.post_Steps = post.post_Steps.filter(id => id.toString() !== stepId.toString());
-      await post.save();
+      const updatedSteps = post.post_Steps.filter(id => id.toString() !== stepId.toString());
+      
+      // Mettre à jour seulement le champ post_Steps sans toucher aux autres champs
+      await Post.findByIdAndUpdate(
+        postId,
+        { post_Steps: updatedSteps },
+        { new: true, runValidators: false }
+      );
       
       return { success: true };
     } catch (error) {
