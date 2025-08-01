@@ -107,12 +107,16 @@ export default function AvatarCustomizer() {
     const [customShoesColor, setCustomShoesColor] = useState('#000000');
     const [customSkinColor, setCustomSkinColor] = useState('#FFDBB4');
     const [isUpdatingOutfit, setIsUpdatingOutfit] = useState(false);
-  const [selectedSindaCategory, setSelectedSindaCategory] = useState<'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian'>('sinda1'); // 'sinda1', 'sinda2', 'sinda3', 'japan', or 'tunisian'
+  const [selectedSindaCategory, setSelectedSindaCategory] = useState<'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian' | 'blackman' | 'alex' | 'jaaf'>('sinda1'); // 'sinda1', 'sinda2', 'sinda3', 'japan', 'tunisian', 'blackman', 'alex', or 'jaaf'
   const [selectedSinda1Avatar, setSelectedSinda1Avatar] = useState<'dressproblond' | 'winterblond' | 'problond'>('dressproblond'); // 'dressproblond', 'winterblond', or 'problond' for Sinda 1
   const [selectedSinda2Avatar, setSelectedSinda2Avatar] = useState<'dressproblack' | 'problack' | 'winterblack'>('dressproblack'); // 'dressproblack', 'problack', or 'winterblack' for Sinda 2
   const [selectedJapanAvatar, setSelectedJapanAvatar] = useState<'casualjapan' | 'projapan' | 'winterjapan'>('casualjapan'); // 'casualjapan', 'projapan', or 'winterjapan' for Japan
   const [selectedTunisianAvatar, setSelectedTunisianAvatar] = useState<'casualtunisian' | 'dresstunisian' | 'protunisian'>('casualtunisian'); // 'casualtunisian', 'dresstunisian', or 'protunisian' for Tunisian
+  const [selectedBlackmanAvatar, setSelectedBlackmanAvatar] = useState<'casualblackman' | 'problackman'>('casualblackman'); // 'casualblackman', or 'problackman' for Black Man
+  const [selectedAlexAvatar, setSelectedAlexAvatar] = useState<'problondman' | 'winterblondman'>('problondman'); // 'problondman' or 'winterblondman' for Alex
+  const [selectedJaafAvatar, setSelectedJaafAvatar] = useState<'protunisianman' | 'wintertunisianman'>('protunisianman'); // 'protunisianman' or 'wintertunisianman' for Jaaf
   const [isNavbarCollapsed, setIsNavbarCollapsed] = useState(false);
+  const [cameraAngle, setCameraAngle] = useState<'front' | 'side' | 'back' | 'full'>('front');
 
 
 
@@ -410,17 +414,135 @@ export default function AvatarCustomizer() {
                   sinda2AvatarType={selectedSinda2Avatar}
                   japanAvatarType={selectedJapanAvatar}
                   tunisianAvatarType={selectedTunisianAvatar}
+                  blackmanAvatarType={selectedBlackmanAvatar}
+                  alexAvatarType={selectedAlexAvatar}
+                  jaafAvatarType={selectedJaafAvatar}
+                  cameraAngle={cameraAngle}
                   onLoad={() => {
                     console.log('FBX model loaded successfully');
                     console.log('Sinda category:', selectedSindaCategory);
                     console.log('Sinda 1 avatar type:', selectedSinda1Avatar);
                     console.log('Sinda 2 avatar type:', selectedSinda2Avatar);
+                    console.log('Alex avatar type:', selectedAlexAvatar);
+                    console.log('Jaaf avatar type:', selectedJaafAvatar);
                     console.log('Custom pants color:', customPantsColor);
                     console.log('Custom shoes color:', customShoesColor);
                     console.log('Skin color:', customSkinColor);
-                  }}
+                                    }}
                 />
-                
+
+                {/* Camera Angle Controls */}
+                <Box sx={{
+                  position: 'absolute',
+                  top: { xs: 10, md: 15 },
+                  right: { xs: 10, md: 15 },
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: { xs: 0.8, md: 1 },
+                  zIndex: 10
+                }}>
+                  <Button
+                    size="small"
+                    variant={cameraAngle === 'front' ? "contained" : "outlined"}
+                    onClick={() => setCameraAngle('front')}
+                    sx={{
+                      minWidth: { xs: '45px', md: '50px' },
+                      height: { xs: '32px', md: '36px' },
+                      fontSize: { xs: '0.7rem', md: '0.75rem' },
+                      background: cameraAngle === 'front'
+                        ? 'linear-gradient(45deg, #2196F3, #1976D2)'
+                        : 'rgba(0,0,0,0.6)',
+                      border: cameraAngle === 'front'
+                        ? 'none'
+                        : '1px solid rgba(255,255,255,0.3)',
+                      color: 'white',
+                      backdropFilter: 'blur(10px)',
+                      '&:hover': {
+                        background: cameraAngle === 'front'
+                          ? 'linear-gradient(45deg, #1976D2, #2196F3)'
+                          : 'rgba(33,150,243,0.2)',
+                      },
+                    }}
+                  >
+                    Front
+                  </Button>
+                  <Button
+                    size="small"
+                    variant={cameraAngle === 'side' ? "contained" : "outlined"}
+                    onClick={() => setCameraAngle('side')}
+                    sx={{
+                      minWidth: { xs: '45px', md: '50px' },
+                      height: { xs: '32px', md: '36px' },
+                      fontSize: { xs: '0.7rem', md: '0.75rem' },
+                      background: cameraAngle === 'side'
+                        ? 'linear-gradient(45deg, #FF9800, #F57C00)'
+                        : 'rgba(0,0,0,0.6)',
+                      border: cameraAngle === 'side'
+                        ? 'none'
+                        : '1px solid rgba(255,255,255,0.3)',
+                      color: 'white',
+                      backdropFilter: 'blur(10px)',
+                      '&:hover': {
+                        background: cameraAngle === 'side'
+                          ? 'linear-gradient(45deg, #F57C00, #FF9800)'
+                          : 'rgba(255,152,0,0.2)',
+                      },
+                    }}
+                  >
+                    Side
+                  </Button>
+                  <Button
+                    size="small"
+                    variant={cameraAngle === 'back' ? "contained" : "outlined"}
+                    onClick={() => setCameraAngle('back')}
+                    sx={{
+                      minWidth: { xs: '45px', md: '50px' },
+                      height: { xs: '32px', md: '36px' },
+                      fontSize: { xs: '0.7rem', md: '0.75rem' },
+                      background: cameraAngle === 'back'
+                        ? 'linear-gradient(45deg, #E91E63, #C2185B)'
+                        : 'rgba(0,0,0,0.6)',
+                      border: cameraAngle === 'back'
+                        ? 'none'
+                        : '1px solid rgba(255,255,255,0.3)',
+                      color: 'white',
+                      backdropFilter: 'blur(10px)',
+                      '&:hover': {
+                        background: cameraAngle === 'back'
+                          ? 'linear-gradient(45deg, #C2185B, #E91E63)'
+                          : 'rgba(233,30,99,0.2)',
+                      },
+                    }}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    size="small"
+                    variant={cameraAngle === 'full' ? "contained" : "outlined"}
+                    onClick={() => setCameraAngle('full')}
+                    sx={{
+                      minWidth: { xs: '45px', md: '50px' },
+                      height: { xs: '32px', md: '36px' },
+                      fontSize: { xs: '0.7rem', md: '0.75rem' },
+                      background: cameraAngle === 'full'
+                        ? 'linear-gradient(45deg, #4CAF50, #388E3C)'
+                        : 'rgba(0,0,0,0.6)',
+                      border: cameraAngle === 'full'
+                        ? 'none'
+                        : '1px solid rgba(255,255,255,0.3)',
+                      color: 'white',
+                      backdropFilter: 'blur(10px)',
+                      '&:hover': {
+                        background: cameraAngle === 'full'
+                          ? 'linear-gradient(45deg, #388E3C, #4CAF50)'
+                          : 'rgba(76,175,80,0.2)',
+                      },
+                    }}
+                  >
+                    Full
+                  </Button>
+                </Box>
+
                 {/* Outfit Update Loading Overlay */}
                 {isUpdatingOutfit && (
                   <Box
@@ -558,7 +680,7 @@ export default function AvatarCustomizer() {
                     >
                       Sinda 2
                     </Button>
-                    <Button
+                    {/* <Button
                       size="medium"
                       variant={selectedSindaCategory === 'sinda3' ? "contained" : "outlined"}
                       onClick={() => {
@@ -585,7 +707,7 @@ export default function AvatarCustomizer() {
                       }}
                     >
                       Sinda 3
-                    </Button>
+                    </Button> */}
                     <Button
                       size="medium"
                       variant={selectedSindaCategory === 'japan' ? "contained" : "outlined"}
@@ -641,6 +763,90 @@ export default function AvatarCustomizer() {
                       }}
                     >
                       Tunisian
+                    </Button>
+                    <Button
+                      size="medium"
+                      variant={selectedSindaCategory === 'blackman' ? "contained" : "outlined"}
+                      onClick={() => {
+                        setSelectedSindaCategory('blackman');
+                        setIsUpdatingOutfit(true);
+                        setTimeout(() => setIsUpdatingOutfit(false), 500);
+                      }}
+                      sx={{
+                        justifyContent: 'flex-start',
+                        height: { xs: '36px', md: '40px' },
+                        fontSize: { xs: '0.8rem', md: '0.85rem' },
+                        background: selectedSindaCategory === 'blackman'
+                          ? 'linear-gradient(45deg, #37474F, #263238)'
+                          : 'transparent',
+                        border: selectedSindaCategory === 'blackman'
+                          ? 'none'
+                          : '1px solid rgba(255,255,255,0.3)',
+                        color: selectedSindaCategory === 'blackman' ? 'white' : 'rgba(255,255,255,0.8)',
+                        '&:hover': {
+                          background: selectedSindaCategory === 'blackman'
+                            ? 'linear-gradient(45deg, #263238, #37474F)'
+                            : 'rgba(255,255,255,0.1)',
+                        },
+                      }}
+                    >
+                      Black Man
+                    </Button>
+                    <Button
+                      size="medium"
+                      variant={selectedSindaCategory === 'alex' ? "contained" : "outlined"}
+                      onClick={() => {
+                        setSelectedSindaCategory('alex');
+                        setIsUpdatingOutfit(true);
+                        setTimeout(() => setIsUpdatingOutfit(false), 500);
+                      }}
+                      sx={{
+                        justifyContent: 'flex-start',
+                        height: { xs: '36px', md: '40px' },
+                        fontSize: { xs: '0.8rem', md: '0.85rem' },
+                        background: selectedSindaCategory === 'alex'
+                          ? 'linear-gradient(45deg, #3F51B5, #303F9F)'
+                          : 'transparent',
+                        border: selectedSindaCategory === 'alex'
+                          ? 'none'
+                          : '1px solid rgba(255,255,255,0.3)',
+                        color: selectedSindaCategory === 'alex' ? 'white' : 'rgba(255,255,255,0.8)',
+                        '&:hover': {
+                          background: selectedSindaCategory === 'alex'
+                            ? 'linear-gradient(45deg, #303F9F, #3F51B5)'
+                            : 'rgba(255,255,255,0.1)',
+                        },
+                      }}
+                    >
+                      Alex
+                    </Button>
+                    <Button
+                      size="medium"
+                      variant={selectedSindaCategory === 'jaaf' ? "contained" : "outlined"}
+                      onClick={() => {
+                        setSelectedSindaCategory('jaaf');
+                        setIsUpdatingOutfit(true);
+                        setTimeout(() => setIsUpdatingOutfit(false), 500);
+                      }}
+                      sx={{
+                        justifyContent: 'flex-start',
+                        height: { xs: '36px', md: '40px' },
+                        fontSize: { xs: '0.8rem', md: '0.85rem' },
+                        background: selectedSindaCategory === 'jaaf'
+                          ? 'linear-gradient(45deg, #FF6B35, #F7931E)'
+                          : 'transparent',
+                        border: selectedSindaCategory === 'jaaf'
+                          ? 'none'
+                          : '1px solid rgba(255,255,255,0.3)',
+                        color: selectedSindaCategory === 'jaaf' ? 'white' : 'rgba(255,255,255,0.8)',
+                        '&:hover': {
+                          background: selectedSindaCategory === 'jaaf'
+                            ? 'linear-gradient(45deg, #F7931E, #FF6B35)'
+                            : 'rgba(255,255,255,0.1)',
+                        },
+                      }}
+                    >
+                      Jaaf
                     </Button>
                   </Box>
                 </Box>
@@ -1040,6 +1246,222 @@ export default function AvatarCustomizer() {
                         }}
                       >
                         Professional
+                      </Button>
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Black Man Style Selection */}
+                {selectedSindaCategory === 'blackman' && (
+                  <Box sx={{ mb: { xs: 2, md: 3 } }}>
+                    <Typography variant="body2" sx={{
+                      color: 'rgba(255,255,255,0.7)',
+                      fontWeight: 'bold',
+                      mb: { xs: 1.5, md: 2 },
+                      fontSize: { xs: '0.8rem', md: '0.85rem' }
+                    }}>
+                      Black Man Style:
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.8, md: 1 } }}>
+                      <Button
+                        size="medium"
+                        variant={selectedBlackmanAvatar === 'casualblackman' ? "contained" : "outlined"}
+                        onClick={() => {
+                          setSelectedBlackmanAvatar('casualblackman');
+                          setIsUpdatingOutfit(true);
+                          setTimeout(() => setIsUpdatingOutfit(false), 500);
+                        }}
+                        sx={{
+                          justifyContent: 'flex-start',
+                          height: { xs: '32px', md: '36px' },
+                          fontSize: { xs: '0.75rem', md: '0.8rem' },
+                          background: selectedBlackmanAvatar === 'casualblackman'
+                            ? 'linear-gradient(45deg, #37474F, #263238)'
+                            : 'transparent',
+                          border: selectedBlackmanAvatar === 'casualblackman'
+                            ? 'none'
+                            : '1px solid rgba(255,255,255,0.2)',
+                          color: selectedBlackmanAvatar === 'casualblackman' ? 'white' : 'rgba(255,255,255,0.7)',
+                          '&:hover': {
+                            background: selectedBlackmanAvatar === 'casualblackman'
+                              ? 'linear-gradient(45deg, #263238, #37474F)'
+                              : 'rgba(255,255,255,0.1)',
+                          },
+                        }}
+                      >
+                        Casual
+                      </Button>
+                      <Button
+                        size="medium"
+                        variant={selectedBlackmanAvatar === 'problackman' ? "contained" : "outlined"}
+                        onClick={() => {
+                          setSelectedBlackmanAvatar('problackman');
+                          setIsUpdatingOutfit(true);
+                          setTimeout(() => setIsUpdatingOutfit(false), 500);
+                        }}
+                        sx={{
+                          justifyContent: 'flex-start',
+                          height: { xs: '32px', md: '36px' },
+                          fontSize: { xs: '0.75rem', md: '0.8rem' },
+                          background: selectedBlackmanAvatar === 'problackman'
+                            ? 'linear-gradient(45deg, #424242, #212121)'
+                            : 'transparent',
+                          border: selectedBlackmanAvatar === 'problackman'
+                            ? 'none'
+                            : '1px solid rgba(255,255,255,0.2)',
+                          color: selectedBlackmanAvatar === 'problackman' ? 'white' : 'rgba(255,255,255,0.7)',
+                          '&:hover': {
+                            background: selectedBlackmanAvatar === 'problackman'
+                              ? 'linear-gradient(45deg, #212121, #424242)'
+                              : 'rgba(255,255,255,0.1)',
+                          },
+                        }}
+                      >
+                        Professional
+                      </Button>
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Alex Style Selection */}
+                {selectedSindaCategory === 'alex' && (
+                  <Box sx={{ mb: { xs: 2, md: 3 } }}>
+                    <Typography variant="body2" sx={{
+                      color: 'rgba(255,255,255,0.7)',
+                      fontWeight: 'bold',
+                      mb: { xs: 1.5, md: 2 },
+                      fontSize: { xs: '0.8rem', md: '0.85rem' }
+                    }}>
+                      Alex Style:
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.8, md: 1 } }}>
+                      <Button
+                        size="medium"
+                        variant={selectedAlexAvatar === 'problondman' ? "contained" : "outlined"}
+                        onClick={() => {
+                          setSelectedAlexAvatar('problondman');
+                          setIsUpdatingOutfit(true);
+                          setTimeout(() => setIsUpdatingOutfit(false), 500);
+                        }}
+                        sx={{
+                          justifyContent: 'flex-start',
+                          height: { xs: '32px', md: '36px' },
+                          fontSize: { xs: '0.75rem', md: '0.8rem' },
+                          background: selectedAlexAvatar === 'problondman'
+                            ? 'linear-gradient(45deg, #3F51B5, #303F9F)'
+                            : 'transparent',
+                          border: selectedAlexAvatar === 'problondman'
+                            ? 'none'
+                            : '1px solid rgba(255,255,255,0.2)',
+                          color: selectedAlexAvatar === 'problondman' ? 'white' : 'rgba(255,255,255,0.7)',
+                          '&:hover': {
+                            background: selectedAlexAvatar === 'problondman'
+                              ? 'linear-gradient(45deg, #303F9F, #3F51B5)'
+                              : 'rgba(255,255,255,0.1)',
+                          },
+                        }}
+                      >
+                        Professional
+                      </Button>
+                      <Button
+                        size="medium"
+                        variant={selectedAlexAvatar === 'winterblondman' ? "contained" : "outlined"}
+                        onClick={() => {
+                          setSelectedAlexAvatar('winterblondman');
+                          setIsUpdatingOutfit(true);
+                          setTimeout(() => setIsUpdatingOutfit(false), 500);
+                        }}
+                        sx={{
+                          justifyContent: 'flex-start',
+                          height: { xs: '32px', md: '36px' },
+                          fontSize: { xs: '0.75rem', md: '0.8rem' },
+                          background: selectedAlexAvatar === 'winterblondman'
+                            ? 'linear-gradient(45deg, #00BCD4, #0097A7)'
+                            : 'transparent',
+                          border: selectedAlexAvatar === 'winterblondman'
+                            ? 'none'
+                            : '1px solid rgba(255,255,255,0.2)',
+                          color: selectedAlexAvatar === 'winterblondman' ? 'white' : 'rgba(255,255,255,0.7)',
+                          '&:hover': {
+                            background: selectedAlexAvatar === 'winterblondman'
+                              ? 'linear-gradient(45deg, #0097A7, #00BCD4)'
+                              : 'rgba(255,255,255,0.1)',
+                          },
+                        }}
+                      >
+                        Winter
+                      </Button>
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Jaaf Style Selection */}
+                {selectedSindaCategory === 'jaaf' && (
+                  <Box sx={{ mb: { xs: 2, md: 3 } }}>
+                    <Typography variant="body2" sx={{
+                      color: 'rgba(255,255,255,0.7)',
+                      fontWeight: 'bold',
+                      mb: { xs: 1.5, md: 2 },
+                      fontSize: { xs: '0.8rem', md: '0.85rem' }
+                    }}>
+                      Jaaf Style:
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.8, md: 1 } }}>
+                      <Button
+                        size="medium"
+                        variant={selectedJaafAvatar === 'protunisianman' ? "contained" : "outlined"}
+                        onClick={() => {
+                          setSelectedJaafAvatar('protunisianman');
+                          setIsUpdatingOutfit(true);
+                          setTimeout(() => setIsUpdatingOutfit(false), 500);
+                        }}
+                        sx={{
+                          justifyContent: 'flex-start',
+                          height: { xs: '32px', md: '36px' },
+                          fontSize: { xs: '0.75rem', md: '0.8rem' },
+                          background: selectedJaafAvatar === 'protunisianman'
+                            ? 'linear-gradient(45deg, #FF6B35, #F7931E)'
+                            : 'transparent',
+                          border: selectedJaafAvatar === 'protunisianman'
+                            ? 'none'
+                            : '1px solid rgba(255,255,255,0.2)',
+                          color: selectedJaafAvatar === 'protunisianman' ? 'white' : 'rgba(255,255,255,0.7)',
+                          '&:hover': {
+                            background: selectedJaafAvatar === 'protunisianman'
+                              ? 'linear-gradient(45deg, #F7931E, #FF6B35)'
+                              : 'rgba(255,255,255,0.1)',
+                          },
+                        }}
+                      >
+                        Professional
+                      </Button>
+                      <Button
+                        size="medium"
+                        variant={selectedJaafAvatar === 'wintertunisianman' ? "contained" : "outlined"}
+                        onClick={() => {
+                          setSelectedJaafAvatar('wintertunisianman');
+                          setIsUpdatingOutfit(true);
+                          setTimeout(() => setIsUpdatingOutfit(false), 500);
+                        }}
+                        sx={{
+                          justifyContent: 'flex-start',
+                          height: { xs: '32px', md: '36px' },
+                          fontSize: { xs: '0.75rem', md: '0.8rem' },
+                          background: selectedJaafAvatar === 'wintertunisianman'
+                            ? 'linear-gradient(45deg, #00BCD4, #0097A7)'
+                            : 'transparent',
+                          border: selectedJaafAvatar === 'wintertunisianman'
+                            ? 'none'
+                            : '1px solid rgba(255,255,255,0.2)',
+                          color: selectedJaafAvatar === 'wintertunisianman' ? 'white' : 'rgba(255,255,255,0.7)',
+                          '&:hover': {
+                            background: selectedJaafAvatar === 'wintertunisianman'
+                              ? 'linear-gradient(45deg, #0097A7, #00BCD4)'
+                              : 'rgba(255,255,255,0.1)',
+                          },
+                        }}
+                      >
+                        Winter
                       </Button>
                     </Box>
                   </Box>

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
@@ -14,11 +14,15 @@ interface FBXAvatarProps {
     accessories?: string;
     skin?: string;
   };
-  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian';
+  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian' | 'blackman' | 'alex' | 'jaaf';
   sinda1AvatarType?: 'dressproblond' | 'winterblond' | 'problond';
   sinda2AvatarType?: 'dressproblack' | 'problack' | 'winterblack';
   japanAvatarType?: 'casualjapan' | 'projapan' | 'winterjapan';
   tunisianAvatarType?: 'casualtunisian' | 'dresstunisian' | 'protunisian';
+  blackmanAvatarType?: 'casualblackman' | 'problackman';
+  alexAvatarType?: 'problondman' | 'winterblondman';
+  jaafAvatarType?: 'protunisianman' | 'wintertunisianman';
+  cameraAngle?: 'front' | 'side' | 'back' | 'full';
   onLoad?: () => void;
 }
 
@@ -45,7 +49,7 @@ const getClothingCategory = (materialName: string, meshName: string): string | n
   return null;
 };
 
-function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', japanAvatarType = 'casualjapan', tunisianAvatarType = 'casualtunisian', onLoad }: {
+function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', japanAvatarType = 'casualjapan', tunisianAvatarType = 'casualtunisian', blackmanAvatarType = 'casualblackman', alexAvatarType = 'problondman', jaafAvatarType = 'protunisianman', onLoad }: {
   clothingColor: string;
   selectedOutfit?: {
     tshirt?: string;
@@ -54,11 +58,14 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
     accessories?: string;
     skin?: string;
   };
-  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian';
+  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian' | 'blackman' | 'alex' | 'jaaf';
   sinda1AvatarType?: 'dressproblond' | 'winterblond' | 'problond';
   sinda2AvatarType?: 'dressproblack' | 'problack' | 'winterblack';
   japanAvatarType?: 'casualjapan' | 'projapan' | 'winterjapan';
   tunisianAvatarType?: 'casualtunisian' | 'dresstunisian' | 'protunisian';
+  blackmanAvatarType?: 'casualblackman' | 'problackman';
+  alexAvatarType?: 'problondman' | 'winterblondman';
+  jaafAvatarType?: 'protunisianman' | 'wintertunisianman';
   onLoad?: () => void;
 }) {
   const meshRef = useRef<THREE.Group>(null);
@@ -136,6 +143,45 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
             break;
           default:
             avatarPath = '/Avatars/casualtunisian.fbx';
+        }
+        break;
+      case 'blackman':
+        // Black Man has multiple options
+        switch (blackmanAvatarType) {
+          case 'casualblackman':
+            avatarPath = '/Avatars/casualblackman.fbx';
+            break;
+          case 'problackman':
+            avatarPath = '/Avatars/problackman.fbx';
+            break;
+          default:
+            avatarPath = '/Avatars/casualblackman.fbx';
+        }
+        break;
+      case 'alex':
+        // Alex has multiple options
+        switch (alexAvatarType) {
+          case 'problondman':
+            avatarPath = '/Avatars/problondman.fbx';
+            break;
+          case 'winterblondman':
+            avatarPath = '/Avatars/winterblondman.fbx';
+            break;
+          default:
+            avatarPath = '/Avatars/problondman.fbx';
+        }
+        break;
+      case 'jaaf':
+        // Jaaf has multiple options
+        switch (jaafAvatarType) {
+          case 'protunisianman':
+            avatarPath = '/Avatars/protunisianman.fbx';
+            break;
+          case 'wintertunisianman':
+            avatarPath = '/Avatars/wintertunisianman.fbx';
+            break;
+          default:
+            avatarPath = '/Avatars/protunisianman.fbx';
         }
         break;
       default:
@@ -513,7 +559,7 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
         setLoading(false);
       }
     );
-     }, [clothingColor, selectedOutfit, sindaCategory, sinda1AvatarType, sinda2AvatarType, japanAvatarType, tunisianAvatarType, onLoad]);
+     }, [clothingColor, selectedOutfit, sindaCategory, sinda1AvatarType, sinda2AvatarType, japanAvatarType, tunisianAvatarType, blackmanAvatarType, onLoad]);
 
   if (loading) {
     return (
@@ -536,11 +582,98 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
   ) : null;
 }
 
-export default function FBXAvatar({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', japanAvatarType = 'casualjapan', tunisianAvatarType = 'casualtunisian', onLoad }: FBXAvatarProps) {
+// Camera Controller Component
+function CameraController({ cameraAngle }: { cameraAngle: 'front' | 'side' | 'back' | 'full' }) {
+  const { camera } = useThree();
+  
+  useEffect(() => {
+    let targetPosition: [number, number, number];
+    let lookAtTarget: [number, number, number];
+    
+    // Focus on head and upper body area (y = 0.3 to 0.5 for upper body focus)
+    const upperBodyFocus: [number, number, number] = [0, 0.4, 0];
+    
+    switch (cameraAngle) {
+      case 'front':
+        targetPosition = [0, 0.4, 3]; // Closer and higher for upper body
+        lookAtTarget = upperBodyFocus;
+        break;
+      case 'side':
+        targetPosition = [3, 0.4, 0]; // Side view focused on upper body
+        lookAtTarget = upperBodyFocus;
+        break;
+      case 'back':
+        targetPosition = [0, 0.4, -3]; // Back view focused on upper body
+        lookAtTarget = upperBodyFocus;
+        break;
+      case 'full':
+        targetPosition = [0, 0, 5]; // Full body view - further back and centered
+        lookAtTarget = [0, 0, 0]; // Look at center for full body
+        break;
+      default:
+        targetPosition = [0, 0.4, 3];
+        lookAtTarget = upperBodyFocus;
+    }
+    
+    // Smooth camera transition
+    const duration = 1000; // 1 second
+    const startPosition = camera.position.clone();
+    const endPosition = new THREE.Vector3(...targetPosition);
+    const startLookAt = new THREE.Vector3(0, 0, 0); // Current look at
+    const endLookAt = new THREE.Vector3(...lookAtTarget);
+    const startTime = Date.now();
+    
+    const animateCamera = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Smooth easing function
+      const easeInOutCubic = (t: number) => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+      const easedProgress = easeInOutCubic(progress);
+      
+      // Interpolate camera position
+      camera.position.lerpVectors(startPosition, endPosition, easedProgress);
+      
+      // Interpolate look at target
+      const currentLookAt = new THREE.Vector3();
+      currentLookAt.lerpVectors(startLookAt, endLookAt, easedProgress);
+      camera.lookAt(currentLookAt);
+      
+      if (progress < 1) {
+        requestAnimationFrame(animateCamera);
+      }
+    };
+    
+    animateCamera();
+  }, [cameraAngle, camera]);
+  
+  return null;
+}
+
+// Dynamic Orbit Controls Component
+function DynamicOrbitControls({ cameraAngle }: { cameraAngle: 'front' | 'side' | 'back' | 'full' }) {
+  const target: [number, number, number] = cameraAngle === 'full' ? [0, -0.1, 0] : [0, 0.4, 0];
+  const minDistance = cameraAngle === 'full' ? 2 : 1.5;
+  const maxDistance = cameraAngle === 'full' ? 10 : 6;
+  
+  return (
+    <OrbitControls 
+      target={target}
+      enablePan={true}
+      enableZoom={true}
+      enableRotate={true}
+      minDistance={minDistance}
+      maxDistance={maxDistance}
+      autoRotate={false}
+    />
+  );
+}
+
+export default function FBXAvatar({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', japanAvatarType = 'casualjapan', tunisianAvatarType = 'casualtunisian', blackmanAvatarType = 'casualblackman', alexAvatarType = 'problondman', jaafAvatarType = 'protunisianman', cameraAngle = 'front', onLoad }: FBXAvatarProps) {
   return (
     <div style={{ width: '100%', height: '400px', position: 'relative' }}>
       <Canvas
-        camera={{ position: [0, 0, 5], fov: 50 }}
+        camera={{ position: [0, 0.4, 3], fov: 20 }}
         style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
       >
         {/* Lighting */}
@@ -566,18 +699,17 @@ export default function FBXAvatar({ clothingColor = '#4A90E2', selectedOutfit, s
           sinda2AvatarType={sinda2AvatarType}
           japanAvatarType={japanAvatarType}
           tunisianAvatarType={tunisianAvatarType}
+          blackmanAvatarType={blackmanAvatarType}
+          alexAvatarType={alexAvatarType}
+          jaafAvatarType={jaafAvatarType}
           onLoad={onLoad}
         />
         
+        {/* Camera Controller */}
+        <CameraController cameraAngle={cameraAngle} />
+        
         {/* Controls */}
-        <OrbitControls 
-          enablePan={true}
-          enableZoom={true}
-          enableRotate={true}
-          minDistance={2}
-          maxDistance={10}
-          autoRotate={false}
-        />
+        <DynamicOrbitControls cameraAngle={cameraAngle} />
       </Canvas>
     </div>
   );
