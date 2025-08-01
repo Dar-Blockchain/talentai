@@ -107,12 +107,12 @@ export default function AvatarCustomizer() {
     const [customShoesColor, setCustomShoesColor] = useState('#000000');
     const [customSkinColor, setCustomSkinColor] = useState('#FFDBB4');
     const [isUpdatingOutfit, setIsUpdatingOutfit] = useState(false);
-  const [selectedSindaCategory, setSelectedSindaCategory] = useState<'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian' | 'blackman' | 'alex' | 'jaaf'>('sinda1'); // 'sinda1', 'sinda2', 'sinda3', 'japan', 'tunisian', 'blackman', 'alex', or 'jaaf'
+  const [selectedSindaCategory, setSelectedSindaCategory] = useState<'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian' | 'alex' | 'jaaf'>('sinda1'); // 'sinda1', 'sinda2', 'sinda3', 'japan', 'tunisian', 'alex', or 'jaaf'
   const [selectedSinda1Avatar, setSelectedSinda1Avatar] = useState<'dressproblond' | 'winterblond' | 'problond'>('dressproblond'); // 'dressproblond', 'winterblond', or 'problond' for Sinda 1
   const [selectedSinda2Avatar, setSelectedSinda2Avatar] = useState<'dressproblack' | 'problack' | 'winterblack'>('dressproblack'); // 'dressproblack', 'problack', or 'winterblack' for Sinda 2
   const [selectedJapanAvatar, setSelectedJapanAvatar] = useState<'casualjapan' | 'projapan' | 'winterjapan'>('casualjapan'); // 'casualjapan', 'projapan', or 'winterjapan' for Japan
   const [selectedTunisianAvatar, setSelectedTunisianAvatar] = useState<'casualtunisian' | 'dresstunisian' | 'protunisian'>('casualtunisian'); // 'casualtunisian', 'dresstunisian', or 'protunisian' for Tunisian
-  const [selectedBlackmanAvatar, setSelectedBlackmanAvatar] = useState<'casualblackman' | 'problackman'>('casualblackman'); // 'casualblackman', or 'problackman' for Black Man
+
   const [selectedAlexAvatar, setSelectedAlexAvatar] = useState<'problondman' | 'winterblondman'>('problondman'); // 'problondman' or 'winterblondman' for Alex
   const [selectedJaafAvatar, setSelectedJaafAvatar] = useState<'protunisianman' | 'wintertunisianman'>('protunisianman'); // 'protunisianman' or 'wintertunisianman' for Jaaf
   const [isNavbarCollapsed, setIsNavbarCollapsed] = useState(false);
@@ -414,7 +414,7 @@ export default function AvatarCustomizer() {
                   sinda2AvatarType={selectedSinda2Avatar}
                   japanAvatarType={selectedJapanAvatar}
                   tunisianAvatarType={selectedTunisianAvatar}
-                  blackmanAvatarType={selectedBlackmanAvatar}
+        
                   alexAvatarType={selectedAlexAvatar}
                   jaafAvatarType={selectedJaafAvatar}
                   cameraAngle={cameraAngle}
@@ -764,34 +764,7 @@ export default function AvatarCustomizer() {
                     >
                       Tunisian
                     </Button>
-                    <Button
-                      size="medium"
-                      variant={selectedSindaCategory === 'blackman' ? "contained" : "outlined"}
-                      onClick={() => {
-                        setSelectedSindaCategory('blackman');
-                        setIsUpdatingOutfit(true);
-                        setTimeout(() => setIsUpdatingOutfit(false), 500);
-                      }}
-                      sx={{
-                        justifyContent: 'flex-start',
-                        height: { xs: '36px', md: '40px' },
-                        fontSize: { xs: '0.8rem', md: '0.85rem' },
-                        background: selectedSindaCategory === 'blackman'
-                          ? 'linear-gradient(45deg, #37474F, #263238)'
-                          : 'transparent',
-                        border: selectedSindaCategory === 'blackman'
-                          ? 'none'
-                          : '1px solid rgba(255,255,255,0.3)',
-                        color: selectedSindaCategory === 'blackman' ? 'white' : 'rgba(255,255,255,0.8)',
-                        '&:hover': {
-                          background: selectedSindaCategory === 'blackman'
-                            ? 'linear-gradient(45deg, #263238, #37474F)'
-                            : 'rgba(255,255,255,0.1)',
-                        },
-                      }}
-                    >
-                      Black Man
-                    </Button>
+
                     <Button
                       size="medium"
                       variant={selectedSindaCategory === 'alex' ? "contained" : "outlined"}
@@ -1251,77 +1224,7 @@ export default function AvatarCustomizer() {
                   </Box>
                 )}
 
-                {/* Black Man Style Selection */}
-                {selectedSindaCategory === 'blackman' && (
-                  <Box sx={{ mb: { xs: 2, md: 3 } }}>
-                    <Typography variant="body2" sx={{
-                      color: 'rgba(255,255,255,0.7)',
-                      fontWeight: 'bold',
-                      mb: { xs: 1.5, md: 2 },
-                      fontSize: { xs: '0.8rem', md: '0.85rem' }
-                    }}>
-                      Black Man Style:
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.8, md: 1 } }}>
-                      <Button
-                        size="medium"
-                        variant={selectedBlackmanAvatar === 'casualblackman' ? "contained" : "outlined"}
-                        onClick={() => {
-                          setSelectedBlackmanAvatar('casualblackman');
-                          setIsUpdatingOutfit(true);
-                          setTimeout(() => setIsUpdatingOutfit(false), 500);
-                        }}
-                        sx={{
-                          justifyContent: 'flex-start',
-                          height: { xs: '32px', md: '36px' },
-                          fontSize: { xs: '0.75rem', md: '0.8rem' },
-                          background: selectedBlackmanAvatar === 'casualblackman'
-                            ? 'linear-gradient(45deg, #37474F, #263238)'
-                            : 'transparent',
-                          border: selectedBlackmanAvatar === 'casualblackman'
-                            ? 'none'
-                            : '1px solid rgba(255,255,255,0.2)',
-                          color: selectedBlackmanAvatar === 'casualblackman' ? 'white' : 'rgba(255,255,255,0.7)',
-                          '&:hover': {
-                            background: selectedBlackmanAvatar === 'casualblackman'
-                              ? 'linear-gradient(45deg, #263238, #37474F)'
-                              : 'rgba(255,255,255,0.1)',
-                          },
-                        }}
-                      >
-                        Casual
-                      </Button>
-                      <Button
-                        size="medium"
-                        variant={selectedBlackmanAvatar === 'problackman' ? "contained" : "outlined"}
-                        onClick={() => {
-                          setSelectedBlackmanAvatar('problackman');
-                          setIsUpdatingOutfit(true);
-                          setTimeout(() => setIsUpdatingOutfit(false), 500);
-                        }}
-                        sx={{
-                          justifyContent: 'flex-start',
-                          height: { xs: '32px', md: '36px' },
-                          fontSize: { xs: '0.75rem', md: '0.8rem' },
-                          background: selectedBlackmanAvatar === 'problackman'
-                            ? 'linear-gradient(45deg, #424242, #212121)'
-                            : 'transparent',
-                          border: selectedBlackmanAvatar === 'problackman'
-                            ? 'none'
-                            : '1px solid rgba(255,255,255,0.2)',
-                          color: selectedBlackmanAvatar === 'problackman' ? 'white' : 'rgba(255,255,255,0.7)',
-                          '&:hover': {
-                            background: selectedBlackmanAvatar === 'problackman'
-                              ? 'linear-gradient(45deg, #212121, #424242)'
-                              : 'rgba(255,255,255,0.1)',
-                          },
-                        }}
-                      >
-                        Professional
-                      </Button>
-                    </Box>
-                  </Box>
-                )}
+
 
                 {/* Alex Style Selection */}
                 {selectedSindaCategory === 'alex' && (

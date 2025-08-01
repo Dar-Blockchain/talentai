@@ -14,12 +14,11 @@ interface FBXAvatarProps {
     accessories?: string;
     skin?: string;
   };
-  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian' | 'blackman' | 'alex' | 'jaaf';
+  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian' | 'alex' | 'jaaf';
   sinda1AvatarType?: 'dressproblond' | 'winterblond' | 'problond';
   sinda2AvatarType?: 'dressproblack' | 'problack' | 'winterblack';
   japanAvatarType?: 'casualjapan' | 'projapan' | 'winterjapan';
   tunisianAvatarType?: 'casualtunisian' | 'dresstunisian' | 'protunisian';
-  blackmanAvatarType?: 'casualblackman' | 'problackman';
   alexAvatarType?: 'problondman' | 'winterblondman';
   jaafAvatarType?: 'protunisianman' | 'wintertunisianman';
   cameraAngle?: 'front' | 'side' | 'back' | 'full';
@@ -49,7 +48,7 @@ const getClothingCategory = (materialName: string, meshName: string): string | n
   return null;
 };
 
-function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', japanAvatarType = 'casualjapan', tunisianAvatarType = 'casualtunisian', blackmanAvatarType = 'casualblackman', alexAvatarType = 'problondman', jaafAvatarType = 'protunisianman', onLoad }: {
+function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', japanAvatarType = 'casualjapan', tunisianAvatarType = 'casualtunisian', alexAvatarType = 'problondman', jaafAvatarType = 'protunisianman', onLoad }: {
   clothingColor: string;
   selectedOutfit?: {
     tshirt?: string;
@@ -58,12 +57,11 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
     accessories?: string;
     skin?: string;
   };
-  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian' | 'blackman' | 'alex' | 'jaaf';
+  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian' | 'alex' | 'jaaf';
   sinda1AvatarType?: 'dressproblond' | 'winterblond' | 'problond';
   sinda2AvatarType?: 'dressproblack' | 'problack' | 'winterblack';
   japanAvatarType?: 'casualjapan' | 'projapan' | 'winterjapan';
   tunisianAvatarType?: 'casualtunisian' | 'dresstunisian' | 'protunisian';
-  blackmanAvatarType?: 'casualblackman' | 'problackman';
   alexAvatarType?: 'problondman' | 'winterblondman';
   jaafAvatarType?: 'protunisianman' | 'wintertunisianman';
   onLoad?: () => void;
@@ -145,19 +143,7 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
             avatarPath = '/Avatars/casualtunisian.fbx';
         }
         break;
-      case 'blackman':
-        // Black Man has multiple options
-        switch (blackmanAvatarType) {
-          case 'casualblackman':
-            avatarPath = '/Avatars/casualblackman.fbx';
-            break;
-          case 'problackman':
-            avatarPath = '/Avatars/problackman.fbx';
-            break;
-          default:
-            avatarPath = '/Avatars/casualblackman.fbx';
-        }
-        break;
+
       case 'alex':
         // Alex has multiple options
         switch (alexAvatarType) {
@@ -559,7 +545,7 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
         setLoading(false);
       }
     );
-     }, [clothingColor, selectedOutfit, sindaCategory, sinda1AvatarType, sinda2AvatarType, japanAvatarType, tunisianAvatarType, blackmanAvatarType, onLoad]);
+     }, [clothingColor, selectedOutfit, sindaCategory, sinda1AvatarType, sinda2AvatarType, japanAvatarType, tunisianAvatarType, onLoad]);
 
   if (loading) {
     return (
@@ -669,26 +655,63 @@ function DynamicOrbitControls({ cameraAngle }: { cameraAngle: 'front' | 'side' |
   );
 }
 
-export default function FBXAvatar({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', japanAvatarType = 'casualjapan', tunisianAvatarType = 'casualtunisian', blackmanAvatarType = 'casualblackman', alexAvatarType = 'problondman', jaafAvatarType = 'protunisianman', cameraAngle = 'front', onLoad }: FBXAvatarProps) {
+export default function FBXAvatar({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = 'sinda1', sinda1AvatarType = 'dressproblond', sinda2AvatarType = 'dressproblack', japanAvatarType = 'casualjapan', tunisianAvatarType = 'casualtunisian', alexAvatarType = 'problondman', jaafAvatarType = 'protunisianman', cameraAngle = 'front', onLoad }: FBXAvatarProps) {
   return (
     <div style={{ width: '100%', height: '400px', position: 'relative' }}>
       <Canvas
         camera={{ position: [0, 0.4, 3], fov: 20 }}
-        style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #87CEEB 0%, #98D8E8 50%, #B0E0E6 100%)' }}
       >
-        {/* Lighting */}
-        <ambientLight intensity={0.6} />
+        {/* Bright Natural Lighting Setup */}
+        {/* Strong ambient light */}
+        <ambientLight intensity={0.6} color="#B0E0E6" />
+        
+        {/* Main sun light - increased intensity */}
         <directionalLight 
-          position={[10, 10, 5]} 
-          intensity={1} 
+          position={[10, 15, 8]} 
+          intensity={1.5} 
+          color="#FFF8DC"
           castShadow 
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
+          shadow-camera-far={50}
+          shadow-camera-left={-15}
+          shadow-camera-right={15}
+          shadow-camera-top={15}
+          shadow-camera-bottom={-15}
+          shadow-bias={-0.0001}
         />
-        <pointLight position={[-10, -10, -10]} intensity={0.3} />
         
-        {/* Environment */}
-        <Environment preset="studio" />
+        {/* Strong fill light */}
+        <directionalLight 
+          position={[-8, 12, -5]} 
+          intensity={0.8} 
+          color="#E6F3FF"
+        />
+        
+        {/* Bright ground bounce */}
+        <directionalLight 
+          position={[0, -5, 0]} 
+          intensity={0.4} 
+          color="#F5DEB3"
+        />
+        
+        {/* Additional front light for brightness */}
+        <directionalLight 
+          position={[0, 5, 5]} 
+          intensity={0.6} 
+          color="#FFFFFF"
+        />
+        
+        {/* Enhanced atmospheric light */}
+        <directionalLight 
+          position={[5, 8, -10]} 
+          intensity={0.5} 
+          color="#E0F6FF"
+        />
+        
+        {/* Realistic outdoor environment */}
+        <Environment preset="apartment" />
         
         {/* FBX Model */}
         <FBXModel 
@@ -699,7 +722,6 @@ export default function FBXAvatar({ clothingColor = '#4A90E2', selectedOutfit, s
           sinda2AvatarType={sinda2AvatarType}
           japanAvatarType={japanAvatarType}
           tunisianAvatarType={tunisianAvatarType}
-          blackmanAvatarType={blackmanAvatarType}
           alexAvatarType={alexAvatarType}
           jaafAvatarType={jaafAvatarType}
           onLoad={onLoad}
