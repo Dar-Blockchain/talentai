@@ -99,10 +99,10 @@ const postSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-  post_Steps: {
+  post_Steps: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "Post_Steps",
-  },  
+  }],  
 });
 
 const Post = mongoose.model("Post", postSchema);
