@@ -661,7 +661,7 @@ export default function FBXAvatar({ clothingColor = '#4A90E2', selectedOutfit, s
       >
         {/* Bright Natural Lighting Setup */}
         {/* Strong ambient light */}
-        <ambientLight intensity={0.6} color="#B0E0E6" />
+        <ambientLight intensity={0.9} color="#FFFFFF" />
         
         {/* Main sun light - increased intensity */}
         <directionalLight 
