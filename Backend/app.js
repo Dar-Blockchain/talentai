@@ -28,6 +28,7 @@ const interviewDetailsRouter = require("./routes/interviewDetailsRouter");
 const repoAnalyzerRouter = require("./routes/repoAnalyzerRouter");
 const notificationRouter = require("./routes/notificationRouter");
 const imageRouter = require("./routes/imageRouter");
+const postStepsRouter = require("./routes/postStepsRouter");
 
 require("dotenv").config();
 
@@ -73,6 +74,7 @@ app.use("/interviewDetails", interviewDetailsRouter);
 app.use("/repo-analyzer", repoAnalyzerRouter);
 app.use("/notification", notificationRouter);
 app.use("/image", imageRouter);
+app.use("/post-steps", postStepsRouter);
 
 app.get("/some-route", (req, res) => {
   res.json("Route accessible");
