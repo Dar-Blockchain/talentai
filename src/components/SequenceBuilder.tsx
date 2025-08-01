@@ -14,7 +14,14 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Alert,
+  Chip,
+  CircularProgress,
+  InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import ReactFlow, {
@@ -50,9 +57,22 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import WorkIcon from '@mui/icons-material/Work';
+import BoltIcon from '@mui/icons-material/Bolt';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import TrendingDownIcon from '@mui/icons-material/TrendingDown';
+import EditIcon from '@mui/icons-material/Edit';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import AddIcon from '@mui/icons-material/Add';
 
 // Import AvatarCustomizer component
 import AvatarCustomizer from '../pages/avatar-customizer';
+
+// Constants
+const GREEN_MAIN = '#00FF9D';
 
 // Styled components
 const Container = styled(Box)({
@@ -322,7 +342,31 @@ const SequenceBuilder: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
 
-  const steps = ['Sequence', 'Prospects', 'Sending options', 'Review'];
+  // Job Post Generator State Variables
+  const [jobDescription, setJobDescription] = useState('');
+  const [salaryRange, setSalaryRange] = useState({
+    currency: '$',
+    min: '',
+    max: ''
+  });
+  const [isQuickGenerating, setIsQuickGenerating] = useState(false);
+  const [isDetailedGenerating, setIsDetailedGenerating] = useState(false);
+  const [generatedJob, setGeneratedJob] = useState<any>(null);
+  const [jobPostError, setJobPostError] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedJob, setEditedJob] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasSharedToLinkedIn, setHasSharedToLinkedIn] = useState(false);
+  const [isPosting, setIsPosting] = useState(false);
+  const [linkedinCopySuccess, setLinkedinCopySuccess] = useState(false);
+  const [editingSkillIndex, setEditingSkillIndex] = useState<number | null>(null);
+  const [editingSkillName, setEditingSkillName] = useState('');
+  const [newSkillLevel, setNewSkillLevel] = useState('3');
+  const [showAddSkillInput, setShowAddSkillInput] = useState(false);
+  const [newSkill, setNewSkill] = useState('');
+  const [skillWarning, setSkillWarning] = useState('');
+
+  const steps = ['Job Post', 'Sequence', 'Avatar', 'Review'];
 
   // Define node types for React Flow
   const nodeTypes: NodeTypes = useMemo(() => ({ custom: CustomNode }), []);
@@ -659,6 +703,212 @@ Ready to customize the content or add more triggers?`
     setModalOpen(false);
   };
 
+  // Job Post Generator Helper Functions
+  const isSalaryRangeValid = () => {
+    return salaryRange.min && salaryRange.max && parseInt(salaryRange.max) >= parseInt(salaryRange.min);
+  };
+
+  const handleSalaryChange = (field: 'min' | 'max' | 'currency', value: string) => {
+    setSalaryRange(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleGenerateJob = async (type: 'quick' | 'detailed') => {
+    try {
+      if (type === 'quick') {
+        setIsQuickGenerating(true);
+      } else {
+        setIsDetailedGenerating(true);
+      }
+      setJobPostError('');
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Mock generated job data
+      const mockJob = {
+        jobDetails: {
+          title: 'Senior Full Stack Developer',
+          description: 'We are seeking a talented Senior Full Stack Developer to join our dynamic team...',
+          requirements: ['5+ years experience with React.js', 'Strong TypeScript skills', 'Experience with Node.js'],
+          responsibilities: ['Lead development of core features', 'Mentor junior developers', 'Design scalable services'],
+          location: 'Remote',
+          employmentType: 'Full-time',
+          experienceLevel: 'Senior',
+          salary: {
+            min: parseInt(salaryRange.min),
+            max: parseInt(salaryRange.max),
+            currency: salaryRange.currency
+          }
+        },
+        skillAnalysis: {
+          requiredSkills: [
+            { name: 'React.js', level: '5', importance: 'Required', category: 'Frontend' },
+            { name: 'TypeScript', level: '4', importance: 'Required', category: 'Language' },
+            { name: 'Node.js', level: '4', importance: 'Required', category: 'Backend' }
+          ],
+          suggestedSkills: {
+            technical: [
+              { name: 'Docker', reason: 'Containerization', category: 'DevOps', priority: 'High' }
+            ],
+            frameworks: [
+              { name: 'Next.js', relatedTo: 'React', priority: 'Medium' }
+            ],
+            tools: [
+              { name: 'Git', purpose: 'Version Control', category: 'Development' }
+            ]
+          },
+          skillSummary: {
+            mainTechnologies: ['React.js', 'TypeScript', 'Node.js'],
+            complementarySkills: ['Docker', 'Next.js'],
+            learningPath: ['JavaScript', 'React.js', 'TypeScript'],
+            stackComplexity: 'Intermediate'
+          }
+        },
+        linkedinPost: {
+          formattedContent: {
+            headline: '🌟 We\'re Hiring: Senior Full Stack Developer 🌟',
+            introduction: 'Are you passionate about building interactive web applications?',
+            companyPitch: 'Join a team where innovation drives us forward.',
+            roleOverview: 'As a Senior Full Stack Developer, you\'ll be at the heart of our engineering process.',
+            keyPoints: [
+              '🔹 Develop cutting-edge web applications',
+              '🔹 Work with a team of talented developers',
+              '🔹 Remote work',
+              `🔹 Salary range: ${salaryRange.currency}${salaryRange.min}-${salaryRange.max}`
+            ],
+            skillsRequired: '💻 Required Skills: React.js, TypeScript, Node.js',
+            benefitsSection: '🎯 We offer a vibrant culture and mentorship opportunities.',
+            callToAction: '✨ Ready to make a difference? Apply now!'
+          },
+          hashtags: ['#Hiring', '#TechJobs', '#RemoteWork'],
+          formatting: {
+            emojis: {
+              company: '🏢',
+              location: '🌍',
+              salary: '💰',
+              requirements: '📋',
+              skills: '💻',
+              benefits: '🎯',
+              apply: '✨'
+            }
+          },
+          finalPost: '🌟 We\'re Hiring: Senior Full Stack Developer 🌟\n\nAre you passionate about building interactive web applications? Join our dynamic team!'
+        }
+      };
+
+      setGeneratedJob(mockJob);
+      setEditedJob(mockJob);
+    } catch (error) {
+      setJobPostError('Failed to generate job post. Please try again.');
+    } finally {
+      setIsQuickGenerating(false);
+      setIsDetailedGenerating(false);
+    }
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    setEditedJob({ ...generatedJob });
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditedJob(null);
+  };
+
+  const handleSave = () => {
+    setGeneratedJob(editedJob);
+    setIsEditing(false);
+    setEditedJob(null);
+  };
+
+  const handleInputChange = (field: string, value: any) => {
+    if (!editedJob) return;
+    
+    const keys = field.split('.');
+    const newEditedJob = { ...editedJob };
+    let current = newEditedJob;
+    
+    for (let i = 0; i < keys.length - 1; i++) {
+      current = current[keys[i]];
+    }
+    
+    current[keys[keys.length - 1]] = value;
+    setEditedJob(newEditedJob);
+  };
+
+  const handleEditSkill = (index: number, skill: any) => {
+    setEditingSkillIndex(index);
+    setEditingSkillName(skill.name);
+    setNewSkillLevel(skill.level);
+  };
+
+  const handleSaveSkill = () => {
+    if (!editedJob || editingSkillIndex === null) return;
+    
+    const newSkills = [...editedJob.skillAnalysis.requiredSkills];
+    newSkills[editingSkillIndex] = {
+      ...newSkills[editingSkillIndex],
+      name: editingSkillName,
+      level: newSkillLevel
+    };
+    
+    handleInputChange('skillAnalysis.requiredSkills', newSkills);
+    setEditingSkillIndex(null);
+    setEditingSkillName('');
+    setNewSkillLevel('3');
+  };
+
+  const getExperienceLevelFromNumber = (level: string | number): string => {
+    const numLevel = parseInt(level.toString());
+    if (numLevel <= 1) return 'Entry Level';
+    if (numLevel <= 2) return 'Junior';
+    if (numLevel <= 3) return 'Mid-Level';
+    if (numLevel <= 4) return 'Senior';
+    return 'Expert';
+  };
+
+  const handleShareLinkedIn = async () => {
+    setIsPosting(true);
+    // Simulate LinkedIn sharing
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setHasSharedToLinkedIn(true);
+    setLinkedinCopySuccess(true);
+    setIsPosting(false);
+    
+    setTimeout(() => setLinkedinCopySuccess(false), 3000);
+  };
+
+  const saveJob = async () => {
+    setIsSaving(true);
+    // Simulate saving job
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setIsSaving(false);
+    // You can add success notification here
+  };
+
+  const SkillChip = ({ label, onDelete, deleteIcon, onClick, sx }: any) => (
+    <Chip
+      label={label}
+      onDelete={onDelete}
+      deleteIcon={deleteIcon}
+      onClick={onClick}
+      sx={{
+        backgroundColor: GREEN_MAIN,
+        color: 'black',
+        fontSize: '0.75rem',
+        height: '28px',
+        '&:hover': {
+          backgroundColor: 'rgba(0, 255, 157, 0.8)',
+        },
+        ...sx
+      }}
+    />
+  );
+
   const handleNext = () => {
     if (activeStep < steps.length - 1) {
       setActiveStep(activeStep + 1);
@@ -692,6 +942,538 @@ Ready to customize the content or add more triggers?`
   const renderStepContent = () => {
     switch (activeStep) {
       case 0:
+        return (
+          <Box sx={{ flex: 1, height: '100%', display: 'flex', flexDirection: { xs: 'column', md: 'row' }, overflow: 'hidden' }}>
+            {/* Left Panel - Job Description Input */}
+            <Box sx={{
+              width: { xs: '100%', md: '50%' },
+              height: { xs: 'auto', md: '100%' },
+              borderRight: { xs: 'none', md: '1px solid rgba(255,255,255,0.1)' },
+              borderBottom: { xs: '1px solid rgba(255,255,255,0.1)', md: 'none' },
+              display: 'flex',
+              flexDirection: 'column',
+              p: { xs: 2, sm: 3 },
+              gap: 2,
+              overflow: 'auto'
+            }}>
+              <Typography variant="h6" sx={{
+                color: '#000',
+                mb: 1,
+                fontSize: { xs: '1rem', sm: '1.25rem' }
+              }}>
+                Job Description
+              </Typography>
+              <Typography variant="body2" sx={{
+                color: '#000',
+                mb: 2,
+                fontSize: { xs: '0.875rem', sm: '1rem' }
+              }}>
+                Describe the position you're looking to fill. Be as detailed as possible about responsibilities, requirements, and desired skills.
+              </Typography>
+
+              <TextField
+                multiline
+                rows={8}
+                fullWidth
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                placeholder="Example: 
+
+We are seeking a Senior Full Stack Developer to join our dynamic team. The ideal candidate will have:
+
+Technical Requirements:
+- 5+ years of experience with React.js and Node.js
+- Strong proficiency in TypeScript and modern JavaScript
+- Experience with cloud platforms (AWS/Azure/GCP)
+- Knowledge of microservices architecture
+- Expertise in database design (SQL and NoSQL)
+
+Responsibilities:
+- Lead development of our core product features
+- Mentor junior developers and conduct code reviews
+- Design and implement scalable backend services
+- Optimize application performance
+- Collaborate with product and design teams
+
+Additional Skills:
+- Experience with CI/CD pipelines
+- Knowledge of Docker and Kubernetes
+- Strong problem-solving abilities
+- Excellent communication skills
+
+Benefits:
+- Competitive salary range: $120,000 - $160,000
+- Remote work options
+- Health insurance
+- 401(k) matching
+- Professional development budget"
+                InputLabelProps={{ sx: { color: GREEN_MAIN } }}
+                InputProps={{
+                  sx: {
+                    color: '#000',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GREEN_MAIN
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GREEN_MAIN,
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: GREEN_MAIN,
+                    },
+                  },
+                }}
+              />
+
+              {!isSalaryRangeValid() && (
+                <Alert
+                  severity="warning"
+                  sx={{
+                    mt: 2,
+                    backgroundColor: 'rgba(255,152,0,0.1)',
+                    color: '#ffb74d',
+                    border: '1px solid rgba(255,152,0,0.3)',
+                    '& .MuiAlert-icon': {
+                      color: '#ffb74d'
+                    }
+                  }}
+                >
+                  Please enter a valid salary range (minimum and maximum values required, maximum must be greater than or equal to minimum)
+                </Alert>
+              )}
+              
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="subtitle1" sx={{ color: '#000', mb: 2 }}>
+                  Salary Range
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                  <Box sx={{ flex: 1 }}>
+                    <FormControl fullWidth>
+                      <InputLabel sx={{ color: GREEN_MAIN }}>Currency</InputLabel>
+                      <Select
+                        value={salaryRange.currency}
+                        onChange={(e) => handleSalaryChange('currency', e.target.value)}
+                        sx={{
+                          color: '#000',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: GREEN_MAIN,
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: GREEN_MAIN,
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: GREEN_MAIN,
+                          },
+                        }}
+                      >
+                        <MenuItem value="$" sx={{ backgroundColor: 'white', color: 'black', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>$ (USD)</MenuItem>
+                        <MenuItem value="€" sx={{ backgroundColor: 'white', color: 'black', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>€ (EUR)</MenuItem>
+                        <MenuItem value="£" sx={{ backgroundColor: 'white', color: 'black', '&:hover': { backgroundColor: 'rgba(30,41,59,1)' } }}>£ (GBP)</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <TextField
+                      fullWidth
+                      label="Minimum Salary"
+                      type="string"
+                      value={salaryRange.min}
+                      onChange={(e) => handleSalaryChange('min', e.target.value)}
+                      InputLabelProps={{ sx: { color: GREEN_MAIN } }}
+                      InputProps={{
+                        sx: {
+                          color: '#000',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: GREEN_MAIN,
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: GREEN_MAIN,
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: GREEN_MAIN,
+                          },
+                        },
+                      }}
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <TextField
+                      fullWidth
+                      label="Maximum Salary"
+                      type="string"
+                      value={salaryRange.max}
+                      onChange={(e) => handleSalaryChange('max', e.target.value)}
+                      InputLabelProps={{ sx: { color: GREEN_MAIN } }}
+                      InputProps={{
+                        sx: {
+                          color: "#000",
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: GREEN_MAIN,
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: GREEN_MAIN,
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: GREEN_MAIN,
+                          },
+                        },
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                <Button
+                  variant="contained"
+                  onClick={() => handleGenerateJob('quick')}
+                  disabled={!jobDescription || isQuickGenerating || !isSalaryRangeValid()}
+                  startIcon={isQuickGenerating ? <CircularProgress size={20} /> : <BoltIcon />}
+                  sx={{
+                    background: GREEN_MAIN,
+                    '&:hover': {
+                      background: GREEN_MAIN,
+                    },
+                    '&.Mui-disabled': {
+                      background: GREEN_MAIN,
+                      color: 'black'
+                    }
+                  }}
+                >
+                  {isQuickGenerating ? 'Generating...' : 'Quick Generate'}
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => handleGenerateJob('detailed')}
+                  disabled={!jobDescription || isDetailedGenerating || !isSalaryRangeValid()}
+                  startIcon={isDetailedGenerating ? <CircularProgress size={20} /> : <AutoAwesomeIcon />}
+                  sx={{
+                    borderColor: GREEN_MAIN,
+                    color: GREEN_MAIN,
+                    '&:hover': {
+                      borderColor: '#02E2FF',
+                      backgroundColor: 'rgba(2,226,255,0.1)'
+                    },
+                    '&.Mui-disabled': {
+                      borderColor: GREEN_MAIN,
+                      color: GREEN_MAIN
+                    }
+                  }}
+                >
+                  {isDetailedGenerating ? 'Generating...' : 'Detailed Generate'}
+                </Button>
+              </Box>
+
+              {(isQuickGenerating || isDetailedGenerating) && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mt: 1,
+                    textAlign: 'center',
+                    color: 'rgba(255,255,255,0.7)',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  {isQuickGenerating ?
+                    'Generating a concise job post...' :
+                    'Performing detailed analysis and generating comprehensive job post...'}
+                </Typography>
+              )}
+            </Box>
+
+            {/* Right Panel - Generated Job Preview */}
+            <Box sx={{
+              width: { xs: '100%', md: '50%' },
+              height: { xs: '50%', md: 'auto' },
+              p: { xs: 2, sm: 3 },
+              overflowY: 'auto',
+            }}>
+              {jobPostError ? (
+                <Alert
+                  severity="error"
+                  sx={{
+                    mb: 2,
+                    backgroundColor: 'rgba(211,47,47,0.1)',
+                    color: '#ff8a80',
+                    border: '1px solid rgba(211,47,47,0.3)',
+                    '& .MuiAlert-icon': {
+                      color: '#ff8a80'
+                    }
+                  }}
+                >
+                  {jobPostError}
+                </Alert>
+              ) : !generatedJob ? (
+                <Box sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 2,
+                  color: 'rgba(255,255,255,0.5)',
+                  textAlign: 'center',
+                  minHeight: { xs: '300px', md: 'auto' }
+                }}>
+                  <Box sx={{
+                    p: { xs: 2, sm: 3 },
+                    borderRadius: '50%',
+                    backgroundColor: GREEN_MAIN,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white'
+                  }}>
+                    <WorkIcon sx={{ fontSize: { xs: 32, sm: 40 } }} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, color: 'black' }}>
+                    Generated job post will appear here
+                  </Typography>
+                  <Typography variant="body2" sx={{
+                    maxWidth: '80%',
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                    color: 'black'
+                  }}>
+                    Enter your job description on the left and click "Generate" to create a professional job posting
+                  </Typography>
+                </Box>
+              ) : (
+                <Box sx={{
+                  color: '#fff',
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }}>
+                  <Box sx={{ mb: 4 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 2 }}>
+                      {isEditing ? (
+                        <TextField
+                          fullWidth
+                          label="Job Title"
+                          value={editedJob.jobDetails.title}
+                          onChange={(e) => handleInputChange('title', e.target.value)}
+                          InputLabelProps={{
+                            sx: {
+                              color: GREEN_MAIN,
+                              fontSize: '1rem',
+                              fontWeight: 500
+                            }
+                          }}
+                          InputProps={{
+                            sx: {
+                              color: '#000',
+                              fontSize: '1.1rem',
+                              '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                              '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: GREEN_MAIN,
+                                borderWidth: '2px'
+                              },
+                            },
+                          }}
+                        />
+                      ) : (
+                        <Typography
+                          variant="h5"
+                          sx={{
+                            color: GREEN_MAIN,
+                            fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                          }}
+                        >
+                          {generatedJob.jobDetails.title}
+                        </Typography>
+                      )}
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        {!isEditing ? (
+                          <>
+                            <Button
+                              variant="contained"
+                              startIcon={<EditIcon />}
+                              onClick={handleEdit}
+                              sx={{
+                                background: GREEN_MAIN,
+                                color: 'black',
+                                '&:hover': {
+                                  background: 'rgba(0, 255, 157, 0.8)',
+                                }
+                              }}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="contained"
+                              startIcon={<LinkedInIcon />}
+                              onClick={handleShareLinkedIn}
+                              disabled={isPosting}
+                              sx={{
+                                background: hasSharedToLinkedIn
+                                  ? 'rgba(0,119,181,0.6)'
+                                  : 'linear-gradient(135deg, #0077B5 0%, #00A0DC 100%)',
+                                '&:hover': {
+                                  background: hasSharedToLinkedIn
+                                    ? 'rgba(0,119,181,0.7)'
+                                    : 'linear-gradient(135deg, #006097 0%, #0077B5 100%)',
+                                }
+                              }}
+                            >
+                              {isPosting
+                                ? 'Sharing...'
+                                : linkedinCopySuccess
+                                  ? 'Shared!'
+                                  : hasSharedToLinkedIn
+                                    ? 'Already Shared'
+                                    : 'Share on LinkedIn'}
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              variant="outlined"
+                              onClick={handleCancel}
+                              sx={{
+                                borderColor: GREEN_MAIN,
+                                color: GREEN_MAIN,
+                                '&:hover': {
+                                  borderColor: GREEN_MAIN,
+                                  backgroundColor: 'rgba(0, 255, 157, 0.1)'
+                                }
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              variant="contained"
+                              onClick={handleSave}
+                              sx={{
+                                background: GREEN_MAIN,
+                                color: 'black',
+                                '&:hover': {
+                                  background: 'rgba(0, 255, 157, 0.8)',
+                                }
+                              }}
+                            >
+                              Save
+                            </Button>
+                          </>
+                        )}
+                      </Box>
+                    </Box>
+
+                    {/* Job Details */}
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="h6" sx={{ color: GREEN_MAIN, mb: 2 }}>
+                        Job Details
+                      </Typography>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <LocationOnIcon sx={{ color: GREEN_MAIN, fontSize: 20 }} />
+                          <Typography variant="body2" sx={{ color: 'black' }}>
+                            {generatedJob.jobDetails.location}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <AttachMoneyIcon sx={{ color: GREEN_MAIN, fontSize: 20 }} />
+                          <Typography variant="body2" sx={{ color: 'black' }}>
+                            {generatedJob.jobDetails.salary.currency}{generatedJob.jobDetails.salary.min.toLocaleString()} - {generatedJob.jobDetails.salary.currency}{generatedJob.jobDetails.salary.max.toLocaleString()}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <WorkIcon sx={{ color: GREEN_MAIN, fontSize: 20 }} />
+                          <Typography variant="body2" sx={{ color: 'black' }}>
+                            {generatedJob.jobDetails.employmentType}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <TrendingUpIcon sx={{ color: GREEN_MAIN, fontSize: 20 }} />
+                          <Typography variant="body2" sx={{ color: 'black' }}>
+                            {generatedJob.jobDetails.experienceLevel}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+
+                    {/* Required Skills */}
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="h6" sx={{ color: GREEN_MAIN, mb: 2 }}>
+                        Required Skills
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {generatedJob.skillAnalysis.requiredSkills.map((skill: any, index: number) => (
+                          <SkillChip
+                            key={index}
+                            label={`${skill.name} (${getExperienceLevelFromNumber(skill.level)})`}
+                            sx={{ mb: 1 }}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+
+                    {/* Description */}
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="h6" sx={{ color: GREEN_MAIN, mb: 2 }}>
+                        Description
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'black', lineHeight: 1.6 }}>
+                        {generatedJob.jobDetails.description}
+                      </Typography>
+                    </Box>
+
+                    {/* Requirements */}
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="h6" sx={{ color: GREEN_MAIN, mb: 2 }}>
+                        Requirements
+                      </Typography>
+                      <Box component="ul" sx={{ pl: 2, color: 'black' }}>
+                        {generatedJob.jobDetails.requirements.map((req: string, index: number) => (
+                          <Typography key={index} component="li" variant="body2" sx={{ mb: 1 }}>
+                            {req}
+                          </Typography>
+                        ))}
+                      </Box>
+                    </Box>
+
+                    {/* Responsibilities */}
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="h6" sx={{ color: GREEN_MAIN, mb: 2 }}>
+                        Responsibilities
+                      </Typography>
+                      <Box component="ul" sx={{ pl: 2, color: 'black' }}>
+                        {generatedJob.jobDetails.responsibilities.map((resp: string, index: number) => (
+                          <Typography key={index} component="li" variant="body2" sx={{ mb: 1 }}>
+                            {resp}
+                          </Typography>
+                        ))}
+                      </Box>
+                    </Box>
+
+                    {/* Save Button */}
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      onClick={saveJob}
+                      disabled={isSaving}
+                      startIcon={isSaving ? <CircularProgress size={20} /> : <SaveIcon />}
+                      sx={{
+                        background: GREEN_MAIN,
+                        color: 'black',
+                        mt: 2,
+                        '&:hover': {
+                          background: 'rgba(0, 255, 157, 0.8)',
+                        }
+                      }}
+                    >
+                      {isSaving ? 'Saving...' : 'Save Job Post'}
+                    </Button>
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          </Box>
+        );
+      case 1:
         return (
           <Box sx={{ flex: 1, height: '100%', position: 'relative' }}>
             <ReactFlow
@@ -759,7 +1541,7 @@ Ready to customize the content or add more triggers?`
             )}
           </Box>
         );
-      case 1:
+      case 2:
         return (
           <Box sx={{ flex: 1, p: 3, overflow: 'auto' }}>
             <Typography variant="h5" sx={{ mb: 3, color: '#1f2937' }}>
@@ -769,25 +1551,6 @@ Ready to customize the content or add more triggers?`
               Personalize your avatar to represent your brand in the sequence. This avatar will be used in all communications.
             </Typography>
               <AvatarCustomizer />
-          </Box>
-        );
-      case 2:
-        return (
-          <Box sx={{ flex: 1, p: 3 }}>
-            <Typography variant="h5" sx={{ mb: 3, color: '#1f2937' }}>
-              Sending Options
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 3, color: '#6b7280' }}>
-              Configure how and when your sequence will be sent to prospects.
-            </Typography>
-            <Paper sx={{ p: 3, maxWidth: 600 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Sending Configuration
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                Sending options configuration will be implemented here.
-              </Typography>
-            </Paper>
           </Box>
         );
       case 3:
@@ -845,7 +1608,7 @@ Ready to customize the content or add more triggers?`
       </Header>
 
       <MainContent>
-        {activeStep === 0 && (
+        {activeStep === 1 && (
           <Sidebar>
             {menuItems.map((item) => {
               const IconComponent = item.icon;
