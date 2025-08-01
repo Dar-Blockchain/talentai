@@ -29,6 +29,7 @@ const repoAnalyzerRouter = require("./routes/repoAnalyzerRouter");
 const notificationRouter = require("./routes/notificationRouter");
 const imageRouter = require("./routes/imageRouter");
 const postStepsRouter = require("./routes/postStepsRouter");
+const candidatePostStepProgressRouter = require("./routes/candidatePostStepProgressRouter");
 
 require("dotenv").config();
 
@@ -75,6 +76,7 @@ app.use("/repo-analyzer", repoAnalyzerRouter);
 app.use("/notification", notificationRouter);
 app.use("/image", imageRouter);
 app.use("/post-steps", postStepsRouter);
+app.use("/candidate-progress", candidatePostStepProgressRouter);
 
 app.get("/some-route", (req, res) => {
   res.json("Route accessible");
