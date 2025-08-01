@@ -14,7 +14,7 @@ interface FBXAvatarProps {
     accessories?: string;
     skin?: string;
   };
-  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian' | 'alex' | 'jaaf';
+  sindaCategory?: 'sinda1' | 'sinda2' | 'japan' | 'tunisian' | 'alex' | 'jaaf';
   sinda1AvatarType?: 'dressproblond' | 'winterblond' | 'problond';
   sinda2AvatarType?: 'dressproblack' | 'problack' | 'winterblack';
   japanAvatarType?: 'casualjapan' | 'projapan' | 'winterjapan';
@@ -57,7 +57,7 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
     accessories?: string;
     skin?: string;
   };
-  sindaCategory?: 'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian' | 'alex' | 'jaaf';
+  sindaCategory?: 'sinda1' | 'sinda2' | 'japan' | 'tunisian' | 'alex' | 'jaaf';
   sinda1AvatarType?: 'dressproblond' | 'winterblond' | 'problond';
   sinda2AvatarType?: 'dressproblack' | 'problack' | 'winterblack';
   japanAvatarType?: 'casualjapan' | 'projapan' | 'winterjapan';
@@ -108,9 +108,6 @@ function FBXModel({ clothingColor = '#4A90E2', selectedOutfit, sindaCategory = '
              avatarPath = '/Avatars/dressproblack.fbx';
          }
          break;
-             case 'sinda3':
-        avatarPath = '/Avatars/final.fbx';
-        break;
       case 'japan':
         // Japan has multiple options
         switch (japanAvatarType) {

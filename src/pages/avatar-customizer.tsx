@@ -91,6 +91,26 @@ const categories = [
   },
 ];
 
+// Avatar names mapping
+const avatarNames = {
+  sinda1: 'Emma',
+  sinda2: 'Sarah',
+  japan: 'Yuki',
+  tunisian: 'Amina',
+  alex: 'Alex',
+  jaaf: 'Jaaf'
+};
+
+  // Avatar roles mapping
+  const avatarRoles = {
+    sinda1: 'RH',
+    sinda2: 'Responsable technique',
+    japan: 'Marketing',
+    tunisian: 'Coordinator',
+    alex: 'Business',
+    jaaf: 'Responsable soft skill'
+  };
+
 export default function AvatarCustomizer() {
     const router = useRouter();
     const theme = useTheme();
@@ -107,7 +127,7 @@ export default function AvatarCustomizer() {
     const [customShoesColor, setCustomShoesColor] = useState('#000000');
     const [customSkinColor, setCustomSkinColor] = useState('#FFDBB4');
     const [isUpdatingOutfit, setIsUpdatingOutfit] = useState(false);
-  const [selectedSindaCategory, setSelectedSindaCategory] = useState<'sinda1' | 'sinda2' | 'sinda3' | 'japan' | 'tunisian' | 'alex' | 'jaaf'>('sinda1'); // 'sinda1', 'sinda2', 'sinda3', 'japan', 'tunisian', 'alex', or 'jaaf'
+  const [selectedSindaCategory, setSelectedSindaCategory] = useState<'sinda1' | 'sinda2' | 'japan' | 'tunisian' | 'alex' | 'jaaf'>('sinda1'); // 'sinda1', 'sinda2', 'japan', 'tunisian', 'alex', or 'jaaf'
   const [selectedSinda1Avatar, setSelectedSinda1Avatar] = useState<'dressproblond' | 'winterblond' | 'problond'>('dressproblond'); // 'dressproblond', 'winterblond', or 'problond' for Sinda 1
   const [selectedSinda2Avatar, setSelectedSinda2Avatar] = useState<'dressproblack' | 'problack' | 'winterblack'>('dressproblack'); // 'dressproblack', 'problack', or 'winterblack' for Sinda 2
   const [selectedJapanAvatar, setSelectedJapanAvatar] = useState<'casualjapan' | 'projapan' | 'winterjapan'>('casualjapan'); // 'casualjapan', 'projapan', or 'winterjapan' for Japan
@@ -621,7 +641,7 @@ export default function AvatarCustomizer() {
                     mb: { xs: 1.5, md: 2 },
                     fontSize: { xs: '0.85rem', md: '0.9rem' }
                   }}>
-                    Sinda Category:
+                    Choose Avatar:
                   </Typography>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.8, md: 1 } }}>
                     <Button
@@ -634,7 +654,7 @@ export default function AvatarCustomizer() {
                       }}
                       sx={{
                         justifyContent: 'flex-start',
-                        height: { xs: '36px', md: '40px' },
+                        height: { xs: '48px', md: '52px' },
                         fontSize: { xs: '0.8rem', md: '0.85rem' },
                         background: selectedSindaCategory === 'sinda1'
                           ? 'linear-gradient(45deg, #FF69B4, #FF1493)'
@@ -650,7 +670,14 @@ export default function AvatarCustomizer() {
                         },
                       }}
                     >
-                      Sinda 1
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
+                        <Typography variant="body2" sx={{ fontSize: 'inherit', fontWeight: 'bold' }}>
+                          {avatarNames.sinda1}
+                        </Typography>
+                        <Typography variant="caption" sx={{ fontSize: '0.7rem', opacity: 0.8 }}>
+                          {avatarRoles.sinda1}
+                        </Typography>
+                      </Box>
                     </Button>
                     <Button
                       size="medium"
@@ -662,7 +689,7 @@ export default function AvatarCustomizer() {
                       }}
                       sx={{
                         justifyContent: 'flex-start',
-                        height: { xs: '36px', md: '40px' },
+                        height: { xs: '48px', md: '52px' },
                         fontSize: { xs: '0.8rem', md: '0.85rem' },
                         background: selectedSindaCategory === 'sinda2'
                           ? 'linear-gradient(45deg, #4CAF50, #45a049)'
@@ -678,36 +705,15 @@ export default function AvatarCustomizer() {
                         },
                       }}
                     >
-                      Sinda 2
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
+                        <Typography variant="body2" sx={{ fontSize: 'inherit', fontWeight: 'bold' }}>
+                          {avatarNames.sinda2}
+                        </Typography>
+                        <Typography variant="caption" sx={{ fontSize: '0.7rem', opacity: 0.8 }}>
+                          {avatarRoles.sinda2}
+                        </Typography>
+                      </Box>
                     </Button>
-                    {/* <Button
-                      size="medium"
-                      variant={selectedSindaCategory === 'sinda3' ? "contained" : "outlined"}
-                      onClick={() => {
-                        setSelectedSindaCategory('sinda3');
-                        setIsUpdatingOutfit(true);
-                        setTimeout(() => setIsUpdatingOutfit(false), 500);
-                      }}
-                              sx={{
-                        justifyContent: 'flex-start',
-                        height: { xs: '36px', md: '40px' },
-                        fontSize: { xs: '0.8rem', md: '0.85rem' },
-                        background: selectedSindaCategory === 'sinda3'
-                          ? 'linear-gradient(45deg, #2196F3, #1976D2)'
-                          : 'transparent',
-                        border: selectedSindaCategory === 'sinda3'
-                          ? 'none'
-                          : '1px solid rgba(255,255,255,0.3)',
-                        color: selectedSindaCategory === 'sinda3' ? 'white' : 'rgba(255,255,255,0.8)',
-                                '&:hover': {
-                          background: selectedSindaCategory === 'sinda3'
-                            ? 'linear-gradient(45deg, #1976D2, #2196F3)'
-                            : 'rgba(255,255,255,0.1)',
-                        },
-                      }}
-                    >
-                      Sinda 3
-                    </Button> */}
                     <Button
                       size="medium"
                       variant={selectedSindaCategory === 'japan' ? "contained" : "outlined"}
@@ -718,7 +724,7 @@ export default function AvatarCustomizer() {
                       }}
                                   sx={{
                         justifyContent: 'flex-start',
-                        height: { xs: '36px', md: '40px' },
+                        height: { xs: '48px', md: '52px' },
                         fontSize: { xs: '0.8rem', md: '0.85rem' },
                         background: selectedSindaCategory === 'japan'
                           ? 'linear-gradient(45deg, #FF5722, #E64A19)'
@@ -734,7 +740,14 @@ export default function AvatarCustomizer() {
                         },
                       }}
                                         >
-                      Japan
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
+                        <Typography variant="body2" sx={{ fontSize: 'inherit', fontWeight: 'bold' }}>
+                          {avatarNames.japan}
+                        </Typography>
+                        <Typography variant="caption" sx={{ fontSize: '0.7rem', opacity: 0.8 }}>
+                          {avatarRoles.japan}
+                        </Typography>
+                      </Box>
                     </Button>
                     <Button
                       size="medium"
@@ -746,7 +759,7 @@ export default function AvatarCustomizer() {
                       }}
                       sx={{
                         justifyContent: 'flex-start',
-                        height: { xs: '36px', md: '40px' },
+                        height: { xs: '48px', md: '52px' },
                         fontSize: { xs: '0.8rem', md: '0.85rem' },
                         background: selectedSindaCategory === 'tunisian'
                           ? 'linear-gradient(45deg, #8BC34A, #689F38)'
@@ -762,7 +775,14 @@ export default function AvatarCustomizer() {
                         },
                       }}
                     >
-                      Tunisian
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
+                        <Typography variant="body2" sx={{ fontSize: 'inherit', fontWeight: 'bold' }}>
+                          {avatarNames.tunisian}
+                        </Typography>
+                        <Typography variant="caption" sx={{ fontSize: '0.7rem', opacity: 0.8 }}>
+                          {avatarRoles.tunisian}
+                        </Typography>
+                      </Box>
                     </Button>
 
                     <Button
@@ -775,7 +795,7 @@ export default function AvatarCustomizer() {
                       }}
                       sx={{
                         justifyContent: 'flex-start',
-                        height: { xs: '36px', md: '40px' },
+                        height: { xs: '48px', md: '52px' },
                         fontSize: { xs: '0.8rem', md: '0.85rem' },
                         background: selectedSindaCategory === 'alex'
                           ? 'linear-gradient(45deg, #3F51B5, #303F9F)'
@@ -791,7 +811,14 @@ export default function AvatarCustomizer() {
                         },
                       }}
                     >
-                      Alex
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
+                        <Typography variant="body2" sx={{ fontSize: 'inherit', fontWeight: 'bold' }}>
+                          {avatarNames.alex}
+                        </Typography>
+                        <Typography variant="caption" sx={{ fontSize: '0.7rem', opacity: 0.8 }}>
+                          {avatarRoles.alex}
+                        </Typography>
+                      </Box>
                     </Button>
                     <Button
                       size="medium"
@@ -803,7 +830,7 @@ export default function AvatarCustomizer() {
                       }}
                       sx={{
                         justifyContent: 'flex-start',
-                        height: { xs: '36px', md: '40px' },
+                        height: { xs: '48px', md: '52px' },
                         fontSize: { xs: '0.8rem', md: '0.85rem' },
                         background: selectedSindaCategory === 'jaaf'
                           ? 'linear-gradient(45deg, #FF6B35, #F7931E)'
@@ -819,7 +846,14 @@ export default function AvatarCustomizer() {
                         },
                       }}
                     >
-                      Jaaf
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%' }}>
+                        <Typography variant="body2" sx={{ fontSize: 'inherit', fontWeight: 'bold' }}>
+                          {avatarNames.jaaf}
+                        </Typography>
+                        <Typography variant="caption" sx={{ fontSize: '0.7rem', opacity: 0.8 }}>
+                          {avatarRoles.jaaf}
+                        </Typography>
+                      </Box>
                     </Button>
                   </Box>
                 </Box>
@@ -833,7 +867,7 @@ export default function AvatarCustomizer() {
                       mb: { xs: 1.5, md: 2 },
                       fontSize: { xs: '0.8rem', md: '0.85rem' }
                     }}>
-                      Sinda 1 Style:
+                      {avatarNames.sinda1} Style:
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.8, md: 1 } }}>
                       <Button
@@ -933,7 +967,7 @@ export default function AvatarCustomizer() {
                       mb: { xs: 1.5, md: 2 },
                       fontSize: { xs: '0.8rem', md: '0.85rem' }
                     }}>
-                      Sinda 2 Style:
+                      {avatarNames.sinda2} Style:
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.8, md: 1 } }}>
                       <Button
@@ -1033,7 +1067,7 @@ export default function AvatarCustomizer() {
                       mb: { xs: 1.5, md: 2 },
                       fontSize: { xs: '0.8rem', md: '0.85rem' }
                     }}>
-                      Japan Style:
+                      {avatarNames.japan} Style:
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.8, md: 1 } }}>
                       <Button
@@ -1133,7 +1167,7 @@ export default function AvatarCustomizer() {
                       mb: { xs: 1.5, md: 2 },
                       fontSize: { xs: '0.8rem', md: '0.85rem' }
                     }}>
-                      Tunisian Style:
+                      {avatarNames.tunisian} Style:
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.8, md: 1 } }}>
                       <Button
@@ -1235,7 +1269,7 @@ export default function AvatarCustomizer() {
                       mb: { xs: 1.5, md: 2 },
                       fontSize: { xs: '0.8rem', md: '0.85rem' }
                     }}>
-                      Alex Style:
+                      {avatarNames.alex} Style:
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.8, md: 1 } }}>
                       <Button
@@ -1307,7 +1341,7 @@ export default function AvatarCustomizer() {
                       mb: { xs: 1.5, md: 2 },
                       fontSize: { xs: '0.8rem', md: '0.85rem' }
                     }}>
-                      Jaaf Style:
+                      {avatarNames.jaaf} Style:
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.8, md: 1 } }}>
                       <Button
