@@ -1,0 +1,18 @@
+{
+  "hederahacks": {
+    "hackathonName": "HederaHacks",
+    "startDate": "2024-07-01",
+    "deadline": "2024-07-07",
+    "maxTeamSize": 4,
+    "mustBeOriginal": true,
+    "demoRequired": true
+  },
+  "ethglobal": {
+    "hackathonName": "ETHGlobal",
+    "startDate": "2024-08-10",
+    "deadline": "2024-08-15",
+    "maxTeamSize": 5,
+    "mustBeOriginal": true,
+    "demoRequired": false
+  }
+}

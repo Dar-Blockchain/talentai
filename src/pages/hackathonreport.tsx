@@ -735,9 +735,9 @@ export default function hackathonreport() {
                   <Typography variant="h5" sx={{ color: '#02E2FF', fontWeight: 700, mb: 2 }}>
                     Technical Analysis
                   </Typography>
-                  <Typography variant="h6" sx={{ color: '#000', mb: 1 }}>
+                  {/* <Typography variant="h6" sx={{ color: '#000', mb: 1 }}>
                     Track: <b>{results.analysis.technicalData.track}</b>
-                  </Typography>
+                  </Typography> */}
                   <Typography variant="h6" sx={{ color: '#000', mb: 2 }}>
                     Overall Score: <b>{results.analysis.technicalData.overallScore}</b>
                   </Typography>

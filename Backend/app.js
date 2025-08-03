@@ -27,6 +27,8 @@ const interviewDetailsRouter = require("./routes/interviewDetailsRouter");
 const repoAnalyzerRouter = require("./routes/repoAnalyzerRouter");
 const notificationRouter = require("./routes/notificationRouter");
 const imageRouter = require("./routes/imageRouter");
+const postStepsRouter = require("./routes/postStepsRouter");
+const candidatePostStepProgressRouter = require("./routes/candidatePostStepProgressRouter");
 const hederaToolsRouter = require("./routes/hederaToolsRouter");
 
 require("dotenv").config();
@@ -72,6 +74,8 @@ app.use("/interviewDetails", interviewDetailsRouter);
 app.use("/repo-analyzer", repoAnalyzerRouter);
 app.use("/notification", notificationRouter);
 app.use("/image", imageRouter);
+app.use("/post-steps", postStepsRouter);
+app.use("/candidate-progress", candidatePostStepProgressRouter);
 app.use("/hedera-tools", hederaToolsRouter);
 
 app.get("/some-route", (req, res) => {

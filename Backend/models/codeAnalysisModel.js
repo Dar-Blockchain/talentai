@@ -84,7 +84,8 @@ const AnalysisSchema = new mongoose.Schema({
   coherence: CoherenceSchema,
   quality: QualitySchema,
   insights: [InsightSchema],
-  structure: StructureSchema
+  structure: StructureSchema,
+  overallScore: {type: Number}
 }, { _id: false });
 
 const CodeAnalysisSchema = new mongoose.Schema({

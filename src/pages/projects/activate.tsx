@@ -18,10 +18,10 @@ const ProjectActivatePage = () => {
   const { isAuthenticated, user } = useSelector(
     (state: RootState) => state.auth
   );
-  const { projectId, token } = router.query;
+  const { token } = router.query;
   const [projectName, setProjectName] = useState("Hackathon Project");
   const [mounted, setMounted] = useState(false);
-  const {loading, error, data} = useSelector(selectInvitationData);
+  const {loading, data} = useSelector(selectInvitationData);
   const [loadingJoin, setLoadingJoin] = useState<boolean>(false)
 
   useEffect(() => {
