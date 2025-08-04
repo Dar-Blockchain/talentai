@@ -23,6 +23,7 @@ import {
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import { Node } from 'reactflow';
 import FBXAvatar from '../components/FBXAvatar';
 
 // Clothing item types
@@ -111,11 +112,15 @@ const avatarRoles = {
   jaaf: 'Responsable soft skill'
 };
 
-export default function AvatarCustomizer() {
+interface AvatarCustomizerProps {
+  nodes?: Node[];
+}
+
+export default function AvatarCustomizer({ nodes = [] }: AvatarCustomizerProps) {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
+  
   const [selectedCategory, setSelectedCategory] = useState('tshirt');
   const [selectedItems, setSelectedItems] = useState<Record<string, string>>({
     tshirt: 'tshirt-1',
@@ -138,7 +143,12 @@ export default function AvatarCustomizer() {
   const [isNavbarCollapsed, setIsNavbarCollapsed] = useState(false);
   const [cameraAngle, setCameraAngle] = useState<'front' | 'side' | 'back' | 'full'>('front');
 
-
+  // Log nodes when they change for debugging
+  useEffect(() => {
+    if (nodes && nodes.length > 0) {
+      console.log('AvatarCustomizer received nodes:', nodes);
+    }
+  }, [nodes]);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
@@ -389,6 +399,9 @@ export default function AvatarCustomizer() {
             </Box>
           </Box>
 
+          {/* Sequence Nodes Information */}
+        
+
           <Box sx={{
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
@@ -632,8 +645,182 @@ export default function AvatarCustomizer() {
                   Avatar Selection
                 </Typography>
 
-                {/* Sinda Category Selection */}
-                <Box sx={{ mb: { xs: 2, md: 3 } }}>
+                {/* Node Avatars Section - Show avatars for each node */}
+                {nodes && nodes.length > 0 && (
+                  <Box sx={{ mb: { xs: 2, md: 3 } }}>
+                    <Typography variant="body2" sx={{
+                      color: 'rgba(255,255,255,0.8)',
+                      fontWeight: 'bold',
+                      mb: { xs: 1.5, md: 2 },
+                      fontSize: { xs: '0.85rem', md: '0.9rem' }
+                    }}>
+                      Node Avatars ({nodes.length} nodes):
+                    </Typography>
+                    <Box sx={{ 
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                      gap: { xs: 1, md: 1.5 },
+                      mb: 2
+                    }}>
+                      {nodes.map((node, index) => {
+                        // Assign avatars based on node content/type
+                        const getAvatarForNode = (node: any) => {
+                          const nodeContent = (node.data?.content || node.data?.label || node.data?.type || '').toLowerCase();
+                          const nodeId = (node.id || '').toLowerCase();
+                          
+                          // Check for interview-related keywords
+                          if (nodeContent.includes('interview') || nodeContent.includes('entretien') || 
+                              nodeContent.includes('rh') || nodeContent.includes('hr') ||
+                              nodeId.includes('interview') || nodeId.includes('rh')) {
+                            return 'sinda1'; // Emma for interviews
+                          }
+                          
+                          // Check for technical-related keywords
+                          if (nodeContent.includes('technical') || nodeContent.includes('technique') || 
+                              nodeContent.includes('code') || nodeContent.includes('dev') ||
+                              nodeContent.includes('programming') || nodeContent.includes('tech') ||
+                              nodeId.includes('technical') || nodeId.includes('tech')) {
+                            return 'sinda2'; // Sarah for technical
+                          }
+                          
+                          // Check for marketing-related keywords
+                          if (nodeContent.includes('marketing') || nodeContent.includes('market') ||
+                              nodeContent.includes('promotion') || nodeContent.includes('campaign') ||
+                              nodeId.includes('marketing')) {
+                            return 'japan'; // Yuki for marketing
+                          }
+                          
+                          // Check for coordination/management keywords
+                          if (nodeContent.includes('coordination') || nodeContent.includes('manage') ||
+                              nodeContent.includes('coordinator') || nodeContent.includes('project') ||
+                              nodeId.includes('coord') || nodeId.includes('manage')) {
+                            return 'tunisian'; // Amina for coordination
+                          }
+                          
+                          // Check for business-related keywords
+                          if (nodeContent.includes('business') || nodeContent.includes('commercial') ||
+                              nodeContent.includes('sales') || nodeContent.includes('client') ||
+                              nodeId.includes('business') || nodeId.includes('sales')) {
+                            return 'alex'; // Alex for business
+                          }
+                          
+                          // Check for soft skills keywords
+                          if (nodeContent.includes('soft') || nodeContent.includes('skill') ||
+                              nodeContent.includes('communication') || nodeContent.includes('leadership') ||
+                              nodeId.includes('soft') || nodeId.includes('skill')) {
+                            return 'jaaf'; // Jaaf for soft skills
+                          }
+                          
+                          // Default assignment based on node type
+                          if (node.data?.type === 'start') return 'sinda1'; // Emma for start nodes
+                          if (node.data?.type === 'message') return 'sinda2'; // Sarah for message nodes
+                          if (node.data?.type === 'condition') return 'japan'; // Yuki for condition nodes
+                          if (node.data?.type === 'delay') return 'tunisian'; // Amina for delay nodes
+                          
+                          // Fallback to cycling through avatars
+                          const nodeAvatars = ['sinda1', 'sinda2', 'japan', 'tunisian', 'alex', 'jaaf'];
+                          return nodeAvatars[index % nodeAvatars.length];
+                        };
+                        
+                        const assignedAvatar = getAvatarForNode(node);
+                        
+                        return (
+                          <Box key={node.id} sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            p: 1.5,
+                            background: selectedSindaCategory === assignedAvatar 
+                              ? 'linear-gradient(45deg, rgba(255,105,180,0.2), rgba(255,20,147,0.2))'
+                              : 'rgba(255,255,255,0.05)',
+                            border: selectedSindaCategory === assignedAvatar
+                              ? '2px solid #FF69B4'
+                              : '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: 2,
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                              background: 'rgba(255,105,180,0.1)',
+                              border: '1px solid #FF69B4',
+                              transform: 'translateY(-2px)'
+                            }
+                          }}
+                          onClick={() => {
+                            setSelectedSindaCategory(assignedAvatar as any);
+                            setIsUpdatingOutfit(true);
+                            setTimeout(() => setIsUpdatingOutfit(false), 500);
+                          }}
+                          >
+                            {/* Avatar Preview Circle */}
+                            <Box sx={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: '50%',
+                              background: node.data?.type === 'start' ? 'linear-gradient(45deg, #4CAF50, #45a049)' : 
+                                         node.data?.type === 'message' ? 'linear-gradient(45deg, #2196F3, #1976D2)' :
+                                         node.data?.type === 'condition' ? 'linear-gradient(45deg, #FF9800, #F57C00)' :
+                                         node.data?.type === 'delay' ? 'linear-gradient(45deg, #9C27B0, #7B1FA2)' : 
+                                         'linear-gradient(45deg, #607D8B, #455A64)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              mb: 1,
+                              fontSize: '1.2rem',
+                              color: 'white',
+                              fontWeight: 'bold',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                            }}>
+                              {avatarNames[assignedAvatar as keyof typeof avatarNames]?.charAt(0) || (index + 1)}
+                            </Box>
+                            
+                            {/* Avatar Name */}
+                            <Typography variant="caption" sx={{
+                              color: 'white',
+                              fontWeight: 'bold',
+                              fontSize: '0.7rem',
+                              textAlign: 'center',
+                              mb: 0.5
+                            }}>
+                              {avatarNames[assignedAvatar as keyof typeof avatarNames]}
+                            </Typography>
+                            
+                            {/* Avatar Role */}
+                            <Typography variant="caption" sx={{
+                              color: 'rgba(255,255,255,0.8)',
+                              fontSize: '0.6rem',
+                              textAlign: 'center',
+                              mb: 0.5,
+                              fontWeight: 'medium',
+                              background: 'rgba(255,255,255,0.1)',
+                              px: 1,
+                              py: 0.25,
+                              borderRadius: 1,
+                              lineHeight: 1.2
+                            }}>
+                              {avatarRoles[assignedAvatar as keyof typeof avatarRoles]}
+                            </Typography>
+                            
+                            {/* Node Type */}
+                            <Typography variant="caption" sx={{
+                              color: 'rgba(255,255,255,0.6)',
+                              fontSize: '0.55rem',
+                              textAlign: 'center',
+                              mb: 0.5
+                            }}>
+                              Node {index + 1}
+                            </Typography>
+                            
+                            {/* Node Type Badge */}
+                           
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Individual Avatar Selection */}
+                {/* <Box sx={{ mb: { xs: 2, md: 3 } }}>
                   <Typography variant="body2" sx={{
                     color: 'rgba(255,255,255,0.8)',
                     fontWeight: 'bold',
@@ -855,7 +1042,7 @@ export default function AvatarCustomizer() {
                       </Box>
                     </Button>
                   </Box>
-                </Box>
+                </Box> */}
 
                 {/* Sinda 1 Style Selection */}
                 {selectedSindaCategory === 'sinda1' && (

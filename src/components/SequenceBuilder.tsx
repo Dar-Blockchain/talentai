@@ -1003,7 +1003,7 @@ Ready to customize the content or add more triggers?`
             <Typography variant="body1" sx={{ mb: 3, color: '#6b7280' }}>
               Personalize your avatar to represent your brand in the sequence. This avatar will be used in all communications.
             </Typography>
-              <AvatarCustomizer />
+              <AvatarCustomizer nodes={nodes} />
           </Box>
         );
       case 4:
