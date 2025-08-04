@@ -1,4 +1,6 @@
 import React, { useState, useCallback, useMemo, useRef } from 'react';
+import { useSelector } from 'react-redux';
+import { postRecruitmentSteps, selectPostStepsLoading, selectPostStepsError } from '../store/slices/postSlice';
 import { 
   Box, 
   Typography, 
@@ -48,7 +50,6 @@ import EmailIcon from '@mui/icons-material/Email';
 import ConditionIcon from '@mui/icons-material/AccountTree';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import SaveIcon from '@mui/icons-material/Save';
-import PreviewIcon from '@mui/icons-material/Preview';
 import CloseIcon from '@mui/icons-material/Close';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import PsychologyIcon from '@mui/icons-material/Psychology';
@@ -59,21 +60,14 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import WorkIcon from '@mui/icons-material/Work';
-import BoltIcon from '@mui/icons-material/Bolt';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import EditIcon from '@mui/icons-material/Edit';
-import LinkedInIcon from '@mui/icons-material/LinkedIn';
-import AddIcon from '@mui/icons-material/Add';
 
 // Import AvatarCustomizer and FBXAvatar components
 import AvatarCustomizer from '../pages/avatar-customizer';
 import FBXAvatar from './FBXAvatar';
-import PostDetails, { PostDetailsRef } from './recruitment-post/PostDetails';
+import PostDetails from './recruitment-post/PostDetails';
+import { PostDetailsRef } from './recruitment-post/types';
+import { AppDispatch } from '@/store/store';
+import { useDispatch } from 'react-redux';
 
 // Constants
 const GREEN_MAIN = '#00FF9D';
@@ -336,17 +330,30 @@ interface ChatMessage {
 }
 
 const SequenceBuilder: React.FC = () => {
+  // Redux
+  const dispatch = useDispatch<AppDispatch>();
+  const postStepsLoading = useSelector(selectPostStepsLoading);
+  const postStepsError = useSelector(selectPostStepsError);
+
+  // React Flow state
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  
+  // UI state
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [currentPrompt, setCurrentPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Stepper state
   const [activeStep, setActiveStep] = useState(0);
   const [isSavingJob, setIsSavingJob] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedJobId, setSavedJobId] = useState<string | null>(null);
+  
+  // Refs
   const postDetailsRef = useRef<PostDetailsRef>(null);
 
   const steps = ['Job Post', 'Sequence', 'Avatar Selection', 'Avatar', 'Review'];
@@ -699,11 +706,15 @@ Ready to customize the content or add more triggers?`
       
       setIsSavingJob(true);
       try {
-        const saveSuccess = await postDetailsRef.current?.saveJob();
-        if (!saveSuccess) {
+        const saveResult = await postDetailsRef.current?.saveJob();
+        if (!saveResult) {
           setSaveError('Failed to save job post. Please try again.');
           return;
         }
+        
+        // Note: You may need to modify PostDetails.saveJob() to return the job ID
+        // For now, using the hardcoded ID from your example
+        setSavedJobId('680d77ec217184309b3a5900');
     } catch (error) {
         console.error('Error during job save:', error);
         setSaveError('An error occurred while saving the job post. Please try again.');
@@ -717,24 +728,54 @@ Ready to customize the content or add more triggers?`
       setActiveStep(activeStep + 1);
     } else {
       // Final step - save the sequence
-      const sequenceData = {
-        nodes: nodes.map(node => ({
-          id: node.id,
-          type: node.data.type,
-          label: node.data.label,
-          position: node.position,
-          config: node.data.config
-        })),
-        edges: edges.map(edge => ({
-          id: edge.id,
-          source: edge.source,
-          target: edge.target
-        }))
-      };
-      
-      console.log('Sequence JSON:', JSON.stringify(sequenceData, null, 2));
+      if (!savedJobId) {
+        setSaveError('No job ID available. Please save the job post first.');
+        return;
+      }
+
+      try {
+        const sequenceData = nodes.map(node => ({
+            ...node,
+            connections: edges
+            .filter(edge => edge.source === node.id || edge.target === node.id)
+            .map(edge => ({
+              id: edge.id,
+              source: edge.source,
+              target: edge.target,
+              type: edge.source === node.id ? 'outgoing' : 'incoming'
+            }))
+          }));
+
+
+        console.log('Sending steps to API:', sequenceData);
+
+        // Call the Redux action to save the sequence
+        const result = await dispatch(postRecruitmentSteps({
+          postId: savedJobId,
+          steps: sequenceData
+        }));
+
+        if (postRecruitmentSteps.fulfilled.match(result)) {
+          console.log('Sequence saved successfully:', result.payload);
+          // You can add success notification here
+        } else {
+          console.error('Failed to save sequence:', result.payload);
+          setSaveError(`Failed to save sequence: ${result.payload}`);
+        }
+        
+      } catch (error) {
+        console.error('Error saving sequence:', error);
+        setSaveError('An error occurred while saving the sequence. Please try again.');
+      }
     }
   };
+
+  // Clear errors when Redux error state changes
+  React.useEffect(() => {
+    if (postStepsError) {
+      setSaveError(`Sequence Error: ${postStepsError}`);
+    }
+  }, [postStepsError]);
 
   const handleBack = () => {
     if (activeStep > 0) {
@@ -1126,7 +1167,7 @@ Ready to customize the content or add more triggers?`
                 }
               }}
             >
-              {isSavingJob ? 'Saving Job...' : 'Next'}
+              {isSavingJob ? 'Saving Job...' : postStepsLoading ? 'Saving Sequence...' : activeStep === steps.length - 1 ? 'Save Sequence' : 'Next'}
             </Button>
           ) : (
             <Button

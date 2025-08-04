@@ -16,6 +16,7 @@ import bidReducer from './slices/bidSlice';
 import todoReducer from './slices/todoSlice';
 import userReducer from './slices/userSlice';
 import projectReducer from './slices/projectSlice';
+import postReducer from './slices/postSlice';
 
 const rootReducer = combineReducers({
   user: userReducer,
@@ -24,7 +25,8 @@ const rootReducer = combineReducers({
   profile: profileReducer,
   bid: bidReducer,
   todo: todoReducer,
-  project: projectReducer
+  project: projectReducer,
+  post: postReducer
 });
 
 const persistConfig = {
