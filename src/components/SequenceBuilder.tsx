@@ -21,7 +21,9 @@ import {
   InputAdornment,
   Dialog,
   DialogTitle,
-  DialogContent
+  DialogContent,
+  Card,
+  Avatar
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import ReactFlow, {
@@ -68,8 +70,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import AddIcon from '@mui/icons-material/Add';
 
-// Import AvatarCustomizer component
+// Import AvatarCustomizer and FBXAvatar components
 import AvatarCustomizer from '../pages/avatar-customizer';
+import FBXAvatar from './FBXAvatar';
 import PostDetails, { PostDetailsRef } from './recruitment-post/PostDetails';
 
 // Constants
@@ -346,7 +349,7 @@ const SequenceBuilder: React.FC = () => {
   const [saveError, setSaveError] = useState<string | null>(null);
   const postDetailsRef = useRef<PostDetailsRef>(null);
 
-  const steps = ['Job Post', 'Sequence', 'Avatar', 'Review'];
+  const steps = ['Job Post', 'Sequence', 'Avatar Selection', 'Avatar', 'Review'];
 
   // Define node types for React Flow
   const nodeTypes: NodeTypes = useMemo(() => ({ custom: CustomNode }), []);
@@ -817,6 +820,184 @@ Ready to customize the content or add more triggers?`
         return (
           <Box sx={{ flex: 1, p: 3, overflow: 'auto' }}>
             <Typography variant="h5" sx={{ mb: 3, color: '#1f2937' }}>
+              Choose Your Interview Avatars
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 4, color: '#6b7280' }}>
+              Select which AI avatars will conduct different parts of your interview process. Each avatar specializes in different areas and brings unique expertise to the assessment.
+            </Typography>
+            
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: 3 }}>
+              {/* Emma - HR Specialist */}
+              <Card sx={{ p: 3, border: '2px solid', borderColor: '#e3f2fd', '&:hover': { borderColor: '#1976d2', transform: 'translateY(-2px)' }, transition: 'all 0.3s ease' }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2, gap: 2 }}>
+                  <Box sx={{ width: 180, height: 180, flexShrink: 0, borderRadius: '50%', overflow: 'hidden', border: '2px solid #e3f2fd' }}>
+                    <FBXAvatar
+                      sindaCategory="sinda1"
+                      sinda1AvatarType="dressproblond"
+                      cameraAngle="front"
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1f2937', mb: 1 }}>Emma</Typography>
+                    <Chip label="HR Specialist" size="small" sx={{ bgcolor: '#e3f2fd', color: '#1976d2', mb: 2 }} />
+                    <Typography variant="body2" sx={{ color: '#6b7280', mb: 2 }}>
+                      Emma is your dedicated HR specialist who excels at cultural fit assessment, company values alignment, and behavioral interviews.
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      <Chip label="Cultural Fit" size="small" variant="outlined" />
+                      <Chip label="Behavioral" size="small" variant="outlined" />
+                      <Chip label="Company Values" size="small" variant="outlined" />
+                    </Box>
+                  </Box>
+                </Box>
+              </Card>
+
+              {/* Sarah - Technical Manager */}
+              <Card sx={{ p: 3, border: '2px solid', borderColor: '#f3e5f5', '&:hover': { borderColor: '#9c27b0', transform: 'translateY(-2px)' }, transition: 'all 0.3s ease' }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2, gap: 2 }}>
+                  <Box sx={{ width: 180, height: 180, flexShrink: 0, borderRadius: '50%', overflow: 'hidden', border: '2px solid #f3e5f5' }}>
+                    <FBXAvatar
+                      sindaCategory="sinda2"
+                      sinda2AvatarType="dressproblack"
+                      cameraAngle="front"
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1f2937', mb: 1 }}>Sarah</Typography>
+                    <Chip label="Technical Manager" size="small" sx={{ bgcolor: '#f3e5f5', color: '#9c27b0', mb: 2 }} />
+                    <Typography variant="body2" sx={{ color: '#6b7280', mb: 2 }}>
+                      Sarah brings deep technical expertise to evaluate coding skills, system design capabilities, and technical problem-solving approaches.
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      <Chip label="Coding Skills" size="small" variant="outlined" />
+                      <Chip label="System Design" size="small" variant="outlined" />
+                      <Chip label="Problem Solving" size="small" variant="outlined" />
+                    </Box>
+                  </Box>
+                </Box>
+              </Card>
+
+              {/* Yuki - Marketing Expert */}
+              <Card sx={{ p: 3, border: '2px solid', borderColor: '#fff3e0', '&:hover': { borderColor: '#ff9800', transform: 'translateY(-2px)' }, transition: 'all 0.3s ease' }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2, gap: 2 }}>
+                  <Box sx={{ width: 180, height: 180, flexShrink: 0, borderRadius: '50%', overflow: 'hidden', border: '2px solid #fff3e0' }}>
+                    <FBXAvatar
+                      sindaCategory="japan"
+                      japanAvatarType="casualjapan"
+                      cameraAngle="front"
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1f2937', mb: 1 }}>Yuki</Typography>
+                    <Chip label="Marketing Expert" size="small" sx={{ bgcolor: '#fff3e0', color: '#ff9800', mb: 2 }} />
+                    <Typography variant="body2" sx={{ color: '#6b7280', mb: 2 }}>
+                      Yuki specializes in creative thinking, brand awareness, campaign strategy, and market analysis. Ideal for marketing roles.
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      <Chip label="Creative Strategy" size="small" variant="outlined" />
+                      <Chip label="Brand Awareness" size="small" variant="outlined" />
+                      <Chip label="Market Analysis" size="small" variant="outlined" />
+                    </Box>
+                  </Box>
+                </Box>
+              </Card>
+
+              {/* Amina - Project Coordinator */}
+              <Card sx={{ p: 3, border: '2px solid', borderColor: '#e8f5e8', '&:hover': { borderColor: '#4caf50', transform: 'translateY(-2px)' }, transition: 'all 0.3s ease' }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2, gap: 2 }}>
+                  <Box sx={{ width: 180, height: 180, flexShrink: 0, borderRadius: '50%', overflow: 'hidden', border: '2px solid #e8f5e8' }}>
+                    <FBXAvatar
+                      sindaCategory="tunisian"
+                      tunisianAvatarType="casualtunisian"
+                      cameraAngle="front"
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1f2937', mb: 1 }}>Amina</Typography>
+                                         <Chip label="Project Coordinator" size="small" sx={{ bgcolor: '#e8f5e8', color: '#4caf50', mb: 2 }} />
+                    <Typography variant="body2" sx={{ color: '#6b7280', mb: 2 }}>
+                      Amina excels at project management, team coordination, and organizational skills assessment. Perfect for leadership positions.
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      <Chip label="Project Management" size="small" variant="outlined" />
+                      <Chip label="Team Leadership" size="small" variant="outlined" />
+                      <Chip label="Organization" size="small" variant="outlined" />
+                    </Box>
+                  </Box>
+                </Box>
+              </Card>
+
+              {/* Alex - Business Analyst */}
+              <Card sx={{ p: 3, border: '2px solid', borderColor: '#f1f8e9', '&:hover': { borderColor: '#689f38', transform: 'translateY(-2px)' }, transition: 'all 0.3s ease' }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2, gap: 2 }}>
+                  <Box sx={{ width: 180, height: 180, flexShrink: 0, borderRadius: '50%', overflow: 'hidden', border: '2px solid #f1f8e9' }}>
+                    <FBXAvatar
+                      sindaCategory="alex"
+                      alexAvatarType="problondman"
+                      cameraAngle="front"
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1f2937', mb: 1 }}>Alex</Typography>
+                    <Chip label="Business Analyst" size="small" sx={{ bgcolor: '#f1f8e9', color: '#689f38', mb: 2 }} />
+                    <Typography variant="body2" sx={{ color: '#6b7280', mb: 2 }}>
+                      Alex focuses on business strategy, data analysis, and strategic thinking. Ideal for business development roles.
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      <Chip label="Business Strategy" size="small" variant="outlined" />
+                      <Chip label="Data Analysis" size="small" variant="outlined" />
+                      <Chip label="Strategic Thinking" size="small" variant="outlined" />
+                    </Box>
+                  </Box>
+                </Box>
+              </Card>
+
+              {/* Jaaf - Soft Skills Manager */}
+              <Card sx={{ p: 3, border: '2px solid', borderColor: '#fce4ec', '&:hover': { borderColor: '#e91e63', transform: 'translateY(-2px)' }, transition: 'all 0.3s ease' }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2, gap: 2 }}>
+                  <Box sx={{ width: 180, height: 180, flexShrink: 0, borderRadius: '50%', overflow: 'hidden', border: '2px solid #fce4ec' }}>
+                    <FBXAvatar
+                      sindaCategory="jaaf"
+                      jaafAvatarType="protunisianman"
+                      cameraAngle="front"
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#1f2937', mb: 1 }}>Jaaf</Typography>
+                    <Chip label="Soft Skills Manager" size="small" sx={{ bgcolor: '#fce4ec', color: '#e91e63', mb: 2 }} />
+                    <Typography variant="body2" sx={{ color: '#6b7280', mb: 2 }}>
+                      Jaaf specializes in soft skills evaluation including communication, teamwork, and emotional intelligence.
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      <Chip label="Communication" size="small" variant="outlined" />
+                      <Chip label="Teamwork" size="small" variant="outlined" />
+                      <Chip label="Emotional Intelligence" size="small" variant="outlined" />
+                    </Box>
+                  </Box>
+                </Box>
+              </Card>
+            </Box>
+
+            <Paper sx={{ p: 3, mt: 4, bgcolor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <Typography variant="h6" sx={{ mb: 2, color: '#1f2937' }}>
+                💡 How Avatar Selection Works
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#6b7280', mb: 2 }}>
+                Your sequence will automatically assign the most appropriate avatar based on the type of assessment or interview step. You can also manually specify which avatar to use for each step in your sequence.
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <Chip label="HR Interview → Emma" size="small" sx={{ bgcolor: '#e3f2fd' }} />
+                <Chip label="Technical Skills → Sarah" size="small" sx={{ bgcolor: '#f3e5f5' }} />
+                <Chip label="Soft Skills → Jaaf" size="small" sx={{ bgcolor: '#fce4ec' }} />
+                <Chip label="Business Role → Alex" size="small" sx={{ bgcolor: '#f1f8e9' }} />
+              </Box>
+            </Paper>
+          </Box>
+        );
+      case 3:
+        return (
+          <Box sx={{ flex: 1, p: 3, overflow: 'auto' }}>
+            <Typography variant="h5" sx={{ mb: 3, color: '#1f2937' }}>
               Customize Your Avatar
             </Typography>
             <Typography variant="body1" sx={{ mb: 3, color: '#6b7280' }}>
@@ -825,7 +1006,7 @@ Ready to customize the content or add more triggers?`
               <AvatarCustomizer />
           </Box>
         );
-      case 3:
+      case 4:
         return (
           <Box sx={{ flex: 1, p: 3 }}>
             <Typography variant="h5" sx={{ mb: 3, color: '#1f2937' }}>
