@@ -94,6 +94,47 @@ class PostStepsController {
     }
   }
 
+  // Ajouter des étapes à un post avec postId en paramètre
+  async addStepsToPost(req, res) {
+    try {
+      const { postId } = req.params;
+      const stepsData = req.body;
+      
+      // Ajouter le postId à chaque étape si pas déjà présent
+      const stepsWithPostId = Array.isArray(stepsData) 
+        ? stepsData.map(step => ({ ...step, postId }))
+        : [{ ...stepsData, postId }];
+      
+      const result = await postStepsService.createPostStep(stepsWithPostId);
+      
+      if (result.success) {
+        const isMultiple = Array.isArray(stepsData);
+        const message = isMultiple 
+          ? `${result.count} étapes ajoutées au post avec succès`
+          : 'Étape ajoutée au post avec succès';
+        
+        return res.status(201).json({
+          success: true,
+          message: message,
+          data: result.data,
+          count: result.count
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: 'Erreur lors de l\'ajout des étapes au post',
+          error: result.error
+        });
+      }
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Erreur serveur',
+        error: error.message
+      });
+    }
+  }
+
   // Récupérer toutes les étapes de post
   async getAllPostSteps(req, res) {
     try {
