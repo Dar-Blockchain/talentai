@@ -14,7 +14,6 @@ const socket = require("./socket");
 const authRouter = require("./routes/authRouter");
 const projectRouter = require("./routes/projectRouter");
 const dashboardRouter = require("./routes/dashboardRouter");
-const agentIARouter = require("./routes/agentIARouter");
 const profileRouter = require("./routes/profileRouter");
 const evaluationRouter = require("./routes/evaluationRouter");
 const linkedinPostRouter = require("./routes/linkedinPostRouter");
@@ -28,6 +27,9 @@ const interviewDetailsRouter = require("./routes/interviewDetailsRouter");
 const repoAnalyzerRouter = require("./routes/repoAnalyzerRouter");
 const notificationRouter = require("./routes/notificationRouter");
 const imageRouter = require("./routes/imageRouter");
+const postStepsRouter = require("./routes/postStepsRouter");
+const candidatePostStepProgressRouter = require("./routes/candidatePostStepProgressRouter");
+const hederaToolsRouter = require("./routes/hederaToolsRouter");
 
 require("dotenv").config();
 
@@ -62,7 +64,6 @@ app.use("/profiles", profileRouter);
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use("/evaluation", evaluationRouter);
 app.use("/linkedinPost", linkedinPostRouter);
-app.use("/api", agentIARouter);
 app.use("/feedback", feedbackRouter);
 app.use("/post", postRouter);
 app.use("/matching", matchingRoutes);
@@ -73,6 +74,9 @@ app.use("/interviewDetails", interviewDetailsRouter);
 app.use("/repo-analyzer", repoAnalyzerRouter);
 app.use("/notification", notificationRouter);
 app.use("/image", imageRouter);
+app.use("/post-steps", postStepsRouter);
+app.use("/candidate-progress", candidatePostStepProgressRouter);
+app.use("/hedera-tools", hederaToolsRouter);
 
 app.get("/some-route", (req, res) => {
   res.json("Route accessible");

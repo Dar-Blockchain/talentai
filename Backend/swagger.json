@@ -1194,6 +1194,412 @@
           }
         }
       }
+    },
+    "/hedera-agent/create-token": {
+      "post": {
+        "tags": ["Hedera Agent Kit"],
+        "summary": "Create Fungible Token",
+        "description": "Creates a new fungible token on Hedera using direct tool calls from Hedera Agent Kit",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name of the token",
+                    "example": "My Token"
+                  },
+                  "symbol": {
+                    "type": "string",
+                    "description": "Symbol of the token",
+                    "example": "MTK"
+                  },
+                  "decimals": {
+                    "type": "integer",
+                    "description": "Number of decimal places",
+                    "default": 2,
+                    "example": 2
+                  },
+                  "initialSupply": {
+                    "type": "integer",
+                    "description": "Initial supply of tokens",
+                    "default": 1000,
+                    "example": 1000
+                  },
+                  "treasuryAccount": {
+                    "type": "string",
+                    "description": "Treasury account ID (optional, defaults to configured account)",
+                    "example": "0.0.123456"
+                  }
+                },
+                "required": ["name", "symbol"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "tokenId": {
+                      "type": "string",
+                      "description": "Hedera Token ID",
+                      "example": "0.0.789012"
+                    },
+                    "transactionId": {
+                      "type": "string",
+                      "description": "Hedera Transaction ID",
+                      "example": "0.0.123456@1234567890.123456789"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Fungible token MTK created successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required parameters"
+          },
+          "401": {
+            "description": "Unauthorized - JWT token required"
+          },
+          "500": {
+            "description": "Internal server error - Hedera operation failed"
+          }
+        }
+      }
+    },
+    "/hedera-agent/create-topic": {
+      "post": {
+        "tags": ["Hedera Agent Kit"],
+        "summary": "Create Consensus Topic",
+        "description": "Creates a new consensus topic on Hedera using direct tool calls from Hedera Agent Kit",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "memo": {
+                    "type": "string",
+                    "description": "Optional memo for the topic",
+                    "example": "My topic for messages"
+                  },
+                  "adminKey": {
+                    "type": "string",
+                    "description": "Optional admin key for the topic",
+                    "example": "admin_key_here"
+                  },
+                  "submitKey": {
+                    "type": "string",
+                    "description": "Optional submit key for the topic",
+                    "example": "submit_key_here"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Topic created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "topicId": {
+                      "type": "string",
+                      "description": "Hedera Topic ID",
+                      "example": "0.0.345678"
+                    },
+                    "transactionId": {
+                      "type": "string",
+                      "description": "Hedera Transaction ID",
+                      "example": "0.0.123456@1234567890.123456789"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Consensus topic created successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - JWT token required"
+          },
+          "500": {
+            "description": "Internal server error - Hedera operation failed"
+          }
+        }
+      }
+    },
+    "/hedera-agent/submit-message": {
+      "post": {
+        "tags": ["Hedera Agent Kit"],
+        "summary": "Submit Topic Message",
+        "description": "Submits a message to an existing consensus topic using direct tool calls from Hedera Agent Kit",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "topicId": {
+                    "type": "string",
+                    "description": "ID of the consensus topic",
+                    "example": "0.0.345678"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Message to submit to the topic",
+                    "example": "Hello, Hedera!"
+                  }
+                },
+                "required": ["topicId", "message"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "transactionId": {
+                      "type": "string",
+                      "description": "Hedera Transaction ID",
+                      "example": "0.0.123456@1234567890.123456789"
+                    },
+                    "topicId": {
+                      "type": "string",
+                      "example": "0.0.345678"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Message submitted to topic successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing topicId or message"
+          },
+          "401": {
+            "description": "Unauthorized - JWT token required"
+          },
+          "500": {
+            "description": "Internal server error - Hedera operation failed"
+          }
+        }
+      }
+    },
+    "/hedera-agent/balance": {
+      "get": {
+        "tags": ["Hedera Agent Kit"],
+        "summary": "Get HBAR Balance",
+        "description": "Gets the HBAR balance for a specific account using direct tool calls from Hedera Agent Kit",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Hedera account ID to check balance for",
+            "example": "0.0.123456"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Balance retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "accountId": {
+                      "type": "string",
+                      "example": "0.0.123456"
+                    },
+                    "balance": {
+                      "type": "string",
+                      "description": "HBAR balance",
+                      "example": "100.50"
+                    },
+                    "unit": {
+                      "type": "string",
+                      "example": "HBAR"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Balance retrieved successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - accountId is required"
+          },
+          "401": {
+            "description": "Unauthorized - JWT token required"
+          },
+          "500": {
+            "description": "Internal server error - Hedera query failed"
+          }
+        }
+      }
+    },
+    "/hedera-agent/my-balance": {
+      "get": {
+        "tags": ["Hedera Agent Kit"],
+        "summary": "Get My HBAR Balance",
+        "description": "Gets the HBAR balance for the configured account using direct tool calls from Hedera Agent Kit",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Balance retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "accountId": {
+                      "type": "string",
+                      "example": "0.0.123456"
+                    },
+                    "balance": {
+                      "type": "string",
+                      "description": "HBAR balance",
+                      "example": "100.50"
+                    },
+                    "unit": {
+                      "type": "string",
+                      "example": "HBAR"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Your balance retrieved successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - JWT token required"
+          },
+          "500": {
+            "description": "Internal server error - Hedera query failed"
+          }
+        }
+      }
+    },
+    "/hedera-agent/tools": {
+      "get": {
+        "tags": ["Hedera Agent Kit"],
+        "summary": "Get Available Tools",
+        "description": "Returns information about available Hedera Agent Kit tools",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Tools information retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "tools": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "example": "create_fungible_token"
+                          },
+                          "description": {
+                            "type": "string",
+                            "example": "Creates a fungible token"
+                          },
+                          "parameters": {
+                            "type": "object",
+                            "description": "Tool parameters schema"
+                          }
+                        }
+                      }
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 4
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Available Hedera tools retrieved successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - JWT token required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
     }
   },
   "components": {

@@ -2,7 +2,6 @@ const Post = require("../models/PostModel");
 const User = require("../models/UserModel");
 const JobAssessmentResult = require("../models/JobAssessmentResultModel");
 const AgentService = require("./AgentService");
-const { schedulePostMatchingAgenda } = require("../postMatchingAgenda");
 
 // Validation des données du post
 const validatePostData = (postData) => {
