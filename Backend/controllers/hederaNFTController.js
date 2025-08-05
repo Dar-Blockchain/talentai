@@ -13,15 +13,47 @@ const axios = require('axios');
 
 class HederaNFTController {
   constructor() {
-    // Check if environment variables are set
-    if (!process.env.HEDERA_ACCOUNT_ID || !process.env.HEDERA_PRIVATE_KEY) {
-      console.warn('⚠️  Hedera environment variables not set. NFT functionality will be disabled.');
-      this.hederaConfigured = false;
-      return;
+    // Initialize properties but don't create Hedera client yet
+    this.client = null;
+    this.operatorAccountId = null;
+    this.operatorPrivateKey = null;
+    this.resumeTokenId = process.env.RESUME_TOKEN_ID || null;
+    this.mirrorNodeApi = 'https://testnet.mirrornode.hedera.com/api/v1';
+    this.hederaConfigured = false;
+    this.initializationPromise = null;
+
+    // Bind methods to maintain 'this' context
+    this.createResumeNFT = this.createResumeNFT.bind(this);
+    this.verifyResumeNFT = this.verifyResumeNFT.bind(this);
+    this.getResumeNFTs = this.getResumeNFTs.bind(this);
+  }
+
+  // Lazy initialization of Hedera client
+  async initializeHedera() {
+    // Return existing promise if already initializing
+    if (this.initializationPromise) {
+      return this.initializationPromise;
     }
 
+    // Return immediately if already configured
+    if (this.hederaConfigured) {
+      return Promise.resolve();
+    }
+
+    this.initializationPromise = this._performInitialization();
+    return this.initializationPromise;
+  }
+
+  async _performInitialization() {
     try {
-      // Initialize Hedera client
+      // Check if environment variables are set
+      if (!process.env.HEDERA_ACCOUNT_ID || !process.env.HEDERA_PRIVATE_KEY) {
+        console.warn('⚠️  Hedera environment variables not set. NFT functionality will be disabled.');
+        this.hederaConfigured = false;
+        return;
+      }
+
+      // Initialize Hedera client with optimized settings
       this.client = Client.forTestnet();
       
       // Set operator account
@@ -30,23 +62,26 @@ class HederaNFTController {
       
       this.client.setOperator(this.operatorAccountId, this.operatorPrivateKey);
       
-      // Resume NFT Token ID (create once and reuse)
-      this.resumeTokenId = process.env.RESUME_TOKEN_ID || null;
-      
-      // Hedera Mirror Node API endpoint
-      this.mirrorNodeApi = 'https://testnet.mirrornode.hedera.com/api/v1';
+      // Set client network timeout
+      this.client.setNetworkTimeout(10000); // 10 seconds timeout
       
       this.hederaConfigured = true;
-      console.log('✅ Hedera client initialized successfully');
+      console.log('✅ Hedera NFT client initialized successfully');
     } catch (error) {
-      console.error('❌ Error initializing Hedera client:', error.message);
+      console.error('❌ Error initializing Hedera NFT client:', error.message);
       this.hederaConfigured = false;
+      throw error;
     }
+  }
 
-    // Bind methods to maintain 'this' context
-    this.createResumeNFT = this.createResumeNFT.bind(this);
-    this.verifyResumeNFT = this.verifyResumeNFT.bind(this);
-    this.getResumeNFTs = this.getResumeNFTs.bind(this);
+  // Ensure client is initialized before any operation
+  async ensureInitialized() {
+    if (!this.hederaConfigured) {
+      await this.initializeHedera();
+    }
+    if (!this.hederaConfigured) {
+      throw new Error('Hedera client is not configured. Please check your environment variables.');
+    }
   }
 
   // Query Hedera Mirror Node for NFT metadata
@@ -130,13 +165,15 @@ class HederaNFTController {
     try {
       console.log('🔄 Processing NFT creation request...');
       
-      // Check if Hedera is configured
-      if (!this.hederaConfigured) {
-        console.log('⚠️  Hedera not configured, returning error');
+      // Ensure Hedera client is initialized
+      try {
+        await this.ensureInitialized();
+      } catch (error) {
+        console.log('⚠️  Hedera initialization failed:', error.message);
         return res.status(503).json({
           success: false,
-          message: 'Hedera blockchain service is not configured. Please check your environment variables.',
-          details: 'Missing HEDERA_ACCOUNT_ID or HEDERA_PRIVATE_KEY environment variables.'
+          message: 'Hedera blockchain service is not available. Please try again later.',
+          details: error.message
         });
       }
 
