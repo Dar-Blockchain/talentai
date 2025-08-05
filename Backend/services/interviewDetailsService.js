@@ -21,7 +21,7 @@ exports.getAllInterviewDetails = async ({ page = 1, limit = 10, sort = "-created
         populate: {
           path: "post_Steps",
           model: "Post_Steps",
-          select: "id type data position connections"
+          select: "id order type data position connections"
         }
       })
       .populate("jobAssessmentResult")
