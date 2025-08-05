@@ -27,6 +27,7 @@ const positionSchema = new mongoose.Schema({
 
 const postStepSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
+  order: { type: Number, required: true },
   type: { type: String, required: true }, // 'custom', 'technical', etc.
   postId: { type: mongoose.Schema.Types.ObjectId, ref: "Post", required: true },
 
