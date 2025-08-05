@@ -18,7 +18,6 @@ const candidate_Post_Step_ProgressSchema = new mongoose.Schema({
     ref: 'Post_Steps',
     required: true,
   },
-
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

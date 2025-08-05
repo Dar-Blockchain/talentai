@@ -23,6 +23,7 @@ router.get('/type/:type', postStepsController.getPostStepsByType);
 // Routes pour les nœuds d'évaluation
 router.post('/post/:postId/node', postStepsController.createNode);
 router.post('/post/:postId/nodes', postStepsController.saveMultipleNodes);
+router.post('/post/:postId/steps', postStepsController.addStepsToPost);
 router.get('/node/:nodeId', postStepsController.getPostStepByNodeId);
 router.put('/node/:nodeId', postStepsController.updatePostStepByNodeId);
 router.delete('/node/:nodeId', postStepsController.deletePostStepByNodeId);
