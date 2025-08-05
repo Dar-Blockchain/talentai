@@ -4,7 +4,7 @@ HEDERA_HACKATHON_CRITERIA = {
   deadline: "2025-07-07",
   maxTeamSize: 4,
   mustBeOriginal: true,
-  demoRequired: true,
+  demoRequired: false,
 };
 
 OTHER_HACKATHON_CRITERIA = {
@@ -13,7 +13,7 @@ OTHER_HACKATHON_CRITERIA = {
   deadline: "2025-07-07",
   maxTeamSize: 3,
   mustBeOriginal: true,
-  demoRequired: true,
+  demoRequired: false,
 };
 
 const CRITERIA_WEIGHTS = {

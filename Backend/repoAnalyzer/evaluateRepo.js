@@ -34,24 +34,16 @@ const analyzeRepo = async (owner, repo, selectedTemplate = 'auto', hackathonCrit
     try {
         console.log('Fetching repo data...');
         const repoData = await fetchRepoData(owner, repo);  // Ensure fetchRepoData is working correctly
-        console.log('Repo data fetched:', repoData);
+
+        console.log("check criteria: ", hackathonCriteria);
 
         // --- Hackathon Eligibility Check ---
+
         let eligibilityResults = {};
         let eligible = true;
         if (hackathonCriteria) {
             console.log(section('HACKATHON ELIGIBILITY CHECK', '🏆', 'yellow'));
-            // Display contributors and commits
-            const numContributors = repoData.contributors ? repoData.contributors.length : 0;
-            const numCommits = repoData.commits ? repoData.commits.length : 0;
-            console.log(colorize(`👥 Contributors (${numContributors}): `, 'magenta') + colorize(repoData.contributors.map(c => c.login).join(', '), 'white'));
-            console.log(colorize(`🔢 Total commits: ${numCommits}`, 'magenta'));
-            if (repoData.commits && repoData.commits.length > 0) {
-                const firstCommit = repoData.commits[repoData.commits.length - 1];
-                const lastCommit = repoData.commits[0];
-                console.log(colorize(`📅 First commit: ${firstCommit.date} by ${firstCommit.author}`, 'magenta'));
-                console.log(colorize(`📅 Last commit: ${lastCommit.date} by ${lastCommit.author}`, 'magenta'));
-            }
+            
             // 1. Date check (repo creation and last commit)
             let datePass = true;
             let repoCreated, repoPushed, hackathonStart, hackathonEnd;
@@ -138,13 +130,10 @@ const analyzeRepo = async (owner, repo, selectedTemplate = 'auto', hackathonCrit
                 }
                 eligible = eligible && demoPass;
             }
-            // Print results
-            Object.entries(eligibilityResults).forEach(([k, v]) => {
-                const status = v.startsWith('PASS') ? colorize('✅', 'green') : v.startsWith('N/A') ? colorize('ℹ️', 'blue') : v.startsWith('ERROR') ? colorize('❌', 'red') : colorize('❌', 'red');
-                console.log(`${status} ${colorize(k, 'yellow')}: ${colorize(v, v.startsWith('PASS') ? 'green' : v.startsWith('ERROR') ? 'red' : 'yellow')}`);
-            });
-            console.log(colorize(`\n${eligible ? '🎉 ELIGIBLE for hackathon judging!' : '🚫 NOT ELIGIBLE for hackathon judging.'}`, eligible ? 'green' : 'red'));
+            eligibilityResults.eligible = eligible;
+            
         }
+
 
         let score = 0;
         let criteriaResults = {};
@@ -195,7 +184,7 @@ const analyzeRepo = async (owner, repo, selectedTemplate = 'auto', hackathonCrit
         score += userExperienceResult.score * CRITERIA_WEIGHTS.userExperience / 100;
 
         // Final score (0-10)
-        const finalScore = score.toFixed(1);
+        const finalScore = score.toFixed(1)*10;
         console.log('Final score calculated:', finalScore);
 
         // --- LLM Hackathon Feasibility Check ---
@@ -223,98 +212,11 @@ const analyzeRepo = async (owner, repo, selectedTemplate = 'auto', hackathonCrit
             }
         }
 
-        // Run intelligent analysis
+        // // Run intelligent analysis
         console.log('\n🧠 RUNNING INTELLIGENT ANALYSIS...');
-        const intelligentAnalyzer = new IntelligentProjectAnalyzer();
-        const intelligentAnalysis = await intelligentAnalyzer.analyzeRepository(owner, repo);
         
-        // Display intelligent analysis results
-        if (intelligentAnalysis) {
-            console.log(section('🧠 INTELLIGENT ANALYSIS RESULTS', '🧠', 'cyan'));
-            
-            // Project Purpose with clear conclusion
-            console.log('\n🎯 PROJECT PURPOSE:');
-            if (intelligentAnalysis.projectPurpose.conclusion) {
-                console.log(`   💡 CONCLUSION: ${intelligentAnalysis.projectPurpose.conclusion}`);
-            }
-            console.log(`   Type: ${intelligentAnalysis.projectPurpose.type}`);
-            console.log(`   Domain: ${intelligentAnalysis.projectPurpose.domain}`);
-            console.log(`   Complexity: ${intelligentAnalysis.projectPurpose.complexity}`);
-            console.log(`   Target Audience: ${intelligentAnalysis.projectPurpose.target}`);
-            console.log(`   Confidence: ${Math.round(intelligentAnalysis.projectPurpose.confidence * 100)}%`);
-            
-            if (intelligentAnalysis.projectPurpose.description) {
-                console.log(`   Description: ${intelligentAnalysis.projectPurpose.description}`);
-            }
-            
-            if (intelligentAnalysis.projectPurpose.features && intelligentAnalysis.projectPurpose.features.length > 0) {
-                console.log(`   Main Features: ${intelligentAnalysis.projectPurpose.features.join(', ')}`);
-            }
-            
-            if (intelligentAnalysis.projectPurpose.technologies && intelligentAnalysis.projectPurpose.technologies.length > 0) {
-                console.log(`   Technology Stack: ${intelligentAnalysis.projectPurpose.technologies.join(', ')}`);
-            }
-            
-            if (intelligentAnalysis.projectPurpose.keyFiles && intelligentAnalysis.projectPurpose.keyFiles.length > 0) {
-                console.log(`   Key Files: ${intelligentAnalysis.projectPurpose.keyFiles.slice(0, 5).join(', ')}${intelligentAnalysis.projectPurpose.keyFiles.length > 5 ? '...' : ''}`);
-            }
-            
-            // Architecture
-            console.log('\n🏗️ ARCHITECTURE:');
-            console.log(`   Pattern: ${intelligentAnalysis.architecture.pattern}`);
-            console.log(`   Layers: ${intelligentAnalysis.architecture.layers.join(', ')}`);
-            console.log(`   Design Patterns: ${intelligentAnalysis.architecture.patterns.join(', ')}`);
-            console.log(`   Quality Score: ${intelligentAnalysis.architecture.quality}/10`);
-            if (intelligentAnalysis.architecture.strengths.length > 0) {
-                console.log(`   Strengths: ${intelligentAnalysis.architecture.strengths.join(', ')}`);
-            }
-            if (intelligentAnalysis.architecture.weaknesses.length > 0) {
-                console.log(`   Weaknesses: ${intelligentAnalysis.architecture.weaknesses.join(', ')}`);
-            }
-            
-            // Coherence
-            console.log('\n🔗 COHERENCE:');
-            console.log(`   Overall Consistency: ${intelligentAnalysis.coherence.consistency.toFixed(1)}/10`);
-            console.log(`   Naming Consistency: ${intelligentAnalysis.coherence.naming.toFixed(1)}/10`);
-            console.log(`   Structural Consistency: ${intelligentAnalysis.coherence.structure.toFixed(1)}/10`);
-            console.log(`   Pattern Consistency: ${intelligentAnalysis.coherence.patterns.toFixed(1)}/10`);
-            
-            // Quality
-            console.log('\n📊 CODE QUALITY:');
-            console.log(`   Overall Quality: ${intelligentAnalysis.quality.overall.toFixed(1)}/10`);
-            console.log(`   Maintainability: ${intelligentAnalysis.quality.maintainability.toFixed(1)}/10`);
-            console.log(`   Readability: ${intelligentAnalysis.quality.readability.toFixed(1)}/10`);
-            console.log(`   Performance: ${intelligentAnalysis.quality.performance.toFixed(1)}/10`);
-            console.log(`   Security: ${intelligentAnalysis.quality.security.toFixed(1)}/10`);
-            console.log(`   Testability: ${intelligentAnalysis.quality.testability.toFixed(1)}/10`);
-            
-            // File Structure Summary
-            if (intelligentAnalysis.structure) {
-                console.log('\n📁 FILE STRUCTURE SUMMARY:');
-                console.log(`   Total Files Analyzed: ${intelligentAnalysis.structure.allFiles.length}`);
-                console.log(`   Total Directories: ${intelligentAnalysis.structure.allDirectories.length}`);
-                console.log(`   Files with Content Analysis: ${Object.keys(intelligentAnalysis.structure.fileContents).length}`);
-                
-                // Show file types distribution
-                const fileTypes = {};
-                intelligentAnalysis.structure.allFiles.forEach(file => {
-                    const ext = file.split('.').pop().toLowerCase();
-                    fileTypes[ext] = (fileTypes[ext] || 0) + 1;
-                });
-                console.log(`   File Types: ${Object.entries(fileTypes).map(([ext, count]) => `${ext}(${count})`).join(', ')}`);
-            }
-            
-            // Intelligent Insights
-            console.log('\n💡 INTELLIGENT INSIGHTS:');
-            intelligentAnalysis.insights.forEach((insight, index) => {
-                const emoji = insight.category === 'strength' ? colorize('✅', 'green') : 
-                             insight.category === 'improvement' ? colorize('⚠️', 'yellow') : 
-                             insight.category === 'understanding' ? colorize('🧠', 'cyan') : 
-                             insight.category === 'information' ? colorize('📊', 'magenta') : colorize('💡', 'green');
-                console.log(`   ${emoji} ${insight.title} (${Math.round(insight.confidence * 100)}% confidence)`);
-                console.log(`      ${insight.message}`);
-            });
-        }
+        
+        
         
         // Get comprehensive code analysis for detailed feedback
         console.log('\n=== COMPREHENSIVE CODE ANALYSIS ===');
@@ -346,13 +248,25 @@ const analyzeRepo = async (owner, repo, selectedTemplate = 'auto', hackathonCrit
             console.log(feedbacks[key]);
         });
 
+        let githubData = {
+            contributors : repoData.contributors,
+            totalCommits : repoData.commits.length,
+            firstCommit : repoData.commits[repoData.commits.length - 1].date,
+            lastCommit : repoData.commits[0].date,
+            creationDate: new Date(repoData.created_at)
+        }
+
+        
+
         return {
             repoName: repoData.name,
             criteriaResults,
             feedbacks,
             finalScore,
             comprehensiveAnalysis,
-            intelligentAnalysis
+            githubData,
+            eligibilityResults,
+            // intelligentAnalysis
         };
     } catch (error) {
         console.error('Error analyzing repository:', error);
@@ -881,6 +795,7 @@ const calculateCodeQualityScore = (codeAnalysis) => {
     
     // 2. Code Quality & Best Practices (25 points)
     console.log('\n📝 2. CODE QUALITY & BEST PRACTICES (25 points max):');
+    console.log("hey codeAnalysis: ", codeAnalysis);
     const qualityScore = evaluateCodeQuality(codeAnalysis);
     score += qualityScore.points;
     feedback.push(...qualityScore.feedback);

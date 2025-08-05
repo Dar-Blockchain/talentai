@@ -2,6 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
+const { analyzeRepo } = require('./evaluateRepo');
 
 class IntelligentProjectAnalyzer {
     constructor() {
@@ -14,11 +15,17 @@ class IntelligentProjectAnalyzer {
         };
     }
 
-    async analyzeRepository(owner, repo) {
+    async analyzeRepository(owner, repo, hackathonCriteria = null) {
         console.log('\n🧠 INTELLIGENT PROJECT ANALYSIS');
         console.log('================================');
         
+        const selectedTemplate = "auto"; 
         try {
+
+            // 0. Fetch repository Data
+            const analyzeRepoResult = await analyzeRepo(owner, repo, selectedTemplate, hackathonCriteria);
+            console.log("result is : ", analyzeRepoResult);
+ 
             // 1. Fetch repository structure
             const repoStructure = await this.fetchRepositoryStructure(owner, repo);
             
@@ -47,7 +54,13 @@ class IntelligentProjectAnalyzer {
                 quality: qualityAnalysis,
                 insights: insights,
                 structure: repoStructure, 
-                overallScore
+
+
+                eligibilityResults: analyzeRepoResult.eligibilityResults,
+                githubData: analyzeRepoResult.githubData,
+                evaluationScores: analyzeRepoResult.criteriaResults,
+                comprehensiveAnalysis: analyzeRepoResult.comprehensiveAnalysis,
+                overallScore: analyzeRepoResult.finalScore
             };
             
         } catch (error) {

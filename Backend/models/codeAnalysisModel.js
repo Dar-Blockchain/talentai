@@ -73,19 +73,33 @@ const StructureSchema = new mongoose.Schema({
   directories: mongoose.Schema.Types.Mixed,
   allFiles: [String],         // <-- Added to match intelligentAnalyzer.js
   allDirectories: [String],   // <-- Added to match intelligentAnalyzer.js
-  fileContents: mongoose.Schema.Types.Mixed,
+  // fileContents: mongoose.Schema.Types.Mixed,
   // analysis: mongoose.Schema.Types.Mixed
 }, { _id: false });
 
 // Main analysis schema
 const AnalysisSchema = new mongoose.Schema({
+  comprehensiveAnalysis: {type: mongoose.Schema.Types.Mixed, required: true},
   projectPurpose: ProjectPurposeSchema,
   architecture: ArchitectureSchema,
   coherence: CoherenceSchema,
   quality: QualitySchema,
   insights: [InsightSchema],
   structure: StructureSchema,
-  overallScore: {type: Number}
+
+  evaluationScores: {type: mongoose.Schema.Types.Mixed, required: true},
+  overallScore: {type: Number, required: true},
+  
+}, { _id: false });
+
+const EligibilityResultsSchema = new mongoose.Schema({
+  startDate: {type: String},
+  deadline: {type: String},
+  maxTeamSize: {type: String},
+  mustBeOriginal: {type: String},
+  demoRequired: {type: String},
+  eligible: {type: Boolean}
+  
 }, { _id: false });
 
 const CodeAnalysisSchema = new mongoose.Schema({
@@ -93,16 +107,10 @@ const CodeAnalysisSchema = new mongoose.Schema({
   owner: { type: String, required: true },
   repo: { type: String, required: true },
   analysis: { type: AnalysisSchema, required: true },
+
+  eligibilityResults: {type: EligibilityResultsSchema, required: true},
+  githubData: {type: mongoose.Schema.Types.Mixed, required: true},
   
-  contributors: [{ type: String }], // or use an object if you want more details per contributor
-  totalCommits: { type: Number },
-  firstCommit: { type: Date },
-  lastCommit: { type: Date },
-  startDateCheck: { type: String }, // e.g., 'PASS' or 'FAIL'
-  deadlineCheck: { type: String },
-  maxTeamSizeCheck: { type: String },
-  mustBeOriginalCheck: { type: String },
-  demoRequiredCheck: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 
