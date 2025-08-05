@@ -3666,7 +3666,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                     <Button
                       variant="contained"
                       startIcon={<AddIcon />}
-                      onClick={() => setJobPostDialog(true)}
+                      onClick={() => router.push('/recruitment/create-job')}
                       sx={{
                         background: 'rgba(0, 255, 157, 1)',
                         color: 'black',

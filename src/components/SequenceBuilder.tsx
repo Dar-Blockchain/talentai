@@ -44,7 +44,7 @@ import ReactFlow, {
   useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-
+import { toast } from "react-hot-toast";
 // Icons
 import EmailIcon from '@mui/icons-material/Email';
 import ConditionIcon from '@mui/icons-material/AccountTree';
@@ -68,6 +68,7 @@ import PostDetails from './recruitment-post/PostDetails';
 import { PostDetailsRef } from './recruitment-post/types';
 import { AppDispatch } from '@/store/store';
 import { useDispatch } from 'react-redux';
+import { useRouter } from 'next/router';
 
 // Constants
 const GREEN_MAIN = '#00FF9D';
@@ -330,6 +331,8 @@ interface ChatMessage {
 }
 
 const SequenceBuilder: React.FC = () => {
+  const router = useRouter();
+  
   // Redux
   const dispatch = useDispatch<AppDispatch>();
   const postStepsLoading = useSelector(selectPostStepsLoading);
@@ -352,16 +355,17 @@ const SequenceBuilder: React.FC = () => {
   const [isSavingJob, setIsSavingJob] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedJobId, setSavedJobId] = useState<string | null>(null);
-  
+    const [isSavingSteps, setIsSavingSteps] = useState(false);
+
   // Refs
   const postDetailsRef = useRef<PostDetailsRef>(null);
 
 const steps = [
   'Job Details',              // Step 1: Job title, description, etc.
   'Recruitment Flow',         // Step 2: Define recruitment sequence
-  'Avatar Selection',         // Step 3: Choose avatars for the job
+  'Avatar Overview',         // Step 3: Choose avatars for the job
   'Customize Avatars',        // Step 4: Modify their appearance/settings
-  'Final Review'              // Step 5: Confirm all before publishing
+  // 'Final Review'              // Step 5: Confirm all before publishing
 ];
   // Define node types for React Flow
   const nodeTypes: NodeTypes = useMemo(() => ({ custom: CustomNode }), []);
@@ -711,7 +715,7 @@ Ready to customize the content or add more triggers?`
       
       setIsSavingJob(true);
       try {
-        const saveResult = await postDetailsRef.current?.saveJob();
+        const saveResult : any = await postDetailsRef.current?.saveJob();
         if (!saveResult?.success || !saveResult?.jobId) {
           setSaveError('Failed to save job post. Please try again.');
           return;
@@ -738,8 +742,10 @@ Ready to customize the content or add more triggers?`
       }
 
       try {
-        const sequenceData = nodes.map(node => ({
+        setIsSavingSteps(true)
+        const sequenceData = nodes.map((node, index) => ({
             ...node,
+            order: index,
             connections: edges
             .filter(edge => edge.source === node.id || edge.target === node.id)
             .map(edge => ({
@@ -761,13 +767,20 @@ Ready to customize the content or add more triggers?`
 
         if (postRecruitmentSteps.fulfilled.match(result)) {
           console.log('Sequence saved successfully:', result.payload);
+          setIsSavingSteps(false)
+          toast.success("Job post created successfully! Your recruitment flow has been saved.");          
           // You can add success notification here
+          router.push('/dashboardCompany')
         } else {
+                    setIsSavingSteps(false)
+
           console.error('Failed to save sequence:', result.payload);
           setSaveError(`Failed to save sequence: ${result.payload}`);
         }
         
       } catch (error) {
+                  setIsSavingSteps(false)
+
         console.error('Error saving sequence:', error);
         setSaveError('An error occurred while saving the sequence. Please try again.');
       }
@@ -865,10 +878,10 @@ Ready to customize the content or add more triggers?`
         return (
           <Box sx={{ flex: 1, p: 3, overflow: 'auto' }}>
             <Typography variant="h5" sx={{ mb: 3, color: '#1f2937' }}>
-              Choose Your Interview Avatars
+              All Available Avatars
             </Typography>
             <Typography variant="body1" sx={{ mb: 4, color: '#6b7280' }}>
-              Select which AI avatars will conduct different parts of your interview process. Each avatar specializes in different areas and brings unique expertise to the assessment.
+              Explore the list of AI avatars available for your interview process. Each avatar is designed with unique skills and specialties to enhance candidate evaluation.
             </Typography>
             
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: 3 }}>
@@ -1091,9 +1104,9 @@ Ready to customize the content or add more triggers?`
           alternativeLabel
           sx={{
             padding: 3,
-            backgroundColor: '#f9fafb', // Light neutral background
+            backgroundColor: '#f9fafb', // Soft neutral background
             borderRadius: 2,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)', // Soft shadow
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)', // Gentle elevation
           }}
         >
           {steps.map((label, index) => (
@@ -1103,10 +1116,10 @@ Ready to customize the content or add more triggers?`
                   style: {
                     color:
                       index === activeStep
-                        ? '#10b981' // Green for current
+                        ? 'rgb(47, 212, 149)' // Current step
                         : index < activeStep
-                        ? '#34d399' // Lighter green for completed
-                        : '#d1d5db', // Gray for upcoming
+                        ? 'rgba(47, 212, 149, 0.7)' // Completed
+                        : '#d1d5db', // Upcoming
                     fontSize: '1.5rem',
                   },
                 }}
@@ -1117,10 +1130,10 @@ Ready to customize the content or add more triggers?`
                   sx={{
                     color:
                       index === activeStep
-                        ? '#111827' // Dark text for current
+                        ? '#1f2937' // Strong text for current
                         : index < activeStep
-                        ? '#6b7280' // Medium text for completed
-                        : '#9ca3af', // Lighter text for future
+                        ? 'rgba(47, 212, 149, 0.9)' // Soft green for completed
+                        : '#9ca3af', // Gray for upcoming
                     textTransform: 'capitalize',
                     fontSize: '0.875rem',
                   }}
@@ -1132,6 +1145,7 @@ Ready to customize the content or add more triggers?`
           ))}
         </Stepper>
       </Header>
+
 
       <MainContent>
         {activeStep === 1 && (
@@ -1173,42 +1187,98 @@ Ready to customize the content or add more triggers?`
             startIcon={<ArrowBackIcon />}
             onClick={handleBack}
             disabled={activeStep === 0}
-            sx={{ 
+            sx={{
               borderRadius: '8px',
+              paddingX: 2.5,
+              paddingY: 1.25,
+              fontWeight: 500,
+              fontSize: '0.875rem',
+              borderColor: '#64748b', // Slate-500
+              color: '#1e293b', // Slate-800
+              textTransform: 'none',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                backgroundColor: '#f1f5f9', // Slate-100
+                borderColor: '#475569', // Slate-600
+              },
               '&.Mui-disabled': {
-                borderColor: 'rgba(102, 126, 234, 0.3)',
-                color: 'rgba(102, 126, 234, 0.5)',
+                borderColor: '#cbd5e1', // Slate-300
+                color: '#94a3b8', // Slate-400
+                backgroundColor: '#f8fafc', // subtle disabled background
               }
             }}
           >
             Back
           </Button>
+
           
           {activeStep < steps.length - 1 ? (
             <Button
               variant="contained"
-              endIcon={isSavingJob ? <CircularProgress size={16} sx={{ color: 'white' }} /> : <ArrowForwardIcon />}
+              endIcon={
+                isSavingJob || isSavingSteps ? (
+                  <CircularProgress size={16} sx={{ color: 'white' }} />
+                ) : (
+                  <ArrowForwardIcon />
+                )
+              }
               onClick={handleNext}
-              disabled={isSavingJob || (activeStep === 0 && postDetailsRef.current?.canProceed())}
-              sx={{ 
+              disabled={isSavingSteps || isSavingJob || (activeStep === 0 && postDetailsRef.current?.canProceed())}
+              sx={{
                 borderRadius: '8px',
-                background: 'linear-gradient(45deg, #667eea 30%, #764ba2 90%)',
+                px: 3,
+                py: 1.5,
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                textTransform: 'none',
+                color: '#ffffff',
+                background: 'linear-gradient(90deg, rgb(47, 212, 149) 0%, rgb(5, 150, 105) 100%)',
+                boxShadow: '0 2px 10px rgba(47, 212, 149, 0.4)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  background: 'linear-gradient(90deg, rgb(38, 180, 128) 0%, rgb(4, 120, 85) 100%)',
+                },
                 '&.Mui-disabled': {
-                  background: 'rgba(102, 126, 234, 0.5)',
-                  color: 'rgba(255, 255, 255, 0.6)',
-                }
+                  background: 'rgba(47, 212, 149, 0.4)',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                },
               }}
             >
-              {isSavingJob ? 'Saving Job...' : postStepsLoading ? 'Confirm...' : activeStep === steps.length - 1 ? 'Save Sequence' : 'Next'}
+              {isSavingJob
+                ? 'Saving Job...'
+                : postStepsLoading
+                ? 'Confirm...'
+                : activeStep === steps.length - 1
+                ? 'Save Sequence'
+                : 'Next'}
             </Button>
+
           ) : (
             <Button
               variant="contained"
-              endIcon={<PlayArrowIcon />}
+              endIcon={
+                isSavingSteps ? (
+                  <CircularProgress size={16} sx={{ color: 'white' }} />
+                ) : (
+                  <PlayArrowIcon />
+                )
+              }
+              disabled={isSavingSteps}
               onClick={handleNext}
-              sx={{ 
+              sx={{
                 borderRadius: '8px',
-                background: 'linear-gradient(45deg, #10b981 30%, #059669 90%)',
+                px: 3,
+                py: 1.5,
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                textTransform: 'none',
+                color: '#ffffff',
+                background: 'linear-gradient(90deg, rgb(47, 212, 149) 0%, rgb(5, 150, 105) 100%)',
+                boxShadow: '0 2px 10px rgba(47, 212, 149, 0.4)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  background: 'linear-gradient(90deg, rgb(38, 180, 128) 0%, rgb(4, 120, 85) 100%)',
+                },
               }}
             >
               Confirm
