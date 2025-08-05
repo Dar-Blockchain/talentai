@@ -75,7 +75,7 @@ export interface JobPost {
 }
 
 export interface PostDetailsRef {
-  saveJob: () => Promise<boolean>;
+  saveJob: () => Promise<{ success: boolean; jobId?: string }>;
   canProceed: () => boolean;
 }
 

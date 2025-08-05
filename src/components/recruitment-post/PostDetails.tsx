@@ -259,7 +259,7 @@ const PostDetails = forwardRef<PostDetailsRef>((props, ref) => {
   };
 
   // Update the saveJob function to handle the job data properly
-  const saveJob = async (): Promise<boolean> => {
+  const saveJob = async (): Promise<{ success: boolean; jobId?: string }> => {
     setIsSaving(true);
     try {
       // Use the updated job data if available, otherwise use the generated job
@@ -457,9 +457,10 @@ As a ${
         throw new Error("Failed to save job");
       }
 
-      const savedJob = await response.json();
+            const savedJob = await response.json();
       // Store the posted job ID for the success dialog
-      setPostedJobId(savedJob.data?._id || savedJob._id);
+      const jobId = savedJob.data?._id || savedJob._id;
+      setPostedJobId(jobId);
       console.log("Job saved successfully:", savedJob);
 
       // Close the dialog after successful save
@@ -467,10 +468,10 @@ As a ${
       setJobDescription("");
       setGeneratedJob(null);
       setUpdatedJobData(undefined); // Reset updated job data
-       return true;
+      return { success: true, jobId };
     } catch (error) {
        console.error("Error saving job:", error);
-       return false;
+       return { success: false };
     } finally {
       setIsSaving(false);
     }

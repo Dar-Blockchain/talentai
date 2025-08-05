@@ -712,14 +712,13 @@ Ready to customize the content or add more triggers?`
       setIsSavingJob(true);
       try {
         const saveResult = await postDetailsRef.current?.saveJob();
-        if (!saveResult) {
+        if (!saveResult?.success || !saveResult?.jobId) {
           setSaveError('Failed to save job post. Please try again.');
           return;
         }
         
-        // Note: You may need to modify PostDetails.saveJob() to return the job ID
-        // For now, using the hardcoded ID from your example
-        setSavedJobId('680d77ec217184309b3a5900');
+        // Use the actual job ID returned from the save operation
+        setSavedJobId(saveResult.jobId);
     } catch (error) {
         console.error('Error during job save:', error);
         setSaveError('An error occurred while saving the job post. Please try again.');
