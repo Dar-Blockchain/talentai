@@ -17,7 +17,8 @@ exports.getAllInterviewDetails = async ({ page = 1, limit = 10, sort = "-created
       .populate("company", "name")
       .populate("post", "title")
       .populate("jobAssessmentResult")
-      .populate("post"),
+      .populate("post_Steps") // Ajout de cette ligne pour peupler les Post_Steps
+      .exec(),
     InterviewDetails.countDocuments(query)
   ]);
 
@@ -29,6 +30,7 @@ exports.getAllInterviewDetails = async ({ page = 1, limit = 10, sort = "-created
     totalPages: Math.ceil(total / limit)
   };
 };
+
 
 
 module.exports.getInterviewDetailsById = async (id) => {
