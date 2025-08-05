@@ -19,6 +19,7 @@ These questions should cover the following areas:
 
 ### 🚨 **STRICT REQUIREMENTS**
 - Generate **exactly ${questionsCount} questions total**. 
+- All questions must be written in English.
 - Each question must be **brief**, **clear**, and **focused** — do not combine multiple questions into one.
 - Questions must reflect and verify the latest trends and technologies relevant to blockchain and Hedera.
 - **Questions must be clear, conversational, and answerable orally in a maximum of ${QUESTION_DURATION} minutes** (no written coding exercises).  
@@ -75,8 +76,10 @@ The questions must be able to uncover:
 
 ### 🚨 STRICT REQUIREMENTS:
 - Generate exactly ${questionsCount} questions total.
+- All questions must be written in English.
 - Use **very simple words** that anyone can understand.  
 - All questions must be **brief**, **easy to answer by speaking** in under **${QUESTION_DURATION} minutes**.  
+- Each question must target different information — no two questions should ask about the same topic or aspect.
 - Include one question that focuses on innovation while also asking about competitors and how the project differentiates itself from them.
 - Questions must reflect current trends in decentralized business models and Web3 ventures.
 - Return valid JSON only of ${questionsCount} strings.
