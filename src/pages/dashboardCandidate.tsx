@@ -1,4 +1,4 @@
-import { useState, useEffect, ReactNode } from "react";
+import React, { useState, useEffect, ReactNode } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getMyProfile,
@@ -2717,6 +2717,62 @@ const INTERVIEW_TYPES = [
   { label: 'Skill', value: 'skill' },
 ];
 
+// Interview pipeline stages (only for Post section) - Sequential order
+const INTERVIEW_STAGES = [
+  { key: 'application', label: 'Application', icon: '📝' },
+  { key: 'hr', label: 'HR Interview', icon: '👥' },
+  { key: 'technical', label: 'Technical', icon: '💻' },
+  { key: 'soft', label: 'Soft Skills', icon: '🗣️' },
+  { key: 'final', label: 'Final Decision', icon: '✅' }
+];
+
+// Helper function to get interview progress (only for Post section)
+const getInterviewProgress = (interviewData: any) => {
+  // Simplified logic - make stages more accessible
+  const stages = ['application', 'hr', 'technical', 'soft', 'final'];
+  
+  // Start with basic progression - application is always available
+  let currentStage = 1; // HR is available by default
+  let completedStages = 0; // Application completed
+  
+  // Make progression more lenient - if we have any interview data, 
+  // allow access to at least HR and Technical stages
+  if (interviewData.type === 'hr') {
+    currentStage = Math.max(currentStage, 2); // Allow technical
+    if (interviewData.overallScore >= 50) {
+      completedStages = 1; // HR completed
+      currentStage = Math.max(currentStage, 3); // Allow soft skills
+    }
+  }
+  
+  if (interviewData.type === 'skill') {
+    currentStage = Math.max(currentStage, 3); // Allow soft skills
+    if (interviewData.overallScore >= 50) {
+      completedStages = Math.max(completedStages, 2); // Technical completed
+      currentStage = Math.max(currentStage, 4); // Allow final
+    }
+  }
+  
+  if (interviewData.type === 'soft') {
+    currentStage = Math.max(currentStage, 4); // Allow final
+    if (interviewData.overallScore >= 50) {
+      completedStages = Math.max(completedStages, 3); // Soft completed
+    }
+  }
+  
+  // For demo purposes, make more stages accessible
+  // In a real app, this would come from your backend API
+  currentStage = Math.max(currentStage, 2); // Always allow at least HR and Technical
+  
+  return {
+    currentStage,
+    completedStages,
+    totalStages: stages.length,
+    status: interviewData.overallScore >= 70 ? 'passed' : 
+            interviewData.overallScore >= 50 ? 'pending' : 'failed'
+  };
+};
+
 type InterviewDetailsTabsProps = {
   profile: any; // Replace 'any' with 'ProfileType' if available
 };
@@ -2766,67 +2822,406 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
     setPage(0);
   };
 
+  // Progress Pipeline Component (only for Post section)
+  const ProgressPipeline = ({ interviewData }: { interviewData: any }) => {
+    const progress = getInterviewProgress(interviewData);
+    
+    // Handle stage click - navigate to specific test/stage
+    const handleStageClick = (stage: any, index: number) => {
+      const isClickable = index <= Math.max(progress.currentStage, 2); // Allow at least first 3 stages
+      
+      if (!isClickable) return;
+      
+      // Generate appropriate URL based on stage type
+      const baseUrl = `/candidate/interview/${interviewData._id || interviewData.id}`;
+      let stageUrl = baseUrl;
+      
+      switch (stage.key) {
+        case 'application':
+          // View application details
+          stageUrl = `${baseUrl}?stage=application`;
+          break;
+        case 'hr':
+          // Go to HR interview test page
+          stageUrl = `/interviewTest/?type=hr&interviewId=${interviewData._id || interviewData.id}`;
+          break;
+        case 'technical':
+          // Go to Technical interview test page - extract skill from job
+          const jobSkill = interviewData.post?.jobDetails?.skills?.[0] || 
+                          interviewData.post?.jobDetails?.primarySkill || 
+                          interviewData.post?.skills?.[0] || 
+                          'JavaScript'; // Default skill
+          const encodedSkill = encodeURIComponent(jobSkill);
+          stageUrl = `/test/?type=technicalSkill&skill=${encodedSkill}&interviewId=${interviewData._id || interviewData.id}`;
+          break;
+        case 'soft':
+          // Go to Soft Skills interview test page
+          stageUrl = `/interviewTest/?type=soft&interviewId=${interviewData._id || interviewData.id}`;
+          break;
+        case 'final':
+          // View final decision
+          stageUrl = `${baseUrl}?stage=final&view=decision`;
+          break;
+        default:
+          stageUrl = baseUrl;
+      }
+      
+      router.push(stageUrl);
+    };
+    
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 300 }}>
+        {INTERVIEW_STAGES.map((stage, index) => {
+          const isCompleted = index <= progress.completedStages;
+          const isCurrent = index === progress.currentStage;
+          const isActive = index <= progress.currentStage;
+          // Make more stages clickable - allow clicking on available stages
+          const isClickable = index <= Math.max(progress.currentStage, 2); // Always allow at least first 3 stages
+          
+          return (
+            <React.Fragment key={stage.key}>
+              <Tooltip 
+                title={
+                  isClickable 
+                    ? index <= progress.completedStages
+                      ? `Click to view ${stage.label} results` 
+                      : stage.key === 'technical'
+                      ? `Click to start ${stage.label} test (${interviewData.post?.jobDetails?.skills?.[0] || interviewData.post?.jobDetails?.primarySkill || interviewData.post?.skills?.[0] || 'JavaScript'})`
+                      : `Click to start ${stage.label} test`
+                    : `${stage.label} - Coming soon`
+                }
+                arrow
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    cursor: isClickable ? 'pointer' : 'not-allowed',
+                    opacity: isClickable ? 1 : 0.6,
+                    transition: 'all 0.3s ease',
+                    '&:hover': isClickable ? {
+                      transform: 'scale(1.05)',
+                    } : {},
+                  }}
+                  onClick={() => handleStageClick(stage, index)}
+                >
+                  <Box
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      backgroundColor: isCompleted 
+                        ? progress.status === 'passed' ? '#4caf50' 
+                        : progress.status === 'failed' ? '#f44336' 
+                        : '#ff9800'
+                        : isCurrent ? '#2196f3' 
+                        : '#e0e0e0',
+                      color: isActive ? 'white' : '#757575',
+                      border: isCurrent ? '2px solid #1976d2' : 'none',
+                      transition: 'all 0.3s ease',
+                      '&:hover': isClickable ? {
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                        transform: 'translateY(-1px)',
+                      } : {},
+                    }}
+                  >
+                    {isCompleted ? '✓' : stage.icon}
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontSize: '10px',
+                      textAlign: 'center',
+                      color: isActive ? '#1976d2' : '#757575',
+                      fontWeight: isCurrent ? 'bold' : 'normal',
+                      maxWidth: 60,
+                      lineHeight: 1.2,
+                      transition: 'color 0.3s ease',
+                    }}
+                  >
+                    {stage.label}
+                  </Typography>
+                </Box>
+              </Tooltip>
+              {index < INTERVIEW_STAGES.length - 1 && (
+                <Box
+                  sx={{
+                    flex: 1,
+                    height: 2,
+                    backgroundColor: isCompleted ? '#4caf50' : '#e0e0e0',
+                    minWidth: 20,
+                    mx: 0.5,
+                    transition: 'background-color 0.3s ease',
+                  }}
+                />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </Box>
+    );
+  };
+
+  // Status Badge Component (only for Post section)
+  const StatusBadge = ({ score, type }: { score: number; type: string }) => {
+    const getStatusColor = () => {
+      if (score >= 80) return { bg: '#e8f5e8', color: '#2e7d32', label: 'Excellent' };
+      if (score >= 70) return { bg: '#e3f2fd', color: '#1976d2', label: 'Good' };
+      if (score >= 60) return { bg: '#fff3e0', color: '#f57c00', label: 'Average' };
+      if (score >= 50) return { bg: '#fce4ec', color: '#c2185b', label: 'Below Average' };
+      return { bg: '#ffebee', color: '#d32f2f', label: 'Poor' };
+    };
+
+    const status = getStatusColor();
+    
+    return (
+      <Box
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 1,
+          px: 1.5,
+          py: 0.5,
+          borderRadius: 2,
+          backgroundColor: status.bg,
+          color: status.color,
+          fontSize: '12px',
+          fontWeight: 'medium',
+        }}
+      >
+        <Box
+          sx={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            backgroundColor: status.color,
+          }}
+        />
+        {score}% - {status.label}
+      </Box>
+    );
+  };
+
   return (
-    <>
-      <Tabs value={tab} onChange={handleTabChange} sx={{ mb: 2 }}>
-        {INTERVIEW_TYPES.map((t) => (
-          <Tab key={t.value} label={t.label} value={t.value} />
-        ))}
-      </Tabs>
+    <Box sx={{ width: '100%' }}>
+      {/* Enhanced Tabs */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs 
+          value={tab} 
+          onChange={handleTabChange}
+          sx={{
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 500,
+              fontSize: '14px',
+              minHeight: 48,
+            },
+            '& .Mui-selected': {
+              color: '#8310FF !important',
+            },
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#8310FF',
+              height: 3,
+            },
+          }}
+        >
+          {INTERVIEW_TYPES.map((t) => (
+            <Tab key={t.value} label={t.label} value={t.value} />
+          ))}
+        </Tabs>
+      </Box>
+
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress color="primary" />
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress sx={{ color: '#8310FF' }} />
         </Box>
       ) : error ? (
-        <Alert severity="error">{error}</Alert>
+        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
       ) : (
         <>
-          <Box >
-            <Table size="small" sx={{ minWidth: 900 }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Overall Score</TableCell>
-                  <TableCell>Post Name</TableCell>
-                  <TableCell>Details</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {data.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center">No data</TableCell>
-                  </TableRow>
-                ) : (
-                  data.map((row: any, idx: number) => {
+          {/* Enhanced Design for Post Tab Only */}
+          {tab === 'post' ? (
+            <>
+              {data.length === 0 ? (
+                <Box
+                  sx={{
+                    textAlign: 'center',
+                    py: 8,
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: 2,
+                    border: '1px dashed #dee2e6',
+                  }}
+                >
+                  <Typography variant="h6" color="textSecondary" gutterBottom>
+                    No Job Applications
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    You don't have any job applications yet.
+                  </Typography>
+                </Box>
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {data.map((row: any, idx: number) => {
+                    const progress = getInterviewProgress(row);
+                    
                     return (
-                      <TableRow key={row._id || row.id}>
-                        <TableCell>{row.type || '-'}</TableCell>
-                        <TableCell>{row.overallScore ?? '-'}</TableCell>
-                        <TableCell>{row.post?.jobDetails?.title || '-'}</TableCell>
-                        <TableCell>
-                          <Button variant="outlined" size="small" onClick={() => router.push(`/candidate/interview/${row._id || row.id}`)}>
-                            Details
+                      <Box
+                        key={row._id || row.id}
+                        sx={{
+                          p: 3,
+                          border: '1px solid #e0e0e0',
+                          borderRadius: 3,
+                          backgroundColor: '#ffffff',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                            transform: 'translateY(-2px)',
+                          },
+                        }}
+                      >
+                        {/* Header */}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                          <Box>
+                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a1a1a', mb: 0.5 }}>
+                              {row.post?.jobDetails?.title || 'Unknown Position'}
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Chip
+                                label={row.type || 'General'}
+                                size="small"
+                                sx={{
+                                  backgroundColor: '#8310FF20',
+                                  color: '#8310FF',
+                                  fontWeight: 500,
+                                  textTransform: 'capitalize',
+                                }}
+                              />
+                              {row.post?.company && (
+                                <Typography variant="body2" color="textSecondary">
+                                  at {row.post.company}
+                                </Typography>
+                              )}
+                            </Box>
+                          </Box>
+                          <Box sx={{ textAlign: 'right' }}>
+                            {row.overallScore !== null && row.overallScore !== undefined ? (
+                              <StatusBadge score={row.overallScore} type={row.type} />
+                            ) : (
+                              <Chip label="Pending" size="small" color="default" />
+                            )}
+                          </Box>
+                        </Box>
+
+                        {/* Progress Pipeline */}
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="subtitle2" sx={{ mb: 1, color: '#666', fontWeight: 500 }}>
+                            Interview Progress
+                          </Typography>
+                          <ProgressPipeline interviewData={row} />
+                        </Box>
+
+                        {/* Action Button */}
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <Button
+                            variant="contained"
+                            size="small"
+                            onClick={() => router.push(`/candidate/interview/${row._id || row.id}`)}
+                            sx={{
+                              backgroundColor: '#8310FF',
+                              color: 'white',
+                              textTransform: 'none',
+                              fontWeight: 500,
+                              px: 3,
+                              py: 1,
+                              borderRadius: 2,
+                              '&:hover': {
+                                backgroundColor: '#6a0bd4',
+                              },
+                            }}
+                          >
+                            View Details
                           </Button>
-                        </TableCell>
-                      </TableRow>
+                        </Box>
+                      </Box>
                     );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </Box>
-          <TablePagination
-            component="div"
-            count={total}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[2, 5, 10]}
-          />
+                  })}
+                </Box>
+              )}
+            </>
+          ) : (
+            /* Original Table Design for Other Tabs */
+            <Box>
+              <Table size="small" sx={{ minWidth: 900 }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Overall Score</TableCell>
+                    <TableCell>Post Name</TableCell>
+                    <TableCell>Details</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {data.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center">No data</TableCell>
+                    </TableRow>
+                  ) : (
+                    data.map((row: any, idx: number) => {
+                      return (
+                        <TableRow key={row._id || row.id}>
+                          <TableCell>{row.type || '-'}</TableCell>
+                          <TableCell>{row.overallScore ?? '-'}</TableCell>
+                          <TableCell>{row.post?.jobDetails?.title || '-'}</TableCell>
+                          <TableCell>
+                            <Button variant="outlined" size="small" onClick={() => router.push(`/candidate/interview/${row._id || row.id}`)}>
+                              Details
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </Box>
+          )}
+
+          {/* Pagination */}
+          {data.length > 0 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <TablePagination
+                component="div"
+                count={total}
+                page={page}
+                onPageChange={handleChangePage}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                rowsPerPageOptions={[2, 5, 10]}
+                sx={tab === 'post' ? {
+                  '& .MuiTablePagination-toolbar': {
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: 2,
+                    px: 2,
+                  },
+                  '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                    color: '#666',
+                    fontWeight: 500,
+                  },
+                } : {}}
+              />
+            </Box>
+          )}
         </>
       )}
-    </>
+    </Box>
   );
 }
 
