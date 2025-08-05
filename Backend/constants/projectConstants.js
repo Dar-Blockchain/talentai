@@ -15,8 +15,8 @@ const PROJECT_STATUS = Object.freeze({
   DONE: "done",
 });
 
-const PITCH_DURATION = 5; // in minutes
-const QUESTION_DURATION = 4; // in minutes
+const PITCH_DURATION = 2; // in minutes
+const QUESTION_DURATION = 3; // in minutes
 
 const BUSINESS_QUESTION_DURATION = 2; // in minutes
 const BUSINESS_PITCH_DURATION = 3; // in minutes
