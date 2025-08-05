@@ -15,9 +15,17 @@ exports.getAllInterviewDetails = async ({ page = 1, limit = 10, sort = "-created
       .limit(parseInt(limit))
       .populate("candidate", "firstName lastName email")
       .populate("company", "name")
-      .populate("post", "title")
+      .populate({
+        path: "post",
+        select: "title jobDetails.title jobDetails.description post_Steps",
+        populate: {
+          path: "post_Steps",
+          model: "Post_Steps",
+          select: "id type data position connections"
+        }
+      })
       .populate("jobAssessmentResult")
-      .populate("post_Steps") // Ajout de cette ligne pour peupler les Post_Steps
+      .populate("postSteps") // Using the virtual populate
       .exec(),
     InterviewDetails.countDocuments(query)
   ]);
@@ -37,8 +45,17 @@ module.exports.getInterviewDetailsById = async (id) => {
   const interview = await InterviewDetails.findById(id)
     .populate("candidate", "firstName lastName email") // adapte les champs si besoin
     .populate("company", "name email")
-    .populate("post")
-    .populate("jobAssessmentResult");
+    .populate({
+      path: "post",
+      select: "title jobDetails post_Steps",
+      populate: {
+        path: "post_Steps",
+        model: "Post_Steps",
+        select: "id type data position connections"
+      }
+    })
+    .populate("jobAssessmentResult")
+    .populate("postSteps"); // Using the virtual populate
   if (!interview) throw new Error("InterviewDetails non trouvée !");
   return interview;
 };

@@ -117,4 +117,16 @@ const interviewDetailsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Virtual populate to get post_Steps through the post relationship
+interviewDetailsSchema.virtual('postSteps', {
+  ref: 'Post_Steps',
+  localField: 'post',
+  foreignField: 'postId',
+  justOne: false
+});
+
+// Ensure virtual fields are serialized
+interviewDetailsSchema.set('toJSON', { virtuals: true });
+interviewDetailsSchema.set('toObject', { virtuals: true });
+
 module.exports = mongoose.model("InterviewDetails", interviewDetailsSchema);
