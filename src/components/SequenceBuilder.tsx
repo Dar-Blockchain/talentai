@@ -356,8 +356,13 @@ const SequenceBuilder: React.FC = () => {
   // Refs
   const postDetailsRef = useRef<PostDetailsRef>(null);
 
-  const steps = ['Job Post', 'Sequence', 'Avatar Selection', 'Avatar', 'Review'];
-
+const steps = [
+  'Job Details',              // Step 1: Job title, description, etc.
+  'Recruitment Flow',         // Step 2: Define recruitment sequence
+  'Avatar Selection',         // Step 3: Choose avatars for the job
+  'Customize Avatars',        // Step 4: Modify their appearance/settings
+  'Final Review'              // Step 5: Confirm all before publishing
+];
   // Define node types for React Flow
   const nodeTypes: NodeTypes = useMemo(() => ({ custom: CustomNode }), []);
 
@@ -1082,17 +1087,45 @@ Ready to customize the content or add more triggers?`
   return (
     <Container>
       <Header>
-        <Stepper activeStep={activeStep} alternativeLabel>
+        <Stepper
+          activeStep={activeStep}
+          alternativeLabel
+          sx={{
+            padding: 3,
+            backgroundColor: '#f9fafb', // Light neutral background
+            borderRadius: 2,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)', // Soft shadow
+          }}
+        >
           {steps.map((label, index) => (
             <Step key={label}>
               <StepLabel
                 StepIconProps={{
                   style: {
-                    color: index === activeStep ? '#16a34a' : index < activeStep ? '#16a34a' : '#9ca3af',
+                    color:
+                      index === activeStep
+                        ? '#10b981' // Green for current
+                        : index < activeStep
+                        ? '#34d399' // Lighter green for completed
+                        : '#d1d5db', // Gray for upcoming
+                    fontSize: '1.5rem',
                   },
                 }}
               >
-                <Typography variant="body2" color={index <= activeStep ? 'primary' : 'textSecondary'}>
+                <Typography
+                  variant="body2"
+                  fontWeight={index === activeStep ? 600 : 400}
+                  sx={{
+                    color:
+                      index === activeStep
+                        ? '#111827' // Dark text for current
+                        : index < activeStep
+                        ? '#6b7280' // Medium text for completed
+                        : '#9ca3af', // Lighter text for future
+                    textTransform: 'capitalize',
+                    fontSize: '0.875rem',
+                  }}
+                >
                   {label}
                 </Typography>
               </StepLabel>
@@ -1126,16 +1159,16 @@ Ready to customize the content or add more triggers?`
         {renderStepContent()}
       </MainContent>
 
-      <Footer>
-        <Button
+      <Footer sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+        {/* <Button
           variant="outlined"
           startIcon={<SaveIcon />}
           sx={{ borderRadius: '8px' }}
         >
           Save
-        </Button>
+        </Button> */}
         
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
           <Button
             variant="outlined"
             startIcon={<ArrowBackIcon />}
@@ -1167,7 +1200,7 @@ Ready to customize the content or add more triggers?`
                 }
               }}
             >
-              {isSavingJob ? 'Saving Job...' : postStepsLoading ? 'Saving Sequence...' : activeStep === steps.length - 1 ? 'Save Sequence' : 'Next'}
+              {isSavingJob ? 'Saving Job...' : postStepsLoading ? 'Confirm...' : activeStep === steps.length - 1 ? 'Save Sequence' : 'Next'}
             </Button>
           ) : (
             <Button
@@ -1179,7 +1212,7 @@ Ready to customize the content or add more triggers?`
                 background: 'linear-gradient(45deg, #10b981 30%, #059669 90%)',
               }}
             >
-              Launch Sequence
+              Confirm
             </Button>
           )}
         </Box>
