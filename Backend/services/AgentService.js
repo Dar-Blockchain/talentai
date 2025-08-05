@@ -7,12 +7,32 @@ const {
 } = require("@hashgraph/sdk");
 const Agent = require("../models/AgentModel");
 
-// Initialize Hedera client (replace with your credentials)
-const client = Client.forTestnet();
-client.setOperator(
-  process.env.HEDERA_ACCOUNT_ID,
-  process.env.HEDERA_PRIVATE_KEY
-);
+// Lazy client initialization for AgentService
+let agentServiceClient = null;
+
+const getAgentServiceClient = () => {
+  if (!agentServiceClient) {
+    try {
+      if (!process.env.HEDERA_ACCOUNT_ID || !process.env.HEDERA_PRIVATE_KEY) {
+        console.warn('⚠️  Agent Service: Environment variables not set.');
+        return null;
+      }
+      
+      agentServiceClient = Client.forTestnet();
+      agentServiceClient.setOperator(
+        process.env.HEDERA_ACCOUNT_ID,
+        process.env.HEDERA_PRIVATE_KEY
+      );
+      agentServiceClient.setNetworkTimeout(10000);
+      
+      console.log('✅ Agent Service client initialized successfully');
+    } catch (error) {
+      console.error('❌ Error initializing Agent Service client:', error.message);
+      return null;
+    }
+  }
+  return agentServiceClient;
+};
 
 /**
  * createAgent creates a new agent using the Hedera SDK and stores it in the database

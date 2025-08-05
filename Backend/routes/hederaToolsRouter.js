@@ -53,4 +53,39 @@ router.get("/my-balance", hederaToolsController.getMyBalance);
  */
 router.get("/tools", hederaToolsController.getAvailableTools);
 
+/**
+ * @route POST /hedera-tools/create-evaluation-topic
+ * @desc Create a new evaluation topic for candidate pipeline using agent credentials
+ * @access Private
+ */
+router.post("/create-evaluation-topic", hederaToolsController.createEvaluationTopic);
+
+/**
+ * @route POST /hedera-tools/submit-evaluation-message
+ * @desc Submit HCS-11 evaluation message to existing topic using topic ID
+ * @access Private
+ */
+router.post("/submit-evaluation-message", hederaToolsController.submitEvaluationMessage);
+
+/**
+ * @route POST /hedera-tools/send-validation-message
+ * @desc Send agent validation message to evaluation topic using HCS-11 standard
+ * @access Private
+ */
+router.post("/send-validation-message", hederaToolsController.sendValidationMessage);
+
+/**
+ * @route GET /hedera-tools/evaluation-topic/:topicId
+ * @desc Get evaluation topic details and messages
+ * @access Private
+ */
+router.get("/evaluation-topic/:topicId", hederaToolsController.getEvaluationTopic);
+
+/**
+ * @route GET /hedera-tools/evaluation-topics
+ * @desc Get all evaluation topics with optional filters (company, postId, status)
+ * @access Private
+ */
+router.get("/evaluation-topics", hederaToolsController.getEvaluationTopics);
+
 module.exports = router;
