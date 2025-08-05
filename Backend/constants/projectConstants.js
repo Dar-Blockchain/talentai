@@ -1,4 +1,4 @@
-const TECHNICAL_ASSESSMENT_QUESTIONS_COUNT = 5;
+const TECHNICAL_ASSESSMENT_QUESTIONS_COUNT = 7;
 const BUSINESS_ASSESSMENT_QUESTIONS_COUNT = 7;
 
 const Team = 5;
@@ -15,8 +15,8 @@ const PROJECT_STATUS = Object.freeze({
   DONE: "done",
 });
 
-const PITCH_DURATION = 5; // in minutes
-const QUESTION_DURATION = 4; // in minutes
+const PITCH_DURATION = 3; // in minutes
+const QUESTION_DURATION = 2; // in minutes
 
 const BUSINESS_QUESTION_DURATION = 2; // in minutes
 const BUSINESS_PITCH_DURATION = 3; // in minutes
