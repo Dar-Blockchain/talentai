@@ -30,14 +30,37 @@ const imageRouter = require("./routes/imageRouter");
 const postStepsRouter = require("./routes/postStepsRouter");
 const candidatePostStepProgressRouter = require("./routes/candidatePostStepProgressRouter");
 const hederaToolsRouter = require("./routes/hederaToolsRouter");
+const hrAgentRouter = require("./routes/hrAgentRouter");
 
 require("dotenv").config();
 
 const app = express();
 
-// Connexion à MongoDB
-connectDB();
-
+// Initialize database connection
+const initializeApp = async () => {
+  console.log('🔄 Starting TalentAI Backend...');
+  console.log('📦 Loading environment configuration...');
+  
+  try {
+    console.log('🔗 Connecting to database...');
+    // Connect to MongoDB first
+    await connectDB();
+    
+    console.log('⚡ Initializing server...');
+    // Start the server only after successful DB connection
+    server.listen(process.env.PORT, () => {
+      console.log('');
+      console.log('🎉 TalentAI Backend successfully started!');
+      console.log(`🚀 Server running on port ${process.env.PORT}`);
+      console.log(`📖 API Documentation: http://localhost:${process.env.PORT}/api/docs`);
+      console.log(`💡 Hedera clients will initialize on first use (lazy loading)`);
+      console.log('');
+    });
+  } catch (error) {
+    console.error('❌ Failed to initialize application:', error);
+    process.exit(1);
+  }
+};
 // Middleware
 //app.use(blockPostmanRequests);
 app.use(express.json());
@@ -77,6 +100,7 @@ app.use("/image", imageRouter);
 app.use("/post-steps", postStepsRouter);
 app.use("/candidate-progress", candidatePostStepProgressRouter);
 app.use("/hedera-tools", hederaToolsRouter);
+app.use("/hr-agents", hrAgentRouter);
 
 app.get("/some-route", (req, res) => {
   res.json("Route accessible");
@@ -102,8 +126,5 @@ io.on('connection', (sock) => {
   });
 });
 
-server.listen(process.env.PORT, () => {
-  console.log(
-    `Le serveur est en cours d'exécution sur le port ${process.env.PORT}`
-  );
-});
+// Initialize the application
+initializeApp();
