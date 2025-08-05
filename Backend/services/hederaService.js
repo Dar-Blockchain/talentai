@@ -8,12 +8,32 @@ const {
   LocalProvider,
 } = require("@hashgraph/sdk");
 
-// Now process.env will include variables from .env
-const client = Client.forTestnet(); // Use forMainnet() for production
-client.setOperator(
-  process.env.HEDERA_ACCOUNT_ID,
-  process.env.HEDERA_PRIVATE_KEY
-);
+// Lazy client initialization for HederaService
+let serviceClient = null;
+
+const getServiceClient = () => {
+  if (!serviceClient) {
+    try {
+      if (!process.env.HEDERA_ACCOUNT_ID || !process.env.HEDERA_PRIVATE_KEY) {
+        console.warn('⚠️  Hedera Service: Environment variables not set.');
+        return null;
+      }
+      
+      serviceClient = Client.forTestnet(); // Use forMainnet() for production
+      serviceClient.setOperator(
+        process.env.HEDERA_ACCOUNT_ID,
+        process.env.HEDERA_PRIVATE_KEY
+      );
+      serviceClient.setNetworkTimeout(10000);
+      
+      console.log('✅ Hedera Service client initialized successfully');
+    } catch (error) {
+      console.error('❌ Error initializing Hedera Service client:', error.message);
+      return null;
+    }
+  }
+  return serviceClient;
+};
 
 /**
  * Creates a new Hedera wallet and returns the public and private keys.
