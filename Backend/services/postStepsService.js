@@ -7,7 +7,9 @@ class PostStepsService {
     try {
       // Vérifier si c'est un tableau ou un objet unique
       if (Array.isArray(postStepData)) {
-        // Traitement multiple
+        // Trier les données par 'order' avant l'insertion
+        postStepData.sort((a, b) => a.order - b.order);  // Tri par 'order'
+        
         const savedPostSteps = [];
         
         for (const stepData of postStepData) {
@@ -72,7 +74,7 @@ class PostStepsService {
     } catch (error) {
       return { success: false, error: error.message };
     }
-  }
+}
 
   // Mettre à jour le post avec les références des post_steps
   async updatePostWithSteps(postId, stepIds) {
