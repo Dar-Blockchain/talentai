@@ -1,4 +1,4 @@
-const Post_Steps = require('../models/post_Steps');
+const Post_Steps = require('../models/post_StepsModel');
 const Post = require('../models/PostModel');
 
 class PostStepsService {
