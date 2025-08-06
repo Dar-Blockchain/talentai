@@ -143,6 +143,7 @@ exports.analyzeGithubRepo = async (req, res) => {
       } else {
         codeCheck.status = ELIGIBILITY_CHECKS_STATUS.IS_NOT_APPROVED;
         projectAssessment.eligibility.isEligible = false;
+        projectAssessment.overallScore = 0; 
       }
     }
 
