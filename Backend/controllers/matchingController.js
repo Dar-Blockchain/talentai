@@ -7,12 +7,6 @@ function normalizeSkillName(name) {
   const part = name.split(".")[0].trim();
   return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
 }
-// Ajoute la fonction utilitaire au début du fichier :
-function normalizeSkillName(name) {
-  if (!name) return "";
-  const part = name.split(".")[0].trim();
-  return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
-}
 
 // Ensuite dans ton controller :
 exports.matchCandidatesToJob = async (req, res) => {
@@ -35,11 +29,20 @@ exports.matchCandidatesToJob = async (req, res) => {
       return res.status(404).json({ error: "Job post not found" });
     }
 
-    // Appliquer la normalisation sur requiredSkills (pour être sûr)
-    const requiredSkills = jobPost.skillAnalysis.requiredSkills.map(skill => ({
-      ...skill,
-      name: normalizeSkillName(skill.name)
-    }));
+    // Vérifier que skillAnalysis existe
+    if (!jobPost.skillAnalysis) {
+      return res.status(400).json({ 
+        error: "Job post has no skill analysis data" 
+      });
+    }
+
+    // Vérifier et normaliser les requiredSkills avec protection contre les valeurs null
+    const requiredSkills = (jobPost.skillAnalysis?.requiredSkills || [])
+      .filter(skill => skill && skill.name) // Filtrer les skills null ou sans nom
+      .map(skill => ({
+        ...skill,
+        name: normalizeSkillName(skill.name)
+      }));
 
     // 3. Calculer les correspondances avec les informations supplémentaires
     const matches = candidates
@@ -48,11 +51,13 @@ exports.matchCandidatesToJob = async (req, res) => {
           return null; // Ignorer ce candidat
         }
 
-        // Appliquer la normalisation sur les skills du candidat
-        const candidateSkills = candidate.skills.map(skill => ({
-          ...skill,
-          name: normalizeSkillName(skill.name)
-        }));
+        // Vérifier et normaliser les skills du candidat avec protection contre les valeurs null
+        const candidateSkills = (candidate.skills || [])
+          .filter(skill => skill && skill.name) // Filtrer les skills null ou sans nom
+          .map(skill => ({
+            ...skill,
+            name: normalizeSkillName(skill.name)
+          }));
 
         const score = calculateSkillMatchScore(
           requiredSkills,
@@ -76,17 +81,19 @@ exports.matchCandidatesToJob = async (req, res) => {
       .filter((match) => match !== null && match.score > 0)
       .sort((a, b) => b.score - a.score);
 
-    // 4. Retourner la réponse
+    // 4. Retourner la réponse avec protection contre les valeurs null
     res.json({
       success: true,
-      jobTitle: jobPost.jobDetails.title,
+      jobTitle: jobPost.jobDetails?.title || "Unknown Job",
       matches,
       count: matches.length,
     });
   } catch (error) {
+    console.error("Error in matchCandidatesToJob:", error);
     res.status(500).json({
       error: "Matching failed",
       details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
