@@ -1,12 +1,8 @@
-import SequenceBuilder from '@/components/SequenceBuilder';
-import React from 'react';
+import SequenceBuilder from "@/components/SequenceBuilder";
+import React from "react";
 
 const CreateJobPage: React.FC = () => {
-  return (
-    <>
-      <SequenceBuilder />
-    </>
-  );
+  return <SequenceBuilder />;
 };
 
 export default CreateJobPage;
