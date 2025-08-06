@@ -49,139 +49,162 @@ const PostDetails = forwardRef<PostDetailsRef>((props, ref) => {
     }));
   };
 
-  const handleGenerateJob = async (type: "quick" | "detailed"): Promise<void> => {
-    try {
-      if (type === "quick") {
-        setIsQuickGenerating(true);
-      } else {
-        setIsDetailedGenerating(true);
+    // Modify the handle generate job function to reset the sharing state ONLY after successful generation
+    const handleGenerateJob = async (type: 'quick' | 'detailed') => {
+      try {
+        if (type === 'quick') {
+          setIsQuickGenerating(true);
+        } else {
+          setIsDetailedGenerating(true);
+        }
+        setJobPostError("");
+  
+        const token = Cookies.get('api_token');
+  
+        // Format salary range for description
+        const salaryText = `\n\nSalary Range: ${salaryRange.currency}${salaryRange.min.toLocaleString()} - ${salaryRange.currency}${salaryRange.max.toLocaleString()}`;
+        const descriptionWithSalary = jobDescription + salaryText;
+  
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}linkedinPost/generate-job-post`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            description: descriptionWithSalary,
+            type
+          })
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to generate job post');
+        }
+  
+        const data = await response.json();
+  
+        // Transform the API response into our required structure
+        const jobPost = {
+          jobDetails: {
+            title: data.jobDetails.title,
+            description: data.jobDetails.description,
+            requirements: data.jobDetails.requirements,
+            responsibilities: data.jobDetails.responsibilities,
+            location: data.jobDetails.location,
+            employmentType: data.jobDetails.employmentType,
+            experienceLevel: data.jobDetails.experienceLevel,
+            salary: data.jobDetails.salary
+          },
+          skillAnalysis: {
+            requiredSkills: data.skillAnalysis.requiredSkills.map((skill: any) => ({
+              name: skill.name,
+              level: skill.level.toString(),
+              importance: "Required",
+              category: skill.name.includes('React') || skill.name.includes('JavaScript') ? 'Frontend' :
+                skill.name.includes('Git') ? 'Version Control' :
+                  'General'
+            })),
+            suggestedSkills: {
+              technical: data.skillAnalysis.suggestedSkills.technical.map((skill: any) => ({
+                name: skill.name,
+                reason: skill.reason,
+                category: skill.category,
+                priority: skill.priority
+              })),
+              frameworks: data.skillAnalysis.suggestedSkills.frameworks.map((framework: any) => ({
+                name: framework.name,
+                relatedTo: framework.relatedTo,
+                priority: framework.priority
+              })),
+              tools: data.skillAnalysis.suggestedSkills.tools.map((tool: any) => ({
+                name: tool.name,
+                purpose: tool.purpose,
+                category: tool.category
+              }))
+            },
+            skillSummary: {
+              mainTechnologies: data.skillAnalysis.requiredSkills.map((skill: any) => skill.name),
+              complementarySkills: data.skillAnalysis.suggestedSkills.technical.map((skill: any) => skill.name),
+              learningPath: data.skillAnalysis.skillSummary.learningPath,
+              stackComplexity: data.skillAnalysis.skillSummary.stackComplexity
+            }
+          },
+          linkedinPost: {
+            formattedContent: {
+              headline: `🌟 We're Hiring: ${data.jobDetails.title} 🌟`,
+              introduction: "Are you passionate about building interactive web applications? We've got an exciting opportunity for you!",
+              companyPitch: "Join a team where innovation, a dynamic culture, and a passion for technology drive us. We believe in empowering our developers and offering endless opportunities for growth.",
+              roleOverview: `As a ${data.jobDetails.title}, you'll be at the heart of our engineering process, building software that matters.`,
+              keyPoints: [
+                "🔹 Develop cutting-edge web applications",
+                "🔹 Work with a team of talented developers",
+                `🔹 ${data.jobDetails.location} work`,
+                `🔹 Salary range: ${data.jobDetails.salary.currency}${data.jobDetails.salary.min}-${data.jobDetails.salary.max}`
+              ],
+              skillsRequired: `💻 Required Skills: ${data.skillAnalysis.requiredSkills.map((skill: any) => skill.name).join(', ')}.`,
+              benefitsSection: "🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.",
+              callToAction: "✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/test"
+            },
+            hashtags: [
+              "#Hiring",
+              "#TechJobs",
+              `#${data.jobDetails.title.replace(/\s+/g, '')}`,
+              "#RemoteWork",
+              "#TechCareers"
+            ],
+            formatting: {
+              emojis: {
+                company: "🏢",
+                location: "📍",
+                salary: "💰",
+                requirements: "📋",
+                skills: "💻",
+                benefits: "🎯",
+                apply: "✨"
+              }
+            },
+            finalPost: `🌟 We're Hiring: ${data.jobDetails.title} 🌟
+  
+  Are you passionate about building interactive web applications? We've got an exciting opportunity for you!
+  
+  Join a team where innovation, a dynamic culture, and a passion for technology drive us. We believe in empowering our developers and offering endless opportunities for growth.
+  
+  As a ${data.jobDetails.title}, you'll be at the heart of our engineering process, building software that matters.
+  
+  🔹 Develop cutting-edge web applications
+  🔹 Work with a team of talented developers
+  🔹 ${data.jobDetails.location} work
+  🔹 Salary range: ${data.jobDetails.salary.currency}${data.jobDetails.salary.min}-${data.jobDetails.salary.max}
+  
+  💻 Required Skills: ${data.skillAnalysis.requiredSkills.map((skill: any) => skill.name).join(', ')}.
+  
+  🎯 We offer a vibrant culture, mentorship from industry leaders, and the chance to work on projects that impact millions.
+  
+  ✨ Ready to make a difference? Pass the test and join our team at https://staging.talentai.bid/
+  
+  #Hiring #TechJobs #${data.jobDetails.title.replace(/\s+/g, '')} #RemoteWork #TechCareers`
+          }
+        };
+  
+        // Log the transformed job post data
+        console.log('Generated Job Post:', jobPost);
+  
+        setGeneratedJob(jobPost);
+  
+        // NOW reset the LinkedIn sharing status since we have a new job post
+        setHasSharedToLinkedIn(false);
+  
+      } catch (error) {
+        console.error('Error generating job:', error);
+        setJobPostError(error instanceof Error ? error.message : 'Failed to generate job post');
+      } finally {
+        if (type === 'quick') {
+          setIsQuickGenerating(false);
+        } else {
+          setIsDetailedGenerating(false);
+        }
       }
-      setJobPostError("");
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Mock generated job data
-      const mockJob: JobPost = {
-        jobDetails: {
-          title: "Senior Full Stack Developer",
-          description:
-            "We are seeking a talented Senior Full Stack Developer to join our dynamic team...",
-          requirements: [
-            "5+ years experience with React.js",
-            "Strong TypeScript skills",
-            "Experience with Node.js",
-          ],
-          responsibilities: [
-            "Lead development of core features",
-            "Mentor junior developers",
-            "Design scalable services",
-          ],
-          location: "Remote",
-          employmentType: "Full-time",
-          experienceLevel: "Senior",
-          salary: {
-            min: parseInt(salaryRange.min),
-            max: parseInt(salaryRange.max),
-            currency: salaryRange.currency,
-          },
-        },
-        skillAnalysis: {
-          requiredSkills: [
-            {
-              name: "React.js",
-              level: "5",
-              importance: "Required",
-              category: "Frontend",
-              experienceLevel: "Senior",
-            },
-            {
-              name: "TypeScript",
-              level: "4",
-              importance: "Required",
-              category: "Language",
-              experienceLevel: "Senior",
-            },
-            {
-              name: "Node.js",
-              level: "4",
-              importance: "Required",
-              category: "Backend",
-              experienceLevel: "Senior",
-            },
-          ],
-          suggestedSkills: {
-            technical: [
-              {
-                name: "Docker",
-                reason: "Containerization",
-                category: "DevOps",
-                priority: "High",
-              },
-            ],
-            frameworks: [
-              { name: "Next.js", relatedTo: "React", priority: "Medium" },
-            ],
-            tools: [
-              {
-                name: "Git",
-                purpose: "Version Control",
-                category: "Development",
-              },
-            ],
-          },
-          skillSummary: {
-            mainTechnologies: ["React.js", "TypeScript", "Node.js"],
-            complementarySkills: ["Docker", "Next.js"],
-            learningPath: ["JavaScript", "React.js", "TypeScript"],
-            stackComplexity: "Intermediate",
-          },
-        },
-        linkedinPost: {
-          formattedContent: {
-            headline: "🌟 We're Hiring: Senior Full Stack Developer 🌟",
-            introduction:
-              "Are you passionate about building interactive web applications?",
-            companyPitch: "Join a team where innovation drives us forward.",
-            roleOverview:
-              "As a Senior Full Stack Developer, you'll be at the heart of our engineering process.",
-            keyPoints: [
-              "🔹 Develop cutting-edge web applications",
-              "🔹 Work with a team of talented developers",
-              "🔹 Remote work",
-              `🔹 Salary range: ${salaryRange.currency}${salaryRange.min}-${salaryRange.max}`,
-            ],
-            skillsRequired: "💻 Required Skills: React.js, TypeScript, Node.js",
-            benefitsSection:
-              "🎯 We offer a vibrant culture and mentorship opportunities.",
-            callToAction: "✨ Ready to make a difference? Apply now!",
-          },
-          hashtags: ["#Hiring", "#TechJobs", "#RemoteWork"],
-          formatting: {
-            emojis: {
-              company: "🏢",
-              location: "🌍",
-              salary: "💰",
-              requirements: "📋",
-              skills: "💻",
-              benefits: "🎯",
-              apply: "✨",
-            },
-          },
-          finalPost:
-            "🌟 We're Hiring: Senior Full Stack Developer 🌟\n\nAre you passionate about building interactive web applications? Join our dynamic team!",
-        },
-      };
-
-      setGeneratedJob(mockJob);
-      setEditedJob(mockJob);
-    } catch (error) {
-      setJobPostError("Failed to generate job post. Please try again.");
-    } finally {
-      setIsQuickGenerating(false);
-      setIsDetailedGenerating(false);
-    }
-  };
+    };
 
   const handleEdit = (): void => {
     setIsEditing(true);
