@@ -50,6 +50,13 @@ exports.analyzeGithubRepo = async (req, res) => {
     });
   }
 
+  if (projectAssessment.codeAnalysis) {
+    return res.status(400).json({
+      success: false,
+      error: "code analysis already processed for this project",
+    });
+  }
+
   const analyzer = new IntelligentProjectAnalyzer();
 
   let hackathonCriteria;
@@ -100,7 +107,7 @@ exports.analyzeGithubRepo = async (req, res) => {
     };
 
     // Save analysis to DB
-    const codeAnalysis = await CodeAnalysis.create({
+    let codeAnalysis = await CodeAnalysis.create({
       githubLink,
       owner,
       repo,
@@ -143,7 +150,10 @@ exports.analyzeGithubRepo = async (req, res) => {
       } else {
         codeCheck.status = ELIGIBILITY_CHECKS_STATUS.IS_NOT_APPROVED;
         projectAssessment.eligibility.isEligible = false;
-        projectAssessment.overallScore = 0; 
+        // set code overallScore and projectAssessment overallScore to 0 , by -not eligible- projects
+        projectAssessment.overallScore = 0;
+        codeAnalysis.analysis.overallScore = 0;
+        await codeAnalysis.save();
       }
     }
 
