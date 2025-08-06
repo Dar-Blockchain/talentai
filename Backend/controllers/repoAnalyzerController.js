@@ -4,7 +4,11 @@ const ProjectAssessment = require("../models/projectAssessmentModel");
 
 const { analyzeRepo } = require("../repoAnalyzer/evaluateRepo");
 const { handleAssessmentFinalOverallScore } = require("../utils/projectUtils");
-const { PROJECT_STATUS } = require("../constants/projectConstants");
+const {
+  PROJECT_STATUS,
+  ELIGIBILITY_REQUIREMENTS,
+  ELIGIBILITY_CHECKS_STATUS,
+} = require("../constants/projectConstants");
 const {
   HEDERA_HACKATHON_CRITERIA,
   OTHER_HACKATHON_CRITERIA,
@@ -39,13 +43,18 @@ exports.analyzeGithubRepo = async (req, res) => {
     !projectAssessment.technicalData ||
     !projectAssessment.businessData
   ) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        error:
-          "TechnicalAssessment and BusinessAssessment must be completed first",
-      });
+    return res.status(400).json({
+      success: false,
+      error:
+        "TechnicalAssessment and BusinessAssessment must be completed first",
+    });
+  }
+
+  if (projectAssessment.codeAnalysis) {
+    return res.status(400).json({
+      success: false,
+      error: "code analysis already processed for this project",
+    });
   }
 
   const analyzer = new IntelligentProjectAnalyzer();
@@ -98,7 +107,7 @@ exports.analyzeGithubRepo = async (req, res) => {
     };
 
     // Save analysis to DB
-    const codeAnalysis = await CodeAnalysis.create({
+    let codeAnalysis = await CodeAnalysis.create({
       githubLink,
       owner,
       repo,
@@ -108,7 +117,6 @@ exports.analyzeGithubRepo = async (req, res) => {
     });
 
     console.log("check codeAnalysis: ", codeAnalysis._id);
-
 
     const projectAssessment = await ProjectAssessment.findOne({
       project: projectId,
@@ -131,10 +139,25 @@ exports.analyzeGithubRepo = async (req, res) => {
     projectAssessment.overallScore = finalOverallScore;
     projectAssessment.status = PROJECT_STATUS.DONE;
 
-    await projectAssessment.save();
+    //update eligibility in the projectAssessmentModel
+    const codeCheck = projectAssessment.eligibility.checks.find(
+      (check) => check.type === ELIGIBILITY_REQUIREMENTS.CODE_SUBMISSION_INFO
+    );
+    if (codeCheck) {
+      if (eligibilityResults.eligible === true) {
+        codeCheck.status = ELIGIBILITY_CHECKS_STATUS.IS_APPROVED;
+        projectAssessment.eligibility.isEligible = true;
+      } else {
+        codeCheck.status = ELIGIBILITY_CHECKS_STATUS.IS_NOT_APPROVED;
+        projectAssessment.eligibility.isEligible = false;
+        // set code overallScore and projectAssessment overallScore to 0 , by -not eligible- projects
+        projectAssessment.overallScore = 0;
+        codeAnalysis.analysis.overallScore = 0;
+        await codeAnalysis.save();
+      }
+    }
 
-    
-    
+    await projectAssessment.save();
 
     res.json({
       success: true,
