@@ -140,11 +140,13 @@ module.exports.getPostsByUserId = async (userId) => {
   try {
     return await Post.find({ user: userId })
       .populate("user", "username email")
+      .populate("post_Steps") // Populate the post_Steps reference
       .sort({ createdAt: -1 });
   } catch (error) {
     throw new Error(`Error fetching user posts: ${error.message}`);
   }
 };
+
 
 // Mettre à jour un post
 module.exports.updatePost = async (postId, userId, updateData) => {

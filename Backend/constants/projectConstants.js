@@ -61,7 +61,7 @@ const ASSESSMENT_OVERALL_SCORE_WEIGHTS = {
 
 const ELIGIBILITY_REQUIREMENTS = Object.freeze({
   TRACK_MATCH: "track_match",
-  CODE_SUBMISSION_ON_TIME: "code_submission_on_time",
+  CODE_SUBMISSION_INFO: "code_submission_info",
 });
 
 const ELIGIBILITY_CHECKS_STATUS = Object.freeze({

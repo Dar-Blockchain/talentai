@@ -37,6 +37,9 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  Stepper,
+  Step,
+  StepLabel,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -3671,13 +3674,14 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                         background: 'rgba(0, 255, 157, 1)',
                         color: 'black',
                         '&:hover': {
-                          background: 'rgba(0, 255, 157, 1)',
-                        },
+                          background: 'rgba(0, 255, 157, 1)'
+                        }
                       }}
                     >
                       Post New Job
                     </Button>
                   </Box>
+
                   {isLoadingJobs ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
                       <CircularProgress sx={{ color: '#02E2FF' }} />
@@ -3687,170 +3691,187 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                   ) : myJobs.length === 0 ? (
                     <Alert severity="info" sx={{ mb: 2 }}>No job posts found.</Alert>
                   ) : (
-                    <Box sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 3,
-                      width: '100%'
-                    }}>
-                      {myJobs.slice(0, displayCount).map((job: any) => (
-                        <Box key={job._id} sx={{
-                          width: '100%',
-                          display: 'flex',
-                          background: 'white',
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, width: '100%' }}>
+                      {myJobs.slice(0, displayCount).map((job: any) => {
+                        const steps = job?.post_Steps
+                          .filter((step: any) => step.postId === job._id)
+                          .sort((a: any, b: any) => a.order - b.order)
 
-                          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-                        }}>
-                          <JobCard sx={{
-                            width: '100%',
-                            maxWidth: '100%',
-                            flex: '1 1 100%'
-                          }}>
-                            {/* Header */}
-                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'space-between' }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <WorkIcon sx={{ color: 'rgba(0, 255, 157, 1)', fontSize: 28 }} />
-                                <Typography variant="h6" sx={{ color: '#000000', fontWeight: 700 }}>
-                                  {job.jobDetails.title}
-                                </Typography>
-                              </Box>
-                              {job.createdAt && (
-                                <Typography variant="caption" sx={{ color: 'black', fontWeight: 500, ml: 2 }}>
-                                  Posted: {new Date(job.createdAt).toLocaleDateString()}
-                                </Typography>
-                              )}
-                            </Box>
-                            {/* Meta Chips */}
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
-                              <Chip
-                                icon={<LocationOnIcon sx={{ fontSize: 18 }} />}
-                                label={job.jobDetails.location}
-                                size="small"
-                                sx={{ backgroundColor: 'rgba(0, 255, 157, 1)', color: 'black', fontWeight: 600 }}
-                              />
-                              <Chip
-                                label={job.jobDetails.employmentType}
-                                size="small"
-                                sx={{ backgroundColor: 'rgba(0, 255, 157, 1)', color: 'black', fontWeight: 600 }}
-                              />
-                              <Chip
-                                label={`${job.jobDetails.salary.currency}${job.jobDetails.salary.min}-${job.jobDetails.salary.max}`}
-                                size="small"
-                                sx={{ backgroundColor: 'rgba(0, 255, 157, 1)', color: 'black', fontWeight: 600 }}
-                              />
-                            </Box>
-                            {/* Description */}
-                            <Typography
-                              variant="body2"
+                        return (
+                          <Box
+                            key={job._id}
+                            sx={{
+                              width: '100%',
+                              display: 'flex',
+                              background: 'white',
+                              boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+                            }}
+                          >
+                            <JobCard
                               sx={{
-                                color: 'black ',
-                                mb: 2,
-                                minHeight: 40,
-                                fontWeight: 500,
-                                lineHeight: 1.5,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                display: '-webkit-box',
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: 'vertical',
+                                width: '100%',
+                                maxWidth: '100%',
+                                flex: '1 1 100%'
                               }}
-                              title={job.jobDetails.description}
                             >
-                              {job.jobDetails.description}
-                            </Typography>
-                            {/* Skills */}
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                              {(job.skillAnalysis?.requiredSkills ?? []).slice(0, 4).map((skill: any, idx: number) => (
+                              {/* Header */}
+                              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'space-between' }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <WorkIcon sx={{ color: 'rgba(0, 255, 157, 1)', fontSize: 28 }} />
+                                  <Typography variant="h6" sx={{ color: '#000000', fontWeight: 700 }}>
+                                    {job.jobDetails.title}
+                                  </Typography>
+                                </Box>
+                                {job.createdAt && (
+                                  <Typography variant="caption" sx={{ color: 'black', fontWeight: 500, ml: 2 }}>
+                                    Posted: {new Date(job.createdAt).toLocaleDateString()}
+                                  </Typography>
+                                )}
+                              </Box>
+
+                              {/* Meta Chips */}
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
                                 <Chip
-                                  key={idx}
-                                  label={skill.name}
+                                  icon={<LocationOnIcon sx={{ fontSize: 18 }} />}
+                                  label={job.jobDetails.location}
                                   size="small"
-                                  icon={<StarIcon sx={{ color: '#00FFC3', fontSize: 18 }} />}
-                                  sx={{
-                                    backgroundColor: 'rgba(0, 255, 157, 1)',
-                                    color: 'white',
-                                    fontWeight: 700,
-                                    fontSize: '0.87rem',
-                                    letterSpacing: 0.2,
-                                    px: 1,
-                                  }}
+                                  sx={{ backgroundColor: 'rgba(0, 255, 157, 1)', color: 'black', fontWeight: 600 }}
                                 />
-                              ))}
-                            </Box>
-                            {/* Actions */}
-                            <Box sx={{ display: 'flex', gap: 2, mt: 'auto', pt: 2, borderTop: '1px solid rgba(2,226,255,0.08)' }}>
-                              <Button
-                                variant="outlined"
-                                fullWidth
-                                onClick={() => handleViewJobDetails(job)}
+                                <Chip
+                                  label={job.jobDetails.employmentType}
+                                  size="small"
+                                  sx={{ backgroundColor: 'rgba(0, 255, 157, 1)', color: 'black', fontWeight: 600 }}
+                                />
+                                <Chip
+                                  label={`${job.jobDetails.salary.currency}${job.jobDetails.salary.min}-${job.jobDetails.salary.max}`}
+                                  size="small"
+                                  sx={{ backgroundColor: 'rgba(0, 255, 157, 1)', color: 'black', fontWeight: 600 }}
+                                />
+                              </Box>
+
+                              {/* Description */}
+                              <Typography
+                                variant="body2"
                                 sx={{
-                                  borderColor: 'rgba(0, 255, 157, 1)',
-                                  color: 'rgba(0, 255, 157, 1)',
-                                  '&:hover': {
-                                    borderColor: 'rgba(0, 255, 157, 1)',
-                                    backgroundColor: '#fff'
-                                  }
+                                  color: 'black',
+                                  mb: 2,
+                                  minHeight: 40,
+                                  fontWeight: 500,
+                                  lineHeight: 1.5,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical'
+                                }}
+                                title={job.jobDetails.description}
+                              >
+                                {job.jobDetails.description}
+                              </Typography>
+
+                              {/* Skills */}
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                                {(job.skillAnalysis?.requiredSkills ?? []).slice(0, 4).map((skill: any, idx: number) => (
+                                  <Chip
+                                    key={idx}
+                                    label={skill.name}
+                                    size="small"
+                                    icon={<StarIcon sx={{ color: '#00FFC3', fontSize: 18 }} />}
+                                    sx={{
+                                      backgroundColor: 'rgba(0, 255, 157, 1)',
+                                      color: 'white',
+                                      fontWeight: 700,
+                                      fontSize: '0.87rem',
+                                      letterSpacing: 0.2,
+                                      px: 1
+                                    }}
+                                  />
+                                ))}
+                              </Box>
+                              
+                              {/* Actions */}
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  gap: 2,
+                                  mt: 'auto',
+                                  pt: 2,
+                                  borderTop: '1px solid rgba(2,226,255,0.08)'
                                 }}
                               >
-                                View Details
-                              </Button>
-                              <Button
-                                variant="outlined"
-                                fullWidth
-                                onClick={() => {
-                                  setSelectedJob(job._id);
-                                  handleFilterDialogOpen();
-                                }}
-                                sx={{
-                                  borderColor: 'rgba(0, 255, 157, 1)',
-                                  color: 'rgba(0, 255, 157, 1)',
-                                  '&:hover': {
+                                <Button
+                                  variant="outlined"
+                                  fullWidth
+                                  onClick={() => handleViewJobDetails(job)}
+                                  sx={{
                                     borderColor: 'rgba(0, 255, 157, 1)',
-                                    backgroundColor: '#fff'
-                                  }
-                                }}
-                              >
-                                View Matches
-                              </Button>
-                              <Button
-                                variant="outlined"
-                                fullWidth
-                                sx={{
-                                  borderColor: '#ff3b30',
-                                  color: '#ff3b30',
-                                  fontWeight: 700,
-                                  borderRadius: '8px',
-                                  textTransform: 'none',
-                                  letterSpacing: 0.5,
-                                  boxShadow: 'none',
-                                  '&:hover': {
+                                    color: 'rgba(0, 255, 157, 1)',
+                                    '&:hover': {
+                                      borderColor: 'rgba(0, 255, 157, 1)',
+                                      backgroundColor: '#fff'
+                                    }
+                                  }}
+                                >
+                                  View Details
+                                </Button>
+                                <Button
+                                  variant="outlined"
+                                  fullWidth
+                                  onClick={() => {
+                                    setSelectedJob(job._id)
+                                    handleFilterDialogOpen()
+                                  }}
+                                  sx={{
+                                    borderColor: 'rgba(0, 255, 157, 1)',
+                                    color: 'rgba(0, 255, 157, 1)',
+                                    '&:hover': {
+                                      borderColor: 'rgba(0, 255, 157, 1)',
+                                      backgroundColor: '#fff'
+                                    }
+                                  }}
+                                >
+                                  View Matches
+                                </Button>
+                                <Button
+                                  variant="outlined"
+                                  fullWidth
+                                  sx={{
                                     borderColor: '#ff3b30',
-                                    background: 'rgba(255,59,48,0.08)'
-                                  },
-                                }}
-                                onClick={() => {
-                                  setJobToDelete(job._id);
-                                  setDeleteDialogOpen(true);
-                                }}
-                              >
-                                Delete
-                              </Button>
-                            </Box>
-                          </JobCard>
-                        </Box>
-                      ))}
+                                    color: '#ff3b30',
+                                    fontWeight: 700,
+                                    borderRadius: '8px',
+                                    textTransform: 'none',
+                                    letterSpacing: 0.5,
+                                    boxShadow: 'none',
+                                    '&:hover': {
+                                      borderColor: '#ff3b30',
+                                      background: 'rgba(255,59,48,0.08)'
+                                    }
+                                  }}
+                                  onClick={() => {
+                                    setJobToDelete(job._id)
+                                    setDeleteDialogOpen(true)
+                                  }}
+                                >
+                                  Delete
+                                </Button>
+                              </Box>
+                            </JobCard>
+                          </Box>
+                        )
+                      })}
 
                       {myJobs.length > displayCount && (
                         <Button
                           variant="contained"
-                          onClick={() => setDisplayCount(prev => prev + 3)}
+                          onClick={() => setDisplayCount((prev: number) => prev + 3)}
                           sx={{
                             backgroundColor: 'rgba(0, 255, 157, 1)',
                             mt: 2,
                             borderColor: 'rgba(0, 255, 157, 1)',
                             color: 'white',
                             '&:hover': {
-                              borderColor: 'rgba(0, 255, 157, 1)',
+                              borderColor: 'rgba(0, 255, 157, 1)'
                             }
                           }}
                         >
@@ -4914,6 +4935,34 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                             />
                           </Box>
                         )}
+                        {/* Recruitment Steps */}
+                              {selectedJobForDetails?.post_Steps?.length > 0 && (
+                                <Box sx={{ mb: 3 }}>
+                                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: 'black' }}>
+                                    Recruitment Steps
+                                  </Typography>
+                                  <Stepper orientation="vertical" nonLinear activeStep={-1}>
+                                    {selectedJobForDetails?.post_Steps?.map((step: any, index: number) => (
+                                      <Step key={step._id}>
+                                        <StepLabel
+                                          StepIconProps={{
+                                            sx: {
+                                              color: 'rgba(0, 255, 157, 1)'
+                                            }
+                                          }}
+                                        >
+                                          <Typography sx={{ fontWeight: 600 }}>
+                                            {step.data.title || step.data.label}
+                                          </Typography>
+                                          <Typography variant="body2" sx={{ color: '#555' }}>
+                                            {step.data.subtitle}
+                                          </Typography>
+                                        </StepLabel>
+                                      </Step>
+                                    ))}
+                                  </Stepper>
+                                </Box>
+                              )}
                       </Box>
                     </Box>
                   )}

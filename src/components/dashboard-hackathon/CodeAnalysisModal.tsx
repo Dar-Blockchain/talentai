@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Chip } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Chip, Card, CardContent, Stack, Avatar, Divider } from '@mui/material';
 import CodeIcon from '@mui/icons-material/Code';
 import InfoIcon from '@mui/icons-material/Info';
 import BarChartIcon from '@mui/icons-material/BarChart';
@@ -10,6 +10,11 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import StarIcon from '@mui/icons-material/Star';
 import DescriptionIcon from '@mui/icons-material/Description';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
+import VerifiedIcon from '@mui/icons-material/Verified'; // Use any relevant icon
+import GroupsIcon from '@mui/icons-material/Groups'
+import CommitIcon from '@mui/icons-material/Commit'
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
+import EmailIcon from '@mui/icons-material/Email'
 
 export const renderStringList = (arr: string[] | undefined) =>
   Array.isArray(arr) && arr.length > 0 ? (
@@ -398,6 +403,159 @@ const renderPerformance = (performance: any) => {
   );
 };
 
+const renderGithubData = (data: any) => {
+  if (!data) return null
+
+  const { contributors, totalCommits, firstCommit, lastCommit, creationDate } = data
+
+  return (
+    <Card elevation={3} sx={{ bgcolor: '#F3F6FD', borderRadius: 3, border: '1.5px solid #E3EAFD', boxShadow: '0 2px 8px #7C4DFF11', p: 2, mb: 2 }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <GroupsIcon sx={{ color: '#7C4DFF', mr: 1 }} />
+          <Typography variant="h6" sx={{ fontWeight: 900, color: '#7C4DFF' }}>Contributors</Typography>
+        </Box>
+
+        <Stack spacing={2}>
+          {contributors.map((contributor: any, index: number) => (
+            <Box key={index} sx={{ p: 2, borderRadius: 2, bgcolor: '#ffffff', border: '1px solid #E3EAFD' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Avatar>{contributor.login.charAt(0).toUpperCase()}</Avatar>
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{contributor.login}</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CommitIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                    <Typography variant="body2">{contributor.contributions} contributions</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <EmailIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                    <Typography variant="body2">{contributor.email}</Typography>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+          ))}
+        </Stack>
+
+        <Divider sx={{ my: 3 }} />
+
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CommitIcon fontSize="small" sx={{ color: 'primary.main' }} />
+            <Typography variant="body2"><strong>Total Commits:</strong> {totalCommits}</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CalendarMonthIcon fontSize="small" sx={{ color: 'primary.main' }} />
+            <Typography variant="body2"><strong>First Commit:</strong> {new Date(firstCommit).toLocaleString()}</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CalendarMonthIcon fontSize="small" sx={{ color: 'primary.main' }} />
+            <Typography variant="body2"><strong>Last Commit:</strong> {new Date(lastCommit).toLocaleString()}</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CalendarMonthIcon fontSize="small" sx={{ color: 'primary.main' }} />
+            <Typography variant="body2"><strong>Repo Created:</strong> {new Date(creationDate).toLocaleString()}</Typography>
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  )
+}
+
+const renderEligibility = (data: any) => {
+  if (!data) return null;
+
+  return (
+    <Box
+      sx={{
+        mb: 3,
+        p: 3,
+        bgcolor: '#F3F6FD',
+        borderRadius: 3,
+        boxShadow: '0 2px 8px #7C4DFF11',
+        border: '1.5px solid #E3EAFD',
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <VerifiedIcon sx={{ color: '#7C4DFF', mr: 1 }} />
+        <Typography variant="h6" sx={{ fontWeight: 900, color: '#7C4DFF' }}>
+          Eligibility
+        </Typography>
+      </Box>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+          gap: 2,
+        }}
+      >
+        <Box>
+          <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>
+            Start Date:
+          </Typography>
+          <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>
+            {data.startDate || 'N/A'}
+          </Typography>
+        </Box>
+
+        <Box>
+          <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>
+            Deadline:
+          </Typography>
+          <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>
+            {data.deadline || 'N/A'}
+          </Typography>
+        </Box>
+
+        <Box>
+          <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>
+            Max Team Size:
+          </Typography>
+          <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>
+            {data.maxTeamSize || 'N/A'}
+          </Typography>
+        </Box>
+
+        <Box>
+          <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>
+            Must Be Original:
+          </Typography>
+          <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>
+            {data.mustBeOriginal || 'N/A'}
+          </Typography>
+        </Box>
+
+        <Box>
+          <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>
+            Demo Required:
+          </Typography>
+          <Typography variant="body2" sx={{ display: 'inline', ml: 0.5 }}>
+            {data.demoRequired || 'N/A'}
+          </Typography>
+        </Box>
+
+        <Box>
+          <Typography variant="body2" sx={{ fontWeight: 700, color: '#4527A0', display: 'inline' }}>
+            Eligible:
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              display: 'inline',
+              ml: 0.5,
+              color: data.eligible ? 'success.main' : 'error.main',
+              fontWeight: 700,
+            }}
+          >
+            {data.eligible ? 'Yes' : 'No'}
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
 const renderOtherSections = (codeAnalysis: any) => {
   const knownKeys = [
     'summary', 'overallScore', 'metrics', 'issues', 'recommendations', 'createdAt',
@@ -432,7 +590,7 @@ const renderOtherSections = (codeAnalysis: any) => {
     ));
 };
 
-const renderCodeAnalysisModalContent = (analysis: any) => {
+const renderCodeAnalysisModalContent = (analysis: any, eligibility: any, githubData: any) => {
   if (!analysis) {
     return <Typography>No code analysis available.</Typography>;
   }
@@ -523,6 +681,8 @@ const renderCodeAnalysisModalContent = (analysis: any) => {
       {renderMaintainability(analysis.maintainability)}
       {renderDependencies(analysis.dependencies)}
       {renderPerformance(analysis.performance)}
+      {renderGithubData(githubData)}
+      {renderEligibility(eligibility)}
       {/* {renderOtherSections(analysis)} */}
       {!hasAnySection && (
         <Typography sx={{ color: 'text.secondary', fontStyle: 'italic', mt: 2 }}>
@@ -542,14 +702,16 @@ interface CodeAnalysisModalProps {
   open: boolean;
   onClose: () => void;
   analysis: any;
+  eligibility: any
+  githubData: any
 }
 
-const CodeAnalysisModal: React.FC<CodeAnalysisModalProps> = ({ open, onClose, analysis }) => {
+const CodeAnalysisModal: React.FC<CodeAnalysisModalProps> = ({ open, onClose, analysis, eligibility, githubData }) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Code Analysis Details</DialogTitle>
       <DialogContent dividers>
-        {renderCodeAnalysisModalContent(analysis)}
+        {renderCodeAnalysisModalContent(analysis, eligibility, githubData)}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Close</Button>

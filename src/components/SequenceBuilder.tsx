@@ -455,14 +455,6 @@ const steps = [
     }
   }, [deleteSelectedNodes]);
 
-  // Add keyboard event listener
-  React.useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [handleKeyDown]);
-
   const addNode = useCallback((type: string) => {
     const menuItem = menuItems.find(item => item.type === type);
     const nodeCount = nodes.filter(node => node.data.type === type).length + 1;

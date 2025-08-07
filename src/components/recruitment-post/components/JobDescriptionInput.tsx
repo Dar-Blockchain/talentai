@@ -138,9 +138,9 @@ const JobDescriptionInput: React.FC<JobDescriptionInputProps> = ({
             }}
           >
             Provide a comprehensive description of the role, including
-            responsibilities, requirements, and desired qualifications. The
-            more detailed you are, the better our AI can craft your perfect
-            job posting.
+            responsibilities, requirements, and desired qualifications. The more
+            detailed you are, the better our AI can craft your perfect job
+            posting.
           </Typography>
         </Box>
 
@@ -181,8 +181,6 @@ Benefits:
 - 401(k) matching
 - Professional development budget"
           variant="outlined"
-          autoFocus={false}
-          disabled={false}
           inputProps={{
             style: {
               pointerEvents: "auto",

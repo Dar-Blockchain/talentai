@@ -2,15 +2,24 @@ const IntelligentProjectAnalyzer = require("../repoAnalyzer/intelligentAnalyzer"
 const CodeAnalysis = require("../models/codeAnalysisModel");
 const ProjectAssessment = require("../models/projectAssessmentModel");
 
-const { analyzeRepo } = require("../repoAnalyzer/evaluateRepo");
+const {
+  analyzeRepo,
+  getContributorsData,
+  checkRepoOwnership,
+} = require("../repoAnalyzer/evaluateRepo");
 const { handleAssessmentFinalOverallScore } = require("../utils/projectUtils");
-const { PROJECT_STATUS } = require("../constants/projectConstants");
+const {
+  PROJECT_STATUS,
+  ELIGIBILITY_REQUIREMENTS,
+  ELIGIBILITY_CHECKS_STATUS,
+} = require("../constants/projectConstants");
 const {
   HEDERA_HACKATHON_CRITERIA,
   OTHER_HACKATHON_CRITERIA,
 } = require("../constants/hackathonConstants");
 
 exports.analyzeGithubRepo = async (req, res) => {
+  const user = req.user;
   const { githubLink, hackathonName } = req.body;
 
   const { projectId } = req.params;
@@ -39,13 +48,18 @@ exports.analyzeGithubRepo = async (req, res) => {
     !projectAssessment.technicalData ||
     !projectAssessment.businessData
   ) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        error:
-          "TechnicalAssessment and BusinessAssessment must be completed first",
-      });
+    return res.status(400).json({
+      success: false,
+      error:
+        "TechnicalAssessment and BusinessAssessment must be completed first",
+    });
+  }
+
+  if (projectAssessment.codeAnalysis) {
+    return res.status(400).json({
+      success: false,
+      error: "code analysis already processed for this project",
+    });
   }
 
   const analyzer = new IntelligentProjectAnalyzer();
@@ -65,7 +79,21 @@ exports.analyzeGithubRepo = async (req, res) => {
       break;
   }
 
-  console.log("check out: ", hackathonCriteria);
+  const contributorsData = await getContributorsData(owner, repo);
+
+  //-1 check repo ownership
+  const ownershipValidated = await checkRepoOwnership(
+    user.email,
+    contributorsData
+  );
+
+  if (!ownershipValidated) {
+    return res.status(403).json({
+      success: false,
+      errorCode: "OWNERSHIP_ERROR",
+      message: "Ownership validation failed",
+    });
+  }
 
   try {
     const {
@@ -81,7 +109,13 @@ exports.analyzeGithubRepo = async (req, res) => {
       comprehensiveAnalysis,
       evaluationScores,
       overallScore,
-    } = await analyzer.analyzeRepository(owner, repo, hackathonCriteria);
+    } = await analyzer.analyzeRepository(
+      owner,
+      repo,
+      hackathonCriteria
+    );
+
+    console.log("check projectPurpose: ", projectPurpose);
 
     const analysis = {
       projectPurpose,
@@ -98,7 +132,7 @@ exports.analyzeGithubRepo = async (req, res) => {
     };
 
     // Save analysis to DB
-    const codeAnalysis = await CodeAnalysis.create({
+    let codeAnalysis = await CodeAnalysis.create({
       githubLink,
       owner,
       repo,
@@ -108,7 +142,6 @@ exports.analyzeGithubRepo = async (req, res) => {
     });
 
     console.log("check codeAnalysis: ", codeAnalysis._id);
-
 
     const projectAssessment = await ProjectAssessment.findOne({
       project: projectId,
@@ -131,10 +164,25 @@ exports.analyzeGithubRepo = async (req, res) => {
     projectAssessment.overallScore = finalOverallScore;
     projectAssessment.status = PROJECT_STATUS.DONE;
 
-    await projectAssessment.save();
+    //update eligibility in the projectAssessmentModel
+    const codeCheck = projectAssessment.eligibility.checks.find(
+      (check) => check.type === ELIGIBILITY_REQUIREMENTS.CODE_SUBMISSION_INFO
+    );
+    if (codeCheck) {
+      if (eligibilityResults.eligible === true) {
+        codeCheck.status = ELIGIBILITY_CHECKS_STATUS.IS_APPROVED;
+        projectAssessment.eligibility.isEligible = true;
+      } else {
+        codeCheck.status = ELIGIBILITY_CHECKS_STATUS.IS_NOT_APPROVED;
+        projectAssessment.eligibility.isEligible = false;
+        // set code overallScore and projectAssessment overallScore to 0 , by -not eligible- projects
+        projectAssessment.overallScore = 0;
+        codeAnalysis.analysis.overallScore = 0;
+        await codeAnalysis.save();
+      }
+    }
 
-    
-    
+    await projectAssessment.save();
 
     res.json({
       success: true,
@@ -142,7 +190,15 @@ exports.analyzeGithubRepo = async (req, res) => {
       codeAnalysis,
     });
   } catch (err) {
-    console.log("error when analysing github repo: ", err);
-    res.status(500).json({ success: false, error: err.message });
+    console.error("error when analysing github repo:", err);
+
+    const status = err.statusCode || 500;
+    const errorCode = err.errorCode || "internalError";
+
+    res.status(status).json({
+      success: false,
+      error: err.message,
+      errorCode: errorCode,
+    });
   }
 };
