@@ -62,7 +62,7 @@ exports.getPostById = async (req, res) => {
 // Récupérer les posts d'un utilisateur
 exports.getUserPosts = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId ="680a4c54dbac1d13d4d297f9";
     const posts = await postService.getPostsByUserId(userId);
     res.status(200).json({
       success: true,
