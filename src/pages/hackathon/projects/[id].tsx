@@ -657,6 +657,8 @@ if (!mounted) return null;
         open={openCodeAnalysisModal}
         onClose={() => setOpenCodeAnalysisModal(false)}
         analysis={assessment?.codeAnalysis?.analysis}
+        eligibility={assessment?.codeAnalysis?.eligibilityResults}
+        githubData={assessment?.codeAnalysis?.githubData}
       />
       {/* Technical Report Modal */}
       <Dialog open={openTechModal} onClose={() => setOpenTechModal(false)} maxWidth="md" fullWidth>

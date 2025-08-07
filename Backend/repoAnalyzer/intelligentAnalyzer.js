@@ -2,7 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
-const { analyzeRepo } = require('./evaluateRepo');
+const { analyzeRepo, checkRepoOwnership, fetchRepoData, getContributorsData } = require('./evaluateRepo');
 
 class IntelligentProjectAnalyzer {
     constructor() {
@@ -25,24 +25,31 @@ class IntelligentProjectAnalyzer {
             // 0. Fetch repository Data
             const analyzeRepoResult = await analyzeRepo(owner, repo, selectedTemplate, hackathonCriteria);
             console.log("result is : ", analyzeRepoResult);
+            
  
             // 1. Fetch repository structure
             const repoStructure = await this.fetchRepositoryStructure(owner, repo);
+            console.log("111");
             
             // 2. Analyze project purpose and domain
             const purposeAnalysis = await this.analyzeProjectPurpose(repoStructure);
+            console.log("222");
             
             // 3. Analyze architecture and patterns
             const architectureAnalysis = await this.analyzeArchitecture(repoStructure);
+            console.log("333");
             
             // 4. Analyze code coherence and consistency
             const coherenceAnalysis = await this.analyzeCoherence(repoStructure);
+            console.log("444");
             
             // 5. Analyze code quality and best practices
             const qualityAnalysis = await this.analyzeCodeQuality(repoStructure);
+            console.log("555");
             
             // 6. Generate intelligent insights
             const insights = await this.generateInsights(repoStructure, purposeAnalysis, architectureAnalysis, coherenceAnalysis, qualityAnalysis);
+            console.log("666");
 
             const overallScore= qualityAnalysis.overall * 10; 
             console.log("check overall: ", overallScore);
@@ -112,6 +119,7 @@ class IntelligentProjectAnalyzer {
             const contents = await this.fetchDirectoryContents(owner, repo, currentPath);
             
             for (const item of contents) {
+                console.log("item is: ", item);
                 if (item.type === 'dir') {
                     // Skip build and dependency directories
                     if (this.shouldSkipDirectory(item.path)) {
@@ -1775,6 +1783,7 @@ class IntelligentProjectAnalyzer {
                     Authorization: `token ${process.env.GITHUB_TOKEN}`,
                 },
             });
+            console.log("heyhey: ", response.data);
             return response.data;
         } catch (error) {
             throw error;
