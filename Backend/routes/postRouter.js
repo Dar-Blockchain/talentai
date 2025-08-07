@@ -8,7 +8,7 @@ const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 const { controledAcces } = require('../middleware/controledAcces'); // Importez le middleware
 
 
-//router.use(requireAuthUser, authLogMiddleware("Post"));
+router.use(requireAuthUser, authLogMiddleware("Post"));
 
 
 // Route pour créer un post
