@@ -2,7 +2,11 @@ const IntelligentProjectAnalyzer = require("../repoAnalyzer/intelligentAnalyzer"
 const CodeAnalysis = require("../models/codeAnalysisModel");
 const ProjectAssessment = require("../models/projectAssessmentModel");
 
-const { analyzeRepo } = require("../repoAnalyzer/evaluateRepo");
+const {
+  analyzeRepo,
+  getContributorsData,
+  checkRepoOwnership,
+} = require("../repoAnalyzer/evaluateRepo");
 const { handleAssessmentFinalOverallScore } = require("../utils/projectUtils");
 const {
   PROJECT_STATUS,
@@ -15,6 +19,7 @@ const {
 } = require("../constants/hackathonConstants");
 
 exports.analyzeGithubRepo = async (req, res) => {
+  const user = req.user;
   const { githubLink, hackathonName } = req.body;
 
   const { projectId } = req.params;
@@ -74,7 +79,21 @@ exports.analyzeGithubRepo = async (req, res) => {
       break;
   }
 
-  console.log("check out: ", hackathonCriteria);
+  const contributorsData = await getContributorsData(owner, repo);
+
+  //-1 check repo ownership
+  const ownershipValidated = await checkRepoOwnership(
+    user.email,
+    contributorsData
+  );
+
+  if (!ownershipValidated) {
+    return res.status(403).json({
+      success: false,
+      errorCode: "OWNERSHIP_ERROR",
+      message: "Ownership validation failed",
+    });
+  }
 
   try {
     const {
@@ -90,7 +109,13 @@ exports.analyzeGithubRepo = async (req, res) => {
       comprehensiveAnalysis,
       evaluationScores,
       overallScore,
-    } = await analyzer.analyzeRepository(owner, repo, hackathonCriteria);
+    } = await analyzer.analyzeRepository(
+      owner,
+      repo,
+      hackathonCriteria
+    );
+
+    console.log("check projectPurpose: ", projectPurpose);
 
     const analysis = {
       projectPurpose,
@@ -165,7 +190,15 @@ exports.analyzeGithubRepo = async (req, res) => {
       codeAnalysis,
     });
   } catch (err) {
-    console.log("error when analysing github repo: ", err);
-    res.status(500).json({ success: false, error: err.message });
+    console.error("error when analysing github repo:", err);
+
+    const status = err.statusCode || 500;
+    const errorCode = err.errorCode || "internalError";
+
+    res.status(status).json({
+      success: false,
+      error: err.message,
+      errorCode: errorCode,
+    });
   }
 };
