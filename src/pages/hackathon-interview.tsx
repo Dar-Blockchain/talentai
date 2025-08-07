@@ -38,8 +38,8 @@ const NEXTJS_QUESTIONS: string[] = [];
 const GREEN_MAIN = '#8310FF';
 
 // --- ElevenLabs TTS Integration ---
-const ELEVENLABS_API_KEY = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY ; // Fallback for demo
-const ELEVENLABS_VOICE_ID = process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID ; // Rachel (most natural female voice)
+const ELEVENLABS_API_KEY = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || ''; // Fallback for demo
+const ELEVENLABS_VOICE_ID = process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || ''; // Rachel (most natural female voice)
 
 // --- Styled Components ---
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
