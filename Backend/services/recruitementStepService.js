@@ -7,6 +7,7 @@ const { parseAIResponse } = require("../parsers/AIResponseParser");
 const {
   generateHRStepQuestionsPrompts,
   generateSoftSkillStepQuestionsPrompts,
+  generateTechnicalSkillStepQuestionsPrompts,
 } = require("../prompts/recruitementStepPrompts");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
@@ -15,7 +16,8 @@ module.exports.generateQuestions = async (
   companyDetails,
   postStep,
   post,
-  userSkills
+  userSkills, 
+  jobRequiredSkills,
 ) => {
   try {
     let systemPrompt = "";
@@ -57,7 +59,20 @@ module.exports.generateQuestions = async (
         companyDetails,
         post.jobDetails
       );
+    } else if (stepType == "technical") {
+      questionsCount = 10;
+      systemPrompt = generateTechnicalSkillStepQuestionsPrompts.getSystemPrompt(
+        questionsCount,
+        
+      );
+
+      userPrompt = generateTechnicalSkillStepQuestionsPrompts.getUserPrompt(
+        questionsCount, jobRequiredSkills
+      );
     }
+
+    console.log("aaaa: ", systemPrompt);
+    console.log("bbbb: ", userPrompt);
 
     const stream = await together.chat.completions.create({
       model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",

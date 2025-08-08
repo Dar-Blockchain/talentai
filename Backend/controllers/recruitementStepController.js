@@ -23,7 +23,6 @@ exports.generateQuestions = async (req, res) => {
     if (!user.profile) {
       throw new HttpError(500, `User  has not profile.`);
     }
-    
 
     const postStep = await Post_Steps.findById(stepId);
     if (!postStep.postId) {
@@ -36,17 +35,22 @@ exports.generateQuestions = async (req, res) => {
     }
 
     const company = post.user;
-    const companyProfile = await Profile.findOne({userId: company}); 
-    const companyDetails = companyProfile.companyDetails; 
+    const companyProfile = await Profile.findOne({ userId: company });
+    const companyDetails = companyProfile.companyDetails;
 
-    const userProfile = await Profile.findOne({userId: user._id});
-    const userSkills = userProfile.skills; 
-    
-    const result = await recruitementService.generateQuestions(companyDetails, postStep, post, userSkills);
+    const userProfile = await Profile.findOne({ userId: user._id });
+    const userSkills = userProfile.skills;
+    const jobRequiredSkills = JSON.stringify(post.skillAnalysis.requiredSkills);
 
-    res.status(200).json(
-      result
+    const result = await recruitementService.generateQuestions(
+      companyDetails,
+      postStep,
+      post,
+      userSkills,
+      jobRequiredSkills
     );
+
+    res.status(200).json(result);
   } catch (error) {
     // Handle known HttpError with custom status and message
     if (error instanceof HttpError) {
