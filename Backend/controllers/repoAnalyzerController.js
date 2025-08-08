@@ -18,6 +18,38 @@ const {
   OTHER_HACKATHON_CRITERIA,
 } = require("../constants/hackathonConstants");
 
+/**
+ * @function analyzeGithubRepo
+ * @description
+ * Analyzes a submitted GitHub repository for a specific project and hackathon.
+ * 
+ * This endpoint performs the following steps:
+ *  - Validates repository ownership by checking if the user's email exists in the contributor list.
+ *  - Ensures that technical and business assessments are already completed.
+ *  - Verifies that a code analysis has not already been conducted for the project.
+ * 
+ * Depending on the `hackathonName`, specific evaluation criteria are applied.
+ * Currently, "HederaHacks" is supported using the `HEDERA_HACKATHON_CRITERIA` constant.
+ * 
+ * Results are saved in the `CodeAnalysis` model and linked to the `ProjectAssessment` model.
+ * The function also updates:
+ *  - `projectAssessment.eligibility` based on eligibility checks.
+ *  - `projectAssessment.overallScore` using the technical, business, and code scores.
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} req.user - Authenticated user data
+ * @param {string} req.body.githubLink - GitHub repository URL
+ * @param {string} req.body.hackathonName - Name of the hackathon
+ * @param {string} req.params.projectId - ID of the project to analyze
+ * 
+ * @param {Object} res - Express response object
+ * 
+ * @returns {Object} JSON response with analysis results or an error message
+ * 
+ * @throws {400} If required data is missing or invalid
+ * @throws {403} If repository ownership validation fails
+ * @throws {500} On internal processing error
+ */
 exports.analyzeGithubRepo = async (req, res) => {
   const user = req.user;
   const { githubLink, hackathonName } = req.body;
@@ -81,7 +113,7 @@ exports.analyzeGithubRepo = async (req, res) => {
 
   const contributorsData = await getContributorsData(owner, repo);
 
-  //-1 check repo ownership
+  //1. check repo ownership
   const ownershipValidated = await checkRepoOwnership(
     user.email,
     contributorsData
@@ -95,6 +127,7 @@ exports.analyzeGithubRepo = async (req, res) => {
     });
   }
 
+  //2.Analyse code
   try {
     const {
       projectPurpose,
@@ -109,11 +142,7 @@ exports.analyzeGithubRepo = async (req, res) => {
       comprehensiveAnalysis,
       evaluationScores,
       overallScore,
-    } = await analyzer.analyzeRepository(
-      owner,
-      repo,
-      hackathonCriteria
-    );
+    } = await analyzer.analyzeRepository(owner, repo, hackathonCriteria);
 
     console.log("check projectPurpose: ", projectPurpose);
 
@@ -155,6 +184,7 @@ exports.analyzeGithubRepo = async (req, res) => {
     const businessScore = projectAssessment.businessData.overallScore;
     const codeScore = overallScore;
 
+    // 3. updates projectAssessment.overallScore
     const finalOverallScore = handleAssessmentFinalOverallScore(
       technicalScore,
       businessScore,
@@ -164,7 +194,7 @@ exports.analyzeGithubRepo = async (req, res) => {
     projectAssessment.overallScore = finalOverallScore;
     projectAssessment.status = PROJECT_STATUS.DONE;
 
-    //update eligibility in the projectAssessmentModel
+    //4. update eligibility in the projectAssessmentModel
     const codeCheck = projectAssessment.eligibility.checks.find(
       (check) => check.type === ELIGIBILITY_REQUIREMENTS.CODE_SUBMISSION_INFO
     );
