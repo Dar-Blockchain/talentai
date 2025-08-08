@@ -105,27 +105,68 @@ class PostStepsController {
         ? stepsData.map(step => ({ ...step, postId }))
         : [{ ...stepsData, postId }];
       
-      const result = await postStepsService.createPostStep(stepsWithPostId);
+      // Traiter chaque étape : créer si elle n'existe pas, mettre à jour si elle existe
+      const results = [];
+      let createdCount = 0;
+      let updatedCount = 0;
       
-      if (result.success) {
-        const isMultiple = Array.isArray(stepsData);
-        const message = isMultiple 
-          ? `${result.count} étapes ajoutées au post avec succès`
-          : 'Étape ajoutée au post avec succès';
-        
-        return res.status(201).json({
-          success: true,
-          message: message,
-          data: result.data,
-          count: result.count
-        });
-      } else {
-        return res.status(400).json({
-          success: false,
-          message: 'Erreur lors de l\'ajout des étapes au post',
-          error: result.error
-        });
+      for (const step of stepsWithPostId) {
+        try {
+          // Vérifier si l'étape existe déjà par son ID
+          const existingStep = await postStepsService.getPostStepByNodeId(step.id);
+          
+          if (existingStep.success && existingStep.data) {
+            // L'étape existe, faire une mise à jour
+            const updateResult = await postStepsService.updatePostStepByNodeId(step.id, step);
+            if (updateResult.success) {
+              results.push(updateResult.data);
+              updatedCount++;
+            } else {
+              throw new Error(`Erreur lors de la mise à jour de l'étape ${step.id}: ${updateResult.error}`);
+            }
+          } else {
+            // L'étape n'existe pas, la créer
+            const createResult = await postStepsService.createPostStep([step]);
+            if (createResult.success) {
+              results.push(createResult.data[0]);
+              createdCount++;
+            } else {
+              throw new Error(`Erreur lors de la création de l'étape ${step.id}: ${createResult.error}`);
+            }
+          }
+        } catch (stepError) {
+          throw new Error(`Erreur lors du traitement de l'étape ${step.id}: ${stepError.message}`);
+        }
       }
+      
+      const isMultiple = Array.isArray(stepsData);
+      let message = '';
+      
+      if (isMultiple) {
+        if (createdCount > 0 && updatedCount > 0) {
+          message = `${createdCount} étapes créées et ${updatedCount} étapes mises à jour avec succès`;
+        } else if (createdCount > 0) {
+          message = `${createdCount} étapes créées avec succès`;
+        } else if (updatedCount > 0) {
+          message = `${updatedCount} étapes mises à jour avec succès`;
+        }
+      } else {
+        if (updatedCount > 0) {
+          message = 'Étape mise à jour avec succès';
+        } else {
+          message = 'Étape créée avec succès';
+        }
+      }
+      
+      return res.status(200).json({
+        success: true,
+        message: message,
+        data: results,
+        count: results.length,
+        created: createdCount,
+        updated: updatedCount
+      });
+      
     } catch (error) {
       return res.status(500).json({
         success: false,
