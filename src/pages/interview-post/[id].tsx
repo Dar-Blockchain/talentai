@@ -335,10 +335,28 @@ const Test = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { data: session } = useSession();
-  const { id } = router.query;
+  const { id, stepId } = router.query;
+
+  // Helper function to get stepId as string
+  const getStepId = () => stepId ? (Array.isArray(stepId) ? stepId[0] : stepId) : 'interview-step';
+  
+  // Extract step type and order from stepId if it follows a pattern
+  const getStepInfo = () => {
+    const currentStepId = getStepId();
+    // Try to extract info from stepId - this might need adjustment based on actual stepId format
+    const stepType = currentStepId.includes('hr') ? 'hr' : 
+                    currentStepId.includes('technical') ? 'technical' :
+                    currentStepId.includes('soft') ? 'soft' : 'interview';
+    return { stepType, stepId: currentStepId };
+  };
+  
+  const getStepTypeDisplay = () => {
+    const { stepType } = getStepInfo();
+    return stepType.charAt(0).toUpperCase() + stepType.slice(1);
+  };
 
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [isGenerating, setIsGenerating] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [current, setCurrent] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
   const [timeLeft, setTimeLeft] = useState(120);
@@ -383,6 +401,60 @@ const Test = () => {
       router.push(`/signin?returnUrl=${encodeURIComponent(`/interview-post/${id}`)}`)
     }
   }, [isAuthenticated, id])
+
+  // Set questions based on step type
+  useEffect(() => {
+    if (stepId) {
+      const { stepType } = getStepInfo();
+      let questionsForType: Question[] = [];
+      switch (stepType) {
+        case 'hr':
+          questionsForType = [
+            { id: '1', text: 'Tell me about yourself and your professional background.', skill: 'Communication', level: 'Basic' },
+            { id: '2', text: 'Why are you interested in this position and our company?', skill: 'Motivation', level: 'Basic' },
+            { id: '3', text: 'What are your greatest strengths and how do they apply to this role?', skill: 'Self-awareness', level: 'Basic' },
+            { id: '4', text: 'Where do you see yourself in 5 years?', skill: 'Career Planning', level: 'Basic' },
+            { id: '5', text: 'Do you have any questions about the role or company culture?', skill: 'Engagement', level: 'Basic' },
+          ];
+          break;
+        case 'technical':
+          questionsForType = [
+            { id: '1', text: 'Explain your experience with the main technologies required for this role.', skill: 'Technical Knowledge', level: 'Intermediate' },
+            { id: '2', text: 'Describe a challenging technical problem you solved recently.', skill: 'Problem Solving', level: 'Intermediate' },
+            { id: '3', text: 'How do you stay updated with the latest technologies in your field?', skill: 'Learning', level: 'Basic' },
+            { id: '4', text: 'Walk me through your approach to debugging a complex issue.', skill: 'Debugging', level: 'Advanced' },
+            { id: '5', text: 'What are the best practices you follow in software development?', skill: 'Best Practices', level: 'Intermediate' },
+          ];
+          break;
+        case 'soft':
+          questionsForType = [
+            { id: '1', text: 'Describe a time when you had to work with a difficult team member.', skill: 'Teamwork', level: 'Intermediate' },
+            { id: '2', text: 'How do you handle stress and pressure in the workplace?', skill: 'Stress Management', level: 'Basic' },
+            { id: '3', text: 'Tell me about a time when you had to adapt to a significant change.', skill: 'Adaptability', level: 'Intermediate' },
+            { id: '4', text: 'How do you prioritize tasks when everything seems urgent?', skill: 'Time Management', level: 'Intermediate' },
+            { id: '5', text: 'Describe a situation where you showed leadership skills.', skill: 'Leadership', level: 'Advanced' },
+          ];
+          break;
+        case 'interview':
+        default:
+          questionsForType = [
+            { id: '1', text: 'Tell me about yourself and your background.', skill: 'Communication', level: 'Basic' },
+            { id: '2', text: 'Why are you interested in this position?', skill: 'Motivation', level: 'Basic' },
+            { id: '3', text: 'What are your greatest strengths?', skill: 'Self-awareness', level: 'Basic' },
+            { id: '4', text: 'Where do you see yourself in 5 years?', skill: 'Career Planning', level: 'Basic' },
+            { id: '5', text: 'Do you have any questions for us?', skill: 'Engagement', level: 'Basic' },
+          ];
+      }
+      
+      setQuestions(questionsForType);
+      setTranscriptions(
+        questionsForType.reduce((acc: any, _: any, index: number) => ({
+          ...acc,
+          [index]: ''
+        }), {})
+      );
+    }
+  }, [stepId])
 
 
   // Add useEffect for authentication and profile check
@@ -884,6 +956,8 @@ const Test = () => {
         testedSkills,
         metadata: {
           type: 'interview',
+          stepId: getStepId(),
+          stepType: getStepInfo().stepType,
           jobId: id,
           timestamp: new Date().toISOString()
         }
@@ -1223,7 +1297,7 @@ const Test = () => {
                 textAlign: { xs: 'center', sm: 'left' }, // Center on mobile
               }}
             >
-              Interview ({current + 1}/{questions.length || '-'})
+              {getStepTypeDisplay()} ({current + 1}/{questions.length || '-'})
             </Typography>
             {hasStartedTest && (
               <Typography 
@@ -1363,23 +1437,37 @@ const Test = () => {
                   maxWidth: '100%',
                 }}
               >
-                {isGenerating ? (
-                  <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    justifyContent: 'center',
-                    background: GREEN_MAIN,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
-                  }}>
-                    <span>Generating your interview questions</span>
-                    <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
-                      ...
-                    </Box>
-                  </Box>
-                ) : questions[current]?.text}
+                                 {isGenerating ? (
+                   <Box sx={{
+                     display: 'flex',
+                     alignItems: 'center',
+                     gap: 2,
+                     justifyContent: 'center',
+                     background: GREEN_MAIN,
+                     WebkitBackgroundClip: 'text',
+                     WebkitTextFillColor: 'transparent',
+                     flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
+                   }}>
+                     <span>Generating your interview questions</span>
+                     <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
+                       ...
+                     </Box>
+                   </Box>
+                 ) : (
+                   <Box>
+                     {stepId && (
+                       <Typography variant="caption" sx={{ 
+                         color: 'rgba(255,255,255,0.8)', 
+                         display: 'block', 
+                         mb: 1,
+                         textAlign: 'center'
+                       }}>
+                         Step: {getStepId()}
+                       </Typography>
+                     )}
+                     {questions[current]?.text}
+                   </Box>
+                 )}
               </Typography>
             </QuestionOverlay>
           </Paper>
