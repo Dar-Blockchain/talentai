@@ -6,6 +6,7 @@ const { parseAIResponse } = require("../parsers/AIResponseParser");
 
 const {
   generateHRStepQuestionsPrompts,
+  generateSoftSkillStepQuestionsPrompts,
 } = require("../prompts/recruitementStepPrompts");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
@@ -14,7 +15,7 @@ module.exports.generateQuestions = async (
   companyDetails,
   postStep,
   post,
-  jobRequiredSkillList
+  userSkills
 ) => {
   try {
     let systemPrompt = "";
@@ -34,7 +35,23 @@ module.exports.generateQuestions = async (
       );
 
       userPrompt = generateHRStepQuestionsPrompts.getUserPrompt(
-        jobRequiredSkillList,
+        userSkills,
+        questionsCount,
+        stepPrompt,
+        companyDetails,
+        post.jobDetails
+      );
+    } else if (stepType == "soft") {
+      questionsCount = 10;
+      systemPrompt = generateSoftSkillStepQuestionsPrompts.getSystemPrompt(
+        questionsCount,
+        stepPrompt,
+        companyDetails,
+        post.jobDetails
+      );
+
+      userPrompt = generateSoftSkillStepQuestionsPrompts.getUserPrompt(
+        userSkills,
         questionsCount,
         stepPrompt,
         companyDetails,

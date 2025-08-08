@@ -39,16 +39,10 @@ exports.generateQuestions = async (req, res) => {
     const companyProfile = await Profile.findOne({userId: company}); 
     const companyDetails = companyProfile.companyDetails; 
 
-    const jobRequiredSkillList = post.skillAnalysis.requiredSkills;
-    if (
-      !jobRequiredSkillList ||
-      !Array.isArray(jobRequiredSkillList) ||
-      jobRequiredSkillList.length === 0
-    ) {
-      throw new HttpError(500, "post has no requiredSkills");
-    }
-
-    const result = await recruitementService.generateQuestions(companyDetails, postStep, post, jobRequiredSkillList);
+    const userProfile = await Profile.findOne({userId: user._id});
+    const userSkills = userProfile.skills; 
+    
+    const result = await recruitementService.generateQuestions(companyDetails, postStep, post, userSkills);
 
     res.status(200).json(
       result

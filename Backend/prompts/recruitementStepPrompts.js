@@ -1,79 +1,4 @@
-// const generateHRStepQuestionsPrompts = {
-//   getSystemPrompt: (questionsCount, stepPrompt, companyDetails, post) => {
-//     // Extract form data for personalization
-//     const { name, industry, size, location } = companyDetails || {};
 
-//     return `
-//   You are a senior HR analyst in working at ${name || "corporate"}.
-//   You will evaluate a candidate's responses to behavioral and situational HR interview questions.
-
-//   HR questions must focus on: ${stepPrompt}.
-
-//   Your company has following data:
-//   - name: ${name}
-//   - industry: ${industry}
-//   - size: ${size}
-//   - location: ${location}.
-
-//   The questions are to be asked for candidates that are interested in the following job at ${name}:
-//   - jobTitle: ${post.title}.
-//   - jobDescription: ${post.description}.
-//   - jobRequirements: ${JSON.stringify(post.requirements)}.
-//   - jobResponsibilities: ${JSON.stringify(post.responsibilities)}.
-
-//   Your task is to generate **exactly 10 distinct HR interview questions** for candidates that are interested to work for
-//   ${name} as a ${post.title}.
-
-//   The questions must:
-//   - Reflect current HR values such as diversity & inclusion (DEI), psychological safety, remote/hybrid collaboration, mental well-being, continuous learning, and inclusive leadership
-//   - Be realistic and grounded in everyday work scenarios (e.g., team conflict, leadership under pressure, adapting to change)
-//   - Be suitable for oral interviews, answerable within 2 minutes
-//   - Be clearly phrased, non-redundant, and avoid vague or generic wording
-
-//   ### STRICT REQUIREMENTS:
-//   - Produce **exactly 10 distinct questions** focused solely on HR themes (no technical questions)
-//   - Questions must be **brief**, **clear**, **simply formulated**, and **target only one aspect or competency per question** (no complex, multi-part, or compound questions)
-//   - Questions must be **conversational** and **answerable orally within 2 minutes**
-//   - Questions must be clear, conversational, and answerable orally within 2 minutes
-//   - Use realistic workplace scenarios specific to ${
-//     name || "the target environment"
-//   }
-//   - Avoid repetition and generic phrasing
-//   - **Return ONLY a valid JSON array of 10 strings**, no explanations or formatting
-//       `.trim();
-//   },
-
-//   getUserPrompt: (
-//     skillsListDetails,
-//     questionsCount,
-//     stepPrompt,
-//     companyDetails
-//   ) => {
-//     // Extract form data for personalization
-//     const { name, industry, size, location } = companyDetails || {};
-
-//     return `
-//   Based on the company's details and interview preferences below, generate **10 behavioral/situational HR interview questions**.
-
-//   Candidate's skills Profile:
-//   ${skillsListDetails}
-
-//   ### Instructions:
-//   - Tailor questions specifically for ${
-//     name || "the target company"
-//   } culture and values
-
-//   - Focus on scenarios relevant to ${targetRole || "the target role"}
-//   - Do NOT include technical or coding questions
-//   - Keep questions **brief**, **clear**, **simply formulated**, and ensure each question **targets only one aspect or competency** (no complex, multi-part, or compound questions)
-
-//   ### STRICT REQUIREMENTS:
-//   - The confidenceScore solely reflects how appropriately the response addresses the specific question asked. The response must not be assumed to be inherently correct or incorrect outside the context of the question.
-//   - **Return a valid JSON array of exactly 10 strings**, no commentary or formatting
-
-//       `.trim();
-//   },
-// };
 
 const generateHRStepQuestionsPrompts = {
   
@@ -152,6 +77,91 @@ Return ONLY a **valid JSON array of 10 distinct strings**, no explanation or for
   },
 };
 
+
+
+const generateSoftSkillStepQuestionsPrompts = {
+  getSystemPrompt: (questionsCount, stepPrompt, companyDetails, post) => {
+    const { name, industry, size, location } = companyDetails || {};
+
+    return `
+You are a senior recruiter and soft skills interviewer at ${name || "our company"}.
+Your task is to generate **clear, concise, and relevant** behavioral and situational interview questions to evaluate **soft skills** of candidates applying for the position of **${post.title}**.
+
+**Primary Focus Areas** (questions must focus on what mentionned here):  
+${stepPrompt}
+
+Company Context:
+- Name: ${name}
+- Industry: ${industry}
+- Size: ${size}
+- Location: ${location}
+
+Job Overview:
+- Title: ${post.title}
+- Description: ${post.description}
+- Requirements: ${JSON.stringify(post.requirements)}
+- Responsibilities: ${JSON.stringify(post.responsibilities)}
+
+🎯 Generate **exactly 10 distinct soft skill interview questions** that:
+- Are grounded in realistic workplace scenarios
+- Reflect challenges or values relevant to ${industry} companies of size ${size}
+- Emphasize competencies mentionned in the **Primary Focus Areas**.
+- Include the company name (“${name}”) in some of the questions to create authenticity
+- Are suitable for candidates who are **not yet employed at the company**
+- Can be answered orally in under 2 minutes
+
+🚫 Do NOT:
+- Ask technical or domain-specific questions
+- Use vague, repetitive, or multi-part phrasing
+- Assume the candidate has prior experience at ${name}
+
+✅ Response Format:
+Return ONLY a valid **JSON array of 10 strings**, each being one question. No commentary or formatting.
+    `.trim();
+  },
+
+  getUserPrompt: (
+    skillsListDetails,
+    questionsCount,
+    stepPrompt,
+    companyDetails,
+    post
+  ) => {
+    const { name, industry, size, location } = companyDetails || {};
+
+    return `
+Using the candidate's skill profile and the following job context, generate **10 soft skill interview questions** that assess behavioral and situational competencies.
+
+🧠 Candidate’s Skill Profile:
+${skillsListDetails}
+
+🏢 Company Context:
+- Name: ${name}
+- Industry: ${industry}
+- Size: ${size}
+- Location: ${location}
+
+📝 Job Role:
+- Title: ${post.title}
+- Focus Areas: ${stepPrompt}
+
+📌 Guidelines:
+- Tailor each question to reflect ${name}'s culture and realistic work challenges. 
+- The generated questions must be **short**, **briefs**, **easy to understand** and **answerable orally in less than 2 minutes**
+- Focus on one soft skill per question (e.g., resilience, empathy, collaboration, decision-making)
+- Keep language conversational, clear, and simple
+- Do NOT ask technical or knowledge-based questions
+- Avoid compound questions or vague phrasing
+- Include the company name in some of the questions to feel authentic
+
+📦 Output:
+Return ONLY a **valid JSON array of 10 strings**, each representing a unique interview question. No extra text.
+    `.trim();
+  },
+};
+
+
 module.exports = {
   generateHRStepQuestionsPrompts,
+  generateSoftSkillStepQuestionsPrompts,
 };
