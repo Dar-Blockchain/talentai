@@ -335,7 +335,7 @@ const Test = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { data: session } = useSession();
-  const { id } = router.query;
+  const { id, stepId } = router.query;
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isGenerating, setIsGenerating] = useState(true);
@@ -431,7 +431,7 @@ const Test = () => {
 
   // Fetch questions when profile is complete
   useEffect(() => {
-    if (isProfileComplete && id) {
+    if (isProfileComplete && stepId) {
       const fetchQuestions = async () => {
         try {
           setIsGenerating(true);
@@ -443,11 +443,10 @@ const Test = () => {
           }
 
           // Use the new recruitment step API endpoint
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}recruitementStep/generate-questions/${id}`, {
-            method: 'POST',
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}recruitementStep/generate-questions/${stepId}`, {
+            method: 'GET',
             headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
+              'Authorization': `Bearer ${token}`
             }
           });
 
@@ -488,7 +487,7 @@ const Test = () => {
 
       fetchQuestions();
     }
-  }, [isProfileComplete, id]);
+  }, [isProfileComplete, stepId]);
 
 
 
@@ -763,11 +762,10 @@ const Test = () => {
       }
 
       // Use the new recruitment step API endpoint
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}recruitementStep/generate-questions/${id}`, {
-        method: 'POST',
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}recruitementStep/generate-questions/${stepId}`, {
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${token}`
         }
       });
 
