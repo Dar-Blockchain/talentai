@@ -212,7 +212,20 @@ const HackathonDashboard = () => {
         setOpenCodeAnalysisModal(true);
       }, 1500);
     } catch (error) {
-      setCodeEvalMessage('Code evaluation failed. Please try again.');
+      let parsedError;
+
+      try {
+        parsedError = typeof error === 'string' ? JSON.parse(error) : error;
+      } catch (e) {
+        parsedError = {};
+      }
+
+      const errorCode = parsedError?.errorCode;
+      if(errorCode === "OWNERSHIP_ERROR"){
+        setCodeEvalMessage('Thank you for the GitHub link. To proceed, the connected user must be a contributor to the repository. Please share a project where you are listed as a contributor.')
+      }else{
+        setCodeEvalMessage('Code evaluation failed. Please try again.');
+      }
       console.error(error);
     } finally {
       setEvaluating(false);
@@ -1043,13 +1056,6 @@ if (!mounted) return null;
                     (hasBusinessData && hasTechnicalData && hasCodeAnalysis ? 100 : 
                      hasBusinessData && hasTechnicalData ? 80 : 
                      hasBusinessData || hasTechnicalData ? 60 : 20) : 0;
-                  console.log('Progress calculation:', {
-                    hasDescription: !!currentProject?.description,
-                    hasBusinessData,
-                    hasTechnicalData,
-                    hasCodeAnalysis,
-                    progress
-                  });
                   return Math.round(progress);
                 })()}%
               </Typography>
@@ -1072,7 +1078,6 @@ if (!mounted) return null;
                       (hasBusinessData && hasTechnicalData && hasCodeAnalysis ? 100 : 
                        hasBusinessData && hasTechnicalData ? 80 : 
                        hasBusinessData || hasTechnicalData ? 60 : 20) : 0;
-                    console.log('Custom progress bar width:', progress);
                     return progress;
                   })()}%`,
                   background: 'linear-gradient(90deg, #7C4DFF 0%, #00B8D4 50%, #8310FF 100%)',
