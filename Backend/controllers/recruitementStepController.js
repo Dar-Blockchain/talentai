@@ -10,19 +10,20 @@ const {
 } = require("../utils/evaluationUtils");
 const { HttpError } = require("../utils/httpUtils");
 const Post_Steps = require("../models/post_StepsModel");
+const Profile = require("../models/ProfileModel");
 
 exports.generateQuestions = async (req, res) => {
   try {
-    const company = req.user;
+    const user = req.user;
     const stepId = req.params.postStepId;
 
-    if (!company) {
-      throw new HttpError(500, `User of type company not found`);
+    if (!user) {
+      throw new HttpError(500, `User  not found`);
     }
-    if (!company.profile) {
-      throw new HttpError(500, `User of type company has not profile.`);
+    if (!user.profile) {
+      throw new HttpError(500, `User  has not profile.`);
     }
-    const companyDetails = company.profile.companyDetails; 
+    
 
     const postStep = await Post_Steps.findById(stepId);
     if (!postStep.postId) {
@@ -33,6 +34,10 @@ exports.generateQuestions = async (req, res) => {
     if (!post) {
       throw new HttpError(500, "post not found in the db");
     }
+
+    const company = post.user;
+    const companyProfile = await Profile.findOne({userId: company}); 
+    const companyDetails = companyProfile.companyDetails; 
 
     const jobRequiredSkillList = post.skillAnalysis.requiredSkills;
     if (
