@@ -11,6 +11,8 @@ const configSchema = new mongoose.Schema({
   nodeNumber: Number,
   title: String,
   configured: Boolean,
+  lastPrompt: String, // Ajouté pour stocker le dernier prompt
+  generatedContent: String // Ajouté pour stocker le contenu généré
 }, { _id: false });
 
 const dataSchema = new mongoose.Schema({
