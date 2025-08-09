@@ -2883,37 +2883,11 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
 
     const completedStepDetails = getCompletedSteps();
 
-    // Handle stage click - navigate to specific test/stage
+    // Handle stage click - navigate to interview-post for all steps
     const handleStageClick = (step: any, index: number) => {
-      const baseUrl = `/candidate/interview/${interviewData._id || interviewData.id}`;
-      let stageUrl = baseUrl;
-      
-      switch (step.data?.type) {
-        case 'hr':
-          stageUrl = `/interviewTest/?type=hr&interviewId=${interviewData._id || interviewData.id}`;
-          break;
-        case 'technical':
-          const jobSkill = interviewData.post?.jobDetails?.skills?.[0] || 
-                          interviewData.post?.jobDetails?.primarySkill || 
-                          'JavaScript';
-          const encodedSkill = encodeURIComponent(jobSkill);
-          stageUrl = `/test/?type=technicalSkill&skill=${encodedSkill}&interviewId=${interviewData._id || interviewData.id}`;
-          break;
-        case 'soft':
-          stageUrl = `/interviewTest/?type=soft&interviewId=${interviewData._id || interviewData.id}`;
-          break;
-        case 'interview':
-          stageUrl = `/interviewTest/?type=interview&interviewId=${interviewData._id || interviewData.id}`;
-          break;
-        case 'email':
-          stageUrl = `${baseUrl}?stage=email&stepId=${step.id}`;
-          break;
-        case 'condition':
-          stageUrl = `${baseUrl}?stage=condition&stepId=${step.id}`;
-          break;
-        default:
-          stageUrl = baseUrl;
-      }
+      // Use the postSteps _id as stepId
+      const stepId = step._id;
+      const stageUrl = `/interview-post/${interviewData.post?._id || interviewData.postId}?stepId=${stepId}`;
       
       router.push(stageUrl);
     };

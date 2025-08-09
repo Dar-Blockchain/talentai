@@ -335,7 +335,7 @@ const Test = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { data: session } = useSession();
-  const { id } = router.query;
+  const { id, stepId } = router.query;
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isGenerating, setIsGenerating] = useState(true);
@@ -431,7 +431,7 @@ const Test = () => {
 
   // Fetch questions when profile is complete
   useEffect(() => {
-    if (isProfileComplete && id) {
+    if (isProfileComplete && stepId) {
       const fetchQuestions = async () => {
         try {
           setIsGenerating(true);
@@ -442,15 +442,12 @@ const Test = () => {
             return;
           }
 
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/job/${id}/generate-technique-questions`, {
-            method: 'POST',
+          // Use the new recruitment step API endpoint
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}recruitementStep/generate-questions/${stepId}`, {
+            method: 'GET',
             headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              jobId: id
-            })
+              'Authorization': `Bearer ${token}`
+            }
           });
 
           if (!response.ok) {
@@ -458,11 +455,12 @@ const Test = () => {
           }
 
           const data: JobQuestionsResponse = await response.json();
-          setTestedSkills(data.testedSkills);
+          setTestedSkills(data.testedSkills || []);
 
           const formattedQuestions: Question[] = data.questions.map((question, index) => {
-            const skillIndex = index % data.requiredSkills.length;
-            const skill = data.requiredSkills[skillIndex];
+            // Handle case where requiredSkills might not be available
+            const skillIndex = data.requiredSkills ? index % data.requiredSkills.length : 0;
+            const skill = data.requiredSkills?.[skillIndex] || { name: 'General', level: 'Intermediate' };
 
             return {
               id: `q_${index + 1}`,
@@ -489,7 +487,7 @@ const Test = () => {
 
       fetchQuestions();
     }
-  }, [isProfileComplete, id]);
+  }, [isProfileComplete, stepId]);
 
 
 
@@ -763,15 +761,12 @@ const Test = () => {
         return;
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/job/${id}/generate-technique-questions`, {
-        method: 'POST',
+      // Use the new recruitment step API endpoint
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}recruitementStep/generate-questions/${stepId}`, {
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          jobId: id
-        })
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (!response.ok) {
@@ -779,10 +774,11 @@ const Test = () => {
       }
 
       const data: JobQuestionsResponse = await response.json();
-      setTestedSkills(data.testedSkills);
+      setTestedSkills(data.testedSkills || []);
       const formattedQuestions: Question[] = data.questions.map((question, index) => {
-        const skillIndex = index % data.requiredSkills.length;
-        const skill = data.requiredSkills[skillIndex];
+        // Handle case where requiredSkills might not be available
+        const skillIndex = data.requiredSkills ? index % data.requiredSkills.length : 0;
+        const skill = data.requiredSkills?.[skillIndex] || { name: 'General', level: 'Intermediate' };
 
         return {
           id: `q_${index + 1}`,

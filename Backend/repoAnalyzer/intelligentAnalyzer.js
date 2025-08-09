@@ -2,7 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
-const { analyzeRepo, checkRepoOwnership, fetchRepoData, getContributorsData } = require('./evaluateRepo');
+const { analyzeRepo } = require('./evaluateRepo');
 
 class IntelligentProjectAnalyzer {
     constructor() {
@@ -119,7 +119,7 @@ class IntelligentProjectAnalyzer {
             const contents = await this.fetchDirectoryContents(owner, repo, currentPath);
             
             for (const item of contents) {
-                console.log("item is: ", item);
+                console.log("item is: ", item.path);
                 if (item.type === 'dir') {
                     // Skip build and dependency directories
                     if (this.shouldSkipDirectory(item.path)) {
@@ -1783,7 +1783,6 @@ class IntelligentProjectAnalyzer {
                     Authorization: `token ${process.env.GITHUB_TOKEN}`,
                 },
             });
-            console.log("heyhey: ", response.data);
             return response.data;
         } catch (error) {
             throw error;
