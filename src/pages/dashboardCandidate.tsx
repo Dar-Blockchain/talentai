@@ -4128,48 +4128,137 @@ function TeamMemberProjectsCard() {
   }
   if (!projects.length) {
     return (
-      <Box sx={{ color: '#191919', textAlign: 'center', py: 2 }}>
-        <Typography>No team projects found.</Typography>
+      <Box sx={{ textAlign: 'center', py: 6 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            mx: 'auto',
+            maxWidth: 720,
+            borderRadius: 3,
+            border: '2px dashed rgba(131,16,255,0.25)',
+            background: 'linear-gradient(180deg, #ffffff 0%, #fbfbff 100%)',
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, #8310FF 0%, #02E2FF 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 25px rgba(131, 16, 255, 0.25)',
+              }}
+            >
+              <GroupIcon sx={{ color: 'white', fontSize: 28 }} />
+            </Box>
+          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#1a1a1a', mb: 1 }}>
+            No Team Projects Yet
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#555', maxWidth: 520, mx: 'auto' }}>
+            You aren’t part of any team projects right now. When you join a team, your projects will appear here with progress and details.
+          </Typography>
+        </Paper>
       </Box>
     );
   }
   return (
-    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
-      {projects.map((project: any) => {
-        const team = Array.isArray(project.team) ? project.team : [];
-        const showAvatars = team.slice(0, 4);
-        const extraCount = team.length > 4 ? team.length - 4 : 0;
-        return (
-          <Paper key={project._id} elevation={2} sx={{ p: 2, borderRadius: 3, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#fff' }}>
-            <Typography variant="h6" sx={{ color: '#8310FF', fontWeight: 700, mb: 1, minHeight: 32 }}>
-              {project.name || 'Untitled Project'}
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#333', mb: 1 }}>
-              {project.description || 'No description.'}
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#191919', mb: 1 }}>
-              <b>Track:</b> {project.track || '-'}
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#191919', mb: 1 }}>
-              <b>Created At:</b> {project.createdAt ? new Date(project.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '-'}
-            </Typography>
-            {/* Team Members - Pro Design */}
-            <Box sx={{ mb: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <Box>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
+          gap: 2,
+        }}
+      >
+        {projects.map((project: any) => {
+          const team = Array.isArray(project.team) ? project.team : [];
+          const showAvatars = team.slice(0, 4);
+          const extraCount = team.length > 4 ? team.length - 4 : 0;
+          const createdLabel = project.createdAt
+            ? new Date(project.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+            : '-';
+
+          return (
+            <Paper
+              key={project._id}
+              elevation={0}
+              sx={{
+                p: 2.5,
+                borderRadius: 3,
+                position: 'relative',
+                overflow: 'hidden',
+                background: 'linear-gradient(180deg, #ffffff 0%, #fbfbff 100%)',
+                border: '1px solid rgba(0,0,0,0.06)',
+                boxShadow: '0 8px 22px rgba(0,0,0,0.06)',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 4,
+                  background: 'linear-gradient(90deg, #8310FF 0%, #02E2FF 50%, #00FFC3 100%)',
+                },
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 14px 36px rgba(0,0,0,0.12)',
+                },
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1a1a1a', pr: 1 }}>
+                  {project.name || 'Untitled Project'}
+                </Typography>
+                {project.track && (
+                  <Chip
+                    label={project.track}
+                    size="small"
+                    sx={{
+                      bgcolor: 'rgba(131,16,255,0.08)',
+                      color: '#8310FF',
+                      fontWeight: 700,
+                      borderRadius: 2,
+                    }}
+                  />
+                )}
+              </Box>
+
+              <Typography variant="body2" sx={{ color: '#444', mb: 1.5, minHeight: 40 }}>
+                {project.description || 'No description.'}
+              </Typography>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
                 <Chip
-                  icon={<GroupIcon sx={{ color: '#8310FF' }} />}
-                  label="Team"
+                  icon={<GroupIcon sx={{ color: '#7C4DFF' }} />}
+                  label={`${team.length} member${team.length !== 1 ? 's' : ''}`}
+                  size="small"
                   sx={{
-                    background: 'rgba(131,16,255,0.08)',
-                    color: '#8310FF',
+                    bgcolor: 'rgba(124, 77, 255, 0.08)',
+                    color: '#7C4DFF',
                     fontWeight: 700,
-                    fontSize: '1rem',
                     borderRadius: 2,
-                    px: 1.5,
-                    mr: 1,
                   }}
                 />
-                <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
+                <Chip
+                  label={`Created ${createdLabel}`}
+                  size="small"
+                  sx={{
+                    bgcolor: 'rgba(0,0,0,0.04)',
+                    color: '#555',
+                    fontWeight: 600,
+                    borderRadius: 2,
+                  }}
+                />
+              </Box>
+
+              <Box sx={{ mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', ml: 0.5 }}>
                   {showAvatars.map((member: any, idx: number) => (
                     <Tooltip
                       key={member._id || idx}
@@ -4258,16 +4347,29 @@ function TeamMemberProjectsCard() {
                   </Popover>
                 </Box>
               </Box>
-            </Box>
-            <Box sx={{ mt: 'auto' }}>
-              <Button variant="contained" sx={{ background: '#8310FF', color: '#fff', borderRadius: 2, textTransform: 'none', fontWeight: 600, width: '100%' }}
-                onClick={() => router.push(`/hackathon/projects/${project._id}`)}>
-                Details
-              </Button>
-            </Box>
-          </Paper>
-        );
-      })}
+
+              <Box sx={{ mt: 'auto' }}>
+                <Button
+                  variant="contained"
+                  sx={{
+                    background: '#8310FF',
+                    color: '#fff',
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    width: '100%',
+                    boxShadow: '0 2px 8px #7C4DFF22',
+                    '&:hover': { background: '#6a0bd4' },
+                  }}
+                  onClick={() => router.push(`/hackathon/projects/${project._id}`)}
+                >
+                  Details
+                </Button>
+              </Box>
+            </Paper>
+          );
+        })}
+      </Box>
     </Box>
   );
 }
@@ -4334,48 +4436,155 @@ function LeaderProjectsCard() {
   }
   if (!projects.length) {
     return (
-      <Box sx={{ color: '#191919', textAlign: 'center', py: 2 }}>
-        <Typography>No leader projects found.</Typography>
+      <Box sx={{ textAlign: 'center', py: 6 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            mx: 'auto',
+            maxWidth: 720,
+            borderRadius: 3,
+            border: '2px dashed rgba(131,16,255,0.25)',
+            background: 'linear-gradient(180deg, #ffffff 0%, #fbfbff 100%)',
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, #8310FF 0%, #02E2FF 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 25px rgba(131, 16, 255, 0.25)',
+              }}
+            >
+              <GroupIcon sx={{ color: 'white', fontSize: 28 }} />
+            </Box>
+          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#1a1a1a', mb: 1 }}>
+            No Leader Projects Yet
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#555', maxWidth: 520, mx: 'auto' }}>
+            You haven’t created any projects as a leader yet. Create a project to manage your team, track progress, and showcase outcomes here.
+          </Typography>
+        </Paper>
       </Box>
     );
   }
   return (
-    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
-      {projects.map((project: any) => {
-        const team = Array.isArray(project.team) ? project.team : [];
-        const showAvatars = team.slice(0, 4);
-        const extraCount = team.length > 4 ? team.length - 4 : 0;
-        return (
-          <Paper key={project._id} elevation={2} sx={{ p: 2, borderRadius: 3, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#fff' }}>
-            <Typography variant="h6" sx={{ color: '#8310FF', fontWeight: 700, mb: 1, minHeight: 32 }}>
-              {project.name || 'Untitled Project'}
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#333', mb: 1 }}>
-              {project.description || 'No description.'}
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#191919', mb: 1 }}>
-              <b>Track:</b> {project.track || '-'}
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#191919', mb: 1 }}>
-              <b>Created At:</b> {project.createdAt ? new Date(project.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '-'}
-            </Typography>
-            {/* Team Members - Pro Design */}
-            <Box sx={{ mb: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <Box>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
+          gap: 2,
+        }}
+      >
+        {projects.map((project: any) => {
+          const team = Array.isArray(project.team) ? project.team : [];
+          const showAvatars = team.slice(0, 4);
+          const extraCount = team.length > 4 ? team.length - 4 : 0;
+          const createdLabel = project.createdAt
+            ? new Date(project.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+            : '-';
+          const isNew = project.createdAt
+            ? Date.now() - new Date(project.createdAt).getTime() < 1000 * 60 * 60 * 24 * 14
+            : false;
+
+          return (
+            <Paper
+              key={project._id}
+              elevation={0}
+              sx={{
+                p: 2.5,
+                borderRadius: 3,
+                position: 'relative',
+                overflow: 'hidden',
+                background: 'linear-gradient(180deg, #ffffff 0%, #fbfbff 100%)',
+                border: '1px solid rgba(0,0,0,0.06)',
+                boxShadow: '0 8px 22px rgba(0,0,0,0.06)',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 4,
+                  background: 'linear-gradient(90deg, #8310FF 0%, #02E2FF 50%, #00FFC3 100%)',
+                },
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 14px 36px rgba(0,0,0,0.12)',
+                },
+              }}
+            >
+              {isNew && (
                 <Chip
-                  icon={<GroupIcon sx={{ color: '#8310FF' }} />}
-                  label="Team"
+                  label="New"
+                  size="small"
                   sx={{
-                    background: 'rgba(131,16,255,0.08)',
+                    position: 'absolute',
+                    top: 10,
+                    right: 10,
+                    bgcolor: 'rgba(131,16,255,0.1)',
                     color: '#8310FF',
                     fontWeight: 700,
-                    fontSize: '1rem',
-                    borderRadius: 2,
-                    px: 1.5,
-                    mr: 1,
                   }}
                 />
-                <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
+              )}
+
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1a1a1a', pr: 1 }}>
+                  {project.name || 'Untitled Project'}
+                </Typography>
+                {project.track && (
+                  <Chip
+                    label={project.track}
+                    size="small"
+                    sx={{
+                      bgcolor: 'rgba(131,16,255,0.08)',
+                      color: '#8310FF',
+                      fontWeight: 700,
+                      borderRadius: 2,
+                    }}
+                  />
+                )}
+              </Box>
+
+              <Typography variant="body2" sx={{ color: '#444', mb: 1.5, minHeight: 40 }}>
+                {project.description || 'No description.'}
+              </Typography>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
+                <Chip
+                  icon={<GroupIcon sx={{ color: '#7C4DFF' }} />}
+                  label={`${team.length} member${team.length !== 1 ? 's' : ''}`}
+                  size="small"
+                  sx={{
+                    bgcolor: 'rgba(124, 77, 255, 0.08)',
+                    color: '#7C4DFF',
+                    fontWeight: 700,
+                    borderRadius: 2,
+                  }}
+                />
+                <Chip
+                  label={`Created ${createdLabel}`}
+                  size="small"
+                  sx={{
+                    bgcolor: 'rgba(0,0,0,0.04)',
+                    color: '#555',
+                    fontWeight: 600,
+                    borderRadius: 2,
+                  }}
+                />
+              </Box>
+
+              <Box sx={{ mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', ml: 0.5 }}>
                   {showAvatars.map((member: any, idx: number) => (
                     <Tooltip
                       key={member._id || idx}
@@ -4464,16 +4673,29 @@ function LeaderProjectsCard() {
                   </Popover>
                 </Box>
               </Box>
-            </Box>
-            <Box sx={{ mt: 'auto' }}>
-              <Button variant="contained" sx={{ background: '#8310FF', color: '#fff', borderRadius: 2, textTransform: 'none', fontWeight: 600, width: '100%' }}
-                onClick={() => router.push(`/hackathon/projects/${project._id}`)}>
-                Details
-              </Button>
-            </Box>
-          </Paper>
-        );
-      })}
+
+              <Box sx={{ mt: 'auto' }}>
+                <Button
+                  variant="contained"
+                  sx={{
+                    background: '#8310FF',
+                    color: '#fff',
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    width: '100%',
+                    boxShadow: '0 2px 8px #7C4DFF22',
+                    '&:hover': { background: '#6a0bd4' },
+                  }}
+                  onClick={() => router.push(`/hackathon/projects/${project._id}`)}
+                >
+                  Details
+                </Button>
+              </Box>
+            </Paper>
+          );
+        })}
+      </Box>
     </Box>
   );
 }
