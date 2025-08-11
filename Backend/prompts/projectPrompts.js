@@ -1,6 +1,39 @@
-const { TECH_STACK_TYPES } = require("../constants/projectConstants");
+// ============================================================================
+// Prompts liés aux projets (génération de questions et analyse de réponses)
+// ----------------------------------------------------------------------------
+// Ce module rassemble des prompts conçus pour guider un LLM (ex: Together AI,
+// OpenAI, etc.) lors de l'évaluation de projets durant un hackathon Hedera.
+// Les prompts imposent des contraintes strictes (sortie JSON uniquement,
+// nombre exact d'éléments, clarté des questions, etc.) afin de faciliter
+// l'intégration côté serveur (parsing fiable, modèles alignés).
+// ============================================================================
 
+const { TECH_STACK_TYPES } = require("../constants/projectConstants");
+// Import de `TECH_STACK_TYPES` (types autorisés pour classifier les éléments du
+// tech stack). Cette constante est injectée dans certains prompts pour contraindre
+// explicitement le LLM à utiliser une valeur parmi les catégories prévues par
+// notre modèle (ex: HEDERA_TOOLING, HEDERA_SERVICE, CORE_TECH, etc.).
+
+// ----------------------------------------------------------------------------
+// generateTechnicalQuestionsPrompts
+// ----------------------------------------------------------------------------
+// But: générer une liste de questions techniques que le jury posera lors du
+// pitch technique. Ces questions visent à sonder: Tech Stack, intégration Hedera,
+// architecture, tooling & SDKs.
+// Contenu:
+// - getSystemPrompt: définit le rôle du LLM et les règles globales (langue,
+//   nombre exact de questions, durée des réponses, interdictions).
+// - getUserPrompt: fournit le contexte spécifique du projet (nom, track,
+//   description) et rappelle les axes à couvrir.
 const generateTechnicalQuestionsPrompts = {
+  // getSystemPrompt
+  // Paramètres:
+  // - projectName: nom du projet (contexte affiché au LLM)
+  // - projectTrack: track du hackathon (ex: DeFi, Sustainability)
+  // - questionsCount: nombre EXACT de questions à générer
+  // - QUESTION_DURATION: durée max (en minutes) d'une réponse orale par question
+  // Renvoie: une string (template) décrivant les exigences strictes que le LLM
+  // doit respecter (ex: JSON uniquement, pas d'hypothèses, brièveté).
   getSystemPrompt: (
     projectName,
     projectTrack,
@@ -29,6 +62,15 @@ Return **valid JSON only of ${questionsCount} strings** (no explanations or form
 `.trim();
   },
 
+  // getUserPrompt
+  // Paramètres:
+  // - projectName: nom du projet
+  // - projectDescription: description libre fournie par l'équipe (source
+  //   d'information pour contextualiser les questions)
+  // - projectTrack: track sélectionné
+  // - questionsCount: nombre EXACT de questions à produire
+  // Rôle: contextualise la génération en rappelant les axes à couvrir. Aucune
+  // logique de calcul ici; on formate juste l'entrée destinée au LLM.
   getUserPrompt: (projectName, projectDescription, projectTrack, questionsCount) => {
     return `
 You are evaluating the project **"${projectName}"**, submitted under the **"${projectTrack}"** track.
@@ -50,7 +92,22 @@ Return **valid JSON only of ${questionsCount} strings** (no explanations or form
   },
 };
 
+// ----------------------------------------------------------------------------
+// generateBusinessQuestionsPrompts
+// ----------------------------------------------------------------------------
+// But: générer des questions côté business pour comprendre la viabilité,
+// l'innovation, l'alignement au track et l'impact écosystème Hedera.
+// Contenu:
+// - getSystemPrompt: rôle et règles strictes (langue, simplicité, durée, unicité)
+// - getUserPrompt: contexte projet + rappel des dimensions business à explorer
 const generateBusinessQuestionsPrompts = {
+  // getSystemPrompt
+  // Paramètres:
+  // - projectName: nom du projet
+  // - projectTrack: track concerné
+  // - questionsCount: nombre EXACT de questions business
+  // - QUESTION_DURATION: durée max (en minutes) d'une réponse orale
+  // Sortie: template décrivant les attentes (clarté, simplicité, pas de doublons)
   getSystemPrompt: (
     projectName,
     projectTrack,
@@ -89,6 +146,13 @@ Return **valid JSON only of exactly ${questionsCount} strings** (no commentary o
     `.trim();
   },
 
+  // getUserPrompt
+  // Paramètres:
+  // - projectName, projectTrack: contexte du projet
+  // - projectDescription: texte libre fourni par l'équipe
+  // - questionsCount: nombre EXACT de questions
+  // Rôle: injecte la description utilisateur et ancre les questions dans
+  // les aspects business cruciaux (problème, marché, différenciation, etc.).
   getUserPrompt: (
     projectName,
     projectTrack,
@@ -121,7 +185,26 @@ Return **valid JSON only of exactly ${questionsCount} strings** (no commentary o
   },
 };
 
+// ----------------------------------------------------------------------------
+// analyzeTechnicalAnswersPrompts
+// ----------------------------------------------------------------------------
+// But: analyser un pitch technique transcrit (Q/A) et construire un objet JSON
+// structuré décrivant: techStack, architecture, approche de scalabilité, résumé
+// et score global. Le prompt inclut une taxonomie stricte pour `techStack`,
+// notamment via `TECH_STACK_TYPES` pour limiter les valeurs de `componentType`.
+// Interactions:
+// - Le contrôleur qui consomme ce prompt enverra les Q/A et recevra un JSON
+//   conforme au schéma attendu par le modèle ProjectAssessment côté backend.
 const analyzeTechnicalAnswersPrompts = {
+  // getSystemPrompt
+  // Paramètres:
+  // - projectName: nom du projet (contexte du pitch)
+  // - projectTrack: track du hackathon (sert aux grilles de notation)
+  // Rôle: énonce un cahier des charges très précis au LLM, incluant:
+  //   * structure JSON attendue
+  //   * rubriques détaillées et barèmes (0–100)
+  //   * contrainte `componentType` = une des valeurs de `TECH_STACK_TYPES`
+  //   * consignes anti-hallucination (ne rien inventer, sanction du name-dropping)
   getSystemPrompt: (projectName, projectTrack) =>
     `
 You are a senior technical judge at a Hedera hackathon. You are reviewing a transcript of a technical pitch delivered by a project team of the project: "${projectName}" in the track: "${projectTrack}".
@@ -223,6 +306,15 @@ Judgment-based summary (3–5 sentences) from the perspective of a business jury
 
 No explanations. Output must be valid JSON only.
 `.trim(),
+  // getUserPrompt
+  // Paramètres:
+  // - projectName, projectTrack: contexte du pitch
+  // - questions: tableau d'objets { question, answer }
+  // Détails:
+  // - Le `.map(...)` formate les paires Q/A en texte multi-lignes, inséré dans
+  //   le template envoyé au LLM.
+  // - Aucun appel d'API ici: ce module ne fait que générer des prompts. Les
+  //   appels réseaux aux LLM sont effectués par d'autres services.
   getUserPrompt: (projectName, projectTrack, questions) =>
     `
 Analyze the following technical pitch for the Hedera project: "${projectName}" in the track: "${projectTrack}"
@@ -238,6 +330,8 @@ Please extract all technical assessment data and generate a complete JSON object
 };
 
 // const analyzeBusinessAnswersPrompts = {
+// NOTE: Bloc d'anciennes consignes business conservées en commentaires.
+// Utile comme référence ou base pour des évolutions futures. Ne pas exécuter.
 //   getSystemPrompt: (projectName, projectTrack) =>
 //     `
 // You are a senior business judge at a Hedera hackathon. You are reviewing a transcript of a business pitch delivered by a project team.
@@ -450,6 +544,12 @@ Please extract all technical assessment data and generate a complete JSON object
 // };
 
 const analyzeBusinessAnswersPrompts = {
+  // analyzeBusinessAnswersPrompts.getSystemPrompt
+  // Paramètres:
+  // - projectName, projectTrack: contexte business
+  // Rôle: impose une lecture factuelle et "bluff-proof" du pitch business.
+  //   * Aucune supposition permise; champs manquants marqués explicitement
+  //   * Barèmes stricts pour innovation / alignement / impact / marché / modèle
   getSystemPrompt: (projectName, projectTrack) => `
 You are a **senior business judge** at a Hedera hackathon.
 
@@ -558,6 +658,12 @@ Your task is to critically extract **only what is explicitly mentioned or clearl
 
 `.trim(),
 
+  // analyzeBusinessAnswersPrompts.getUserPrompt
+  // Paramètres:
+  // - projectName, projectTrack: contexte du projet
+  // - questions: tableau { question, answer } issu de la transcription
+  // Rôle: transmet l'intégralité des Q/A, rappelle les consignes de sortie JSON
+  // et exige le remplissage strict de chaque champ du schéma `businessData`.
   getUserPrompt: (
     projectName,
     projectTrack,
@@ -644,6 +750,12 @@ Your task:
 };
 
 
+// ----------------------------------------------------------------------------
+// Export public du module
+// ----------------------------------------------------------------------------
+// Les objets exportés sont consommés par les services/contrôleurs backend qui
+// orchestrent les appels aux modèles LLM. Ce module ne gère ni appels réseau,
+// ni parsing: il ne fournit que des chaînes (prompts) prêtes à l'emploi.
 module.exports = {
   generateTechnicalQuestionsPrompts,
   generateBusinessQuestionsPrompts,
