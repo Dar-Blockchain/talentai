@@ -1394,7 +1394,7 @@ export default function DashboardCandidate() {
     );
   }
 
-  if (error) {
+  if (error && !loading) {
     return (
       <Container sx={{ mt: 4 }}>
         <Alert severity="error" sx={{ borderRadius: "12px" }}>
@@ -1404,14 +1404,8 @@ export default function DashboardCandidate() {
     );
   }
 
-  if (!profile) {
-    return (
-      <Container sx={{ mt: 4 }}>
-        <Alert severity="info" sx={{ borderRadius: "12px" }}>
-          No profile data available
-        </Alert>
-      </Container>
-    );
+  if (!profile && !loading) {
+    return <></>
   }
 
   return (
