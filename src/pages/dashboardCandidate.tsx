@@ -812,6 +812,7 @@ export default function DashboardCandidate() {
 
   const [addSkillDialogOpen, setAddSkillDialogOpen] = useState(false);
   const [newSkill, setNewSkill] = useState({ name: "", proficiencyLevel: 1 });
+  const [addSoftSkillDialogOpen, setAddSoftSkillDialogOpen] = useState(false);
 
   // Add state to track pre-selected skill for test modal
   const [preSelectedTest, setPreSelectedTest] = useState<{
@@ -983,6 +984,15 @@ export default function DashboardCandidate() {
     setPreSelectedTest(null);
   };
 
+  const handleCloseAddSoftSkillModal = () => {
+    setAddSoftSkillDialogOpen(false);
+    setSoftSkillType("");
+    setSoftSkillLanguage("");
+    setSoftSkillSubcategory("");
+    setSoftSkillProficiency(1);
+    setIsExistingSoftSkill(false);
+  };
+
   const handleSkillTypeChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -1035,6 +1045,51 @@ export default function DashboardCandidate() {
       handleCloseTestModal();
     } catch (error) {
       console.error("Error in test submission:", error);
+      toast.error("Failed to start test");
+    }
+  };
+
+  const handleSoftSkillAddSubmit = async () => {
+    try {
+      if (!softSkillType) {
+        toast.error("Please select a soft skill");
+        return;
+      }
+      const proficiencyMap: { [key: string]: number } = {
+        "Entry Level": 1,
+        Junior: 2,
+        "Mid Level": 3,
+        Senior: 4,
+        Expert: 5,
+      };
+      const proficiency =
+        proficiencyMap[
+          getExperienceLevelFromProficiency(softSkillProficiency)
+        ] || 1;
+
+      const queryParams = new URLSearchParams();
+      queryParams.append("type", "soft");
+      queryParams.append("skill", softSkillType);
+      queryParams.append("proficiency", proficiency.toString());
+
+      if (softSkillType === "Communication") {
+        if (!softSkillLanguage) {
+          toast.error("Please select a language for Communication skill");
+          return;
+        }
+        queryParams.append("language", softSkillLanguage);
+      } else {
+        if (!softSkillSubcategory) {
+          toast.error("Please select a subcategory");
+          return;
+        }
+        queryParams.append("subcategory", softSkillSubcategory);
+      }
+
+      router.push(`/test?${queryParams.toString()}`);
+      handleCloseAddSoftSkillModal();
+    } catch (error) {
+      console.error("Error in soft skill submission:", error);
       toast.error("Failed to start test");
     }
   };
@@ -2535,7 +2590,7 @@ export default function DashboardCandidate() {
                     </Box>
                     <Button
                       startIcon={<AddIcon />}
-                      onClick={() => setAddSkillDialogOpen(true)}
+                      onClick={() => setAddSoftSkillDialogOpen(true)}
                       variant="outlined"
                       sx={{
                         color: "#FF6B6B",
@@ -2608,7 +2663,7 @@ export default function DashboardCandidate() {
                         </Typography>
                         <Button
                           startIcon={<AddIcon />}
-                          onClick={() => setAddSkillDialogOpen(true)}
+                          onClick={() => setAddSoftSkillDialogOpen(true)}
                           variant="contained"
                           sx={{
                             mt: 2,
@@ -2837,6 +2892,256 @@ export default function DashboardCandidate() {
               <TeamMemberProjectsCard />
             </StyledCard>
           </Box>
+          {/* Add Soft Skill Dialog */}
+          <Dialog
+            open={addSoftSkillDialogOpen}
+            onClose={handleCloseAddSoftSkillModal}
+            maxWidth="sm"
+            fullWidth
+            PaperProps={{
+              sx: {
+                background: "#ffffff",
+                borderRadius: "24px",
+                border: "1px solid #FF6B6B",
+              },
+            }}
+          >
+            <DialogTitle
+              sx={{
+                borderBottom: "1px solid #FF6B6B",
+                color: GREEN_MAIN,
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Typography variant="h6" sx={{ color: "black" }}>
+                  Add Soft Skill
+                </Typography>
+                <IconButton onClick={handleCloseAddSoftSkillModal} sx={{ color: "black" }}>
+                  <CloseIcon />
+                </IconButton>
+              </Box>
+            </DialogTitle>
+            <DialogContent>
+              <Box>
+                <Typography sx={{ color: GREEN_MAIN, mb: 1, mt: 2 }}>Select Soft Skill</Typography>
+                <Autocomplete
+                  fullWidth
+                  options={softSkills}
+                  value={softSkills.find((s) => s.name === softSkillType) || null}
+                  onChange={(_, value) => handleSoftSkillChange(value?.name || "")}
+                  getOptionLabel={(option) => option.name}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
+                      InputProps={{
+                        ...params.InputProps,
+                        sx: {
+                          color: "#000000",
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "rgba(0,0,0,0.2)",
+                          },
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: GREEN_MAIN,
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: GREEN_MAIN,
+                          },
+                          "&.Mui-focused": {
+                            "& .MuiInputLabel-root": {
+                              color: GREEN_MAIN,
+                            },
+                          },
+                          "& .MuiInputLabel-root": {
+                            "&.Mui-focused": {
+                              color: GREEN_MAIN,
+                            },
+                          },
+                        },
+                      }}
+                    />
+                  )}
+                  PaperComponent={(props) => (
+                    <Paper
+                      {...props}
+                      sx={{
+                        backgroundColor: "white",
+                        color: "black",
+                        "& .MuiAutocomplete-option": {
+                          color: "black",
+                          '&[aria-selected="true"]': {
+                            backgroundColor: "rgba(0, 255, 157, 0.1)",
+                          },
+                          "&:hover": {
+                            backgroundColor: "rgba(0, 255, 157, 0.05)",
+                          },
+                        },
+                      }}
+                    />
+                  )}
+                />
+
+                {softSkillType === "Communication" && (
+                  <Autocomplete
+                    fullWidth
+                    options={languages}
+                    value={languages.find((l) => l.value === softSkillLanguage) || null}
+                    onChange={(_, value) => handleSoftSkillLanguageChange(value?.value || "")}
+                    getOptionLabel={(option) => option.label}
+                    sx={{ mt: 2 }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        InputLabelProps={{ sx: { color: GREEN_MAIN } }}
+                        InputProps={{
+                          ...params.InputProps,
+                          sx: {
+                            color: "#000000",
+                            "& .MuiOutlinedInput-notchedOutline": {
+                              borderColor: GREEN_MAIN,
+                            },
+                            "&:hover .MuiOutlinedInput-notchedOutline": {
+                              borderColor: GREEN_MAIN,
+                            },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                              borderColor: GREEN_MAIN,
+                            },
+                            "&.Mui-focused": {
+                              "& .MuiInputLabel-root": {
+                                color: GREEN_MAIN,
+                              },
+                            },
+                            "& .MuiInputLabel-root": {
+                              "&.Mui-focused": {
+                                color: GREEN_MAIN,
+                              },
+                            },
+                          },
+                        }}
+                      />
+                    )}
+                    PaperComponent={(props) => (
+                      <Paper
+                        {...props}
+                        sx={{
+                          backgroundColor: "white",
+                          color: "black",
+                          "& .MuiAutocomplete-option": {
+                            color: "black",
+                            '&[aria-selected="true"]': {
+                              backgroundColor: GREEN_MAIN,
+                            },
+                            "&:hover": {
+                              backgroundColor: GREEN_MAIN,
+                            },
+                          },
+                        }}
+                      />
+                    )}
+                  />
+                )}
+
+                {softSkillType && softSkillType !== "Communication" && (
+                  <Autocomplete
+                    fullWidth
+                    options={
+                      softSkills.find((s) => s.name === softSkillType)?.subcategories || []
+                    }
+                    value={
+                      softSkills
+                        .find((s) => s.name === softSkillType)
+                        ?.subcategories?.find((sub) => sub.value === softSkillSubcategory) || null
+                    }
+                    onChange={(_, value) => handleSoftSkillSubcategoryChange(value?.value || "")}
+                    getOptionLabel={(option) => option.label}
+                    sx={{ mt: 2 }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
+                        InputProps={{
+                          ...params.InputProps,
+                          sx: {
+                            color: "#000000",
+                            "& .MuiOutlinedInput-notchedOutline": {
+                              borderColor: "rgba(4, 3, 3, 0.2)",
+                            },
+                            "&:hover .MuiOutlinedInput-notchedOutline": {
+                              borderColor: GREEN_MAIN,
+                            },
+                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                              borderColor: GREEN_MAIN,
+                            },
+                            "&.Mui-focused": {
+                              "& .MuiInputLabel-root": {
+                                color: GREEN_MAIN,
+                              },
+                            },
+                            "& .MuiInputLabel-root": {
+                              "&.Mui-focused": {
+                                color: GREEN_MAIN,
+                              },
+                            },
+                          },
+                        }}
+                      />
+                    )}
+                    PaperComponent={(props) => (
+                      <Paper
+                        {...props}
+                        sx={{
+                          backgroundColor: "white",
+                          color: "black",
+                          "& .MuiAutocomplete-option": {
+                            color: "black",
+                            '&[aria-selected="true"]': {
+                              backgroundColor: GREEN_MAIN,
+                            },
+                            "&:hover": {
+                              backgroundColor: GREEN_MAIN,
+                            },
+                          },
+                        }}
+                      />
+                    )}
+                  />
+                )}
+              </Box>
+            </DialogContent>
+            <DialogActions sx={{ p: 3, borderTop: "1px solid rgba(255, 107, 107, 0.2)" }}>
+              <Button onClick={handleCloseAddSoftSkillModal} sx={{ color: "rgba(0,0,0,0.7)", "&:hover": { color: "#000000" } }}>
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleSoftSkillAddSubmit}
+                disabled={
+                  !softSkillType ||
+                  (softSkillType === "Communication" && !softSkillLanguage) ||
+                  (softSkillType !== "Communication" && !softSkillSubcategory)
+                }
+                sx={{
+                  background: GREEN_MAIN,
+                  color: "#000000",
+                  "&:hover": {
+                    background: GREEN_MAIN,
+                  },
+                  "&.Mui-disabled": {
+                    background: "rgba(0,0,0,0.1)",
+                    color: "rgba(0,0,0,0.3)",
+                  },
+                }}
+              >
+                Start Test
+              </Button>
+            </DialogActions>
+          </Dialog>
           {/* Add Skill Dialog */}
           <Dialog
             open={addSkillDialogOpen}
