@@ -1,59 +1,102 @@
+// ============================================================================
+// IntelligentProjectAnalyzer
+// ---------------------------------------------------------------------------
+// Ce module fournit une classe capable d'analyser un dépôt GitHub de manière
+// intelligente et structurée, en combinant:
+// - Une exploration récursive de l'arborescence du repo via l'API GitHub
+// - Une analyse des fichiers clés (package.json, README, fichiers de code...)
+// - Des heuristiques pour déduire le domaine, l'architecture et la cohérence
+// - Un scoring qualitatif (maintenabilité, lisibilité, performance, sécurité...)
+// - Des insights et recommandations concrètes pour améliorer le projet
+// 
+// Il interagit avec `evaluateRepo.js` pour récupérer des métriques et résultats
+// complémentaires (scores, éligibilité hackathon, etc.).
+// ============================================================================
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
 const { analyzeRepo } = require('./evaluateRepo');
 
+// ---------------------------------------------------------------------------
+// Classe principale qui encapsule l'analyse du projet
+// - Le constructeur initialise une structure d'état pour accumuler les résultats
+//   d'analyse de haut niveau (but du projet, architecture, cohérence, qualité).
+// ---------------------------------------------------------------------------
 class IntelligentProjectAnalyzer {
     constructor() {
+        // `analysis` maintient un résumé global des résultats majeurs.
         this.analysis = {
-            projectPurpose: null,
-            architecture: null,
-            coherence: null,
-            quality: null,
-            insights: []
+            projectPurpose: null, // Finalité/domaine du projet (ex: Backend API, E-commerce...)
+            architecture: null,   // Type d'architecture détectée (MVC, Layered, Next.js...)
+            coherence: null,      // Cohérence (naming, structure, patterns)
+            quality: null,        // Qualité (maintenabilité, lisibilité, sécurité...)
+            insights: []          // Liste d'insights et recommandations générées
         };
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeRepository(owner, repo, hackathonCriteria)
+    // -----------------------------------------------------------------------
+    // But: point d'entrée principal. Orchestration de toutes les étapes:
+    // 0) Appel à analyzeRepo (du module evaluateRepo) pour récupérer une analyse
+    //    complète et des scores objectifs (structure, fichiers, critères...)
+    // 1) Récupération récursive de la structure du repo (fichiers/dossiers)
+    // 2) Analyse de la finalité (purpose) et du domaine via les contenus
+    // 3) Analyse de l'architecture et de patterns
+    // 4) Analyse de la cohérence du code (naming/structure/patterns)
+    // 5) Analyse de la qualité du code (maintenabilité, lisibilité, perf, sécurité, tests)
+    // 6) Génération d'insights et recommandations
+    // 
+    // Paramètres:
+    // - owner: propriétaire GitHub
+    // - repo: nom du dépôt GitHub
+    // - hackathonCriteria: critères d'éligibilité au hackathon (optionnel)
+    // 
+    // Retour: objet consolidé avec toutes les analyses et scores
+    // -----------------------------------------------------------------------
     async analyzeRepository(owner, repo, hackathonCriteria = null) {
         console.log('\n🧠 INTELLIGENT PROJECT ANALYSIS');
         console.log('================================');
         
-        const selectedTemplate = "auto"; 
+        const selectedTemplate = "auto"; // Choix automatique du template de projet
         try {
 
-            // 0. Fetch repository Data
+            // 0. Récupère une analyse globale (scores, éligibilité, résumé des fichiers)
             const analyzeRepoResult = await analyzeRepo(owner, repo, selectedTemplate, hackathonCriteria);
             console.log("result is : ", analyzeRepoResult);
             
  
-            // 1. Fetch repository structure
+            // 1. Récupère la structure du repository (fichiers, répertoires, contenus)
             const repoStructure = await this.fetchRepositoryStructure(owner, repo);
             console.log("111");
             
-            // 2. Analyze project purpose and domain
+            // 2. Analyse la finalité du projet et son domaine
             const purposeAnalysis = await this.analyzeProjectPurpose(repoStructure);
             console.log("222");
             
-            // 3. Analyze architecture and patterns
+            // 3. Analyse l'architecture et les patterns utilisés
             const architectureAnalysis = await this.analyzeArchitecture(repoStructure);
             console.log("333");
             
-            // 4. Analyze code coherence and consistency
+            // 4. Analyse la cohérence du code (naming/structure/patterns)
             const coherenceAnalysis = await this.analyzeCoherence(repoStructure);
             console.log("444");
             
-            // 5. Analyze code quality and best practices
+            // 5. Analyse la qualité du code (maintenabilité, lisibilité, perf, sécurité, tests)
             const qualityAnalysis = await this.analyzeCodeQuality(repoStructure);
             console.log("555");
             
-            // 6. Generate intelligent insights
+            // 6. Génère des insights et recommandations basés sur les analyses précédentes
             const insights = await this.generateInsights(repoStructure, purposeAnalysis, architectureAnalysis, coherenceAnalysis, qualityAnalysis);
             console.log("666");
 
+            // Exemple de calcul local (non utilisé ensuite): overallScore
             const overallScore= qualityAnalysis.overall * 10; 
             console.log("check overall: ", overallScore);
             
+            // Agrégation et retour d'un objet consolidé combinant résultats locaux
+            // et résultats provenant de analyzeRepo (scores objectives, éligibilité, etc.)
             return {
                 projectPurpose: purposeAnalysis,
                 architecture: architectureAnalysis,
@@ -71,11 +114,22 @@ class IntelligentProjectAnalyzer {
             };
             
         } catch (error) {
+            // Gestion d'erreur globale de l'analyse intelligente
             console.error('Error in intelligent analysis:', error);
             return null;
         }
     }
 
+    // -----------------------------------------------------------------------
+    // fetchRepositoryStructure(owner, repo)
+    // -----------------------------------------------------------------------
+    // But: explorer récursivement le dépôt pour construire une structure riche:
+    // - files, directories, allFiles, allDirectories
+    // - fileContents (contenu brut) pour les fichiers importants
+    // - analysis (résumé: purpose, features, stack, architecture...)
+    // 
+    // Utilise crawlRepository pour parcourir tout l'arbre via l'API GitHub.
+    // -----------------------------------------------------------------------
     async fetchRepositoryStructure(owner, repo) {
         console.log("owner", owner);
         console.log("repo", repo);
@@ -83,11 +137,11 @@ class IntelligentProjectAnalyzer {
 
         
         const structure = {
-            files: {},
-            directories: {},
-            allFiles: [],
-            allDirectories: [],
-            fileContents: {},
+            files: {},            // Fichiers "importants" indexés par chemin -> contenu
+            directories: {},      // Dictionnaire des dossiers
+            allFiles: [],         // Liste à plat de tous les fichiers
+            allDirectories: [],   // Liste à plat de tous les dossiers
+            fileContents: {},     // Tous contenus (pour analyse) indexés par chemin
             analysis: {
                 projectPurpose: null,
                 mainFeatures: [],
@@ -98,10 +152,10 @@ class IntelligentProjectAnalyzer {
         };
 
         try {
-            // Recursively fetch all files and directories
+            // Parcours récursif de tout le repo
             await this.crawlRepository(owner, repo, '', structure);
             
-            // Analyze all fetched files to understand project purpose
+            // Analyse les fichiers récupérés pour inférer le purpose (but) du projet
             await this.analyzeAllFilesForPurpose(structure);
             
             console.log(`✅ Analyzed ${structure.allDirectories.length} directories and ${structure.allFiles.length} files`);
@@ -109,58 +163,81 @@ class IntelligentProjectAnalyzer {
             return structure;
             
         } catch (error) {
+            // Journalise et propage l'erreur si la structure ne peut être obtenue
             console.error('Error fetching repository structure:', error);
             throw error;
         }
     }
 
+    // -----------------------------------------------------------------------
+    // crawlRepository(owner, repo, currentPath, structure)
+    // -----------------------------------------------------------------------
+    // But: parcourir un chemin (dossier) du repo, lister son contenu via API
+    // GitHub, et pour chaque élément:
+    // - Descendre récursivement dans les sous-dossiers (sauf dossiers ignorés)
+    // - Enregistrer les fichiers (sauf ignorés) et, si possible, récupérer leur
+    //   contenu pour analyse ultérieure (base64 décodé)
+    // 
+    // Paramètres:
+    // - owner, repo: repo GitHub
+    // - currentPath: chemin courant (string, vide pour la racine)
+    // - structure: objet d'accumulation des résultats
+    // -----------------------------------------------------------------------
     async crawlRepository(owner, repo, currentPath, structure) {
         try {
+            // Appel API GitHub: liste le contenu du répertoire courant
             const contents = await this.fetchDirectoryContents(owner, repo, currentPath);
             
             for (const item of contents) {
                 console.log("item is: ", item.path);
                 if (item.type === 'dir') {
-                    // Skip build and dependency directories
+                    // Ignore certains dossiers (build, cache, node_modules, etc.)
                     if (this.shouldSkipDirectory(item.path)) {
                         continue;
                     }
                     
-                    // Add to directories list
+                    // Ajoute le dossier aux collections
                     structure.allDirectories.push(item.path);
                     structure.directories[item.path] = [];
                     
-                    // Recursively crawl subdirectories
+                    // Descente récursive dans le sous-dossier
                     await this.crawlRepository(owner, repo, item.path, structure);
                 } else if (item.type === 'file') {
-                    // Skip build artifacts and large files
+                    // Ignore certains fichiers (trop gros, binaires, artefacts...)
                     if (this.shouldSkipFile(item.path, item.size)) {
                         continue;
                     }
                     
-                    // Add to files list
+                    // Ajoute le fichier aux collections
                     structure.allFiles.push(item.path);
                     
-                    // Fetch content for analysis
+                    // Récupère le contenu pour analyse
                     try {
                         const content = await this.fetchFileContent(owner, repo, item.path);
                         structure.fileContents[item.path] = content;
                         
-                        // Store important files separately for easy access
+                        // Mémorise séparément les fichiers jugés importants
                         if (this.isImportantFile(item.path)) {
                             structure.files[item.path] = content;
                         }
                     } catch (error) {
+                        // Tolère l'échec pour certains fichiers
                         console.log(`⚠️ Could not fetch content for ${item.path}: ${error.message}`);
                     }
                 }
             }
         } catch (error) {
-            // Skip directories that can't be accessed
+            // Si le dossier n'est pas accessible, on journalise et on continue
             console.log(`⚠️ Could not access ${currentPath}: ${error.message}`);
         }
     }
 
+    // -----------------------------------------------------------------------
+    // shouldSkipDirectory(dirPath)
+    // -----------------------------------------------------------------------
+    // But: indiquer si un dossier doit être ignoré (gains de performance et
+    // pertinence: on ignore caches, builds, vendor, etc.).
+    // -----------------------------------------------------------------------
     shouldSkipDirectory(dirPath) {
         const skipPatterns = [
             'node_modules', '.git', 'build', 'dist', 'out', '.next',
@@ -171,6 +248,14 @@ class IntelligentProjectAnalyzer {
         return skipPatterns.some(pattern => dirPath.includes(pattern));
     }
 
+    // -----------------------------------------------------------------------
+    // shouldSkipFile(filePath, fileSize)
+    // -----------------------------------------------------------------------
+    // But: indiquer si un fichier doit être ignoré (trop gros ou non pertinent
+    // pour l'analyse textuelle: binaires, artefacts minifiés, archives...).
+    // - fileSize > 1MB: ignore pour limiter les coûts de transfert
+    // - extensions non textuelles: ignore
+    // -----------------------------------------------------------------------
     shouldSkipFile(filePath, fileSize) {
         // Skip large files (over 1MB)
         if (fileSize > 1024 * 1024) {
@@ -189,6 +274,12 @@ class IntelligentProjectAnalyzer {
         return skipExtensions.some(ext => filePath.endsWith(ext));
     }
 
+    // -----------------------------------------------------------------------
+    // isImportantFile(filePath)
+    // -----------------------------------------------------------------------
+    // But: signaler si un fichier est important pour l'analyse (code, JSON,
+    // README, env, Docker...). Ces fichiers seront priorisés pour lecture.
+    // -----------------------------------------------------------------------
     isImportantFile(filePath) {
         const importantExtensions = ['.js', '.jsx', '.ts', '.tsx', '.json', '.md', '.txt', '.yml', '.yaml', '.env'];
         const importantFiles = ['package.json', 'README.md', 'Dockerfile', 'docker-compose.yml', '.gitignore'];
@@ -199,6 +290,18 @@ class IntelligentProjectAnalyzer {
         return importantExtensions.includes(`.${extension}`) || importantFiles.includes(fileName);
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeAllFilesForPurpose(structure)
+    // -----------------------------------------------------------------------
+    // But: produit une analyse globale à partir des contenus collectés afin de
+    // déduire: purpose (finalité), fonctionnalités, stack, architecture, complexité.
+    // Étapes principales:
+    // - Analyse `package.json` puis README
+    // - Analyse des fichiers code (JS/TS)
+    // - Analyse des fichiers de configuration
+    // - Détermination de la complexité
+    // - Nettoyage et dédoublonnage
+    // -----------------------------------------------------------------------
     async analyzeAllFilesForPurpose(structure) {
         console.log('🔍 Analyzing all files for project purpose...');
         
@@ -212,7 +315,7 @@ class IntelligentProjectAnalyzer {
             keyFiles: []
         };
 
-        // Analyze package.json first
+        // Analyse en priorité package.json (souvent le plus informatif)
         if (structure.fileContents['package.json']) {
             const pkgAnalysis = this.analyzePackageJson(structure.fileContents['package.json']);
             analysis.projectPurpose = pkgAnalysis.purpose;
@@ -220,7 +323,7 @@ class IntelligentProjectAnalyzer {
             analysis.description = pkgAnalysis.description;
         }
 
-        // Analyze README files
+        // Analyse des README ou docs pour extraire but/description/features
         const readmeFiles = Object.keys(structure.fileContents).filter(f => 
             f.toLowerCase().includes('readme') || f.toLowerCase().includes('docs')
         );
@@ -236,7 +339,7 @@ class IntelligentProjectAnalyzer {
             analysis.mainFeatures.push(...readmeAnalysis.features);
         }
 
-        // Analyze all JavaScript/TypeScript files for functionality
+        // Analyse des fichiers de code (JS/TS) pour détecter fonctionnalités
         const codeFiles = Object.keys(structure.fileContents).filter(f => 
             f.endsWith('.js') || f.endsWith('.jsx') || f.endsWith('.ts') || f.endsWith('.tsx')
         );
@@ -254,7 +357,7 @@ class IntelligentProjectAnalyzer {
             }
         }
 
-        // Analyze configuration files
+        // Analyse des fichiers de configuration (config, env)
         const configFiles = Object.keys(structure.fileContents).filter(f => 
             f.includes('config') || f.includes('env') || f.includes('settings')
         );
@@ -265,16 +368,17 @@ class IntelligentProjectAnalyzer {
             analysis.technologyStack.push(...configAnalysis.technologies);
         }
 
-        // Determine complexity based on file count and structure
+        // Détermination de la complexité globale selon le volume et l'organisation
         analysis.complexity = this.determineComplexity(structure);
 
-        // Remove duplicates and clean up
+        // Nettoyage (dé-duplication) et sélection de fichiers clés
         analysis.mainFeatures = [...new Set(analysis.mainFeatures)].filter(f => f);
         analysis.technologyStack = [...new Set(analysis.technologyStack)].filter(t => t);
         analysis.keyFiles = this.identifyKeyFiles(structure);
 
         structure.analysis = analysis;
         
+        // Log d'informations clés de l'analyse globale
         console.log(`🎯 Project Purpose: ${analysis.projectPurpose || 'Unknown'}`);
         console.log(`🔧 Main Features: ${analysis.mainFeatures.slice(0, 5).join(', ')}${analysis.mainFeatures.length > 5 ? '...' : ''}`);
         console.log(`⚙️ Technologies: ${analysis.technologyStack.join(', ')}`);
@@ -284,6 +388,14 @@ class IntelligentProjectAnalyzer {
         return analysis;
     }
 
+    // -----------------------------------------------------------------------
+    // analyzePackageJson(content)
+    // -----------------------------------------------------------------------
+    // But: parser `package.json` et en extraire:
+    // - technologies/dépendances majeures
+    // - description du projet
+    // - un indice de finalité via le nom du projet
+    // -----------------------------------------------------------------------
     analyzePackageJson(content) {
         try {
             const pkg = JSON.parse(content);
@@ -293,10 +405,10 @@ class IntelligentProjectAnalyzer {
                 description: null
             };
 
-            // Get description
+            // Description directe depuis package.json
             analysis.description = pkg.description;
 
-            // Analyze dependencies for technology stack
+            // Détecte technologies via dépendances
             const deps = { ...pkg.dependencies, ...pkg.devDependencies };
             
             if (deps['express']) analysis.technologies.push('Express.js', 'Node.js');
@@ -309,17 +421,24 @@ class IntelligentProjectAnalyzer {
             if (deps['jest']) analysis.technologies.push('Jest');
             if (deps['cypress']) analysis.technologies.push('Cypress');
 
-            // Analyze project name for purpose
+            // Déduit la finalité depuis le nom du projet
             if (pkg.name) {
                 analysis.purpose = this.analyzeProjectName(pkg.name);
             }
 
             return analysis;
         } catch (error) {
+            // Si le JSON est invalide, renvoie une analyse vide
             return { purpose: null, technologies: [], description: null };
         }
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeReadmeFile(content)
+    // -----------------------------------------------------------------------
+    // But: heuristiques sur README pour extraire un but, une description et
+    // quelques features typiques (ex: budget => finance, e-commerce => shop...).
+    // -----------------------------------------------------------------------
     analyzeReadmeFile(content) {
         const analysis = {
             purpose: null,
@@ -329,7 +448,7 @@ class IntelligentProjectAnalyzer {
 
         const contentLower = content.toLowerCase();
 
-        // Look for common purpose indicators
+        // Indices de domaine/finalité courants dans les READMEs
         if (contentLower.includes('budget') || contentLower.includes('finance') || contentLower.includes('money')) {
             analysis.purpose = 'Financial Management Application';
             analysis.features.push('Budget Tracking', 'Financial Planning');
@@ -355,7 +474,7 @@ class IntelligentProjectAnalyzer {
             analysis.features.push('REST API', 'Backend Services');
         }
 
-        // Extract description from first paragraph
+        // Première ligne non vide comme description basique
         const lines = content.split('\n');
         for (const line of lines) {
             if (line.trim() && !line.startsWith('#') && !line.startsWith('[')) {
@@ -367,6 +486,12 @@ class IntelligentProjectAnalyzer {
         return analysis;
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeCodeFile(content, filePath)
+    // -----------------------------------------------------------------------
+    // But: heuristiques sur le contenu des fichiers code pour inférer features,
+    // architecture (Express backend, React frontend...), et éventuellement but.
+    // -----------------------------------------------------------------------
     analyzeCodeFile(content, filePath) {
         const analysis = {
             purpose: null,
@@ -377,7 +502,7 @@ class IntelligentProjectAnalyzer {
         const contentLower = content.toLowerCase();
         const fileName = filePath.toLowerCase();
 
-        // Analyze based on file content
+        // Heuristiques basées sur contenu
         if (contentLower.includes('express') && contentLower.includes('app')) {
             analysis.architecture = 'Express.js Backend';
         }
@@ -411,7 +536,7 @@ class IntelligentProjectAnalyzer {
             analysis.features.push('API Endpoints');
         }
 
-        // Analyze based on file name
+        // Heuristiques basées sur le nom du fichier
         if (fileName.includes('budget') || fileName.includes('finance')) {
             analysis.purpose = 'Financial Management';
         }
@@ -427,6 +552,12 @@ class IntelligentProjectAnalyzer {
         return analysis;
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeConfigFile(content, filePath)
+    // -----------------------------------------------------------------------
+    // But: heuristiques sur fichiers de configuration (MongoDB, Express/CORS,
+    // Auth/JWT...) pour enrichir technologies et features.
+    // -----------------------------------------------------------------------
     analyzeConfigFile(content, filePath) {
         const analysis = {
             features: [],
@@ -453,6 +584,11 @@ class IntelligentProjectAnalyzer {
         return analysis;
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeProjectName(name)
+    // -----------------------------------------------------------------------
+    // But: déduire une finalité approximative à partir du nom du projet.
+    // -----------------------------------------------------------------------
     analyzeProjectName(name) {
         const nameLower = name.toLowerCase();
         
@@ -479,6 +615,12 @@ class IntelligentProjectAnalyzer {
         return null;
     }
 
+    // -----------------------------------------------------------------------
+    // determineComplexity(structure)
+    // -----------------------------------------------------------------------
+    // But: classifier globalement la complexité (simple/modérée/complexe)
+    // selon le nombre de fichiers et dossiers.
+    // -----------------------------------------------------------------------
     determineComplexity(structure) {
         const totalFiles = structure.allFiles.length;
         const totalDirs = structure.allDirectories.length;
@@ -492,23 +634,29 @@ class IntelligentProjectAnalyzer {
         }
     }
 
+    // -----------------------------------------------------------------------
+    // identifyKeyFiles(structure)
+    // -----------------------------------------------------------------------
+    // But: lister les fichiers clés (config, points d'entrée, docs) pour fournir
+    // un aperçu rapide aux développeurs et aux rapports d'insights.
+    // -----------------------------------------------------------------------
     identifyKeyFiles(structure) {
         const keyFiles = [];
         
-        // Add important configuration files
+        // Fichiers de configuration importants
         const configFiles = structure.allFiles.filter(f => 
             f.includes('package.json') || f.includes('config') || f.includes('env')
         );
         keyFiles.push(...configFiles);
         
-        // Add main entry points
+        // Points d'entrée courants des applis
         const entryFiles = structure.allFiles.filter(f => 
             f.includes('index.js') || f.includes('app.js') || f.includes('server.js') ||
             f.includes('main.js') || f.includes('App.jsx') || f.includes('App.tsx')
         );
         keyFiles.push(...entryFiles);
         
-        // Add documentation files
+        // Documentation
         const docFiles = structure.allFiles.filter(f => 
             f.includes('readme') || f.includes('docs')
         );
@@ -517,10 +665,17 @@ class IntelligentProjectAnalyzer {
         return [...new Set(keyFiles)];
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeProjectPurpose(structure)
+    // -----------------------------------------------------------------------
+    // But: produire un objet `purpose` détaillé (domaine, type, complexité,
+    // cible, confiance, description, features, technologies, fichiers clés) en
+    // se basant sur `structure.analysis` alimenté précédemment.
+    // -----------------------------------------------------------------------
     async analyzeProjectPurpose(structure) {
         console.log('🎯 Analyzing project purpose...');
         
-        // Use the comprehensive analysis we already performed
+        // Réutilise l'analyse complète déjà effectuée
         const analysis = structure.analysis;
         
         const purpose = {
@@ -535,8 +690,8 @@ class IntelligentProjectAnalyzer {
             keyFiles: analysis.keyFiles
         };
 
-        // Calculate confidence based on available information
-        let confidence = 0.3; // Base confidence
+        // Calcule une confiance basée sur la richesse des informations
+        let confidence = 0.3; // Base
         
         if (analysis.projectPurpose) confidence += 0.3;
         if (analysis.description) confidence += 0.2;
@@ -545,7 +700,7 @@ class IntelligentProjectAnalyzer {
         
         purpose.confidence = Math.min(1, confidence);
 
-        // Provide a clear conclusion about the project
+        // Construit une conclusion textuelle résumant le tout
         let conclusion = '';
         
         if (analysis.projectPurpose) {
@@ -580,32 +735,38 @@ class IntelligentProjectAnalyzer {
         return purpose;
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeArchitecture(structure)
+    // -----------------------------------------------------------------------
+    // But: détecter des patterns d'architecture (Next.js, MVC, layered...) et
+    // qualifier la qualité via plusieurs sous-analyses (couches, patterns, orga).
+    // -----------------------------------------------------------------------
     async analyzeArchitecture(structure) {
         console.log('🏗️ Analyzing architecture patterns...');
         
         const architecture = {
-            pattern: null,
-            layers: [],
-            patterns: [],
-            quality: 0,
-            strengths: [],
-            weaknesses: [],
+            pattern: null,   // Nom du pattern principal
+            layers: [],      // Couches détectées (Presentation, Business, Data...)
+            patterns: [],    // Design patterns (Repository, Factory, Observer...)
+            quality: 0,      // Score qualité architecture
+            strengths: [],   // Points forts
+            weaknesses: [],  // Points faibles
             structure: {}
         };
 
-        // Detect architectural patterns based on directory structure
+        // Détecte un pattern global d'architecture à partir de l'arborescence
         architecture.pattern = this.detectArchitecturePattern(structure);
         
-        // Analyze layer separation
+        // Analyse la séparation des couches
         architecture.layers = this.analyzeLayerSeparation(structure);
         
-        // Detect design patterns
+        // Détecte des design patterns
         architecture.patterns = this.detectDesignPatterns(structure);
         
-        // Analyze file organization
+        // Analyse l'organisation des fichiers
         architecture.structure = this.analyzeFileOrganization(structure);
         
-        // Analyze architectural quality
+        // Évalue la qualité architecturale (forces/faiblesses)
         const qualityAnalysis = this.analyzeArchitecturalQuality(structure, architecture);
         architecture.quality = qualityAnalysis.score;
         architecture.strengths = qualityAnalysis.strengths;
@@ -615,39 +776,46 @@ class IntelligentProjectAnalyzer {
         return architecture;
     }
 
+    // -----------------------------------------------------------------------
+    // detectArchitecturePattern(structure)
+    // -----------------------------------------------------------------------
+    // But: heuristiques pour deviner un pattern d'architecture global depuis
+    // la liste des dossiers/fichiers (Next.js app/pages, MVC, microservices...).
+    // -----------------------------------------------------------------------
     detectArchitecturePattern(structure) {
         const dirs = structure.allDirectories.map(d => d.toLowerCase());
         const files = structure.allFiles.map(f => f.toLowerCase());
 
-        // Check for Next.js patterns
+        // Next.js (App Router)
         if (dirs.some(d => d.includes('app'))) {
             return 'App Router (Next.js 13+)';
         }
+        // Next.js (Pages Router)
         if (dirs.some(d => d.includes('pages'))) {
             return 'Pages Router (Next.js)';
         }
 
-        // Check for React patterns
+        // React (présence de src + fichiers mentionnant react)
         if (dirs.some(d => d.includes('src')) && files.some(f => f.includes('react'))) {
             return 'React Component-Based';
         }
 
-        // Check for MVC patterns
+        // MVC (modèles/contrôleurs/vues)
         if (dirs.some(d => d.includes('controllers') || d.includes('models') || d.includes('views'))) {
             return 'MVC (Model-View-Controller)';
         }
 
-        // Check for layered architecture
+        // Architecture en couches (services + controllers)
         if (dirs.some(d => d.includes('services')) && dirs.some(d => d.includes('controllers'))) {
             return 'Layered Architecture';
         }
 
-        // Check for Express.js patterns
+        // Express.js REST API (express + routes)
         if (files.some(f => f.includes('express')) && files.some(f => f.includes('route'))) {
             return 'Express.js REST API';
         }
 
-        // Check for microservices patterns
+        // Microservices (services + docker)
         if (dirs.some(d => d.includes('services')) && files.some(f => f.includes('docker'))) {
             return 'Microservices Architecture';
         }
@@ -655,6 +823,12 @@ class IntelligentProjectAnalyzer {
         return 'Custom Architecture';
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeFileOrganization(structure)
+    // -----------------------------------------------------------------------
+    // But: catégoriser l'organisation des fichiers (racine, config, docs, tests,
+    // déploiement) et, si `src/` existe, relever les sous-dossiers clés.
+    // -----------------------------------------------------------------------
     analyzeFileOrganization(structure) {
         const organization = {
             rootFiles: [],
@@ -665,7 +839,7 @@ class IntelligentProjectAnalyzer {
             deployment: []
         };
 
-        // Categorize files
+        // Catégorisation par mot-clé dans le chemin
         for (const file of structure.allFiles) {
             const fileName = file.toLowerCase();
             
@@ -690,7 +864,7 @@ class IntelligentProjectAnalyzer {
             }
         }
 
-        // Analyze src structure if it exists
+        // Analyse spécifique si une structure src/ est présente
         const srcDirs = structure.allDirectories.filter(d => d.startsWith('src/'));
         if (srcDirs.length > 0) {
             organization.srcStructure = {
@@ -707,44 +881,56 @@ class IntelligentProjectAnalyzer {
         return organization;
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeCoherence(structure)
+    // -----------------------------------------------------------------------
+    // But: calculer des sous-scores de cohérence (naming/structure/patterns) et
+    // produire un score global.
+    // -----------------------------------------------------------------------
     async analyzeCoherence(structure) {
         console.log('🔗 Analyzing code coherence...');
         
         const coherence = {
-            consistency: 0,
-            naming: 0,
-            structure: 0,
-            patterns: 0
+            consistency: 0, // Score global
+            naming: 0,      // Cohérence des noms de fichiers/dossiers
+            structure: 0,   // Cohérence de la profondeur / regroupements
+            patterns: 0     // Cohérence des patterns (extensions, groupes...)
         };
 
-        // Analyze naming consistency
+        // Cohérence de nommage
         coherence.naming = this.analyzeNamingConsistency(structure);
         
-        // Analyze structural consistency
+        // Cohérence structurelle
         coherence.structure = this.analyzeStructuralConsistency(structure);
         
-        // Analyze pattern consistency
+        // Cohérence des patterns
         coherence.patterns = this.analyzePatternConsistency(structure);
         
-        // Calculate overall consistency
+        // Moyenne des sous-scores
         coherence.consistency = (coherence.naming + coherence.structure + coherence.patterns) / 3;
 
         console.log(`✅ Coherence: ${coherence.consistency.toFixed(1)}/10 (Naming: ${coherence.naming.toFixed(1)}, Structure: ${coherence.structure.toFixed(1)}, Patterns: ${coherence.patterns.toFixed(1)})`);
         return coherence;
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeNamingConsistency(structure)
+    // -----------------------------------------------------------------------
+    // But: vérifier la cohérence de nommage des fichiers et dossiers (camelCase,
+    // kebab-case, snake_case) et attribuer un score.
+    // -----------------------------------------------------------------------
     analyzeNamingConsistency(structure) {
         let score = 5;
         const fileNames = structure.allFiles.map(f => f.split('/').pop().toLowerCase());
         const dirNames = structure.allDirectories.map(d => d.split('/').pop().toLowerCase());
 
-        // Check for consistent file naming patterns
+        // Compte par extensions
         const jsFiles = fileNames.filter(f => f.endsWith('.js'));
         const tsFiles = fileNames.filter(f => f.endsWith('.ts'));
         const jsxFiles = fileNames.filter(f => f.endsWith('.jsx'));
         const tsxFiles = fileNames.filter(f => f.endsWith('.tsx'));
 
-        // Check for consistent casing
+        // Détection de conventions de casse courantes
         const camelCaseFiles = fileNames.filter(f => /^[a-z][a-zA-Z0-9]*\.(js|ts|jsx|tsx)$/.test(f));
         const kebabCaseFiles = fileNames.filter(f => /^[a-z][a-z0-9-]*\.(js|ts|jsx|tsx)$/.test(f));
         const snakeCaseFiles = fileNames.filter(f => /^[a-z][a-z0-9_]*\.(js|ts|jsx|tsx)$/.test(f));
@@ -763,7 +949,7 @@ class IntelligentProjectAnalyzer {
             }
         }
 
-        // Check for consistent directory naming
+        // Même logique pour les dossiers
         const camelCaseDirs = dirNames.filter(d => /^[a-z][a-zA-Z0-9]*$/.test(d));
         const kebabCaseDirs = dirNames.filter(d => /^[a-z][a-z0-9-]*$/.test(d));
         const snakeCaseDirs = dirNames.filter(d => /^[a-z][a-z0-9_]*$/.test(d));
@@ -782,22 +968,28 @@ class IntelligentProjectAnalyzer {
         return Math.min(10, Math.max(0, score));
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeStructuralConsistency(structure)
+    // -----------------------------------------------------------------------
+    // But: analyser la cohérence de profondeur des dossiers et des regroupements
+    // logiques (components/services/utils/config...).
+    // -----------------------------------------------------------------------
     analyzeStructuralConsistency(structure) {
         let score = 5;
         const dirs = structure.allDirectories;
 
-        // Check for consistent directory depth
+        // Mesure la variance de profondeur des dossiers
         const depths = dirs.map(d => d.split('/').length);
         const avgDepth = depths.reduce((a, b) => a + b, 0) / depths.length;
         const depthVariance = depths.reduce((sum, depth) => sum + Math.pow(depth - avgDepth, 2), 0) / depths.length;
 
         if (depthVariance < 1) {
-            score += 2; // Very consistent depth
+            score += 2; // Très cohérent
         } else if (depthVariance < 2) {
-            score += 1; // Moderately consistent depth
+            score += 1; // Moderément cohérent
         }
 
-        // Check for logical grouping
+        // Regroupements logiques courants
         const hasComponents = dirs.some(d => d.includes('components'));
         const hasServices = dirs.some(d => d.includes('services'));
         const hasUtils = dirs.some(d => d.includes('utils'));
@@ -810,7 +1002,7 @@ class IntelligentProjectAnalyzer {
             score += 1;
         }
 
-        // Check for consistent file organization within directories
+        // Vérifie que les dossiers contiennent effectivement des fichiers
         const organizedDirs = dirs.filter(dir => {
             const filesInDir = structure.allFiles.filter(file => file.startsWith(dir + '/'));
             return filesInDir.length > 0;
@@ -823,11 +1015,17 @@ class IntelligentProjectAnalyzer {
         return Math.min(10, Math.max(0, score));
     }
 
+    // -----------------------------------------------------------------------
+    // analyzePatternConsistency(structure)
+    // -----------------------------------------------------------------------
+    // But: cohérence des types de fichiers (extensions dominantes), grouping de
+    // fichiers similaires, et cohérence de config.
+    // -----------------------------------------------------------------------
     analyzePatternConsistency(structure) {
         let score = 5;
         const files = structure.allFiles;
 
-        // Check for consistent file extensions
+        // Cohérence des extensions dominantes
         const extensions = files.map(f => f.split('.').pop().toLowerCase());
         const extensionCounts = {};
         extensions.forEach(ext => {
@@ -841,18 +1039,18 @@ class IntelligentProjectAnalyzer {
         const dominantRatio = extensionCounts[dominantExtension] / totalFiles;
 
         if (dominantRatio >= 0.7) {
-            score += 2; // Very consistent file types
+            score += 2; // Très cohérent
         } else if (dominantRatio >= 0.5) {
-            score += 1; // Moderately consistent file types
+            score += 1; // Moderément cohérent
         }
 
-        // Check for consistent file organization patterns
+        // Grouping JS/TS
         const jsFiles = files.filter(f => f.endsWith('.js'));
         const tsFiles = files.filter(f => f.endsWith('.ts'));
         const jsonFiles = files.filter(f => f.endsWith('.json'));
         const mdFiles = files.filter(f => f.endsWith('.md'));
 
-        // Check if similar files are grouped together
+        // Vérifie un grouping relativement cohérent entre JS et TS
         const hasConsistentGrouping = (jsFiles.length > 0 && tsFiles.length === 0) || 
                                     (tsFiles.length > 0 && jsFiles.length === 0) ||
                                     (jsFiles.length > 0 && tsFiles.length > 0 && Math.abs(jsFiles.length - tsFiles.length) < 3);
@@ -861,7 +1059,7 @@ class IntelligentProjectAnalyzer {
             score += 2;
         }
 
-        // Check for configuration file consistency
+        // Cohérence des fichiers de config
         const configFiles = files.filter(f => f.includes('config') || f.includes('env'));
         if (configFiles.length > 0 && configFiles.every(f => f.includes('config') || f.includes('env'))) {
             score += 1;
@@ -870,6 +1068,12 @@ class IntelligentProjectAnalyzer {
         return Math.min(10, Math.max(0, score));
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeCodeQuality(structure)
+    // -----------------------------------------------------------------------
+    // But: calculer des sous-scores (maintenabilité, lisibilité, performance,
+    // sécurité, testabilité) puis un score global de qualité.
+    // -----------------------------------------------------------------------
     async analyzeCodeQuality(structure) {
         console.log('📊 Analyzing code quality...');
         
@@ -882,32 +1086,34 @@ class IntelligentProjectAnalyzer {
             testability: 0
         };
 
-        // Analyze maintainability
+        // Sous-scores via sous-analyses dédiées
         quality.maintainability = this.analyzeMaintainability(structure);
         
-        // Analyze readability
         quality.readability = this.analyzeReadability(structure);
         
-        // Analyze performance
         quality.performance = this.analyzePerformance(structure);
         
-        // Analyze security
         quality.security = this.analyzeSecurity(structure);
         
-        // Analyze testability
         quality.testability = this.analyzeTestability(structure);
         
-        // Calculate overall quality
+        // Score global = moyenne simple
         quality.overall = (quality.maintainability + quality.readability + quality.performance + quality.security + quality.testability) / 5;
 
         console.log(`✅ Code Quality: ${quality.overall.toFixed(1)}/10 (Maintainability: ${quality.maintainability.toFixed(1)}, Readability: ${quality.readability.toFixed(1)})`);
         return quality;
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeMaintainability(structure)
+    // -----------------------------------------------------------------------
+    // But: heuristiques liées à la modularité, séparation des responsabilités,
+    // présence de config et documentation.
+    // -----------------------------------------------------------------------
     analyzeMaintainability(structure) {
         let score = 5;
         
-        // Check for modular structure
+        // Modularité (components/services/utils/modules)
         const modularDirs = structure.allDirectories.filter(dir => 
             dir.includes('components') || dir.includes('services') || 
             dir.includes('utils') || dir.includes('modules')
@@ -915,20 +1121,20 @@ class IntelligentProjectAnalyzer {
         if (modularDirs.length >= 3) score += 2;
         else if (modularDirs.length >= 1) score += 1;
         
-        // Check for separation of concerns
+        // Séparation des responsabilités
         const hasComponents = structure.allDirectories.some(d => d.includes('components'));
         const hasServices = structure.allDirectories.some(d => d.includes('services'));
         const hasUtils = structure.allDirectories.some(d => d.includes('utils'));
         if (hasComponents && hasServices) score += 2;
         if (hasUtils) score += 1;
         
-        // Check for configuration files
+        // Fichiers de configuration
         const configFiles = structure.allFiles.filter(f => 
             f.includes('config') || f.includes('env') || f.includes('settings')
         );
         if (configFiles.length >= 2) score += 1;
         
-        // Check for documentation
+        // Documentation
         const docFiles = structure.allFiles.filter(f => 
             f.includes('readme') || f.includes('docs') || f.includes('api')
         );
@@ -937,16 +1143,22 @@ class IntelligentProjectAnalyzer {
         return Math.min(10, Math.max(0, score));
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeReadability(structure)
+    // -----------------------------------------------------------------------
+    // But: heuristiques de lisibilité (docs présentes, noms de dossiers clairs,
+    // organisation des fichiers en sous-dossiers, présence de commentaires).
+    // -----------------------------------------------------------------------
     analyzeReadability(structure) {
         let score = 5;
         
-        // Check for documentation
+        // Documentation
         const docFiles = structure.allFiles.filter(f => 
             f.includes('readme') || f.includes('docs') || f.includes('license')
         );
         if (docFiles.length >= 1) score += 2;
         
-        // Check for clear directory names
+        // Noms de dossiers courts et sans caractères spéciaux
         const clearNames = structure.allDirectories.filter(dir => {
             const dirName = dir.split('/').pop();
             return dirName.length <= 15 && !dirName.includes('_') && !dirName.includes('-');
@@ -954,14 +1166,14 @@ class IntelligentProjectAnalyzer {
         if (clearNames.length >= structure.allDirectories.length * 0.8) score += 2;
         else if (clearNames.length >= structure.allDirectories.length * 0.6) score += 1;
         
-        // Check for consistent file organization
+        // Organisation des fichiers (présence de répertoires)
         const organizedFiles = structure.allFiles.filter(file => {
             const parts = file.split('/');
-            return parts.length >= 2; // Files are in directories
+            return parts.length >= 2; // Fichier placé dans un dossier
         });
         if (organizedFiles.length >= structure.allFiles.length * 0.8) score += 1;
         
-        // Check for code comments (if we have file content)
+        // Présence de commentaires dans les fichiers dont on a le contenu
         const filesWithContent = Object.keys(structure.files);
         if (filesWithContent.length > 0) {
             let filesWithComments = 0;
@@ -977,25 +1189,31 @@ class IntelligentProjectAnalyzer {
         return Math.min(10, Math.max(0, score));
     }
 
+    // -----------------------------------------------------------------------
+    // analyzePerformance(structure)
+    // -----------------------------------------------------------------------
+    // But: détecter outils/perfs (webpack/vite/babel, compression/cache) et
+    // dépendances associées dans package.json.
+    // -----------------------------------------------------------------------
     analyzePerformance(structure) {
         let score = 5;
         
-        // Check for performance-related configurations
+        // Fichiers de config liés aux performances ou au build
         const perfFiles = structure.allFiles.filter(f => 
             f.includes('webpack') || f.includes('vite') || f.includes('babel') ||
             f.includes('compression') || f.includes('cache')
         );
         if (perfFiles.length >= 1) score += 2;
         
-        // Check for build optimization tools in package.json
+        // Vérifie la présence de paquets optimisant le build/perf
         if (structure.files['package.json']) {
             try {
                 const pkg = JSON.parse(structure.files['package.json']);
                 const deps = { ...pkg.dependencies, ...pkg.devDependencies };
                 
-                if (deps['webpack'] || deps['vite']) score += 2; // Build optimization
+                if (deps['webpack'] || deps['vite']) score += 2; // Outils de build
                 if (deps['compression'] || deps['gzip']) score += 1; // Compression
-                if (deps['cache-manager'] || deps['redis']) score += 1; // Caching
+                if (deps['cache-manager'] || deps['redis']) score += 1; // Cache
             } catch (error) {
                 // Ignore parsing errors
             }
@@ -1004,25 +1222,31 @@ class IntelligentProjectAnalyzer {
         return Math.min(10, Math.max(0, score));
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeSecurity(structure)
+    // -----------------------------------------------------------------------
+    // But: détecter des éléments de sécurité (helmet/cors/bcrypt/jwt/rate-limit)
+    // dans les fichiers et dépendances.
+    // -----------------------------------------------------------------------
     analyzeSecurity(structure) {
         let score = 5;
         
-        // Check for security-related configurations
+        // Indices de sécurité dans les chemins de fichiers
         const securityFiles = structure.allFiles.filter(f => 
             f.includes('helmet') || f.includes('cors') || f.includes('bcrypt') ||
             f.includes('jwt') || f.includes('auth') || f.includes('rate-limit')
         );
         if (securityFiles.length >= 1) score += 2;
         
-        // Check for security packages in package.json
+        // Paquets sécurité dans package.json
         if (structure.files['package.json']) {
             try {
                 const pkg = JSON.parse(structure.files['package.json']);
                 const deps = { ...pkg.dependencies, ...pkg.devDependencies };
                 
-                if (deps['helmet'] || deps['cors']) score += 2; // Security middleware
-                if (deps['bcrypt'] || deps['jsonwebtoken']) score += 1; // Authentication
-                if (deps['express-rate-limit']) score += 1; // Rate limiting
+                if (deps['helmet'] || deps['cors']) score += 2; // Middleware sécurité
+                if (deps['bcrypt'] || deps['jsonwebtoken']) score += 1; // Auth
+                if (deps['express-rate-limit']) score += 1; // Limitation de débit
             } catch (error) {
                 // Ignore parsing errors
             }
@@ -1031,31 +1255,37 @@ class IntelligentProjectAnalyzer {
         return Math.min(10, Math.max(0, score));
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeTestability(structure)
+    // -----------------------------------------------------------------------
+    // But: vérifier la présence d'infra de tests (fichiers et packages Jest,
+    // Mocha, Cypress, Playwright...), dossiers de tests, etc.
+    // -----------------------------------------------------------------------
     analyzeTestability(structure) {
         let score = 5;
         
-        // Check for testing setup
+        // Fichiers indicateurs de tests
         const testFiles = structure.allFiles.filter(f => 
             f.includes('test') || f.includes('spec') || f.includes('jest') ||
             f.includes('mocha') || f.includes('cypress') || f.includes('playwright')
         );
         if (testFiles.length >= 1) score += 2;
         
-        // Check for test directories
+        // Dossiers de tests
         const testDirs = structure.allDirectories.filter(d => 
             d.includes('test') || d.includes('spec') || d.includes('__tests__')
         );
         if (testDirs.length >= 1) score += 1;
         
-        // Check for testing packages in package.json
+        // Paquets de tests dans package.json
         if (structure.files['package.json']) {
             try {
                 const pkg = JSON.parse(structure.files['package.json']);
                 const deps = { ...pkg.dependencies, ...pkg.devDependencies };
                 
-                if (deps['jest'] || deps['mocha']) score += 2; // Testing framework
-                if (deps['cypress'] || deps['playwright']) score += 1; // E2E testing
-                if (deps['@testing-library']) score += 1; // Testing utilities
+                if (deps['jest'] || deps['mocha']) score += 2; // Framework de tests
+                if (deps['cypress'] || deps['playwright']) score += 1; // E2E
+                if (deps['@testing-library']) score += 1; // Utilitaires de tests
             } catch (error) {
                 // Ignore parsing errors
             }
@@ -1064,12 +1294,18 @@ class IntelligentProjectAnalyzer {
         return Math.min(10, Math.max(0, score));
     }
 
+    // -----------------------------------------------------------------------
+    // generateInsights(structure, purpose, architecture, coherence, quality)
+    // -----------------------------------------------------------------------
+    // But: générer une liste d'insights (compréhension, forces, faiblesses,
+    // informations, recommandations spécifiques) en se basant sur les analyses.
+    // -----------------------------------------------------------------------
     async generateInsights(structure, purpose, architecture, coherence, quality) {
         console.log('💡 Generating intelligent insights...');
         
         const insights = [];
 
-        // Project Purpose Insights with clear conclusion
+        // Insights sur le but avec conclusion claire
         if (purpose.conclusion) {
             insights.push({
                 type: 'purpose',
@@ -1096,7 +1332,7 @@ class IntelligentProjectAnalyzer {
             });
         }
 
-        // Technology Stack Insights
+        // Stack technologique
         if (purpose.technologies && purpose.technologies.length > 0) {
             insights.push({
                 type: 'technology',
@@ -1107,7 +1343,7 @@ class IntelligentProjectAnalyzer {
             });
         }
 
-        // Features Insights
+        // Features principales
         if (purpose.features && purpose.features.length > 0) {
             insights.push({
                 type: 'features',
@@ -1118,7 +1354,7 @@ class IntelligentProjectAnalyzer {
             });
         }
 
-        // Architecture Insights
+        // Architecture: forces/faiblesses
         if (architecture.quality >= 7) {
             insights.push({
                 type: 'architecture',
@@ -1137,7 +1373,7 @@ class IntelligentProjectAnalyzer {
             });
         }
 
-        // Coherence Insights
+        // Cohérence
         if (coherence.consistency >= 7) {
             insights.push({
                 type: 'coherence',
@@ -1156,7 +1392,7 @@ class IntelligentProjectAnalyzer {
             });
         }
 
-        // Quality Insights
+        // Qualité globale
         if (quality.overall >= 7) {
             insights.push({
                 type: 'quality',
@@ -1175,7 +1411,7 @@ class IntelligentProjectAnalyzer {
             });
         }
 
-        // File Structure Insights
+        // Taille/complexité de la structure
         const totalFiles = structure.allFiles.length;
         const totalDirs = structure.allDirectories.length;
         
@@ -1205,7 +1441,7 @@ class IntelligentProjectAnalyzer {
             });
         }
 
-        // Key Files Insights
+        // Fichiers clés
         if (purpose.keyFiles && purpose.keyFiles.length > 0) {
             insights.push({
                 type: 'structure',
@@ -1216,7 +1452,7 @@ class IntelligentProjectAnalyzer {
             });
         }
 
-        // Specific Recommendations
+        // Recommandations spécifiques (documentation, testing, sécurité, config...)
         const recommendations = this.generateSpecificRecommendations(structure, purpose, architecture, coherence, quality);
         insights.push(...recommendations);
 
@@ -1224,10 +1460,16 @@ class IntelligentProjectAnalyzer {
         return insights;
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeTechnologyStack(structure)
+    // -----------------------------------------------------------------------
+    // But: extraire un inventaire rapide des technologies via package.json
+    // et extensions de fichiers.
+    // -----------------------------------------------------------------------
     analyzeTechnologyStack(structure) {
         const stack = [];
         
-        // Analyze package.json for dependencies
+        // Analyse de package.json
         if (structure.files['package.json']) {
             try {
                 const pkg = JSON.parse(structure.files['package.json']);
@@ -1247,16 +1489,18 @@ class IntelligentProjectAnalyzer {
             }
         }
 
-        // Analyze file extensions
+        // Extensions de fichiers
         const extensions = structure.allFiles.map(f => f.split('.').pop().toLowerCase());
         if (extensions.some(ext => ext === 'ts' || ext === 'tsx')) stack.push('TypeScript');
         if (extensions.some(ext => ext === 'jsx')) stack.push('JSX');
         if (extensions.some(ext => ext === 'css' || ext === 'scss')) stack.push('CSS/SCSS');
 
-        return [...new Set(stack)]; // Remove duplicates
+        return [...new Set(stack)]; // Supprime les doublons
     }
 
-    // Helper methods for detailed analysis
+    // -----------------------------------------------------------------------
+    // Méthodes utilitaires d'analyse de patterns
+    // -----------------------------------------------------------------------
     analyzeFilePatterns(files) {
         const patterns = {
             extensions: {},
@@ -1268,7 +1512,7 @@ class IntelligentProjectAnalyzer {
             const ext = path.extname(file.name);
             patterns.extensions[ext] = (patterns.extensions[ext] || 0) + 1;
             
-            // Analyze naming patterns
+            // Détecte le style de nommage
             if (file.name.includes('.')) {
                 const baseName = file.name.split('.')[0];
                 if (baseName.includes('-')) {
@@ -1286,8 +1530,11 @@ class IntelligentProjectAnalyzer {
         return patterns;
     }
 
+    // -----------------------------------------------------------------------
+    // Heuristiques de domaine spécifiques (Next.js / React / Backend / Mobile)
+    // -----------------------------------------------------------------------
     analyzeNextJSDomain(structure) {
-        // Analyze Next.js specific patterns
+        // Next.js: app router vs pages router
         if (structure.directories['app']) {
             return 'Modern Web Application (App Router)';
         } else if (structure.directories['pages']) {
@@ -1297,7 +1544,7 @@ class IntelligentProjectAnalyzer {
     }
 
     analyzeReactDomain(structure) {
-        // Analyze React patterns
+        // React: présence de src/components
         if (structure.directories['src'] && structure.directories['src'].some(f => f.name.includes('components'))) {
             return 'Component-Based Web Application';
         }
@@ -1305,7 +1552,7 @@ class IntelligentProjectAnalyzer {
     }
 
     analyzeBackendDomain(structure) {
-        // Analyze backend patterns
+        // Backend: détection de controllers/routes
         if (structure.directories['controllers'] && structure.directories['routes']) {
             return 'REST API Backend';
         } else if (structure.directories['src'] && structure.directories['src'].some(f => f.name.includes('api'))) {
@@ -1315,17 +1562,20 @@ class IntelligentProjectAnalyzer {
     }
 
     analyzeMobileDomain(structure) {
-        // Analyze mobile patterns
+        // Mobile: dossiers android/ios
         if (structure.directories['android'] || structure.directories['ios']) {
             return 'Native Mobile Application';
         }
         return 'Cross-Platform Mobile Application';
     }
 
+    // -----------------------------------------------------------------------
+    // Heuristiques complémentaires basées sur noms/description/README/structure
+    // -----------------------------------------------------------------------
     analyzeProjectName(name, currentDomain) {
         const nameLower = name.toLowerCase();
         
-        // Common domain indicators in project names
+        // Indices courants dans les noms de projet
         if (nameLower.includes('api') || nameLower.includes('backend')) return 'Backend API';
         if (nameLower.includes('web') || nameLower.includes('frontend')) return 'Web Application';
         if (nameLower.includes('mobile') || nameLower.includes('app')) return 'Mobile Application';
@@ -1339,7 +1589,7 @@ class IntelligentProjectAnalyzer {
     analyzeDescription(description, currentDomain) {
         const descLower = description.toLowerCase();
         
-        // Analyze description for domain clues
+        // Indices dans la description du projet
         if (descLower.includes('api') || descLower.includes('backend')) return 'Backend API';
         if (descLower.includes('web app') || descLower.includes('frontend')) return 'Web Application';
         if (descLower.includes('mobile') || descLower.includes('react native')) return 'Mobile Application';
@@ -1352,7 +1602,7 @@ class IntelligentProjectAnalyzer {
     analyzeREADME(content) {
         const contentLower = content.toLowerCase();
         
-        // Extract domain from README content
+        // Extrait le domaine probable depuis le README
         if (contentLower.includes('api') || contentLower.includes('endpoint')) return 'Backend API';
         if (contentLower.includes('web app') || contentLower.includes('frontend')) return 'Web Application';
         if (contentLower.includes('mobile') || contentLower.includes('react native')) return 'Mobile Application';
@@ -1362,7 +1612,7 @@ class IntelligentProjectAnalyzer {
     }
 
     analyzeStructureForDomain(structure) {
-        // Analyze directory structure for domain clues
+        // Indices structurels de domaine
         if (structure.directories['controllers'] && structure.directories['models']) {
             return 'Backend API';
         } else if (structure.directories['components'] && structure.directories['pages']) {
@@ -1376,25 +1626,31 @@ class IntelligentProjectAnalyzer {
 
     mergeDomainAnalysis(primary, secondary) {
         if (primary && secondary && primary !== secondary) {
-            // If both analyses suggest different domains, prefer the more specific one
+            // Priorise le plus spécifique si divergence
             if (primary.includes('API') && secondary.includes('Web')) return primary;
             if (secondary.includes('API') && primary.includes('Web')) return secondary;
-            return primary; // Default to primary
+            return primary; // Par défaut
         }
         return primary || secondary;
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeComplexity(structure)
+    // -----------------------------------------------------------------------
+    // But: alternative (non utilisée ici) pour calculer une complexité plus fine
+    // en fonction de divers patterns collectés dans structure.
+    // -----------------------------------------------------------------------
     analyzeComplexity(structure) {
         let complexity = 0;
         
-        // Count directories
+        // Compte des dossiers
         complexity += Object.keys(structure.directories).length * 2;
         
-        // Count files
+        // Compte des fichiers
         const totalFiles = Object.keys(structure.files).length;
         complexity += totalFiles * 0.5;
         
-        // Analyze patterns
+        // Analyse des patterns
         Object.values(structure.patterns).forEach(pattern => {
             complexity += Object.keys(pattern.extensions).length;
         });
@@ -1405,8 +1661,13 @@ class IntelligentProjectAnalyzer {
         return 'Very Complex';
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeTargetAudience(structure, domain)
+    // -----------------------------------------------------------------------
+    // But: inférer une audience cible en fonction du domaine déduit.
+    // -----------------------------------------------------------------------
     analyzeTargetAudience(structure, domain) {
-        // Analyze target audience based on domain and structure
+        // Quelques règles simples basées sur le domaine
         if (domain && domain.includes('API')) return 'Developers';
         if (domain && domain.includes('Admin')) return 'Administrators';
         if (domain && domain.includes('E-commerce')) return 'Consumers';
@@ -1415,54 +1676,66 @@ class IntelligentProjectAnalyzer {
         return 'General Users';
     }
 
+    // -----------------------------------------------------------------------
+    // calculatePurposeConfidence(structure, purpose)
+    // -----------------------------------------------------------------------
+    // But: calculer une confiance sur la finalité à partir de la richesse des
+    // informations disponibles (package.json, README, structure...).
+    // -----------------------------------------------------------------------
     calculatePurposeConfidence(structure, purpose) {
         let confidence = 0;
         
-        // Base confidence from package.json analysis
+        // package.json
         if (structure.files['package.json']) confidence += 0.4;
         
-        // README analysis
+        // README
         if (structure.files['README.md']) confidence += 0.3;
         
-        // Structure analysis
+        // Structure (présence de dossiers)
         if (Object.keys(structure.directories).length > 0) confidence += 0.2;
         
-        // Naming analysis
+        // Noms/Types présents
         if (purpose.domain && purpose.type) confidence += 0.1;
         
         return Math.min(1, confidence);
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeLayerSeparation(structure)
+    // -----------------------------------------------------------------------
+    // But: détecter des couches logiques (Presentation, Business, Data, Utils,
+    // Config, Middleware) à partir des noms de dossiers.
+    // -----------------------------------------------------------------------
     analyzeLayerSeparation(structure) {
         const layers = [];
         const dirs = structure.allDirectories.map(d => d.toLowerCase());
 
-        // Check for presentation layer
+        // Couche présentation
         if (dirs.some(d => d.includes('components') || d.includes('pages') || d.includes('views'))) {
             layers.push('Presentation');
         }
 
-        // Check for business logic layer
+        // Couche logique métier
         if (dirs.some(d => d.includes('services') || d.includes('business') || d.includes('logic'))) {
             layers.push('Business Logic');
         }
 
-        // Check for data access layer
+        // Couche accès aux données
         if (dirs.some(d => d.includes('models') || d.includes('repositories') || d.includes('dao'))) {
             layers.push('Data Access');
         }
 
-        // Check for utilities layer
+        // Couche utilitaires
         if (dirs.some(d => d.includes('utils') || d.includes('helpers') || d.includes('common'))) {
             layers.push('Utilities');
         }
 
-        // Check for configuration layer
+        // Couche configuration
         if (dirs.some(d => d.includes('config') || d.includes('settings'))) {
             layers.push('Configuration');
         }
 
-        // Check for middleware layer
+        // Couche middleware
         if (dirs.some(d => d.includes('middleware') || d.includes('interceptors'))) {
             layers.push('Middleware');
         }
@@ -1470,6 +1743,12 @@ class IntelligentProjectAnalyzer {
         return layers.length > 0 ? layers : ['Monolithic'];
     }
 
+    // -----------------------------------------------------------------------
+    // detectDesignPatterns(structure)
+    // -----------------------------------------------------------------------
+    // But: détecter quelques design patterns fréquemment observables par
+    // inspection de noms de dossiers/fichiers.
+    // -----------------------------------------------------------------------
     detectDesignPatterns(structure) {
         const patterns = [];
         const dirs = structure.allDirectories.map(d => d.toLowerCase());
@@ -1518,6 +1797,13 @@ class IntelligentProjectAnalyzer {
         return patterns;
     }
 
+    // -----------------------------------------------------------------------
+    // analyzeArchitecturalQuality(structure, architecture)
+    // -----------------------------------------------------------------------
+    // But: produire un score qualitatif et des listes forces/faiblesses basées
+    // sur la séparation des couches, les patterns, l'organisation, la config,
+    // la documentation et la structure de tests.
+    // -----------------------------------------------------------------------
     analyzeArchitecturalQuality(structure, architecture) {
         let score = 5;
         const strengths = [];
@@ -1591,6 +1877,12 @@ class IntelligentProjectAnalyzer {
         };
     }
 
+    // -----------------------------------------------------------------------
+    // generateSpecificRecommendations(structure, purpose, architecture, coherence, quality)
+    // -----------------------------------------------------------------------
+    // But: générer une liste de recommandations concrètes (docs, tests, sécurité,
+    // configuration) selon les faiblesses identifiées dans les analyses.
+    // -----------------------------------------------------------------------
     generateSpecificRecommendations(structure, purpose, architecture, coherence, quality) {
         const recommendations = [];
         
@@ -1775,7 +2067,16 @@ class IntelligentProjectAnalyzer {
         return recommendations;
     }
 
-    // Helper methods for fetching data
+    // -----------------------------------------------------------------------
+    // Appels API GitHub
+    // -----------------------------------------------------------------------
+    // fetchDirectoryContents: liste les éléments d'un répertoire d'un repo
+    // fetchFileContent: récupère le contenu base64 d'un fichier et le décode
+    // 
+    // Important:
+    // - Utilise l'API GitHub `contents` avec un header Authorization (token)
+    // - Les réponses renvoient du contenu encodé en base64 (pour les fichiers)
+    // -----------------------------------------------------------------------
     async fetchDirectoryContents(owner, repo, path) {
         try {
             const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
@@ -1785,6 +2086,7 @@ class IntelligentProjectAnalyzer {
             });
             return response.data;
         } catch (error) {
+            // Propagation de l'erreur vers l'appelant (gérée plus haut)
             throw error;
         }
     }
@@ -1796,11 +2098,14 @@ class IntelligentProjectAnalyzer {
                     Authorization: `token ${process.env.GITHUB_TOKEN}`,
                 },
             });
+            // Décodage du contenu base64 en UTF-8
             return Buffer.from(response.data.content, 'base64').toString('utf8');
         } catch (error) {
+            // Propagation de l'erreur vers l'appelant (gérée plus haut)
             throw error;
         }
     }
 }
 
+// Export de la classe pour usage dans d'autres modules (ex: routes/controllers)
 module.exports = IntelligentProjectAnalyzer; 

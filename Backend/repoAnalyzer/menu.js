@@ -1,9 +1,30 @@
+// ============================================================================
+// Menu interactif pour l'analyseur de dépôts GitHub
+// ---------------------------------------------------------------------------
+// Ce module fournit une interface CLI interactive utilisant inquirer.js pour:
+// - Collecter les paramètres d'analyse (owner, repo, template, hackathon)
+// - Afficher les templates disponibles et les critères de hackathon
+// - Lancer l'analyse via analyzeRepo et afficher les résultats
+// - Gérer la sauvegarde des résultats et les options de continuation
+// - Permettre la création de nouveaux templates de projet/hackathon
+// 
+// Il interagit avec evaluateRepo.js pour l'analyse et charge des templates
+// depuis des fichiers JSON locaux (projectTemplates.json, hackathonTemplates.json).
+// ============================================================================
 const inquirer = require('inquirer');
 const { analyzeRepo } = require('./evaluateRepo');
 const fs = require('fs');
 const path = require('path');
 
+// ---------------------------------------------------------------------------
+// Fonctions utilitaires de chargement de templates
+// ---------------------------------------------------------------------------
+
 // Load project templates
+// ---------------------------------------------------------------------------
+// But: charger les templates de projets depuis le fichier JSON local
+// Retour: objet contenant les templates (nextjs, react, nodejs, custom...) ou {} si fichier absent
+// Utilisé par: showMainMenu, showTemplatesMenu pour proposer les options de templates
 const loadProjectTemplates = () => {
     const templatePath = path.join(__dirname, 'projectTemplates.json');
     if (fs.existsSync(templatePath)) {
@@ -13,6 +34,10 @@ const loadProjectTemplates = () => {
 };
 
 // Load hackathon templates
+// ---------------------------------------------------------------------------
+// But: charger les templates de hackathon depuis le fichier JSON local
+// Retour: objet contenant les critères de hackathon ou {} si fichier absent
+// Utilisé par: showMainMenu pour proposer les options de hackathon
 const loadHackathonTemplates = () => {
     const templatePath = path.join(__dirname, 'hackathonTemplates.json');
     if (fs.existsSync(templatePath)) {
@@ -21,7 +46,14 @@ const loadHackathonTemplates = () => {
     return {};
 };
 
+// ---------------------------------------------------------------------------
+// Fonctions d'affichage et d'interface utilisateur
+// ---------------------------------------------------------------------------
+
 // Display welcome banner
+// ---------------------------------------------------------------------------
+// But: afficher une bannière d'accueil avec le nom de l'application
+// Utilisé par: main() au démarrage de l'application
 const displayBanner = () => {
     console.log('\n' + '='.repeat(60));
     console.log('🚀 GITHUB REPOSITORY EVALUATOR');
@@ -31,6 +63,19 @@ const displayBanner = () => {
 };
 
 // Main menu with hackathon selection
+// ---------------------------------------------------------------------------
+// But: afficher le menu principal interactif et collecter tous les paramètres
+// nécessaires pour l'analyse (owner, repo, hackathon, template, options)
+// 
+// Étapes:
+// 1. Charge les templates disponibles
+// 2. Construit les listes d'options pour hackathon et templates
+// 3. Affiche les questions interactives avec validation
+// 4. Gère les actions spéciales (exit, view_templates)
+// 5. Attache les critères de hackathon sélectionnés
+// 
+// Retour: objet answers avec tous les paramètres collectés
+// Utilisé par: main() dans la boucle principale
 const showMainMenu = async () => {
     const templates = loadProjectTemplates();
     const hackathonTemplates = loadHackathonTemplates();
@@ -125,6 +170,11 @@ const showMainMenu = async () => {
 };
 
 // Templates menu
+// ---------------------------------------------------------------------------
+// But: afficher un aperçu détaillé de tous les templates disponibles
+// - Liste chaque template avec sa description et ses fichiers clés
+// - Propose de continuer l'analyse ou de quitter
+// Utilisé par: showMainMenu quand l'utilisateur choisit "view_templates"
 const showTemplatesMenu = async () => {
     const templates = loadProjectTemplates();
     
@@ -163,6 +213,11 @@ const showTemplatesMenu = async () => {
 };
 
 // Get template description
+// ---------------------------------------------------------------------------
+// But: fournir une description textuelle pour un nom de template donné
+// Paramètres: templateName - nom du template (nextjs, react, nodejs, custom)
+// Retour: description textuelle du template
+// Utilisé par: showTemplatesMenu pour afficher les descriptions
 const getTemplateDescription = (templateName) => {
     const descriptions = {
         'nextjs': 'Next.js React framework with pages, API routes, and components',
@@ -173,7 +228,23 @@ const getTemplateDescription = (templateName) => {
     return descriptions[templateName] || 'Custom project template';
 };
 
+// ---------------------------------------------------------------------------
+// Fonctions d'analyse et d'affichage des résultats
+// ---------------------------------------------------------------------------
+
 // Run analysis
+// ---------------------------------------------------------------------------
+// But: orchestrer l'analyse complète d'un dépôt
+// Paramètres: answers - objet contenant tous les paramètres (owner, repo, template, hackathonCriteria)
+// Étapes:
+// 1. Affiche les paramètres de l'analyse
+// 2. Mesure le temps d'exécution
+// 3. Appelle analyzeRepo avec les paramètres
+// 4. Affiche les résultats via displayResults
+// 5. Sauvegarde les résultats si demandé
+// 6. Gère les erreurs d'analyse
+// 
+// Interactions: appelle analyzeRepo (evaluateRepo.js) et displayResults
 const runAnalysis = async (answers) => {
     console.log('\n🔍 STARTING REPOSITORY ANALYSIS...');
     console.log('='.repeat(50));
@@ -201,6 +272,17 @@ const runAnalysis = async (answers) => {
 };
 
 // Display results
+// ---------------------------------------------------------------------------
+// But: afficher les résultats d'analyse de manière formatée et lisible
+// Paramètres:
+// - result: objet de résultats de analyzeRepo
+// - answers: paramètres utilisés pour l'analyse
+// - duration: temps d'exécution en millisecondes
+// 
+// Affichage:
+// - Informations générales (nom, temps, score final)
+// - Breakdown des critères avec émojis selon le score
+// - Feedback détaillé pour chaque critère
 const displayResults = (result, answers, duration) => {
     console.log('\n' + '='.repeat(60));
     console.log('📊 ANALYSIS RESULTS');
@@ -228,6 +310,14 @@ const displayResults = (result, answers, duration) => {
 };
 
 // Save results to file
+// ---------------------------------------------------------------------------
+// But: sauvegarder les résultats d'analyse dans un fichier JSON
+// Paramètres:
+// - result: résultats de l'analyse
+// - answers: paramètres utilisés
+// 
+// Crée un fichier avec timestamp: analysis_owner_repo_YYYY-MM-DDTHH-MM-SS.json
+// Contient: date d'analyse, repo, template, et résultats complets
 const saveResultsToFile = (result, answers) => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filename = `analysis_${answers.owner}_${answers.repo}_${timestamp}.json`;
@@ -248,6 +338,10 @@ const saveResultsToFile = (result, answers) => {
 };
 
 // Show continue options
+// ---------------------------------------------------------------------------
+// But: proposer les options après une analyse (analyser un autre repo, voir templates, quitter)
+// Retour: action choisie par l'utilisateur
+// Utilisé par: main() pour déterminer la suite du programme
 const showContinueOptions = async () => {
     const { action } = await inquirer.prompt([
         {
@@ -265,7 +359,23 @@ const showContinueOptions = async () => {
     return action;
 };
 
+// ---------------------------------------------------------------------------
+// Fonction principale et gestion du flux d'application
+// ---------------------------------------------------------------------------
+
 // Main application flow
+// ---------------------------------------------------------------------------
+// But: orchestrer le flux principal de l'application
+// Étapes:
+// 1. Affiche la bannière d'accueil
+// 2. Boucle infinie jusqu'à sortie:
+//    - Collecte les paramètres via showMainMenu
+//    - Lance l'analyse via runAnalysis
+//    - Propose les options de continuation
+//    - Gère les erreurs avec option de retry
+// 3. Gestion propre de la sortie
+// 
+// Gestion d'erreurs: try/catch global avec option de retry pour l'utilisateur
 const main = async () => {
     displayBanner();
     
@@ -308,18 +418,42 @@ const main = async () => {
     }
 };
 
+// ---------------------------------------------------------------------------
+// Gestion des signaux système et démarrage
+// ---------------------------------------------------------------------------
+
 // Handle process termination
+// ---------------------------------------------------------------------------
+// But: gérer proprement l'interruption Ctrl+C (SIGINT)
+// Affiche un message de sortie et termine le processus proprement
 process.on('SIGINT', () => {
     console.log('\n\n👋 Goodbye!');
     process.exit(0);
 });
 
 // Start the application
+// ---------------------------------------------------------------------------
+// But: démarrer l'application seulement si ce fichier est exécuté directement
+// Vérifie require.main === module pour éviter l'exécution lors d'un require()
 if (require.main === module) {
     main().catch(console.error);
 }
 
+// ---------------------------------------------------------------------------
+// Fonction utilitaire pour créer de nouveaux templates
+// ---------------------------------------------------------------------------
+
 // Prompt for new project metadata and save to JSON
+// ---------------------------------------------------------------------------
+// But: permettre la création interactive de nouveaux templates de projet/hackathon
+// Collecte via inquirer:
+// - Dates de début/fin (validation format YYYY-MM-DD)
+// - Nom du hackathon
+// - Taille max d'équipe
+// - Critères d'originalité et de démo
+// 
+// Sauvegarde dans un fichier JSON avec nom basé sur le hackathon et la date
+// Format: hackathonName_YYYY-MM-DD.project.json
 const promptForProjectMetadata = async () => {
     const questions = [
         {
@@ -375,4 +509,5 @@ const promptForProjectMetadata = async () => {
     console.log(`\n✅ Project template saved as ${fileName}\n`);
 };
 
+// Export de la fonction principale pour usage dans d'autres modules
 module.exports = { main }; 
