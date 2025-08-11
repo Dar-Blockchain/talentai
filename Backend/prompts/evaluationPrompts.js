@@ -1,3 +1,24 @@
+// ============================================================================
+// Prompts pour l'évaluation des candidats
+// ---------------------------------------------------------------------------
+// Ce module contient tous les prompts utilisés par l'IA pour:
+// - Générer des questions d'entretien techniques et RH
+// - Analyser les réponses des candidats
+// - Évaluer les niveaux de compétence
+// - Produire des recommandations personnalisées
+// 
+// Chaque objet contient getSystemPrompt() et getUserPrompt() pour structurer
+// les interactions avec l'IA (Together AI, OpenAI, etc.).
+// ============================================================================
+
+// ---------------------------------------------------------------------------
+// generateJobQuestionsPrompts
+// ---------------------------------------------------------------------------
+// But: générer des questions d'entretien techniques pour un poste spécifique
+// Utilisé par: les contrôleurs d'évaluation pour créer des tests sur mesure
+// 
+// getSystemPrompt: définit le rôle de l'IA et les règles de génération
+// getUserPrompt: fournit les détails du poste et des compétences requises
 const generateJobQuestionsPrompts = {
   getSystemPrompt: (questionsCount) =>
     `
@@ -92,6 +113,14 @@ Generate a total of **${questionsCount} oral technical interview questions**.
 `.trim(),
 };
 
+// ---------------------------------------------------------------------------
+// generateOnboardingQuestionsPrompts
+// ---------------------------------------------------------------------------
+// But: générer des questions pour évaluer une compétence spécifique lors de l'onboarding
+// Utilisé par: l'évaluation des compétences individuelles (pas pour un poste complet)
+// 
+// Différence avec generateJobQuestionsPrompts: se concentre sur une seule compétence
+// avec des questions réparties sur tous les niveaux (1-5)
 const generateOnboardingQuestionsPrompts = {
   getSystemPrompt: (questionsCount) =>
     `
@@ -167,6 +196,16 @@ Example Output:
 `.trim(),
 };
 
+// ---------------------------------------------------------------------------
+// analyzeOnbordingQuestionsPrompts
+// ---------------------------------------------------------------------------
+// But: analyser les réponses d'un candidat à des questions d'onboarding
+// Utilisé par: l'évaluation des compétences individuelles
+// 
+// Particularités:
+// - Système de pondération par niveau (questions 1-2 = poids 1, 3-4 = poids 2, etc.)
+// - Génération de todoList avec tâches d'amélioration
+// - Calcul de confidenceScore basé sur les poids
 const analyzeOnbordingQuestionsPrompts = {
   getSystemPrompt: () =>
     `
@@ -251,8 +290,8 @@ STRICT REQUIREMENTS:
       - At least **one external resource** (doc, course, guide, etc.) per technology is required, and it should be up-to-date and reputable.
       - **Do not provide vague advice.**  
       Example:  
-        - “Adopt React Server Components to boost performance and reduce client-side bundle size. Detailed guide and best practices: https://react.dev/reference/react-server/components”
-        - “Use TypeScript 5.x to enhance type safety and leverage new language features. Official release notes and migration tips: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html”
+        - "Adopt React Server Components to boost performance and reduce client-side bundle size. Detailed guide and best practices: https://react.dev/reference/react-server/components"
+        - "Use TypeScript 5.x to enhance type safety and leverage new language features. Official release notes and migration tips: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html"
 
 Respond strictly in JSON format only, without any additional explanations or text.
 `,
@@ -317,6 +356,17 @@ Return only the valid JSON output. Do not include any commentary.
 `,
 };
 
+// ---------------------------------------------------------------------------
+// analyzeJobTestResultsPrompts
+// ---------------------------------------------------------------------------
+// But: analyser les résultats d'un test complet pour un poste (multi-compétences)
+// Utilisé par: l'évaluation finale d'un candidat pour un poste spécifique
+// 
+// Différences avec analyzeOnbordingQuestionsPrompts:
+// - Évalue plusieurs compétences simultanément
+// - Calcule un score global pondéré
+// - Produit un jobMatch avec pourcentage et statut
+// - Système de scoring égal (pas de pondération par niveau)
 const analyzeJobTestResultsPrompts = {
   getSystemPrompt: () =>
     `
@@ -337,7 +387,7 @@ Your role is to:
 4 - Senior  
 5 - Expert
 
-**Confidence Score Rules (per skill):**
+**Confidence Score Rules (per skill)**:
 - Every question has equal weight
 - Each answer is scored:
   - Fully correct → 1 point
@@ -486,13 +536,23 @@ Return a valid JSON object with the following structure:
       - At least **one external resource** (doc, course, guide, etc.) per technology is required, and it should be up-to-date and reputable.
       - **Do not provide vague advice.**  
       Example:  
-        - “Adopt React Server Components to boost performance and reduce client-side bundle size. Detailed guide and best practices: https://react.dev/reference/react-server/components”
-        - “Use TypeScript 5.x to enhance type safety and leverage new language features. Official release notes and migration tips: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html”
+        - "Adopt React Server Components to boost performance and reduce client-side bundle size. Detailed guide and best practices: https://react.dev/reference/react-server/components"
+        - "Use TypeScript 5.x to enhance type safety and leverage new language features. Official release notes and migration tips: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html"
 
 Return **valid JSON only**
 `.trim(),
 };
 
+// ---------------------------------------------------------------------------
+// generateHRQuestionsPrompts
+// ---------------------------------------------------------------------------
+// But: générer des questions RH (soft skills) personnalisées selon l'entreprise
+// Utilisé par: l'évaluation des compétences comportementales et culturelles
+// 
+// Particularités:
+// - Personnalisation selon l'entreprise, le rôle, le niveau d'expérience
+// - Focus sur les soft skills (pas de questions techniques)
+// - Intégration des valeurs RH modernes (DEI, bien-être, etc.)
 const generateHRQuestionsPrompts = {
   getSystemPrompt: (formData) => {
     // Extract form data for personalization
@@ -611,14 +671,24 @@ ${skillsListDetails}
   },
 };
 
+// ---------------------------------------------------------------------------
+// analyzeHRAnswersPrompts
+// ---------------------------------------------------------------------------
+// But: analyser les réponses aux questions RH et évaluer les soft skills
+// Utilisé par: l'évaluation finale des compétences comportementales
+// 
+// Particularités:
+// - Infère automatiquement 3 soft skills à partir des questions
+// - Évalue la pertinence des réponses (pas la "justesse" absolue)
+// - Focus sur les compétences comportementales et culturelles
 const analyzeHRAnswersPrompts = {
   getSystemPrompt: () =>
     `
-You are a senior HR interviewer and analyst. Your task is to evaluate a candidate’s oral interview responses (transcribed with possible minor errors or incomplete phrases) and extract the key soft skills being assessed.
+You are a senior HR interviewer and analyst. Your task is to evaluate a candidate's oral interview responses (transcribed with possible minor errors or incomplete phrases) and extract the key soft skills being assessed.
 
 Your analysis must:
 1. **Infer the 3 soft skills most consistently evaluated across all questions**.
-2. **Assess the candidate’s proficiency** in those 3 soft skills only.
+2. **Assess the candidate's proficiency** in those 3 soft skills only.
 3. **Follow scoring and structuring instructions strictly**.
 
 
@@ -639,7 +709,7 @@ Your task:
       - status: "correct", "partial_correct", or "incorrect"
       - exampleCorrectAnswer (required if status of answer is "incorrect" or "partial_correct")
 
-**Confidence Score Rules (per skill):**
+**Confidence Score Rules (per skill)**:
 - Every question is mapped to one skill only (you may assume an even split).
 - Each answer is scored:
   - Fully relevant/correct → 1 point → status: "correct"
@@ -675,8 +745,8 @@ Use this scale to assign proficiencyLevel:
  - At least **one external resource** (doc, course, guide, etc.) is required, and it should be up-to-date and reputable.
  - **Do not provide vague advice.**  
  - Example:  
-      - “Focus on advanced team management techniques to handle diverse team dynamics. Recommended resource: 'Managing Teams: Pocket Mentor' by Harvard Business Review Press.”
-      - “Develop a deeper understanding of different work styles and perspectives to enhance collaboration. Suggested learning resource: 'The Five Dysfunctions of a Team: A Leadership Fable' by Patrick Lencioni.”
+      - "Focus on advanced team management techniques to handle diverse team dynamics. Recommended resource: 'Managing Teams: Pocket Mentor' by Harvard Business Review Press."
+      - "Develop a deeper understanding of different work styles and perspectives to enhance collaboration. Suggested learning resource: 'The Five Dysfunctions of a Team: A Leadership Fable' by Patrick Lencioni."
 
 
 - Return **valid JSON only**(no extra explanation or notes)
@@ -731,6 +801,7 @@ Generate and return JSON in the following format:
     `.trim(),
 };
 
+// Export de tous les prompts pour usage dans les contrôleurs d'évaluation
 module.exports = {
   generateJobQuestionsPrompts,
   generateOnboardingQuestionsPrompts,

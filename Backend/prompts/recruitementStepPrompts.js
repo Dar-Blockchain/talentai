@@ -1,7 +1,38 @@
+// ============================================================================
+// Prompts pour les étapes du recrutement
+// ----------------------------------------------------------------------------
+// Ce module regroupe des prompts destinés à un LLM (ex: Together AI, OpenAI)
+// pour générer des questions d'entretien (RH, soft skills, techniques) et
+// guider l'évaluation en fonction du contexte de l'entreprise et du poste.
+// 
+// Principes clés imposés dans les prompts:
+// - Sortie strictement au format JSON (listes de chaînes);
+// - Nombre EXACT de questions requis;
+// - Pas d'hypothèses non fondées; clarté et brièveté des questions;
+// - Adaptation au contexte (entreprise, industrie, taille, localisation, poste);
+// - Éviter la répétition et les formulations ambiguës.
+// ============================================================================
 
-
+// ----------------------------------------------------------------------------
+// generateHRStepQuestionsPrompts
+// ----------------------------------------------------------------------------
+// But: générer des questions RH (comportementales/situationnelles) adaptées à
+// l'entreprise et au poste pour une étape précise du processus (stepPrompt).
+// 
+// Structure:
+// - getSystemPrompt: définit le rôle du LLM et les règles strictes de sortie.
+// - getUserPrompt: fournit le contexte complet (profil de compétences, société,
+//   poste) pour permettre une génération fidèle et contextualisée.
 const generateHRStepQuestionsPrompts = {
   
+  // getSystemPrompt
+  // Paramètres:
+  // - questionsCount: nombre de questions souhaitées (le prompt impose 10)
+  // - stepPrompt: description des compétences/axes RH ciblés pour cette étape
+  // - companyDetails: objet { name, industry, size, location } décrivant la société
+  // - post: objet décrivant le poste (title, description, requirements, responsibilities)
+  // Rôle: cadrer le LLM avec des exigences strictes (10 questions, JSON, pas
+  // de technique) et contextualiser avec les infos de l'entreprise et du poste.
   getSystemPrompt: (questionsCount, stepPrompt, companyDetails, post) => {
     const { name, industry, size, location } = companyDetails || {};
 
@@ -40,6 +71,15 @@ Return ONLY a **valid JSON array of 10 unique question strings**, with no commen
     `.trim();
   },
 
+  // getUserPrompt
+  // Paramètres:
+  // - skillsListDetails: profil de compétences du candidat (utilisé comme contexte)
+  // - questionsCount: nombre souhaité (le prompt impose une sortie de 10)
+  // - stepPrompt: axes RH ciblés (ex: collaboration, leadership)
+  // - companyDetails: details de l'entreprise (name, industry, size, location)
+  // - post: détails du poste (title, description, requirements, responsibilities)
+  // Rôle: fournir au LLM un contexte riche pour générer des questions
+  // comportementales réalistes et adaptées à la culture d'entreprise.
   getUserPrompt: (
     skillsListDetails,
     questionsCount,
@@ -79,6 +119,16 @@ Return ONLY a **valid JSON array of 10 distinct strings**, no explanation or for
 
 
 
+// ----------------------------------------------------------------------------
+// generateSoftSkillStepQuestionsPrompts
+// ----------------------------------------------------------------------------
+// But: générer des questions ciblant spécifiquement les soft skills (compétences
+// comportementales) à partir d'axes fournis (stepPrompt) et du contexte
+// entreprise/poste.
+// 
+// Différences vs generateHRStepQuestionsPrompts:
+// - Accent explicite sur les soft skills et les « Primary Focus Areas ».
+// - Consignes renforcées sur l'authenticité (mention de l'entreprise).
 const generateSoftSkillStepQuestionsPrompts = {
   getSystemPrompt: (questionsCount, stepPrompt, companyDetails, post) => {
     const { name, industry, size, location } = companyDetails || {};
@@ -120,6 +170,10 @@ Return ONLY a valid **JSON array of 10 strings**, each being one question. No co
     `.trim();
   },
 
+  // getUserPrompt
+  // Paramètres: similaires à la version RH générale, mais le focus est mis
+  // sur les soft skills listés dans `stepPrompt`. Le profil de compétences
+  // `skillsListDetails` sert à adapter le niveau/angle des questions.
   getUserPrompt: (
     skillsListDetails,
     questionsCount,
@@ -161,6 +215,16 @@ Return ONLY a **valid JSON array of 10 strings**, each representing a unique int
 };
 
 
+// ----------------------------------------------------------------------------
+// generateTechnicalSkillStepQuestionsPrompts
+// ----------------------------------------------------------------------------
+// But: générer des questions techniques (hard skills) pour évaluer le niveau
+// de maîtrise par rapport à des compétences données. Ici, le LLM doit produire
+// EXACTEMENT `questionsCount` questions, en respectant des niveaux de
+// compétence et des contraintes de forme (réponse orale < 2 min, JSON only).
+// 
+// Note: contrairement aux prompts RH/soft, celui-ci filtre explicitement sur
+// les hard skills (les soft skills doivent être ignorées dans la génération).
 const generateTechnicalSkillStepQuestionsPrompts = {
   getSystemPrompt: (questionsCount) =>
     `
@@ -226,6 +290,13 @@ The AI must return **a single valid JSON array** containing **exactly 10 mixed q
 ]
 `.trim(),
 
+  // getUserPrompt
+  // Paramètres:
+  // - questionsCount: nombre EXACT de questions techniques à générer
+  // - jobRequiredSkills: liste des compétences requises (incluant niveaux)
+  //   À partir de laquelle on extrait uniquement les hard skills à évaluer.
+  // Rôle: orienter la distribution des questions entre les compétences
+  // techniques, tout en imposant le format JSON et l'absence de redondances.
   getUserPrompt: (questionsCount, jobRequiredSkills) =>
     `
 You are given a list of required skills with associated proficiency levels for a specific job role.
