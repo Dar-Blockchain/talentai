@@ -70,6 +70,60 @@ import GroupIcon from '@mui/icons-material/Group';
 import Avatar from '@mui/material/Avatar';
 const GREEN_MAIN = "#8310FF";
 
+// Add shimmer animation keyframes
+const shimmerKeyframes = `
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 0.6;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.3;
+      transform: scale(1.1);
+    }
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes scoreCountUp {
+    from {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes cardFloat {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+`;
+
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -79,9 +133,21 @@ const StyledCard = styled(Card)(({ theme }) => ({
   boxShadow: "0 10px 40px rgba(0, 0, 0, 0.08), 0 0 20px rgba(0, 0, 0, 0.04)",
   border: "1px solid rgba(0, 0, 0, 0.05)",
   transition: "all 0.3s ease",
+  position: "relative",
+  overflow: "hidden",
   "&:hover": {
     transform: "translateY(-4px)",
     boxShadow: "0 20px 50px rgba(0, 0, 0, 0.12), 0 0 30px rgba(0, 0, 0, 0.08)",
+  },
+  "&::before": {
+    content: '""',
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "4px",
+    background: "linear-gradient(90deg, #8310FF 0%, #02E2FF 50%, #00FFC3 100%)",
+    borderRadius: "24px 24px 0 0",
   },
 }));
 
@@ -367,6 +433,12 @@ const SkillBlock = ({
         gap: 3,
         transition: "all 0.3s ease",
         border: "1px solid rgba(0, 0, 0, 0.05)",
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+        "&:hover": {
+          transform: "translateY(-2px)",
+          boxShadow: "0 8px 25px rgba(0, 0, 0, 0.08)",
+          border: "1px solid rgba(0, 0, 0, 0.08)",
+        },
       }}
     >
       <Box sx={{ flex: 1 }}>
@@ -422,20 +494,34 @@ const SkillBlock = ({
         </Typography>
         <Box
           sx={{
-            height: "8px",
+            height: "10px",
             background: "rgba(0,0,0,0.06)",
-            borderRadius: "4px",
+            borderRadius: "8px",
             overflow: "hidden",
             mt: 2,
+            position: "relative",
           }}
         >
           <Box
             sx={{
               width: `${percentage}%`,
               height: "100%",
-              background: GREEN_MAIN,
-              borderRadius: "4px",
-              transition: "width 0.5s ease",
+              background: type === "technical" 
+                ? "linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)"
+                : "linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%)",
+              borderRadius: "8px",
+              transition: "width 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+              position: "relative",
+              "&::after": {
+                content: '""',
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)",
+                animation: "shimmer 2s infinite",
+              },
             }}
           />
         </Box>
@@ -1400,37 +1486,178 @@ export default function DashboardCandidate() {
         sx={{
           minHeight: "100vh",
           color: GREEN_MAIN,
-          padding: { xs: theme.spacing(2), sm: theme.spacing(4), md: theme.spacing(6) }, // Responsive padding
+          // padding: { xs: theme.spacing(2), sm: theme.spacing(4), md: theme.spacing(6) }, // Responsive padding
         }}
       >
         <Container maxWidth="lg">
-          {/* Profile Header */}
+                    {/* Profile Header */}
           <ProfileHeader>
             <Box sx={{ position: "relative", zIndex: 2 }}>
+              {/* Welcome Section */}
               <Box
                 sx={{
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "flex-start",
-                  mb: 3,
-                  flexDirection: { xs: "column", sm: "row" }, // Stack vertically on mobile
-                  gap: { xs: 2, sm: 0 }, // Add gap on mobile
+                  mb: 4,
+                  flexDirection: { xs: "column", lg: "row" },
+                  gap: { xs: 3, lg: 4 },
                 }}
               >
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant="h3"
+                {/* Left side - Welcome message and user info */}
+                <Box sx={{ flex: 1, display: "flex", alignItems: "center", gap: 3 }}>
+                  {/* User Avatar */}
+                  <Avatar
                     sx={{
+                      width: { xs: 80, sm: 100, md: 120 },
+                      height: { xs: 80, sm: 100, md: 120 },
+                      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                      fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
                       fontWeight: 700,
-                      mb: 2,
-                      color: "#191919",
-                      fontSize: { xs: "1.75rem", sm: "2.125rem", md: "3rem" }, // Responsive font size
-                      lineHeight: { xs: 1.2, sm: 1.3, md: 1.4 }, // Responsive line height
-                      wordBreak: "break-word", // Prevent text overflow
+                      boxShadow: "0 4px 16px rgba(102, 126, 234, 0.3)",
                     }}
                   >
-                    Welcome back, {profile.userId.username}!
-                  </Typography>
+                    {profile.userId?.username?.[0] || profile.userId?.email?.[0] || "U"}
+                  </Avatar>
+                  
+                  {/* Welcome Text */}
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant="h3"
+                      sx={{
+                        fontWeight: 700,
+                        mb: 1,
+                        color: "#1a1a1a",
+                        fontSize: { xs: "1.75rem", sm: "2.125rem", md: "2.5rem", lg: "3rem" },
+                        lineHeight: { xs: 1.2, sm: 1.3, md: 1.4 },
+                      }}
+                    >
+                      Welcome back, {profile.userId.username}!
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        color: "#666666",
+                        fontWeight: 400,
+                        fontSize: { xs: "1rem", sm: "1.125rem" },
+                        mb: 1,
+                      }}
+                    >
+                      Ready to continue your journey? Let's make today productive!
+                    </Typography>
+                    
+                    {/* Role and Member Since Info */}
+                    <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <WorkIcon sx={{ color: "#667eea", fontSize: "1.2rem" }} />
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "#666666",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {profile.userId.role || "Member"}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <CalendarTodayIcon sx={{ color: "#667eea", fontSize: "1.2rem" }} />
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "#666666",
+                            fontWeight: 500,
+                          }}
+                        >
+                          Member since {new Date(profile.userId.createdAt).toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "long",
+                              year: "numeric",
+                            }
+                          )}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+
+                {/* Right side - Quick Stats */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: { xs: "row", sm: "column" },
+                    gap: 2,
+                    minWidth: { xs: "auto", sm: 200 },
+                  }}
+                >
+                  {/* Tests Completed */}
+                  <Box
+                    sx={{
+                      background: "#f8f9fa",
+                      borderRadius: "12px",
+                      padding: 2,
+                      textAlign: "center",
+                      border: "1px solid #e9ecef",
+                      minWidth: { xs: 120, sm: 140 },
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+                    }}
+                  >
+                    <Typography
+                      variant="h4"
+                      sx={{
+                        fontWeight: 700,
+                        color: "#1a1a1a",
+                        fontSize: { xs: "1.5rem", sm: "2rem" },
+                      }}
+                    >
+                      {profile.quota || 0}/5
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "#666666",
+                        fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                        fontWeight: 500,
+                      }}
+                    >
+                      Tests Completed
+                    </Typography>
+                  </Box>
+
+                  {/* Experience Level */}
+                  <Box
+                    sx={{
+                      background: "#f8f9fa",
+                      borderRadius: "12px",
+                      padding: 2,
+                      textAlign: "center",
+                      border: "1px solid #e9ecef",
+                      minWidth: { xs: 120, sm: 140 },
+                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+                    }}
+                  >
+                    <Typography
+                      variant="h4"
+                      sx={{
+                        fontWeight: 700,
+                        color: "#1a1a1a",
+                        fontSize: { xs: "1.5rem", sm: "2rem" },
+                      }}
+                    >
+                      {profile.requiredExperienceLevel || "Beginner"}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "#666666",
+                        fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                        fontWeight: 500,
+                      }}
+                    >
+                      Experience Level
+                    </Typography>
+                  </Box>
                 </Box>
               </Box>
 
@@ -1438,7 +1665,19 @@ export default function DashboardCandidate() {
               <Stack
                 direction={{ xs: "column", sm: "row" }}
                 spacing={{ xs: 2, sm: 2 }}
-                sx={{ mt: 4 }}
+                sx={{ 
+                  mt: 4,
+                  "& .MuiButton-root": {
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "#ffffff",
+                    fontWeight: 600,
+                    "&:hover": {
+                      background: "linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)",
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 8px 25px rgba(102, 126, 234, 0.3)",
+                    },
+                  },
+                }}
               >
                 <ActionButton
                   variant="contained"
@@ -1446,15 +1685,19 @@ export default function DashboardCandidate() {
                   onClick={() => handleStartTest()}
                   disabled={profile.quota >= 5}
                   sx={{
-                    background: GREEN_MAIN,
-                    color: "#000000",
-                    width: { xs: "100%", sm: "auto" }, // Full width on mobile
+                    background: profile.quota >= 5 
+                      ? "rgba(255,255,255,0.1)" 
+                      : "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.2) 100%)",
+                    color: "#ffffff",
+                    width: { xs: "100%", sm: "auto" },
                     "&:hover": {
-                      background: GREEN_MAIN,
+                      background: profile.quota >= 5 
+                        ? "rgba(255,255,255,0.1)" 
+                        : "linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.3) 100%)",
                     },
                     "&.Mui-disabled": {
-                      background: "rgba(0,0,0,0.1)",
-                      color: "rgba(0,0,0,0.3)",
+                      background: "rgba(255,255,255,0.1)",
+                      color: "rgba(255,255,255,0.5)",
                     },
                   }}
                 >
@@ -1465,11 +1708,11 @@ export default function DashboardCandidate() {
                   startIcon={<PersonIcon />}
                   onClick={() => router.push("/interviewTest")}
                   sx={{
-                    background: "linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)",
-                    color: "#000000",
-                    width: { xs: "100%", sm: "auto" }, // Full width on mobile
+                    background: "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.2) 100%)",
+                    color: "#ffffff",
+                    width: { xs: "100%", sm: "auto" },
                     "&:hover": {
-                      background: "linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)",
+                      background: "linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.3) 100%)",
                     },
                   }}
                 >
@@ -1480,19 +1723,20 @@ export default function DashboardCandidate() {
                   startIcon={<DescriptionIcon />}
                   onClick={() => router.push("/resume-builder")}
                   sx={{
-                    borderColor: "black",
-                    color: "black",
-                    width: { xs: "100%", sm: "auto" }, // Full width on mobile
+                    borderColor: "rgba(255,255,255,0.3)",
+                    color: "#ffffff",
+                    width: { xs: "100%", sm: "auto" },
                     "&:hover": {
-                      borderColor: GREEN_MAIN,
-                      background: "rgba(0, 255, 157, 0.08)",
+                      borderColor: "rgba(255,255,255,0.5)",
+                      background: "rgba(255,255,255,0.1)",
                     },
                   }}
                 >
                   CV Builder
                 </ActionButton>
               </Stack>
-
+            </Box>
+          </ProfileHeader>
               {/* Edit Profile Modal */}
               <Dialog
                 open={editProfileOpen}
@@ -2057,114 +2301,10 @@ export default function DashboardCandidate() {
                   </Button>
                 </DialogActions>
               </Dialog>
-            </Box>
-
-            <Container maxWidth="lg">
-              <Box
-                sx={{
-                  mt: 4,
-                  display: "grid",
-                  gridTemplateColumns: {
-                    xs: "1fr",
-                    sm: "repeat(2, 1fr)",
-                    md: "repeat(4, 1fr)",
-                  },
-                  gap: 3,
-                }}
-              >
-                {/* Skills Count */}
-                <StatCard>
-                  <Typography
-                    variant="overline"
-                    sx={{ color: "text.secondary", letterSpacing: 2 }}
-                  >
-                    Skills Count
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    sx={{ fontWeight: 600, color: "text.primary", mt: 1 }}
-                  >
-                    {profile.skills?.length || 0}
-                  </Typography>
-                </StatCard>
-
-                {/* Tests Passed */}
-                <StatCard>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                    <Typography
-                      variant="overline"
-                      sx={{ color: "text.secondary", letterSpacing: 2 }}
-                    >
-                      Tests Passed
-                    </Typography>
-                    <Typography
-                      variant="h6"
-                      sx={{ fontWeight: 600, color: "text.primary" }}
-                    >
-                      {profile.quota || 0}/5
-                    </Typography>
-                    {timeUntilReset && (
-                      <Chip
-                        label={`Reset: ${resetDate}`}
-                        size="small"
-                        sx={{
-                          alignSelf: "flex-start",
-                          height: 20,
-                          fontSize: "0.75rem",
-                          backgroundColor: "rgba(0,0,0,0.05)",
-                          color: "rgba(0,0,0,0.6)",
-                          "& .MuiChip-label": {
-                            px: 1,
-                            py: 0.5,
-                          },
-                        }}
-                      />
-                    )}
-                  </Box>
-                </StatCard>
-
-                {/* Last Login */}
-                <StatCard>
-                  <Typography
-                    variant="overline"
-                    sx={{ color: "text.secondary", letterSpacing: 2 }}
-                  >
-                    Last Login
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    sx={{ fontWeight: 600, color: "text.primary", mt: 1 }}
-                  >
-                    {new Date(profile.userId.lastLogin).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </Typography>
-                </StatCard>
-
-                {/* Profile Status */}
-                <StatCard>
-                  <Typography
-                    variant="overline"
-                    sx={{ color: "text.secondary", letterSpacing: 2 }}
-                  >
-                    Profile Status
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    sx={{ fontWeight: 600, color: "text.primary", mt: 1 }}
-                  >
-                    {profile.userId.isVerified ? "Verified" : "Pending"}
-                  </Typography>
-                </StatCard>
-              </Box>
-            </Container>
-          </ProfileHeader>
 
           {/* Ads Block - Show API ad post */}
           <StyledCard sx={{ mb: 4, background: '#f8fafc', border: '2px dashed #8310FF' }}>
-            <SectionTitle sx={{ color: '#8310FF', fontSize: '1.5rem', mb: 2 }}>Recommended Opportunities</SectionTitle>
+            <SectionTitle sx={{ color: '#8310FF', fontSize: '1.5rem', mb: 4 }}>Recommended Opportunities</SectionTitle>
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
               {adLoading ? (
                 <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120 }}>
@@ -2202,111 +2342,70 @@ export default function DashboardCandidate() {
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                md: "repeat(2, 1fr)",
-              },
+              width: "100%",
               gap: 4,
             }}
           >
             <Box>
               <StyledCard>
-                <SectionTitle>Personal Information</SectionTitle>
-                <InfoItem>
-                  <PersonIcon sx={{ color: GREEN_MAIN }} />
+                <Box sx={{ display: "flex", alignItems: "center", gap: 3, mb: 4 }}>
+                  <Box
+                    sx={{
+                      width: "60px",
+                      height: "60px",
+                      borderRadius: "16px",
+                      background: "linear-gradient(135deg, #8310FF 0%, #02E2FF 100%)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 8px 25px rgba(131, 16, 255, 0.3)",
+                    }}
+                  >
+                    <DescriptionIcon sx={{ color: "white", fontSize: "28px" }} />
+                  </Box>
                   <Box>
-                    <Typography variant="body2" sx={{ color: "#191919" }}>
-                      Username
-                    </Typography>
+                    <SectionTitle sx={{ mb: 1 }}>Skills & Expertise</SectionTitle>
                     <Typography
-                      variant="body1"
-                      sx={{ color: "#191919", fontWeight: 500 }}
+                      variant="body2"
+                      sx={{
+                        color: "rgba(0,0,0,0.6)",
+                        fontSize: "1rem",
+                        fontWeight: 500,
+                        mt: 3
+                      }}
                     >
-                      {profile.userId.username}
+                      Showcase your technical and soft skills to potential employers
                     </Typography>
                   </Box>
-                </InfoItem>
-                <InfoItem>
-                  <EmailIcon sx={{ color: GREEN_MAIN }} />
-                  <Box>
-                    <Typography variant="body2" sx={{ color: "rgba(0,0,0,0.7)" }}>
-                      Email
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      sx={{ color: "#000000", fontWeight: 500 }}
-                    >
-                      {profile.userId.email}
-                    </Typography>
-                  </Box>
-                </InfoItem>
-                <InfoItem>
-                  <WorkIcon sx={{ color: GREEN_MAIN }} />
-                  <Box>
-                    <Typography variant="body2" sx={{ color: "rgba(0,0,0,0.7)" }}>
-                      Role
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      sx={{ color: "#000000", fontWeight: 500 }}
-                    >
-                      {profile.userId.role}
-                    </Typography>
-                  </Box>
-                </InfoItem>
-                <InfoItem>
-                  <CalendarTodayIcon sx={{ color: GREEN_MAIN }} />
-                  <Box>
-                    <Typography variant="body2" sx={{ color: "rgba(0,0,0,0.7)" }}>
-                      Member Since
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      sx={{ color: "#000000", fontWeight: 500 }}
-                    >
-                      {new Date(profile.userId.createdAt).toLocaleDateString(
-                        "en-US",
-                        {
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        }
-                      )}
-                    </Typography>
-                  </Box>
-                </InfoItem>
-              </StyledCard>
-            </Box>
+                </Box>
 
-            <Box>
-              <StyledCard>
-                <SectionTitle>Skills & Expertise</SectionTitle>
-
-                {/* Overall Score Circle */}
+                {/* Overall Score - Simple and Modern */}
                 <Box
                   sx={{
                     display: "flex",
-                    justifyContent: "center",
+                    flexDirection: "column",
                     alignItems: "center",
-                    mb: 4,
+                    justifyContent: "center",
+                    mb: 5,
+                    gap: 2,
                   }}
                 >
                   <ScoreCircle>
                     <CircularProgress
                       variant="determinate"
                       value={100}
-                      size={150}
-                      thickness={4}
+                      size={180}
+                      thickness={6}
                       sx={{
                         position: "absolute",
-                        color: "rgba(0, 0, 0, 0.1)",
+                        color: "rgba(0, 0, 0, 0.08)",
                       }}
                     />
                     <CircularProgress
                       variant="determinate"
-                      value={100}
-                      size={150}
-                      thickness={4}
+                      value={profile ? Number(profile.overallScore) : 0}
+                      size={180}
+                      thickness={6}
                       sx={{
                         position: "absolute",
                         color: "transparent",
@@ -2320,60 +2419,144 @@ export default function DashboardCandidate() {
                       sx={{
                         position: "absolute",
                         display: "flex",
-                        flexDirection: "column",
                         alignItems: "center",
+                        justifyContent: "center",
+                        flexDirection: "column",
                       }}
                     >
                       <Typography
-                        variant="h5"
+                        variant="h3"
                         sx={{
                           background:
                             "linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)",
                           WebkitBackgroundClip: "text",
                           WebkitTextFillColor: "transparent",
                           fontWeight: "bold",
+                          fontSize: "2.75rem",
+                          textAlign: "center",
                         }}
                       >
-                        {profile
-                          ? Number(profile.overallScore).toFixed(2)
-                          : "0.00%"}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          color: "rgba(0, 0, 0, 0.7)",
-                          mt: 1,
-                          fontSize: "0.875rem",
-                        }}
-                      >
-                        Overall
+                        {profile ? Number(profile.overallScore).toFixed(1) : "0.0"}
                       </Typography>
                     </Box>
                     <svg width="0" height="0">
                       <defs>
-                        <linearGradient
-                          id="gradient"
-                          x1="0%"
-                          y1="0%"
-                          x2="100%"
-                          y2="100%"
-                        >
+                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
                           <stop offset="0%" stopColor="#02E2FF" />
                           <stop offset="100%" stopColor="#00FFC3" />
                         </linearGradient>
                       </defs>
                     </svg>
                   </ScoreCircle>
+                  <Typography
+                    sx={{
+                      color: "rgba(0, 0, 0, 0.75)",
+                      fontSize: "1rem",
+                      fontWeight: 700,
+                      textTransform: "none",
+                      letterSpacing: 0.2,
+                    }}
+                  >
+                    Overall Score
+                  </Typography>
+                </Box>
+
+                {/* Motivational Message */}
+                <Box
+                  sx={{
+                    textAlign: "center",
+                    mb: 4,
+                    p: 3,
+                    borderRadius: "20px",
+                    background: "linear-gradient(135deg, rgba(131,16,255,0.05) 0%, rgba(2,226,255,0.05) 100%)",
+                    border: "1px solid rgba(131,16,255,0.1)",
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      color: "#8310FF",
+                      fontSize: "1.1rem",
+                      fontWeight: 600,
+                      mb: 1,
+                    }}
+                  >
+                    💪 Keep Growing Your Skills!
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: "rgba(0,0,0,0.7)",
+                      fontSize: "0.95rem",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {Number(profile.overallScore) >= 90 ? "You're an expert! Consider mentoring others and sharing your knowledge." :
+                     Number(profile.overallScore) >= 80 ? "Excellent progress! You're close to becoming an expert in your field." :
+                     Number(profile.overallScore) >= 70 ? "Great work! Keep practicing and you'll reach advanced level soon." :
+                     Number(profile.overallScore) >= 60 ? "Good start! Focus on improving your weakest areas to boost your score." :
+                     "Welcome! Start by taking skill assessments to build your profile and track your progress."}
+                  </Typography>
                 </Box>
 
                 {/* Soft Skills Distribution */}
                 <Box sx={{ mb: 4 }}>
-                  <Typography
-                    variant="h6"
-                    gutterBottom
-                    sx={{ color: "black", opacity: 0.9 }}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 3,
+                    }}
                   >
-                    Soft Skills
-                  </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Box
+                        sx={{
+                          width: "40px",
+                          height: "40px",
+                          borderRadius: "12px",
+                          background: "linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <PersonIcon sx={{ color: "white", fontSize: "20px" }} />
+                      </Box>
+                      <Typography
+                        variant="h6"
+                        sx={{ 
+                          color: "black", 
+                          opacity: 0.9,
+                          fontWeight: 600,
+                          fontSize: "1.25rem"
+                        }}
+                      >
+                        Soft Skills
+                      </Typography>
+                    </Box>
+                    <Button
+                      startIcon={<AddIcon />}
+                      onClick={() => setAddSkillDialogOpen(true)}
+                      variant="outlined"
+                      sx={{
+                        color: "#FF6B6B",
+                        borderColor: "#FF6B6B",
+                        borderRadius: "12px",
+                        px: 3,
+                        py: 1,
+                        textTransform: "none",
+                        fontWeight: 600,
+                        "&:hover": {
+                          borderColor: "#FF6B6B",
+                          background: "rgba(255,107,107,0.08)",
+                          transform: "translateY(-2px)",
+                          boxShadow: "0 4px 12px rgba(255,107,107,0.2)",
+                        },
+                        transition: "all 0.3s ease",
+                      }}
+                    >
+                      Add Soft Skill
+                    </Button>
+                  </Box>
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     {profile?.softSkills?.length ? (
                       profile.softSkills.map((skill: any) => (
@@ -2388,12 +2571,66 @@ export default function DashboardCandidate() {
                         />
                       ))
                     ) : (
-                      <Typography
-                        sx={{ color: "black", textAlign: "center", py: 2 }}
+                      <Box
+                        sx={{
+                          textAlign: "center",
+                          py: 4,
+                          px: 3,
+                          borderRadius: "16px",
+                          background: "rgba(255,107,107,0.05)",
+                          border: "2px dashed rgba(255,107,107,0.3)",
+                        }}
                       >
-                        No soft skills added yet. Start a soft skill test to add
-                        them.
-                      </Typography>
+                        <PersonIcon 
+                          sx={{ 
+                            fontSize: "48px", 
+                            color: "rgba(255,107,107,0.5)",
+                            mb: 2 
+                          }} 
+                        />
+                        <Typography
+                          sx={{ 
+                            color: "rgba(0,0,0,0.6)", 
+                            fontSize: "1rem",
+                            fontWeight: 500
+                          }}
+                        >
+                          No soft skills added yet
+                        </Typography>
+                        <Typography
+                          sx={{ 
+                            color: "rgba(0,0,0,0.5)", 
+                            fontSize: "0.875rem",
+                            mt: 1
+                          }}
+                        >
+                          Start a soft skill test to add them to your profile
+                        </Typography>
+                        <Button
+                          startIcon={<AddIcon />}
+                          onClick={() => setAddSkillDialogOpen(true)}
+                          variant="contained"
+                          sx={{
+                            mt: 2,
+                            background: "linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)",
+                            color: "white",
+                            borderRadius: "12px",
+                            px: 3,
+                            py: 1.5,
+                            textTransform: "none",
+                            fontWeight: 600,
+                            boxShadow: "0 4px 15px rgba(255,107,107,0.3)",
+                            "&:hover": {
+                              background: "linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)",
+                              transform: "translateY(-2px)",
+                              boxShadow: "0 8px 25px rgba(255,107,107,0.4)",
+                            },
+                            transition: "all 0.3s ease",
+                          }}
+                        >
+                          Add Your First Skill
+                        </Button>
+                      </Box>
                     )}
                   </Box>
                 </Box>
@@ -2405,67 +2642,173 @@ export default function DashboardCandidate() {
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      mb: 2,
+                      mb: 3,
                     }}
                   >
-                    <Typography
-                      variant="h6"
-                      sx={{ color: "#000000", opacity: 0.9 }}
-                    >
-                      Technical Skills
-                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Box
+                        sx={{
+                          width: "40px",
+                          height: "40px",
+                          borderRadius: "12px",
+                          background: "linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <WorkIcon sx={{ color: "white", fontSize: "20px" }} />
+                      </Box>
+                      <Typography
+                        variant="h6"
+                        sx={{ 
+                          color: "#000000", 
+                          opacity: 0.9,
+                          fontWeight: 600,
+                          fontSize: "1.25rem"
+                        }}
+                      >
+                        Technical Skills
+                      </Typography>
+                    </Box>
                     <Button
                       startIcon={<AddIcon />}
                       onClick={() => setAddSkillDialogOpen(true)}
+                      variant="outlined"
                       sx={{
-                        color: "black",
-                        borderColor: "black",
+                        color: "#02E2FF",
+                        borderColor: "#02E2FF",
+                        borderRadius: "12px",
+                        px: 3,
+                        py: 1,
+                        textTransform: "none",
+                        fontWeight: 600,
                         "&:hover": {
-                          borderColor: "black",
-                          background: "rgba(2,226,255,0.1)",
+                          borderColor: "#02E2FF",
+                          background: "rgba(2,226,255,0.08)",
+                          transform: "translateY(-2px)",
+                          boxShadow: "0 4px 12px rgba(2,226,255,0.2)",
                         },
+                        transition: "all 0.3s ease",
                       }}
                     >
-                      Add Skill
+                      Add Technical Skill
                     </Button>
                   </Box>
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     {profile.skills
                       ?.filter(
                         (skill: any) => !softSkillNames.includes(skill.name)
-                      )
-                      ?.slice(0, visibleSkills)
-                      ?.map((skill: any) => (
-                        <SkillBlock
-                          key={skill.name}
-                          skill={skill}
-                          type="technical"
-                          onStartTest={() => handleStartTest("technical", skill)}
-                          onDelete={() => handleDeleteSkill(skill.name)}
-                        />
-                      ))}
-                  </Box>
-                  {profile.skills?.filter(
-                    (skill: any) => !softSkillNames.includes(skill.name)
-                  )?.length > visibleSkills && (
+                      )?.length > 0 ? (
+                      <>
+                        {profile.skills
+                          ?.filter(
+                            (skill: any) => !softSkillNames.includes(skill.name)
+                          )
+                          ?.slice(0, visibleSkills)
+                          ?.map((skill: any) => (
+                            <SkillBlock
+                              key={skill.name}
+                              skill={skill}
+                              type="technical"
+                              onStartTest={() => handleStartTest("technical", skill)}
+                              onDelete={() => handleDeleteSkill(skill.name)}
+                            />
+                          ))}
+                        {profile.skills?.filter(
+                          (skill: any) => !softSkillNames.includes(skill.name)
+                        )?.length > visibleSkills && (
+                          <Box
+                            sx={{ display: "flex", justifyContent: "center", mt: 2 }}
+                          >
+                            <Button
+                              onClick={() => setVisibleSkills((prev) => prev + 3)}
+                              variant="outlined"
+                              sx={{
+                                color: "#02E2FF",
+                                borderColor: "#02E2FF",
+                                borderRadius: "12px",
+                                px: 3,
+                                py: 1,
+                                textTransform: "none",
+                                fontWeight: 600,
+                                "&:hover": {
+                                  borderColor: "#02E2FF",
+                                  background: "rgba(2,226,255,0.08)",
+                                  transform: "translateY(-2px)",
+                                  boxShadow: "0 4px 12px rgba(2,226,255,0.2)",
+                                },
+                                transition: "all 0.3s ease",
+                              }}
+                            >
+                              Load More
+                            </Button>
+                          </Box>
+                        )}
+                      </>
+                    ) : (
                       <Box
-                        sx={{ display: "flex", justifyContent: "center", mt: 2 }}
+                        sx={{
+                          textAlign: "center",
+                          py: 4,
+                          px: 3,
+                          borderRadius: "16px",
+                          background: "rgba(2,226,255,0.05)",
+                          border: "2px dashed rgba(2,226,255,0.3)",
+                        }}
                       >
-                        <Button
-                          onClick={() => setVisibleSkills((prev) => prev + 3)}
-                          sx={{
-                            color: "black",
-                            borderColor: "black",
-                            "&:hover": {
-                              borderColor: "black",
-                              background: "rgba(2,226,255,0.1)",
-                            },
+                        <WorkIcon 
+                          sx={{ 
+                            fontSize: "48px", 
+                            color: "rgba(2,226,255,0.5)",
+                            mb: 2 
+                          }} 
+                        />
+                        <Typography
+                          sx={{ 
+                            color: "rgba(0,0,0,0.6)", 
+                            fontSize: "1rem",
+                            fontWeight: 500
                           }}
                         >
-                          Load More
+                          No technical skills added yet
+                        </Typography>
+                        <Typography
+                          sx={{ 
+                            color: "rgba(0,0,0,0.5)", 
+                            fontSize: "0.875rem",
+                            mt: 1
+                          }}
+                        >
+                          Start a technical skill test to add them to your profile
+                        </Typography>
+                        <Button
+                          startIcon={<AddIcon />}
+                          onClick={() => setAddSkillDialogOpen(true)}
+                          variant="contained"
+                          sx={{
+                            mt: 2,
+                            background: "linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)",
+                            color: "white",
+                            borderRadius: "12px",
+                            px: 3,
+                            py: 1.5,
+                            textTransform: "none",
+                            fontWeight: 600,
+                            boxShadow: "0 4px 15px rgba(2,226,255,0.3)",
+                            "&:hover": {
+                              background: "linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)",
+                              transform: "translateY(-2px)",
+                              boxShadow: "0 8px 25px rgba(2,226,255,0.4)",
+                            },
+                            transition: "all 0.3s ease",
+                          }}
+                        >
+                          Add Your First Skill
                         </Button>
                       </Box>
                     )}
+                  </Box>
                 </Box>
               </StyledCard>
             </Box>
