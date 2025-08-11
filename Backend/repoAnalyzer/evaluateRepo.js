@@ -1,21 +1,29 @@
+// ============================================================================
+// Ce fichier contient l'analyseur principal pour évaluer un dépôt GitHub.
+// Il utilise des critères objectifs et l'IA (Together AI) pour évaluer la qualité,
+// l'innovation, la documentation, la fonctionnalité et l'expérience utilisateur.
+// Il gère aussi l'éligibilité à un hackathon selon des critères donnés.
+// ============================================================================
 const axios = require("axios");
-const Together = require("together-ai"); // Use require instead of import
+const Together = require("together-ai"); // Utilisation de require pour Together AI
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
 const IntelligentProjectAnalyzer = require("./intelligentAnalyzer");
 
+// Initialisation de l'API Together AI avec la clé d'API dans les variables d'environnement
 const together = new Together(); // Auth using API key in process.env.TOGETHER_API_KEY
 
+// CRITERIA_WEIGHTS définit le poids de chaque critère dans le score final (somme = 100)
 const CRITERIA_WEIGHTS = {
-  codeQuality: 30,
-  innovation: 25,
-  functionality: 20,
-  documentation: 15,
-  userExperience: 10,
+  codeQuality: 30, // Qualité du code (30%)
+  innovation: 25,  // Innovation (25%)
+  functionality: 20, // Fonctionnalité (20%)
+  documentation: 15, // Documentation (15%)
+  userExperience: 10, // Expérience utilisateur (10%)
 };
 
-// Add chalk for colored output if available
+// Optionnel : colorisation de la sortie console si le module chalk est disponible
 let chalk = null;
 try {
   chalk = require("chalk");
@@ -23,11 +31,13 @@ try {
   chalk = null;
 }
 
+// Fonction utilitaire pour coloriser le texte dans la console
 function colorize(text, color) {
   if (chalk && chalk[color]) return chalk[color](text);
   return text;
 }
 
+// Fonction utilitaire pour afficher une section formatée dans la console
 function section(title, emoji = "", color = "cyan") {
   const line = "=".repeat(60);
   return `\n${colorize(line, color)}\n${emoji ? emoji + " " : ""}${colorize(
@@ -36,7 +46,14 @@ function section(title, emoji = "", color = "cyan") {
   )}\n${colorize(line, color)}`;
 }
 
-// Analyze the repository
+// ========================
+// Fonction principale : analyseRepo
+// ========================
+// Analyse un dépôt GitHub selon plusieurs critères et retourne un rapport détaillé.
+// owner : propriétaire du repo (string)
+// repo : nom du repo (string)
+// selectedTemplate : type de projet (auto ou spécifique)
+// hackathonCriteria : critères d'éligibilité au hackathon (objet ou null)
 const analyzeRepo = async (
   owner,
   repo,
@@ -44,23 +61,25 @@ const analyzeRepo = async (
   hackathonCriteria = null
 ) => {
   try {
+    // Affiche les critères de hackathon reçus (utile pour le debug)
     console.log("check criteria: ", hackathonCriteria);
 
+    // Récupération des données du repo depuis GitHub (métadonnées, contributeurs, commits...)
     console.log('Fetching repo data...');
     const repoData = await fetchRepoData(owner, repo);  
 
-    // --- Hackathon Eligibility Check ---
-
-    let eligibilityResults = {};
-    let eligible = true;
+    // --- Vérification de l'éligibilité au hackathon ---
+    let eligibilityResults = {}; // Résultats détaillés de l'éligibilité
+    let eligible = true; // Booléen global d'éligibilité
     if (hackathonCriteria) {
+      // Affiche une section spéciale dans la console
       console.log(section("HACKATHON ELIGIBILITY CHECK", "🏆", "yellow"));
 
-      // 1. Date check (repo creation and last commit)
+      // 1. Vérification des dates (création du repo et dernier commit)
       let datePass = true;
       let repoCreated, repoPushed, hackathonStart, hackathonEnd;
       try {
-        repoCreated = new Date(repoData.created_at);
+        repoCreated = new Date(repoData.created_at); // Date de création du repo
         if (isNaN(repoCreated)) throw new Error("Invalid repo created_at date");
       } catch (e) {
         eligibilityResults.startDate =
@@ -68,7 +87,7 @@ const analyzeRepo = async (
         datePass = false;
       }
       try {
-        repoPushed = new Date(repoData.pushed_at);
+        repoPushed = new Date(repoData.pushed_at); // Date du dernier push
         if (isNaN(repoPushed)) throw new Error("Invalid repo pushed_at date");
       } catch (e) {
         eligibilityResults.deadline =
@@ -76,7 +95,7 @@ const analyzeRepo = async (
         datePass = false;
       }
       try {
-        hackathonStart = new Date(hackathonCriteria.startDate);
+        hackathonStart = new Date(hackathonCriteria.startDate); // Début du hackathon
         if (isNaN(hackathonStart))
           throw new Error("Invalid hackathon startDate");
       } catch (e) {
@@ -85,13 +104,14 @@ const analyzeRepo = async (
         datePass = false;
       }
       try {
-        hackathonEnd = new Date(hackathonCriteria.deadline);
+        hackathonEnd = new Date(hackathonCriteria.deadline); // Fin du hackathon
         if (isNaN(hackathonEnd)) throw new Error("Invalid hackathon deadline");
       } catch (e) {
         eligibilityResults.deadline =
           "ERROR (Invalid or missing hackathon deadline)";
         datePass = false;
       }
+      // Vérifie que le repo n'a pas été créé avant le début du hackathon
       if (
         repoCreated &&
         hackathonStart &&
@@ -109,6 +129,7 @@ const analyzeRepo = async (
             .slice(0, 10)})`;
         }
       }
+      // Vérifie que le dernier commit n'est pas après la fin du hackathon
       if (
         repoPushed &&
         hackathonEnd &&
@@ -127,7 +148,7 @@ const analyzeRepo = async (
         }
       }
       eligible = eligible && datePass;
-      // 2. Team size (contributors)
+      // 2. Taille de l'équipe (nombre de contributeurs)
       let teamPass = true;
       if (hackathonCriteria.maxTeamSize) {
         const contributors = repoData.contributors
@@ -142,7 +163,7 @@ const analyzeRepo = async (
         }
         eligible = eligible && teamPass;
       }
-      // 3. Originality (fork check)
+      // 3. Originalité (le repo ne doit pas être un fork si exigé)
       let originalityPass = true;
       if (hackathonCriteria.mustBeOriginal !== undefined) {
         if (repoData.fork && hackathonCriteria.mustBeOriginal) {
@@ -153,7 +174,7 @@ const analyzeRepo = async (
         }
         eligible = eligible && originalityPass;
       }
-      // 4. Demo required (check for demo video or demo.md)
+      // 4. Démo requise (présence d'un fichier ou vidéo de démo)
       let demoPass = true;
       if (hackathonCriteria.demoRequired !== undefined) {
         const hasDemo =
@@ -174,18 +195,19 @@ const analyzeRepo = async (
       eligibilityResults.eligible = eligible;
     }
 
+    // Initialisation des scores et feedbacks pour chaque critère
     let score = 0;
     let criteriaResults = {};
     let feedbacks = {};
 
-    // Get comprehensive code analysis first
+    // Analyse complète du code (structure, fichiers, etc.)
     console.log("Getting comprehensive code analysis...");
     const comprehensiveAnalysis = await getComprehensiveCodeAnalysis(
       repoData,
       selectedTemplate
     );
 
-    // Analyze Code Quality (using objective metrics)
+    // Analyse de la qualité du code (métriques objectives)
     console.log("Evaluating code quality...");
     const codeQualityResult = calculateCodeQualityScore(comprehensiveAnalysis);
     console.log("Code quality score:", codeQualityResult.score);
@@ -193,7 +215,7 @@ const analyzeRepo = async (
     feedbacks.codeQuality = codeQualityResult.feedback;
     score += (codeQualityResult.score * CRITERIA_WEIGHTS.codeQuality) / 100;
 
-    // Analyze Documentation (using objective metrics)
+    // Analyse de la documentation (métriques objectives)
     console.log("Evaluating documentation...");
     const documentationResult = calculateDocumentationScore(
       comprehensiveAnalysis
@@ -203,7 +225,7 @@ const analyzeRepo = async (
     feedbacks.documentation = documentationResult.feedback;
     score += (documentationResult.score * CRITERIA_WEIGHTS.documentation) / 100;
 
-    // Evaluate Functionality (using objective metrics)
+    // Analyse de la fonctionnalité (métriques objectives)
     console.log("Evaluating functionality...");
     const functionalityResult = calculateFunctionalityScore(
       comprehensiveAnalysis
@@ -213,7 +235,7 @@ const analyzeRepo = async (
     feedbacks.functionality = functionalityResult.feedback;
     score += (functionalityResult.score * CRITERIA_WEIGHTS.functionality) / 100;
 
-    // Evaluate Innovation (using objective metrics)
+    // Analyse de l'innovation (métriques objectives)
     console.log("Evaluating innovation...");
     const innovationResult = calculateInnovationScore(comprehensiveAnalysis);
     console.log("Innovation score:", innovationResult.score);
@@ -221,7 +243,7 @@ const analyzeRepo = async (
     feedbacks.innovation = innovationResult.feedback;
     score += (innovationResult.score * CRITERIA_WEIGHTS.innovation) / 100;
 
-    // Evaluate User Experience (using objective metrics)
+    // Analyse de l'expérience utilisateur (métriques objectives)
     console.log("Evaluating user experience...");
     const userExperienceResult = calculateUserExperienceScore(
       comprehensiveAnalysis
@@ -232,19 +254,21 @@ const analyzeRepo = async (
     score +=
       (userExperienceResult.score * CRITERIA_WEIGHTS.userExperience) / 100;
 
-    // Final score (0-10)
+    // Calcul du score final (sur 10)
     const finalScore = score.toFixed(1) * 10;
     console.log("Final score calculated:", finalScore);
 
-    // --- LLM Hackathon Feasibility Check ---
+    // --- Vérification de la faisabilité du projet par LLM (IA) pour le hackathon ---
     let llmFeasibility = null;
     if (hackathonCriteria && repoData.commits && repoData.contributors) {
+      // Calcul du nombre de jours du hackathon
       const hackathonDays =
         Math.ceil(
           (new Date(hackathonCriteria.deadline) -
             new Date(hackathonCriteria.startDate)) /
             (1000 * 60 * 60 * 24)
         ) + 1;
+      // Préparation du prompt pour l'IA (Together AI)
       const prompt =
         `You are a hackathon judge. The following project was completed by ${repoData.contributors.length} contributors in ${repoData.commits.length} commits, between ${hackathonCriteria.startDate} and ${hackathonCriteria.deadline} (${hackathonDays} days). Here is a summary of the project:\n\n` +
         `Project type: ${comprehensiveAnalysis.projectType}\n` +
@@ -256,6 +280,7 @@ const analyzeRepo = async (
         `Codebase size: ${comprehensiveAnalysis.summary.totalLines} lines, ${comprehensiveAnalysis.summary.totalFiles} files.\n` +
         `Please answer: Is it realistic for a team of ${repoData.contributors.length} to build this project in ${hackathonDays} days? Answer YES or NO and explain why. If it looks suspiciously large or complex, say so.`;
       try {
+        // Appel à l'API Together AI pour obtenir un jugement sur la faisabilité
         const response = await callTogetherAIWithTimeout(
           {
             messages: [
@@ -272,17 +297,21 @@ const analyzeRepo = async (
         );
         console.log(colorize(llmFeasibility, "white"));
       } catch (e) {
+        // Gestion d'erreur si l'appel IA échoue
         console.warn("LLM feasibility check failed:", e.message);
       }
     }
 
-    // // Run intelligent analysis
+    // ========================
+    // Affichage détaillé des analyses et feedbacks
+    // ========================
+    // Affiche l'analyse intelligente (structure, fichiers, feedbacks...)
     console.log("\n🧠 RUNNING INTELLIGENT ANALYSIS...");
 
-    // Get comprehensive code analysis for detailed feedback
+    // Affiche l'analyse complète du code (structure, fichiers, etc.)
     console.log("\n=== COMPREHENSIVE CODE ANALYSIS ===");
 
-    // Print comprehensive feedback
+    // Affiche la structure du projet
     console.log("\n📊 PROJECT STRUCTURE ANALYSIS:");
     console.log(`Project Type: ${comprehensiveAnalysis.projectType}`);
     console.log(
@@ -293,7 +322,7 @@ const analyzeRepo = async (
     );
     console.log(`File Types:`, comprehensiveAnalysis.summary.fileTypes);
 
-    // Print detailed file feedback
+    // Affiche un aperçu détaillé de chaque fichier analysé
     console.log("\n📁 DETAILED FILE ANALYSIS:");
     Object.keys(comprehensiveAnalysis.files).forEach((fileName) => {
       const file = comprehensiveAnalysis.files[fileName];
@@ -302,17 +331,18 @@ const analyzeRepo = async (
       console.log(`   Size: ${file.size} characters`);
       console.log(`   Type: ${file.type}`);
 
-      // Show first few lines as preview
+      // Affiche les premières lignes du fichier pour donner un aperçu
       const preview = file.content.split("\n").slice(0, 3).join("\n   ");
       console.log(`   Preview:\n   ${preview}...`);
     });
 
-    // Print feedbacks for each criterion
+    // Affiche les feedbacks pour chaque critère (qualité, doc, etc.)
     Object.keys(feedbacks).forEach((key) => {
       console.log(`\n${key.charAt(0).toUpperCase() + key.slice(1)} Feedback:`);
       console.log(feedbacks[key]);
     });
 
+    // Rassemble les données GitHub utiles pour le rapport final
     let githubData = {
       contributors: repoData.contributors,
       totalCommits: repoData.commits.length,
@@ -321,6 +351,7 @@ const analyzeRepo = async (
       creationDate: new Date(repoData.created_at),
     };
 
+    // Retourne le rapport d'analyse complet
     return {
       repoName: repoData.name,
       criteriaResults,
@@ -332,16 +363,22 @@ const analyzeRepo = async (
       // intelligentAnalysis
     };
   } catch (error) {
+    // Gestion d'erreur globale pour l'analyse du repo
     console.error("Error analyzing repository:", error);
     return null;
   }
 };
 
-// Helper to call Together AI with timeout
+// ========================
+// Fonction utilitaire : appel à Together AI avec timeout
+// ========================
+// Permet d'appeler l'API Together AI avec une limite de temps (timeout)
+// params : paramètres pour l'appel (messages, modèle, etc.)
+// label : étiquette pour le debug
 const callTogetherAIWithTimeout = async (params, label) => {
-  const timeoutMs = 30000; // 30 seconds
+  const timeoutMs = 30000; // 30 secondes
   return Promise.race([
-    together.chat.completions.create(params),
+    together.chat.completions.create(params), // Appel à l'API Together AI
     new Promise((_, reject) =>
       setTimeout(
         () => reject(new Error(`Together AI timeout for ${label}`)),
@@ -351,10 +388,17 @@ const callTogetherAIWithTimeout = async (params, label) => {
   ]);
 };
 
-// AI-powered Code Quality Evaluation using Together AI
+// ========================
+// Fonctions d'évaluation par l'IA (Together AI)
+// ========================
+// Ces fonctions appellent l'IA pour évaluer la qualité du code, la documentation,
+// la fonctionnalité, l'innovation et l'expérience utilisateur, en utilisant des prompts spécialisés.
+// Elles utilisent getCodeSample ou getReadme pour fournir un extrait pertinent à l'IA.
+
+// Évaluation de la qualité du code par l'IA
 const evaluateCodeQualityWithAI = async (repoData) => {
   console.log("Getting code sample for code quality...");
-  const codeSample = await getCodeSample(repoData); // Fetch a sample of code
+  const codeSample = await getCodeSample(repoData); // Récupère un extrait de code
   console.log("Code sample fetched for code quality.");
   if (!codeSample || codeSample === "No code sample found") {
     console.warn(
@@ -363,6 +407,7 @@ const evaluateCodeQualityWithAI = async (repoData) => {
     return { score: 5, feedback: "No code sample available." };
   }
   try {
+    // Appel à l'IA pour obtenir une évaluation et un feedback
     const response = await callTogetherAIWithTimeout(
       {
         messages: [
@@ -373,7 +418,7 @@ const evaluateCodeQualityWithAI = async (repoData) => {
           },
           { role: "user", content: `Here is a code sample: ${codeSample}` },
         ],
-        model: "deepseek-ai/DeepSeek-V3", // Use Together AI model
+        model: "deepseek-ai/DeepSeek-V3", // Modèle IA utilisé
       },
       "code quality"
     );
@@ -381,6 +426,7 @@ const evaluateCodeQualityWithAI = async (repoData) => {
     const evaluation = response.choices[0].message.content;
     return { score: evaluateAIResponse(evaluation), feedback: evaluation };
   } catch (error) {
+    // Gestion d'erreur ou de timeout
     console.error("Error evaluating code quality:", error);
     return {
       score: 5,
@@ -389,16 +435,17 @@ const evaluateCodeQualityWithAI = async (repoData) => {
   }
 };
 
-// AI-powered Documentation Evaluation using Together AI
+// Évaluation de la documentation par l'IA
 const evaluateDocumentationWithAI = async (repoData) => {
   console.log("Getting README for documentation...");
-  const readme = await getReadme(repoData); // Fetch README for evaluation
+  const readme = await getReadme(repoData); // Récupère le README
   console.log("README fetched for documentation.");
   if (!readme || readme === "No README found") {
     console.warn("No README available for documentation. Returning score 0.");
     return { score: 0, feedback: "No README available." };
   }
   try {
+    // Appel à l'IA pour évaluer la documentation
     const response = await callTogetherAIWithTimeout(
       {
         messages: [
@@ -420,6 +467,7 @@ const evaluateDocumentationWithAI = async (repoData) => {
     const evaluation = response.choices[0].message.content;
     return { score: evaluateAIResponse(evaluation), feedback: evaluation };
   } catch (error) {
+    // Gestion d'erreur ou de timeout
     console.error("Error evaluating documentation:", error);
     return {
       score: 5,
@@ -428,10 +476,10 @@ const evaluateDocumentationWithAI = async (repoData) => {
   }
 };
 
-// AI-powered Functionality Evaluation using Together AI
+// Évaluation de la fonctionnalité par l'IA
 const evaluateFunctionalityWithAI = async (repoData) => {
   console.log("Getting code sample for functionality...");
-  const codeSample = await getCodeSample(repoData); // Reuse code sample for functionality
+  const codeSample = await getCodeSample(repoData); // Réutilise un extrait de code
   console.log("Code sample fetched for functionality.");
   if (!codeSample || codeSample === "No code sample found") {
     console.warn(
@@ -440,6 +488,7 @@ const evaluateFunctionalityWithAI = async (repoData) => {
     return { score: 5, feedback: "No code sample available." };
   }
   try {
+    // Appel à l'IA pour évaluer la fonctionnalité du code
     const response = await callTogetherAIWithTimeout(
       {
         messages: [
@@ -458,6 +507,7 @@ const evaluateFunctionalityWithAI = async (repoData) => {
     const evaluation = response.choices[0].message.content;
     return { score: evaluateAIResponse(evaluation), feedback: evaluation };
   } catch (error) {
+    // Gestion d'erreur ou de timeout
     console.error("Error evaluating functionality:", error);
     return {
       score: 5,
@@ -505,16 +555,17 @@ const evaluateInnovationWithAI = async (repoData) => {
   }
 };
 
-// AI-powered User Experience Evaluation using Together AI
+// Évaluation de l'expérience utilisateur par l'IA
 const evaluateUserExperienceWithAI = async (repoData) => {
   console.log("Getting README for user experience...");
-  const readme = await getReadme(repoData); // Use README as a proxy for UX
+  const readme = await getReadme(repoData); // Utilise le README comme proxy pour l'UX
   console.log("README fetched for user experience.");
   if (!readme || readme === "No README found") {
     console.warn("No README available for user experience. Returning score 0.");
     return { score: 0, feedback: "No README available." };
   }
   try {
+    // Appel à l'IA pour évaluer l'expérience utilisateur
     const response = await callTogetherAIWithTimeout(
       {
         messages: [
@@ -536,6 +587,7 @@ const evaluateUserExperienceWithAI = async (repoData) => {
     const evaluation = response.choices[0].message.content;
     return { score: evaluateAIResponse(evaluation), feedback: evaluation };
   } catch (error) {
+    // Gestion d'erreur ou de timeout
     console.error("Error evaluating user experience:", error);
     return {
       score: 5,
@@ -544,7 +596,11 @@ const evaluateUserExperienceWithAI = async (repoData) => {
   }
 };
 
-// Utility function to parse AI evaluation into a score
+// ========================
+// Fonction utilitaire : extraction du score à partir de la réponse IA
+// ========================
+// Cette fonction tente d'extraire un score sur 10 à partir du texte retourné par l'IA.
+// Elle gère plusieurs formats possibles ("8/10", "Score: 7", mots-clés, etc.)
 const evaluateAIResponse = (responseContent) => {
   // More comprehensive parsing of AI evaluation
   const content = responseContent.toLowerCase();
@@ -630,7 +686,16 @@ const evaluateAIResponse = (responseContent) => {
   return 5;
 };
 
-// Utility to get code sample based on project templates
+// ========================
+// Fonctions utilitaires pour extraire des fichiers et templates du repo
+// ========================
+// getCodeSample : extrait un fichier pertinent selon le type de projet (template)
+// getReadme : extrait le contenu du README.md
+// fetchRepoData : récupère toutes les métadonnées du repo (GitHub API)
+// loadProjectTemplates : charge les templates de structure de projet
+// detectProjectTypeFromRepo : détecte le type de projet à partir des fichiers du repo
+// ...
+// Toutes ces fonctions sont utilisées pour alimenter l'analyse objective et les prompts IA.
 const getCodeSample = async (repoData) => {
   console.log("[getCodeSample] Loading project templates...");
   const templates = loadProjectTemplates();
@@ -887,7 +952,12 @@ const detectProjectType = () => {
   return "custom";
 };
 
-// Function to fetch and analyze multiple files for comprehensive feedback
+// ========================
+// Fonction d'analyse complète du code (structure, fichiers, résumé...)
+// ========================
+// getComprehensiveCodeAnalysis : analyse tous les fichiers essentiels du projet
+// et retourne un objet détaillé sur la structure, le nombre de lignes, les types de fichiers, etc.
+// Utilise les templates pour savoir quels fichiers sont importants selon le type de projet.
 const getComprehensiveCodeAnalysis = async (
   repoData,
   selectedTemplate = "auto"
@@ -1822,6 +1892,12 @@ const calculateUserExperienceScore = (codeAnalysis) => {
   };
 };
 
+// ========================
+// Fonctions utilitaires pour la vérification de la propriété du repo
+// ========================
+// getContributorsData : récupère les emails des contributeurs via l'API GitHub
+// checkRepoOwnership : vérifie si un email utilisateur correspond à un contributeur du repo
+// Ces fonctions sont utiles pour valider l'appartenance d'un utilisateur à un projet.
 const fetch = require("node-fetch");
 
 async function getContributorsData(owner, repo) {
