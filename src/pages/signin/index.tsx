@@ -42,6 +42,16 @@ export default function SignIn() {
   const [showVerification, setShowVerification] = useState(false);
   const [isHackathon, setIsHackathon] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [postVerifyRedirect, setPostVerifyRedirect] = useState<
+    | {
+        hasProfile: boolean;
+        callbackUrl?: string;
+        returnUrl?: string;
+        isHackathon: boolean;
+        userForHackathon?: any;
+      }
+    | null
+  >(null);
 
   const dispatch = useDispatch<AppDispatch>();
   const {
@@ -156,24 +166,41 @@ export default function SignIn() {
       const hasProfile = Object.keys(response.profile || {}).length > 0;
       const callbackUrl = router.query.callbackUrl as string | undefined;
       const returnUrl = router.query.returnUrl as string | undefined;
-      const isHackathon = router.query.source === "hackathon";
+      const isHackathonFromQuery = router.query.source === "hackathon";
 
-      const doRedirect = async () => {
+      // Defer redirect until Redux user state is updated
+      setPostVerifyRedirect({
+        hasProfile,
+        callbackUrl,
+        returnUrl,
+        isHackathon: !!isHackathonFromQuery,
+        userForHackathon: response.user,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Verification failed");
+      setVerifying(false);
+    }
+  };
+
+  // Redirect only after Redux auth.user is populated
+  useEffect(() => {
+    const doRedirect = async () => {
+      if (!postVerifyRedirect) return;
+
+      const { hasProfile, callbackUrl, returnUrl, isHackathon, userForHackathon } =
+        postVerifyRedirect;
+
+      try {
         if (isHackathon) {
-          await handleHackathonRedirect(response.user);
-          setVerifying(false);
+          await handleHackathonRedirect(userForHackathon || user);
           return;
         }
 
         if (!hasProfile) {
           if (callbackUrl) {
-            router.push(
-              `/preferences?callbackUrl=${encodeURIComponent(callbackUrl)}`
-            );
+            router.push(`/preferences?callbackUrl=${encodeURIComponent(callbackUrl)}`);
           } else if (returnUrl) {
-            router.push(
-              `/preferences?returnUrl=${encodeURIComponent(returnUrl)}`
-            );
+            router.push(`/preferences?returnUrl=${encodeURIComponent(returnUrl)}`);
           } else {
             router.push("/preferences");
           }
@@ -198,18 +225,17 @@ export default function SignIn() {
             }
           }
         }
-
+      } finally {
         setVerifying(false);
-      };
-
-      if (user && Object.keys(user).length > 0) {
-        doRedirect();
+        setPostVerifyRedirect(null);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Verification failed");
-      setVerifying(false);
+    };
+
+    // Ensure we have a user from Redux before redirecting
+    if (postVerifyRedirect && user && Object.keys(user || {}).length > 0) {
+      void doRedirect();
     }
-  };
+  }, [user, postVerifyRedirect, router]);
 
   // Use Redux error if available
   useEffect(() => {
