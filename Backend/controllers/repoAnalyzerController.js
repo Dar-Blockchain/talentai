@@ -119,13 +119,13 @@ exports.analyzeGithubRepo = async (req, res) => {
     contributorsData
   );
 
-  if (!ownershipValidated) {
-    return res.status(403).json({
-      success: false,
-      errorCode: "OWNERSHIP_ERROR",
-      message: "Ownership validation failed",
-    });
-  }
+  // if (!ownershipValidated) {
+  //   return res.status(403).json({
+  //     success: false,
+  //     errorCode: "OWNERSHIP_ERROR",
+  //     message: "Ownership validation failed",
+  //   });
+  // }
 
   //2.Analyse code
   try {
