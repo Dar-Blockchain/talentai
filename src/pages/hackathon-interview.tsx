@@ -50,65 +50,61 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
 
 const RecordingControls = styled(Box)(({ theme }) => ({
   position: 'absolute',
-  bottom: theme.spacing(2), // Moved even lower
+  top: theme.spacing(2),
   left: '50%',
   transform: 'translateX(-50%)',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  gap: theme.spacing(2),
+  gap: theme.spacing(1),
   zIndex: 2,
-  background: 'rgba(0, 0, 0, 0.9)', // Darker background for better contrast
-  padding: theme.spacing(2.5),
-  borderRadius: '20px',
-  backdropFilter: 'blur(15px)',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
-  minWidth: '280px',
-  maxWidth: '90%',
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+  background: 'rgba(0, 0, 0, 0.6)',
+  padding: theme.spacing(1),
+  borderRadius: '12px',
+  backdropFilter: 'blur(10px)',
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  minWidth: 'auto',
+  maxWidth: '70%',
+  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
   [theme.breakpoints.up('sm')]: {
-    minWidth: '320px',
-    maxWidth: '320px',
-    bottom: theme.spacing(3), // Slightly higher on desktop but still at bottom
+    top: theme.spacing(2),
   },
 }));
 
 const RecordingButton = styled(Button)(({ theme }) => ({
-  width: '100%',
-  padding: theme.spacing(1.5),
-  fontSize: '1.1rem',
+  width: 'auto',
+  minWidth: '140px',
+  padding: theme.spacing(1),
+  fontSize: '0.95rem',
   fontWeight: 600,
-  borderRadius: '12px',
-  transition: 'all 0.3s ease',
-  '&:hover': {
-    transform: 'scale(1.02)',
-  },
+  borderRadius: '10px',
+  transition: 'all 0.2s ease',
 }));
 
 const TranscriptDisplay = styled(Typography)(({ theme }) => ({
   color: '#fff',
   textAlign: 'center',
-  maxWidth: '90%',
-  background: 'rgba(0, 0, 0, 0.8)',
-  padding: theme.spacing(2.5),
-  borderRadius: '16px',
-  backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
-  marginTop: theme.spacing(2),
-  maxHeight: '150px',
+  maxWidth: '75%',
+  background: 'rgba(0, 0, 0, 0.6)',
+  padding: theme.spacing(1),
+  borderRadius: '10px',
+  backdropFilter: 'blur(8px)',
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  marginTop: theme.spacing(1),
+  maxHeight: '100px',
   overflowY: 'auto',
-  fontSize: '0.95rem',
-  lineHeight: 1.5,
-  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
+  fontSize: '0.85rem',
+  lineHeight: 1.4,
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
   '&::-webkit-scrollbar': {
-    width: '8px',
+    width: '6px',
   },
   '&::-webkit-scrollbar-thumb': {
-    background: 'rgba(255, 255, 255, 0.3)',
+    background: 'rgba(255, 255, 255, 0.25)',
     borderRadius: '4px',
   },
   '&::-webkit-scrollbar-track': {
-    background: 'rgba(255, 255, 255, 0.1)',
+    background: 'rgba(255, 255, 255, 0.08)',
     borderRadius: '4px',
   },
 }));
@@ -227,6 +223,19 @@ const CircularCamera = styled(Box)(({ theme }) => ({
     bottom: theme.spacing(2),
     right: theme.spacing(2),
   },
+}));
+
+// Controls overlay centered over the avatar area
+const AvatarCenterControls = styled(Box)(({ theme }) => ({
+  position: 'absolute',
+  top: theme.spacing(2),
+  left: '50%',
+  transform: 'translateX(-50%)',
+  zIndex: 3,
+  display: 'flex',
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: theme.spacing(1.5),
 }));
 
 const MainCanvas = styled(Box)(({ theme }) => ({
@@ -1548,32 +1557,53 @@ const Test = () => {
               firstQuestionText={questions[0]?.text || ""}
               hasStartedTest={hasStartedTest}
             />
+
+            {/* Start Test button centered over the avatar area (before start) */}
+            {!hasStartedTest && (
+              <AvatarCenterControls>
+                <RecordingButton
+                  variant="contained"
+                  onClick={startTest}
+                  disabled={isGenerating || isConnecting}
+                  sx={{
+                    backgroundColor: isConnecting ? '#FFC107' : GREEN_MAIN,
+                    color: '#000',
+                    '&:hover': { backgroundColor: isConnecting ? '#FFB300' : GREEN_MAIN },
+                    '&.Mui-disabled': {
+                      backgroundColor: isConnecting ? '#FFC107' : GREEN_MAIN,
+                      color: '#000',
+                      opacity: 1,
+                    },
+                    px: { xs: 2, sm: 3 },
+                    py: { xs: 1, sm: 1.25 },
+                  }}
+                >
+                  {isConnecting ? 'Connecting...' : 'Start Test'}
+                </RecordingButton>
+              </AvatarCenterControls>
+            )}
             
-            {/* Recording Controls Overlay */}
-            <RecordingControls>
-              <RecordingButton
-                variant="contained"
-                onClick={hasStartedTest ? undefined : startTest}
-                disabled={isGenerating || hasStartedTest || isConnecting}
-                sx={{
-                  backgroundColor: GREEN_MAIN,
-                  '&:hover': {
-                    backgroundColor: GREEN_MAIN,
-                  },
-                  '&.Mui-disabled': {
-                    backgroundColor: hasStartedTest ? '#ff4444' : 'rgba(255, 255, 255, 0.12)',
-                    color: hasStartedTest ? '#fff' : 'rgba(255, 255, 255, 0.3)',
-                  }
-                }}
-              >
-                {isConnecting
-                  ? 'Connecting...'
-                  : hasStartedTest
-                    ? `Recording (${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')} min)`
-                    : 'Start Test'
-                }
-              </RecordingButton>
-              {hasStartedTest && (
+            {/* Recording Controls Overlay (visible only after start) */}
+            {hasStartedTest && (
+              <RecordingControls>
+                <RecordingButton
+                  variant="contained"
+                  disabled
+                  sx={{
+                    backgroundColor: '#E53935',
+                    color: '#fff',
+                    minWidth: '160px',
+                    '&.Mui-disabled': {
+                      backgroundColor: '#E53935',
+                      color: '#fff',
+                      opacity: 1,
+                    },
+                  }}
+                >
+                  {isConnecting
+                    ? 'Connecting...'
+                    : `Recording (${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')} min)`}
+                </RecordingButton>
                 <>
                   <VoiceActivityIndicator isActive={currentTranscript.length > 0}>
                     <VoiceWaves />
@@ -1585,8 +1615,8 @@ const Test = () => {
                     </TranscriptDisplay>
                   )}
                 </>
-              )}
-            </RecordingControls>
+              </RecordingControls>
+            )}
 
             {/* Question Overlay */}
             <QuestionOverlay>
@@ -1641,6 +1671,7 @@ const Test = () => {
               muted
             />
           </CircularCamera>
+
         </Container>
 
         <NavigationBar>

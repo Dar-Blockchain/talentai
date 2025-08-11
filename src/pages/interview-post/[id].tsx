@@ -14,7 +14,6 @@ import {
   Paper,
   styled,
   IconButton,
-  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -78,26 +77,7 @@ const RecordingButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-const TranscriptDisplay = styled(Typography)(({ theme }) => ({
-  color: '#fff',
-  textAlign: 'center',
-  maxWidth: '90%',
-  background: 'rgba(0, 0, 0, 0.6)',
-  padding: theme.spacing(2),
-  borderRadius: '12px',
-  backdropFilter: 'blur(5px)',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
-  marginTop: theme.spacing(1),
-  maxHeight: '150px',
-  overflowY: 'auto',
-  '&::-webkit-scrollbar': {
-    width: '6px',
-  },
-  '&::-webkit-scrollbar-thumb': {
-    background: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: '3px',
-  },
-}));
+
 
 const QuestionOverlay = styled(Box)(({ theme }) => ({
   position: 'absolute',
@@ -334,7 +314,6 @@ const Test = () => {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const { data: session } = useSession();
   const { id, stepId } = router.query;
 
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -370,8 +349,6 @@ const Test = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
-    // Interval used to finalize each chunk
-  const chunkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // MediaRecorder references
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -383,51 +360,6 @@ const Test = () => {
       router.push(`/signin?returnUrl=${encodeURIComponent(`/interview-post/${id}`)}`)
     }
   }, [isAuthenticated, id])
-
-
-  // Add useEffect for authentication and profile check
-  // useEffect(() => {
-  //   const checkAuthAndProfile = async () => {
-  //     const token = Cookies.get('api_token');
-  //     if (!token) {
-  //       console.log('No token found, redirecting to signin');
-  //       router.push(`/signin?returnUrl=${encodeURIComponent(`/interview-post/${id}`)}`);
-  //       return;
-  //     }
-
-  //     try {
-  //       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
-  //         headers: {
-  //           'Authorization': `Bearer ${token}`
-  //         }
-  //       });
-
-  //       // If profile exists and is valid, proceed with test
-  //       if (response.ok) {
-  //         const profileData = await response.json();
-  //         console.log('Profile data:', profileData);
-
-  //         if (profileData && profileData.type &&
-  //           ((profileData.type === 'Candidate') ||
-  //             (profileData.type === 'Company' && profileData.requiredSkills && profileData.requiredSkills.length > 0))) {
-  //           console.log('Profile is complete, proceeding with test');
-  //           setIsProfileComplete(true);
-  //           return;
-  //         }
-  //       }
-
-  //       console.log('Profile not found or invalid, redirecting to preferences');
-  //       router.push(`/preferences?returnUrl=${encodeURIComponent(`/interview-post/${id}`)}`);
-  //     } catch (error) {
-  //       console.error('Error checking profile:', error);
-  //       router.push(`/preferences?returnUrl=${encodeURIComponent(`/interview-post/${id}`)}`);
-  //     }
-  //   };
-
-  //   if (router.isReady && id) {
-  //     checkAuthAndProfile();
-  //   }
-  // }, [router.isReady, id]);
 
   // Fetch questions when profile is complete
   useEffect(() => {
