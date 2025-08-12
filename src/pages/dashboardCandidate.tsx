@@ -1404,7 +1404,7 @@ export default function DashboardCandidate() {
     );
   }
 
-  if (!profile && !loading) {
+  if (!profile) {
     return <></>
   }
 
