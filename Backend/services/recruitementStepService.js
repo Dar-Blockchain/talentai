@@ -10,6 +10,9 @@ const {
   generateTechnicalSkillStepQuestionsPrompts,
 } = require("../prompts/recruitementStepPrompts");
 
+
+const evaluationPrompts = require("../prompts/evaluationPrompts");
+
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
 module.exports.generateQuestions = async (
@@ -105,11 +108,43 @@ module.exports.generateQuestions = async (
   }
 };
 
-exports.analyseQuestions = async ({ questions, user, formData }) => {
+exports.analyseQuestions = async ({ questions, postStep,jobId, formData }) => {
 
+  const stepType = postStep.data.type;
 
-  const systemPrompt = analyzeHRAnswersPrompts.getSystemPrompt();
-  const userPrompt = analyzeHRAnswersPrompts.getUserPrompt(questions);
+  if (stepType == "interview") {
+    // refers to an hrInterview
+    systemPrompt = evaluationPrompts.analyzeHRAnswersPrompts.getSystemPrompt();
+
+    userPrompt = evaluationPrompts.analyzeHRAnswersPrompts.getUserPrompt(
+      questions
+    );
+  } else if (stepType == "soft") {
+    systemPrompt = evaluationPrompts.analyzeHRAnswersPrompts.getSystemPrompt();
+
+    userPrompt = evaluationPrompts.analyzeHRAnswersPrompts.getUserPrompt(
+      questions
+    );
+  } else if (stepType == "technical") {
+    systemPrompt = evaluationPrompts.analyzeJobTestResultsPrompts.getSystemPrompt();
+
+    const post = await Post.findById(jobId);
+    if (!post) throw new HttpError(404, "Post not found in the DB");
+  
+    const jobSkills = post.skillAnalysis.requiredSkills || [];
+    if (!Array.isArray(jobSkills) || jobSkills.length === 0) {
+      throw new HttpError(400, "Post has no requiredSkills");
+    }
+  
+    const requiredSkills = testedSkills.map((s) => ({
+      name: s.name,
+      proficiencyLevel: s.level,
+    }));
+
+    userPrompt = evaluationPrompts.analyzeJobTestResultsPrompts.getUserPrompt(
+      requiredSkills, questions
+    );
+  }
 
   const stream = await together.chat.completions.create({
     model: "deepseek-ai/DeepSeek-V3",
@@ -138,7 +173,6 @@ exports.analyseQuestions = async ({ questions, user, formData }) => {
   // II.
   // store softskills in the candidate's profile (if any are proven)
   // update todoList : Pass HR Test : isCompleted
-  await handleAddSoftSkills(profile, analysis.skillAnalysis);
 
   const interviewId = await saveInterviewDetails(
     profile,

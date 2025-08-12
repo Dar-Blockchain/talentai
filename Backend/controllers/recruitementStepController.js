@@ -107,7 +107,7 @@ exports.analyseQuestions = async (req, res) => {
 
     const result = await recruitementService.analyseQuestions({
       questions,
-      user,
+      postStep,
       formData,
     });
 
