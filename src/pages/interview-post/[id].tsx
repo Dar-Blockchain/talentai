@@ -438,7 +438,7 @@ const Test = () => {
             } else {
               stopRecording();
               saveTestResults();
-              router.push('/report');
+              router.push(`/report-interview?postId=${id}${stepId ? `&stepId=${stepId}` : ''}`);
             }
           }
           return prev - 1;
@@ -788,7 +788,7 @@ const Test = () => {
       setCurrent(c => c + 1);
     } else {
       saveTestResults();
-      router.push('/report');
+      router.push(`/report-interview?postId=${id}${stepId ? `&stepId=${stepId}` : ''}`);
     }
   };
 
@@ -824,17 +824,17 @@ const Test = () => {
       localStorage.setItem('test_results', JSON.stringify(testData));
       Cookies.set('test_results', JSON.stringify(testData), { expires: 7 });
 
-      // Navigate to report page with job ID
+      // Navigate to interview report page with post and step IDs
       router.push({
-        pathname: '/report',
-        query: { jobId: id }
+        pathname: '/report-interview',
+        query: stepId ? { postId: id as string, stepId: stepId as string } : { postId: id as string }
       });
     } catch (error) {
       console.error('Error saving test results:', error);
-      // Still redirect to report page even if saving fails
+      // Still redirect to interview report page even if saving fails
       router.push({
-        pathname: '/report',
-        query: { jobId: id }
+        pathname: '/report-interview',
+        query: stepId ? { postId: id as string, stepId: stepId as string } : { postId: id as string }
       });
     }
   };
