@@ -83,8 +83,27 @@ exports.analyseQuestions = async (req, res) => {
       });
     }
 
-    if (!Array.isArray(formData)) {
-      throw new HttpError(400, `formData is not an array`);
+    // Normalize optional formData
+    const normalizedFormData = Array.isArray(formData) ? formData : null;
+
+    // Sanitize questions: ensure shape { question: string, answer: string }
+    const sanitizedQuestions = questions
+      .filter((qa) => qa && typeof qa.question === "string")
+      .map((qa) => ({
+        question:
+          typeof qa.question === "string" ? qa.question : String(qa.question),
+        answer:
+          typeof qa.answer === "string"
+            ? qa.answer
+            : qa.answer == null
+            ? ""
+            : String(qa.answer),
+      }));
+
+    if (sanitizedQuestions.length === 0) {
+      return res.status(400).json({
+        error: "questions must contain at least one valid item with a 'question' field",
+      });
     }
 
     if (!user) {
@@ -104,11 +123,17 @@ exports.analyseQuestions = async (req, res) => {
       throw new HttpError(500, "post not found in the db");
     }
   
+    // Load candidate profile document
+    const profile = await Profile.findOne({ userId: user._id });
+    if (!profile) {
+      throw new HttpError(500, "Candidate profile not found");
+    }
 
     const result = await recruitementService.analyseQuestions({
-      questions,
+      questions: sanitizedQuestions,
       postStep,
-      formData,
+      formData: normalizedFormData,
+      profile,
     });
 
     res.status(200).json(result);
