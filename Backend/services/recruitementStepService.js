@@ -104,3 +104,57 @@ module.exports.generateQuestions = async (
     throw new HttpError(500, `Internal server error: ${error}`);
   }
 };
+
+exports.analyseQuestions = async ({ questions, user, formData }) => {
+
+
+  const systemPrompt = analyzeHRAnswersPrompts.getSystemPrompt();
+  const userPrompt = analyzeHRAnswersPrompts.getUserPrompt(questions);
+
+  const stream = await together.chat.completions.create({
+    model: "deepseek-ai/DeepSeek-V3",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    max_tokens: 2048,
+    temperature: 0.3,
+    stream: true,
+  });
+
+  let raw = "";
+  for await (const chunk of stream) {
+    const content = chunk.choices?.[0]?.delta?.content;
+    if (content) raw += content;
+  }
+
+  // I. parse AI response
+  let analysis = await parseAIResponse(raw);
+
+  console.log("old value", analysis.overallScore);
+  analysis.overallScore = handleHROverallScore(analysis.skillAnalysis);
+  console.log("new value", analysis.overallScore);
+
+  // II.
+  // store softskills in the candidate's profile (if any are proven)
+  // update todoList : Pass HR Test : isCompleted
+  await handleAddSoftSkills(profile, analysis.skillAnalysis);
+
+  const interviewId = await saveInterviewDetails(
+    profile,
+    analysis.overallScore,
+    analysis.skillAnalysis,
+    formData,
+    analysis.recommendations
+  );
+
+  profile.quota++;
+
+  if (!profile.interviewDetails) {
+    profile.interviewDetails = [];
+  }
+  profile.interviewDetails.push(interviewId);
+  await profile.save();
+
+  return { analysis };
+};

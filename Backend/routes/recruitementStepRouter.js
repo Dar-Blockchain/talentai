@@ -8,4 +8,6 @@ router.use(requireAuthUser);
 
 router.get('/generate-questions/:postStepId', recruitementStepController.generateQuestions);
 
+router.post('/analyse-questions/:postStepId', recruitementStepController.analyseQuestions);
+
 module.exports = router;
