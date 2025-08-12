@@ -356,10 +356,11 @@ const Test = () => {
   // Transcription states
   const [isTranscribing, setIsTranscribing] = useState(false);
   useEffect(() => {
-    if(!isAuthenticated && id){
-      router.push(`/signin?returnUrl=${encodeURIComponent(`/interview-post/${id}`)}`)
+    if (!isAuthenticated && id) {
+      const target = `/interview-post/${id}${stepId ? `?stepId=${stepId}` : ''}`;
+      router.push(`/signin?returnUrl=${encodeURIComponent(target)}`);
     }
-  }, [isAuthenticated, id])
+  }, [isAuthenticated, id, stepId]);
 
   // Fetch questions when profile is complete
   useEffect(() => {
@@ -370,7 +371,8 @@ const Test = () => {
           const token = Cookies.get('api_token');
           if (!token) {
             console.log('No token found, redirecting to signin');
-            router.push(`/signin?returnUrl=${encodeURIComponent(`/interview-post/${id}`)}`);
+            const target = `/interview-post/${id}${stepId ? `?stepId=${stepId}` : ''}`;
+            router.push(`/signin?returnUrl=${encodeURIComponent(target)}`);
             return;
           }
 
@@ -689,7 +691,8 @@ const Test = () => {
       const token = Cookies.get('api_token');
       if (!token) {
         console.log('No token found, redirecting to signin');
-        router.push(`/signin?returnUrl=${encodeURIComponent(`/interview-post/${id}`)}`);
+        const target = `/interview-post/${id}${stepId ? `?stepId=${stepId}` : ''}`;
+        router.push(`/signin?returnUrl=${encodeURIComponent(target)}`);
         return;
       }
 

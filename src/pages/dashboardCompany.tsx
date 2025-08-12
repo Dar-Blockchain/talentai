@@ -4369,15 +4369,27 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                   sx={{ color: '#02E2FF', fontWeight: 600, flex: 1, wordBreak: 'break-all' }}
                   id="test-job-link"
                 >
-                  {postedJobId
-                    ? `${typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'http://localhost:3000'}/testjob/${postedJobId}`
-                    : ''}
+                  {(() => {
+                    if (!postedJobId) return '';
+                    const base = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'http://localhost:3000';
+                    // Try to find the first step id for the newly posted job
+                    const job = myJobs.find((j: any) => j._id === postedJobId);
+                    const stepId = job?.post_Steps?.[0]?._id;
+                    return stepId
+                      ? `${base}/interview-post/${postedJobId}?stepId=${stepId}`
+                      : `${base}/interview-post/${postedJobId}`;
+                  })()}
                 </Typography>
                 <Tooltip title={copySuccess ? 'Copied!' : 'Copy'}>
                   <IconButton
                     onClick={() => {
                       if (!postedJobId) return;
-                      const url = `${typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'http://localhost:3000'}/testjob/${postedJobId}`;
+                      const base = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'http://localhost:3000';
+                      const job = myJobs.find((j: any) => j._id === postedJobId);
+                      const stepId = job?.post_Steps?.[0]?._id;
+                      const url = stepId
+                        ? `${base}/interview-post/${postedJobId}?stepId=${stepId}`
+                        : `${base}/interview-post/${postedJobId}`;
                       navigator.clipboard.writeText(url);
                       setCopySuccess(true);
                       setTimeout(() => setCopySuccess(false), 1500);
@@ -4774,17 +4786,26 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                             fontSize: '0.9rem'
                           }}
                         >
-                          {typeof window !== 'undefined' && window.location.origin 
-                            ? `${window.location.origin}/testjob/${selectedJobForDetails._id}`
-                            : `https://app.talentai.bid/testjob/${selectedJobForDetails._id}`
-                          }
+                          {(() => {
+                            const base = typeof window !== 'undefined' && window.location.origin 
+                              ? `${window.location.origin}`
+                              : `https://app.talentai.bid`;
+                            const stepId = selectedJobForDetails?.post_Steps?.[0]?._id;
+                            return stepId
+                              ? `${base}/interview-post/${selectedJobForDetails._id}?stepId=${stepId}`
+                              : `${base}/interview-post/${selectedJobForDetails._id}`;
+                          })()}
                         </Typography>
                         <Tooltip title="Copy URL" arrow>
                           <IconButton
                             onClick={() => {
-                              const url = typeof window !== 'undefined' && window.location.origin 
-                                ? `${window.location.origin}/testjob/${selectedJobForDetails._id}`
-                                : `https://app.talentai.bid/testjob/${selectedJobForDetails._id}`;
+                              const base = typeof window !== 'undefined' && window.location.origin 
+                                ? `${window.location.origin}`
+                                : `https://app.talentai.bid`;
+                              const stepId = selectedJobForDetails?.post_Steps?.[0]?._id;
+                              const url = stepId
+                                ? `${base}/interview-post/${selectedJobForDetails._id}?stepId=${stepId}`
+                                : `${base}/interview-post/${selectedJobForDetails._id}`;
                               navigator.clipboard.writeText(url);
                               // You could add a success notification here
                             }}
