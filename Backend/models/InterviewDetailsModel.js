@@ -104,6 +104,12 @@ const interviewDetailsSchema = new mongoose.Schema(
 
     interviewContext: { type: interviewContextSchema, required: false },
 
+    // Questions d'entretien au niveau principal
+    questions: {
+      type: [questionAnswerSchema],
+      default: []
+    },
+
     overallScore: { type: Number },
     skillDetails: {
       type: [skillDetailsSchema],
