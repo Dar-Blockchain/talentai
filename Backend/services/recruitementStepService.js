@@ -10,7 +10,6 @@ const {
   generateTechnicalSkillStepQuestionsPrompts,
 } = require("../prompts/recruitementStepPrompts");
 
-
 const evaluationPrompts = require("../prompts/evaluationPrompts");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
@@ -19,8 +18,8 @@ module.exports.generateQuestions = async (
   companyDetails,
   postStep,
   post,
-  userSkills, 
-  jobRequiredSkills,
+  userSkills,
+  jobRequiredSkills
 ) => {
   try {
     let systemPrompt = "";
@@ -64,13 +63,14 @@ module.exports.generateQuestions = async (
       );
     } else if (stepType == "technical") {
       questionsCount = 10;
-      systemPrompt = generateTechnicalSkillStepQuestionsPrompts.getSystemPrompt(
-        questionsCount,
-        
-      );
+      systemPrompt =
+        generateTechnicalSkillStepQuestionsPrompts.getSystemPrompt(
+          questionsCount
+        );
 
       userPrompt = generateTechnicalSkillStepQuestionsPrompts.getUserPrompt(
-        questionsCount, jobRequiredSkills
+        questionsCount,
+        jobRequiredSkills
       );
     }
 
@@ -108,42 +108,42 @@ module.exports.generateQuestions = async (
   }
 };
 
-exports.analyseQuestions = async ({ questions, postStep,jobId }) => {
-
+exports.analyseQuestions = async ({ questions, postStep }) => {
+  console.log("analyseQuestions");
   const stepType = postStep.data.type;
 
   if (stepType == "interview") {
     // refers to an hrInterview
     systemPrompt = evaluationPrompts.analyzeHRAnswersPrompts.getSystemPrompt();
+    userPrompt = evaluationPrompts.analyzeHRAnswersPrompts.getUserPrompt(questions);
+    console.log("interview");
+    console.log("userPrompt",userPrompt);
+    console.log("systemPrompt",systemPrompt);
 
-    userPrompt = evaluationPrompts.analyzeHRAnswersPrompts.getUserPrompt(
-      questions
-    );
   } else if (stepType == "soft") {
     systemPrompt = evaluationPrompts.analyzeHRAnswersPrompts.getSystemPrompt();
+    userPrompt = evaluationPrompts.analyzeHRAnswersPrompts.getUserPrompt(questions);
+    console.log("soft");
 
-    userPrompt = evaluationPrompts.analyzeHRAnswersPrompts.getUserPrompt(
-      questions
-    );
   } else if (stepType == "technical") {
     systemPrompt = evaluationPrompts.analyzeJobTestResultsPrompts.getSystemPrompt();
 
-    const post = await Post.findById(jobId);
-    if (!post) throw new HttpError(404, "Post not found in the DB");
-  
     const jobSkills = post.skillAnalysis.requiredSkills || [];
     if (!Array.isArray(jobSkills) || jobSkills.length === 0) {
       throw new HttpError(400, "Post has no requiredSkills");
     }
-  
+
     const requiredSkills = testedSkills.map((s) => ({
       name: s.name,
       proficiencyLevel: s.level,
     }));
 
     userPrompt = evaluationPrompts.analyzeJobTestResultsPrompts.getUserPrompt(
-      requiredSkills, questions
+      requiredSkills,
+      questions
     );
+    console.log("technical");
+
   }
 
   const stream = await together.chat.completions.create({

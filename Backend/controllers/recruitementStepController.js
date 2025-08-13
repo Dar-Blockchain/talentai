@@ -86,7 +86,7 @@ exports.analyseQuestions = async (req, res) => {
     if (!postStep.postId) {
       throw new HttpError(400, `postId in postStep not found`);
     }
-
+console.log(postStep.data.type)
     const post = await Post.findById(postStep.postId);
     if (!post) {
       throw new HttpError(500, "post not found in the db");
