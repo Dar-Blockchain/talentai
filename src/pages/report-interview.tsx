@@ -47,15 +47,23 @@ const TranscriptSection = styled(Box)(({ theme }) => ({
 
 interface SkillAnalysis {
   skillName: string;
-  currentProficiency: number;
-  demonstratedProficiency: number;
-  currentExperienceLevel: string;
-  demonstratedExperienceLevel: string;
+  category?: string;
+  proficiencyLevel?: number;
+  currentProficiency?: number;
+  demonstratedProficiency?: number;
+  currentExperienceLevel?: string;
+  demonstratedExperienceLevel?: string;
   strengths: string[];
   weaknesses: string[];
   confidenceScore: number;
-  improvement: string;
+  improvement?: string;
   demonstratedLevel?: string;
+  questionAnswerList?: Array<{
+    question: string;
+    answer: string;
+    status: string;
+    exampleCorrectAnswer?: string;
+  }>;
 }
 
 interface AnalysisResult {
@@ -255,47 +263,33 @@ export default function ReportInterview() {
           throw new Error('Invalid test results format in storage');
         }
 
-        const jobId = (router.query.postId as string) || (router.query.jobId as string);
-        if (jobId) {
-          const jobResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/analyze-job-test-results`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ jobId, questions: testData.results, testedSkills: testData.testedSkills })
-          });
-          if (!jobResponse.ok) {
-            const errorText = await jobResponse.text();
-            throw new Error(errorText || 'Failed to analyze results');
-          }
-          const analysisData = await jobResponse.json();
-          setResults(analysisData.result);
-        } else {
-          // Fallback to profile-based analysis like report.tsx
-          const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
-            method: 'GET',
-            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          });
-          if (!profileResponse.ok) throw new Error('Failed to fetch user profile');
-          const profileData = await profileResponse.json();
-          const userSkills = profileData?.skills || [];
+        const stepId = router.query.stepId as string;
 
-          const requestBody = {
-            type: testData.metadata?.type || 'interview',
-            skill: userSkills.map((s: any) => ({ name: s.name, proficiencyLevel: parseInt(s.proficiencyLevel) || 1 })),
-            questions: testData.results,
-          };
+        // Profile-based analysis
+        const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        });
+        if (!profileResponse.ok) throw new Error('Failed to fetch user profile');
+        const profileData = await profileResponse.json();
+        const userSkills = profileData?.skills || [];
 
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/analyze-profile-answers`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify(requestBody),
-          });
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText || 'Failed to analyze results');
-          }
-          const analysisData = await response.json();
-          setResults(analysisData.result);
+        const requestBody = {
+          questions: testData.results,
+        };
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}recruitementStep/analyse-questions/${stepId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(requestBody),
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || 'Failed to analyze results');
         }
+        const analysisData = await response.json();
+        console.log('API Response:', analysisData); // Debug log
+        setResults(analysisData.result || analysisData);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'An error occurred');
       } finally {
@@ -363,78 +357,137 @@ export default function ReportInterview() {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, p: 2, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 2 }}>
                   <TrendingUpIcon sx={{ color: '#02E2FF' }} />
                   <Typography variant="h5" sx={{ color: '#000' }}>
-                    Score: {Number(results.analysis.overallScore).toFixed(2)}%
+                    Score: {Number(results.analysis.overallScore || 0).toFixed(2)}%
                   </Typography>
-                  <Chip label={results.analysis.technicalLevel} sx={{ backgroundColor: 'rgba(2, 226, 255, 0.2)', color: '#02E2FF', ml: 'auto' }} />
+                  {results.analysis.technicalLevel && (
+                    <Chip label={results.analysis.technicalLevel} sx={{ backgroundColor: 'rgba(2, 226, 255, 0.2)', color: '#02E2FF', ml: 'auto' }} />
+                  )}
                 </Box>
-                <Typography variant="body1" sx={{ color: '#000', mb: 2 }}>
-                  {results.analysis.generalAssessment}
-                </Typography>
+                {results.analysis.generalAssessment && (
+                  <Typography variant="body1" sx={{ color: '#000', mb: 2 }}>
+                    {results.analysis.generalAssessment}
+                  </Typography>
+                )}
               </Box>
 
-              <Box sx={{ mb: 4, padding: '10px', border: '1px solid black' }}>
-                <Typography variant="h6" sx={{ color: '#000', mb: 2 }}>Skill Analysis</Typography>
-                {results.analysis.skillAnalysis.map((skill, i) => (
-                  <TranscriptSection key={i}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, backgroundColor: 'white' }}>
-                      <Box>
-                        <Typography variant="h6" sx={{ color: '#8310FF' }}>{skill.skillName}</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography sx={{ color: '#000' }}>
-                            Level: {(() => {
-                              const level = skill.demonstratedExperienceLevel || skill.demonstratedLevel;
-                              if (!level) return 'N/A';
-                              const num = Number(level);
-                              switch (num) {
-                                case 1: return 'Entry Level';
-                                case 2: return 'Junior';
-                                case 3: return 'Mid Level';
-                                case 4: return 'Senior';
-                                case 5: return 'Expert';
-                                default: return String(level);
-                              }
-                            })()}
-                          </Typography>
+              {results.analysis.skillAnalysis && results.analysis.skillAnalysis.length > 0 && (
+                <Box sx={{ mb: 4, padding: '10px', border: '1px solid black' }}>
+                  <Typography variant="h6" sx={{ color: '#000', mb: 2 }}>Skill Analysis</Typography>
+                  {results.analysis.skillAnalysis.map((skill, i) => (
+                    <TranscriptSection key={i}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, backgroundColor: 'white', p: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="h6" sx={{ color: '#8310FF' }}>{skill.skillName}</Typography>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Chip 
+                              label={skill.category || 'N/A'} 
+                              size="small" 
+                              sx={{ backgroundColor: 'rgba(131, 16, 255, 0.1)', color: '#8310FF' }} 
+                            />
+                            <Chip 
+                              label={`Level ${skill.proficiencyLevel || 0}`} 
+                              size="small" 
+                              sx={{ backgroundColor: 'rgba(2, 226, 255, 0.1)', color: '#02E2FF' }} 
+                            />
+                          </Box>
                         </Box>
-                      </Box>
-                      <Box>
-                        <Box sx={{ mt: 2 }}>
-                          <Typography sx={{ color: '#00FFC3', mb: 1 }}>Strengths:</Typography>
-                          {skill.strengths.map((s, j) => (
-                            <Typography key={j} sx={{ color: '#000', ml: 2 }}>• {s}</Typography>
-                          ))}
+                        
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography sx={{ color: '#000', mb: 1 }}>
+                              <strong>Confidence Score:</strong> {skill.confidenceScore || 0}%
+                            </Typography>
+                          </Box>
                         </Box>
-                        <Box sx={{ mt: 2 }}>
-                          <Typography sx={{ color: '#FF6B6B', mb: 1 }}>Areas for Improvement:</Typography>
-                          {skill.weaknesses.map((w, j) => (
-                            <Typography key={j} sx={{ color: '#000', ml: 2 }}>• {w}</Typography>
-                          ))}
-                        </Box>
-                      </Box>
-                    </Box>
-                  </TranscriptSection>
-                ))}
-              </Box>
 
-              <Box sx={{ mb: 4, padding: '10px', border: '1px solid black' }}>
-                <Typography variant="h6" sx={{ color: '#000', mb: 2 }}>Recommendations</Typography>
-                <Box sx={{ backgroundColor: 'rgba(255,255,255,0.05)', p: 2, borderRadius: 2 }}>
-                  {results.analysis.recommendations.map((rec, i) => (
-                    <Typography key={i} sx={{ color: '#000', mb: 1 }}>• {rec}</Typography>
+                        <Box>
+                          {skill.strengths && skill.strengths.length > 0 && (
+                            <Box sx={{ mt: 2 }}>
+                              <Typography sx={{ color: '#00FFC3', mb: 1, fontWeight: 600 }}>Strengths:</Typography>
+                              {skill.strengths.map((s, j) => (
+                                <Typography key={j} sx={{ color: '#000', ml: 2, mb: 0.5 }}>• {s}</Typography>
+                              ))}
+                            </Box>
+                          )}
+                          
+                          {skill.weaknesses && skill.weaknesses.length > 0 && (
+                            <Box sx={{ mt: 2 }}>
+                              <Typography sx={{ color: '#FF6B6B', mb: 1, fontWeight: 600 }}>Areas for Improvement:</Typography>
+                              {skill.weaknesses.map((w, j) => (
+                                <Typography key={j} sx={{ color: '#000', ml: 2, mb: 0.5 }}>• {w}</Typography>
+                              ))}
+                            </Box>
+                          )}
+                        </Box>
+
+                        {skill.questionAnswerList && skill.questionAnswerList.length > 0 && (
+                          <Box sx={{ mt: 3 }}>
+                            <Typography sx={{ color: '#000', mb: 2, fontWeight: 600 }}>Question & Answer Analysis:</Typography>
+                            {skill.questionAnswerList.map((qa, qIndex) => (
+                              <Box key={qIndex} sx={{ mb: 3, p: 2, backgroundColor: 'rgba(0,0,0,0.02)', borderRadius: 2 }}>
+                                <Typography sx={{ color: '#000', fontWeight: 500, mb: 1 }}>
+                                  Question {qIndex + 1}:
+                                </Typography>
+                                <Typography sx={{ color: '#000', mb: 2, fontStyle: 'italic' }}>
+                                  "{qa.question}"
+                                </Typography>
+                                
+                                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                                  <Typography sx={{ color: '#000', fontWeight: 500 }}>Your Answer:</Typography>
+                                  <Chip 
+                                    label={qa.status || 'unknown'} 
+                                    size="small"
+                                    sx={{ 
+                                      backgroundColor: qa.status === 'correct' ? 'rgba(0, 255, 195, 0.2)' : 'rgba(255, 107, 107, 0.2)',
+                                      color: qa.status === 'correct' ? '#00FFC3' : '#FF6B6B'
+                                    }}
+                                  />
+                                </Box>
+                                <Typography sx={{ color: '#000', mb: 2, ml: 2 }}>
+                                  "{qa.answer || 'No answer provided'}"
+                                </Typography>
+                                
+                                {qa.exampleCorrectAnswer && (
+                                  <Box sx={{ mt: 2 }}>
+                                    <Typography sx={{ color: '#00FFC3', fontWeight: 500, mb: 1 }}>
+                                      Example Good Answer:
+                                    </Typography>
+                                    <Typography sx={{ color: '#000', ml: 2, fontStyle: 'italic' }}>
+                                      "{qa.exampleCorrectAnswer}"
+                                    </Typography>
+                                  </Box>
+                                )}
+                              </Box>
+                            ))}
+                          </Box>
+                        )}
+                      </Box>
+                    </TranscriptSection>
                   ))}
                 </Box>
-              </Box>
+              )}
 
-              <Box sx={{ mb: 4, padding: '10px', border: '1px solid black' }}>
-                <Typography variant="h6" sx={{ color: '#000', mb: 2 }}>Next Steps</Typography>
-                <Box sx={{ backgroundColor: 'rgba(255,255,255,0.05)', p: 2, borderRadius: 2 }}>
-                  {results.analysis.nextSteps.map((step, i) => (
-                    <Typography key={i} sx={{ color: '#000', mb: 1 }}>• {step}</Typography>
-                  ))}
+              {results.analysis.recommendations && results.analysis.recommendations.length > 0 && (
+                <Box sx={{ mb: 4, padding: '10px', border: '1px solid black' }}>
+                  <Typography variant="h6" sx={{ color: '#000', mb: 2 }}>Recommendations</Typography>
+                  <Box sx={{ backgroundColor: 'rgba(255,255,255,0.05)', p: 2, borderRadius: 2 }}>
+                    {results.analysis.recommendations.map((rec, i) => (
+                      <Typography key={i} sx={{ color: '#000', mb: 1 }}>• {rec}</Typography>
+                    ))}
+                  </Box>
                 </Box>
-              </Box>
+              )}
+
+              {results.analysis.nextSteps && results.analysis.nextSteps.length > 0 && (
+                <Box sx={{ mb: 4, padding: '10px', border: '1px solid black' }}>
+                  <Typography variant="h6" sx={{ color: '#000', mb: 2 }}>Next Steps</Typography>
+                  <Box sx={{ backgroundColor: 'rgba(255,255,255,0.05)', p: 2, borderRadius: 2 }}>
+                    {results.analysis.nextSteps.map((step, i) => (
+                      <Typography key={i} sx={{ color: '#000', mb: 1 }}>• {step}</Typography>
+                    ))}
+                  </Box>
+                </Box>
+              )}
 
               <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, pt: 4, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
                 <Button variant="contained" size="large" onClick={handleFeedbackOpen} startIcon={<PersonIcon />} sx={{ background: '#8310FF', color: '#fff', px: 4, py: 1.5, borderRadius: 2, textTransform: 'none', fontSize: '1.1rem', fontWeight: 500 }}>
