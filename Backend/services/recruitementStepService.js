@@ -182,8 +182,9 @@ exports.analyseQuestions = async ({ questions, postStep ,user}) => {
       profile,
       analysis.overallScore,
       analysis.skillAnalysis,
-      jobId ,
-      analysis.recommendations
+      jobId,
+      analysis.recommendations,
+      questions
     );
 console.log("interviewId",interviewId)
     return { analysis };

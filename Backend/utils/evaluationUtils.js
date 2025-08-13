@@ -307,7 +307,8 @@ async function saveInterviewDetailsForJob(
   overallScore,
   skillAnalysis,
   jobId, 
-  recommendations
+  recommendations,
+  questions = null
 ) {
   const details = skillAnalysis.map((skill) => ({
     name: skill.skillName,
@@ -323,14 +324,26 @@ async function saveInterviewDetailsForJob(
     })),
   }));
 
-  const interviewDetails = new InterviewDetails({
+  const interviewDetailsData = {
     candidate: profile._id,
     post: jobId,
     type: INTERVIEW_TYPES.POST,
     overallScore: overallScore,
     skillDetails: details,
     recommendations: recommendations,
-  });
+  };
+
+  // Ajouter les questions si elles sont fournies
+  if (questions && Array.isArray(questions)) {
+    interviewDetailsData.questions = questions.map((qa) => ({
+      question: qa.question,
+      answer: qa.answer || "",
+      status: qa.status || "answered",
+      exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
+    }));
+  }
+
+  const interviewDetails = new InterviewDetails(interviewDetailsData);
 
   await interviewDetails.save();
   return interviewDetails._id;
