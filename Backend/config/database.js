@@ -31,9 +31,9 @@ const connectDB = async () => {
 
     const conn = await mongoose.connect(process.env.MONGODB_URI, connectionOptions);
     
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+   /* console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     console.log(`📊 Connection Pool - Min: ${connectionOptions.minPoolSize}, Max: ${connectionOptions.maxPoolSize}`);
-    
+    */
     // Initialize performance monitoring (delayed to avoid startup noise)
     setTimeout(() => {
       if (process.env.NODE_ENV === 'development') {

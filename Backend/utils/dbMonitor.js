@@ -47,7 +47,7 @@ class DatabaseMonitor {
         
         // Log pool status every 30 seconds in development
         if (process.env.NODE_ENV === 'development') {
-          console.log('📊 DB Pool Status:', poolInfo);
+        //  console.log('📊 DB Pool Status:', poolInfo);
         }
       }
     }, 30000); // Every 30 seconds
@@ -65,7 +65,7 @@ class DatabaseMonitor {
 
   // Log performance summary
   logPerformanceSummary() {
-    console.log('📈 Database Performance Summary:', this.getStats());
+  //  console.log('📈 Database Performance Summary:', this.getStats());
   }
 }
 
