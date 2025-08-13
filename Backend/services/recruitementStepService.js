@@ -4,7 +4,7 @@ require("dotenv").config();
 const { HttpError } = require("../utils/httpUtils");
 const { parseAIResponse } = require("../parsers/AIResponseParser");
 const Post = require("../models/PostModel");
-const { handleHROverallScore } = require("../utils/evaluationUtils");
+const { handleHROverallScore, saveInterviewDetailsForJob } = require("../utils/evaluationUtils");
 
 const {
   generateHRStepQuestionsPrompts,
@@ -13,7 +13,7 @@ const {
 } = require("../prompts/recruitementStepPrompts");
 
 const evaluationPrompts = require("../prompts/evaluationPrompts");
-
+const Profile = require("../models/ProfileModel");
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
 module.exports.generateQuestions = async (
@@ -108,9 +108,8 @@ module.exports.generateQuestions = async (
   }
 };
 
-exports.analyseQuestions = async ({ questions, postStep }) => {
+exports.analyseQuestions = async ({ questions, postStep ,user}) => {
   try {
-    console.log("analyseQuestions");
     const stepType = postStep.data.type;
     let systemPrompt = "";
     let userPrompt = "";
@@ -119,13 +118,10 @@ exports.analyseQuestions = async ({ questions, postStep }) => {
       // refers to an hrInterview
       systemPrompt = evaluationPrompts.analyzeHRAnswersPrompts.getSystemPrompt();
       userPrompt = evaluationPrompts.analyzeHRAnswersPrompts.getUserPrompt(questions);
-      console.log("interview");
-      console.log("userPrompt", userPrompt);
-      console.log("systemPrompt", systemPrompt);
+
     } else if (stepType == "soft") {
       systemPrompt = evaluationPrompts.analyzeHRAnswersPrompts.getSystemPrompt();
       userPrompt = evaluationPrompts.analyzeHRAnswersPrompts.getUserPrompt(questions);
-      console.log("soft");
     } else if (stepType == "technical") {
       systemPrompt = evaluationPrompts.analyzeJobTestResultsPrompts.getSystemPrompt();
 
@@ -148,7 +144,6 @@ exports.analyseQuestions = async ({ questions, postStep }) => {
         requiredSkills,
         questions
       );
-      console.log("technical");
     }
 
     const stream = await together.chat.completions.create({
@@ -176,7 +171,21 @@ exports.analyseQuestions = async ({ questions, postStep }) => {
       analysis.overallScore = handleHROverallScore(analysis.skillAnalysis);
       console.log("new value", analysis.overallScore);
     }
+    const profile = await Profile.findById(user.profile);
 
+    if (!profile)
+      throw new HttpError(404, "Aucun profil trouvé pour cet utilisateur.");
+    
+    const jobId = postStep.postId;
+
+    const interviewId = await saveInterviewDetailsForJob(
+      profile,
+      analysis.overallScore,
+      analysis.skillAnalysis,
+      jobId ,
+      analysis.recommendations
+    );
+console.log("interviewId",interviewId)
     return { analysis };
   } catch (error) {
     console.error("Error analysing questions:", error);
@@ -184,3 +193,4 @@ exports.analyseQuestions = async ({ questions, postStep }) => {
     throw new HttpError(500, `Internal server error: ${error}`);
   }
 };
+

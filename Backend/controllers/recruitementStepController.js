@@ -4,10 +4,6 @@ require("dotenv").config();
 const Post = require("../models/PostModel");
 
 const recruitementService = require("../services/recruitementStepService");
-const {
-  saveInterviewDetailsForOnboarding,
-  saveInterviewDetailsForAddSkill,
-} = require("../utils/evaluationUtils");
 const { HttpError } = require("../utils/httpUtils");
 const Post_Steps = require("../models/post_StepsModel");
 const Profile = require("../models/ProfileModel");
@@ -70,6 +66,7 @@ exports.generateQuestions = async (req, res) => {
 
 exports.analyseQuestions = async (req, res) => {
   try {
+    const user = req.user;
     const stepId = req.params.postStepId;
     const { questions } = req.body;
 
@@ -86,6 +83,7 @@ exports.analyseQuestions = async (req, res) => {
     if (!postStep.postId) {
       throw new HttpError(400, `postId in postStep not found`);
     }
+
 console.log(postStep.data.type)
     const post = await Post.findById(postStep.postId);
     if (!post) {
@@ -94,7 +92,8 @@ console.log(postStep.data.type)
 
     const result = await recruitementService.analyseQuestions({
       questions,
-      postStep,      
+      postStep,
+      user,      
     });
 
     res.status(200).json(result);
