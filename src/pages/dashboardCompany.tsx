@@ -86,6 +86,10 @@ import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import CompanyOnly from '../components/CompanyOnly';
 import DescriptionIcon from '@mui/icons-material/Description';
+import SearchIcon from '@mui/icons-material/Search';
+import SortIcon from '@mui/icons-material/Sort';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 
 // At the top of your file, after imports
 const GREEN_MAIN = 'rgba(0, 255, 157, 1)';
@@ -1174,7 +1178,21 @@ As a ${jobDataToUse.jobDetails.title}, you'll be at the heart of our engineering
   // Update the renderBidHistory function
   const renderBidHistory = () => (
     <StyledCard sx={{ mt: 4 }}>
-      <SectionTitle>Bid History</SectionTitle>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <SectionTitle sx={{ mb: 0 }}>Bid History</SectionTitle>
+        {data.length > 0 && (
+          <Chip
+            label={`${data.length} bids`}
+            size="small"
+            sx={{
+              background: 'rgba(2, 226, 255, 0.12)',
+              color: '#0f172a',
+              fontWeight: 700,
+              border: '1px solid rgba(0,0,0,0.08)'
+            }}
+          />
+        )}
+      </Box>
       {status === "loading" ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
           <CircularProgress sx={{ color: '#02E2FF' }} />
@@ -1182,38 +1200,103 @@ As a ${jobDataToUse.jobDetails.title}, you'll be at the heart of our engineering
       ) : status === "failed" ? (
         <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
       ) : data.length === 0 ? (
-        <Alert severity="info" sx={{ mb: 2 }}>No bid history found.</Alert>
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2,
+          py: 6,
+          px: 2,
+          textAlign: 'center',
+          background: 'linear-gradient(135deg, rgba(2,226,255,0.06) 0%, rgba(0,255,195,0.06) 100%)',
+          borderRadius: '16px',
+          border: '1px solid rgba(15,23,42,0.06)'
+        }}>
+          <Box sx={{
+            width: 72,
+            height: 72,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, rgba(2,226,255,0.15), rgba(0,255,195,0.15))',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: 'inset 0 0 0 1px rgba(15,23,42,0.06)'
+          }}>
+            <PersonSearchIcon sx={{ color: GREEN_MAIN, fontSize: 36 }} />
+          </Box>
+          <Typography variant="h6" sx={{ color: '#0f172a', fontWeight: 800 }}>
+            No bid history yet
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#64748b', maxWidth: 520 }}>
+            Once you place bids on candidates who match your job posts, they will appear here. View matches from your job posts to place a bid.
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<WorkIcon />}
+            onClick={() => router.push('/recruitment/create-job')}
+            sx={{
+              mt: 1,
+              background: 'linear-gradient(90deg, #02E2FF, #00FFC3)',
+              color: '#0f172a',
+              fontWeight: 800,
+              borderRadius: '12px',
+              px: 2.5,
+              '&:hover': {
+                background: 'linear-gradient(90deg, #00FFC3, #02E2FF)'
+              }
+            }}
+          >
+            Post New Job
+          </Button>
+        </Box>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {data.map((bid: any) => (
-            <Box key={bid?._id} sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: 'white',
-              borderRadius: '10px',
-              p: 2,
-              boxShadow: '0 0 10px 0 rgba(0, 0, 0, 0.1)',
-              border: '1px solid rgba(255,255,255,0.08)'
-            }}>
+            <Box
+              key={bid?._id}
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: '1fr auto auto',
+                alignItems: 'center',
+                gap: 2,
+                background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+                borderRadius: '16px',
+                p: 2,
+                boxShadow: '0 8px 20px rgba(2,23,36,0.06)',
+                border: '1px solid rgba(15,23,42,0.06)'
+              }}
+            >
               <Box>
-                <Typography sx={{ color: '#000', fontWeight: 600 }}>{bid?.userInfo?.username}</Typography>
-                <Typography sx={{ color: '#000', fontSize: '0.9rem' }}>{bid?.userInfo?.email}</Typography>
-                <Typography sx={{ color: '#000', fontSize: '0.85rem' }}>{bid?.post?.jobDetails?.title}</Typography>
+                <Typography sx={{ color: '#0f172a', fontWeight: 700 }}>{bid?.userInfo?.username}</Typography>
+                <Typography sx={{ color: '#64748b', fontSize: '0.9rem' }}>{bid?.userInfo?.email}</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+                  <Chip
+                    icon={<WorkIcon sx={{ fontSize: 16 }} />}
+                    label={bid?.post?.jobDetails?.title || '—'}
+                    size="small"
+                    sx={{ background: 'rgba(2, 226, 255, 0.12)', color: '#0f172a', fontWeight: 700, border: '1px solid rgba(0,0,0,0.08)' }}
+                  />
+                  {bid?.status && (
+                    <Chip
+                      label={bid.status === 'win' ? 'Won' : 'Lost'}
+                      size="small"
+                      sx={{
+                        background: bid.status === 'win' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                        color: '#0f172a',
+                        fontWeight: 800,
+                        border: '1px solid rgba(0,0,0,0.08)'
+                      }}
+                    />
+                  )}
+                </Box>
               </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                {/* <Chip
-                  label={bid.status === 'win' ? 'Won' : 'Lost'}
-                  color={bid.status === 'win' ? 'success' : 'error'}
-                  sx={{ fontWeight: 700 }}
-                /> */}
-                <Typography sx={{ color: GREEN_MAIN, fontWeight: 600 }}>
-                  ${bid?.finalBid}
-                </Typography>
-                <Typography sx={{ color: 'black', fontSize: '0.8rem' }}>
-                  {new Date(bid?.dateBid).toLocaleDateString()}
-                </Typography>
-              </Box>
+              <Typography sx={{ color: '#0f172a', fontWeight: 800, justifySelf: 'end' }}>
+                ${bid?.finalBid}
+              </Typography>
+              <Typography sx={{ color: '#64748b', fontSize: '0.85rem', justifySelf: 'end' }}>
+                {new Date(bid?.dateBid).toLocaleDateString()}
+              </Typography>
             </Box>
           ))}
         </Box>
@@ -3878,24 +3961,62 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             <Box sx={{ flex: 2 }}>
               {!selectedJob ? (
                 <Box sx={{ mb: 6 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography variant="h5" sx={{ color: 'black', fontWeight: 700 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, gap: 2, flexWrap: 'wrap' }}>
+                    <Typography variant="h5" sx={{ color: 'black', fontWeight: 800, letterSpacing: 0.2 }}>
                       My Job Posts
                     </Typography>
-                    <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={() => router.push('/recruitment/create-job')}
-                      sx={{
-                        background: 'rgba(0, 255, 157, 1)',
-                        color: 'black',
-                        '&:hover': {
-                          background: 'rgba(0, 255, 157, 1)'
-                        }
-                      }}
-                    >
-                      Post New Job
-                    </Button>
+                    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <TextField
+                        size="small"
+                        placeholder="Search jobs..."
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <SearchIcon sx={{ color: '#64748b' }} />
+                            </InputAdornment>
+                          )
+                        }}
+                        sx={{
+                          minWidth: { xs: '100%', sm: 260 },
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'white',
+                            borderRadius: '12px'
+                          }
+                        }}
+                      />
+                      <Button
+                        variant="outlined"
+                        startIcon={<SortIcon />}
+                        sx={{
+                          borderColor: 'rgba(0,0,0,0.12)',
+                          color: '#0f172a',
+                          background: 'white',
+                          borderRadius: '12px',
+                          '&:hover': {
+                            borderColor: 'rgba(0,0,0,0.2)',
+                            background: 'white'
+                          }
+                        }}
+                      >
+                        Sort
+                      </Button>
+                      <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => router.push('/recruitment/create-job')}
+                        sx={{
+                          background: 'linear-gradient(90deg, #02E2FF, #00FFC3)',
+                          color: '#0f172a',
+                          fontWeight: 800,
+                          borderRadius: '12px',
+                          '&:hover': {
+                            background: 'linear-gradient(90deg, #00FFC3, #02E2FF)'
+                          }
+                        }}
+                      >
+                        Post New Job
+                      </Button>
+                    </Box>
                   </Box>
 
                   {isLoadingJobs ? (
@@ -3919,49 +4040,52 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                             sx={{
                               width: '100%',
                               display: 'flex',
-                              background: 'white',
-                              boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+                              background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+                              boxShadow: '0 12px 24px rgba(2,23,36,0.06)',
+                              borderRadius: '16px',
+                              border: '1px solid rgba(15, 23, 42, 0.06)'
                             }}
                           >
                             <JobCard
                               sx={{
                                 width: '100%',
                                 maxWidth: '100%',
-                                flex: '1 1 100%'
+                                flex: '1 1 100%',
+                                p: 2.5
                               }}
                             >
                               {/* Header */}
-                              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, justifyContent: 'space-between' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2.5, justifyContent: 'space-between' }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                   <WorkIcon sx={{ color: 'rgba(0, 255, 157, 1)', fontSize: 28 }} />
-                                  <Typography variant="h6" sx={{ color: '#000000', fontWeight: 700 }}>
+                                  <Typography variant="h6" sx={{ color: '#0f172a', fontWeight: 800 }}>
                                     {job.jobDetails.title}
                                   </Typography>
                                 </Box>
                                 {job.createdAt && (
-                                  <Typography variant="caption" sx={{ color: 'black', fontWeight: 500, ml: 2 }}>
+                                  <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, ml: 2 }}>
                                     Posted: {new Date(job.createdAt).toLocaleDateString()}
                                   </Typography>
                                 )}
                               </Box>
 
                               {/* Meta Chips */}
-                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
                                 <Chip
                                   icon={<LocationOnIcon sx={{ fontSize: 18 }} />}
                                   label={job.jobDetails.location}
                                   size="small"
-                                  sx={{ backgroundColor: 'rgba(0, 255, 157, 1)', color: 'black', fontWeight: 600 }}
+                                  sx={{ backgroundColor: 'rgba(0, 255, 157, 0.15)', color: '#0f172a', fontWeight: 700, border: '1px solid rgba(0,0,0,0.08)' }}
                                 />
                                 <Chip
                                   label={job.jobDetails.employmentType}
                                   size="small"
-                                  sx={{ backgroundColor: 'rgba(0, 255, 157, 1)', color: 'black', fontWeight: 600 }}
+                                  sx={{ backgroundColor: 'rgba(2, 226, 255, 0.12)', color: '#0f172a', fontWeight: 700, border: '1px solid rgba(0,0,0,0.08)' }}
                                 />
                                 <Chip
                                   label={`${job.jobDetails.salary.currency}${job.jobDetails.salary.min}-${job.jobDetails.salary.max}`}
                                   size="small"
-                                  sx={{ backgroundColor: 'rgba(0, 255, 157, 1)', color: 'black', fontWeight: 600 }}
+                                  sx={{ backgroundColor: 'rgba(0,255,157,0.12)', color: '#0f172a', fontWeight: 700, border: '1px solid rgba(0,0,0,0.08)' }}
                                 />
                               </Box>
 
@@ -3969,8 +4093,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                               <Typography
                                 variant="body2"
                                 sx={{
-                                  color: 'black',
-                                  mb: 2,
+                                  color: '#0f172a',
+                                  mb: 2.5,
                                   minHeight: 40,
                                   fontWeight: 500,
                                   lineHeight: 1.5,
@@ -3994,9 +4118,9 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                                     size="small"
                                     icon={<StarIcon sx={{ color: '#00FFC3', fontSize: 18 }} />}
                                     sx={{
-                                      backgroundColor: 'rgba(0, 255, 157, 1)',
-                                      color: 'white',
-                                      fontWeight: 700,
+                                      backgroundColor: 'rgba(0, 255, 157, 0.15)',
+                                      color: '#0f172a',
+                                      fontWeight: 800,
                                       fontSize: '0.87rem',
                                       letterSpacing: 0.2,
                                       px: 1
@@ -4009,22 +4133,23 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                               <Box
                                 sx={{
                                   display: 'flex',
-                                  gap: 2,
+                                  gap: 1.5,
                                   mt: 'auto',
                                   pt: 2,
                                   borderTop: '1px solid rgba(2,226,255,0.08)'
                                 }}
                               >
                                 <Button
-                                  variant="outlined"
+                                  variant="contained"
                                   fullWidth
                                   onClick={() => handleViewJobDetails(job)}
                                   sx={{
-                                    borderColor: 'rgba(0, 255, 157, 1)',
-                                    color: 'rgba(0, 255, 157, 1)',
+                                    background: 'linear-gradient(90deg, #02E2FF, #00FFC3)',
+                                    color: '#0f172a',
+                                    fontWeight: 800,
+                                    borderRadius: '10px',
                                     '&:hover': {
-                                      borderColor: 'rgba(0, 255, 157, 1)',
-                                      backgroundColor: '#fff'
+                                      background: 'linear-gradient(90deg, #00FFC3, #02E2FF)'
                                     }
                                   }}
                                 >
@@ -4038,10 +4163,13 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                                     handleFilterDialogOpen()
                                   }}
                                   sx={{
-                                    borderColor: 'rgba(0, 255, 157, 1)',
-                                    color: 'rgba(0, 255, 157, 1)',
+                                    borderColor: 'rgba(0,0,0,0.1)',
+                                    color: '#0f172a',
+                                    background: 'white',
+                                    fontWeight: 800,
+                                    borderRadius: '10px',
                                     '&:hover': {
-                                      borderColor: 'rgba(0, 255, 157, 1)',
+                                      borderColor: 'rgba(0,0,0,0.2)',
                                       backgroundColor: '#fff'
                                     }
                                   }}
@@ -4055,7 +4183,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                                     borderColor: '#ff3b30',
                                     color: '#ff3b30',
                                     fontWeight: 700,
-                                    borderRadius: '8px',
+                                    borderRadius: '10px',
                                     textTransform: 'none',
                                     letterSpacing: 0.5,
                                     boxShadow: 'none',
@@ -4080,14 +4208,20 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                       {myJobs.length > displayCount && (
                         <Button
                           variant="contained"
+                          endIcon={<ExpandMoreIcon />}
                           onClick={() => setDisplayCount((prev: number) => prev + 3)}
                           sx={{
-                            backgroundColor: 'rgba(0, 255, 157, 1)',
-                            mt: 2,
-                            borderColor: 'rgba(0, 255, 157, 1)',
-                            color: 'white',
+                            mt: 2.5,
+                            px: 3,
+                            py: 1.25,
+                            borderRadius: '12px',
+                            background: 'linear-gradient(90deg, #02E2FF, #00FFC3)',
+                            color: '#0f172a',
+                            fontWeight: 800,
+                            boxShadow: '0 8px 20px rgba(0, 255, 195, 0.25)',
                             '&:hover': {
-                              borderColor: 'rgba(0, 255, 157, 1)'
+                              background: 'linear-gradient(90deg, #00FFC3, #02E2FF)',
+                              boxShadow: '0 12px 28px rgba(0, 255, 195, 0.3)'
                             }
                           }}
                         >
