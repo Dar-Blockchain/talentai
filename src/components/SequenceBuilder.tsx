@@ -1049,6 +1049,7 @@ Ready to customize the content or add more triggers?`
           <Box sx={{ flex: 1, p: 3, overflow: 'auto' }}>
             <Typography variant="h5" sx={{ mb: 3, color: '#1f2937' }}>
               Customize Your Avatar
+              
             </Typography>
             <Typography variant="body1" sx={{ mb: 3, color: '#6b7280' }}>
               Personalize your avatar to represent your brand in the sequence. This avatar will be used in all communications.
