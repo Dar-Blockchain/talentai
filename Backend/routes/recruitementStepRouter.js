@@ -4,7 +4,7 @@ const recruitementStepController = require('../controllers/recruitementStepContr
 const { requireAuthUser } = require('../middleware/authMiddleware');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 
-router.use(requireAuthUser);
+//router.use(requireAuthUser);
 
 router.get('/generate-questions/:postStepId', recruitementStepController.generateQuestions);
 
