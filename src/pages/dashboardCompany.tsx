@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMyProfile, selectProfile, clearProfile } from '../store/slices/profileSlice';
 import { AppDispatch, RootState } from '../store/store';
-import {
+import { 
   Box,
   Container,
   Typography,
@@ -40,6 +40,11 @@ import {
   Stepper,
   Step,
   StepLabel,
+  AppBar,
+  Toolbar,
+  Avatar,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -50,6 +55,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import CategoryIcon from '@mui/icons-material/Category';
 import { useRouter } from 'next/router';
 import StarIcon from '@mui/icons-material/Star';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Cookies from 'js-cookie';
 import WorkIcon from '@mui/icons-material/Work';
@@ -119,14 +125,14 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
 }));
 
 const ProfileHeader = styled(Box)(({ theme }) => ({
-  background: 'white',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-  color: '#ffffff',
-  padding: theme.spacing(4),
-  borderRadius: '16px',
-  marginBottom: theme.spacing(3),
+  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+  color: '#000000',
+  padding: theme.spacing(4, 2),
+  borderRadius: '32px',
+  marginBottom: theme.spacing(6),
   position: 'relative',
   overflow: 'hidden',
+  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.1), 0 0 30px rgba(0, 0, 0, 0.06)',
   '&:before': {
     content: '""',
     position: 'absolute',
@@ -134,24 +140,76 @@ const ProfileHeader = styled(Box)(({ theme }) => ({
     left: '0',
     right: '0',
     bottom: '0',
-    zIndex: 1
-  }
+    background: 'radial-gradient(circle at top right, rgba(0, 0, 0, 0.03) 0%, transparent 70%)',
+    zIndex: 1,
+  },
+  [theme.breakpoints.up('sm')]: {
+    padding: theme.spacing(6, 4),
+  },
+  [theme.breakpoints.up('md')]: {
+    padding: theme.spacing(8),
+  },
 }));
 
 const StatsContainer = styled(Box)(({ theme }) => ({
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-  gap: theme.spacing(2),
+  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+  gap: theme.spacing(3),
   marginTop: theme.spacing(3)
 }));
 
-const StatCard = styled(Box)(({ theme }) => ({
-  background: 'rgba(255,255,255,0.1)',
-  padding: theme.spacing(2),
-  borderRadius: '12px',
-  backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+const StatCard = styled(Paper)(({ theme }) => ({
+  background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.grey[100]} 100%)`,
+  padding: theme.spacing(3),
+  borderRadius: Number(theme.shape.borderRadius) * 3,
+  border: `1px solid ${theme.palette.divider}`,
+  boxShadow: '0 6px 20px rgba(0, 0, 0, 0.05), 0 1px 6px rgba(0, 0, 0, 0.04)',
+  transition: theme.transitions.create(['transform', 'box-shadow'], {
+    duration: theme.transitions.duration.short,
+  }),
+  minHeight: 120,
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
+  cursor: 'default',
+  '&:hover': {
+    transform: 'translateY(-5px)',
+    boxShadow: '0 12px 35px rgba(0, 0, 0, 0.08), 0 4px 20px rgba(0, 0, 0, 0.04)',
+  },
+}));
+
+const IconCircle = styled(Box)(({ theme }) => ({
+  width: 40,
+  height: 40,
+  borderRadius: '50%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: 'linear-gradient(135deg, #7C4DFF22 0%, #00B8D422 100%)',
+  border: `1px solid ${theme.palette.divider}`,
+}));
+
+const HeaderBadge = styled(Chip)(({ theme }) => ({
+  borderRadius: 999,
+  fontWeight: 600,
+  height: 28,
+  '& .MuiChip-label': { px: 1.5 },
+  background: 'rgba(2, 226, 255, 0.08)',
+  border: '1px solid rgba(2, 226, 255, 0.15)',
+}));
+
+const GradientButton = styled(Button)(({ theme }) => ({
+  textTransform: 'none',
+  fontWeight: 700,
+  borderRadius: 12,
+  padding: '10px 16px',
+  background: 'linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)',
+  color: '#fff',
+  boxShadow: '0 4px 16px #00B8D433',
+  '&:hover': {
+    background: 'linear-gradient(90deg, #00B8D4 0%, #7C4DFF 100%)',
+    boxShadow: '0 6px 20px #7C4DFF33',
+  },
 }));
 
 const CompanyInfoCard = styled(Box)(({ theme }) => ({
@@ -172,13 +230,26 @@ const InfoRow = styled(Box)(({ theme }) => ({
 }));
 
 const SkillChip = styled(Chip)(({ theme }) => ({
-  borderRadius: '8px',
-  backgroundColor: GREEN_MAIN,
-  color: 'black',
-  fontWeight: 600,
   margin: theme.spacing(0.5),
+  borderRadius: '12px',
+  padding: theme.spacing(1.2),
+  height: 36,
+  background: 'rgba(2, 226, 255, 0.08)',
+  color: '#111827',
+  border: '1px solid rgba(2, 226, 255, 0.15)',
+  fontWeight: 600,
+  letterSpacing: 0.2,
+  transition: 'all 0.2s ease',
   '&:hover': {
-    backgroundColor: 'rgba(2, 226, 255, 0.2)',
+    background: 'rgba(2, 226, 255, 0.15)',
+    transform: 'translateY(-2px)',
+    boxShadow: '0 6px 16px rgba(2,226,255,0.10)'
+  },
+  '& .MuiChip-icon': {
+    color: '#00B8D4',
+  },
+  '& .MuiChip-deleteIcon': {
+    color: '#ef4444',
   }
 }));
 
@@ -413,6 +484,8 @@ const DashboardCompany = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { profile, loading } = useSelector(selectProfile);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [editSkillsDialog, setEditSkillsDialog] = useState(false);
   const [filterDialog, setFilterDialog] = useState(false);
   const [minScore, setMinScore] = useState<number>(0);
@@ -1874,6 +1947,22 @@ Benefits:
                           }}
                         />
                       </Box>
+                      {generatedJob?.skillAnalysis?.requiredSkills && generatedJob.skillAnalysis.requiredSkills.length > 0 && (
+                        <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                          {generatedJob.skillAnalysis.requiredSkills.map((skill: { name: string; level: string | number }, index: number) => (
+                            <Chip
+                              key={`top-req-skill-${index}`}
+                              label={`${skill.name} (${getExperienceLevelFromNumber(skill.level)})`}
+                              size="small"
+                              sx={{
+                                backgroundColor: GREEN_MAIN,
+                                color: 'black',
+                                height: '24px'
+                              }}
+                            />
+                          ))}
+                        </Box>
+                      )}
                     </>
                   )}
                 </Box>
@@ -3418,6 +3507,127 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
         py: 4,
       }}>
+        {/* Navbar */}
+        <AppBar
+          position="static"
+          elevation={0}
+          sx={{
+            bgcolor: 'rgba(255,255,255,0.7)',
+            color: '#191919',
+            boxShadow: '0 4px 24px 0 rgba(124,77,255,0.10)',
+            mb: 3,
+            borderRadius: 3,
+            backdropFilter: 'blur(16px)',
+            width: 'unset',
+            mx: { xs: 1, sm: 4 },
+            mt: 2,
+            px: { xs: 1, sm: 3 },
+            py: 1,
+          }}
+        >
+          <Toolbar
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              minHeight: { xs: 56, sm: 72 },
+              px: '0 !important',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box
+                component="img"
+                src="/logo.svg"
+                alt="TalentAI Logo"
+                sx={{ height: { xs: 28, sm: 32 }, mr: 1, cursor: 'pointer', transition: 'transform 0.2s', '&:hover': { transform: 'scale(1.07)' } }}
+                onClick={() => router.push('/')}
+              />
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 800,
+                  fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif',
+                  color: '#7C4DFF',
+                  textShadow: '0 2px 8px #7C4DFF11',
+                  display: { xs: 'none', sm: 'block' },
+                }}
+              >
+                Company Dashboard
+              </Typography>
+            </Box>
+            {profile && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
+                <Avatar
+                  sx={{
+                    bgcolor: 'linear-gradient(135deg, #7C4DFF 60%, #00B8D4 100%)',
+                    color: '#fff',
+                    width: 44,
+                    height: 44,
+                    fontWeight: 700,
+                    fontSize: 22,
+                    boxShadow: '0 2px 8px #7C4DFF22',
+                    border: '2px solid #fff',
+                  }}
+                >
+                  {profile.userId?.username?.[0] || profile.userId?.email?.[0] || 'U'}
+                </Avatar>
+                {!isMobile && (
+                  <>
+                    <Box sx={{ textAlign: 'right', minWidth: 120 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#222', fontSize: 17, lineHeight: 1.1 }}>
+                        {profile.userId?.username || 'User'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: 13 }}>
+                        {profile.userId?.email}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ mx: 1, height: 36, borderLeft: '1.5px solid #E0E0E0' }} />
+                  </>
+                )}
+                {isMobile ? (
+                  <IconButton
+                    onClick={handleLogout}
+                    sx={{
+                      background: 'linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)',
+                      color: '#fff',
+                      width: 44, height: 44,
+                      '&:hover': {
+                        background: 'linear-gradient(90deg, #00B8D4 0%, #7C4DFF 100%)',
+                      }
+                    }}
+                  >
+                    <LogoutIcon />
+                  </IconButton>
+                ) : (
+                  <Button
+                    variant="contained"
+                    startIcon={<LogoutIcon />}
+                    sx={{
+                      background: 'linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)',
+                      color: '#fff',
+                      fontWeight: 700,
+                      borderRadius: 2,
+                      px: 3,
+                      py: 1.2,
+                      boxShadow: '0 2px 8px #00B8D422',
+                      textTransform: 'none',
+                      fontSize: 16,
+                      letterSpacing: 0.2,
+                      transition: 'background 0.2s, box-shadow 0.2s',
+                      '&:hover': {
+                        background: 'linear-gradient(90deg, #00B8D4 0%, #7C4DFF 100%)',
+                        boxShadow: '0 4px 16px #00B8D433',
+                      },
+                    }}
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </Button>
+                )}
+              </Box>
+            )}
+          </Toolbar>
+        </AppBar>
         <ToastContainer
           position="top-right"
           autoClose={3000}
@@ -3508,157 +3718,162 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
             </DialogActions>
           </Dialog>
 
-          <Box sx={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            mb: 3,
-            position: 'relative'
-          }}>
-            <Button
-              onClick={handleLogout}
-              startIcon={<LogoutIcon />}
-              variant="contained"
-              sx={{
-                background: 'rgba(0, 255, 157, 1)',
-                color: '#0f172a',
-                fontWeight: 600,
-                '&:hover': {
-                  background: 'rgba(0, 255, 157, 1)',
-                  boxShadow: '0 4px 12px rgba(2, 226, 255, 0.3)'
-                },
-                textTransform: 'none',
-                padding: '8px 20px',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(2, 226, 255, 0.2)'
-              }}
-            >
-              Logout
-            </Button>
-          </Box>
+          
 
           <ProfileHeader>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'relative', zIndex: 2 }}>
-              <Box>
-                <Typography variant="h4" sx={{ fontWeight: 700, mb: 1, color: '#000000' }}>
-                  {profile?.companyDetails?.name}
-                </Typography>
-                <Typography variant="body1" sx={{ opacity: 0.9, mb: 3, color: '#000000' }}>
-                  {profile?.type} • {profile?.userId.role}
-                </Typography>
+            <Box sx={{ position: 'relative', zIndex: 2 }}>
+              <Box sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: { xs: 'flex-start', md: 'center' },
+                mb: 4,
+                flexDirection: { xs: 'column', md: 'row' },
+                gap: { xs: 2, md: 4 },
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+  <Avatar sx={{ bgcolor: '#00B8D4', color: '#fff', width: 64, height: 64, fontSize: 28, fontWeight: 700 }}>
+                    {(profile?.companyDetails?.name || profile?.userId?.username || 'U')?.[0]}
+                  </Avatar>
+                  <Box>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Typography variant="h4" sx={{ fontWeight: 800, color: '#111827', lineHeight: 1.1 }}>
+        {profile?.companyDetails?.name}
+      </Typography>
+      {profile?.userId?.isVerified && (
+        <CheckCircleIcon sx={{ color: '#22c55e', fontSize: 24 }} />
+      )}
+    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, flexWrap: 'wrap' }}>
+                      {profile?.type && (
+                        <HeaderBadge label={profile.type} />
+                      )}
+                      {/* {profile?.userId?.role && (
+                        <HeaderBadge label={profile.userId.role} />
+                      )} */}
+                      {profile?.companyDetails?.location && (
+                        <HeaderBadge label={profile.companyDetails.location} />
+                      )}
+                    </Box>
+                  </Box>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+                {/* Verified chip removed in favor of icon next to name */}
+                  <GradientButton onClick={() => router.push('/recruitment/create-job')}>
+                    Post Job
+                  </GradientButton>
+                </Box>
               </Box>
 
+              <StatsContainer>
+                <StatCard>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <IconCircle>
+                      <CategoryIcon sx={{ color: '#7C4DFF' }} />
+                    </IconCircle>
+                    <Box>
+                      <Typography variant="overline" sx={{ opacity: 0.7, color: '#111827' }}>
+                        Industry
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#111827' }}>
+                        {profile?.companyDetails?.industry || '—'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </StatCard>
+                <StatCard>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <IconCircle>
+                      <GroupsIcon sx={{ color: '#00B8D4' }} />
+                    </IconCircle>
+                    <Box>
+                      <Typography variant="overline" sx={{ opacity: 0.7, color: '#111827' }}>
+                        Company Size
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#111827' }}>
+                        {profile?.companyDetails?.size || '—'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </StatCard>
+                <StatCard>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <IconCircle>
+                      <LocationOnIcon sx={{ color: '#22C55E' }} />
+                    </IconCircle>
+                    <Box>
+                      <Typography variant="overline" sx={{ opacity: 0.7, color: '#111827' }}>
+                        Location
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: '#111827' }}>
+                        {profile?.companyDetails?.location || '—'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </StatCard>
+              </StatsContainer>
             </Box>
-            <StatsContainer>
-              <StatCard>
-                <Typography variant="overline" sx={{ opacity: 0.7, color: '#000000' }}>
-                  Industry
-                </Typography>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#000000' }}>
-                  {profile?.companyDetails?.industry}
-                </Typography>
-              </StatCard>
-              <StatCard>
-                <Typography variant="overline" sx={{ opacity: 0.7, color: '#000000' }}>
-                  Company Size
-                </Typography>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#000000' }}>
-                  {profile?.companyDetails?.size}
-                </Typography>
-              </StatCard>
-              <StatCard>
-                <Typography variant="overline" sx={{ opacity: 0.7, color: '#000000' }}>
-                  Location
-                </Typography>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#000000' }}>
-                  {profile?.companyDetails?.location}
-                </Typography>
-              </StatCard>
-            </StatsContainer>
           </ProfileHeader>
 
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
-            <Box sx={{ flex: 1 }}>
-              <CompanyInfoCard>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <SectionTitle>Company Information</SectionTitle>
-                  {profile?.userId.isVerified && (
-                    <Chip
-                      label="Verified Company"
-                      color="success"
-                      size="small"
-                      sx={{
-                        backgroundColor: 'rgba(34, 197, 94, 0.2)',
-                        color: '#4ade80',
-                        fontWeight: 600,
-                        borderRadius: '8px'
-                      }}
-                    />
-                  )}
-                </Box>
+          {/* Full-width Required Skills Section */}
+          <StyledCard>
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              gap: 2,
+              mb: 2
+            }}>
+              <SectionTitle sx={{ mb: 0 }}>Required Skills</SectionTitle>
+            </Box>
 
-                <InfoRow>
-                  <BusinessIcon sx={{ color: 'rgba(0, 255, 157, 1)' }} />
-                  <Typography sx={{ color: '#000000', fontWeight: 500 }}>{profile?.companyDetails?.name}</Typography>
-                </InfoRow>
-
-                <InfoRow>
-                  <CategoryIcon sx={{ color: 'rgba(0, 255, 157, 1)' }} />
-                  <Typography sx={{ color: '#000000', fontWeight: 500 }}>{profile?.companyDetails?.industry}</Typography>
-                </InfoRow>
-
-                <InfoRow>
-                  <GroupsIcon sx={{ color: 'rgba(0, 255, 157, 1)' }} />
-                  <Typography sx={{ color: '#000000', fontWeight: 500 }}>{profile?.companyDetails?.size} employees</Typography>
-                </InfoRow>
-
-                <InfoRow>
-                  <LocationOnIcon sx={{ color: 'rgba(0, 255, 157, 1)' }} />
-                  <Typography sx={{ color: '#000000', fontWeight: 500 }}>{profile?.companyDetails?.location}</Typography>
-                </InfoRow>
-              </CompanyInfoCard>
-
-              <StyledCard>
-                <Box sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 3
-                }}>
-                  <SectionTitle>Required Skills</SectionTitle>
-                </Box>
-
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {localRequiredSkills.map((skill, index) => (
-                    <SkillChip
-                      key={index}
-                      label={`${skill} (${generatedJob?.jobDetails?.experienceLevel || 'Entry Level'})`}
-                      onDelete={isEditing ? () => {
-                        setLocalRequiredSkills(localRequiredSkills.filter((_, i) => i !== index));
-                      } : undefined}
-                      deleteIcon={isEditing ? <DeleteIcon sx={{ color: 'red' }} /> : undefined}
-                    />
-                  ))}
-                </Box>
-
-                <Box sx={{ mt: 3 }}>
-                  {/* <Typography variant="subtitle2" sx={{ color: 'black', mb: 1 }}>
-                    Required Experience Level
-                  </Typography> */}
-                  <SectionTitle> Required Experience</SectionTitle>
-
-                  <Chip
-                    label={profile?.requiredExperienceLevel}
+            <Box sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 1.25,
+              p: 2,
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, rgba(2,226,255,0.06) 0%, rgba(0,255,195,0.06) 100%)',
+              border: '1px solid rgba(0,0,0,0.06)'
+            }}>
+              {localRequiredSkills && localRequiredSkills.length > 0 ? (
+                localRequiredSkills.map((skill, index) => (
+                  <SkillChip
+                    key={`fullwidth-req-skill-${index}`}
+                    icon={<StarIcon sx={{ fontSize: 18 }} />}
+                    label={`${skill}`}
                     sx={{
-                      borderRadius: '8px',
-                      backgroundColor: 'rgba(0, 255, 157, 1)',
-                      color: 'black',
-                      fontWeight: 600
+                      background: 'linear-gradient(135deg, rgba(0,255,157,0.18) 0%, rgba(2,226,255,0.18) 100%)',
+                      color: '#0f172a',
+                      border: '1px solid rgba(0,0,0,0.08)',
+                      fontWeight: 700
                     }}
                   />
-                </Box>
-              </StyledCard>
+                ))
+              ) : (
+                <Typography variant="body2" sx={{ color: '#6b7280' }}>
+                  No required skills added yet.
+                </Typography>
+              )}
             </Box>
+
+            <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+              <Typography variant="subtitle2" sx={{ color: '#111827' }}>
+                Required Experience:
+              </Typography>
+              <Chip
+                label={profile?.requiredExperienceLevel || 'Not set'}
+                sx={{
+                  borderRadius: '12px',
+                  background: 'rgba(2, 226, 255, 0.1)',
+                  color: '#111827',
+                  border: '1px solid rgba(2, 226, 255, 0.2)',
+                  fontWeight: 700
+                }}
+              />
+            </Box>
+          </StyledCard>
+
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
 
             <Box sx={{ flex: 2 }}>
               {!selectedJob ? (
