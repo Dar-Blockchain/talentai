@@ -186,7 +186,7 @@ exports.analyseQuestions = async ({ questions, postStep ,user}) => {
       analysis.recommendations,
       questions
     );
-console.log("interviewId",interviewId)
+
     return { analysis };
   } catch (error) {
     console.error("Error analysing questions:", error);

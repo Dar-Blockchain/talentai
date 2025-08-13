@@ -335,12 +335,15 @@ async function saveInterviewDetailsForJob(
 
   // Ajouter les questions si elles sont fournies
   if (questions && Array.isArray(questions)) {
-    interviewDetailsData.questions = questions.map((qa) => ({
-      question: qa.question,
-      answer: qa.answer || "",
-      status: qa.status || "answered",
-      exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
-    }));
+    interviewDetailsData.questions = questions.map((qa) => {
+      const hasAnswer = qa.answer && qa.answer.trim() !== "";
+      return {
+        question: qa.question,
+        answer: hasAnswer ? qa.answer : "No answer provided",
+        status: hasAnswer ? (qa.status || "correct") : "incorrect",
+        exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
+      };
+    });
   }
 
   const interviewDetails = new InterviewDetails(interviewDetailsData);
