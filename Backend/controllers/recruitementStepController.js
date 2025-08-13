@@ -70,7 +70,6 @@ exports.generateQuestions = async (req, res) => {
 
 exports.analyseQuestions = async (req, res) => {
   try {
-    const user = req.user;
     const stepId = req.params.postStepId;
     const { questions, formData } = req.body;
 
@@ -106,13 +105,6 @@ exports.analyseQuestions = async (req, res) => {
       });
     }
 
-    if (!user) {
-      throw new HttpError(500, `User  not found`);
-    }
-    if (!user.profile) {
-      throw new HttpError(500, `User  has not profile.`);
-    }
-
     const postStep = await Post_Steps.findById(stepId);
     if (!postStep.postId) {
       throw new HttpError(400, `postId in postStep not found`);
@@ -121,12 +113,6 @@ exports.analyseQuestions = async (req, res) => {
     const post = await Post.findById(postStep.postId);
     if (!post) {
       throw new HttpError(500, "post not found in the db");
-    }
-  
-    // Load candidate profile document
-    const profile = await Profile.findOne({ userId: user._id });
-    if (!profile) {
-      throw new HttpError(500, "Candidate profile not found");
     }
 
     const result = await recruitementService.analyseQuestions({
@@ -148,7 +134,7 @@ exports.analyseQuestions = async (req, res) => {
     // Handle unexpected errors
     return res.status(500).json({
       error:
-        "An unexpected error occurred while generating technical questions for job.",
+        "An unexpected error occurred while generating analyse questions.",
     });
   }
 };
