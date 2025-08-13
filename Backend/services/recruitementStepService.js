@@ -178,7 +178,7 @@ exports.analyseQuestions = async ({ questions, postStep ,user}) => {
     
     const jobId = postStep.postId;
 
-    const interviewId = await saveInterviewDetailsForJob(
+    await saveInterviewDetailsForJob(
       profile,
       analysis.overallScore,
       analysis.skillAnalysis,
