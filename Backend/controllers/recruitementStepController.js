@@ -119,7 +119,6 @@ exports.analyseQuestions = async (req, res) => {
       questions: sanitizedQuestions,
       postStep,
       formData: normalizedFormData,
-      profile,
     });
 
     res.status(200).json(result);
