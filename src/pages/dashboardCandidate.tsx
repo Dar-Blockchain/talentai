@@ -2374,7 +2374,7 @@ export default function DashboardCandidate() {
                         {ad.jobDetails?.description ? ad.jobDetails.description.slice(0, 90) + (ad.jobDetails.description.length > 90 ? '...' : '') : 'No description.'}
                       </Typography>
                       <Box sx={{ mt: 'auto' }}>
-                        <Link href={`/testjob/${ad._id}`} passHref legacyBehavior>
+                        <Link href={`/interview-post/${ad._id}${ad?.post_Steps?.length ? `?stepId=${ad.post_Steps[0]}` : ''}`} passHref legacyBehavior>
                           <Button variant="contained" sx={{ background: '#8310FF', color: '#fff', borderRadius: 2, textTransform: 'none', fontWeight: 600, width: '100%' }}>
                             Learn More
                           </Button>
