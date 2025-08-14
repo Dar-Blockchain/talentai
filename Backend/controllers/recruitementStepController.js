@@ -30,6 +30,8 @@ exports.generateQuestions = async (req, res) => {
       throw new HttpError(500, "post not found in the db");
     }
 
+    console.log(post)
+
     const company = post.user;
     const companyProfile = await Profile.findOne({ userId: company });
     const companyDetails = companyProfile.companyDetails;
@@ -43,7 +45,8 @@ exports.generateQuestions = async (req, res) => {
       postStep,
       post,
       userSkills,
-      jobRequiredSkills
+      jobRequiredSkills,
+      user
     );
 
     res.status(200).json(result);

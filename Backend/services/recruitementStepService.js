@@ -5,6 +5,7 @@ const { HttpError } = require("../utils/httpUtils");
 const { parseAIResponse } = require("../parsers/AIResponseParser");
 const Post = require("../models/PostModel");
 const { handleHROverallScore, saveInterviewDetailsForJob } = require("../utils/evaluationUtils");
+const candidatePostStepProgressService = require("./candidatePostStepProgressService");
 
 const {
   generateHRStepQuestionsPrompts,
@@ -21,7 +22,8 @@ module.exports.generateQuestions = async (
   postStep,
   post,
   userSkills,
-  jobRequiredSkills
+  jobRequiredSkills,
+  user
 ) => {
   try {
     let systemPrompt = "";
@@ -98,6 +100,72 @@ module.exports.generateQuestions = async (
     }
 
     let questions = await parseAIResponse(raw);
+
+    // Créer ou mettre à jour un enregistrement dans candidate_Post_Step_Progress après la génération des questions
+    try {
+      // Récupérer tous les steps du post
+      const postStepsService = require('./postStepsService');
+      const allPostStepsResult = await postStepsService.getPostStepsByPostId(post._id);
+      
+      if (!allPostStepsResult.success) {
+        console.error('Erreur lors de la récupération des steps du post:', allPostStepsResult.error);
+        return { questions, totalQuestions: questions.length };
+      }
+      
+      const allPostSteps = allPostStepsResult.data;
+      
+      // Vérifier si un enregistrement de progression existe déjà pour ce candidat et ce post
+      const existingProgress = await candidatePostStepProgressService.getProgressByCandidateAndPost(user._id, post._id);
+      
+      if (existingProgress.success && existingProgress.data) {
+        // L'enregistrement existe, ajouter les steps manquants
+        const existingStepIds = existingProgress.data.steps.map(step => step.stepId.toString());
+        
+        // Ajouter les steps qui n'existent pas encore
+        allPostSteps.forEach(step => {
+          if (!existingStepIds.includes(step._id.toString())) {
+            existingProgress.data.steps.push({
+              stepId: step._id,
+              status: 'pending',
+              completedAt: null
+            });
+          }
+        });
+        
+        // Mettre à jour l'enregistrement
+        const updateResult = await candidatePostStepProgressService.updateProgress(
+          existingProgress.data._id,
+          { steps: existingProgress.data.steps }
+        );
+        
+        if (!updateResult.success) {
+          console.error('Erreur lors de la mise à jour du progrès:', updateResult.error);
+        }
+      } else {
+        // Créer un nouvel enregistrement avec tous les steps du post
+        const allStepsData = allPostSteps.map(step => ({
+          stepId: step._id,
+          status: 'pending',
+          completedAt: null
+        }));
+        
+        const progressData = {
+          idCandidate: user._id, // ID du candidat (utilisateur connecté)
+          idPost: post._id, // ID du post
+          currentStep: postStep._id, // ID de l'étape courante
+          steps: allStepsData, // Tous les steps du post
+          InterviewDetails: null // À adapter selon votre logique
+        };
+        
+        const progressResult = await candidatePostStepProgressService.createProgress(progressData);
+        if (!progressResult.success) {
+          console.error('Erreur lors de la création du progrès:', progressResult.error);
+        }
+      }
+    } catch (progressError) {
+      console.error('Erreur lors de la création/mise à jour de l\'enregistrement de progression:', progressError);
+      // Ne pas faire échouer la requête principale pour cette erreur
+    }
 
     return { questions, totalQuestions: questions.length };
   } catch (error) {
