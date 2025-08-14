@@ -1,12 +1,10 @@
 const postStepsService = require('../services/postStepsService');
-const candidatePostStepProgressService = require('../services/candidatePostStepProgressService');
 
 class PostStepsController {
   // Créer une nouvelle étape de post (unique ou multiple)
   async createPostStep(req, res) {
     try {
-      const userId = req.user ? req.user._id : null;
-      const result = await postStepsService.createPostStepWithProgress(req.body, userId);
+      const result = await postStepsService.createPostStep(req.body);
       
       if (result.success) {
         const isMultiple = Array.isArray(req.body);
@@ -101,9 +99,8 @@ class PostStepsController {
     try {
       const { postId } = req.params;
       const stepsData = req.body;
-      const userId = req.user ? req.user._id : null;
       
-      const result = await postStepsService.addStepsToPostWithProgress(postId, stepsData, userId);
+      const result = await postStepsService.addStepsToPost(postId, stepsData);
       
       if (result.success) {
         const isMultiple = Array.isArray(stepsData);
