@@ -1,5 +1,6 @@
 const Post_Steps = require('../models/post_StepsModel');
 const Post = require('../models/PostModel');
+const candidatePostStepProgressService = require('./candidatePostStepProgressService');
 
 class PostStepsService {
   // Créer une nouvelle étape de post (unique ou multiple)
@@ -399,6 +400,127 @@ class PostStepsService {
       }).populate('postId', 'title').sort({ 'data.config.nodeNumber': 1 });
       
       return { success: true, data: nodes };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Ajouter des étapes à un post avec création d'enregistrement de progression
+  async addStepsToPostWithProgress(postId, stepsData, userId = null) {
+    try {
+      // Ajouter le postId à chaque étape si pas déjà présent
+      const stepsWithPostId = Array.isArray(stepsData) 
+        ? stepsData.map(step => ({ ...step, postId }))
+        : [{ ...stepsData, postId }];
+      
+      // Traiter chaque étape : créer si elle n'existe pas, mettre à jour si elle existe
+      const results = [];
+      let createdCount = 0;
+      let updatedCount = 0;
+      const createdStepIds = []; // Pour stocker les IDs des étapes créées
+      
+      for (const step of stepsWithPostId) {
+        try {
+          // Vérifier si l'étape existe déjà par son ID
+          const existingStep = await this.getPostStepByNodeId(step.id);
+          
+          if (existingStep.success && existingStep.data) {
+            // L'étape existe, faire une mise à jour
+            const updateResult = await this.updatePostStepByNodeId(step.id, step);
+            if (updateResult.success) {
+              results.push(updateResult.data);
+              updatedCount++;
+            } else {
+              throw new Error(`Erreur lors de la mise à jour de l'étape ${step.id}: ${updateResult.error}`);
+            }
+          } else {
+            // L'étape n'existe pas, la créer
+            const createResult = await this.createPostStep([step]);
+            if (createResult.success) {
+              results.push(createResult.data[0]);
+              createdCount++;
+              // Stocker l'ID de l'étape créée pour créer l'enregistrement de progression
+              createdStepIds.push(createResult.data[0]._id);
+            } else {
+              throw new Error(`Erreur lors de la création de l'étape ${step.id}: ${createResult.error}`);
+            }
+          }
+        } catch (stepError) {
+          throw new Error(`Erreur lors du traitement de l'étape ${step.id}: ${stepError.message}`);
+        }
+      }
+      
+      // Créer un seul enregistrement dans candidate_Post_Step_Progress pour toutes les nouvelles étapes
+      if (createdStepIds.length > 0) {
+        try {
+          // Créer un seul enregistrement avec toutes les étapes créées
+          const progressData = {
+            idCandidate: userId, // ID de l'utilisateur connecté
+            idPost: postId,
+            status: "pending",
+            currentStep: createdStepIds[0], // Première étape comme étape courante
+            steps: createdStepIds, // Toutes les étapes créées
+            InterviewDetails: null // À adapter selon votre logique
+          };
+          
+          const progressResult = await candidatePostStepProgressService.createProgress(progressData);
+          if (!progressResult.success) {
+            console.error('Erreur lors de la création du progrès:', progressResult.error);
+          }
+        } catch (progressError) {
+          console.error('Erreur lors de la création de l\'enregistrement de progression:', progressError);
+          // Ne pas faire échouer la requête principale pour cette erreur
+        }
+      }
+      
+      return {
+        success: true,
+        data: results,
+        count: results.length,
+        created: createdCount,
+        updated: updatedCount
+      };
+      
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Créer des étapes avec enregistrement de progression
+  async createPostStepWithProgress(postStepData, userId = null) {
+    try {
+      const result = await this.createPostStep(postStepData);
+      
+      if (result.success) {
+        // Créer un seul enregistrement dans candidate_Post_Step_Progress pour toutes les nouvelles étapes
+        if (result.data && result.data.length > 0) {
+          try {
+            // Extraire les IDs des étapes créées
+            const stepIds = result.data.map(step => step._id);
+            const firstStep = result.data[0];
+            
+            // Créer un seul enregistrement avec toutes les étapes créées
+            const progressData = {
+              idCandidate: userId, // ID de l'utilisateur connecté
+              idPost: firstStep.postId,
+              status: "pending",
+              currentStep: stepIds[0], // Première étape comme étape courante
+              steps: stepIds, // Toutes les étapes créées
+              InterviewDetails: null // À adapter selon votre logique
+            };
+            
+            const progressResult = await candidatePostStepProgressService.createProgress(progressData);
+            if (!progressResult.success) {
+              console.error('Erreur lors de la création du progrès:', progressResult.error);
+            }
+          } catch (progressError) {
+            console.error('Erreur lors de la création de l\'enregistrement de progression:', progressError);
+            // Ne pas faire échouer la requête principale pour cette erreur
+          }
+        }
+      }
+      
+      return result;
     } catch (error) {
       return { success: false, error: error.message };
     }

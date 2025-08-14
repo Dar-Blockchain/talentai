@@ -5,33 +5,10 @@ class PostStepsController {
   // Créer une nouvelle étape de post (unique ou multiple)
   async createPostStep(req, res) {
     try {
-      const result = await postStepsService.createPostStep(req.body);
+      const userId = req.user ? req.user._id : null;
+      const result = await postStepsService.createPostStepWithProgress(req.body, userId);
       
       if (result.success) {
-        // Créer des enregistrements dans candidate_Post_Step_Progress pour les nouvelles étapes
-        if (result.data && result.data.length > 0) {
-          try {
-            for (const step of result.data) {
-              const progressData = {
-                idCandidate: null, // À adapter selon votre logique
-                idPost: step.postId,
-                status: "pending",
-                currentStep: step._id,
-                steps: [step._id],
-                InterviewDetails: null // À adapter selon votre logique
-              };
-              
-              const progressResult = await candidatePostStepProgressService.createProgress(progressData);
-              if (!progressResult.success) {
-                console.error(`Erreur lors de la création du progrès pour l'étape ${step._id}:`, progressResult.error);
-              }
-            }
-          } catch (progressError) {
-            console.error('Erreur lors de la création des enregistrements de progression:', progressError);
-            // Ne pas faire échouer la requête principale pour cette erreur
-          }
-        }
-        
         const isMultiple = Array.isArray(req.body);
         const message = isMultiple 
           ? `${result.count} étapes de post créées avec succès`
@@ -124,103 +101,45 @@ class PostStepsController {
     try {
       const { postId } = req.params;
       const stepsData = req.body;
+      const userId = req.user ? req.user._id : null;
       
-      // Ajouter le postId à chaque étape si pas déjà présent
-      const stepsWithPostId = Array.isArray(stepsData) 
-        ? stepsData.map(step => ({ ...step, postId }))
-        : [{ ...stepsData, postId }];
+      const result = await postStepsService.addStepsToPostWithProgress(postId, stepsData, userId);
       
-      // Traiter chaque étape : créer si elle n'existe pas, mettre à jour si elle existe
-      const results = [];
-      let createdCount = 0;
-      let updatedCount = 0;
-      const createdStepIds = []; // Pour stocker les IDs des étapes créées
-      
-      for (const step of stepsWithPostId) {
-        try {
-          // Vérifier si l'étape existe déjà par son ID
-          const existingStep = await postStepsService.getPostStepByNodeId(step.id);
-          
-          if (existingStep.success && existingStep.data) {
-            // L'étape existe, faire une mise à jour
-            const updateResult = await postStepsService.updatePostStepByNodeId(step.id, step);
-            if (updateResult.success) {
-              results.push(updateResult.data);
-              updatedCount++;
-            } else {
-              throw new Error(`Erreur lors de la mise à jour de l'étape ${step.id}: ${updateResult.error}`);
-            }
-          } else {
-            // L'étape n'existe pas, la créer
-            const createResult = await postStepsService.createPostStep([step]);
-            if (createResult.success) {
-              results.push(createResult.data[0]);
-              createdCount++;
-              // Stocker l'ID de l'étape créée pour créer l'enregistrement de progression
-              createdStepIds.push(createResult.data[0]._id);
-            } else {
-              throw new Error(`Erreur lors de la création de l'étape ${step.id}: ${createResult.error}`);
-            }
+      if (result.success) {
+        const isMultiple = Array.isArray(stepsData);
+        let message = '';
+        
+        if (isMultiple) {
+          if (result.created > 0 && result.updated > 0) {
+            message = `${result.created} étapes créées et ${result.updated} étapes mises à jour avec succès`;
+          } else if (result.created > 0) {
+            message = `${result.created} étapes créées avec succès`;
+          } else if (result.updated > 0) {
+            message = `${result.updated} étapes mises à jour avec succès`;
           }
-        } catch (stepError) {
-          throw new Error(`Erreur lors du traitement de l'étape ${step.id}: ${stepError.message}`);
-        }
-      }
-      
-      // Créer des enregistrements dans candidate_Post_Step_Progress pour les nouvelles étapes
-      if (createdStepIds.length > 0) {
-        try {
-          // Récupérer tous les candidats qui ont postulé pour ce post
-          // Note: Vous devrez adapter cette partie selon votre logique métier
-          // Pour l'instant, nous créons un enregistrement générique
-          for (const stepId of createdStepIds) {
-            const progressData = {
-              idCandidate: null, // À adapter selon votre logique
-              idPost: postId,
-              status: "pending",
-              currentStep: stepId,
-              steps: [stepId],
-              InterviewDetails: null // À adapter selon votre logique
-            };
-            
-            const progressResult = await candidatePostStepProgressService.createProgress(progressData);
-            if (!progressResult.success) {
-              console.error(`Erreur lors de la création du progrès pour l'étape ${stepId}:`, progressResult.error);
-            }
-          }
-        } catch (progressError) {
-          console.error('Erreur lors de la création des enregistrements de progression:', progressError);
-          // Ne pas faire échouer la requête principale pour cette erreur
-        }
-      }
-      
-      const isMultiple = Array.isArray(stepsData);
-      let message = '';
-      
-      if (isMultiple) {
-        if (createdCount > 0 && updatedCount > 0) {
-          message = `${createdCount} étapes créées et ${updatedCount} étapes mises à jour avec succès`;
-        } else if (createdCount > 0) {
-          message = `${createdCount} étapes créées avec succès`;
-        } else if (updatedCount > 0) {
-          message = `${updatedCount} étapes mises à jour avec succès`;
-        }
-      } else {
-        if (updatedCount > 0) {
-          message = 'Étape mise à jour avec succès';
         } else {
-          message = 'Étape créée avec succès';
+          if (result.updated > 0) {
+            message = 'Étape mise à jour avec succès';
+          } else {
+            message = 'Étape créée avec succès';
+          }
         }
+        
+        return res.status(200).json({
+          success: true,
+          message: message,
+          data: result.data,
+          count: result.count,
+          created: result.created,
+          updated: result.updated
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: 'Erreur lors de l\'ajout des étapes',
+          error: result.error
+        });
       }
-      
-      return res.status(200).json({
-        success: true,
-        message: message,
-        data: results,
-        count: results.length,
-        created: createdCount,
-        updated: updatedCount
-      });
       
     } catch (error) {
       return res.status(500).json({
