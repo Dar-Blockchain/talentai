@@ -83,6 +83,34 @@ class CandidatePostStepProgressController {
     }
   }
 
+  // Récupérer un progrès par idCandidate
+  async findByIdCandidate(req, res) {
+    try {
+      const candidateId  = req.user._id;
+      const result = await candidatePostStepProgressService.findByIdCandidate(candidateId);
+      
+      if (result.success) {
+        return res.status(200).json({
+          success: true,
+          message: 'Progrès récupéré avec succès',
+          data: result.data
+        });
+      } else {
+        return res.status(404).json({
+          success: false,
+          message: 'Progrès non trouvé',
+          error: result.error
+        });
+      }
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Erreur serveur',
+        error: error.message
+      });
+    }
+  }
+
   // Récupérer le progrès d'un candidat pour un post spécifique
   async getProgressByCandidateAndPost(req, res) {
     try {

@@ -43,6 +43,24 @@ class CandidatePostStepProgressService {
     }
   }
 
+  // Récupérer un progrès par idCandidate (premier enregistrement trouvé)
+  async findByIdCandidate(candidateId) {
+    try {
+      const progress = await CandidatePostStepProgress.findOne({ idCandidate: candidateId })
+        .populate('idCandidate', 'name email')
+        .populate('idPost', 'jobDetails.title')
+        .populate('currentStep', 'data.label data.type')
+        .populate('steps.stepId', 'data.label data.type order');
+      
+      if (!progress) {
+        return { success: false, error: 'Progrès non trouvé pour ce candidat' };
+      }
+      return { success: true, data: progress };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
   // Récupérer le progrès d'un candidat pour un post spécifique
   async getProgressByCandidateAndPost(candidateId, postId) {
     try {

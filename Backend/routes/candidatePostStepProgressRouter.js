@@ -10,6 +10,7 @@ router.use(requireAuthUser);
 router.post('/', candidatePostStepProgressController.createProgress);
 router.get('/', candidatePostStepProgressController.getAllProgress);
 router.get('/:id', candidatePostStepProgressController.getProgressById);
+router.get('/getUserProgress', candidatePostStepProgressController.findByIdCandidate);
 router.put('/:id', candidatePostStepProgressController.updateProgress);
 router.delete('/:id', candidatePostStepProgressController.deleteProgress);
 
