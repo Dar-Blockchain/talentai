@@ -4251,7 +4251,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
             <Box sx={{ flex: 2 }}>
               {!selectedJob ? (
-                <Box sx={{ mb: 6 }}>
+                <StyledCard sx={{ mb: 6 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, gap: 2, flexWrap: 'wrap' }}>
                     <Typography variant="h5" sx={{ color: 'black', fontWeight: 800, letterSpacing: 0.2 }}>
                       My Job Posts
@@ -4521,7 +4521,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                       )}
                     </Box>
                   )}
-                </Box>
+                </StyledCard>
               ) : (
                 <Box sx={{ mt: 4 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -5979,12 +5979,14 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
           </Dialog>
 
           {/* Add Company Profiles Section */}
-          <Box sx={{ mt: 6, mb: 6 }}>
-            <Typography variant="h5" sx={{ color: 'black', fontWeight: 700, mb: 3 }}>
-              Company Profiles & Assessments
-            </Typography>
+          <StyledCard sx={{ mt: 6, mb: 6 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, gap: 2, flexWrap: 'wrap' }}>
+              <Typography variant="h5" sx={{ color: 'black', fontWeight: 800, letterSpacing: 0.2 }}>
+                Company Profiles & Assessments
+              </Typography>
+            </Box>
             {renderCompanyProfilesTable()}
-          </Box>
+          </StyledCard>
         </Container>
       </Box>
     </CompanyOnly>
