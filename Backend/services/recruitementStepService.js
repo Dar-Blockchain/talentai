@@ -259,6 +259,53 @@ exports.analyseQuestions = async ({ questions, postStep ,user}) => {
       questions
     );
 
+    // Mettre à jour le statut des steps dans candidate_Post_Step_Progress après l'analyse
+    try {
+      // Récupérer l'enregistrement de progression pour ce candidat et ce post
+      const existingProgress = await candidatePostStepProgressService.getProgressByCandidateAndPost(user._id, jobId);
+      
+      if (existingProgress.success && existingProgress.data) {
+        const progress = existingProgress.data;
+        
+        // Trouver l'index du step actuel
+        const currentStepIndex = progress.steps.findIndex(step => 
+          step.stepId.toString() === postStep._id.toString()
+        );
+        
+        if (currentStepIndex !== -1) {
+          // Marquer le step actuel comme 'done'
+          progress.steps[currentStepIndex].status = 'done';
+          progress.steps[currentStepIndex].completedAt = new Date();
+          
+          // Marquer le step suivant comme 'inProgress' s'il existe
+          if (currentStepIndex + 1 < progress.steps.length) {
+            progress.steps[currentStepIndex + 1].status = 'inProgress';
+            progress.steps[currentStepIndex + 1].completedAt = null;
+            
+            // Mettre à jour le currentStep vers le step suivant
+            progress.currentStep = progress.steps[currentStepIndex + 1].stepId;
+          }
+          
+          // Mettre à jour l'enregistrement
+          const updateResult = await candidatePostStepProgressService.updateProgress(
+            progress._id,
+            { 
+              steps: progress.steps,
+              currentStep: progress.currentStep,
+              updatedAt: new Date()
+            }
+          );
+          
+          if (!updateResult.success) {
+            console.error('Erreur lors de la mise à jour du progrès après analyse:', updateResult.error);
+          }
+        }
+      }
+    } catch (progressError) {
+      console.error('Erreur lors de la mise à jour du progrès après analyse:', progressError);
+      // Ne pas faire échouer la requête principale pour cette erreur
+    }
+
     return { analysis };
   } catch (error) {
     console.error("Error analysing questions:", error);
