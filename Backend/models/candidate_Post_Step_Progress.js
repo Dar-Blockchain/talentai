@@ -25,7 +25,7 @@ const candidate_Post_Step_ProgressSchema = new mongoose.Schema({
   InterviewDetails: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'InterviewDetails',
-    required: true,
+    required: false,
   },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
