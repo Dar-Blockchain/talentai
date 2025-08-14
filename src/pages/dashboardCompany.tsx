@@ -1190,8 +1190,8 @@ As a ${jobDataToUse.jobDetails.title}, you'll be at the heart of our engineering
 
   // Update the renderBidHistory function
   const renderBidHistory = () => (
-    <StyledCard sx={{ mt: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+    <StyledCard sx={{ mt: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <SectionTitle sx={{ mb: 0 }}>Bid History</SectionTitle>
         {data.length > 0 && (
           <Chip
@@ -4251,7 +4251,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
             <Box sx={{ flex: 2 }}>
               {!selectedJob ? (
-                <StyledCard sx={{ mb: 6 }}>
+                <StyledCard sx={{ mb: 3 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, gap: 2, flexWrap: 'wrap' }}>
                     <Typography variant="h5" sx={{ color: 'black', fontWeight: 800, letterSpacing: 0.2 }}>
                       My Job Posts
