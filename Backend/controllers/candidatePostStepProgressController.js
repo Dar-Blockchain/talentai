@@ -87,6 +87,8 @@ class CandidatePostStepProgressController {
   async findByIdCandidate(req, res) {
     try {
       const candidateId  = req.user._id;
+      console.log("candidateId",candidateId)
+
       const result = await candidatePostStepProgressService.findByIdCandidate(candidateId);
       
       if (result.success) {

@@ -46,11 +46,12 @@ class CandidatePostStepProgressService {
   // Récupérer un progrès par idCandidate (premier enregistrement trouvé)
   async findByIdCandidate(candidateId) {
     try {
+      console.log(candidateId)
       const progress = await CandidatePostStepProgress.findOne({ idCandidate: candidateId })
-        .populate('idCandidate', 'name email')
-        .populate('idPost', 'jobDetails.title')
-        .populate('currentStep', 'data.label data.type')
-        .populate('steps.stepId', 'data.label data.type order');
+        .populate('idCandidate')
+        .populate('idPost')
+        .populate('currentStep')
+        .populate('steps.stepId');
       
       if (!progress) {
         return { success: false, error: 'Progrès non trouvé pour ce candidat' };

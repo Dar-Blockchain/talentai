@@ -7,10 +7,10 @@ const {requireAuthUser} = require('../middleware/authMiddleware');
 router.use(requireAuthUser);
 
 // CRUD de base
+router.get('/getUserProgress', candidatePostStepProgressController.findByIdCandidate);
 router.post('/', candidatePostStepProgressController.createProgress);
 router.get('/', candidatePostStepProgressController.getAllProgress);
 router.get('/:id', candidatePostStepProgressController.getProgressById);
-router.get('/getUserProgress', candidatePostStepProgressController.findByIdCandidate);
 router.put('/:id', candidatePostStepProgressController.updateProgress);
 router.delete('/:id', candidatePostStepProgressController.deleteProgress);
 
