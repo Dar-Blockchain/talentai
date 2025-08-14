@@ -207,15 +207,20 @@ const HeaderBadge = styled(Chip)(({ theme }) => ({
 
 const GradientButton = styled(Button)(({ theme }) => ({
   textTransform: 'none',
-  fontWeight: 700,
-  borderRadius: 12,
-  padding: '10px 16px',
-  background: 'linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)',
-  color: '#fff',
-  boxShadow: '0 4px 16px #00B8D433',
+  fontWeight: 800,
+  borderRadius: 999,
+  padding: '10px 18px',
+  height: 42,
+  background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
+  color: '#0f172a',
+  letterSpacing: 0.2,
+  boxShadow: '0 6px 18px rgba(2,226,255,0.3)',
+  border: '1px solid rgba(255,255,255,0.35)',
+  backdropFilter: 'blur(6px)',
   '&:hover': {
-    background: 'linear-gradient(90deg, #00B8D4 0%, #7C4DFF 100%)',
-    boxShadow: '0 6px 20px #7C4DFF33',
+    background: 'linear-gradient(90deg, rgba(2,226,255,0.92) 0%, rgba(0,255,195,0.92) 100%)',
+    boxShadow: '0 10px 24px rgba(2,226,255,0.35)',
+    transform: 'translateY(-1px)'
   },
 }));
 
@@ -3827,7 +3832,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
         minHeight: '100vh',
         backgroundColor: 'white',
 
-        py: 4,
+        py: 2,
       }}>
         {/* Navbar */}
         <AppBar
@@ -4080,7 +4085,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                 </Box>
                 <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
                 {/* Verified chip removed in favor of icon next to name */}
-                  <GradientButton onClick={() => router.push('/recruitment/create-job')}>
+                  <GradientButton onClick={() => router.push('/recruitment/create-job')} endIcon={<AddIcon />}>
                     Post Job
                   </GradientButton>
                 </Box>
