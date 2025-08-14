@@ -3270,7 +3270,6 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
 
     return (
       <>
-
         {assessmentView === 'table' ? (
           <TableContainer component={Paper} sx={{
             backgroundColor: 'white',
