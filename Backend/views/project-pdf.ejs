@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title><%= project.name %> - Project Assessment</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,700,900&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <style>
+    body { font-family: 'Roboto', Arial, sans-serif; background: #f6f8fc; color: #222; }
+    .container { max-width: 900px; margin: 24px auto; background: #fff; border-radius: 28px; box-shadow: 0 8px 32px rgba(60, 80, 140, .10); padding: 42px 50px 30px 50px;}
+    .title { font-size: 2.3rem; font-weight: 900; color: #211964; margin-bottom: 10px;}
+    .desc { color: #666; font-size: 1.05rem; margin-bottom: 32px;}
+    .section { margin-bottom: 32px; }
+    .section-title { font-size: 1.2em; font-weight: 700; color: #211964; margin-bottom: 18px; display: flex; align-items: center;}
+    .icon { font-size: 2rem; margin-right: 10px; }
+    .card { background: #f0f4ff; border-radius: 16px; padding: 22px 28px 18px 28px; box-shadow: 0 2px 10px rgba(40,60,120,.08); margin-bottom: 14px;}
+    .chip { display: inline-block; font-weight: 700; font-size: 16px; padding: 5px 20px; border-radius: 22px; margin-left: 8px; color: #fff;}
+    .chip.green { background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%); }
+    .chip.yellow { background: linear-gradient(90deg, #ff9800 0%, #ffc107 100%); }
+    .chip.red { background: linear-gradient(90deg, #e53935 0%, #ff6a00 100%); }
+    .chip.grey { background: #e0e0e0; color: #444; }
+    ul { padding-left: 25px;}
+    .section-divider { border-top: 1.5px solid #ececec; margin: 18px 0 18px 0;}
+    .list-title { font-weight: 700; margin-top: 12px;}
+    .score-box { display: flex; align-items: center; margin-bottom: 8px;}
+    .elig { display: flex; align-items: center; margin-bottom: 6px;}
+    .elig .chip { margin-left: 8px; }
+    .team {margin-top: 8px;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title"><%= project.name %></div>
+    <div class="desc"><%= project.description %></div>
+    <!-- Technical Assessment -->
+    <div class="section">
+      <div class="section-title"><span class="material-icons icon">science</span>Technical Assessment <span class="chip <%= renderScoreClass(assessment.technicalData?.overallScore) %>"><%= renderScoreText(assessment.technicalData?.overallScore) %></span></div>
+      <div class="section-divider"></div>
+      <div class="card">
+        <b>Summary :</b> <%= assessment.technicalData?.summary || "No summary provided." %>
+      </div>
+      <% if (assessment.technicalData && Array.isArray(assessment.technicalData.techStack)) { %>
+        <% assessment.technicalData.techStack.forEach(stack => { %>
+          <div class="card">
+            <div class="score-box">
+              <span class="material-icons icon">construction</span>
+              <b><%= stack.title %></b> (<%= stack.componentType %>)
+              <span class="chip <%= renderScoreClass(stack.score) %>"><%= renderScoreText(stack.score) %></span>
+            </div>
+            <div>Complexity: <%= stack.complexity %>, Modernity: <%= stack.modernity %></div>            
+          </div>
+        <% }) %>
+      <% } %>
+      <% if(assessment.technicalData && assessment.technicalData.architecture) { %>
+        <div class="card">
+          <div class="score-box">
+            <span class="material-icons icon">account_tree</span>
+            <b>Architecture</b> (<%= assessment.technicalData.architecture.type %>)
+            <span class="chip <%= renderScoreClass(assessment.technicalData.architecture.score) %>"><%= renderScoreText(assessment.technicalData.architecture.score) %></span>
+          </div>         
+        </div>
+      <% } %>
+      <% if(assessment.technicalData && assessment.technicalData.scalabilityApproach) { %>
+        <div class="card">
+          <div class="score-box">
+            <span class="material-icons icon">show_chart</span>
+            <b>Scalability Approach</b>
+            <span class="chip <%= renderScoreClass(assessment.technicalData.scalabilityApproach.score) %>"><%= renderScoreText(assessment.technicalData.scalabilityApproach.score) %></span>
+          </div>          
+        </div>
+      <% } %>
+    </div>
+    <!-- Business Assessment -->
+    <div class="section">
+      <div class="section-title"><span class="material-icons icon">business_center</span>Business Assessment <span class="chip <%= renderScoreClass(assessment.businessData?.overallScore) %>"><%= renderScoreText(assessment.businessData?.overallScore) %></span></div>
+      <div class="section-divider"></div>
+      <div class="card">
+        <b>Summary :</b> <%= assessment.businessData?.summary || "No summary provided." %>
+      </div>
+      <!-- Ajoute ici toutes les sous-sections business (businessModel, marketPotential, competitors, innovation, etc) avec la même logique que plus haut ! -->
+    </div>
+    <!-- Combined Score -->
+    <div class="section">
+      <div class="section-title"><span class="material-icons icon">star</span>Combined Score</div>
+      <div class="card"><span class="chip <%= renderScoreClass(assessment.overallScore) %>"><%= renderScoreText(assessment.overallScore) %></span></div>
+    </div>
+    <!-- Eligibility -->
+    <div class="section">
+      <div class="section-title"><span class="material-icons icon">warning_amber</span>Eligibility</div>
+      <div class="card elig">
+        <b>Status:</b>
+        <span class="chip <%= assessment.eligibility.isEligible ? 'green' : 'red' %>"><%= assessment.eligibility.isEligible ? 'Eligible' : 'Not Eligible' %></span>
+      </div>
+      <% if(Array.isArray(assessment.eligibility.checks)) { %>
+        <ul>
+        <% assessment.eligibility.checks.forEach(check => { %>
+          <li>
+            <b><%= check.type %>:</b>
+            <span style="color: <%= check.status === 'IS_ELIGIBLE' ? '#43e97b' : check.status === 'IS_NOT_ELIGIBLE' ? '#e53935' : '#ff9800' %>"><%= check.status.replace(/_/g, ' ').toLowerCase() %></span>
+          </li>
+        <% }) %>
+        </ul>
+      <% } %>
+    </div>
+    <!-- Team -->    
+  </div>
+</body>
+</html>

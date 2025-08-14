@@ -1,0 +1,233 @@
+.team {
+  padding: 120px 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.05) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.team::before,
+.team::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(2, 226, 255, 0.5), transparent);
+}
+
+.team::before {
+  top: 0;
+}
+
+.team::after {
+  bottom: 0;
+}
+
+.teamContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  position: relative;
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: 4rem;
+  position: relative;
+}
+
+.sectionTitle {
+  font-size: 3.5rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+  transform: translateX(-50%);
+  letter-spacing: -0.02em;
+  position: relative; 
+}
+
+.sectionTitle::after {
+  content: '';
+  position: absolute;
+  bottom: -15px;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, #02E2FF, transparent);
+  border-radius: 2px;
+}
+
+.sectionSubtitle {
+  font-size: 1.3rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 4rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.teamGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2.5rem;
+  margin-top: 3rem;
+  position: relative;
+}
+
+.teamCard {
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  padding: 2.5rem;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(2, 226, 255, 0.15);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.teamImageContainer {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 2rem;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid rgba(2, 226, 255, 0.3);
+  box-shadow: 0 15px 35px rgba(2, 226, 255, 0.15);
+}
+
+.teamImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(1.05) contrast(1.05);
+}
+
+.teamInfo {
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.teamName {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  color: #fff;
+  background: linear-gradient(135deg, #fff 0%, #02E2FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+}
+
+.teamRole {
+  font-size: 1.2rem;
+  color: #02E2FF;
+  margin-bottom: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  opacity: 0.95;
+  text-shadow: 0 2px 4px rgba(2, 226, 255, 0.2);
+}
+
+.teamBio {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.7;
+  margin-top: 1rem;
+  position: relative;
+  padding-top: 1.25rem;
+  font-weight: 400;
+}
+
+.teamBio::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #02E2FF, transparent);
+  border-radius: 2px;
+}
+
+@media (max-width: 1024px) {
+  .sectionTitle {
+    font-size: 3rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .team {
+    padding: 80px 0;
+  }
+
+  .sectionTitle {
+    font-size: 2.5rem;
+  }
+
+  .sectionSubtitle {
+    font-size: 1.1rem;
+    margin-bottom: 3rem;
+  }
+
+  .teamImageContainer {
+    width: 180px;
+    height: 180px;
+  }
+
+  .teamName {
+    font-size: 1.6rem;
+  }
+
+  .teamRole {
+    font-size: 1.1rem;
+  }
+
+  .teamBio {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .teamGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .teamCard {
+    padding: 2rem;
+  }
+
+  .sectionTitle {
+    font-size: 2rem;
+  }
+
+  .teamImageContainer {
+    width: 160px;
+    height: 160px;
+  }
+
+  .teamName {
+    font-size: 1.4rem;
+  }
+
+  .teamRole {
+    font-size: 1rem;
+  }
+
+  .teamBio {
+    font-size: 0.9rem;
+  }
+} 

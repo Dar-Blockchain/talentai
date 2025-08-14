@@ -1,0 +1,63 @@
+const express = require('express');
+const router = express.Router();
+const profileController = require('../controllers/profileController');
+
+// Importez les middlewares
+const { requireAuthUser } = require('../middleware/authMiddleware');
+const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
+
+
+router.use(requireAuthUser, authLogMiddleware("Profile"));
+
+
+// Créer ou mettre à jour un profil
+router.post('/createOrUpdateProfile', profileController.createOrUpdateProfile);
+
+// Créer ou mettre à jour un profil entreprise
+router.post('/createOrUpdateCompanyProfile', profileController.createOrUpdateCompanyProfile);
+
+// Récupérer le profil de l'utilisateur connecté
+router.get('/getMyProfile', profileController.getMyProfile);
+
+// Récupérer un profil par ID utilisateur
+router.get('/getProfileById/:userId', profileController.getProfileById);
+
+// Récupérer tous les profils
+router.get('/getAllProfiles', profileController.getAllProfiles);
+
+// Supprimer un profil
+router.delete('/deleteProfile', profileController.deleteProfile);
+
+// Rechercher des profils par compétences
+router.get('/search/skills', profileController.searchProfilesBySkills);
+
+// Ajouter des soft skills
+router.post('/addSoftSkills', profileController.addSoftSkills); 
+
+// Récupérer les soft skills
+router.get('/getSoftSkills', profileController.getSoftSkills);
+
+router.get('/getCompanyBid', profileController.getCompanyBids);
+
+// Récupérer les soft skills par ID
+router.get('/getSoftSkillsById/:userId', profileController.getSoftSkills);
+
+router.put('/updateFinalBid', profileController.updateFinalBid);
+
+router.delete('/deleteHardSkill', profileController.deleteHardSkill);
+
+router.delete('/deleteSoftSkills', profileController.deleteSoftSkill);
+
+router.get('/getCompanyWithAssessments/:jobId?', profileController.getCompanyWithAssessments);
+
+router.get("/company/stats/total", profileController.getTotalCompanies);
+
+router.get("/company/stats/active-posts", profileController.getCompaniesWithActivePosts);
+
+router.get("/company/stats/top-hiring", profileController.getTopHiringCompanies);
+
+router.get("/company/stats/recent-active", profileController.getRecentActiveCompanies);
+
+router.get("/company/stats/top-industries", profileController.getTopIndustries);
+
+module.exports = router; 

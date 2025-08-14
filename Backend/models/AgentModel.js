@@ -1,0 +1,51 @@
+const mongoose = require("mongoose");
+
+const agentSchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true },
+  avatarName: { 
+    type: String, 
+    required: true, 
+    enum: ["sinda", "olga", "jaaf", "sam", "julia", "yuka"],
+    unique: true
+  },
+  role: { type: String, required: true },
+  description: { type: String },
+  isActive: { type: Boolean, default: true },
+  hederaAccountId: { type: String },
+  hederaPrivateKey: { type: String },
+  hederaPublicKey: { type: String },
+  
+  // HCS-11 Profile Fields
+  hcs11Profile: { 
+    type: mongoose.Schema.Types.Mixed,
+    description: "Complete HCS-11 compliant agent profile"
+  },
+  inboundTopicId: { 
+    type: String,
+    description: "Hedera topic ID for receiving messages"
+  },
+  outboundTopicId: { 
+    type: String,
+    description: "Hedera topic ID for sending messages"
+  },
+  profileRegistrationId: {
+    type: String,
+    description: "HCS-11 profile registration message ID"
+  },
+  profileId: {
+    type: String,
+    description: "Unique HCS-11 profile identifier"
+  },
+  deploymentMessageId: {
+    type: String,
+    description: "HCS-11 profile deployment message ID on consensus network"
+  },
+  
+  // Legacy fields for backwards compatibility
+  accountId: { type: String },
+  privkey: { type: String },
+  pubkey: { type: String },
+  createdAt: { type: Date, default: Date.now },
+});
+
+module.exports = mongoose.model("Agent", agentSchema);
