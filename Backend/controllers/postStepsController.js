@@ -1,4 +1,5 @@
 const postStepsService = require('../services/postStepsService');
+const candidatePostStepProgressService = require('../services/candidatePostStepProgressService');
 
 class PostStepsController {
   // Créer une nouvelle étape de post (unique ou multiple)
@@ -7,6 +8,30 @@ class PostStepsController {
       const result = await postStepsService.createPostStep(req.body);
       
       if (result.success) {
+        // Créer des enregistrements dans candidate_Post_Step_Progress pour les nouvelles étapes
+        if (result.data && result.data.length > 0) {
+          try {
+            for (const step of result.data) {
+              const progressData = {
+                idCandidate: null, // À adapter selon votre logique
+                idPost: step.postId,
+                status: "pending",
+                currentStep: step._id,
+                steps: [step._id],
+                InterviewDetails: null // À adapter selon votre logique
+              };
+              
+              const progressResult = await candidatePostStepProgressService.createProgress(progressData);
+              if (!progressResult.success) {
+                console.error(`Erreur lors de la création du progrès pour l'étape ${step._id}:`, progressResult.error);
+              }
+            }
+          } catch (progressError) {
+            console.error('Erreur lors de la création des enregistrements de progression:', progressError);
+            // Ne pas faire échouer la requête principale pour cette erreur
+          }
+        }
+        
         const isMultiple = Array.isArray(req.body);
         const message = isMultiple 
           ? `${result.count} étapes de post créées avec succès`
@@ -109,6 +134,7 @@ class PostStepsController {
       const results = [];
       let createdCount = 0;
       let updatedCount = 0;
+      const createdStepIds = []; // Pour stocker les IDs des étapes créées
       
       for (const step of stepsWithPostId) {
         try {
@@ -130,12 +156,41 @@ class PostStepsController {
             if (createResult.success) {
               results.push(createResult.data[0]);
               createdCount++;
+              // Stocker l'ID de l'étape créée pour créer l'enregistrement de progression
+              createdStepIds.push(createResult.data[0]._id);
             } else {
               throw new Error(`Erreur lors de la création de l'étape ${step.id}: ${createResult.error}`);
             }
           }
         } catch (stepError) {
           throw new Error(`Erreur lors du traitement de l'étape ${step.id}: ${stepError.message}`);
+        }
+      }
+      
+      // Créer des enregistrements dans candidate_Post_Step_Progress pour les nouvelles étapes
+      if (createdStepIds.length > 0) {
+        try {
+          // Récupérer tous les candidats qui ont postulé pour ce post
+          // Note: Vous devrez adapter cette partie selon votre logique métier
+          // Pour l'instant, nous créons un enregistrement générique
+          for (const stepId of createdStepIds) {
+            const progressData = {
+              idCandidate: null, // À adapter selon votre logique
+              idPost: postId,
+              status: "pending",
+              currentStep: stepId,
+              steps: [stepId],
+              InterviewDetails: null // À adapter selon votre logique
+            };
+            
+            const progressResult = await candidatePostStepProgressService.createProgress(progressData);
+            if (!progressResult.success) {
+              console.error(`Erreur lors de la création du progrès pour l'étape ${stepId}:`, progressResult.error);
+            }
+          }
+        } catch (progressError) {
+          console.error('Erreur lors de la création des enregistrements de progression:', progressError);
+          // Ne pas faire échouer la requête principale pour cette erreur
         }
       }
       
