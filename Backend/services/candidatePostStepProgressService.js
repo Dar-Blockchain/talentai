@@ -265,6 +265,86 @@ class CandidatePostStepProgressService {
       return { success: false, error: error.message };
     }
   }
+
+  // Mettre à jour le statut d'une étape spécifique
+  async updateStepStatus(progressId, stepId, newStatus) {
+    try {
+      const progress = await CandidatePostStepProgress.findById(progressId);
+      if (!progress) {
+        return { success: false, error: 'Progrès non trouvé' };
+      }
+
+      // Trouver l'étape dans le tableau steps
+      const stepIndex = progress.steps.findIndex(step => 
+        step.stepId.toString() === stepId.toString()
+      );
+
+      if (stepIndex === -1) {
+        return { success: false, error: 'Étape non trouvée dans ce progrès' };
+      }
+
+      // Mettre à jour le statut de l'étape
+      progress.steps[stepIndex].status = newStatus;
+      
+      // Si l'étape est terminée, ajouter la date de completion
+      if (newStatus === 'done') {
+        progress.steps[stepIndex].completedAt = new Date();
+      } else {
+        progress.steps[stepIndex].completedAt = null;
+      }
+
+      // Mettre à jour le statut global si nécessaire
+      const allStepsDone = progress.steps.every(step => step.status === 'done');
+      if (allStepsDone) {
+        progress.status = 'done';
+      } else if (progress.steps.some(step => step.status === 'inProgress')) {
+        progress.status = 'inProgress';
+      }
+
+      progress.updatedAt = new Date();
+      await progress.save();
+
+      return { success: true, data: progress };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Récupérer le progrès d'un candidat avec les détails des étapes
+  async getProgressWithStepDetails(candidateId, postId) {
+    try {
+      const progress = await CandidatePostStepProgress.findOne({
+        idCandidate: candidateId,
+        idPost: postId
+      })
+      .populate('idCandidate', 'name email')
+      .populate('idPost', 'jobDetails.title')
+      .populate('currentStep', 'data.label data.type')
+      .populate('steps.stepId', 'data.label data.type order');
+      
+      if (!progress) {
+        return { success: false, error: 'Progrès non trouvé' };
+      }
+      return { success: true, data: progress };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Marquer une étape comme en cours
+  async startStep(progressId, stepId) {
+    return this.updateStepStatus(progressId, stepId, 'inProgress');
+  }
+
+  // Marquer une étape comme terminée
+  async completeStep(progressId, stepId) {
+    return this.updateStepStatus(progressId, stepId, 'done');
+  }
+
+  // Réinitialiser une étape
+  async resetStep(progressId, stepId) {
+    return this.updateStepStatus(progressId, stepId, 'pending');
+  }
 }
 
 module.exports = new CandidatePostStepProgressService(); 

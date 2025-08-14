@@ -453,15 +453,19 @@ class PostStepsService {
       // Créer un seul enregistrement dans candidate_Post_Step_Progress pour toutes les nouvelles étapes
       if (createdStepIds.length > 0) {
         try {
-          // Créer un seul enregistrement avec toutes les étapes créées
-          const progressData = {
-            idCandidate: userId, // ID de l'utilisateur connecté
-            idPost: postId,
-            status: "pending",
-            currentStep: createdStepIds[0], // Première étape comme étape courante
-            steps: createdStepIds, // Toutes les étapes créées
-            InterviewDetails: null // À adapter selon votre logique
-          };
+                     // Créer un seul enregistrement avec toutes les étapes créées
+           const progressData = {
+             idCandidate: userId, // ID de l'utilisateur connecté
+             idPost: postId,
+             status: "pending",
+             currentStep: createdStepIds[0], // Première étape comme étape courante
+             steps: createdStepIds.map(stepId => ({
+               stepId: stepId,
+               status: 'pending',
+               completedAt: null
+             })), // Toutes les étapes créées avec leur statut
+             InterviewDetails: null // À adapter selon votre logique
+           };
           
           const progressResult = await candidatePostStepProgressService.createProgress(progressData);
           if (!progressResult.success) {
@@ -499,15 +503,19 @@ class PostStepsService {
             const stepIds = result.data.map(step => step._id);
             const firstStep = result.data[0];
             
-            // Créer un seul enregistrement avec toutes les étapes créées
-            const progressData = {
-              idCandidate: userId, // ID de l'utilisateur connecté
-              idPost: firstStep.postId,
-              status: "pending",
-              currentStep: stepIds[0], // Première étape comme étape courante
-              steps: stepIds, // Toutes les étapes créées
-              InterviewDetails: null // À adapter selon votre logique
-            };
+                         // Créer un seul enregistrement avec toutes les étapes créées
+             const progressData = {
+               idCandidate: userId, // ID de l'utilisateur connecté
+               idPost: firstStep.postId,
+               status: "pending",
+               currentStep: stepIds[0], // Première étape comme étape courante
+               steps: stepIds.map(stepId => ({
+                 stepId: stepId,
+                 status: 'pending',
+                 completedAt: null
+               })), // Toutes les étapes créées avec leur statut
+               InterviewDetails: null // À adapter selon votre logique
+             };
             
             const progressResult = await candidatePostStepProgressService.createProgress(progressData);
             if (!progressResult.success) {
