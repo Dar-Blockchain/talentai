@@ -121,16 +121,20 @@ module.exports.generateQuestions = async (
         // L'enregistrement existe, ajouter les steps manquants
         const existingStepIds = existingProgress.data.steps.map(step => step.stepId.toString());
         
-        // Ajouter les steps qui n'existent pas encore
-        allPostSteps.forEach(step => {
-          if (!existingStepIds.includes(step._id.toString())) {
-            existingProgress.data.steps.push({
-              stepId: step._id,
-              status: 'pending',
-              completedAt: null
-            });
-          }
-        });
+                 // Ajouter les steps qui n'existent pas encore
+         allPostSteps.forEach((step, index) => {
+           if (!existingStepIds.includes(step._id.toString())) {
+             // Si c'est le premier step ajouté et qu'il n'y a pas encore de step inProgress, le marquer comme inProgress
+             const hasInProgressStep = existingProgress.data.steps.some(s => s.status === 'inProgress');
+             const isFirstNewStep = existingProgress.data.steps.length === 0;
+             
+             existingProgress.data.steps.push({
+               stepId: step._id,
+               status: (isFirstNewStep || !hasInProgressStep) ? 'inProgress' : 'pending',
+               completedAt: null
+             });
+           }
+         });
         
         // Mettre à jour l'enregistrement
         const updateResult = await candidatePostStepProgressService.updateProgress(
@@ -141,21 +145,21 @@ module.exports.generateQuestions = async (
         if (!updateResult.success) {
           console.error('Erreur lors de la mise à jour du progrès:', updateResult.error);
         }
-      } else {
-        // Créer un nouvel enregistrement avec tous les steps du post
-        const allStepsData = allPostSteps.map(step => ({
-          stepId: step._id,
-          status: 'pending',
-          completedAt: null
-        }));
-        
-        const progressData = {
-          idCandidate: user._id, // ID du candidat (utilisateur connecté)
-          idPost: post._id, // ID du post
-          currentStep: postStep._id, // ID de l'étape courante
-          steps: allStepsData, // Tous les steps du post
-          InterviewDetails: null // À adapter selon votre logique
-        };
+             } else {
+         // Créer un nouvel enregistrement avec tous les steps du post
+         const allStepsData = allPostSteps.map((step, index) => ({
+           stepId: step._id,
+           status: index === 0 ? 'inProgress' : 'pending', // Premier step = inProgress, autres = pending
+           completedAt: null
+         }));
+         
+         const progressData = {
+           idCandidate: user._id, // ID du candidat (utilisateur connecté)
+           idPost: post._id, // ID du post
+           currentStep: postStep._id, // ID de l'étape courante
+           steps: allStepsData, // Tous les steps du post
+           InterviewDetails: null // À adapter selon votre logique
+         };
         
         const progressResult = await candidatePostStepProgressService.createProgress(progressData);
         if (!progressResult.success) {
