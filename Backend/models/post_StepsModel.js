@@ -39,7 +39,12 @@ const postStepSchema = new mongoose.Schema({
   height: Number,
   selected: Boolean,
   dragging: Boolean,
-
+  status: {
+    type: String,
+    enum: ['pending', 'inProgress', 'done'],
+    default: 'pending',
+    required: true
+  },
   data: dataSchema,
   connections: [connectionSchema],
 }, {
