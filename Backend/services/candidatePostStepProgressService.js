@@ -90,7 +90,9 @@ class CandidatePostStepProgressService {
         .populate('idPost', 'jobDetails.title')
         .populate('currentStep', 'data.label data.type')
         .sort({ updatedAt: -1 });
-      return { success: true, data: progress };
+      
+      // Return empty array if no progress found (this is not an error)
+      return { success: true, data: progress || [] };
     } catch (error) {
       return { success: false, error: error.message };
     }

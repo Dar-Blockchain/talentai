@@ -208,33 +208,74 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
       if (!token) {
         throw new Error('No authentication token found');
       }
+      
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/';
+      const apiUrl = `${apiBaseUrl}candidate-progress/getUserProgress`;
+      console.log('Fetching from:', apiUrl);
+      console.log('Token exists:', !!token);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}candidate-progress/getUserProgress`, {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+        // Try to parse error response, but handle cases where it might not be JSON
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (parseError) {
+          console.log('Could not parse error response as JSON, using status text');
+        }
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
+      console.log('API Response:', result);
       
-             if (result.success) {
-         // Handle both single object and array responses
-         const progressData = Array.isArray(result.data) ? result.data : [result.data];
-         setCandidateProgress(progressData);
-         console.log('Candidate Progress Data:', progressData);
-       } else {
-        throw new Error(result.message || 'Failed to fetch progress data');
+      if (result.success) {
+        // Handle both single object and array responses
+        const progressData = Array.isArray(result.data) ? result.data : [result.data];
+        setCandidateProgress(progressData);
+        console.log('Candidate Progress Data:', progressData);
+      } else {
+        // Check if it's a "no progress found" error (which is not a real error)
+        if (result.message && result.message.includes('Progrès non trouvé')) {
+          // This is not an error - just no progress data yet
+          console.log('No progress data found - this is normal for new users');
+          setCandidateProgress([]);
+          setProgressError(null);
+        } else {
+          throw new Error(result.message || 'Failed to fetch progress data');
+        }
       }
     } catch (error) {
       console.error('Error fetching candidate progress:', error);
-      setProgressError(error instanceof Error ? error.message : 'An error occurred');
+      
+      // Handle specific error cases
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          setProgressError('Request timed out. Please try again.');
+        } else if (error.message.includes('Progrès non trouvé')) {
+          // This is not a real error - just no data
+          setProgressError(null);
+          setCandidateProgress([]);
+        } else {
+          setProgressError(error.message);
+        }
+      } else {
+        setProgressError('An unexpected error occurred');
+      }
     } finally {
       setProgressLoading(false);
     }
@@ -1125,16 +1166,17 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                              const nextStep = progress.steps?.find(step => step.status === 'pending') || 
                                             progress.steps?.find(step => step.status === 'inProgress');
                             
-                            if (nextStep) {
-                              // Navigate with step ID from steps
-                              router.push(`/interview-post/${progress.idPost?._id}?stepId=${nextStep.stepId?._id || nextStep._id}`);
-                            } else if (progress.currentStep) {
-                              // Use current step ID
-                              router.push(`/interview-post/${progress.idPost?._id}?stepId=${progress.currentStep._id}`);
-                            } else {
-                              // Fallback to just the post ID
-                              router.push(`/interview-post/${progress.idPost?._id}`);
-                            }
+                                                         if (nextStep) {
+                               // Navigate with step ID from steps - stepId is an object containing _id
+                               const stepId = nextStep.stepId
+                               router.push(`/interview-post/${progress.idPost?._id}?stepId=${stepId}`);
+                             } else if (progress.currentStep) {
+                               // Use current step ID
+                               router.push(`/interview-post/${progress.idPost?._id}?stepId=${progress.currentStep._id}`);
+                             } else {
+                               // Fallback to just the post ID
+                               router.push(`/interview-post/${progress.idPost?._id}`);
+                             }
                           }}
                           sx={{
                             backgroundColor: '#02E2FF',
