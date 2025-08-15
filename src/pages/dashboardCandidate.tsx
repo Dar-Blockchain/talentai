@@ -1733,21 +1733,24 @@ export default function DashboardCandidate() {
                   variant="contained"
                   startIcon={<PlayArrowIcon />}
                   onClick={() => handleStartTest()}
-                  disabled={profile.quota >= 5}
+                  disabled={profile?.quota >= 5}
                   sx={{
-                    background: profile.quota >= 5 
-                      ? "rgba(255,255,255,0.1)" 
+                    background: profile?.quota >= 5 
+                      ? "rgba(128,128,128,0.3)" 
                       : "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.2) 100%)",
-                    color: "#ffffff",
+                    color: profile?.quota >= 5 ? "#888888" : "#ffffff",
                     width: { xs: "100%", sm: "auto" },
+                    cursor: profile?.quota >= 5 ? "not-allowed" : "pointer",
+                    border: "1px solid rgba(255,255,255,0.2)",
                     "&:hover": {
-                      background: profile.quota >= 5 
-                        ? "rgba(255,255,255,0.1)" 
+                      background: profile?.quota >= 5 
+                        ? "rgba(128,128,128,0.3)" 
                         : "linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.3) 100%)",
                     },
                     "&.Mui-disabled": {
-                      background: "rgba(255,255,255,0.1)",
-                      color: "rgba(255,255,255,0.5)",
+                      background: "rgba(128,128,128,0.3)",
+                      color: "#888888",
+                      cursor: "not-allowed",
                     },
                   }}
                 >
@@ -1757,12 +1760,20 @@ export default function DashboardCandidate() {
                   variant="contained"
                   startIcon={<PersonIcon />}
                   onClick={() => router.push("/interviewTest")}
+                  disabled={profile?.quota >= 5}
                   sx={{
-                    background: "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.2) 100%)",
-                    color: "#ffffff",
+                    background: profile?.quota >= 5
+                      ? "linear-gradient(135deg, rgba(128,128,128,0.3) 0%, rgba(128,128,128,0.2) 100%)"
+                      : "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.2) 100%)",
+                    color: profile?.quota >= 5 ? "#888888" : "#ffffff",
                     width: { xs: "100%", sm: "auto" },
                     "&:hover": {
-                      background: "linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.3) 100%)",
+                      background: profile?.quota >= 5
+                        ? "linear-gradient(135deg, rgba(128,128,128,0.3) 0%, rgba(128,128,128,0.2) 100%)"
+                        : "linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.3) 100%)",
+                    },
+                    "&:disabled": {
+                      cursor: "not-allowed",
                     },
                   }}
                 >
