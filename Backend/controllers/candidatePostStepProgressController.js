@@ -89,7 +89,7 @@ class CandidatePostStepProgressController {
       const candidateId  = req.user._id;
       console.log("candidateId",candidateId)
 
-      const result = await candidatePostStepProgressService.findByIdCandidate(candidateId);
+      const result = await candidatePostStepProgressService.getProgressByCandidate(candidateId);
       
       if (result.success) {
         return res.status(200).json({
