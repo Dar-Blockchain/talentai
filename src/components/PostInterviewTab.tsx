@@ -432,7 +432,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
             </Card>
           </Box>
           
-          <Box sx={{ flex: '1 1 250px', minWidth: '250px' }}>
+          {/* <Box sx={{ flex: '1 1 250px', minWidth: '250px' }}>
             <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' }}>
               <CardContent sx={{ color: 'white' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -446,7 +446,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                 </Box>
               </CardContent>
             </Card>
-          </Box>
+          </Box> */}
         </Box>
 
       {/* Candidate Progress Section */}
