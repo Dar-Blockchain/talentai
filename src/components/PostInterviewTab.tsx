@@ -1166,16 +1166,17 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                              const nextStep = progress.steps?.find(step => step.status === 'pending') || 
                                             progress.steps?.find(step => step.status === 'inProgress');
                             
-                            if (nextStep) {
-                              // Navigate with step ID from steps
-                              router.push(`/interview-post/${progress.idPost?._id}?stepId=${nextStep.stepId?._id || nextStep._id}`);
-                            } else if (progress.currentStep) {
-                              // Use current step ID
-                              router.push(`/interview-post/${progress.idPost?._id}?stepId=${progress.currentStep._id}`);
-                            } else {
-                              // Fallback to just the post ID
-                              router.push(`/interview-post/${progress.idPost?._id}`);
-                            }
+                                                         if (nextStep) {
+                               // Navigate with step ID from steps - stepId is an object containing _id
+                               const stepId = nextStep.stepId
+                               router.push(`/interview-post/${progress.idPost?._id}?stepId=${stepId}`);
+                             } else if (progress.currentStep) {
+                               // Use current step ID
+                               router.push(`/interview-post/${progress.idPost?._id}?stepId=${progress.currentStep._id}`);
+                             } else {
+                               // Fallback to just the post ID
+                               router.push(`/interview-post/${progress.idPost?._id}`);
+                             }
                           }}
                           sx={{
                             backgroundColor: '#02E2FF',
