@@ -63,6 +63,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { toast } from "react-hot-toast";
 import { generateTodos } from "@/store/slices/todoSlice";
 import CandidateOnly from "../components/CandidateOnly";
+import PostInterviewTab from "../components/PostInterviewTab";
 import { useCallback } from 'react';
 import Link from "next/link";
 import Popover from '@mui/material/Popover';
@@ -3357,6 +3358,7 @@ const INTERVIEW_TYPES = [
   { label: 'Onboarding', value: 'onboarding' },
   { label: 'HR', value: 'hr' },
   { label: 'Skill', value: 'skill' },
+  { label: 'Post Interview', value: 'post_interview' },
 ];
 
 // Interview pipeline stages (only for Post section) - Sequential order
@@ -3992,6 +3994,8 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
                 </Box>
               )}
             </>
+          ) : tab === 'post_interview' ? (
+            <PostInterviewTab data={data} loading={loading} error={error} />
           ) : (
             /* Original Table Design for Other Tabs */
             <Box>
@@ -4154,7 +4158,7 @@ function TeamMemberProjectsCard() {
             No Team Projects Yet
           </Typography>
           <Typography variant="body2" sx={{ color: '#555', maxWidth: 520, mx: 'auto' }}>
-            You aren’t part of any team projects right now. When you join a team, your projects will appear here with progress and details.
+            You aren't part of any team projects right now. When you join a team, your projects will appear here with progress and details.
           </Typography>
         </Paper>
       </Box>
@@ -4462,7 +4466,7 @@ function LeaderProjectsCard() {
             No Leader Projects Yet
           </Typography>
           <Typography variant="body2" sx={{ color: '#555', maxWidth: 520, mx: 'auto' }}>
-            You haven’t created any projects as a leader yet. Create a project to manage your team, track progress, and showcase outcomes here.
+            You haven't created any projects as a leader yet. Create a project to manage your team, track progress, and showcase outcomes here.
           </Typography>
         </Paper>
       </Box>

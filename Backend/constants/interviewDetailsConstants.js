@@ -8,7 +8,8 @@ const INTERVIEW_TYPES = Object.freeze({
   POST: "post",
   ONBOARDING: "onboarding",
   HR: "hr",
-  SKILL: "skill"
+  SKILL: "skill",
+  POST_INTERVIEW: "post_interview"
 });
 
 module.exports = { ANSWER_STATUS, INTERVIEW_TYPES };
