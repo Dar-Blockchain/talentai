@@ -294,8 +294,7 @@ interface SpeechRecognitionError extends Event {
 interface Question {
   id: string;
   text: string;
-  skill: string;
-  level: string;
+
 }
 
 interface JobQuestionsResponse {
@@ -399,8 +398,6 @@ const Test = () => {
             return {
               id: `q_${index + 1}`,
               text: question,
-              skill: skill.name,
-              level: skill.level
             };
           });
 
@@ -806,8 +803,6 @@ const Test = () => {
       const results = questions.map((q, index) => ({
         question: q.text,
         answer: transcriptions[index] || '',
-        skill: q.skill,
-        level: q.level
       }));
 
       const testData = {

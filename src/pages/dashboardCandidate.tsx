@@ -63,6 +63,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { toast } from "react-hot-toast";
 import { generateTodos } from "@/store/slices/todoSlice";
 import CandidateOnly from "../components/CandidateOnly";
+import PostInterviewTab from "../components/PostInterviewTab";
 import { useCallback } from 'react';
 import Link from "next/link";
 import Popover from '@mui/material/Popover';
@@ -3353,93 +3354,24 @@ export default function DashboardCandidate() {
 }
 
 const INTERVIEW_TYPES = [
-  { label: 'Post', value: 'post' },
   { label: 'Onboarding', value: 'onboarding' },
   { label: 'HR', value: 'hr' },
   { label: 'Skill', value: 'skill' },
+  { label: 'Post Interview', value: 'post_interview' },
 ];
 
-// Interview pipeline stages (only for Post section) - Sequential order
-const INTERVIEW_STAGES = [
-  { key: 'application', label: 'Application', icon: '📝' },
-  { key: 'hr', label: 'HR Interview', icon: '👥' },
-  { key: 'technical', label: 'Technical', icon: '💻' },
-  { key: 'soft', label: 'Soft Skills', icon: '🗣️' },
-  { key: 'interview', label: 'Interview', icon: '🎤' },
-  { key: 'condition', label: 'Condition', icon: '⚖️' },
-  { key: 'email', label: 'Email', icon: '📧' },
-  { key: 'final', label: 'Final Decision', icon: '✅' }
-];
 
-// Function to get icon based on step type
-const getStepIcon = (stepType: string): string => {
-  const iconMap: { [key: string]: string } = {
-    'technical': '💻',
-    'hr': '👥',
-    'soft': '🗣️',
-    'interview': '🎤',
-    'condition': '⚖️',
-    'email': '📧',
-    'final': '✅',
-    'application': '📝',
-    'custom': '⚙️'
-  };
-  return iconMap[stepType] || '📄';
-};
 
-// Helper function to get interview progress (only for Post section)
-const getInterviewProgress = (interviewData: any) => {
-  // Simplified logic - make stages more accessible
-  const stages = ['application', 'hr', 'technical', 'soft', 'final'];
-  
-  // Start with basic progression - application is always available
-  let currentStage = 1; // HR is available by default
-  let completedStages = 0; // Application completed
-  
-  // Make progression more lenient - if we have any interview data, 
-  // allow access to at least HR and Technical stages
-  if (interviewData.type === 'hr') {
-    currentStage = Math.max(currentStage, 2); // Allow technical
-    if (interviewData.overallScore >= 50) {
-      completedStages = 1; // HR completed
-      currentStage = Math.max(currentStage, 3); // Allow soft skills
-    }
-  }
-  
-  if (interviewData.type === 'skill') {
-    currentStage = Math.max(currentStage, 3); // Allow soft skills
-    if (interviewData.overallScore >= 50) {
-      completedStages = Math.max(completedStages, 2); // Technical completed
-      currentStage = Math.max(currentStage, 4); // Allow final
-    }
-  }
-  
-  if (interviewData.type === 'soft') {
-    currentStage = Math.max(currentStage, 4); // Allow final
-    if (interviewData.overallScore >= 50) {
-      completedStages = Math.max(completedStages, 3); // Soft completed
-    }
-  }
-  
-  // For demo purposes, make more stages accessible
-  // In a real app, this would come from your backend API
-  currentStage = Math.max(currentStage, 2); // Always allow at least HR and Technical
-  
-  return {
-    currentStage,
-    completedStages,
-    totalStages: stages.length,
-    status: interviewData.overallScore >= 70 ? 'passed' : 
-            interviewData.overallScore >= 50 ? 'pending' : 'failed'
-  };
-};
+
+
+
 
 type InterviewDetailsTabsProps = {
   profile: any; // Replace 'any' with 'ProfileType' if available
 };
 
 function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
-  const [tab, setTab] = useState('post');
+  const [tab, setTab] = useState('post_interview');
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -3483,367 +3415,9 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
     setPage(0);
   };
 
-  // Progress Pipeline Component (only for Post section)
-  const ProgressPipeline = ({ interviewData }: { interviewData: any }) => {
-    // Get the actual post steps from the interview data
-    const postSteps = interviewData.post?.post_Steps || [];
-    
-    // Sort steps by nodeNumber to maintain order
-    const sortedSteps = postSteps.sort((a: any, b: any) => {
-      const aNum = a.data?.config?.nodeNumber || 0;
-      const bNum = b.data?.config?.nodeNumber || 0;
-      return aNum - bNum;
-    });
 
-    // Get all completed interview types for this candidate and post
-    const getCompletedSteps = () => {
-      const completed = new Map(); // Use Map to store completion details
-      
-      // Add current interview data if it represents a completed step
-      if (interviewData.overallScore >= 50) {
-        completed.set(interviewData.type, {
-          score: interviewData.overallScore,
-          completedAt: interviewData.createdAt,
-          interviewId: interviewData._id
-        });
-      }
-      
-      // TODO: In a full implementation, fetch all InterviewDetails for this candidate and post
-      // const allInterviews = await fetchAllInterviewsForCandidateAndPost(candidateId, postId);
-      // allInterviews.forEach(interview => {
-      //   if (interview.overallScore >= 50) {
-      //     completed.set(interview.type, {
-      //       score: interview.overallScore,
-      //       completedAt: interview.createdAt,
-      //       interviewId: interview._id
-      //     });
-      //   }
-      // });
-      
-      return completed;
-    };
 
-    const completedStepDetails = getCompletedSteps();
 
-    // Handle stage click - navigate to interview-post for all steps
-    const handleStageClick = (step: any, index: number) => {
-      // Use the postSteps _id as stepId
-      const stepId = step._id;
-      const stageUrl = `/interview-post/${interviewData.post?._id || interviewData.postId}?stepId=${stepId}`;
-      
-      router.push(stageUrl);
-    };
-    
-    return (
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', sm: 'row' },
-          alignItems: { xs: 'stretch', sm: 'center' },
-          minWidth: { xs: 'auto', sm: 300 },
-          width: '100%',
-          position: 'relative',
-          p: { xs: 1.5, sm: 2 },
-          backgroundColor: 'rgba(255, 255, 255, 0.8)',
-          borderRadius: 3,
-          border: '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-          gap: { xs: 2, sm: 0 },
-        }}
-      >
-        {sortedSteps.length > 0 ? (
-          sortedSteps.map((step: any, index: number) => {
-            const stepType = step.data?.type || 'custom';
-            const stepLabel = step.data?.label || step.data?.config?.title || `Step ${index + 1}`;
-            const stepIcon = getStepIcon(stepType);
-            // Consider a step configured if it has proper data structure and type
-            // Also make first step always available if it has basic structure
-            const isConfigured = !!(step.data?.type && step.data?.label) || 
-                                step.data?.config?.configured || 
-                                (index === 0 && step.data?.type); // First step is always available if it has a type
-            
-            // Determine step status based on actual completion data
-            const completionDetails = completedStepDetails.get(stepType);
-            const isCompleted = !!completionDetails;
-            
-            // Find current progress - first non-completed configured step
-            const currentStepIndex = sortedSteps.findIndex((s: any, i: number) => {
-              const sType = s.data?.type || 'custom';
-              const sConfigured = !!(s.data?.type && s.data?.label) || 
-                                 s.data?.config?.configured || 
-                                 (i === 0 && s.data?.type);
-              const sCompleted = completedStepDetails.has(sType);
-              return sConfigured && !sCompleted;
-            });
-            
-            const isCurrent = !isCompleted && index === (currentStepIndex >= 0 ? currentStepIndex : 0) && isConfigured;
-            const isActive = isCompleted || isCurrent;
-            const isClickable = isConfigured;
-
-            // Debug logging (remove in production)
-            if (index === 0) {
-              console.log('First step debug:', {
-                stepType,
-                stepLabel,
-                hasType: !!step.data?.type,
-                hasLabel: !!step.data?.label,
-                configConfigured: step.data?.config?.configured,
-                isConfigured,
-                isCompleted,
-                isCurrent,
-                isClickable
-              });
-            }
-            
-            return (
-              <React.Fragment key={step.id || index}>
-                <Tooltip 
-                  title={
-                    <Box sx={{ textAlign: 'center', minWidth: 200 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-                        {stepLabel}
-                      </Typography>
-                      
-                      {isCompleted && completionDetails ? (
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#4caf50', fontWeight: 600, mb: 0.5, display: 'block' }}>
-                            ✓ Completed by You
-                          </Typography>
-                          <Typography variant="caption" sx={{ opacity: 0.8, fontSize: '11px' }}>
-                            Score: {completionDetails.score}%
-                          </Typography>
-                          {completionDetails.completedAt && (
-                            <Typography variant="caption" sx={{ opacity: 0.7, fontSize: '10px', display: 'block', mt: 0.5 }}>
-                              Completed: {new Date(completionDetails.completedAt).toLocaleDateString()}
-                            </Typography>
-                          )}
-                          <Typography variant="caption" sx={{ 
-                            color: completionDetails.score >= 80 ? '#4caf50' : completionDetails.score >= 60 ? '#ff9800' : '#f44336', 
-                            fontSize: '10px', 
-                            display: 'block', 
-                            mt: 0.5,
-                            fontWeight: 600
-                          }}>
-                            {completionDetails.score >= 80 ? 'Excellent!' : completionDetails.score >= 60 ? 'Good' : 'Needs Improvement'}
-                          </Typography>
-                        </Box>
-                      ) : isClickable ? (
-                        <Typography variant="caption" sx={{ color: '#2196f3', fontWeight: 500 }}>
-                          Click to start this step
-                        </Typography>
-                      ) : (
-                        <Typography variant="caption" sx={{ opacity: 0.6 }}>
-                          Not configured yet
-                        </Typography>
-                      )}
-                      
-                      <Typography variant="caption" sx={{ opacity: 0.5, fontSize: '10px', display: 'block', mt: 1 }}>
-                        Step {index + 1} of {sortedSteps.length}
-                      </Typography>
-                    </Box>
-                  }
-                  arrow
-                  placement="top"
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: { xs: 'row', sm: 'column' },
-                      alignItems: 'center',
-                      gap: { xs: 2, sm: 1 },
-                      cursor: isClickable ? 'pointer' : 'not-allowed',
-                      opacity: isClickable ? 1 : 0.5,
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      position: 'relative',
-                      zIndex: 1,
-                      width: { xs: '100%', sm: 'auto' },
-                      p: { xs: 1, sm: 0 },
-                      borderRadius: { xs: 2, sm: 0 },
-                      backgroundColor: { xs: 'rgba(255, 255, 255, 0.5)', sm: 'transparent' },
-                      '&:hover': isClickable ? {
-                        transform: { xs: 'scale(1.02)', sm: 'translateY(-2px) scale(1.05)' },
-                        backgroundColor: { xs: 'rgba(255, 255, 255, 0.8)', sm: 'transparent' },
-                      } : {},
-                    }}
-                    onClick={() => isClickable && handleStageClick(step, index)}
-                  >
-                    {/* Step Number Badge */}
-                    <Box
-                      sx={{
-                        position: { xs: 'static', sm: 'absolute' },
-                        top: { sm: -8 },
-                        right: { sm: -8 },
-                        width: { xs: 24, sm: 18 },
-                        height: { xs: 24, sm: 18 },
-                        borderRadius: '50%',
-                        backgroundColor: isCompleted ? '#4caf50' : isCurrent ? '#2196f3' : '#9e9e9e',
-                        color: 'white',
-                        fontSize: { xs: '12px', sm: '10px' },
-                        fontWeight: 'bold',
-                        display: { xs: 'flex', sm: 'flex' },
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 2,
-                        order: { xs: -1, sm: 0 },
-                        flexShrink: 0,
-                      }}
-                    >
-                      {index + 1}
-                    </Box>
-                    
-                    <Box
-                      sx={{
-                        width: { xs: 40, sm: 48 },
-                        height: { xs: 40, sm: 48 },
-                        borderRadius: 3,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: { xs: '16px', sm: '20px' },
-                        fontWeight: 'bold',
-                        flexShrink: 0,
-                        background: isCompleted 
-                          ? 'linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)'
-                          : isCurrent 
-                          ? 'linear-gradient(135deg, #2196f3 0%, #42a5f5 100%)'
-                          : isConfigured 
-                          ? 'linear-gradient(135deg, #ff9800 0%, #ffb74d 100%)'
-                          : 'linear-gradient(135deg, #e0e0e0 0%, #eeeeee 100%)',
-                        color: isActive || isConfigured ? 'white' : '#757575',
-                        border: isCurrent ? '3px solid #1976d2' : isCompleted ? '3px solid #388e3c' : '3px solid transparent',
-                        boxShadow: isCompleted 
-                          ? { xs: '0 4px 12px rgba(76, 175, 80, 0.2)', sm: '0 8px 24px rgba(76, 175, 80, 0.3)' }
-                          : isCurrent 
-                          ? { xs: '0 4px 12px rgba(33, 150, 243, 0.2)', sm: '0 8px 24px rgba(33, 150, 243, 0.3)' }
-                          : isConfigured
-                          ? { xs: '0 2px 8px rgba(255, 152, 0, 0.1)', sm: '0 4px 12px rgba(255, 152, 0, 0.2)' }
-                          : '0 2px 8px rgba(0, 0, 0, 0.1)',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        '&:hover': isClickable ? {
-                          boxShadow: isCompleted 
-                            ? { xs: '0 6px 16px rgba(76, 175, 80, 0.3)', sm: '0 12px 32px rgba(76, 175, 80, 0.4)' }
-                            : isCurrent 
-                            ? { xs: '0 6px 16px rgba(33, 150, 243, 0.3)', sm: '0 12px 32px rgba(33, 150, 243, 0.4)' }
-                            : { xs: '0 4px 12px rgba(255, 152, 0, 0.2)', sm: '0 8px 24px rgba(255, 152, 0, 0.3)' },
-                          transform: { xs: 'scale(1.05)', sm: 'translateY(-2px)' },
-                        } : {},
-                      }}
-                    >
-                      {isCompleted ? '✓' : stepIcon}
-                    </Box>
-                    
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        fontSize: { xs: '12px', sm: '11px' },
-                        textAlign: { xs: 'left', sm: 'center' },
-                        color: isActive ? '#1976d2' : isCompleted ? '#4caf50' : '#757575',
-                        fontWeight: isCurrent ? 700 : isCompleted ? 600 : 500,
-                        maxWidth: { xs: 'none', sm: 80 },
-                        lineHeight: 1.3,
-                        transition: 'all 0.3s ease',
-                        textTransform: 'capitalize',
-                        flex: { xs: 1, sm: 'none' },
-                      }}
-                    >
-                      {stepLabel}
-                    </Typography>
-                  </Box>
-                </Tooltip>
-                
-                {/* Enhanced Connecting line - only show on desktop */}
-                {index < sortedSteps.length - 1 && (
-                  (() => {
-                    // Check if current step is completed to determine line color
-                    const shouldShowProgress = isCompleted;
-                    
-                    return (
-                      <Box
-                        sx={{
-                          display: { xs: 'none', sm: 'block' },
-                          flex: 1,
-                          height: '3px',
-                          background: shouldShowProgress 
-                            ? 'linear-gradient(90deg, #4caf50 0%, #66bb6a 100%)'
-                            : 'linear-gradient(90deg, #e0e0e0 0%, #f5f5f5 100%)',
-                          minWidth: { sm: 30, md: 50 },
-                          mx: { sm: 1, md: 2 },
-                          borderRadius: 2,
-                          position: 'relative',
-                          transition: 'all 0.4s ease',
-                          '&::after': shouldShowProgress ? {
-                            content: '""',
-                            position: 'absolute',
-                            top: '50%',
-                            right: -6,
-                            transform: 'translateY(-50%)',
-                            width: 0,
-                            height: 0,
-                            borderLeft: '6px solid #4caf50',
-                            borderTop: '4px solid transparent',
-                            borderBottom: '4px solid transparent',
-                          } : {},
-                        }}
-                      />
-                    );
-                  })()
-                )}
-              </React.Fragment>
-            );
-          })
-        ) : (
-          <Box sx={{ textAlign: 'center', py: 3, width: '100%' }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              🔧 No recruitment steps configured
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Configure your recruitment flow to see the progress here
-            </Typography>
-          </Box>
-        )}
-      </Box>
-    );
-  };
-
-  // Status Badge Component (only for Post section)
-  const StatusBadge = ({ score, type }: { score: number; type: string }) => {
-    const getStatusColor = () => {
-      if (score >= 80) return { bg: '#e8f5e8', color: '#2e7d32', label: 'Excellent' };
-      if (score >= 70) return { bg: '#e3f2fd', color: '#1976d2', label: 'Good' };
-      if (score >= 60) return { bg: '#fff3e0', color: '#f57c00', label: 'Average' };
-      if (score >= 50) return { bg: '#fce4ec', color: '#c2185b', label: 'Below Average' };
-      return { bg: '#ffebee', color: '#d32f2f', label: 'Poor' };
-    };
-
-    const status = getStatusColor();
-    
-    return (
-      <Box
-        sx={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 1,
-          px: 1.5,
-          py: 0.5,
-          borderRadius: 2,
-          backgroundColor: status.bg,
-          color: status.color,
-          fontSize: '12px',
-          fontWeight: 'medium',
-        }}
-      >
-        <Box
-          sx={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            backgroundColor: status.color,
-          }}
-        />
-        {score}% - {status.label}
-      </Box>
-    );
-  };
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -3882,116 +3456,8 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
         <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
       ) : (
         <>
-          {/* Enhanced Design for Post Tab Only */}
-          {tab === 'post' ? (
-            <>
-              {data.length === 0 ? (
-                <Box
-                  sx={{
-                    textAlign: 'center',
-                    py: 8,
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: 2,
-                    border: '1px dashed #dee2e6',
-                  }}
-                >
-                  <Typography variant="h6" color="textSecondary" gutterBottom>
-                    No Job Applications
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    You don't have any job applications yet.
-                  </Typography>
-                </Box>
-              ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {data.map((row: any, idx: number) => {
-                    const progress = getInterviewProgress(row);
-                    
-                    return (
-                      <Box
-                        key={row._id || row.id}
-                        sx={{
-                          p: 3,
-                          border: '1px solid #e0e0e0',
-                          borderRadius: 3,
-                          backgroundColor: '#ffffff',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-                            transform: 'translateY(-2px)',
-                          },
-                        }}
-                      >
-                        {/* Header */}
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                          <Box>
-                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a1a1a', mb: 0.5 }}>
-                              {row.post?.jobDetails?.title || 'Unknown Position'}
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Chip
-                                label={row.type || 'General'}
-                                size="small"
-                                sx={{
-                                  backgroundColor: '#8310FF20',
-                                  color: '#8310FF',
-                                  fontWeight: 500,
-                                  textTransform: 'capitalize',
-                                }}
-                              />
-                              {row.post?.company && (
-                                <Typography variant="body2" color="textSecondary">
-                                  at {row.post.company}
-                                </Typography>
-                              )}
-                            </Box>
-                          </Box>
-                          <Box sx={{ textAlign: 'right' }}>
-                            {row.overallScore !== null && row.overallScore !== undefined ? (
-                              <StatusBadge score={row.overallScore} type={row.type} />
-                            ) : (
-                              <Chip label="Pending" size="small" color="default" />
-                            )}
-                          </Box>
-                        </Box>
-
-                        {/* Progress Pipeline */}
-                        <Box sx={{ mb: 2 }}>
-                          <Typography variant="subtitle2" sx={{ mb: 1, color: '#666', fontWeight: 500 }}>
-                            Interview Progress
-                          </Typography>
-                          <ProgressPipeline interviewData={row} />
-                        </Box>
-
-                        {/* Action Button */}
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                          <Button
-                            variant="contained"
-                            size="small"
-                            onClick={() => router.push(`/candidate/interview/${row._id || row.id}`)}
-                            sx={{
-                              backgroundColor: '#8310FF',
-                              color: 'white',
-                              textTransform: 'none',
-                              fontWeight: 500,
-                              px: 3,
-                              py: 1,
-                              borderRadius: 2,
-                              '&:hover': {
-                                backgroundColor: '#6a0bd4',
-                              },
-                            }}
-                          >
-                            View Details
-                          </Button>
-                        </Box>
-                      </Box>
-                    );
-                  })}
-                </Box>
-              )}
-            </>
+          {tab === 'post_interview' ? (
+            <PostInterviewTab data={data} loading={loading} error={error} />
           ) : (
             /* Original Table Design for Other Tabs */
             <Box>
@@ -4041,7 +3507,7 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
                 rowsPerPage={rowsPerPage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
                 rowsPerPageOptions={[2, 5, 10]}
-                sx={tab === 'post' ? {
+                sx={tab === 'post_interview' ? {
                   '& .MuiTablePagination-toolbar': {
                     backgroundColor: '#f8f9fa',
                     borderRadius: 2,
@@ -4154,7 +3620,7 @@ function TeamMemberProjectsCard() {
             No Team Projects Yet
           </Typography>
           <Typography variant="body2" sx={{ color: '#555', maxWidth: 520, mx: 'auto' }}>
-            You aren’t part of any team projects right now. When you join a team, your projects will appear here with progress and details.
+            You aren't part of any team projects right now. When you join a team, your projects will appear here with progress and details.
           </Typography>
         </Paper>
       </Box>
@@ -4462,7 +3928,7 @@ function LeaderProjectsCard() {
             No Leader Projects Yet
           </Typography>
           <Typography variant="body2" sx={{ color: '#555', maxWidth: 520, mx: 'auto' }}>
-            You haven’t created any projects as a leader yet. Create a project to manage your team, track progress, and showcase outcomes here.
+            You haven't created any projects as a leader yet. Create a project to manage your team, track progress, and showcase outcomes here.
           </Typography>
         </Paper>
       </Box>
