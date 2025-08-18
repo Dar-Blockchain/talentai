@@ -1177,25 +1177,98 @@ function Preferences() {
 
         {/* Personal Details Step - Only for candidates */}
         {currentStep === 'Personal Details' && userType === 'candidate' && (
-          <Box sx={{ py: 2 }}>
-            <Typography variant="h6" sx={{ color: 'black' }} gutterBottom>
-              Tell us about yourself
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Box sx={{ py: 4 }}>
+            {/* Enhanced Header */}
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Box sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+                boxShadow: '0 8px 25px rgba(0, 255, 157, 0.3)'
+              }}>
+                <PersonIcon sx={{ fontSize: 40, color: 'white' }} />
+              </Box>
+              <Typography 
+                variant="h4" 
+                gutterBottom 
+                sx={{ 
+                  color: 'black',
+                  fontWeight: 700,
+                  mb: 2
+                }}
+              >
+                Tell us about yourself
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: '#666',
+                  maxWidth: 500,
+                  mx: 'auto',
+                  lineHeight: 1.6
+                }}
+              >
+                Let's start building your professional profile. This information helps us personalize your experience and connect you with the right opportunities.
+              </Typography>
+            </Box>
+
+            {/* Enhanced Form */}
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: 4,
+              maxWidth: 600,
+              mx: 'auto'
+            }}>
               <TextField
                 fullWidth
                 label="First Name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 required
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'black' }
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
               />
               <TextField
@@ -1204,70 +1277,223 @@ function Preferences() {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 required
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'black' }
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
               />
+            </Box>
+
+            {/* Help Text */}
+            <Box sx={{ 
+              mt: 4, 
+              p: 3, 
+              borderRadius: 3, 
+              backgroundColor: '#F8F9FA',
+              border: '2px solid #E9ECEF',
+              maxWidth: 600,
+              mx: 'auto',
+              textAlign: 'center'
+            }}>
+              <Typography variant="body2" sx={{ color: '#495057', lineHeight: 1.6 }}>
+                <strong>💡 Tip:</strong> Use your legal name as it appears on official documents. 
+                This helps with verification and professional networking.
+              </Typography>
             </Box>
           </Box>
         )}
 
         {/* Company Details Step */}
         {currentStep === 'Company Details' && (
-          <Box sx={{ py: 2 }}>
-            <Typography variant="h6" sx={{ color: 'black' }} gutterBottom>
-              Tell us about your company
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Box sx={{ py: 4 }}>
+            {/* Enhanced Header */}
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Box sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+                boxShadow: '0 8px 25px rgba(0, 255, 157, 0.3)'
+              }}>
+                <BusinessIcon sx={{ fontSize: 40, color: 'white' }} />
+              </Box>
+              <Typography 
+                variant="h4" 
+                gutterBottom 
+                sx={{ 
+                  color: 'black',
+                  fontWeight: 700,
+                  mb: 2
+                }}
+              >
+                Tell us about your company
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: '#666',
+                  maxWidth: 500,
+                  mx: 'auto',
+                  lineHeight: 1.6
+                }}
+              >
+                Help us understand your organization better to find the perfect talent match for your needs.
+              </Typography>
+            </Box>
+
+            {/* Enhanced Form */}
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: 4,
+              maxWidth: 600,
+              mx: 'auto'
+            }}>
               <TextField
                 fullWidth
                 label="Company Name"
                 value={companyDetails.name}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, name: e.target.value }))}
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'black' }
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
               />
+
               <StyledSelect
                 select
                 fullWidth
                 label="Industry"
                 value={companyDetails.industry}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, industry: e.target.value }))}
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
                       sx: {
-                        backgroundColor: '#f5f5f5'
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: 2,
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
                       }
                     }
                   }
                 }}
               >
-                <MenuItem value="Technology" sx={{ color: 'black' }}>Technology</MenuItem>
-                <MenuItem value="Finance" sx={{ color: 'black' }}>Finance</MenuItem>
-                <MenuItem value="Healthcare" sx={{ color: 'black' }}>Healthcare</MenuItem>
-                <MenuItem value="Education" sx={{ color: 'black' }}>Education</MenuItem>
-                <MenuItem value="Other" sx={{ color: 'black' }}>Other</MenuItem>
+                <MenuItem value="Technology" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Technology</MenuItem>
+                <MenuItem value="Finance" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Finance</MenuItem>
+                <MenuItem value="Healthcare" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Healthcare</MenuItem>
+                <MenuItem value="Education" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Education</MenuItem>
+                <MenuItem value="Other" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Other</MenuItem>
               </StyledSelect>
 
               <StyledSelect
@@ -1276,28 +1502,61 @@ function Preferences() {
                 label="Company Size"
                 value={companyDetails.size}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, size: e.target.value }))}
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
                       sx: {
-                        backgroundColor: '#f5f5f5'
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: 2,
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
                       }
                     }
                   }
                 }}
               >
-                <MenuItem value="1-10" sx={{ color: 'black' }}  >1-10 employees</MenuItem>
-                <MenuItem value="11-50" sx={{ color: 'black' }}>11-50 employees</MenuItem>
-                <MenuItem value="51-200" sx={{ color: 'black' }}>51-200 employees</MenuItem>
-                <MenuItem value="201-500" sx={{ color: 'black' }}>201-500 employees</MenuItem>
-                <MenuItem value="501+" sx={{ color: 'black' }}>501+ employees</MenuItem>
+                <MenuItem value="1-10" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>1-10 employees</MenuItem>
+                <MenuItem value="11-50" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>11-50 employees</MenuItem>
+                <MenuItem value="51-200" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>51-200 employees</MenuItem>
+                <MenuItem value="201-500" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>201-500 employees</MenuItem>
+                <MenuItem value="501+" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>501+ employees</MenuItem>
               </StyledSelect>
 
               <StyledSelect
@@ -1306,27 +1565,77 @@ function Preferences() {
                 label="Location"
                 value={companyDetails.location}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, location: e.target.value }))}
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
                       sx: {
-                        backgroundColor: '#f5f5f5'
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: 2,
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
                       }
                     }
                   }
                 }}
               >
-                <MenuItem value="Remote" sx={{ color: 'black' }}>Remote</MenuItem>
-                <MenuItem value="On-site" sx={{ color: 'black' }}>On-site</MenuItem>
-                <MenuItem value="Hybrid" sx={{ color: 'black' }}>Hybrid</MenuItem>
+                <MenuItem value="Remote" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Remote</MenuItem>
+                <MenuItem value="On-site" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>On-site</MenuItem>
+                <MenuItem value="Hybrid" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Hybrid</MenuItem>
               </StyledSelect>
+            </Box>
+
+            {/* Help Text */}
+            <Box sx={{ 
+              mt: 4, 
+              p: 3, 
+              borderRadius: 3, 
+              backgroundColor: '#F8F9FA',
+              border: '2px solid #E9ECEF',
+              maxWidth: 600,
+              mx: 'auto',
+              textAlign: 'center'
+            }}>
+              <Typography variant="body2" sx={{ color: '#495057', lineHeight: 1.6 }}>
+                <strong>💡 Tip:</strong> Providing accurate company information helps us match you with the right candidates 
+                and ensures a better hiring experience for your organization.
+              </Typography>
             </Box>
           </Box>
         )}
