@@ -1,8 +1,8 @@
-import SequenceBuilder from "@/components/SequenceBuilder";
+import RecruitmentFlowBuilder from "@/components/RecruitmentFlowBuilder";
 import React from "react";
 
 const CreateJobPage: React.FC = () => {
-  return <SequenceBuilder />;
+  return <RecruitmentFlowBuilder />;
 };
 
 export default CreateJobPage;

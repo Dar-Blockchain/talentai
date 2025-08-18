@@ -250,7 +250,7 @@ exports.analyseQuestions = async ({ questions, postStep ,user}) => {
     
     const jobId = postStep.postId;
 
-    await saveInterviewDetailsForJob(
+    const interviewDetailsId = await saveInterviewDetailsForJob(
       profile,
       analysis.overallScore,
       analysis.skillAnalysis,
@@ -276,6 +276,10 @@ exports.analyseQuestions = async ({ questions, postStep ,user}) => {
           // Marquer le step actuel comme 'done'
           progress.steps[currentStepIndex].status = 'done';
           progress.steps[currentStepIndex].completedAt = new Date();
+          // Lier l'entretien créé à ce step
+          if (interviewDetailsId) {
+            progress.steps[currentStepIndex].interviewDetails = interviewDetailsId;
+          }
           
           // Marquer le step suivant comme 'inProgress' s'il existe
           if (currentStepIndex + 1 < progress.steps.length) {

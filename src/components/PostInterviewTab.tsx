@@ -1143,20 +1143,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
 
                      {/* Action Buttons */}
                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
-                       <Button
-                         variant="outlined"
-                         size="small"
-                         startIcon={<VisibilityIcon />}
-                         onClick={() => router.push(`/candidate/interview/${progress._id}`)}
-                         sx={{
-                           borderColor: '#02E2FF',
-                           color: '#02E2FF',
-                           textTransform: 'none',
-                           fontWeight: 500,
-                         }}
-                       >
-                         View Details
-                       </Button>
+                      
                                                <Button
                           variant="contained"
                           size="small"
@@ -1168,7 +1155,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                             
                                                          if (nextStep) {
                                // Navigate with step ID from steps - stepId is an object containing _id
-                               const stepId = nextStep.stepId
+                               const stepId = nextStep.stepId._id
                                router.push(`/interview-post/${progress.idPost?._id}?stepId=${stepId}`);
                              } else if (progress.currentStep) {
                                // Use current step ID
