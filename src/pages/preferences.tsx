@@ -3,6 +3,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
 import {
   Box,
   Card,
@@ -16,7 +17,6 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
-  LinearProgress,
   Tabs,
   Tab,
   Paper,
@@ -26,7 +26,12 @@ import {
   AppBar,
   Toolbar,
   Avatar,
-  IconButton
+  IconButton,
+  Fade,
+  Zoom,
+  Slide,
+  Grow,
+  Collapse
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
@@ -40,6 +45,7 @@ import AnalyticsIcon from '@mui/icons-material/Analytics';
 import PersonIcon from '@mui/icons-material/Person';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import LogoutIcon from '@mui/icons-material/Logout';
+
 import Cookies from 'js-cookie';
 import { color } from 'framer-motion';
 import { useSelector, useDispatch } from 'react-redux';
@@ -176,17 +182,34 @@ const COMPANY_STEPS = [
 
 function ColorlibStepIcon(props: StepIconProps) {
   const { active, completed, icon } = props;
-  const userRole = useSelector((state: RootState) => state.user.userType);
-  const icons: Record<string, React.ReactElement> = {
-    1: <CodeIcon />,
-    2: <StarIcon />,
-    3: <StarIcon />,
-    4: <StarIcon />,
-    5: <CheckCircleIcon />
+  const userRole = useSelector((state: RootState) => state.user?.userType || '');
+  
+  // Company flow icons
+  const companyIcons: Record<string, React.ReactElement> = {
+    1: <BusinessIcon />,        // Company Details
+    2: <DesignServicesIcon />,  // Required Skills
+    3: <AnalyticsIcon />,       // Experience Level
+    4: <CheckCircleIcon />      // Review
   };
+  
+  // Candidate flow icons
+  const candidateIcons: Record<string, React.ReactElement> = {
+    1: <PersonIcon />,          // Personal Details
+    2: <CodeIcon />,            // Select Skills
+    3: <BugReportIcon />,       // Hedera QCM (if applicable)
+    4: <StarIcon />,            // Rate Proficiency
+    5: <CheckCircleIcon />      // Review
+  };
+  
+  // Select type icon (initial step)
+  const selectTypeIcon = <BusinessIcon />;
+  
+  const icons = userRole === 'company' ? companyIcons : candidateIcons;
+  
   const bg = active || completed
     ? userRole === 'company' ? 'rgba(0, 255, 157, 1)' : '#8310FF'
     : 'black';
+    
   return (
     <Box sx={{
       background: bg,
@@ -200,7 +223,7 @@ function ColorlibStepIcon(props: StepIconProps) {
       boxShadow: active ? '0 4px 10px rgba(0,0,0,0.25)' : 'none',
       zIndex: 1,
     }}>
-      {icons[String(icon)]}
+      {icons[String(icon)] || selectTypeIcon}
     </Box>
   );
 }
@@ -223,7 +246,7 @@ const getSteps = (userType: UserType, hasHederaExp: 'yes' | 'no' | '') => {
 // Add styled select component
 
 
-export default function Preferences() {
+function Preferences() {
   const router = useRouter();
   const { user } = useSelector((state: RootState) => state.auth);
 
@@ -231,6 +254,7 @@ export default function Preferences() {
   const [userType, setUserType] = useState<UserType>('');
   const [selectedCategory, setSelectedCategory] = useState('development');
   const [isTestJobReturnUrl, setIsTestJobReturnUrl] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   // Company specific states
   const [companyDetails, setCompanyDetails] = useState({
@@ -250,7 +274,7 @@ export default function Preferences() {
   const [skills, setSkills] = useState<string[]>([]);
   const [skillWarning, setSkillWarning] = useState<string>('');
 
-  const userRole = useSelector((state: RootState) => state.user.userType);
+  const userRole = useSelector((state: RootState) => state.user?.userType || '');
 
   const GREEN_MAIN = userRole === 'company' ? 'rgba(0, 255, 157, 1)' : '#8310FF';
   // Styled connector & step icon
@@ -376,7 +400,7 @@ export default function Preferences() {
     return steps[activeStep];
   }, [steps, activeStep]);
 
-  const progress = (activeStep / (steps.length - 1)) * 100;
+
 
   const handleNext = () => setActiveStep(i => i + 1);
   const handleBack = () => setActiveStep(i => i - 1);
@@ -508,6 +532,12 @@ export default function Preferences() {
 
   // Add effect to check traffic counter
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+    
     const checkProfile = async () => {
       // Check if returnUrl points to a test job
       const returnUrl = router.query.returnUrl as string;
@@ -571,16 +601,18 @@ export default function Preferences() {
     };
 
     checkProfile();
-  }, [router]);
+  }, [router, isClient]);
 
   // Add effect to check for returnUrl on component mount
   useEffect(() => {
+    if (!isClient) return;
+    
     const returnUrl = router.query.returnUrl as string;
     if (returnUrl && returnUrl.includes('/testjob/')) {
       setIsTestJobReturnUrl(true);
       setUserType('candidate');
     }
-  }, [router.query.returnUrl]);
+  }, [router.query.returnUrl, isClient]);
 
   const [error, setError] = useState<string>('');
 
@@ -639,6 +671,27 @@ export default function Preferences() {
       console.error('Logout failed:', error);
     }
   };
+  // Prevent hydration mismatch by not rendering until client-side
+  if (!isClient || !user) {
+    return null;
+  }
+
+  // Show loading state while preventing hydration
+  if (!isClient) {
+    return (
+      <Box sx={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        backgroundColor: '#f5f5f5'
+      }}>
+        <Typography variant="h6" sx={{ color: '#666' }}>
+          Loading...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ minHeight: '100vh' }}>
@@ -751,109 +804,373 @@ export default function Preferences() {
         p: 2
       }}>
       <Card elevation={8} sx={{ backgroundColor: 'white', width: { xs: '100%', sm: 800 }, p: 4, borderRadius: 3, backdropFilter: 'blur(10px)' }}>
-        <LinearProgress
-          variant="determinate"
-          value={progress}
-          sx={{
-            height: 6,
-            borderRadius: 3,
-            mb: 3,
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            '& .MuiLinearProgress-bar': {
-              backgroundColor: GREEN_MAIN
-            }
-          }}
-        />
 
-        <Typography variant="h4" fontWeight={700} gutterBottom sx={{ color: 'black' }}>
-          {activeStep === 0 ? 'Welcome to TalentAI' : "Let's Deep Dive into Your Skills"}
-        </Typography>
 
-        <Stepper alternativeLabel activeStep={activeStep} connector={<ColorlibConnector />} sx={{ my: 4 }}>
-          {steps.map(label => (
-            <Step key={label}>
-              <StepLabel
-                StepIconComponent={ColorlibStepIcon}
-                sx={{
-                  '& .MuiStepLabel-label.Mui-active': { color: `${GREEN_MAIN} !important` },
-                  '& .MuiStepLabel-label.Mui-completed': { color: `${GREEN_MAIN} !important` }
-                }}
-              >
-                {label}
-              </StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+{activeStep !== 0 && <Typography variant="h4" fontWeight={700} gutterBottom sx={{ color: 'black' }}>
+          Let's Deep Dive into Your Skills
+        </Typography>}
+
+        {/* Only show stepper when there are multiple steps AND not on the first step */}
+        {steps.length > 1 && activeStep > 0 && (
+          <Stepper alternativeLabel activeStep={activeStep} connector={<ColorlibConnector />} sx={{ my: 4 }}>
+            {steps.map(label => (
+              <Step key={label}>
+                <StepLabel
+                  StepIconComponent={ColorlibStepIcon}
+                  sx={{
+                    '& .MuiStepLabel-label.Mui-active': { color: `${GREEN_MAIN} !important` },
+                    '& .MuiStepLabel-label.Mui-completed': { color: `${GREEN_MAIN} !important` }
+                  }}
+                >
+                  {label}
+                </StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+        )}
 
         {/* User Type Selection Step */}
         {currentStep === 'Select Type' && (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="h6" gutterBottom sx={{ color: 'black' }}>
-              Are you a candidate looking for opportunities or a company seeking talent?
-            </Typography>
-            {isTestJobReturnUrl && (
-              <Typography variant="body2" sx={{ color: 'orange', mb: 2, fontStyle: 'italic' }}>
-                You're accessing a job test, so only candidate registration is available.
+          <Box sx={{ textAlign: 'center', py: 6 }}>
+            {/* Enhanced Header Section */}
+            <Box sx={{ mb: 6 }}>
+              <Typography 
+                variant="h3" 
+                gutterBottom 
+                sx={{ 
+                  color: 'black',
+                  fontWeight: 800,
+                  background: 'linear-gradient(135deg, #7C4DFF 0%, #00B8D4 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  mb: 2,
+                  fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' }
+                }}
+              >
+                Welcome to TalentAI
               </Typography>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  color: '#666',
+                  fontWeight: 500,
+                  maxWidth: 600,
+                  mx: 'auto',
+                  lineHeight: 1.6,
+                  fontSize: { xs: '1rem', sm: '1.1rem' }
+                }}
+              >
+                Are you a candidate looking for opportunities or a company seeking talent?
+              </Typography>
+            </Box>
+
+            {/* Warning Message */}
+            {isTestJobReturnUrl && (
+              <Box sx={{ 
+                mb: 4,
+                p: 2,
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #FF9800 0%, #FF5722 100%)',
+                color: 'white',
+                maxWidth: 500,
+                mx: 'auto',
+                boxShadow: '0 4px 20px rgba(255, 152, 0, 0.3)'
+              }}>
+                <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '0.95rem' }}>
+                  ⚠️ You're accessing a job test, so only candidate registration is available.
+                </Typography>
+              </Box>
             )}
+
+            {/* Enhanced Selection Cards */}
             <Box sx={{
-              display: 'flex',
-              gap: 3,
-              justifyContent: 'center',
-              mt: 4
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+              gap: { xs: 3, sm: 4 },
+              maxWidth: 800,
+              mx: 'auto',
+              mt: 6
             }}>
-              <Button
-                variant={userType === 'candidate' ? 'contained' : 'outlined'}
+              {/* Candidate Card */}
+              <Box
+                sx={{
+                  p: 4,
+                  borderRadius: 4,
+                  border: `3px solid ${userType === 'candidate' ? GREEN_MAIN : '#E0E0E0'}`,
+                  backgroundColor: userType === 'candidate' ? `${GREEN_MAIN}15` : 'white',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&:hover': {
+                    transform: 'translateY(-8px)',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+                    borderColor: GREEN_MAIN,
+                    backgroundColor: `${GREEN_MAIN}10`
+                  },
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 4,
+                    background: userType === 'candidate' 
+                      ? `linear-gradient(90deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`
+                      : 'transparent',
+                    transition: 'all 0.3s ease'
+                  }
+                }}
                 onClick={() => handleUserTypeSelect('candidate')}
-                startIcon={<PersonIcon />}
-                disabled={userRole === 'company' && !isTestJobReturnUrl}
+              >
+                {/* Icon Container */}
+                <Box sx={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  background: userType === 'candidate' 
+                    ? `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`
+                    : 'linear-gradient(135deg, #F5F5F5 0%, #E0E0E0 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mx: 'auto',
+                  mb: 3,
+                  transition: 'all 0.3s ease',
+                  boxShadow: userType === 'candidate' 
+                    ? '0 8px 25px rgba(0, 255, 157, 0.3)'
+                    : '0 4px 15px rgba(0,0,0,0.1)'
+                }}>
+                  <PersonIcon sx={{ 
+                    fontSize: 40, 
+                    color: userType === 'candidate' ? 'white' : '#666',
+                    transition: 'all 0.3s ease'
+                  }} />
+                </Box>
+
+                {/* Content */}
+                <Typography 
+                  variant="h5" 
+                  sx={{ 
+                    fontWeight: 700,
+                    color: userType === 'candidate' ? GREEN_MAIN : '#333',
+                    mb: 2,
+                    transition: 'color 0.3s ease'
+                  }}
+                >
+                  I'm a Candidate
+                </Typography>
+                
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    color: userType === 'candidate' ? '#555' : '#666',
+                    lineHeight: 1.6,
+                    mb: 3,
+                    transition: 'color 0.3s ease'
+                  }}
+                >
+                  Looking for exciting opportunities? Showcase your skills and connect with top companies.
+                </Typography>
+
+                {/* Features List */}
+                <Box sx={{ textAlign: 'left', mb: 3 }}>
+                  {[
+                    '✓ Take skill assessments',
+                    '✓ Build your profile',
+                    '✓ Get matched with jobs',
+                    '✓ Earn certifications'
+                  ].map((feature, index) => (
+                    <Typography 
+                      key={index}
+                      variant="body2" 
+                      sx={{ 
+                        color: userType === 'candidate' ? '#555' : '#666',
+                        mb: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      {feature}
+                    </Typography>
+                  ))}
+                </Box>
+
+                {/* Status Badge */}
+                {userType === 'candidate' && (
+                  <Box sx={{
+                    position: 'absolute',
+                    top: 16,
+                    right: 16,
+                    px: 2,
+                    py: 0.5,
+                    borderRadius: 2,
+                    background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                    color: 'white',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    boxShadow: '0 4px 15px rgba(0, 255, 157, 0.3)'
+                  }}>
+                  SELECTED
+                </Box>
+                )}
+              </Box>
+
+              {/* Company Card */}
+              <Box
                 sx={{
-                  color: userType === 'candidate' ? 'black' : GREEN_MAIN,
-                  borderColor: GREEN_MAIN,
-                  backgroundColor: userType === 'candidate' ? GREEN_MAIN : 'transparent',
-                  py: 2,
-                  px: 4,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600,
+                  p: 4,
+                  borderRadius: 4,
+                  border: `3px solid ${userType === 'company' ? GREEN_MAIN : '#E0E0E0'}`,
+                  backgroundColor: userType === 'company' ? `${GREEN_MAIN}15` : 'white',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  opacity: (userRole === 'jobseeker' || isTestJobReturnUrl) ? 0.5 : 1,
                   '&:hover': {
-                    backgroundColor: userRole === 'company' ? 'transparent' : GREEN_MAIN,
-                    color: userRole === 'company' ? GREEN_MAIN : 'black',
+                    transform: (userRole === 'jobseeker' || isTestJobReturnUrl) ? 'none' : 'translateY(-8px)',
+                    boxShadow: (userRole === 'jobseeker' || isTestJobReturnUrl) ? 'none' : '0 20px 40px rgba(0,0,0,0.15)',
+                    borderColor: (userRole === 'jobseeker' || isTestJobReturnUrl) ? '#E0E0E0' : GREEN_MAIN,
+                    backgroundColor: (userRole === 'jobseeker' || isTestJobReturnUrl) ? 'white' : `${GREEN_MAIN}10`
                   },
-                  '&.Mui-disabled': {
-                    color: 'rgba(0, 0, 0, 0.26)',
-                    borderColor: 'rgba(0, 0, 0, 0.26)',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 4,
+                    background: userType === 'company' 
+                      ? `linear-gradient(90deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`
+                      : 'transparent',
+                    transition: 'all 0.3s ease'
                   }
                 }}
+                onClick={() => !(userRole === 'jobseeker' || isTestJobReturnUrl) && handleUserTypeSelect('company')}
               >
-                I'm a Candidate
-              </Button>
-              <Button
-                variant={userType === 'company' ? 'contained' : 'outlined'}
-                onClick={() => handleUserTypeSelect('company')}
-                startIcon={<BusinessIcon />}
-                disabled={userRole === 'jobseeker' || isTestJobReturnUrl}
-                sx={{
-                  color: userType === 'company' ? 'black' : GREEN_MAIN,
-                  borderColor: GREEN_MAIN,
-                  backgroundColor: userType === 'company' ? GREEN_MAIN : 'transparent',
-                  py: 2,
-                  px: 4,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  '&:hover': {
-                    backgroundColor: userRole === 'jobseeker' ? 'transparent' : GREEN_MAIN,
-                    color: userRole === 'jobseeker' ? GREEN_MAIN : 'black',
-                  },
-                  '&.Mui-disabled': {
-                    color: 'rgba(0, 0, 0, 0.26)',
-                    borderColor: 'rgba(0, 0, 0, 0.26)',
-                  }
-                }}
-              >
-                I'm a Company
-              </Button>
+                {/* Icon Container */}
+                <Box sx={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  background: userType === 'company' 
+                    ? `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`
+                    : 'linear-gradient(135deg, #F5F5F5 0%, #E0E0E0 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mx: 'auto',
+                  mb: 3,
+                  transition: 'all 0.3s ease',
+                  boxShadow: userType === 'company' 
+                    ? '0 8px 25px rgba(0, 255, 157, 0.3)'
+                    : '0 4px 15px rgba(0,0,0,0.1)'
+                }}>
+                  <BusinessIcon sx={{ 
+                    fontSize: 40, 
+                    color: userType === 'company' ? 'white' : '#666',
+                    transition: 'all 0.3s ease'
+                  }} />
+                </Box>
+
+                {/* Content */}
+                <Typography 
+                  variant="h5" 
+                  sx={{ 
+                    fontWeight: 700,
+                    color: userType === 'company' ? GREEN_MAIN : '#333',
+                    mb: 2,
+                    transition: 'color 0.3s ease'
+                  }}
+                >
+                  I'm a Company
+                </Typography>
+                
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    color: userType === 'company' ? '#555' : '#666',
+                    lineHeight: 1.6,
+                    mb: 3,
+                    transition: 'color 0.3s ease'
+                  }}
+                >
+                  Need talented professionals? Find the perfect match for your projects and teams.
+                </Typography>
+
+                {/* Features List */}
+                <Box sx={{ textAlign: 'left', mb: 3 }}>
+                  {[
+                    '✓ Post job opportunities',
+                    '✓ Access talent pool',
+                    '✓ Skill-based matching',
+                    '✓ Quality assessments'
+                  ].map((feature, index) => (
+                    <Typography 
+                      key={index}
+                      variant="body2" 
+                      sx={{ 
+                        color: userType === 'company' ? '#555' : '#666',
+                        mb: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      {feature}
+                    </Typography>
+                  ))}
+                </Box>
+
+                {/* Status Badge */}
+                {userType === 'company' && (
+                  <Box sx={{
+                    position: 'absolute',
+                    top: 16,
+                    right: 16,
+                    px: 2,
+                    py: 0.5,
+                    borderRadius: 2,
+                    background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                    color: 'white',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    boxShadow: '0 4px 15px rgba(0, 255, 157, 0.3)'
+                  }}>
+                  SELECTED
+                </Box>
+                )}
+
+                {/* Disabled Overlay */}
+                {(userRole === 'jobseeker' || isTestJobReturnUrl) && (
+                  <Box sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0,0,0,0.1)',
+                    borderRadius: 4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Typography variant="body2" sx={{ color: '#666', fontWeight: 600 }}>
+                      Not Available
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </Box>
+
+            {/* Bottom Info */}
+            <Box sx={{ mt: 6, p: 3, borderRadius: 3, backgroundColor: '#F8F9FA', maxWidth: 600, mx: 'auto' }}>
+              <Typography variant="body2" sx={{ color: '#666', lineHeight: 1.6 }}>
+                <strong>💡 Tip:</strong> Choose the option that best describes your current role. 
+                You can always update your preferences later in your profile settings.
+              </Typography>
             </Box>
           </Box>
         )}
@@ -1407,3 +1724,21 @@ export default function Preferences() {
       </Box>
   );
 }
+
+// Export with dynamic import to prevent SSR hydration issues
+export default dynamic(() => Promise.resolve(Preferences), {
+  ssr: false,
+  loading: () => (
+    <Box sx={{ 
+      minHeight: '100vh', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center',
+      backgroundColor: '#f5f5f5'
+    }}>
+      <Typography variant="h6" sx={{ color: '#666' }}>
+        Loading...
+      </Typography>
+    </Box>
+  )
+});
