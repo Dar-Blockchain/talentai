@@ -804,9 +804,7 @@ function Preferences() {
         p: 2
       }}>
       <Card elevation={8} sx={{ backgroundColor: 'white', width: { xs: '100%', sm: 800 }, p: 4, borderRadius: 3, backdropFilter: 'blur(10px)' }}>
-
-
-{activeStep !== 0 && <Typography variant="h4" fontWeight={700} gutterBottom sx={{ color: 'black' }}>
+        {activeStep !== 0 && <Typography variant="h4" fontWeight={700} gutterBottom sx={{ color: 'black' }}>
           Let's Deep Dive into Your Skills
         </Typography>}
 
@@ -1642,9 +1640,62 @@ function Preferences() {
 
         {/* Skills Selection Steps - Combined logic for both candidate and company */}
         {(currentStep === 'Select Skills' || currentStep === 'Required Skills') && (
-          <Box>
-            {/* Categories Tabs */}
-            <Paper sx={{ mb: 3, p: 2, borderRadius: 2, backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+          <Box sx={{ py: 4 }}>
+            {/* Enhanced Header */}
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Box sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+                boxShadow: '0 8px 25px rgba(0, 255, 157, 0.3)'
+              }}>
+                <CodeIcon sx={{ fontSize: 40, color: 'white' }} />
+              </Box>
+              <Typography 
+                variant="h4" 
+                gutterBottom 
+                sx={{ 
+                  color: 'black',
+                  fontWeight: 700,
+                  mb: 2
+                }}
+              >
+                {userType === 'company' ? 'Required Skills Selection' : 'Skill Assessment'}
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: '#666',
+                  maxWidth: 600,
+                  mx: 'auto',
+                  lineHeight: 1.6
+                }}
+              >
+                {userType === 'company' 
+                  ? 'Choose the skills that best match your company\'s requirements. This helps us find the perfect talent match.'
+                  : 'Select the skill you want to be assessed on. Choose wisely as this will determine your test content.'
+                }
+              </Typography>
+            </Box>
+
+            {/* Enhanced Categories Tabs */}
+            <Paper sx={{ 
+              mb: 4, 
+              p: 3, 
+              borderRadius: 3, 
+              background: 'linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%)',
+              border: '2px solid #DEE2E6',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+            }}>
+              <Typography variant="h6" sx={{ mb: 2, color: '#333', fontWeight: 600, textAlign: 'center' }}>
+                Choose a Skill Category
+              </Typography>
               <Tabs
                 value={selectedCategory}
                 onChange={(_, v) => setSelectedCategory(v)}
@@ -1652,17 +1703,28 @@ function Preferences() {
                 scrollButtons="auto"
                 sx={{
                   '& .MuiTab-root': {
-                    minWidth: 120,
+                    minWidth: 140,
                     textTransform: 'none',
                     fontWeight: 600,
-                    boxShadow: 'none',
-                    color: 'black',
-                    '&.Mui-selected': {
+                    fontSize: '0.95rem',
+                    color: '#666',
+                    borderRadius: 2,
+                    mx: 0.5,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 255, 157, 0.1)',
                       color: GREEN_MAIN
+                    },
+                    '&.Mui-selected': {
+                      color: GREEN_MAIN,
+                      backgroundColor: 'rgba(0, 255, 157, 0.15)',
+                      fontWeight: 700
                     }
                   },
                   '& .MuiTabs-indicator': {
-                    backgroundColor: GREEN_MAIN
+                    backgroundColor: GREEN_MAIN,
+                    height: 4,
+                    borderRadius: 2
                   }
                 }}
               >
@@ -1673,78 +1735,209 @@ function Preferences() {
                     label={c.label}
                     icon={c.icon}
                     iconPosition="start"
+                    sx={{
+                      '& .MuiTab-iconWrapper': {
+                        color: 'inherit',
+                        mr: 1
+                      }
+                    }}
                   />
                 ))}
               </Tabs>
             </Paper>
 
-            {/* Title */}
-            <Typography variant="h6" mb={2} sx={{ color: 'black' }}>
-              {userType === 'company'
-                ? 'Select the skills your company is looking for'
-                : `Select your ${selectedCategory} skill (1 skill required)`
-              }
-            </Typography>
-
-            {skillWarning && (
-              <Typography color="error" sx={{ mb: 2 }}>
-                {skillWarning}
+            {/* Skills Selection Section */}
+            <Box sx={{ mb: 4 }}>
+              <Typography 
+                variant="h5" 
+                mb={3} 
+                sx={{ 
+                  color: '#333',
+                  fontWeight: 600,
+                  textAlign: 'center',
+                  background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}
+              >
+                {userType === 'company'
+                  ? `Select ${selectedCategory} skills for your company`
+                  : `Choose your ${selectedCategory} skill`
+                }
               </Typography>
-            )}
 
-            {/* Skills Grid */}
-            <Box sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: 'repeat(2,1fr)', sm: 'repeat(3,1fr)', md: 'repeat(4,1fr)' },
-              gap: 2
-            }}>
-              {filteredSkills.map(skill => {
-                const isCompany = userType === 'company';
-                const skillsList = isCompany ? requiredSkills : skills;
-                const sel = skillsList.includes(skill.label);
+              {skillWarning && (
+                <Box sx={{ 
+                  mb: 3, 
+                  p: 2, 
+                  borderRadius: 2, 
+                  backgroundColor: '#FFF3CD',
+                  border: '1px solid #FFEAA7',
+                  textAlign: 'center'
+                }}>
+                  <Typography color="warning.main" sx={{ fontWeight: 600 }}>
+                    ⚠️ {skillWarning}
+                  </Typography>
+                </Box>
+              )}
 
-                return (
-                  <Tooltip
-                    key={skill.label}
-                    title={`Click to ${sel ? 'remove' : 'add'} ${skill.label}`}
-                  >
-                    <Chip
-                      label={skill.label}
-                      clickable
-                      onClick={() => {
-                        if (isCompany) {
-                          setRequiredSkills(prev =>
-                            sel ? prev.filter(s => s !== skill.label) : [...prev, skill.label]
-                          );
-                        } else {
-                          toggleSkill(skill.label);
-                        }
-                      }}
-                      sx={{
-                        width: '100%',
-                        height: 40,
-                        border: `1px solid #${skill.color}`,
-                        backgroundColor: sel ? `#${skill.color}` : 'transparent',
-                        color: sel ? '#fff' : `#${skill.color}`,
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          backgroundColor: `#${skill.color}`,
-                          color: '#fff',
-                          transform: 'scale(1.05)',
-                          boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-                        }
-                      }}
-                    />
-                  </Tooltip>
-                );
-              })}
+              {/* Enhanced Skills Grid */}
+              <Box sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: 'repeat(2,1fr)', sm: 'repeat(3,1fr)', md: 'repeat(4,1fr)' },
+                gap: 3,
+                mb: 4
+              }}>
+                {filteredSkills.map(skill => {
+                  const isCompany = userType === 'company';
+                  const skillsList = isCompany ? requiredSkills : skills;
+                  const sel = skillsList.includes(skill.label);
+
+                  return (
+                    <Tooltip
+                      key={skill.label}
+                      title={`Click to ${sel ? 'remove' : 'add'} ${skill.label}`}
+                      arrow
+                      placement="top"
+                    >
+                      <Box
+                        sx={{
+                          cursor: 'pointer',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          transform: sel ? 'scale(1.05)' : 'scale(1)',
+                          '&:hover': {
+                            transform: 'scale(1.08)',
+                            zIndex: 1
+                          }
+                        }}
+                      >
+                        <Chip
+                          label={skill.label}
+                          clickable
+                          onClick={() => {
+                            if (isCompany) {
+                              setRequiredSkills(prev =>
+                                sel ? prev.filter(s => s !== skill.label) : [...prev, skill.label]
+                              );
+                            } else {
+                              toggleSkill(skill.label);
+                            }
+                          }}
+                          sx={{
+                            width: '100%',
+                            height: 50,
+                            border: `2px solid #${skill.color}`,
+                            backgroundColor: sel ? `#${skill.color}` : 'white',
+                            color: sel ? '#fff' : `#${skill.color}`,
+                            fontWeight: sel ? 700 : 600,
+                            fontSize: '0.9rem',
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            boxShadow: sel 
+                              ? `0 8px 25px rgba(${parseInt(skill.color.slice(0, 2), 16)}, ${parseInt(skill.color.slice(2, 4), 16)}, ${parseInt(skill.color.slice(4, 6), 16)}, 0.4)`
+                              : '0 4px 15px rgba(0,0,0,0.1)',
+                            '&:hover': {
+                              backgroundColor: sel ? `#${skill.color}` : `#${skill.color}`,
+                              color: '#fff',
+                              boxShadow: `0 12px 30px rgba(${parseInt(skill.color.slice(0, 2), 16)}, ${parseInt(skill.color.slice(2, 4), 16)}, ${parseInt(skill.color.slice(4, 6), 16)}, 0.5)`,
+                              transform: 'translateY(-2px)'
+                            }
+                          }}
+                        />
+                      </Box>
+                    </Tooltip>
+                  );
+                })}
+              </Box>
+
+              {/* Skills Summary */}
+              <Box sx={{ 
+                p: 3, 
+                borderRadius: 3, 
+                backgroundColor: '#F8F9FA',
+                border: '2px solid #E9ECEF',
+                textAlign: 'center'
+              }}>
+                <Typography variant="body1" sx={{ color: '#495057', fontWeight: 600, mb: 1 }}>
+                  {userType === 'company' ? 'Selected Skills:' : 'Your Selected Skill:'}
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
+                  {userType === 'company' ? (
+                    requiredSkills.length > 0 ? (
+                      requiredSkills.map((skill, index) => (
+                        <Chip
+                          key={index}
+                          label={skill}
+                          sx={{
+                            background: GREEN_MAIN,
+                            color: 'white',
+                            fontWeight: 600,
+                            '&:hover': { background: GREEN_MAIN }
+                          }}
+                        />
+                      ))
+                    ) : (
+                      <Typography variant="body2" sx={{ color: '#999', fontStyle: 'italic' }}>
+                        No skills selected yet
+                      </Typography>
+                    )
+                  ) : (
+                    skills.length > 0 ? (
+                      skills.map((skill, index) => (
+                        <Chip
+                          key={index}
+                          label={skill}
+                          sx={{
+                            background: GREEN_MAIN,
+                            color: 'white',
+                            fontWeight: 600,
+                            '&:hover': { background: GREEN_MAIN }
+                          }}
+                        />
+                      ))
+                    ) : (
+                      <Typography variant="body2" sx={{ color: '#999', fontStyle: 'italic' }}>
+                        No skill selected yet
+                      </Typography>
+                    )
+                  )}
+                </Box>
+              </Box>
             </Box>
 
-            {/* Hedera Experience Question */}
+            {/* Enhanced Hedera Experience Question */}
             {((userType === 'candidate' && skills.includes('Hedera')) ||
               (userType === 'company' && requiredSkills.includes('Hedera'))) && (
-                <Box sx={{ mt: 4 }}>
-                  <Typography variant="h6" gutterBottom sx={{ color: '#fff' }}>
+                <Box sx={{ 
+                  mt: 6, 
+                  p: 4, 
+                  borderRadius: 3, 
+                  background: 'linear-gradient(135deg, #02E2FF08 0%, #00FFC308 100%)',
+                  border: '2px solid #02E2FF30',
+                  textAlign: 'center'
+                }}>
+                  <Box sx={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mx: 'auto',
+                    mb: 3,
+                    boxShadow: '0 6px 20px rgba(2, 226, 255, 0.3)'
+                  }}>
+                    <BugReportIcon sx={{ fontSize: 30, color: 'white' }} />
+                  </Box>
+                  <Typography 
+                    variant="h6" 
+                    gutterBottom 
+                    sx={{ 
+                      color: '#333',
+                      fontWeight: 600,
+                      mb: 3
+                    }}
+                  >
                     {userType === 'company'
                       ? 'Is Hedera experience required?'
                       : 'Do you have experience working with Hedera?'
@@ -1754,45 +1947,69 @@ function Preferences() {
                     row
                     value={hederaExp}
                     onChange={(e) => setHederaExp(e.target.value as 'yes' | 'no')}
-                    sx={{ mt: 1 }}
+                    sx={{ 
+                      justifyContent: 'center',
+                      gap: 4
+                    }}
                   >
                     <FormControlLabel
                       value="yes"
                       control={
                         <Radio
                           sx={{
-                            color: 'rgba(255, 255, 255, 0.7)',
+                            color: '#02E2FF',
                             '&.Mui-checked': {
-                              color: GREEN_MAIN
+                              color: '#02E2FF'
                             }
                           }}
                         />
                       }
-                      label="Yes"
-                      sx={{
-                        color: '#fff'
-                      }}
+                      label={
+                        <Typography sx={{ color: '#333', fontWeight: 500 }}>
+                          Yes, I have experience
+                        </Typography>
+                      }
                     />
                     <FormControlLabel
                       value="no"
                       control={
                         <Radio
                           sx={{
-                            color: 'rgba(255, 255, 255, 0.7)',
+                            color: '#02E2FF',
                             '&.Mui-checked': {
-                              color: GREEN_MAIN
+                              color: '#02E2FF'
                             }
                           }}
                         />
                       }
-                      label="No"
-                      sx={{
-                        color: '#fff'
-                      }}
+                      label={
+                        <Typography sx={{ color: '#333', fontWeight: 500 }}>
+                          No, I'm new to Hedera
+                        </Typography>
+                      }
                     />
                   </RadioGroup>
                 </Box>
               )}
+
+            {/* Help Text */}
+            <Box sx={{ 
+              mt: 4, 
+              p: 3, 
+              borderRadius: 3, 
+              backgroundColor: '#E8F5E8',
+              border: '2px solid #C8E6C9',
+              textAlign: 'center',
+              maxWidth: 600,
+              mx: 'auto'
+            }}>
+              <Typography variant="body2" sx={{ color: '#2E7D32', lineHeight: 1.6 }}>
+                <strong>💡 Tip:</strong> {userType === 'company' 
+                  ? 'Select skills that accurately represent your company\'s needs. You can select multiple skills to broaden your talent search.'
+                  : 'Choose the skill you\'re most confident in. This will be the focus of your assessment and help showcase your expertise.'
+                }
+              </Typography>
+            </Box>
           </Box>
         )}
 
