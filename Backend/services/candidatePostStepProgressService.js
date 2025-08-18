@@ -20,6 +20,7 @@ class CandidatePostStepProgressService {
         .populate('idPost', 'jobDetails.title')
         .populate('currentStep', 'data.label data.type')
         .populate('steps.stepId', 'data.label data.type order')
+        .populate('steps.interviewDetails', 'type overallScore createdAt')
         .sort({ createdAt: -1 });
       return { success: true, data: progress };
     } catch (error) {
@@ -34,7 +35,8 @@ class CandidatePostStepProgressService {
         .populate('idCandidate', 'name email')
         .populate('idPost', 'jobDetails.title')
         .populate('currentStep', 'data.label data.type')
-        .populate('steps.stepId', 'data.label data.type order');
+        .populate('steps.stepId', 'data.label data.type order')
+        .populate('steps.interviewDetails', 'type overallScore createdAt');
       
       if (!progress) {
         return { success: false, error: 'Progrès non trouvé' };
@@ -53,7 +55,8 @@ class CandidatePostStepProgressService {
         .populate('idCandidate')
         .populate('idPost')
         .populate('currentStep')
-        .populate('steps.stepId', 'data.label data.type order');
+        .populate('steps.stepId', 'data.label data.type order')
+        .populate('steps.interviewDetails', 'type overallScore createdAt');
       
       if (!progress) {
         return { success: false, error: 'Progrès non trouvé pour ce candidat' };
@@ -74,7 +77,8 @@ class CandidatePostStepProgressService {
       .populate('idCandidate', 'name email')
       .populate('idPost', 'jobDetails.title')
       .populate('currentStep', 'data.label data.type')
-      .populate('steps.stepId', 'data.label data.type order');
+      .populate('steps.stepId', 'data.label data.type order')
+      .populate('steps.interviewDetails', 'type overallScore createdAt');
       
       if (!progress) {
         return { success: false, error: 'Progrès non trouvé' };
@@ -93,6 +97,7 @@ class CandidatePostStepProgressService {
         .populate('idPost', 'jobDetails.title')
         .populate('currentStep', 'data.label data.type')
         .populate('steps.stepId', 'data.label data.type order')
+        .populate('steps.interviewDetails', 'type overallScore createdAt')
         .sort({ updatedAt: -1 });
       
       // Return empty array if no progress found (this is not an error)
@@ -110,6 +115,7 @@ class CandidatePostStepProgressService {
         .populate('idPost', 'jobDetails.title')
         .populate('currentStep', 'data.label data.type')
         .populate('steps.stepId', 'data.label data.type order')
+        .populate('steps.interviewDetails', 'type overallScore createdAt')
         .sort({ updatedAt: -1 });
       return { success: true, data: progress };
     } catch (error) {
@@ -125,6 +131,7 @@ class CandidatePostStepProgressService {
         .populate('idPost', 'jobDetails.title')
         .populate('currentStep', 'data.label data.type')
         .populate('steps.stepId', 'data.label data.type order')
+        .populate('steps.interviewDetails', 'type overallScore createdAt')
         .sort({ updatedAt: -1 });
       return { success: true, data: progress };
     } catch (error) {
@@ -143,7 +150,8 @@ class CandidatePostStepProgressService {
       .populate('idCandidate', 'name email')
       .populate('idPost', 'jobDetails.title')
       .populate('currentStep', 'data.label data.type')
-      .populate('steps.stepId', 'data.label data.type order');
+      .populate('steps.stepId', 'data.label data.type order')
+      .populate('steps.interviewDetails', 'type overallScore createdAt');
       
       if (!updatedProgress) {
         return { success: false, error: 'Progrès non trouvé' };
@@ -165,7 +173,8 @@ class CandidatePostStepProgressService {
       .populate('idCandidate', 'name email')
       .populate('idPost', 'jobDetails.title')
       .populate('currentStep', 'data.label data.type')
-      .populate('steps.stepId', 'data.label data.type order');
+      .populate('steps.stepId', 'data.label data.type order')
+      .populate('steps.interviewDetails', 'type overallScore createdAt');
       
       if (!updatedProgress) {
         return { success: false, error: 'Progrès non trouvé' };
@@ -225,7 +234,8 @@ class CandidatePostStepProgressService {
       .populate('idCandidate', 'name email')
       .populate('idPost', 'jobDetails.title')
       .populate('currentStep', 'data.label data.type')
-      .populate('steps.stepId', 'data.label data.type order');
+      .populate('steps.stepId', 'data.label data.type order')
+      .populate('steps.interviewDetails', 'type overallScore createdAt');
       
       return { success: true, data: progress };
     } catch (error) {
@@ -272,6 +282,7 @@ class CandidatePostStepProgressService {
       .populate('idCandidate', 'name email')
       .populate('idPost', 'jobDetails.title')
       .populate('steps.stepId', 'data.label data.type order')
+      .populate('steps.interviewDetails', 'type overallScore createdAt')
       .sort({ updatedAt: -1 });
       
       return { success: true, data: completedCandidates };
@@ -290,6 +301,7 @@ class CandidatePostStepProgressService {
       .populate('idCandidate', 'name email')
       .populate('idPost', 'jobDetails.title')
       .populate('steps.stepId', 'data.label data.type order')
+      .populate('steps.interviewDetails', 'type overallScore createdAt')
       .sort({ updatedAt: -1 });
       
       return { success: true, data: inProgressCandidates };
@@ -352,7 +364,8 @@ class CandidatePostStepProgressService {
       .populate('idCandidate', 'name email')
       .populate('idPost', 'jobDetails.title')
       .populate('currentStep', 'data.label data.type')
-      .populate('steps.stepId', 'data.label data.type order');
+      .populate('steps.stepId', 'data.label data.type order')
+      .populate('steps.interviewDetails', 'type overallScore createdAt');
       
       if (!progress) {
         return { success: false, error: 'Progrès non trouvé' };
