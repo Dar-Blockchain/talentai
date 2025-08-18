@@ -587,15 +587,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                          </Box>
                        </Box>
                        
-                       <Chip
-                         label={`Step ${progress.currentStep?.data?.config?.nodeNumber || 'N/A'}`}
-                         size="small"
-                         sx={{
-                           backgroundColor: '#02E2FF20',
-                           color: '#02E2FF',
-                           fontWeight: 500,
-                         }}
-                       />
+                       
                        <Chip
                          label={progress.currentStep?.data?.type || 'Unknown'}
                          size="small"
