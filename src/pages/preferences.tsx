@@ -1177,25 +1177,98 @@ function Preferences() {
 
         {/* Personal Details Step - Only for candidates */}
         {currentStep === 'Personal Details' && userType === 'candidate' && (
-          <Box sx={{ py: 2 }}>
-            <Typography variant="h6" sx={{ color: 'black' }} gutterBottom>
-              Tell us about yourself
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Box sx={{ py: 4 }}>
+            {/* Enhanced Header */}
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Box sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+                boxShadow: '0 8px 25px rgba(0, 255, 157, 0.3)'
+              }}>
+                <PersonIcon sx={{ fontSize: 40, color: 'white' }} />
+              </Box>
+              <Typography 
+                variant="h4" 
+                gutterBottom 
+                sx={{ 
+                  color: 'black',
+                  fontWeight: 700,
+                  mb: 2
+                }}
+              >
+                Tell us about yourself
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: '#666',
+                  maxWidth: 500,
+                  mx: 'auto',
+                  lineHeight: 1.6
+                }}
+              >
+                Let's start building your professional profile. This information helps us personalize your experience and connect you with the right opportunities.
+              </Typography>
+            </Box>
+
+            {/* Enhanced Form */}
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: 4,
+              maxWidth: 600,
+              mx: 'auto'
+            }}>
               <TextField
                 fullWidth
                 label="First Name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 required
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'black' }
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
               />
               <TextField
@@ -1204,70 +1277,223 @@ function Preferences() {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 required
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'black' }
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
               />
+            </Box>
+
+            {/* Help Text */}
+            <Box sx={{ 
+              mt: 4, 
+              p: 3, 
+              borderRadius: 3, 
+              backgroundColor: '#F8F9FA',
+              border: '2px solid #E9ECEF',
+              maxWidth: 600,
+              mx: 'auto',
+              textAlign: 'center'
+            }}>
+              <Typography variant="body2" sx={{ color: '#495057', lineHeight: 1.6 }}>
+                <strong>💡 Tip:</strong> Use your legal name as it appears on official documents. 
+                This helps with verification and professional networking.
+              </Typography>
             </Box>
           </Box>
         )}
 
         {/* Company Details Step */}
         {currentStep === 'Company Details' && (
-          <Box sx={{ py: 2 }}>
-            <Typography variant="h6" sx={{ color: 'black' }} gutterBottom>
-              Tell us about your company
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Box sx={{ py: 4 }}>
+            {/* Enhanced Header */}
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Box sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+                boxShadow: '0 8px 25px rgba(0, 255, 157, 0.3)'
+              }}>
+                <BusinessIcon sx={{ fontSize: 40, color: 'white' }} />
+              </Box>
+              <Typography 
+                variant="h4" 
+                gutterBottom 
+                sx={{ 
+                  color: 'black',
+                  fontWeight: 700,
+                  mb: 2
+                }}
+              >
+                Tell us about your company
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: '#666',
+                  maxWidth: 500,
+                  mx: 'auto',
+                  lineHeight: 1.6
+                }}
+              >
+                Help us understand your organization better to find the perfect talent match for your needs.
+              </Typography>
+            </Box>
+
+            {/* Enhanced Form */}
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: 4,
+              maxWidth: 600,
+              mx: 'auto'
+            }}>
               <TextField
                 fullWidth
                 label="Company Name"
                 value={companyDetails.name}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, name: e.target.value }))}
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'black' }
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
               />
+
               <StyledSelect
                 select
                 fullWidth
                 label="Industry"
                 value={companyDetails.industry}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, industry: e.target.value }))}
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
                       sx: {
-                        backgroundColor: '#f5f5f5'
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: 2,
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
                       }
                     }
                   }
                 }}
               >
-                <MenuItem value="Technology" sx={{ color: 'black' }}>Technology</MenuItem>
-                <MenuItem value="Finance" sx={{ color: 'black' }}>Finance</MenuItem>
-                <MenuItem value="Healthcare" sx={{ color: 'black' }}>Healthcare</MenuItem>
-                <MenuItem value="Education" sx={{ color: 'black' }}>Education</MenuItem>
-                <MenuItem value="Other" sx={{ color: 'black' }}>Other</MenuItem>
+                <MenuItem value="Technology" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Technology</MenuItem>
+                <MenuItem value="Finance" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Finance</MenuItem>
+                <MenuItem value="Healthcare" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Healthcare</MenuItem>
+                <MenuItem value="Education" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Education</MenuItem>
+                <MenuItem value="Other" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Other</MenuItem>
               </StyledSelect>
 
               <StyledSelect
@@ -1276,28 +1502,61 @@ function Preferences() {
                 label="Company Size"
                 value={companyDetails.size}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, size: e.target.value }))}
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
                       sx: {
-                        backgroundColor: '#f5f5f5'
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: 2,
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
                       }
                     }
                   }
                 }}
               >
-                <MenuItem value="1-10" sx={{ color: 'black' }}  >1-10 employees</MenuItem>
-                <MenuItem value="11-50" sx={{ color: 'black' }}>11-50 employees</MenuItem>
-                <MenuItem value="51-200" sx={{ color: 'black' }}>51-200 employees</MenuItem>
-                <MenuItem value="201-500" sx={{ color: 'black' }}>201-500 employees</MenuItem>
-                <MenuItem value="501+" sx={{ color: 'black' }}>501+ employees</MenuItem>
+                <MenuItem value="1-10" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>1-10 employees</MenuItem>
+                <MenuItem value="11-50" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>11-50 employees</MenuItem>
+                <MenuItem value="51-200" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>51-200 employees</MenuItem>
+                <MenuItem value="201-500" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>201-500 employees</MenuItem>
+                <MenuItem value="501+" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>501+ employees</MenuItem>
               </StyledSelect>
 
               <StyledSelect
@@ -1306,27 +1565,77 @@ function Preferences() {
                 label="Location"
                 value={companyDetails.location}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, location: e.target.value }))}
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
                       sx: {
-                        backgroundColor: '#f5f5f5'
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: 2,
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
                       }
                     }
                   }
                 }}
               >
-                <MenuItem value="Remote" sx={{ color: 'black' }}>Remote</MenuItem>
-                <MenuItem value="On-site" sx={{ color: 'black' }}>On-site</MenuItem>
-                <MenuItem value="Hybrid" sx={{ color: 'black' }}>Hybrid</MenuItem>
+                <MenuItem value="Remote" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Remote</MenuItem>
+                <MenuItem value="On-site" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>On-site</MenuItem>
+                <MenuItem value="Hybrid" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Hybrid</MenuItem>
               </StyledSelect>
+            </Box>
+
+            {/* Help Text */}
+            <Box sx={{ 
+              mt: 4, 
+              p: 3, 
+              borderRadius: 3, 
+              backgroundColor: '#F8F9FA',
+              border: '2px solid #E9ECEF',
+              maxWidth: 600,
+              mx: 'auto',
+              textAlign: 'center'
+            }}>
+              <Typography variant="body2" sx={{ color: '#495057', lineHeight: 1.6 }}>
+                <strong>💡 Tip:</strong> Providing accurate company information helps us match you with the right candidates 
+                and ensures a better hiring experience for your organization.
+              </Typography>
             </Box>
           </Box>
         )}
@@ -1598,61 +1907,342 @@ function Preferences() {
         )}
 
         {currentStep === 'Review' && (
-          <Box>
-            <Typography mb={2} sx={{ color: 'black' }}>Review your inputs before starting the test:</Typography>
-            <Typography variant="body2" sx={{ color: 'black' }}>
-              <strong>Type:</strong> {userType === 'company' ? 'Company' : 'Candidate'}
-            </Typography>
-            {userType === 'company' ? (
-              <>
-                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}>
-                  <strong>Company Details:</strong>
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'black' }}>
-                  Name: {companyDetails.name}<br />
-                  Industry: {companyDetails.industry}<br />
-                  Size: {companyDetails.size}<br />
-                  Location: {companyDetails.location}
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
-                  <strong>Required Skills:</strong> {requiredSkills.join(', ')}
-                </Typography>
-                {hederaExp === 'yes' && (
-                  <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
-                    <strong>Hedera Experience:</strong> Verified
-                  </Typography>
-                )}
-                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
-                  <strong>Required Experience Level:</strong> {experienceLevel}
-                </Typography>
-              </>
-            ) : (
-              <>
-                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
-                  <strong>Personal Details:</strong>
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'black' }}>
-                  First Name: {firstName}<br />
-                  Last Name: {lastName}
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
-                  <strong>Skills:</strong> {skills.join(', ')}
-                </Typography>
-                {hederaExp === 'yes' && (
-                  <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
-                    <strong>Hedera Experience:</strong> Verified
-                  </Typography>
-                )}
-                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
-                  <strong>Proficiency Levels:</strong>
-                </Typography>
-                {skills.map(skill => (
-                  <Typography key={skill} variant="body2" sx={{ color: 'black' }}>
-                    - {skill}: {proficiency[skill] ?? '-'}/5
-                  </Typography>
-                ))}
-              </>
-            )}
+          <Box sx={{ py: 4 }}>
+            {/* Enhanced Header */}
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Box sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+                boxShadow: '0 8px 25px rgba(0, 255, 157, 0.3)'
+              }}>
+                <CheckCircleIcon sx={{ fontSize: 40, color: 'white' }} />
+              </Box>
+              <Typography 
+                variant="h4" 
+                gutterBottom 
+                sx={{ 
+                  color: 'black',
+                  fontWeight: 700,
+                  mb: 2
+                }}
+              >
+                Review Your Profile
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: '#666',
+                  maxWidth: 600,
+                  mx: 'auto',
+                  lineHeight: 1.6
+                }}
+              >
+                Please review all the information below before proceeding. You can go back to make changes if needed.
+              </Typography>
+            </Box>
+
+            {/* Profile Type Badge */}
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              mb: 4 
+            }}>
+              <Chip
+                label={userType === 'company' ? 'Company Profile' : 'Candidate Profile'}
+                sx={{
+                  background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  px: 3,
+                  py: 1,
+                  boxShadow: '0 4px 15px rgba(0, 255, 157, 0.3)'
+                }}
+              />
+            </Box>
+
+            {/* Review Content */}
+            <Box sx={{ maxWidth: 700, mx: 'auto' }}>
+              {userType === 'company' ? (
+                // Company Review
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {/* Company Details Section */}
+                  <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid ${GREEN_MAIN}20` }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                      <BusinessIcon sx={{ color: GREEN_MAIN, fontSize: 28 }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+                        Company Details
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: '#666', mb: 1, fontWeight: 500 }}>
+                          Company Name
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                          {companyDetails.name || 'Not specified'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: '#666', mb: 1, fontWeight: 500 }}>
+                          Industry
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                          {companyDetails.industry || 'Not specified'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: '#666', mb: 1, fontWeight: 500 }}>
+                          Company Size
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                          {companyDetails.size || 'Not specified'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: '#666', mb: 1, fontWeight: 500 }}>
+                          Location
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                          {companyDetails.location || 'Not specified'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Paper>
+
+                  {/* Required Skills Section */}
+                  <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid ${GREEN_MAIN}20` }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                      <DesignServicesIcon sx={{ color: GREEN_MAIN, fontSize: 28 }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+                        Required Skills
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {requiredSkills.length > 0 ? (
+                        requiredSkills.map((skill, index) => (
+                          <Chip
+                            key={index}
+                            label={skill}
+                            sx={{
+                              background: GREEN_MAIN,
+                              color: 'white',
+                              fontWeight: 600,
+                              '&:hover': { background: GREEN_MAIN }
+                            }}
+                          />
+                        ))
+                      ) : (
+                        <Typography variant="body2" sx={{ color: '#999', fontStyle: 'italic' }}>
+                          No skills selected
+                        </Typography>
+                      )}
+                    </Box>
+                  </Paper>
+
+                  {/* Experience Level Section */}
+                  <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid ${GREEN_MAIN}20` }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                      <AnalyticsIcon sx={{ color: GREEN_MAIN, fontSize: 28 }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+                        Required Experience Level
+                      </Typography>
+                    </Box>
+                    <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                      {experienceLevel || 'Not specified'}
+                    </Typography>
+                  </Paper>
+
+                  {/* Hedera Experience Section */}
+                  {hederaExp === 'yes' && (
+                    <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid #02E2FF20`, background: 'linear-gradient(135deg, #02E2FF08 0%, #00FFC308 100%)' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                        <BugReportIcon sx={{ color: '#02E2FF', fontSize: 28 }} />
+                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+                          Hedera Experience Required
+                        </Typography>
+                      </Box>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 2,
+                        p: 2,
+                        borderRadius: 2,
+                        background: 'linear-gradient(135deg, #02E2FF15 0%, #00FFC315 100%)',
+                        border: '1px solid #02E2FF30'
+                      }}>
+                        <CheckCircleIcon sx={{ color: '#02E2FF', fontSize: 24 }} />
+                        <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                          Hedera experience verification completed
+                        </Typography>
+                      </Box>
+                    </Paper>
+                  )}
+                </Box>
+              ) : (
+                // Candidate Review
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {/* Personal Details Section */}
+                  <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid ${GREEN_MAIN}20` }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                      <PersonIcon sx={{ color: GREEN_MAIN, fontSize: 28 }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+                        Personal Details
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: '#666', mb: 1, fontWeight: 500 }}>
+                          First Name
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                          {firstName || 'Not specified'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: '#666', mb: 1, fontWeight: 500 }}>
+                          Last Name
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                          {lastName || 'Not specified'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Paper>
+
+                  {/* Skills Section */}
+                  <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid ${GREEN_MAIN}20` }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                      <CodeIcon sx={{ color: GREEN_MAIN, fontSize: 28 }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+                        Selected Skills
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
+                      {skills.length > 0 ? (
+                        skills.map((skill, index) => (
+                          <Chip
+                            key={index}
+                            label={skill}
+                            sx={{
+                              background: GREEN_MAIN,
+                              color: 'white',
+                              fontWeight: 600,
+                              '&:hover': { background: GREEN_MAIN }
+                            }}
+                          />
+                        ))
+                      ) : (
+                        <Typography variant="body2" sx={{ color: '#999', fontStyle: 'italic' }}>
+                          No skills selected
+                        </Typography>
+                      )}
+                    </Box>
+                  </Paper>
+
+                  {/* Proficiency Levels Section */}
+                  {skills.length > 0 && (
+                    <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid ${GREEN_MAIN}20` }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                        <StarIcon sx={{ color: GREEN_MAIN, fontSize: 28 }} />
+                        <Typography variant="h6" sx={{ color: '#333', fontWeight: 600 }}>
+                          Proficiency Levels
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {skills.map(skill => (
+                          <Box key={skill} sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            p: 2,
+                            borderRadius: 2,
+                            background: '#F8F9FA',
+                            border: '1px solid #E9ECEF'
+                          }}>
+                            <Typography variant="body1" sx={{ color: '#333', fontWeight: 500 }}>
+                              {skill}
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Box sx={{ 
+                                display: 'flex', 
+                                gap: 0.5 
+                              }}>
+                                {[1, 2, 3, 4, 5].map((level) => (
+                                  <Box
+                                    key={level}
+                                    sx={{
+                                      width: 16,
+                                      height: 16,
+                                      borderRadius: '50%',
+                                      background: level <= (proficiency[skill] || 1) ? GREEN_MAIN : '#E9ECEF',
+                                      transition: 'all 0.2s ease'
+                                    }}
+                                  />
+                                ))}
+                              </Box>
+                              <Typography variant="body2" sx={{ color: '#666', fontWeight: 600, ml: 1 }}>
+                                {proficiency[skill] || 1}/5
+                              </Typography>
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Paper>
+                  )}
+
+                  {/* Hedera Experience Section */}
+                  {hederaExp === 'yes' && (
+                    <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid #02E2FF20`, background: 'linear-gradient(135deg, #02E2FF08 0%, #00FFC308 100%)' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                        <BugReportIcon sx={{ color: '#02E2FF', fontSize: 28 }} />
+                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+                          Hedera Experience
+                        </Typography>
+                      </Box>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 2,
+                        p: 2,
+                        borderRadius: 2,
+                        background: 'linear-gradient(135deg, #02E2FF15 0%, #00FFC315 100%)',
+                        border: '1px solid #02E2FF30'
+                      }}>
+                        <CheckCircleIcon sx={{ color: '#02E2FF', fontSize: 24 }} />
+                        <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                          Hedera experience verification completed
+                        </Typography>
+                      </Box>
+                    </Paper>
+                  )}
+                </Box>
+              )}
+            </Box>
+
+            {/* Summary Message */}
+            <Box sx={{ 
+              mt: 6, 
+              p: 4, 
+              borderRadius: 3, 
+              background: 'linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%)',
+              border: '2px solid #DEE2E6',
+              textAlign: 'center',
+              maxWidth: 600,
+              mx: 'auto'
+            }}>
+              <Typography variant="body1" sx={{ color: '#495057', lineHeight: 1.6 }}>
+                <strong>🎯 Ready to proceed?</strong> All your information has been captured. 
+                Click the button below to {userType === 'company' ? 'access your dashboard' : 'start your assessment'}.
+              </Typography>
+            </Box>
           </Box>
         )}
 
@@ -1709,13 +2299,15 @@ function Preferences() {
                 }
               }}
             >
-              {activeStep === steps.length - 1
-                ? (userType === 'company'
-                  ? 'Go to Dashboard'
-                  : (router.query.returnUrl
-                    ? 'Continue to Test'
-                    : 'Start Test'))
-                : 'Next'}
+              {activeStep === 0
+                ? 'Get Started'
+                : activeStep === steps.length - 1
+                  ? (userType === 'company'
+                    ? 'Go to Dashboard'
+                    : (router.query.returnUrl
+                      ? 'Continue to Test'
+                      : 'Start Test'))
+                  : 'Next'}
             </Button>
           )}
         </Box>
