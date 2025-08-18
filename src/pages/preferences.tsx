@@ -1709,13 +1709,15 @@ function Preferences() {
                 }
               }}
             >
-              {activeStep === steps.length - 1
-                ? (userType === 'company'
-                  ? 'Go to Dashboard'
-                  : (router.query.returnUrl
-                    ? 'Continue to Test'
-                    : 'Start Test'))
-                : 'Next'}
+              {activeStep === 0
+                ? 'Get Started'
+                : activeStep === steps.length - 1
+                  ? (userType === 'company'
+                    ? 'Go to Dashboard'
+                    : (router.query.returnUrl
+                      ? 'Continue to Test'
+                      : 'Start Test'))
+                  : 'Next'}
             </Button>
           )}
         </Box>
