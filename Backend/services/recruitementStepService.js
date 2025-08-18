@@ -119,39 +119,49 @@ module.exports.generateQuestions = async (
       
       if (existingProgress.success && existingProgress.data) {
         // L'enregistrement existe, ajouter les steps manquants
-        const existingStepIds = existingProgress.data.steps.map(step => step.stepId.toString());
+        const existingStepIds = existingProgress.data.steps.map(step => {
+          // Gérer stepId peuplé ou ObjectId
+          return step.stepId && step.stepId._id ? step.stepId._id.toString() : step.stepId.toString();
+        });
         
-                 // Ajouter les steps qui n'existent pas encore
-         allPostSteps.forEach((step, index) => {
-           if (!existingStepIds.includes(step._id.toString())) {
-             // Si c'est le premier step ajouté et qu'il n'y a pas encore de step inProgress, le marquer comme inProgress
-             const hasInProgressStep = existingProgress.data.steps.some(s => s.status === 'inProgress');
-             const isFirstNewStep = existingProgress.data.steps.length === 0;
-             
-             existingProgress.data.steps.push({
-               stepId: step._id,
-               status: (isFirstNewStep || !hasInProgressStep) ? 'inProgress' : 'pending',
-               completedAt: null
-             });
-           }
-         });
+        // Créer une liste des nouveaux steps à ajouter
+        const newStepsToAdd = [];
+        allPostSteps.forEach((step, index) => {
+          if (!existingStepIds.includes(step._id.toString())) {
+            // Si c'est le premier step ajouté et qu'il n'y a pas encore de step inProgress, le marquer comme inProgress
+            const hasInProgressStep = existingProgress.data.steps.some(s => s.status === 'inProgress');
+            const isFirstNewStep = existingProgress.data.steps.length === 0;
+            
+            newStepsToAdd.push({
+              stepId: step._id,
+              status: (isFirstNewStep || !hasInProgressStep) ? 'inProgress' : 'pending',
+              completedAt: null
+            });
+          }
+        });
         
-        // Assainir les steps (remplacer les documents peuplés par leurs _id)
-        const sanitizedSteps = existingProgress.data.steps.map(s => ({
-          stepId: s.stepId && s.stepId._id ? s.stepId._id : s.stepId,
-          interviewDetails: s.interviewDetails && s.interviewDetails._id ? s.interviewDetails._id : (s.interviewDetails || null),
-          status: s.status,
-          completedAt: s.completedAt || null,
-        }));
+        // Ajouter seulement les nouveaux steps pour éviter les doublons
+        if (newStepsToAdd.length > 0) {
+          // Assainir les steps existants (remplacer les documents peuplés par leurs _id)
+          const sanitizedExistingSteps = existingProgress.data.steps.map(s => ({
+            stepId: s.stepId && s.stepId._id ? s.stepId._id : s.stepId,
+            interviewDetails: s.interviewDetails && s.interviewDetails._id ? s.interviewDetails._id : (s.interviewDetails || null),
+            status: s.status,
+            completedAt: s.completedAt || null,
+          }));
 
-        // Mettre à jour l'enregistrement
-        const updateResult = await candidatePostStepProgressService.updateProgress(
-          existingProgress.data._id,
-          { steps: sanitizedSteps }
-        );
-        
-        if (!updateResult.success) {
-          console.error('Erreur lors de la mise à jour du progrès:', updateResult.error);
+          // Combiner les steps existants avec les nouveaux
+          const allSteps = [...sanitizedExistingSteps, ...newStepsToAdd];
+
+          // Mettre à jour l'enregistrement
+          const updateResult = await candidatePostStepProgressService.updateProgress(
+            existingProgress.data._id,
+            { steps: allSteps }
+          );
+          
+          if (!updateResult.success) {
+            console.error('Erreur lors de la mise à jour du progrès:', updateResult.error);
+          }
         }
              } else {
          // Créer un nouvel enregistrement avec tous les steps du post
