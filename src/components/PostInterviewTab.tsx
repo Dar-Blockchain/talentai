@@ -1238,6 +1238,13 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                         variant="contained"
                         size="small"
                         startIcon={<AssignmentIcon />}
+                        disabled={(() => {
+                          // Check if all steps are completed
+                          if (progress.steps && progress.steps.length > 0) {
+                            return progress.steps.every(step => step.status === 'done');
+                          }
+                          return false;
+                        })()}
                         onClick={() => {
                           // Find the next step in correct order: inProgress first, then pending in order
                           let nextStep = null;
@@ -1277,6 +1284,10 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                           '&:hover': {
                             backgroundColor: '#02C2E0',
                           },
+                          '&.Mui-disabled': {
+                            backgroundColor: '#e0e0e0',
+                            color: '#9e9e9e',
+                          },
                         }}
                                               >
                           {(() => {
@@ -1284,6 +1295,13 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                               const sortedSteps = [...progress.steps].sort((a, b) => 
                                 (a.stepId?.order || 0) - (b.stepId?.order || 0)
                               );
+                              
+                              // Check if all steps are completed
+                              const allStepsCompleted = progress.steps.every(step => step.status === 'done');
+                              if (allStepsCompleted) {
+                                return 'Application Completed ✅';
+                              }
+                              
                               const inProgressStep = sortedSteps.find(step => step.status === 'inProgress');
                               const nextPendingStep = sortedSteps.find(step => step.status === 'pending');
                               
