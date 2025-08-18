@@ -113,6 +113,7 @@ interface CandidateProgress {
   };
   currentStep: {
     _id: string;
+    order?: number;
     status?: string;
     data: {
       label: string;
@@ -128,6 +129,7 @@ interface CandidateProgress {
      steps: Array<{
      stepId: {
        _id: string;
+       order?: number;
        status?: string;
        data: {
          label: string;
@@ -291,6 +293,21 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
   // Fetch progress on component mount
   useEffect(() => {
     fetchCandidateProgress();
+  }, []);
+
+  // Refresh progress when returning from an interview
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Page became visible again, refresh progress data
+        fetchCandidateProgress();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   // Debug logging
@@ -1195,41 +1212,89 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                         </Typography>
                       </Box>
 
-                     {/* Action Buttons */}
-                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
-                      
-                                               <Button
-                          variant="contained"
-                          size="small"
-                          startIcon={<AssignmentIcon />}
-                          onClick={() => {
-                                                         // Find the next pending step or current step
-                             const nextStep = progress.steps?.find(step => step.status === 'pending') || 
-                                            progress.steps?.find(step => step.status === 'inProgress');
+                                          {/* Action Buttons */}
+                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3, gap: 2 }}>
+                      {/* Refresh Button */}
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => fetchCandidateProgress()}
+                        disabled={progressLoading}
+                        sx={{
+                          borderColor: '#02E2FF',
+                          color: '#02E2FF',
+                          textTransform: 'none',
+                          fontWeight: 500,
+                          '&:hover': {
+                            borderColor: '#02C2E0',
+                            backgroundColor: '#02E2FF10',
+                          },
+                        }}
+                      >
+                        {progressLoading ? 'Refreshing...' : 'Refresh Status'}
+                      </Button>
+
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<AssignmentIcon />}
+                        onClick={() => {
+                          // Find the next step in correct order: inProgress first, then pending in order
+                          let nextStep = null;
+                          
+                          if (progress.steps) {
+                            // Sort steps by order to ensure correct sequence
+                            const sortedSteps = [...progress.steps].sort((a, b) => 
+                              (a.stepId?.order || 0) - (b.stepId?.order || 0)
+                            );
                             
-                                                         if (nextStep) {
-                               // Navigate with step ID from steps - stepId is an object containing _id
-                               const stepId = nextStep.stepId._id
-                               router.push(`/interview-post/${progress.idPost?._id}?stepId=${stepId}`);
-                             } else if (progress.currentStep) {
-                               // Use current step ID
-                               router.push(`/interview-post/${progress.idPost?._id}?stepId=${progress.currentStep._id}`);
-                             } else {
-                               // Fallback to just the post ID
-                               router.push(`/interview-post/${progress.idPost?._id}`);
-                             }
-                          }}
-                          sx={{
-                            backgroundColor: '#02E2FF',
-                            color: 'white',
-                            textTransform: 'none',
-                            fontWeight: 500,
-                            '&:hover': {
-                              backgroundColor: '#02C2E0',
-                            },
-                          }}
-                        >
-                          Continue Application
+                            // First, look for inProgress steps (current step to continue)
+                            nextStep = sortedSteps.find(step => step.status === 'inProgress');
+                            
+                            // If no inProgress step, find the first pending step in order
+                            if (!nextStep) {
+                              nextStep = sortedSteps.find(step => step.status === 'pending');
+                            }
+                          }
+                          
+                          if (nextStep) {
+                            // Navigate with step ID from steps - stepId is an object containing _id
+                            const stepId = nextStep.stepId._id
+                            router.push(`/interview-post/${progress.idPost?._id}?stepId=${stepId}`);
+                          } else if (progress.currentStep) {
+                            // Use current step ID
+                            router.push(`/interview-post/${progress.idPost?._id}?stepId=${progress.currentStep._id}`);
+                          } else {
+                            // Fallback to just the post ID
+                            router.push(`/interview-post/${progress.idPost?._id}`);
+                          }
+                        }}
+                        sx={{
+                          backgroundColor: '#02E2FF',
+                          color: 'white',
+                          textTransform: 'none',
+                          fontWeight: 500,
+                          '&:hover': {
+                            backgroundColor: '#02C2E0',
+                          },
+                        }}
+                                              >
+                          {(() => {
+                            if (progress.steps) {
+                              const sortedSteps = [...progress.steps].sort((a, b) => 
+                                (a.stepId?.order || 0) - (b.stepId?.order || 0)
+                              );
+                              const inProgressStep = sortedSteps.find(step => step.status === 'inProgress');
+                              const nextPendingStep = sortedSteps.find(step => step.status === 'pending');
+                              
+                              if (inProgressStep) {
+                                return `Continue: ${inProgressStep.stepId?.data?.label || 'Current Step'}`;
+                              } else if (nextPendingStep) {
+                                return `Start: ${nextPendingStep.stepId?.data?.label || 'Next Step'}`;
+                              }
+                            }
+                            return 'Continue Application';
+                          })()}
                         </Button>
                      </Box>
                   </Box>
