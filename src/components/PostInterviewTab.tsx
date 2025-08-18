@@ -125,28 +125,35 @@ interface CandidateProgress {
       };
     };
   };
-  steps: Array<{
-    stepId: {
-      _id: string;
-      status?: string;
-      data: {
-        label: string;
-        type: string;
-        subtitle?: string;
-        config?: {
-          nodeNumber: number;
-          title?: string;
-          configured?: boolean;
-        };
-      };
-    };
-    status: string;
-    completedAt?: string;
-    _id: string;
-    score?: number;
-    results?: string;
-    feedback?: string;
-  }>;
+     steps: Array<{
+     stepId: {
+       _id: string;
+       status?: string;
+       data: {
+         label: string;
+         type: string;
+         subtitle?: string;
+         config?: {
+           nodeNumber: number;
+           title?: string;
+           configured?: boolean;
+         };
+       };
+     };
+     status: string;
+     completedAt?: string;
+     _id: string;
+     score?: number;
+     results?: string;
+     feedback?: string;
+     interviewDetails?: {
+       _id: string;
+       type: string;
+       overallScore: number;
+       createdAt: number;
+       id: string;
+     } | null;
+   }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -826,15 +833,15 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                                                        '0 4px 15px rgba(0,0,0,0.12)',
                                            }
                                         }}>
-                                          {/* Step Header */}
+                                                                                    {/* Step Header */}
                                           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                                             <Box>
-                                                                                             <Typography variant="h6" sx={{ 
-                                                 fontWeight: 600, 
-                                                 color: step.status === 'done' ? '#2e7d32' : 
-                                                        step.status === 'inProgress' ? '#f57c00' : '#333',
-                                                 mb: 0.5
-                                               }}>
+                                              <Typography variant="h6" sx={{ 
+                                                fontWeight: 600, 
+                                                color: step.status === 'done' ? '#2e7d32' : 
+                                                       step.status === 'inProgress' ? '#f57c00' : '#333',
+                                                mb: 0.5
+                                              }}>
                                                 {step.stepId?.data?.label || `Step ${index + 1}`}
                                               </Typography>
                                               <Typography variant="body2" color="textSecondary">
@@ -843,20 +850,67 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                                             </Box>
                                             
                                             {/* Status Badge */}
-                                                                                         <Chip
-                                               label={step.status === 'done' ? 'Completed' : 
-                                                      step.status === 'inProgress' ? 'In Progress' : 'Pending'}
-                                               size="small"
-                                               sx={{
-                                                 backgroundColor: step.status === 'done' ? '#4caf5020' : 
-                                                                step.status === 'inProgress' ? '#ff980020' : '#9e9e9e20',
-                                                 color: step.status === 'done' ? '#2e7d32' : 
-                                                        step.status === 'inProgress' ? '#f57c00' : '#757575',
-                                                 fontWeight: 600,
-                                                 textTransform: 'capitalize'
-                                               }}
-                                             />
+                                            <Chip
+                                              label={step.status === 'done' ? 'Completed' : 
+                                                     step.status === 'inProgress' ? 'In Progress' : 'Pending'}
+                                              size="small"
+                                              sx={{
+                                                backgroundColor: step.status === 'done' ? '#4caf5020' : 
+                                                               step.status === 'inProgress' ? '#ff980020' : '#9e9e9e20',
+                                                color: step.status === 'done' ? '#2e7d32' : 
+                                                       step.status === 'inProgress' ? '#f57c00' : '#757575',
+                                                fontWeight: 600,
+                                                textTransform: 'capitalize'
+                                              }}
+                                            />
                                           </Box>
+                                          
+                                                                                     {/* Overall Score Display */}
+                                           {step.interviewDetails?.overallScore !== undefined && (
+                                             <Box sx={{ 
+                                               display: 'flex', 
+                                               alignItems: 'center', 
+                                               gap: 2, 
+                                               mb: 2,
+                                               p: 1.5,
+                                               backgroundColor: step.status === 'done' ? '#e8f5e8' : 
+                                                            step.status === 'inProgress' ? '#fff8e1' : '#f5f5f5',
+                                               borderRadius: 2,
+                                               border: '1px solid',
+                                               borderColor: step.status === 'done' ? '#c8e6c9' : 
+                                                         step.status === 'inProgress' ? '#ffcc80' : '#e0e0e0'
+                                             }}>
+                                               <Box sx={{
+                                                 width: 36,
+                                                 height: 36,
+                                                 borderRadius: '50%',
+                                                 backgroundColor: step.status === 'done' ? '#4caf50' : 
+                                                              step.status === 'inProgress' ? '#ff9800' : '#9e9e9e',
+                                                 display: 'flex',
+                                                 alignItems: 'center',
+                                                 justifyContent: 'center',
+                                                 color: 'white',
+                                                 fontWeight: 700,
+                                                 fontSize: '0.75rem'
+                                               }}>
+                                                 {step.interviewDetails.overallScore}
+                                               </Box>
+                                               <Box>
+                                                 <Typography variant="caption" color="textSecondary">
+                                                   Overall Score
+                                                 </Typography>
+                                                 <Typography variant="body2" sx={{ 
+                                                   fontWeight: 600, 
+                                                   color: step.status === 'done' ? '#2e7d32' : 
+                                                          step.status === 'inProgress' ? '#f57c00' : '#757575'
+                                                 }}>
+                                                   {step.interviewDetails.overallScore >= 80 ? 'Excellent' : 
+                                                    step.interviewDetails.overallScore >= 70 ? 'Good' : 
+                                                    step.interviewDetails.overallScore >= 60 ? 'Average' : 'Below Average'}
+                                                 </Typography>
+                                               </Box>
+                                             </Box>
+                                           )}
                                           
                                           {/* Step Progress Bar */}
                                           <Box sx={{ mb: 2 }}>
