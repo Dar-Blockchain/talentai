@@ -22,6 +22,12 @@ const candidate_Post_Step_ProgressSchema = new mongoose.Schema({
       ref: 'Post_Steps',
       required: true,
     },
+    interviewDetails: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'InterviewDetails',
+      default: null,
+      required: false,
+    },
     status: {
       type: String,
       enum: ['pending', 'inProgress', 'done'],
