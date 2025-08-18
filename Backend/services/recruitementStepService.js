@@ -136,10 +136,18 @@ module.exports.generateQuestions = async (
            }
          });
         
+        // Assainir les steps (remplacer les documents peuplés par leurs _id)
+        const sanitizedSteps = existingProgress.data.steps.map(s => ({
+          stepId: s.stepId && s.stepId._id ? s.stepId._id : s.stepId,
+          interviewDetails: s.interviewDetails && s.interviewDetails._id ? s.interviewDetails._id : (s.interviewDetails || null),
+          status: s.status,
+          completedAt: s.completedAt || null,
+        }));
+
         // Mettre à jour l'enregistrement
         const updateResult = await candidatePostStepProgressService.updateProgress(
           existingProgress.data._id,
-          { steps: existingProgress.data.steps }
+          { steps: sanitizedSteps }
         );
         
         if (!updateResult.success) {
@@ -258,7 +266,7 @@ exports.analyseQuestions = async ({ questions, postStep ,user}) => {
       analysis.recommendations,
       questions
     );
-
+console.log("interviewDetailsId",interviewDetailsId)
     // Mettre à jour le statut des steps dans candidate_Post_Step_Progress après l'analyse
     try {
       // Récupérer l'enregistrement de progression pour ce candidat et ce post
@@ -267,9 +275,10 @@ exports.analyseQuestions = async ({ questions, postStep ,user}) => {
       if (existingProgress.success && existingProgress.data) {
         const progress = existingProgress.data;
         
-        // Trouver l'index du step actuel
+        // Trouver l'index du step actuel (gérer stepId peuplé ou ObjectId)
+        const normalizeId = (val) => (val && val._id ? val._id.toString() : val ? val.toString() : '');
         const currentStepIndex = progress.steps.findIndex(step => 
-          step.stepId.toString() === postStep._id.toString()
+          normalizeId(step.stepId) === normalizeId(postStep._id)
         );
         
         if (currentStepIndex !== -1) {
@@ -290,12 +299,21 @@ exports.analyseQuestions = async ({ questions, postStep ,user}) => {
             progress.currentStep = progress.steps[currentStepIndex + 1].stepId;
           }
           
+          // Assainir avant mise à jour (éviter d'envoyer des documents peuplés)
+          const sanitizedSteps = progress.steps.map(s => ({
+            stepId: s.stepId && s.stepId._id ? s.stepId._id : s.stepId,
+            interviewDetails: s.interviewDetails && s.interviewDetails._id ? s.interviewDetails._id : (s.interviewDetails || null),
+            status: s.status,
+            completedAt: s.completedAt || null,
+          }));
+          const sanitizedCurrentStep = progress.currentStep && progress.currentStep._id ? progress.currentStep._id : progress.currentStep;
+
           // Mettre à jour l'enregistrement
           const updateResult = await candidatePostStepProgressService.updateProgress(
             progress._id,
             { 
-              steps: progress.steps,
-              currentStep: progress.currentStep,
+              steps: sanitizedSteps,
+              currentStep: sanitizedCurrentStep,
               updatedAt: new Date()
             }
           );
