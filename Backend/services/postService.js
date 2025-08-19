@@ -218,8 +218,12 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
     select: 'skills',
   });
 
-  if (!user || !user.profile || !Array.isArray(user.profile.skills) || user.profile.skills.length === 0) {
-    throw new Error("No skills found for this user.");
+  if (!user) {
+    throw new Error("User not found.");
+  }
+  if (!user.profile || !Array.isArray(user.profile.skills) || user.profile.skills.length === 0) {
+    // No skills means nothing to recommend → return empty list instead of throwing
+    return [];
   }
 
   // Normalize skills to a list of names
@@ -228,7 +232,7 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
     .filter(Boolean);
 
   if (skillNames.length === 0) {
-    throw new Error("No skills found for this user.");
+    return [];
   }
 
   // Find posts that match at least one of the user's skills
@@ -237,6 +241,10 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
   })
     .sort({ createdAt: -1 })
     .lean();
+
+  if (!candidatePosts || candidatePosts.length === 0) {
+    return [];
+  }
 
   // Score posts by the number of matching required skills
   const scored = candidatePosts.map((post) => {
