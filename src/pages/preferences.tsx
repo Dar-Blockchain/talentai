@@ -52,6 +52,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store/store';
 import { signOut } from 'next-auth/react';
 import { clearProfile } from '@/store/slices/profileSlice';
+import { logout } from '@/store/slices/authSlice';
 
 type Skill = { label: string; color: string; category: string };
 
@@ -661,6 +662,7 @@ function Preferences() {
 
       // Clear Redux state
       dispatch(clearProfile());
+      dispatch(logout());
 
       // Sign out from NextAuth
       await signOut({ redirect: false });

@@ -5,6 +5,9 @@ import {
   selectProfile,
   clearProfile,
 } from "../store/slices/profileSlice";
+import {
+  logout
+} from "../store/slices/authSlice";
 import type { Profile as ProfileType } from "../store/slices/profileSlice";
 import { AppDispatch, RootState } from "../store/store";
 import {
@@ -930,6 +933,7 @@ export default function DashboardCandidate() {
       router.push("/signin");
       // Clear Redux state
       dispatch(clearProfile());
+      dispatch(logout());
       // Sign out from NextAuth
       await signOut({ redirect: false });
     } catch (error) {
