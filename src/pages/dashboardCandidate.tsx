@@ -5,6 +5,9 @@ import {
   selectProfile,
   clearProfile,
 } from "../store/slices/profileSlice";
+import {
+  logout
+} from "../store/slices/authSlice";
 import type { Profile as ProfileType } from "../store/slices/profileSlice";
 import { AppDispatch, RootState } from "../store/store";
 import {
@@ -475,7 +478,7 @@ const SkillBlock = ({
         >
           {type === "technical" ? (
             <>
-              {skill.Levelconfirmed && (
+              {skill.Levelconfirmed && skill.Levelconfirmed > 0 ? (
                 <Chip
                   label={`${getLevelFromNumber(skill.Levelconfirmed)} Confirmed`}
                   size="small"
@@ -483,6 +486,18 @@ const SkillBlock = ({
                     ml: 1,
                     backgroundColor: "rgba(0, 255, 157, 0.2)",
                     color: "black",
+                    height: "20px",
+                    fontSize: "0.75rem",
+                  }}
+                />
+              ) : (
+                <Chip
+                  label="No Level Confirmed"
+                  size="small"
+                  sx={{
+                    ml: 1,
+                    backgroundColor: "rgba(255, 193, 7, 0.2)",
+                    color: "#856404",
                     height: "20px",
                     fontSize: "0.75rem",
                   }}
@@ -930,6 +945,7 @@ export default function DashboardCandidate() {
       router.push("/signin");
       // Clear Redux state
       dispatch(clearProfile());
+      dispatch(logout());
       // Sign out from NextAuth
       await signOut({ redirect: false });
     } catch (error) {
@@ -2395,7 +2411,13 @@ export default function DashboardCandidate() {
                     </Paper>
                   </Box>
                 ))
-              ) : null}
+              ) : (
+                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120 }}>
+                  <Typography variant="body1" sx={{ color: '#666', fontStyle: 'italic' }}>
+                    No recommended opportunities available at the moment.
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </StyledCard>
 

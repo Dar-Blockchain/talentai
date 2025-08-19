@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMyProfile, selectProfile, clearProfile } from '../store/slices/profileSlice';
+import {
+  logout
+} from "../store/slices/authSlice";
 import { AppDispatch, RootState } from '../store/store';
 import { 
   Box,
@@ -667,6 +670,7 @@ const DashboardCompany = () => {
 
       // Clear Redux state
       dispatch(clearProfile());
+      dispatch(logout());
 
       // Sign out from NextAuth
       await signOut({ redirect: false });
