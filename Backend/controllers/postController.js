@@ -141,7 +141,7 @@ exports.updatePostStatus = async (req, res) => {
 
 exports.getPostsByUserTopSkills = async (req, res) => {
   try {
-    const userId = "682f3434d281f5a0afe96fee"; // Adapté selon comment tu passes l'id (paramètre, JWT…)
+    const userId = req.user._id; // Adapté selon comment tu passes l'id (paramètre, JWT…)
     const posts = await postService.getPostsByUserTopSkill(userId);
     res.status(200).json({
       success: true,
