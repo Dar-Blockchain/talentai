@@ -2395,7 +2395,13 @@ export default function DashboardCandidate() {
                     </Paper>
                   </Box>
                 ))
-              ) : null}
+              ) : (
+                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120 }}>
+                  <Typography variant="body1" sx={{ color: '#666', fontStyle: 'italic' }}>
+                    No recommended opportunities available at the moment.
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </StyledCard>
 
