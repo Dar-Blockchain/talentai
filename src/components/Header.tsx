@@ -24,6 +24,7 @@ import { useDispatch } from "react-redux";
 import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
 import dynamic from 'next/dynamic';
 import { setUserType } from "@/store/slices/userSlice";
+import UserAvatar from "./UserAvatar";
 
 const navItems = [
   { label: "Features", id: "features" },
@@ -31,12 +32,14 @@ const navItems = [
   { label: "Pricing", id: "pricing" },
   { label: "Contact", id: "contact" },
 ];
+
 type HeaderProps = {
   logo: string; // path to the logo image
   type: string; // "company" or "jobseeker"
   color: string; // "company" or "jobseeker"
   link: string;
 };
+
 const Header = ({ logo, type, color, link }: HeaderProps) => {
   const router = useRouter();
   const theme = useTheme();
@@ -50,12 +53,14 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
   useEffect(() => {
     setMounted(true);
   }, []);
+
   useEffect(() => {
     if (type) {
       localStorage.setItem("userType", type);
       dispatch(setUserType(type as "company" | "jobseeker")); 
     }
-  }, [type]);
+  }, [type, dispatch]);
+
   useEffect(() => {
     if (isAuthenticated) {
       dispatch(getMyProfile());
@@ -104,6 +109,12 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
             />
           </ListItem>
         ))}
+        {/* Show UserAvatar in mobile drawer when authenticated */}
+        {isAuthenticated && (
+          <ListItem sx={{ justifyContent: "center", mt: 2 }}>
+            <UserAvatar />
+          </ListItem>
+        )}
       </List>
     </Box>
   );
@@ -127,6 +138,7 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
             sx={{ height: 32, cursor: 'pointer' }}
             onClick={() => router.push(type === "company" ? '/' : '/jobseekerLanding')}
           />
+          
           {!isMobile && (
             <Stack direction="row" spacing={4} alignItems="center">
               {navItems.map((item) => (
@@ -151,6 +163,7 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
               ))}
             </Stack>
           )}
+          
           <Typography
             sx={{
               cursor: 'pointer',
@@ -168,43 +181,35 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
           >
             {link}
           </Typography>
+          
           {!isMobile ? (
-            <Button
-              variant="contained"
-              onClick={() => {
-                if (isAuthenticated && profile && profile.type === "Candidate") {
-                  router.push("/dashboardCandidate");
-                } else if (isAuthenticated && profile && profile.type === "Company") {
-                  router.push("/dashboardCompany");
-                } else {
-                  router.push("/signin");
+            // Show UserAvatar for authenticated users, Get Started button for others
+            isAuthenticated ? (
+              <UserAvatar />
+            ) : (
+              <Button
+                variant="contained"
+                onClick={() => router.push("/signin")}
+                sx={{
+                  backgroundColor: "#000",
+                  color: "#fff",
+                  borderRadius: 999,
+                  textTransform: "none",
+                  padding: "6px 20px",
+                  fontWeight: 500,
+                  "&:hover": {
+                    backgroundColor: "#333",
+                  },
+                }}
+                endIcon={
+                  <ArrowForwardIcon
+                    sx={{ fontSize: 16, color: color }}
+                  />
                 }
-              }}
-              sx={{
-                backgroundColor: "#000",
-                color: "#fff",
-                borderRadius: 999,
-                textTransform: "none",
-                padding: "6px 20px",
-                fontWeight: 500,
-                "&:hover": {
-                  backgroundColor: "#333",
-                },
-              }}
-              endIcon={
-                <ArrowForwardIcon
-                  sx={{ fontSize: 16, color: color }}
-                />
-              }
-            >
-              {isAuthenticated && profile
-                ? profile.type === "Candidate"
-                  ? "Dashboard Candidate"
-                  : profile.type === "Company"
-                    ? "Dashboard Company"
-                    : "Get Started"
-                : "Get Started"}
-            </Button>
+              >
+                Get Started
+              </Button>
+            )
           ) : (
             <IconButton color="inherit" edge="end" onClick={handleDrawerToggle}>
               <MenuIcon />
