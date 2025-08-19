@@ -21,7 +21,6 @@ import {
   Person as PersonIcon,
   Logout as LogoutIcon,
   Email as EmailIcon,
-  Settings as SettingsIcon,
 } from "@mui/icons-material";
 import type { RootState } from "../store/store";
 import Cookies from 'js-cookie';
@@ -352,32 +351,7 @@ export default function UserAvatar() {
             />
           </MenuItem>
 
-          <MenuItem 
-            onClick={() => {}} 
-            sx={{ 
-              py: 1.5,
-              px: 2,
-              borderRadius: 2,
-              mb: 0.5,
-              transition: "all 0.2s ease",
-              "&:hover": {
-                background: "linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)",
-                transform: "translateX(4px)",
-              },
-            }}
-          >
-            <ListItemIcon>
-              <SettingsIcon sx={{ color: "text.secondary", fontSize: 20 }} />
-            </ListItemIcon>
-            <ListItemText 
-              primary="Settings" 
-              primaryTypographyProps={{ 
-                variant: "body2",
-                fontWeight: 600,
-                fontSize: "0.9rem",
-              }} 
-            />
-          </MenuItem>
+
 
           <Divider sx={{ my: 1.5, opacity: 0.6 }} />
 
