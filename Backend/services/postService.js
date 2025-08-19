@@ -211,24 +211,45 @@ module.exports.updatePostStatus = async (postId, userId, status) => {
 };
 
 
+// Recommend posts for a user based on ALL their skills (not only the first)
 module.exports.getPostsByUserTopSkill = async (userId) => {
   const user = await User.findById(userId).populate({
     path: 'profile',
     select: 'skills',
   });
-  if (!user || !user.profile || !user.profile.skills || user.profile.skills.length === 0) {
-    throw new Error("Aucune compétence trouvée pour cet utilisateur.");
+
+  if (!user || !user.profile || !Array.isArray(user.profile.skills) || user.profile.skills.length === 0) {
+    throw new Error("No skills found for this user.");
   }
 
-  // On prend le premier skill
-  const firstSkill = user.profile.skills[0].name;
+  // Normalize skills to a list of names
+  const skillNames = user.profile.skills
+    .map((s) => (typeof s === 'string' ? s : s?.name))
+    .filter(Boolean);
 
-  // On récupère 3 posts différents correspondant à ce skill
-  const posts = await Post.find({ "skillAnalysis.requiredSkills.name": firstSkill })
+  if (skillNames.length === 0) {
+    throw new Error("No skills found for this user.");
+  }
+
+  // Find posts that match at least one of the user's skills
+  const candidatePosts = await Post.find({
+    "skillAnalysis.requiredSkills.name": { $in: skillNames },
+  })
     .sort({ createdAt: -1 })
-    .limit(3);
+    .lean();
 
-  return posts;
+  // Score posts by the number of matching required skills
+  const scored = candidatePosts.map((post) => {
+    const required = (post.skillAnalysis?.requiredSkills || []).map((rs) => rs.name);
+    const matchCount = required.reduce((acc, name) => acc + (skillNames.includes(name) ? 1 : 0), 0);
+    return { post, matchCount };
+  });
+
+  // Sort by match count desc, then most recent
+  scored.sort((a, b) => b.matchCount - a.matchCount || new Date(b.post.createdAt) - new Date(a.post.createdAt));
+
+  // Return top 3 recommendations
+  return scored.slice(0, 3).map((s) => s.post);
 };
 
 
