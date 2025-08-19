@@ -1,7 +1,7 @@
 const postStepsService = require('../services/postStepsService');
 
 // Créer une nouvelle étape de post (unique ou multiple)
-async function createPostStep(req, res) {
+module.exports.createPostStep = async (req, res) => {
   try {
     const result = await postStepsService.createPostStep(req.body);
     
@@ -34,7 +34,7 @@ async function createPostStep(req, res) {
 }
 
 // Créer un nouveau nœud avec génération automatique
-async function createNode(req, res) {
+module.exports.createNode = async (req, res) => {
   try {
     const { postId } = req.params;
     const nodeData = req.body;
@@ -64,7 +64,7 @@ async function createNode(req, res) {
 }
 
 // Sauvegarder plusieurs nœuds en une fois
-async function saveMultipleNodes(req, res) {
+module.exports.saveMultipleNodes = async (req, res) => {
   try {
     const { postId } = req.params;
     const nodesData = req.body;
@@ -94,7 +94,7 @@ async function saveMultipleNodes(req, res) {
 }
 
 // Ajouter des étapes à un post avec postId en paramètre
-async function addStepsToPost(req, res) {
+module.exports.addStepsToPost = async (req, res) => {
   try {
     const { postId } = req.params;
     const stepsData = req.body;
@@ -147,7 +147,7 @@ async function addStepsToPost(req, res) {
 }
 
 // Récupérer toutes les étapes de post
-async function getAllPostSteps(req, res) {
+module.exports.getAllPostSteps = async (req, res) => {
   try {
     const result = await postStepsService.getAllPostSteps();
     
@@ -174,7 +174,7 @@ async function getAllPostSteps(req, res) {
 }
 
 // Récupérer une étape de post par ID
-async function getPostStepById(req, res) {
+module.exports.getPostStepById = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await postStepsService.getPostStepById(id);
@@ -202,7 +202,7 @@ async function getPostStepById(req, res) {
 }
 
 // Récupérer une étape par son ID unique (nodeId)
-async function getPostStepByNodeId(req, res) {
+module.exports.getPostStepByNodeId = async (req, res) => {
   try {
     const { nodeId } = req.params;
     const result = await postStepsService.getPostStepByNodeId(nodeId);
@@ -230,7 +230,7 @@ async function getPostStepByNodeId(req, res) {
 }
 
 // Récupérer les étapes d'un post spécifique
-async function getPostStepsByPostId(req, res) {
+module.exports.getPostStepsByPostId = async (req, res) => {
   try {
     const { postId } = req.params;
     const result = await postStepsService.getPostStepsByPostId(postId);
@@ -258,7 +258,7 @@ async function getPostStepsByPostId(req, res) {
 }
 
 // Mettre à jour une étape de post
-async function updatePostStep(req, res) {
+module.exports.updatePostStep = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await postStepsService.updatePostStep(id, req.body);
@@ -286,7 +286,7 @@ async function updatePostStep(req, res) {
 }
 
 // Mettre à jour une étape par son ID unique (nodeId)
-async function updatePostStepByNodeId(req, res) {
+module.exports.updatePostStepByNodeId = async (req, res) => {
   try {
     const { nodeId } = req.params;
     const result = await postStepsService.updatePostStepByNodeId(nodeId, req.body);
@@ -314,7 +314,7 @@ async function updatePostStepByNodeId(req, res) {
 }
 
 // Mettre à jour la configuration d'un nœud
-async function updateNodeConfig(req, res) {
+module.exports.updateNodeConfig = async (req, res) => {
   try {
     const { nodeId } = req.params;
     const configData = req.body;
@@ -344,7 +344,7 @@ async function updateNodeConfig(req, res) {
 }
 
 // Mettre à jour la position d'un nœud
-async function updateNodePosition(req, res) {
+module.exports.updateNodePosition = async (req, res) => {
   try {
     const { nodeId } = req.params;
     const positionData = req.body;
@@ -374,7 +374,7 @@ async function updateNodePosition(req, res) {
 }
 
 // Supprimer une étape de post
-async function deletePostStep(req, res) {
+module.exports.deletePostStep = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await postStepsService.deletePostStep(id);
@@ -402,7 +402,7 @@ async function deletePostStep(req, res) {
 }
 
 // Supprimer une étape par son ID unique (nodeId)
-async function deletePostStepByNodeId(req, res) {
+module.exports.deletePostStepByNodeId = async (req, res) => {
   try {
     const { nodeId } = req.params;
     const result = await postStepsService.deletePostStepByNodeId(nodeId);
@@ -430,7 +430,7 @@ async function deletePostStepByNodeId(req, res) {
 }
 
 // Récupérer les étapes par type
-async function getPostStepsByType(req, res) {
+module.exports.getPostStepsByType = async (req, res) => {
   try {
     const { type } = req.params;
     const result = await postStepsService.getPostStepsByType(type);
@@ -458,7 +458,7 @@ async function getPostStepsByType(req, res) {
 }
 
 // Récupérer les nœuds par type spécifique (technical, interview, condition, email)
-async function getNodesBySpecificType(req, res) {
+module.exports.getNodesBySpecificType = async (req, res) => {
   try {
     const { postId, nodeType } = req.params;
     const result = await postStepsService.getNodesBySpecificType(postId, nodeType);
@@ -486,7 +486,7 @@ async function getNodesBySpecificType(req, res) {
 }
 
 // Récupérer le prochain numéro de nœud
-async function getNextNodeNumber(req, res) {
+module.exports.getNextNodeNumber = async (req, res) => {
   try {
     const { postId } = req.params;
     const result = await postStepsService.getNextNodeNumber(postId);
@@ -512,21 +512,3 @@ async function getNextNodeNumber(req, res) {
     });
   }
 }
-
-module.exports.createPostStep = createPostStep;
-module.exports.createNode = createNode;
-module.exports.saveMultipleNodes = saveMultipleNodes;
-module.exports.addStepsToPost = addStepsToPost;
-module.exports.getAllPostSteps = getAllPostSteps;
-module.exports.getPostStepById = getPostStepById;
-module.exports.getPostStepByNodeId = getPostStepByNodeId;
-module.exports.getPostStepsByPostId = getPostStepsByPostId;
-module.exports.updatePostStep = updatePostStep;
-module.exports.updatePostStepByNodeId = updatePostStepByNodeId;
-module.exports.updateNodeConfig = updateNodeConfig;
-module.exports.updateNodePosition = updateNodePosition;
-module.exports.deletePostStep = deletePostStep;
-module.exports.deletePostStepByNodeId = deletePostStepByNodeId;
-module.exports.getPostStepsByType = getPostStepsByType;
-module.exports.getNodesBySpecificType = getNodesBySpecificType;
-module.exports.getNextNodeNumber = getNextNodeNumber;
