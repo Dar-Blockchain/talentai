@@ -1,7 +1,7 @@
 const Post_Steps = require('../models/post_StepsModel');
 const Post = require('../models/PostModel');
 
-// Créer une nouvelle étape de post (unique ou multiple)
+// Create a new post step (single or multiple)
 module.exports.createPostStep = async (postStepData) => {
   try {
     if (Array.isArray(postStepData)) {
@@ -64,12 +64,12 @@ module.exports.createPostStep = async (postStepData) => {
   }
 }
 
-// Mettre à jour le post avec les références des post_steps
+// Update the post with the post_steps references
 module.exports.updatePostWithSteps = async (postId, stepIds) => {
   try {
     const post = await Post.findById(postId);
     if (!post) {
-      throw new Error('Post non trouvé');
+      throw new Error('Post not found');
     }
 
     const existingSteps = post.post_Steps || [];
@@ -83,17 +83,17 @@ module.exports.updatePostWithSteps = async (postId, stepIds) => {
 
     return { success: true };
   } catch (error) {
-    console.error('Erreur lors de la mise à jour du post:', error);
+    console.error('Error updating post:', error);
     return { success: false, error: error.message };
   }
 }
 
-// Supprimer les références du post lors de la suppression d'un post_step
+// Remove post references when deleting a post_step
 module.exports.removeStepFromPost = async (postId, stepId) => {
   try {
     const post = await Post.findById(postId);
     if (!post) {
-      throw new Error('Post non trouvé');
+      throw new Error('Post not found');
     }
 
     const updatedSteps = post.post_Steps.filter(id => id.toString() !== stepId.toString());
@@ -106,12 +106,12 @@ module.exports.removeStepFromPost = async (postId, stepId) => {
 
     return { success: true };
   } catch (error) {
-    console.error('Erreur lors de la suppression de la référence:', error);
+    console.error('Error removing reference:', error);
     return { success: false, error: error.message };
   }
 }
 
-// Récupérer toutes les étapes de post
+// Retrieve all post steps
 module.exports.getAllPostSteps = async () => {
   try {
     const postSteps = await Post_Steps.find().populate('postId', 'title').sort({ 'data.config.nodeNumber': 1 });
@@ -121,12 +121,12 @@ module.exports.getAllPostSteps = async () => {
   }
 }
 
-// Récupérer une étape de post par ID
+// Retrieve a post step by ID
 module.exports.getPostStepById = async (id) => {
   try {
     const postStep = await Post_Steps.findById(id).populate('postId', 'title');
     if (!postStep) {
-      return { success: false, error: 'Étape de post non trouvée' };
+      return { success: false, error: 'Post step not found' };
     }
     return { success: true, data: postStep };
   } catch (error) {
@@ -134,12 +134,12 @@ module.exports.getPostStepById = async (id) => {
   }
 }
 
-// Récupérer une étape par son ID unique (nodeId)
+// Retrieve a step by its unique ID (nodeId)
 module.exports.getPostStepByNodeId = async (nodeId) => {
   try {
     const postStep = await Post_Steps.findOne({ id: nodeId }).populate('postId', 'title');
     if (!postStep) {
-      return { success: false, error: 'Étape de post non trouvée' };
+      return { success: false, error: 'Post step not found' };
     }
     return { success: true, data: postStep };
   } catch (error) {
@@ -147,7 +147,7 @@ module.exports.getPostStepByNodeId = async (nodeId) => {
   }
 }
 
-// Récupérer les étapes d'un post spécifique
+// Retrieve steps for a specific post
 module.exports.getPostStepsByPostId = async (postId) => {
   try {
     const postSteps = await Post_Steps.find({ postId }).populate('postId', 'title').sort({ 'data.config.nodeNumber': 1 });
@@ -157,7 +157,7 @@ module.exports.getPostStepsByPostId = async (postId) => {
   }
 }
 
-// Mettre à jour une étape de post
+// Update a post step
 module.exports.updatePostStep = async (id, updateData) => {
   try {
     const updatedPostStep = await Post_Steps.findByIdAndUpdate(
@@ -167,7 +167,7 @@ module.exports.updatePostStep = async (id, updateData) => {
     ).populate('postId', 'title');
 
     if (!updatedPostStep) {
-      return { success: false, error: 'Étape de post non trouvée' };
+      return { success: false, error: 'Post step not found' };
     }
     return { success: true, data: updatedPostStep };
   } catch (error) {
@@ -175,7 +175,7 @@ module.exports.updatePostStep = async (id, updateData) => {
   }
 }
 
-// Mettre à jour une étape par son ID unique (nodeId)
+// Update a step by its unique ID (nodeId)
 module.exports.updatePostStepByNodeId = async (nodeId, updateData) => {
   try {
     const updatedPostStep = await Post_Steps.findOneAndUpdate(
@@ -185,7 +185,7 @@ module.exports.updatePostStepByNodeId = async (nodeId, updateData) => {
     ).populate('postId', 'title');
 
     if (!updatedPostStep) {
-      return { success: false, error: 'Étape de post non trouvée' };
+      return { success: false, error: 'Post step not found' };
     }
     return { success: true, data: updatedPostStep };
   } catch (error) {
@@ -193,12 +193,12 @@ module.exports.updatePostStepByNodeId = async (nodeId, updateData) => {
   }
 }
 
-// Supprimer une étape de post
+// Delete a post step
 module.exports.deletePostStep = async (id) => {
   try {
     const deletedPostStep = await Post_Steps.findByIdAndDelete(id);
     if (!deletedPostStep) {
-      return { success: false, error: 'Étape de post non trouvée' };
+      return { success: false, error: 'Post step not found' };
     }
 
     await module.exports.removeStepFromPost(deletedPostStep.postId, deletedPostStep._id);
@@ -209,12 +209,12 @@ module.exports.deletePostStep = async (id) => {
   }
 }
 
-// Supprimer une étape par son ID unique (nodeId)
+// Delete a step by its unique ID (nodeId)
 module.exports.deletePostStepByNodeId = async (nodeId) => {
   try {
     const deletedPostStep = await Post_Steps.findOneAndDelete({ id: nodeId });
     if (!deletedPostStep) {
-      return { success: false, error: 'Étape de post non trouvée' };
+      return { success: false, error: 'Post step not found' };
     }
 
     await module.exports.removeStepFromPost(deletedPostStep.postId, deletedPostStep._id);
@@ -225,7 +225,7 @@ module.exports.deletePostStepByNodeId = async (nodeId) => {
   }
 }
 
-// Récupérer les étapes par type
+// Retrieve steps by type
 module.exports.getPostStepsByType = async (type) => {
   try {
     const postSteps = await Post_Steps.find({ 'data.type': type }).populate('postId', 'title').sort({ 'data.config.nodeNumber': 1 });
@@ -235,7 +235,7 @@ module.exports.getPostStepsByType = async (type) => {
   }
 }
 
-// Récupérer les étapes par type de nœud (technical, interview, etc.)
+// Retrieve steps by node type (technical, interview, etc.)
 module.exports.getPostStepsByNodeType = async (nodeType) => {
   try {
     const postSteps = await Post_Steps.find({ 'data.type': nodeType }).populate('postId', 'title').sort({ 'data.config.nodeNumber': 1 });
@@ -245,7 +245,7 @@ module.exports.getPostStepsByNodeType = async (nodeType) => {
   }
 }
 
-// Mettre à jour la configuration d'un nœud
+// Update a node configuration
 module.exports.updateNodeConfig = async (nodeId, configData) => {
   try {
     const updatedPostStep = await Post_Steps.findOneAndUpdate(
@@ -258,7 +258,7 @@ module.exports.updateNodeConfig = async (nodeId, configData) => {
     ).populate('postId', 'title');
 
     if (!updatedPostStep) {
-      return { success: false, error: 'Étape de post non trouvée' };
+      return { success: false, error: 'Post step not found' };
     }
     return { success: true, data: updatedPostStep };
   } catch (error) {
@@ -266,7 +266,7 @@ module.exports.updateNodeConfig = async (nodeId, configData) => {
   }
 }
 
-// Mettre à jour la position d'un nœud
+// Update a node position
 module.exports.updateNodePosition = async (nodeId, positionData) => {
   try {
     const updatedPostStep = await Post_Steps.findOneAndUpdate(
@@ -280,7 +280,7 @@ module.exports.updateNodePosition = async (nodeId, positionData) => {
     ).populate('postId', 'title');
 
     if (!updatedPostStep) {
-      return { success: false, error: 'Étape de post non trouvée' };
+      return { success: false, error: 'Post step not found' };
     }
     return { success: true, data: updatedPostStep };
   } catch (error) {
@@ -288,7 +288,7 @@ module.exports.updateNodePosition = async (nodeId, positionData) => {
   }
 }
 
-// Récupérer le prochain numéro de nœud pour un post
+// Get next node number for a post
 module.exports.getNextNodeNumber = async (postId) => {
   try {
     const lastNode = await Post_Steps.findOne({ postId }).sort({ 'data.config.nodeNumber': -1 });
@@ -298,7 +298,7 @@ module.exports.getNextNodeNumber = async (postId) => {
   }
 }
 
-// Créer un nœud avec génération automatique de l'ID et du numéro
+// Create a node with automatic ID and number generation
 module.exports.createNode = async (postId, nodeData) => {
   try {
     const nextNodeResult = await module.exports.getNextNodeNumber(postId);
@@ -335,7 +335,7 @@ module.exports.createNode = async (postId, nodeData) => {
   }
 }
 
-// Sauvegarder plusieurs nœuds en une fois
+// Save multiple nodes at once
 module.exports.saveMultipleNodes = async (postId, nodesData) => {
   try {
     const nodesToSave = nodesData.map((nodeData, index) => {
@@ -365,7 +365,7 @@ module.exports.saveMultipleNodes = async (postId, nodesData) => {
   }
 }
 
-// Récupérer les nœuds par type spécifique (technical, interview, condition, email)
+// Retrieve nodes by specific type (technical, interview, condition, email)
 module.exports.getNodesBySpecificType = async (postId, nodeType) => {
   try {
     const nodes = await Post_Steps.find({
@@ -379,7 +379,7 @@ module.exports.getNodesBySpecificType = async (postId, nodeType) => {
   }
 }
 
-// Ajouter des étapes à un post
+// Add steps to a post
 module.exports.addStepsToPost = async (postId, stepsData) => {
   try {
     const stepsWithPostId = Array.isArray(stepsData)
@@ -400,7 +400,7 @@ module.exports.addStepsToPost = async (postId, stepsData) => {
             results.push(updateResult.data);
             updatedCount++;
           } else {
-            throw new Error(`Erreur lors de la mise à jour de l'étape ${step.id}: ${updateResult.error}`);
+            throw new Error(`Error updating step ${step.id}: ${updateResult.error}`);
           }
         } else {
           const createResult = await module.exports.createPostStep([step]);
@@ -408,11 +408,11 @@ module.exports.addStepsToPost = async (postId, stepsData) => {
             results.push(createResult.data[0]);
             createdCount++;
           } else {
-            throw new Error(`Erreur lors de la création de l'étape ${step.id}: ${createResult.error}`);
+            throw new Error(`Error creating step ${step.id}: ${createResult.error}`);
           }
         }
       } catch (stepError) {
-        throw new Error(`Erreur lors du traitement de l'étape ${step.id}: ${stepError.message}`);
+        throw new Error(`Error processing step ${step.id}: ${stepError.message}`);
       }
     }
 

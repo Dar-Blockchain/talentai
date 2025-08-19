@@ -1,6 +1,6 @@
 const postStepsService = require('../services/postStepsService');
 
-// Créer une nouvelle étape de post (unique ou multiple)
+// Create a new post step (single or multiple)
 module.exports.createPostStep = async (req, res) => {
   try {
     const result = await postStepsService.createPostStep(req.body);
@@ -8,8 +8,8 @@ module.exports.createPostStep = async (req, res) => {
     if (result.success) {
       const isMultiple = Array.isArray(req.body);
       const message = isMultiple 
-        ? `${result.count} étapes de post créées avec succès`
-        : 'Étape de post créée avec succès';
+        ? `${result.count} post steps created successfully`
+        : 'Post step created successfully';
       
       return res.status(201).json({
         success: true,
@@ -20,20 +20,20 @@ module.exports.createPostStep = async (req, res) => {
     } else {
       return res.status(400).json({
         success: false,
-        message: 'Erreur lors de la création de l\'étape de post',
+        message: 'Error creating post step',
         error: result.error
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
 }
 
-// Créer un nouveau nœud avec génération automatique
+// Create a new node with automatic generation
 module.exports.createNode = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -44,26 +44,26 @@ module.exports.createNode = async (req, res) => {
     if (result.success) {
       return res.status(201).json({
         success: true,
-        message: 'Nœud créé avec succès',
+        message: 'Node created successfully',
         data: result.data
       });
     } else {
       return res.status(400).json({
         success: false,
-        message: 'Erreur lors de la création du nœud',
+        message: 'Error creating node',
         error: result.error
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
 }
 
-// Sauvegarder plusieurs nœuds en une fois
+// Save multiple nodes at once
 module.exports.saveMultipleNodes = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -74,26 +74,26 @@ module.exports.saveMultipleNodes = async (req, res) => {
     if (result.success) {
       return res.status(201).json({
         success: true,
-        message: 'Nœuds sauvegardés avec succès',
+        message: 'Nodes saved successfully',
         data: result.data
       });
     } else {
       return res.status(400).json({
         success: false,
-        message: 'Erreur lors de la sauvegarde des nœuds',
+        message: 'Error saving nodes',
         error: result.error
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
 }
 
-// Ajouter des étapes à un post avec postId en paramètre
+// Add steps to a post with postId parameter
 module.exports.addStepsToPost = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -107,17 +107,17 @@ module.exports.addStepsToPost = async (req, res) => {
       
       if (isMultiple) {
         if (result.created > 0 && result.updated > 0) {
-          message = `${result.created} étapes créées et ${result.updated} étapes mises à jour avec succès`;
+          message = `${result.created} steps created and ${result.updated} steps updated successfully`;
         } else if (result.created > 0) {
-          message = `${result.created} étapes créées avec succès`;
+          message = `${result.created} steps created successfully`;
         } else if (result.updated > 0) {
-          message = `${result.updated} étapes mises à jour avec succès`;
+          message = `${result.updated} steps updated successfully`;
         }
       } else {
         if (result.updated > 0) {
-          message = 'Étape mise à jour avec succès';
+          message = 'Step updated successfully';
         } else {
-          message = 'Étape créée avec succès';
+          message = 'Step created successfully';
         }
       }
       
@@ -132,7 +132,7 @@ module.exports.addStepsToPost = async (req, res) => {
     } else {
       return res.status(400).json({
         success: false,
-        message: 'Erreur lors de l\'ajout des étapes',
+        message: 'Error adding steps',
         error: result.error
       });
     }
@@ -140,13 +140,13 @@ module.exports.addStepsToPost = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
 }
 
-// Récupérer toutes les étapes de post
+// Retrieve all post steps
 module.exports.getAllPostSteps = async (req, res) => {
   try {
     const result = await postStepsService.getAllPostSteps();
@@ -154,26 +154,26 @@ module.exports.getAllPostSteps = async (req, res) => {
     if (result.success) {
       return res.status(200).json({
         success: true,
-        message: 'Étapes de post récupérées avec succès',
+        message: 'Post steps retrieved successfully',
         data: result.data
       });
     } else {
       return res.status(400).json({
         success: false,
-        message: 'Erreur lors de la récupération des étapes de post',
+        message: 'Error retrieving post steps',
         error: result.error
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
 }
 
-// Récupérer une étape de post par ID
+// Retrieve a post step by ID
 module.exports.getPostStepById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -182,26 +182,26 @@ module.exports.getPostStepById = async (req, res) => {
     if (result.success) {
       return res.status(200).json({
         success: true,
-        message: 'Étape de post récupérée avec succès',
+        message: 'Post step retrieved successfully',
         data: result.data
       });
     } else {
       return res.status(404).json({
         success: false,
-        message: 'Étape de post non trouvée',
+        message: 'Post step not found',
         error: result.error
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
 }
 
-// Récupérer une étape par son ID unique (nodeId)
+// Retrieve a step by its unique ID (nodeId)
 module.exports.getPostStepByNodeId = async (req, res) => {
   try {
     const { nodeId } = req.params;
@@ -210,26 +210,26 @@ module.exports.getPostStepByNodeId = async (req, res) => {
     if (result.success) {
       return res.status(200).json({
         success: true,
-        message: 'Étape de post récupérée avec succès',
+        message: 'Post step retrieved successfully',
         data: result.data
       });
     } else {
       return res.status(404).json({
         success: false,
-        message: 'Étape de post non trouvée',
+        message: 'Post step not found',
         error: result.error
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
 }
 
-// Récupérer les étapes d'un post spécifique
+// Retrieve steps for a specific post
 module.exports.getPostStepsByPostId = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -238,26 +238,26 @@ module.exports.getPostStepsByPostId = async (req, res) => {
     if (result.success) {
       return res.status(200).json({
         success: true,
-        message: 'Étapes de post récupérées avec succès',
+        message: 'Post steps retrieved successfully',
         data: result.data
       });
     } else {
       return res.status(400).json({
         success: false,
-        message: 'Erreur lors de la récupération des étapes de post',
+        message: 'Error retrieving post steps',
         error: result.error
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
 }
 
-// Mettre à jour une étape de post
+// Update a post step
 module.exports.updatePostStep = async (req, res) => {
   try {
     const { id } = req.params;
@@ -266,26 +266,26 @@ module.exports.updatePostStep = async (req, res) => {
     if (result.success) {
       return res.status(200).json({
         success: true,
-        message: 'Étape de post mise à jour avec succès',
+        message: 'Post step updated successfully',
         data: result.data
       });
     } else {
       return res.status(404).json({
         success: false,
-        message: 'Étape de post non trouvée',
+        message: 'Post step not found',
         error: result.error
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
 }
 
-// Mettre à jour une étape par son ID unique (nodeId)
+// Update a step by its unique ID (nodeId)
 module.exports.updatePostStepByNodeId = async (req, res) => {
   try {
     const { nodeId } = req.params;
@@ -294,26 +294,26 @@ module.exports.updatePostStepByNodeId = async (req, res) => {
     if (result.success) {
       return res.status(200).json({
         success: true,
-        message: 'Étape de post mise à jour avec succès',
+        message: 'Post step updated successfully',
         data: result.data
       });
     } else {
       return res.status(404).json({
         success: false,
-        message: 'Étape de post non trouvée',
+        message: 'Post step not found',
         error: result.error
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
 }
 
-// Mettre à jour la configuration d'un nœud
+// Update a node configuration
 module.exports.updateNodeConfig = async (req, res) => {
   try {
     const { nodeId } = req.params;
@@ -324,26 +324,26 @@ module.exports.updateNodeConfig = async (req, res) => {
     if (result.success) {
       return res.status(200).json({
         success: true,
-        message: 'Configuration du nœud mise à jour avec succès',
+        message: 'Node configuration updated successfully',
         data: result.data
       });
     } else {
       return res.status(404).json({
         success: false,
-        message: 'Nœud non trouvé',
+        message: 'Node not found',
         error: result.error
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
 }
 
-// Mettre à jour la position d'un nœud
+// Update a node position
 module.exports.updateNodePosition = async (req, res) => {
   try {
     const { nodeId } = req.params;
@@ -354,26 +354,26 @@ module.exports.updateNodePosition = async (req, res) => {
     if (result.success) {
       return res.status(200).json({
         success: true,
-        message: 'Position du nœud mise à jour avec succès',
+        message: 'Node position updated successfully',
         data: result.data
       });
     } else {
       return res.status(404).json({
         success: false,
-        message: 'Nœud non trouvé',
+        message: 'Node not found',
         error: result.error
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
 }
 
-// Supprimer une étape de post
+// Delete a post step
 module.exports.deletePostStep = async (req, res) => {
   try {
     const { id } = req.params;
@@ -382,26 +382,26 @@ module.exports.deletePostStep = async (req, res) => {
     if (result.success) {
       return res.status(200).json({
         success: true,
-        message: 'Étape de post supprimée avec succès',
+        message: 'Post step deleted successfully',
         data: result.data
       });
     } else {
       return res.status(404).json({
         success: false,
-        message: 'Étape de post non trouvée',
+        message: 'Post step not found',
         error: result.error
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
 }
 
-// Supprimer une étape par son ID unique (nodeId)
+// Delete a step by its unique ID (nodeId)
 module.exports.deletePostStepByNodeId = async (req, res) => {
   try {
     const { nodeId } = req.params;
@@ -410,26 +410,26 @@ module.exports.deletePostStepByNodeId = async (req, res) => {
     if (result.success) {
       return res.status(200).json({
         success: true,
-        message: 'Étape de post supprimée avec succès',
+        message: 'Post step deleted successfully',
         data: result.data
       });
     } else {
       return res.status(404).json({
         success: false,
-        message: 'Étape de post non trouvée',
+        message: 'Post step not found',
         error: result.error
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
 }
 
-// Récupérer les étapes par type
+// Retrieve steps by type
 module.exports.getPostStepsByType = async (req, res) => {
   try {
     const { type } = req.params;
@@ -438,26 +438,26 @@ module.exports.getPostStepsByType = async (req, res) => {
     if (result.success) {
       return res.status(200).json({
         success: true,
-        message: 'Étapes de post récupérées avec succès',
+        message: 'Post steps retrieved successfully',
         data: result.data
       });
     } else {
       return res.status(400).json({
         success: false,
-        message: 'Erreur lors de la récupération des étapes de post',
+        message: 'Error retrieving post steps',
         error: result.error
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
 }
 
-// Récupérer les nœuds par type spécifique (technical, interview, condition, email)
+// Retrieve nodes by specific type (technical, interview, condition, email)
 module.exports.getNodesBySpecificType = async (req, res) => {
   try {
     const { postId, nodeType } = req.params;
@@ -466,26 +466,26 @@ module.exports.getNodesBySpecificType = async (req, res) => {
     if (result.success) {
       return res.status(200).json({
         success: true,
-        message: 'Nœuds récupérés avec succès',
+        message: 'Nodes retrieved successfully',
         data: result.data
       });
     } else {
       return res.status(400).json({
         success: false,
-        message: 'Erreur lors de la récupération des nœuds',
+        message: 'Error retrieving nodes',
         error: result.error
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
 }
 
-// Récupérer le prochain numéro de nœud
+// Get next node number
 module.exports.getNextNodeNumber = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -494,20 +494,20 @@ module.exports.getNextNodeNumber = async (req, res) => {
     if (result.success) {
       return res.status(200).json({
         success: true,
-        message: 'Prochain numéro de nœud récupéré avec succès',
+        message: 'Next node number retrieved successfully',
         data: result.data
       });
     } else {
       return res.status(400).json({
         success: false,
-        message: 'Erreur lors de la récupération du numéro de nœud',
+        message: 'Error retrieving next node number',
         error: result.error
       });
     }
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
+      message: 'Server error',
       error: error.message
     });
   }
