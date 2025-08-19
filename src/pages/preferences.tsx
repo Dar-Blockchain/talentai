@@ -804,9 +804,7 @@ function Preferences() {
         p: 2
       }}>
       <Card elevation={8} sx={{ backgroundColor: 'white', width: { xs: '100%', sm: 800 }, p: 4, borderRadius: 3, backdropFilter: 'blur(10px)' }}>
-
-
-{activeStep !== 0 && <Typography variant="h4" fontWeight={700} gutterBottom sx={{ color: 'black' }}>
+        {activeStep !== 0 && <Typography variant="h4" fontWeight={700} gutterBottom sx={{ color: 'black' }}>
           Let's Deep Dive into Your Skills
         </Typography>}
 
@@ -1177,25 +1175,98 @@ function Preferences() {
 
         {/* Personal Details Step - Only for candidates */}
         {currentStep === 'Personal Details' && userType === 'candidate' && (
-          <Box sx={{ py: 2 }}>
-            <Typography variant="h6" sx={{ color: 'black' }} gutterBottom>
-              Tell us about yourself
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Box sx={{ py: 4 }}>
+            {/* Enhanced Header */}
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Box sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+                boxShadow: '0 8px 25px rgba(0, 255, 157, 0.3)'
+              }}>
+                <PersonIcon sx={{ fontSize: 40, color: 'white' }} />
+              </Box>
+              <Typography 
+                variant="h4" 
+                gutterBottom 
+                sx={{ 
+                  color: 'black',
+                  fontWeight: 700,
+                  mb: 2
+                }}
+              >
+                Tell us about yourself
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: '#666',
+                  maxWidth: 500,
+                  mx: 'auto',
+                  lineHeight: 1.6
+                }}
+              >
+                Let's start building your professional profile. This information helps us personalize your experience and connect you with the right opportunities.
+              </Typography>
+            </Box>
+
+            {/* Enhanced Form */}
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: 4,
+              maxWidth: 600,
+              mx: 'auto'
+            }}>
               <TextField
                 fullWidth
                 label="First Name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 required
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'black' }
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
               />
               <TextField
@@ -1204,70 +1275,223 @@ function Preferences() {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 required
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'black' }
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
               />
+            </Box>
+
+            {/* Help Text */}
+            <Box sx={{ 
+              mt: 4, 
+              p: 3, 
+              borderRadius: 3, 
+              backgroundColor: '#F8F9FA',
+              border: '2px solid #E9ECEF',
+              maxWidth: 600,
+              mx: 'auto',
+              textAlign: 'center'
+            }}>
+              <Typography variant="body2" sx={{ color: '#495057', lineHeight: 1.6 }}>
+                <strong>💡 Tip:</strong> Use your legal name as it appears on official documents. 
+                This helps with verification and professional networking.
+              </Typography>
             </Box>
           </Box>
         )}
 
         {/* Company Details Step */}
         {currentStep === 'Company Details' && (
-          <Box sx={{ py: 2 }}>
-            <Typography variant="h6" sx={{ color: 'black' }} gutterBottom>
-              Tell us about your company
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Box sx={{ py: 4 }}>
+            {/* Enhanced Header */}
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Box sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+                boxShadow: '0 8px 25px rgba(0, 255, 157, 0.3)'
+              }}>
+                <BusinessIcon sx={{ fontSize: 40, color: 'white' }} />
+              </Box>
+              <Typography 
+                variant="h4" 
+                gutterBottom 
+                sx={{ 
+                  color: 'black',
+                  fontWeight: 700,
+                  mb: 2
+                }}
+              >
+                Tell us about your company
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: '#666',
+                  maxWidth: 500,
+                  mx: 'auto',
+                  lineHeight: 1.6
+                }}
+              >
+                Help us understand your organization better to find the perfect talent match for your needs.
+              </Typography>
+            </Box>
+
+            {/* Enhanced Form */}
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: 4,
+              maxWidth: 600,
+              mx: 'auto'
+            }}>
               <TextField
                 fullWidth
                 label="Company Name"
                 value={companyDetails.name}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, name: e.target.value }))}
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'black' }
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
               />
+
               <StyledSelect
                 select
                 fullWidth
                 label="Industry"
                 value={companyDetails.industry}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, industry: e.target.value }))}
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
                       sx: {
-                        backgroundColor: '#f5f5f5'
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: 2,
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
                       }
                     }
                   }
                 }}
               >
-                <MenuItem value="Technology" sx={{ color: 'black' }}>Technology</MenuItem>
-                <MenuItem value="Finance" sx={{ color: 'black' }}>Finance</MenuItem>
-                <MenuItem value="Healthcare" sx={{ color: 'black' }}>Healthcare</MenuItem>
-                <MenuItem value="Education" sx={{ color: 'black' }}>Education</MenuItem>
-                <MenuItem value="Other" sx={{ color: 'black' }}>Other</MenuItem>
+                <MenuItem value="Technology" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Technology</MenuItem>
+                <MenuItem value="Finance" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Finance</MenuItem>
+                <MenuItem value="Healthcare" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Healthcare</MenuItem>
+                <MenuItem value="Education" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Education</MenuItem>
+                <MenuItem value="Other" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Other</MenuItem>
               </StyledSelect>
 
               <StyledSelect
@@ -1276,28 +1500,61 @@ function Preferences() {
                 label="Company Size"
                 value={companyDetails.size}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, size: e.target.value }))}
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
                       sx: {
-                        backgroundColor: '#f5f5f5'
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: 2,
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
                       }
                     }
                   }
                 }}
               >
-                <MenuItem value="1-10" sx={{ color: 'black' }}  >1-10 employees</MenuItem>
-                <MenuItem value="11-50" sx={{ color: 'black' }}>11-50 employees</MenuItem>
-                <MenuItem value="51-200" sx={{ color: 'black' }}>51-200 employees</MenuItem>
-                <MenuItem value="201-500" sx={{ color: 'black' }}>201-500 employees</MenuItem>
-                <MenuItem value="501+" sx={{ color: 'black' }}>501+ employees</MenuItem>
+                <MenuItem value="1-10" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>1-10 employees</MenuItem>
+                <MenuItem value="11-50" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>11-50 employees</MenuItem>
+                <MenuItem value="51-200" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>51-200 employees</MenuItem>
+                <MenuItem value="201-500" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>201-500 employees</MenuItem>
+                <MenuItem value="501+" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>501+ employees</MenuItem>
               </StyledSelect>
 
               <StyledSelect
@@ -1306,36 +1563,139 @@ function Preferences() {
                 label="Location"
                 value={companyDetails.location}
                 onChange={(e) => setCompanyDetails(prev => ({ ...prev, location: e.target.value }))}
+                variant="outlined"
                 sx={{
-                  backgroundColor: 'white',
-                  color: 'black',
-                  '& .MuiInputBase-input': { color: 'grey' },
-                  '& .MuiInputLabel-root': { color: 'grey' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    },
+                    '&.Mui-focused': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(131, 16, 255, 0.2)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { 
+                    color: '#333',
+                    fontSize: '1.1rem',
+                    padding: '16px 20px'
+                  },
+                  '& .MuiInputLabel-root': { 
+                    color: '#666',
+                    fontSize: '1rem',
+                    fontWeight: 500
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: '#E0E0E0',
+                    borderWidth: 2,
+                    transition: 'all 0.3s ease'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN 
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { 
+                    borderColor: GREEN_MAIN,
+                    borderWidth: 3
+                  }
                 }}
                 SelectProps={{
                   MenuProps: {
                     PaperProps: {
                       sx: {
-                        backgroundColor: '#f5f5f5'
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: 2,
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
                       }
                     }
                   }
                 }}
               >
-                <MenuItem value="Remote" sx={{ color: 'black' }}>Remote</MenuItem>
-                <MenuItem value="On-site" sx={{ color: 'black' }}>On-site</MenuItem>
-                <MenuItem value="Hybrid" sx={{ color: 'black' }}>Hybrid</MenuItem>
+                <MenuItem value="Remote" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Remote</MenuItem>
+                <MenuItem value="On-site" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>On-site</MenuItem>
+                <MenuItem value="Hybrid" sx={{ color: '#333', fontWeight: 500, py: 1.5 }}>Hybrid</MenuItem>
               </StyledSelect>
+            </Box>
+
+            {/* Help Text */}
+            <Box sx={{ 
+              mt: 4, 
+              p: 3, 
+              borderRadius: 3, 
+              backgroundColor: '#F8F9FA',
+              border: '2px solid #E9ECEF',
+              maxWidth: 600,
+              mx: 'auto',
+              textAlign: 'center'
+            }}>
+              <Typography variant="body2" sx={{ color: '#495057', lineHeight: 1.6 }}>
+                <strong>💡 Tip:</strong> Providing accurate company information helps us match you with the right candidates 
+                and ensures a better hiring experience for your organization.
+              </Typography>
             </Box>
           </Box>
         )}
 
         {/* Skills Selection Steps - Combined logic for both candidate and company */}
         {(currentStep === 'Select Skills' || currentStep === 'Required Skills') && (
-          <Box>
-            {/* Categories Tabs */}
-            <Paper sx={{ mb: 3, p: 2, borderRadius: 2, backgroundColor: 'rgba(255, 255, 255, 0.1)' }}>
+          <Box sx={{ py: 4 }}>
+            {/* Enhanced Header */}
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Box sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+                boxShadow: '0 8px 25px rgba(0, 255, 157, 0.3)'
+              }}>
+                <CodeIcon sx={{ fontSize: 40, color: 'white' }} />
+              </Box>
+              <Typography 
+                variant="h4" 
+                gutterBottom 
+                sx={{ 
+                  color: 'black',
+                  fontWeight: 700,
+                  mb: 2
+                }}
+              >
+                {userType === 'company' ? 'Required Skills Selection' : 'Skill Assessment'}
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: '#666',
+                  maxWidth: 600,
+                  mx: 'auto',
+                  lineHeight: 1.6
+                }}
+              >
+                {userType === 'company' 
+                  ? 'Choose the skills that best match your company\'s requirements. This helps us find the perfect talent match.'
+                  : 'Select the skill you want to be assessed on. Choose wisely as this will determine your test content.'
+                }
+              </Typography>
+            </Box>
+
+            {/* Enhanced Categories Tabs */}
+            <Paper sx={{ 
+              mb: 4, 
+              p: 3, 
+              borderRadius: 3, 
+              background: 'linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%)',
+              border: '2px solid #DEE2E6',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+            }}>
+              <Typography variant="h6" sx={{ mb: 2, color: '#333', fontWeight: 600, textAlign: 'center' }}>
+                Choose a Skill Category
+              </Typography>
               <Tabs
                 value={selectedCategory}
                 onChange={(_, v) => setSelectedCategory(v)}
@@ -1343,17 +1703,28 @@ function Preferences() {
                 scrollButtons="auto"
                 sx={{
                   '& .MuiTab-root': {
-                    minWidth: 120,
+                    minWidth: 140,
                     textTransform: 'none',
                     fontWeight: 600,
-                    boxShadow: 'none',
-                    color: 'black',
-                    '&.Mui-selected': {
+                    fontSize: '0.95rem',
+                    color: '#666',
+                    borderRadius: 2,
+                    mx: 0.5,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 255, 157, 0.1)',
                       color: GREEN_MAIN
+                    },
+                    '&.Mui-selected': {
+                      color: GREEN_MAIN,
+                      backgroundColor: 'rgba(0, 255, 157, 0.15)',
+                      fontWeight: 700
                     }
                   },
                   '& .MuiTabs-indicator': {
-                    backgroundColor: GREEN_MAIN
+                    backgroundColor: GREEN_MAIN,
+                    height: 4,
+                    borderRadius: 2
                   }
                 }}
               >
@@ -1364,78 +1735,209 @@ function Preferences() {
                     label={c.label}
                     icon={c.icon}
                     iconPosition="start"
+                    sx={{
+                      '& .MuiTab-iconWrapper': {
+                        color: 'inherit',
+                        mr: 1
+                      }
+                    }}
                   />
                 ))}
               </Tabs>
             </Paper>
 
-            {/* Title */}
-            <Typography variant="h6" mb={2} sx={{ color: 'black' }}>
-              {userType === 'company'
-                ? 'Select the skills your company is looking for'
-                : `Select your ${selectedCategory} skill (1 skill required)`
-              }
-            </Typography>
-
-            {skillWarning && (
-              <Typography color="error" sx={{ mb: 2 }}>
-                {skillWarning}
+            {/* Skills Selection Section */}
+            <Box sx={{ mb: 4 }}>
+              <Typography 
+                variant="h5" 
+                mb={3} 
+                sx={{ 
+                  color: '#333',
+                  fontWeight: 600,
+                  textAlign: 'center',
+                  background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}
+              >
+                {userType === 'company'
+                  ? `Select ${selectedCategory} skills for your company`
+                  : `Choose your ${selectedCategory} skill`
+                }
               </Typography>
-            )}
 
-            {/* Skills Grid */}
-            <Box sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: 'repeat(2,1fr)', sm: 'repeat(3,1fr)', md: 'repeat(4,1fr)' },
-              gap: 2
-            }}>
-              {filteredSkills.map(skill => {
-                const isCompany = userType === 'company';
-                const skillsList = isCompany ? requiredSkills : skills;
-                const sel = skillsList.includes(skill.label);
+              {skillWarning && (
+                <Box sx={{ 
+                  mb: 3, 
+                  p: 2, 
+                  borderRadius: 2, 
+                  backgroundColor: '#FFF3CD',
+                  border: '1px solid #FFEAA7',
+                  textAlign: 'center'
+                }}>
+                  <Typography color="warning.main" sx={{ fontWeight: 600 }}>
+                    ⚠️ {skillWarning}
+                  </Typography>
+                </Box>
+              )}
 
-                return (
-                  <Tooltip
-                    key={skill.label}
-                    title={`Click to ${sel ? 'remove' : 'add'} ${skill.label}`}
-                  >
-                    <Chip
-                      label={skill.label}
-                      clickable
-                      onClick={() => {
-                        if (isCompany) {
-                          setRequiredSkills(prev =>
-                            sel ? prev.filter(s => s !== skill.label) : [...prev, skill.label]
-                          );
-                        } else {
-                          toggleSkill(skill.label);
-                        }
-                      }}
-                      sx={{
-                        width: '100%',
-                        height: 40,
-                        border: `1px solid #${skill.color}`,
-                        backgroundColor: sel ? `#${skill.color}` : 'transparent',
-                        color: sel ? '#fff' : `#${skill.color}`,
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          backgroundColor: `#${skill.color}`,
-                          color: '#fff',
-                          transform: 'scale(1.05)',
-                          boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-                        }
-                      }}
-                    />
-                  </Tooltip>
-                );
-              })}
+              {/* Enhanced Skills Grid */}
+              <Box sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: 'repeat(2,1fr)', sm: 'repeat(3,1fr)', md: 'repeat(4,1fr)' },
+                gap: 3,
+                mb: 4
+              }}>
+                {filteredSkills.map(skill => {
+                  const isCompany = userType === 'company';
+                  const skillsList = isCompany ? requiredSkills : skills;
+                  const sel = skillsList.includes(skill.label);
+
+                  return (
+                    <Tooltip
+                      key={skill.label}
+                      title={`Click to ${sel ? 'remove' : 'add'} ${skill.label}`}
+                      arrow
+                      placement="top"
+                    >
+                      <Box
+                        sx={{
+                          cursor: 'pointer',
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                          transform: sel ? 'scale(1.05)' : 'scale(1)',
+                          '&:hover': {
+                            transform: 'scale(1.08)',
+                            zIndex: 1
+                          }
+                        }}
+                      >
+                        <Chip
+                          label={skill.label}
+                          clickable
+                          onClick={() => {
+                            if (isCompany) {
+                              setRequiredSkills(prev =>
+                                sel ? prev.filter(s => s !== skill.label) : [...prev, skill.label]
+                              );
+                            } else {
+                              toggleSkill(skill.label);
+                            }
+                          }}
+                          sx={{
+                            width: '100%',
+                            height: 50,
+                            border: `2px solid #${skill.color}`,
+                            backgroundColor: sel ? `#${skill.color}` : 'white',
+                            color: sel ? '#fff' : `#${skill.color}`,
+                            fontWeight: sel ? 700 : 600,
+                            fontSize: '0.9rem',
+                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            boxShadow: sel 
+                              ? `0 8px 25px rgba(${parseInt(skill.color.slice(0, 2), 16)}, ${parseInt(skill.color.slice(2, 4), 16)}, ${parseInt(skill.color.slice(4, 6), 16)}, 0.4)`
+                              : '0 4px 15px rgba(0,0,0,0.1)',
+                            '&:hover': {
+                              backgroundColor: sel ? `#${skill.color}` : `#${skill.color}`,
+                              color: '#fff',
+                              boxShadow: `0 12px 30px rgba(${parseInt(skill.color.slice(0, 2), 16)}, ${parseInt(skill.color.slice(2, 4), 16)}, ${parseInt(skill.color.slice(4, 6), 16)}, 0.5)`,
+                              transform: 'translateY(-2px)'
+                            }
+                          }}
+                        />
+                      </Box>
+                    </Tooltip>
+                  );
+                })}
+              </Box>
+
+              {/* Skills Summary */}
+              <Box sx={{ 
+                p: 3, 
+                borderRadius: 3, 
+                backgroundColor: '#F8F9FA',
+                border: '2px solid #E9ECEF',
+                textAlign: 'center'
+              }}>
+                <Typography variant="body1" sx={{ color: '#495057', fontWeight: 600, mb: 1 }}>
+                  {userType === 'company' ? 'Selected Skills:' : 'Your Selected Skill:'}
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
+                  {userType === 'company' ? (
+                    requiredSkills.length > 0 ? (
+                      requiredSkills.map((skill, index) => (
+                        <Chip
+                          key={index}
+                          label={skill}
+                          sx={{
+                            background: GREEN_MAIN,
+                            color: 'white',
+                            fontWeight: 600,
+                            '&:hover': { background: GREEN_MAIN }
+                          }}
+                        />
+                      ))
+                    ) : (
+                      <Typography variant="body2" sx={{ color: '#999', fontStyle: 'italic' }}>
+                        No skills selected yet
+                      </Typography>
+                    )
+                  ) : (
+                    skills.length > 0 ? (
+                      skills.map((skill, index) => (
+                        <Chip
+                          key={index}
+                          label={skill}
+                          sx={{
+                            background: GREEN_MAIN,
+                            color: 'white',
+                            fontWeight: 600,
+                            '&:hover': { background: GREEN_MAIN }
+                          }}
+                        />
+                      ))
+                    ) : (
+                      <Typography variant="body2" sx={{ color: '#999', fontStyle: 'italic' }}>
+                        No skill selected yet
+                      </Typography>
+                    )
+                  )}
+                </Box>
+              </Box>
             </Box>
 
-            {/* Hedera Experience Question */}
+            {/* Enhanced Hedera Experience Question */}
             {((userType === 'candidate' && skills.includes('Hedera')) ||
               (userType === 'company' && requiredSkills.includes('Hedera'))) && (
-                <Box sx={{ mt: 4 }}>
-                  <Typography variant="h6" gutterBottom sx={{ color: '#fff' }}>
+                <Box sx={{ 
+                  mt: 6, 
+                  p: 4, 
+                  borderRadius: 3, 
+                  background: 'linear-gradient(135deg, #02E2FF08 0%, #00FFC308 100%)',
+                  border: '2px solid #02E2FF30',
+                  textAlign: 'center'
+                }}>
+                  <Box sx={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mx: 'auto',
+                    mb: 3,
+                    boxShadow: '0 6px 20px rgba(2, 226, 255, 0.3)'
+                  }}>
+                    <BugReportIcon sx={{ fontSize: 30, color: 'white' }} />
+                  </Box>
+                  <Typography 
+                    variant="h6" 
+                    gutterBottom 
+                    sx={{ 
+                      color: '#333',
+                      fontWeight: 600,
+                      mb: 3
+                    }}
+                  >
                     {userType === 'company'
                       ? 'Is Hedera experience required?'
                       : 'Do you have experience working with Hedera?'
@@ -1445,68 +1947,222 @@ function Preferences() {
                     row
                     value={hederaExp}
                     onChange={(e) => setHederaExp(e.target.value as 'yes' | 'no')}
-                    sx={{ mt: 1 }}
+                    sx={{ 
+                      justifyContent: 'center',
+                      gap: 4
+                    }}
                   >
                     <FormControlLabel
                       value="yes"
                       control={
                         <Radio
                           sx={{
-                            color: 'rgba(255, 255, 255, 0.7)',
+                            color: '#02E2FF',
                             '&.Mui-checked': {
-                              color: GREEN_MAIN
+                              color: '#02E2FF'
                             }
                           }}
                         />
                       }
-                      label="Yes"
-                      sx={{
-                        color: '#fff'
-                      }}
+                      label={
+                        <Typography sx={{ color: '#333', fontWeight: 500 }}>
+                          Yes, I have experience
+                        </Typography>
+                      }
                     />
                     <FormControlLabel
                       value="no"
                       control={
                         <Radio
                           sx={{
-                            color: 'rgba(255, 255, 255, 0.7)',
+                            color: '#02E2FF',
                             '&.Mui-checked': {
-                              color: GREEN_MAIN
+                              color: '#02E2FF'
                             }
                           }}
                         />
                       }
-                      label="No"
-                      sx={{
-                        color: '#fff'
-                      }}
+                      label={
+                        <Typography sx={{ color: '#333', fontWeight: 500 }}>
+                          No, I'm new to Hedera
+                        </Typography>
+                      }
                     />
                   </RadioGroup>
                 </Box>
               )}
+
+            {/* Help Text */}
+            <Box sx={{ 
+              mt: 4, 
+              p: 3, 
+              borderRadius: 3, 
+              backgroundColor: '#E8F5E8',
+              border: '2px solid #C8E6C9',
+              textAlign: 'center',
+              maxWidth: 600,
+              mx: 'auto'
+            }}>
+              <Typography variant="body2" sx={{ color: '#2E7D32', lineHeight: 1.6 }}>
+                <strong>💡 Tip:</strong> {userType === 'company' 
+                  ? 'Select skills that accurately represent your company\'s needs. You can select multiple skills to broaden your talent search.'
+                  : 'Choose the skill you\'re most confident in. This will be the focus of your assessment and help showcase your expertise.'
+                }
+              </Typography>
+            </Box>
           </Box>
         )}
 
         {/* Experience Level Step for Company */}
         {currentStep === 'Experience Level' && (
-          <Box>
-            <Typography variant="h6" sx={{ color: 'black' }} gutterBottom>
-              Required Experience Level
-            </Typography>
-            <RadioGroup
-              value={experienceLevel}
-              onChange={(e) => setExperienceLevel(e.target.value)}
-              sx={{ color: 'black' }}
-            >
-              {['Entry Level', 'Mid Level', 'Senior', 'Lead/Expert'].map(level => (
-                <FormControlLabel
-                  key={level}
-                  value={level}
-                  control={<Radio />}
-                  label={level}
-                />
-              ))}
-            </RadioGroup>
+          <Box sx={{ py: 4 }}>
+            {/* Enhanced Header */}
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Box sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+                boxShadow: '0 8px 25px rgba(0, 255, 157, 0.3)'
+              }}>
+                <AnalyticsIcon sx={{ fontSize: 40, color: 'white' }} />
+              </Box>
+              <Typography 
+                variant="h4" 
+                gutterBottom 
+                sx={{ 
+                  color: 'black',
+                  fontWeight: 700,
+                  mb: 2
+                }}
+              >
+                Required Experience Level
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: '#666',
+                  maxWidth: 600,
+                  mx: 'auto',
+                  lineHeight: 1.6
+                }}
+              >
+                Specify the experience level required for the position. This helps us match you with candidates who meet your criteria.
+              </Typography>
+            </Box>
+
+            {/* Enhanced Experience Level Selection */}
+            <Box sx={{ maxWidth: 600, mx: 'auto' }}>
+              <RadioGroup
+                value={experienceLevel}
+                onChange={(e) => setExperienceLevel(e.target.value)}
+                sx={{ 
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2
+                }}
+              >
+                {[
+                  { value: 'Entry Level', label: 'Entry Level', description: '0-2 years of experience', icon: '🌱' },
+                  { value: 'Mid Level', label: 'Mid Level', description: '2-5 years of experience', icon: '🚀' },
+                  { value: 'Senior', label: 'Senior', description: '5-8 years of experience', icon: '⭐' },
+                  { value: 'Lead/Expert', label: 'Lead/Expert', description: '8+ years of experience', icon: '🏆' }
+                ].map(level => (
+                  <Paper
+                    key={level.value}
+                    elevation={0}
+                    sx={{
+                      p: 3,
+                      borderRadius: 3,
+                      border: `2px solid ${experienceLevel === level.value ? GREEN_MAIN : '#E0E0E0'}`,
+                      backgroundColor: experienceLevel === level.value ? `${GREEN_MAIN}10` : 'white',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        borderColor: GREEN_MAIN,
+                        backgroundColor: `${GREEN_MAIN}05`,
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                      }
+                    }}
+                    onClick={() => setExperienceLevel(level.value)}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: '50%',
+                        background: experienceLevel === level.value 
+                          ? `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`
+                          : 'linear-gradient(135deg, #F5F5F5 0%, #E0E0E0 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.5rem',
+                        transition: 'all 0.3s ease'
+                      }}>
+                        {level.icon}
+                      </Box>
+                      <Box sx={{ flex: 1 }}>
+                        <FormControlLabel
+                          value={level.value}
+                          control={
+                            <Radio
+                              sx={{
+                                color: experienceLevel === level.value ? GREEN_MAIN : '#666',
+                                '&.Mui-checked': {
+                                  color: GREEN_MAIN
+                                }
+                              }}
+                            />
+                          }
+                          label={
+                            <Box>
+                              <Typography variant="h6" sx={{ 
+                                color: experienceLevel === level.value ? GREEN_MAIN : '#333',
+                                fontWeight: 600,
+                                mb: 0.5
+                              }}>
+                                {level.label}
+                              </Typography>
+                              <Typography variant="body2" sx={{ 
+                                color: experienceLevel === level.value ? '#555' : '#666',
+                                fontSize: '0.9rem'
+                              }}>
+                                {level.description}
+                              </Typography>
+                            </Box>
+                          }
+                          sx={{ margin: 0, width: '100%' }}
+                        />
+                      </Box>
+                    </Box>
+                  </Paper>
+                ))}
+              </RadioGroup>
+            </Box>
+
+            {/* Help Text */}
+            <Box sx={{ 
+              mt: 4, 
+              p: 3, 
+              borderRadius: 3, 
+              backgroundColor: '#F8F9FA',
+              border: '2px solid #E9ECEF',
+              maxWidth: 600,
+              mx: 'auto',
+              textAlign: 'center'
+            }}>
+              <Typography variant="body2" sx={{ color: '#495057', lineHeight: 1.6 }}>
+                <strong>💡 Tip:</strong> Choose the experience level that best matches your requirements. 
+                This ensures candidates have the right expertise for your projects.
+              </Typography>
+            </Box>
           </Box>
         )}
 
@@ -1577,82 +2233,544 @@ function Preferences() {
         )}
 
         {currentStep === 'Rate Proficiency' && (
-          <Box>
-            <Typography mb={2} sx={{ color: 'black' }}>Rate your proficiency (1 = Novice, 5 = Expert)</Typography>
-            {skills.map(skill => (
-              <Box key={skill} sx={{ mb: 3, position: 'relative' }}>
-                <Typography gutterBottom sx={{ color: 'black' }}>{skill}</Typography>
-                <Slider
-                  value={proficiency[skill] ?? 3}
-                  onChange={(_, v) => setProf(skill, v as number)}
-                  step={1}
-                  marks
-                  min={1}
-                  max={5}
-                  sx={{ color: GREEN_MAIN }}
-                  valueLabelDisplay="auto"
-                />
+          <Box sx={{ py: 4 }}>
+            {/* Enhanced Header */}
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Box sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+                boxShadow: '0 8px 25px rgba(0, 255, 157, 0.3)'
+              }}>
+                <StarIcon sx={{ fontSize: 40, color: 'white' }} />
               </Box>
-            ))}
+              <Typography 
+                variant="h4" 
+                gutterBottom 
+                sx={{ 
+                  color: 'black',
+                  fontWeight: 700,
+                  mb: 2
+                }}
+              >
+                Rate Your Proficiency
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: '#666',
+                  maxWidth: 600,
+                  mx: 'auto',
+                  lineHeight: 1.6
+                }}
+              >
+                Assess your skill level for each selected skill. Be honest about your capabilities to get the most accurate assessment.
+              </Typography>
+            </Box>
+
+            {/* Proficiency Rating Section */}
+            <Box sx={{ maxWidth: 700, mx: 'auto' }}>
+              {skills.map(skill => (
+                <Paper
+                  key={skill}
+                  elevation={0}
+                  sx={{
+                    p: 4,
+                    mb: 4,
+                    borderRadius: 3,
+                    border: '2px solid #E0E0E0',
+                    backgroundColor: 'white',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      borderColor: GREEN_MAIN,
+                      boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
+                    }
+                  }}
+                >
+                  <Box sx={{ mb: 3 }}>
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        color: '#333',
+                        fontWeight: 600,
+                        mb: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1
+                      }}
+                    >
+                      <CodeIcon sx={{ color: GREEN_MAIN, fontSize: 24 }} />
+                      {skill}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: '#666',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      Drag the slider to rate your proficiency level
+                    </Typography>
+                  </Box>
+
+                  {/* Enhanced Slider */}
+                  <Box sx={{ px: 2 }}>
+                    <Slider
+                      value={proficiency[skill] ?? 3}
+                      onChange={(_, v) => setProf(skill, v as number)}
+                      step={1}
+                      min={1}
+                      max={5}
+                      marks={[
+                        { value: 1, label: 'Novice' },
+                        { value: 2, label: 'Beginner' },
+                        { value: 3, label: 'Intermediate' },
+                        { value: 4, label: 'Advanced' },
+                        { value: 5, label: 'Expert' }
+                      ]}
+                      sx={{
+                        color: GREEN_MAIN,
+                        height: 8,
+                        '& .MuiSlider-track': {
+                          border: 'none',
+                          height: 8,
+                          borderRadius: 4,
+                          background: `linear-gradient(90deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`
+                        },
+                        '& .MuiSlider-rail': {
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: '#E0E0E0'
+                        },
+                        '& .MuiSlider-thumb': {
+                          width: 24,
+                          height: 24,
+                          backgroundColor: GREEN_MAIN,
+                          border: '3px solid white',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                          '&:hover': {
+                            boxShadow: '0 6px 12px rgba(0,0,0,0.3)',
+                            transform: 'scale(1.1)'
+                          }
+                        },
+                        '& .MuiSlider-mark': {
+                          backgroundColor: '#E0E0E0',
+                          width: 4,
+                          height: 4,
+                          borderRadius: '50%'
+                        },
+                        '& .MuiSlider-markActive': {
+                          backgroundColor: GREEN_MAIN
+                        },
+                        '& .MuiSlider-markLabel': {
+                          color: '#666',
+                          fontSize: '0.8rem',
+                          fontWeight: 500,
+                          mt: 1
+                        }
+                      }}
+                      valueLabelDisplay="auto"
+                      valueLabelFormat={(value) => {
+                        const labels = ['Novice', 'Beginner', 'Intermediate', 'Advanced', 'Expert'];
+                        return labels[value - 1] || value;
+                      }}
+                    />
+                  </Box>
+
+                  {/* Proficiency Level Display */}
+                  <Box sx={{ 
+                    mt: 3, 
+                    p: 2, 
+                    borderRadius: 2, 
+                    backgroundColor: `${GREEN_MAIN}10`,
+                    border: `1px solid ${GREEN_MAIN}30`,
+                    textAlign: 'center'
+                  }}>
+                    <Typography variant="body2" sx={{ color: '#666', mb: 1, fontWeight: 500 }}>
+                      Current Level:
+                    </Typography>
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        color: GREEN_MAIN,
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.5
+                      }}
+                    >
+                      {(() => {
+                        const level = proficiency[skill] ?? 3;
+                        const labels = ['Novice', 'Beginner', 'Intermediate', 'Advanced', 'Expert'];
+                        return labels[level - 1] || level;
+                      })()}
+                    </Typography>
+                  </Box>
+                </Paper>
+              ))}
+            </Box>
+
+            {/* Help Text */}
+            <Box sx={{ 
+              mt: 4, 
+              p: 3, 
+              borderRadius: 3, 
+              backgroundColor: '#E8F5E8',
+              border: '2px solid #C8E6C9',
+              textAlign: 'center',
+              maxWidth: 600,
+              mx: 'auto'
+            }}>
+              <Typography variant="body2" sx={{ color: '#2E7D32', lineHeight: 1.6 }}>
+                <strong>💡 Tip:</strong> Rate your skills honestly based on your actual experience and confidence level. 
+                This helps us provide you with the most appropriate assessment and opportunities.
+              </Typography>
+            </Box>
           </Box>
         )}
 
         {currentStep === 'Review' && (
-          <Box>
-            <Typography mb={2} sx={{ color: 'black' }}>Review your inputs before starting the test:</Typography>
-            <Typography variant="body2" sx={{ color: 'black' }}>
-              <strong>Type:</strong> {userType === 'company' ? 'Company' : 'Candidate'}
-            </Typography>
-            {userType === 'company' ? (
-              <>
-                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}>
-                  <strong>Company Details:</strong>
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'black' }}>
-                  Name: {companyDetails.name}<br />
-                  Industry: {companyDetails.industry}<br />
-                  Size: {companyDetails.size}<br />
-                  Location: {companyDetails.location}
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
-                  <strong>Required Skills:</strong> {requiredSkills.join(', ')}
-                </Typography>
-                {hederaExp === 'yes' && (
-                  <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
-                    <strong>Hedera Experience:</strong> Verified
-                  </Typography>
-                )}
-                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
-                  <strong>Required Experience Level:</strong> {experienceLevel}
-                </Typography>
-              </>
-            ) : (
-              <>
-                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
-                  <strong>Personal Details:</strong>
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'black' }}>
-                  First Name: {firstName}<br />
-                  Last Name: {lastName}
-                </Typography>
-                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
-                  <strong>Skills:</strong> {skills.join(', ')}
-                </Typography>
-                {hederaExp === 'yes' && (
-                  <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
-                    <strong>Hedera Experience:</strong> Verified
-                  </Typography>
-                )}
-                <Typography variant="body2" sx={{ mt: 1, color: 'black' }}  >
-                  <strong>Proficiency Levels:</strong>
-                </Typography>
-                {skills.map(skill => (
-                  <Typography key={skill} variant="body2" sx={{ color: 'black' }}>
-                    - {skill}: {proficiency[skill] ?? '-'}/5
-                  </Typography>
-                ))}
-              </>
-            )}
+          <Box sx={{ py: 4 }}>
+            {/* Enhanced Header */}
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Box sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+                boxShadow: '0 8px 25px rgba(0, 255, 157, 0.3)'
+              }}>
+                <CheckCircleIcon sx={{ fontSize: 40, color: 'white' }} />
+              </Box>
+              <Typography 
+                variant="h4" 
+                gutterBottom 
+                sx={{ 
+                  color: 'black',
+                  fontWeight: 700,
+                  mb: 2
+                }}
+              >
+                Review Your Profile
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: '#666',
+                  maxWidth: 600,
+                  mx: 'auto',
+                  lineHeight: 1.6
+                }}
+              >
+                Please review all the information below before proceeding. You can go back to make changes if needed.
+              </Typography>
+            </Box>
+
+            {/* Profile Type Badge */}
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              mb: 4 
+            }}>
+              <Chip
+                label={userType === 'company' ? 'Company Profile' : 'Candidate Profile'}
+                sx={{
+                  background: `linear-gradient(135deg, ${GREEN_MAIN} 0%, #00B8D4 100%)`,
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  px: 3,
+                  py: 1,
+                  boxShadow: '0 4px 15px rgba(0, 255, 157, 0.3)'
+                }}
+              />
+            </Box>
+
+            {/* Review Content */}
+            <Box sx={{ maxWidth: 700, mx: 'auto' }}>
+              {userType === 'company' ? (
+                // Company Review
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {/* Company Details Section */}
+                  <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid ${GREEN_MAIN}20` }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                      <BusinessIcon sx={{ color: GREEN_MAIN, fontSize: 28 }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+                        Company Details
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: '#666', mb: 1, fontWeight: 500 }}>
+                          Company Name
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                          {companyDetails.name || 'Not specified'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: '#666', mb: 1, fontWeight: 500 }}>
+                          Industry
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                          {companyDetails.industry || 'Not specified'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: '#666', mb: 1, fontWeight: 500 }}>
+                          Company Size
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                          {companyDetails.size || 'Not specified'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: '#666', mb: 1, fontWeight: 500 }}>
+                          Location
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                          {companyDetails.location || 'Not specified'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Paper>
+
+                  {/* Required Skills Section */}
+                  <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid ${GREEN_MAIN}20` }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                      <DesignServicesIcon sx={{ color: GREEN_MAIN, fontSize: 28 }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+                        Required Skills
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {requiredSkills.length > 0 ? (
+                        requiredSkills.map((skill, index) => (
+                          <Chip
+                            key={index}
+                            label={skill}
+                            sx={{
+                              background: GREEN_MAIN,
+                              color: 'white',
+                              fontWeight: 600,
+                              '&:hover': { background: GREEN_MAIN }
+                            }}
+                          />
+                        ))
+                      ) : (
+                        <Typography variant="body2" sx={{ color: '#999', fontStyle: 'italic' }}>
+                          No skills selected
+                        </Typography>
+                      )}
+                    </Box>
+                  </Paper>
+
+                  {/* Experience Level Section */}
+                  <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid ${GREEN_MAIN}20` }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                      <AnalyticsIcon sx={{ color: GREEN_MAIN, fontSize: 28 }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+                        Required Experience Level
+                      </Typography>
+                    </Box>
+                    <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                      {experienceLevel || 'Not specified'}
+                    </Typography>
+                  </Paper>
+
+                  {/* Hedera Experience Section */}
+                  {hederaExp === 'yes' && (
+                    <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid #02E2FF20`, background: 'linear-gradient(135deg, #02E2FF08 0%, #00FFC308 100%)' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                        <BugReportIcon sx={{ color: '#02E2FF', fontSize: 28 }} />
+                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+                          Hedera Experience Required
+                        </Typography>
+                      </Box>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 2,
+                        p: 2,
+                        borderRadius: 2,
+                        background: 'linear-gradient(135deg, #02E2FF15 0%, #00FFC315 100%)',
+                        border: '1px solid #02E2FF30'
+                      }}>
+                        <CheckCircleIcon sx={{ color: '#02E2FF', fontSize: 24 }} />
+                        <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                          Hedera experience verification completed
+                        </Typography>
+                      </Box>
+                    </Paper>
+                  )}
+                </Box>
+              ) : (
+                // Candidate Review
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {/* Personal Details Section */}
+                  <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid ${GREEN_MAIN}20` }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                      <PersonIcon sx={{ color: GREEN_MAIN, fontSize: 28 }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+                        Personal Details
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: '#666', mb: 1, fontWeight: 500 }}>
+                          First Name
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                          {firstName || 'Not specified'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" sx={{ color: '#666', mb: 1, fontWeight: 500 }}>
+                          Last Name
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                          {lastName || 'Not specified'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Paper>
+
+                  {/* Skills Section */}
+                  <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid ${GREEN_MAIN}20` }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                      <CodeIcon sx={{ color: GREEN_MAIN, fontSize: 28 }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+                        Selected Skills
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
+                      {skills.length > 0 ? (
+                        skills.map((skill, index) => (
+                          <Chip
+                            key={index}
+                            label={skill}
+                            sx={{
+                              background: GREEN_MAIN,
+                              color: 'white',
+                              fontWeight: 600,
+                              '&:hover': { background: GREEN_MAIN }
+                            }}
+                          />
+                        ))
+                      ) : (
+                        <Typography variant="body2" sx={{ color: '#999', fontStyle: 'italic' }}>
+                          No skills selected
+                        </Typography>
+                      )}
+                    </Box>
+                  </Paper>
+
+                  {/* Proficiency Levels Section */}
+                  {skills.length > 0 && (
+                    <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid ${GREEN_MAIN}20` }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                        <StarIcon sx={{ color: GREEN_MAIN, fontSize: 28 }} />
+                        <Typography variant="h6" sx={{ color: '#333', fontWeight: 600 }}>
+                          Proficiency Levels
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {skills.map(skill => (
+                          <Box key={skill} sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            p: 2,
+                            borderRadius: 2,
+                            background: '#F8F9FA',
+                            border: '1px solid #E9ECEF'
+                          }}>
+                            <Typography variant="body1" sx={{ color: '#333', fontWeight: 500 }}>
+                              {skill}
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Box sx={{ 
+                                display: 'flex', 
+                                gap: 0.5 
+                              }}>
+                                {[1, 2, 3, 4, 5].map((level) => (
+                                  <Box
+                                    key={level}
+                                    sx={{
+                                      width: 16,
+                                      height: 16,
+                                      borderRadius: '50%',
+                                      background: level <= (proficiency[skill] || 1) ? GREEN_MAIN : '#E9ECEF',
+                                      transition: 'all 0.2s ease'
+                                    }}
+                                  />
+                                ))}
+                              </Box>
+                              <Typography variant="body2" sx={{ color: '#666', fontWeight: 600, ml: 1 }}>
+                                {proficiency[skill] || 1}/5
+                              </Typography>
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Paper>
+                  )}
+
+                  {/* Hedera Experience Section */}
+                  {hederaExp === 'yes' && (
+                    <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid #02E2FF20`, background: 'linear-gradient(135deg, #02E2FF08 0%, #00FFC308 100%)' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                        <BugReportIcon sx={{ color: '#02E2FF', fontSize: 28 }} />
+                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
+                          Hedera Experience
+                        </Typography>
+                      </Box>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 2,
+                        p: 2,
+                        borderRadius: 2,
+                        background: 'linear-gradient(135deg, #02E2FF15 0%, #00FFC315 100%)',
+                        border: '1px solid #02E2FF30'
+                      }}>
+                        <CheckCircleIcon sx={{ color: '#02E2FF', fontSize: 24 }} />
+                        <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
+                          Hedera experience verification completed
+                        </Typography>
+                      </Box>
+                    </Paper>
+                  )}
+                </Box>
+              )}
+            </Box>
+
+            {/* Summary Message */}
+            <Box sx={{ 
+              mt: 6, 
+              p: 4, 
+              borderRadius: 3, 
+              background: 'linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%)',
+              border: '2px solid #DEE2E6',
+              textAlign: 'center',
+              maxWidth: 600,
+              mx: 'auto'
+            }}>
+              <Typography variant="body1" sx={{ color: '#495057', lineHeight: 1.6 }}>
+                <strong>🎯 Ready to proceed?</strong> All your information has been captured. 
+                Click the button below to {userType === 'company' ? 'access your dashboard' : 'start your assessment'}.
+              </Typography>
+            </Box>
           </Box>
         )}
 
@@ -1709,13 +2827,15 @@ function Preferences() {
                 }
               }}
             >
-              {activeStep === steps.length - 1
-                ? (userType === 'company'
-                  ? 'Go to Dashboard'
-                  : (router.query.returnUrl
-                    ? 'Continue to Test'
-                    : 'Start Test'))
-                : 'Next'}
+              {activeStep === 0
+                ? 'Get Started'
+                : activeStep === steps.length - 1
+                  ? (userType === 'company'
+                    ? 'Go to Dashboard'
+                    : (router.query.returnUrl
+                      ? 'Continue to Test'
+                      : 'Start Test'))
+                  : 'Next'}
             </Button>
           )}
         </Box>
