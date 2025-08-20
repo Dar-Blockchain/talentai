@@ -101,34 +101,34 @@ module.exports.generateQuestions = async (
 
     let questions = await parseAIResponse(raw);
 
-    // Créer ou mettre à jour un enregistrement dans candidate_Post_Step_Progress après la génération des questions
+    // Create or update a record in candidate_Post_Step_Progress after generating the questions
     try {
-      // Récupérer tous les steps du post
+      // Retrieve all steps of the post
       const postStepsService = require('./postStepsService');
       const allPostStepsResult = await postStepsService.getPostStepsByPostId(post._id);
       
       if (!allPostStepsResult.success) {
-        console.error('Erreur lors de la récupération des steps du post:', allPostStepsResult.error);
+        console.error('Error retrieving post steps:', allPostStepsResult.error);
         return { questions, totalQuestions: questions.length };
       }
       
       const allPostSteps = allPostStepsResult.data;
       
-      // Vérifier si un enregistrement de progression existe déjà pour ce candidat et ce post
+      // Check if a progress record already exists for this candidate and this post
       const existingProgress = await candidatePostStepProgressService.getProgressByCandidateAndPost(user._id, post._id);
       
       if (existingProgress.success && existingProgress.data) {
-        // L'enregistrement existe, ajouter les steps manquants
+        // Record exists, add missing steps
         const existingStepIds = existingProgress.data.steps.map(step => {
-          // Gérer stepId peuplé ou ObjectId
+          // Handle populated stepId or ObjectId
           return step.stepId && step.stepId._id ? step.stepId._id.toString() : step.stepId.toString();
         });
         
-        // Créer une liste des nouveaux steps à ajouter
+        // Create a list of new steps to add
         const newStepsToAdd = [];
         allPostSteps.forEach((step, index) => {
           if (!existingStepIds.includes(step._id.toString())) {
-            // Si c'est le premier step ajouté et qu'il n'y a pas encore de step inProgress, le marquer comme inProgress
+            // If this is the first added step and there is no step inProgress yet, mark it as inProgress
             const hasInProgressStep = existingProgress.data.steps.some(s => s.status === 'inProgress');
             const isFirstNewStep = existingProgress.data.steps.length === 0;
             
@@ -140,9 +140,9 @@ module.exports.generateQuestions = async (
           }
         });
         
-        // Ajouter seulement les nouveaux steps pour éviter les doublons
+        // Add only new steps to avoid duplicates
         if (newStepsToAdd.length > 0) {
-          // Assainir les steps existants (remplacer les documents peuplés par leurs _id)
+          // Sanitize existing steps (replace populated documents with their _id)
           const sanitizedExistingSteps = existingProgress.data.steps.map(s => ({
             stepId: s.stepId && s.stepId._id ? s.stepId._id : s.stepId,
             interviewDetails: s.interviewDetails && s.interviewDetails._id ? s.interviewDetails._id : (s.interviewDetails || null),
@@ -150,43 +150,43 @@ module.exports.generateQuestions = async (
             completedAt: s.completedAt || null,
           }));
 
-          // Combiner les steps existants avec les nouveaux
+          // Combine existing steps with the new ones
           const allSteps = [...sanitizedExistingSteps, ...newStepsToAdd];
 
-          // Mettre à jour l'enregistrement
+          // Update the record
           const updateResult = await candidatePostStepProgressService.updateProgress(
             existingProgress.data._id,
             { steps: allSteps }
           );
           
           if (!updateResult.success) {
-            console.error('Erreur lors de la mise à jour du progrès:', updateResult.error);
+            console.error('Error updating progress:', updateResult.error);
           }
         }
              } else {
-         // Créer un nouvel enregistrement avec tous les steps du post
+        // Create a new record with all steps of the post
          const allStepsData = allPostSteps.map((step, index) => ({
            stepId: step._id,
-           status: index === 0 ? 'inProgress' : 'pending', // Premier step = inProgress, autres = pending
+           status: index === 0 ? 'inProgress' : 'pending', // First step = inProgress, others = pending
            completedAt: null
          }));
          
          const progressData = {
-           idCandidate: user._id, // ID du candidat (utilisateur connecté)
-           idPost: post._id, // ID du post
-           currentStep: postStep._id, // ID de l'étape courante
-           steps: allStepsData, // Tous les steps du post
-           InterviewDetails: null // À adapter selon votre logique
+           idCandidate: user._id, // Candidate ID (logged-in user)
+           idPost: post._id, // Post ID
+           currentStep: postStep._id, // Current step ID
+           steps: allStepsData, // All steps of the post
+           InterviewDetails: null // To adapt according to your logic
          };
         
         const progressResult = await candidatePostStepProgressService.createProgress(progressData);
         if (!progressResult.success) {
-          console.error('Erreur lors de la création du progrès:', progressResult.error);
+          console.error('Error creating progress:', progressResult.error);
         }
       }
     } catch (progressError) {
-      console.error('Erreur lors de la création/mise à jour de l\'enregistrement de progression:', progressError);
-      // Ne pas faire échouer la requête principale pour cette erreur
+      console.error('Error creating/updating the progress record:', progressError);
+      // Do not fail the main request for this error
     }
 
     return { questions, totalQuestions: questions.length };
@@ -264,7 +264,7 @@ exports.analyseQuestions = async ({ questions, postStep ,user}) => {
     const profile = await Profile.findById(user.profile);
 
     if (!profile)
-      throw new HttpError(404, "Aucun profil trouvé pour cet utilisateur.");
+      throw new HttpError(404, "No profile found for this user.");
     
     const jobId = postStep.postId;
 
@@ -277,39 +277,39 @@ exports.analyseQuestions = async ({ questions, postStep ,user}) => {
       questions
     );
 console.log("interviewDetailsId",interviewDetailsId)
-    // Mettre à jour le statut des steps dans candidate_Post_Step_Progress après l'analyse
+    // Update the status of steps in candidate_Post_Step_Progress after the analysis
     try {
-      // Récupérer l'enregistrement de progression pour ce candidat et ce post
+      // Retrieve the progress record for this candidate and this post
       const existingProgress = await candidatePostStepProgressService.getProgressByCandidateAndPost(user._id, jobId);
       
       if (existingProgress.success && existingProgress.data) {
         const progress = existingProgress.data;
         
-        // Trouver l'index du step actuel (gérer stepId peuplé ou ObjectId)
+        // Find the index of the current step (handle populated stepId or ObjectId)
         const normalizeId = (val) => (val && val._id ? val._id.toString() : val ? val.toString() : '');
         const currentStepIndex = progress.steps.findIndex(step => 
           normalizeId(step.stepId) === normalizeId(postStep._id)
         );
         
         if (currentStepIndex !== -1) {
-          // Marquer le step actuel comme 'done'
+          // Mark the current step as 'done'
           progress.steps[currentStepIndex].status = 'done';
           progress.steps[currentStepIndex].completedAt = new Date();
-          // Lier l'entretien créé à ce step
+          // Link the created interview to this step
           if (interviewDetailsId) {
             progress.steps[currentStepIndex].interviewDetails = interviewDetailsId;
           }
           
-          // Marquer le step suivant comme 'inProgress' s'il existe
+          // Mark the next step as 'inProgress' if it exists
           if (currentStepIndex + 1 < progress.steps.length) {
             progress.steps[currentStepIndex + 1].status = 'inProgress';
             progress.steps[currentStepIndex + 1].completedAt = null;
             
-            // Mettre à jour le currentStep vers le step suivant
+            // Update currentStep to the next step
             progress.currentStep = progress.steps[currentStepIndex + 1].stepId;
           }
           
-          // Assainir avant mise à jour (éviter d'envoyer des documents peuplés)
+          // Sanitize before updating (avoid sending populated documents)
           const sanitizedSteps = progress.steps.map(s => ({
             stepId: s.stepId && s.stepId._id ? s.stepId._id : s.stepId,
             interviewDetails: s.interviewDetails && s.interviewDetails._id ? s.interviewDetails._id : (s.interviewDetails || null),
@@ -318,7 +318,7 @@ console.log("interviewDetailsId",interviewDetailsId)
           }));
           const sanitizedCurrentStep = progress.currentStep && progress.currentStep._id ? progress.currentStep._id : progress.currentStep;
 
-          // Mettre à jour l'enregistrement
+          // Update the record
           const updateResult = await candidatePostStepProgressService.updateProgress(
             progress._id,
             { 
@@ -329,13 +329,13 @@ console.log("interviewDetailsId",interviewDetailsId)
           );
           
           if (!updateResult.success) {
-            console.error('Erreur lors de la mise à jour du progrès après analyse:', updateResult.error);
+            console.error('Error updating progress after analysis:', updateResult.error);
           }
         }
       }
     } catch (progressError) {
-      console.error('Erreur lors de la mise à jour du progrès après analyse:', progressError);
-      // Ne pas faire échouer la requête principale pour cette erreur
+      console.error('Error updating progress after analysis:', progressError);
+      // Do not fail the main request for this error
     }
 
     return { analysis };
