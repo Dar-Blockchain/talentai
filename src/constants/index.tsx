@@ -1,0 +1,5 @@
+export const GITHUB_URL='https://github.com/TalentAI-bid/'
+export const TWITTER_URL='https://x.com/talentai_bid'
+export const YOUTUBE_URL='https://www.youtube.com/@TalentAi-w3p'
+export const LINKEDIN_URL='https://www.linkedin.com/company/106773236/'
+export const BOOK_DEMO_URL='https://calendly.com/hatemazaiez1/book-demo'

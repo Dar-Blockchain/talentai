@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Main Sitemap -->
+  <sitemap>
+    <loc>https://app.talentai.bid/sitemap.xml</loc>
+    <lastmod>2024-12-19</lastmod>
+  </sitemap>
+  
+  <!-- Job Posts Sitemap -->
+  <sitemap>
+    <loc>https://app.talentai.bid/api/sitemap-jobs.xml</loc>
+    <lastmod>2024-12-19</lastmod>
+  </sitemap>
+</sitemapindex> 

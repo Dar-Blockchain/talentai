@@ -1,0 +1,10 @@
+° vérification des nom des skill (react , express , node ) le meme pour tt 
+° problème onbording toujour 0% (9bal kont njib f 10% 20%)
+° problème sauvegarde poste job au niveaux skills 
+	- modification statique skill
+	- problème au niveau level de chaque skills nest pas synchroniser avec front 
+	- après le sauvegarde Ilya  Posted: 09/06/2025 c'est faut
+	
+
+° pour le matching il faut le meme confirmedlevel et le level du skill demander dans le poste 
+° score de matching réciproque avec le nombre de skills dans le poste et les skills matched dans le profile parmi c'est skills 
