@@ -13,6 +13,7 @@ const {
   analyzeJobTestResultsPrompts,
   generateHRQuestionsPrompts,
   analyzeHRAnswersPrompts,
+  analyzeOnbordingQuestionsPrompts,
 } = require("../prompts/evaluationPrompts");
 const { HttpError } = require("../utils/httpUtils");
 const {
@@ -31,11 +32,195 @@ const {
   saveInterviewDetails,
   saveInterviewDetailsForJob,
   handleHROverallScore,
+  saveInterviewDetailsForOnboarding,
 } = require("../utils/evaluationUtils");
 
 const InterviewDetails = require("../models/InterviewDetailsModel");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
+
+/**
+ * Analyze onboarding answers for a given user and skill.
+ *
+ * - Validates input arrays and skill objects
+ * - Calls TogetherAI with onboarding prompts
+ * - Parses and validates JSON response from AI
+ * - Derives demonstrated experience level from overall score
+ * - Persists interview details and updates profile/todoList accordingly
+ *
+ * Tested: Très bien testé manuellement le 20/08/2025
+ */
+exports.analyzeOnboardingAnswersService = async ({ user, skill, questions }) => {
+  if (!Array.isArray(skill) || !Array.isArray(questions)) {
+    throw new HttpError(400, "Invalid request format: arrays required");
+  }
+
+  const isValidSkill = skill.every(
+    (s) =>
+      s.name &&
+      typeof s.name === "string" &&
+      typeof s.proficiencyLevel === "number" &&
+      s.proficiencyLevel >= 1 &&
+      s.proficiencyLevel <= 5
+  );
+
+  if (!isValidSkill) {
+    throw new HttpError(
+      400,
+      "Invalid skill format: name (string) and proficiencyLevel (1-5) required"
+    );
+  }
+
+  if (!user) throw new HttpError(404, "User not found");
+
+  const profile = await Profile.findById(user.profile);
+  if (!profile) throw new HttpError(404, "Profile not found");
+
+  const todoList = await TodoList.findById(profile.todoList);
+
+  const skillName = skill[0].name;
+  const systemPrompt = analyzeOnbordingQuestionsPrompts.getSystemPrompt();
+  const userPrompt = analyzeOnbordingQuestionsPrompts.getUserPrompt(
+    skillName,
+    questions
+  );
+
+  const stream = await together.chat.completions.create({
+    model: "deepseek-ai/DeepSeek-V3",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    max_tokens: 2500,
+    temperature: 0.7,
+    stream: true,
+  });
+
+  let raw = "";
+  for await (const chunk of stream) {
+    const content = chunk.choices?.[0]?.delta?.content;
+    if (content) raw += content;
+  }
+
+  // Parse AI JSON fenced block
+  let analysis;
+  let jsonStr;
+  const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (jsonMatch) {
+    jsonStr = jsonMatch[1];
+  } else {
+    jsonStr = raw;
+  }
+
+  jsonStr = jsonStr
+    .trim()
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/^[^{]*/, "")
+    .replace(/[^}]*$/, "");
+
+  try {
+    analysis = JSON.parse(jsonStr);
+  } catch (firstError) {
+    jsonStr = jsonStr
+      .replace(/,(\s*[}\]])/g, "$1")
+      .replace(/'/g, '"')
+      .replace(/\n/g, " ")
+      .replace(/\s+/g, " ");
+    analysis = JSON.parse(jsonStr);
+  }
+
+  if (!analysis || typeof analysis !== "object") {
+    throw new HttpError(422, "AI analysis parsing failed");
+  }
+
+  if (!analysis.skillAnalysis || !Array.isArray(analysis.skillAnalysis)) {
+    throw new HttpError(422, "Invalid AI response: skillAnalysis missing");
+  }
+
+  const requiredFields = [
+    "overallScore",
+    "technicalLevel",
+    "generalAssassment",
+    "recommendations",
+    "nextSteps",
+    "skillAnalysis",
+  ];
+  const missingFields = requiredFields.filter((f) => !(f in analysis));
+  if (missingFields.length > 0) {
+    throw new HttpError(422, `AI response missing fields: ${missingFields.join(", ")}`);
+  }
+
+  // Derive demonstrated experience level from overallScore
+  const overallScore = analysis.overallScore;
+  let demonstratedExperienceLevel;
+  let experienceLevelString = "";
+  if (overallScore < 6) {
+    demonstratedExperienceLevel = 0;
+    experienceLevelString = "NoLevel";
+  } else if (overallScore < 16.32) {
+    demonstratedExperienceLevel = 1;
+    experienceLevelString = "Entry Level";
+  } else if (overallScore < 30.32) {
+    demonstratedExperienceLevel = 2;
+    experienceLevelString = "Junior";
+  } else if (overallScore < 48.31) {
+    demonstratedExperienceLevel = 3;
+    experienceLevelString = "Mid Level";
+  } else if (overallScore < 69.33) {
+    demonstratedExperienceLevel = 4;
+    experienceLevelString = "Senior";
+  } else {
+    demonstratedExperienceLevel = 5;
+    experienceLevelString = "Expert";
+  }
+
+  analysis.technicalLevel = experienceLevelString;
+  analysis.skillAnalysis[0].requiredLevel = demonstratedExperienceLevel;
+  analysis.skillAnalysis[0].demonstratedExperienceLevel =
+    demonstratedExperienceLevel;
+
+  const interviewId = await saveInterviewDetailsForOnboarding(
+    profile,
+    overallScore,
+    analysis.skillAnalysis,
+    analysis.recommendations
+  );
+
+  if (!profile.interviewDetails) profile.interviewDetails = [];
+  profile.interviewDetails.push(interviewId);
+  await profile.save();
+
+  if (demonstratedExperienceLevel > 0) {
+    profile.skills = [
+      {
+        name: analysis.skillAnalysis[0].skillName,
+        proficiencyLevel: demonstratedExperienceLevel,
+        experienceLevel: experienceLevelString,
+        NumberTestPassed: 1,
+        ScoreTest: overallScore,
+        Levelconfirmed:
+          demonstratedExperienceLevel === 1
+            ? 1
+            : demonstratedExperienceLevel === 5
+            ? 5
+            : demonstratedExperienceLevel - 1,
+      },
+    ];
+    await profile.save();
+
+    if (todoList) {
+      const index = todoList.todos.findIndex((todo) => todo.type === "Skill");
+      if (index !== -1) {
+        todoList.todos[index] = {
+          ...analysis.skillAnalysis[0].todoList,
+        };
+      }
+      await todoList.save();
+    }
+  }
+
+  return { analysis };
+};
 
 module.exports.generateTechniqueQuestionsForJob = async (
   jobRequiredSkillList,
