@@ -471,6 +471,7 @@ const JuryDashboard = () => {
         detailsProject={detailsProject}
       />
       {/* Code Validation Details Modal */}
+      
       <CodeValidationDetailsModal
         open={codeValidationDetailsModalOpen}
         onClose={handleCloseCodeValidationDetails}
