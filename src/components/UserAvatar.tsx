@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { useRouter } from "next/router";
+import { useRouter, usePathname } from "next/navigation";
+import Box from "@mui/material/Box";
 import {
   Avatar,
   Menu,
@@ -11,7 +12,6 @@ import {
   ListItemText,
   Divider,
   Typography,
-  Box,
   IconButton,
   Badge,
   Fade,
@@ -36,6 +36,7 @@ export default function UserAvatar() {
   const [isHovered, setIsHovered] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
   
   const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
   
@@ -135,15 +136,92 @@ export default function UserAvatar() {
   };
 
   const getRoleColor = (role: string) => {
-    switch (role) {
-      case "company":
-        return "linear-gradient(135deg, #29D291 0%, #00FF9D 100%)";
-      case "candidate":
-        return "linear-gradient(135deg, #8310FF 0%, #B366FF 100%)";
-      case "admin":
-        return "linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%)";
-      default:
-        return "linear-gradient(135deg, #667eea 0%, #764ba2 100%)";
+    const isHomePage = pathname === "/";
+    
+    if (isHomePage) {
+      // Home page color scheme - enhanced green palette with complementary accents
+      switch (role) {
+        case "company":
+          return "linear-gradient(135deg, #4ddaa4 0%, #00ff9d 30%, #2fd495 60%, #00e6b3 100%)";
+        case "candidate":
+          return "linear-gradient(135deg, #4ddaa4 0%, #00ff9d 25%, #2fd495 50%, #00e6b3 75%, #4ddaa4 100%)";
+        case "admin":
+          return "linear-gradient(135deg, #2fd495 0%, #00ff9d 30%, #4ddaa4 60%, #00e6b3 100%)";
+        default:
+          return "linear-gradient(135deg, #4ddaa4 0%, #00ff9d 25%, #2fd495 50%, #00e6b3 75%, #4ddaa4 100%)";
+      }
+    } else {
+      // Jobseeker landing page - current enhanced colors
+      switch (role) {
+        case "company":
+          return "linear-gradient(135deg, #00D4AA 0%, #00F5A3 50%, #00D4FF 100%)";
+        case "candidate":
+          return "linear-gradient(135deg, #8B5CF6 0%, #A855F7 50%, #C084FC 100%)";
+        case "admin":
+          return "linear-gradient(135deg, #EF4444 0%, #F87171 50%, #FCA5A5 100%)";
+        default:
+          return "linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #A855F7 100%)";
+      }
+    }
+  };
+
+  const getRoleShadow = (role: string) => {
+    const isHomePage = pathname === "/";
+    
+    if (isHomePage) {
+      // Home page shadows - enhanced green palette with depth
+      switch (role) {
+        case "company":
+          return "0 8px 32px rgba(77, 218, 164, 0.4), 0 4px 16px rgba(0, 255, 157, 0.3), 0 2px 8px rgba(47, 212, 149, 0.2)";
+        case "candidate":
+          return "0 8px 32px rgba(77, 218, 164, 0.4), 0 4px 16px rgba(0, 255, 157, 0.3), 0 2px 8px rgba(47, 212, 149, 0.2)";
+        case "admin":
+          return "0 8px 32px rgba(77, 218, 164, 0.4), 0 4px 16px rgba(0, 255, 157, 0.3), 0 2px 8px rgba(47, 212, 149, 0.2)";
+        default:
+          return "0 8px 32px rgba(77, 218, 164, 0.4), 0 4px 16px rgba(0, 255, 157, 0.3), 0 2px 8px rgba(47, 212, 149, 0.2)";
+      }
+    } else {
+      // Jobseeker landing page shadows - current enhanced shadows
+      switch (role) {
+        case "company":
+          return "0 8px 32px rgba(0, 212, 170, 0.4), 0 4px 16px rgba(0, 245, 163, 0.3)";
+        case "candidate":
+          return "0 8px 32px rgba(139, 92, 246, 0.4), 0 4px 16px rgba(168, 85, 247, 0.3)";
+        case "admin":
+          return "0 8px 32px rgba(239, 68, 68, 0.4), 0 4px 16px rgba(248, 113, 113, 0.3)";
+        default:
+          return "0 8px 32px rgba(99, 102, 241, 0.4), 0 4px 16px rgba(139, 92, 246, 0.3)";
+      }
+    }
+  };
+
+  const getRoleGlow = (role: string) => {
+    const isHomePage = pathname === "/";
+    
+    if (isHomePage) {
+      // Home page glow - enhanced green palette with multi-layered glow
+      switch (role) {
+        case "company":
+          return "0 0 20px rgba(77, 218, 164, 0.7), 0 0 40px rgba(0, 255, 157, 0.5), 0 0 60px rgba(47, 212, 149, 0.3)";
+        case "candidate":
+          return "0 0 20px rgba(77, 218, 164, 0.7), 0 0 40px rgba(0, 255, 157, 0.5), 0 0 60px rgba(47, 212, 149, 0.3)";
+        case "admin":
+          return "0 0 20px rgba(77, 218, 164, 0.7), 0 0 40px rgba(0, 255, 157, 0.5), 0 0 60px rgba(47, 212, 149, 0.3)";
+        default:
+          return "0 0 20px rgba(77, 218, 164, 0.7), 0 0 40px rgba(0, 255, 157, 0.5), 0 0 60px rgba(47, 212, 149, 0.3)";
+      }
+    } else {
+      // Jobseeker landing page glow - current enhanced glows
+      switch (role) {
+        case "company":
+          return "0 0 20px rgba(0, 212, 170, 0.6), 0 0 40px rgba(0, 245, 163, 0.4)";
+        case "candidate":
+          return "0 0 20px rgba(139, 92, 246, 0.6), 0 0 40px rgba(168, 85, 247, 0.4)";
+        case "admin":
+          return "0 0 20px rgba(239, 68, 68, 0.6), 0 0 40px rgba(248, 113, 113, 0.4)";
+        default:
+          return "0 0 20px rgba(99, 102, 241, 0.6), 0 0 40px rgba(139, 102, 246, 0.4)";
+      }
     }
   };
 
@@ -162,58 +240,82 @@ export default function UserAvatar() {
           },
         }}
       >
-        <Badge
-          overlap="circular"
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-          badgeContent={
-            <Box
-              sx={{
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                background: getRoleColor(getUserRole()),
-                border: "2px solid #fff",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
-              }}
-            />
-          }
-        >
-          <Avatar
-            sx={{
-              width: 44,
-              height: 44,
+                 <Badge
+           overlap="circular"
+           anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+           badgeContent={
+             <Box
+               sx={{
+                 width: 18,
+                 height: 18,
+                 borderRadius: "50%",
+                 background: getRoleColor(getUserRole()),
+                 border: "3px solid #ffffff",
+                 boxShadow: `0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4), ${getRoleGlow(getUserRole())}`,
+                 position: "relative",
+                 "&::after": {
+                   content: '""',
+                   position: "absolute",
+                   top: "50%",
+                   left: "50%",
+                   width: "6px",
+                   height: "6px",
+                   borderRadius: "50%",
+                   background: "rgba(255, 255, 255, 0.8)",
+                   transform: "translate(-50%, -50%)",
+                   boxShadow: "0 0 8px rgba(255, 255, 255, 0.6)",
+                 },
+               }}
+             />
+           }
+         >
+           <Avatar
+             sx={{
+               width: 48,
+               height: 48,
               background: isHovered 
-                ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                : "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-              color: "white",
-              fontWeight: 700,
-              fontSize: "1.1rem",
-              border: "3px solid rgba(255, 255, 255, 0.8)",
+                ? (pathname === "/" 
+                    ? "linear-gradient(135deg, #4ddaa4 0%, #00ff9d 25%, #2fd495 50%, #00e6b3 75%, #4ddaa4 100%)"
+                    : "linear-gradient(135deg, #FF6B9D 0%, #C44569 50%, #F8BBD9 100%)")
+                : (pathname === "/" 
+                    ? "linear-gradient(135deg, #4ddaa4 0%, #00ff9d 30%, #2fd495 60%, #00e6b3 100%)"
+                    : "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)"),
+               color: "white",
+               fontWeight: 800,
+               fontSize: "1.2rem",
+               border: "4px solid rgba(255, 255, 255, 0.95)",
               boxShadow: isHovered
-                ? "0 8px 25px rgba(102, 126, 234, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2)"
-                : "0 4px 15px rgba(240, 147, 251, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)",
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-              cursor: "pointer",
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                borderRadius: "50%",
-                background: "linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%)",
-                opacity: 0,
-                transition: "opacity 0.3s ease",
-              },
-              "&:hover::before": {
-                opacity: 1,
-              },
-            }}
-          >
-            {getUserInitials()}
-          </Avatar>
-        </Badge>
+                ? (pathname === "/" 
+                    ? "0 12px 40px rgba(77, 218, 164, 0.6), 0 6px 20px rgba(0, 255, 157, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.3)"
+                    : "0 12px 40px rgba(255, 107, 157, 0.6), 0 0 0 2px rgba(255, 255, 255, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.3)")
+                : (pathname === "/" 
+                    ? "0 8px 25px rgba(77, 218, 164, 0.5), 0 4px 12px rgba(0, 255, 157, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.2)"
+                    : "0 8px 25px rgba(102, 126, 234, 0.5), 0 0 0 2px rgba(255, 255, 255, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.2)"),
+               transition: "all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+               cursor: "pointer",
+               position: "relative",
+               overflow: "hidden",
+               "&::before": {
+                 content: '""',
+                 position: "absolute",
+                 top: 0,
+                 left: 0,
+                 right: 0,
+                 bottom: 0,
+                 borderRadius: "50%",
+                 background: "linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3) 50%, transparent 70%)",
+                 opacity: 0,
+                 transition: "opacity 0.4s ease",
+                 transform: "rotate(45deg)",
+               },
+               "&:hover::before": {
+                 opacity: 1,
+               },
+             }}
+           >
+             {getUserInitials()}
+           </Avatar>
+         </Badge>
       </IconButton>
 
       <Menu
@@ -233,12 +335,12 @@ export default function UserAvatar() {
         PaperProps={{
           sx: {
             mt: 2,
-            minWidth: 280,
-            borderRadius: 3,
-            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 25px rgba(0, 0, 0, 0.1)",
-            border: "1px solid rgba(255, 255, 255, 0.2)",
-            background: "rgba(255, 255, 255, 0.95)",
-            backdropFilter: "blur(20px)",
+            minWidth: 320,
+            borderRadius: 4,
+            boxShadow: "0 25px 80px rgba(0, 0, 0, 0.2), 0 12px 40px rgba(0, 0, 0, 0.15)",
+            border: "1px solid rgba(255, 255, 255, 0.3)",
+            background: "linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%)",
+            backdropFilter: "blur(25px)",
             overflow: "hidden",
             "&::before": {
               content: '""',
@@ -246,8 +348,9 @@ export default function UserAvatar() {
               top: 0,
               left: 0,
               right: 0,
-              height: "4px",
+              height: "6px",
               background: getRoleColor(getUserRole()),
+              boxShadow: getRoleShadow(getUserRole()),
             },
           },
         }}
@@ -255,22 +358,50 @@ export default function UserAvatar() {
         {/* User Info Section */}
         <Box
           sx={{
-            p: 3,
+            p: 4,
             textAlign: "center",
-            background: "linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%)",
-            borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
+            background: "linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%)",
+            borderBottom: "1px solid rgba(0, 0, 0, 0.08)",
+            position: "relative",
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              bottom: 0,
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "60%",
+              height: "1px",
+              background: "linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.3) 50%, transparent 100%)",
+            },
           }}
         >
           <Avatar
             sx={{
-              width: 60,
-              height: 60,
+              width: 72,
+              height: 72,
               mx: "auto",
-              mb: 2,
+              mb: 3,
               background: getRoleColor(getUserRole()),
-              fontSize: "1.5rem",
-              fontWeight: 700,
-              boxShadow: "0 8px 25px rgba(0, 0, 0, 0.15)",
+              fontSize: "1.8rem",
+              fontWeight: 800,
+              boxShadow: getRoleShadow(getUserRole()),
+              border: "4px solid rgba(255, 255, 255, 0.9)",
+              position: "relative",
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: -2,
+                left: -2,
+                right: -2,
+                bottom: -2,
+                borderRadius: "50%",
+                background: "linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%)",
+                opacity: 0,
+                transition: "opacity 0.3s ease",
+              },
+              "&:hover::before": {
+                opacity: 1,
+              },
             }}
           >
             {getUserInitials()}
@@ -279,10 +410,11 @@ export default function UserAvatar() {
           <Typography 
             variant="h6" 
             sx={{ 
-              fontWeight: 700, 
-              color: "text.primary",
-              mb: 0.5,
-              fontSize: "1.1rem",
+              fontWeight: 800, 
+              color: "#1F2937",
+              mb: 1,
+              fontSize: "1.25rem",
+              textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
             }}
           >
             {getUserDisplayName()}
@@ -291,31 +423,52 @@ export default function UserAvatar() {
           <Typography 
             variant="body2" 
             sx={{ 
-              color: "text.secondary",
+              color: "#6B7280",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: 0.5,
-              fontSize: "0.875rem",
+              gap: 1,
+              fontSize: "0.9rem",
+              mb: 2,
             }}
           >
-            <EmailIcon sx={{ fontSize: 16, color: "primary.main" }} />
+            <EmailIcon sx={{ 
+              fontSize: 18, 
+              color: "#6366F1",
+              filter: "drop-shadow(0 1px 2px rgba(99, 102, 241, 0.3))"
+            }} />
             {safeUser.email}
           </Typography>
           
           <Box
             sx={{
-              mt: 1.5,
               display: "inline-block",
-              px: 2,
-              py: 0.5,
-              borderRadius: 2,
+              px: 3,
+              py: 1,
+              borderRadius: 3,
               background: getRoleColor(getUserRole()),
               color: "white",
-              fontSize: "0.75rem",
-              fontWeight: 600,
+              fontSize: "0.8rem",
+              fontWeight: 700,
               textTransform: "uppercase",
-              letterSpacing: "0.5px",
+              letterSpacing: "1px",
+              boxShadow: getRoleShadow(getUserRole()),
+              border: "1px solid rgba(255, 255, 255, 0.3)",
+              position: "relative",
+              overflow: "hidden",
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0,
+                left: "-100%",
+                width: "100%",
+                height: "100%",
+                background: "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)",
+                transition: "left 0.5s ease",
+              },
+              "&:hover::before": {
+                left: "100%",
+              },
             }}
           >
             {safeUser.role || "User"}
@@ -323,64 +476,87 @@ export default function UserAvatar() {
         </Box>
 
         {/* Menu Items */}
-        <Box sx={{ p: 1 }}>
+        <Box sx={{ p: 2 }}>
           <MenuItem 
             onClick={handleProfileClick} 
             sx={{ 
-              py: 1.5,
-              px: 2,
-              borderRadius: 2,
-              mb: 0.5,
-              transition: "all 0.2s ease",
+              py: 2,
+              px: 3,
+              borderRadius: 3,
+              mb: 1,
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              background: "rgba(99, 102, 241, 0.02)",
+              border: "1px solid rgba(99, 102, 241, 0.1)",
               "&:hover": {
-                background: "linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)",
-                transform: "translateX(4px)",
+                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.12) 100%)",
+                transform: "translateX(6px) scale(1.02)",
+                borderColor: "rgba(99, 102, 241, 0.3)",
+                boxShadow: "0 8px 25px rgba(99, 102, 241, 0.15)",
               },
             }}
           >
             <ListItemIcon>
-              <PersonIcon sx={{ color: "primary.main", fontSize: 20 }} />
+              <PersonIcon sx={{ 
+                color: "#6366F1", 
+                fontSize: 22,
+                filter: "drop-shadow(0 1px 2px rgba(99, 102, 241, 0.3))"
+              }} />
             </ListItemIcon>
             <ListItemText 
               primary="Profile" 
               primaryTypographyProps={{ 
                 variant: "body2",
-                fontWeight: 600,
-                fontSize: "0.9rem",
+                fontWeight: 700,
+                fontSize: "0.95rem",
+                color: "#374151",
               }} 
             />
           </MenuItem>
 
 
 
-          <Divider sx={{ my: 1.5, opacity: 0.6 }} />
+          <Divider sx={{ 
+            my: 2, 
+            opacity: 0.4,
+            background: "linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.2), transparent)",
+            height: "1px",
+          }} />
 
           <MenuItem 
             onClick={handleLogoutClick} 
             sx={{ 
-              py: 1.5,
-              px: 2,
-              borderRadius: 2,
-              transition: "all 0.2s ease",
+              py: 2,
+              px: 3,
+              borderRadius: 3,
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              background: "rgba(239, 68, 68, 0.02)",
+              border: "1px solid rgba(239, 68, 68, 0.1)",
               "&:hover": {
-                background: "linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(229, 57, 53, 0.1) 100%)",
-                transform: "translateX(4px)",
+                background: "linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(248, 113, 113, 0.12) 100%)",
+                transform: "translateX(6px) scale(1.02)",
+                borderColor: "rgba(239, 68, 68, 0.3)",
+                boxShadow: "0 8px 25px rgba(239, 68, 68, 0.15)",
               },
             }}
           >
             <ListItemIcon>
-              <LogoutIcon sx={{ color: "error.main", fontSize: 20 }} />
+              <LogoutIcon sx={{ 
+                color: "#EF4444", 
+                fontSize: 22,
+                filter: "drop-shadow(0 1px 2px rgba(239, 68, 68, 0.3))"
+              }} />
             </ListItemIcon>
             <ListItemText 
               primary="Logout" 
               primaryTypographyProps={{ 
                 variant: "body2",
-                fontWeight: 600,
-                fontSize: "0.9rem",
-                color: "error.main"
+                fontWeight: 700,
+                fontSize: "0.95rem",
+                color: "#DC2626"
               }} 
             />
           </MenuItem>
+
         </Box>
       </Menu>
     </Box>
