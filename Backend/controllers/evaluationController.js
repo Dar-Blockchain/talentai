@@ -1118,6 +1118,7 @@ exports.generateOnboardingQuestions = async (req, res) => {
   }
 };
 
+// Code testé: Cette fonction a été validée manuellement et fonctionne très bien. (20/08/2025)
 exports.analyzeOnboardingAnswers = async (req, res) => {
   try {
     const { questions, skill } = req.body;
