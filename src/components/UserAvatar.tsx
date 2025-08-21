@@ -76,11 +76,11 @@ export default function UserAvatar() {
     // Check if user has a profile (has firstName and lastName)
     if (role === "company") {
       // User has a profile, go to dashboard
-      router.push("/dashboardCompany");
+      router.push("/dashboard/company");
     } else if(role === "candidate") {
-      router.push("/dashboardCandidate");
+      router.push("/dashboard/candidate");
     }else if(role === "admin"){
-      router.push("/dashboardAdmin");
+      router.push("/dashboard/admin");
     }else{
       // User doesn't have a profile, go to preferences to complete it
       router.push("/preferences");

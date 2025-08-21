@@ -92,10 +92,10 @@ export default function SignIn() {
     try {
       console.log(userData);
       if (userData.role === "jury") {
-        return redirect("/dashboardJury");
+        return redirect("/dashboard/jury");
       }
       // if (userData.email === "hatemazaiez1@gmail.com") {
-      //   return redirect("/dashboardJury");
+      //   return redirect("/dashboard/jury");
       // }
       const token = localStorage.getItem("api_token");
       const baseUrl =
@@ -231,13 +231,13 @@ export default function SignIn() {
           } else {
             switch (safeUser?.role) {
               case "Admin":
-                router.push("/dashboardAdmin");
+                router.push("/dashboard/admin");
                 break;
               case "Candidat":
-                router.push("/dashboardCandidate");
+                router.push("/dashboard/candidate");
                 break;
               case "Company":
-                router.push("/dashboardCompany");
+                router.push("/dashboard/company");
                 break;
               default:
                 router.push("/preferences");
@@ -313,13 +313,13 @@ export default function SignIn() {
         // User has profile, redirect to appropriate dashboard
         switch (safeUser.role) {
           case "Admin":
-            router.push("/dashboardAdmin");
+            router.push("/dashboard/admin");
             break;
           case "Candidat":
-            router.push("/dashboardCandidate");
+            router.push("/dashboard/candidate");
             break;
           case "Company":
-            router.push("/dashboardCompany");
+            router.push("/dashboard/company");
             break;
           default:
             router.push("/preferences");

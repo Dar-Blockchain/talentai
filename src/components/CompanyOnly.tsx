@@ -58,12 +58,12 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
       if (profile.userId.role === 'Candidat' || profile.userId.role === 'Candidate') {
         // Candidate user trying to access company page, redirect to candidate dashboard
         console.log("Candidate user detected, redirecting to candidate dashboard");
-        router.push('/dashboardCandidate');
+        router.push('/dashboard/candidate');
         return;
       } else if (profile.userId.role === 'Admin') {
         // Admin user trying to access company page, redirect to admin dashboard
         console.log("Admin user detected, redirecting to admin dashboard");
-        router.push('/dashboardAdmin');
+        router.push('/dashboard/admin');
         return;
       } else if (profile.userId.role !== 'Company') {
         // Unknown role, redirect to signin

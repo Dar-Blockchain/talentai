@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getMyProfile, selectProfile, clearProfile } from '../store/slices/profileSlice';
+import { getMyProfile, selectProfile, clearProfile } from '@/store/slices/profileSlice';
 import {
   logout
-} from "../store/slices/authSlice";
-import { AppDispatch, RootState } from '../store/store';
+} from "@/store/slices/authSlice";
+import { AppDispatch, RootState } from '@/store/store';
 import { 
   Box,
   Container,
@@ -90,7 +90,7 @@ import axios from 'axios';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import CompanyOnly from '../components/CompanyOnly';
+import CompanyOnly from '@/components/CompanyOnly';
 import DescriptionIcon from '@mui/icons-material/Description';
 import SearchIcon from '@mui/icons-material/Search';
 import SortIcon from '@mui/icons-material/Sort';

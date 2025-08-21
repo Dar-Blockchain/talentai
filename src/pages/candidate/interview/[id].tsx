@@ -64,7 +64,7 @@ export default function CandidateInterviewDetailPage() {
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
                 <Button
                     startIcon={<ArrowBackIcon />}
-                    onClick={() => router.push('/dashboardCandidate')}
+                    onClick={() => router.push('/dashboard/candidate')}
                     sx={{ color: GREEN_MAIN, fontWeight: 600 }}
                 >
                     Back to Dashboard

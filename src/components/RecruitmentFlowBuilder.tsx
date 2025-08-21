@@ -758,7 +758,7 @@ Ready to customize the content or add more triggers?`
           setIsSavingSteps(false)
           toast.success("Job post created successfully! Your recruitment flow has been saved.");          
           // You can add success notification here
-          router.push('/dashboardCompany')
+          router.push('/dashboard/company')
         } else {
                     setIsSavingSteps(false)
 

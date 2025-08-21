@@ -975,7 +975,7 @@ export default function ResumeBuilder() {
 
       {/* Back Button */}
       <IconButton
-        onClick={() => router.push('/dashboardCandidate')}
+        onClick={() => router.push('/dashboard/candidate')}
         sx={{
           position: "fixed",
           left: isMobile ? 20 : 300,

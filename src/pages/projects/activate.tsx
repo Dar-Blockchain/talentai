@@ -82,7 +82,7 @@ const ProjectActivatePage = () => {
         body: JSON.stringify({ projectId: data.projectId, token }),
       });
       if (!res.ok) throw new Error("Activation failed");
-      router.push("/dashboardCandidate");
+      router.push("/dashboard/candidate");
       setLoadingJoin(false)
     } catch (err) {
       setLoadingJoin(false)
