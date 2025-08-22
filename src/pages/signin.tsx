@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -24,8 +24,8 @@ import {
   Google as GoogleIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
-import { registerUser, verifyOTP } from "../../store/slices/authSlice";
-import type { RootState, AppDispatch } from "../../store/store";
+import { registerUser, verifyOTP } from "@/store/slices/authSlice";
+import type { RootState, AppDispatch } from "@/store/store";
 import Cookies from "js-cookie";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import { getUserLocation } from "@/utils/api";

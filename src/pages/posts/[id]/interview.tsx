@@ -356,7 +356,7 @@ const Test = () => {
   const [isTranscribing, setIsTranscribing] = useState(false);
   useEffect(() => {
     if (!isAuthenticated && id) {
-      const target = `/interview-post/${id}${stepId ? `?stepId=${stepId}` : ''}`;
+      const target = `/posts/${id}/interview${stepId ? `?stepId=${stepId}` : ''}`;
       router.push(`/signin?returnUrl=${encodeURIComponent(target)}`);
     }
   }, [isAuthenticated, id, stepId]);
@@ -370,7 +370,7 @@ const Test = () => {
           const token = Cookies.get('api_token');
           if (!token) {
             console.log('No token found, redirecting to signin');
-            const target = `/interview-post/${id}${stepId ? `?stepId=${stepId}` : ''}`;
+            const target = `/posts/${id}/interview${stepId ? `?stepId=${stepId}` : ''}`;
             router.push(`/signin?returnUrl=${encodeURIComponent(target)}`);
             return;
           }
@@ -688,7 +688,7 @@ const Test = () => {
       const token = Cookies.get('api_token');
       if (!token) {
         console.log('No token found, redirecting to signin');
-        const target = `/interview-post/${id}${stepId ? `?stepId=${stepId}` : ''}`;
+        const target = `/posts/${id}/interview${stepId ? `?stepId=${stepId}` : ''}`;
         router.push(`/signin?returnUrl=${encodeURIComponent(target)}`);
         return;
       }

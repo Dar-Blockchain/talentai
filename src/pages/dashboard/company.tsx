@@ -1252,7 +1252,7 @@ As a ${jobDataToUse.jobDetails.title}, you'll be at the heart of our engineering
           <Button
             variant="contained"
             startIcon={<WorkIcon />}
-            onClick={() => router.push('/recruitment/create-job')}
+            onClick={() => router.push('/posts/create')}
             sx={{
               mt: 1,
               background: 'linear-gradient(90deg, #02E2FF, #00FFC3)',
@@ -2598,7 +2598,7 @@ Benefits:
             </Button>
             <Button
               variant="contained"
-              onClick={() => router.push('/recruitment/create-job')}
+              onClick={() => router.push('/posts/create')}
               sx={{
                 background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
                 color: '#0f172a',
@@ -4943,7 +4943,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                 </Box>
                 <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
                 {/* Verified chip removed in favor of icon next to name */}
-                  <GradientButton onClick={() => router.push('/recruitment/create-job')} endIcon={<AddIcon />}>
+                  <GradientButton onClick={() => router.push('/posts/create')} endIcon={<AddIcon />}>
                     Post Job
                   </GradientButton>
                 </Box>
@@ -5152,7 +5152,7 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                       <Button
                         variant="contained"
                         startIcon={<AddIcon />}
-                        onClick={() => router.push('/recruitment/create-job')}
+                        onClick={() => router.push('/posts/create')}
                         sx={{
                           background: 'linear-gradient(90deg, #02E2FF, #00FFC3)',
                           color: '#0f172a',
@@ -5922,8 +5922,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                     const job = myJobs.find((j: any) => j._id === postedJobId);
                     const stepId = job?.post_Steps?.[0]?._id;
                     return stepId
-                      ? `${base}/interview-post/${postedJobId}?stepId=${stepId}`
-                      : `${base}/interview-post/${postedJobId}`;
+                      ? `${base}/posts/${postedJobId}/interview?stepId=${stepId}`
+                      : `${base}/posts/${postedJobId}/interview`;
                   })()}
                 </Typography>
                 <Tooltip title={copySuccess ? 'Copied!' : 'Copy'}>
@@ -5934,8 +5934,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                       const job = myJobs.find((j: any) => j._id === postedJobId);
                       const stepId = job?.post_Steps?.[0]?._id;
                       const url = stepId
-                        ? `${base}/interview-post/${postedJobId}?stepId=${stepId}`
-                        : `${base}/interview-post/${postedJobId}`;
+                        ? `${base}/posts/${postedJobId}/interview?stepId=${stepId}`
+                        : `${base}/posts/${postedJobId}/interview`;
                       navigator.clipboard.writeText(url);
                       setCopySuccess(true);
                       setTimeout(() => setCopySuccess(false), 1500);
@@ -6338,8 +6338,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                               : `https://app.talentai.bid`;
                             const stepId = selectedJobForDetails?.post_Steps?.[0]?._id;
                             return stepId
-                              ? `${base}/interview-post/${selectedJobForDetails._id}?stepId=${stepId}`
-                              : `${base}/interview-post/${selectedJobForDetails._id}`;
+                              ? `${base}/posts/${selectedJobForDetails._id}/interview?stepId=${stepId}`
+                              : `${base}/posts/${selectedJobForDetails._id}/interview`;
                           })()}
                         </Typography>
                         <Tooltip title="Copy URL" arrow>
@@ -6350,8 +6350,8 @@ ${generatedJob.skillAnalysis.requiredSkills.map(skill => `• ${skill.name} (Lev
                                 : `https://app.talentai.bid`;
                               const stepId = selectedJobForDetails?.post_Steps?.[0]?._id;
                               const url = stepId
-                                ? `${base}/interview-post/${selectedJobForDetails._id}?stepId=${stepId}`
-                                : `${base}/interview-post/${selectedJobForDetails._id}`;
+                                ? `${base}/posts/${selectedJobForDetails._id}/interview?stepId=${stepId}`
+                                : `${base}/posts/${selectedJobForDetails._id}/interview`;
                               navigator.clipboard.writeText(url);
                               // You could add a success notification here
                             }}
