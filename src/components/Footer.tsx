@@ -58,7 +58,7 @@ const Footer = ({ type }: { type: "company" | "jobseeker" }) => {
             src={type === "company" ? "/logo.svg" : "/logojobSeeker.svg"}
             alt="TalentAI Logo"
             sx={{ height: 32 }}
-            onClick={() => router.push(type === "company" ? '/' : '/jobseekerLanding')}
+            onClick={() => router.push(type === "company" ? '/' : '/home/candidate')}
           />
           <Typography variant="body2" sx={{ mt: 2, lineHeight: "160%" }}>
             {type === "company" ? (

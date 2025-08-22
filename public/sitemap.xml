@@ -10,7 +10,7 @@
 
   <!-- Job Seeker Landing Page -->
   <url>
-    <loc>https://app.talentai.bid/jobseekerLanding</loc>
+    <loc>https://app.talentai.bid/home/candidate</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

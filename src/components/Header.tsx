@@ -136,7 +136,7 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
             src={type === "company" ? "/logo.svg" : "/logojobSeeker.svg"}
             alt="TalentAI Logo"
             sx={{ height: 32, cursor: 'pointer' }}
-            onClick={() => router.push(type === "company" ? '/' : '/jobseekerLanding')}
+            onClick={() => router.push(type === "company" ? '/' : '/home/candidate')}
           />
           
           {!isMobile && (
@@ -177,7 +177,7 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
               padding: '4px 8px',
               borderRadius: '4px'
             }}
-            onClick={() => router.push(type === "company" ? '/jobseekerLanding' : '/')}
+            onClick={() => router.push(type === "company" ? '/home/candidate' : '/')}
           >
             {link}
           </Typography>
