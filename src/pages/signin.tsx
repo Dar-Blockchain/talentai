@@ -106,18 +106,18 @@ export default function SignIn() {
       });
 
       if (!response.ok) {
-        return redirect("/hackathon-registration");
+        return redirect("/hackathon/register");
       }
 
       const data = await response.json();
       if (Array.isArray(data) && data.length > 0) {
         return redirect(`/hackathon/projects/${data[0]._id}`);
       } else {
-        return redirect("/hackathon-registration");
+        return redirect("/hackathon/register");
       }
     } catch (error) {
       console.warn("Error in handleHackathonRedirect:", error);
-      return redirect("/hackathon-registration");
+      return redirect("/hackathon/register");
     }
   };
 

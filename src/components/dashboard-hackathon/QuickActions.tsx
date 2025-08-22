@@ -16,7 +16,7 @@ interface QuickActionsProps {
 const QuickActions: React.FC<QuickActionsProps> = ({ projectId, disableBusiness, disableTechnical, onEvaluateCode, disableEvaluateCode }) => {
   const router = useRouter();
   const goToInterview = (type: string) => {
-    let url = `/hackathon-interview?type=${type}`;
+    let url = `/hackathon/interview?type=${type}`;
     if (projectId) {
       url += `&projectId=${projectId}`;
     }

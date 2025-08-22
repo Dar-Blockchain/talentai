@@ -265,7 +265,7 @@ if (!mounted) return null;
           </Typography>
           <Button
             variant="contained"
-            onClick={() => router.push('/hackathon-registration')}
+            onClick={() => router.push('/hackathon/register')}
             sx={{ bgcolor: '#8310FF', '&:hover': { bgcolor: '#6b0cd6' } }}
           >
             Register Project
