@@ -30,7 +30,7 @@ const ProjectActivatePage = () => {
 
   useEffect(() => {
     if (isAuthenticated === false) {
-      const callbackUrl = `/projects/activate?token=${token}`;
+      const callbackUrl = `/hackathon/projects/members/confirm?token=${token}`;
       router.replace(`/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
       return;
     }
@@ -92,7 +92,7 @@ const ProjectActivatePage = () => {
 
   const handleLogout = () => {
     dispatch(logout());
-    const callbackUrl = `/projects/activate?token=${token}`;
+    const callbackUrl = `/hackathon/projects/members/confirm?token=${token}`;
     router.replace(`/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
     return;
   };

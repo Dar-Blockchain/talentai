@@ -16,7 +16,7 @@ interface CompanyOnlyProps {
 export default function CompanyOnly({ children }: CompanyOnlyProps) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { profile, loading: profileLoading } = useSelector(selectProfile);
+  const { user, profile , isLoading, isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [isChecking, setIsChecking] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
 
@@ -30,13 +30,13 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
     }
 
     // Fetch profile if not already loaded
-    if (!profile && !profileLoading) {
+    if (!profile && !isLoading) {
       dispatch(getMyProfile());
     }
-  }, [dispatch, profile, profileLoading, router]);
+  }, [dispatch, profile, isLoading, router]);
 
   useEffect(() => {
-    if (!profileLoading) {
+    if (!isLoading) {
       if (!profile) {
         // No profile found, but let's retry a few times before redirecting
         if (retryCount < 3) {
@@ -55,17 +55,17 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
       }
 
       // Check user role and redirect accordingly
-      if (profile.userId.role === 'Candidat' || profile.userId.role === 'Candidate') {
+      if (user?.role === 'Candidat' || user?.role === 'Candidate') {
         // Candidate user trying to access company page, redirect to candidate dashboard
         console.log("Candidate user detected, redirecting to candidate dashboard");
         router.push('/dashboard/candidate');
         return;
-      } else if (profile.userId.role === 'Admin') {
+      } else if (user?.role === 'Admin') {
         // Admin user trying to access company page, redirect to admin dashboard
         console.log("Admin user detected, redirecting to admin dashboard");
         router.push('/dashboard/admin');
         return;
-      } else if (profile.userId.role !== 'Company') {
+      } else if (user?.role !== 'Company') {
         // Unknown role, redirect to signin
         console.log("Unknown role, redirecting to signin");
         router.push('/signin');
@@ -76,10 +76,10 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
       console.log("User is company, allowing access");
       setIsChecking(false);
     }
-  }, [profile, profileLoading, router, retryCount, dispatch]);
+  }, [profile, isLoading, router, retryCount, dispatch]);
 
   // Show loading while checking permissions
-  if (profileLoading || isChecking) {
+  if (isLoading || isChecking) {
     return (
       <Box sx={{ 
         display: 'flex', 
@@ -98,7 +98,7 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
   }
 
   // Show error if user is not a company
-  if (!profileLoading && profile && profile.userId.role !== 'Company') {
+  if (!isLoading && user?.role !== 'Company') {
     return (
       <Box sx={{ 
         display: 'flex', 
