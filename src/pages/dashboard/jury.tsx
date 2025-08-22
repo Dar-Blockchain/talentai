@@ -22,20 +22,20 @@ import {
   selectTopTechnicalProjects,
   selectTopBusinessProjects,
   selectTopCodeValidationProjects,
-} from "../store/slices/projectSlice";
-import { RootState } from "../store/store";
-import { logout } from "../store/slices/authSlice";
+} from "@/store/slices/projectSlice";
+import { RootState } from "@/store/store";
+import { logout } from "@/store/slices/authSlice";
 import { useRouter } from "next/router";
 
-import TopTechnicalProjectsTable from "../components/dashboard-jury/TopTechnicalProjectsTable";
-import TopBusinessProjectsTable from "../components/dashboard-jury/TopBusinessProjectsTable";
-import TopCodeValidationProjectsTable from "../components/dashboard-jury/TopCodeValidationProjectsTable";
-import StatsCards from "../components/dashboard-jury/StatsCards";
-import ChartsSection from "../components/dashboard-jury/ChartsSection";
-import ProjectsTable from "../components/dashboard-jury/ProjectsTable";
-import DetailsModal from "../components/dashboard-jury/DetailsModal";
-import CodeValidationDetailsModal from "../components/dashboard-jury/CodeValidationDetailsModal";
-import TeamModal from "../components/dashboard-jury/TeamModal";
+import TopTechnicalProjectsTable from "@/components/dashboard-jury/TopTechnicalProjectsTable";
+import TopBusinessProjectsTable from "@/components/dashboard-jury/TopBusinessProjectsTable";
+import TopCodeValidationProjectsTable from "@/components/dashboard-jury/TopCodeValidationProjectsTable";
+import StatsCards from "@/components/dashboard-jury/StatsCards";
+import ChartsSection from "@/components/dashboard-jury/ChartsSection";
+import ProjectsTable from "@/components/dashboard-jury/ProjectsTable";
+import DetailsModal from "@/components/dashboard-jury/DetailsModal";
+import CodeValidationDetailsModal from "@/components/dashboard-jury/CodeValidationDetailsModal";
+import TeamModal from "@/components/dashboard-jury/TeamModal";
 
 const JuryDashboard = () => {
   const dispatch = useDispatch();

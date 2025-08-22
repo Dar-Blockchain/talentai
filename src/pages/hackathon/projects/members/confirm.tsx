@@ -30,7 +30,7 @@ const ProjectActivatePage = () => {
 
   useEffect(() => {
     if (isAuthenticated === false) {
-      const callbackUrl = `/projects/activate?token=${token}`;
+      const callbackUrl = `/hackathon/projects/members/confirm?token=${token}`;
       router.replace(`/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
       return;
     }
@@ -82,7 +82,7 @@ const ProjectActivatePage = () => {
         body: JSON.stringify({ projectId: data.projectId, token }),
       });
       if (!res.ok) throw new Error("Activation failed");
-      router.push("/dashboardCandidate");
+      router.push("/dashboard/candidate");
       setLoadingJoin(false)
     } catch (err) {
       setLoadingJoin(false)
@@ -92,7 +92,7 @@ const ProjectActivatePage = () => {
 
   const handleLogout = () => {
     dispatch(logout());
-    const callbackUrl = `/projects/activate?token=${token}`;
+    const callbackUrl = `/hackathon/projects/members/confirm?token=${token}`;
     router.replace(`/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
     return;
   };

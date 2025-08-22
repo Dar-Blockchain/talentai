@@ -490,7 +490,7 @@ function Preferences() {
       // Get returnUrl from query parameters
       const returnUrl = router.query.returnUrl as string;
       if (userType === 'company') {
-        router.push('/dashboardCompany');
+        router.push('/dashboard/company');
         return;
       }
 
@@ -587,9 +587,9 @@ function Preferences() {
 
             // If no returnUrl, redirect to appropriate dashboard
             if (data.type === 'Company') {
-              router.push('/dashboardCompany');
+              router.push('/dashboard/company');
             } else {
-              router.push('/dashboardCandidate');
+              router.push('/dashboard/candidate');
             }
           }
           // If profile is not complete, stay on preferences page

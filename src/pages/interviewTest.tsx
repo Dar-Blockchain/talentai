@@ -835,7 +835,7 @@ const Test = () => {
     if (hasStartedTest) {
       saveTestResults();
     }
-    router.push('/dashboardCandidate');
+    router.push('/dashboard/candidate');
   };
 
   // Function to save test results
@@ -895,7 +895,7 @@ const Test = () => {
         setShowSecurityModal(true);
         stopRecording();
         setTimeout(() => {
-          router.push('/dashboardCandidate');
+          router.push('/dashboard/candidate');
         }, 2000); // Give time for modal to show
       }
       return next;
@@ -1327,7 +1327,7 @@ const Test = () => {
             justifyContent: 'space-between'
           }}>
             <Button
-              onClick={() => router.push('/dashboardCandidate')}
+              onClick={() => router.push('/dashboard/candidate')}
               sx={{
                 color: '#000',
                 '&:hover': { color: '#000' }

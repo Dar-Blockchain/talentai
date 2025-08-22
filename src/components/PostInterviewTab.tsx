@@ -1259,13 +1259,13 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                           if (nextStep) {
                             // Navigate with step ID from steps - stepId is an object containing _id
                             const stepId = nextStep.stepId._id
-                            router.push(`/interview-post/${progress.idPost?._id}?stepId=${stepId}`);
+                            router.push(`/posts/${progress.idPost?._id}/interview?stepId=${stepId}`);
                           } else if (progress.currentStep) {
                             // Use current step ID
-                            router.push(`/interview-post/${progress.idPost?._id}?stepId=${progress.currentStep._id}`);
+                            router.push(`/posts/${progress.idPost?._id}/interview?stepId=${progress.currentStep._id}`);
                           } else {
                             // Fallback to just the post ID
-                            router.push(`/interview-post/${progress.idPost?._id}`);
+                            router.push(`/posts/${progress.idPost?._id}/interview`);
                           }
                         }}
                         sx={{

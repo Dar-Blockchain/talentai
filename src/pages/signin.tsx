@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -24,8 +24,8 @@ import {
   Google as GoogleIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
-import { registerUser, verifyOTP } from "../../store/slices/authSlice";
-import type { RootState, AppDispatch } from "../../store/store";
+import { registerUser, verifyOTP } from "@/store/slices/authSlice";
+import type { RootState, AppDispatch } from "@/store/store";
 import Cookies from "js-cookie";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import { getUserLocation } from "@/utils/api";
@@ -92,10 +92,10 @@ export default function SignIn() {
     try {
       console.log(userData);
       if (userData.role === "jury") {
-        return redirect("/dashboardJury");
+        return redirect("/dashboard/jury");
       }
       // if (userData.email === "hatemazaiez1@gmail.com") {
-      //   return redirect("/dashboardJury");
+      //   return redirect("/dashboard/jury");
       // }
       const token = localStorage.getItem("api_token");
       const baseUrl =
@@ -106,18 +106,18 @@ export default function SignIn() {
       });
 
       if (!response.ok) {
-        return redirect("/hackathon-registration");
+        return redirect("/hackathon/register");
       }
 
       const data = await response.json();
       if (Array.isArray(data) && data.length > 0) {
         return redirect(`/hackathon/projects/${data[0]._id}`);
       } else {
-        return redirect("/hackathon-registration");
+        return redirect("/hackathon/register");
       }
     } catch (error) {
       console.warn("Error in handleHackathonRedirect:", error);
-      return redirect("/hackathon-registration");
+      return redirect("/hackathon/register");
     }
   };
 
@@ -231,13 +231,13 @@ export default function SignIn() {
           } else {
             switch (safeUser?.role) {
               case "Admin":
-                router.push("/dashboardAdmin");
+                router.push("/dashboard/admin");
                 break;
               case "Candidat":
-                router.push("/dashboardCandidate");
+                router.push("/dashboard/candidate");
                 break;
               case "Company":
-                router.push("/dashboardCompany");
+                router.push("/dashboard/company");
                 break;
               default:
                 router.push("/preferences");
@@ -313,13 +313,13 @@ export default function SignIn() {
         // User has profile, redirect to appropriate dashboard
         switch (safeUser.role) {
           case "Admin":
-            router.push("/dashboardAdmin");
+            router.push("/dashboard/admin");
             break;
           case "Candidat":
-            router.push("/dashboardCandidate");
+            router.push("/dashboard/candidate");
             break;
           case "Company":
-            router.push("/dashboardCompany");
+            router.push("/dashboard/company");
             break;
           default:
             router.push("/preferences");

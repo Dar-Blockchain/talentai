@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '../store/store';
+import { AppDispatch, RootState } from '@/store/store';
 import {
     Box,
     Container,
@@ -75,16 +75,14 @@ import {
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 import { signOut } from 'next-auth/react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import WorldMap from '../components/WorldMap';
-import AdminOnly from '../components/AdminOnly';
-import { selectProfile, getMyProfile } from '../store/slices/profileSlice';
-import AdminWorldMap from '../components/dashboard-admin/AdminWorldMap';
-import AdminSkillsDistribution from '../components/dashboard-admin/AdminSkillsDistribution';
-import AdminGrowthAnalytics from '../components/dashboard-admin/AdminGrowthAnalytics';
-import AdminHeader from '../components/dashboard-admin/AdminHeader';
-import AdminStatsCards from '../components/dashboard-admin/AdminStatsCards';
-import AdminSkillsBarChart from '../components/dashboard-admin/AdminSkillsBarChart';
+import AdminOnly from '@/components/AdminOnly';
+import { selectProfile } from '@/store/slices/profileSlice';
+import AdminWorldMap from '@/components/dashboard-admin/AdminWorldMap';
+import AdminSkillsDistribution from '@/components/dashboard-admin/AdminSkillsDistribution';
+import AdminGrowthAnalytics from '@/components/dashboard-admin/AdminGrowthAnalytics';
+import AdminHeader from '@/components/dashboard-admin/AdminHeader';
+import AdminStatsCards from '@/components/dashboard-admin/AdminStatsCards';
+import AdminSkillsBarChart from '@/components/dashboard-admin/AdminSkillsBarChart';
 
 // Constants
 const GREEN_MAIN = '#8310FF';

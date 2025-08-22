@@ -94,7 +94,7 @@ module.exports.createProject = async (data, baseUrl, senderEmail) => {
     await project.save();
 
     for (const member of teamWithTokens) {
-      const link = `${baseUrl}/projects/activate?token=${member.activationToken}`;
+      const link = `${baseUrl}/hackathon/projects/members/confirm?token=${member.activationToken}`;
       await sendActivationEmail(member.email, link, project);
     }
 
@@ -172,7 +172,7 @@ module.exports.addMemberToTeam = async (projectId, member, baseUrl, senderEmail)
   await project.save();
 
   // Générer et envoyer le lien d'activation
-  const link = `${baseUrl}/projects/activate?token=${activationToken}`;
+  const link = `${baseUrl}/hackathon/projects/members/confirm?token=${activationToken}`;
   await sendActivationEmail(member.email, link,project );
 
   return {
@@ -210,7 +210,7 @@ module.exports.resendTeamInvitation = async (
     
 
     // Envoi du mail
-    const link = `${baseUrl}/projects/activate?token=${activationToken}`;
+    const link = `${baseUrl}/hackathon/projects/members/confirm?token=${activationToken}`;
     await sendActivationEmail(member.email, link, project);
     
 

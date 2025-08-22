@@ -14,6 +14,7 @@ import {
   Paper,
   styled,
   IconButton,
+  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -28,12 +29,17 @@ import Cookies from 'js-cookie';
 import { RootState } from '@/store/store';
 import { useSelector } from 'react-redux';
 import dynamic from 'next/dynamic';
+import AvatarCanvas from '@/components/AvatarCanvas';
 
 // Remove hardcoded questions
 const NEXTJS_QUESTIONS: string[] = [];
 
 // Add this after imports
 const GREEN_MAIN = '#8310FF';
+
+// --- ElevenLabs TTS Integration ---
+const ELEVENLABS_API_KEY = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || ''; // Fallback for demo
+const ELEVENLABS_VOICE_ID = process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || ''; // Rachel (most natural female voice)
 
 // --- Styled Components ---
 const StyledAppBar = styled(AppBar)(({ theme }) => ({
@@ -44,40 +50,64 @@ const StyledAppBar = styled(AppBar)(({ theme }) => ({
 
 const RecordingControls = styled(Box)(({ theme }) => ({
   position: 'absolute',
-  top: 16,
+  top: theme.spacing(2),
   left: '50%',
   transform: 'translateX(-50%)',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  gap: 2,
+  gap: theme.spacing(1),
   zIndex: 2,
-  background: 'rgba(0, 0, 0, 0.5)',
-  padding: theme.spacing(2),
-  borderRadius: '16px',
+  background: 'rgba(0, 0, 0, 0.6)',
+  padding: theme.spacing(1),
+  borderRadius: '12px',
   backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
-  minWidth: '280px', // Base width for mobile
-  maxWidth: '90%', // Limit width on mobile
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  minWidth: 'auto',
+  maxWidth: '70%',
+  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)',
   [theme.breakpoints.up('sm')]: {
-    minWidth: '300px',
-    maxWidth: '300px',
+    top: theme.spacing(2),
   },
 }));
 
 const RecordingButton = styled(Button)(({ theme }) => ({
-  width: '100%',
-  padding: theme.spacing(1.5),
-  fontSize: '1.1rem',
+  width: 'auto',
+  minWidth: '140px',
+  padding: theme.spacing(1),
+  fontSize: '0.95rem',
   fontWeight: 600,
-  borderRadius: '12px',
-  transition: 'all 0.3s ease',
-  '&:hover': {
-    transform: 'scale(1.02)',
-  },
+  borderRadius: '10px',
+  transition: 'all 0.2s ease',
 }));
 
-
+const TranscriptDisplay = styled(Typography)(({ theme }) => ({
+  color: '#fff',
+  textAlign: 'center',
+  maxWidth: '75%',
+  background: 'rgba(0, 0, 0, 0.6)',
+  padding: theme.spacing(1),
+  borderRadius: '10px',
+  backdropFilter: 'blur(8px)',
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  marginTop: theme.spacing(1),
+  maxHeight: '100px',
+  overflowY: 'auto',
+  fontSize: '0.85rem',
+  lineHeight: 1.4,
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+  '&::-webkit-scrollbar': {
+    width: '6px',
+  },
+  '&::-webkit-scrollbar-thumb': {
+    background: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: '4px',
+  },
+  '&::-webkit-scrollbar-track': {
+    background: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: '4px',
+  },
+}));
 
 const QuestionOverlay = styled(Box)(({ theme }) => ({
   position: 'absolute',
@@ -102,11 +132,13 @@ const NavigationBar = styled(Box)(({ theme }) => ({
   backdropFilter: 'blur(10px)',
   borderTop: '1px solid rgba(255, 255, 255, 0.1)',
   display: 'flex',
-  justifyContent: 'center', // Center the buttons on mobile
+  justifyContent: 'center',
   alignItems: 'center',
-  gap: theme.spacing(2), // Add gap between buttons
+  gap: theme.spacing(2),
+  marginBottom: theme.spacing(2), // Add margin to account for circular camera
   [theme.breakpoints.up('sm')]: {
     justifyContent: 'space-between',
+    marginBottom: 0,
   },
 }));
 
@@ -159,6 +191,64 @@ const FirstViolationModal = styled(Dialog)(({ theme }) => ({
     border: '1px solid rgba(255, 255, 255, 0.1)',
     maxWidth: '600px',
     margin: theme.spacing(2),
+  },
+}));
+
+// Add styled components for the new layout
+const CircularCamera = styled(Box)(({ theme }) => ({
+  position: 'fixed',
+  bottom: theme.spacing(3),
+  right: theme.spacing(3),
+  width: '10vw',
+  height: '10vw',
+  minWidth: '80px',
+  minHeight: '80px',
+  maxWidth: '150px',
+  maxHeight: '150px',
+  borderRadius: '50%',
+  overflow: 'hidden',
+  zIndex: 1000,
+  border: '3px solid #8310FF',
+  boxShadow: '0 8px 32px rgba(131, 16, 255, 0.3)',
+  backgroundColor: '#000',
+  '& video': {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    transform: 'scaleX(-1)',
+  },
+  [theme.breakpoints.down('sm')]: {
+    width: '15vw',
+    height: '15vw',
+    bottom: theme.spacing(2),
+    right: theme.spacing(2),
+  },
+}));
+
+// Controls overlay centered over the avatar area
+const AvatarCenterControls = styled(Box)(({ theme }) => ({
+  position: 'absolute',
+  top: theme.spacing(2),
+  left: '50%',
+  transform: 'translateX(-50%)',
+  zIndex: 3,
+  display: 'flex',
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: theme.spacing(1.5),
+}));
+
+const MainCanvas = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  width: '100%',
+  height: '70vh',
+  borderRadius: theme.spacing(3),
+  overflow: 'hidden',
+  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+  [theme.breakpoints.down('sm')]: {
+    height: '60vh',
+    borderRadius: theme.spacing(2),
   },
 }));
 
@@ -294,7 +384,8 @@ interface SpeechRecognitionError extends Event {
 interface Question {
   id: string;
   text: string;
-
+  skill: string;
+  level: string;
 }
 
 interface JobQuestionsResponse {
@@ -311,15 +402,16 @@ interface JobQuestionsResponse {
 const Test = () => {
   const theme = useTheme();
   const router = useRouter();
+  const { id, type, projectId } = router.query;
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const { id, stepId } = router.query;
+  const { data: session } = useSession();
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isGenerating, setIsGenerating] = useState(true);
   const [current, setCurrent] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(120);
+  const [timeLeft, setTimeLeft] = useState(240);
   const [testedSkills, setTestedSkills] = useState<any[]>([]);
   const currentIndexRef = useRef(0);
   const [hasStartedTest, setHasStartedTest] = useState(false);
@@ -348,79 +440,42 @@ const Test = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
+    // Interval used to finalize each chunk
+  const chunkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // MediaRecorder references
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
+  // Prevent double stopRecording
+  const stoppedRef = useRef(false);
+
   // Transcription states
   const [isTranscribing, setIsTranscribing] = useState(false);
+
+  // Question selection logic
+  const [invalidType, setInvalidType] = useState(false);
+  const [fetchError, setFetchError] = useState('');
+  const [showLoaderModal, setShowLoaderModal] = useState(false);
+
+  // Add new state for TTS
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  
+  // Add new state for greeting control
+  const [shouldPlayGreeting, setShouldPlayGreeting] = useState(false);
+  
+  // Add new state for avatar question speaking
+  const [shouldSpeakQuestion, setShouldSpeakQuestion] = useState(false);
+
+  // Add new state for warning modal
+  const [showFullscreenWarning, setShowFullscreenWarning] = useState(false);
+
   useEffect(() => {
-    if (!isAuthenticated && id) {
-      const target = `/interview-post/${id}${stepId ? `?stepId=${stepId}` : ''}`;
-      router.push(`/signin?returnUrl=${encodeURIComponent(target)}`);
+    if(!isAuthenticated && id){
+      router.push(`/signin?returnUrl=${encodeURIComponent(`/testjob/${id}`)}`)
     }
-  }, [isAuthenticated, id, stepId]);
-
-  // Fetch questions when profile is complete
-  useEffect(() => {
-    if (isProfileComplete && stepId) {
-      const fetchQuestions = async () => {
-        try {
-          setIsGenerating(true);
-          const token = Cookies.get('api_token');
-          if (!token) {
-            console.log('No token found, redirecting to signin');
-            const target = `/interview-post/${id}${stepId ? `?stepId=${stepId}` : ''}`;
-            router.push(`/signin?returnUrl=${encodeURIComponent(target)}`);
-            return;
-          }
-
-          // Use the new recruitment step API endpoint
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}recruitementStep/generate-questions/${stepId}`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to fetch questions');
-          }
-
-          const data: JobQuestionsResponse = await response.json();
-          setTestedSkills(data.testedSkills || []);
-
-          const formattedQuestions: Question[] = data.questions.map((question, index) => {
-            // Handle case where requiredSkills might not be available
-            const skillIndex = data.requiredSkills ? index % data.requiredSkills.length : 0;
-            const skill = data.requiredSkills?.[skillIndex] || { name: 'General', level: 'Intermediate' };
-
-            return {
-              id: `q_${index + 1}`,
-              text: question,
-            };
-          });
-
-          setQuestions(formattedQuestions);
-          setTranscriptions(
-            formattedQuestions.reduce((acc: any, _: any, index: number) => ({
-              ...acc,
-              [index]: ''
-            }), {})
-          );
-        } catch (error) {
-          console.error('Error fetching questions:', error);
-          router.push('/');
-        } finally {
-          setIsGenerating(false);
-        }
-      };
-
-      fetchQuestions();
-    }
-  }, [isProfileComplete, stepId]);
-
-
+  }, [isAuthenticated, id])
 
   // Timer only runs when test has started
   useEffect(() => {
@@ -431,11 +486,19 @@ const Test = () => {
           if (prev <= 1) {
             if (current < questions.length - 1) {
               setCurrent(c => c + 1);
-              return 120; // Reset timer to 120 seconds (2 minutes)
+              // If next is last question, set to 300, else 240
+              if (current + 1 === questions.length - 1) {
+                return 300;
+              } else {
+                return 240;
+              }
             } else {
               stopRecording();
               saveTestResults();
-              router.push(`/report-interview?postId=${id}${stepId ? `&stepId=${stepId}` : ''}`);
+              router.push({
+                pathname: '/hackathon/report',
+                query: { type, projectId }
+              });
             }
           }
           return prev - 1;
@@ -448,9 +511,13 @@ const Test = () => {
   // Reset timer when question changes
   useEffect(() => {
     currentIndexRef.current = current;
-    setTimeLeft(120); // Reset to 120 seconds (2 minutes)
+    if (current === questions.length - 1) {
+      setTimeLeft(300); // Last question: 5 minutes
+    } else {
+      setTimeLeft(240); // Others: 4 minutes
+    }
     setCurrentTranscript(''); // Clear current transcript
-  }, [current]);
+  }, [current, questions.length]);
 
   // Initialize camera
   useEffect(() => {
@@ -651,31 +718,77 @@ const Test = () => {
     }
   };
 
+  // Enter fullscreen
+  const enterFullscreen = () => {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if ((elem as any).webkitRequestFullscreen) {
+      (elem as any).webkitRequestFullscreen();
+    } else if ((elem as any).msRequestFullscreen) {
+      (elem as any).msRequestFullscreen();
+    }
+  };
+
+  // Exit fullscreen
+  const exitFullscreen = () => {
+    // Only exit if in fullscreen and document is active
+    const isFullscreen = !!(
+      document.fullscreenElement ||
+      (document as any).webkitFullscreenElement ||
+      (document as any).mozFullScreenElement ||
+      (document as any).msFullscreenElement
+    );
+    // @ts-ignore: document.hasFocus exists in browsers
+    const isActive = typeof document.hasFocus === 'function' ? document.hasFocus() : true;
+    if (!isFullscreen || !isActive) return;
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if ((document as any).webkitExitFullscreen) {
+      (document as any).webkitExitFullscreen();
+    } else if ((document as any).msExitFullscreen) {
+      (document as any).msExitFullscreen();
+    }
+  };
+
   // Update stopRecording function
   const stopRecording = () => {
+    if (stoppedRef.current) return;
+    stoppedRef.current = true;
+    exitFullscreen();
     // Close WebSocket connection
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
+    try {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+    } catch (e) { /* ignore */ }
 
     // Stop audio context
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
+    try {
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+    } catch (e) { /* ignore */ }
 
     // Disconnect processor
-    if (processorRef.current) {
-      processorRef.current.disconnect();
-      processorRef.current = null;
-    }
+    try {
+      if (processorRef.current) {
+        processorRef.current.disconnect();
+        processorRef.current = null;
+      }
+    } catch (e) { /* ignore */ }
 
     // Stop audio tracks
-    if (audioStreamRef.current) {
-      audioStreamRef.current.getTracks().forEach(track => track.stop());
-      audioStreamRef.current = null;
-    }
+    try {
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach(track => {
+          try { track.stop(); } catch (e) { /* ignore */ }
+        });
+        audioStreamRef.current = null;
+      }
+    } catch (e) { /* ignore */ }
 
     setIsRecording(false);
     setHasStartedTest(false);
@@ -684,49 +797,38 @@ const Test = () => {
 
   const handleGuidelinesAccept = async () => {
     try {
+      setShowLoaderModal(true);
       setIsGenerating(true);
       const token = Cookies.get('api_token');
       if (!token) {
         console.log('No token found, redirecting to signin');
-        const target = `/interview-post/${id}${stepId ? `?stepId=${stepId}` : ''}`;
-        router.push(`/signin?returnUrl=${encodeURIComponent(target)}`);
+        router.push(`/signin?returnUrl=${encodeURIComponent(router.asPath)}`);
         return;
       }
-
-      // Use the new recruitment step API endpoint
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}recruitementStep/generate-questions/${stepId}`, {
+      if (!projectId || !type) {
+        throw new Error('Missing project or type');
+      }
+      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}project/generateQuestions/${projectId}/${type}`;
+      const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-
       if (!response.ok) {
         throw new Error('Failed to fetch questions');
       }
-
-      const data: JobQuestionsResponse = await response.json();
-      setTestedSkills(data.testedSkills || []);
-      const formattedQuestions: Question[] = data.questions.map((question, index) => {
-        // Handle case where requiredSkills might not be available
-        const skillIndex = data.requiredSkills ? index % data.requiredSkills.length : 0;
-        const skill = data.requiredSkills?.[skillIndex] || { name: 'General', level: 'Intermediate' };
-
-        return {
-          id: `q_${index + 1}`,
+      const data = await response.json();
+      if (Array.isArray(data.questions) && data.questions.length > 0) {
+        setQuestions(data.questions.map((question: string) => ({
+          id: uuidv4(),
           text: question,
-          skill: skill.name,
-          level: skill.level
-        };
-      });
-
-      setQuestions(formattedQuestions);
-      setTranscriptions(
-        formattedQuestions.reduce((acc: any, _: any, index: number) => ({
-          ...acc,
-          [index]: ''
-        }), {})
-      );
+          skill: '',
+          level: ''
+        })));
+        setInvalidType(false);
+      } else {
+        setQuestions([]);
+        setInvalidType(true);
+      }
       setGuidelinesAccepted(true);
       setShowGuidelines(false);
     } catch (error) {
@@ -734,17 +836,25 @@ const Test = () => {
       router.push('/');
     } finally {
       setIsGenerating(false);
+      setShowLoaderModal(false);
+      // Trigger greeting AFTER the loader modal closes with a small delay
+      setTimeout(() => {
+        console.log('Guidelines accepted and loader finished - triggering avatar greeting');
+        setShouldPlayGreeting(true);
+      }, 500); // Small delay to ensure UI has updated
     }
   };
 
   // Modify startTest function
   const startTest = async () => {
+    stoppedRef.current = false;
     if (!guidelinesAccepted) {
       setShowGuidelines(true);
       return;
     }
 
     try {
+      enterFullscreen();
       // Initialize transcriptions for all questions
       setTranscriptions(
         questions.reduce((acc: any, _: any, index: number) => ({
@@ -770,7 +880,12 @@ const Test = () => {
 
       setIsRecording(true);
       setHasStartedTest(true);
-      setTimeLeft(120); // Start with 120 seconds (2 minutes)
+      setTimeLeft(240); // Start with 240 seconds (4 minutes)
+      
+      // Trigger avatar to speak the first question
+      setTimeout(() => {
+        setShouldSpeakQuestion(true);
+      }, 1000); // Give time for test to start properly
     } catch (error) {
       console.error('Recording setup error:', error);
       setIsRecording(false);
@@ -785,16 +900,20 @@ const Test = () => {
       setCurrent(c => c + 1);
     } else {
       saveTestResults();
-      router.push(`/report-interview?postId=${id}${stepId ? `&stepId=${stepId}` : ''}`);
+      router.push({
+        pathname: '/hackathon/report',
+        query: { type, projectId }
+      });
     }
   };
 
   const goHome = () => {
+    exitFullscreen();
     streamRef.current?.getTracks().forEach(t => t.stop());
     if (hasStartedTest) {
       saveTestResults();
     }
-    router.push('/dashboardCandidate');
+    router.push(`/hackathon/projects/${projectId}`);
   };
 
   // Function to save test results
@@ -803,13 +922,15 @@ const Test = () => {
       const results = questions.map((q, index) => ({
         question: q.text,
         answer: transcriptions[index] || '',
+        skill: q.skill,
+        level: q.level
       }));
 
       const testData = {
         results,
         testedSkills,
         metadata: {
-          type: 'interview',
+          type: 'job',
           jobId: id,
           timestamp: new Date().toISOString()
         }
@@ -819,17 +940,17 @@ const Test = () => {
       localStorage.setItem('test_results', JSON.stringify(testData));
       Cookies.set('test_results', JSON.stringify(testData), { expires: 7 });
 
-      // Navigate to interview report page with post and step IDs
+      // Navigate to report page with job ID
       router.push({
-        pathname: '/report-interview',
-        query: stepId ? { postId: id as string, stepId: stepId as string } : { postId: id as string }
+        pathname: '/hackathon/report',
+        query: { type, projectId }
       });
     } catch (error) {
       console.error('Error saving test results:', error);
-      // Still redirect to interview report page even if saving fails
+      // Still redirect to report page even if saving fails
       router.push({
-        pathname: '/report-interview',
-        query: stepId ? { postId: id as string, stepId: stepId as string } : { postId: id as string }
+        pathname: '/hackathon/report',
+        query: { type, projectId }
       });
     }
   };
@@ -846,7 +967,7 @@ const Test = () => {
         setShowSecurityModal(true);
         stopRecording();
         setTimeout(() => {
-          router.push('/dashboardCandidate');
+          router.push(`/hackathon/projects/${projectId}`);
         }, 2000); // Give time for modal to show
       }
       return next;
@@ -929,22 +1050,224 @@ const Test = () => {
     }
   }, [current]);
 
+  // Fetch TTS audio from ElevenLabs when question changes
+  useEffect(() => {
+    const fetchTTS = async () => {
+      if (!questions[current]?.text) return;
+      setIsSpeaking(false);
+      setAudioUrl(null);
+      
+      // Remove delay for first question since avatar will handle it
+      if (current === 0 && shouldSpeakQuestion) {
+        return; // Let avatar handle first question TTS
+      }
+      
+      try {
+        if(hasStartedTest){
+        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`, {
+          method: 'POST',
+          headers: {
+            'xi-api-key': ELEVENLABS_API_KEY,
+            'Content-Type': 'application/json',
+            'Accept': 'audio/mpeg',
+          },
+          body: JSON.stringify({
+            text: questions[current].text,
+            voice_settings: {
+              stability: 0.3, // more expressive
+              similarity_boost: 0.85, // closer to real
+              style: 1.0, // more natural prosody (if supported)
+              use_speaker_boost: true
+            },
+          }),
+        });
+        if (!response.ok) {
+          console.warn('TTS fetch failed:', response.status, response.statusText);
+          return; // Fail silently instead of throwing
+        }
+        const audioBlob = await response.blob();
+        const url = URL.createObjectURL(audioBlob);
+        setAudioUrl(url);
+      }
+      } catch (e) {
+        console.error('TTS error', e);
+        // Fail silently to not interrupt the interview flow
+      }
+      
+    };
+    if (hasStartedTest && questions.length > 0 && !isGenerating) {
+      fetchTTS();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, questions, isGenerating, shouldSpeakQuestion,hasStartedTest]);
+
+  // Play audio when audioUrl changes
+  useEffect(() => {
+    if (audioUrl && audioRef.current && hasStartedTest) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play();
+      setIsSpeaking(true);
+      audioRef.current.onended = () => setIsSpeaking(false);
+    }
+  }, [audioUrl,hasStartedTest]);
+
+  // Listen for fullscreenchange: if test is running and fullscreen is exited, show warning and allow re-entering fullscreen
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isFullscreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
+      if (hasStartedTest && !isFullscreen) {
+        setShowFullscreenWarning(true);
+      }
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, [hasStartedTest]);
+
+  // Pause timer when fullscreen is exited
+  const [isPaused, setIsPaused] = useState(false);
+  useEffect(() => {
+    if (showFullscreenWarning) {
+      setIsPaused(true);
+    } else {
+      setIsPaused(false);
+    }
+  }, [showFullscreenWarning]);
+  useEffect(() => {
+  const handleCopy = (e: ClipboardEvent) => e.preventDefault();
+  const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+
+  document.addEventListener('copy', handleCopy);
+  document.addEventListener('contextmenu', handleContextMenu);
+
+  return () => {
+    document.removeEventListener('copy', handleCopy);
+    document.removeEventListener('contextmenu', handleContextMenu);
+  };
+}, []);
+
+  // Modify timer effect to pause when isPaused is true
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (hasStartedTest && timeLeft > 0 && !isPaused) {
+      timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            if (current < questions.length - 1) {
+              setCurrent(c => c + 1);
+              // If next is last question, set to 300, else 240
+              if (current + 1 === questions.length - 1) {
+                return 300;
+              } else {
+                return 240;
+              }
+            } else {
+              stopRecording();
+              saveTestResults();
+              router.push({
+                pathname: '/hackathon/report',
+                query: { type, projectId }
+              });
+            }
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [current, timeLeft, questions.length, hasStartedTest, router, isPaused]);
+
+  if (fetchError) {
+    return <div style={{ padding: 40, textAlign: 'center', color: 'red' }}>{fetchError}</div>;
+  }
+  if (!type || !projectId) {
+    return <div style={{ padding: 40, textAlign: 'center', color: 'red' }}>Missing project or type.</div>;
+  }
+  
+
   if(!isAuthenticated){
     return null
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: { xs: 1, sm: 4 }, // Responsive padding
-        px: { xs: 0, sm: 2 }, // Add horizontal padding on larger screens
-      }}
-    >
+    <>
+      <style jsx global>{`
+        @keyframes dots {
+          0%, 20% { content: '.'; }
+          40% { content: '..'; }
+          60%, 100% { content: '...'; }
+        }
+      `}</style>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          py: { xs: 1, sm: 4 }, // Responsive padding
+          px: { xs: 0, sm: 2 }, // Add horizontal padding on larger screens
+        }}
+      >
+      {/* No avatar, only audio will play */}
+      {audioUrl && (
+        <audio ref={audioRef} src={audioUrl} />
+      )}
+      {/* Fullscreen warning modal */}
+      <Dialog open={showFullscreenWarning} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 2 } }}>
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 700, color: '#7C4DFF', fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', pb: 0 }}>
+          Fullscreen Required
+        </DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 3 }}>
+          <Typography variant="body1" sx={{ color: '#333', fontWeight: 500, textAlign: 'center' }}>
+            You exited fullscreen mode (e.g., by pressing Escape).<br />
+            Please re-enter fullscreen to continue your test.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setShowFullscreenWarning(false);
+              // Try to re-enter fullscreen
+              const elem = document.documentElement;
+              if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+              } else if ((elem as any).webkitRequestFullscreen) {
+                (elem as any).webkitRequestFullscreen();
+              } else if ((elem as any).msRequestFullscreen) {
+                (elem as any).msRequestFullscreen();
+              }
+            }}
+            sx={{ background: '#8310FF', color: '#fff', borderRadius: 2, px: 4, textTransform: 'none', fontWeight: 600 }}
+          >
+            Re-enter Fullscreen and Continue Test
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setShowFullscreenWarning(false);
+              stopRecording();
+              router.push(`/hackathon/projects/${projectId}`);
+            }}
+            sx={{ borderColor: '#8310FF', color: '#8310FF', borderRadius: 2, px: 4, textTransform: 'none', fontWeight: 600, ml: 2 }}
+          >
+            End Test
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Box
         sx={{
           width: '100%',
@@ -1027,12 +1350,12 @@ const Test = () => {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}>
-              Important Interview Guidelines
+              Important Test Guidelines
             </Typography>
           </DialogTitle>
           <DialogContent sx={{ padding: theme.spacing(4) }}>
             <Typography variant="body1" sx={{ color: '#000', mb: 3, opacity: 0.9 }}>
-              Please ensure you meet the following requirements before starting the interview:
+              Please ensure you meet the following requirements before starting the test:
             </Typography>
 
             <GuidelineItem>
@@ -1042,7 +1365,7 @@ const Test = () => {
                   Time Commitment
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#000' }}>
-                  Set aside 30 minutes of uninterrupted time. The interview cannot be paused once started.
+                  Set aside 30 minutes of uninterrupted time. The test cannot be paused once started.
                 </Typography>
               </Box>
             </GuidelineItem>
@@ -1054,7 +1377,7 @@ const Test = () => {
                   Quiet Environment
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#000' }}>
-                  Find a quiet room with no background noise. Background sounds can affect your interview results.
+                  Find a quiet room with no background noise. Background sounds can affect your test results.
                 </Typography>
               </Box>
             </GuidelineItem>
@@ -1066,7 +1389,7 @@ const Test = () => {
                   Camera and Microphone
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#000' }}>
-                  Ensure your camera and microphone are working properly. Interview will use both for recording.
+                  Ensure your camera and microphone are working properly. Test will use both for recording.
                 </Typography>
               </Box>
             </GuidelineItem>
@@ -1078,7 +1401,7 @@ const Test = () => {
                   Individual Assessment
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#000' }}>
-                  Complete the interview alone. No other people should be present or helping during the assessment.
+                  Complete the test alone. No other people should be present or helping during the assessment.
                 </Typography>
               </Box>
             </GuidelineItem>
@@ -1101,7 +1424,7 @@ const Test = () => {
             justifyContent: 'space-between'
           }}>
             <Button
-              onClick={() => router.push('/dashboardCandidate')}
+              onClick={() => router.push(`/hackathon/projects/${projectId}`)}
               sx={{
                 color: '#000',
                 '&:hover': { color: '#000' }
@@ -1130,6 +1453,19 @@ const Test = () => {
           </DialogActions>
         </GuidelinesModal>
 
+        {/* Loader Modal for Test Preparation */}
+        <Dialog open={showLoaderModal} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 2 } }}>
+          <DialogTitle sx={{ textAlign: 'center', fontWeight: 700, color: '#7C4DFF', fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif', pb: 0 }}>
+            Preparing Your Test
+          </DialogTitle>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 3 }}>
+            <CircularProgress sx={{ color: '#7C4DFF', mb: 2 }} />
+            <Typography variant="body1" sx={{ color: '#333', fontWeight: 500, textAlign: 'center' }}>
+              Please wait while we prepare your questions and environment...
+            </Typography>
+          </DialogContent>
+        </Dialog>
+
         <StyledAppBar position="static" elevation={0}>
           <Toolbar sx={{ 
             flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
@@ -1149,7 +1485,7 @@ const Test = () => {
                 textAlign: { xs: 'center', sm: 'left' }, // Center on mobile
               }}
             >
-              Interview ({current + 1}/{questions.length || '-'})
+              Skill Test ({current + 1}/{questions.length || '-'})
             </Typography>
             {hasStartedTest && (
               <Typography 
@@ -1183,7 +1519,7 @@ const Test = () => {
                 '&:hover': { backgroundColor: 'rgba(244,67,54,0.1)' },
               }}
             >
-              End Interview
+              End Test
             </Button>
           </Toolbar>
           <LinearProgress
@@ -1200,93 +1536,102 @@ const Test = () => {
         </StyledAppBar>
 
         <Container
-          maxWidth="md"
+          maxWidth="lg"
           sx={{
             flexGrow: 1,
-            py: { xs: 2, sm: 4 }, // Responsive padding
-            px: { xs: 1, sm: 2 }, // Add horizontal padding for mobile
+            py: { xs: 2, sm: 4 },
+            px: { xs: 1, sm: 2 },
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'transparent',
-            boxShadow: 'none',
-            minHeight: { xs: '60vh', sm: 'auto' }, // Ensure minimum height on mobile
+            minHeight: { xs: '60vh', sm: 'auto' },
           }}
         >
-          <Paper
-            elevation={12}
-            sx={{
-              position: 'relative',
-              width: '100%',
-              pt: { xs: '75%', sm: '56.25%' }, // Responsive aspect ratio (4:3 on mobile, 16:9 on desktop)
-              borderRadius: { xs: 2, sm: 4 }, // Responsive border radius
-              overflow: 'hidden',
-              background: 'rgba(255,255,255,0.98)',
-              boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
-              maxHeight: { xs: '70vh', sm: 'none' }, // Limit height on mobile
-            }}
-          >
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                transform: 'scaleX(-1)',
-                borderRadius: '24px',
-                boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
-                border: '2px solid #e0f7fa',
-              }}
+          {/* Main Three.js Canvas Area */}
+          <MainCanvas>
+            <AvatarCanvas 
+              isSpeaking={isSpeaking} 
+              shouldPlayGreeting={shouldPlayGreeting}
+              shouldSpeakQuestion={shouldSpeakQuestion}
+              firstQuestionText={questions[0]?.text || ""}
+              hasStartedTest={hasStartedTest}
             />
 
-            <RecordingControls>
-              <RecordingButton
-                variant="contained"
-                onClick={hasStartedTest ? undefined : startTest}
-                disabled={isGenerating || hasStartedTest || isConnecting}
-                sx={{
-                  backgroundColor: GREEN_MAIN,
-                  '&:hover': {
-                    backgroundColor: GREEN_MAIN,
-                  },
-                  '&.Mui-disabled': {
-                    backgroundColor: hasStartedTest ? '#ff4444' : 'rgba(255, 255, 255, 0.12)',
-                    color: hasStartedTest ? '#fff' : 'rgba(255, 255, 255, 0.3)',
-                  }
-                }}
-              >
-                {isConnecting
-                  ? 'Connecting...'
-                  : hasStartedTest
-                    ? `Recording (${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')} min)`
-                    : 'Start Interview'
-                }
-              </RecordingButton>
-              {hasStartedTest && (
-                <VoiceActivityIndicator isActive={currentTranscript.length > 0}>
-                  <VoiceWaves />
-                  <VoiceIcon />
-                </VoiceActivityIndicator>
-              )}
-            </RecordingControls>
+            {/* Start Test button centered over the avatar area (before start) */}
+            {!hasStartedTest && (
+              <AvatarCenterControls>
+                <RecordingButton
+                  variant="contained"
+                  onClick={startTest}
+                  disabled={isGenerating || isConnecting}
+                  sx={{
+                    backgroundColor: isConnecting ? '#FFC107' : GREEN_MAIN,
+                    color: '#000',
+                    '&:hover': { backgroundColor: isConnecting ? '#FFB300' : GREEN_MAIN },
+                    '&.Mui-disabled': {
+                      backgroundColor: isConnecting ? '#FFC107' : GREEN_MAIN,
+                      color: '#000',
+                      opacity: 1,
+                    },
+                    px: { xs: 2, sm: 3 },
+                    py: { xs: 1, sm: 1.25 },
+                  }}
+                >
+                  {isConnecting ? 'Connecting...' : 'Start Test'}
+                </RecordingButton>
+              </AvatarCenterControls>
+            )}
+            
+            {/* Recording Controls Overlay (visible only after start) */}
+            {hasStartedTest && (
+              <RecordingControls>
+                <RecordingButton
+                  variant="contained"
+                  disabled
+                  sx={{
+                    backgroundColor: '#E53935',
+                    color: '#fff',
+                    minWidth: '160px',
+                    '&.Mui-disabled': {
+                      backgroundColor: '#E53935',
+                      color: '#fff',
+                      opacity: 1,
+                    },
+                  }}
+                >
+                  {isConnecting
+                    ? 'Connecting...'
+                    : `Recording (${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')} min)`}
+                </RecordingButton>
+                <>
+                  <VoiceActivityIndicator isActive={currentTranscript.length > 0}>
+                    <VoiceWaves />
+                    <VoiceIcon />
+                  </VoiceActivityIndicator>
+                  {currentTranscript && (
+                    <TranscriptDisplay variant="body2">
+                      {currentTranscript}
+                    </TranscriptDisplay>
+                  )}
+                </>
+              </RecordingControls>
+            )}
 
+            {/* Question Overlay */}
             <QuestionOverlay>
               <Typography 
                 variant="h6" 
                 sx={{ 
                   color: '#fff',
-                  fontSize: { xs: '1rem', sm: '1.25rem' }, // Responsive font size
-                  lineHeight: { xs: 1.3, sm: 1.4 }, // Responsive line height
+                  fontSize: { xs: '1rem', sm: '1.25rem' },
+                  lineHeight: { xs: 1.3, sm: 1.4 },
                   textAlign: 'center',
-                  px: { xs: 1, sm: 0 }, // Add horizontal padding on mobile
-                  wordBreak: 'break-word', // Prevent text overflow
+                  px: { xs: 1, sm: 0 },
+                  wordBreak: 'break-word',
                   maxWidth: '100%',
+                  userSelect: 'none',
+                  pointerEvents: 'none',
                 }}
               >
                 {isGenerating ? (
@@ -1298,17 +1643,35 @@ const Test = () => {
                     background: GREEN_MAIN,
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
+                    flexDirection: { xs: 'column', sm: 'row' },
                   }}>
                     <span>Generating your interview questions</span>
-                    <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
+                    <Box
+                      component="span"
+                      sx={{
+                        display: 'inline-block',
+                        animation: 'dots 1.4s infinite',
+                        userSelect: 'none',
+                      }}
+                    >
                       ...
                     </Box>
                   </Box>
                 ) : questions[current]?.text}
               </Typography>
             </QuestionOverlay>
-          </Paper>
+          </MainCanvas>
+
+          {/* Circular Camera in Bottom Right */}
+          <CircularCamera>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+            />
+          </CircularCamera>
+
         </Container>
 
         <NavigationBar>
@@ -1326,7 +1689,7 @@ const Test = () => {
             variant="contained"
             endIcon={<ArrowForwardIcon />}
             onClick={handleNext}
-            disabled={isGenerating || (current > 0 && nextButtonDisabled)}
+            disabled={!hasStartedTest || isGenerating || (current > 0 && nextButtonDisabled)}
             sx={{
               textTransform: 'none',
               background: nextButtonDisabled ? 'rgba(255, 255, 255, 0.12)' : GREEN_MAIN,
@@ -1348,18 +1711,19 @@ const Test = () => {
           >
             {current < questions.length - 1
               ? `Next Question${nextButtonDisabled ? ` (${buttonTimer}s)` : ''}`
-              : 'Finish Interview'}
+              : 'Finish Test'}
           </Button>
         </NavigationBar>
+        </Box>
       </Box>
-    </Box>
+    </>
   );
 }
 
 const DynamicContent = dynamic(() => Promise.resolve(Test), { ssr: false })
 
-const InterviewPost: React.FC = () => {
+const HackathonInterview: React.FC = () => {
   return <DynamicContent />
 }
 
-export default InterviewPost
+export default HackathonInterview

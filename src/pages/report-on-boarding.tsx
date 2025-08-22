@@ -186,7 +186,7 @@ export default function ReportOnBoarding() {
     }
   }, [router.isReady]);
 
-  const goHome = () => router.push('/dashboardCandidate');
+  const goHome = () => router.push('/dashboard/candidate');
 
   if (loading || analyzing) {
     return (
@@ -440,7 +440,7 @@ export default function ReportOnBoarding() {
             <Button
               variant="contained"
               size="large"
-              onClick={() => router.push('/dashboardCandidate')}
+              onClick={() => router.push('/dashboard/candidate')}
               startIcon={<PersonIcon />}
               sx={{
                 background: '#8310FF',

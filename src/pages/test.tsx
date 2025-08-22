@@ -834,7 +834,7 @@ export default function Test() {
       // Store current URL in localStorage before navigation
       localStorage.setItem('previousUrl', window.location.href);
     }
-    router.push('/dashboardCandidate');
+    router.push('/dashboard/candidate');
   };
 
   // Function to save test results
@@ -900,7 +900,7 @@ export default function Test() {
           });
         }
         setTimeout(() => {
-          router.push('/dashboardCandidate');
+          router.push('/dashboard/candidate');
         }, 2000); // Give time for modal to show
       }
       return next;
@@ -980,7 +980,7 @@ export default function Test() {
       {/* Add Test Limit Error Modal */}
       <TestLimitModal
         open={showTestLimitError}
-        onClose={() => router.push('/dashboardCandidate')}
+        onClose={() => router.push('/dashboard/candidate')}
       >
         <DialogTitle sx={{
           fontWeight: 700,
@@ -998,7 +998,7 @@ export default function Test() {
         <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
           <Button
             variant="contained"
-            onClick={() => router.push('/dashboardCandidate')}
+            onClick={() => router.push('/dashboard/candidate')}
             sx={{
               background: GREEN_MAIN,
               color: '#000000',
@@ -1154,7 +1154,7 @@ export default function Test() {
           justifyContent: 'space-between'
         }}>
           <Button
-            onClick={() => router.push('/dashboardCandidate')}
+            onClick={() => router.push('/dashboard/candidate')}
             sx={{
               color: 'black ',
               '&:hover': { color: 'black' }

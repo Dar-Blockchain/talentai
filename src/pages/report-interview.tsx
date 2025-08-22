@@ -246,7 +246,7 @@ export default function ReportInterview() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const hasRun = useRef(false);
 
-  const goHome = () => router.push('/dashboardCandidate');
+  const goHome = () => router.push('/dashboard/candidate');
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -308,11 +308,11 @@ export default function ReportInterview() {
   const handleFeedbackClose = () => setFeedbackOpen(false);
   const handleFeedbackSubmit = () => {
     handleFeedbackClose();
-    router.push('/dashboardCandidate');
+    router.push('/dashboard/candidate');
   };
   const handleSkipFeedback = () => {
     handleFeedbackClose();
-    router.push('/dashboardCandidate');
+    router.push('/dashboard/candidate');
   };
 
   if (loading || analyzing) {

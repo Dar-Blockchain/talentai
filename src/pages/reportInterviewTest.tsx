@@ -595,7 +595,7 @@ export default function Report() {
       analyzeResults();
     }
   }, [router.isReady, router.query.from, router.query.type, router.query.skill, router.query.subcategory, router.query.proficiency]);
-  const goHome = () => router.push('/dashboardCandidate');
+  const goHome = () => router.push('/dashboard/candidate');
 
   const handleFeedbackOpen = () => {
     setFeedbackOpen(true);
@@ -609,7 +609,7 @@ export default function Report() {
     try {
       console.log('Feedback submitted:', feedbackData);
       handleFeedbackClose();
-      router.push('/dashboardCandidate');
+      router.push('/dashboard/candidate');
     } catch (error) {
       console.error('Error submitting feedback:', error);
     }
@@ -617,7 +617,7 @@ export default function Report() {
 
   const handleSkipFeedback = () => {
     handleFeedbackClose();
-    router.push('/dashboardCandidate');
+    router.push('/dashboard/candidate');
   };
 
   if (loading || analyzing) {
