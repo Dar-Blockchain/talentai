@@ -39,6 +39,7 @@ const postStepSchema = new mongoose.Schema({
   height: Number,
   selected: Boolean,
   dragging: Boolean,
+  condition : String,
   status: {
     type: String,
     enum: ['pending', 'inProgress', 'done'],

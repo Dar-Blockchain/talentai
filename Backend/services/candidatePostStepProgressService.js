@@ -1,4 +1,4 @@
-const CandidatePostStepProgress = require('../models/candidate_Post_Step_Progress');
+const CandidatePostStepProgress = require("../models/candidate_Post_Step_Progress");
 
 class CandidatePostStepProgressService {
   // Créer un nouveau progrès de candidat
@@ -16,11 +16,11 @@ class CandidatePostStepProgressService {
   async getAllProgress() {
     try {
       const progress = await CandidatePostStepProgress.find()
-        .populate('idCandidate', 'name email')
-        .populate('idPost', 'jobDetails.title')
-        .populate('currentStep', 'data.label data.type')
-        .populate('steps.stepId', 'data.label data.type order')
-        .populate('steps.interviewDetails', 'type overallScore createdAt')
+        .populate("idCandidate", "name email")
+        .populate("idPost", "jobDetails.title")
+        .populate("currentStep", "data.label data.type")
+        .populate("steps.stepId", "data.label data.type order")
+        .populate("steps.interviewDetails", "type overallScore createdAt")
         .sort({ createdAt: -1 });
       return { success: true, data: progress };
     } catch (error) {
@@ -32,14 +32,14 @@ class CandidatePostStepProgressService {
   async getProgressById(id) {
     try {
       const progress = await CandidatePostStepProgress.findById(id)
-        .populate('idCandidate', 'name email')
-        .populate('idPost', 'jobDetails.title')
-        .populate('currentStep', 'data.label data.type')
-        .populate('steps.stepId', 'data.label data.type order')
-        .populate('steps.interviewDetails', 'type overallScore createdAt');
-      
+        .populate("idCandidate", "name email")
+        .populate("idPost", "jobDetails.title")
+        .populate("currentStep", "data.label data.type")
+        .populate("steps.stepId", "data.label data.type order")
+        .populate("steps.interviewDetails", "type overallScore createdAt");
+
       if (!progress) {
-        return { success: false, error: 'Progrès non trouvé' };
+        return { success: false, error: "Progrès non trouvé" };
       }
       return { success: true, data: progress };
     } catch (error) {
@@ -50,16 +50,18 @@ class CandidatePostStepProgressService {
   // Récupérer un progrès par idCandidate (premier enregistrement trouvé)
   async findByIdCandidate(candidateId) {
     try {
-      console.log(candidateId)
-      const progress = await CandidatePostStepProgress.findOne({ idCandidate: candidateId })
-        .populate('idCandidate')
-        .populate('idPost')
-        .populate('currentStep')
-        .populate('steps.stepId', 'data.label data.type order')
-        .populate('steps.interviewDetails', 'type overallScore createdAt');
-      
+      console.log(candidateId);
+      const progress = await CandidatePostStepProgress.findOne({
+        idCandidate: candidateId,
+      })
+        .populate("idCandidate")
+        .populate("idPost")
+        .populate("currentStep")
+        .populate("steps.stepId", "data.label data.type order")
+        .populate("steps.interviewDetails", "type overallScore createdAt");
+
       if (!progress) {
-        return { success: false, error: 'Progrès non trouvé pour ce candidat' };
+        return { success: false, error: "Progrès non trouvé pour ce candidat" };
       }
       return { success: true, data: progress };
     } catch (error) {
@@ -72,16 +74,16 @@ class CandidatePostStepProgressService {
     try {
       const progress = await CandidatePostStepProgress.findOne({
         idCandidate: candidateId,
-        idPost: postId
+        idPost: postId,
       })
-      .populate('idCandidate', 'name email')
-      .populate('idPost', 'jobDetails.title')
-      .populate('currentStep', 'data.label data.type')
-      .populate('steps.stepId', 'data.label data.type order')
-      .populate('steps.interviewDetails', 'type overallScore createdAt');
-      
+        .populate("idCandidate", "name email")
+        .populate("idPost", "jobDetails.title")
+        .populate("currentStep", "data.label data.type")
+        .populate("steps.stepId", "data.label data.type order")
+        .populate("steps.interviewDetails", "type overallScore createdAt");
+
       if (!progress) {
-        return { success: false, error: 'Progrès non trouvé' };
+        return { success: false, error: "Progrès non trouvé" };
       }
       return { success: true, data: progress };
     } catch (error) {
@@ -92,14 +94,16 @@ class CandidatePostStepProgressService {
   // Récupérer tous les progrès d'un candidat
   async getProgressByCandidate(candidateId) {
     try {
-      const progress = await CandidatePostStepProgress.find({ idCandidate: candidateId })
-        .populate('idCandidate', 'name email')
-        .populate('idPost', 'jobDetails.title')
-        .populate('currentStep', 'data.label data.type')
-        .populate('steps.stepId', 'data.label data.type order')
-        .populate('steps.interviewDetails', 'type overallScore createdAt')
+      const progress = await CandidatePostStepProgress.find({
+        idCandidate: candidateId,
+      })
+        .populate("idCandidate", "name email")
+        .populate("idPost", "jobDetails.title")
+        .populate("currentStep", "data.label data.type")
+        .populate("steps.stepId", "data.label data.type order")
+        .populate("steps.interviewDetails", "type overallScore createdAt")
         .sort({ updatedAt: -1 });
-      
+
       // Return empty array if no progress found (this is not an error)
       return { success: true, data: progress || [] };
     } catch (error) {
@@ -111,11 +115,11 @@ class CandidatePostStepProgressService {
   async getProgressByPost(postId) {
     try {
       const progress = await CandidatePostStepProgress.find({ idPost: postId })
-        .populate('idCandidate', 'name email')
-        .populate('idPost', 'jobDetails.title')
-        .populate('currentStep', 'data.label data.type')
-        .populate('steps.stepId', 'data.label data.type order')
-        .populate('steps.interviewDetails', 'type overallScore createdAt')
+        .populate("idCandidate", "name email")
+        .populate("idPost", "jobDetails.title")
+        .populate("currentStep", "data.label data.type")
+        .populate("steps.stepId", "data.label data.type order")
+        .populate("steps.interviewDetails", "type overallScore createdAt")
         .sort({ updatedAt: -1 });
       return { success: true, data: progress };
     } catch (error) {
@@ -127,11 +131,11 @@ class CandidatePostStepProgressService {
   async getProgressByStatus(status) {
     try {
       const progress = await CandidatePostStepProgress.find({ status })
-        .populate('idCandidate', 'name email')
-        .populate('idPost', 'jobDetails.title')
-        .populate('currentStep', 'data.label data.type')
-        .populate('steps.stepId', 'data.label data.type order')
-        .populate('steps.interviewDetails', 'type overallScore createdAt')
+        .populate("idCandidate", "name email")
+        .populate("idPost", "jobDetails.title")
+        .populate("currentStep", "data.label data.type")
+        .populate("steps.stepId", "data.label data.type order")
+        .populate("steps.interviewDetails", "type overallScore createdAt")
         .sort({ updatedAt: -1 });
       return { success: true, data: progress };
     } catch (error) {
@@ -147,14 +151,14 @@ class CandidatePostStepProgressService {
         { ...updateData, updatedAt: new Date() },
         { new: true, runValidators: true }
       )
-      .populate('idCandidate', 'name email')
-      .populate('idPost', 'jobDetails.title')
-      .populate('currentStep', 'data.label data.type')
-      .populate('steps.stepId', 'data.label data.type order')
-      .populate('steps.interviewDetails', 'type overallScore createdAt');
-      
+        .populate("idCandidate", "name email")
+        .populate("idPost", "jobDetails.title")
+        .populate("currentStep", "data.label data.type")
+        .populate("steps.stepId", "data.label data.type order")
+        .populate("steps.interviewDetails", "type overallScore createdAt");
+
       if (!updatedProgress) {
-        return { success: false, error: 'Progrès non trouvé' };
+        return { success: false, error: "Progrès non trouvé" };
       }
       return { success: true, data: updatedProgress };
     } catch (error) {
@@ -170,14 +174,14 @@ class CandidatePostStepProgressService {
         { ...updateData, updatedAt: new Date() },
         { new: true, runValidators: true }
       )
-      .populate('idCandidate', 'name email')
-      .populate('idPost', 'jobDetails.title')
-      .populate('currentStep', 'data.label data.type')
-      .populate('steps.stepId', 'data.label data.type order')
-      .populate('steps.interviewDetails', 'type overallScore createdAt');
-      
+        .populate("idCandidate", "name email")
+        .populate("idPost", "jobDetails.title")
+        .populate("currentStep", "data.label data.type")
+        .populate("steps.stepId", "data.label data.type order")
+        .populate("steps.interviewDetails", "type overallScore createdAt");
+
       if (!updatedProgress) {
-        return { success: false, error: 'Progrès non trouvé' };
+        return { success: false, error: "Progrès non trouvé" };
       }
       return { success: true, data: updatedProgress };
     } catch (error) {
@@ -188,9 +192,11 @@ class CandidatePostStepProgressService {
   // Supprimer un progrès
   async deleteProgress(id) {
     try {
-      const deletedProgress = await CandidatePostStepProgress.findByIdAndDelete(id);
+      const deletedProgress = await CandidatePostStepProgress.findByIdAndDelete(
+        id
+      );
       if (!deletedProgress) {
-        return { success: false, error: 'Progrès non trouvé' };
+        return { success: false, error: "Progrès non trouvé" };
       }
       return { success: true, data: deletedProgress };
     } catch (error) {
@@ -203,10 +209,10 @@ class CandidatePostStepProgressService {
     try {
       const deletedProgress = await CandidatePostStepProgress.findOneAndDelete({
         idCandidate: candidateId,
-        idPost: postId
+        idPost: postId,
       });
       if (!deletedProgress) {
-        return { success: false, error: 'Progrès non trouvé' };
+        return { success: false, error: "Progrès non trouvé" };
       }
       return { success: true, data: deletedProgress };
     } catch (error) {
@@ -219,24 +225,24 @@ class CandidatePostStepProgressService {
     try {
       const progress = await CandidatePostStepProgress.findOneAndUpdate(
         { idCandidate: candidateId, idPost: postId },
-        { 
-          ...progressData, 
+        {
+          ...progressData,
           idCandidate: candidateId,
           idPost: postId,
-          updatedAt: new Date() 
+          updatedAt: new Date(),
         },
-        { 
-          new: true, 
-          upsert: true, 
-          runValidators: true 
+        {
+          new: true,
+          upsert: true,
+          runValidators: true,
         }
       )
-      .populate('idCandidate', 'name email')
-      .populate('idPost', 'jobDetails.title')
-      .populate('currentStep', 'data.label data.type')
-      .populate('steps.stepId', 'data.label data.type order')
-      .populate('steps.interviewDetails', 'type overallScore createdAt');
-      
+        .populate("idCandidate", "name email")
+        .populate("idPost", "jobDetails.title")
+        .populate("currentStep", "data.label data.type")
+        .populate("steps.stepId", "data.label data.type order")
+        .populate("steps.interviewDetails", "type overallScore createdAt");
+
       return { success: true, data: progress };
     } catch (error) {
       return { success: false, error: error.message };
@@ -250,22 +256,24 @@ class CandidatePostStepProgressService {
         { $match: { idPost: new mongoose.Types.ObjectId(postId) } },
         {
           $group: {
-            _id: '$status',
+            _id: "$status",
             count: { $sum: 1 },
-            avgProgress: { $avg: { $toDouble: '$progress' } }
-          }
-        }
+            avgProgress: { $avg: { $toDouble: "$progress" } },
+          },
+        },
       ]);
-      
-      const totalCandidates = await CandidatePostStepProgress.countDocuments({ idPost: postId });
-      
-      return { 
-        success: true, 
-        data: { 
-          stats, 
+
+      const totalCandidates = await CandidatePostStepProgress.countDocuments({
+        idPost: postId,
+      });
+
+      return {
+        success: true,
+        data: {
+          stats,
           totalCandidates,
-          postId 
-        } 
+          postId,
+        },
       };
     } catch (error) {
       return { success: false, error: error.message };
@@ -277,14 +285,14 @@ class CandidatePostStepProgressService {
     try {
       const completedCandidates = await CandidatePostStepProgress.find({
         idPost: postId,
-        status: 'completed'
+        status: "completed",
       })
-      .populate('idCandidate', 'name email')
-      .populate('idPost', 'jobDetails.title')
-      .populate('steps.stepId', 'data.label data.type order')
-      .populate('steps.interviewDetails', 'type overallScore createdAt')
-      .sort({ updatedAt: -1 });
-      
+        .populate("idCandidate", "name email")
+        .populate("idPost", "jobDetails.title")
+        .populate("steps.stepId", "data.label data.type order")
+        .populate("steps.interviewDetails", "type overallScore createdAt")
+        .sort({ updatedAt: -1 });
+
       return { success: true, data: completedCandidates };
     } catch (error) {
       return { success: false, error: error.message };
@@ -296,14 +304,14 @@ class CandidatePostStepProgressService {
     try {
       const inProgressCandidates = await CandidatePostStepProgress.find({
         idPost: postId,
-        status: { $in: ['in_progress', 'started'] }
+        status: { $in: ["in_progress", "started"] },
       })
-      .populate('idCandidate', 'name email')
-      .populate('idPost', 'jobDetails.title')
-      .populate('steps.stepId', 'data.label data.type order')
-      .populate('steps.interviewDetails', 'type overallScore createdAt')
-      .sort({ updatedAt: -1 });
-      
+        .populate("idCandidate", "name email")
+        .populate("idPost", "jobDetails.title")
+        .populate("steps.stepId", "data.label data.type order")
+        .populate("steps.interviewDetails", "type overallScore createdAt")
+        .sort({ updatedAt: -1 });
+
       return { success: true, data: inProgressCandidates };
     } catch (error) {
       return { success: false, error: error.message };
@@ -315,34 +323,36 @@ class CandidatePostStepProgressService {
     try {
       const progress = await CandidatePostStepProgress.findById(progressId);
       if (!progress) {
-        return { success: false, error: 'Progrès non trouvé' };
+        return { success: false, error: "Progrès non trouvé" };
       }
 
       // Trouver l'étape dans le tableau steps
-      const stepIndex = progress.steps.findIndex(step => 
-        step.stepId.toString() === stepId.toString()
+      const stepIndex = progress.steps.findIndex(
+        (step) => step.stepId.toString() === stepId.toString()
       );
 
       if (stepIndex === -1) {
-        return { success: false, error: 'Étape non trouvée dans ce progrès' };
+        return { success: false, error: "Étape non trouvée dans ce progrès" };
       }
 
       // Mettre à jour le statut de l'étape
       progress.steps[stepIndex].status = newStatus;
-      
+
       // Si l'étape est terminée, ajouter la date de completion
-      if (newStatus === 'done') {
+      if (newStatus === "done") {
         progress.steps[stepIndex].completedAt = new Date();
       } else {
         progress.steps[stepIndex].completedAt = null;
       }
 
       // Mettre à jour le statut global si nécessaire
-      const allStepsDone = progress.steps.every(step => step.status === 'done');
+      const allStepsDone = progress.steps.every(
+        (step) => step.status === "done"
+      );
       if (allStepsDone) {
-        progress.status = 'done';
-      } else if (progress.steps.some(step => step.status === 'inProgress')) {
-        progress.status = 'inProgress';
+        progress.status = "done";
+      } else if (progress.steps.some((step) => step.status === "inProgress")) {
+        progress.status = "inProgress";
       }
 
       progress.updatedAt = new Date();
@@ -359,16 +369,16 @@ class CandidatePostStepProgressService {
     try {
       const progress = await CandidatePostStepProgress.findOne({
         idCandidate: candidateId,
-        idPost: postId
+        idPost: postId,
       })
-      .populate('idCandidate', 'name email')
-      .populate('idPost', 'jobDetails.title')
-      .populate('currentStep', 'data.label data.type')
-      .populate('steps.stepId', 'data.label data.type order')
-      .populate('steps.interviewDetails', 'type overallScore createdAt');
-      
+        .populate("idCandidate", "name email")
+        .populate("idPost", "jobDetails.title")
+        .populate("currentStep", "data.label data.type")
+        .populate("steps.stepId", "data.label data.type order")
+        .populate("steps.interviewDetails", "type overallScore createdAt");
+
       if (!progress) {
-        return { success: false, error: 'Progrès non trouvé' };
+        return { success: false, error: "Progrès non trouvé" };
       }
       return { success: true, data: progress };
     } catch (error) {
@@ -378,18 +388,18 @@ class CandidatePostStepProgressService {
 
   // Marquer une étape comme en cours
   async startStep(progressId, stepId) {
-    return this.updateStepStatus(progressId, stepId, 'inProgress');
+    return this.updateStepStatus(progressId, stepId, "inProgress");
   }
 
   // Marquer une étape comme terminée
   async completeStep(progressId, stepId) {
-    return this.updateStepStatus(progressId, stepId, 'done');
+    return this.updateStepStatus(progressId, stepId, "done");
   }
 
   // Réinitialiser une étape
   async resetStep(progressId, stepId) {
-    return this.updateStepStatus(progressId, stepId, 'pending');
+    return this.updateStepStatus(progressId, stepId, "pending");
   }
 }
 
-module.exports = new CandidatePostStepProgressService(); 
+module.exports = new CandidatePostStepProgressService();
