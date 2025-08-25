@@ -595,7 +595,7 @@ export const evaluateProjectCode = createAsyncThunk<
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ githubLink, template: 'auto', hackathonName: 'HederaHacks' }),
+        body: JSON.stringify({ githubLink, template: 'auto' }),
       });
       if (!response.ok) {
         const error = await response.text();

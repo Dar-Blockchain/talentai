@@ -8,7 +8,6 @@ import {
 import {
   logout
 } from "@/store/slices/authSlice";
-import type { Profile as ProfileType } from "@/store/slices/profileSlice";
 import { AppDispatch, RootState } from "@/store/store";
 import {
   Box,
@@ -53,7 +52,6 @@ import { styled } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import PersonIcon from "@mui/icons-material/Person";
-import EmailIcon from "@mui/icons-material/Email";
 import WorkIcon from "@mui/icons-material/Work";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -69,64 +67,11 @@ import CandidateOnly from "@/components/CandidateOnly";
 import PostInterviewTab from "@/components/PostInterviewTab";
 import { useCallback } from 'react';
 import Link from "next/link";
-import Popover from '@mui/material/Popover';
-import GroupIcon from '@mui/icons-material/Group';
+
 import Avatar from '@mui/material/Avatar';
 const GREEN_MAIN = "#8310FF";
 
-// Add shimmer animation keyframes
-const shimmerKeyframes = `
-  @keyframes shimmer {
-    0% {
-      transform: translateX(-100%);
-    }
-    100% {
-      transform: translateX(100%);
-    }
-  }
-  
-  @keyframes pulse {
-    0%, 100% {
-      opacity: 0.6;
-      transform: scale(1);
-    }
-    50% {
-      opacity: 0.3;
-      transform: scale(1.1);
-    }
-  }
-  
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  @keyframes scoreCountUp {
-    from {
-      transform: scale(0.8);
-      opacity: 0;
-    }
-    to {
-      transform: scale(1);
-      opacity: 1;
-    }
-  }
-  
-  @keyframes cardFloat {
-    0%, 100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-5px);
-    }
-  }
-`;
+ 
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -173,8 +118,6 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
   },
 }));
 
-
-
 const ProfileHeader = styled(Box)(({ theme }) => ({
   background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
   color: "#000000",
@@ -201,48 +144,6 @@ const ProfileHeader = styled(Box)(({ theme }) => ({
   },
   [theme.breakpoints.up("md")]: {
     padding: theme.spacing(8),
-  },
-}));
-
-const StatCard = styled(Paper)(({ theme }) => ({
-  background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.grey[100]} 100%)`,
-  padding: theme.spacing(3),
-  borderRadius: Number(theme.shape.borderRadius) * 3,
-  border: `1px solid ${theme.palette.divider}`,
-  boxShadow: `
-    0 6px 20px rgba(0, 0, 0, 0.05),
-    0 1px 6px rgba(0, 0, 0, 0.04)
-  `,
-  transition: theme.transitions.create(["transform", "box-shadow"], {
-    duration: theme.transitions.duration.short,
-  }),
-  minHeight: 120,
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "space-between",
-  cursor: "default",
-
-  "&:hover": {
-    transform: "translateY(-5px)",
-    boxShadow: `
-      0 12px 35px rgba(0, 0, 0, 0.08),
-      0 4px 20px rgba(0, 0, 0, 0.04)
-    `,
-  },
-}));
-
-const SkillChip = styled(Chip)(({ theme }) => ({
-  margin: theme.spacing(0.5),
-  borderRadius: "12px",
-  padding: theme.spacing(1.5),
-  height: "36px",
-  background: "rgba(2, 226, 255, 0.08)",
-  color: "#000000",
-  border: "1px solid rgba(2, 226, 255, 0.15)",
-  transition: "all 0.3s ease",
-  "&:hover": {
-    background: "rgba(2, 226, 255, 0.15)",
-    transform: "scale(1.05)",
   },
 }));
 
@@ -284,40 +185,7 @@ const ActionButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-const InfoItem = styled(Box)(({ theme }) => ({
-  display: "flex",
-  alignItems: "center",
-  gap: theme.spacing(3),
-  marginBottom: theme.spacing(3),
-  padding: theme.spacing(3),
-  borderRadius: "16px",
-  background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-  color: "#000000",
-  boxShadow: "0 5px 20px rgba(0, 0, 0, 0.04), 0 0 10px rgba(0, 0, 0, 0.02)",
-  transition: "all 0.3s ease",
-  "&:hover": {
-    background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
-    transform: "translateX(6px)",
-    boxShadow: "0 8px 25px rgba(0, 0, 0, 0.08), 0 0 15px rgba(0, 0, 0, 0.04)",
-  },
-}));
 
-interface MatchingCandidate {
-  id: string;
-  name: string;
-  matchScore: number;
-  location: string;
-  role: string;
-  skills: Array<{
-    name: string;
-    proficiencyLevel: number;
-  }>;
-  experienceLevel: string;
-  description: string;
-  avatarUrl: string;
-  availability: string;
-  expectedSalary?: string;
-}
 
 interface Skill {
   name: string;
@@ -330,24 +198,6 @@ interface Skill {
   }>;
 }
 
-interface Log {
-  _id: string;
-  type: string;
-  method: string;
-  url: string;
-  ip: string;
-  referer: string;
-  statusCode: number;
-  user_id: string;
-  user_nom: string;
-  headers: string;
-  executionTime: number;
-  body: string;
-  timestamp: string;
-  __v: number;
-}
-
-// Add this before calculateSkillPercentage
 const softSkillNames = [
   "Communication",
   "Leadership",
@@ -839,17 +689,12 @@ export default function DashboardCandidate() {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const generateTodoList = () => {
-    dispatch(generateTodos());
-  };
-  useEffect(() => {
-    dispatch(getMyProfile());
-    // dispatch(fetchTodos());
-  }, [dispatch]);
 
   useEffect(() => {
-    // fetchLogs(); // Commented out - logs functionality moved to admin dashboard
-  }, []);
+    dispatch(getMyProfile());
+  }, [dispatch]);
+
+
 
   useEffect(() => {
     if (profile) {
@@ -1127,7 +972,6 @@ export default function DashboardCandidate() {
 
   const handleAddSkill = async () => {
     try {
-      const token = Cookies.get("api_token");
       const selectedSkill = newSkill.name;
 
       const isDuplicate = profile?.skills?.some(
@@ -1291,9 +1135,6 @@ export default function DashboardCandidate() {
       setSoftSkillProficiency(1);
     }
   };
-
-  // Filter technical skills (exclude soft skills)
-
 
   // Add state to track if a skill was just added
   const [justAddedSkill, setJustAddedSkill] = useState<any>(null);
@@ -2906,20 +2747,7 @@ export default function DashboardCandidate() {
             </StyledCard>
           </Box>
 
-          {/* My Leader Projects Section */}
-          <Box>
-            <StyledCard>
-              <SectionTitle>My Leader Projects</SectionTitle>
-              <LeaderProjectsCard />
-            </StyledCard>
-          </Box>
-          {/* My Team Projects Section */}
-          <Box>
-            <StyledCard>
-              <SectionTitle>My Team Projects</SectionTitle>
-              <TeamMemberProjectsCard />
-            </StyledCard>
-          </Box>
+        
           {/* Add Soft Skill Dialog */}
           <Dialog
             open={addSoftSkillDialogOpen}
@@ -3393,12 +3221,6 @@ const INTERVIEW_TYPES = [
   { label: 'Post Interview', value: 'post_interview' },
 ];
 
-
-
-
-
-
-
 type InterviewDetailsTabsProps = {
   profile: any; // Replace 'any' with 'ProfileType' if available
 };
@@ -3560,635 +3382,3 @@ function InterviewDetailsTabs({ profile }: InterviewDetailsTabsProps) {
   );
 }
 
-function TeamMemberProjectsCard() {
-  const [projects, setProjects] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [popoverTeam, setPopoverTeam] = useState<any[]>([]);
-
-  useEffect(() => {
-    const fetchProjects = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const token = localStorage.getItem("api_token");
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/";
-        const res = await fetch(`${apiBase}project/teamMemberProjects`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (!res.ok) throw new Error("Failed to fetch team member projects");
-        const json = await res.json();
-        if (json.success && Array.isArray(json.result)) {
-          setProjects(json.result);
-        } else if (json.success && json.result) {
-          setProjects([json.result]);
-        } else {
-          setError("No project data available");
-        }
-      } catch (e: any) {
-        setError(e.message || "Error fetching projects");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProjects();
-  }, []);
-
-  // Helper for avatar initials
-  const getInitials = (name: string, email: string) => {
-    if (name && name.trim().length > 0) {
-      return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
-    }
-    if (email) return email[0].toUpperCase();
-    return '?';
-  };
-
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 120 }}>
-        <CircularProgress size={32} sx={{ color: '#8310FF' }} />
-      </Box>
-    );
-  }
-  if (error) {
-    return (
-      <Box sx={{ color: '#c62828', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120 }}>
-        <Typography>{error}</Typography>
-      </Box>
-    );
-  }
-  if (!projects.length) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 6 }}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            mx: 'auto',
-            maxWidth: 720,
-            borderRadius: 3,
-            border: '2px dashed rgba(131,16,255,0.25)',
-            background: 'linear-gradient(180deg, #ffffff 0%, #fbfbff 100%)',
-          }}
-        >
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
-            <Box
-              sx={{
-                width: 56,
-                height: 56,
-                borderRadius: '16px',
-                background: 'linear-gradient(135deg, #8310FF 0%, #02E2FF 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 8px 25px rgba(131, 16, 255, 0.25)',
-              }}
-            >
-              <GroupIcon sx={{ color: 'white', fontSize: 28 }} />
-            </Box>
-          </Box>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: '#1a1a1a', mb: 1 }}>
-            No Team Projects Yet
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#555', maxWidth: 520, mx: 'auto' }}>
-            You aren't part of any team projects right now. When you join a team, your projects will appear here with progress and details.
-          </Typography>
-        </Paper>
-      </Box>
-    );
-  }
-  return (
-    <Box>
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
-          gap: 2,
-        }}
-      >
-        {projects.map((project: any) => {
-          const team = Array.isArray(project.team) ? project.team : [];
-          const showAvatars = team.slice(0, 4);
-          const extraCount = team.length > 4 ? team.length - 4 : 0;
-          const createdLabel = project.createdAt
-            ? new Date(project.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-            : '-';
-
-          return (
-            <Paper
-              key={project._id}
-              elevation={0}
-              sx={{
-                p: 2.5,
-                borderRadius: 3,
-                position: 'relative',
-                overflow: 'hidden',
-                background: 'linear-gradient(180deg, #ffffff 0%, #fbfbff 100%)',
-                border: '1px solid rgba(0,0,0,0.06)',
-                boxShadow: '0 8px 22px rgba(0,0,0,0.06)',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 4,
-                  background: 'linear-gradient(90deg, #8310FF 0%, #02E2FF 50%, #00FFC3 100%)',
-                },
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 14px 36px rgba(0,0,0,0.12)',
-                },
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5 }}>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1a1a1a', pr: 1 }}>
-                  {project.name || 'Untitled Project'}
-                </Typography>
-                {project.track && (
-                  <Chip
-                    label={project.track}
-                    size="small"
-                    sx={{
-                      bgcolor: 'rgba(131,16,255,0.08)',
-                      color: '#8310FF',
-                      fontWeight: 700,
-                      borderRadius: 2,
-                    }}
-                  />
-                )}
-              </Box>
-
-              <Typography variant="body2" sx={{ color: '#444', mb: 1.5, minHeight: 40 }}>
-                {project.description || 'No description.'}
-              </Typography>
-
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
-                <Chip
-                  icon={<GroupIcon sx={{ color: '#7C4DFF' }} />}
-                  label={`${team.length} member${team.length !== 1 ? 's' : ''}`}
-                  size="small"
-                  sx={{
-                    bgcolor: 'rgba(124, 77, 255, 0.08)',
-                    color: '#7C4DFF',
-                    fontWeight: 700,
-                    borderRadius: 2,
-                  }}
-                />
-                <Chip
-                  label={`Created ${createdLabel}`}
-                  size="small"
-                  sx={{
-                    bgcolor: 'rgba(0,0,0,0.04)',
-                    color: '#555',
-                    fontWeight: 600,
-                    borderRadius: 2,
-                  }}
-                />
-              </Box>
-
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', ml: 0.5 }}>
-                  {showAvatars.map((member: any, idx: number) => (
-                    <Tooltip
-                      key={member._id || idx}
-                      title={
-                        <Box>
-                          <Typography variant="subtitle2">{member.name || member.email}</Typography>
-                          <Typography variant="caption">{member.email}</Typography><br />
-                          <Typography variant="caption">Role: {member.role || '-'}</Typography><br />
-                          <Chip
-                            label={member.validated ? 'Validated' : 'Not Validated'}
-                            size="small"
-                            color={member.validated ? 'success' : 'warning'}
-                            sx={{ mt: 0.5 }}
-                          />
-                        </Box>
-                      }
-                      arrow
-                    >
-                      <Avatar
-                        sx={{
-                          bgcolor: member.validated ? '#00b894' : '#fdcb6e',
-                          color: '#fff',
-                          border: member.validated ? '2px solid #00b894' : '2px solid #fdcb6e',
-                          width: 36,
-                          height: 36,
-                          fontWeight: 700,
-                          fontSize: '1rem',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                          ml: idx === 0 ? 0 : -1.2,
-                          zIndex: 10 - idx,
-                          cursor: 'pointer',
-                        }}
-                        onClick={e => {
-                          setAnchorEl(e.currentTarget);
-                          setPopoverTeam(team);
-                        }}
-                      >
-                        {getInitials(member.name, member.email)}
-                      </Avatar>
-                    </Tooltip>
-                  ))}
-                  {extraCount > 0 && (
-                    <Avatar
-                      sx={{
-                        bgcolor: '#8310FF',
-                        color: '#fff',
-                        width: 36,
-                        height: 36,
-                        fontWeight: 700,
-                        fontSize: '1rem',
-                        ml: -1.2,
-                        zIndex: 5,
-                        cursor: 'pointer',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                      }}
-                      onClick={e => {
-                        setAnchorEl(e.currentTarget);
-                        setPopoverTeam(team);
-                      }}
-                    >
-                      +{extraCount}
-                    </Avatar>
-                  )}
-                  <Popover
-                    open={Boolean(anchorEl)}
-                    anchorEl={anchorEl}
-                    onClose={() => setAnchorEl(null)}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-                  >
-                    <Box sx={{ p: 2, minWidth: 220 }}>
-                      <Typography variant="subtitle2" sx={{ mb: 1 }}>Full Team</Typography>
-                      {popoverTeam.map((member: any, idx: number) => (
-                        <Box key={member._id || idx} sx={{ mb: 1 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{member.name || member.email}</Typography>
-                          <Typography variant="caption">{member.email}</Typography><br />
-                          <Typography variant="caption">Role: {member.role || '-'}</Typography><br />
-                          <Chip
-                            label={member.validated ? 'Validated' : 'Not Validated'}
-                            size="small"
-                            color={member.validated ? 'success' : 'warning'}
-                            sx={{ mt: 0.5 }}
-                          />
-                        </Box>
-                      ))}
-                    </Box>
-                  </Popover>
-                </Box>
-              </Box>
-
-              <Box sx={{ mt: 'auto' }}>
-                <Button
-                  variant="contained"
-                  sx={{
-                    background: '#8310FF',
-                    color: '#fff',
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    width: '100%',
-                    boxShadow: '0 2px 8px #7C4DFF22',
-                    '&:hover': { background: '#6a0bd4' },
-                  }}
-                  onClick={() => router.push(`/hackathon/projects/${project._id}`)}
-                >
-                  Details
-                </Button>
-              </Box>
-            </Paper>
-          );
-        })}
-      </Box>
-    </Box>
-  );
-}
-
-// LeaderProjectsCard: same design as TeamMemberProjectsCard but fetches from /project/leaderProjects
-function LeaderProjectsCard() {
-  const [projects, setProjects] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [popoverTeam, setPopoverTeam] = useState<any[]>([]);
-  const router = useRouter();
-
-  useEffect(() => {
-    const fetchProjects = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const token = localStorage.getItem("api_token");
-        const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/";
-        const res = await fetch(`${apiBase}project/leaderProjects`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        if (!res.ok) throw new Error("Failed to fetch leader projects");
-        const json = await res.json();
-        if (json.success && Array.isArray(json.result)) {
-          setProjects(json.result);
-        } else if (json.success && json.result) {
-          setProjects([json.result]);
-        } else {
-          setError("No project data available");
-        }
-      } catch (e: any) {
-        setError(e.message || "Error fetching projects");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProjects();
-  }, []);
-
-  // Helper for avatar initials
-  const getInitials = (name: string, email: string) => {
-    if (name && name.trim().length > 0) {
-      return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
-    }
-    if (email) return email[0].toUpperCase();
-    return '?';
-  };
-
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 120 }}>
-        <CircularProgress size={32} sx={{ color: '#8310FF' }} />
-      </Box>
-    );
-  }
-  if (error) {
-    return (
-      <Box sx={{ color: '#c62828', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120 }}>
-        <Typography>{error}</Typography>
-      </Box>
-    );
-  }
-  if (!projects.length) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 6 }}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            mx: 'auto',
-            maxWidth: 720,
-            borderRadius: 3,
-            border: '2px dashed rgba(131,16,255,0.25)',
-            background: 'linear-gradient(180deg, #ffffff 0%, #fbfbff 100%)',
-          }}
-        >
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
-            <Box
-              sx={{
-                width: 56,
-                height: 56,
-                borderRadius: '16px',
-                background: 'linear-gradient(135deg, #8310FF 0%, #02E2FF 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 8px 25px rgba(131, 16, 255, 0.25)',
-              }}
-            >
-              <GroupIcon sx={{ color: 'white', fontSize: 28 }} />
-            </Box>
-          </Box>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: '#1a1a1a', mb: 1 }}>
-            No Leader Projects Yet
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#555', maxWidth: 520, mx: 'auto' }}>
-            You haven't created any projects as a leader yet. Create a project to manage your team, track progress, and showcase outcomes here.
-          </Typography>
-        </Paper>
-      </Box>
-    );
-  }
-  return (
-    <Box>
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
-          gap: 2,
-        }}
-      >
-        {projects.map((project: any) => {
-          const team = Array.isArray(project.team) ? project.team : [];
-          const showAvatars = team.slice(0, 4);
-          const extraCount = team.length > 4 ? team.length - 4 : 0;
-          const createdLabel = project.createdAt
-            ? new Date(project.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-            : '-';
-          const isNew = project.createdAt
-            ? Date.now() - new Date(project.createdAt).getTime() < 1000 * 60 * 60 * 24 * 14
-            : false;
-
-          return (
-            <Paper
-              key={project._id}
-              elevation={0}
-              sx={{
-                p: 2.5,
-                borderRadius: 3,
-                position: 'relative',
-                overflow: 'hidden',
-                background: 'linear-gradient(180deg, #ffffff 0%, #fbfbff 100%)',
-                border: '1px solid rgba(0,0,0,0.06)',
-                boxShadow: '0 8px 22px rgba(0,0,0,0.06)',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 4,
-                  background: 'linear-gradient(90deg, #8310FF 0%, #02E2FF 50%, #00FFC3 100%)',
-                },
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 14px 36px rgba(0,0,0,0.12)',
-                },
-              }}
-            >
-              {isNew && (
-                <Chip
-                  label="New"
-                  size="small"
-                  sx={{
-                    position: 'absolute',
-                    top: 10,
-                    right: 10,
-                    bgcolor: 'rgba(131,16,255,0.1)',
-                    color: '#8310FF',
-                    fontWeight: 700,
-                  }}
-                />
-              )}
-
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5 }}>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: '#1a1a1a', pr: 1 }}>
-                  {project.name || 'Untitled Project'}
-                </Typography>
-                {project.track && (
-                  <Chip
-                    label={project.track}
-                    size="small"
-                    sx={{
-                      bgcolor: 'rgba(131,16,255,0.08)',
-                      color: '#8310FF',
-                      fontWeight: 700,
-                      borderRadius: 2,
-                    }}
-                  />
-                )}
-              </Box>
-
-              <Typography variant="body2" sx={{ color: '#444', mb: 1.5, minHeight: 40 }}>
-                {project.description || 'No description.'}
-              </Typography>
-
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
-                <Chip
-                  icon={<GroupIcon sx={{ color: '#7C4DFF' }} />}
-                  label={`${team.length} member${team.length !== 1 ? 's' : ''}`}
-                  size="small"
-                  sx={{
-                    bgcolor: 'rgba(124, 77, 255, 0.08)',
-                    color: '#7C4DFF',
-                    fontWeight: 700,
-                    borderRadius: 2,
-                  }}
-                />
-                <Chip
-                  label={`Created ${createdLabel}`}
-                  size="small"
-                  sx={{
-                    bgcolor: 'rgba(0,0,0,0.04)',
-                    color: '#555',
-                    fontWeight: 600,
-                    borderRadius: 2,
-                  }}
-                />
-              </Box>
-
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', ml: 0.5 }}>
-                  {showAvatars.map((member: any, idx: number) => (
-                    <Tooltip
-                      key={member._id || idx}
-                      title={
-                        <Box>
-                          <Typography variant="subtitle2">{member.name || member.email}</Typography>
-                          <Typography variant="caption">{member.email}</Typography><br />
-                          <Typography variant="caption">Role: {member.role || '-'}</Typography><br />
-                          <Chip
-                            label={member.validated ? 'Validated' : 'Not Validated'}
-                            size="small"
-                            color={member.validated ? 'success' : 'warning'}
-                            sx={{ mt: 0.5 }}
-                          />
-                        </Box>
-                      }
-                      arrow
-                    >
-                      <Avatar
-                        sx={{
-                          bgcolor: member.validated ? '#00b894' : '#fdcb6e',
-                          color: '#fff',
-                          border: member.validated ? '2px solid #00b894' : '2px solid #fdcb6e',
-                          width: 36,
-                          height: 36,
-                          fontWeight: 700,
-                          fontSize: '1rem',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                          ml: idx === 0 ? 0 : -1.2,
-                          zIndex: 10 - idx,
-                          cursor: 'pointer',
-                        }}
-                        onClick={e => {
-                          setAnchorEl(e.currentTarget);
-                          setPopoverTeam(team);
-                        }}
-                      >
-                        {getInitials(member.name, member.email)}
-                      </Avatar>
-                    </Tooltip>
-                  ))}
-                  {extraCount > 0 && (
-                    <Avatar
-                      sx={{
-                        bgcolor: '#8310FF',
-                        color: '#fff',
-                        width: 36,
-                        height: 36,
-                        fontWeight: 700,
-                        fontSize: '1rem',
-                        ml: -1.2,
-                        zIndex: 5,
-                        cursor: 'pointer',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                      }}
-                      onClick={e => {
-                        setAnchorEl(e.currentTarget);
-                        setPopoverTeam(team);
-                      }}
-                    >
-                      +{extraCount}
-                    </Avatar>
-                  )}
-                  <Popover
-                    open={Boolean(anchorEl)}
-                    anchorEl={anchorEl}
-                    onClose={() => setAnchorEl(null)}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-                  >
-                    <Box sx={{ p: 2, minWidth: 220 }}>
-                      <Typography variant="subtitle2" sx={{ mb: 1 }}>Full Team</Typography>
-                      {popoverTeam.map((member: any, idx: number) => (
-                        <Box key={member._id || idx} sx={{ mb: 1 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{member.name || member.email}</Typography>
-                          <Typography variant="caption">{member.email}</Typography><br />
-                          <Typography variant="caption">Role: {member.role || '-'}</Typography><br />
-                          <Chip
-                            label={member.validated ? 'Validated' : 'Not Validated'}
-                            size="small"
-                            color={member.validated ? 'success' : 'warning'}
-                            sx={{ mt: 0.5 }}
-                          />
-                        </Box>
-                      ))}
-                    </Box>
-                  </Popover>
-                </Box>
-              </Box>
-
-              <Box sx={{ mt: 'auto' }}>
-                <Button
-                  variant="contained"
-                  sx={{
-                    background: '#8310FF',
-                    color: '#fff',
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    width: '100%',
-                    boxShadow: '0 2px 8px #7C4DFF22',
-                    '&:hover': { background: '#6a0bd4' },
-                  }}
-                  onClick={() => router.push(`/hackathon/projects/${project._id}`)}
-                >
-                  Details
-                </Button>
-              </Box>
-            </Paper>
-          );
-        })}
-      </Box>
-    </Box>
-  );
-}
