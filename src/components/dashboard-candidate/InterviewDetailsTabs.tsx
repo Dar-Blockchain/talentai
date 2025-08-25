@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import {
     Box,
@@ -28,11 +28,10 @@ import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import PostInterviewTab from "@/components/PostInterviewTab";
 
 const INTERVIEW_TYPES = [
-    { label: "Post Interview", value: "post_interview" },
-
-    { label: "Onboarding", value: "onboarding" },
-    { label: "HR", value: "hr" },
-    { label: "Skill", value: "skill" },
+    { label: "Post Interview", value: "post_interview", icon: <AssignmentTurnedInIcon sx={{ fontSize: 18 }} /> },
+    { label: "Onboarding", value: "onboarding", icon: <CalendarTodayIcon sx={{ fontSize: 18 }} /> },
+    { label: "HR", value: "hr", icon: <PersonOutlineIcon sx={{ fontSize: 18 }} /> },
+    { label: "Skill", value: "skill", icon: <TrendingUpIcon sx={{ fontSize: 18 }} /> },
 ];
 
 export type InterviewDetailsTabsProps = {
@@ -58,13 +57,52 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                 const realProfileId = profile?._id;
                 const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/?page=${pageNum + 1
                     }&limit=${limit}&type=${type}&profileId=${realProfileId}`;
+
+                // Simple session cache with TTL to avoid redundant re-fetching on quick returns
+                const cacheKey = `interviewDetails:${realProfileId}:${type}:${pageNum}:${limit}`;
+                const ttlMs = 2 * 60 * 1000; // 2 minutes
+                try {
+                    const cachedRaw = sessionStorage.getItem(cacheKey);
+                    if (cachedRaw) {
+                        const cached = JSON.parse(cachedRaw);
+                        if (cached && cached.timestamp && (Date.now() - cached.timestamp) < ttlMs) {
+                            const cachedResults = Array.isArray(cached.results) ? cached.results : [];
+                            const cachedTotal = (typeof cached.total === 'number' && cached.total > 0)
+                                ? cached.total
+                                : cachedResults.length;
+                            setData(cachedResults);
+                            setTotal(cachedTotal);
+                            setLoading(false);
+                            return;
+                        }
+                    }
+                } catch (_) {
+                    // ignore cache errors
+                }
                 const res = await fetch(url, {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                 });
                 if (!res.ok) throw new Error("Failed to fetch interview details");
                 const json = await res.json();
-                setData(json.results || []);
-                setTotal(json.total || 0);
+                const results = Array.isArray(json.results) ? json.results : (Array.isArray(json.data) ? json.data : []);
+                const inferredTotal =
+                    (typeof json.total === 'number' && json.total >= 0) ? json.total :
+                    (typeof json.count === 'number' && json.count >= 0) ? json.count :
+                    (typeof json.totalCount === 'number' && json.totalCount >= 0) ? json.totalCount :
+                    results.length;
+                setData(results);
+                setTotal(inferredTotal);
+
+                // write to cache
+                try {
+                    sessionStorage.setItem(cacheKey, JSON.stringify({
+                        timestamp: Date.now(),
+                        results,
+                        total: inferredTotal,
+                    }));
+                } catch (_) {
+                    // ignore cache write failure
+                }
             } catch (e: any) {
                 setError(e.message || "Error fetching data");
             } finally {
@@ -74,7 +112,14 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
         [profile]
     );
 
+    const mountedOnce = useRef(false);
     useEffect(() => {
+        // Guard against double-invocation in React StrictMode in development
+        if (!mountedOnce.current) {
+            mountedOnce.current = true;
+            fetchData(tab, page, rowsPerPage);
+            return;
+        }
         fetchData(tab, page, rowsPerPage);
     }, [tab, page, rowsPerPage, fetchData]);
 
@@ -92,28 +137,58 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
 
     return (
         <Box sx={{ width: "100%" }}>
-            <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+            <Box sx={{ mb: 3 }}>
                 <Tabs
                     value={tab}
                     onChange={handleTabChange}
+                    variant="scrollable"
+                    scrollButtons="auto"
                     sx={{
+                        px: 1,
+                        py: 1,
+                        backgroundColor: "#f8f9fc",
+                        borderRadius: 2,
+                        boxShadow: "inset 0 0 0 1px rgba(131,16,255,0.08)",
                         "& .MuiTab-root": {
                             textTransform: "none",
-                            fontWeight: 500,
-                            fontSize: "14px",
-                            minHeight: 48,
-                        },
-                        "& .Mui-selected": {
-                            color: "#8310FF !important",
+                            fontWeight: 700,
+                            fontSize: "13.5px",
+                            minHeight: 44,
+                            minWidth: 120,
+                            color: "#555",
+                            borderRadius: 1.5,
+                            mx: 0.5,
+                            px: 1.5,
+                            transition: "all .2s ease",
+                            "&:hover": {
+                                backgroundColor: "#ffffff",
+                                boxShadow: "0 6px 18px rgba(0,0,0,.06)",
+                            },
+                            "&.Mui-selected": {
+                                color: "#2b2152",
+                                backgroundColor: "#ffffff",
+                                boxShadow: "0 8px 22px rgba(131,16,255,.15)",
+                            },
                         },
                         "& .MuiTabs-indicator": {
-                            backgroundColor: "#8310FF",
-                            height: 3,
+                            height: 0,
+                            background: "linear-gradient(90deg,#8310FF 0%,#02E2FF 100%)",
+                            borderRadius: 2,
                         },
                     }}
                 >
                     {INTERVIEW_TYPES.map((t) => (
-                        <Tab key={t.value} label={t.label} value={t.value} />
+                        <Tab
+                            key={t.value}
+                            value={t.value}
+                            label={
+                                <Stack direction="row" alignItems="center" spacing={1}>
+                                    {t.icon}
+                                    <Typography sx={{ fontWeight: 800 }}>{t.label}</Typography>
+                                   
+                                </Stack>
+                            }
+                        />
                     ))}
                 </Tabs>
             </Box>
