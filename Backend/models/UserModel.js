@@ -46,12 +46,7 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Profile",
     },
-    project: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Project",
-      },
-    ],
+    // project reference removed (Project domain deprecated)
     post: [
       {
         type: mongoose.Schema.Types.ObjectId,

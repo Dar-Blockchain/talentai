@@ -15,7 +15,6 @@ import profileReducer from './slices/profileSlice';
 import bidReducer from './slices/bidSlice';
 import todoReducer from './slices/todoSlice';
 import userReducer from './slices/userSlice';
-import projectReducer from './slices/projectSlice';
 import postReducer from './slices/postSlice';
 
 const rootReducer = combineReducers({
@@ -25,7 +24,7 @@ const rootReducer = combineReducers({
   profile: profileReducer,
   bid: bidReducer,
   todo: todoReducer,
-  project: projectReducer,
+  // project slice removed
   post: postReducer
 });
 
