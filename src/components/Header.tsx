@@ -133,7 +133,7 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
         <Toolbar sx={{ justifyContent: "space-between" }}>
           <Box
             component="img"
-            src={type === "company" ? "/logo.svg" : "/logojobSeeker.svg"}
+            src={type === "company" ? "/logo.svg" : "/logo-purple.svg"}
             alt="TalentAI Logo"
             sx={{ height: 32, cursor: 'pointer' }}
             onClick={() => router.push(type === "company" ? '/' : '/home/candidate')}

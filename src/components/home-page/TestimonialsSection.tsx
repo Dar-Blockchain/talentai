@@ -47,7 +47,7 @@ const TestimonialsSection = () => {
         <Box
             sx={{
                 // background: 'linear-gradient(135deg, rgba(131, 16, 255, 0.15) 0%, #FFFFFF 100%)',
-                backgroundImage: 'url("/backgroundPurple.png")', // 👉 remplace par ton chemin réel
+                backgroundImage: 'url("/images/home/backgroundPurple.png")', // 👉 remplace par ton chemin réel
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
@@ -113,11 +113,7 @@ const TestimonialsSection = () => {
                         },
                     }}
                 >
-                    <img
-                        src="/VectorLeft.png"
-                        alt="Previous"
-                        // style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                    />
+                    <ArrowBackIosIcon sx={{ color: 'white', fontSize: 20 }} />
                 </IconButton>
 
                 <IconButton
@@ -133,10 +129,7 @@ const TestimonialsSection = () => {
                         },
                     }}
                 >
-                    <img
-                        src="/VectorRight.png"
-                        alt="Next"
-                    />
+                    <ArrowForwardIosIcon sx={{ color: 'white', fontSize: 20 }} />
                 </IconButton>
             </Stack>
             {/* Cards */}

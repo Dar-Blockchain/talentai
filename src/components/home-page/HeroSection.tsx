@@ -161,7 +161,7 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
         >
           <Box sx={{ position: "relative", width:  "90%", height: type === "company" ? "100%" : "450px" }}>
             <img
-              src={type === "company" ? "/jobSeekerImage.jpg" : "/CompanyImage.jpg"}
+              src={type === "company" ? "/images/home/jobSeekerImage.jpg" : "/images/home/CompanyImage.jpg"}
               alt="Hero Section"
               style={{
                 width: "100%",

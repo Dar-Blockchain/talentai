@@ -55,7 +55,7 @@ const Footer = ({ type }: { type: "company" | "jobseeker" }) => {
         <Box sx={{ minWidth: 200 }}>
           <Box
             component="img"
-            src={type === "company" ? "/logo.svg" : "/logojobSeeker.svg"}
+            src={type === "company" ? "/logo.svg" : "/logo-purple.svg"}
             alt="TalentAI Logo"
             sx={{ height: 32 }}
             onClick={() => router.push(type === "company" ? '/' : '/home/candidate')}

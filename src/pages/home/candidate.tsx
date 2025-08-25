@@ -12,7 +12,7 @@ import TestimonialsSection from "@/components/home-page/TestimonialsSection";
 const JobSeekerLanding: React.FC = () => {
   return (
     <>
-      <Header logo="/logojobSeeker.png" type="jobseeker" color="#8310FF" link="Are you hiring?" />
+      <Header logo="/logo-purple.png" type="jobseeker" color="#8310FF" link="Are you hiring?" />
 
       <HeroSection title="Get Hired" color="#8310FF" type="jobseeker" subtitle="For Who You Really Are." />
       {/* <PartnersSection /> */}

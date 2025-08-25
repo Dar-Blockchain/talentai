@@ -380,7 +380,7 @@ export default function SignIn() {
           >
             <Box
               component="img"
-              src={userType === "company" ? "/logo.svg" : "/logojobSeeker.svg"}
+              src={userType === "company" ? "/logo.svg" : "/logo-purple.svg"}
               alt="TalentAI Logo"
               sx={{ height: 32, cursor: "pointer" }}
               onClick={() => router.push("/")}

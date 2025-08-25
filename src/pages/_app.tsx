@@ -53,9 +53,9 @@ export default function App({ Component, pageProps }: AppProps) {
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <Head>
-            <link rel="icon" href="/talentaifavicon.ico" />
-            <link rel="apple-touch-icon" href="/talentaifavicon.ico" />
-            <link rel="shortcut icon" href="/talentaifavicon.ico" />
+            <link rel="icon" href="/favicon.ico" />
+            <link rel="apple-touch-icon" href="/favicon.ico" />
+            <link rel="shortcut icon" href="/favicon.ico" />
           </Head>
           <AuthWrapper>
             <Component {...pageProps} />

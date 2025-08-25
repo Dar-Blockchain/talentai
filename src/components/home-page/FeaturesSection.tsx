@@ -111,7 +111,7 @@ const FeaturesSection = ({ type, color }: FeaturesSectionProps) => {
             <>
               <Box
                 component="img"
-                src={type as "company" | "jobseeker" === "company" ? "/logo.svg" : "/logojobSeeker.svg"}
+                src={type as "company" | "jobseeker" === "company" ? "/logo.svg" : "/logo-purple.svg"}
                 alt="TalentAI Logo"
                 sx={{
                   height: "1em",
