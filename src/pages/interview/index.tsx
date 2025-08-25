@@ -544,7 +544,7 @@ export default function Test() {
             } else {
               stopRecording();
               saveTestResults();
-              router.push('/report');
+              router.push('/interview/report');
             }
           }
           return prev - 1;
@@ -803,7 +803,7 @@ export default function Test() {
       // Check if this is an on-boarding test
       if (router.query.type === 'on-boarding') {
         router.push({
-          pathname: '/report-on-boarding',
+          pathname: '/interview/report/on-boarding',
           query: {
             type: 'technicalSkill',
             skills: router.query.skills,
@@ -814,7 +814,7 @@ export default function Test() {
       } else {
         // For technical type, pass the skill and proficiency parameters
         router.push({
-          pathname: '/report',
+          pathname: '/interview/report',
           query: {
             from: 'test',
             type: router.query.type || 'technical',
@@ -862,7 +862,7 @@ export default function Test() {
     // Only navigate if not already navigating in handleNext
     if (current < questions.length - 1) {
       router.push({
-        pathname: '/report',
+        pathname: '/interview/report',
         query: {
           from: 'test',
           type: router.query.type || 'technical',

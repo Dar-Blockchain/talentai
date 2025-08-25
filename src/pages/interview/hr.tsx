@@ -872,13 +872,13 @@ const Test = () => {
 
       // Navigate to report page
       router.push({
-        pathname: '/reportInterviewTest',
+        pathname: '/interview/report/hr',
       });
     } catch (error) {
       console.error('Error saving test results:', error);
       // Still redirect to report page even if saving fails
       router.push({
-        pathname: '/reportInterviewTest',
+        pathname: '/interview/report/hr',
       });
     }
   };

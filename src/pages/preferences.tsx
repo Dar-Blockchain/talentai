@@ -502,7 +502,7 @@ function Preferences() {
       } else {
         // For normal sign-in, go to test page with skills and levels
         router.push({
-          pathname: '/test',
+          pathname: '/interview',
           query: {
             type: 'on-boarding',
             skills: skills.join(','),
