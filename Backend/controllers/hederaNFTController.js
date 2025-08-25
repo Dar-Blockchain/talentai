@@ -253,7 +253,7 @@ class HederaNFTController {
       
       // Generate multiple verification URLs
       const verificationUrls = {
-        custom: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify/${nftId}`,
+        custom: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/resume-builder/verify/${nftId}`,
         hedera: `https://hashscan.io/testnet/token/${this.resumeTokenId}/${serial}`,
         mirror: `${this.mirrorNodeApi}/tokens/${this.resumeTokenId}/nfts/${serial}`
       };

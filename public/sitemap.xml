@@ -58,7 +58,7 @@
 
   <!-- Chatbot Test Page -->
   <url>
-    <loc>https://app.talentai.bid/chatbot-test</loc>
+    <loc>https://app.talentai.bid/resume-builder/chatbot-test</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -66,7 +66,7 @@
 
   <!-- Auth Success Page -->
   <url>
-    <loc>https://app.talentai.bid/auth-success</loc>
+    <loc>https://app.talentai.bid/linkedin-auth-callback</loc>
     <lastmod>2024-12-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
