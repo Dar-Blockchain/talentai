@@ -5,7 +5,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { useTheme } from "@mui/material/styles";
 import { useForm } from "react-hook-form";
-import { signIn } from "next-auth/react";
 import {
   Box,
   Card,
@@ -13,7 +12,6 @@ import {
   TextField,
   Button,
   Alert,
-  Divider,
   InputAdornment,
   CircularProgress,
   Container,
@@ -39,18 +37,15 @@ export default function SignIn() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
-  
+
   const [verifying, setVerifying] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [isClient, setIsClient] = useState(false);
-  const [postVerifyRedirect, setPostVerifyRedirect] = useState<
-    | {
-        hasProfile: boolean;
-        callbackUrl?: string;
-        returnUrl?: string;
-      }
-    | null
-  >(null);
+  const [postVerifyRedirect, setPostVerifyRedirect] = useState<{
+    hasProfile: boolean;
+    callbackUrl?: string;
+    returnUrl?: string;
+  } | null>(null);
 
   const dispatch = useDispatch<AppDispatch>();
   const {
@@ -81,7 +76,6 @@ export default function SignIn() {
 
   const email = watchEmail("email");
   const code = watchCode("code");
-  
 
   const onEmailSubmit = async (data: EmailFormData) => {
     const emailToSend = data.email.toLowerCase().trim();
@@ -133,14 +127,12 @@ export default function SignIn() {
         sameSite: "lax",
       });
 
-      // More robust profile detection
-      console.log('Profile response:', response.profile);
-      const hasProfile = response.profile && 
-                        response.profile !== null && 
-                        typeof response.profile === 'object' && 
-                        Object.keys(response.profile).length > 0 &&
-                        response.profile.type; // Check if profile has a type field
-      console.log('Has profile:', hasProfile);
+      const hasProfile =
+        response.profile &&
+        response.profile !== null &&
+        typeof response.profile === "object" &&
+        Object.keys(response.profile).length > 0 &&
+        response.profile.type; // Check if profile has a type field
       const callbackUrl = router.query.callbackUrl as string | undefined;
       const returnUrl = router.query.returnUrl as string | undefined;
       // Defer redirect until Redux user state is updated
@@ -158,20 +150,22 @@ export default function SignIn() {
   // Redirect only after Redux auth.user is populated
   useEffect(() => {
     if (!isClient) return; // Don't run on server
-    
+
     const doRedirect = async () => {
       if (!postVerifyRedirect) return;
 
       const { hasProfile, callbackUrl, returnUrl } = postVerifyRedirect;
 
       try {
-        console.log('Redirect logic - hasProfile:', hasProfile, 'callbackUrl:', callbackUrl, 'returnUrl:', returnUrl);
         if (!hasProfile) {
-          console.log('No profile found, redirecting to preferences');
           if (callbackUrl) {
-            router.push(`/preferences?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+            router.push(
+              `/preferences?callbackUrl=${encodeURIComponent(callbackUrl)}`
+            );
           } else if (returnUrl) {
-            router.push(`/preferences?returnUrl=${encodeURIComponent(returnUrl)}`);
+            router.push(
+              `/preferences?returnUrl=${encodeURIComponent(returnUrl)}`
+            );
           } else {
             router.push("/preferences");
           }
@@ -203,7 +197,11 @@ export default function SignIn() {
     };
 
     // Ensure we have a user from Redux before redirecting
-    if (postVerifyRedirect && safeUser && Object.keys(safeUser || {}).length > 0) {
+    if (
+      postVerifyRedirect &&
+      safeUser &&
+      Object.keys(safeUser || {}).length > 0
+    ) {
       void doRedirect();
     }
   }, [safeUser, postVerifyRedirect, router, isClient]);
@@ -221,37 +219,40 @@ export default function SignIn() {
     setIsClient(true);
   }, []);
 
-  
-
   // Auto-redirect if user is already authenticated but has no profile
   useEffect(() => {
     if (!isClient) return; // Don't run on server
-    console.log(safeUser, "safeUser")
-    if (router.isReady && safeUser && Object.keys(safeUser || {}).length > 0 && isAuthenticated) {
+    if (
+      router.isReady &&
+      safeUser &&
+      Object.keys(safeUser || {}).length > 0 &&
+      isAuthenticated
+    ) {
       // User is authenticated, check if they have a profile
-      const hasProfile = safeProfile && 
-                        safeProfile !== null && 
-                        typeof safeProfile === 'object' && 
-                        Object.keys(safeProfile).length > 0 &&
-                        safeProfile.type;
-      
-      console.log('Auto-redirect check - user:', safeUser, 'profile:', safeProfile, 'hasProfile:', hasProfile);
-      
+      const hasProfile =
+        safeProfile &&
+        safeProfile !== null &&
+        typeof safeProfile === "object" &&
+        Object.keys(safeProfile).length > 0 &&
+        safeProfile.type;
+
       if (!hasProfile) {
-        console.log('User authenticated but no profile, redirecting to preferences');
         // Check for callback URLs in query params
         const callbackUrl = router.query.callbackUrl as string | undefined;
         const returnUrl = router.query.returnUrl as string | undefined;
-        
+
         if (callbackUrl) {
-          router.push(`/preferences?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+          router.push(
+            `/preferences?callbackUrl=${encodeURIComponent(callbackUrl)}`
+          );
         } else if (returnUrl) {
-          router.push(`/preferences?returnUrl=${encodeURIComponent(returnUrl)}`);
+          router.push(
+            `/preferences?returnUrl=${encodeURIComponent(returnUrl)}`
+          );
         } else {
           router.push("/preferences");
         }
       } else {
-        console.log('User has profile, redirecting to appropriate dashboard');
         // User has profile, redirect to appropriate dashboard
         switch (safeUser.role) {
           case "Admin":
@@ -276,8 +277,12 @@ export default function SignIn() {
   // Set checkingAuth to false when we're done checking
   useEffect(() => {
     if (!isClient) return; // Don't run on server
-    
-    if (router.isReady && !safeIsLoading && (!safeUser || Object.keys(safeUser || {}).length === 0)) {
+
+    if (
+      router.isReady &&
+      !safeIsLoading &&
+      (!safeUser || Object.keys(safeUser || {}).length === 0)
+    ) {
       setCheckingAuth(false);
     }
   }, [router.isReady, safeIsLoading, safeUser, isClient]);
@@ -317,7 +322,10 @@ export default function SignIn() {
   }
 
   // Show loading while checking authentication
-  if (checkingAuth && (safeIsLoading || (safeUser && Object.keys(safeUser || {}).length > 0))) {
+  if (
+    checkingAuth &&
+    (safeIsLoading || (safeUser && Object.keys(safeUser || {}).length > 0))
+  ) {
     return (
       <Box
         sx={{
