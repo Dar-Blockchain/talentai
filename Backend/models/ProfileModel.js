@@ -78,9 +78,7 @@ const profileSchema = new mongoose.Schema(
       { type: mongoose.Schema.Types.ObjectId, ref: "JobAssessmentResult" },
     ],
 
-    projectAssessments: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "ProjectAssessment" },
-    ],
+    // projectAssessments removed (ProjectAssessment feature deprecated)
 
     // Bid received by user (if type is Candidate)
     companyBid: {

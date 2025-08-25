@@ -33,10 +33,7 @@ const ProjectSchema = new mongoose.Schema(
       ref: "Profile",
       required: false,
     },
-    assessment: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "ProjectAssessment", // Ensure this matches the model name exactly
-    },
+    // assessment removed (ProjectAssessment feature deprecated)
   },
   { timestamps: true }
 );
