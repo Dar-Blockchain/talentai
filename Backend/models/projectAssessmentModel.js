@@ -224,12 +224,7 @@ const ProjectAssessmentSchema = new mongoose.Schema(
 
     businessData: BusinessDataSchema,
 
-    codeAnalysis: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "CodeAnalysis",
-      required: false,
-      default: null,
-    },
+    
 
     status: {
       type: String,
