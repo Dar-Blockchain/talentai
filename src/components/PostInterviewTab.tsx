@@ -223,6 +223,23 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
       console.log('Fetching from:', apiUrl);
       console.log('Token exists:', !!token);
 
+      // Session cache with TTL to avoid redundant fetches on quick returns
+      const cacheKey = `candidateProgress`;
+      const ttlMs = 2 * 60 * 1000; // 2 minutes
+      try {
+        const cachedRaw = sessionStorage.getItem(cacheKey);
+        if (cachedRaw) {
+          const cached = JSON.parse(cachedRaw);
+          if (cached && cached.timestamp && (Date.now() - cached.timestamp) < ttlMs) {
+            setCandidateProgress(Array.isArray(cached.data) ? cached.data : [cached.data]);
+            setProgressLoading(false);
+            return;
+          }
+        }
+      } catch (_) {
+        // ignore cache errors
+      }
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
       
@@ -257,6 +274,16 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
         const progressData = Array.isArray(result.data) ? result.data : [result.data];
         setCandidateProgress(progressData);
         console.log('Candidate Progress Data:', progressData);
+
+        // write to cache
+        try {
+          sessionStorage.setItem('candidateProgress', JSON.stringify({
+            timestamp: Date.now(),
+            data: progressData,
+          }));
+        } catch (_) {
+          // ignore cache write errors
+        }
       } else {
         // Check if it's a "no progress found" error (which is not a real error)
         if (result.message && result.message.includes('Progrès non trouvé')) {
@@ -264,6 +291,12 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
           console.log('No progress data found - this is normal for new users');
           setCandidateProgress([]);
           setProgressError(null);
+          try {
+            sessionStorage.setItem('candidateProgress', JSON.stringify({
+              timestamp: Date.now(),
+              data: [],
+            }));
+          } catch (_) {}
         } else {
           throw new Error(result.message || 'Failed to fetch progress data');
         }
@@ -334,13 +367,15 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
     return 'Poor';
   };
 
-  if (loading) {
+  // When both main data and progress are empty but either is still loading,
+  // show a single global loader instead of partially rendering the UI.
+  if ((loading || progressLoading) && (!data || data.length === 0) && (!candidateProgress || candidateProgress.length === 0)) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
         <Box sx={{ width: '100%', maxWidth: 400 }}>
           <LinearProgress sx={{ mb: 2 }} />
           <Typography variant="body2" color="textSecondary" textAlign="center">
-            Loading post interview data...
+            Loading your interview data...
           </Typography>
         </Box>
       </Box>

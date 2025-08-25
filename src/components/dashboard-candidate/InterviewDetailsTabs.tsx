@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import {
     Box,
@@ -58,6 +58,24 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                 const realProfileId = profile?._id;
                 const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/?page=${pageNum + 1
                     }&limit=${limit}&type=${type}&profileId=${realProfileId}`;
+
+                // Simple session cache with TTL to avoid redundant re-fetching on quick returns
+                const cacheKey = `interviewDetails:${realProfileId}:${type}:${pageNum}:${limit}`;
+                const ttlMs = 2 * 60 * 1000; // 2 minutes
+                try {
+                    const cachedRaw = sessionStorage.getItem(cacheKey);
+                    if (cachedRaw) {
+                        const cached = JSON.parse(cachedRaw);
+                        if (cached && cached.timestamp && (Date.now() - cached.timestamp) < ttlMs) {
+                            setData(cached.results || []);
+                            setTotal(cached.total || 0);
+                            setLoading(false);
+                            return;
+                        }
+                    }
+                } catch (_) {
+                    // ignore cache errors
+                }
                 const res = await fetch(url, {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                 });
@@ -65,6 +83,17 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                 const json = await res.json();
                 setData(json.results || []);
                 setTotal(json.total || 0);
+
+                // write to cache
+                try {
+                    sessionStorage.setItem(cacheKey, JSON.stringify({
+                        timestamp: Date.now(),
+                        results: json.results || [],
+                        total: json.total || 0,
+                    }));
+                } catch (_) {
+                    // ignore cache write failure
+                }
             } catch (e: any) {
                 setError(e.message || "Error fetching data");
             } finally {
@@ -74,7 +103,14 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
         [profile]
     );
 
+    const mountedOnce = useRef(false);
     useEffect(() => {
+        // Guard against double-invocation in React StrictMode in development
+        if (!mountedOnce.current) {
+            mountedOnce.current = true;
+            fetchData(tab, page, rowsPerPage);
+            return;
+        }
         fetchData(tab, page, rowsPerPage);
     }, [tab, page, rowsPerPage, fetchData]);
 
