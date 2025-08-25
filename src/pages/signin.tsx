@@ -27,7 +27,6 @@ import {
 import { registerUser, verifyOTP } from "@/store/slices/authSlice";
 import type { RootState, AppDispatch } from "@/store/store";
 import Cookies from "js-cookie";
-import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import { getUserLocation } from "@/utils/api";
 
 type EmailFormData = { email: string };
@@ -40,7 +39,7 @@ export default function SignIn() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
-  const [isHackathon, setIsHackathon] = useState(false);
+  
   const [verifying, setVerifying] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [isClient, setIsClient] = useState(false);
@@ -49,8 +48,6 @@ export default function SignIn() {
         hasProfile: boolean;
         callbackUrl?: string;
         returnUrl?: string;
-        isHackathon: boolean;
-        userForHackathon?: any;
       }
     | null
   >(null);
@@ -84,42 +81,7 @@ export default function SignIn() {
 
   const email = watchEmail("email");
   const code = watchCode("code");
-  const handleHackathonRedirect = async (userData: any) => {
-    const redirect = (path: string) => {
-      router.push(path);
-      setVerifying(false);
-    };
-    try {
-      console.log(userData);
-      if (userData.role === "jury") {
-        return redirect("/dashboard/jury");
-      }
-      // if (userData.email === "hatemazaiez1@gmail.com") {
-      //   return redirect("/dashboard/jury");
-      // }
-      const token = localStorage.getItem("api_token");
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
-
-      const response = await fetch(`${baseUrl}project/getMyProjects`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-
-      if (!response.ok) {
-        return redirect("/hackathon/register");
-      }
-
-      const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
-        return redirect(`/hackathon/projects/${data[0]._id}`);
-      } else {
-        return redirect("/hackathon/register");
-      }
-    } catch (error) {
-      console.warn("Error in handleHackathonRedirect:", error);
-      return redirect("/hackathon/register");
-    }
-  };
+  
 
   const onEmailSubmit = async (data: EmailFormData) => {
     const emailToSend = data.email.toLowerCase().trim();
@@ -181,15 +143,11 @@ export default function SignIn() {
       console.log('Has profile:', hasProfile);
       const callbackUrl = router.query.callbackUrl as string | undefined;
       const returnUrl = router.query.returnUrl as string | undefined;
-      const isHackathonFromQuery = router.query.source === "hackathon";
-
       // Defer redirect until Redux user state is updated
       setPostVerifyRedirect({
         hasProfile,
         callbackUrl,
         returnUrl,
-        isHackathon: !!isHackathonFromQuery,
-        userForHackathon: response.user,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Verification failed");
@@ -204,15 +162,9 @@ export default function SignIn() {
     const doRedirect = async () => {
       if (!postVerifyRedirect) return;
 
-      const { hasProfile, callbackUrl, returnUrl, isHackathon, userForHackathon } =
-        postVerifyRedirect;
+      const { hasProfile, callbackUrl, returnUrl } = postVerifyRedirect;
 
       try {
-        if (isHackathon) {
-          await handleHackathonRedirect(userForHackathon || safeUser);
-          return;
-        }
-
         console.log('Redirect logic - hasProfile:', hasProfile, 'callbackUrl:', callbackUrl, 'returnUrl:', returnUrl);
         if (!hasProfile) {
           console.log('No profile found, redirecting to preferences');
@@ -269,17 +221,7 @@ export default function SignIn() {
     setIsClient(true);
   }, []);
 
-  useEffect(() => {
-    if (router.isReady) {
-      // Check for hackathon parameter
-      const isHackathonParam = router.query.source === "hackathon";
-      setIsHackathon(isHackathonParam);
-      if (isHackathonParam) {
-        // Store hackathon status in localStorage
-        localStorage.setItem("isHackathonParticipant", "true");
-      }
-    }
-  }, [router.isReady, router.query]);
+  
 
   // Auto-redirect if user is already authenticated but has no profile
   useEffect(() => {
@@ -394,54 +336,13 @@ export default function SignIn() {
   return (
     <Box
       sx={{
-        mt: isHackathon ? 0 : { xs: 3, sm: 4, md: 5 },
+        mt: { xs: 3, sm: 4, md: 5 },
         minHeight: "100vh",
         background: "white",
         display: "flex",
         flexDirection: "column",
       }}
     >
-      {/* Hackathon Banner */}
-      {isHackathon && (
-        <Box
-          sx={{
-            width: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            py: 2.5,
-            mb: 2,
-            background: "linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)",
-            color: "#fff",
-            borderRadius: 0,
-            boxShadow: "0 4px 24px #7C4DFF22",
-            fontFamily: "Quicksand, Arial Rounded MT Bold, Arial, sans-serif",
-            position: "relative",
-            zIndex: 2,
-          }}
-        >
-          <EmojiEventsIcon sx={{ fontSize: 32, mr: 2, color: "#FFD600" }} />
-          <Box>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 800,
-                letterSpacing: 0.5,
-                color: "#fff",
-                mb: 0.2,
-              }}
-            >
-              Welcome to the TalentAI Hackathon!
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{ color: "#fff", opacity: 0.92, fontWeight: 500 }}
-            >
-              Sign in below to join the hackathon and access exclusive features.
-            </Typography>
-          </Box>
-        </Box>
-      )}
       {/* Main Content */}
       <Container
         maxWidth="sm"
@@ -524,9 +425,7 @@ export default function SignIn() {
               lineHeight: 1.6,
             }}
           >
-            {isHackathon
-              ? "Sign in to join the hackathon, submit your project, and access exclusive resources!"
-              : "Sign in to access your recruitment dashboard"}
+            {"Sign in to access your recruitment dashboard"}
           </Typography>
 
           {error && (
@@ -735,30 +634,28 @@ export default function SignIn() {
               )}
             </Button>
 
-            {!isHackathon && (
-              <Box sx={{ textAlign: "center", mt: 2 }}>
-                <Button
-                  startIcon={<ArrowBackIcon />}
-                  onClick={() => router.push("/")}
-                  sx={{
+            <Box sx={{ textAlign: "center", mt: 2 }}>
+              <Button
+                startIcon={<ArrowBackIcon />}
+                onClick={() => router.push("/")}
+                sx={{
+                  color:
+                    userType === "company"
+                      ? "rgba(41, 210, 145, 0.83)"
+                      : "rgba(131, 16, 255, 0.83)",
+                  textTransform: "none",
+                  "&:hover": {
+                    background: "transparent",
                     color:
                       userType === "company"
-                        ? "rgba(41, 210, 145, 0.83)"
-                        : "rgba(131, 16, 255, 0.83)",
-                    textTransform: "none",
-                    "&:hover": {
-                      background: "transparent",
-                      color:
-                        userType === "company"
-                          ? "rgba(41, 210, 145, 0.73)"
-                          : "rgba(131, 16, 255, 0.73)",
-                    },
-                  }}
-                >
-                  Back to Landing Page
-                </Button>
-              </Box>
-            )}
+                        ? "rgba(41, 210, 145, 0.73)"
+                        : "rgba(131, 16, 255, 0.73)",
+                  },
+                }}
+              >
+                Back to Landing Page
+              </Button>
+            </Box>
           </Box>
 
           {/* <Divider
