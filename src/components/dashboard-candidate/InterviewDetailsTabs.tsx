@@ -247,7 +247,7 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
 
                                                     <Stack direction="row" justifyContent="flex-end" sx={{ mt: 0.5 }}>
                                                         <Button
-                                                            onClick={() => router.push(`/candidate/interview/${row._id || row.id}`)}
+                                                            onClick={() => router.push(`/interview/report/${row._id || row.id}`)}
                                                             size="small"
                                                             sx={{
                                                                 textTransform: "none",
@@ -362,7 +362,7 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                                     )}
                                                     <Stack direction="row" justifyContent="flex-end">
                                                         <Button
-                                                            onClick={() => router.push(`/candidate/interview/${row._id || row.id}`)}
+                                                            onClick={() => router.push(`/interview/report/${row._id || row.id}`)}
                                                             size="small"
                                                             sx={{
                                                                 textTransform: "none",
@@ -455,7 +455,7 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                                     )}
                                                     <Stack direction="row" justifyContent="flex-end" sx={{ mt: 0.5 }}>
                                                         <Button
-                                                            onClick={() => router.push(`/candidate/interview/${row._id || row.id}`)}
+                                                            onClick={() => router.push(`/interview/report/${row._id || row.id}`)}
                                                             size="small"
                                                             sx={{
                                                                 textTransform: "none",
@@ -514,7 +514,7 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                                             size="small"
                                                             onClick={() =>
                                                                 router.push(
-                                                                    `/candidate/interview/${row._id || row.id}`
+                                                                    `/interview/report/${row._id || row.id}`
                                                                 )
                                                             }
                                                         >

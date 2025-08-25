@@ -1515,7 +1515,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                     variant="outlined"
                     size="small"
                     startIcon={<VisibilityIcon />}
-                    onClick={() => router.push(`/candidate/interview/${interview._id}`)}
+                    onClick={() => router.push(`/interview/report/${interview._id}`)}
                     sx={{
                       borderColor: '#02E2FF',
                       color: '#02E2FF',

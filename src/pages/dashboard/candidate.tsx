@@ -808,7 +808,7 @@ export default function DashboardCandidate() {
         // Use default proficiency level of 1 if not defined
         const proficiencyLevel = skill.proficiencyLevel || 1;
         router.push(
-          `/test?type=technical&skill=${skill.name}&proficiency=${proficiencyLevel}`
+          `/interview?type=technical&skill=${skill.name}&proficiency=${proficiencyLevel}`
         );
       } else {
         setSoftSkillType(skill.name);
@@ -826,7 +826,7 @@ export default function DashboardCandidate() {
         };
         setSoftSkillProficiency(proficiencyMap[skill.experienceLevel] || 1);
         router.push(
-          `/test?type=soft&skill=${skill.name}&category=${skill.category
+          `/interview?type=soft&skill=${skill.name}&category=${skill.category
           }&proficiency=${proficiencyMap[skill.experienceLevel] || 1}`
         );
       }
@@ -869,7 +869,7 @@ export default function DashboardCandidate() {
     try {
       if (skillType === "technical" && selectedSkill) {
         router.push(
-          `/test?type=technicalSkill&skill=${selectedSkill}`
+          `/interview?type=technicalSkill&skill=${selectedSkill}`
         );
       } else if (skillType === "soft" && softSkillType) {
         const proficiencyMap: { [key: string]: number } = {
@@ -903,7 +903,7 @@ export default function DashboardCandidate() {
           queryParams.append("subcategory", softSkillSubcategory);
         }
 
-        router.push(`/test?${queryParams.toString()}`);
+        router.push(`/interview?${queryParams.toString()}`);
       }
       handleCloseTestModal();
     } catch (error) {
@@ -949,7 +949,7 @@ export default function DashboardCandidate() {
         queryParams.append("subcategory", softSkillSubcategory);
       }
 
-      router.push(`/test?${queryParams.toString()}`);
+      router.push(`/interview?${queryParams.toString()}`);
       handleCloseAddSoftSkillModal();
     } catch (error) {
       console.error("Error in soft skill submission:", error);
@@ -992,7 +992,7 @@ export default function DashboardCandidate() {
       // Redirect to test for the selected skill
       if (selectedSkill) {
         router.push(
-          `/test?type=technicalSkill&skill=${encodeURIComponent(selectedSkill)}`
+          `/interview?type=technicalSkill&skill=${encodeURIComponent(selectedSkill)}`
         );
       }
     } catch (error) {
@@ -1617,7 +1617,7 @@ export default function DashboardCandidate() {
                 <ActionButton
                   variant="contained"
                   startIcon={<PersonIcon />}
-                  onClick={() => router.push("/interviewTest")}
+                  onClick={() => router.push("/interview/hr")}
                   disabled={profile?.quota >= 5}
                   sx={{
                     background: profile?.quota >= 5
