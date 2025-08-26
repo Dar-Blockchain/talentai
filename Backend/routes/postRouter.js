@@ -1,43 +1,63 @@
+/**
+ * Routes des offres (posts)
+ *
+ * Middlewares globaux appliqués:
+ * - requireAuthUser: nécessite un utilisateur authentifié
+ * - LogMiddleware("Post"): journalise les requêtes liées aux posts
+ * - controledAcces: certaines routes peuvent nécessiter un rôle spécifique côté contrôleur
+ */
 const express = require("express");
 const router = express.Router();
 const { requireAuthUser } = require("../middleware/authMiddleware");
 
-// Importez les middlewares
+// Import des middlewares
 const postController = require("../controllers/postController");
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 const { controledAcces } = require('../middleware/controledAcces'); // Importez le middleware
 
 
+// Auth obligatoire + logs pour toutes les routes
 router.use(requireAuthUser, authLogMiddleware("Post"));
 
 
-// Route pour créer un post
+// POST /post/save-post
+// Description: Crée un post
 router.post("/save-post", postController.createPost);
 
-// Route pour récupérer tous les posts
+// GET /post/get-all-posts
+// Description: Retourne tous les posts
 router.get("/get-all-posts", postController.getAllPosts);
 
-// Route pour récupérer les posts de l'utilisateur connecté
+// GET /post/my-posts
+// Description: Posts de l'utilisateur courant
 router.get("/my-posts", postController.getUserPosts);
 
-// Route pour récupérer les posts d'un utilisateur spécifique
+// GET /post/user/:userId
+// Description: Posts d'un utilisateur spécifique
 router.get("/user/:userId", postController.getUserPosts);
 
-// Route pour récupérer un post spécifique
+// GET /post/getPostById/:id
+// Description: Détails d'un post
 router.get("/getPostById/:id", postController.getPostById);
 
-// Route pour mettre à jour un post
+// PUT /post/updatePost/:id
+// Description: Met à jour un post
 router.put("/updatePost/:id", postController.updatePost);
 
-// Route pour changer le statut d'un post
+// PATCH /post/updatePostStatus/:id
+// Description: Modifie le statut d'un post (actif/brouillon, etc.)
 router.patch("/updatePostStatus/:id", postController.updatePostStatus);
 
-// Route pour supprimer un post
+// DELETE /post/deletePost/:id
+// Description: Supprime un post
 router.delete("/deletePost/:id", postController.deletePost);
 
-// Nouvelle route pour récupérer 3 posts par les 3 premiers skills du profil utilisateur
+// GET /post/adsPost
+// Description: 3 posts proposés à partir des 3 premières compétences du profil
 router.get("/adsPost", postController.getPostsByUserTopSkills);
 
+// GET /post/DetailsPost/:id
+// Description: Alias de détail de post
 router.get("/DetailsPost/:id", postController.getPostById);
 
 module.exports = router;
