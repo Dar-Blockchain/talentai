@@ -6,7 +6,7 @@ import { LocationOn as LocationIcon, ZoomIn, ZoomOut } from '@mui/icons-material
 
 // Dynamically import the entire map component with SSR disabled
 const WorldMapComponent = dynamic(
-  () => import('@/components/WorldMapComponent'),
+  () => import('@/components/dashboard-admin/WorldMapComponent'),
   { 
     ssr: false,
     loading: () => (

@@ -1,4 +1,4 @@
-import RecruitmentFlowBuilder from "@/components/RecruitmentFlowBuilder";
+import RecruitmentFlowBuilder from "@/components/posts/RecruitmentFlowBuilder";
 import React from "react";
 
 const CreateJobPage: React.FC = () => {

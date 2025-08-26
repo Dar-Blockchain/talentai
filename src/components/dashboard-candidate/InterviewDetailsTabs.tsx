@@ -25,7 +25,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
-import PostInterviewTab from "@/components/PostInterviewTab";
+import PostInterviewTab from "@/components/dashboard-candidate/PostInterviewTab";
 
 const INTERVIEW_TYPES = [
     { label: "Post Interview", value: "post_interview", icon: <AssignmentTurnedInIcon sx={{ fontSize: 18 }} /> },

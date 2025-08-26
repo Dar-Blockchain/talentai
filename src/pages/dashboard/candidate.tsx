@@ -64,7 +64,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { toast } from "react-hot-toast";
 import { generateTodos } from "@/store/slices/todoSlice";
 import CandidateOnly from "@/components/CandidateOnly";
-import PostInterviewTab from "@/components/PostInterviewTab";
+import PostInterviewTab from "@/components/dashboard-candidate/PostInterviewTab";
 import InterviewDetailsTabs from "@/components/dashboard-candidate/InterviewDetailsTabs";
 import RecommendedOpportunities from "@/components/dashboard-candidate/RecommendedOpportunities";
 import WelcomeHeader from "@/components/dashboard-candidate/WelcomeHeader";

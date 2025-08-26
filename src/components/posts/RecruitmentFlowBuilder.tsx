@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { postRecruitmentSteps, selectPostStepsLoading, selectPostStepsError } from '../store/slices/postSlice';
+import { postRecruitmentSteps, selectPostStepsLoading, selectPostStepsError } from '../../store/slices/postSlice';
 import { 
   Box, 
   Typography, 
