@@ -38,7 +38,7 @@ export type AddSoftSkillDialogProps = {
   onSoftSkillSubcategoryChange: (value: string) => void;
 };
 
-export default function AddSoftSkillDialog(props: AddSoftSkillDialogProps) {
+function AddSoftSkillDialogComponent(props: AddSoftSkillDialogProps) {
   const {
     open,
     onClose,
@@ -297,5 +297,6 @@ export default function AddSoftSkillDialog(props: AddSoftSkillDialogProps) {
     </Dialog>
   );
 }
+export default React.memo(AddSoftSkillDialogComponent);
 
 

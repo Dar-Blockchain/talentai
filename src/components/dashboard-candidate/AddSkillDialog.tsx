@@ -29,7 +29,7 @@ export type AddSkillDialogProps = {
   technicalSkillsList: string[];
 };
 
-export default function AddSkillDialog(props: AddSkillDialogProps) {
+function AddSkillDialogComponent(props: AddSkillDialogProps) {
   const {
     open,
     onClose,
@@ -210,5 +210,6 @@ export default function AddSkillDialog(props: AddSkillDialogProps) {
     </Dialog>
   );
 }
+export default React.memo(AddSkillDialogComponent);
 
 

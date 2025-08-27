@@ -21,7 +21,7 @@ export type UserInfoCardProps = {
   handleDeleteSkill: (name: string) => void;
 };
 
-export default function UserInfoCard(props: UserInfoCardProps) {
+function UserInfoCardComponent(props: UserInfoCardProps) {
   const {
     profile,
     SectionTitle,
@@ -269,5 +269,6 @@ export default function UserInfoCard(props: UserInfoCardProps) {
     </Box>
   );
 }
+export default React.memo(UserInfoCardComponent);
 
 

@@ -54,7 +54,7 @@ export type TestSelectionDialogProps = {
   onSoftSkillSubcategoryChange: (value: string) => void;
 };
 
-export default function TestSelectionDialog(props: TestSelectionDialogProps) {
+function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
   const {
     open,
     onClose,
@@ -452,5 +452,7 @@ export default function TestSelectionDialog(props: TestSelectionDialogProps) {
     </Dialog>
   );
 }
+
+export default React.memo(TestSelectionDialogComponent);
 
 
