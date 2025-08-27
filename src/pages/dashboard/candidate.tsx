@@ -75,6 +75,10 @@ import TestSelectionDialog from "@/components/dashboard-candidate/TestSelectionD
 import UserInfoCard from "@/components/dashboard-candidate/UserInfoCard";
 import AddSoftSkillDialog from "@/components/dashboard-candidate/AddSoftSkillDialog";
 import AddSkillDialog from "@/components/dashboard-candidate/AddSkillDialog";
+import EditProfileModal from "@/components/dashboard-candidate/EditProfileModal";
+import LoadingState from "@/components/dashboard-candidate/LoadingState";
+import ErrorState from "@/components/dashboard-candidate/ErrorState";
+import DashboardNavbar from "@/components/dashboard-candidate/DashboardNavbar";
 
 import Avatar from '@mui/material/Avatar';
 const GREEN_MAIN = "#8310FF";
@@ -1077,186 +1081,23 @@ export default function DashboardCandidate() {
     <CandidateOnly>
       {/* Show loading state */}
       {loading && (
-        <Container
-          sx={{
-            minHeight: "100vh",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            // background: '#0f172a'
-          }}
-          aria-label="Loading dashboard"
-          role="main"
-        >
-          <Box sx={{ textAlign: 'center' }}>
-            <CircularProgress 
-              sx={{ color: GREEN_MAIN }} 
-              size={60}
-              aria-label="Loading profile data"
-            />
-            <Typography 
-              variant="h6" 
-              sx={{ mt: 2, color: GREEN_MAIN }}
-              aria-live="polite"
-            >
-              Loading your dashboard...
-            </Typography>
-          </Box>
-        </Container>
+        <LoadingState />
       )}
 
       {/* Show error state */}
       {error && !loading && (
-        <Container sx={{ mt: 4 }} role="main">
-          <Alert 
-            severity="error" 
-            sx={{ borderRadius: "12px" }}
-            aria-live="assertive"
-          >
-            <Typography variant="h6" gutterBottom>
-              Error Loading Dashboard
-            </Typography>
-            <Typography>
-              {error}
-            </Typography>
-            <Button 
-              onClick={() => dispatch(getMyProfile())} 
-              sx={{ mt: 2 }}
-              variant="outlined"
-              aria-label="Retry loading profile"
-            >
-              Try Again
-            </Button>
-          </Alert>
-        </Container>
+        <ErrorState error={error} onRetry={() => dispatch(getMyProfile())} />
       )}
 
       {/* Show main content only when profile is available */}
       {!loading && !error && profile && (
         <>
           {/* Navbar */}
-          <AppBar
-            position="static"
-            elevation={0}
-            sx={{
-              bgcolor: "rgba(255,255,255,0.7)",
-              color: "#191919",
-              boxShadow: "0 4px 24px 0 rgba(124,77,255,0.10)",
-              mb: 3,
-              borderRadius: 3,
-              backdropFilter: "blur(16px)",
-              width: 'unset',
-              mx: { xs: 1, sm: 4 },
-              mt: 2,
-              px: { xs: 1, sm: 3 },
-              py: 1,
-            }}
-            role="banner"
-            aria-label="Dashboard navigation"
-          >
-            <Toolbar
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                minHeight: { xs: 56, sm: 72 },
-                px: '0 !important',
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <Box
-                  component="img"
-                  src="/logo.svg"
-                  alt="TalentAI Logo"
-                  sx={{ height: { xs: 28, sm: 32 }, mr: 1, cursor: "pointer", transition: "transform 0.2s", '&:hover': { transform: 'scale(1.07)' } }}
-                  onClick={() => router.push("/")}
-                />
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 800,
-                    fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif',
-                    color: "#7C4DFF",
-                    textShadow: "0 2px 8px #7C4DFF11",
-                    display: { xs: "none", sm: "block" },
-                  }}
-                >
-                  Candidate Dashboard
-                </Typography>
-              </Box>
-              {profile && (
-                <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 2 } }}>
-                  <Avatar
-                    sx={{
-                      bgcolor: "linear-gradient(135deg, #7C4DFF 60%, #00B8D4 100%)",
-                      color: "#fff",
-                      width: 44,
-                      height: 44,
-                      fontWeight: 700,
-                      fontSize: 22,
-                      boxShadow: "0 2px 8px #7C4DFF22",
-                      border: "2px solid #fff",
-                    }}
-                  >
-                    {profile.userId?.username?.[0] || profile.userId?.email?.[0] || "U"}
-                  </Avatar>
-                  {!isMobile && (
-                    <>
-                      <Box sx={{ textAlign: "right", minWidth: 120 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#222", fontSize: 17, lineHeight: 1.1 }}>
-                          {profile.userId?.username || "User"}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: 13 }}>
-                          {profile.userId?.email}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ mx: 1, height: 36, borderLeft: "1.5px solid #E0E0E0" }} />
-                    </>
-                  )}
-                  {isMobile ? (
-                    <IconButton 
-                      onClick={handleLogout}
-                      sx={{
-                        background: "linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)",
-                        color: "#fff",
-                        width: 44, height: 44,
-                        '&:hover': {
-                          background: "linear-gradient(90deg, #00B8D4 0%, #7C4DFF 100%)",
-                        }
-                      }}
-                    >
-                      <LogoutIcon />
-                    </IconButton>
-                  ) : (
-                    <Button
-                      variant="contained"
-                      startIcon={<LogoutIcon />}
-                      sx={{
-                        background: "linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)",
-                        color: "#fff",
-                        fontWeight: 700,
-                        borderRadius: 2,
-                        px: 3,
-                        py: 1.2,
-                        boxShadow: "0 2px 8px #00B8D422",
-                        textTransform: "none",
-                        fontSize: 16,
-                        letterSpacing: 0.2,
-                        transition: "background 0.2s, box-shadow 0.2s",
-                        '&:hover': {
-                          background: "linear-gradient(90deg, #00B8D4 0%, #7C4DFF 100%)",
-                          boxShadow: "0 4px 16px #00B8D433",
-                        },
-                      }}
-                      onClick={handleLogout}
-                    >
-                      Logout
-                    </Button>
-                  )}
-                </Box>
-              )}
-            </Toolbar>
-          </AppBar>
+          <DashboardNavbar
+            profile={profile}
+            onLogout={handleLogout}
+            isMobile={isMobile}
+          />
           <Box
             sx={{
               minHeight: "100vh",
@@ -1265,7 +1106,7 @@ export default function DashboardCandidate() {
             }}
           >
             <Container maxWidth="lg">
-                        {/* Profile Header */}
+              {/* Profile Header */}
               <ProfileHeader>
                 <Box sx={{ position: "relative", zIndex: 2 }}>
                   <WelcomeHeader
@@ -1277,173 +1118,14 @@ export default function DashboardCandidate() {
                   />
                 </Box>
               </ProfileHeader>
-                  {/* Edit Profile Modal */}
-                  <Dialog
-                    open={editProfileOpen}
-                    onClose={handleEditProfileClose}
-                    maxWidth="md"
-                    fullWidth
-                    PaperProps={{
-                      sx: {
-                        background: "rgba(30, 41, 59, 0.95)",
-                        backdropFilter: "blur(10px)",
-                        borderRadius: "16px",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                      },
-                    }}
-                  >
-                    <DialogTitle
-                      sx={{
-                        borderBottom: "1px solid rgba(255,255,255,0.1)",
-                        color: "#000000",
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Typography variant="h6">Edit Profile</Typography>
-                        <IconButton
-                          onClick={handleEditProfileClose}
-                          sx={{ color: "rgba(0,0,0,0.7)" }}
-                        >
-                          <CloseIcon />
-                        </IconButton>
-                      </Box>
-                    </DialogTitle>
-                    <DialogContent sx={{ mt: 2 }}>
-                      <Box
-                        component="form"
-                        onSubmit={handleSubmit}
-                        sx={{ display: "flex", flexDirection: "column", gap: 3 }}
-                      >
-                        <TextField
-                          name="username"
-                          label="Username"
-                          value={formData.username}
-                          onChange={handleInputChange}
-                          fullWidth
-                          InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
-                          InputProps={{
-                            sx: {
-                              color: "#000000",
-                              "& .MuiOutlinedInput-notchedOutline": {
-                                borderColor: "rgba(0,0,0,0.2)",
-                              },
-                              "&:hover .MuiOutlinedInput-notchedOutline": {
-                                borderColor: "rgba(0,0,0,0.3)",
-                              },
-                              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                borderColor: GREEN_MAIN,
-                              },
-                            },
-                          }}
-                        />
-                        <TextField
-                          name="email"
-                          label="Email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          fullWidth
-                          InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
-                          InputProps={{
-                            sx: {
-                              color: "#000000",
-                              "& .MuiOutlinedInput-notchedOutline": {
-                                borderColor: "rgba(0,0,0,0.2)",
-                              },
-                              "&:hover .MuiOutlinedInput-notchedOutline": {
-                                borderColor: "rgba(0,0,0,0.3)",
-                              },
-                              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                borderColor: GREEN_MAIN,
-                              },
-                            },
-                          }}
-                        />
-                        <TextField
-                          select
-                          name="experienceLevel"
-                          label="Experience Level"
-                          value={formData.experienceLevel}
-                          onChange={handleInputChange}
-                          fullWidth
-                          InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
-                          InputProps={{
-                            sx: {
-                              color: "#000000",
-                              "& .MuiOutlinedInput-notchedOutline": {
-                                borderColor: "rgba(0,0,0,0.2)",
-                              },
-                              "&:hover .MuiOutlinedInput-notchedOutline": {
-                                borderColor: "rgba(0,0,0,0.3)",
-                              },
-                              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                borderColor: GREEN_MAIN,
-                              },
-                            },
-                          }}
-                          SelectProps={{
-                            sx: { color: "#000000" },
-                          }}
-                        >
-                          {[
-                            "Entry Level",
-                            "Junior",
-                            "Mid Level",
-                            "Senior",
-                            "Expert",
-                          ].map((level) => (
-                            <MenuItem
-                              key={level}
-                              value={level}
-                              sx={{
-                                backgroundColor: "rgba(30,41,59,0.98)",
-                                "&:hover": { backgroundColor: "rgba(30,41,59,1)" },
-                              }}
-                            >
-                              {level}
-                            </MenuItem>
-                          ))}
-                        </TextField>
-                      </Box>
-                    </DialogContent>
-                    <DialogActions
-                      sx={{
-                        borderTop: "1px solid rgba(255,255,255,0.1)",
-                        padding: 2,
-                      }}
-                    >
-                      <Button
-                        onClick={handleEditProfileClose}
-                        sx={{
-                          color: "rgba(0,0,0,0.7)",
-                          "&:hover": { color: "#000000" },
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        variant="contained"
-                        onClick={handleSubmit}
-                        sx={{
-                          background:
-                            "linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)",
-                          color: "#000000",
-                          "&:hover": {
-                            background:
-                              "linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)",
-                          },
-                        }}
-                      >
-                        Save Changes
-                      </Button>
-                    </DialogActions>
-                  </Dialog>
+                                     {/* Edit Profile Modal */}
+                   <EditProfileModal
+                     open={editProfileOpen}
+                     onClose={handleEditProfileClose}
+                     formData={formData}
+                     onChange={handleInputChange}
+                     onSubmit={handleSubmit}
+                   />
 
                   {/* Test Selection Modal */}
                   <TestSelectionDialog
