@@ -24,7 +24,7 @@ import WidgetsIcon from '@mui/icons-material/Widgets'
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions'
 import IconsSidebar from '@/components/resume-builder/IconsSidebar'
 import QRCode from 'qrcode'
-import { ResumeBuilderChatBot, ResumeChatBotFab } from '@/components/resume-chatbot'
+import { ResumeBuilderChatBot, ResumeChatBotFab } from '@/components/resume-builder/resume-chatbot'
 
 // Add debug button and dialog
 const DEBUG_MODE = process.env.NODE_ENV === 'development';
