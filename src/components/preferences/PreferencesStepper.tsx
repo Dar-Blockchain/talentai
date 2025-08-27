@@ -17,9 +17,16 @@ interface PreferencesStepperProps {
   userType: string;
 }
 
-function ColorlibStepIcon(props: StepIconProps) {
-  const { active, completed, icon } = props;
-  const userRole = userType || '';
+// Extended StepIconProps to include userType
+interface CustomStepIconProps extends StepIconProps {
+  userType: string;
+}
+
+/**
+ * Custom step icon component that displays different icons based on user type and step
+ */
+function ColorlibStepIcon(props: CustomStepIconProps) {
+  const { active, completed, icon, userType } = props;
   
   // Company flow icons
   const companyIcons: Record<string, React.ReactElement> = {
@@ -41,10 +48,10 @@ function ColorlibStepIcon(props: StepIconProps) {
   // Select type icon (initial step)
   const selectTypeIcon = <BusinessIcon />;
   
-  const icons = userRole === 'company' ? companyIcons : candidateIcons;
+  const icons = userType === 'company' ? companyIcons : candidateIcons;
   
   const bg = active || completed
-    ? userRole === 'company' ? 'rgba(0, 255, 157, 1)' : '#8310FF'
+    ? userType === 'company' ? 'rgba(0, 255, 157, 1)' : '#8310FF'
     : 'black';
     
   return (
@@ -65,12 +72,16 @@ function ColorlibStepIcon(props: StepIconProps) {
   );
 }
 
+/**
+ * Preferences stepper component that shows the current step in the preferences flow
+ */
 const PreferencesStepper = ({ steps, activeStep, userType }: PreferencesStepperProps) => {
   const GREEN_MAIN = userType === 'company' ? 'rgba(0, 255, 157, 1)' : '#8310FF';
   const FADE_OPACITY = 0.3;
 
+  // Custom connector with dynamic colors based on user type
   const ColorlibConnector = styled(StepConnector)(({ theme }: any) => {
-    const primary = userType === 'company' ? GREEN_MAIN : GREEN_MAIN;
+    const primary = GREEN_MAIN;
     const faded = `rgba(${parseInt(primary.slice(1, 3), 16)},${parseInt(primary.slice(3, 5), 16)},${parseInt(primary.slice(5, 7), 16)},${FADE_OPACITY})`;
 
     return {
@@ -122,7 +133,9 @@ const PreferencesStepper = ({ steps, activeStep, userType }: PreferencesStepperP
       {steps.map(label => (
         <Step key={label}>
           <StepLabel
-            StepIconComponent={ColorlibStepIcon}
+            StepIconComponent={(props) => (
+              <ColorlibStepIcon {...props} userType={userType} />
+            )}
             sx={{
               '& .MuiStepLabel-label.Mui-active': { color: `${GREEN_MAIN} !important` },
               '& .MuiStepLabel-label.Mui-completed': { color: `${GREEN_MAIN} !important` }
