@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ReactNode } from "react";
+import React, { useState, useEffect, ReactNode, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getMyProfile,
@@ -64,12 +64,21 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { toast } from "react-hot-toast";
 import { generateTodos } from "@/store/slices/todoSlice";
 import CandidateOnly from "@/components/CandidateOnly";
-import PostInterviewTab from "@/components/PostInterviewTab";
+import PostInterviewTab from "@/components/dashboard-candidate/PostInterviewTab";
+import SkillBlock from "@/components/dashboard-candidate/SkillBlock";
 import InterviewDetailsTabs from "@/components/dashboard-candidate/InterviewDetailsTabs";
 import RecommendedOpportunities from "@/components/dashboard-candidate/RecommendedOpportunities";
 import WelcomeHeader from "@/components/dashboard-candidate/WelcomeHeader";
-import { useCallback } from 'react';
+ 
 import Link from "next/link";
+import TestSelectionDialog from "@/components/dashboard-candidate/TestSelectionDialog";
+import UserInfoCard from "@/components/dashboard-candidate/UserInfoCard";
+import AddSoftSkillDialog from "@/components/dashboard-candidate/AddSoftSkillDialog";
+import AddSkillDialog from "@/components/dashboard-candidate/AddSkillDialog";
+import EditProfileModal from "@/components/dashboard-candidate/EditProfileModal";
+import LoadingState from "@/components/dashboard-candidate/LoadingState";
+import ErrorState from "@/components/dashboard-candidate/ErrorState";
+import DashboardNavbar from "@/components/dashboard-candidate/DashboardNavbar";
 
 import Avatar from '@mui/material/Avatar';
 const GREEN_MAIN = "#8310FF";
@@ -242,195 +251,7 @@ const ScoreCircle = styled(Box)(({ theme }) => ({
   margin: "0 auto",
 }));
 
-// SkillBlock component for unified skill design
-const SkillBlock = ({
-  skill,
-  type,
-  onStartTest,
-  onDelete,
-}: {
-  skill: any;
-  type: "technical" | "soft";
-  onStartTest: () => void;
-  onDelete?: () => void;
-}) => {
-  const proficiencyMap: { [key: string]: number } = {
-    "Entry Level": 1,
-    Junior: 2,
-    "Mid Level": 3,
-    Senior: 4,
-    Expert: 5,
-  };
-
-  const getLevelFromNumber = (level: number): string => {
-    const levelMap: { [key: number]: string } = {
-      1: "Entry Level",
-      2: "Junior",
-      3: "Mid Level",
-      4: "Senior",
-      5: "Expert"
-    };
-    return levelMap[level] || "Entry Level";
-  };
-
-  const proficiencyLevel =
-    type === "technical"
-      ? skill.proficiencyLevel
-      : proficiencyMap[skill.experienceLevel] || 1;
-  const percentage = (proficiencyLevel / 5) * 100;
-  return (
-    <Box
-      sx={{
-        p: 3,
-        borderRadius: "20px",
-        background: "white",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 3,
-        transition: "all 0.3s ease",
-        border: "1px solid rgba(0, 0, 0, 0.05)",
-        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-        "&:hover": {
-          transform: "translateY(-2px)",
-          boxShadow: "0 8px 25px rgba(0, 0, 0, 0.08)",
-          border: "1px solid rgba(0, 0, 0, 0.08)",
-        },
-      }}
-    >
-      <Box sx={{ flex: 1 }}>
-        <Typography
-          sx={{
-            color: "black",
-            fontWeight: 600,
-            fontSize: "1.1rem",
-            mb: 1,
-          }}
-        >
-          {skill.name}
-        </Typography>
-        {type === "soft" && (
-          <Typography
-            variant="caption"
-            sx={{
-              color: "rgba(0,0,0,0.6)",
-              display: "block",
-              mb: 1,
-            }}
-          >
-            {skill.category}
-          </Typography>
-        )}
-        <Typography
-          variant="caption"
-          sx={{
-            color: "black",
-            ml: 1,
-            fontWeight: 500,
-          }}
-        >
-          {type === "technical" ? (
-            <>
-              {skill.Levelconfirmed && skill.Levelconfirmed > 0 ? (
-                <Chip
-                  label={`${getLevelFromNumber(skill.Levelconfirmed)} Confirmed`}
-                  size="small"
-                  sx={{
-                    ml: 1,
-                    backgroundColor: "rgba(0, 255, 157, 0.2)",
-                    color: "black",
-                    height: "20px",
-                    fontSize: "0.75rem",
-                  }}
-                />
-              ) : (
-                <Chip
-                  label="No Level Confirmed"
-                  size="small"
-                  sx={{
-                    ml: 1,
-                    backgroundColor: "rgba(255, 193, 7, 0.2)",
-                    color: "#856404",
-                    height: "20px",
-                    fontSize: "0.75rem",
-                  }}
-                />
-              )}
-            </>
-          ) : (
-            skill.experienceLevel
-          )}
-        </Typography>
-        <Box
-          sx={{
-            height: "10px",
-            background: "rgba(0,0,0,0.06)",
-            borderRadius: "8px",
-            overflow: "hidden",
-            mt: 2,
-            position: "relative",
-          }}
-        >
-          <Box
-            sx={{
-              width: `${percentage}%`,
-              height: "100%",
-              background: type === "technical" 
-                ? "linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)"
-                : "linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%)",
-              borderRadius: "8px",
-              transition: "width 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
-              position: "relative",
-              "&::after": {
-                content: '""',
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)",
-                animation: "shimmer 2s infinite",
-              },
-            }}
-          />
-        </Box>
-      </Box>
-      <Box sx={{ display: "flex", gap: 2 }}>
-        <Button
-          variant="contained"
-          startIcon={<PlayArrowIcon />}
-          onClick={onStartTest}
-          sx={{
-            background: GREEN_MAIN,
-            color: "#000000",
-            "&:hover": {
-              background: GREEN_MAIN,
-            },
-          }}
-        >
-          Start Test
-        </Button>
-
-        {onDelete && (
-          <IconButton
-            onClick={onDelete}
-            size="medium"
-            sx={{
-              color: "#ff3b30",
-              background: "rgba(255,59,48,0.08)",
-              "&:hover": {
-                background: "rgba(255,59,48,0.12)",
-                transform: "scale(1.1)",
-              },
-            }}
-          >
-            <DeleteIcon />
-          </IconButton>
-        )}
-      </Box>
-    </Box>
-  );
-};
+// moved to components/dashboard-candidate/SkillBlock.tsx
 
 // Sample list of technical skills (expand as needed)
 const technicalSkillsList = [
@@ -801,7 +622,7 @@ export default function DashboardCandidate() {
     }
   };
 
-  const handleStartTest = (type?: "technical" | "soft", skill?: any) => {
+  const handleStartTest = useCallback((type?: "technical" | "soft", skill?: any) => {
     if (type && skill) {
       setPreSelectedTest({ type, skill });
       setSkillType(type);
@@ -836,9 +657,9 @@ export default function DashboardCandidate() {
       setPreSelectedTest(null);
       setTestModalOpen(true);
     }
-  };
+  }, [router]);
 
-  const handleCloseTestModal = () => {
+  const handleCloseTestModal = useCallback(() => {
     setTestModalOpen(false);
     setSkillType("");
     setSelectedSkill("");
@@ -847,27 +668,27 @@ export default function DashboardCandidate() {
     setSoftSkillSubcategory("");
     setSoftSkillProficiency(1);
     setPreSelectedTest(null);
-  };
+  }, []);
 
-  const handleCloseAddSoftSkillModal = () => {
+  const handleCloseAddSoftSkillModal = useCallback(() => {
     setAddSoftSkillDialogOpen(false);
     setSoftSkillType("");
     setSoftSkillLanguage("");
     setSoftSkillSubcategory("");
     setSoftSkillProficiency(1);
     setIsExistingSoftSkill(false);
-  };
+  }, []);
 
-  const handleSkillTypeChange = (
+  const handleSkillTypeChange = useCallback((
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setSkillType(event.target.value);
     setSelectedSkill("");
     setSoftSkillType("");
     setSoftSkillLanguage("");
-  };
+  }, []);
 
-  const handleTestSubmit = async () => {
+  const handleTestSubmit = useCallback(async () => {
     try {
       if (skillType === "technical" && selectedSkill) {
         router.push(
@@ -912,9 +733,9 @@ export default function DashboardCandidate() {
       console.error("Error in test submission:", error);
       toast.error("Failed to start test");
     }
-  };
+  }, [skillType, selectedSkill, softSkillType, softSkillLanguage, softSkillSubcategory, softSkillProficiency, router]);
 
-  const handleSoftSkillAddSubmit = async () => {
+  const handleSoftSkillAddSubmit = useCallback(async () => {
     try {
       if (!softSkillType) {
         toast.error("Please select a soft skill");
@@ -957,7 +778,7 @@ export default function DashboardCandidate() {
       console.error("Error in soft skill submission:", error);
       toast.error("Failed to start test");
     }
-  };
+  }, [softSkillType, softSkillLanguage, softSkillSubcategory, softSkillProficiency, router]);
 
   const [notification, setNotification] = useState<{
     open: boolean;
@@ -1239,1717 +1060,197 @@ export default function DashboardCandidate() {
       .finally(() => setAdLoading(false));
   }, []);
 
-  if (loading) {
-    return (
-      <Container
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          // background: '#0f172a'
-        }}
-      >
-        <CircularProgress sx={{ color: GREEN_MAIN }} />
-      </Container>
-    );
-  }
+  // Move all useMemo hooks here to ensure they're called every render
+  const memoizedAdData = useMemo(() => {
+    return (adPost || []).map((ad: any) => ({
+      _id: ad._id,
+      title: ad.jobDetails?.title,
+      description: ad.jobDetails?.description || '',
+      firstStepId: (ad?.post_Steps && ad.post_Steps.length > 0) ? ad.post_Steps[0] : undefined,
+    }));
+  }, [adPost]);
 
-  if (error && !loading) {
-    return (
-      <Container sx={{ mt: 4 }}>
-        <Alert severity="error" sx={{ borderRadius: "12px" }}>
-          {error}
-        </Alert>
-      </Container>
-    );
-  }
+  const memoizedAdTotal = useMemo(() => {
+    return Array.isArray(adPost) ? adPost.length : 0;
+  }, [adPost]);
 
-  if (!profile) {
-    return <></>
-  }
+  // All hooks must be called before any early returns
+  // Now render the component with conditional content instead of early returns
 
   return (
     <CandidateOnly>
-      {/* Navbar */}
-      <AppBar
-        position="static"
-        elevation={0}
-        sx={{
-          bgcolor: "rgba(255,255,255,0.7)",
-          color: "#191919",
-          boxShadow: "0 4px 24px 0 rgba(124,77,255,0.10)",
-          mb: 3,
-          borderRadius: 3,
-          backdropFilter: "blur(16px)",
-          width: 'unset',
-          mx: { xs: 1, sm: 4 },
-          mt: 2,
-          px: { xs: 1, sm: 3 },
-          py: 1,
-        }}
-      >
-        <Toolbar
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            minHeight: { xs: 56, sm: 72 },
-            px: '0 !important',
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Box
-              component="img"
-              src="/logo.svg"
-              alt="TalentAI Logo"
-              sx={{ height: { xs: 28, sm: 32 }, mr: 1, cursor: "pointer", transition: "transform 0.2s", '&:hover': { transform: 'scale(1.07)' } }}
-              onClick={() => router.push("/")}
-            />
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 800,
-                fontFamily: 'Quicksand, Arial Rounded MT Bold, Arial, sans-serif',
-                color: "#7C4DFF",
-                textShadow: "0 2px 8px #7C4DFF11",
-                display: { xs: "none", sm: "block" },
-              }}
-            >
-              Candidate Dashboard
-            </Typography>
-          </Box>
-          {profile && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, sm: 2 } }}>
-              <Avatar
-                sx={{
-                  bgcolor: "linear-gradient(135deg, #7C4DFF 60%, #00B8D4 100%)",
-                  color: "#fff",
-                  width: 44,
-                  height: 44,
-                  fontWeight: 700,
-                  fontSize: 22,
-                  boxShadow: "0 2px 8px #7C4DFF22",
-                  border: "2px solid #fff",
-                }}
-              >
-                {profile.userId?.username?.[0] || profile.userId?.email?.[0] || "U"}
-              </Avatar>
-              {!isMobile && (
-                <>
-                  <Box sx={{ textAlign: "right", minWidth: 120 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "#222", fontSize: 17, lineHeight: 1.1 }}>
-                      {profile.userId?.username || "User"}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: 13 }}>
-                      {profile.userId?.email}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ mx: 1, height: 36, borderLeft: "1.5px solid #E0E0E0" }} />
-                </>
-              )}
-              {isMobile ? (
-                <IconButton 
-                  onClick={handleLogout}
-                  sx={{
-                    background: "linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)",
-                    color: "#fff",
-                    width: 44, height: 44,
-                    '&:hover': {
-                      background: "linear-gradient(90deg, #00B8D4 0%, #7C4DFF 100%)",
-                    }
-                  }}
-                >
-                  <LogoutIcon />
-                </IconButton>
-              ) : (
-                <Button
-                  variant="contained"
-                  startIcon={<LogoutIcon />}
-                  sx={{
-                    background: "linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)",
-                    color: "#fff",
-                    fontWeight: 700,
-                    borderRadius: 2,
-                    px: 3,
-                    py: 1.2,
-                    boxShadow: "0 2px 8px #00B8D422",
-                    textTransform: "none",
-                    fontSize: 16,
-                    letterSpacing: 0.2,
-                    transition: "background 0.2s, box-shadow 0.2s",
-                    '&:hover': {
-                      background: "linear-gradient(90deg, #00B8D4 0%, #7C4DFF 100%)",
-                      boxShadow: "0 4px 16px #00B8D433",
-                    },
-                  }}
-                  onClick={handleLogout}
-                >
-                  Logout
-                </Button>
-              )}
-            </Box>
-          )}
-        </Toolbar>
-      </AppBar>
-      <Box
-        sx={{
-          minHeight: "100vh",
-          color: GREEN_MAIN,
-          // padding: { xs: theme.spacing(2), sm: theme.spacing(4), md: theme.spacing(6) }, // Responsive padding
-        }}
-      >
-        <Container maxWidth="lg">
-                    {/* Profile Header */}
-          <ProfileHeader>
-            <Box sx={{ position: "relative", zIndex: 2 }}>
-              <WelcomeHeader
-                profile={profile}
-                quota={profile?.quota || 0}
-                onStartTest={handleStartTest}
-                onHrInterview={() => router.push("/interview/hr")}
-                onCvBuilder={() => router.push("/resume-builder")}
-              />
-            </Box>
-          </ProfileHeader>
-              {/* Edit Profile Modal */}
-              <Dialog
-                open={editProfileOpen}
-                onClose={handleEditProfileClose}
-                maxWidth="md"
-                fullWidth
-                PaperProps={{
-                  sx: {
-                    background: "rgba(30, 41, 59, 0.95)",
-                    backdropFilter: "blur(10px)",
-                    borderRadius: "16px",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                  },
-                }}
-              >
-                <DialogTitle
-                  sx={{
-                    borderBottom: "1px solid rgba(255,255,255,0.1)",
-                    color: "#000000",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Typography variant="h6">Edit Profile</Typography>
-                    <IconButton
-                      onClick={handleEditProfileClose}
-                      sx={{ color: "rgba(0,0,0,0.7)" }}
-                    >
-                      <CloseIcon />
-                    </IconButton>
-                  </Box>
-                </DialogTitle>
-                <DialogContent sx={{ mt: 2 }}>
-                  <Box
-                    component="form"
-                    onSubmit={handleSubmit}
-                    sx={{ display: "flex", flexDirection: "column", gap: 3 }}
-                  >
-                    <TextField
-                      name="username"
-                      label="Username"
-                      value={formData.username}
-                      onChange={handleInputChange}
-                      fullWidth
-                      InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
-                      InputProps={{
-                        sx: {
-                          color: "#000000",
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "rgba(0,0,0,0.2)",
-                          },
-                          "&:hover .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "rgba(0,0,0,0.3)",
-                          },
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: GREEN_MAIN,
-                          },
-                        },
-                      }}
-                    />
-                    <TextField
-                      name="email"
-                      label="Email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      fullWidth
-                      InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
-                      InputProps={{
-                        sx: {
-                          color: "#000000",
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "rgba(0,0,0,0.2)",
-                          },
-                          "&:hover .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "rgba(0,0,0,0.3)",
-                          },
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: GREEN_MAIN,
-                          },
-                        },
-                      }}
-                    />
-                    <TextField
-                      select
-                      name="experienceLevel"
-                      label="Experience Level"
-                      value={formData.experienceLevel}
-                      onChange={handleInputChange}
-                      fullWidth
-                      InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
-                      InputProps={{
-                        sx: {
-                          color: "#000000",
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "rgba(0,0,0,0.2)",
-                          },
-                          "&:hover .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "rgba(0,0,0,0.3)",
-                          },
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: GREEN_MAIN,
-                          },
-                        },
-                      }}
-                      SelectProps={{
-                        sx: { color: "#000000" },
-                      }}
-                    >
-                      {[
-                        "Entry Level",
-                        "Junior",
-                        "Mid Level",
-                        "Senior",
-                        "Expert",
-                      ].map((level) => (
-                        <MenuItem
-                          key={level}
-                          value={level}
-                          sx={{
-                            backgroundColor: "rgba(30,41,59,0.98)",
-                            "&:hover": { backgroundColor: "rgba(30,41,59,1)" },
-                          }}
-                        >
-                          {level}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Box>
-                </DialogContent>
-                <DialogActions
-                  sx={{
-                    borderTop: "1px solid rgba(255,255,255,0.1)",
-                    padding: 2,
-                  }}
-                >
-                  <Button
-                    onClick={handleEditProfileClose}
-                    sx={{
-                      color: "rgba(0,0,0,0.7)",
-                      "&:hover": { color: "#000000" },
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    onClick={handleSubmit}
-                    sx={{
-                      background:
-                        "linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)",
-                      color: "#000000",
-                      "&:hover": {
-                        background:
-                          "linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)",
-                      },
-                    }}
-                  >
-                    Save Changes
-                  </Button>
-                </DialogActions>
-              </Dialog>
+      {/* Show loading state */}
+      {loading && (
+        <LoadingState />
+      )}
 
-              {/* Test Selection Modal */}
-              <Dialog
-                open={testModalOpen}
-                onClose={handleCloseTestModal}
-                maxWidth="sm"
-                fullWidth
-                PaperProps={{
-                  sx: {
-                    background: "#ffffff",
-                    borderRadius: "24px",
-                    border: "1px solid #8310FF",
-                  },
-                }}
-              >
-                <DialogTitle
-                  sx={{
-                    borderBottom: "1px solid #8310FF",
-                    color: GREEN_MAIN,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Typography variant="h6" sx={{ color: "black" }}>
-                      Start New Test
-                    </Typography>
-                    <IconButton
-                      onClick={handleCloseTestModal}
-                      sx={{ color: "black" }}
-                    >
-                      <CloseIcon />
-                    </IconButton>
-                  </Box>
-                </DialogTitle>
-                <DialogContent>
-                  <FormControl component="fieldset" sx={{ width: "100%", mb: 3 }}>
-                    <FormLabel sx={{
-                      color: GREEN_MAIN, mb: 1, mt: 2,
+      {/* Show error state */}
+      {error && !loading && (
+        <ErrorState error={error} onRetry={() => dispatch(getMyProfile())} />
+      )}
 
-                    }}>
-                      <Typography variant="h6" sx={{ color: GREEN_MAIN }}>Select Skill Type</Typography>
-                    </FormLabel>
-                    <RadioGroup
-                      value={skillType}
-                      onChange={handleSkillTypeChange}
-                    >
-                      <FormControlLabel
-                        value="technical"
-                        control={<Radio sx={{
-                          color: 'rgba(0,0,0,0.6)',
-                          '&.Mui-checked': {
-                            color: GREEN_MAIN
-                          }
-                        }} />}
-                        label="Technical Skill"
-                        sx={{
-                          '&.Mui-checked': {
-                            color: GREEN_MAIN
-                          }
-                        }}
-                      />
-                      <FormControlLabel
-                        value="soft"
-                        control={<Radio sx={{
-                          color: 'rgba(0,0,0,0.6)',
-                          '&.Mui-checked': {
-                            color: GREEN_MAIN
-                          }
-                        }} />}
-                        label="Soft Skill"
-                        sx={{
-                          '&.Mui-checked': {
-                            color: GREEN_MAIN
-                          }
-                        }}
-                      />
-                    </RadioGroup>
-                  </FormControl>
-
-                  {skillType === "technical" && (
-                    <Box >
-                      <Typography sx={{ color: GREEN_MAIN }}>Select Technical Skill</Typography>
-
-                      <Autocomplete
-                        fullWidth
-                        options={technicalSkillsList}
-                        value={selectedSkill}
-                        onChange={(_, value) => setSelectedSkill(value || "")}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            InputLabelProps={{ sx: { color: GREEN_MAIN } }}
-                            InputProps={{
-                              ...params.InputProps,
-                              sx: {
-                                color: "#000000",
-                                "& .MuiOutlinedInput-notchedOutline": {
-                                  borderColor: "rgba(0,0,0,0.2)",
-                                },
-                                "&:hover .MuiOutlinedInput-notchedOutline": {
-                                  borderColor: GREEN_MAIN,
-                                },
-                                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                                  borderColor: GREEN_MAIN,
-                                },
-                                "&.Mui-focused": {
-                                  "& .MuiInputLabel-root": {
-                                    color: GREEN_MAIN,
-                                  },
-                                },
-                                "& .MuiInputLabel-root": {
-                                  "&.Mui-focused": {
-                                    color: GREEN_MAIN,
-                                  },
-                                },
-                              },
-                            }}
-                          />
-                        )}
-                        PaperComponent={(props) => (
-                          <Paper
-                            {...props}
-                            sx={{
-                              backgroundColor: "white",
-                              "& .MuiAutocomplete-option": {
-                                color: "black",
-                                '&[aria-selected="true"]': {
-                                  backgroundColor: "rgba(131, 16, 255, 0.1)",
-                                  color: GREEN_MAIN
-                                },
-                                "&:hover": {
-                                  backgroundColor: "rgba(131, 16, 255, 0.05)",
-                                },
-                              },
-                            }}
-                          />
-                        )}
-                      />
-                    </Box>
-                  )}
-
-                  {skillType === "soft" && (
-                    <Box sx={{}}>
-                      <Typography sx={{ color: GREEN_MAIN }}>Select Soft Skill</Typography>
-
-                      <Autocomplete
-                        fullWidth
-                        options={softSkills}
-                        value={
-                          softSkills.find((s) => s.name === softSkillType) || null
-                        }
-                        onChange={(_, value) =>
-                          handleSoftSkillChange(value?.name || "")
-                        }
-                        getOptionLabel={(option) => option.name}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
-                            InputProps={{
-                              ...params.InputProps,
-                              sx: {
-                                color: "#000000",
-                                "& .MuiOutlinedInput-notchedOutline": {
-                                  borderColor: "rgba(0,0,0,0.2)",
-                                },
-                                "&:hover .MuiOutlinedInput-notchedOutline": {
-                                  borderColor: GREEN_MAIN,
-                                },
-                                "&.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                {
-                                  borderColor: GREEN_MAIN,
-                                },
-                                "&.Mui-focused": {
-                                  "& .MuiInputLabel-root": {
-                                    color: GREEN_MAIN,
-                                  },
-                                },
-                                "& .MuiInputLabel-root": {
-                                  "&.Mui-focused": {
-                                    color: GREEN_MAIN,
-                                  },
-                                },
-                              },
-                            }}
-                          />
-                        )}
-                        PaperComponent={(props) => (
-                          <Paper
-                            {...props}
-                            sx={{
-                              backgroundColor: "white",
-                              color: "black",
-                              "& .MuiAutocomplete-option": {
-                                color: "black",
-                                '&[aria-selected="true"]': {
-                                  backgroundColor: "rgba(0, 255, 157, 0.1)",
-                                },
-                                "&:hover": {
-                                  backgroundColor: "rgba(0, 255, 157, 0.05)",
-                                },
-                              },
-                            }}
-                          />
-                        )}
-                      />
-
-                      {softSkillType === "Communication" && (
-                        <Autocomplete
-                          fullWidth
-                          options={languages}
-                          value={
-                            languages.find(
-                              (l) => l.value === softSkillLanguage
-                            ) || null
-                          }
-                          onChange={(_, value) =>
-                            handleSoftSkillLanguageChange(value?.value || "")
-                          }
-                          getOptionLabel={(option) => option.label}
-                          sx={{ mt: 2 }}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              InputLabelProps={{
-                                sx: { color: GREEN_MAIN },
-                              }}
-                              InputProps={{
-                                ...params.InputProps,
-                                sx: {
-                                  color: "#000000",
-                                  "& .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: GREEN_MAIN,
-                                  },
-                                  "&:hover .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: GREEN_MAIN
-                                  },
-                                  "&.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                  {
-                                    borderColor: GREEN_MAIN,
-                                  },
-                                  "&.Mui-focused": {
-                                    "& .MuiInputLabel-root": {
-                                      color: GREEN_MAIN,
-                                    },
-                                  },
-                                  "& .MuiInputLabel-root": {
-                                    "&.Mui-focused": {
-                                      color: GREEN_MAIN,
-                                    },
-                                  },
-                                },
-                              }}
-                            />
-                          )}
-                          PaperComponent={(props) => (
-                            <Paper
-                              {...props}
-                              sx={{
-                                backgroundColor: "white",
-                                color: "black",
-                                "& .MuiAutocomplete-option": {
-                                  color: "black",
-                                  '&[aria-selected="true"]': {
-                                    backgroundColor: GREEN_MAIN,
-                                  },
-                                  "&:hover": {
-                                    backgroundColor: GREEN_MAIN,
-                                  },
-                                },
-                              }}
-                            />
-                          )}
-                        />
-                      )}
-
-                      {softSkillType && softSkillType !== "Communication" && (
-                        <Autocomplete
-                          fullWidth
-                          options={
-                            softSkills.find((s) => s.name === softSkillType)
-                              ?.subcategories || []
-                          }
-                          value={
-                            softSkills
-                              .find((s) => s.name === softSkillType)
-                              ?.subcategories?.find(
-                                (sub) => sub.value === softSkillSubcategory
-                              ) || null
-                          }
-                          onChange={(_, value) =>
-                            handleSoftSkillSubcategoryChange(value?.value || "")
-                          }
-                          getOptionLabel={(option) => option.label}
-                          sx={{ mt: 2 }}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              InputLabelProps={{
-                                sx: { color: "rgba(0,0,0,0.7)" },
-                              }}
-                              InputProps={{
-                                ...params.InputProps,
-                                sx: {
-                                  color: "#000000",
-                                  "& .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: "rgba(4, 3, 3, 0.2)",
-                                  },
-                                  "&:hover .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: GREEN_MAIN,
-                                  },
-                                  "&.Mui-focused .MuiOutlinedInput-notchedOutline":
-                                  {
-                                    borderColor: GREEN_MAIN,
-                                  },
-                                  "&.Mui-focused": {
-                                    "& .MuiInputLabel-root": {
-                                      color: GREEN_MAIN,
-                                    },
-                                  },
-                                  "& .MuiInputLabel-root": {
-                                    "&.Mui-focused": {
-                                      color: GREEN_MAIN,
-                                    },
-                                  },
-                                },
-                              }}
-                            />
-                          )}
-                          PaperComponent={(props) => (
-                            <Paper
-                              {...props}
-                              sx={{
-                                backgroundColor: "white",
-                                color: "black",
-                                "& .MuiAutocomplete-option": {
-                                  color: "black",
-                                  '&[aria-selected="true"]': {
-                                    backgroundColor: GREEN_MAIN,
-                                  },
-                                  "&:hover": {
-                                    backgroundColor: GREEN_MAIN,
-                                  },
-                                },
-                              }}
-                            />
-                          )}
-                        />
-                      )}
-                    </Box>
-                  )}
-                </DialogContent>
-                <DialogActions
-                  sx={{ p: 3, borderTop: "1px solid rgba(0, 255, 157, 0.2)" }}
-                >
-                  <Button
-                    onClick={handleCloseTestModal}
-                    sx={{
-                      color: "rgba(0,0,0,0.7)",
-                      "&:hover": { color: "#000000" },
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="contained"
-                    onClick={handleTestSubmit}
-                    disabled={
-                      (skillType === "technical" && !selectedSkill) ||
-                      (skillType === "soft" &&
-                        (!softSkillType ||
-                          (softSkillType === "Communication" &&
-                            !softSkillLanguage) ||
-                          (softSkillType !== "Communication" &&
-                            !softSkillSubcategory)))
-                    }
-                    sx={{
-                      background: GREEN_MAIN,
-                      color: "#000000",
-                      "&:hover": {
-                        background: GREEN_MAIN,
-                      },
-                      "&.Mui-disabled": {
-                        background: "rgba(0,0,0,0.1)",
-                        color: "rgba(0,0,0,0.3)",
-                      },
-                    }}
-                  >
-                    Start Test
-                  </Button>
-                </DialogActions>
-              </Dialog>
-
-          {/* Recommended Opportunities - Subcomponent */}
-          <StyledCard sx={{ mb: 4, background: '#f8fafc', border: '2px dashed #8310FF' }}>
-            <SectionTitle sx={{ color: '#8310FF', fontSize: '1.5rem', mb: 4 }}>Recommended Opportunities</SectionTitle>
-            {adLoading ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120 }}>
-                <CircularProgress size={32} sx={{ color: '#8310FF' }} />
-              </Box>
-            ) : adError ? (
-              <Box sx={{ color: '#c62828', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120 }}>
-                <Typography>{adError}</Typography>
-              </Box>
-            ) : (
-              <RecommendedOpportunities
-                data={(adPost || []).map((ad: any) => ({
-                  _id: ad._id,
-                  title: ad.jobDetails?.title,
-                  description: ad.jobDetails?.description || '',
-                  firstStepId: (ad?.post_Steps && ad.post_Steps.length > 0) ? ad.post_Steps[0] : undefined,
-                }))}
-                total={Array.isArray(adPost) ? adPost.length : 0}
-                emptyText="No recommended opportunities available at the moment."
-              />
-            )}
-          </StyledCard>
-
-          {/* User Information */}
+      {/* Show main content only when profile is available */}
+      {!loading && !error && profile && (
+        <>
+          {/* Navbar */}
+          <DashboardNavbar
+            profile={profile}
+            onLogout={handleLogout}
+            isMobile={isMobile}
+          />
           <Box
             sx={{
-              display: "grid",
-              width: "100%",
-              gap: 4,
+              minHeight: "100vh",
+              color: GREEN_MAIN,
+              // padding: { xs: theme.spacing(2), sm: theme.spacing(4), md: theme.spacing(6) }, // Responsive padding
             }}
           >
-            <Box>
-              <StyledCard>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 3, mb: 4 }}>
-                  <Box
-                    sx={{
-                      width: "60px",
-                      height: "60px",
-                      borderRadius: "16px",
-                      background: "linear-gradient(135deg, #8310FF 0%, #02E2FF 100%)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "0 8px 25px rgba(131, 16, 255, 0.3)",
-                    }}
-                  >
-                    <DescriptionIcon sx={{ color: "white", fontSize: "28px" }} />
-                  </Box>
-                  <Box>
-                    <SectionTitle sx={{ mb: 1 }}>Skills & Expertise</SectionTitle>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: "rgba(0,0,0,0.6)",
-                        fontSize: "1rem",
-                        fontWeight: 500,
-                        mt: 3
-                      }}
-                    >
-                      Showcase your technical and soft skills to potential employers
-                    </Typography>
-                  </Box>
+            <Container maxWidth="lg">
+              {/* Profile Header */}
+              <ProfileHeader>
+                <Box sx={{ position: "relative", zIndex: 2 }}>
+                  <WelcomeHeader
+                    profile={profile}
+                    quota={profile?.quota || 0}
+                    onStartTest={handleStartTest}
+                    onHrInterview={() => router.push("/interview/hr")}
+                    onCvBuilder={() => router.push("/resume-builder")}
+                  />
                 </Box>
+              </ProfileHeader>
+                                     {/* Edit Profile Modal */}
+                   <EditProfileModal
+                     open={editProfileOpen}
+                     onClose={handleEditProfileClose}
+                     formData={formData}
+                     onChange={handleInputChange}
+                     onSubmit={handleSubmit}
+                   />
 
-                {/* Overall Score - Simple and Modern */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    mb: 5,
-                    gap: 2,
-                  }}
-                >
-                  <ScoreCircle>
-                    <CircularProgress
-                      variant="determinate"
-                      value={100}
-                      size={180}
-                      thickness={6}
-                      sx={{
-                        position: "absolute",
-                        color: "rgba(0, 0, 0, 0.08)",
-                      }}
-                    />
-                    <CircularProgress
-                      variant="determinate"
-                      value={profile ? Number(profile.overallScore) : 0}
-                      size={180}
-                      thickness={6}
-                      sx={{
-                        position: "absolute",
-                        color: "transparent",
-                        "& .MuiCircularProgress-circle": {
-                          strokeLinecap: "round",
-                          stroke: "url(#gradient)",
-                        },
-                      }}
-                    />
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexDirection: "column",
-                      }}
-                    >
-                      <Typography
-                        variant="h3"
-                        sx={{
-                          background:
-                            "linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)",
-                          WebkitBackgroundClip: "text",
-                          WebkitTextFillColor: "transparent",
-                          fontWeight: "bold",
-                          fontSize: "2.75rem",
-                          textAlign: "center",
-                        }}
-                      >
-                        {profile ? Number(profile.overallScore).toFixed(1) : "0.0"}
-                      </Typography>
-                    </Box>
-                    <svg width="0" height="0">
-                      <defs>
-                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#02E2FF" />
-                          <stop offset="100%" stopColor="#00FFC3" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                  </ScoreCircle>
-                  <Typography
-                    sx={{
-                      color: "rgba(0, 0, 0, 0.75)",
-                      fontSize: "1rem",
-                      fontWeight: 700,
-                      textTransform: "none",
-                      letterSpacing: 0.2,
-                    }}
-                  >
-                    Overall Score
-                  </Typography>
-                </Box>
+                  {/* Test Selection Modal */}
+                  <TestSelectionDialog
+                    open={testModalOpen}
+                    onClose={handleCloseTestModal}
+                    onSubmit={handleTestSubmit}
+                    primaryAccentColor={GREEN_MAIN}
+                    skillType={skillType}
+                    onSkillTypeChange={handleSkillTypeChange}
+                    technicalSkillsList={technicalSkillsList}
+                    selectedSkill={selectedSkill}
+                    onSelectedSkillChange={(v) => setSelectedSkill(v)}
+                    softSkills={softSkills}
+                    softSkillType={softSkillType}
+                    onSoftSkillChange={handleSoftSkillChange}
+                    languages={languages}
+                    softSkillLanguage={softSkillLanguage}
+                    onSoftSkillLanguageChange={handleSoftSkillLanguageChange}
+                    softSkillSubcategory={softSkillSubcategory}
+                    onSoftSkillSubcategoryChange={handleSoftSkillSubcategoryChange}
+                  />
 
-                {/* Motivational Message */}
-                <Box
-                  sx={{
-                    textAlign: "center",
-                    mb: 4,
-                    p: 3,
-                    borderRadius: "20px",
-                    background: "linear-gradient(135deg, rgba(131,16,255,0.05) 0%, rgba(2,226,255,0.05) 100%)",
-                    border: "1px solid rgba(131,16,255,0.1)",
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      color: "#8310FF",
-                      fontSize: "1.1rem",
-                      fontWeight: 600,
-                      mb: 1,
-                    }}
-                  >
-                    💪 Keep Growing Your Skills!
-                  </Typography>
-                  <Typography
-                    sx={{
-                      color: "rgba(0,0,0,0.7)",
-                      fontSize: "0.95rem",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {Number(profile.overallScore) >= 90 ? "You're an expert! Consider mentoring others and sharing your knowledge." :
-                     Number(profile.overallScore) >= 80 ? "Excellent progress! You're close to becoming an expert in your field." :
-                     Number(profile.overallScore) >= 70 ? "Great work! Keep practicing and you'll reach advanced level soon." :
-                     Number(profile.overallScore) >= 60 ? "Good start! Focus on improving your weakest areas to boost your score." :
-                     "Welcome! Start by taking skill assessments to build your profile and track your progress."}
-                  </Typography>
-                </Box>
-
-                {/* Soft Skills Distribution */}
-                <Box sx={{ mb: 4 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      mb: 3,
-                    }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <Box
-                        sx={{
-                          width: "40px",
-                          height: "40px",
-                          borderRadius: "12px",
-                          background: "linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <PersonIcon sx={{ color: "white", fontSize: "20px" }} />
-                      </Box>
-                      <Typography
-                        variant="h6"
-                        sx={{ 
-                          color: "black", 
-                          opacity: 0.9,
-                          fontWeight: 600,
-                          fontSize: "1.25rem"
-                        }}
-                      >
-                        Soft Skills
-                      </Typography>
-                    </Box>
-                    <Button
-                      startIcon={<AddIcon />}
-                      onClick={() => setAddSoftSkillDialogOpen(true)}
-                      variant="outlined"
-                      sx={{
-                        color: "#FF6B6B",
-                        borderColor: "#FF6B6B",
-                        borderRadius: "12px",
-                        px: 3,
-                        py: 1,
-                        textTransform: "none",
-                        fontWeight: 600,
-                        "&:hover": {
-                          borderColor: "#FF6B6B",
-                          background: "rgba(255,107,107,0.08)",
-                          transform: "translateY(-2px)",
-                          boxShadow: "0 4px 12px rgba(255,107,107,0.2)",
-                        },
-                        transition: "all 0.3s ease",
-                      }}
-                    >
-                      Add Soft Skill
-                    </Button>
+              {/* Recommended Opportunities - Subcomponent */}
+              <StyledCard sx={{ mb: 4, background: '#f8fafc', border: '2px dashed #8310FF' }}>
+                <SectionTitle sx={{ color: '#8310FF', fontSize: '1.5rem', mb: 4 }}>Recommended Opportunities</SectionTitle>
+                {adLoading ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120 }}>
+                    <CircularProgress size={32} sx={{ color: '#8310FF' }} />
                   </Box>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    {profile?.softSkills?.length ? (
-                      profile.softSkills.map((skill: any) => (
-                        <SkillBlock
-                          key={`${skill.name}-${skill.category}`}
-                          skill={skill}
-                          type="soft"
-                          onStartTest={() => handleStartTest("soft", skill)}
-                          onDelete={() =>
-                            handleDeleteSoftSkill(skill.name, skill.category)
-                          }
-                        />
-                      ))
-                    ) : (
-                      <Box
-                        sx={{
-                          textAlign: "center",
-                          py: 4,
-                          px: 3,
-                          borderRadius: "16px",
-                          background: "rgba(255,107,107,0.05)",
-                          border: "2px dashed rgba(255,107,107,0.3)",
-                        }}
-                      >
-                        <PersonIcon 
-                          sx={{ 
-                            fontSize: "48px", 
-                            color: "rgba(255,107,107,0.5)",
-                            mb: 2 
-                          }} 
-                        />
-                        <Typography
-                          sx={{ 
-                            color: "rgba(0,0,0,0.6)", 
-                            fontSize: "1rem",
-                            fontWeight: 500
-                          }}
-                        >
-                          No soft skills added yet
-                        </Typography>
-                        <Typography
-                          sx={{ 
-                            color: "rgba(0,0,0,0.5)", 
-                            fontSize: "0.875rem",
-                            mt: 1
-                          }}
-                        >
-                          Start a soft skill test to add them to your profile
-                        </Typography>
-                        <Button
-                          startIcon={<AddIcon />}
-                          onClick={() => setAddSoftSkillDialogOpen(true)}
-                          variant="contained"
-                          sx={{
-                            mt: 2,
-                            background: "linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)",
-                            color: "white",
-                            borderRadius: "12px",
-                            px: 3,
-                            py: 1.5,
-                            textTransform: "none",
-                            fontWeight: 600,
-                            boxShadow: "0 4px 15px rgba(255,107,107,0.3)",
-                            "&:hover": {
-                              background: "linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)",
-                              transform: "translateY(-2px)",
-                              boxShadow: "0 8px 25px rgba(255,107,107,0.4)",
-                            },
-                            transition: "all 0.3s ease",
-                          }}
-                        >
-                          Add Your First Skill
-                        </Button>
-                      </Box>
-                    )}
+                ) : adError ? (
+                  <Box sx={{ color: '#c62828', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120 }}>
+                    <Typography>{adError}</Typography>
                   </Box>
-                </Box>
-
-                {/* Technical Skills */}
-                <Box sx={{ mb: 4 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      mb: 3,
-                    }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <Box
-                        sx={{
-                          width: "40px",
-                          height: "40px",
-                          borderRadius: "12px",
-                          background: "linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <WorkIcon sx={{ color: "white", fontSize: "20px" }} />
-                      </Box>
-                      <Typography
-                        variant="h6"
-                        sx={{ 
-                          color: "#000000", 
-                          opacity: 0.9,
-                          fontWeight: 600,
-                          fontSize: "1.25rem"
-                        }}
-                      >
-                        Technical Skills
-                      </Typography>
-                    </Box>
-                    <Button
-                      startIcon={<AddIcon />}
-                      onClick={() => setAddSkillDialogOpen(true)}
-                      variant="outlined"
-                      sx={{
-                        color: "#02E2FF",
-                        borderColor: "#02E2FF",
-                        borderRadius: "12px",
-                        px: 3,
-                        py: 1,
-                        textTransform: "none",
-                        fontWeight: 600,
-                        "&:hover": {
-                          borderColor: "#02E2FF",
-                          background: "rgba(2,226,255,0.08)",
-                          transform: "translateY(-2px)",
-                          boxShadow: "0 4px 12px rgba(2,226,255,0.2)",
-                        },
-                        transition: "all 0.3s ease",
-                      }}
-                    >
-                      Add Technical Skill
-                    </Button>
-                  </Box>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    {profile.skills
-                      ?.filter(
-                        (skill: any) => !softSkillNames.includes(skill.name)
-                      )?.length > 0 ? (
-                      <>
-                        {profile.skills
-                          ?.filter(
-                            (skill: any) => !softSkillNames.includes(skill.name)
-                          )
-                          ?.slice(0, visibleSkills)
-                          ?.map((skill: any) => (
-                            <SkillBlock
-                              key={skill.name}
-                              skill={skill}
-                              type="technical"
-                              onStartTest={() => handleStartTest("technical", skill)}
-                              onDelete={() => handleDeleteSkill(skill.name)}
-                            />
-                          ))}
-                        {profile.skills?.filter(
-                          (skill: any) => !softSkillNames.includes(skill.name)
-                        )?.length > visibleSkills && (
-                          <Box
-                            sx={{ display: "flex", justifyContent: "center", mt: 2 }}
-                          >
-                            <Button
-                              onClick={() => setVisibleSkills((prev) => prev + 3)}
-                              variant="outlined"
-                              sx={{
-                                color: "#02E2FF",
-                                borderColor: "#02E2FF",
-                                borderRadius: "12px",
-                                px: 3,
-                                py: 1,
-                                textTransform: "none",
-                                fontWeight: 600,
-                                "&:hover": {
-                                  borderColor: "#02E2FF",
-                                  background: "rgba(2,226,255,0.08)",
-                                  transform: "translateY(-2px)",
-                                  boxShadow: "0 4px 12px rgba(2,226,255,0.2)",
-                                },
-                                transition: "all 0.3s ease",
-                              }}
-                            >
-                              Load More
-                            </Button>
-                          </Box>
-                        )}
-                      </>
-                    ) : (
-                      <Box
-                        sx={{
-                          textAlign: "center",
-                          py: 4,
-                          px: 3,
-                          borderRadius: "16px",
-                          background: "rgba(2,226,255,0.05)",
-                          border: "2px dashed rgba(2,226,255,0.3)",
-                        }}
-                      >
-                        <WorkIcon 
-                          sx={{ 
-                            fontSize: "48px", 
-                            color: "rgba(2,226,255,0.5)",
-                            mb: 2 
-                          }} 
-                        />
-                        <Typography
-                          sx={{ 
-                            color: "rgba(0,0,0,0.6)", 
-                            fontSize: "1rem",
-                            fontWeight: 500
-                          }}
-                        >
-                          No technical skills added yet
-                        </Typography>
-                        <Typography
-                          sx={{ 
-                            color: "rgba(0,0,0,0.5)", 
-                            fontSize: "0.875rem",
-                            mt: 1
-                          }}
-                        >
-                          Start a technical skill test to add them to your profile
-                        </Typography>
-                        <Button
-                          startIcon={<AddIcon />}
-                          onClick={() => setAddSkillDialogOpen(true)}
-                          variant="contained"
-                          sx={{
-                            mt: 2,
-                            background: "linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)",
-                            color: "white",
-                            borderRadius: "12px",
-                            px: 3,
-                            py: 1.5,
-                            textTransform: "none",
-                            fontWeight: 600,
-                            boxShadow: "0 4px 15px rgba(2,226,255,0.3)",
-                            "&:hover": {
-                              background: "linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)",
-                              transform: "translateY(-2px)",
-                              boxShadow: "0 8px 25px rgba(2,226,255,0.4)",
-                            },
-                            transition: "all 0.3s ease",
-                          }}
-                        >
-                          Add Your First Skill
-                        </Button>
-                      </Box>
-                    )}
-                  </Box>
-                </Box>
+                ) : (
+                  <RecommendedOpportunities
+                    data={memoizedAdData}
+                    total={memoizedAdTotal}
+                    emptyText="No recommended opportunities available at the moment."
+                  />
+                )}
               </StyledCard>
-            </Box>
 
-            {/* Interview Details Section */}
+              {/* User Information */}
+              <UserInfoCard
+                profile={profile}
+                SectionTitle={SectionTitle}
+                StyledCard={StyledCard}
+                ScoreCircle={ScoreCircle}
+                GREEN_MAIN={GREEN_MAIN}
+                softSkillNames={softSkillNames}
+                visibleSkills={visibleSkills}
+                setVisibleSkills={(updater: any) => setVisibleSkills(updater)}
+                setAddSoftSkillDialogOpen={(open: boolean) => setAddSoftSkillDialogOpen(open)}
+                setAddSkillDialogOpen={(open: boolean) => setAddSkillDialogOpen(open)}
+                SkillBlock={SkillBlock}
+                handleStartTest={handleStartTest}
+                handleDeleteSoftSkill={handleDeleteSoftSkill}
+                handleDeleteSkill={handleDeleteSkill}
+              />
 
-          </Box>
-          <Box>
-            <StyledCard>
-              <SectionTitle>Interview Details</SectionTitle>
-              <InterviewDetailsTabs profile={profile} />
-            </StyledCard>
-          </Box>
-
-        
-          {/* Add Soft Skill Dialog */}
-          <Dialog
-            open={addSoftSkillDialogOpen}
-            onClose={handleCloseAddSoftSkillModal}
-            maxWidth="sm"
-            fullWidth
-            PaperProps={{
-              sx: {
-                background: "#ffffff",
-                borderRadius: "24px",
-                border: "1px solid #FF6B6B",
-              },
-            }}
-          >
-            <DialogTitle
-              sx={{
-                borderBottom: "1px solid #FF6B6B",
-                color: GREEN_MAIN,
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Typography variant="h6" sx={{ color: "black" }}>
-                  Add Soft Skill
-                </Typography>
-                <IconButton onClick={handleCloseAddSoftSkillModal} sx={{ color: "black" }}>
-                  <CloseIcon />
-                </IconButton>
-              </Box>
-            </DialogTitle>
-            <DialogContent>
+              {/* Interview Details Section */}
+              
               <Box>
-                <Typography sx={{ color: GREEN_MAIN, mb: 1, mt: 2 }}>Select Soft Skill</Typography>
-                <Autocomplete
-                  fullWidth
-                  options={softSkills}
-                  value={softSkills.find((s) => s.name === softSkillType) || null}
-                  onChange={(_, value) => handleSoftSkillChange(value?.name || "")}
-                  getOptionLabel={(option) => option.name}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
-                      InputProps={{
-                        ...params.InputProps,
-                        sx: {
-                          color: "#000000",
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "rgba(0,0,0,0.2)",
-                          },
-                          "&:hover .MuiOutlinedInput-notchedOutline": {
-                            borderColor: GREEN_MAIN,
-                          },
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: GREEN_MAIN,
-                          },
-                          "&.Mui-focused": {
-                            "& .MuiInputLabel-root": {
-                              color: GREEN_MAIN,
-                            },
-                          },
-                          "& .MuiInputLabel-root": {
-                            "&.Mui-focused": {
-                              color: GREEN_MAIN,
-                            },
-                          },
-                        },
-                      }}
-                    />
-                  )}
-                  PaperComponent={(props) => (
-                    <Paper
-                      {...props}
-                      sx={{
-                        backgroundColor: "white",
-                        color: "black",
-                        "& .MuiAutocomplete-option": {
-                          color: "black",
-                          '&[aria-selected="true"]': {
-                            backgroundColor: "rgba(0, 255, 157, 0.1)",
-                          },
-                          "&:hover": {
-                            backgroundColor: "rgba(0, 255, 157, 0.05)",
-                          },
-                        },
-                      }}
-                    />
-                  )}
-                />
-
-                {softSkillType === "Communication" && (
-                  <Autocomplete
-                    fullWidth
-                    options={languages}
-                    value={languages.find((l) => l.value === softSkillLanguage) || null}
-                    onChange={(_, value) => handleSoftSkillLanguageChange(value?.value || "")}
-                    getOptionLabel={(option) => option.label}
-                    sx={{ mt: 2 }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        InputLabelProps={{ sx: { color: GREEN_MAIN } }}
-                        InputProps={{
-                          ...params.InputProps,
-                          sx: {
-                            color: "#000000",
-                            "& .MuiOutlinedInput-notchedOutline": {
-                              borderColor: GREEN_MAIN,
-                            },
-                            "&:hover .MuiOutlinedInput-notchedOutline": {
-                              borderColor: GREEN_MAIN,
-                            },
-                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                              borderColor: GREEN_MAIN,
-                            },
-                            "&.Mui-focused": {
-                              "& .MuiInputLabel-root": {
-                                color: GREEN_MAIN,
-                              },
-                            },
-                            "& .MuiInputLabel-root": {
-                              "&.Mui-focused": {
-                                color: GREEN_MAIN,
-                              },
-                            },
-                          },
-                        }}
-                      />
-                    )}
-                    PaperComponent={(props) => (
-                      <Paper
-                        {...props}
-                        sx={{
-                          backgroundColor: "white",
-                          color: "black",
-                          "& .MuiAutocomplete-option": {
-                            color: "black",
-                            '&[aria-selected="true"]': {
-                              backgroundColor: GREEN_MAIN,
-                            },
-                            "&:hover": {
-                              backgroundColor: GREEN_MAIN,
-                            },
-                          },
-                        }}
-                      />
-                    )}
-                  />
-                )}
-
-                {softSkillType && softSkillType !== "Communication" && (
-                  <Autocomplete
-                    fullWidth
-                    options={
-                      softSkills.find((s) => s.name === softSkillType)?.subcategories || []
-                    }
-                    value={
-                      softSkills
-                        .find((s) => s.name === softSkillType)
-                        ?.subcategories?.find((sub) => sub.value === softSkillSubcategory) || null
-                    }
-                    onChange={(_, value) => handleSoftSkillSubcategoryChange(value?.value || "")}
-                    getOptionLabel={(option) => option.label}
-                    sx={{ mt: 2 }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
-                        InputProps={{
-                          ...params.InputProps,
-                          sx: {
-                            color: "#000000",
-                            "& .MuiOutlinedInput-notchedOutline": {
-                              borderColor: "rgba(4, 3, 3, 0.2)",
-                            },
-                            "&:hover .MuiOutlinedInput-notchedOutline": {
-                              borderColor: GREEN_MAIN,
-                            },
-                            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                              borderColor: GREEN_MAIN,
-                            },
-                            "&.Mui-focused": {
-                              "& .MuiInputLabel-root": {
-                                color: GREEN_MAIN,
-                              },
-                            },
-                            "& .MuiInputLabel-root": {
-                              "&.Mui-focused": {
-                                color: GREEN_MAIN,
-                              },
-                            },
-                          },
-                        }}
-                      />
-                    )}
-                    PaperComponent={(props) => (
-                      <Paper
-                        {...props}
-                        sx={{
-                          backgroundColor: "white",
-                          color: "black",
-                          "& .MuiAutocomplete-option": {
-                            color: "black",
-                            '&[aria-selected="true"]': {
-                              backgroundColor: GREEN_MAIN,
-                            },
-                            "&:hover": {
-                              backgroundColor: GREEN_MAIN,
-                            },
-                          },
-                        }}
-                      />
-                    )}
-                  />
-                )}
+                <StyledCard>
+                  <SectionTitle>Interview Details</SectionTitle>
+                  <InterviewDetailsTabs profile={profile} />
+                </StyledCard>
               </Box>
-            </DialogContent>
-            <DialogActions sx={{ p: 3, borderTop: "1px solid rgba(255, 107, 107, 0.2)" }}>
-              <Button onClick={handleCloseAddSoftSkillModal} sx={{ color: "rgba(0,0,0,0.7)", "&:hover": { color: "#000000" } }}>
-                Cancel
-              </Button>
-              <Button
-                variant="contained"
-                onClick={handleSoftSkillAddSubmit}
-                disabled={
-                  !softSkillType ||
-                  (softSkillType === "Communication" && !softSkillLanguage) ||
-                  (softSkillType !== "Communication" && !softSkillSubcategory)
-                }
-                sx={{
-                  background: GREEN_MAIN,
-                  color: "#000000",
-                  "&:hover": {
-                    background: GREEN_MAIN,
-                  },
-                  "&.Mui-disabled": {
-                    background: "rgba(0,0,0,0.1)",
-                    color: "rgba(0,0,0,0.3)",
-                  },
-                }}
+
+            
+              {/* Add Soft Skill Dialog */}
+              <AddSoftSkillDialog
+                open={addSoftSkillDialogOpen}
+                onClose={handleCloseAddSoftSkillModal}
+                onSubmit={handleSoftSkillAddSubmit}
+                primaryAccentColor={GREEN_MAIN}
+                softSkills={softSkills}
+                languages={languages}
+                softSkillType={softSkillType}
+                onSoftSkillChange={handleSoftSkillChange}
+                softSkillLanguage={softSkillLanguage}
+                onSoftSkillLanguageChange={handleSoftSkillLanguageChange}
+                softSkillSubcategory={softSkillSubcategory}
+                onSoftSkillSubcategoryChange={handleSoftSkillSubcategoryChange}
+              />
+              {/* Add Skill Dialog */}
+              <AddSkillDialog
+                open={addSkillDialogOpen}
+                onClose={() => setAddSkillDialogOpen(false)}
+                onSubmit={handleAddSkill}
+                primaryAccentColor={GREEN_MAIN}
+                selectedCategory={selectedCategory}
+                onSelectedCategoryChange={(v) => setSelectedCategory(v)}
+                newSkillName={newSkill.name}
+                onSkillSelection={(v) => handleSkillSelection(v)}
+                skillCategories={skillCategories}
+                technicalSkillsList={technicalSkillsList}
+              />
+
+              {/* Add Snackbar for notifications */}
+              <Snackbar
+                open={notification.open}
+                autoHideDuration={4000}
+                onClose={handleCloseNotification}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
               >
-                Start Test
-              </Button>
-            </DialogActions>
-          </Dialog>
-          {/* Add Skill Dialog */}
-          <Dialog
-            open={addSkillDialogOpen}
-            onClose={() => setAddSkillDialogOpen(false)}
-            maxWidth="sm"
-            fullWidth
-            PaperProps={{
-              sx: {
-                background: "white",
-                borderRadius: "16px",
-                border: "1px solid rgba(0,0,0,0.1)",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-                position: "relative",
-                zIndex: 1300
-              },
-            }}
-          >
-            <DialogTitle
-              sx={{
-                borderBottom: "1px solid rgba(0,0,0,0.1)",
-                color: "#000000",
-                padding: "16px 24px"
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Typography variant="h6">Add New Skill</Typography>
-                <IconButton
-                  onClick={() => setAddSkillDialogOpen(false)}
-                  sx={{ color: "rgba(0,0,0,0.7)" }}
+                <Alert
+                  onClose={handleCloseNotification}
+                  severity={notification.severity}
+                  sx={{
+                    width: '100%',
+                    backgroundColor: notification.severity === 'error' ? '#ffebee' : '#e8f5e9',
+                    color: notification.severity === 'error' ? '#c62828' : '#2e7d32',
+                    '& .MuiAlert-icon': {
+                      color: notification.severity === 'error' ? '#c62828' : '#2e7d32'
+                    }
+                  }}
                 >
-                  <CloseIcon />
-                </IconButton>
-              </Box>
-            </DialogTitle>
-            <DialogContent sx={{ mt: 2, padding: "24px" }}>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                {/* Category Select */}
-                <Autocomplete<string>
-                  fullWidth
-                  options={Object.keys(skillCategories)}
-                  value={selectedCategory || null}
-                  onChange={(_, value) => setSelectedCategory(value || "")}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Category"
-                      InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          backgroundColor: "white",
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "rgba(0,0,0,0.2)",
-                          },
-                          "&:hover .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "rgba(0,0,0,0.3)",
-                          },
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: GREEN_MAIN,
-                          },
-                        },
-                        "& .MuiInputLabel-root": {
-                          color: "rgba(0,0,0,0.7)",
-                          "&.Mui-focused": {
-                            color: GREEN_MAIN,
-                          },
-                        },
-                      }}
-                    />
-                  )}
-                  PaperComponent={(props) => (
-                    <Paper
-                      {...props}
-                      sx={{
-                        backgroundColor: "white",
-                        "& .MuiAutocomplete-option": {
-                          color: "black",
-                          '&[aria-selected="true"]': {
-                            backgroundColor: "rgba(0, 255, 157, 0.1)",
-                          },
-                          "&:hover": {
-                            backgroundColor: "rgba(0, 255, 157, 0.05)",
-                          },
-                        },
-                      }}
-                    />
-                  )}
-                />
-                {/* Skill Autocomplete */}
-                <Autocomplete<string>
-                  fullWidth
-                  options={
-                    selectedCategory
-                      ? skillCategories[
-                      selectedCategory as keyof typeof skillCategories
-                      ]
-                      : technicalSkillsList
-                  }
-                  value={newSkill.name}
-                  onChange={(_, value: string | null) => handleSkillSelection(value)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Skill Name"
-                      InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          backgroundColor: "white",
-                          "& .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "rgba(0,0,0,0.2)",
-                          },
-                          "&:hover .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "rgba(0,0,0,0.3)",
-                          },
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: GREEN_MAIN,
-                          },
-                        },
-                        "& .MuiInputLabel-root": {
-                          color: "rgba(0,0,0,0.7)",
-                          "&.Mui-focused": {
-                            color: GREEN_MAIN,
-                          },
-                        },
-                      }}
-                    />
-                  )}
-                  PaperComponent={(props) => (
-                    <Paper
-                      {...props}
-                      sx={{
-                        backgroundColor: "white",
-                        "& .MuiAutocomplete-option": {
-                          color: "black",
-                          '&[aria-selected="true"]': {
-                            backgroundColor: "rgba(0, 255, 157, 0.1)",
-                          },
-                          "&:hover": {
-                            backgroundColor: "rgba(0, 255, 157, 0.05)",
-                          },
-                        },
-                      }}
-                    />
-                  )}
-                />
-              </Box>
-            </DialogContent>
-            <DialogActions
-              sx={{
-                padding: "16px 24px",
-                borderTop: "1px solid rgba(0,0,0,0.1)",
-              }}
-            >
-              <Button
-                onClick={() => setAddSkillDialogOpen(false)}
-                sx={{
-                  color: "rgba(0,0,0,0.8)",
-                  mr: 1,
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="contained"
-                onClick={handleAddSkill}
-                disabled={!newSkill.name}
-                sx={{
-                  background: GREEN_MAIN,
-                  color: "#000000",
-                  "&:hover": {
-                    background: GREEN_MAIN,
-                  },
-                  "&.Mui-disabled": {
-                    background: "rgba(0,0,0,0.1)",
-                    color: "rgba(0,0,0,0.3)",
-                  },
-                }}
-              >
-                Add Skill
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          {/* Add Snackbar for notifications */}
-          <Snackbar
-            open={notification.open}
-            autoHideDuration={4000}
-            onClose={handleCloseNotification}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          >
-            <Alert
-              onClose={handleCloseNotification}
-              severity={notification.severity}
-              sx={{
-                width: '100%',
-                backgroundColor: notification.severity === 'error' ? '#ffebee' : '#e8f5e9',
-                color: notification.severity === 'error' ? '#c62828' : '#2e7d32',
-                '& .MuiAlert-icon': {
-                  color: notification.severity === 'error' ? '#c62828' : '#2e7d32'
-                }
-              }}
-            >
-              {notification.message}
-            </Alert>
-          </Snackbar>
-        </Container>
-      </Box>
+                  {notification.message}
+                </Alert>
+              </Snackbar>
+            </Container>
+          </Box>
+        </>
+      )}
     </CandidateOnly>
   );
 }

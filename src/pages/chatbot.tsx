@@ -26,7 +26,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import ChatBot from '../../components/ChatBot';
+import ChatBot from '@/components/chatbot/ChatBot';
 
 const CHATBOT_API_URL = 'http://localhost:8001/api';
 

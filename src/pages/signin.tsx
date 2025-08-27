@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
-import { useTheme } from "@mui/material/styles";
 import { useForm } from "react-hook-form";
 import {
   Box,
@@ -19,7 +18,6 @@ import {
 import {
   Email as EmailIcon,
   LockClock as LockClockIcon,
-  Google as GoogleIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
 import { registerUser, verifyOTP } from "@/store/slices/authSlice";
@@ -31,7 +29,6 @@ type EmailFormData = { email: string };
 type CodeFormData = { code: string };
 
 export default function SignIn() {
-  const theme = useTheme();
   const router = useRouter();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -43,7 +40,6 @@ export default function SignIn() {
   const [isClient, setIsClient] = useState(false);
   const [postVerifyRedirect, setPostVerifyRedirect] = useState<{
     hasProfile: boolean;
-    callbackUrl?: string;
     returnUrl?: string;
   } | null>(null);
 
@@ -133,12 +129,10 @@ export default function SignIn() {
         typeof response.profile === "object" &&
         Object.keys(response.profile).length > 0 &&
         response.profile.type; // Check if profile has a type field
-      const callbackUrl = router.query.callbackUrl as string | undefined;
       const returnUrl = router.query.returnUrl as string | undefined;
       // Defer redirect until Redux user state is updated
       setPostVerifyRedirect({
         hasProfile,
-        callbackUrl,
         returnUrl,
       });
     } catch (err) {
@@ -154,15 +148,11 @@ export default function SignIn() {
     const doRedirect = async () => {
       if (!postVerifyRedirect) return;
 
-      const { hasProfile, callbackUrl, returnUrl } = postVerifyRedirect;
+      const { hasProfile, returnUrl } = postVerifyRedirect;
 
       try {
         if (!hasProfile) {
-          if (callbackUrl) {
-            router.push(
-              `/preferences?callbackUrl=${encodeURIComponent(callbackUrl)}`
-            );
-          } else if (returnUrl) {
+          if (returnUrl) {
             router.push(
               `/preferences?returnUrl=${encodeURIComponent(returnUrl)}`
             );
@@ -170,9 +160,7 @@ export default function SignIn() {
             router.push("/preferences");
           }
         } else {
-          if (callbackUrl) {
-            router.push(decodeURIComponent(callbackUrl));
-          } else if (returnUrl) {
+          if (returnUrl) {
             router.push(decodeURIComponent(returnUrl));
           } else {
             switch (safeUser?.role) {
@@ -237,15 +225,10 @@ export default function SignIn() {
         safeProfile.type;
 
       if (!hasProfile) {
-        // Check for callback URLs in query params
-        const callbackUrl = router.query.callbackUrl as string | undefined;
+        // Check for returnUrl in query params
         const returnUrl = router.query.returnUrl as string | undefined;
 
-        if (callbackUrl) {
-          router.push(
-            `/preferences?callbackUrl=${encodeURIComponent(callbackUrl)}`
-          );
-        } else if (returnUrl) {
+        if (returnUrl) {
           router.push(
             `/preferences?returnUrl=${encodeURIComponent(returnUrl)}`
           );
@@ -665,41 +648,6 @@ export default function SignIn() {
               </Button>
             </Box>
           </Box>
-
-          {/* <Divider
-            sx={{
-              my: 2,
-              "&::before, &::after": {
-                borderColor: "rgba(0, 0, 0, 0.1)",
-              },
-              color: "rgba(0, 0, 0, 0.7)",
-            }}
-          >
-            OR
-          </Divider> */}
-
-          {/* GOOGLE SIGN IN */}
-          {/* <Button
-            fullWidth
-            variant="contained"
-            startIcon={<GoogleIcon />}
-            onClick={() => signIn("google")}
-            sx={{
-              py: 1.5,
-              textTransform: "none",
-              color: "#fff",
-              background: userType === "company" ? "rgba(41, 210, 145, 0.83)" : "rgba(131, 16, 255, 0.83)",
-              "&:hover": {
-                background: userType === "company" ? "rgba(41, 210, 145, 0.73)" : "rgba(131, 16, 255, 0.73)",
-              },
-              "&.Mui-disabled": {
-                background: "rgba(0, 0, 0, 0.12)",
-                color: "#fff",
-              },
-            }}
-          >
-            Continue with Google
-          </Button> */}
         </Card>
       </Container>
     </Box>

@@ -2,11 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { v4 as uuidv4 } from "uuid"
-import { DndContext, closestCenter } from "@dnd-kit/core"
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useTheme, useMediaQuery, Drawer, IconButton, Button, Modal, Dialog, DialogTitle, DialogContent, DialogActions, Typography, Box, Paper, TextField, CircularProgress, Snackbar, Alert, AlertColor } from "@mui/material"
-import MenuIcon from "@mui/icons-material/Menu"
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
@@ -14,26 +10,21 @@ import { useDispatch, useSelector } from "react-redux"
 import { getMyProfile } from "@/store/slices/profileSlice"
 import { AppDispatch, RootState } from "@/store/store"
 import styles from '@/styles/ResumeBuilder.module.css'
-import Sidebar from '@/components/Sidebar'
-import Canvas from '@/components/Canvas'
-import SectionRenderer from '@/components/SectionRenderer'
-import ZoomControls from '@/components/zoom-controls'
+import Sidebar from '@/components/resume-builder/Sidebar'
+import Canvas from '@/components/resume-builder/Canvas'
+import SectionRenderer from '@/components/resume-builder/SectionRenderer'
+import ZoomControls from '@/components/resume-builder/zoom-controls'
 import { HeaderSection, TextSection, SkillsSection, LanguagesSection, EducationSection, ExperienceSection, ProjectsSection, CustomSection, ImageSection, LineSection, SectionType } from '@/models/sectionTypes'
-import ResumeActions from '@/components/ResumeActions'
-import QRCodeModal from '@/components/QRCodeModal'
+import ResumeActions from '@/components/resume-builder/ResumeActions'
+import QRCodeModal from '@/components/resume-builder/QRCodeModal'
 import { nftService } from '@/utils/nftService'
 import { useSession } from "next-auth/react"
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh'
 import { useRouter } from 'next/router'
-import FrenchDataCV from '@/components/templates/FrenchDataCV'
-import ReactDOM from 'react-dom/client'
-import BugReportIcon from '@mui/icons-material/BugReport'
-import LinkedInIcon from '@mui/icons-material/LinkedIn'
 import WidgetsIcon from '@mui/icons-material/Widgets'
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions'
-import IconsSidebar from '@/components/IconsSidebar'
+import IconsSidebar from '@/components/resume-builder/IconsSidebar'
 import QRCode from 'qrcode'
-import { ResumeBuilderChatBot, ResumeChatBotFab } from '@/components/resume-chatbot'
+import { ResumeBuilderChatBot, ResumeChatBotFab } from '@/components/resume-builder/resume-chatbot'
 
 // Add debug button and dialog
 const DEBUG_MODE = process.env.NODE_ENV === 'development';
