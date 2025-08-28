@@ -358,6 +358,7 @@ async function saveInterviewDetailsForOnboarding(
   skillAnalysis,
   recommendations
 ) {
+  console.log("skillAnalysis", skillAnalysis);
   const details = skillAnalysis.map((skill) => ({
     name: skill.skillName,
     type: SKILL_TYPES.HARD,
@@ -371,7 +372,7 @@ async function saveInterviewDetailsForOnboarding(
       exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
     })),
   }));
-
+  console.log("details", details);
   const interviewDetails = new InterviewDetails({
     candidate: profile._id,
     type: INTERVIEW_TYPES.ONBOARDING,
@@ -381,7 +382,6 @@ async function saveInterviewDetailsForOnboarding(
   });
 
   await interviewDetails.save();
-  console.log("interviewDetails", interviewDetails);
   return interviewDetails._id;
 }
 
