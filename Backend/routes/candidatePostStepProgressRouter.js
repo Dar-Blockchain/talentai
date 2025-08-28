@@ -1,12 +1,19 @@
+/**
+ * Routes de progression d'étapes par candidat et par post
+ *
+ * Middlewares globaux appliqués:
+ * - requireAuthUser: nécessite un utilisateur authentifié
+ */
 const express = require('express');
 const router = express.Router();
 const candidatePostStepProgressController = require('../controllers/candidatePostStepProgressController');
 const {requireAuthUser} = require('../middleware/authMiddleware');
 
-// Routes protégées par authentification
+// Auth obligatoire pour toutes les routes
 router.use(requireAuthUser);
 
 // CRUD de base
+// GET /candidate-post-step-progress/getUserProgress: progression de l'utilisateur courant
 router.get('/getUserProgress', candidatePostStepProgressController.findByIdCandidate);
 router.post('/', candidatePostStepProgressController.createProgress);
 router.get('/', candidatePostStepProgressController.getAllProgress);

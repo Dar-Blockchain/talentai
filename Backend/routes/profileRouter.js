@@ -1,45 +1,53 @@
+/**
+ * Routes de profil utilisateur et d'entreprise
+ *
+ * Middlewares globaux appliqués:
+ * - requireAuthUser: nécessite un utilisateur authentifié
+ * - LogMiddleware("Profile"): journalise les requêtes de profil
+ */
 const express = require('express');
 const router = express.Router();
 const profileController = require('../controllers/profileController');
 
-// Importez les middlewares
+// Import des middlewares
 const { requireAuthUser } = require('../middleware/authMiddleware');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 
+// Auth obligatoire + logs pour toutes les routes
 router.use(requireAuthUser, authLogMiddleware("Profile"));
 
 
-// Créer ou mettre à jour un profil
+// POST /profile/createOrUpdateProfile — crée/maj profil utilisateur
 router.post('/createOrUpdateProfile', profileController.createOrUpdateProfile);
 
-// Créer ou mettre à jour un profil entreprise
+// POST /profile/createOrUpdateCompanyProfile — crée/maj profil entreprise
 router.post('/createOrUpdateCompanyProfile', profileController.createOrUpdateCompanyProfile);
 
-// Récupérer le profil de l'utilisateur connecté
+// GET /profile/getMyProfile — profil de l'utilisateur courant
 router.get('/getMyProfile', profileController.getMyProfile);
 
-// Récupérer un profil par ID utilisateur
+// GET /profile/getProfileById/:userId — profil par identifiant utilisateur
 router.get('/getProfileById/:userId', profileController.getProfileById);
 
-// Récupérer tous les profils
+// GET /profile/getAllProfiles — liste de tous les profils
 router.get('/getAllProfiles', profileController.getAllProfiles);
 
-// Supprimer un profil
+// DELETE /profile/deleteProfile — supprime le profil courant
 router.delete('/deleteProfile', profileController.deleteProfile);
 
-// Rechercher des profils par compétences
+// GET /profile/search/skills — recherche par compétences
 router.get('/search/skills', profileController.searchProfilesBySkills);
 
-// Ajouter des soft skills
+// POST /profile/addSoftSkills — ajoute des soft skills
 router.post('/addSoftSkills', profileController.addSoftSkills); 
 
-// Récupérer les soft skills
+// GET /profile/getSoftSkills — soft skills courants
 router.get('/getSoftSkills', profileController.getSoftSkills);
 
 router.get('/getCompanyBid', profileController.getCompanyBids);
 
-// Récupérer les soft skills par ID
+// GET /profile/getSoftSkillsById/:userId — soft skills par utilisateur
 router.get('/getSoftSkillsById/:userId', profileController.getSoftSkills);
 
 router.put('/updateFinalBid', profileController.updateFinalBid);

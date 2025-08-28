@@ -1,90 +1,97 @@
+/**
+ * Routes d'outils Hedera (création de token, topics, messages, soldes, etc.)
+ *
+ * Middlewares globaux appliqués:
+ * - requireAuthUser: nécessite un utilisateur authentifié
+ * - LogMiddleware("HederaTools"): journalise l'utilisation des outils
+ */
 const express = require("express");
 const router = express.Router();
 const hederaToolsController = require("../controllers/hederaToolsController");
 
-// Importez les middlewares
+// Import des middlewares
 const { requireAuthUser } = require('../middleware/authMiddleware');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 
-// Apply authentication middleware and logging
+// Auth requis + journalisation
 router.use(requireAuthUser, authLogMiddleware("HederaTools"));
 
-// Hedera Tools Routes - Direct tool calls without LLM
+// Routes Hedera Tools - Appels directs sans LLM
 
 /**
  * @route POST /hedera-tools/create-token
- * @desc Create a fungible token using Hedera Agent Kit tools directly
- * @access Private
+ * @desc Crée un token fongible via Hedera Agent Kit
+ * @access Privé
  */
 router.post("/create-token", hederaToolsController.createFungibleToken);
 
 /**
  * @route POST /hedera-tools/create-topic
- * @desc Create a consensus topic using Hedera Agent Kit tools directly
- * @access Private
+ * @desc Crée un topic de consensus via Hedera Agent Kit
+ * @access Privé
  */
 router.post("/create-topic", hederaToolsController.createTopic);
 
 /**
  * @route POST /hedera-tools/submit-message
- * @desc Submit a message to a consensus topic using Hedera Agent Kit tools directly
- * @access Private
+ * @desc Envoie un message sur un topic de consensus
+ * @access Privé
  */
 router.post("/submit-message", hederaToolsController.submitTopicMessage);
 
 /**
  * @route GET /hedera-tools/balance
- * @desc Get HBAR balance for a specific account using Hedera Agent Kit tools directly
- * @access Private
+ * @desc Récupère le solde HBAR pour un compte donné
+ * @access Privé
  */
 router.get("/balance", hederaToolsController.getHbarBalance);
 
 /**
  * @route GET /hedera-tools/my-balance
- * @desc Get HBAR balance for the current configured account
- * @access Private
+ * @desc Récupère le solde HBAR du compte configuré courant
+ * @access Privé
  */
 router.get("/my-balance", hederaToolsController.getMyBalance);
 
 /**
  * @route GET /hedera-tools/tools
- * @desc Get information about available Hedera Agent Kit tools
- * @access Private
+ * @desc Informations sur les outils disponibles Hedera Agent Kit
+ * @access Privé
  */
 router.get("/tools", hederaToolsController.getAvailableTools);
 
 /**
  * @route POST /hedera-tools/create-evaluation-topic
- * @desc Create a new evaluation topic for candidate pipeline using agent credentials
- * @access Private
+ * @desc Crée un topic d'évaluation pour le pipeline candidat (via credentials d'agent)
+ * @access Privé
  */
 router.post("/create-evaluation-topic", hederaToolsController.createEvaluationTopic);
 
 /**
  * @route POST /hedera-tools/submit-evaluation-message
- * @desc Submit HCS-11 evaluation message to existing topic using topic ID
- * @access Private
+ * @desc Soumet un message d'évaluation HCS-11 à un topic existant
+ * @access Privé
  */
 router.post("/submit-evaluation-message", hederaToolsController.submitEvaluationMessage);
 
 /**
  * @route POST /hedera-tools/send-validation-message
- * @desc Send agent validation message to evaluation topic using HCS-11 standard
- * @access Private
+ * @desc Envoie un message de validation HCS-11 vers un topic d'évaluation
+ * @access Privé
  */
 router.post("/send-validation-message", hederaToolsController.sendValidationMessage);
 
 /**
  * @route GET /hedera-tools/evaluation-topic/:topicId
- * @desc Get evaluation topic details and messages
- * @access Private
+ * @desc Détails et messages d'un topic d'évaluation
+ * @access Privé
  */
 router.get("/evaluation-topic/:topicId", hederaToolsController.getEvaluationTopic);
 
 /**
  * @route GET /hedera-tools/evaluation-topics
- * @desc Get all evaluation topics with optional filters (company, postId, status)
- * @access Private
+ * @desc Liste tous les topics d'évaluation (filtres: company, postId, status)
+ * @access Privé
  */
 router.get("/evaluation-topics", hederaToolsController.getEvaluationTopics);
 
