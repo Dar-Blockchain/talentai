@@ -55,17 +55,17 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
       }
 
       // Check user role and redirect accordingly
-      if (user?.role === 'Candidat' || user?.role === 'Candidate') {
+      if (profile?.type === 'Candidat' || profile?.type === 'Candidate') {
         // Candidate user trying to access company page, redirect to candidate dashboard
         console.log("Candidate user detected, redirecting to candidate dashboard");
         router.push('/dashboard/candidate');
         return;
-      } else if (user?.role === 'Admin') {
+      } else if (profile?.type === 'Admin') {
         // Admin user trying to access company page, redirect to admin dashboard
         console.log("Admin user detected, redirecting to admin dashboard");
         router.push('/dashboard/admin');
         return;
-      } else if (user?.role !== 'Company') {
+      } else if (profile?.type !== 'Company') {
         // Unknown role, redirect to signin
         console.log("Unknown role, redirecting to signin");
         router.push('/signin');
@@ -98,7 +98,7 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
   }
 
   // Show error if user is not a company
-  if (!isLoading && user?.role !== 'Company') {
+  if (!isLoading && profile?.type !== 'Company') {
     return (
       <Box sx={{ 
         display: 'flex', 
