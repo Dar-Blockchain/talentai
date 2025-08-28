@@ -1298,9 +1298,7 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
         analysis.skillAnalysis,
         analysis.recommendations
       );
-      if (!profile.interviewDetails) {
-        profile.interviewDetails = [];
-      }
+
       profile.interviewDetails.push(interviewId);
       await profile.save();
 
