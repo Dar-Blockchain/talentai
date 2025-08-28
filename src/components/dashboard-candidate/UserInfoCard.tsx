@@ -17,8 +17,10 @@ export type UserInfoCardProps = {
   setAddSkillDialogOpen: (open: boolean) => void;
   SkillBlock: any; // component from parent
   handleStartTest: (type?: "technical" | "soft", skill?: any) => void;
-  handleDeleteSoftSkill: (name: string, category: string) => void;
-  handleDeleteSkill: (name: string) => void;
+  
+  // Additional props for the delete functions
+  dispatch: any;
+  getMyProfile: any;
 };
 
 function UserInfoCardComponent(props: UserInfoCardProps) {
@@ -35,9 +37,75 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
     setAddSkillDialogOpen,
     SkillBlock,
     handleStartTest,
-    handleDeleteSoftSkill,
-    handleDeleteSkill,
+    dispatch,
+    getMyProfile,
   } = props;
+
+  const handleDeleteSkill = async (skillName: string) => {
+    try {
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        console.error("Authentication token not found");
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/deleteHardSkill`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ skillToDelete: skillName }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete skill");
+      }
+
+      // Refresh profile data
+      dispatch(getMyProfile());
+      console.log("Skill deleted successfully");
+    } catch (error) {
+      console.error("Error deleting skill:", error);
+      console.error("Failed to delete skill");
+    }
+  };
+
+  const handleDeleteSoftSkill = async (skillName: string, category: string) => {
+    try {
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        console.error("Authentication token not found");
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/deleteSoftSkills`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ softSkillToDelete: skillName }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete soft skill");
+      }
+
+      // Refresh profile data
+      dispatch(getMyProfile());
+      console.log("Soft skill deleted successfully");
+    } catch (error) {
+      console.error("Error deleting soft skill:", error);
+      console.error("Failed to delete soft skill");
+    }
+  };
 
   return (
     <Box sx={{

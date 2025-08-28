@@ -29,7 +29,6 @@ type SoftSkill = {
 export type TestSelectionDialogProps = {
   open: boolean;
   onClose: () => void;
-  onSubmit: () => void;
 
   // Styling token passed from parent to keep consistent theming
   primaryAccentColor: string;
@@ -52,13 +51,18 @@ export type TestSelectionDialogProps = {
 
   softSkillSubcategory: string;
   onSoftSkillSubcategoryChange: (value: string) => void;
+
+  // Additional props for the submit function
+  softSkillProficiency: number;
+  router: any;
+  toast: any;
+  getExperienceLevelFromProficiency: (proficiency: number) => string;
 };
 
 function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
   const {
     open,
     onClose,
-    onSubmit,
     primaryAccentColor,
     skillType,
     onSkillTypeChange,
@@ -73,7 +77,58 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
     onSoftSkillLanguageChange,
     softSkillSubcategory,
     onSoftSkillSubcategoryChange,
+    softSkillProficiency,
+    router,
+    toast,
+    getExperienceLevelFromProficiency,
   } = props;
+
+  const handleTestSubmit = async () => {
+    try {
+      if (skillType === "technical" && selectedSkill) {
+        router.push(
+          `/interview?type=technicalSkill&skill=${selectedSkill}`
+        );
+      } else if (skillType === "soft" && softSkillType) {
+        const proficiencyMap: { [key: string]: number } = {
+          "Entry Level": 1,
+          Junior: 2,
+          "Mid Level": 3,
+          Senior: 4,
+          Expert: 5,
+        };
+        const proficiency =
+          proficiencyMap[
+          getExperienceLevelFromProficiency(softSkillProficiency)
+          ] || 1;
+
+        const queryParams = new URLSearchParams();
+        queryParams.append("type", "soft");
+        queryParams.append("skill", softSkillType);
+        queryParams.append("proficiency", proficiency.toString());
+
+        if (softSkillType === "Communication") {
+          if (!softSkillLanguage) {
+            toast.error("Please select a language for Communication skill");
+            return;
+          }
+          queryParams.append("language", softSkillLanguage);
+        } else {
+          if (!softSkillSubcategory) {
+            toast.error("Please select a subcategory");
+            return;
+          }
+          queryParams.append("subcategory", softSkillSubcategory);
+        }
+
+        router.push(`/interview?${queryParams.toString()}`);
+      }
+      onClose();
+    } catch (error) {
+      console.error("Error in test submission:", error);
+      toast.error("Failed to start test");
+    }
+  };
 
   const isSubmitDisabled =
     (skillType === "technical" && !selectedSkill) ||
@@ -434,7 +489,7 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
         </Button>
         <Button
           variant="contained"
-          onClick={onSubmit}
+          onClick={handleTestSubmit}
           disabled={isSubmitDisabled}
           sx={{
             background: primaryAccentColor,
