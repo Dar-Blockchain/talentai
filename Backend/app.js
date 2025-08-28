@@ -27,6 +27,7 @@ const notificationRouter = require("./routes/notificationRouter");
 const postStepsRouter = require("./routes/postStepsRouter");
 const candidatePostStepProgressRouter = require("./routes/candidatePostStepProgressRouter");
 const hederaToolsRouter = require("./routes/hederaToolsRouter");
+const hcs11Router = require("./routes/hcs11Router");
 const hrAgentRouter = require("./routes/hrAgentRouter");
 const recruitementStepRouter = require("./routes/recruitementStepRouter");
 
@@ -95,6 +96,7 @@ app.use("/notification", notificationRouter);
 app.use("/post-steps", postStepsRouter);
 app.use("/candidate-progress", candidatePostStepProgressRouter);
 app.use("/hedera-tools", hederaToolsRouter);
+app.use("/api/hcs11", hcs11Router);
 app.use("/hr-agents", hrAgentRouter);
 app.use("/recruitementStep", recruitementStepRouter)
 
