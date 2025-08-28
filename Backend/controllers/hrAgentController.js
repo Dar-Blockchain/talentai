@@ -363,6 +363,66 @@ const hrAgentController = {
   },
 
   /**
+   * Initialize single HR agent with HCS-11 profile using data from request body
+   */
+  async initializeSingleAgent(req, res) {
+    try {
+      const { agentConfig } = req.body;
+      
+      if (!agentConfig) {
+        return res.status(400).json({
+          success: false,
+          error: "Agent configuration is required"
+        });
+      }
+
+      console.log(`🚀 Initializing single agent: ${agentConfig.name}...`);
+
+      // Create Hedera wallet for the agent
+      const hederaWallet = await createHederaWallet();
+      console.log(`🔐 Created Hedera wallet for ${agentConfig.name}: ${hederaWallet.accountId}`);
+
+      // Create agent record
+      const newAgent = new AgentModel({
+        ...agentConfig,
+        hederaAccountId: hederaWallet.accountId,
+        hederaPrivateKey: hederaWallet.privateKey,
+        hederaPublicKey: hederaWallet.publicKey,
+        status: 'created',
+        isActive: true,
+        createdAt: new Date()
+      });
+
+      await newAgent.save();
+      console.log(`✅ Agent ${agentConfig.name} saved to database`);
+
+      // Create HCS-11 profile
+      await this.createAgentHCS11Profile(newAgent);
+      console.log(`✅ HCS-11 profile created for ${agentConfig.name}`);
+
+      res.json({
+        success: true,
+        message: `Agent ${agentConfig.name} initialized successfully`,
+        agent: {
+          id: newAgent._id,
+          name: newAgent.name,
+          role: newAgent.role,
+          hederaAccountId: newAgent.hederaAccountId,
+          status: newAgent.status
+        }
+      });
+
+    } catch (error) {
+      console.error(`❌ Error initializing single agent:`, error);
+      res.status(500).json({
+        success: false,
+        error: "Failed to initialize single agent",
+        details: error.message
+      });
+    }
+  },
+
+  /**
    * Create HCS-11 compliant agent profile with structured messaging and memo
    * Based on HCS-11 standard for agent profile management and identity
    */
@@ -982,8 +1042,8 @@ ${interviewNotes}
   },
 
   /**
-   * Agent-to-Agent messaging using HCS-10/HCS-11 standards
-   * Profile A sends message to Profile B, Profile B automatically responds
+   * Agent-to-Agent bidding system with HCS-10/HCS-11 messaging
+   * Agent A sends bid message to Agent B via Hedera blockchain, Agent B responds and stores in database
    */
   async submitEvaluationMessage(req, res) {
     try {
@@ -991,7 +1051,10 @@ ${interviewNotes}
         agentAId,
         agentBId,
         candidateId,
-        message
+        postId,
+        message,
+        bidAmount,
+        bidMessage
       } = req.body;
 
       if (!agentAId || !agentBId || !candidateId) {
@@ -1171,7 +1234,7 @@ ${interviewNotes}
         console.log(`⚠️  Agent A LangChain failed, using fallback: ${error.message}`);
         agentALangChain = {
           processMessage: async (prompt) => ({
-            response: `As ${agentA.role}, I've evaluated candidate ${candidateId}. The candidate shows strong potential in their field.`,
+            response: `Bidding amount ${finalBidAmount} for candidate ${candidateId} of the post ${postId || 'N/A'}`,
             success: true,
             metadata: { provider: "fallback-mode" }
           })
@@ -1193,7 +1256,7 @@ ${interviewNotes}
         console.log(`⚠️  Agent B LangChain failed, using fallback: ${error.message}`);
         agentBLangChain = {
           processMessage: async (prompt) => ({
-            response: `Thank you for the evaluation update. As ${agentB.role}, I acknowledge the assessment. Could you provide more details about the score?`,
+            response: `Your bid is stored`,
             success: true,
             metadata: { provider: "fallback-mode" }
           })
@@ -1201,18 +1264,21 @@ ${interviewNotes}
       }
 
       // Display conversation header
+      const finalBidAmount = bidAmount && !isNaN(bidAmount) ? parseFloat(bidAmount) : 1000.0;
       console.log('\n' + '='.repeat(80));
-      console.log(`🗣️  HCS-10/HCS-11 AGENT MESSAGING STARTING`);
+      console.log(`🗣️  HCS-10/HCS-11 BIDDING SIMULATION STARTING`);
       console.log(`👥 Participants: ${agentA.name} → ${agentB.name}`);
       console.log(`🎯 Topic: Candidate ${candidateId} Evaluation`);
+      console.log(`💰 Bid Amount: $${finalBidAmount}`);
       console.log(`📅 Started: ${new Date().toLocaleString()}`);
       console.log('='.repeat(80));
 
-      // STEP 1: Agent A generates and sends message to Agent B's inbound topic
-      console.log(`\n💬 STEP 1: ${agentA.name} composing evaluation message...`);
+      // STEP 1: Agent A generates and sends bid message to Agent B's inbound topic
+      console.log(`\n💬 STEP 1: ${agentA.name} composing bid message...`);
       
-      const evaluationPrompt = message || `As ${agentA.role}, create a professional evaluation message about candidate ${candidateId}. Include your assessment and recommendation. Keep it concise and professional.`;
-      const agentAResponse = await agentALangChain.processMessage(evaluationPrompt);
+      // Agent A (Company Agent) sends exact bid message
+      const exactBidMessage = `Bid amount ${finalBidAmount} for candidate ${candidateId} for post ${postId || 'N/A'}`;
+      const agentAResponse = { response: exactBidMessage }; // Direct message, no AI processing needed
       
       // Create HCS-11 compliant message structure
       const hcs11MessageFromA = {
@@ -1246,20 +1312,24 @@ ${interviewNotes}
         
         // Message content
         content: {
-          subject: `Candidate ${candidateId} Evaluation`,
+          subject: `Candidate ${candidateId} Bid Submission`,
           message: agentAResponse.response,
           candidateId: candidateId,
+          postId: postId,
           evaluationType: agentA.role,
+          bidAmount: finalBidAmount,
+          currency: "USD",
+          bidType: "candidate_evaluation",
           priority: "normal",
           requiresResponse: true
         },
         
         // Metadata
         metadata: {
-          conversationId: `conv_${Date.now()}`,
+          conversationId: `bid_conv_${Date.now()}`,
           protocol: "hcs-10",
-          messageFormat: "agent_evaluation",
-          platform: "talentai"
+          messageFormat: "agent_bid_message",
+          platform: "talentai_bidding"
         }
       };
 
@@ -1276,11 +1346,66 @@ ${interviewNotes}
       // Wait a moment for message propagation
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // STEP 2: Agent B receives and processes the message, then responds
-      console.log(`\n💬 STEP 2: ${agentB.name} processing message and responding...`);
+      // STEP 2: Agent B (Master Agent) receives bid message and stores in database FIRST
+      console.log(`\n💬 STEP 2: ${agentB.name} (Master Agent) storing bid in database...`);
       
-      const responsePrompt = `You received this evaluation message from ${agentA.name} (${agentA.role}): "${agentAResponse.response}". As ${agentB.role}, provide a professional response acknowledging the evaluation and asking any relevant follow-up questions. Keep it conversational but professional.`;
-      const agentBResponse = await agentBLangChain.processMessage(responsePrompt);
+      // Store bid in database BEFORE responding
+      let agentBResponse;
+      
+      try {
+        // Find or create evaluation topic for this bid
+        let evaluationTopic = await EvaluationTopicModel.findOne({ 
+          candidateId: candidateId,
+          postId: postId 
+        });
+        
+        if (!evaluationTopic) {
+          // Create new evaluation topic with all required fields
+          evaluationTopic = new EvaluationTopicModel({
+            topicId: `bid_topic_${candidateId}_${Date.now()}`,
+            company: "TalentAI Bidding System",
+            postId: postId || `bid_post_${candidateId}`,
+            candidateName: `Candidate_${candidateId}`,
+            candidateId: candidateId,
+            topicMemo: `Bidding topic for candidate ${candidateId} on post ${postId || 'N/A'}`,
+            status: 'active',
+            createdBy: agentB.name,
+            evaluations: [],
+            createdAt: new Date()
+          });
+        }
+
+        // Store the bid as an evaluation record
+        evaluationTopic.evaluations.push({
+          agentId: agentA._id,
+          agentName: agentA.name,
+          agentRole: agentA.role,
+          messageId: hcs11MessageFromA.messageId,
+          hederaMessageId: messageToB.toString(),
+          evaluation: {
+            passed: null,
+            score: finalBidAmount, // Store bid amount as score
+            feedback: agentAResponse.response,
+            interviewNotes: `Bid received: ${finalBidAmount} for candidate ${candidateId} on post ${postId || 'N/A'}`,
+            messageType: "bid_message",
+            bidAmount: finalBidAmount,
+            currency: "USD",
+            postId: postId,
+            storedByMasterAgent: agentB.name
+          },
+          timestamp: new Date()
+        });
+
+        await evaluationTopic.save();
+        console.log(`✅ Bid stored successfully in database by ${agentB.name} (Master Agent)`);
+        
+        // STEP 3: Now Master Agent responds with exact message
+        agentBResponse = { response: "Bid successfully stored" }; // Exact response message
+        
+      } catch (dbError) {
+        console.error(`❌ Database storage error: ${dbError.message}`);
+        agentBResponse = { response: "Bid storage failed" };
+      }
 
       // Create response message from Agent B to Agent A
       const hcs11ResponseFromB = {
@@ -1414,7 +1539,7 @@ ${interviewNotes}
       });
       
       if (evaluationTopic) {
-        // Add HCS-10 message records
+        // Add HCS-10 bid message records
         evaluationTopic.evaluations.push({
           agentId: agentA._id,
           agentName: agentA.name,
@@ -1422,11 +1547,13 @@ ${interviewNotes}
           messageId: hcs11MessageFromA.messageId,
           hederaMessageId: messageToB.toString(),
           evaluation: {
-            passed: true,
-            score: 85,
+            passed: null,
+            score: finalBidAmount, // Using bid amount as score for reference
             feedback: agentAResponse.response,
-            interviewNotes: "HCS-10/HCS-11 evaluation message",
-            messageType: "agent_evaluation_message",
+            interviewNotes: `Bid submitted via HCS-10: $${finalBidAmount} for candidate ${candidateId}`,
+            messageType: "agent_bid_message",
+            bidAmount: finalBidAmount,
+            currency: "USD",
             sentToTopic: agentB.inboundTopicId
           },
           timestamp: new Date()
@@ -1442,34 +1569,75 @@ ${interviewNotes}
             passed: null,
             score: null,
             feedback: agentBResponse.response,
-            interviewNotes: "HCS-10/HCS-11 response message",
-            messageType: "agent_response_message",
+            interviewNotes: `Bid acknowledgment via HCS-10: Received $${finalBidAmount} bid from ${agentA.name}`,
+            messageType: "agent_bid_acknowledgment",
+            receivedBidAmount: finalBidAmount,
+            currency: "USD",
             sentToTopic: agentA.inboundTopicId,
             inReplyTo: hcs11MessageFromA.messageId
           },
           timestamp: new Date()
         });
 
-        evaluationTopic.status = 'hcs-messaging';
+        evaluationTopic.status = 'active'; // Keep as active for bidding process
         await evaluationTopic.save();
+        
+        // Log successful database storage
+        console.log(`💾 Bid information stored in database successfully`);
+        console.log(`📊 Evaluation Topic ID: ${evaluationTopic._id}`);
+        console.log(`💰 Bid Amount: $${finalBidAmount} recorded in evaluation records`);
+      } else {
+        // Create new evaluation topic if none exists
+        const newEvaluationTopic = new EvaluationTopicModel({
+          topicId: `bid_topic_${candidateId}_${Date.now()}`,
+          company: "TalentAI Bidding System",
+          postId: `bid_post_${candidateId}`,
+          candidateName: `Candidate_${candidateId}`,
+          candidateId: candidateId,
+          topicMemo: `Bidding topic for candidate ${candidateId} via HCS-10/HCS-11 messaging`,
+          status: 'active',
+          createdBy: agentA.name,
+          evaluations: [{
+            agentId: agentA._id,
+            agentName: agentA.name,
+            agentRole: agentA.role,
+            messageId: hcs11MessageFromA.messageId,
+            hederaMessageId: messageToB.toString(),
+            evaluation: {
+              passed: null,
+              score: finalBidAmount,
+              feedback: agentAResponse.response,
+              interviewNotes: `Bid submitted via HCS-10: $${finalBidAmount}`,
+              messageType: "agent_bid_message",
+              bidAmount: finalBidAmount,
+              currency: "USD"
+            },
+            timestamp: new Date()
+          }],
+          createdAt: new Date()
+        });
+        
+        await newEvaluationTopic.save();
+        console.log(`💾 New evaluation topic created and bid stored: ${newEvaluationTopic._id}`);
       }
 
       // Display completion status
-      console.log('\n' + '✅ HCS-10/HCS-11 MESSAGING COMPLETED '.padStart(50, '=').padEnd(80, '='));
-      console.log(`🎉 Agent-to-agent messaging completed successfully!`);
-      console.log(`   📡 ${agentA.name} → ${agentB.name}: Message sent to ${agentB.inboundTopicId}`);
-      console.log(`   📡 ${agentB.name} → ${agentA.name}: Response sent to ${agentA.inboundTopicId}`);
+      console.log('\n' + '✅ HCS-10/HCS-11 BIDDING COMPLETED '.padStart(50, '=').padEnd(80, '='));
+      console.log(`🎉 Agent-to-agent bidding completed successfully!`);
+      console.log(`   💰 ${agentA.name} → ${agentB.name}: Bid of $${finalBidAmount} sent to ${agentB.inboundTopicId}`);
+      console.log(`   💾 ${agentB.name} → ${agentA.name}: Acknowledgment sent to ${agentA.inboundTopicId} & stored in database`);
       console.log(`📊 Messages exchanged: 2 (via Hedera network)`);
       console.log(`🎯 Candidate: ${candidateId}`);
+      console.log(`💰 Bid Amount: $${finalBidAmount}`);
       console.log(`⏱️  Duration: ${((Date.now() - conversationStartTime) / 1000).toFixed(1)}s`);
-      console.log(`🔗 Protocol: HCS-10 messaging with HCS-11 profiles`);
+      console.log(`🔗 Protocol: HCS-10 messaging with HCS-11 profiles + Database Storage`);
       console.log(`💾 Conversation ID: ${conversationRecord.conversationId}`);
       console.log('='.repeat(80) + '\n');
 
       res.json({
         success: true,
-        message: "HCS-10/HCS-11 agent messaging completed successfully",
-        protocol: "hcs-10/hcs-11",
+        message: "HCS-10/HCS-11 bidding simulation completed successfully",
+        protocol: "hcs-10/hcs-11-bidding",
         conversation: conversationRecord,
         messaging: {
           agentA: {
@@ -1494,11 +1662,19 @@ ${interviewNotes}
           }
         },
         candidateId: candidateId,
+        biddingDetails: {
+          bidAmount: finalBidAmount,
+          currency: "USD",
+          bidderAgent: agentA.name,
+          receiverAgent: agentB.name,
+          storedInDatabase: true
+        },
         networkMessages: {
-          messageFromA: hcs11MessageFromA,
-          responseFromB: hcs11ResponseFromB
+          bidMessageFromA: hcs11MessageFromA,
+          acknowledgmentFromB: hcs11ResponseFromB
         },
         conversationCompleted: true,
+        biddingCompleted: true,
         timestamp: new Date().toISOString()
       });
 

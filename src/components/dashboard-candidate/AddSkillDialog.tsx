@@ -17,7 +17,6 @@ import CloseIcon from "@mui/icons-material/Close";
 export type AddSkillDialogProps = {
   open: boolean;
   onClose: () => void;
-  onSubmit: () => void;
   primaryAccentColor: string;
 
   selectedCategory: string;
@@ -27,13 +26,21 @@ export type AddSkillDialogProps = {
 
   skillCategories: Record<string, string[]>;
   technicalSkillsList: string[];
+  
+  // Profile data for duplicate checking
+  profileSkills?: any[];
+  
+  // Router for navigation
+  router: any;
+  
+  // Notification state and setter
+  setNotification: (notification: any) => void;
 };
 
 function AddSkillDialogComponent(props: AddSkillDialogProps) {
   const {
     open,
     onClose,
-    onSubmit,
     primaryAccentColor,
     selectedCategory,
     onSelectedCategoryChange,
@@ -41,7 +48,44 @@ function AddSkillDialogComponent(props: AddSkillDialogProps) {
     onSkillSelection,
     skillCategories,
     technicalSkillsList,
+    profileSkills,
+    router,
+    setNotification,
   } = props;
+
+  const handleAddSkill = async () => {
+    try {
+      const selectedSkill = newSkillName;
+
+      const isDuplicate = profileSkills?.some(
+        (skill: any) => skill.name.toLowerCase() === selectedSkill.toLowerCase()
+      );
+
+      if (isDuplicate) {
+        console.log("Skill already exists in profile");
+        setNotification({
+          open: true,
+          message: "This skill already exists in your profile!",
+          severity: 'error'
+        });
+        return;
+      }
+
+      // Redirect to test for the selected skill
+      if (selectedSkill) {
+        router.push(
+          `/interview?type=technicalSkill&skill=${encodeURIComponent(selectedSkill)}`
+        );
+      }
+    } catch (error) {
+      console.error("Error adding skill:", error);
+      setNotification({
+        open: true,
+        message: "Failed to add skill. Please try again.",
+        severity: 'error'
+      });
+    }
+  };
 
   const categoryOptions = Object.keys(skillCategories || {});
   const skillOptions = selectedCategory
@@ -192,7 +236,7 @@ function AddSkillDialogComponent(props: AddSkillDialogProps) {
         </Button>
         <Button
           variant="contained"
-          onClick={onSubmit}
+          onClick={handleAddSkill}
           disabled={!newSkillName}
           sx={{
             background: primaryAccentColor,

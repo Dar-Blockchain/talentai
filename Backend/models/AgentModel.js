@@ -2,12 +2,7 @@ const mongoose = require("mongoose");
 
 const agentSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
-  avatarName: { 
-    type: String, 
-    required: true, 
-    enum: ["sinda", "olga", "jaaf", "sam", "julia", "yuka"],
-    unique: true
-  },
+  avatarName: { type: String, required: true },
   role: { type: String, required: true },
   description: { type: String },
   isActive: { type: Boolean, default: true },
