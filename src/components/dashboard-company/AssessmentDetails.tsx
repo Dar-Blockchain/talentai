@@ -8,7 +8,6 @@ import {
   Box,
   Button,
   IconButton,
-  Grid,
   Chip,
   Avatar,
   LinearProgress,
@@ -207,9 +206,9 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
   // ============================================================================
 
   const renderScoreSection = () => (
-    <Grid container spacing={3} sx={{ mb: 4 }}>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
       {/* Overall Score */}
-      <Grid item xs={12} md={4}>
+      <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
         <ScoreCard>
           <Typography variant="h4" sx={{ fontWeight: 700, color: getScoreColor(assessment.results.overallScore) }}>
             {assessment.results.overallScore}%
@@ -235,10 +234,10 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
             }}
           />
         </ScoreCard>
-      </Grid>
+      </Box>
 
       {/* Technical Score */}
-      <Grid item xs={12} md={4}>
+      <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
         <ScoreCard>
           <Typography variant="h4" sx={{ fontWeight: 700, color: getScoreColor(assessment.results.technicalScore) }}>
             {assessment.results.technicalScore}%
@@ -264,10 +263,10 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
             }}
           />
         </ScoreCard>
-      </Grid>
+      </Box>
 
       {/* Soft Skills Score */}
-      <Grid item xs={12} md={4}>
+      <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
         <ScoreCard>
           <Typography variant="h4" sx={{ fontWeight: 700, color: getScoreColor(assessment.results.softSkillScore) }}>
             {assessment.results.softSkillScore}%
@@ -293,8 +292,8 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
             }}
           />
         </ScoreCard>
-      </Grid>
-    </Grid>
+      </Box>
+    </Box>
   );
 
   const renderCandidateInfo = () => (
@@ -302,8 +301,8 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
       <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
         Candidate Information
       </Typography>
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+        <Box sx={{ flex: '1 1 300px', minWidth: '300px' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Avatar
               src={assessment.candidate.avatar}
@@ -336,9 +335,9 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
               </Box>
             </Box>
           </Box>
-        </Grid>
+        </Box>
         
-        <Grid item xs={12} md={6}>
+        <Box sx={{ flex: '1 1 300px', minWidth: '300px' }}>
           <Box>
             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
               Skills Assessment
@@ -354,8 +353,8 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
               ))}
             </Box>
           </Box>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Box>
   );
 
@@ -364,8 +363,8 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
       <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
         Job Details
       </Typography>
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+        <Box sx={{ flex: '1 1 300px', minWidth: '300px' }}>
           <Box sx={{ p: 2, borderRadius: 2, backgroundColor: 'rgba(131, 16, 255, 0.05)' }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
               {assessment.job.title}
@@ -374,9 +373,9 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
               {assessment.job.company}
             </Typography>
           </Box>
-        </Grid>
+        </Box>
         
-        <Grid item xs={12} md={6}>
+        <Box sx={{ flex: '1 1 300px', minWidth: '300px' }}>
           <Box sx={{ p: 2, borderRadius: 2, backgroundColor: 'rgba(2, 226, 255, 0.05)' }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
               Required Skills
@@ -393,8 +392,8 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
               ))}
             </Box>
           </Box>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Box>
   );
 
@@ -454,44 +453,38 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
 
   const renderAssessmentMeta = () => (
     <Box sx={{ p: 3, borderRadius: 2, backgroundColor: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.05)' }}>
-      <Grid container spacing={3}>
-        <Grid item xs={12} sm={4}>
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-              Status
-            </Typography>
-            <Chip
-              label={assessment.status}
-              color={assessment.status === 'completed' ? 'success' : 
-                     assessment.status === 'in-progress' ? 'warning' : 'error'}
-              variant="outlined"
-              sx={{ textTransform: 'capitalize' }}
-            />
-          </Box>
-        </Grid>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+        <Box sx={{ flex: '1 1 200px', minWidth: '200px', textAlign: 'center' }}>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+            Status
+          </Typography>
+          <Chip
+            label={assessment.status}
+            color={assessment.status === 'completed' ? 'success' : 
+                   assessment.status === 'in-progress' ? 'warning' : 'error'}
+            variant="outlined"
+            sx={{ textTransform: 'capitalize' }}
+          />
+        </Box>
         
-        <Grid item xs={12} sm={4}>
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-              Duration
-            </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-              {formatDuration(assessment.duration)}
-            </Typography>
-          </Box>
-        </Grid>
+        <Box sx={{ flex: '1 1 200px', minWidth: '200px', textAlign: 'center' }}>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+            Duration
+          </Typography>
+          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+            {formatDuration(assessment.duration)}
+          </Typography>
+        </Box>
         
-        <Grid item xs={12} sm={4}>
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-              Completed
-            </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 600 }}>
-              {formatDate(assessment.completedAt)}
-            </Typography>
-          </Box>
-        </Grid>
-      </Grid>
+        <Box sx={{ flex: '1 1 200px', minWidth: '200px', textAlign: 'center' }}>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+            Completed
+          </Typography>
+          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+            {formatDate(assessment.completedAt)}
+          </Typography>
+        </Box>
+      </Box>
     </Box>
   );
 
@@ -580,3 +573,4 @@ const AssessmentDetails: React.FC<AssessmentDetailsProps> = ({
 };
 
 export default AssessmentDetails;
+

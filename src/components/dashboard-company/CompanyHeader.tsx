@@ -215,3 +215,4 @@ const CompanyHeader: React.FC<CompanyHeaderProps> = ({
 };
 
 export default CompanyHeader;
+
