@@ -17,6 +17,13 @@ router.use(requireAuthUser, authLogMiddleware("HRAgent"));
 router.post("/initialize", hrAgentController.initializeAgents);
 
 /**
+ * @route POST /hr-agents/initialize-single
+ * @desc Initialize single HR agent with HCS-11 profile using data from request body
+ * @access Private (Admin only)
+ */
+router.post("/initialize-single", hrAgentController.initializeSingleAgent);
+
+/**
  * @route POST /hr-agents
  * @desc Create a new HR agent
  * @access Private (Admin only)
