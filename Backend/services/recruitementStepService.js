@@ -242,8 +242,8 @@ exports.analyseQuestions = async ({ questions, postStep ,user}) => {
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 2048,
-      temperature: 0.3,
+      max_tokens: 4096, // Increased token limit for complex JSON response
+      temperature: 0.1, // Lower temperature for more consistent JSON output
       stream: true,
     });
 
@@ -253,8 +253,39 @@ exports.analyseQuestions = async ({ questions, postStep ,user}) => {
       if (content) raw += content;
     }
 
-    // I. parse AI response
-    let analysis = await parseAIResponse(raw);
+    // Debug: Log the raw AI response before parsing
+    console.log("Raw AI response:", raw);
+    console.log("Raw AI response length:", raw.length);
+    console.log("Raw AI response type:", typeof raw);
+
+    // I. parse AI response with retry mechanism
+    let analysis;
+    try {
+      analysis = await parseAIResponse(raw);
+    } catch (parseError) {
+      console.warn("First parsing attempt failed, trying with different model:", parseError.message);
+      
+      // Retry with a different model that might be better at JSON generation
+      const retryStream = await together.chat.completions.create({
+        model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo", // Different model for retry
+        messages: [
+          { role: "system", content: systemPrompt + "\n\nIMPORTANT: Return ONLY valid JSON. No markdown, no explanations, no additional text." },
+          { role: "user", content: userPrompt + "\n\nRemember: Return ONLY valid JSON format." },
+        ],
+        max_tokens: 4096,
+        temperature: 0.05, // Very low temperature for consistent output
+        stream: true,
+      });
+
+      let retryRaw = "";
+      for await (const chunk of retryStream) {
+        const content = chunk.choices?.[0]?.delta?.content;
+        if (content) retryRaw += content;
+      }
+
+      console.log("Retry AI response:", retryRaw);
+      analysis = await parseAIResponse(retryRaw);
+    }
 
     console.log("old value", analysis.overallScore);
     if (stepType !== "technical") {

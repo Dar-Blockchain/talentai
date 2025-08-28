@@ -904,31 +904,42 @@ export default function DashboardCandidate() {
   // Move all useMemo hooks here to ensure they're called every render
   const memoizedAdData = useMemo(() => {
     console.log("Processing adPost in memoizedAdData:", adPost);
+    console.log("Profile data:", profile);
     
     // Check if user has passed any tests with good scores
-    const hasGoodTestScores = profile?.skills?.some((skill: any) => 
-      skill.score && skill.score > 20
-    ) || profile?.softSkills?.some((skill: any) => 
-      skill.score && skill.score > 20
-    );
+    // Look for different possible score fields
+    const hasGoodTestScores = profile?.skills?.some((skill: any) => {
+      console.log("Checking skill:", skill);
+      const score = skill.score || skill.proficiencyLevel || skill.level || skill.percentage;
+      console.log("Skill score found:", score);
+      return score && score > 20;
+    }) || profile?.softSkills?.some((skill: any) => {
+      console.log("Checking soft skill:", skill);
+      const score = skill.score || skill.proficiencyLevel || skill.level || skill.percentage;
+      console.log("Soft skill score found:", score);
+      return score && score > 20;
+    });
     
     console.log("User has good test scores:", hasGoodTestScores);
     console.log("Profile skills:", profile?.skills);
     console.log("Profile soft skills:", profile?.softSkills);
     
-    // Only show opportunities if user has good test scores
-    if (!hasGoodTestScores) {
-      console.log("User doesn't have good test scores, returning empty array");
-      return [];
-    }
+    // For now, let's show opportunities regardless of test scores to debug
+    // TODO: Re-enable this check once we understand the score structure
+    console.log("Temporarily showing all opportunities for debugging");
     
-    const processed = (adPost || []).map((ad: any) => ({
-      _id: ad._id,
-      title: ad.jobDetails?.title,
-      description: ad.jobDetails?.description || '',
-      firstStepId: (ad?.post_Steps && ad.post_Steps.length > 0) ? ad.post_Steps[0] : undefined,
-    }));
-    console.log("Processed memoizedAdData:", processed);
+    const processed = (adPost || []).map((ad: any) => {
+      console.log("Processing ad:", ad);
+      const processedAd = {
+        _id: ad._id,
+        title: ad.jobDetails?.title,
+        description: ad.jobDetails?.description || '',
+        firstStepId: (ad?.post_Steps && ad.post_Steps.length > 0) ? ad.post_Steps[0] : undefined,
+      };
+      console.log("Processed ad:", processedAd);
+      return processedAd;
+    });
+    console.log("Final processed memoizedAdData:", processed);
     return processed;
   }, [adPost, profile]);
 
