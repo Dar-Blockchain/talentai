@@ -222,7 +222,7 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
             },
           }}
         >
-          Start Test
+          Technical/Soft Test
         </Button>
         <Button
           variant="contained"
@@ -245,7 +245,7 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
             },
           }}
         >
-          HR Interview Test
+          HR Test
         </Button>
         <Button
           variant="outlined"
