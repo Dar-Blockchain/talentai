@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
     },
     LastName: {
       type: String,
-   },
+    },
     email: {
       type: String,
       required: true,
@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema(
     },
     ip: String,
     Localisation: String,
-    role: { type: String, enum: ["Company","jury", "Candidat","Admin"] },
+    role: { type: String, enum: ["Company", "jury", "Candidat", "Admin"] },
     profile: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Profile",
@@ -59,10 +59,18 @@ const userSchema = new mongoose.Schema(
         date: { type: Date, default: Date.now },
         ip: String,
         localisation: String,
-        method: { type: String, enum: ['OTP', 'Password', 'OAuth'], default: 'OTP' },
-        status: { type: String, enum: ['Success', 'Failed'], default: 'Success' }
-      }
-    ]
+        method: {
+          type: String,
+          enum: ["OTP", "Password", "OAuth"],
+          default: "OTP",
+        },
+        status: {
+          type: String,
+          enum: ["Success", "Failed"],
+          default: "Success",
+        },
+      },
+    ],
     //  pubkey: { type: String, default: null },
     //  privkey: { type: String, default: null },
     //  accountId: { type: String, default: null },

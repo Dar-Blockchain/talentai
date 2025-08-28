@@ -56,7 +56,7 @@ router.delete('/deleteHardSkill', profileController.deleteHardSkill);
 
 router.delete('/deleteSoftSkills', profileController.deleteSoftSkill);
 
-router.get('/getCompanyWithAssessments/:jobId?', profileController.getCompanyWithAssessments);
+router.get('/getCompanyWithAssessments', profileController.getCompanyWithAssessments);
 
 router.get("/company/stats/total", profileController.getTotalCompanies);
 
