@@ -31,7 +31,7 @@ type RecommendedOpportunitiesProps = {
   emptyText?: string;
 };
 
-export default function RecommendedOpportunities({ data, total, emptyText = "No recommendations available yet" }: RecommendedOpportunitiesProps) {
+export default function RecommendedOpportunities({ data, total, emptyText = "You need to pass a test with a score of 'Good' or >20% to see recommended opportunities" }: RecommendedOpportunitiesProps) {
   const [selected, setSelected] = useState<RecommendedOpportunity | null>(null);
   const [selectedDetails, setSelectedDetails] = useState<Record<string, any> | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
