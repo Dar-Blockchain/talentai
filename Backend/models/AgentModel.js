@@ -41,6 +41,17 @@ const agentSchema = new mongoose.Schema({
   privkey: { type: String },
   pubkey: { type: String },
   createdAt: { type: Date, default: Date.now },
+
+  Campany: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
+
+  Post: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Post",
+  },
+
 });
 
 module.exports = mongoose.model("Agent", agentSchema);
