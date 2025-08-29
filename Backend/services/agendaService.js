@@ -28,14 +28,20 @@ async function initializeAgenda() {
   // Define the hourly job
   agendaInstance.define('agent:heartbeat', async () => {
     try {
-      const agents = await Agent.find({}, { _id: 1, name: 1 }).lean();
+      const agents = await Agent.find({}, { _id: 1, name: 1 })
+        .populate({ path: 'Campany', select: 'username role' })
+        .populate({ path: 'Post', select: 'jobDetails user' })
+        .lean();
       if (!agents || agents.length === 0) {
         console.log('[agent:heartbeat] Aucun agent trouvé');
         return;
       }
       agents.forEach((agent) => {
-        const label = agent.name || agent._id?.toString();
-        console.log(`im here - agent=${label}`);
+        const agentLabel = agent.name || agent._id?.toString();
+        const username = agent.Campany?.username || 'unknown-user';
+        const jobTitle = agent.Post?.jobDetails?.title || 'unknown-title';
+        const jobLocation = agent.Post?.jobDetails?.location || 'unknown-location';
+        console.log(`im here - agent=${agentLabel} | username=${username} | jobTitle=${jobTitle} | location=${jobLocation}`);
       });
     } catch (err) {
       console.error('[agent:heartbeat] Error:', err.message);
