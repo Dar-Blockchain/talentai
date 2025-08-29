@@ -1872,6 +1872,104 @@
         "summary": "Initialize HR Validation Agents with HCS-11 Profiles",
         "description": "Creates all 6 HR validation agents with Hedera wallets, HCS-11 compliant profiles, and HCS-10 communication topics (one-time operation). Each agent gets inbound/outbound topics for messaging. Requires Admin role and JWT token.",
         "security": [{ "bearerAuth": [] }],
+         "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "avatarName", "role", "description"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Agent name (e.g., Sarah-TechLead-Agent)",
+                    "example": "Sarah-TechLead-Agent"
+                  },
+                  "avatarName": {
+                    "type": "string",
+                    "description": "Agent avatar identifier (lowercase, used for topics)",
+                    "example": "sarah"
+                  },
+                  "role": {
+                    "type": "string",
+                    "description": "Agent role/specialization",
+                    "example": "Technical Leadership Specialist"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Agent description and responsibilities",
+                    "example": "Validates technical leadership capabilities and team management skills"
+                  },
+                  "hcs11CustomProfile": {
+                    "type": "object",
+                    "description": "Optional custom HCS-11 profile configuration",
+                    "properties": {
+                      "agentPersonality": {
+                        "type": "object",
+                        "properties": {
+                          "communicationStyle": {
+                            "type": "string",
+                            "example": "technical_analytical"
+                          },
+                          "approachMethod": {
+                            "type": "string",
+                            "example": "systematic_deep_dive"
+                          },
+                          "evaluationPhilosophy": {
+                            "type": "string",
+                            "example": "Focus on scalable architecture and clean code practices"
+                          }
+                        }
+                      },
+                      "specializedCapabilities": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "example": ["system_architecture_assessment", "api_design_evaluation"]
+                      },
+                      "evaluationFramework": {
+                        "type": "object",
+                        "properties": {
+                          "primaryFocus": {
+                            "type": "string",
+                            "example": "backend_systems"
+                          },
+                          "assessmentCriteria": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "example": ["system_design_thinking", "code_architecture"]
+                          }
+                        }
+                      },
+                      "domainExpertise": {
+                        "type": "object",
+                        "properties": {
+                          "primaryTechnologies": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "example": ["Node.js", "Python", "Java"]
+                          },
+                          "specializations": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "example": ["API_gateway_design", "microservices"]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "All HR validation agents initialized successfully",
