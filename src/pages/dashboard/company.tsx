@@ -231,6 +231,7 @@ const DashboardCompany = () => {
   const [isLoadingJobs, setIsLoadingJobs] = useState(false);
   const [jobsError, setJobsError] = useState<string | null>(null);
   const [displayCount, setDisplayCount] = useState(3); // Change initial display count to 3
+  const [linkedinWarningOpen, setLinkedinWarningOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [bidDialogOpen, setBidDialogOpen] = useState(false);
