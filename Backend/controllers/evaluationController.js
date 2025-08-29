@@ -1124,6 +1124,7 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
     const { questions, skill } = req.body;
     const user = req.user;
 
+
     if (!Array.isArray(skill)) {
       return res.status(400).json({
         error: "Invalid request format",
@@ -1291,6 +1292,7 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
       analysis.skillAnalysis[0].demonstratedExperienceLevel =
         demonstratedExperienceLevel;
 
+      console.log("analysis.skillAnalysis", );
       // save interview details and update profile with interview ID
       const interviewId = await saveInterviewDetailsForOnboarding(
         profile,
@@ -1298,9 +1300,7 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
         analysis.skillAnalysis,
         analysis.recommendations
       );
-      if (!profile.interviewDetails) {
-        profile.interviewDetails = [];
-      }
+
       profile.interviewDetails.push(interviewId);
       await profile.save();
 

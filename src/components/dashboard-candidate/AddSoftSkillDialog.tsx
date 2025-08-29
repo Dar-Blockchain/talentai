@@ -24,7 +24,6 @@ type SoftSkill = {
 export type AddSoftSkillDialogProps = {
   open: boolean;
   onClose: () => void;
-  onSubmit: () => void;
   primaryAccentColor: string; // use GREEN_MAIN for consistency
 
   softSkills: SoftSkill[];
@@ -36,13 +35,16 @@ export type AddSoftSkillDialogProps = {
   onSoftSkillLanguageChange: (value: string) => void;
   softSkillSubcategory: string;
   onSoftSkillSubcategoryChange: (value: string) => void;
+  
+  // Additional props for the function
+  softSkillProficiency: number;
+  router: any;
 };
 
 function AddSoftSkillDialogComponent(props: AddSoftSkillDialogProps) {
   const {
     open,
     onClose,
-    onSubmit,
     primaryAccentColor,
     softSkills,
     languages,
@@ -52,7 +54,66 @@ function AddSoftSkillDialogComponent(props: AddSoftSkillDialogProps) {
     onSoftSkillLanguageChange,
     softSkillSubcategory,
     onSoftSkillSubcategoryChange,
+    softSkillProficiency,
+    router,
   } = props;
+
+  const getExperienceLevelFromProficiency = (proficiency: string): string => {
+    const proficiencyMap: { [key: string]: string } = {
+      "1": "Entry Level",
+      "2": "Junior",
+      "3": "Mid Level",
+      "4": "Senior",
+      "5": "Expert",
+    };
+    return proficiencyMap[proficiency] || "Entry Level";
+  };
+
+  const handleSoftSkillAddSubmit = async () => {
+    try {
+      if (!softSkillType) {
+        // You can use toast here if available, or implement a notification system
+        console.error("Please select a soft skill");
+        return;
+      }
+      const proficiencyMap: { [key: string]: number } = {
+        "Entry Level": 1,
+        Junior: 2,
+        "Mid Level": 3,
+        Senior: 4,
+        Expert: 5,
+      };
+      const proficiency =
+        proficiencyMap[
+          getExperienceLevelFromProficiency(softSkillProficiency)
+        ] || 1;
+
+      const queryParams = new URLSearchParams();
+      queryParams.append("type", "soft");
+      queryParams.append("skill", softSkillType);
+      queryParams.append("proficiency", proficiency.toString());
+
+      if (softSkillType === "Communication") {
+        if (!softSkillLanguage) {
+          console.error("Please select a language for Communication skill");
+          return;
+        }
+        queryParams.append("language", softSkillLanguage);
+      } else {
+        if (!softSkillSubcategory) {
+          console.error("Please select a subcategory");
+          return;
+        }
+        queryParams.append("subcategory", softSkillSubcategory);
+      }
+
+      router.push(`/interview?${queryParams.toString()}`);
+      onClose();
+    } catch (error) {
+      console.error("Error in soft skill submission:", error);
+      console.error("Failed to start test");
+    }
+  };
 
   const submitDisabled =
     !softSkillType ||
@@ -279,7 +340,7 @@ function AddSoftSkillDialogComponent(props: AddSoftSkillDialogProps) {
         </Button>
         <Button
           variant="contained"
-          onClick={onSubmit}
+          onClick={handleSoftSkillAddSubmit}
           disabled={submitDisabled}
           sx={{
             background: primaryAccentColor,

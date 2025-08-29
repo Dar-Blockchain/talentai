@@ -355,7 +355,8 @@ async function saveInterviewDetailsForJob(
 async function saveInterviewDetailsForOnboarding(
   profile,
   overallScore,
-  skillAnalysis
+  skillAnalysis,
+  recommendations
 ) {
   const details = skillAnalysis.map((skill) => ({
     name: skill.skillName,
@@ -370,7 +371,6 @@ async function saveInterviewDetailsForOnboarding(
       exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
     })),
   }));
-
   const interviewDetails = new InterviewDetails({
     candidate: profile._id,
     type: INTERVIEW_TYPES.ONBOARDING,

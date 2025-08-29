@@ -189,7 +189,9 @@ async function parseAIResponse(raw) {
     return result;
   } catch (err) {
     console.error("Failed to parse AI response:", err);
-    throw new Error("AI response could not be parsed .");
+    console.error("Raw response that failed to parse:", raw);
+    console.error("Cleaned JSON string that failed:", jsonStr);
+    throw new Error(`AI response could not be parsed: ${err.message}. Raw response: ${raw.substring(0, 200)}...`);
   }
 }
 

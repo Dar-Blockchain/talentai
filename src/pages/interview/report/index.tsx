@@ -488,33 +488,6 @@ export default function Report() {
           throw new Error('Invalid test results format in storage');
         }
 
-        const jobId = router.query.jobId as string;
-        if (jobId) {
-          const jobResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}evaluation/analyze-job-test-results`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({ jobId, questions: testData.results, testedSkills: testData.testedSkills })
-          });
-
-          if (!jobResponse.ok) {
-            const errorText = await jobResponse.text();
-            let errorMessage = 'Failed to analyze results';
-            try {
-              const errorJson = JSON.parse(errorText);
-              errorMessage = errorJson.message || errorJson.error || errorText;
-            } catch {
-              errorMessage = errorText || 'Failed to analyze results';
-            }
-            throw new Error(`Failed to analyze results: ${errorMessage}`);
-          }
-
-          const analysisData = await jobResponse.json();
-          console.log('Job Analysis response:', analysisData);
-          setResults(analysisData.result);
-        } else {
           const profileResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
             method: 'GET',
             headers: {
@@ -602,7 +575,6 @@ export default function Report() {
           }
 
           setResults(analysisData.result);
-        }
       } catch (e) {
         console.error('Error analyzing test results:', e);
         setError(e instanceof Error ? e.message : 'An error occurred');

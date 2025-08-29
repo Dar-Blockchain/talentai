@@ -518,6 +518,16 @@ export default function DashboardCandidate() {
     dispatch(getMyProfile());
   }, [dispatch]);
 
+  // Debug profile data
+  useEffect(() => {
+    if (profile) {
+      console.log("Profile loaded:", profile);
+      console.log("Profile skills:", profile.skills);
+      console.log("Profile soft skills:", profile.softSkills);
+      console.log("Profile overall score:", profile.overallScore);
+    }
+  }, [profile]);
+
 
 
   useEffect(() => {
@@ -688,97 +698,9 @@ export default function DashboardCandidate() {
     setSoftSkillLanguage("");
   }, []);
 
-  const handleTestSubmit = useCallback(async () => {
-    try {
-      if (skillType === "technical" && selectedSkill) {
-        router.push(
-          `/interview?type=technicalSkill&skill=${selectedSkill}`
-        );
-      } else if (skillType === "soft" && softSkillType) {
-        const proficiencyMap: { [key: string]: number } = {
-          "Entry Level": 1,
-          Junior: 2,
-          "Mid Level": 3,
-          Senior: 4,
-          Expert: 5,
-        };
-        const proficiency =
-          proficiencyMap[
-          getExperienceLevelFromProficiency(softSkillProficiency)
-          ] || 1;
 
-        const queryParams = new URLSearchParams();
-        queryParams.append("type", "soft");
-        queryParams.append("skill", softSkillType);
-        queryParams.append("proficiency", proficiency.toString());
 
-        if (softSkillType === "Communication") {
-          if (!softSkillLanguage) {
-            toast.error("Please select a language for Communication skill");
-            return;
-          }
-          queryParams.append("language", softSkillLanguage);
-        } else {
-          if (!softSkillSubcategory) {
-            toast.error("Please select a subcategory");
-            return;
-          }
-          queryParams.append("subcategory", softSkillSubcategory);
-        }
 
-        router.push(`/interview?${queryParams.toString()}`);
-      }
-      handleCloseTestModal();
-    } catch (error) {
-      console.error("Error in test submission:", error);
-      toast.error("Failed to start test");
-    }
-  }, [skillType, selectedSkill, softSkillType, softSkillLanguage, softSkillSubcategory, softSkillProficiency, router]);
-
-  const handleSoftSkillAddSubmit = useCallback(async () => {
-    try {
-      if (!softSkillType) {
-        toast.error("Please select a soft skill");
-        return;
-      }
-      const proficiencyMap: { [key: string]: number } = {
-        "Entry Level": 1,
-        Junior: 2,
-        "Mid Level": 3,
-        Senior: 4,
-        Expert: 5,
-      };
-      const proficiency =
-        proficiencyMap[
-          getExperienceLevelFromProficiency(softSkillProficiency)
-        ] || 1;
-
-      const queryParams = new URLSearchParams();
-      queryParams.append("type", "soft");
-      queryParams.append("skill", softSkillType);
-      queryParams.append("proficiency", proficiency.toString());
-
-      if (softSkillType === "Communication") {
-        if (!softSkillLanguage) {
-          toast.error("Please select a language for Communication skill");
-          return;
-        }
-        queryParams.append("language", softSkillLanguage);
-      } else {
-        if (!softSkillSubcategory) {
-          toast.error("Please select a subcategory");
-          return;
-        }
-        queryParams.append("subcategory", softSkillSubcategory);
-      }
-
-      router.push(`/interview?${queryParams.toString()}`);
-      handleCloseAddSoftSkillModal();
-    } catch (error) {
-      console.error("Error in soft skill submission:", error);
-      toast.error("Failed to start test");
-    }
-  }, [softSkillType, softSkillLanguage, softSkillSubcategory, softSkillProficiency, router]);
 
   const [notification, setNotification] = useState<{
     open: boolean;
@@ -794,39 +716,7 @@ export default function DashboardCandidate() {
     setNotification(prev => ({ ...prev, open: false }));
   };
 
-  const handleAddSkill = async () => {
-    try {
-      const selectedSkill = newSkill.name;
 
-      const isDuplicate = profile?.skills?.some(
-        (skill: any) => skill.name.toLowerCase() === selectedSkill.toLowerCase()
-      );
-
-      if (isDuplicate) {
-        console.log("Skill already exists in profile");
-        setNotification({
-          open: true,
-          message: "This skill already exists in your profile!",
-          severity: 'error'
-        });
-        return;
-      }
-
-      // Redirect to test for the selected skill
-      if (selectedSkill) {
-        router.push(
-          `/interview?type=technicalSkill&skill=${encodeURIComponent(selectedSkill)}`
-        );
-      }
-    } catch (error) {
-      console.error("Error adding skill:", error);
-      setNotification({
-        open: true,
-        message: "Failed to add skill. Please try again.",
-        severity: 'error'
-      });
-    }
-  };
 
   // Add new handler for skill selection
   const handleSkillSelection = (value: string | null) => {
@@ -963,73 +853,9 @@ export default function DashboardCandidate() {
   // Add state to track if a skill was just added
   const [justAddedSkill, setJustAddedSkill] = useState<any>(null);
 
-  // Add delete skill handler
-  const handleDeleteSkill = async (skillName: string) => {
-    try {
-      const token = localStorage.getItem("api_token");
-      if (!token) {
-        toast.error("Authentication token not found");
-        return;
-      }
+  
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/deleteHardSkill`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ skillToDelete: skillName }),
-        }
-      );
 
-      if (!response.ok) {
-        throw new Error("Failed to delete skill");
-      }
-
-      // Refresh profile data
-      dispatch(getMyProfile());
-      toast.success("Skill deleted successfully");
-    } catch (error) {
-      console.error("Error deleting skill:", error);
-      toast.error("Failed to delete skill");
-    }
-  };
-
-  // Add delete soft skill handler
-  const handleDeleteSoftSkill = async (skillName: string, category: string) => {
-    try {
-      const token = localStorage.getItem("api_token");
-      if (!token) {
-        toast.error("Authentication token not found");
-        return;
-      }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/deleteSoftSkills`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ softSkillToDelete: skillName }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to delete soft skill");
-      }
-
-      // Refresh profile data
-      dispatch(getMyProfile());
-      toast.success("Soft skill deleted successfully");
-    } catch (error) {
-      console.error("Error deleting soft skill:", error);
-      toast.error("Failed to delete soft skill");
-    }
-  };
 
   const [adLoading, setAdLoading] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
@@ -1040,35 +866,82 @@ export default function DashboardCandidate() {
     setAdError(null);
     const token = localStorage.getItem("api_token");
     const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+    
+    console.log("Fetching ad posts from:", `${apiBase}post/adsPost`);
+    console.log("Token available:", !!token);
+    
     fetch(`${apiBase}post/adsPost`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
       .then((res) => {
+        console.log("API response status:", res.status);
         if (!res.ok) throw new Error("Failed to fetch ad post");
         return res.json();
       })
       .then((json) => {
+        console.log("API response data:", json);
         if (json.success && Array.isArray(json.data)) {
+          console.log("Setting adPost with array:", json.data);
           setAdPost(json.data);
         } else if (json.success && json.data) {
+          console.log("Setting adPost with single item:", json.data);
           setAdPost([json.data]);
         } else {
+          console.log("No ad data available, setting error");
           setAdError("No ad data available");
         }
       })
-      .catch((e) => setAdError(e.message || "Error fetching ad post"))
-      .finally(() => setAdLoading(false));
+      .catch((e) => {
+        console.error("Error fetching ad post:", e);
+        setAdError(e.message || "Error fetching ad post");
+      })
+      .finally(() => {
+        console.log("Setting adLoading to false");
+        setAdLoading(false);
+      });
   }, []);
 
   // Move all useMemo hooks here to ensure they're called every render
   const memoizedAdData = useMemo(() => {
-    return (adPost || []).map((ad: any) => ({
-      _id: ad._id,
-      title: ad.jobDetails?.title,
-      description: ad.jobDetails?.description || '',
-      firstStepId: (ad?.post_Steps && ad.post_Steps.length > 0) ? ad.post_Steps[0] : undefined,
-    }));
-  }, [adPost]);
+    console.log("Processing adPost in memoizedAdData:", adPost);
+    console.log("Profile data:", profile);
+    
+    // Check if user has passed any tests with good scores
+    // Look for different possible score fields
+    const hasGoodTestScores = profile?.skills?.some((skill: any) => {
+      console.log("Checking skill:", skill);
+      const score = skill.score || skill.proficiencyLevel || skill.level || skill.percentage;
+      console.log("Skill score found:", score);
+      return score && score > 20;
+    }) || profile?.softSkills?.some((skill: any) => {
+      console.log("Checking soft skill:", skill);
+      const score = skill.score || skill.proficiencyLevel || skill.level || skill.percentage;
+      console.log("Soft skill score found:", score);
+      return score && score > 20;
+    });
+    
+    console.log("User has good test scores:", hasGoodTestScores);
+    console.log("Profile skills:", profile?.skills);
+    console.log("Profile soft skills:", profile?.softSkills);
+    
+    // For now, let's show opportunities regardless of test scores to debug
+    // TODO: Re-enable this check once we understand the score structure
+    console.log("Temporarily showing all opportunities for debugging");
+    
+    const processed = (adPost || []).map((ad: any) => {
+      console.log("Processing ad:", ad);
+      const processedAd = {
+        _id: ad._id,
+        title: ad.jobDetails?.title,
+        description: ad.jobDetails?.description || '',
+        firstStepId: (ad?.post_Steps && ad.post_Steps.length > 0) ? ad.post_Steps[0] : undefined,
+      };
+      console.log("Processed ad:", processedAd);
+      return processedAd;
+    });
+    console.log("Final processed memoizedAdData:", processed);
+    return processed;
+  }, [adPost, profile]);
 
   const memoizedAdTotal = useMemo(() => {
     return Array.isArray(adPost) ? adPost.length : 0;
@@ -1128,25 +1001,28 @@ export default function DashboardCandidate() {
                    />
 
                   {/* Test Selection Modal */}
-                  <TestSelectionDialog
-                    open={testModalOpen}
-                    onClose={handleCloseTestModal}
-                    onSubmit={handleTestSubmit}
-                    primaryAccentColor={GREEN_MAIN}
-                    skillType={skillType}
-                    onSkillTypeChange={handleSkillTypeChange}
-                    technicalSkillsList={technicalSkillsList}
-                    selectedSkill={selectedSkill}
-                    onSelectedSkillChange={(v) => setSelectedSkill(v)}
-                    softSkills={softSkills}
-                    softSkillType={softSkillType}
-                    onSoftSkillChange={handleSoftSkillChange}
-                    languages={languages}
-                    softSkillLanguage={softSkillLanguage}
-                    onSoftSkillLanguageChange={handleSoftSkillLanguageChange}
-                    softSkillSubcategory={softSkillSubcategory}
-                    onSoftSkillSubcategoryChange={handleSoftSkillSubcategoryChange}
-                  />
+                                     <TestSelectionDialog
+                     open={testModalOpen}
+                     onClose={handleCloseTestModal}
+                     primaryAccentColor={GREEN_MAIN}
+                     skillType={skillType}
+                     onSkillTypeChange={handleSkillTypeChange}
+                     technicalSkillsList={technicalSkillsList}
+                     selectedSkill={selectedSkill}
+                     onSelectedSkillChange={(v) => setSelectedSkill(v)}
+                     softSkills={softSkills}
+                     softSkillType={softSkillType}
+                     onSoftSkillChange={handleSoftSkillChange}
+                     languages={languages}
+                     softSkillLanguage={softSkillLanguage}
+                     onSoftSkillLanguageChange={handleSoftSkillLanguageChange}
+                     softSkillSubcategory={softSkillSubcategory}
+                     onSoftSkillSubcategoryChange={handleSoftSkillSubcategoryChange}
+                     softSkillProficiency={softSkillProficiency}
+                     router={router}
+                     toast={toast}
+                     getExperienceLevelFromProficiency={getExperienceLevelFromProficiency}
+                   />
 
               {/* Recommended Opportunities - Subcomponent */}
               <StyledCard sx={{ mb: 4, background: '#f8fafc', border: '2px dashed #8310FF' }}>
@@ -1163,28 +1039,28 @@ export default function DashboardCandidate() {
                   <RecommendedOpportunities
                     data={memoizedAdData}
                     total={memoizedAdTotal}
-                    emptyText="No recommended opportunities available at the moment."
+                    emptyText="You need to pass a test with a score of 'Good' or >20% to see recommended opportunities"
                   />
                 )}
               </StyledCard>
 
               {/* User Information */}
-              <UserInfoCard
-                profile={profile}
-                SectionTitle={SectionTitle}
-                StyledCard={StyledCard}
-                ScoreCircle={ScoreCircle}
-                GREEN_MAIN={GREEN_MAIN}
-                softSkillNames={softSkillNames}
-                visibleSkills={visibleSkills}
-                setVisibleSkills={(updater: any) => setVisibleSkills(updater)}
-                setAddSoftSkillDialogOpen={(open: boolean) => setAddSoftSkillDialogOpen(open)}
-                setAddSkillDialogOpen={(open: boolean) => setAddSkillDialogOpen(open)}
-                SkillBlock={SkillBlock}
-                handleStartTest={handleStartTest}
-                handleDeleteSoftSkill={handleDeleteSoftSkill}
-                handleDeleteSkill={handleDeleteSkill}
-              />
+                             <UserInfoCard
+                 profile={profile}
+                 SectionTitle={SectionTitle}
+                 StyledCard={StyledCard}
+                 ScoreCircle={ScoreCircle}
+                 GREEN_MAIN={GREEN_MAIN}
+                 softSkillNames={softSkillNames}
+                 visibleSkills={visibleSkills}
+                 setVisibleSkills={(updater: any) => setVisibleSkills(updater)}
+                 setAddSoftSkillDialogOpen={(open: boolean) => setAddSoftSkillDialogOpen(open)}
+                 setAddSkillDialogOpen={(open: boolean) => setAddSkillDialogOpen(open)}
+                 SkillBlock={SkillBlock}
+                 handleStartTest={handleStartTest}
+                 dispatch={dispatch}
+                 getMyProfile={getMyProfile}
+               />
 
               {/* Interview Details Section */}
               
@@ -1200,7 +1076,6 @@ export default function DashboardCandidate() {
               <AddSoftSkillDialog
                 open={addSoftSkillDialogOpen}
                 onClose={handleCloseAddSoftSkillModal}
-                onSubmit={handleSoftSkillAddSubmit}
                 primaryAccentColor={GREEN_MAIN}
                 softSkills={softSkills}
                 languages={languages}
@@ -1210,12 +1085,13 @@ export default function DashboardCandidate() {
                 onSoftSkillLanguageChange={handleSoftSkillLanguageChange}
                 softSkillSubcategory={softSkillSubcategory}
                 onSoftSkillSubcategoryChange={handleSoftSkillSubcategoryChange}
+                softSkillProficiency={softSkillProficiency}
+                router={router}
               />
               {/* Add Skill Dialog */}
               <AddSkillDialog
                 open={addSkillDialogOpen}
                 onClose={() => setAddSkillDialogOpen(false)}
-                onSubmit={handleAddSkill}
                 primaryAccentColor={GREEN_MAIN}
                 selectedCategory={selectedCategory}
                 onSelectedCategoryChange={(v) => setSelectedCategory(v)}
@@ -1223,6 +1099,9 @@ export default function DashboardCandidate() {
                 onSkillSelection={(v) => handleSkillSelection(v)}
                 skillCategories={skillCategories}
                 technicalSkillsList={technicalSkillsList}
+                profileSkills={profile?.skills}
+                router={router}
+                setNotification={setNotification}
               />
 
               {/* Add Snackbar for notifications */}
