@@ -342,3 +342,4 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile, localReq
 };
 
 export default CompanyInfoHeader;
+
