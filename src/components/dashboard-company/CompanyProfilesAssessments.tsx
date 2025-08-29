@@ -37,6 +37,7 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import EmailIcon from '@mui/icons-material/Email';
 import InfoIcon from '@mui/icons-material/Info';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import AssessmentDetailsModal from './AssessmentDetailsModal';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -58,20 +59,25 @@ interface CompanyProfilesAssessmentsProps {
   companyProfiles: any[];
   isLoadingProfiles: boolean;
   profilesError: string | null;
-  onViewAssessmentDetails: (assessment: any) => void;
 }
 
 const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
   companyProfiles,
   isLoadingProfiles,
-  profilesError,
-  onViewAssessmentDetails
+  profilesError
 }) => {
   const [displayedAssessments, setDisplayedAssessments] = useState(10);
   const [assessmentSearch, setAssessmentSearch] = useState('');
   const [assessmentStatusFilter, setAssessmentStatusFilter] = useState('all');
   const [assessmentSort, setAssessmentSort] = useState('date_desc');
   const [assessmentView, setAssessmentView] = useState<'table' | 'cards'>('table');
+  const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
+  const [assessmentModalOpen, setAssessmentModalOpen] = useState(false);
+
+  const handleViewAssessmentDetails = (assessment: any) => {
+    setSelectedAssessment(assessment);
+    setAssessmentModalOpen(true);
+  };
 
   const renderCompanyProfilesTable = () => {
     if (isLoadingProfiles) {
@@ -241,7 +247,7 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
                         variant="contained"
                         size="small"
                         endIcon={<ArrowForwardIcon />}
-                        onClick={() => onViewAssessmentDetails(assessment)}
+                        onClick={() => handleViewAssessmentDetails(assessment)}
                         sx={{
                           background: 'linear-gradient(90deg, rgba(0,255,157,1) 0%, rgba(2,226,255,1) 100%)',
                           color: '#0f172a',
@@ -337,7 +343,7 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
                         variant="contained"
                         size="small"
                         endIcon={<ArrowForwardIcon />}
-                        onClick={() => onViewAssessmentDetails(assessment)}
+                        onClick={() => handleViewAssessmentDetails(assessment)}
                         sx={{
                           background: 'linear-gradient(90deg, rgba(0,255,157,1) 0%, rgba(2,226,255,1) 100%)',
                           color: '#0f172a',
@@ -406,8 +412,16 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
         </Typography>
       </Box>
       {renderCompanyProfilesTable()}
+
+      {/* Assessment Details Modal */}
+      <AssessmentDetailsModal
+        open={assessmentModalOpen}
+        onClose={() => setAssessmentModalOpen(false)}
+        assessment={selectedAssessment}
+      />
     </StyledCard>
   );
 };
 
 export default CompanyProfilesAssessments;
+
