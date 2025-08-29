@@ -1,0 +1,15 @@
+# Allow all web crawlers
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /dashboard/admin
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+
+# Sitemap location
+Sitemap: https://app.talentai.bid/sitemap-index.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1 

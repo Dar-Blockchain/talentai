@@ -1,0 +1,63 @@
+/**
+ * Routes des offres (posts)
+ *
+ * Middlewares globaux appliqués:
+ * - requireAuthUser: nécessite un utilisateur authentifié
+ * - LogMiddleware("Post"): journalise les requêtes liées aux posts
+ * - controledAcces: certaines routes peuvent nécessiter un rôle spécifique côté contrôleur
+ */
+const express = require("express");
+const router = express.Router();
+const { requireAuthUser } = require("../middleware/authMiddleware");
+
+// Import des middlewares
+const postController = require("../controllers/postController");
+const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
+const { controledAcces } = require('../middleware/controledAcces'); // Importez le middleware
+
+
+// Auth obligatoire + logs pour toutes les routes
+router.use(requireAuthUser, authLogMiddleware("Post"));
+
+
+// POST /post/save-post
+// Description: Crée un post
+router.post("/save-post", postController.createPost);
+
+// GET /post/get-all-posts
+// Description: Retourne tous les posts
+router.get("/get-all-posts", postController.getAllPosts);
+
+// GET /post/my-posts
+// Description: Posts de l'utilisateur courant
+router.get("/my-posts", postController.getUserPosts);
+
+// GET /post/user/:userId
+// Description: Posts d'un utilisateur spécifique
+router.get("/user/:userId", postController.getUserPosts);
+
+// GET /post/getPostById/:id
+// Description: Détails d'un post
+router.get("/getPostById/:id", postController.getPostById);
+
+// PUT /post/updatePost/:id
+// Description: Met à jour un post
+router.put("/updatePost/:id", postController.updatePost);
+
+// PATCH /post/updatePostStatus/:id
+// Description: Modifie le statut d'un post (actif/brouillon, etc.)
+router.patch("/updatePostStatus/:id", postController.updatePostStatus);
+
+// DELETE /post/deletePost/:id
+// Description: Supprime un post
+router.delete("/deletePost/:id", postController.deletePost);
+
+// GET /post/adsPost
+// Description: 3 posts proposés à partir des 3 premières compétences du profil
+router.get("/adsPost", postController.getPostsByUserTopSkills);
+
+// GET /post/DetailsPost/:id
+// Description: Alias de détail de post
+router.get("/DetailsPost/:id", postController.getPostById);
+
+module.exports = router;

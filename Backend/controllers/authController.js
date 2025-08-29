@@ -1,0 +1,129 @@
+const authService = require("../services/authService");
+const Profile = require("../models/ProfileModel");
+
+// Route d'inscription
+module.exports.register = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const result = await authService.registerUser(email);
+
+    res.status(201).json({
+      message: result.message,
+      email: result.email,
+      username: result.username,
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Vérification OTP
+module.exports.verifyOTP = async (req, res) => {
+  try {
+    const { email, otp, location } = req.body;
+
+    const result = await authService.verifyUserOTP(email, otp, location);
+
+    res.cookie("jwt_token", result.token, {
+      httpOnly: false,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    if (result.user && result.user.profile) {
+      const profile = await Profile.findById(result.user.profile);
+      if (!profile){
+        profile = null; 
+      }
+
+      return res.status(200).json({
+        message: "Email vérifié avec succès",
+        user: result.user,
+        token: result.token,
+        profile: profile,
+      });
+    }
+    // Créer la session avec le token
+    res.status(200).json({
+      message: "Email vérifié avec succès",
+      user: result.user,
+      token: result.token,
+      profile: null
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Connexion avec Gmail
+module.exports.connectWithGmail = async (req, res) => {
+  try {
+    const { id_token } = req.body; // Récupère le `id_token` envoyé par le frontend
+
+
+    const result = await authService.connectWithGmail(id_token);
+
+    // Créer un cookie avec le token JWT
+    res.cookie("jwt_token", result.token, {
+      httpOnly: false,
+      maxAge: 5 * 365 * 24 * 60 * 60 * 1000, // 5 ans
+    });
+
+    res.status(200).json({
+      message: result.message,
+      user: result.user,
+      token: result.token,
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Route de déconnexion
+module.exports.logout = (req, res) => {
+  // Supprimer le cookie JWT
+  res.clearCookie("jwt_token");
+
+  // Détruire la session si elle existe
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Erreur lors de la destruction de la session:", err);
+        return res.status(500).json({ message: "Erreur lors de la déconnexion" });
+      }
+      res.status(200).json({ message: "Déconnexion réussie" });
+    });
+  } else {
+    res.status(200).json({ message: "Déconnexion réussie" });
+  }
+};
+
+
+module.exports.GetGmailByToken = async (req, res) => {
+  try {
+    const { id_token } = req.body; // Récupère le `id_token` envoyé par le frontend
+
+    const email = await authService.GetGmailByToken(id_token);
+
+    res.status(200).json({
+      email,
+      message: "Email récupéré avec succès",
+    });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: "Erreur lors de la récupération de l'email." });
+  }
+};
+
+module.exports.warnUser = async (req, res) => {
+  try {
+    const user = req.user;
+
+    const result = await authService.warnUser(user.email);
+
+    // Créer la session avec le token
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};

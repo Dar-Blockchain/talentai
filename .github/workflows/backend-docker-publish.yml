@@ -1,0 +1,73 @@
+name: Backend Docker Build and Push
+
+on:
+  push:
+    branches: [ Version-BetaMain ]
+    paths: [ 'Backend/**' ]  # Only trigger when Backend files change
+  pull_request:
+    branches: [ Version-BetaMain ]
+    paths: [ 'Backend/**' ]
+
+
+env:
+  AWS_REGION: us-west-2  # Change this to your ECR repository region
+  ECR_REPOSITORY: talentaibackend  # Backend ECR repository name
+
+jobs:
+  build-and-push-backend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Debug ECR Registry URL
+      run: |
+        echo "ECR Registry: ${{ steps.login-ecr.outputs.registry }}"
+        echo "Backend ECR Repository: ${{ env.ECR_REPOSITORY }}"
+
+    - name: Build, tag, and push backend image to Amazon ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        echo "Using ECR Registry from login: $ECR_REGISTRY"
+        echo "Building backend image..."
+        
+        cd Backend
+        docker build \
+          --build-arg PORT="5004" \
+          --build-arg NODE_ENV="production" \
+          --build-arg EMAIL_USER="${{ secrets.EMAIL_USER }}" \
+          --build-arg EMAIL_PASSWORD="${{ secrets.EMAIL_PASSWORD }}" \
+          --build-arg OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
+          --build-arg MONGODB_URI="${{ secrets.MONGODB_URI }}" \
+          --build-arg Net_Secret="${{ secrets.NET_SECRET }}" \
+          --build-arg HEDERA_ACCOUNT_ID="${{ secrets.HEDERA_ACCOUNT_ID }}" \
+          --build-arg HEDERA_PRIVATE_KEY="${{ secrets.HEDERA_PRIVATE_KEY }}" \
+          --build-arg HEDERA_PUBLIC_KEY="${{ secrets.HEDERA_PUBLIC_KEY }}" \
+          --build-arg HEDERA_NETWORK="testnet" \
+          --build-arg LINKEDIN_CLIENT_ID="${{ secrets.LINKEDIN_CLIENT_ID }}" \
+          --build-arg LINKEDIN_CLIENT_SECRET="${{ secrets.LINKEDIN_CLIENT_SECRET }}" \
+          --build-arg LINKEDIN_REDIRECT_URI="${{ secrets.LINKEDIN_REDIRECT_URI }}" \
+          --build-arg TOGETHER_API_KEY="${{ secrets.TOGETHER_API_KEY }}" \
+          -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+          -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+        
+        echo "Pushing backend images..."
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+    - name: Image digest
+      run: echo "Backend image pushed successfully" 
