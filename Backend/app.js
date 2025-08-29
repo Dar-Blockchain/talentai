@@ -10,6 +10,7 @@ const blockPostmanRequests = require("./middleware/blockPostmanRequests");
 const http = require("http");
 const connectDB = require("./config/database");
 const socket = require("./socket");
+const { initializeAgenda } = require("./services/agendaService");
 
 const authRouter = require("./routes/authRouter");
 const dashboardRouter = require("./routes/dashboardRouter");
@@ -44,6 +45,8 @@ const initializeApp = async () => {
     console.log('🔗 Connecting to database...');
     // Connect to MongoDB first
     await connectDB();
+    // Initialize Agenda scheduler after DB connection
+    await initializeAgenda();
     
     console.log('⚡ Initializing server...');
     // Start the server only after successful DB connection
