@@ -160,3 +160,4 @@ const JobPostSuccessDialog: React.FC<JobPostSuccessDialogProps> = ({
 };
 
 export default JobPostSuccessDialog;
+
