@@ -9,4 +9,5 @@ export { default as EditSkillsDialog } from './EditSkillsDialog';
 export { default as FilterDialog } from './FilterDialog';
 export { default as MatchingProfiles } from './MatchingProfiles';
 export { default as Navbar } from './Navbar';
+export { default as MyJobPosts } from './MyJobPosts';
 

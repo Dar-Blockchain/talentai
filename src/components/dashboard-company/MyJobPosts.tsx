@@ -1,76 +1,25 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   Typography,
   Card,
-  CircularProgress,
+  Chip,
+  Button,
   Alert,
+  CircularProgress,
   TextField,
   InputAdornment,
-  Button,
-  Chip,
-  Tooltip,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import SearchIcon from '@mui/icons-material/Search';
-import SortIcon from '@mui/icons-material/Sort';
 import AddIcon from '@mui/icons-material/Add';
-import WorkIcon from '@mui/icons-material/Work';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import StarIcon from '@mui/icons-material/Star';
+import WorkIcon from '@mui/icons-material/Work';
+import SearchIcon from '@mui/icons-material/Search';
+import SortIcon from '@mui/icons-material/Sort';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import PersonSearchIcon from '@mui/icons-material/PersonSearch';
-import InfoIcon from '@mui/icons-material/Info';
-import { useRouter } from 'next/router';
 
-// ============================================================================
-// TYPES & INTERFACES
-// ============================================================================
-
-interface Job {
-  _id: string;
-  jobDetails: {
-    title: string;
-    location: string;
-    employmentType: string;
-    salary: {
-      currency: string;
-      min: number;
-      max: number;
-    };
-    description: string;
-  };
-  skillAnalysis?: {
-    requiredSkills: Array<{
-      name: string;
-    }>;
-  };
-  post_Steps?: Array<{
-    postId: string;
-    order: number;
-  }>;
-  createdAt: string;
-}
-
-interface MyJobPostsProps {
-  myJobs: Job[];
-  isLoadingJobs: boolean;
-  jobsError: string | null;
-  selectedJob: string | null;
-  displayCount: number;
-  onViewJobDetails: (job: Job) => void;
-  onViewMatches: (jobId: string) => void;
-  onDeleteJob: (jobId: string) => void;
-  onSetDisplayCount: (count: number) => void;
-  onSetSelectedJob: (jobId: string | null) => void;
-  onFilterDialogOpen: () => void;
-  onDeleteDialogOpen: (jobId: string) => void;
-}
-
-// ============================================================================
-// STYLED COMPONENTS
-// ============================================================================
-
+// Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
   padding: theme.spacing(3),
   marginBottom: theme.spacing(3),
@@ -87,43 +36,55 @@ const StyledCard = styled(Card)(({ theme }) => ({
 }));
 
 const JobCard = styled(Box)(({ theme }) => ({
-  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+  background: 'white',
   borderRadius: '16px',
-  border: '1px solid rgba(15, 23, 42, 0.06)',
-  boxShadow: '0 12px 24px rgba(2,23,36,0.06)',
-  transition: 'all 0.3s ease',
+  padding: theme.spacing(3),
+  border: '1px solid rgba(2,226,255,0.15)',
+  boxShadow: '0 4px 20px rgba(2,226,255,0.10)',
+  transition: 'transform 0.2s, box-shadow 0.2s',
+  display: 'flex',
+  flexDirection: 'column',
+  minWidth: 0,
+  width: '100%',
+  maxWidth: 400,
+  flex: '1 1 340px',
+  margin: '0 auto',
+  [theme.breakpoints.down('sm')]: {
+    maxWidth: '100%',
+    minWidth: 0,
+    padding: theme.spacing(2),
+  },
   '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: '0 16px 32px rgba(2,23,36,0.1)'
-  }
+    transform: 'translateY(-4px) scale(1.02)',
+    boxShadow: '0 8px 32px rgba(2,226,255,0.18)',
+    border: '1.5px solid #02E2FF',
+  },
 }));
 
-// ============================================================================
-// MAIN COMPONENT
-// ============================================================================
+interface MyJobPostsProps {
+  myJobs: any[];
+  isLoadingJobs: boolean;
+  jobsError: string | null;
+  displayCount: number;
+  onViewJobDetails: (job: any) => void;
+  onViewMatches: (jobId: string) => void;
+  onDeleteJob: (jobId: string) => void;
+  onLoadMore: () => void;
+  onCreateNewJob: () => void;
+}
 
-/**
- * MyJobPosts Component
- * 
- * Displays the company's job posts with search, sort, and management capabilities
- */
 const MyJobPosts: React.FC<MyJobPostsProps> = ({
   myJobs,
   isLoadingJobs,
   jobsError,
-  selectedJob,
   displayCount,
   onViewJobDetails,
   onViewMatches,
   onDeleteJob,
-  onSetDisplayCount,
-  onSetSelectedJob,
-  onFilterDialogOpen,
-  onDeleteDialogOpen
+  onLoadMore,
+  onCreateNewJob,
 }) => {
-  const router = useRouter();
-
-  const renderJobPosts = () => (
+  return (
     <StyledCard sx={{ mb: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, gap: 2, flexWrap: 'wrap' }}>
         <Typography variant="h5" sx={{ color: 'black', fontWeight: 800, letterSpacing: 0.2 }}>
@@ -167,7 +128,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => router.push('/posts/create')}
+            onClick={onCreateNewJob}
             sx={{
               background: 'linear-gradient(90deg, #02E2FF, #00FFC3)',
               color: '#0f172a',
@@ -193,10 +154,10 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
         <Alert severity="info" sx={{ mb: 2 }}>No job posts found.</Alert>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, width: '100%' }}>
-          {myJobs.slice(0, displayCount).map((job: Job) => {
+          {myJobs.slice(0, displayCount).map((job: any) => {
             const steps = job?.post_Steps
-              ?.filter((step: any) => step.postId === job._id)
-              .sort((a: any, b: any) => a.order - b.order) || [];
+              .filter((step: any) => step.postId === job._id)
+              .sort((a: any, b: any) => a.order - b.order)
 
             return (
               <Box
@@ -322,10 +283,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                     <Button
                       variant="outlined"
                       fullWidth
-                      onClick={() => {
-                        onSetSelectedJob(job._id);
-                        onFilterDialogOpen();
-                      }}
+                      onClick={() => onViewMatches(job._id)}
                       sx={{
                         borderColor: 'rgba(0,0,0,0.1)',
                         color: '#0f172a',
@@ -356,21 +314,21 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                           background: 'rgba(255,59,48,0.08)'
                         }
                       }}
-                      onClick={() => onDeleteDialogOpen(job._id)}
+                      onClick={() => onDeleteJob(job._id)}
                     >
                       Delete
                     </Button>
                   </Box>
                 </JobCard>
               </Box>
-            );
+            )
           })}
 
           {myJobs.length > displayCount && (
             <Button
               variant="contained"
               endIcon={<ExpandMoreIcon />}
-              onClick={() => onSetDisplayCount(displayCount + 3)}
+              onClick={onLoadMore}
               sx={{
                 mt: 2.5,
                 px: 3,
@@ -392,96 +350,6 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
         </Box>
       )}
     </StyledCard>
-  );
-
-  const renderMatchingCandidates = () => (
-    <StyledCard>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-          <Box sx={{
-            width: 32,
-            height: 32,
-            borderRadius: '10px',
-            display: 'grid',
-            placeItems: 'center',
-            background: 'linear-gradient(135deg, rgba(0,255,157,0.9), rgba(2,226,255,0.9))',
-            boxShadow: '0 4px 12px rgba(2,226,255,0.35)'
-          }}>
-            <PersonSearchIcon sx={{ color: '#0f172a', fontSize: 18 }} />
-          </Box>
-          <Typography variant="h6" sx={{ color: '#0f172a', fontWeight: 800 }}>
-            Matching Candidates
-          </Typography>
-          <Tooltip title="Candidates are matched based on their skills meeting or exceeding the required level for your job posting. The match score indicates how well their skills align with your requirements.">
-            <InfoIcon sx={{ color: 'rgba(0, 255, 157, 1)', cursor: 'help' }} />
-          </Tooltip>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1.25 }}>
-          <Button
-            variant="contained"
-            startIcon={<WorkIcon />}
-            onClick={() => onSetSelectedJob(null)}
-            sx={{
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-              color: '#0f172a',
-              fontWeight: 700,
-              borderRadius: '16px',
-              px: 3,
-              py: 1.5,
-              fontSize: '0.95rem',
-              textTransform: 'none',
-              boxShadow: '0 6px 20px rgba(2,226,255,0.3)',
-              border: '2px solid transparent',
-              position: 'relative',
-              overflow: 'hidden',
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
-                zIndex: 1
-              },
-              '&:hover': {
-                background: 'linear-gradient(135deg, #00FFC3 0%, #02E2FF 100%)',
-                transform: 'translateY(-3px)',
-                boxShadow: '0 12px 28px rgba(2,226,255,0.4)',
-                border: '2px solid rgba(255,255,255,0.3)'
-              },
-              '&:active': {
-                transform: 'translateY(-1px)',
-                boxShadow: '0 6px 20px rgba(2,226,255,0.3)'
-              },
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              '& .MuiButton-startIcon': {
-                zIndex: 2,
-                position: 'relative'
-              },
-              '& .MuiButton-label': {
-                zIndex: 2,
-                position: 'relative'
-              }
-            }}
-          >
-            ← Return to Jobs
-          </Button>
-        </Box>
-      </Box>
-      {/* This will be rendered by the parent component */}
-      <Box sx={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography variant="body2" sx={{ color: '#64748b' }}>
-          Matching candidates will be displayed here
-        </Typography>
-      </Box>
-    </StyledCard>
-  );
-
-  return (
-    <Box sx={{ flex: 2 }}>
-      {!selectedJob ? renderJobPosts() : renderMatchingCandidates()}
-    </Box>
   );
 };
 
