@@ -20,13 +20,9 @@ import {
   Alert,
   CircularProgress,
   TextField,
-  Paper,
-  MenuItem,
+
   Tooltip,
   InputAdornment,
-  Stepper,
-  Step,
-  StepLabel,
   AppBar,
   Toolbar,
   Avatar,
@@ -49,7 +45,7 @@ import ErrorIcon from '@mui/icons-material/Error';
 import InfoIcon from '@mui/icons-material/Info';
 import { signOut } from 'next-auth/react';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import DeleteIcon from '@mui/icons-material/Delete';
+
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -69,6 +65,9 @@ import CompanyInfoHeader from '@/components/dashboard-company/CompanyInfoHeader'
 import JobDetailsModal from '@/components/dashboard-company/JobDetailsModal';
 import JobPostSuccessDialog from '@/components/dashboard-company/JobPostSuccessDialog';
 import AddBidDialog from '@/components/dashboard-company/AddBidDialog';
+import DeleteJobPostDialog from '@/components/dashboard-company/DeleteJobPostDialog';
+import EditSkillsDialog from '@/components/dashboard-company/EditSkillsDialog';
+import FilterDialog from '@/components/dashboard-company/FilterDialog';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -138,82 +137,6 @@ interface MatchingCandidate {
     category: string;
     _id: string;
   }>;
-}
-
-// Update the JobPost interface
-interface JobPost {
-  jobDetails: {
-    title: string;
-    description: string;
-    requirements: string[];
-    responsibilities: string[];
-    location: string;
-    employmentType: string;
-    experienceLevel: string;
-    salary: {
-      min: number;
-      max: number;
-      currency: string;
-    };
-  };
-  skillAnalysis: {
-    requiredSkills: Array<{
-      name: string;
-      level: string;
-      importance: string;
-      category: string;
-      experienceLevel: string;
-    }>;
-    suggestedSkills: {
-      technical: Array<{
-        name: string;
-        reason: string;
-        category: string;
-        priority: string;
-      }>;
-      frameworks: Array<{
-        name: string;
-        relatedTo: string;
-        priority: string;
-      }>;
-      tools: Array<{
-        name: string;
-        purpose: string;
-        category: string;
-      }>;
-    };
-    skillSummary: {
-      mainTechnologies: string[];
-      complementarySkills: string[];
-      learningPath: string[];
-      stackComplexity: string;
-    };
-  };
-  linkedinPost: {
-    formattedContent: {
-      headline: string;
-      introduction: string;
-      companyPitch: string;
-      roleOverview: string;
-      keyPoints: string[];
-      skillsRequired: string;
-      benefitsSection: string;
-      callToAction: string;
-    };
-    hashtags: string[];
-    formatting: {
-      emojis: {
-        company: string;
-        location: string;
-        salary: string;
-        requirements: string;
-        skills: string;
-        benefits: string;
-        apply: string;
-      };
-    };
-    finalPost: string;
-  };
 }
 
 const DashboardCompany = () => {
@@ -371,146 +294,6 @@ const DashboardCompany = () => {
   useEffect(() => {
     fetchMyJobs();
   }, []);
-  const renderFilterDialog = () => (
-    <Dialog
-      open={filterDialog}
-      onClose={() => setFilterDialog(false)}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: '16px',
-          background: 'white',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255,255,255,0.1)',
-        }
-      }}
-    >
-      <DialogTitle sx={{
-        borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
-        color: '#000000'
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography variant="h6" sx={{ color: '#000000' }}>Filter by Job</Typography>
-          <IconButton
-            onClick={() => setFilterDialog(false)}
-            sx={{ color: 'rgba(255,255,255,0.7)' }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-      <DialogContent sx={{ mt: 2 }}>
-        <Typography variant="subtitle2" sx={{ mb: 1, color: '#000000' }}>
-          Select Job
-        </Typography>
-        {isLoadingJobs ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-            <CircularProgress size={24} sx={{ color: '#000000' }} />
-          </Box>
-        ) : jobsError ? (
-          <Alert severity="error" sx={{
-            backgroundColor: 'rgba(211,47,47,0.1)',
-            color: '#ff8a80',
-            border: '1px solid rgba(211,47,47,0.3)',
-            '& .MuiAlert-icon': {
-              color: '#ff8a80'
-            }
-          }}>
-            {jobsError}
-          </Alert>
-        ) : (
-          <TextField
-            select
-            fullWidth
-            value={selectedJob}
-            onChange={handleJobChange}
-            sx={{
-              color: 'black',
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#000000'
-              },
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#000000'
-              },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#000000'
-              },
-              backgroundColor: 'white',
-              '& .MuiSelect-select': {
-                color: 'black'
-              },
-              '& .MuiInputLabel-root': {
-                color: 'black'
-              }
-            }}
-            SelectProps={{
-              MenuProps: {
-                PaperProps: {
-                  sx: {
-                    maxHeight: 300,
-                    backgroundColor: 'white',
-                    '& .MuiMenuItem-root': {
-                      color: 'black',
-                      '&:hover': {
-                        backgroundColor: 'rgba(0, 255, 157, 0.1)',
-                      },
-                      '&.Mui-selected': {
-                        backgroundColor: 'rgba(0, 255, 157, 0.2)',
-                        '&:hover': {
-                          backgroundColor: 'rgba(0, 255, 157, 0.3)',
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }}
-          >
-            <MenuItem value="">All Jobs</MenuItem>
-            {myJobs.map((job) => (
-              <MenuItem key={job._id} value={job._id} sx={{ backgroundColor: 'white' }}>
-                {job.jobDetails.title}
-              </MenuItem>
-            ))}
-          </TextField>
-        )}
-      </DialogContent>
-      <DialogActions sx={{
-        p: 3,
-        borderTop: '1px solid rgba(255,255,255,0.1)'
-      }}>
-        <Button
-          onClick={() => {
-            setSelectedJob('');
-            setFilterDialog(false);
-          }}
-          sx={{
-            borderColor: 'black',
-            color: 'black',
-            '&:hover': {
-              borderColor: 'rgba(0, 255, 157, 1)',
-              background: 'rgba(0, 255, 157, 0.08)'
-            }
-          }}
-        >
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleFilterApply}
-          sx={{
-            background: 'rgba(0, 255, 157, 1)',
-            '&:hover': {
-              background: 'rgba(0, 255, 157, 1)',
-            }
-          }}
-        >
-          Apply Filter
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
 
 
 
@@ -1523,7 +1306,21 @@ const DashboardCompany = () => {
           theme="dark"
         />
         <Container maxWidth="lg">
-          {renderFilterDialog()}
+          {/* Filter Dialog */}
+          <FilterDialog
+            open={filterDialog}
+            onClose={() => setFilterDialog(false)}
+            selectedJob={selectedJob}
+            onJobChange={handleJobChange}
+            onApplyFilter={handleFilterApply}
+            onCancel={() => {
+              setSelectedJob('');
+              setFilterDialog(false);
+            }}
+            jobs={myJobs}
+            isLoadingJobs={isLoadingJobs}
+            jobsError={jobsError}
+          />
           <CompanyInfoHeader
             profile={profile}
             localRequiredSkills={localRequiredSkills}
@@ -1893,202 +1690,13 @@ const DashboardCompany = () => {
             onPostNewJob={() => router.push('/posts/create')}
           />
 
-          <Dialog
-            open={editSkillsDialog}
-            onClose={() => setEditSkillsDialog(false)}
-            maxWidth="sm"
-            fullWidth
-            PaperProps={{
-              sx: {
-                borderRadius: '16px',
-                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
-                background: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(20px)'
-              }
-            }}
-          >
-            <DialogTitle sx={{
-              borderBottom: '1px solid rgba(255,255,255,0.1)',
-              pb: 2,
-              background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-              color: 'white'
-            }}>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>Edit Required Skills</Typography>
-              <IconButton
-                onClick={() => setEditSkillsDialog(false)}
-                sx={{
-                  position: 'absolute',
-                  right: 8,
-                  top: 8,
-                  color: 'rgba(255,255,255,0.8)'
-                }}
-              >
-                <CloseIcon />
-              </IconButton>
-            </DialogTitle>
-            <DialogContent sx={{ mt: 2 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
-                Add Required Skills
-
-
-              </Typography>
-              <TextField
-                fullWidth
-                placeholder="Enter skills (comma separated)"
-                variant="outlined"
-                sx={{
-                  mb: 3,
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
-                  }
-                }}
-              />
-
-              <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
-                Required Experience Level
-              </Typography>
-              <TextField
-                fullWidth
-                select
-                SelectProps={{
-                  native: true,
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '8px',
-                    backgroundColor: 'rgba(255,255,255,0.9)'
-                  }
-                }}
-              >
-                <option value="">Select Level</option>
-                <option value="Entry Level">Entry Level</option>
-                <option value="Junior+">Junior+</option>
-                <option value="Mid Level">Mid Level</option>
-                <option value="Senior">Senior</option>
-                <option value="Expert">Expert</option>
-              </TextField>
-            </DialogContent>
-            <DialogActions sx={{
-              p: 3,
-              borderTop: '1px solid rgba(255,255,255,0.1)',
-              background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
-            }}>
-              <Button
-                onClick={() => setEditSkillsDialog(false)}
-                sx={{
-                  color: 'rgba(255,255,255,0.8)',
-                  borderRadius: '8px',
-                  textTransform: 'none',
-                  fontWeight: 600
-                }}
-              >
-                Cancel
-              </Button>
-              {/* <Button
-                variant="contained"
-                onClick={() => setEditSkillsDialog(false)}
-                sx={{
-                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                  borderRadius: '8px',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  px: 4,
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
-                  }
-                }}
-              >
-                Save Changes
-              </Button> */}
-            </DialogActions>
-          </Dialog>
-
-          {/* My Job Posts Section */}
-
-          <Dialog
+          {/* Delete Job Post Dialog */}
+          <DeleteJobPostDialog
             open={deleteDialogOpen}
             onClose={handleCancelDelete}
-            maxWidth="xs"
-            fullWidth
-            PaperProps={{
-              sx: {
-                borderRadius: '16px',
-                background: 'rgba(30, 41, 59, 0.95)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                boxShadow: '0 8px 32px rgba(255,59,48,0.10)',
-                p: 0
-              }
-            }}
-          >
-            <DialogTitle
-              sx={{
-                pb: 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1.5,
-                color: '#ff3b30',
-                fontSize: '1.2rem',
-                fontWeight: 700,
-                borderBottom: '1px solid rgba(255,255,255,0.1)',
-                background: 'white',
-              }}
-            >
-              <ErrorIcon sx={{ color: 'red', fontSize: 28 }} />
-              Are you sure you want to delete this job post?
-            </DialogTitle>
-            <DialogContent sx={{
-              background: 'white',
-              color: '#fff',
-              py: 3,
-              px: 3,
-              fontSize: '1rem',
-              borderBottom: '1px solid rgba(255,255,255,0.08)'
-            }}>
-              <Typography sx={{ color: 'black' }}>
-                This action cannot be undone.
-              </Typography>
-            </DialogContent>
-            <DialogActions sx={{
-              px: 3,
-              py: 2,
-              background: 'white',
-              borderTop: '1px solid rgba(255,255,255,0.08)'
-            }}>
-              <Button onClick={handleCancelDelete} disabled={isDeleting}
-                sx={{
-                  color: 'rgba(255,255,255,0.8)',
-                  borderRadius: '8px',
-                  textTransform: 'none',
-                  fontWeight: 600
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => handleDeleteJob(jobToDelete)}
-                color="error"
-                variant="contained"
-                disabled={isDeleting}
-                sx={{
-                  background: 'linear-gradient(135deg, #ff3b30 0%, #ff8a65 100%)',
-                  color: '#fff',
-                  borderRadius: '8px',
-                  fontWeight: 700,
-                  textTransform: 'none',
-                  boxShadow: 'none',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #ff3b30 0%, #ff8a65 100%)',
-                    opacity: 0.9
-                  },
-                  minWidth: 100
-                }}
-                startIcon={<DeleteIcon />}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </Button>
-            </DialogActions>
-          </Dialog>
+            onDelete={() => handleDeleteJob(jobToDelete)}
+            isDeleting={isDeleting}
+          />
 
           {/* Add Bid Dialog */}
           <AddBidDialog
