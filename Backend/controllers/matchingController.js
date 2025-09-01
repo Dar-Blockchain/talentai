@@ -31,17 +31,17 @@ exports.matchCandidatesToJob = async (req, res) => {
 
     // Vérifier que skillAnalysis existe
     if (!jobPost.skillAnalysis) {
-      return res.status(400).json({ 
-        error: "Job post has no skill analysis data" 
+      return res.status(400).json({
+        error: "Job post has no skill analysis data",
       });
     }
 
     // Vérifier et normaliser les requiredSkills avec protection contre les valeurs null
     const requiredSkills = (jobPost.skillAnalysis?.requiredSkills || [])
-      .filter(skill => skill && skill.name) // Filtrer les skills null ou sans nom
-      .map(skill => ({
+      .filter((skill) => skill && skill.name) // Filtrer les skills null ou sans nom
+      .map((skill) => ({
         ...skill,
-        name: normalizeSkillName(skill.name)
+        name: normalizeSkillName(skill.name),
       }));
 
     // 3. Calculer les correspondances avec les informations supplémentaires
@@ -53,16 +53,13 @@ exports.matchCandidatesToJob = async (req, res) => {
 
         // Vérifier et normaliser les skills du candidat avec protection contre les valeurs null
         const candidateSkills = (candidate.skills || [])
-          .filter(skill => skill && skill.name) // Filtrer les skills null ou sans nom
-          .map(skill => ({
+          .filter((skill) => skill && skill.name) // Filtrer les skills null ou sans nom
+          .map((skill) => ({
             ...skill,
-            name: normalizeSkillName(skill.name)
+            name: normalizeSkillName(skill.name),
           }));
 
-        const score = calculateSkillMatchScore(
-          requiredSkills,
-          candidateSkills
-        );
+        const score = calculateSkillMatchScore(requiredSkills, candidateSkills);
 
         return {
           candidateId: candidate.userId,
@@ -93,7 +90,7 @@ exports.matchCandidatesToJob = async (req, res) => {
     res.status(500).json({
       error: "Matching failed",
       details: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
     });
   }
 };

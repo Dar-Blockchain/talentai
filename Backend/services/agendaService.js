@@ -1,5 +1,5 @@
-const Agenda = require('agenda');
-const Agent = require('../models/AgentModel');
+const Agenda = require("agenda");
+const Agent = require("../models/AgentModel");
 
 let agendaInstance;
 let isInitialized = false;
@@ -13,66 +13,71 @@ async function initializeAgenda() {
   }
 
   if (!process.env.MONGODB_URI) {
-    console.error('❌ Agenda requires MONGODB_URI to be set');
+    console.error("❌ Agenda requires MONGODB_URI to be set");
     return null;
   }
 
   agendaInstance = new Agenda({
-    db: { address: process.env.MONGODB_URI, collection: 'agendaJobs' },
-    processEvery: '30 seconds',
+    db: { address: process.env.MONGODB_URI, collection: "agendaJobs" },
+    processEvery: "10 seconds",
     maxConcurrency: 5,
     defaultConcurrency: 1,
     lockLimit: 10,
   });
 
   // Define the hourly job
-  agendaInstance.define('agent:heartbeat', async () => {
+  agendaInstance.define("agent:heartbeat", async () => {
     try {
       const agents = await Agent.find({}, { _id: 1, name: 1 })
-        .populate({ path: 'Campany', select: 'username role' })
-        .populate({ path: 'Post', select: 'jobDetails user' })
+        .populate({ path: "Campany", select: "username role" })
+        .populate({ path: "Post", select: "jobDetails user" })
         .lean();
       if (!agents || agents.length === 0) {
-        console.log('[agent:heartbeat] Aucun agent trouvé');
+        console.log("[agent:heartbeat] Aucun agent trouvé");
         return;
       }
       agents.forEach((agent) => {
         const agentLabel = agent.name || agent._id?.toString();
-        const username = agent.Campany?.username || 'unknown-user';
-        const jobTitle = agent.Post?.jobDetails?.title || 'unknown-title';
-        const jobLocation = agent.Post?.jobDetails?.location || 'unknown-location';
-        console.log(`im here - agent=${agentLabel} | username=${username} | jobTitle=${jobTitle} | location=${jobLocation}`);
+        const username = agent.Campany?.username || "unknown-user";
+        const jobTitle = agent.Post?.jobDetails?.title || "unknown-title";
+        const jobLocation =
+          agent.Post?.jobDetails?.location || "unknown-location";
+        console.log(
+          `im here - agent=${agentLabel} | username=${username} | jobTitle=${jobTitle} | location=${jobLocation}`
+        );
       });
     } catch (err) {
-      console.error('[agent:heartbeat] Error:', err.message);
+      console.error("[agent:heartbeat] Error:", err.message);
     }
   });
 
-  agendaInstance.on('ready', async () => {
+  agendaInstance.on("ready", async () => {
     // Ensure the job runs every hour
-    await agendaInstance.every('1 hour', 'agent:heartbeat');
+    await agendaInstance.every("1 hour", "agent:heartbeat");
     // Trigger once immediately at startup for visibility
-    await agendaInstance.now('agent:heartbeat');
+    await agendaInstance.now("agent:heartbeat");
     await agendaInstance.start();
-    console.log('⏱️  Agenda démarré. Job agent:heartbeat planifié chaque heure.');
+    console.log(
+      "⏱️  Agenda démarré. Job agent:heartbeat planifié chaque heure."
+    );
   });
 
-  agendaInstance.on('error', (err) => {
-    console.error('❌ Agenda error:', err);
+  agendaInstance.on("error", (err) => {
+    console.error("❌ Agenda error:", err);
   });
 
   // Graceful shutdown
   const shutdown = async () => {
     try {
       await agendaInstance.stop();
-      console.log('🛑 Agenda arrêté proprement');
+      console.log("🛑 Agenda arrêté proprement");
     } catch (e) {
-      console.error('Erreur à l\'arrêt d\'Agenda:', e);
+      console.error("Erreur à l'arrêt d'Agenda:", e);
     }
     process.exit(0);
   };
-  process.once('SIGTERM', shutdown);
-  process.once('SIGINT', shutdown);
+  process.once("SIGTERM", shutdown);
+  process.once("SIGINT", shutdown);
 
   isInitialized = true;
   return agendaInstance;
@@ -81,5 +86,3 @@ async function initializeAgenda() {
 module.exports = {
   initializeAgenda,
 };
-
-

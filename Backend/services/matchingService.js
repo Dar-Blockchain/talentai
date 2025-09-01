@@ -4,7 +4,7 @@ function normalizeSkillName(name) {
   return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
 }
 
-module.exports.calculateSkillMatchScore = (jobSkills, candidateSkills) => { 
+module.exports.calculateSkillMatchScore = (jobSkills, candidateSkills) => {
   let totalScore = 0;
   const maxPossibleScore = jobSkills.length * 100; // 100% par compétence
 
@@ -48,6 +48,7 @@ module.exports.calculateSkillMatchScore = (jobSkills, candidateSkills) => {
     }
   });
 
-  const matchPercentage = Math.round((totalScore / maxPossibleScore) * 1000) / 10;
+  const matchPercentage =
+    Math.round((totalScore / maxPossibleScore) * 1000) / 10;
   return matchPercentage;
 };
