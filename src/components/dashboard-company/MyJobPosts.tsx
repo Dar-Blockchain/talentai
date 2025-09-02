@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -9,6 +9,15 @@ import {
   CircularProgress,
   TextField,
   InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Stepper,
+  Step,
+  StepLabel,
+  Tooltip,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -18,6 +27,17 @@ import WorkIcon from '@mui/icons-material/Work';
 import SearchIcon from '@mui/icons-material/Search';
 import SortIcon from '@mui/icons-material/Sort';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import {
+  Close as CloseIcon,
+  AttachMoney as AttachMoneyIcon,
+  Description as DescriptionIcon,
+  Check as CheckIcon,
+  AutoAwesome as AutoAwesomeIcon,
+  TrendingUp as TrendingUpIcon,
+  Info as InfoIcon,
+  Link as LinkIcon,
+  ContentCopy as ContentCopyIcon,
+} from '@mui/icons-material';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -66,7 +86,6 @@ interface MyJobPostsProps {
   isLoadingJobs: boolean;
   jobsError: string | null;
   displayCount: number;
-  onViewJobDetails: (job: any) => void;
   onViewMatches: (jobId: string) => void;
   onDeleteJob: (jobId: string) => void;
   onLoadMore: () => void;
@@ -78,12 +97,26 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   isLoadingJobs,
   jobsError,
   displayCount,
-  onViewJobDetails,
   onViewMatches,
   onDeleteJob,
   onLoadMore,
   onCreateNewJob,
 }) => {
+  // Add state for job details modal
+  const [jobDetailsModalOpen, setJobDetailsModalOpen] = useState(false);
+  const [selectedJobForDetails, setSelectedJobForDetails] = useState<any>(null);
+
+  // Add handlers for job details modal
+  const handleViewJobDetails = (job: any) => {
+    setSelectedJobForDetails(job);
+    setJobDetailsModalOpen(true);
+  };
+
+  const handleCloseJobDetailsModal = () => {
+    setJobDetailsModalOpen(false);
+    setSelectedJobForDetails(null);
+  };
+
   return (
     <StyledCard sx={{ mb: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, gap: 2, flexWrap: 'wrap' }}>
@@ -267,7 +300,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
                     <Button
                       variant="contained"
                       fullWidth
-                      onClick={() => onViewJobDetails(job)}
+                      onClick={() => handleViewJobDetails(job)}
                       sx={{
                         background: 'linear-gradient(90deg, #02E2FF, #00FFC3)',
                         color: '#0f172a',
@@ -349,6 +382,45 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
           )}
         </Box>
       )}
+
+      {/* Job Details Modal */}
+      <Dialog open={jobDetailsModalOpen} onClose={handleCloseJobDetailsModal} maxWidth="md" fullWidth>
+        <DialogTitle>{selectedJobForDetails?.jobDetails?.title}</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="h6" gutterBottom>Job Details</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Typography variant="body1"><strong>Title:</strong> {selectedJobForDetails?.jobDetails?.title}</Typography>
+            <Typography variant="body1"><strong>Description:</strong> {selectedJobForDetails?.jobDetails?.description}</Typography>
+            <Typography variant="body1"><strong>Location:</strong> {selectedJobForDetails?.jobDetails?.location}</Typography>
+            <Typography variant="body1"><strong>Employment Type:</strong> {selectedJobForDetails?.jobDetails?.employmentType}</Typography>
+            <Typography variant="body1"><strong>Salary:</strong> {selectedJobForDetails?.jobDetails?.salary?.currency}{selectedJobForDetails?.jobDetails?.salary?.min}-{selectedJobForDetails?.jobDetails?.salary?.max}</Typography>
+            <Typography variant="body1"><strong>Created At:</strong> {new Date(selectedJobForDetails?.createdAt).toLocaleDateString()}</Typography>
+          </Box>
+
+          <Typography variant="h6" gutterBottom mt={3}>Required Skills</Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {(selectedJobForDetails?.skillAnalysis?.requiredSkills ?? []).map((skill: any, idx: number) => (
+              <Chip
+                key={idx}
+                label={skill.name}
+                size="small"
+                icon={<StarIcon sx={{ color: '#00FFC3', fontSize: 18 }} />}
+                sx={{
+                  backgroundColor: 'rgba(0, 255, 157, 0.15)',
+                  color: '#0f172a',
+                  fontWeight: 800,
+                  fontSize: '0.87rem',
+                  letterSpacing: 0.2,
+                  px: 1
+                }}
+              />
+            ))}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseJobDetailsModal} color="primary">Close</Button>
+        </DialogActions>
+      </Dialog>
     </StyledCard>
   );
 };

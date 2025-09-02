@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -136,12 +136,17 @@ const SkillChip = styled(Chip)(({ theme }) => ({
 
 interface CompanyInfoHeaderProps {
   profile: any;
-  localRequiredSkills: string[];
 }
 
-const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile, localRequiredSkills }) => {
+const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
   const router = useRouter();
-
+  // Add new state for selected assessment
+  const [localRequiredSkills, setLocalRequiredSkills] = useState(
+    profile?.requiredSkills || []
+  );
+  useEffect(() => {
+    setLocalRequiredSkills(profile?.requiredSkills || []);
+  }, [profile]);
   return (
     <ProfileHeader>
       <Box sx={{ position: 'relative', zIndex: 2 }}>
@@ -246,7 +251,7 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile, localReq
             border: '1px solid rgba(0,0,0,0.06)'
           }}>
             {localRequiredSkills && localRequiredSkills.length > 0 ? (
-              localRequiredSkills.map((skill, index) => (
+              localRequiredSkills.map((skill: any, index: any) => (
                 <SkillChip
                   key={`header-req-skill-${index}`}
                   icon={

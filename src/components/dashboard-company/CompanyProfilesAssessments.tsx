@@ -56,16 +56,15 @@ const StyledCard = styled(Card)(({ theme }) => ({
 }));
 
 interface CompanyProfilesAssessmentsProps {
-  companyProfiles: any[];
-  isLoadingProfiles: boolean;
-  profilesError: string | null;
+  profile: any;
 }
 
 const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
-  companyProfiles,
-  isLoadingProfiles,
-  profilesError
+  profile
 }) => {
+  const [companyProfiles, setCompanyProfiles] = useState<any[]>([]);
+  const [isLoadingProfiles, setIsLoadingProfiles] = useState(false);
+  const [profilesError, setProfilesError] = useState<string | null>(null);
   const [displayedAssessments, setDisplayedAssessments] = useState(10);
   const [assessmentSearch, setAssessmentSearch] = useState('');
   const [assessmentStatusFilter, setAssessmentStatusFilter] = useState('all');
@@ -73,6 +72,49 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
   const [assessmentView, setAssessmentView] = useState<'table' | 'cards'>('table');
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
   const [assessmentModalOpen, setAssessmentModalOpen] = useState(false);
+
+  // Add function to fetch company profiles
+  const fetchCompanyProfiles = async () => {
+    try {
+      setIsLoadingProfiles(true);
+      setProfilesError(null);
+      const token = localStorage.getItem('api_token');
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getCompanyWithAssessments`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch company profiles');
+      }
+
+      const data = await response.json();
+      setCompanyProfiles(data);
+    } catch (error) {
+      setProfilesError('Failed to fetch company profiles');
+      console.error('Error fetching company profiles:', error);
+    } finally {
+      setIsLoadingProfiles(false);
+    }
+  };
+
+  // Add useEffect to fetch profiles when component mounts
+  useEffect(() => {
+    // Only fetch company profiles if user is a company
+    if (
+      profile &&
+      (profile.userId.role === 'Company' || profile.userId.role === 'company')
+    ) {
+      fetchCompanyProfiles();
+    }
+  }, [profile]);
 
   const handleViewAssessmentDetails = (assessment: any) => {
     setSelectedAssessment(assessment);
