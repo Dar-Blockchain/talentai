@@ -16,7 +16,6 @@ import CompanyOnly from "@/components/CompanyOnly";
 import CompanyProfilesAssessments from "@/components/dashboard-company/CompanyProfilesAssessments";
 import BidHistory from "@/components/dashboard-company/BidHistory";
 import CompanyInfoHeader from "@/components/dashboard-company/CompanyInfoHeader";
-import JobDetailsModal from "@/components/dashboard-company/JobDetailsModal";
 import AddBidDialog from "@/components/dashboard-company/AddBidDialog";
 import DeleteJobPostDialog from "@/components/dashboard-company/DeleteJobPostDialog";
 import FilterDialog from "@/components/dashboard-company/FilterDialog";
@@ -91,14 +90,6 @@ const DashboardCompany = () => {
     (state: RootState) => state.bid.bids
   );
   const [jobToDelete, setJobToDelete] = useState<string>("");
-  // Add new state for selected assessment
-  const [localRequiredSkills, setLocalRequiredSkills] = useState(
-    profile?.requiredSkills || []
-  );
-
-  // Add state for job details modal
-  const [jobDetailsModalOpen, setJobDetailsModalOpen] = useState(false);
-  const [selectedJobForDetails, setSelectedJobForDetails] = useState<any>(null);
 
   const handleFilterApply = async () => {
     if (!selectedJob) {
@@ -240,23 +231,6 @@ const DashboardCompany = () => {
     setSelectedCandidate(null);
   };
 
-  
-
-  useEffect(() => {
-    setLocalRequiredSkills(profile?.requiredSkills || []);
-  }, [profile]);
-
-  // Add handlers for job details modal
-  const handleViewJobDetails = (job: any) => {
-    setSelectedJobForDetails(job);
-    setJobDetailsModalOpen(true);
-  };
-
-  const handleCloseJobDetailsModal = () => {
-    setJobDetailsModalOpen(false);
-    setSelectedJobForDetails(null);
-  };
-
   return (
     <CompanyOnly>
       <Box
@@ -300,7 +274,6 @@ const DashboardCompany = () => {
           />
           <CompanyInfoHeader
             profile={profile}
-            localRequiredSkills={localRequiredSkills}
           />
 
           <Box
@@ -312,23 +285,22 @@ const DashboardCompany = () => {
           >
             <Box sx={{ flex: 2 }}>
               {!selectedJob ? (
-                <MyJobPosts
-                  myJobs={myJobs}
-                  isLoadingJobs={isLoadingJobs}
-                  jobsError={jobsError}
-                  displayCount={displayCount}
-                  onViewJobDetails={handleViewJobDetails}
-                  onViewMatches={(jobId) => {
-                    setSelectedJob(jobId);
-                    handleFilterDialogOpen();
-                  }}
-                  onDeleteJob={(jobId) => {
-                    setJobToDelete(jobId);
-                    setDeleteDialogOpen(true);
-                  }}
-                  onLoadMore={() => setDisplayCount((prev: number) => prev + 3)}
-                  onCreateNewJob={() => router.push("/posts/create")}
-                />
+                                 <MyJobPosts
+                   myJobs={myJobs}
+                   isLoadingJobs={isLoadingJobs}
+                   jobsError={jobsError}
+                   displayCount={displayCount}
+                   onViewMatches={(jobId) => {
+                     setSelectedJob(jobId);
+                     handleFilterDialogOpen();
+                   }}
+                   onDeleteJob={(jobId) => {
+                     setJobToDelete(jobId);
+                     setDeleteDialogOpen(true);
+                   }}
+                   onLoadMore={() => setDisplayCount((prev: number) => prev + 3)}
+                   onCreateNewJob={() => router.push("/posts/create")}
+                 />
               ) : (
                 <StyledCard>
                   <MatchingProfiles
@@ -372,12 +344,7 @@ const DashboardCompany = () => {
             selectedJob={selectedJob}
           />
 
-          {/* Job Details Modal */}
-          <JobDetailsModal
-            open={jobDetailsModalOpen}
-            onClose={handleCloseJobDetailsModal}
-            selectedJobForDetails={selectedJobForDetails}
-          />
+
 
           {/* Company Profiles & Assessments Section */}
           <CompanyProfilesAssessments
