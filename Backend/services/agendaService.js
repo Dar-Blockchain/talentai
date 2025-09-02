@@ -29,8 +29,7 @@ async function initializeAgenda() {
   agendaInstance.define("agent:heartbeat", async () => {
     try {
       const agents = await Agent.find({}, { _id: 1, name: 1 })
-        .populate({ path: "Campany", select: "username role" })
-        .populate({ path: "Post", select: "jobDetails user" })
+        .populate({ path: "PostId", select: "jobDetails user" })
         .lean();
       if (!agents || agents.length === 0) {
         console.log("[agent:heartbeat] Aucun agent trouvé");
@@ -38,12 +37,12 @@ async function initializeAgenda() {
       }
       agents.forEach((agent) => {
         const agentLabel = agent.name || agent._id?.toString();
-        const username = agent.Campany?.username || "unknown-user";
+        //const username = agent.CampanyId?.username || "unknown-user";
         const jobTitle = agent.Post?.jobDetails?.title || "unknown-title";
         const jobLocation =
           agent.Post?.jobDetails?.location || "unknown-location";
         console.log(
-          `im here - agent=${agentLabel} | username=${username} | jobTitle=${jobTitle} | location=${jobLocation}`
+          `im here - agent=${agentLabel} | jobTitle=${jobTitle} | location=${jobLocation}`
         );
       });
     } catch (err) {
@@ -52,13 +51,13 @@ async function initializeAgenda() {
   });
 
   agendaInstance.on("ready", async () => {
-    // Ensure the job runs every hour
-    await agendaInstance.every("1 hour", "agent:heartbeat");
+    // Ensure the job runs every 10 seconds
+    await agendaInstance.every("10 seconds", "agent:heartbeat");
     // Trigger once immediately at startup for visibility
     await agendaInstance.now("agent:heartbeat");
     await agendaInstance.start();
     console.log(
-      "⏱️  Agenda démarré. Job agent:heartbeat planifié chaque heure."
+      "⏱️  Agenda démarré. Job agent:heartbeat planifié toutes les 10 secondes."
     );
   });
 
