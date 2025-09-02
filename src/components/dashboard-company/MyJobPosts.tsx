@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -9,6 +9,15 @@ import {
   CircularProgress,
   TextField,
   InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Stepper,
+  Step,
+  StepLabel,
+  Tooltip,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -18,6 +27,17 @@ import WorkIcon from '@mui/icons-material/Work';
 import SearchIcon from '@mui/icons-material/Search';
 import SortIcon from '@mui/icons-material/Sort';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import {
+  Close as CloseIcon,
+  AttachMoney as AttachMoneyIcon,
+  Description as DescriptionIcon,
+  Check as CheckIcon,
+  AutoAwesome as AutoAwesomeIcon,
+  TrendingUp as TrendingUpIcon,
+  Info as InfoIcon,
+  Link as LinkIcon,
+  ContentCopy as ContentCopyIcon,
+} from '@mui/icons-material';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({

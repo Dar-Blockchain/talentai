@@ -1,4 +1,6 @@
 import React from 'react';
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
 import {
   AppBar,
   Toolbar,
@@ -12,17 +14,49 @@ import {
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useRouter } from 'next/router';
+import Cookies from "js-cookie";
+import {
+  clearProfile,
+} from "@/store/slices/profileSlice";
+import { logout } from "@/store/slices/authSlice";
+import { signOut } from "next-auth/react";
 
 interface NavbarProps {
   profile: any;
-  onLogout: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ profile, onLogout }) => {
+const Navbar: React.FC<NavbarProps> = ({ profile }) => {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const handleLogout = async () => {
+    try {
+      // First clear the token from both localStorage and cookies
+      localStorage.removeItem("api_token");
+      Cookies.remove("api_token", { path: "/" });
 
+      // Then clear all other data
+      localStorage.clear();
+
+      // Clear all other cookies
+      Object.keys(Cookies.get()).forEach((cookieName) => {
+        Cookies.remove(cookieName, { path: "/" });
+      });
+
+      // Clear Redux state
+      dispatch(clearProfile());
+      dispatch(logout());
+
+      // Sign out from NextAuth
+      await signOut({ redirect: false });
+
+      // Redirect to signin page
+      router.push("/signin");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
   return (
     <AppBar
       position="static"
@@ -108,7 +142,7 @@ const Navbar: React.FC<NavbarProps> = ({ profile, onLogout }) => {
             )}
             {isMobile ? (
               <IconButton
-                onClick={onLogout}
+                onClick={handleLogout}
                 sx={{
                   background: 'linear-gradient(90deg, #7C4DFF 0%, #00B8D4 100%)',
                   color: '#fff',
@@ -141,7 +175,7 @@ const Navbar: React.FC<NavbarProps> = ({ profile, onLogout }) => {
                     boxShadow: '0 4px 16px #00B8D433',
                   },
                 }}
-                onClick={onLogout}
+                onClick={handleLogout}
               >
                 Logout
               </Button>
