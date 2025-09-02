@@ -42,12 +42,12 @@ const agentSchema = new mongoose.Schema({
   pubkey: { type: String },
   createdAt: { type: Date, default: Date.now },
 
-  Campany: {
+  CompanyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
 
-  Post: {
+  PostId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Post",
   },
