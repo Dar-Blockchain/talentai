@@ -9,49 +9,48 @@ const agentSchema = new mongoose.Schema({
   hederaAccountId: { type: String },
   hederaPrivateKey: { type: String },
   hederaPublicKey: { type: String },
-  
+
   // HCS-11 Profile Fields
-  hcs11Profile: { 
+  hcs11Profile: {
     type: mongoose.Schema.Types.Mixed,
-    description: "Complete HCS-11 compliant agent profile"
+    description: "Complete HCS-11 compliant agent profile",
   },
-  inboundTopicId: { 
+  inboundTopicId: {
     type: String,
-    description: "Hedera topic ID for receiving messages"
+    description: "Hedera topic ID for receiving messages",
   },
-  outboundTopicId: { 
+  outboundTopicId: {
     type: String,
-    description: "Hedera topic ID for sending messages"
+    description: "Hedera topic ID for sending messages",
   },
   profileRegistrationId: {
     type: String,
-    description: "HCS-11 profile registration message ID"
+    description: "HCS-11 profile registration message ID",
   },
   profileId: {
     type: String,
-    description: "Unique HCS-11 profile identifier"
+    description: "Unique HCS-11 profile identifier",
   },
   deploymentMessageId: {
     type: String,
-    description: "HCS-11 profile deployment message ID on consensus network"
+    description: "HCS-11 profile deployment message ID on consensus network",
   },
-  
+
   // Legacy fields for backwards compatibility
   accountId: { type: String },
   privkey: { type: String },
   pubkey: { type: String },
   createdAt: { type: Date, default: Date.now },
 
-  Campany: {
+  CompanyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
 
-  Post: {
+  PostId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Post",
   },
-
 });
 
 module.exports = mongoose.model("Agent", agentSchema);

@@ -505,10 +505,47 @@ As a ${
      return generatedJob !== null && !isSaving;
    };
 
+   // Function to get job title
+   const getJobTitle = (): string | undefined => {
+     return generatedJob?.jobDetails?.title;
+   };
+
+   // Function to get job skills
+   const getJobSkills = (): string[] => {
+     if (!generatedJob?.skillAnalysis) return [];
+     
+     const skills: string[] = [];
+     
+     // Add required skills
+     if (generatedJob.skillAnalysis.requiredSkills) {
+       skills.push(...generatedJob.skillAnalysis.requiredSkills.map(skill => skill.name));
+     }
+     
+     // Add main technologies from skill summary
+     if (generatedJob.skillAnalysis.skillSummary?.mainTechnologies) {
+       skills.push(...generatedJob.skillAnalysis.skillSummary.mainTechnologies);
+     }
+     
+     // Add technical skills
+     if (generatedJob.skillAnalysis.suggestedSkills?.technical) {
+       skills.push(...generatedJob.skillAnalysis.suggestedSkills.technical.map(skill => skill.name));
+     }
+     
+     // Add frameworks
+     if (generatedJob.skillAnalysis.suggestedSkills?.frameworks) {
+       skills.push(...generatedJob.skillAnalysis.suggestedSkills.frameworks.map(framework => framework.name));
+     }
+     
+     // Remove duplicates and return
+     return [...new Set(skills)];
+   };
+
    // Expose functions to parent component
    useImperativeHandle(ref, () => ({
      saveJob,
-     canProceed
+     canProceed,
+     getJobTitle,
+     getJobSkills
    }));
 
   return (
