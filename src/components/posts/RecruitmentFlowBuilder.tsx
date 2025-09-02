@@ -1,14 +1,15 @@
 import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { postRecruitmentSteps, selectPostStepsLoading, selectPostStepsError } from '../../store/slices/postSlice';
-import { 
-  Box, 
-  Typography, 
-  Button, 
-  Stepper, 
-  Step, 
-  StepLabel, 
-  IconButton, 
+import { RootState } from '../../store/store';
+import {
+  Box,
+  Typography,
+  Button,
+  Stepper,
+  Step,
+  StepLabel,
+  IconButton,
   Tooltip,
   Modal,
   Paper,
@@ -67,6 +68,7 @@ import { PostDetailsRef } from './recruitment-post/types';
 import { AppDispatch } from '@/store/store';
 import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
+import Cookies from 'js-cookie';
 
 // Constants
 const GREEN_MAIN = '#00FF9D';
@@ -209,15 +211,15 @@ const CustomNode = ({ data, selected }: { data: any; selected: boolean }) => {
       <Handle
         type="target"
         position={Position.Top}
-        style={{ 
-          background: style.borderColor, 
-          width: 12, 
+        style={{
+          background: style.borderColor,
+          width: 12,
           height: 12,
           border: '2px solid white',
           boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
         }}
       />
-      
+
       {/* Condition nodes have two output handles (Yes/No) */}
       {data.type === 'condition' ? (
         <>
@@ -225,9 +227,9 @@ const CustomNode = ({ data, selected }: { data: any; selected: boolean }) => {
             type="source"
             position={Position.Bottom}
             id="yes"
-            style={{ 
-              background: '#10b981', 
-              width: 12, 
+            style={{
+              background: '#10b981',
+              width: 12,
               height: 12,
               border: '2px solid white',
               boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
@@ -238,9 +240,9 @@ const CustomNode = ({ data, selected }: { data: any; selected: boolean }) => {
             type="source"
             position={Position.Bottom}
             id="no"
-            style={{ 
-              background: '#ef4444', 
-              width: 12, 
+            style={{
+              background: '#ef4444',
+              width: 12,
               height: 12,
               border: '2px solid white',
               boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
@@ -252,48 +254,48 @@ const CustomNode = ({ data, selected }: { data: any; selected: boolean }) => {
         <Handle
           type="source"
           position={Position.Bottom}
-          style={{ 
-            background: style.borderColor, 
-            width: 12, 
+          style={{
+            background: style.borderColor,
+            width: 12,
             height: 12,
             border: '2px solid white',
             boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
           }}
         />
       )}
-      
+
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
         <Typography variant="subtitle2" fontWeight="bold">
           {data.label}
         </Typography>
         {data.config?.configured && (
-          <Box sx={{ 
-            width: 8, 
-            height: 8, 
-            backgroundColor: '#10b981', 
+          <Box sx={{
+            width: 8,
+            height: 8,
+            backgroundColor: '#10b981',
             borderRadius: '50%',
             flexShrink: 0
           }} />
         )}
       </Box>
-      
+
       {data.subtitle && (
         <Typography variant="caption" sx={{ opacity: 0.8, display: 'block', mb: 0.5 }}>
           {data.subtitle}
         </Typography>
       )}
-      
+
       {!data.config?.configured && (
-        <Typography variant="caption" sx={{ 
-          color: '#f59e0b', 
-          display: 'block', 
+        <Typography variant="caption" sx={{
+          color: '#f59e0b',
+          display: 'block',
           fontWeight: 'bold',
           fontSize: '10px'
         }}>
           Not configured
         </Typography>
       )}
-      
+
       {/* Show condition details if configured */}
       {data.type === 'condition' && data.config?.field && data.config?.operator && data.config?.value && (
         <Box sx={{ mt: 1, fontSize: '11px', opacity: 0.9 }}>
@@ -330,16 +332,17 @@ interface ChatMessage {
 
 const RecruitmentFlowBuilder: React.FC = () => {
   const router = useRouter();
-  
+
   // Redux
   const dispatch = useDispatch<AppDispatch>();
   const postStepsLoading = useSelector(selectPostStepsLoading);
   const postStepsError = useSelector(selectPostStepsError);
+  const { profile: authProfile, isLoading: authLoading } = useSelector((state: RootState) => state.auth);
 
   // React Flow state
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  
+
   // UI state
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
@@ -347,62 +350,296 @@ const RecruitmentFlowBuilder: React.FC = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [currentPrompt, setCurrentPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  
+
   // Stepper state
   const [activeStep, setActiveStep] = useState(0);
   const [isSavingJob, setIsSavingJob] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedJobId, setSavedJobId] = useState<string | null>(null);
-    const [isSavingSteps, setIsSavingSteps] = useState(false);
+  const [isSavingSteps, setIsSavingSteps] = useState(false);
 
   // Refs
   const postDetailsRef = useRef<PostDetailsRef>(null);
 
-const steps = [
-  'Job Details',              // Step 1: Job title, description, etc.
-  'Recruitment Flow',         // Step 2: Define recruitment sequence
-  // 'Final Review'              // Step 3: Confirm all before publishing
-];
+  // Function to register HR Agent for the post
+  const registerHRAgent = async (jobId: string) => {
+    try {
+      console.log('Full auth profile object:', authProfile);
+      console.log('Auth profile structure:', {
+        hasProfile: !!authProfile,
+        hasUserId: !!authProfile?.userId,
+        userId: authProfile?.userId,
+        companyDetails: authProfile?.companyDetails,
+        profileType: authProfile?.type
+      });
+
+      // Wait for profile to load if it's not available yet
+      if (!authProfile && authLoading) {
+        console.log('Profile still loading, waiting...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        if (!authProfile) {
+          throw new Error('Company profile not loaded - please try again');
+        }
+      }
+
+      // Check different possible profile structures
+      let companyId, companyName;
+
+      if (authProfile?.userId?._id) {
+        // Structure: authProfile.userId._id
+        companyId = authProfile.userId._id;
+        companyName = authProfile.companyDetails?.name || 'Company';
+        console.log('Using authProfile.userId._id structure');
+      } else if (authProfile?._id) {
+        // Structure: authProfile._id (direct profile ID)
+        companyId = authProfile._id;
+        companyName = authProfile.companyDetails?.name || 'Company';
+        console.log('Using authProfile._id structure');
+      } else {
+        console.error('Available profile data:', authProfile);
+        throw new Error('Company profile not found - unable to determine company ID');
+      }
+
+             // Get job title and skills from PostDetails component state
+       const postTitle = postDetailsRef.current?.getJobTitle?.() || 'Post';
+       const jobSkills = postDetailsRef.current?.getJobSkills?.() || [];
+
+       // Create agent name and avatar name in the format: company+_IdCompagny+{jobTitle}+_IdPost
+       const agentName = `${companyName}_${companyId}${postTitle}_${jobId}`;
+       const avatarName = `${companyName}_${companyId}${postTitle}_${jobId}`;
+       console.log('Agent name:', agentName);
+       console.log('Avatar name:', avatarName);
+       console.log('Job skills:', jobSkills);
+       
+       // Enhanced agent configuration with detailed structure
+       const agentConfig = {
+         name: agentName,
+         postId: jobId,
+         avatarName: avatarName,
+         role: "Technical Leadership Specialist",
+         description: `Agent of ${companyName} for the ${postTitle} Post ${jobId}`,
+         Company: companyId,
+         hcs11CustomProfile: {
+           agentPersonality: {
+             communicationStyle: "technical_analytical",
+             approachMethod: "systematic_deep_dive",
+             evaluationPhilosophy: "Focus on scalable architecture and clean code practices"
+           },
+           specializedCapabilities: [
+             "system_architecture_assessment",
+             "api_design_evaluation"
+           ],
+           evaluationFramework: {
+             primaryFocus: "backend_systems",
+             assessmentCriteria: [
+               "system_design_thinking",
+               "code_architecture"
+             ]
+           },
+           domainExpertise: {
+             primaryTechnologies: jobSkills.length > 0 ? jobSkills : [
+               "Node.js",
+               "Python",
+               "Java"
+             ],
+             specializations: [
+               "API_gateway_design",
+               "microservices"
+             ]
+           }
+         }
+       };
+
+      // Validate agentConfig data
+      console.log('Agent config validation:', {
+        name: agentConfig.name,
+        nameLength: agentConfig.name.length,
+        avatarName: agentConfig.avatarName,
+        avatarNameLength: agentConfig.avatarName.length,
+        role: agentConfig.role,
+        description: agentConfig.description,
+        descriptionLength: agentConfig.description.length,
+        hasHcs11Profile: !!agentConfig.hcs11CustomProfile
+      });
+
+      // Check for any undefined or null values
+      if (!agentConfig.name || !agentConfig.avatarName || !agentConfig.role || !agentConfig.description) {
+        throw new Error('Agent config has missing required fields');
+      }
+
+      // Check for empty strings
+      if (agentConfig.name.trim() === '' || agentConfig.avatarName.trim() === '' || agentConfig.description.trim() === '') {
+        throw new Error('Agent config has empty required fields');
+      }
+
+      // Validate hcs11CustomProfile structure if present
+      if (agentConfig.hcs11CustomProfile) {
+        const profile = agentConfig.hcs11CustomProfile;
+        if (!profile.agentPersonality || !profile.specializedCapabilities || !profile.evaluationFramework || !profile.domainExpertise) {
+          throw new Error('Agent config hcs11CustomProfile has missing required sections');
+        }
+      }
+
+      // Try multiple token sources
+      let token: string | undefined = Cookies.get("api_token");
+      if (!token) {
+        token = localStorage.getItem('api_token') || undefined;
+      }
+      if (!token) {
+        token = localStorage.getItem('token') || undefined;
+      }
+
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
+      // Log the request details for debugging
+
+
+      // Make the API request with retry logic
+      let response;
+      let lastError;
+
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          console.log(`Attempt ${attempt}/3: Making HR agent registration request...`);
+
+          response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}hr-agents/initialize`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ 
+                agentConfigs: [agentConfig],
+              }),
+            }
+          );
+
+          console.log(`Attempt ${attempt} - Response status:`, response.status);
+          console.log(`Attempt ${attempt} - Response headers:`, Object.fromEntries(response.headers.entries()));
+
+          // If we get a successful response, break out of retry loop
+          if (response.ok) {
+            break;
+          }
+
+          // If it's a client error (4xx), don't retry
+          if (response.status >= 400 && response.status < 500) {
+            break;
+          }
+
+          // For server errors (5xx), retry
+          if (response.status >= 500) {
+            lastError = new Error(`Server error ${response.status}, attempt ${attempt}/3`);
+            if (attempt < 3) {
+              console.log(`Server error, retrying in 2 seconds...`);
+              await new Promise(resolve => setTimeout(resolve, 2000));
+              continue;
+            }
+          }
+
+        } catch (fetchError) {
+          lastError = fetchError;
+          console.error(`Attempt ${attempt} failed:`, fetchError);
+          if (attempt < 3) {
+            console.log(`Fetch error, retrying in 2 seconds...`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            continue;
+          }
+        }
+      }
+
+      if (!response) {
+        throw lastError || new Error('Failed to make API request after 3 attempts');
+      }
+
+      if (!response.ok) {
+        let errorData;
+        let responseText = '';
+
+        try {
+          responseText = await response.text();
+          console.error('Raw error response text:', responseText);
+
+          // Try to parse as JSON
+          try {
+            errorData = JSON.parse(responseText);
+            console.error('Parsed error response data:', errorData);
+          } catch (parseError) {
+            console.error('Could not parse response as JSON:', parseError);
+            errorData = { error: 'Invalid JSON response' };
+          }
+        } catch (textError) {
+          console.error('Could not read response text:', textError);
+          errorData = { error: 'Could not read response' };
+        }
+
+        const errorMessage = errorData?.error || errorData?.message || errorData?.details || `HTTP ${response.status}: Failed to register HR agent`;
+        console.error('Final error message:', errorMessage);
+
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      console.log('HR Agent registered successfully:', result);
+      toast.success('HR Agent registered successfully for this post');
+
+      return result;
+    } catch (error) {
+      console.error('Error registering HR agent:', error);
+      throw error;
+    }
+  };
+
+  const steps = [
+    'Job Details',              // Step 1: Job title, description, etc.
+    'Recruitment Flow',         // Step 2: Define recruitment sequence
+    // 'Final Review'              // Step 3: Confirm all before publishing
+  ];
   // Define node types for React Flow
   const nodeTypes: NodeTypes = useMemo(() => ({ custom: CustomNode }), []);
 
   // Menu items configuration
   const menuItems = [
-    { 
-      type: 'technical', 
-      icon: EngineeringIcon, 
-      label: 'Technical Skills', 
-      subtitle: 'Validate technical skills' 
+    {
+      type: 'technical',
+      icon: EngineeringIcon,
+      label: 'Technical Skills',
+      subtitle: 'Validate technical skills'
     },
-    { 
-      type: 'soft', 
-      icon: PsychologyIcon, 
-      label: 'Soft Skills', 
-      subtitle: 'Assess soft skills' 
+    {
+      type: 'soft',
+      icon: PsychologyIcon,
+      label: 'Soft Skills',
+      subtitle: 'Assess soft skills'
     },
-    { 
-      type: 'interview', 
-      icon: InterviewIcon, 
-      label: 'HR Interview', 
-      subtitle: 'Conduct HR interview' 
+    {
+      type: 'interview',
+      icon: InterviewIcon,
+      label: 'HR Interview',
+      subtitle: 'Conduct HR interview'
     },
-    { 
-      type: 'task', 
-      icon: AssignmentIcon, 
-      label: 'Task Creation', 
-      subtitle: 'Create assessment task' 
+    {
+      type: 'task',
+      icon: AssignmentIcon,
+      label: 'Task Creation',
+      subtitle: 'Create assessment task'
     },
-    { 
-      type: 'condition', 
-      icon: ConditionIcon, 
-      label: 'Condition', 
-      subtitle: 'Add conditional logic' 
+    {
+      type: 'condition',
+      icon: ConditionIcon,
+      label: 'Condition',
+      subtitle: 'Add conditional logic'
     },
-    { 
-      type: 'email', 
-      icon: EmailIcon, 
-      label: 'Email', 
-      subtitle: 'Send email notification' 
+    {
+      type: 'email',
+      icon: EmailIcon,
+      label: 'Email',
+      subtitle: 'Send email notification'
     },
   ];
 
@@ -417,29 +654,29 @@ const steps = [
 
   const deleteSelectedNodes = useCallback(() => {
     if (selectedNodes.length === 0) return;
-    
+
     const selectedNodeIds = selectedNodes.map(node => node.id);
-    
+
     // Remove nodes
     setNodes((nds) => nds.filter((node) => !selectedNodeIds.includes(node.id)));
-    
+
     // Remove connected edges
-    setEdges((eds) => eds.filter((edge) => 
+    setEdges((eds) => eds.filter((edge) =>
       !selectedNodeIds.includes(edge.source) && !selectedNodeIds.includes(edge.target)
     ));
-    
+
     setSelectedNodes([]);
   }, [selectedNodes, setNodes, setEdges]);
 
   const deleteNode = useCallback((nodeId: string) => {
     // Remove the node
     setNodes((nds) => nds.filter((node) => node.id !== nodeId));
-    
+
     // Remove connected edges
-    setEdges((eds) => eds.filter((edge) => 
+    setEdges((eds) => eds.filter((edge) =>
       edge.source !== nodeId && edge.target !== nodeId
     ));
-    
+
     setSelectedNodes([]);
   }, [setNodes, setEdges]);
 
@@ -457,11 +694,11 @@ const steps = [
     const newNode: Node = {
       id: `${type}_${Date.now()}`,
       type: 'custom',
-      position: { 
-        x: Math.random() * 300 + 100, 
-        y: Math.random() * 300 + 100 
+      position: {
+        x: Math.random() * 300 + 100,
+        y: Math.random() * 300 + 100
       },
-      data: { 
+      data: {
         label: `${menuItem?.label || type} ${nodeCount}`,
         type: type,
         subtitle: menuItem?.subtitle,
@@ -477,7 +714,7 @@ const steps = [
 
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
-    
+
     // For condition nodes, don't start with chat - show form directly
     if (node.data.type === 'condition') {
       setChatMessages([]);
@@ -527,18 +764,18 @@ const steps = [
       setNodes((nds) =>
         nds.map((node) =>
           node.id === selectedNode.id
-            ? { 
-                ...node, 
-                data: { 
-                  ...node.data, 
-                  config: { 
-                    ...node.data.config, 
-                    lastPrompt: promptToProcess,
-                    generatedContent: aiResponse,
-                    configured: true
-                  } 
+            ? {
+              ...node,
+              data: {
+                ...node.data,
+                config: {
+                  ...node.data.config,
+                  lastPrompt: promptToProcess,
+                  generatedContent: aiResponse,
+                  configured: true
                 }
               }
+            }
             : node
         )
       );
@@ -647,7 +884,7 @@ Ready to customize the content or add more triggers?`
 
   const handleConditionFormUpdate = (field: string, value: any) => {
     if (!selectedNode) return;
-    
+
     // Update the selected node state immediately for UI responsiveness
     const updatedNode = {
       ...selectedNode,
@@ -664,58 +901,78 @@ Ready to customize the content or add more triggers?`
 
   const handleConditionConfirm = () => {
     if (!selectedNode) return;
-    
-    const isComplete = selectedNode.data.config?.field && 
-                      selectedNode.data.config?.operator && 
-                      selectedNode.data.config?.value;
-    
+
+    const isComplete = selectedNode.data.config?.field &&
+      selectedNode.data.config?.operator &&
+      selectedNode.data.config?.value;
+
     // Update the nodes array with final configuration
     setNodes((nds) =>
       nds.map((node) =>
         node.id === selectedNode.id
-          ? { 
-              ...selectedNode,
-              data: {
-                ...selectedNode.data,
-                config: {
-                  ...selectedNode.data.config,
-                  configured: isComplete
-                }
+          ? {
+            ...selectedNode,
+            data: {
+              ...selectedNode.data,
+              config: {
+                ...selectedNode.data.config,
+                configured: isComplete
               }
             }
+          }
           : node
       )
     );
-    
+
     setModalOpen(false);
   };
 
-    const handleNext = async () => {
+  const handleNext = async () => {
     // Clear any previous save errors
     setSaveError(null);
-    
+
+    // Check if profile is loaded
+    if (!authProfile && authLoading) {
+      setSaveError('Profile is still loading. Please wait a moment and try again.');
+      return;
+    }
+
+    if (!authProfile) {
+      setSaveError('Company profile not found. Please ensure you are logged in as a company user.');
+      return;
+    }
+
     // If we're on the Job Post step (step 0), save the job first
     if (activeStep === 0) {
       if (!postDetailsRef.current?.canProceed()) {
         setSaveError('Please generate a job post before proceeding to the next step.');
         return;
       }
-      
+
       setIsSavingJob(true);
       try {
-        const saveResult : any = await postDetailsRef.current?.saveJob();
+        const saveResult: any = await postDetailsRef.current?.saveJob();
         if (!saveResult?.success || !saveResult?.jobId) {
           setSaveError('Failed to save job post. Please try again.');
           return;
         }
-        
+
         // Use the actual job ID returned from the save operation
         setSavedJobId(saveResult.jobId);
-    } catch (error) {
+
+        // Register HR Agent for this post
+        try {
+          await registerHRAgent(saveResult.jobId);
+        } catch (agentError) {
+          console.error('Error registering HR agent:', agentError);
+          // Don't block the flow if agent registration fails
+          toast.error('Warning: HR agent registration failed, but job was saved.');
+        }
+      } catch (error) {
         console.error('Error during job save:', error);
         setSaveError('An error occurred while saving the job post. Please try again.');
         return;
-    } finally {
+      } finally {
         setIsSavingJob(false);
       }
     }
@@ -732,9 +989,9 @@ Ready to customize the content or add more triggers?`
       try {
         setIsSavingSteps(true)
         const sequenceData = nodes.map((node, index) => ({
-            ...node,
-            order: index,
-            connections: edges
+          ...node,
+          order: index,
+          connections: edges
             .filter(edge => edge.source === node.id || edge.target === node.id)
             .map(edge => ({
               id: edge.id,
@@ -742,7 +999,7 @@ Ready to customize the content or add more triggers?`
               target: edge.target,
               type: edge.source === node.id ? 'outgoing' : 'incoming'
             }))
-          }));
+        }));
 
 
         console.log('Sending steps to API:', sequenceData);
@@ -756,18 +1013,18 @@ Ready to customize the content or add more triggers?`
         if (postRecruitmentSteps.fulfilled.match(result)) {
           console.log('Sequence saved successfully:', result.payload);
           setIsSavingSteps(false)
-          toast.success("Job post created successfully! Your recruitment flow has been saved.");          
+          toast.success("Job post created successfully! Your recruitment flow has been saved.");
           // You can add success notification here
           router.push('/dashboard/company')
         } else {
-                    setIsSavingSteps(false)
+          setIsSavingSteps(false)
 
           console.error('Failed to save sequence:', result.payload);
           setSaveError(`Failed to save sequence: ${result.payload}`);
         }
-        
+
       } catch (error) {
-                  setIsSavingSteps(false)
+        setIsSavingSteps(false)
 
         console.error('Error saving sequence:', error);
         setSaveError('An error occurred while saving the sequence. Please try again.');
@@ -781,6 +1038,13 @@ Ready to customize the content or add more triggers?`
       setSaveError(`Sequence Error: ${postStepsError}`);
     }
   }, [postStepsError]);
+
+  // Ensure profile is loaded when component mounts
+  React.useEffect(() => {
+    if (!authProfile && !authLoading) {
+      console.log('No auth profile found, component may need to wait for profile to load');
+    }
+  }, [authProfile, authLoading]);
 
   const handleBack = () => {
     if (activeStep > 0) {
@@ -845,13 +1109,13 @@ Ready to customize the content or add more triggers?`
                 >
                   Delete {selectedNodes.length} item{selectedNodes.length > 1 ? 's' : ''}
                 </Button>
-                <Typography 
-                  variant="caption" 
-                  sx={{ 
-                    backgroundColor: 'rgba(0,0,0,0.7)', 
-                    color: 'white', 
-                    px: 1, 
-                    py: 0.5, 
+                <Typography
+                  variant="caption"
+                  sx={{
+                    backgroundColor: 'rgba(0,0,0,0.7)',
+                    color: 'white',
+                    px: 1,
+                    py: 0.5,
                     borderRadius: '4px',
                     fontSize: '10px'
                   }}
@@ -916,8 +1180,8 @@ Ready to customize the content or add more triggers?`
                       index === activeStep
                         ? 'rgb(47, 212, 149)' // Current step
                         : index < activeStep
-                        ? 'rgba(47, 212, 149, 0.7)' // Completed
-                        : '#d1d5db', // Upcoming
+                          ? 'rgba(47, 212, 149, 0.7)' // Completed
+                          : '#d1d5db', // Upcoming
                     fontSize: '1.5rem',
                   },
                 }}
@@ -930,10 +1194,10 @@ Ready to customize the content or add more triggers?`
                       index === activeStep
                         ? '#1f2937' // Strong text for current
                         : index < activeStep
-                        ? 'rgba(47, 212, 149, 0.9)' // Soft green for completed
-                        : '#9ca3af', // Gray for upcoming
+                          ? 'rgba(47, 212, 149, 0.9)' // Soft green for completed
+                          : '#9ca3af', // Gray for upcoming
                     textTransform: 'capitalize',
-                    fontSize: '0.875rem',
+                    fontSize: '14px',
                   }}
                 >
                   {label}
@@ -942,6 +1206,40 @@ Ready to customize the content or add more triggers?`
             </Step>
           ))}
         </Stepper>
+
+        {/* Profile Loading Indicator */}
+        {authLoading && (
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            mt: 2,
+            p: 1,
+            backgroundColor: '#e3f2fd',
+            borderRadius: 1,
+            border: '1px solid #1976d2'
+          }}>
+            <CircularProgress size={16} />
+            <Typography variant="body2" color="primary">
+              Loading company profile...
+            </Typography>
+          </Box>
+        )}
+
+        {/* Profile Error Indicator */}
+        {!authProfile && !authLoading && (
+          <Box sx={{
+            mt: 2,
+            p: 1,
+            backgroundColor: '#ffebee',
+            borderRadius: 1,
+            border: '1px solid #d32f2f'
+          }}>
+            <Typography variant="body2" color="error">
+              Company profile not found. Please ensure you are logged in as a company user.
+            </Typography>
+          </Box>
+        )}
       </Header>
 
 
@@ -952,8 +1250,8 @@ Ready to customize the content or add more triggers?`
               const IconComponent = item.icon;
               return (
                 <Tooltip key={item.type} title={item.label} placement="right">
-                  <ActionButton 
-                    actionType={item.type} 
+                  <ActionButton
+                    actionType={item.type}
                     onClick={() => addNode(item.type)}
                   >
                     <IconComponent fontSize="small" />
@@ -966,7 +1264,7 @@ Ready to customize the content or add more triggers?`
             })}
           </Sidebar>
         )}
-        
+
         {renderStepContent()}
       </MainContent>
 
@@ -978,7 +1276,7 @@ Ready to customize the content or add more triggers?`
         >
           Save
         </Button> */}
-        
+
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
           <Button
             variant="outlined"
@@ -1009,7 +1307,7 @@ Ready to customize the content or add more triggers?`
             Back
           </Button>
 
-          
+
           {activeStep < steps.length - 1 ? (
             <Button
               variant="contained"
@@ -1045,10 +1343,10 @@ Ready to customize the content or add more triggers?`
               {isSavingJob
                 ? 'Saving Job...'
                 : postStepsLoading
-                ? 'Confirm...'
-                : activeStep === steps.length - 1
-                ? 'Save Sequence'
-                : 'Next'}
+                  ? 'Confirm...'
+                  : activeStep === steps.length - 1
+                    ? 'Save Sequence'
+                    : 'Next'}
             </Button>
 
           ) : (
@@ -1086,16 +1384,16 @@ Ready to customize the content or add more triggers?`
       </Footer>
 
       {/* Configuration Modal */}
-      <Modal 
-        open={modalOpen} 
+      <Modal
+        open={modalOpen}
         onClose={() => setModalOpen(false)}
         disableEnforceFocus
         disableAutoFocus
       >
-        <Box 
+        <Box
           sx={{
-            ...ModalStyle, 
-            width: selectedNode?.data.type === 'condition' ? 550 : 700, 
+            ...ModalStyle,
+            width: selectedNode?.data.type === 'condition' ? 550 : 700,
             height: selectedNode?.data.type === 'condition' ? 'auto' : 600,
             maxHeight: selectedNode?.data.type === 'condition' ? '80vh' : 600,
             overflow: selectedNode?.data.type === 'condition' ? 'auto' : 'hidden'
@@ -1120,10 +1418,10 @@ Ready to customize the content or add more triggers?`
 
           {/* Condition Form */}
           {selectedNode?.data.type === 'condition' ? (
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
                 gap: 2.5,
                 minHeight: 'auto',
                 pb: 2
@@ -1187,19 +1485,19 @@ Ready to customize the content or add more triggers?`
                 helperText="Enter the value to compare against (numbers for scores, text for status)"
               />
 
-              <Box sx={{ 
-                display: 'flex', 
-                gap: 2, 
-                p: 1.5, 
-                backgroundColor: '#f5f5f5', 
+              <Box sx={{
+                display: 'flex',
+                gap: 2,
+                p: 1.5,
+                backgroundColor: '#f5f5f5',
                 borderRadius: '8px',
-                alignItems: 'center' 
+                alignItems: 'center'
               }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ 
-                    width: 10, 
-                    height: 10, 
-                    backgroundColor: '#10b981', 
+                  <Box sx={{
+                    width: 10,
+                    height: 10,
+                    backgroundColor: '#10b981',
                     borderRadius: '50%',
                     border: '2px solid white',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
@@ -1210,10 +1508,10 @@ Ready to customize the content or add more triggers?`
                 </Box>
                 <Typography variant="body2" sx={{ mx: 1 }}>|</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ 
-                    width: 10, 
-                    height: 10, 
-                    backgroundColor: '#ef4444', 
+                  <Box sx={{
+                    width: 10,
+                    height: 10,
+                    backgroundColor: '#ef4444',
                     borderRadius: '50%',
                     border: '2px solid white',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
@@ -1225,9 +1523,9 @@ Ready to customize the content or add more triggers?`
               </Box>
 
               {selectedNode?.data.config?.field && selectedNode?.data.config?.operator && selectedNode?.data.config?.value && (
-                <Box sx={{ 
-                  p: 1.5, 
-                  backgroundColor: '#e3f2fd', 
+                <Box sx={{
+                  p: 1.5,
+                  backgroundColor: '#e3f2fd',
                   borderRadius: '8px',
                   border: '1px solid #1976d2'
                 }}>
@@ -1244,9 +1542,9 @@ Ready to customize the content or add more triggers?`
             /* Chat Interface for other nodes */
             <>
               {/* Chat Messages Area */}
-              <Box 
-                sx={{ 
-                  height: 400, 
+              <Box
+                sx={{
+                  height: 400,
                   overflowY: 'auto',
                   border: '1px solid #e0e0e0',
                   borderRadius: '8px',
@@ -1278,11 +1576,11 @@ Ready to customize the content or add more triggers?`
                       <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
                         {message.text}
                       </Typography>
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
-                          opacity: 0.7, 
-                          display: 'block', 
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          opacity: 0.7,
+                          display: 'block',
                           mt: 0.5,
                           fontSize: '11px'
                         }}
@@ -1292,7 +1590,7 @@ Ready to customize the content or add more triggers?`
                     </Box>
                   </Box>
                 ))}
-                
+
                 {isGenerating && (
                   <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 2 }}>
                     <Box
@@ -1339,7 +1637,7 @@ Ready to customize the content or add more triggers?`
                     }
                   }}
                 />
-                <IconButton 
+                <IconButton
                   onClick={handleSendPrompt}
                   disabled={!currentPrompt.trim() || isGenerating}
                   color="primary"
@@ -1363,8 +1661,8 @@ Ready to customize the content or add more triggers?`
           )}
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, mt: 2 }}>
-            <Button 
-              variant="outlined" 
+            <Button
+              variant="outlined"
               color="error"
               startIcon={<DeleteIcon />}
               onClick={() => {
@@ -1376,15 +1674,15 @@ Ready to customize the content or add more triggers?`
             >
               Delete Node
             </Button>
-            
+
             <Box sx={{ display: 'flex', gap: 1 }}>
               {selectedNode?.data.type === 'condition' ? (
                 <>
                   <Button variant="outlined" onClick={() => setModalOpen(false)}>
                     Cancel
                   </Button>
-                  <Button 
-                    variant="contained" 
+                  <Button
+                    variant="contained"
                     onClick={handleConditionConfirm}
                     disabled={!selectedNode?.data.config?.field || !selectedNode?.data.config?.operator || !selectedNode?.data.config?.value}
                   >

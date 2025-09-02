@@ -77,6 +77,8 @@ export interface JobPost {
 export interface PostDetailsRef {
   saveJob: () => Promise<{ success: boolean; jobId?: string }>;
   canProceed: () => boolean;
+  getJobTitle: () => string | undefined;
+  getJobSkills: () => string[];
 }
 
 export interface SalaryRange {
