@@ -17,7 +17,6 @@ import CompanyProfilesAssessments from "@/components/dashboard-company/CompanyPr
 import BidHistory from "@/components/dashboard-company/BidHistory";
 import CompanyInfoHeader from "@/components/dashboard-company/CompanyInfoHeader";
 import AddBidDialog from "@/components/dashboard-company/AddBidDialog";
-import DeleteJobPostDialog from "@/components/dashboard-company/DeleteJobPostDialog";
 import FilterDialog from "@/components/dashboard-company/FilterDialog";
 import MatchingProfiles from "@/components/dashboard-company/MatchingProfiles";
 import Navbar from "@/components/dashboard-company/Navbar";
@@ -284,7 +283,7 @@ const DashboardCompany = () => {
           >
             <Box sx={{ flex: 2 }}>
               {!selectedJob ? (
-                                <MyJobPosts
+                <MyJobPosts
                    myJobs={myJobs}
                    isLoadingJobs={isLoadingJobs}
                    jobsError={jobsError}
