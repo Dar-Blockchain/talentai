@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ReactNode, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getMyProfile,
@@ -14,64 +14,23 @@ import {
   Container,
   Typography,
   Card,
-  Chip,
-  Button,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Alert,
   CircularProgress,
-  TextField,
-  Paper,
-  Stack,
-  MenuItem,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  FormControl,
-  FormLabel,
-  Autocomplete,
   useTheme,
-  Tooltip,
   Snackbar,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TablePagination,
-  Tabs,
-  Tab,
-  AppBar,
-  Toolbar,
   useMediaQuery,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import AddIcon from "@mui/icons-material/Add";
-import CloseIcon from "@mui/icons-material/Close";
-import PersonIcon from "@mui/icons-material/Person";
-import WorkIcon from "@mui/icons-material/Work";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import LogoutIcon from "@mui/icons-material/Logout";
-import DescriptionIcon from "@mui/icons-material/Description";
 import { useRouter } from "next/router";
 import Cookies from "js-cookie";
 import { signOut } from "next-auth/react";
-import DeleteIcon from "@mui/icons-material/Delete";
 import { toast } from "react-hot-toast";
-import { generateTodos } from "@/store/slices/todoSlice";
 import CandidateOnly from "@/components/CandidateOnly";
-import PostInterviewTab from "@/components/dashboard-candidate/PostInterviewTab";
 import SkillBlock from "@/components/dashboard-candidate/SkillBlock";
 import InterviewDetailsTabs from "@/components/dashboard-candidate/InterviewDetailsTabs";
 import RecommendedOpportunities from "@/components/dashboard-candidate/RecommendedOpportunities";
 import WelcomeHeader from "@/components/dashboard-candidate/WelcomeHeader";
- 
-import Link from "next/link";
-import TestSelectionDialog from "@/components/dashboard-candidate/TestSelectionDialog";
+ import TestSelectionDialog from "@/components/dashboard-candidate/TestSelectionDialog";
 import UserInfoCard from "@/components/dashboard-candidate/UserInfoCard";
 import AddSoftSkillDialog from "@/components/dashboard-candidate/AddSoftSkillDialog";
 import AddSkillDialog from "@/components/dashboard-candidate/AddSkillDialog";
@@ -80,7 +39,6 @@ import LoadingState from "@/components/dashboard-candidate/LoadingState";
 import ErrorState from "@/components/dashboard-candidate/ErrorState";
 import DashboardNavbar from "@/components/dashboard-candidate/DashboardNavbar";
 
-import Avatar from '@mui/material/Avatar';
 const GREEN_MAIN = "#8310FF";
 
  
@@ -158,46 +116,6 @@ const ProfileHeader = styled(Box)(({ theme }) => ({
     padding: theme.spacing(8),
   },
 }));
-
-const ActionButton = styled(Button)(({ theme }) => ({
-  borderRadius: Number(theme.shape.borderRadius) * 2.5,
-  textTransform: "none",
-  fontWeight: 600,
-  fontSize: "1rem", // base font size (mobile)
-  padding: theme.spacing(1.5, 3), // base padding (mobile)
-  // backgroundColor: theme.palette.primary.main,
-  color: theme.palette.primary.contrastText,
-  boxShadow: "0 6px 18px rgba(0, 0, 0, 0.08)",
-  transition: theme.transitions.create(["transform", "box-shadow"], {
-    duration: theme.transitions.duration.short,
-  }),
-
-  // Responsive styles
-  [theme.breakpoints.up("sm")]: {
-    fontSize: "1.05rem",
-    padding: theme.spacing(1.75, 3.5),
-  },
-  [theme.breakpoints.up("md")]: {
-    fontSize: "1.1rem",
-    padding: theme.spacing(2, 4),
-  },
-
-  "&:hover": {
-    backgroundColor: theme.palette.primary.dark,
-    transform: "translateY(-2px)",
-    boxShadow: "0 10px 24px rgba(0, 0, 0, 0.15)",
-  },
-  "&:active": {
-    transform: "translateY(0)",
-    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-  },
-  "&:focus-visible": {
-    outline: `2px solid ${theme.palette.primary.light}`,
-    outlineOffset: 2,
-  },
-}));
-
-
 
 interface Skill {
   name: string;

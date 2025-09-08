@@ -237,7 +237,6 @@ const DashboardCompany = () => {
         sx={{
           minHeight: "100vh",
           backgroundColor: "white",
-
           py: 2,
         }}
       >
@@ -332,9 +331,6 @@ const DashboardCompany = () => {
             error={error}
             onPostNewJob={() => router.push("/posts/create")}
           />
-
-          
-
           {/* Add Bid Dialog */}
           <AddBidDialog
             open={bidDialogOpen}
@@ -342,9 +338,6 @@ const DashboardCompany = () => {
             selectedCandidate={selectedCandidate}
             selectedJob={selectedJob}
           />
-
-
-
           {/* Company Profiles & Assessments Section */}
           <CompanyProfilesAssessments
             profile={profile}
