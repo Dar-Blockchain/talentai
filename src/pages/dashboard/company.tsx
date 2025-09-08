@@ -285,7 +285,7 @@ const DashboardCompany = () => {
           >
             <Box sx={{ flex: 2 }}>
               {!selectedJob ? (
-                                 <MyJobPosts
+                                <MyJobPosts
                    myJobs={myJobs}
                    isLoadingJobs={isLoadingJobs}
                    jobsError={jobsError}
@@ -300,9 +300,14 @@ const DashboardCompany = () => {
                    }}
                    onLoadMore={() => setDisplayCount((prev: number) => prev + 3)}
                    onCreateNewJob={() => router.push("/posts/create")}
+                   deleteDialogOpen={deleteDialogOpen}
+                   isDeleting={isDeleting}
+                   jobToDelete={jobToDelete}
+                   onCancelDelete={handleCancelDelete}
+                   onConfirmDelete={() => handleDeleteJob(jobToDelete)}
                  />
               ) : (
-                <StyledCard>
+                 <StyledCard>
                   <MatchingProfiles
                     matchingProfiles={matchingProfiles}
                     isLoadingMatches={isLoadingMatches}
@@ -328,13 +333,7 @@ const DashboardCompany = () => {
             onPostNewJob={() => router.push("/posts/create")}
           />
 
-          {/* Delete Job Post Dialog */}
-          <DeleteJobPostDialog
-            open={deleteDialogOpen}
-            onClose={handleCancelDelete}
-            onDelete={() => handleDeleteJob(jobToDelete)}
-            isDeleting={isDeleting}
-          />
+          
 
           {/* Add Bid Dialog */}
           <AddBidDialog

@@ -38,6 +38,7 @@ import {
   Link as LinkIcon,
   ContentCopy as ContentCopyIcon,
 } from '@mui/icons-material';
+import DeleteJobPostDialog from '@/components/dashboard-company/DeleteJobPostDialog';
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -90,6 +91,12 @@ interface MyJobPostsProps {
   onDeleteJob: (jobId: string) => void;
   onLoadMore: () => void;
   onCreateNewJob: () => void;
+  // Delete dialog control from parent
+  deleteDialogOpen: boolean;
+  isDeleting: boolean;
+  jobToDelete: string;
+  onCancelDelete: () => void;
+  onConfirmDelete: () => void;
 }
 
 const MyJobPosts: React.FC<MyJobPostsProps> = ({
@@ -101,6 +108,11 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   onDeleteJob,
   onLoadMore,
   onCreateNewJob,
+  deleteDialogOpen,
+  isDeleting,
+  jobToDelete,
+  onCancelDelete,
+  onConfirmDelete,
 }) => {
   // Add state for job details modal
   const [jobDetailsModalOpen, setJobDetailsModalOpen] = useState(false);
@@ -421,6 +433,14 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
           <Button onClick={handleCloseJobDetailsModal} color="primary">Close</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Delete Job Post Dialog */}
+      <DeleteJobPostDialog
+        open={deleteDialogOpen}
+        onClose={onCancelDelete}
+        onDelete={onConfirmDelete}
+        isDeleting={isDeleting}
+      />
     </StyledCard>
   );
 };
