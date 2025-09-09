@@ -3,6 +3,9 @@ const Agent = require("../models/AgentModel");
 
 let agendaInstance;
 let isInitialized = false;
+let lastHeartbeatAt = null;
+let countdownInterval = null;
+let hasWarnedForCurrentCycle = false;
 
 /**
  * Initialize Agenda scheduler and define recurring jobs
@@ -28,8 +31,11 @@ async function initializeAgenda() {
   // Define the hourly job
   agendaInstance.define("agent:heartbeat", async () => {
     try {
+      // Enregistre l'heure d'exécution du heartbeat
+      lastHeartbeatAt = new Date();
+      hasWarnedForCurrentCycle = false;
       const agents = await Agent.find({}, { _id: 1, name: 1 })
-        .populate({ path: "PostId", select: "jobDetails user" })
+        .populate({ path: "postId", select: "jobDetails user" })
         .lean();
       if (!agents || agents.length === 0) {
         console.log("[agent:heartbeat] Aucun agent trouvé");
@@ -38,7 +44,7 @@ async function initializeAgenda() {
       agents.forEach((agent) => {
         const agentLabel = agent.name || agent._id?.toString();
         //const username = agent.CampanyId?.username || "unknown-user";
-        const jobTitle = agent.PostId?.jobDetails?.title || "unknown-title";
+        const jobTitle = agent.postId?.jobDetails?.title || "unknown-title";
 
         console.log(
           `im here - agent= ${agentLabel} | jobTitle=${jobTitle} `
@@ -50,14 +56,34 @@ async function initializeAgenda() {
   });
 
   agendaInstance.on("ready", async () => {
-    // Ensure the job runs every 10 seconds
-    await agendaInstance.every("10 seconds", "agent:heartbeat");
-    // Trigger once immediately at startup for visibility
-    await agendaInstance.now("agent:heartbeat");
+    // Démarre Agenda avant de planifier les jobs pour plus de fiabilité
     await agendaInstance.start();
+    // Planifie le job récurrent toutes les 10 secondes
+    await agendaInstance.every("10 seconds", "agent:heartbeat");
+    // Déclenche une exécution immédiate au démarrage pour visibilité
+    await agendaInstance.now("agent:heartbeat");
     console.log(
       "⏱️  Agenda démarré. Job agent:heartbeat planifié toutes les 10 secondes."
     );
+
+    // Démarre un compte à rebours/monitoring pour vérifier l'exécution toutes les 10s
+    if (!countdownInterval) {
+      countdownInterval = setInterval(() => {
+        if (!lastHeartbeatAt) {
+          return;
+        }
+        const nextExpectedAt = lastHeartbeatAt.getTime() + 10000; // +10s
+        const remainingMs = nextExpectedAt - Date.now();
+        const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+        console.log(`Compte à rebours avant prochain heartbeat: ${remainingSeconds}s`);
+
+        // Tolérance de 2s avant d'alerter, et une seule alerte par cycle
+        if (remainingMs < -2000 && !hasWarnedForCurrentCycle) {
+          console.warn("⚠️  Aucun heartbeat détecté dans la fenêtre attendue (>12s). Vérifiez Agenda.");
+          hasWarnedForCurrentCycle = true;
+        }
+      }, 1000);
+    }
   });
 
   agendaInstance.on("error", (err) => {
@@ -71,6 +97,10 @@ async function initializeAgenda() {
       console.log("🛑 Agenda arrêté proprement");
     } catch (e) {
       console.error("Erreur à l'arrêt d'Agenda:", e);
+    }
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
     }
     process.exit(0);
   };
