@@ -69,6 +69,7 @@ import { AppDispatch } from '@/store/store';
 import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
 import Cookies from 'js-cookie';
+import { selectProfile } from '@/store/slices/profileSlice';
 
 // Constants
 const GREEN_MAIN = '#00FF9D';
@@ -337,7 +338,7 @@ const RecruitmentFlowBuilder: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const postStepsLoading = useSelector(selectPostStepsLoading);
   const postStepsError = useSelector(selectPostStepsError);
-  const { profile: authProfile, isLoading: authLoading } = useSelector((state: RootState) => state.auth);
+  const { profile: authProfile, loading: authLoading } = useSelector(selectProfile);
 
   // React Flow state
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
