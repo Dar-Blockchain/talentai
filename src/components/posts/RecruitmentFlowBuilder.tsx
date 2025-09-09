@@ -69,6 +69,7 @@ import { AppDispatch } from '@/store/store';
 import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
 import Cookies from 'js-cookie';
+import { selectProfile } from '@/store/slices/profileSlice';
 
 // Constants
 const GREEN_MAIN = '#00FF9D';
@@ -337,7 +338,7 @@ const RecruitmentFlowBuilder: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const postStepsLoading = useSelector(selectPostStepsLoading);
   const postStepsError = useSelector(selectPostStepsError);
-  const { profile: authProfile, isLoading: authLoading } = useSelector((state: RootState) => state.auth);
+  const { profile: authProfile, loading: authLoading } = useSelector(selectProfile);
 
   // React Flow state
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -1085,6 +1086,64 @@ Ready to customize the content or add more triggers?`
               <Background variant={'dots' as any} gap={12} size={1} />
             </ReactFlow>
 
+            {/* Empty Flow Message */}
+            {nodes.length === 0 && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  textAlign: 'center',
+                  zIndex: 1000,
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  padding: 4,
+                  borderRadius: 2,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  border: '2px dashed #e1e5e9'
+                }}
+              >
+                <Box sx={{ mb: 2 }}>
+                  <SmartToyIcon sx={{ fontSize: 48, color: '#6b7280', mb: 1 }} />
+                </Box>
+                <Typography variant="h6" sx={{ color: '#374151', mb: 1, fontWeight: 600 }}>
+                  Build Your Recruitment Flow
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#6b7280', mb: 2, maxWidth: 300 }}>
+                  Add recruitment steps from the sidebar to create your hiring process. 
+                  You need at least one step to continue.
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  {['technical', 'soft', 'interview'].map((type) => {
+                    const item = menuItems.find(item => item.type === type);
+                    const IconComponent = item?.icon;
+                    return (
+                      <Button
+                        key={type}
+                        variant="outlined"
+                        size="small"
+                        startIcon={IconComponent && <IconComponent fontSize="small" />}
+                        onClick={() => addNode(type)}
+                        sx={{
+                          borderRadius: 2,
+                          textTransform: 'none',
+                          fontSize: '12px',
+                          borderColor: '#e5e7eb',
+                          color: '#6b7280',
+                          '&:hover': {
+                            borderColor: '#d1d5db',
+                            backgroundColor: '#f9fafb'
+                          }
+                        }}
+                      >
+                        Add {item?.label}
+                      </Button>
+                    );
+                  })}
+                </Box>
+              </Box>
+            )}
+
             {/* Floating Delete Button */}
             {selectedNodes.length > 0 && (
               <Box
@@ -1387,7 +1446,7 @@ Ready to customize the content or add more triggers?`
                   <PlayArrowIcon />
                 )
               }
-              disabled={isSavingSteps}
+              disabled={isSavingSteps || nodes.length === 0}
               onClick={handleNext}
               sx={{
                 borderRadius: '8px',
