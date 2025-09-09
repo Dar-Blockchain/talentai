@@ -22,7 +22,7 @@ async function initializeAgenda() {
 
   agendaInstance = new Agenda({
     db: { address: process.env.MONGODB_URI, collection: "agendaJobs" },
-    processEvery: "10 seconds",
+    processEvery: "1 second",
     maxConcurrency: 5,
     defaultConcurrency: 1,
     lockLimit: 10,
@@ -60,15 +60,25 @@ async function initializeAgenda() {
     await agendaInstance.start();
     // Planifie le job récurrent toutes les 10 secondes
     await agendaInstance.every("10 seconds", "agent:heartbeat");
+    // Info diagnostic: afficher le prochain run prévu
+    try {
+      const jobs = await agendaInstance.jobs({ name: "agent:heartbeat" });
+      const next = jobs?.[0]?.attrs?.nextRunAt;
+      if (next) {
+        console.log(`Prochain agent:heartbeat prévu à: ${new Date(next).toISOString()}`);
+      }
+    } catch (e) {
+      console.warn("Impossible de lire les jobs agenda:", e?.message);
+    }
     // Déclenche une exécution immédiate au démarrage pour visibilité
     await agendaInstance.now("agent:heartbeat");
     console.log(
       "⏱️  Agenda démarré. Job agent:heartbeat planifié toutes les 10 secondes."
     );
-
+/*
     // Démarre un compte à rebours/monitoring pour vérifier l'exécution toutes les 10s
     if (!countdownInterval) {
-      countdownInterval = setInterval(() => {
+      countdownInterval = setInterval(async () => {
         if (!lastHeartbeatAt) {
           return;
         }
@@ -81,9 +91,16 @@ async function initializeAgenda() {
         if (remainingMs < -2000 && !hasWarnedForCurrentCycle) {
           console.warn("⚠️  Aucun heartbeat détecté dans la fenêtre attendue (>12s). Vérifiez Agenda.");
           hasWarnedForCurrentCycle = true;
+          // Watchdog: tenter de relancer immédiatement le job
+          try {
+            await agendaInstance.now("agent:heartbeat");
+            console.log("Watchdog: relance immédiate de agent:heartbeat");
+          } catch (e) {
+            console.error("Watchdog: échec de relance du job:", e?.message);
+          }
         }
       }, 1000);
-    }
+    }*/
   });
 
   agendaInstance.on("error", (err) => {
