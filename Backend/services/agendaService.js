@@ -38,11 +38,10 @@ async function initializeAgenda() {
       agents.forEach((agent) => {
         const agentLabel = agent.name || agent._id?.toString();
         //const username = agent.CampanyId?.username || "unknown-user";
-        const jobTitle = agent.Post?.jobDetails?.title || "unknown-title";
-        const jobLocation =
-          agent.Post?.jobDetails?.location || "unknown-location";
+        const jobTitle = agent.PostId?.jobDetails?.title || "unknown-title";
+
         console.log(
-          `im here - agent=${agentLabel} | jobTitle=${jobTitle} | location=${jobLocation}`
+          `im here - agent= ${agentLabel} | jobTitle=${jobTitle} `
         );
       });
     } catch (err) {
