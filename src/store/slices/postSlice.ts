@@ -16,6 +16,14 @@ interface PostState {
   error: string | null;
   postStepsLoading: boolean;
   postStepsError: string | null;
+  myPosts: any[];
+  myPostsLoading: boolean;
+  myPostsError: string | null;
+  jobMatches: any[];
+  jobMatchesLoading: boolean;
+  jobMatchesError: string | null;
+  deletePostLoading: boolean;
+  deletePostError: string | null;
 }
 
 // Initial state
@@ -25,6 +33,14 @@ const initialState: PostState = {
   error: null,
   postStepsLoading: false,
   postStepsError: null,
+  myPosts: [],
+  myPostsLoading: false,
+  myPostsError: null,
+  jobMatches: [],
+  jobMatchesLoading: false,
+  jobMatchesError: null,
+  deletePostLoading: false,
+  deletePostError: null,
 };
 
 // Async thunk for posting recruitment steps
@@ -61,6 +77,109 @@ export const postRecruitmentSteps = createAsyncThunk(
       return data;
     } catch (error: any) {
       return rejectWithValue(error.message || 'An error occurred while posting recruitment steps');
+    }
+  }
+);
+
+// Async thunk to fetch company posts (my posts)
+export const fetchMyPosts = createAsyncThunk(
+  'post/fetchMyPosts',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('api_token='))
+        ?.split('=')[1];
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/my-posts`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to fetch my posts');
+      }
+
+      const data = await response.json();
+      // Some endpoints return { data: [...] }
+      return Array.isArray(data) ? data : (data.data || []);
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'An error occurred while fetching posts');
+    }
+  }
+);
+
+// Async thunk to fetch matches for a selected job post
+export const fetchJobMatches = createAsyncThunk(
+  'post/fetchJobMatches',
+  async (selectedJobId: string, { rejectWithValue }) => {
+    try {
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('api_token='))
+        ?.split('=')[1];
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}matching/jobs/${selectedJobId}/matches`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to fetch job matches');
+      }
+
+      const data = await response.json();
+      // Endpoint returns { success, matches }
+      return data && Array.isArray(data.matches) ? data.matches : [];
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'An error occurred while fetching matches');
+    }
+  }
+);
+
+// Async thunk to delete a post by id
+export const deletePost = createAsyncThunk(
+  'post/deletePost',
+  async (jobId: string, { rejectWithValue }) => {
+    try {
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('api_token='))
+        ?.split('=')[1];
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/deletePost/${jobId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to delete post');
+      }
+
+      return jobId;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'An error occurred while deleting post');
     }
   }
 );
@@ -109,6 +228,47 @@ const postSlice = createSlice({
       .addCase(postRecruitmentSteps.rejected, (state, action) => {
         state.postStepsLoading = false;
         state.postStepsError = action.payload as string;
+      })
+      // Fetch my posts
+      .addCase(fetchMyPosts.pending, (state) => {
+        state.myPostsLoading = true;
+        state.myPostsError = null;
+      })
+      .addCase(fetchMyPosts.fulfilled, (state, action: PayloadAction<any[]>) => {
+        state.myPostsLoading = false;
+        state.myPosts = action.payload || [];
+      })
+      .addCase(fetchMyPosts.rejected, (state, action) => {
+        state.myPostsLoading = false;
+        state.myPostsError = action.payload as string;
+      })
+      // Fetch job matches
+      .addCase(fetchJobMatches.pending, (state) => {
+        state.jobMatchesLoading = true;
+        state.jobMatchesError = null;
+        state.jobMatches = [];
+      })
+      .addCase(fetchJobMatches.fulfilled, (state, action: PayloadAction<any[]>) => {
+        state.jobMatchesLoading = false;
+        state.jobMatches = action.payload || [];
+      })
+      .addCase(fetchJobMatches.rejected, (state, action) => {
+        state.jobMatchesLoading = false;
+        state.jobMatchesError = action.payload as string;
+      })
+      // Delete post
+      .addCase(deletePost.pending, (state) => {
+        state.deletePostLoading = true;
+        state.deletePostError = null;
+      })
+      .addCase(deletePost.fulfilled, (state, action: PayloadAction<string>) => {
+        state.deletePostLoading = false;
+        // Optimistically remove from myPosts if present
+        state.myPosts = state.myPosts.filter((p: any) => (p._id || p.id) !== action.payload);
+      })
+      .addCase(deletePost.rejected, (state, action) => {
+        state.deletePostLoading = false;
+        state.deletePostError = action.payload as string;
       });
   },
 });
@@ -123,3 +283,11 @@ export default postSlice.reducer;
 export const selectSteps = (state: { post: PostState }) => state.post.steps;
 export const selectPostStepsLoading = (state: { post: PostState }) => state.post.postStepsLoading;
 export const selectPostStepsError = (state: { post: PostState }) => state.post.postStepsError;
+export const selectMyPosts = (state: { post: PostState }) => state.post.myPosts;
+export const selectMyPostsLoading = (state: { post: PostState }) => state.post.myPostsLoading;
+export const selectMyPostsError = (state: { post: PostState }) => state.post.myPostsError;
+export const selectJobMatches = (state: { post: PostState }) => state.post.jobMatches;
+export const selectJobMatchesLoading = (state: { post: PostState }) => state.post.jobMatchesLoading;
+export const selectJobMatchesError = (state: { post: PostState }) => state.post.jobMatchesError;
+export const selectDeletePostLoading = (state: { post: PostState }) => state.post.deletePostLoading;
+export const selectDeletePostError = (state: { post: PostState }) => state.post.deletePostError;

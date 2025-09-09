@@ -1,17 +1,25 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  getMyProfile,
-  selectProfile,
-} from "@/store/slices/profileSlice";
+import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
 import { AppDispatch, RootState } from "@/store/store";
 import { Box, Container, Card } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { useRouter } from "next/router";
-import Cookies from "js-cookie";
-import { toast, ToastContainer } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { fetchBids } from "@/store/slices/bidSlice";
+import {
+  fetchMyPosts,
+  selectMyPosts,
+  selectMyPostsError,
+  selectMyPostsLoading,
+  fetchJobMatches,
+  selectJobMatches,
+  selectJobMatchesError,
+  selectJobMatchesLoading,
+  deletePost,
+  selectDeletePostLoading,
+} from "@/store/slices/postSlice";
 import CompanyOnly from "@/components/CompanyOnly";
 import CompanyProfilesAssessments from "@/components/dashboard-company/CompanyProfilesAssessments";
 import BidHistory from "@/components/dashboard-company/BidHistory";
@@ -71,18 +79,16 @@ const DashboardCompany = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { profile } = useSelector(selectProfile);
   const [filterDialog, setFilterDialog] = useState(false);
-  const [matchingProfiles, setMatchingProfiles] = useState<MatchingCandidate[]>(
-    []
-  );
-  const [isLoadingMatches, setIsLoadingMatches] = useState(false);
-  const [matchError, setMatchError] = useState<string | null>(null);
-  const [myJobs, setMyJobs] = useState<any[]>([]);
+  const matchingProfiles = useSelector(selectJobMatches) as MatchingCandidate[];
+  const isLoadingMatches = useSelector(selectJobMatchesLoading);
+  const matchError = useSelector(selectJobMatchesError);
+  const myJobs = useSelector(selectMyPosts);
   const [selectedJob, setSelectedJob] = useState("");
-  const [isLoadingJobs, setIsLoadingJobs] = useState(false);
-  const [jobsError, setJobsError] = useState<string | null>(null);
+  const isLoadingJobs = useSelector(selectMyPostsLoading);
+  const jobsError = useSelector(selectMyPostsError);
   const [displayCount, setDisplayCount] = useState(3); // Change initial display count to 3
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const isDeleting = useSelector(selectDeletePostLoading);
   const [bidDialogOpen, setBidDialogOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
   const { data, status, error } = useSelector(
@@ -96,41 +102,8 @@ const DashboardCompany = () => {
       return;
     }
 
-    try {
-      setIsLoadingMatches(true);
-      setMatchError(null);
-      const token = Cookies.get("api_token");
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}matching/jobs/${selectedJob}/matches`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch matching candidates");
-      }
-
-      const data = await response.json();
-      if (data.success && data.matches) {
-        setMatchingProfiles(data.matches);
-      } else {
-        setMatchingProfiles([]);
-      }
-    } catch (error) {
-      setMatchError(
-        error instanceof Error ? error.message : "Failed to fetch matches"
-      );
-      console.error("Error fetching matches:", error);
-    } finally {
-      setIsLoadingMatches(false);
-      setFilterDialog(false);
-    }
+    dispatch(fetchJobMatches(selectedJob));
+    setFilterDialog(false);
   };
 
   useEffect(() => {
@@ -138,37 +111,8 @@ const DashboardCompany = () => {
     dispatch(fetchBids());
   }, [dispatch]);
 
-  // Add function to fetch job posts
-  const fetchMyJobs = async () => {
-    const token = Cookies.get("api_token");
-    setIsLoadingJobs(true);
-    setJobsError(null);
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/my-posts`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch jobs");
-      }
-
-      const data = await response.json();
-      setMyJobs(data.data || []);
-    } catch (error) {
-      setJobsError(
-        error instanceof Error ? error.message : "Failed to fetch jobs"
-      );
-      console.error("Error fetching jobs:", error);
-    } finally {
-      setIsLoadingJobs(false);
-    }
-  };
+  // Fetch job posts via Redux
+  const fetchMyJobs = () => dispatch(fetchMyPosts());
 
   // Add handler for job selection
   const handleJobChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -187,31 +131,11 @@ const DashboardCompany = () => {
   // MatchingProfiles component handles this now
 
   const handleDeleteJob = async (jobId: string) => {
-    setIsDeleting(true);
-    try {
-      const token = Cookies.get("api_token");
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}post/deletePost/${jobId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (response.ok) {
-        fetchMyJobs();
-        setDeleteDialogOpen(false);
-        setJobToDelete("");
-      } else {
-        throw new Error("Failed to delete job");
-      }
-    } catch (error) {
-      console.error("Error deleting job:", error);
-      alert("Failed to delete job. Please try again.");
-    } finally {
-      setIsDeleting(false);
-    }
+    await dispatch(deletePost(jobId));
+    setDeleteDialogOpen(false);
+    setJobToDelete("");
+    // Refresh list to be safe
+    fetchMyJobs();
   };
 
   const handleCancelDelete = () => {
@@ -270,9 +194,7 @@ const DashboardCompany = () => {
             isLoadingJobs={isLoadingJobs}
             jobsError={jobsError}
           />
-          <CompanyInfoHeader
-            profile={profile}
-          />
+          <CompanyInfoHeader profile={profile} />
 
           <Box
             sx={{
@@ -284,28 +206,28 @@ const DashboardCompany = () => {
             <Box sx={{ flex: 2 }}>
               {!selectedJob ? (
                 <MyJobPosts
-                   myJobs={myJobs}
-                   isLoadingJobs={isLoadingJobs}
-                   jobsError={jobsError}
-                   displayCount={displayCount}
-                   onViewMatches={(jobId) => {
-                     setSelectedJob(jobId);
-                     handleFilterDialogOpen();
-                   }}
-                   onDeleteJob={(jobId) => {
-                     setJobToDelete(jobId);
-                     setDeleteDialogOpen(true);
-                   }}
-                   onLoadMore={() => setDisplayCount((prev: number) => prev + 3)}
-                   onCreateNewJob={() => router.push("/posts/create")}
-                   deleteDialogOpen={deleteDialogOpen}
-                   isDeleting={isDeleting}
-                   jobToDelete={jobToDelete}
-                   onCancelDelete={handleCancelDelete}
-                   onConfirmDelete={() => handleDeleteJob(jobToDelete)}
-                 />
+                  myJobs={myJobs}
+                  isLoadingJobs={isLoadingJobs}
+                  jobsError={jobsError}
+                  displayCount={displayCount}
+                  onViewMatches={(jobId) => {
+                    setSelectedJob(jobId);
+                    handleFilterDialogOpen();
+                  }}
+                  onDeleteJob={(jobId) => {
+                    setJobToDelete(jobId);
+                    setDeleteDialogOpen(true);
+                  }}
+                  onLoadMore={() => setDisplayCount((prev: number) => prev + 3)}
+                  onCreateNewJob={() => router.push("/posts/create")}
+                  deleteDialogOpen={deleteDialogOpen}
+                  isDeleting={isDeleting}
+                  jobToDelete={jobToDelete}
+                  onCancelDelete={handleCancelDelete}
+                  onConfirmDelete={() => handleDeleteJob(jobToDelete)}
+                />
               ) : (
-                 <StyledCard>
+                <StyledCard>
                   <MatchingProfiles
                     matchingProfiles={matchingProfiles}
                     isLoadingMatches={isLoadingMatches}
@@ -338,9 +260,7 @@ const DashboardCompany = () => {
             selectedJob={selectedJob}
           />
           {/* Company Profiles & Assessments Section */}
-          <CompanyProfilesAssessments
-            profile={profile}
-          />
+          <CompanyProfilesAssessments profile={profile} />
         </Container>
       </Box>
     </CompanyOnly>
