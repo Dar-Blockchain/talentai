@@ -345,6 +345,7 @@ const RecruitmentFlowBuilder: React.FC = () => {
 
   // UI state
   const [modalOpen, setModalOpen] = useState(false);
+  const [agentLoadingModalOpen, setAgentLoadingModalOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<Node[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -357,12 +358,15 @@ const RecruitmentFlowBuilder: React.FC = () => {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedJobId, setSavedJobId] = useState<string | null>(null);
   const [isSavingSteps, setIsSavingSteps] = useState(false);
+  const [isRegisteringAgent, setIsRegisteringAgent] = useState(false);
 
   // Refs
   const postDetailsRef = useRef<PostDetailsRef>(null);
 
   // Function to register HR Agent for the post
   const registerHRAgent = async (jobId: string) => {
+    setIsRegisteringAgent(true);
+    setAgentLoadingModalOpen(true);
     try {
       console.log('Full auth profile object:', authProfile);
       console.log('Auth profile structure:', {
@@ -592,6 +596,9 @@ const RecruitmentFlowBuilder: React.FC = () => {
     } catch (error) {
       console.error('Error registering HR agent:', error);
       throw error;
+    } finally {
+      setIsRegisteringAgent(false);
+      setAgentLoadingModalOpen(false);
     }
   };
 
@@ -1226,6 +1233,25 @@ Ready to customize the content or add more triggers?`
           </Box>
         )}
 
+        {/* Agent Registration Loading Indicator */}
+        {isRegisteringAgent && (
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            mt: 2,
+            p: 1,
+            backgroundColor: '#f3e5f5',
+            borderRadius: 1,
+            border: '1px solid #9c27b0'
+          }}>
+            <CircularProgress size={16} sx={{ color: '#9c27b0' }} />
+            <Typography variant="body2" sx={{ color: '#9c27b0' }}>
+              Creating your AI agent for this position...
+            </Typography>
+          </Box>
+        )}
+
         {/* Profile Error Indicator */}
         {!authProfile && !authLoading && (
           <Box sx={{
@@ -1312,14 +1338,14 @@ Ready to customize the content or add more triggers?`
             <Button
               variant="contained"
               endIcon={
-                isSavingJob || isSavingSteps ? (
+                isSavingJob || isSavingSteps || isRegisteringAgent ? (
                   <CircularProgress size={16} sx={{ color: 'white' }} />
                 ) : (
                   <ArrowForwardIcon />
                 )
               }
               onClick={handleNext}
-              disabled={isSavingSteps || isSavingJob || (activeStep === 0 && postDetailsRef.current?.canProceed())}
+              disabled={isSavingSteps || isSavingJob || isRegisteringAgent || (activeStep === 0 && postDetailsRef.current?.canProceed())}
               sx={{
                 borderRadius: '8px',
                 px: 3,
@@ -1342,11 +1368,13 @@ Ready to customize the content or add more triggers?`
             >
               {isSavingJob
                 ? 'Saving Job...'
-                : postStepsLoading
-                  ? 'Confirm...'
-                  : activeStep === steps.length - 1
-                    ? 'Save Sequence'
-                    : 'Next'}
+                : isRegisteringAgent
+                  ? 'Creating AI Agent...'
+                  : postStepsLoading
+                    ? 'Confirm...'
+                    : activeStep === steps.length - 1
+                      ? 'Save Sequence'
+                      : 'Next'}
             </Button>
 
           ) : (
@@ -1695,6 +1723,171 @@ Ready to customize the content or add more triggers?`
                 </Button>
               )}
             </Box>
+          </Box>
+        </Box>
+      </Modal>
+
+      {/* Agent Loading Modal */}
+      <Modal
+        open={agentLoadingModalOpen}
+        disableEscapeKeyDown
+        onClose={() => {}} // Prevent closing
+        aria-labelledby="agent-loading-modal"
+        aria-describedby="agent-loading-description"
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 450,
+            bgcolor: 'background.paper',
+            borderRadius: '16px',
+            boxShadow: 24,
+            p: 4,
+            textAlign: 'center',
+            border: 'none',
+            outline: 'none'
+          }}
+        >
+          {/* AI Robot Icon Animation */}
+          <Box
+            sx={{
+              mb: 3,
+              display: 'flex',
+              justifyContent: 'center',
+              position: 'relative'
+            }}
+          >
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                animation: 'pulse 2s infinite',
+                '@keyframes pulse': {
+                  '0%': {
+                    transform: 'scale(1)',
+                    boxShadow: '0 0 0 0 rgba(102, 126, 234, 0.7)'
+                  },
+                  '70%': {
+                    transform: 'scale(1.05)',
+                    boxShadow: '0 0 0 10px rgba(102, 126, 234, 0)'
+                  },
+                  '100%': {
+                    transform: 'scale(1)',
+                    boxShadow: '0 0 0 0 rgba(102, 126, 234, 0)'
+                  }
+                }
+              }}
+            >
+              <SmartToyIcon 
+                sx={{ 
+                  fontSize: 40, 
+                  color: 'white',
+                  animation: 'rotate 3s linear infinite',
+                  '@keyframes rotate': {
+                    '0%': { transform: 'rotate(0deg)' },
+                    '100%': { transform: 'rotate(360deg)' }
+                  }
+                }} 
+              />
+            </Box>
+          </Box>
+
+          {/* Loading Title */}
+          <Typography 
+            variant="h5" 
+            sx={{ 
+              mb: 2, 
+              fontWeight: 600,
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              color: 'transparent'
+            }}
+          >
+            Creating Your AI Agent
+          </Typography>
+
+          {/* Description */}
+          <Typography 
+            variant="body1" 
+            sx={{ 
+              mb: 3, 
+              color: '#6b7280',
+              lineHeight: 1.6
+            }}
+          >
+            We're setting up your personalized AI recruitment agent that will help you evaluate candidates and streamline your hiring process.
+          </Typography>
+
+          {/* Loading Animation */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+            <CircularProgress 
+              size={40} 
+              sx={{ 
+                color: '#667eea',
+                animation: 'spin 1s linear infinite'
+              }} 
+            />
+          </Box>
+
+          {/* Status Message */}
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              color: '#9ca3af',
+              fontStyle: 'italic',
+              animation: 'fadeInOut 2s infinite',
+              '@keyframes fadeInOut': {
+                '0%': { opacity: 0.5 },
+                '50%': { opacity: 1 },
+                '100%': { opacity: 0.5 }
+              }
+            }}
+          >
+            This may take a few moments...
+          </Typography>
+
+          {/* Progress Dots */}
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              gap: 1, 
+              mt: 3 
+            }}
+          >
+            {[0, 1, 2].map((index) => (
+              <Box
+                key={index}
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  bgcolor: '#667eea',
+                  animation: `bounce 1.4s infinite both`,
+                  animationDelay: `${index * 0.16}s`,
+                  '@keyframes bounce': {
+                    '0%, 80%, 100%': {
+                      transform: 'scale(0)',
+                      opacity: 0.5
+                    },
+                    '40%': {
+                      transform: 'scale(1)',
+                      opacity: 1
+                    }
+                  }
+                }}
+              />
+            ))}
           </Box>
         </Box>
       </Modal>
