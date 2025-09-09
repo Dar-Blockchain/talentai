@@ -75,7 +75,7 @@ async function initializeAgenda() {
     console.log(
       "⏱️  Agenda démarré. Job agent:heartbeat planifié toutes les 10 secondes."
     );
-/*
+
     // Démarre un compte à rebours/monitoring pour vérifier l'exécution toutes les 10s
     if (!countdownInterval) {
       countdownInterval = setInterval(async () => {
@@ -100,7 +100,7 @@ async function initializeAgenda() {
           }
         }
       }, 1000);
-    }*/
+    }
   });
 
   agendaInstance.on("error", (err) => {
