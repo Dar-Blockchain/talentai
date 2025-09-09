@@ -47,7 +47,7 @@ const agentSchema = new mongoose.Schema({
     ref: "User",
   },
 
-  PostId: {
+  postId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Post",
   },
