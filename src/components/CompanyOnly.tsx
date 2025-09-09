@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '../store/store';
+import { AppDispatch } from '../store/store';
 import { selectProfile, getMyProfile } from '../store/slices/profileSlice';
 import {
   Box,
@@ -16,7 +16,7 @@ interface CompanyOnlyProps {
 export default function CompanyOnly({ children }: CompanyOnlyProps) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { user, profile , isLoading, isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { profile, loading: profileLoading } = useSelector(selectProfile);
   const [isChecking, setIsChecking] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
 
@@ -30,13 +30,13 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
     }
 
     // Fetch profile if not already loaded
-    if (!profile && !isLoading) {
+    if (!profile && !profileLoading) {
       dispatch(getMyProfile());
     }
-  }, [dispatch, profile, isLoading, router]);
+  }, [dispatch, profile, profileLoading, router]);
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!profileLoading) {
       if (!profile) {
         // No profile found, but let's retry a few times before redirecting
         if (retryCount < 3) {
@@ -54,18 +54,19 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
         }
       }
 
-      // Check user role and redirect accordingly
-      if (profile?.type === 'Candidat' || profile?.type === 'Candidate') {
+      // Check user role and redirect accordingly (align with CandidateOnly)
+      const role = profile?.userId?.role;
+      if (role === 'Candidat' || role === 'Candidate') {
         // Candidate user trying to access company page, redirect to candidate dashboard
         console.log("Candidate user detected, redirecting to candidate dashboard");
         router.push('/dashboard/candidate');
         return;
-      } else if (profile?.type === 'Admin') {
+      } else if (role === 'Admin') {
         // Admin user trying to access company page, redirect to admin dashboard
         console.log("Admin user detected, redirecting to admin dashboard");
         router.push('/dashboard/admin');
         return;
-      } else if (profile?.type !== 'Company') {
+      } else if (role !== 'Company') {
         // Unknown role, redirect to signin
         console.log("Unknown role, redirecting to signin");
         router.push('/signin');
@@ -76,10 +77,10 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
       console.log("User is company, allowing access");
       setIsChecking(false);
     }
-  }, [profile, isLoading, router, retryCount, dispatch]);
+  }, [profile, profileLoading, router, retryCount, dispatch]);
 
   // Show loading while checking permissions
-  if (isLoading || isChecking) {
+  if (profileLoading || isChecking) {
     return (
       <Box sx={{ 
         display: 'flex', 
@@ -98,7 +99,7 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
   }
 
   // Show error if user is not a company
-  if (!isLoading && profile?.type !== 'Company') {
+  if (!profileLoading && profile && profile.userId.role !== 'Company') {
     return (
       <Box sx={{ 
         display: 'flex', 
