@@ -92,6 +92,14 @@ function AddSkillDialogComponent(props: AddSkillDialogProps) {
     ? skillCategories[selectedCategory] || []
     : technicalSkillsList;
 
+  const filterSkills = (options: string[], { inputValue }: { inputValue: string }) => {
+    const q = (inputValue || '').trim().toLowerCase();
+    if (!q) return options;
+    const starts = options.filter(o => o.toLowerCase().startsWith(q));
+    const contains = options.filter(o => o.toLowerCase().includes(q) && !o.toLowerCase().startsWith(q));
+    return [...starts, ...contains];
+  };
+
   return (
     <Dialog
       open={open}
@@ -181,6 +189,7 @@ function AddSkillDialogComponent(props: AddSkillDialogProps) {
             options={skillOptions}
             value={newSkillName}
             onChange={(_, value: string | null) => onSkillSelection(value)}
+            filterOptions={filterSkills}
             renderInput={(params) => (
               <TextField
                 {...params}
