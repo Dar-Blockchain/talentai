@@ -39,7 +39,7 @@ import {
   ContentCopy as ContentCopyIcon,
 } from '@mui/icons-material';
 import DeleteJobPostDialog from '@/components/dashboard-company/DeleteJobPostDialog';
-
+import JobDetailsDialog from '@/components/dashboard-company/JobDetailsDialog';
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -395,44 +395,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
         </Box>
       )}
 
-      {/* Job Details Modal */}
-      <Dialog open={jobDetailsModalOpen} onClose={handleCloseJobDetailsModal} maxWidth="md" fullWidth>
-        <DialogTitle>{selectedJobForDetails?.jobDetails?.title}</DialogTitle>
-        <DialogContent dividers>
-          <Typography variant="h6" gutterBottom>Job Details</Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <Typography variant="body1"><strong>Title:</strong> {selectedJobForDetails?.jobDetails?.title}</Typography>
-            <Typography variant="body1"><strong>Description:</strong> {selectedJobForDetails?.jobDetails?.description}</Typography>
-            <Typography variant="body1"><strong>Location:</strong> {selectedJobForDetails?.jobDetails?.location}</Typography>
-            <Typography variant="body1"><strong>Employment Type:</strong> {selectedJobForDetails?.jobDetails?.employmentType}</Typography>
-            <Typography variant="body1"><strong>Salary:</strong> {selectedJobForDetails?.jobDetails?.salary?.currency}{selectedJobForDetails?.jobDetails?.salary?.min}-{selectedJobForDetails?.jobDetails?.salary?.max}</Typography>
-            <Typography variant="body1"><strong>Created At:</strong> {new Date(selectedJobForDetails?.createdAt).toLocaleDateString()}</Typography>
-          </Box>
-
-          <Typography variant="h6" gutterBottom mt={3}>Required Skills</Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {(selectedJobForDetails?.skillAnalysis?.requiredSkills ?? []).map((skill: any, idx: number) => (
-              <Chip
-                key={idx}
-                label={skill.name}
-                size="small"
-                icon={<StarIcon sx={{ color: '#00FFC3', fontSize: 18 }} />}
-                sx={{
-                  backgroundColor: 'rgba(0, 255, 157, 0.15)',
-                  color: '#0f172a',
-                  fontWeight: 800,
-                  fontSize: '0.87rem',
-                  letterSpacing: 0.2,
-                  px: 1
-                }}
-              />
-            ))}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseJobDetailsModal} color="primary">Close</Button>
-        </DialogActions>
-      </Dialog>
+      <JobDetailsDialog open={jobDetailsModalOpen} onClose={handleCloseJobDetailsModal} job={selectedJobForDetails} />
 
       {/* Delete Job Post Dialog */}
       <DeleteJobPostDialog
