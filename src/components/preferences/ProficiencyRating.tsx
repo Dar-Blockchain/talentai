@@ -108,9 +108,15 @@ const ProficiencyRating: React.FC<ProficiencyRatingProps> = ({
                     backgroundColor: GREEN_MAIN,
                     border: '3px solid white',
                     boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                    transition: 'box-shadow 120ms ease',
                     '&:hover': {
-                      boxShadow: '0 6px 12px rgba(0,0,0,0.3)',
-                      transform: 'scale(1.1)'
+                      boxShadow: '0 6px 12px rgba(0,0,0,0.28)'
+                    },
+                    '&.Mui-active': {
+                      boxShadow: '0 6px 12px rgba(0,0,0,0.28)'
+                    },
+                    '&.Mui-focusVisible': {
+                      boxShadow: '0 6px 12px rgba(0,0,0,0.28)'
                     }
                   },
                   '& .MuiSlider-mark': {

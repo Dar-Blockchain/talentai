@@ -64,9 +64,15 @@ const SkillsSelection: React.FC<SkillsSelectionProps> = ({
 
   const toggleSkill = (label: string) => {
     if (skills.includes(label)) {
-        const x = skills.filter((s: string) => s !== label) || []
+      const x = skills.filter((s: string) => s !== label) || []
       setSkills(x);
     } else {
+      // Candidate: single-select, auto-switch to new skill
+      if (userType === 'candidate') {
+        setSkills([label]);
+        return;
+      }
+      // Company (should not hit here; company uses requiredSkills path)
       if (skills.length >= 1) return;
       const x = [...skills, label]
       setSkills(x);
@@ -75,10 +81,10 @@ const SkillsSelection: React.FC<SkillsSelectionProps> = ({
 
   const toggleRequiredSkill = (label: string) => {
     if (requiredSkills.includes(label)) {
-        const x = requiredSkills.filter((s: string) => s !== label)
+      const x = requiredSkills.filter((s: string) => s !== label)
       setRequiredSkills(x);
     } else {
-        const x = [...requiredSkills, label]
+      const x = [...requiredSkills, label]
       setRequiredSkills(x);
     }
   };
@@ -185,7 +191,7 @@ const SkillsSelection: React.FC<SkillsSelectionProps> = ({
             const sel = skillsList.includes(skill.label);
 
             return (
-              <Tooltip key={skill.label} title={`Click to ${sel ? 'remove' : 'add'} ${skill.label}`} arrow>
+              <Tooltip key={skill.label} title={`Click to ${sel ? (isCompany ? 'remove' : 'switch to') : (isCompany ? 'add' : 'select')} ${skill.label}`} arrow>
                 <Box sx={{ cursor: 'pointer', transition: 'all 0.3s ease', transform: sel ? 'scale(1.05)' : 'scale(1)' }}>
                   <Chip
                     label={skill.label}

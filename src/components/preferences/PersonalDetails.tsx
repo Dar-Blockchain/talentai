@@ -11,6 +11,21 @@ interface PersonalDetailsProps {
 const PersonalDetails = ({ firstName, setFirstName, lastName, setLastName }: PersonalDetailsProps) => {
   const GREEN_MAIN = 'rgba(0, 255, 157, 1)';
 
+  // Allow only letters, spaces, hyphens, and apostrophes commonly found in names
+  const sanitizeName = (value: string) => {
+    // Remove numbers and disallowed special characters, trim leading spaces
+    const cleaned = value.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ '’-]/g, '');
+    return cleaned.replace(/^\s+/, '');
+  };
+
+  const handleFirstNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFirstName(sanitizeName(e.target.value));
+  };
+
+  const handleLastNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLastName(sanitizeName(e.target.value));
+  };
+
   return (
     <Box sx={{ py: 4 }}>
       {/* Enhanced Header */}
@@ -65,9 +80,11 @@ const PersonalDetails = ({ firstName, setFirstName, lastName, setLastName }: Per
           fullWidth
           label="First Name"
           value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
+          onChange={handleFirstNameChange}
           required
           variant="outlined"
+          inputProps={{ inputMode: 'text', pattern: "[A-Za-zÀ-ÖØ-öø-ÿ '’-]+" }}
+          helperText="Letters only. No numbers or special characters."
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: 3,
@@ -110,9 +127,11 @@ const PersonalDetails = ({ firstName, setFirstName, lastName, setLastName }: Per
           fullWidth
           label="Last Name"
           value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
+          onChange={handleLastNameChange}
           required
           variant="outlined"
+          inputProps={{ inputMode: 'text', pattern: "[A-Za-zÀ-ÖØ-öø-ÿ '’-]+" }}
+          helperText="Letters only. No numbers or special characters."
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: 3,
