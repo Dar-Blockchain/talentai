@@ -137,6 +137,23 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
         (softSkillType === "Communication" && !softSkillLanguage) ||
         (softSkillType !== "Communication" && !softSkillSubcategory)));
 
+  // Custom filters: prioritize options starting with input, then other contains
+  const filterStartsFirstStrings = (options: string[], { inputValue }: { inputValue: string }) => {
+    const q = (inputValue || '').trim().toLowerCase();
+    if (!q) return options;
+    const starts = options.filter(o => o.toLowerCase().startsWith(q));
+    const contains = options.filter(o => o.toLowerCase().includes(q) && !o.toLowerCase().startsWith(q));
+    return [...starts, ...contains];
+  };
+
+  const filterStartsFirstSoft = (options: SoftSkill[], { inputValue }: { inputValue: string }) => {
+    const q = (inputValue || '').trim().toLowerCase();
+    if (!q) return options;
+    const starts = options.filter(o => o.name.toLowerCase().startsWith(q));
+    const contains = options.filter(o => o.name.toLowerCase().includes(q) && !o.name.toLowerCase().startsWith(q));
+    return [...starts, ...contains];
+  };
+
   return (
     <Dialog
       open={open}
@@ -232,6 +249,7 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
               options={technicalSkillsList}
               value={selectedSkill}
               onChange={(_, value) => onSelectedSkillChange(value || "")}
+              filterOptions={filterStartsFirstStrings}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -297,6 +315,7 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
               value={softSkills.find((s) => s.name === softSkillType) || null}
               onChange={(_, value) => onSoftSkillChange(value?.name || "")}
               getOptionLabel={(option) => option.name}
+              filterOptions={filterStartsFirstSoft}
               renderInput={(params) => (
                 <TextField
                   {...params}
