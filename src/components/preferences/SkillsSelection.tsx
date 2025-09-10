@@ -7,21 +7,76 @@ import BugReportIcon from '@mui/icons-material/BugReport';
 import BusinessIcon from '@mui/icons-material/Business';
 
 // Skills data
+// --- Skills List ---
 const ALL_SKILLS = [
+  // Development
   { label: 'JavaScript', color: 'F7DF1E', category: 'development' },
   { label: 'TypeScript', color: '3178C6', category: 'development' },
   { label: 'React', color: '61DAFB', category: 'development' },
   { label: 'Node.js', color: '339933', category: 'development' },
   { label: 'Python', color: '3776AB', category: 'development' },
+  { label: 'Go', color: '00ADD8', category: 'development' },
+  { label: 'Rust', color: '000000', category: 'development' },
+  { label: 'GraphQL', color: 'E10098', category: 'development' },
+  { label: 'Docker', color: '2496ED', category: 'development' },
   { label: 'Hedera', color: '02E2FF', category: 'development' },
-  { label: 'Solidity', color: '363636', category: 'web3' },
-  { label: 'Ethereum', color: '627EEA', category: 'web3' },
-  { label: 'Machine Learning', color: 'FF6B6B', category: 'ai' },
-  { label: 'Deep Learning', color: '00B894', category: 'ai' },
+  // Marketing
   { label: 'SEO', color: 'FF6B6B', category: 'marketing' },
   { label: 'Content Marketing', color: '4ECDC4', category: 'marketing' },
+  { label: 'Social Media', color: '45B7D1', category: 'marketing' },
+  { label: 'Email Marketing', color: '96CEB4', category: 'marketing' },
+  { label: 'Analytics', color: 'FFEEAD', category: 'marketing' },
+  { label: 'Web3 Marketing', color: '00B894', category: 'marketing' },
+  { label: 'NFT Marketing', color: '6C5CE7', category: 'marketing' },
+  { label: 'Community Management', color: '0984E3', category: 'marketing' },
+  { label: 'Token Economics', color: 'F7DF1E', category: 'marketing' },
+  { label: 'DeFi Marketing', color: 'FF6B6B', category: 'marketing' },
+  { label: 'Crypto PR', color: '00B894', category: 'marketing' },
+  { label: 'Blockchain Events', color: 'E84393', category: 'marketing' },
+  { label: 'DAO Governance', color: '6C5CE7', category: 'marketing' },
+  // QA
   { label: 'Manual Testing', color: '9C27B0', category: 'qa' },
+  { label: 'Automated Testing', color: '673AB7', category: 'qa' },
+  { label: 'Test Planning', color: '3F51B5', category: 'qa' },
+  { label: 'Performance Testing', color: '2196F3', category: 'qa' },
+  { label: 'API Testing', color: '03A9F4', category: 'qa' },
+  { label: 'Security Testing', color: '00BCD4', category: 'qa' },
+  // Business
   { label: 'Project Management', color: '6C5CE7', category: 'business' },
+  { label: 'Agile', color: '00B894', category: 'business' },
+  { label: 'Scrum', color: 'FDCB6E', category: 'business' },
+  { label: 'Product Management', color: 'E84393', category: 'business' },
+  { label: 'Business Analysis', color: '0984E3', category: 'business' },
+  // Web3
+  { label: 'Solidity', color: '363636', category: 'web3' },
+  { label: 'Ethereum', color: '627EEA', category: 'web3' },
+  { label: 'Smart Contracts', color: 'F7931A', category: 'web3' },
+  { label: 'DeFi', color: 'FF6B6B', category: 'web3' },
+  { label: 'NFTs', color: '00B894', category: 'web3' },
+  { label: 'Web3.js', color: 'F16822', category: 'web3' },
+  { label: 'Hardhat', color: 'F7DF1E', category: 'web3' },
+  { label: 'Truffle', color: '3FE0C5', category: 'web3' },
+  { label: 'Massa', color: '00B894', category: 'web3' },
+  { label: 'Hedera', color: '02E2FF', category: 'web3' },
+  { label: 'Polkadot', color: 'E6007A', category: 'web3' },
+  { label: 'NEAR', color: '000000', category: 'web3' },
+  { label: 'Substrate', color: '000000', category: 'web3' },
+  { label: 'Cosmos', color: '2E3148', category: 'web3' },
+  { label: 'Solana', color: '00FFA3', category: 'web3' },
+  { label: 'Avalanche', color: 'E84142', category: 'web3' },
+  { label: 'Polygon', color: '8247E5', category: 'web3' },
+  { label: 'Arbitrum', color: '28A0F0', category: 'web3' },
+  { label: 'Optimism', color: 'FF0420', category: 'web3' },
+  { label: 'Base', color: '0052FF', category: 'web3' },
+  // AI
+  { label: 'Machine Learning', color: 'FF6B6B', category: 'ai' },
+  { label: 'Deep Learning', color: '00B894', category: 'ai' },
+  { label: 'TensorFlow', color: 'FF6F00', category: 'ai' },
+  { label: 'PyTorch', color: 'EE4C2C', category: 'ai' },
+  { label: 'Natural Language Processing', color: '4ECDC4', category: 'ai' },
+  { label: 'Computer Vision', color: '6C5CE7', category: 'ai' },
+  { label: 'Reinforcement Learning', color: '0984E3', category: 'ai' },
+  { label: 'Data Science', color: '00B894', category: 'ai' }
 ];
 
 const CATEGORIES = [
