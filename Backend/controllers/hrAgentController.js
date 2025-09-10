@@ -1008,7 +1008,7 @@ const hrAgentController = {
    */
   async getAgentsByCompany(req, res) {
     try {
-      const companyId = req.user._id; // ou req.user.companyId
+      const companyId = req.user._id; 
 
       // Récupérer les agents
       const agents = await AgentModel.find(
