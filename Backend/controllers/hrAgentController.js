@@ -1008,54 +1008,59 @@ const hrAgentController = {
    */
   async getAgentsByCompany(req, res) {
     try {
-      const { companyId } = req.user._id;
+      const companyId = "68bfe60b3f43c9688f40bd78"; // ou req.user.companyId
 
-      if (!companyId) {
-        return res.status(400).json({
-          success: false,
-          message: "companyId est requis",
-        });
-      }
-
+      // Récupérer les agents
       const agents = await AgentModel.find(
         { Company: companyId },
         { _id: 1, name: 1, postId: 1 }
       )
         .populate({ path: "postId", select: "jobDetails user" })
         .lean();
-
+  
       if (!agents || agents.length === 0) {
-        console.log("🔄 [Agenda] Aucun agent trouvé");
-        return;
+        return res.status(200).json({
+          success: true,
+          data: [],
+          message: "Aucun agent trouvé pour cette société",
+        });
       }
-
+  
+      // Pour chaque agent, calculer les matches
+      const agentsWithMatches = [];
       let totalMatches = 0;
+  
       for (const agent of agents) {
         const agentLabel = agent.name || agent._id?.toString();
-
+  
         if (!agent.postId?._id) {
-          console.log(`⚠️  [Agenda] Agent ${agentLabel} sans postId`);
+          agentsWithMatches.push({
+            agentId: agent._id,
+            name: agentLabel,
+            matches: [],
+            message: "Pas de post associé",
+          });
           continue;
         }
-
+  
         const { jobTitle, matches } = await computeMatches(agent.postId._id);
         totalMatches += matches.length;
-        // Log seulement s'il y a des matches ou des erreurs
-        if (matches.length > 0) {
-          console.log(
-            `✅ [Agenda] Agent ${agentLabel} | Job: ${jobTitle} | ${matches.length} candidat(s) matché(s) | #1 Name : ${matches[0].name}  candidat matché Score :  ${matches[0].score} FinalBid : ${matches[0].finalBid} _id : ${matches[0].candidateId}`
-          );
-        }
+  
+        agentsWithMatches.push({
+          agentId: agent._id,
+          name: agentLabel,
+          jobTitle: jobTitle,
+          matches: matches,
+        });
       }
-
-      // Log de résumé seulement
-      console.log(
-        `🔄 [Agenda] Heartbeat terminé - ${agents.length} agent(s) traité(s), ${totalMatches} match(es) total`
-      );
-
+  
+      // Réponse JSON complète
       return res.status(200).json({
         success: true,
-        data: agents,
+        companyId,
+        totalAgents: agents.length,
+        totalMatches,
+        agents: agentsWithMatches,
       });
     } catch (error) {
       console.error("Error fetching agents by company:", error);
