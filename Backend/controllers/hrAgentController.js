@@ -11,6 +11,61 @@ const {
 const { Client, PrivateKey, PublicKey } = require('@hashgraph/sdk');
 const EvaluationTopicModel = require('../models/EvaluationTopicModel');
 const { HCS10Client, HCS11Client, AIAgentType, AIAgentCapability, Logger, ConnectionsManager } = require('@hashgraphonline/standards-sdk');
+const JobPost = require("../models/PostModel");
+const Profile = require("../models/ProfileModel");
+const { calculateSkillMatchScore } = require("../services/matchingService");
+
+// utilitaire pour normaliser les noms de skills
+function normalizeSkillName(name) {
+  if (!name) return "";
+  const part = name.split(".")[0].trim();
+  return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+}
+
+async function computeMatches(jobPostId) {
+  const candidates = await Profile.find({ type: "Candidate" })
+    .populate("userId", "username email")
+    .populate("companyBid.company", "username email")
+    .select("userId skills companyDetails.name companyBid")
+    .lean();
+
+  const jobPost = await JobPost.findById(jobPostId)
+    .select("skillAnalysis.requiredSkills jobDetails.title")
+    .lean();
+
+  if (!jobPost || !jobPost.skillAnalysis) return [];
+
+  const requiredSkills = (jobPost.skillAnalysis.requiredSkills || [])
+    .filter((s) => s && s.name)
+    .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
+
+  const matches = candidates
+    .map((candidate) => {
+      if (!candidate.userId) return null;
+      const candidateSkills = (candidate.skills || [])
+        .filter((s) => s && s.name)
+        .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
+
+      const score = calculateSkillMatchScore(requiredSkills, candidateSkills);
+
+      return {
+        candidateId: candidate.userId._id,
+        name: candidate.userId.username || "Anonymous",
+        score,
+        finalBid: candidate.companyBid?.finalBid || null,
+        biddingCompany: candidate.companyBid?.company?.username || null,
+        matchedSkills: candidateSkills.filter((cs) =>
+          requiredSkills.some((rs) => rs.name === cs.name)
+        ),
+        requiredSkills,
+      };
+    })
+    .filter((m) => m && m.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  return { jobTitle: jobPost.jobDetails?.title || "Unknown", matches };
+}
+
 
 // Coordinator diagnostic functions integrated into controller
 
@@ -823,6 +878,36 @@ const hrAgentController = {
       res.status(500).json({
         success: false,
         message: 'Internal server error', 
+        error: error.message
+      });
+    }
+  },
+
+  /**
+   * Get agents by company
+   */
+  async getAgentsByCompany(req, res) {
+    try {
+      const { companyId } = req.user._id;
+
+      if (!companyId) {
+        return res.status(400).json({
+          success: false,
+          message: 'companyId est requis'
+        });
+      }
+
+      const agents = await AgentModel.find({ Company: companyId }).select('-hederaPrivateKey');
+
+      return res.status(200).json({
+        success: true,
+        data: agents
+      });
+    } catch (error) {
+      console.error('Error fetching agents by company:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error',
         error: error.message
       });
     }
