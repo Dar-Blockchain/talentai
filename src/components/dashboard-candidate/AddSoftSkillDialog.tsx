@@ -58,13 +58,13 @@ function AddSoftSkillDialogComponent(props: AddSoftSkillDialogProps) {
     router,
   } = props;
 
-  const getExperienceLevelFromProficiency = (proficiency: string): string => {
-    const proficiencyMap: { [key: string]: string } = {
-      "1": "Entry Level",
-      "2": "Junior",
-      "3": "Mid Level",
-      "4": "Senior",
-      "5": "Expert",
+  const getExperienceLevelFromProficiency = (proficiency: number): string => {
+    const proficiencyMap: { [key: number]: string } = {
+      1: "Entry Level",
+      2: "Junior",
+      3: "Mid Level",
+      4: "Senior",
+      5: "Expert",
     };
     return proficiencyMap[proficiency] || "Entry Level";
   };
@@ -120,6 +120,31 @@ function AddSoftSkillDialogComponent(props: AddSoftSkillDialogProps) {
     (softSkillType === "Communication" && !softSkillLanguage) ||
     (softSkillType !== "Communication" && !softSkillSubcategory);
 
+  // Custom filters: prioritize options starting with input, then other contains
+  const filterStartsFirstSoft = (options: SoftSkill[], { inputValue }: { inputValue: string }) => {
+    const q = (inputValue || '').trim().toLowerCase();
+    if (!q) return options;
+    const starts = options.filter(o => o.name.toLowerCase().startsWith(q));
+    const contains = options.filter(o => o.name.toLowerCase().includes(q) && !o.name.toLowerCase().startsWith(q));
+    return [...starts, ...contains];
+  };
+
+  const filterStartsFirstLang = (options: LanguageOption[], { inputValue }: { inputValue: string }) => {
+    const q = (inputValue || '').trim().toLowerCase();
+    if (!q) return options;
+    const starts = options.filter(o => o.label.toLowerCase().startsWith(q));
+    const contains = options.filter(o => o.label.toLowerCase().includes(q) && !o.label.toLowerCase().startsWith(q));
+    return [...starts, ...contains];
+  };
+
+  const filterStartsFirstSub = (options: SoftSkillSubcategory[], { inputValue }: { inputValue: string }) => {
+    const q = (inputValue || '').trim().toLowerCase();
+    if (!q) return options;
+    const starts = options.filter(o => o.label.toLowerCase().startsWith(q));
+    const contains = options.filter(o => o.label.toLowerCase().includes(q) && !o.label.toLowerCase().startsWith(q));
+    return [...starts, ...contains];
+  };
+
   return (
     <Dialog
       open={open}
@@ -158,6 +183,7 @@ function AddSoftSkillDialogComponent(props: AddSoftSkillDialogProps) {
             value={softSkills.find((s) => s.name === softSkillType) || null}
             onChange={(_, value) => onSoftSkillChange(value?.name || "")}
             getOptionLabel={(option) => option.name}
+            filterOptions={filterStartsFirstSoft}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -216,6 +242,7 @@ function AddSoftSkillDialogComponent(props: AddSoftSkillDialogProps) {
               value={languages.find((l) => l.value === softSkillLanguage) || null}
               onChange={(_, value) => onSoftSkillLanguageChange(value?.value || "")}
               getOptionLabel={(option) => option.label}
+              filterOptions={filterStartsFirstLang}
               sx={{ mt: 2 }}
               renderInput={(params) => (
                 <TextField
@@ -280,6 +307,7 @@ function AddSoftSkillDialogComponent(props: AddSoftSkillDialogProps) {
               }
               onChange={(_, value) => onSoftSkillSubcategoryChange(value?.value || "")}
               getOptionLabel={(option) => option.label}
+              filterOptions={filterStartsFirstSub}
               sx={{ mt: 2 }}
               renderInput={(params) => (
                 <TextField
@@ -290,7 +318,7 @@ function AddSoftSkillDialogComponent(props: AddSoftSkillDialogProps) {
                     sx: {
                       color: "#000000",
                       "& .MuiOutlinedInput-notchedOutline": {
-                        borderColor: "rgba(4, 3, 3, 0.2)",
+                        borderColor: "rgba(0,0,0,0.2)",
                       },
                       "&:hover .MuiOutlinedInput-notchedOutline": {
                         borderColor: primaryAccentColor,
