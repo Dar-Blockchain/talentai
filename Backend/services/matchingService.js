@@ -41,7 +41,7 @@ module.exports.calculateSkillMatchScore = (jobSkills, candidateSkills) => {
           skillScore = 0;
         }
       } else {
-        console.log(`Missing levels for ${normJobSkill}`);
+      //  console.log(`Missing levels for ${normJobSkill}`);
       }
 
       totalScore += Math.min(skillScore, 100);

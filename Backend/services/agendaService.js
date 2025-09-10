@@ -1,5 +1,8 @@
 const Agenda = require("agenda");
 const Agent = require("../models/AgentModel");
+const JobPost = require("../models/PostModel");
+const Profile = require("../models/ProfileModel");
+const { calculateSkillMatchScore } = require("../services/matchingService");
 
 let agendaInstance;
 let isInitialized = false;
@@ -7,82 +10,131 @@ let lastHeartbeatAt = null;
 let countdownInterval = null;
 let hasWarnedForCurrentCycle = false;
 
-/**
- * Initialize Agenda scheduler and define recurring jobs
- */
-async function initializeAgenda() {
-  if (isInitialized) {
-    return agendaInstance;
-  }
+// utilitaire pour normaliser les noms de skills
+function normalizeSkillName(name) {
+  if (!name) return "";
+  const part = name.split(".")[0].trim();
+  return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+}
 
-  if (!process.env.MONGODB_URI) {
-    console.error("❌ Agenda requires MONGODB_URI to be set");
-    return null;
-  }
+async function computeMatches(jobPostId) {
+  const candidates = await Profile.find({ type: "Candidate" })
+    .populate("userId", "username email")
+    .populate("companyBid.company", "username email")
+    .select("userId skills companyDetails.name companyBid")
+    .lean();
+
+  const jobPost = await JobPost.findById(jobPostId)
+    .select("skillAnalysis.requiredSkills jobDetails.title")
+    .lean();
+
+  if (!jobPost || !jobPost.skillAnalysis) return [];
+
+  const requiredSkills = (jobPost.skillAnalysis.requiredSkills || [])
+    .filter((s) => s && s.name)
+    .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
+
+  const matches = candidates
+    .map((candidate) => {
+      if (!candidate.userId) return null;
+      const candidateSkills = (candidate.skills || [])
+        .filter((s) => s && s.name)
+        .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
+
+      const score = calculateSkillMatchScore(requiredSkills, candidateSkills);
+
+      return {
+        candidateId: candidate.userId._id,
+        name: candidate.userId.username || "Anonymous",
+        score,
+        finalBid: candidate.companyBid?.finalBid || null,
+        biddingCompany: candidate.companyBid?.company?.username || null,
+        matchedSkills: candidateSkills.filter((cs) =>
+          requiredSkills.some((rs) => rs.name === cs.name)
+        ),
+        requiredSkills,
+      };
+    })
+    .filter((m) => m && m.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  return { jobTitle: jobPost.jobDetails?.title || "Unknown", matches };
+}
+
+async function initializeAgenda() {
+  if (isInitialized) return agendaInstance;
 
   agendaInstance = new Agenda({
     db: { address: process.env.MONGODB_URI, collection: "agendaJobs" },
-    processEvery: "10 seconds",
-    maxConcurrency: 5,
-    defaultConcurrency: 1,
-    lockLimit: 10,
+    processEvery: "1 second", // vérifie toutes les secondes pour précision
   });
 
-  // Define the hourly job
   agendaInstance.define("agent:heartbeat", async () => {
     try {
-      // Enregistre l'heure d'exécution du heartbeat
       lastHeartbeatAt = new Date();
       hasWarnedForCurrentCycle = false;
-      const agents = await Agent.find({}, { _id: 1, name: 1 })
+
+      const agents = await Agent.find({}, { _id: 1, name: 1, postId: 1 })
         .populate({ path: "postId", select: "jobDetails user" })
         .lean();
+
       if (!agents || agents.length === 0) {
-        console.log("[agent:heartbeat] Aucun agent trouvé");
+        console.log("🔄 [Agenda] Aucun agent trouvé");
         return;
       }
-      agents.forEach((agent) => {
-        const agentLabel = agent.name || agent._id?.toString();
-        //const username = agent.CampanyId?.username || "unknown-user";
-        const jobTitle = agent.postId?.jobDetails?.title || "unknown-title";
 
-        console.log(
-          `im here - agent= ${agentLabel} | jobTitle=${jobTitle} `
-        );
-      });
+      let totalMatches = 0;
+      for (const agent of agents) {
+        const agentLabel = agent.name || agent._id?.toString();
+
+        if (!agent.postId?._id) {
+          console.log(`⚠️  [Agenda] Agent ${agentLabel} sans postId`);
+          continue;
+        }
+
+        const { jobTitle, matches } = await computeMatches(agent.postId._id);
+        totalMatches += matches.length;
+        // Log seulement s'il y a des matches ou des erreurs
+        if (matches.length > 0) {
+          console.log(`✅ [Agenda] Agent ${agentLabel} | Job: ${jobTitle} | ${matches.length} candidat(s) matché(s) | #1 Name : ${matches[0].name}  candidat matché Score :  ${matches[0].score} FinalBid : ${matches[0].finalBid} _id : ${matches[0].candidateId}`);
+        }
+      }
+
+      // Log de résumé seulement
+      console.log(`🔄 [Agenda] Heartbeat terminé - ${agents.length} agent(s) traité(s), ${totalMatches} match(es) total`);
     } catch (err) {
-      console.error("[agent:heartbeat] Error:", err.message);
+      console.error("❌ [Agenda] Erreur heartbeat:", err.message);
     }
   });
 
   agendaInstance.on("ready", async () => {
-    // Démarre Agenda avant de planifier les jobs pour plus de fiabilité
     await agendaInstance.start();
-    // Planifie le job récurrent toutes les 10 secondes
-    await agendaInstance.every("10 seconds", "agent:heartbeat");
-    // Déclenche une exécution immédiate au démarrage pour visibilité
+    await agendaInstance.every("1 minute", "agent:heartbeat"); // exécution chaque minute
     await agendaInstance.now("agent:heartbeat");
-    console.log(
-      "⏱️  Agenda démarré. Job agent:heartbeat planifié toutes les 10 secondes."
-    );
+    console.log("⏱️ Agenda démarré avec job agent:heartbeat toutes les 1 min");
 
-    // Démarre un compte à rebours/monitoring pour vérifier l'exécution toutes les 10s
+    // Compteur décroissant (moins fréquent pour éviter le spam)
     if (!countdownInterval) {
       countdownInterval = setInterval(() => {
-        if (!lastHeartbeatAt) {
-          return;
-        }
-        const nextExpectedAt = lastHeartbeatAt.getTime() + 10000; // +10s
+        if (!lastHeartbeatAt) return;
+        const nextExpectedAt = lastHeartbeatAt.getTime() + 60000; // +1 minute
         const remainingMs = nextExpectedAt - Date.now();
         const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
-        console.log(`Compte à rebours avant prochain heartbeat: ${remainingSeconds}s`);
-
-        // Tolérance de 2s avant d'alerter, et une seule alerte par cycle
-        if (remainingMs < -2000 && !hasWarnedForCurrentCycle) {
-          console.warn("⚠️  Aucun heartbeat détecté dans la fenêtre attendue (>12s). Vérifiez Agenda.");
-          hasWarnedForCurrentCycle = true;
+        
+        // Afficher seulement toutes les 10 secondes pour éviter le spam
+        if (remainingSeconds % 10 === 0 || remainingSeconds <= 5) {
+          process.stdout.write(`\r🕒 Prochain heartbeat dans: ${remainingSeconds}s `);
         }
-      }, 1000);
+
+        // Watchdog: relance si pas exécuté après 62s
+        if (remainingMs < -2000 && !hasWarnedForCurrentCycle) {
+          console.warn("\n⚠️  [Agenda] Aucun heartbeat détecté (>62s). Relance...");
+          hasWarnedForCurrentCycle = true;
+          agendaInstance.now("agent:heartbeat").catch(e => {
+            console.error("❌ [Agenda] Échec de relance:", e?.message);
+          });
+        }
+      }, 2000); // Vérification toutes les 2 secondes au lieu d'1
     }
   });
 
@@ -90,27 +142,8 @@ async function initializeAgenda() {
     console.error("❌ Agenda error:", err);
   });
 
-  // Graceful shutdown
-  const shutdown = async () => {
-    try {
-      await agendaInstance.stop();
-      console.log("🛑 Agenda arrêté proprement");
-    } catch (e) {
-      console.error("Erreur à l'arrêt d'Agenda:", e);
-    }
-    if (countdownInterval) {
-      clearInterval(countdownInterval);
-      countdownInterval = null;
-    }
-    process.exit(0);
-  };
-  process.once("SIGTERM", shutdown);
-  process.once("SIGINT", shutdown);
-
   isInitialized = true;
   return agendaInstance;
 }
 
-module.exports = {
-  initializeAgenda,
-};
+module.exports = { initializeAgenda };
