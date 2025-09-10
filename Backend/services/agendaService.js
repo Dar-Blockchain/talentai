@@ -3,6 +3,7 @@ const Agent = require("../models/AgentModel");
 const JobPost = require("../models/PostModel");
 const Profile = require("../models/ProfileModel");
 const { calculateSkillMatchScore } = require("../services/matchingService");
+const axios = require("axios");
 
 let agendaInstance;
 let isInitialized = false;
@@ -97,6 +98,28 @@ async function initializeAgenda() {
         // Log seulement s'il y a des matches ou des erreurs
         if (matches.length > 0) {
           console.log(`✅ [Agenda] Agent ${agentLabel} | Job: ${jobTitle} | ${matches.length} candidat(s) matché(s) | #1 Name : ${matches[0].name}  candidat matché Score :  ${matches[0].score} FinalBid : ${matches[0].finalBid} _id : ${matches[0].candidateId}`);
+        
+          // --- Envoi POST seulement pour le premier match avec score > 70 ---
+        const topMatch = matches.find((m) => m.score > 70);
+        if (topMatch) {
+          try {
+            await axios.post("http://localhost:5000/hr-agents/submit-evaluation-message", {
+              agentAId: agent._id,
+              agentBId: "68bff5c35dd4c475d2209524", // master
+              candidateId: topMatch.candidateId,
+              postId: agent.postId._id,
+              message: "Please review this candidate",
+              bidAmount: topMatch.finalBid || 20
+            });
+            console.log(`📤 [Agenda] Message envoyé pour candidat ${topMatch.name} avec score ${topMatch.score}`);
+          } catch (err) {
+            console.error(`❌ [Agenda] Échec envoi message pour candidat ${topMatch.name}:`, err.message);
+          }
+        } else {
+          console.log(`⚠️ [Agenda] Aucun candidat avec score > 70 pour agent ${agentLabel}`);
+        }
+
+          
         }
       }
 
@@ -109,25 +132,25 @@ async function initializeAgenda() {
 
   agendaInstance.on("ready", async () => {
     await agendaInstance.start();
-    await agendaInstance.every("1 hour", "agent:heartbeat"); // exécution chaque heure
+    await agendaInstance.every("5 minutes", "agent:heartbeat"); // exécution toutes les 5 minutes
     await agendaInstance.now("agent:heartbeat");
-    console.log("⏱️ Agenda démarré avec job agent:heartbeat toutes les 1 heure");
+    console.log("⏱️ Agenda démarré avec job agent:heartbeat toutes les 5 minutes");
   
     // Compteur décroissant
     if (!countdownInterval) {
       countdownInterval = setInterval(() => {
         if (!lastHeartbeatAt) return;
-        const nextExpectedAt = lastHeartbeatAt.getTime() + 3600000; // +1 heure en ms
+        const nextExpectedAt = lastHeartbeatAt.getTime() + 300000; // +5 minutes en ms
         const remainingMs = nextExpectedAt - Date.now();
         const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
   
-        if (remainingSeconds % 600 === 0 || remainingSeconds <= 5) { // affichage toutes les 10 min + dernières 5 sec
+        if (remainingSeconds % 60 === 0 || remainingSeconds <= 5) { // affichage chaque minute + dernières 5 sec
           process.stdout.write(`\r🕒 Prochain heartbeat dans: ${remainingSeconds}s `);
         }
   
-        // Watchdog: relance si pas exécuté après 1h + 2s
+        // Watchdog: relance si pas exécuté après 5min + 2s
         if (remainingMs < -2000 && !hasWarnedForCurrentCycle) {
-          console.warn("\n⚠️  [Agenda] Aucun heartbeat détecté (>1h2s). Relance...");
+          console.warn("\n⚠️  [Agenda] Aucun heartbeat détecté (>5min2s). Relance...");
           hasWarnedForCurrentCycle = true;
           agendaInstance.now("agent:heartbeat").catch(e => {
             console.error("❌ [Agenda] Échec de relance:", e?.message);
