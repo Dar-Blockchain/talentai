@@ -49,6 +49,13 @@ router.post("/", hrAgentController.createAgent);
 router.get("/all", hrAgentController.getAllAgents);
 
 /**
+ * @route GET /hr-agents/company/:companyId
+ * @desc Récupère les agents par entreprise (Company)
+ * @access Privé
+ */
+router.get("/company", hrAgentController.getAgentsByCompany);
+
+/**
  * @route GET /hr-agents/avatar/:avatarName
  * @desc Récupère un agent par nom d'avatar
  * @access Privé
