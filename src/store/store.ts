@@ -16,6 +16,7 @@ import bidReducer from './slices/bidSlice';
 import todoReducer from './slices/todoSlice';
 import userReducer from './slices/userSlice';
 import postReducer from './slices/postSlice';
+import hrAgentsReducer from './slices/hrAgentsSlice';
 
 const rootReducer = combineReducers({
   user: userReducer,
@@ -25,7 +26,8 @@ const rootReducer = combineReducers({
   bid: bidReducer,
   todo: todoReducer,
   // project slice removed
-  post: postReducer
+  post: postReducer,
+  hrAgents: hrAgentsReducer
 });
 
 const persistConfig = {
