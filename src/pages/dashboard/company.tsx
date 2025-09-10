@@ -20,6 +20,7 @@ import {
   deletePost,
   selectDeletePostLoading,
 } from "@/store/slices/postSlice";
+import { fetchHRAgents } from "@/store/slices/hrAgentsSlice";
 import CompanyOnly from "@/components/CompanyOnly";
 import CompanyProfilesAssessments from "@/components/dashboard-company/CompanyProfilesAssessments";
 import BidHistory from "@/components/dashboard-company/BidHistory";
@@ -29,6 +30,7 @@ import FilterDialog from "@/components/dashboard-company/FilterDialog";
 import MatchingProfiles from "@/components/dashboard-company/MatchingProfiles";
 import Navbar from "@/components/dashboard-company/Navbar";
 import MyJobPosts from "@/components/dashboard-company/MyJobPosts";
+import HRAgentsTable from "@/components/dashboard-company/HRAgentsTable";
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -109,7 +111,11 @@ const DashboardCompany = () => {
   useEffect(() => {
     dispatch(getMyProfile());
     dispatch(fetchBids());
-  }, [dispatch]);
+    // Fetch HR agents when profile is loaded
+    if (profile?._id) {
+      dispatch(fetchHRAgents(profile._id));
+    }
+  }, [dispatch, profile?._id]);
 
   // Fetch job posts via Redux
   const fetchMyJobs = () => dispatch(fetchMyPosts());
@@ -252,6 +258,12 @@ const DashboardCompany = () => {
             error={error}
             onPostNewJob={() => router.push("/posts/create")}
           />
+          
+          {/* HR Agents Section */}
+          {profile?._id && (
+            <HRAgentsTable companyId={profile._id} />
+          )}
+          
           {/* Add Bid Dialog */}
           <AddBidDialog
             open={bidDialogOpen}

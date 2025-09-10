@@ -109,34 +109,34 @@ async function initializeAgenda() {
 
   agendaInstance.on("ready", async () => {
     await agendaInstance.start();
-    await agendaInstance.every("1 minute", "agent:heartbeat"); // exécution chaque minute
+    await agendaInstance.every("1 hour", "agent:heartbeat"); // exécution chaque heure
     await agendaInstance.now("agent:heartbeat");
-    console.log("⏱️ Agenda démarré avec job agent:heartbeat toutes les 1 min");
-
-    // Compteur décroissant (moins fréquent pour éviter le spam)
+    console.log("⏱️ Agenda démarré avec job agent:heartbeat toutes les 1 heure");
+  
+    // Compteur décroissant
     if (!countdownInterval) {
       countdownInterval = setInterval(() => {
         if (!lastHeartbeatAt) return;
-        const nextExpectedAt = lastHeartbeatAt.getTime() + 60000; // +1 minute
+        const nextExpectedAt = lastHeartbeatAt.getTime() + 3600000; // +1 heure en ms
         const remainingMs = nextExpectedAt - Date.now();
         const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
-        
-        // Afficher seulement toutes les 10 secondes pour éviter le spam
-        if (remainingSeconds % 10 === 0 || remainingSeconds <= 5) {
+  
+        if (remainingSeconds % 600 === 0 || remainingSeconds <= 5) { // affichage toutes les 10 min + dernières 5 sec
           process.stdout.write(`\r🕒 Prochain heartbeat dans: ${remainingSeconds}s `);
         }
-
-        // Watchdog: relance si pas exécuté après 62s
+  
+        // Watchdog: relance si pas exécuté après 1h + 2s
         if (remainingMs < -2000 && !hasWarnedForCurrentCycle) {
-          console.warn("\n⚠️  [Agenda] Aucun heartbeat détecté (>62s). Relance...");
+          console.warn("\n⚠️  [Agenda] Aucun heartbeat détecté (>1h2s). Relance...");
           hasWarnedForCurrentCycle = true;
           agendaInstance.now("agent:heartbeat").catch(e => {
             console.error("❌ [Agenda] Échec de relance:", e?.message);
           });
         }
-      }, 2000); // Vérification toutes les 2 secondes au lieu d'1
+      }, 2000);
     }
   });
+  
 
   agendaInstance.on("error", (err) => {
     console.error("❌ Agenda error:", err);

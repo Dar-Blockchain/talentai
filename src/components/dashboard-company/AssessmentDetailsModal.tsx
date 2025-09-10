@@ -282,21 +282,21 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                 
                 <Box sx={{ textAlign: 'center' }}>
                   <Chip
-                    label={assessment.analysis.jobMatch.status}
+                    label={assessment.analysis?.jobMatch?.status}
                     size="medium"
                     sx={{
-                      backgroundColor: assessment.analysis.jobMatch.status === 'match' 
+                      backgroundColor: assessment.analysis?.jobMatch?.status === 'match' 
                         ? 'linear-gradient(135deg, rgba(0,255,195,0.9), rgba(0,255,195,0.8))' 
                         : 'linear-gradient(135deg, rgba(255,59,48,0.9), rgba(255,59,48,0.8))',
-                      background: assessment.analysis.jobMatch.status === 'match' 
+                      background: assessment.analysis?.jobMatch?.status === 'match' 
                         ? 'linear-gradient(135deg, rgba(0,255,195,0.9), rgba(0,255,195,0.8))' 
                         : 'linear-gradient(135deg, rgba(255,59,48,0.9), rgba(255,59,48,0.8))',
-                      color: assessment.analysis.jobMatch.status === 'match' ? '#065f46' : '#7f1d1d',
+                      color: assessment.analysis?.jobMatch?.status === 'match' ? '#065f46' : '#7f1d1d',
                       fontWeight: 700,
                       height: 32,
                       fontSize: '0.9rem',
                       borderRadius: '16px',
-                      boxShadow: assessment.analysis.jobMatch.status === 'match'
+                      boxShadow: assessment.analysis?.jobMatch?.status === 'match'
                         ? '0 4px 16px rgba(0,255,195,0.3)'
                         : '0 4px 16px rgba(255,59,48,0.3)'
                     }}
@@ -446,7 +446,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                   fontWeight: 800,
                   mb: 1
                 }}>
-                  {assessment.analysis.jobMatch.status === 'match' ? '✓' : '✗'}
+                  {assessment.analysis?.jobMatch?.status === 'match' ? '✓' : '✗'}
                 </Typography>
                 <Typography variant="subtitle1" sx={{ 
                   color: '#64748b',
@@ -495,93 +495,125 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
               gridTemplateColumns: { xs: '1fr', md: 'repeat(auto-fit, minmax(300px, 1fr))' },
               gap: 3
             }}>
-              {assessment.analysis.skillAnalysis.map((skill: any, index: number) => (
-                <Box key={index} sx={{ 
-                  background: 'linear-gradient(135deg, rgba(0,255,195,0.05) 0%, rgba(2,226,255,0.05) 100%)',
-                  borderRadius: '20px',
-                  padding: '20px',
-                  border: '1px solid rgba(0,255,195,0.15)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 8px 24px rgba(0,255,195,0.15)',
-                    border: '1px solid rgba(0,255,195,0.3)'
-                  }
-                }}>
-                  <Typography variant="h6" sx={{ 
-                    color: '#1e293b', 
-                    mb: 2,
-                    fontWeight: 700,
-                    textAlign: 'center'
+              {assessment.analysis.skillAnalysis.map((skill: any, index: number) => {
+                // Check if this is a soft skill (no requiredLevel field or requiredLevel is null/undefined)
+                const isSoftSkill = !skill.requiredLevel || skill.requiredLevel === null || skill.requiredLevel === undefined;
+
+                return (
+                  <Box key={index} sx={{ 
+                    background: 'linear-gradient(135deg, rgba(0,255,195,0.05) 0%, rgba(2,226,255,0.05) 100%)',
+                    borderRadius: '20px',
+                    padding: '20px',
+                    border: '1px solid rgba(0,255,195,0.15)',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 24px rgba(0,255,195,0.15)',
+                      border: '1px solid rgba(0,255,195,0.3)'
+                    }
                   }}>
-                    {skill.skillName}
-                  </Typography>
-                  
-                  <Box sx={{ 
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 2,
-                    mb: 2
-                  }}>
-                    <Box sx={{
-                      background: 'rgba(2,226,255,0.1)',
-                      borderRadius: '12px',
-                      padding: '16px',
-                      textAlign: 'center',
-                      border: '1px solid rgba(2,226,255,0.2)'
+                    <Typography variant="h6" sx={{ 
+                      color: '#1e293b', 
+                      mb: 2,
+                      fontWeight: 700,
+                      textAlign: 'center'
                     }}>
-                      <Typography variant="subtitle2" sx={{ 
-                        color: '#64748b',
-                        mb: 1,
-                        fontWeight: 600
-                      }}>
-                        Required Level
-                      </Typography>
-                      <Typography sx={{ 
-                        color: '#1e293b',
-                        fontWeight: 700,
-                        fontSize: '1.1rem'
-                      }}>
-                        {skill.requiredLevel}
-                      </Typography>
-                    </Box>
+                      {skill.skillName}
+                    </Typography>
                     
-                    <Box sx={{
-                      background: skill.match === 'match' 
-                        ? 'rgba(0,255,195,0.1)' 
-                        : 'rgba(255,59,48,0.1)',
-                      borderRadius: '12px',
-                      padding: '16px',
-                      textAlign: 'center',
-                      border: `1px solid ${skill.match === 'match' 
-                        ? 'rgba(0,255,195,0.2)' 
-                        : 'rgba(255,59,48,0.2)'}`
-                    }}>
-                      <Typography variant="subtitle2" sx={{ 
-                        color: '#64748b',
-                        mb: 1,
-                        fontWeight: 600
+                    {isSoftSkill ? (
+                      // Soft skill display - only skillName and confidenceScore
+                      <Box sx={{
+                        background: 'rgba(0,255,195,0.1)',
+                        borderRadius: '12px',
+                        padding: '16px',
+                        textAlign: 'center',
+                        border: '1px solid rgba(0,255,195,0.2)'
                       }}>
-                        Match Status
-                      </Typography>
-                      <Chip
-                        label={skill.match}
-                        size="small"
-                        sx={{
-                          backgroundColor: skill.match === 'match' 
-                            ? 'rgba(0,255,195,0.9)' 
-                            : 'rgba(255,59,48,0.9)',
-                          color: skill.match === 'match' ? '#065f46' : '#7f1d1d',
+                        <Typography variant="subtitle2" sx={{ 
+                          color: '#64748b',
+                          mb: 1,
+                          fontWeight: 600
+                        }}>
+                          Confidence Score
+                        </Typography>
+                        <Typography sx={{ 
+                          color: '#1e293b',
                           fontWeight: 700,
-                          height: 28,
+                          fontSize: '1.5rem'
+                        }}>
+                          {skill.confidenceScore || 'N/A'}%
+                        </Typography>
+                      </Box>
+                    ) : (
+                      // Technical skill display - full details
+                      <Box sx={{ 
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: 2,
+                        mb: 2
+                      }}>
+                        <Box sx={{
+                          background: 'rgba(2,226,255,0.1)',
                           borderRadius: '12px',
-                          fontSize: '0.8rem'
-                        }}
-                      />
-                    </Box>
+                          padding: '16px',
+                          textAlign: 'center',
+                          border: '1px solid rgba(2,226,255,0.2)'
+                        }}>
+                          <Typography variant="subtitle2" sx={{ 
+                            color: '#64748b',
+                            mb: 1,
+                            fontWeight: 600
+                          }}>
+                            Required Level
+                          </Typography>
+                          <Typography sx={{ 
+                            color: '#1e293b',
+                            fontWeight: 700,
+                            fontSize: '1.1rem'
+                          }}>
+                            {skill.requiredLevel}
+                          </Typography>
+                        </Box>
+                        
+                        <Box sx={{
+                          background: skill.match === 'match' 
+                            ? 'rgba(0,255,195,0.1)' 
+                            : 'rgba(255,59,48,0.1)',
+                          borderRadius: '12px',
+                          padding: '16px',
+                          textAlign: 'center',
+                          border: `1px solid ${skill.match === 'match' 
+                            ? 'rgba(0,255,195,0.2)' 
+                            : 'rgba(255,59,48,0.2)'}`
+                        }}>
+                          <Typography variant="subtitle2" sx={{ 
+                            color: '#64748b',
+                            mb: 1,
+                            fontWeight: 600
+                          }}>
+                            Match Status
+                          </Typography>
+                          <Chip
+                            label={skill.match}
+                            size="small"
+                            sx={{
+                              backgroundColor: skill.match === 'match' 
+                                ? 'rgba(0,255,195,0.9)' 
+                                : 'rgba(255,59,48,0.9)',
+                              color: skill.match === 'match' ? '#065f46' : '#7f1d1d',
+                              fontWeight: 700,
+                              height: 28,
+                              borderRadius: '12px',
+                              fontSize: '0.8rem'
+                            }}
+                          />
+                        </Box>
+                      </Box>
+                    )}
                   </Box>
-                </Box>
-              ))}
+                );
+              })}
             </Box>
           </Box>
 

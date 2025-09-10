@@ -235,7 +235,7 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
                         </Avatar>
                         <Box>
                           <Typography sx={{ fontWeight: 600, lineHeight: 1 }}>
-                            {assessment.condidateId.userId.username}
+                            {assessment.condidateId?.userId?.username || 'Unknown User'}
                           </Typography>
                           {assessment?.condidateId?.userId?.email && (
                             <Typography variant="caption" sx={{ color: '#64748b' }}>
@@ -246,17 +246,17 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
                       </Box>
                     </TableCell>
                     <TableCell sx={{ color: '#000' }}>
-                      {assessment.jobId.jobDetails.title}
+                      {assessment.jobId?.jobDetails?.title || 'Unknown Job'}
                     </TableCell>
                     <TableCell sx={{ color: '#000' }}>
                       {new Date(assessment.timestamp).toLocaleDateString()}
                     </TableCell>
                     <TableCell sx={{ color: '#000', minWidth: 160 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography sx={{ fontWeight: 700, minWidth: 40 }}>{assessment.analysis.overallScore}%</Typography>
+                        <Typography sx={{ fontWeight: 700, minWidth: 40 }}>{assessment.analysis?.overallScore || 0}%</Typography>
                         <LinearProgress
                           variant="determinate"
-                          value={Number(assessment.analysis.overallScore) || 0}
+                          value={Number(assessment.analysis?.overallScore) || 0}
                           sx={{
                             flex: 1,
                             height: 8,
@@ -271,13 +271,13 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
                     </TableCell>
                     <TableCell sx={{ color: '#fff' }}>
                       <Chip
-                        label={assessment.analysis.jobMatch.status}
+                        label={assessment.analysis?.jobMatch?.status || 'Unknown'}
                         size="small"
                         sx={{
-                          backgroundColor: assessment.analysis.jobMatch.status === 'match'
+                          backgroundColor: assessment.analysis?.jobMatch?.status === 'match'
                             ? 'rgba(0,255,195,0.13)'
                             : 'rgba(255,59,48,0.13)',
-                          color: assessment.analysis.jobMatch.status === 'match'
+                          color: assessment.analysis?.jobMatch?.status === 'match'
                             ? '#00FFC3'
                             : '#ff3b30',
                           fontWeight: 600

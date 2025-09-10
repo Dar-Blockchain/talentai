@@ -1,16 +1,79 @@
-const AgentModel = require('../models/AgentModel');
-const { createHederaWallet } = require('../services/hederaService');
-const { LangChainTogetherAIAgent } = require('../helpers/langchainTogetherAIAgent');
-const { 
-  HederaLangchainToolkit, 
+const AgentModel = require("../models/AgentModel");
+const { createHederaWallet } = require("../services/hederaService");
+const {
+  LangChainTogetherAIAgent,
+} = require("../helpers/langchainTogetherAIAgent");
+const {
+  HederaLangchainToolkit,
   AgentMode,
-  coreHTSPlugin, 
+  coreHTSPlugin,
   coreConsensusPlugin,
-  coreQueriesPlugin
-} = require('hedera-agent-kit');
-const { Client, PrivateKey, PublicKey } = require('@hashgraph/sdk');
-const EvaluationTopicModel = require('../models/EvaluationTopicModel');
-const { HCS10Client, HCS11Client, AIAgentType, AIAgentCapability, Logger, ConnectionsManager } = require('@hashgraphonline/standards-sdk');
+  coreQueriesPlugin,
+} = require("hedera-agent-kit");
+const { Client, PrivateKey, PublicKey } = require("@hashgraph/sdk");
+const EvaluationTopicModel = require("../models/EvaluationTopicModel");
+const {
+  HCS10Client,
+  HCS11Client,
+  AIAgentType,
+  AIAgentCapability,
+  Logger,
+  ConnectionsManager,
+} = require("@hashgraphonline/standards-sdk");
+const JobPost = require("../models/PostModel");
+const Profile = require("../models/ProfileModel");
+const { calculateSkillMatchScore } = require("../services/matchingService");
+
+// utilitaire pour normaliser les noms de skills
+function normalizeSkillName(name) {
+  if (!name) return "";
+  const part = name.split(".")[0].trim();
+  return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+}
+
+async function computeMatches(jobPostId) {
+  const candidates = await Profile.find({ type: "Candidate" })
+    .populate("userId", "username email")
+    .populate("companyBid.company", "username email")
+    .select("userId skills companyDetails.name companyBid")
+    .lean();
+
+  const jobPost = await JobPost.findById(jobPostId)
+    .select("skillAnalysis.requiredSkills jobDetails.title")
+    .lean();
+
+  if (!jobPost || !jobPost.skillAnalysis) return [];
+
+  const requiredSkills = (jobPost.skillAnalysis.requiredSkills || [])
+    .filter((s) => s && s.name)
+    .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
+
+  const matches = candidates
+    .map((candidate) => {
+      if (!candidate.userId) return null;
+      const candidateSkills = (candidate.skills || [])
+        .filter((s) => s && s.name)
+        .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
+
+      const score = calculateSkillMatchScore(requiredSkills, candidateSkills);
+
+      return {
+        candidateId: candidate.userId._id,
+        name: candidate.userId.username || "Anonymous",
+        score,
+        finalBid: candidate.companyBid?.finalBid || null,
+        biddingCompany: candidate.companyBid?.company?.username || null,
+        matchedSkills: candidateSkills.filter((cs) =>
+          requiredSkills.some((rs) => rs.name === cs.name)
+        ),
+        requiredSkills,
+      };
+    })
+    .filter((m) => m && m.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  return { jobTitle: jobPost.jobDetails?.title || "Unknown", matches };
+}
 
 // Coordinator diagnostic functions integrated into controller
 
@@ -22,22 +85,22 @@ const hrAgentController = {
   async initializeAgents(req, res) {
     try {
       const { agentConfigs } = req.body;
-      
+
       // Validate agentConfigs
       if (!agentConfigs || !Array.isArray(agentConfigs)) {
         return res.status(400).json({
           success: false,
-          message: 'agentConfigs array is required'
+          message: "agentConfigs array is required",
         });
       }
-      
+
       // Check if user has admin role
-    //   if (req.user.role !== 'admin') {
-    //     return res.status(403).json({
-    //       success: false,
-    //       message: 'Access denied. Admin role required.'
-    //     });
-    //   }
+      //   if (req.user.role !== 'admin') {
+      //     return res.status(403).json({
+      //       success: false,
+      //       message: 'Access denied. Admin role required.'
+      //     });
+      //   }
 
       // Check if agents already exist
       // const existingAgents = await AgentModel.find();
@@ -84,7 +147,7 @@ const hrAgentController = {
       //     }
       //   },
       //   {
-      //     name: "Olga-Technical-Agent", 
+      //     name: "Olga-Technical-Agent",
       //     avatarName: "olga",
       //     role: "Technical Skills Evaluator",
       //     description: "Validates candidate technical skills and expertise",
@@ -119,7 +182,7 @@ const hrAgentController = {
       //   },
       //   {
       //     name: "Jaaf-Experience-Agent",
-      //     avatarName: "jaaf", 
+      //     avatarName: "jaaf",
       //     role: "Experience Validator",
       //     description: "Validates candidate work experience and background",
       //     hcs11CustomProfile: {
@@ -153,7 +216,7 @@ const hrAgentController = {
       //   {
       //     name: "Sam-Culture-Agent",
       //     avatarName: "sam",
-      //     role: "Cultural Fit Assessor", 
+      //     role: "Cultural Fit Assessor",
       //     description: "Evaluates candidate cultural fit and values alignment",
       //     hcs11CustomProfile: {
       //       agentPersonality: {
@@ -219,7 +282,7 @@ const hrAgentController = {
       //   },
       //   {
       //     name: "Yuka-Communication-Agent",
-      //     avatarName: "yuka", 
+      //     avatarName: "yuka",
       //     role: "Communication Skills Specialist",
       //     description: "Validates candidate communication and presentation skills",
       //     hcs11CustomProfile: {
@@ -255,15 +318,15 @@ const hrAgentController = {
 
       // Create agents in database with Hedera wallets and HCS-11 profiles
       const createdAgents = [];
-      
+
       for (const config of agentConfigs) {
         console.log(`🔄 Creating agent: ${config.name}`);
         console.log(`   📝 Step 1: Creating Hedera wallet...`);
-        
+
         // Create Hedera wallet for this agent
         const hederaWallet = await createHederaWallet();
         console.log(`   ✅ Wallet created: ${hederaWallet.accountId}`);
-        
+
         // Save agent to database first with custom profile
         const agent = new AgentModel({
           ...config,
@@ -275,9 +338,9 @@ const hrAgentController = {
           // Legacy fields for backwards compatibility
           accountId: hederaWallet.accountId,
           privkey: hederaWallet.privkey,
-          pubkey: hederaWallet.pubkey
+          pubkey: hederaWallet.pubkey,
         });
-        
+
         const savedAgent = await agent.save();
         console.log(`   📦 Agent saved to database: ${savedAgent._id}`);
 
@@ -285,9 +348,11 @@ const hrAgentController = {
         console.log(`   📝 Step 2: Creating HCS-10 messaging topics...`);
         let inboundTopicId = null;
         let outboundTopicId = null;
-        
+
         try {
-          const topicResult = await hrAgentController.createAgentHCS11Profile(savedAgent);
+          const topicResult = await hrAgentController.createAgentHCS11Profile(
+            savedAgent
+          );
           if (topicResult.success) {
             inboundTopicId = topicResult.inboundTopicId;
             outboundTopicId = topicResult.outboundTopicId;
@@ -296,23 +361,37 @@ const hrAgentController = {
             console.log(`   📤 Outbound: ${outboundTopicId}`);
           }
         } catch (topicError) {
-          console.log(`   ⚠️  HCS-10 topic creation failed: ${topicError.message}`);
+          console.log(
+            `   ⚠️  HCS-10 topic creation failed: ${topicError.message}`
+          );
         }
 
         // Step 3: Create HCS-11 compliant profile using official SDK methods
-        console.log(`   📝 Step 3: Creating HCS-11 profile with official SDK...`);
+        console.log(
+          `   📝 Step 3: Creating HCS-11 profile with official SDK...`
+        );
         let profileResult = { success: false };
         try {
-          profileResult = await hrAgentController.setHCS11AccountMemo(savedAgent, inboundTopicId, outboundTopicId);
+          profileResult = await hrAgentController.setHCS11AccountMemo(
+            savedAgent,
+            inboundTopicId,
+            outboundTopicId
+          );
           if (profileResult.success) {
             console.log(`   ✅ HCS-11 profile created successfully!`);
-            console.log(`   📄 Profile Topic ID: ${profileResult.profileTopicId}`);
+            console.log(
+              `   📄 Profile Topic ID: ${profileResult.profileTopicId}`
+            );
             console.log(`   🔗 Account memo updated automatically`);
           } else {
-            console.log(`   ⚠️  HCS-11 profile creation failed: ${profileResult.error}`);
+            console.log(
+              `   ⚠️  HCS-11 profile creation failed: ${profileResult.error}`
+            );
           }
         } catch (memoError) {
-          console.log(`   ⚠️  HCS-11 profile setup failed: ${memoError.message}`);
+          console.log(
+            `   ⚠️  HCS-11 profile setup failed: ${memoError.message}`
+          );
           profileResult = { success: false, error: memoError.message };
         }
 
@@ -323,51 +402,62 @@ const hrAgentController = {
             savedAgent.outboundTopicId = profileResult.outboundTopicId;
             savedAgent.profileId = profileResult.profileId;
             if (profileResult.deploymentMessageId) {
-              savedAgent.deploymentMessageId = profileResult.deploymentMessageId;
+              savedAgent.deploymentMessageId =
+                profileResult.deploymentMessageId;
             }
             if (profileResult.registrationMessageId) {
-              savedAgent.profileRegistrationId = profileResult.registrationMessageId;
+              savedAgent.profileRegistrationId =
+                profileResult.registrationMessageId;
             }
             await savedAgent.save();
             console.log(`   ✅ HCS-11 profile created successfully`);
             console.log(`   🆔 Profile ID: ${profileResult.profileId}`);
             console.log(`   📩 Inbound Topic: ${profileResult.inboundTopicId}`);
-            console.log(`   📤 Outbound Topic: ${profileResult.outboundTopicId}`);
+            console.log(
+              `   📤 Outbound Topic: ${profileResult.outboundTopicId}`
+            );
             if (profileResult.deploymentMessageId) {
-              console.log(`   🚀 Deployment ID: ${profileResult.deploymentMessageId}`);
+              console.log(
+                `   🚀 Deployment ID: ${profileResult.deploymentMessageId}`
+              );
             }
             if (profileResult.integrity) {
-              console.log(`   🔐 Profile Hash: ${profileResult.integrity.profileHash}`);
+              console.log(
+                `   🔐 Profile Hash: ${profileResult.integrity.profileHash}`
+              );
             }
           } else {
-            console.log(`   ⚠️  HCS-11 profile creation partially failed: ${profileResult.message}`);
+            console.log(
+              `   ⚠️  HCS-11 profile creation partially failed: ${profileResult.message}`
+            );
           }
         } catch (profileError) {
-          console.error(`   ❌ Failed to create HCS-11 profile: ${profileError.message}`);
+          console.error(
+            `   ❌ Failed to create HCS-11 profile: ${profileError.message}`
+          );
           // Continue with agent creation even if profile fails
         }
-        
+
         // Remove private key from response for security
         const agentResponse = savedAgent.toObject();
         delete agentResponse.hederaPrivateKey;
         delete agentResponse.privkey;
         createdAgents.push(agentResponse);
-        
+
         console.log(`   🎉 Agent ${config.name} fully initialized!\n`);
       }
 
       res.status(200).json({
         success: true,
-        message: 'HR validation agents initialized successfully', 
-        data: createdAgents
+        message: "HR validation agents initialized successfully",
+        data: createdAgents,
       });
-
     } catch (error) {
-      console.error('Error initializing HR agents:', error);
+      console.error("Error initializing HR agents:", error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
-        error: error.message
+        message: "Internal server error",
+        error: error.message,
       });
     }
   },
@@ -378,11 +468,11 @@ const hrAgentController = {
   async initializeSingleAgent(req, res) {
     try {
       const { agentConfig } = req.body;
-      
+
       if (!agentConfig) {
         return res.status(400).json({
           success: false,
-          error: "Agent configuration is required"
+          error: "Agent configuration is required",
         });
       }
 
@@ -390,7 +480,9 @@ const hrAgentController = {
 
       // Create Hedera wallet for the agent
       const hederaWallet = await createHederaWallet();
-      console.log(`🔐 Created Hedera wallet for ${agentConfig.name}: ${hederaWallet.accountId}`);
+      console.log(
+        `🔐 Created Hedera wallet for ${agentConfig.name}: ${hederaWallet.accountId}`
+      );
 
       // Create agent record
       const newAgent = new AgentModel({
@@ -398,9 +490,9 @@ const hrAgentController = {
         hederaAccountId: hederaWallet.accountId,
         hederaPrivateKey: hederaWallet.privateKey,
         hederaPublicKey: hederaWallet.publicKey,
-        status: 'created',
+        status: "created",
         isActive: true,
-        createdAt: new Date()
+        createdAt: new Date(),
       });
 
       await newAgent.save();
@@ -418,16 +510,15 @@ const hrAgentController = {
           name: newAgent.name,
           role: newAgent.role,
           hederaAccountId: newAgent.hederaAccountId,
-          status: newAgent.status
-        }
+          status: newAgent.status,
+        },
       });
-
     } catch (error) {
       console.error(`❌ Error initializing single agent:`, error);
       res.status(500).json({
         success: false,
         error: "Failed to initialize single agent",
-        details: error.message
+        details: error.message,
       });
     }
   },
@@ -438,16 +529,19 @@ const hrAgentController = {
    */
   async createAgentHCS11Profile(agent) {
     try {
-      console.log(`      🔧 Creating HCS-11 compliant profile for ${agent.name}...`);
-      
+      console.log(
+        `      🔧 Creating HCS-11 compliant profile for ${agent.name}...`
+      );
+
       // Initialize HCS10Client for the agent
       const hcs10Client = new HCS10Client({
-        network: 'testnet',
+        network: "testnet",
         operatorId: agent.hederaAccountId,
         operatorPrivateKey: agent.hederaPrivateKey,
-        guardedRegistryBaseUrl: process.env.REGISTRY_URL || 'https://moonscape.tech',
+        guardedRegistryBaseUrl:
+          process.env.REGISTRY_URL || "https://moonscape.tech",
         prettyPrint: false,
-        logLevel: 'info'
+        logLevel: "info",
       });
 
       // Step 1: Create inbound topic for receiving messages with HCS-11 memo
@@ -455,14 +549,19 @@ const hrAgentController = {
       let inboundTopicId;
       try {
         // Use HCS-11 protocol format for topics
-        const protocolStandard = '11';
+        const protocolStandard = "11";
         const inboundTopicMemo = `hcs-11:hcs://${protocolStandard}/in-${agent.avatarName}`;
-        
-        const inboundTopic = await hcs10Client.createTopic(`${agent.name}-Inbound`, inboundTopicMemo);
+
+        const inboundTopic = await hcs10Client.createTopic(
+          `${agent.name}-Inbound`,
+          inboundTopicMemo
+        );
         inboundTopicId = inboundTopic.toString();
         console.log(`      ✅ Inbound topic created: ${inboundTopicId}`);
       } catch (topicError) {
-        console.error(`      ❌ Failed to create inbound topic: ${topicError.message}`);
+        console.error(
+          `      ❌ Failed to create inbound topic: ${topicError.message}`
+        );
         throw new Error(`Inbound topic creation failed: ${topicError.message}`);
       }
 
@@ -471,21 +570,28 @@ const hrAgentController = {
       let outboundTopicId;
       try {
         // Use HCS-11 protocol format for topics
-        const protocolStandard = '11';
+        const protocolStandard = "11";
         const outboundTopicMemo = `hcs-11:hcs://${protocolStandard}/out-${agent.avatarName}`;
-        
-        const outboundTopic = await hcs10Client.createTopic(`${agent.name}-Outbound`, outboundTopicMemo);
+
+        const outboundTopic = await hcs10Client.createTopic(
+          `${agent.name}-Outbound`,
+          outboundTopicMemo
+        );
         outboundTopicId = outboundTopic.toString();
         console.log(`      ✅ Outbound topic created: ${outboundTopicId}`);
       } catch (topicError) {
-        console.error(`      ❌ Failed to create outbound topic: ${topicError.message}`);
-        throw new Error(`Outbound topic creation failed: ${topicError.message}`);
+        console.error(
+          `      ❌ Failed to create outbound topic: ${topicError.message}`
+        );
+        throw new Error(
+          `Outbound topic creation failed: ${topicError.message}`
+        );
       }
 
       // Step 3: Create comprehensive HCS-11 standard compliant profile
       const profileId = `agent_${agent._id.toString()}`;
       const timestamp = new Date().toISOString();
-      
+
       const hcs11Profile = {
         // Core HCS-11 standard fields
         p: "hcs-11",
@@ -494,7 +600,7 @@ const hrAgentController = {
         type: "agent_profile",
         op: "deploy",
         timestamp: timestamp,
-        
+
         // Agent Identity Section
         identity: {
           agentId: profileId,
@@ -503,72 +609,80 @@ const hrAgentController = {
           avatar: agent.avatarName,
           role: agent.role,
           description: agent.description,
-          organizationalUnit: "TalentAI_HR_Validation_System"
+          organizationalUnit: "TalentAI_HR_Validation_System",
         },
-        
+
         // Hedera Network Identity
         hedera: {
           accountId: agent.hederaAccountId,
           publicKey: agent.hederaPublicKey,
           network: process.env.HEDERA_NETWORK || "testnet",
           isActive: agent.isActive,
-          createdAt: timestamp
+          createdAt: timestamp,
         },
-        
+
         // Communication Configuration
         communication: {
           inbound: {
             topicId: inboundTopicId,
             purpose: "message_reception",
-            access: "controlled"
+            access: "controlled",
           },
           outbound: {
             topicId: outboundTopicId,
-            purpose: "message_transmission", 
-            access: "controlled"
+            purpose: "message_transmission",
+            access: "controlled",
           },
           protocols: {
             supported: ["HCS-10", "HCS-11"],
-            primary: "HCS-11"
+            primary: "HCS-11",
           },
-          messageFormats: ["structured_json", "evaluation_data", "conversation"],
+          messageFormats: [
+            "structured_json",
+            "evaluation_data",
+            "conversation",
+          ],
           maxMessageSize: 1024,
           rateLimits: {
             messagesPerMinute: 60,
-            burstLimit: 10
-          }
+            burstLimit: 10,
+          },
         },
-        
+
         // Agent Capabilities and Specialization - Enhanced with Custom Profile
         capabilities: {
           core: [
             "conversational_ai",
-            "candidate_evaluation", 
+            "candidate_evaluation",
             "collaborative_assessment",
             "structured_messaging",
-            "hcs_consensus_participation"
+            "hcs_consensus_participation",
           ],
           specialization: hrAgentController.getAgentSpecialization(agent.role),
           customProfile: agent.hcs11CustomProfile || {},
           agentPersonality: agent.hcs11CustomProfile?.agentPersonality || {
             communicationStyle: "professional",
             approachMethod: "standard_evaluation",
-            evaluationPhilosophy: "Comprehensive candidate assessment"
+            evaluationPhilosophy: "Comprehensive candidate assessment",
           },
-          specializedCapabilities: agent.hcs11CustomProfile?.specializedCapabilities || {},
-          evaluationFramework: agent.hcs11CustomProfile?.evaluationFramework || {},
+          specializedCapabilities:
+            agent.hcs11CustomProfile?.specializedCapabilities || {},
+          evaluationFramework:
+            agent.hcs11CustomProfile?.evaluationFramework || {},
           domainExpertise: agent.hcs11CustomProfile?.domainExpertise || {},
           aiModel: {
             provider: "openai",
             version: "gpt-4",
             specialTraining: "hr_evaluation_protocols",
             customizedFor: agent.role,
-            personalityProfile: agent.hcs11CustomProfile?.agentPersonality
+            personalityProfile: agent.hcs11CustomProfile?.agentPersonality,
           },
           languages: ["en"],
-          evaluationCriteria: hrAgentController.getEvaluationCriteria(agent.role)
+          evaluationCriteria: hrAgentController.getEvaluationCriteria(
+            agent.role
+          ),
         },
-        
+
         // Governance and Compliance
         governance: {
           permissions: {
@@ -576,50 +690,59 @@ const hrAgentController = {
             communicate: true,
             collaborate: true,
             dataAccess: "evaluation_only",
-            networkParticipation: "consensus_messaging"
+            networkParticipation: "consensus_messaging",
           },
           restrictions: {
             personalDataStorage: false,
             crossNetworkCommunication: false,
             unauthorizedAccess: false,
-            scopeLimitation: "talent_evaluation_only"
+            scopeLimitation: "talent_evaluation_only",
           },
           compliance: {
             standards: ["HCS-11", "ISO-27001", "GDPR"],
             dataRetention: "evaluation_session_only",
             auditLog: true,
-            privacy: "by_design"
+            privacy: "by_design",
           },
           authorization: {
             registeredBy: agent.hederaAccountId,
             authorizedScopes: ["hr_evaluation", "candidate_assessment"],
-            validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 1 year
-          }
+            validUntil: new Date(
+              Date.now() + 365 * 24 * 60 * 60 * 1000
+            ).toISOString(), // 1 year
+          },
         },
-        
+
         // Metadata and Versioning
         metadata: {
           creator: "TalentAI_System",
-          purpose: "Autonomous HR agent for talent evaluation and candidate assessment",
+          purpose:
+            "Autonomous HR agent for talent evaluation and candidate assessment",
           category: "hr_validation_agent",
-          tags: ["ai_agent", "hr_evaluation", "talent_assessment", agent.avatarName],
+          tags: [
+            "ai_agent",
+            "hr_evaluation",
+            "talent_assessment",
+            agent.avatarName,
+          ],
           version: "1.0.0",
           schemaVersion: "hcs-11-v1.0",
           lastUpdated: timestamp,
           checksum: hrAgentController.generateProfileChecksum(agent),
-          documentationUrl: "https://docs.talentai.bid/agents/hcs-11"
+          documentationUrl: "https://docs.talentai.bid/agents/hcs-11",
         },
-        
+
         // Profile Hash and Integrity
         integrity: {
           profileHash: null, // Will be calculated after profile creation
           signatureChain: [],
-          verificationStatus: "pending"
-        }
+          verificationStatus: "pending",
+        },
       };
 
       // Calculate profile hash for integrity
-      hcs11Profile.integrity.profileHash = hrAgentController.calculateProfileHash(hcs11Profile);
+      hcs11Profile.integrity.profileHash =
+        hrAgentController.calculateProfileHash(hcs11Profile);
 
       // Step 4: Deploy profile using HCS-11 standard message format
       console.log(`      📝 Deploying HCS-11 profile to network...`);
@@ -636,9 +759,9 @@ const hrAgentController = {
             deploymentId: `deploy_${Date.now()}`,
             status: "active",
             network: process.env.HEDERA_NETWORK || "testnet",
-            consensusRequired: true
+            consensusRequired: true,
           },
-          m: `HCS-11 agent profile deployment for ${agent.role} validation agent`
+          m: `HCS-11 agent profile deployment for ${agent.role} validation agent`,
         };
 
         const deploymentResult = await hcs10Client.sendMessage(
@@ -646,7 +769,9 @@ const hrAgentController = {
           JSON.stringify(deploymentMessage)
         );
 
-        console.log(`      ✅ Profile deployed with consensus message ID: ${deploymentResult.toString()}`);
+        console.log(
+          `      ✅ Profile deployed with consensus message ID: ${deploymentResult.toString()}`
+        );
 
         // Step 5: Send profile registration to outbound topic for network discovery
         const registrationMessage = {
@@ -662,9 +787,9 @@ const hrAgentController = {
             inboundTopic: inboundTopicId,
             outboundTopic: outboundTopicId,
             status: "online",
-            discoverable: true
+            discoverable: true,
           },
-          m: `Agent registration announcement for network discovery`
+          m: `Agent registration announcement for network discovery`,
         };
 
         await hcs10Client.sendMessage(
@@ -681,12 +806,13 @@ const hrAgentController = {
           outboundTopicId: outboundTopicId,
           deploymentMessageId: deploymentResult.toString(),
           profileId: profileId,
-          integrity: hcs11Profile.integrity
+          integrity: hcs11Profile.integrity,
         };
-
       } catch (deploymentError) {
-        console.error(`      ❌ Failed to deploy profile: ${deploymentError.message}`);
-        
+        console.error(
+          `      ❌ Failed to deploy profile: ${deploymentError.message}`
+        );
+
         // Return success with topics but note deployment failure
         return {
           success: true,
@@ -694,18 +820,19 @@ const hrAgentController = {
           inboundTopicId: inboundTopicId,
           outboundTopicId: outboundTopicId,
           message: `Topics created but profile deployment failed: ${deploymentError.message}`,
-          profileId: profileId
+          profileId: profileId,
         };
       }
-
     } catch (error) {
-      console.error(`      💥 HCS-11 profile creation failed: ${error.message}`);
+      console.error(
+        `      💥 HCS-11 profile creation failed: ${error.message}`
+      );
       return {
         success: false,
         error: error.message,
         profile: null,
         inboundTopicId: null,
-        outboundTopicId: null
+        outboundTopicId: null,
       };
     }
   },
@@ -717,41 +844,85 @@ const hrAgentController = {
     const specializations = {
       "Soft Skills Specialist": {
         focus: "interpersonal_skills",
-        expertise: ["communication", "teamwork", "emotional_intelligence", "leadership"],
-        evaluationCriteria: ["collaboration", "adaptability", "problem_solving"]
+        expertise: [
+          "communication",
+          "teamwork",
+          "emotional_intelligence",
+          "leadership",
+        ],
+        evaluationCriteria: [
+          "collaboration",
+          "adaptability",
+          "problem_solving",
+        ],
       },
       "Technical Skills Evaluator": {
-        focus: "technical_competence", 
-        expertise: ["programming", "system_design", "technical_architecture", "code_quality"],
-        evaluationCriteria: ["technical_depth", "innovation", "best_practices"]
+        focus: "technical_competence",
+        expertise: [
+          "programming",
+          "system_design",
+          "technical_architecture",
+          "code_quality",
+        ],
+        evaluationCriteria: ["technical_depth", "innovation", "best_practices"],
       },
       "Experience Validator": {
         focus: "professional_background",
-        expertise: ["work_history", "achievements", "career_progression", "industry_knowledge"],
-        evaluationCriteria: ["relevance", "growth", "accomplishments"]
+        expertise: [
+          "work_history",
+          "achievements",
+          "career_progression",
+          "industry_knowledge",
+        ],
+        evaluationCriteria: ["relevance", "growth", "accomplishments"],
       },
       "Cultural Fit Assessor": {
         focus: "organizational_alignment",
-        expertise: ["values_alignment", "team_dynamics", "company_culture", "behavioral_fit"],
-        evaluationCriteria: ["cultural_match", "team_integration", "value_alignment"]
+        expertise: [
+          "values_alignment",
+          "team_dynamics",
+          "company_culture",
+          "behavioral_fit",
+        ],
+        evaluationCriteria: [
+          "cultural_match",
+          "team_integration",
+          "value_alignment",
+        ],
       },
       "Leadership Potential Evaluator": {
         focus: "leadership_capabilities",
-        expertise: ["strategic_thinking", "team_management", "decision_making", "vision"],
-        evaluationCriteria: ["leadership_style", "influence", "strategic_thinking"]
+        expertise: [
+          "strategic_thinking",
+          "team_management",
+          "decision_making",
+          "vision",
+        ],
+        evaluationCriteria: [
+          "leadership_style",
+          "influence",
+          "strategic_thinking",
+        ],
       },
       "Communication Skills Specialist": {
         focus: "communication_effectiveness",
-        expertise: ["verbal_communication", "written_communication", "presentation_skills", "active_listening"],
-        evaluationCriteria: ["clarity", "persuasion", "engagement"]
-      }
+        expertise: [
+          "verbal_communication",
+          "written_communication",
+          "presentation_skills",
+          "active_listening",
+        ],
+        evaluationCriteria: ["clarity", "persuasion", "engagement"],
+      },
     };
 
-    return specializations[role] || {
-      focus: "general_evaluation",
-      expertise: ["assessment", "evaluation", "feedback"],
-      evaluationCriteria: ["competence", "performance", "potential"]
-    };
+    return (
+      specializations[role] || {
+        focus: "general_evaluation",
+        expertise: ["assessment", "evaluation", "feedback"],
+        evaluationCriteria: ["competence", "performance", "potential"],
+      }
+    );
   },
 
   /**
@@ -759,18 +930,18 @@ const hrAgentController = {
    */
   async getAllAgents(req, res) {
     try {
-      const agents = await AgentModel.find().select('-hederaPrivateKey');
-      
+      const agents = await AgentModel.find().select("-hederaPrivateKey");
+
       res.status(200).json({
         success: true,
-        data: agents
+        data: agents,
       });
     } catch (error) {
-      console.error('Error fetching HR agents:', error);
+      console.error("Error fetching HR agents:", error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
-        error: error.message
+        message: "Internal server error",
+        error: error.message,
       });
     }
   },
@@ -781,26 +952,28 @@ const hrAgentController = {
   async getAgentByAvatar(req, res) {
     try {
       const { avatarName } = req.params;
-      
-      const agent = await AgentModel.findOne({ avatarName }).select('-hederaPrivateKey');
-      
+
+      const agent = await AgentModel.findOne({ avatarName }).select(
+        "-hederaPrivateKey"
+      );
+
       if (!agent) {
         return res.status(404).json({
           success: false,
-          message: 'Agent not found'
+          message: "Agent not found",
         });
       }
 
       res.status(200).json({
         success: true,
-        data: agent
+        data: agent,
       });
     } catch (error) {
-      console.error('Error fetching agent by avatar:', error);
+      console.error("Error fetching agent by avatar:", error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
-        error: error.message
+        message: "Internal server error",
+        error: error.message,
       });
     }
   },
@@ -811,19 +984,90 @@ const hrAgentController = {
   async getAgentsByRole(req, res) {
     try {
       const { role } = req.params;
-      
-      const agents = await AgentModel.find({ role }).select('-hederaPrivateKey');
-      
+
+      const agents = await AgentModel.find({ role }).select(
+        "-hederaPrivateKey"
+      );
+
       res.status(200).json({
         success: true,
-        data: agents
+        data: agents,
       });
     } catch (error) {
-      console.error('Error fetching agents by role:', error);
+      console.error("Error fetching agents by role:", error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error', 
-        error: error.message
+        message: "Internal server error",
+        error: error.message,
+      });
+    }
+  },
+
+  /**
+   * Get agents by company
+   */
+  async getAgentsByCompany(req, res) {
+    try {
+      const companyId = req.user._id; 
+
+      // Récupérer les agents
+      const agents = await AgentModel.find(
+        { Company: companyId },
+        { _id: 1, name: 1, postId: 1 }
+      )
+        .populate({ path: "postId", select: "jobDetails user" })
+        .lean();
+  
+      if (!agents || agents.length === 0) {
+        return res.status(200).json({
+          success: true,
+          data: [],
+          message: "Aucun agent trouvé pour cette société",
+        });
+      }
+  
+      // Pour chaque agent, calculer les matches
+      const agentsWithMatches = [];
+      let totalMatches = 0;
+  
+      for (const agent of agents) {
+        const agentLabel = agent.name || agent._id?.toString();
+  
+        if (!agent.postId?._id) {
+          agentsWithMatches.push({
+            agentId: agent._id,
+            name: agentLabel,
+            matches: [],
+            message: "Pas de post associé",
+          });
+          continue;
+        }
+  
+        const { jobTitle, matches } = await computeMatches(agent.postId._id);
+        totalMatches += matches.length;
+  
+        agentsWithMatches.push({
+          agentId: agent._id,
+          name: agentLabel,
+          jobTitle: jobTitle,
+          matches: matches,
+        });
+      }
+  
+      // Réponse JSON complète
+      return res.status(200).json({
+        success: true,
+        companyId,
+        totalAgents: agents.length,
+        totalMatches,
+        agents: agentsWithMatches,
+      });
+    } catch (error) {
+      console.error("Error fetching agents by company:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+        error: error.message,
       });
     }
   },
@@ -834,12 +1078,12 @@ const hrAgentController = {
   async createAgent(req, res) {
     try {
       // Check if user has admin role
-    //   if (req.user.role !== 'admin') {
-    //     return res.status(403).json({
-    //       success: false,
-    //       message: 'Access denied. Admin role required.'
-    //     });
-    //   }
+      //   if (req.user.role !== 'admin') {
+      //     return res.status(403).json({
+      //       success: false,
+      //       message: 'Access denied. Admin role required.'
+      //     });
+      //   }
 
       const { name, avatarName, role, description } = req.body;
 
@@ -847,24 +1091,24 @@ const hrAgentController = {
       if (!name || !avatarName || !role) {
         return res.status(400).json({
           success: false,
-          message: 'Name, avatarName, and role are required'
+          message: "Name, avatarName, and role are required",
         });
       }
 
       // Check if agent with same name or avatar already exists
       const existingAgent = await AgentModel.findOne({
-        $or: [{ name }, { avatarName }]
+        $or: [{ name }, { avatarName }],
       });
 
       if (existingAgent) {
         return res.status(400).json({
           success: false,
-          message: 'Agent with this name or avatar already exists'
+          message: "Agent with this name or avatar already exists",
         });
       }
 
       console.log(`Creating Hedera wallet for agent: ${name}`);
-      
+
       // Create Hedera wallet for this agent
       const hederaWallet = await createHederaWallet();
 
@@ -881,11 +1125,11 @@ const hrAgentController = {
         // Legacy fields for backwards compatibility
         accountId: hederaWallet.accountId,
         privkey: hederaWallet.privkey,
-        pubkey: hederaWallet.pubkey
+        pubkey: hederaWallet.pubkey,
       });
 
       const savedAgent = await newAgent.save();
-      
+
       // Remove private key from response for security
       const agentResponse = savedAgent.toObject();
       delete agentResponse.hederaPrivateKey;
@@ -893,16 +1137,15 @@ const hrAgentController = {
 
       res.status(201).json({
         success: true,
-        message: 'HR agent created successfully',
-        data: agentResponse
+        message: "HR agent created successfully",
+        data: agentResponse,
       });
-
     } catch (error) {
-      console.error('Error creating HR agent:', error);
+      console.error("Error creating HR agent:", error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error',
-        error: error.message
+        message: "Internal server error",
+        error: error.message,
       });
     }
   },
@@ -913,7 +1156,7 @@ const hrAgentController = {
   async createAgentToolkit(agentId) {
     const agent = await AgentModel.findById(agentId);
     if (!agent) {
-      throw new Error('Agent not found');
+      throw new Error("Agent not found");
     }
 
     const agentClient = Client.forTestnet().setOperator(
@@ -924,10 +1167,10 @@ const hrAgentController = {
     const toolkit = new HederaLangchainToolkit({
       client: agentClient,
       configuration: {
-        tools: ['create_topic_tool', 'submit_topic_message_tool'],
+        tools: ["create_topic_tool", "submit_topic_message_tool"],
         plugins: [coreConsensusPlugin],
-        context: { mode: AgentMode.AUTONOMOUS }
-      }
+        context: { mode: AgentMode.AUTONOMOUS },
+      },
     });
 
     return { agent, toolkit };
@@ -939,17 +1182,18 @@ const hrAgentController = {
    */
   async sendValidationMessage(req, res) {
     try {
-      const { 
-        candidateId, 
-        evaluationResult, 
+      const {
+        candidateId,
+        evaluationResult,
         interviewNotes,
         topicId,
-        agentId
+        agentId,
       } = req.body;
 
       if (!candidateId || !evaluationResult || !topicId || !agentId) {
         return res.status(400).json({
-          error: "candidateId, evaluationResult, topicId, and agentId are required"
+          error:
+            "candidateId, evaluationResult, topicId, and agentId are required",
         });
       }
 
@@ -961,12 +1205,13 @@ const hrAgentController = {
 
       // Initialize HCS10Client for the agent
       const hcs10Client = new HCS10Client({
-        network: 'testnet',
+        network: "testnet",
         operatorId: sendingAgent.hederaAccountId,
         operatorPrivateKey: sendingAgent.hederaPrivateKey,
-        guardedRegistryBaseUrl: process.env.REGISTRY_URL || 'https://moonscape.tech',
+        guardedRegistryBaseUrl:
+          process.env.REGISTRY_URL || "https://moonscape.tech",
         prettyPrint: true,
-        logLevel: 'debug',
+        logLevel: "debug",
       });
 
       // Create HCS-11 compliant evaluation message
@@ -978,19 +1223,21 @@ const hrAgentController = {
           name: sendingAgent.name,
           avatar: sendingAgent.avatarName,
           role: sendingAgent.role,
-          accountId: sendingAgent.hederaAccountId
+          accountId: sendingAgent.hederaAccountId,
         },
         evaluation: {
           candidateId: candidateId,
           passed: evaluationResult.passed,
           score: evaluationResult.score,
           feedback: evaluationResult.feedback,
-          interviewNotes: interviewNotes
+          interviewNotes: interviewNotes,
         },
         conversationalPrompt: `🎯 ${sendingAgent.role.toUpperCase()} EVALUATION COMPLETE
         
 Candidate: ${candidateId}
-Overall Assessment: ${evaluationResult.passed ? '✅ APPROVED' : '❌ NEEDS IMPROVEMENT'}
+Overall Assessment: ${
+          evaluationResult.passed ? "✅ APPROVED" : "❌ NEEDS IMPROVEMENT"
+        }
 Score: ${evaluationResult.score}/100
 
 📊 Key Findings:
@@ -999,11 +1246,13 @@ ${evaluationResult.feedback}
 🗣️ Interview Insights:
 ${interviewNotes}
 
-💡 Recommendation: ${evaluationResult.passed ? 
-  'This candidate demonstrates excellent abilities and would be a great fit for the team.' : 
-  'This candidate needs development before proceeding.'}
+💡 Recommendation: ${
+          evaluationResult.passed
+            ? "This candidate demonstrates excellent abilities and would be a great fit for the team."
+            : "This candidate needs development before proceeding."
+        }
 
-@Coordinator: Please review and provide your assessment. What are your thoughts on this evaluation?`
+@Coordinator: Please review and provide your assessment. What are your thoughts on this evaluation?`,
       };
 
       // Send message using HCS-10 standards
@@ -1024,13 +1273,17 @@ ${interviewNotes}
           agentRole: sendingAgent.role,
           messageId: messageId,
           evaluation: evaluationResult,
-          timestamp: new Date()
+          timestamp: new Date(),
         });
         await evaluationTopic.save();
       }
 
       // Start automatic monitoring for coordinator response
-      this.startAgentCommunicationMonitoring(topicId, sendingAgent._id, candidateId);
+      this.startAgentCommunicationMonitoring(
+        topicId,
+        sendingAgent._id,
+        candidateId
+      );
 
       res.json({
         success: true,
@@ -1039,14 +1292,13 @@ ${interviewNotes}
         topicId: topicId,
         agentName: sendingAgent.name,
         evaluation: evaluationResult,
-        hcs11Compliant: true
+        hcs11Compliant: true,
       });
-
     } catch (error) {
-      console.error('Error sending validation message:', error);
+      console.error("Error sending validation message:", error);
       res.status(500).json({
         error: "Failed to send validation message",
-        details: error.message
+        details: error.message,
       });
     }
   },
@@ -1057,63 +1309,72 @@ ${interviewNotes}
    */
   async submitEvaluationMessage(req, res) {
     try {
-      const { 
+      const {
         agentAId,
         agentBId,
         candidateId,
         postId,
         message,
         bidAmount,
-        bidMessage
+        bidMessage,
       } = req.body;
 
       if (!agentAId || !agentBId || !candidateId) {
         return res.status(400).json({
-          error: "agentAId, agentBId, and candidateId are required"
+          error: "agentAId, agentBId, and candidateId are required",
         });
       }
 
       // Get both agents with their HCS-11 profiles
       const agentA = await AgentModel.findById(agentAId);
       const agentB = await AgentModel.findById(agentBId);
-        
+
       if (!agentA || !agentB) {
         return res.status(404).json({ error: "One or both agents not found" });
       }
 
       // Fetch HCS-11 profiles from Hedera network to get latest topic information
-      console.log(`🔍 Fetching HCS-11 profiles from network to ensure topic availability...`);
-      
+      console.log(
+        `🔍 Fetching HCS-11 profiles from network to ensure topic availability...`
+      );
+
       // Function to fetch and update agent profile with topic IDs
       const fetchAndUpdateAgentProfile = async (agent) => {
         try {
-          console.log(`📡 Fetching HCS-11 profile for ${agent.name} (${agent.hederaAccountId})`);
-          
+          console.log(
+            `📡 Fetching HCS-11 profile for ${agent.name} (${agent.hederaAccountId})`
+          );
+
           const client = new HCS11Client({
-            network: process.env.HEDERA_NETWORK === 'mainnet' ? 'mainnet' : 'testnet',
+            network:
+              process.env.HEDERA_NETWORK === "mainnet" ? "mainnet" : "testnet",
             auth: {
               operatorId: agent.hederaAccountId,
               privateKey: agent.hederaPrivateKey,
             },
-            logLevel: 'info',
+            logLevel: "info",
           });
 
           // Fetch profile from network
           const profileResult = await client.fetchProfileByAccountId(
             agent.hederaAccountId,
-            process.env.HEDERA_NETWORK === 'mainnet' ? 'mainnet' : 'testnet'
+            process.env.HEDERA_NETWORK === "mainnet" ? "mainnet" : "testnet"
           );
 
           if (profileResult.success && profileResult.profile) {
             console.log(`✅ Profile retrieved for ${agent.name}`);
-            
+
             // Parse profile to extract topic information
             let parsedProfile = profileResult.profile;
-            if (typeof profileResult.profile === 'string') {
+            if (typeof profileResult.profile === "string") {
               try {
-                parsedProfile = client.parseProfileFromString(profileResult.profile);
+                parsedProfile = client.parseProfileFromString(
+                  profileResult.profile
+                );
               } catch (parseError) {
-                console.log(`⚠️ Could not parse profile: ${parseError.message}`);
+                console.log(
+                  `⚠️ Could not parse profile: ${parseError.message}`
+                );
               }
             }
 
@@ -1121,55 +1382,69 @@ ${interviewNotes}
             let inboundTopicId = agent.inboundTopicId;
             let outboundTopicId = agent.outboundTopicId;
 
-            if (parsedProfile && typeof parsedProfile === 'object') {
+            if (parsedProfile && typeof parsedProfile === "object") {
               // Try to extract from parsed profile
               if (parsedProfile.inboundTopicId) {
                 inboundTopicId = parsedProfile.inboundTopicId;
-                console.log(`📥 Found inbound topic in profile: ${inboundTopicId}`);
+                console.log(
+                  `📥 Found inbound topic in profile: ${inboundTopicId}`
+                );
               }
               if (parsedProfile.outboundTopicId) {
                 outboundTopicId = parsedProfile.outboundTopicId;
-                console.log(`📤 Found outbound topic in profile: ${outboundTopicId}`);
+                console.log(
+                  `📤 Found outbound topic in profile: ${outboundTopicId}`
+                );
               }
             }
 
             // Update agent in database if we have new topic information
-            if ((inboundTopicId && inboundTopicId !== agent.inboundTopicId) || 
-                (outboundTopicId && outboundTopicId !== agent.outboundTopicId)) {
-              console.log(`📝 Updating ${agent.name} with topic IDs from profile`);
+            if (
+              (inboundTopicId && inboundTopicId !== agent.inboundTopicId) ||
+              (outboundTopicId && outboundTopicId !== agent.outboundTopicId)
+            ) {
+              console.log(
+                `📝 Updating ${agent.name} with topic IDs from profile`
+              );
               await AgentModel.findByIdAndUpdate(agent._id, {
                 inboundTopicId: inboundTopicId || agent.inboundTopicId,
                 outboundTopicId: outboundTopicId || agent.outboundTopicId,
-                hcs11ProfileTopicId: profileResult.profileTopicId || agent.hcs11ProfileTopicId,
-                lastProfileFetch: new Date()
+                hcs11ProfileTopicId:
+                  profileResult.profileTopicId || agent.hcs11ProfileTopicId,
+                lastProfileFetch: new Date(),
               });
-              
+
               // Update local agent object
               agent.inboundTopicId = inboundTopicId || agent.inboundTopicId;
               agent.outboundTopicId = outboundTopicId || agent.outboundTopicId;
-              agent.hcs11ProfileTopicId = profileResult.profileTopicId || agent.hcs11ProfileTopicId;
+              agent.hcs11ProfileTopicId =
+                profileResult.profileTopicId || agent.hcs11ProfileTopicId;
             }
 
             return {
               success: true,
               inboundTopicId: inboundTopicId,
               outboundTopicId: outboundTopicId,
-              profileTopicId: profileResult.profileTopicId
+              profileTopicId: profileResult.profileTopicId,
             };
-
           } else {
-            console.log(`❌ No profile found for ${agent.name}: ${profileResult.error || 'Profile not found'}`);
+            console.log(
+              `❌ No profile found for ${agent.name}: ${
+                profileResult.error || "Profile not found"
+              }`
+            );
             return {
               success: false,
-              error: profileResult.error || 'Profile not found on network'
+              error: profileResult.error || "Profile not found on network",
             };
           }
-
         } catch (error) {
-          console.error(`❌ Error fetching profile for ${agent.name}: ${error.message}`);
+          console.error(
+            `❌ Error fetching profile for ${agent.name}: ${error.message}`
+          );
           return {
             success: false,
-            error: error.message
+            error: error.message,
           };
         }
       };
@@ -1177,77 +1452,91 @@ ${interviewNotes}
       // Fetch profiles for both agents
       const [agentAProfile, agentBProfile] = await Promise.all([
         fetchAndUpdateAgentProfile(agentA),
-        fetchAndUpdateAgentProfile(agentB)
+        fetchAndUpdateAgentProfile(agentB),
       ]);
 
       // Validate agents have HCS-10 topics after profile fetch
       if (!agentA.inboundTopicId || !agentA.outboundTopicId) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: `Agent A (${agentA.name}) missing HCS-10 topics even after profile fetch.`,
           profileFetchResult: agentAProfile,
-          solution: "Please run POST /hr-agents/initialize to create proper agent profiles with topics"
+          solution:
+            "Please run POST /hr-agents/initialize to create proper agent profiles with topics",
         });
       }
-      
+
       if (!agentB.inboundTopicId || !agentB.outboundTopicId) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: `Agent B (${agentB.name}) missing HCS-10 topics even after profile fetch.`,
           profileFetchResult: agentBProfile,
-          solution: "Please run POST /hr-agents/initialize to create proper agent profiles with topics"
+          solution:
+            "Please run POST /hr-agents/initialize to create proper agent profiles with topics",
         });
       }
 
       console.log(`✅ Both agents have required HCS-10 topics:`);
 
-      console.log(`🤖 Starting HCS-10/HCS-11 agent messaging between ${agentA.name} and ${agentB.name}`);
+      console.log(
+        `🤖 Starting HCS-10/HCS-11 agent messaging between ${agentA.name} and ${agentB.name}`
+      );
       console.log(`📡 Using Hedera network profiles for communication`);
-      console.log(`📥 Agent A Inbound: ${agentA.inboundTopicId} | 📤 Outbound: ${agentA.outboundTopicId}`);
-      console.log(`📥 Agent B Inbound: ${agentB.inboundTopicId} | 📤 Outbound: ${agentB.outboundTopicId}`);
+      console.log(
+        `📥 Agent A Inbound: ${agentA.inboundTopicId} | 📤 Outbound: ${agentA.outboundTopicId}`
+      );
+      console.log(
+        `📥 Agent B Inbound: ${agentB.inboundTopicId} | 📤 Outbound: ${agentB.outboundTopicId}`
+      );
 
       // Start timing the conversation
       const conversationStartTime = Date.now();
 
       // Initialize HCS10 clients for both agents
       const agentAHCS10 = new HCS10Client({
-        network: 'testnet',
+        network: "testnet",
         operatorId: agentA.hederaAccountId,
         operatorPrivateKey: agentA.hederaPrivateKey,
-        guardedRegistryBaseUrl: process.env.REGISTRY_URL || 'https://moonscape.tech',
+        guardedRegistryBaseUrl:
+          process.env.REGISTRY_URL || "https://moonscape.tech",
         prettyPrint: false,
-        logLevel: 'info'
+        logLevel: "info",
       });
 
       const agentBHCS10 = new HCS10Client({
-        network: 'testnet',
+        network: "testnet",
         operatorId: agentB.hederaAccountId,
         operatorPrivateKey: agentB.hederaPrivateKey,
-        guardedRegistryBaseUrl: process.env.REGISTRY_URL || 'https://moonscape.tech',
+        guardedRegistryBaseUrl:
+          process.env.REGISTRY_URL || "https://moonscape.tech",
         prettyPrint: false,
-        logLevel: 'info'
+        logLevel: "info",
       });
 
       // Initialize LangChain agents for AI-powered responses
       let agentALangChain, agentBLangChain;
-      
+
       try {
         agentALangChain = new LangChainTogetherAIAgent({
           accountId: agentA.hederaAccountId,
           privateKey: agentA.hederaPrivateKey,
-          network: 'testnet',
-          operationalMode: 'standard',
+          network: "testnet",
+          operationalMode: "standard",
           verbose: false,
-          skipProfileValidation: true
+          skipProfileValidation: true,
         });
         await agentALangChain.initialize();
         console.log(`✅ Agent A (${agentA.name}) LangChain initialized`);
       } catch (error) {
-        console.log(`⚠️  Agent A LangChain failed, using fallback: ${error.message}`);
+        console.log(
+          `⚠️  Agent A LangChain failed, using fallback: ${error.message}`
+        );
         agentALangChain = {
           processMessage: async (prompt) => ({
-            response: `Bidding amount ${finalBidAmount} for candidate ${candidateId} of the post ${postId || 'N/A'}`,
+            response: `Bidding amount ${finalBidAmount} for candidate ${candidateId} of the post ${
+              postId || "N/A"
+            }`,
             success: true,
-            metadata: { provider: "fallback-mode" }
-          })
+            metadata: { provider: "fallback-mode" },
+          }),
         };
       }
 
@@ -1255,49 +1544,56 @@ ${interviewNotes}
         agentBLangChain = new LangChainTogetherAIAgent({
           accountId: agentB.hederaAccountId,
           privateKey: agentB.hederaPrivateKey,
-          network: 'testnet',
-          operationalMode: 'standard',
+          network: "testnet",
+          operationalMode: "standard",
           verbose: false,
-          skipProfileValidation: true
+          skipProfileValidation: true,
         });
         await agentBLangChain.initialize();
         console.log(`✅ Agent B (${agentB.name}) LangChain initialized`);
       } catch (error) {
-        console.log(`⚠️  Agent B LangChain failed, using fallback: ${error.message}`);
+        console.log(
+          `⚠️  Agent B LangChain failed, using fallback: ${error.message}`
+        );
         agentBLangChain = {
           processMessage: async (prompt) => ({
             response: `Your bid is stored`,
             success: true,
-            metadata: { provider: "fallback-mode" }
-          })
+            metadata: { provider: "fallback-mode" },
+          }),
         };
       }
 
       // Display conversation header
-      const finalBidAmount = bidAmount && !isNaN(bidAmount) ? parseFloat(bidAmount) : 1000.0;
-      console.log('\n' + '='.repeat(80));
+      const finalBidAmount =
+        bidAmount && !isNaN(bidAmount) ? parseFloat(bidAmount) : 1000.0;
+      console.log("\n" + "=".repeat(80));
       console.log(`🗣️  HCS-10/HCS-11 BIDDING SIMULATION STARTING`);
       console.log(`👥 Participants: ${agentA.name} → ${agentB.name}`);
       console.log(`🎯 Topic: Candidate ${candidateId} Evaluation`);
       console.log(`💰 Bid Amount: $${finalBidAmount}`);
       console.log(`📅 Started: ${new Date().toLocaleString()}`);
-      console.log('='.repeat(80));
+      console.log("=".repeat(80));
 
       // STEP 1: Agent A generates and sends bid message to Agent B's inbound topic
       console.log(`\n💬 STEP 1: ${agentA.name} composing bid message...`);
-      
+
       // Agent A (Company Agent) sends exact bid message
-      const exactBidMessage = `Bid amount ${finalBidAmount} for candidate ${candidateId} for post ${postId || 'N/A'}`;
+      const exactBidMessage = `Bid amount ${finalBidAmount} for candidate ${candidateId} for post ${
+        postId || "N/A"
+      }`;
       const agentAResponse = { response: exactBidMessage }; // Direct message, no AI processing needed
-      
+
       // Create HCS-11 compliant message structure
       const hcs11MessageFromA = {
         standard: "HCS-11",
         version: "1.0.0",
         type: "agent_evaluation_message",
         timestamp: new Date().toISOString(),
-        messageId: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        
+        messageId: `msg_${Date.now()}_${Math.random()
+          .toString(36)
+          .substr(2, 9)}`,
+
         // Sender profile information
         from: {
           agentId: agentA._id.toString(),
@@ -1306,9 +1602,9 @@ ${interviewNotes}
           role: agentA.role,
           hederaAccountId: agentA.hederaAccountId,
           profileTopicId: agentA.hcs11ProfileTopicId,
-          outboundTopicId: agentA.outboundTopicId
+          outboundTopicId: agentA.outboundTopicId,
         },
-        
+
         // Recipient profile information
         to: {
           agentId: agentB._id.toString(),
@@ -1317,9 +1613,9 @@ ${interviewNotes}
           role: agentB.role,
           hederaAccountId: agentB.hederaAccountId,
           profileTopicId: agentB.hcs11ProfileTopicId,
-          inboundTopicId: agentB.inboundTopicId
+          inboundTopicId: agentB.inboundTopicId,
         },
-        
+
         // Message content
         content: {
           subject: `Candidate ${candidateId} Bid Submission`,
@@ -1331,44 +1627,48 @@ ${interviewNotes}
           currency: "USD",
           bidType: "candidate_evaluation",
           priority: "normal",
-          requiresResponse: true
+          requiresResponse: true,
         },
-        
+
         // Metadata
         metadata: {
           conversationId: `bid_conv_${Date.now()}`,
           protocol: "hcs-10",
           messageFormat: "agent_bid_message",
-          platform: "talentai_bidding"
-        }
+          platform: "talentai_bidding",
+        },
       };
 
       // Send message from Agent A to Agent B's inbound topic
-      console.log(`📤 Sending message to ${agentB.name}'s inbound topic: ${agentB.inboundTopicId}`);
+      console.log(
+        `📤 Sending message to ${agentB.name}'s inbound topic: ${agentB.inboundTopicId}`
+      );
       const messageToB = await agentAHCS10.sendMessage(
         agentB.inboundTopicId,
         JSON.stringify(hcs11MessageFromA)
       );
-      
+
       console.log(`✅ Message sent! Message ID: ${messageToB.toString()}`);
       console.log(`💭 "${agentAResponse.response}"`);
 
       // Wait a moment for message propagation
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // STEP 2: Agent B (Master Agent) receives bid message and stores in database FIRST
-      console.log(`\n💬 STEP 2: ${agentB.name} (Master Agent) storing bid in database...`);
-      
+      console.log(
+        `\n💬 STEP 2: ${agentB.name} (Master Agent) storing bid in database...`
+      );
+
       // Store bid in database BEFORE responding
       let agentBResponse;
-      
+
       try {
         // Find or create evaluation topic for this bid
-        let evaluationTopic = await EvaluationTopicModel.findOne({ 
+        let evaluationTopic = await EvaluationTopicModel.findOne({
           candidateId: candidateId,
-          postId: postId 
+          postId: postId,
         });
-        
+
         if (!evaluationTopic) {
           // Create new evaluation topic with all required fields
           evaluationTopic = new EvaluationTopicModel({
@@ -1377,11 +1677,13 @@ ${interviewNotes}
             postId: postId || `bid_post_${candidateId}`,
             candidateName: `Candidate_${candidateId}`,
             candidateId: candidateId,
-            topicMemo: `Bidding topic for candidate ${candidateId} on post ${postId || 'N/A'}`,
-            status: 'active',
+            topicMemo: `Bidding topic for candidate ${candidateId} on post ${
+              postId || "N/A"
+            }`,
+            status: "active",
             createdBy: agentB.name,
             evaluations: [],
-            createdAt: new Date()
+            createdAt: new Date(),
           });
         }
 
@@ -1396,22 +1698,25 @@ ${interviewNotes}
             passed: null,
             score: finalBidAmount, // Store bid amount as score
             feedback: agentAResponse.response,
-            interviewNotes: `Bid received: ${finalBidAmount} for candidate ${candidateId} on post ${postId || 'N/A'}`,
+            interviewNotes: `Bid received: ${finalBidAmount} for candidate ${candidateId} on post ${
+              postId || "N/A"
+            }`,
             messageType: "bid_message",
             bidAmount: finalBidAmount,
             currency: "USD",
             postId: postId,
-            storedByMasterAgent: agentB.name
+            storedByMasterAgent: agentB.name,
           },
-          timestamp: new Date()
+          timestamp: new Date(),
         });
 
         await evaluationTopic.save();
-        console.log(`✅ Bid stored successfully in database by ${agentB.name} (Master Agent)`);
-        
+        console.log(
+          `✅ Bid stored successfully in database by ${agentB.name} (Master Agent)`
+        );
+
         // STEP 3: Now Master Agent responds with exact message
         agentBResponse = { response: "Bid successfully stored" }; // Exact response message
-        
       } catch (dbError) {
         console.error(`❌ Database storage error: ${dbError.message}`);
         agentBResponse = { response: "Bid storage failed" };
@@ -1423,9 +1728,11 @@ ${interviewNotes}
         version: "1.0.0",
         type: "agent_response_message",
         timestamp: new Date().toISOString(),
-        messageId: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        messageId: `msg_${Date.now()}_${Math.random()
+          .toString(36)
+          .substr(2, 9)}`,
         inReplyTo: hcs11MessageFromA.messageId,
-        
+
         // Sender (Agent B)
         from: {
           agentId: agentB._id.toString(),
@@ -1434,9 +1741,9 @@ ${interviewNotes}
           role: agentB.role,
           hederaAccountId: agentB.hederaAccountId,
           profileTopicId: agentB.hcs11ProfileTopicId,
-          outboundTopicId: agentB.outboundTopicId
+          outboundTopicId: agentB.outboundTopicId,
         },
-        
+
         // Recipient (Agent A)
         to: {
           agentId: agentA._id.toString(),
@@ -1445,68 +1752,87 @@ ${interviewNotes}
           role: agentA.role,
           hederaAccountId: agentA.hederaAccountId,
           profileTopicId: agentA.hcs11ProfileTopicId,
-          inboundTopicId: agentA.inboundTopicId
+          inboundTopicId: agentA.inboundTopicId,
         },
-        
+
         // Response content
         content: {
           subject: `Re: Candidate ${candidateId} Evaluation`,
           message: agentBResponse.response,
           candidateId: candidateId,
           responseType: agentB.role,
-          originalMessage: hcs11MessageFromA.content.message
+          originalMessage: hcs11MessageFromA.content.message,
         },
-        
+
         // Metadata
         metadata: {
           conversationId: hcs11MessageFromA.metadata.conversationId,
           protocol: "hcs-10",
           messageFormat: "agent_response",
-          platform: "talentai"
-        }
+          platform: "talentai",
+        },
       };
 
       // Send response from Agent B to Agent A's inbound topic
-      console.log(`📤 Sending response to ${agentA.name}'s inbound topic: ${agentA.inboundTopicId}`);
+      console.log(
+        `📤 Sending response to ${agentA.name}'s inbound topic: ${agentA.inboundTopicId}`
+      );
       const responseToA = await agentBHCS10.sendMessage(
         agentA.inboundTopicId,
         JSON.stringify(hcs11ResponseFromB)
       );
-      
+
       console.log(`✅ Response sent! Message ID: ${responseToA.toString()}`);
       console.log(`💭 "${agentBResponse.response}"`);
 
       // Display conversation summary
-      console.log('\n' + '🔄 HCS-10/HCS-11 CONVERSATION SUMMARY '.padStart(50, '=').padEnd(80, '='));
-      console.log(`1️⃣  ${agentA.name} → ${agentB.name}: "${agentAResponse.response}"`);
-      console.log(`   📡 Sent to: ${agentB.inboundTopicId} | Message ID: ${messageToB.toString()}`);
-      console.log(`2️⃣  ${agentB.name} → ${agentA.name}: "${agentBResponse.response}"`);
-      console.log(`   📡 Sent to: ${agentA.inboundTopicId} | Message ID: ${responseToA.toString()}`);
-      console.log('='.repeat(80));
+      console.log(
+        "\n" +
+          "🔄 HCS-10/HCS-11 CONVERSATION SUMMARY "
+            .padStart(50, "=")
+            .padEnd(80, "=")
+      );
+      console.log(
+        `1️⃣  ${agentA.name} → ${agentB.name}: "${agentAResponse.response}"`
+      );
+      console.log(
+        `   📡 Sent to: ${
+          agentB.inboundTopicId
+        } | Message ID: ${messageToB.toString()}`
+      );
+      console.log(
+        `2️⃣  ${agentB.name} → ${agentA.name}: "${agentBResponse.response}"`
+      );
+      console.log(
+        `   📡 Sent to: ${
+          agentA.inboundTopicId
+        } | Message ID: ${responseToA.toString()}`
+      );
+      console.log("=".repeat(80));
 
       // Create conversation record
       const conversationRecord = {
         conversationId: hcs11MessageFromA.metadata.conversationId,
-        type: 'hcs-10-messaging',
+        type: "hcs-10-messaging",
         participants: [
-          { 
-            agentId: agentA._id, 
-            name: agentA.name, 
+          {
+            agentId: agentA._id,
+            name: agentA.name,
             role: agentA.role,
             hederaAccountId: agentA.hederaAccountId,
             profileTopicId: agentA.hcs11ProfileTopicId,
             inboundTopicId: agentA.inboundTopicId,
-            outboundTopicId: agentA.outboundTopicId
+            outboundTopicId: agentA.outboundTopicId,
           },
-          { 
-            agentId: agentB._id, 
-            name: agentB.name, 
+          {
+            agentId: agentB._id,
+            name: agentB.name,
             role: agentB.role,
             hederaAccountId: agentB.hederaAccountId,
             profileTopicId: agentB.hcs11ProfileTopicId,
             inboundTopicId: agentB.inboundTopicId,
-            outboundTopicId: agentB.outboundTopicId
-          }
+            outboundTopicId: agentB.outboundTopicId,
+          },
         ],
         messages: [
           {
@@ -1518,7 +1844,7 @@ ${interviewNotes}
             role: agentA.role,
             topicId: agentB.inboundTopicId,
             hederaMessageId: messageToB.toString(),
-            type: 'evaluation'
+            type: "evaluation",
           },
           {
             messageId: hcs11ResponseFromB.messageId,
@@ -1529,25 +1855,25 @@ ${interviewNotes}
             role: agentB.role,
             topicId: agentA.inboundTopicId,
             hederaMessageId: responseToA.toString(),
-            type: 'response',
-            inReplyTo: hcs11MessageFromA.messageId
-          }
+            type: "response",
+            inReplyTo: hcs11MessageFromA.messageId,
+          },
         ],
         candidateId: candidateId,
-        protocol: 'hcs-10/hcs-11',
+        protocol: "hcs-10/hcs-11",
         completed: true,
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       // Update evaluation topic with HCS-10 message records
-      const evaluationTopic = await EvaluationTopicModel.findOne({ 
+      const evaluationTopic = await EvaluationTopicModel.findOne({
         $or: [
           { topicId: agentA.inboundTopicId },
           { topicId: agentB.inboundTopicId },
-          { candidateId: candidateId }
-        ]
+          { candidateId: candidateId },
+        ],
       });
-      
+
       if (evaluationTopic) {
         // Add HCS-10 bid message records
         evaluationTopic.evaluations.push({
@@ -1564,9 +1890,9 @@ ${interviewNotes}
             messageType: "agent_bid_message",
             bidAmount: finalBidAmount,
             currency: "USD",
-            sentToTopic: agentB.inboundTopicId
+            sentToTopic: agentB.inboundTopicId,
           },
-          timestamp: new Date()
+          timestamp: new Date(),
         });
 
         evaluationTopic.evaluations.push({
@@ -1584,18 +1910,20 @@ ${interviewNotes}
             receivedBidAmount: finalBidAmount,
             currency: "USD",
             sentToTopic: agentA.inboundTopicId,
-            inReplyTo: hcs11MessageFromA.messageId
+            inReplyTo: hcs11MessageFromA.messageId,
           },
-          timestamp: new Date()
+          timestamp: new Date(),
         });
 
-        evaluationTopic.status = 'active'; // Keep as active for bidding process
+        evaluationTopic.status = "active"; // Keep as active for bidding process
         await evaluationTopic.save();
-        
+
         // Log successful database storage
         console.log(`💾 Bid information stored in database successfully`);
         console.log(`📊 Evaluation Topic ID: ${evaluationTopic._id}`);
-        console.log(`💰 Bid Amount: $${finalBidAmount} recorded in evaluation records`);
+        console.log(
+          `💰 Bid Amount: $${finalBidAmount} recorded in evaluation records`
+        );
       } else {
         // Create new evaluation topic if none exists
         const newEvaluationTopic = new EvaluationTopicModel({
@@ -1605,44 +1933,63 @@ ${interviewNotes}
           candidateName: `Candidate_${candidateId}`,
           candidateId: candidateId,
           topicMemo: `Bidding topic for candidate ${candidateId} via HCS-10/HCS-11 messaging`,
-          status: 'active',
+          status: "active",
           createdBy: agentA.name,
-          evaluations: [{
-            agentId: agentA._id,
-            agentName: agentA.name,
-            agentRole: agentA.role,
-            messageId: hcs11MessageFromA.messageId,
-            hederaMessageId: messageToB.toString(),
-            evaluation: {
-              passed: null,
-              score: finalBidAmount,
-              feedback: agentAResponse.response,
-              interviewNotes: `Bid submitted via HCS-10: $${finalBidAmount}`,
-              messageType: "agent_bid_message",
-              bidAmount: finalBidAmount,
-              currency: "USD"
+          evaluations: [
+            {
+              agentId: agentA._id,
+              agentName: agentA.name,
+              agentRole: agentA.role,
+              messageId: hcs11MessageFromA.messageId,
+              hederaMessageId: messageToB.toString(),
+              evaluation: {
+                passed: null,
+                score: finalBidAmount,
+                feedback: agentAResponse.response,
+                interviewNotes: `Bid submitted via HCS-10: $${finalBidAmount}`,
+                messageType: "agent_bid_message",
+                bidAmount: finalBidAmount,
+                currency: "USD",
+              },
+              timestamp: new Date(),
             },
-            timestamp: new Date()
-          }],
-          createdAt: new Date()
+          ],
+          createdAt: new Date(),
         });
-        
+
         await newEvaluationTopic.save();
-        console.log(`💾 New evaluation topic created and bid stored: ${newEvaluationTopic._id}`);
+        console.log(
+          `💾 New evaluation topic created and bid stored: ${newEvaluationTopic._id}`
+        );
       }
 
       // Display completion status
-      console.log('\n' + '✅ HCS-10/HCS-11 BIDDING COMPLETED '.padStart(50, '=').padEnd(80, '='));
+      console.log(
+        "\n" +
+          "✅ HCS-10/HCS-11 BIDDING COMPLETED "
+            .padStart(50, "=")
+            .padEnd(80, "=")
+      );
       console.log(`🎉 Agent-to-agent bidding completed successfully!`);
-      console.log(`   💰 ${agentA.name} → ${agentB.name}: Bid of $${finalBidAmount} sent to ${agentB.inboundTopicId}`);
-      console.log(`   💾 ${agentB.name} → ${agentA.name}: Acknowledgment sent to ${agentA.inboundTopicId} & stored in database`);
+      console.log(
+        `   💰 ${agentA.name} → ${agentB.name}: Bid of $${finalBidAmount} sent to ${agentB.inboundTopicId}`
+      );
+      console.log(
+        `   💾 ${agentB.name} → ${agentA.name}: Acknowledgment sent to ${agentA.inboundTopicId} & stored in database`
+      );
       console.log(`📊 Messages exchanged: 2 (via Hedera network)`);
       console.log(`🎯 Candidate: ${candidateId}`);
       console.log(`💰 Bid Amount: $${finalBidAmount}`);
-      console.log(`⏱️  Duration: ${((Date.now() - conversationStartTime) / 1000).toFixed(1)}s`);
-      console.log(`🔗 Protocol: HCS-10 messaging with HCS-11 profiles + Database Storage`);
+      console.log(
+        `⏱️  Duration: ${((Date.now() - conversationStartTime) / 1000).toFixed(
+          1
+        )}s`
+      );
+      console.log(
+        `🔗 Protocol: HCS-10 messaging with HCS-11 profiles + Database Storage`
+      );
       console.log(`💾 Conversation ID: ${conversationRecord.conversationId}`);
-      console.log('='.repeat(80) + '\n');
+      console.log("=".repeat(80) + "\n");
 
       res.json({
         success: true,
@@ -1658,7 +2005,7 @@ ${interviewNotes}
             profileTopicId: agentA.hcs11ProfileTopicId,
             message: agentAResponse.response,
             sentTo: agentB.inboundTopicId,
-            hederaMessageId: messageToB.toString()
+            hederaMessageId: messageToB.toString(),
           },
           agentB: {
             id: agentB._id,
@@ -1668,8 +2015,8 @@ ${interviewNotes}
             profileTopicId: agentB.hcs11ProfileTopicId,
             message: agentBResponse.response,
             sentTo: agentA.inboundTopicId,
-            hederaMessageId: responseToA.toString()
-          }
+            hederaMessageId: responseToA.toString(),
+          },
         },
         candidateId: candidateId,
         biddingDetails: {
@@ -1677,33 +2024,41 @@ ${interviewNotes}
           currency: "USD",
           bidderAgent: agentA.name,
           receiverAgent: agentB.name,
-          storedInDatabase: true
+          storedInDatabase: true,
         },
         networkMessages: {
           bidMessageFromA: hcs11MessageFromA,
-          acknowledgmentFromB: hcs11ResponseFromB
+          acknowledgmentFromB: hcs11ResponseFromB,
         },
         conversationCompleted: true,
         biddingCompleted: true,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-
     } catch (error) {
       // Display error in chat format
-      console.log('\n' + '❌ HCS-10/HCS-11 MESSAGING FAILED '.padStart(40, '=').padEnd(80, '='));
+      console.log(
+        "\n" +
+          "❌ HCS-10/HCS-11 MESSAGING FAILED ".padStart(40, "=").padEnd(80, "=")
+      );
       console.error(`💥 Error during agent messaging:`);
       console.error(`🔍 Error Type: ${error.name}`);
       console.error(`📝 Error Message: ${error.message}`);
-      console.error(`🎯 Candidate: ${req.body.candidateId || 'Unknown'}`);
-      console.error(`👥 Agents: ${req.body.agentAId || 'Unknown'} ↔️ ${req.body.agentBId || 'Unknown'}`);
+      console.error(`🎯 Candidate: ${req.body.candidateId || "Unknown"}`);
+      console.error(
+        `👥 Agents: ${req.body.agentAId || "Unknown"} ↔️ ${
+          req.body.agentBId || "Unknown"
+        }`
+      );
       console.error(`⏰ Failed at: ${new Date().toLocaleString()}`);
-      
-      if (error.message.includes('missing HCS-10 topics')) {
-        console.error(`🔧 Solution: Run POST /hr-agents/initialize to create agent profiles and topics`);
+
+      if (error.message.includes("missing HCS-10 topics")) {
+        console.error(
+          `🔧 Solution: Run POST /hr-agents/initialize to create agent profiles and topics`
+        );
       }
-      
-      console.log('='.repeat(80) + '\n');
-      
+
+      console.log("=".repeat(80) + "\n");
+
       res.status(500).json({
         success: false,
         error: "Failed to complete HCS-10/HCS-11 agent messaging",
@@ -1714,16 +2069,16 @@ ${interviewNotes}
             "Agents missing HCS-10 inbound/outbound topics",
             "Invalid Hedera credentials",
             "Network connectivity issues",
-            "HCS-11 profile not properly inscribed"
+            "HCS-11 profile not properly inscribed",
           ],
           solutions: [
             "Run POST /hr-agents/initialize to create topics",
             "Use POST /hr-agents/debug-memo/:agentId to fix profiles",
             "Check Hedera network connectivity",
-            "Verify agent credentials"
-          ]
+            "Verify agent credentials",
+          ],
         },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   },
@@ -1734,10 +2089,10 @@ ${interviewNotes}
   async fixAgentMemo(req, res) {
     try {
       const { agentId } = req.params;
-      
+
       if (!agentId) {
         return res.status(400).json({
-          error: "agentId is required"
+          error: "agentId is required",
         });
       }
 
@@ -1749,25 +2104,36 @@ ${interviewNotes}
 
       // Check if agent has proper Hedera configuration
       if (!agent.hederaAccountId || !agent.hederaPrivateKey) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: "Agent missing Hedera configuration",
-          details: `AccountId: ${agent.hederaAccountId ? 'Present' : 'Missing'}, PrivateKey: ${agent.hederaPrivateKey ? 'Present' : 'Missing'}`
+          details: `AccountId: ${
+            agent.hederaAccountId ? "Present" : "Missing"
+          }, PrivateKey: ${agent.hederaPrivateKey ? "Present" : "Missing"}`,
         });
       }
 
-      console.log(`🔧 Fixing HCS-11 memo for agent: ${agent.name} (${agent.hederaAccountId})`);
+      console.log(
+        `🔧 Fixing HCS-11 memo for agent: ${agent.name} (${agent.hederaAccountId})`
+      );
 
       // Create HCS-11 profile memo using standards SDK
       const profileMemo = hrAgentController.createHCS11ProfileMemo(agent);
-      
+
       console.log(`🔧 Creating HCS-11 profile memo: ${profileMemo}`);
-      
+
       // Try to update the account memo using Hedera SDK
       try {
-        const { Client, PrivateKey, AccountUpdateTransaction } = require('@hashgraph/sdk');
-        
+        const {
+          Client,
+          PrivateKey,
+          AccountUpdateTransaction,
+        } = require("@hashgraph/sdk");
+
         const client = Client.forTestnet();
-        client.setOperator(agent.hederaAccountId, PrivateKey.fromString(agent.hederaPrivateKey));
+        client.setOperator(
+          agent.hederaAccountId,
+          PrivateKey.fromString(agent.hederaPrivateKey)
+        );
 
         const accountUpdateTx = new AccountUpdateTransaction()
           .setAccountId(agent.hederaAccountId)
@@ -1776,9 +2142,9 @@ ${interviewNotes}
         const txResponse = await accountUpdateTx.execute(client);
         const receipt = await txResponse.getReceipt(client);
 
-        if (receipt.status.toString() === 'SUCCESS') {
+        if (receipt.status.toString() === "SUCCESS") {
           console.log(`✅ HCS-11 memo updated successfully for ${agent.name}`);
-          
+
           res.json({
             success: true,
             message: "Agent HCS-11 memo updated successfully",
@@ -1786,40 +2152,44 @@ ${interviewNotes}
               id: agent._id,
               name: agent.name,
               accountId: agent.hederaAccountId,
-              role: agent.role
+              role: agent.role,
             },
             memo: profileMemo,
-            transactionId: txResponse.transactionId.toString()
+            transactionId: txResponse.transactionId.toString(),
           });
         } else {
-          throw new Error(`Transaction failed with status: ${receipt.status.toString()}`);
+          throw new Error(
+            `Transaction failed with status: ${receipt.status.toString()}`
+          );
         }
-
       } catch (hederaError) {
-        console.error(`❌ Failed to update Hedera account memo:`, hederaError.message);
-        
+        console.error(
+          `❌ Failed to update Hedera account memo:`,
+          hederaError.message
+        );
+
         // Still return success but note the limitation
         res.json({
           success: true,
-          message: "Agent profile created (memo update skipped due to Hedera limitations)",
+          message:
+            "Agent profile created (memo update skipped due to Hedera limitations)",
           agent: {
             id: agent._id,
             name: agent.name,
             accountId: agent.hederaAccountId,
-            role: agent.role
+            role: agent.role,
           },
           memo: profileMemo,
           note: "Account memo update requires account owner permissions. Profile stored locally.",
-          hederaError: hederaError.message
+          hederaError: hederaError.message,
         });
       }
-
     } catch (error) {
-      console.error('Error fixing agent memo:', error);
+      console.error("Error fixing agent memo:", error);
       res.status(500).json({
         success: false,
         error: "Failed to fix agent memo",
-        details: error.message
+        details: error.message,
       });
     }
   },
@@ -1830,15 +2200,17 @@ ${interviewNotes}
   async getAgentProfile(req, res) {
     try {
       const { agentId } = req.params;
-      
+
       if (!agentId) {
         return res.status(400).json({
-          error: "agentId is required"
+          error: "agentId is required",
         });
       }
 
-      const agent = await AgentModel.findById(agentId).select('-hederaPrivateKey -privkey');
-      
+      const agent = await AgentModel.findById(agentId).select(
+        "-hederaPrivateKey -privkey"
+      );
+
       if (!agent) {
         return res.status(404).json({ error: "Agent not found" });
       }
@@ -1849,7 +2221,11 @@ ${interviewNotes}
         hasInboundTopic: !!agent.inboundTopicId,
         hasOutboundTopic: !!agent.outboundTopicId,
         isRegistered: !!agent.profileRegistrationId,
-        isFullyConfigured: !!(agent.hcs11Profile && agent.inboundTopicId && agent.outboundTopicId)
+        isFullyConfigured: !!(
+          agent.hcs11Profile &&
+          agent.inboundTopicId &&
+          agent.outboundTopicId
+        ),
       };
 
       res.json({
@@ -1862,28 +2238,32 @@ ${interviewNotes}
           description: agent.description,
           accountId: agent.hederaAccountId,
           publicKey: agent.hederaPublicKey,
-          isActive: agent.isActive
+          isActive: agent.isActive,
         },
         hcs11Profile: agent.hcs11Profile || null,
         communication: {
           inboundTopicId: agent.inboundTopicId || null,
           outboundTopicId: agent.outboundTopicId || null,
-          registrationId: agent.profileRegistrationId || null
+          registrationId: agent.profileRegistrationId || null,
         },
         status: profileStatus,
-        recommendations: profileStatus.isFullyConfigured ? [] : [
-          !profileStatus.hasProfile && "Run POST /hr-agents/fix-memo/{agentId} to create HCS-11 profile",
-          !profileStatus.hasInboundTopic && "Missing inbound topic - reinitialize agent",
-          !profileStatus.hasOutboundTopic && "Missing outbound topic - reinitialize agent"
-        ].filter(Boolean)
+        recommendations: profileStatus.isFullyConfigured
+          ? []
+          : [
+              !profileStatus.hasProfile &&
+                "Run POST /hr-agents/fix-memo/{agentId} to create HCS-11 profile",
+              !profileStatus.hasInboundTopic &&
+                "Missing inbound topic - reinitialize agent",
+              !profileStatus.hasOutboundTopic &&
+                "Missing outbound topic - reinitialize agent",
+            ].filter(Boolean),
       });
-
     } catch (error) {
-      console.error('Error fetching agent profile:', error);
+      console.error("Error fetching agent profile:", error);
       res.status(500).json({
         success: false,
         error: "Failed to fetch agent profile",
-        details: error.message
+        details: error.message,
       });
     }
   },
@@ -1894,77 +2274,96 @@ ${interviewNotes}
   getEvaluationCriteria(role) {
     const criteriaMap = {
       "Soft Skills Specialist": {
-        primary: ["communication_effectiveness", "interpersonal_skills", "emotional_intelligence"],
+        primary: [
+          "communication_effectiveness",
+          "interpersonal_skills",
+          "emotional_intelligence",
+        ],
         secondary: ["teamwork", "adaptability", "leadership_potential"],
         weightings: { communication: 0.4, interpersonal: 0.3, emotional: 0.3 },
         scoringMethod: "behavioral_assessment",
-        benchmarks: ["industry_standard", "role_specific"]
+        benchmarks: ["industry_standard", "role_specific"],
       },
       "Technical Skills Evaluator": {
         primary: ["technical_competence", "problem_solving", "system_design"],
         secondary: ["code_quality", "innovation", "best_practices"],
         weightings: { technical: 0.5, problem_solving: 0.3, design: 0.2 },
         scoringMethod: "technical_assessment",
-        benchmarks: ["technology_stack", "experience_level"]
+        benchmarks: ["technology_stack", "experience_level"],
       },
       "Experience Validator": {
         primary: ["relevant_experience", "career_progression", "achievements"],
         secondary: ["industry_knowledge", "leadership_roles", "impact"],
         weightings: { experience: 0.4, progression: 0.3, achievements: 0.3 },
         scoringMethod: "experience_verification",
-        benchmarks: ["role_requirements", "industry_standards"]
+        benchmarks: ["role_requirements", "industry_standards"],
       },
       "Cultural Fit Assessor": {
         primary: ["values_alignment", "team_dynamics", "cultural_adaptation"],
         secondary: ["communication_style", "work_preferences", "collaboration"],
         weightings: { values: 0.4, dynamics: 0.3, adaptation: 0.3 },
         scoringMethod: "cultural_assessment",
-        benchmarks: ["company_culture", "team_values"]
+        benchmarks: ["company_culture", "team_values"],
       },
       "Leadership Potential Evaluator": {
         primary: ["strategic_thinking", "team_management", "decision_making"],
         secondary: ["vision", "influence", "change_management"],
         weightings: { strategic: 0.4, management: 0.3, decisions: 0.3 },
         scoringMethod: "leadership_assessment",
-        benchmarks: ["leadership_competencies", "role_level"]
+        benchmarks: ["leadership_competencies", "role_level"],
       },
       "Communication Skills Specialist": {
-        primary: ["verbal_communication", "written_communication", "presentation"],
+        primary: [
+          "verbal_communication",
+          "written_communication",
+          "presentation",
+        ],
         secondary: ["active_listening", "clarity", "persuasion"],
         weightings: { verbal: 0.4, written: 0.3, presentation: 0.3 },
         scoringMethod: "communication_assessment",
-        benchmarks: ["role_requirements", "communication_standards"]
-      }
+        benchmarks: ["role_requirements", "communication_standards"],
+      },
     };
 
-    return criteriaMap[role] || {
-      primary: ["general_competence"],
-      secondary: ["basic_skills"],
-      weightings: { general: 1.0 },
-      scoringMethod: "basic_assessment",
-      benchmarks: ["minimum_requirements"]
-    };
+    return (
+      criteriaMap[role] || {
+        primary: ["general_competence"],
+        secondary: ["basic_skills"],
+        weightings: { general: 1.0 },
+        scoringMethod: "basic_assessment",
+        benchmarks: ["minimum_requirements"],
+      }
+    );
   },
 
   /**
    * Generate profile checksum for integrity verification
    */
   generateProfileChecksum(agent) {
-    const crypto = require('crypto');
-    const data = `${agent._id}${agent.name}${agent.role}${agent.hederaAccountId}${Date.now()}`;
-    return crypto.createHash('sha256').update(data).digest('hex').substring(0, 16);
+    const crypto = require("crypto");
+    const data = `${agent._id}${agent.name}${agent.role}${
+      agent.hederaAccountId
+    }${Date.now()}`;
+    return crypto
+      .createHash("sha256")
+      .update(data)
+      .digest("hex")
+      .substring(0, 16);
   },
 
   /**
    * Calculate profile hash for integrity checking
    */
   calculateProfileHash(profile) {
-    const crypto = require('crypto');
+    const crypto = require("crypto");
     // Create a copy without the integrity field to avoid circular reference
     const profileCopy = { ...profile };
     delete profileCopy.integrity;
-    const profileString = JSON.stringify(profileCopy, Object.keys(profileCopy).sort());
-    return crypto.createHash('sha256').update(profileString).digest('hex');
+    const profileString = JSON.stringify(
+      profileCopy,
+      Object.keys(profileCopy).sort()
+    );
+    return crypto.createHash("sha256").update(profileString).digest("hex");
   },
 
   /**
@@ -1972,15 +2371,25 @@ ${interviewNotes}
    */
   validateHCS11Profile(profile) {
     const requiredFields = [
-      'p', 'standard', 'version', 'type', 'op', 'timestamp',
-      'identity', 'hedera', 'communication', 'capabilities', 
-      'governance', 'metadata', 'integrity'
+      "p",
+      "standard",
+      "version",
+      "type",
+      "op",
+      "timestamp",
+      "identity",
+      "hedera",
+      "communication",
+      "capabilities",
+      "governance",
+      "metadata",
+      "integrity",
     ];
 
     const validation = {
       isValid: true,
       errors: [],
-      warnings: []
+      warnings: [],
     };
 
     // Check required fields
@@ -1998,9 +2407,14 @@ ${interviewNotes}
     }
 
     // Validate communication topics
-    if (!profile.communication?.inbound?.topicId || !profile.communication?.outbound?.topicId) {
+    if (
+      !profile.communication?.inbound?.topicId ||
+      !profile.communication?.outbound?.topicId
+    ) {
       validation.isValid = false;
-      validation.errors.push("Both inbound and outbound topic IDs are required");
+      validation.errors.push(
+        "Both inbound and outbound topic IDs are required"
+      );
     }
 
     // Validate Hedera account format
@@ -2034,12 +2448,15 @@ ${interviewNotes}
         metadata: {
           ...agent.hcs11Profile.metadata,
           lastUpdated: new Date().toISOString(),
-          version: hrAgentController.incrementVersion(agent.hcs11Profile.metadata.version)
-        }
+          version: hrAgentController.incrementVersion(
+            agent.hcs11Profile.metadata.version
+          ),
+        },
       };
 
       // Recalculate integrity hash
-      updatedProfile.integrity.profileHash = hrAgentController.calculateProfileHash(updatedProfile);
+      updatedProfile.integrity.profileHash =
+        hrAgentController.calculateProfileHash(updatedProfile);
       updatedProfile.integrity.verificationStatus = "pending";
 
       // Update in database
@@ -2049,9 +2466,9 @@ ${interviewNotes}
       // Send update message to network
       if (agent.outboundTopicId) {
         const hcs10Client = new HCS10Client({
-          network: 'testnet',
+          network: "testnet",
           operatorId: agent.hederaAccountId,
-          operatorPrivateKey: agent.hederaPrivateKey
+          operatorPrivateKey: agent.hederaPrivateKey,
         });
 
         const updateMessage = {
@@ -2062,7 +2479,7 @@ ${interviewNotes}
           agentId: updatedProfile.identity.agentId,
           updates: updates,
           newHash: updatedProfile.integrity.profileHash,
-          m: "Agent profile update notification"
+          m: "Agent profile update notification",
         };
 
         await hcs10Client.sendMessage(
@@ -2074,14 +2491,13 @@ ${interviewNotes}
       return {
         success: true,
         profile: updatedProfile,
-        message: "Profile updated successfully"
+        message: "Profile updated successfully",
       };
-
     } catch (error) {
-      console.error('Error updating HCS-11 profile:', error);
+      console.error("Error updating HCS-11 profile:", error);
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   },
@@ -2090,7 +2506,7 @@ ${interviewNotes}
    * Increment version number (semantic versioning)
    */
   incrementVersion(currentVersion) {
-    const parts = currentVersion.split('.');
+    const parts = currentVersion.split(".");
     const patch = parseInt(parts[2]) + 1;
     return `${parts[0]}.${parts[1]}.${patch}`;
   },
@@ -2101,7 +2517,11 @@ ${interviewNotes}
   validateMemoLength(memo) {
     const maxLength = 100;
     if (memo.length > maxLength) {
-      throw new Error(`Memo too long: ${memo.length} chars (max ${maxLength}). Content: ${memo.substring(0, 50)}...`);
+      throw new Error(
+        `Memo too long: ${
+          memo.length
+        } chars (max ${maxLength}). Content: ${memo.substring(0, 50)}...`
+      );
     }
     return true;
   },
@@ -2113,22 +2533,26 @@ ${interviewNotes}
     try {
       // Initialize the HCS-11 client with minimal config for memo generation
       const client = new HCS11Client({
-        network: process.env.HEDERA_NETWORK === 'mainnet' ? 'mainnet' : 'testnet',
+        network:
+          process.env.HEDERA_NETWORK === "mainnet" ? "mainnet" : "testnet",
         auth: {
           operatorId: agent.hederaAccountId,
           privateKey: agent.hederaPrivateKey,
         },
-        logLevel: 'error', // Reduce logging for memo generation
+        logLevel: "error", // Reduce logging for memo generation
       });
 
       // Generate HCS-11 compliant memo using the standards SDK
       // Use profileTopicId if available, otherwise use account ID with HCS-11 standard
       const resourceId = profileTopicId || agent.hederaAccountId;
       const memo = client.setProfileForAccountMemo(resourceId, 11);
-      
+
       return memo;
     } catch (error) {
-      console.error(`❌ Error creating HCS-11 profile memo for agent ${agent.name}:`, error);
+      console.error(
+        `❌ Error creating HCS-11 profile memo for agent ${agent.name}:`,
+        error
+      );
       // Fallback to manual format if SDK fails
       const resourceId = profileTopicId || agent.hederaAccountId;
       return `hcs-11:hcs://${11}/${resourceId}`;
@@ -2138,37 +2562,46 @@ ${interviewNotes}
   /**
    * Set HCS-11 compliant account memo for agent
    */
-  async setHCS11AccountMemo(agent, inboundTopicId = null, outboundTopicId = null) {
-    console.log(`      🔄 Setting HCS-11 memo for ${agent.name} (${agent.hederaAccountId})`);
+  async setHCS11AccountMemo(
+    agent,
+    inboundTopicId = null,
+    outboundTopicId = null
+  ) {
+    console.log(
+      `      🔄 Setting HCS-11 memo for ${agent.name} (${agent.hederaAccountId})`
+    );
     console.log(`      🔑 Using agent's own credentials for authentication`);
-    if (inboundTopicId) console.log(`      📥 Including inbound topic: ${inboundTopicId}`);
-    if (outboundTopicId) console.log(`      📤 Including outbound topic: ${outboundTopicId}`);
-    
+    if (inboundTopicId)
+      console.log(`      📥 Including inbound topic: ${inboundTopicId}`);
+    if (outboundTopicId)
+      console.log(`      📤 Including outbound topic: ${outboundTopicId}`);
+
     try {
       // Initialize the HCS-11 client using the AGENT'S own credentials
       const client = new HCS11Client({
-        network: process.env.HEDERA_NETWORK === 'mainnet' ? 'mainnet' : 'testnet',
+        network:
+          process.env.HEDERA_NETWORK === "mainnet" ? "mainnet" : "testnet",
         auth: {
           operatorId: agent.hederaAccountId,
           privateKey: agent.hederaPrivateKey,
         },
-        logLevel: 'info',
+        logLevel: "info",
       });
 
       // Create AI agent profile using official HCS-11 SDK method
       // Only include basic properties, no topic dependencies
       const profileOptions = {
-        alias: agent.name, // Full name as alias  
+        alias: agent.name, // Full name as alias
         bio: agent.description || `HR ${agent.role} Skills Evaluation Agent`,
-        creator: 'TalentAI Platform',
+        creator: "TalentAI Platform",
         properties: {
-          agentType: 'hr-agent',
+          agentType: "hr-agent",
           role: agent.role,
           specializations: agent.capabilities || [],
-          platform: 'talentai', 
+          platform: "talentai",
           createdAt: new Date().toISOString(),
-          hederaAccountId: agent.hederaAccountId
-        }
+          hederaAccountId: agent.hederaAccountId,
+        },
       };
 
       // Only add topics if they exist to avoid dependency errors
@@ -2188,14 +2621,20 @@ ${interviewNotes}
           AIAgentCapability.LANGUAGE_TRANSLATION,
           AIAgentCapability.KNOWLEDGE_RETRIEVAL,
           AIAgentCapability.DATA_INTEGRATION,
-          ...(agent.role === 'Technical' ? [AIAgentCapability.CODE_GENERATION] : []),
-          ...(agent.role === 'Soft' ? [AIAgentCapability.SUMMARIZATION_EXTRACTION] : []),
+          ...(agent.role === "Technical"
+            ? [AIAgentCapability.CODE_GENERATION]
+            : []),
+          ...(agent.role === "Soft"
+            ? [AIAgentCapability.SUMMARIZATION_EXTRACTION]
+            : []),
         ],
-        'LangChain-TogetherAI', // Model
+        "LangChain-TogetherAI", // Model
         profileOptions
       );
 
-      console.log(`      🔄 Creating and inscribing HCS-11 profile for ${agent.name}...`);
+      console.log(
+        `      🔄 Creating and inscribing HCS-11 profile for ${agent.name}...`
+      );
       console.log(`      📝 Profile created using official HCS-11 SDK methods`);
 
       // Create and inscribe profile in one step with automatic account memo update
@@ -2204,24 +2643,34 @@ ${interviewNotes}
         true, // Update account memo automatically
         {
           progressCallback: (progress) => {
-            console.log(`      📊 ${progress.stage}: ${progress.progressPercent}%`);
+            console.log(
+              `      📊 ${progress.stage}: ${progress.progressPercent}%`
+            );
           },
         }
       );
 
       if (oneStepResult.success) {
-        console.log(`      ✅ HCS-11 profile created and published successfully!`);
-        console.log(`      📄 Profile Topic ID: ${oneStepResult.profileTopicId}`);
-        console.log(`      🔗 Account memo should now be set automatically by the SDK.`);
-        
+        console.log(
+          `      ✅ HCS-11 profile created and published successfully!`
+        );
+        console.log(
+          `      📄 Profile Topic ID: ${oneStepResult.profileTopicId}`
+        );
+        console.log(
+          `      🔗 Account memo should now be set automatically by the SDK.`
+        );
+
         // Wait a moment for the transaction to propagate before returning
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
         // Update agent record with profile information
         await AgentModel.findByIdAndUpdate(agent._id, {
           hcs11ProfileTopicId: oneStepResult.profileTopicId,
-          hcs11Memo: oneStepResult.accountMemo || `hcs-11:hcs://11/${oneStepResult.profileTopicId}`,
-          status: 'hcs11-profile-created'
+          hcs11Memo:
+            oneStepResult.accountMemo ||
+            `hcs-11:hcs://11/${oneStepResult.profileTopicId}`,
+          status: "hcs11-profile-created",
         });
 
         return {
@@ -2229,30 +2678,35 @@ ${interviewNotes}
           profileTopicId: oneStepResult.profileTopicId,
           accountId: agent.hederaAccountId,
           accountMemo: oneStepResult.accountMemo,
-          method: 'official-hcs11-createAndInscribeProfile',
-          type: 'hcs11-standards-compliant'
+          method: "official-hcs11-createAndInscribeProfile",
+          type: "hcs11-standards-compliant",
         };
       } else {
-        console.error(`      ❌ 'createAndInscribeProfile' failed: ${oneStepResult.error}`);
+        console.error(
+          `      ❌ 'createAndInscribeProfile' failed: ${oneStepResult.error}`
+        );
         throw new Error(oneStepResult.error);
       }
-
     } catch (hcs11Error) {
       console.log(`      ⚠️  HCS11Client failed: ${hcs11Error.message}`);
       console.log(`      🔄 Trying fallback approach with Hedera SDK...`);
-      
+
       // Fallback: Generate and set memo manually
       try {
         const hcs11Memo = `hcs-11:hcs://11/${agent.hederaAccountId}`;
         console.log(`      📝 Generated fallback memo: ${hcs11Memo}`);
 
-        const { Client, AccountUpdateTransaction, PrivateKey } = require('@hashgraph/sdk');
-        
+        const {
+          Client,
+          AccountUpdateTransaction,
+          PrivateKey,
+        } = require("@hashgraph/sdk");
+
         const client = Client.forTestnet();
-        if (process.env.HEDERA_NETWORK === 'mainnet') {
-          client.setNetwork('mainnet');
+        if (process.env.HEDERA_NETWORK === "mainnet") {
+          client.setNetwork("mainnet");
         }
-        
+
         // Use agent's own credentials
         client.setOperator(
           agent.hederaAccountId,
@@ -2267,25 +2721,26 @@ ${interviewNotes}
         const receipt = await txResponse.getReceipt(client);
 
         console.log(`      ✅ Fallback memo set successfully!`);
-        console.log(`      📝 Transaction: ${txResponse.transactionId.toString()}`);
-        
+        console.log(
+          `      📝 Transaction: ${txResponse.transactionId.toString()}`
+        );
+
         return {
           success: true,
           memo: hcs11Memo,
           transactionId: txResponse.transactionId.toString(),
           accountId: agent.hederaAccountId,
-          method: 'fallback-hedera-sdk',
-          type: 'hcs11-manual'
+          method: "fallback-hedera-sdk",
+          type: "hcs11-manual",
         };
-
       } catch (fallbackError) {
         console.error(`      ❌ Both approaches failed!`);
         console.error(`      🔴 HCS11Client: ${hcs11Error.message}`);
         console.error(`      🔴 Fallback: ${fallbackError.message}`);
-        
+
         return {
           success: false,
-          error: `HCS11Client failed: ${hcs11Error.message}. Fallback failed: ${fallbackError.message}`
+          error: `HCS11Client failed: ${hcs11Error.message}. Fallback failed: ${fallbackError.message}`,
         };
       }
     }
@@ -2301,36 +2756,45 @@ ${interviewNotes}
     // Format: hcs-11:hcs://protocol_standard/resource_id
     const hcs11ProtocolPattern = /^hcs-11:hcs:\/\/([0-9]+)\/(.+)$/;
     const matches = memo.match(hcs11ProtocolPattern);
-    
+
     if (!matches) {
       return null;
     }
-    
+
     const protocolStandard = matches[1];
     const resourceId = matches[2];
-    
+
     // Check if it's an account ID (format: 0.0.123456) or other resource
     const isAccountId = /^[0-9]+\.[0-9]+\.[0-9]+$/.test(resourceId);
-    
+
     return {
-      standard: 'hcs-11',
-      protocol: 'hcs',
+      standard: "hcs-11",
+      protocol: "hcs",
       protocolStandard: protocolStandard,
       resourceId: resourceId,
       isAccountId: isAccountId,
-      resourceType: isAccountId ? 'account' : (resourceId.startsWith('in-') ? 'inbound-topic' : (resourceId.startsWith('out-') ? 'outbound-topic' : 'other')),
+      resourceType: isAccountId
+        ? "account"
+        : resourceId.startsWith("in-")
+        ? "inbound-topic"
+        : resourceId.startsWith("out-")
+        ? "outbound-topic"
+        : "other",
       isValidProtocolRef: true,
-      isHCS11Standard: protocolStandard === '11',
-      format: 'hcs-protocol'
+      isHCS11Standard: protocolStandard === "11",
+      format: "hcs-protocol",
     };
   },
 
   async verifyHCS11Memo(accountId) {
     try {
-      const { Client, AccountInfoQuery } = require('@hashgraph/sdk');
-      
+      const { Client, AccountInfoQuery } = require("@hashgraph/sdk");
+
       const client = Client.forTestnet();
-      client.setOperator(process.env.HEDERA_ACCOUNT_ID, process.env.HEDERA_PRIVATE_KEY);
+      client.setOperator(
+        process.env.HEDERA_ACCOUNT_ID,
+        process.env.HEDERA_PRIVATE_KEY
+      );
       //client.setNetworkTimeout(10000);
 
       // Query account info to get memo
@@ -2339,11 +2803,11 @@ ${interviewNotes}
         .execute(client);
 
       const memo = accountInfo.accountMemo;
-      
+
       if (!memo) {
         return {
           success: false,
-          error: "No memo found on account"
+          error: "No memo found on account",
         };
       }
 
@@ -2355,49 +2819,51 @@ ${interviewNotes}
           memo: memo,
           parsedMemo: protocolParsed,
           isHCS11Compliant: true,
-          format: 'hcs-protocol'
+          format: "hcs-protocol",
         };
       }
 
       // Try to parse legacy custom formats for backward compatibility
-      if (memo.startsWith('hcs-11:') && !memo.includes('hcs://')) {
-        const parts = memo.split(':');
+      if (memo.startsWith("hcs-11:") && !memo.includes("hcs://")) {
+        const parts = memo.split(":");
         if (parts.length === 4) {
           return {
             success: true,
             memo: memo,
             parsedMemo: {
-              standard: 'hcs-11',
+              standard: "hcs-11",
               avatarName: parts[1],
               roleFirst: parts[2],
               shortId: parts[3],
               isCompactFormat: true,
-              format: 'legacy-colon'
+              format: "legacy-colon",
             },
             isHCS11Compliant: false, // Not standard compliant
-            format: 'legacy-colon'
+            format: "legacy-colon",
           };
         }
       }
 
       // Try to parse old camelCase format for backward compatibility
-      if (memo.startsWith('Hcs11')) {
+      if (memo.startsWith("Hcs11")) {
         const content = memo.slice(5);
-        const matches = content.match(/^([A-Z][a-z]+)([A-Z][a-z]+)([a-f0-9]{8})$/);
+        const matches = content.match(
+          /^([A-Z][a-z]+)([A-Z][a-z]+)([a-f0-9]{8})$/
+        );
         if (matches) {
           return {
             success: true,
             memo: memo,
             parsedMemo: {
-              standard: 'hcs-11',
+              standard: "hcs-11",
               avatarName: matches[1].toLowerCase(),
               roleFirst: matches[2],
               shortId: matches[3],
               isCompactFormat: true,
-              format: 'legacy-camelCase'
+              format: "legacy-camelCase",
             },
             isHCS11Compliant: false, // Not standard compliant
-            format: 'legacy-camelCase'
+            format: "legacy-camelCase",
           };
         }
       }
@@ -2405,12 +2871,12 @@ ${interviewNotes}
       // Fall back to trying JSON format (legacy)
       try {
         const parsedMemo = JSON.parse(memo);
-        
+
         if (parsedMemo.p !== "hcs-11" || parsedMemo.standard !== "HCS-11") {
           return {
             success: false,
             error: "Memo is not HCS-11 compliant",
-            memo: memo
+            memo: memo,
           };
         }
 
@@ -2419,21 +2885,19 @@ ${interviewNotes}
           memo: memo,
           parsedMemo: parsedMemo,
           isHCS11Compliant: true,
-          format: 'json'
+          format: "json",
         };
-
       } catch (parseError) {
         return {
           success: false,
           error: `Invalid memo format. Expected 'hcs-11:hcs://11/resource_id' (HCS-11 protocol) or valid HCS-11 JSON. Got: ${memo}`,
-          memo: memo
+          memo: memo,
         };
       }
-
     } catch (error) {
       return {
         success: false,
-        error: error.message
+        error: error.message,
       };
     }
   },
@@ -2443,14 +2907,14 @@ ${interviewNotes}
    */
   async checkAllAgents(req, res) {
     try {
-      console.log('🔍 Checking all HR agents for configuration issues...');
-      
+      console.log("🔍 Checking all HR agents for configuration issues...");
+
       const agents = await AgentModel.find({});
       const report = {
         totalAgents: agents.length,
         configurationIssues: [],
         validAgents: [],
-        recommendations: []
+        recommendations: [],
       };
 
       for (const agent of agents) {
@@ -2459,18 +2923,18 @@ ${interviewNotes}
           name: agent.name,
           avatar: agent.avatarName,
           role: agent.role,
-          issues: []
+          issues: [],
         };
 
         // Check Hedera configuration
         if (!agent.hederaAccountId) {
-          agentStatus.issues.push('Missing Hedera Account ID');
+          agentStatus.issues.push("Missing Hedera Account ID");
         }
         if (!agent.hederaPrivateKey) {
-          agentStatus.issues.push('Missing Hedera Private Key');
+          agentStatus.issues.push("Missing Hedera Private Key");
         }
         if (!agent.isActive) {
-          agentStatus.issues.push('Agent is inactive');
+          agentStatus.issues.push("Agent is inactive");
         }
 
         if (agentStatus.issues.length > 0) {
@@ -2479,22 +2943,34 @@ ${interviewNotes}
           report.validAgents.push({
             id: agent._id,
             name: agent.name,
-            accountId: agent.hederaAccountId
+            accountId: agent.hederaAccountId,
           });
         }
       }
 
       // Generate recommendations
       if (report.configurationIssues.length > 0) {
-        report.recommendations.push('Run POST /hr-agents/initialize to create missing agents');
-        report.recommendations.push('Use POST /hr-agents/fix-memo/{agentId} to fix HCS-11 memo issues');
+        report.recommendations.push(
+          "Run POST /hr-agents/initialize to create missing agents"
+        );
+        report.recommendations.push(
+          "Use POST /hr-agents/fix-memo/{agentId} to fix HCS-11 memo issues"
+        );
       }
 
-      if (report.configurationIssues.some(agent => agent.issues.includes('Missing Hedera Account ID'))) {
-        report.recommendations.push('Agents missing Hedera accounts need to be reinitialized');
+      if (
+        report.configurationIssues.some((agent) =>
+          agent.issues.includes("Missing Hedera Account ID")
+        )
+      ) {
+        report.recommendations.push(
+          "Agents missing Hedera accounts need to be reinitialized"
+        );
       }
 
-      console.log(`📊 Agent Check Results: ${report.validAgents.length} valid, ${report.configurationIssues.length} with issues`);
+      console.log(
+        `📊 Agent Check Results: ${report.validAgents.length} valid, ${report.configurationIssues.length} with issues`
+      );
 
       res.json({
         success: true,
@@ -2503,16 +2979,15 @@ ${interviewNotes}
         summary: {
           healthy: report.validAgents.length,
           needsAttention: report.configurationIssues.length,
-          totalChecked: report.totalAgents
-        }
+          totalChecked: report.totalAgents,
+        },
       });
-
     } catch (error) {
-      console.error('Error checking agents:', error);
+      console.error("Error checking agents:", error);
       res.status(500).json({
         success: false,
         error: "Failed to check agents",
-        details: error.message
+        details: error.message,
       });
     }
   },
@@ -2525,18 +3000,22 @@ ${interviewNotes}
     try {
       // Simulate waiting for coordinator response
       setTimeout(async () => {
-        console.log(`🔍 Monitoring topic ${topicId} for coordinator response...`);
-        
+        console.log(
+          `🔍 Monitoring topic ${topicId} for coordinator response...`
+        );
+
         // In a real implementation, you would poll the topic for new messages
         // For now, we'll simulate a coordinator response after 30 seconds
-        
-        const coordinatorAgent = await AgentModel.findOne({ avatarName: 'julia' });
+
+        const coordinatorAgent = await AgentModel.findOne({
+          avatarName: "julia",
+        });
         if (!coordinatorAgent) return;
 
         // Ensure coordinator has default Hedera config for LangChain agent
         if (!coordinatorAgent.hederaAccountId) {
-          coordinatorAgent.hederaAccountId = '0.0.000000';
-          coordinatorAgent.hederaPrivateKey = 'mock-key-for-langchain-only';
+          coordinatorAgent.hederaAccountId = "0.0.000000";
+          coordinatorAgent.hederaPrivateKey = "mock-key-for-langchain-only";
         }
 
         // Simulate intelligent coordinator response
@@ -2545,37 +3024,43 @@ ${interviewNotes}
           coordinatorConversationalAgent = new LangChainTogetherAIAgent({
             accountId: coordinatorAgent.hederaAccountId,
             privateKey: coordinatorAgent.hederaPrivateKey,
-            network: 'testnet',
-            operationalMode: 'standard',
+            network: "testnet",
+            operationalMode: "standard",
             verbose: false,
-            skipProfileValidation: true // Skip HCS-11 profile validation
+            skipProfileValidation: true, // Skip HCS-11 profile validation
           });
           await coordinatorConversationalAgent.initialize();
         } catch (error) {
-          console.error(`❌ Coordinator agent initialization failed, using fallback:`, error.message);
+          console.error(
+            `❌ Coordinator agent initialization failed, using fallback:`,
+            error.message
+          );
           // Create fallback coordinator
           coordinatorConversationalAgent = {
             processMessage: async (prompt) => ({
               response: `As HR Coordinator, I've received the evaluation for candidate ${candidateId}. Thank you for the assessment. I'll review this and provide feedback on next steps.`,
               success: true,
-              metadata: { provider: "fallback-mode", timestamp: new Date().toISOString() }
-            })
+              metadata: {
+                provider: "fallback-mode",
+                timestamp: new Date().toISOString(),
+              },
+            }),
           };
         }
 
         // Generate intelligent response based on the evaluation
         const contextualPrompt = `As the HR Coordinator, provide a thoughtful response to Sinda's soft skills evaluation for candidate ${candidateId}. Consider the evaluation results and provide next steps.`;
-        
-        const aiResponse = await coordinatorConversationalAgent.processMessage(contextualPrompt);
-        
+
+        const aiResponse = await coordinatorConversationalAgent.processMessage(
+          contextualPrompt
+        );
+
         console.log(`🤖 Coordinator AI Response: ${aiResponse.response}`);
-        
+
         // This would trigger the submitEvaluationMessage in a real scenario
-        
       }, 30000); // Wait 30 seconds before coordinator responds
-      
     } catch (error) {
-      console.error('Error monitoring coordinator response:', error);
+      console.error("Error monitoring coordinator response:", error);
     }
   },
 
@@ -2583,31 +3068,36 @@ ${interviewNotes}
    * Start HCS-10 agent communication monitoring
    * Listens for messages on topic and responds automatically
    */
-  async startAgentCommunicationMonitoring(topicId, sendingAgentId, candidateId) {
+  async startAgentCommunicationMonitoring(
+    topicId,
+    sendingAgentId,
+    candidateId
+  ) {
     try {
       console.log(`🔄 Starting HCS-10 monitoring for topic ${topicId}`);
-      
+
       // Get coordinator agent
-      const coordinatorAgent = await AgentModel.findOne({ avatarName: 'yuka' });
+      const coordinatorAgent = await AgentModel.findOne({ avatarName: "yuka" });
       if (!coordinatorAgent) {
-        console.error('Coordinator agent (Yuka) not found');
+        console.error("Coordinator agent (Yuka) not found");
         return;
       }
 
       // Initialize HCS10Client for coordinator
       const coordinatorHCS10Client = new HCS10Client({
-        network: 'testnet',
+        network: "testnet",
         operatorId: coordinatorAgent.hederaAccountId,
         operatorPrivateKey: coordinatorAgent.hederaPrivateKey,
-        guardedRegistryBaseUrl: process.env.REGISTRY_URL || 'https://moonscape.tech',
+        guardedRegistryBaseUrl:
+          process.env.REGISTRY_URL || "https://moonscape.tech",
         prettyPrint: true,
-        logLevel: 'debug',
+        logLevel: "debug",
       });
 
       // Ensure coordinator has default Hedera config for LangChain agent
       if (!coordinatorAgent.hederaAccountId) {
-        coordinatorAgent.hederaAccountId = '0.0.000000';
-        coordinatorAgent.hederaPrivateKey = 'mock-key-for-langchain-only';
+        coordinatorAgent.hederaAccountId = "0.0.000000";
+        coordinatorAgent.hederaPrivateKey = "mock-key-for-langchain-only";
       }
 
       // Initialize LangChain TogetherAI Agent for intelligent responses
@@ -2616,21 +3106,27 @@ ${interviewNotes}
         coordinatorConversationalAgent = new LangChainTogetherAIAgent({
           accountId: coordinatorAgent.hederaAccountId,
           privateKey: coordinatorAgent.hederaPrivateKey,
-          network: 'testnet',
-          operationalMode: 'standard',
+          network: "testnet",
+          operationalMode: "standard",
           verbose: true,
-          skipProfileValidation: true // Skip HCS-11 profile validation
+          skipProfileValidation: true, // Skip HCS-11 profile validation
         });
         await coordinatorConversationalAgent.initialize();
       } catch (error) {
-        console.error(`❌ Coordinator agent initialization failed, using fallback:`, error.message);
+        console.error(
+          `❌ Coordinator agent initialization failed, using fallback:`,
+          error.message
+        );
         // Create fallback coordinator
         coordinatorConversationalAgent = {
           processMessage: async (prompt) => ({
             response: `As HR Coordinator, I'm monitoring the evaluation process for candidate ${candidateId}. I'll provide appropriate responses based on agent evaluations.`,
             success: true,
-            metadata: { provider: "fallback-mode", timestamp: new Date().toISOString() }
-          })
+            metadata: {
+              provider: "fallback-mode",
+              timestamp: new Date().toISOString(),
+            },
+          }),
         };
       }
 
@@ -2639,7 +3135,7 @@ ${interviewNotes}
         try {
           // Get recent messages from topic (this is a simplified approach)
           // In a real implementation, you'd use proper HCS message streaming
-          
+
           // Simulate coordinator response after detecting agent message
           const coordinatorPrompt = `As the HR Coordinator, I've received an evaluation for candidate ${candidateId}. 
           Please provide a professional coordinator response that either:
@@ -2650,7 +3146,10 @@ ${interviewNotes}
           
           Keep response professional, constructive, and actionable.`;
 
-          const coordinatorResponse = await coordinatorConversationalAgent.processMessage(coordinatorPrompt);
+          const coordinatorResponse =
+            await coordinatorConversationalAgent.processMessage(
+              coordinatorPrompt
+            );
 
           // Create HCS-11 coordinator response
           const coordinatorHCS11Message = {
@@ -2661,7 +3160,7 @@ ${interviewNotes}
               name: coordinatorAgent.name,
               avatar: coordinatorAgent.avatarName,
               role: coordinatorAgent.role,
-              accountId: coordinatorAgent.hederaAccountId
+              accountId: coordinatorAgent.hederaAccountId,
             },
             response: coordinatorResponse.response,
             candidateId: candidateId,
@@ -2670,17 +3169,18 @@ ${interviewNotes}
 
 ${coordinatorResponse.response}
 
-Next steps will be communicated to the evaluation team.`
+Next steps will be communicated to the evaluation team.`,
           };
 
           // Send coordinator response
-          const responseMessageResult = await coordinatorHCS10Client.sendMessage(
-            topicId,
-            JSON.stringify(coordinatorHCS11Message)
-          );
+          const responseMessageResult =
+            await coordinatorHCS10Client.sendMessage(
+              topicId,
+              JSON.stringify(coordinatorHCS11Message)
+            );
 
           const responseMessageId = responseMessageResult.toString();
-          
+
           // Send immediate proof of reception
           const proofOfReceptionMessage = {
             standard: "HCS-11",
@@ -2690,13 +3190,13 @@ Next steps will be communicated to the evaluation team.`
               name: coordinatorAgent.name,
               avatar: coordinatorAgent.avatarName,
               role: coordinatorAgent.role,
-              accountId: coordinatorAgent.hederaAccountId
+              accountId: coordinatorAgent.hederaAccountId,
             },
             acknowledgment: {
               candidateId: candidateId,
               status: "received_and_processed",
               action: "evaluation_completed",
-              originalMessageId: responseMessageId
+              originalMessageId: responseMessageId,
             },
             conversationalPrompt: `📨 PROOF OF RECEPTION
 
@@ -2706,7 +3206,7 @@ ${coordinatorAgent.name} has successfully received, processed, and responded to 
 ✅ Evaluation processed and completed  
 ✅ Response sent and verified
 
-Message chain verified and stored on Hedera Consensus Service.`
+Message chain verified and stored on Hedera Consensus Service.`,
           };
 
           // Send proof of reception
@@ -2715,14 +3215,17 @@ Message chain verified and stored on Hedera Consensus Service.`
             JSON.stringify(proofOfReceptionMessage)
           );
 
-          console.log(`📋 Coordinator ${coordinatorAgent.name} responded to topic ${topicId}`);
-          console.log(`📨 Proof of reception sent with message ID: ${proofMessageResult.toString()}`);
-          
+          console.log(
+            `📋 Coordinator ${coordinatorAgent.name} responded to topic ${topicId}`
+          );
+          console.log(
+            `📨 Proof of reception sent with message ID: ${proofMessageResult.toString()}`
+          );
+
           // Clear interval after first response (or implement smarter logic)
           clearInterval(monitorInterval);
-
         } catch (error) {
-          console.error('Error in coordinator monitoring:', error);
+          console.error("Error in coordinator monitoring:", error);
         }
       }, 45000); // Check every 45 seconds
 
@@ -2731,9 +3234,8 @@ Message chain verified and stored on Hedera Consensus Service.`
         clearInterval(monitorInterval);
         console.log(`⏰ Stopped monitoring topic ${topicId} after timeout`);
       }, 600000);
-
     } catch (error) {
-      console.error('Error starting agent communication monitoring:', error);
+      console.error("Error starting agent communication monitoring:", error);
     }
   },
 
@@ -2744,74 +3246,86 @@ Message chain verified and stored on Hedera Consensus Service.`
   async diagnoseCoordinator(req, res) {
     try {
       const { coordinatorId } = req.params;
-      
+
       if (!coordinatorId) {
         return res.status(400).json({
-          error: "coordinatorId is required"
+          error: "coordinatorId is required",
         });
       }
 
       console.log(`🔍 Starting diagnostic for coordinator: ${coordinatorId}`);
-      
+
       // Check coordinator existence
       let coordinator = null;
       if (mongoose.Types.ObjectId.isValid(coordinatorId)) {
         coordinator = await AgentModel.findById(coordinatorId);
-      } else if (coordinatorId.includes('.')) {
-        coordinator = await AgentModel.findOne({ hederaAccountId: coordinatorId });
+      } else if (coordinatorId.includes(".")) {
+        coordinator = await AgentModel.findOne({
+          hederaAccountId: coordinatorId,
+        });
       }
-      
+
       if (!coordinator) {
         // Try to find a default coordinator
-        coordinator = await AgentModel.findOne({ avatarName: { $in: ['yuka', 'julia'] } });
+        coordinator = await AgentModel.findOne({
+          avatarName: { $in: ["yuka", "julia"] },
+        });
       }
-      
+
       // Get all coordinators
       const allCoordinators = await AgentModel.find({
-        avatarName: { $in: ['yuka', 'julia'] }
+        avatarName: { $in: ["yuka", "julia"] },
       });
-      
+
       // Get recent evaluations
-      const recentEvaluations = coordinator ? await EvaluationTopicModel.find({
-        'evaluations.agentId': coordinator._id,
-        createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
-      }).sort({ createdAt: -1 }).limit(10) : [];
+      const recentEvaluations = coordinator
+        ? await EvaluationTopicModel.find({
+            "evaluations.agentId": coordinator._id,
+            createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+          })
+            .sort({ createdAt: -1 })
+            .limit(10)
+        : [];
 
       res.json({
         success: true,
         diagnostic: {
           coordinatorId,
           coordinatorFound: !!coordinator,
-          coordinator: coordinator ? {
-            id: coordinator._id,
-            name: coordinator.name,
-            avatar: coordinator.avatarName,
-            role: coordinator.role,
-            isActive: coordinator.isActive,
-            hasHederaAccount: !!coordinator.hederaAccountId,
-            hasHederaKey: !!coordinator.hederaPrivateKey
-          } : null,
-          allCoordinators: allCoordinators.map(c => ({
+          coordinator: coordinator
+            ? {
+                id: coordinator._id,
+                name: coordinator.name,
+                avatar: coordinator.avatarName,
+                role: coordinator.role,
+                isActive: coordinator.isActive,
+                hasHederaAccount: !!coordinator.hederaAccountId,
+                hasHederaKey: !!coordinator.hederaPrivateKey,
+              }
+            : null,
+          allCoordinators: allCoordinators.map((c) => ({
             id: c._id,
             name: c.name,
             avatar: c.avatarName,
-            isActive: c.isActive
+            isActive: c.isActive,
           })),
           recentEvaluationsCount: recentEvaluations.length,
-          proofOfReceptionIssues: recentEvaluations.filter(evaluation => 
-            evaluation.evaluations.some(eval => 
-              coordinator && eval.agentId.toString() === coordinator._id.toString() && !eval.messageId
+          proofOfReceptionIssues: recentEvaluations.filter((evaluation) =>
+            evaluation.evaluations.some(
+              (eval) =>
+                coordinator &&
+                eval.agentId.toString() === coordinator._id.toString() &&
+                !eval.messageId
             )
-          ).length
-        }
+          ).length,
+        },
       });
-
     } catch (error) {
-      console.error('Error diagnosing coordinator:', error);
+      console.error("Error diagnosing coordinator:", error);
       res.status(500).json({
         success: false,
         error: "Failed to diagnose coordinator",
-        details: error.message
+        details: error.message,
       });
     }
   },
@@ -2822,10 +3336,10 @@ Message chain verified and stored on Hedera Consensus Service.`
   async fixProofOfReception(req, res) {
     try {
       const { coordinatorId, topicId, candidateId } = req.body;
-      
+
       if (!coordinatorId || !topicId || !candidateId) {
         return res.status(400).json({
-          error: "coordinatorId, topicId, and candidateId are required"
+          error: "coordinatorId, topicId, and candidateId are required",
         });
       }
 
@@ -2833,35 +3347,41 @@ Message chain verified and stored on Hedera Consensus Service.`
       let coordinator = null;
       if (mongoose.Types.ObjectId.isValid(coordinatorId)) {
         coordinator = await AgentModel.findById(coordinatorId);
-      } else if (coordinatorId.includes('.')) {
-        coordinator = await AgentModel.findOne({ hederaAccountId: coordinatorId });
+      } else if (coordinatorId.includes(".")) {
+        coordinator = await AgentModel.findOne({
+          hederaAccountId: coordinatorId,
+        });
       }
-      
+
       if (!coordinator) {
         // Try to find a default coordinator
-        coordinator = await AgentModel.findOne({ avatarName: { $in: ['yuka', 'julia'] } });
+        coordinator = await AgentModel.findOne({
+          avatarName: { $in: ["yuka", "julia"] },
+        });
       }
-      
+
       if (!coordinator) {
         return res.status(404).json({ error: "Coordinator not found" });
       }
 
       // Check if coordinator has proper Hedera configuration
       if (!coordinator.hederaAccountId || !coordinator.hederaPrivateKey) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: "Coordinator missing Hedera configuration",
-          solution: "Reinitialize the coordinator with proper Hedera credentials"
+          solution:
+            "Reinitialize the coordinator with proper Hedera credentials",
         });
       }
 
       // Initialize HCS10Client for proof of reception
       const hcs10Client = new HCS10Client({
-        network: 'testnet',
+        network: "testnet",
         operatorId: coordinator.hederaAccountId,
         operatorPrivateKey: coordinator.hederaPrivateKey,
-        guardedRegistryBaseUrl: process.env.REGISTRY_URL || 'https://moonscape.tech',
+        guardedRegistryBaseUrl:
+          process.env.REGISTRY_URL || "https://moonscape.tech",
         prettyPrint: true,
-        logLevel: 'debug',
+        logLevel: "debug",
       });
 
       // Send proof of reception message
@@ -2873,12 +3393,12 @@ Message chain verified and stored on Hedera Consensus Service.`
           name: coordinator.name,
           avatar: coordinator.avatarName,
           role: coordinator.role,
-          accountId: coordinator.hederaAccountId
+          accountId: coordinator.hederaAccountId,
         },
         acknowledgment: {
           candidateId: candidateId,
           status: "received",
-          action: "evaluation_acknowledged"
+          action: "evaluation_acknowledged",
         },
         conversationalPrompt: `📨 PROOF OF RECEPTION
 
@@ -2888,7 +3408,7 @@ ${coordinator.name} acknowledges receipt of evaluation for candidate ${candidate
 🔄 Processing evaluation...
 📋 Response will follow shortly
 
-Message verified and stored on Hedera Consensus Service.`
+Message verified and stored on Hedera Consensus Service.`,
       };
 
       // Send the acknowledgment
@@ -2912,15 +3432,17 @@ Message verified and stored on Hedera Consensus Service.`
             passed: null, // Not an evaluation, just acknowledgment
             score: null,
             feedback: "Proof of reception acknowledged",
-            interviewNotes: "Message received and verified"
+            interviewNotes: "Message received and verified",
           },
-          timestamp: new Date()
+          timestamp: new Date(),
         });
 
         await evaluationTopic.save();
       }
 
-      console.log(`✅ Proof of reception sent by ${coordinator.name} for topic ${topicId}`);
+      console.log(
+        `✅ Proof of reception sent by ${coordinator.name} for topic ${topicId}`
+      );
 
       res.json({
         success: true,
@@ -2928,22 +3450,21 @@ Message verified and stored on Hedera Consensus Service.`
         coordinator: {
           id: coordinator._id,
           name: coordinator.name,
-          avatar: coordinator.avatarName
+          avatar: coordinator.avatarName,
         },
         proofOfReception: {
           messageId: messageId,
           topicId: topicId,
           candidateId: candidateId,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       });
-
     } catch (error) {
-      console.error('Error fixing proof of reception:', error);
+      console.error("Error fixing proof of reception:", error);
       res.status(500).json({
         success: false,
         error: "Failed to send proof of reception",
-        details: error.message
+        details: error.message,
       });
     }
   },
@@ -2954,12 +3475,12 @@ Message verified and stored on Hedera Consensus Service.`
   async validateAgentHCS11(req, res) {
     try {
       const { agentId } = req.params;
-      
+
       const agent = await AgentModel.findById(agentId);
       if (!agent) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           success: false,
-          error: "Agent not found" 
+          error: "Agent not found",
         });
       }
 
@@ -2967,20 +3488,24 @@ Message verified and stored on Hedera Consensus Service.`
         return res.status(400).json({
           success: false,
           error: "Agent does not have an HCS-11 profile",
-          recommendation: "Run POST /hr-agents/initialize to create HCS-11 profiles"
+          recommendation:
+            "Run POST /hr-agents/initialize to create HCS-11 profiles",
         });
       }
 
       // Validate the profile
-      const validation = hrAgentController.validateHCS11Profile(agent.hcs11Profile);
-      
+      const validation = hrAgentController.validateHCS11Profile(
+        agent.hcs11Profile
+      );
+
       // Additional custom validation for agent-specific requirements
       const customValidation = {
         hasCustomProfile: !!agent.hcs11CustomProfile,
         hasPersonality: !!agent.hcs11CustomProfile?.agentPersonality,
-        hasSpecializedCapabilities: !!agent.hcs11CustomProfile?.specializedCapabilities,
+        hasSpecializedCapabilities:
+          !!agent.hcs11CustomProfile?.specializedCapabilities,
         hasEvaluationFramework: !!agent.hcs11CustomProfile?.evaluationFramework,
-        hasDomainExpertise: !!agent.hcs11CustomProfile?.domainExpertise
+        hasDomainExpertise: !!agent.hcs11CustomProfile?.domainExpertise,
       };
 
       res.json({
@@ -2991,18 +3516,19 @@ Message verified and stored on Hedera Consensus Service.`
         customProfileValidation: customValidation,
         profileHash: agent.hcs11Profile?.integrity?.profileHash,
         lastUpdated: agent.hcs11Profile?.metadata?.lastUpdated,
-        recommendations: validation.isValid ? [] : [
-          "Fix validation errors to ensure HCS-11 compliance",
-          "Update profile structure to match standard requirements"
-        ]
+        recommendations: validation.isValid
+          ? []
+          : [
+              "Fix validation errors to ensure HCS-11 compliance",
+              "Update profile structure to match standard requirements",
+            ],
       });
-
     } catch (error) {
-      console.error('Error validating HCS-11 profile:', error);
+      console.error("Error validating HCS-11 profile:", error);
       res.status(500).json({
         success: false,
         error: "Failed to validate HCS-11 profile",
-        details: error.message
+        details: error.message,
       });
     }
   },
@@ -3018,32 +3544,34 @@ Message verified and stored on Hedera Consensus Service.`
       if (!updates) {
         return res.status(400).json({
           success: false,
-          error: "Updates object is required"
+          error: "Updates object is required",
         });
       }
 
-      const result = await hrAgentController.updateHCS11Profile(agentId, updates);
-      
+      const result = await hrAgentController.updateHCS11Profile(
+        agentId,
+        updates
+      );
+
       if (result.success) {
         res.json({
           success: true,
           message: "Agent HCS-11 profile updated successfully",
           profile: result.profile,
-          newHash: result.profile?.integrity?.profileHash
+          newHash: result.profile?.integrity?.profileHash,
         });
       } else {
         res.status(400).json({
           success: false,
-          error: result.error
+          error: result.error,
         });
       }
-
     } catch (error) {
-      console.error('Error updating agent profile:', error);
+      console.error("Error updating agent profile:", error);
       res.status(500).json({
         success: false,
         error: "Failed to update agent profile",
-        details: error.message
+        details: error.message,
       });
     }
   },
@@ -3053,32 +3581,33 @@ Message verified and stored on Hedera Consensus Service.`
    */
   async updateAllAgentMemos(req, res) {
     try {
-      console.log('🔄 Updating HCS-11 memos for all agents...');
-      
+      console.log("🔄 Updating HCS-11 memos for all agents...");
+
       const agents = await AgentModel.find({ isActive: true });
       const results = [];
-      
+
       for (const agent of agents) {
-        console.log(`\n📝 Updating memo for ${agent.name} (${agent.hederaAccountId})...`);
-        
+        console.log(
+          `\n📝 Updating memo for ${agent.name} (${agent.hederaAccountId})...`
+        );
+
         try {
           const result = await hrAgentController.setHCS11AccountMemo(agent);
-          
+
           results.push({
             agentId: agent._id,
             agentName: agent.name,
             accountId: agent.hederaAccountId,
             success: result.success,
             transactionId: result.transactionId,
-            error: result.error
+            error: result.error,
           });
-          
+
           if (result.success) {
             console.log(`✅ ${agent.name}: Memo updated successfully`);
           } else {
             console.log(`❌ ${agent.name}: Failed - ${result.error}`);
           }
-          
         } catch (agentError) {
           console.error(`❌ ${agent.name}: Error - ${agentError.message}`);
           results.push({
@@ -3086,14 +3615,14 @@ Message verified and stored on Hedera Consensus Service.`
             agentName: agent.name,
             accountId: agent.hederaAccountId,
             success: false,
-            error: agentError.message
+            error: agentError.message,
           });
         }
       }
-      
-      const successCount = results.filter(r => r.success).length;
-      const failCount = results.filter(r => !r.success).length;
-      
+
+      const successCount = results.filter((r) => r.success).length;
+      const failCount = results.filter((r) => !r.success).length;
+
       res.json({
         success: true,
         message: `HCS-11 memo update completed. ${successCount} successful, ${failCount} failed.`,
@@ -3101,16 +3630,15 @@ Message verified and stored on Hedera Consensus Service.`
         summary: {
           total: agents.length,
           successful: successCount,
-          failed: failCount
-        }
+          failed: failCount,
+        },
       });
-
     } catch (error) {
-      console.error('Error updating agent memos:', error);
+      console.error("Error updating agent memos:", error);
       res.status(500).json({
         success: false,
         error: "Failed to update agent memos",
-        details: error.message
+        details: error.message,
       });
     }
   },
@@ -3121,85 +3649,98 @@ Message verified and stored on Hedera Consensus Service.`
   async debugAndFixMemo(req, res) {
     try {
       const { agentId } = req.params;
-      
+
       const agent = await AgentModel.findById(agentId);
       if (!agent) {
         return res.status(404).json({
           success: false,
-          error: "Agent not found"
+          error: "Agent not found",
         });
       }
 
-      console.log(`🔧 Debugging HCS-11 memo for agent: ${agent.name} (${agent.hederaAccountId})`);
-      
+      console.log(
+        `🔧 Debugging HCS-11 memo for agent: ${agent.name} (${agent.hederaAccountId})`
+      );
+
       // First, check current memo status
       let currentMemoStatus = null;
       try {
-        currentMemoStatus = await hrAgentController.verifyHCS11Memo(agent.hederaAccountId);
+        currentMemoStatus = await hrAgentController.verifyHCS11Memo(
+          agent.hederaAccountId
+        );
         console.log(`📊 Current memo status:`, currentMemoStatus);
       } catch (verifyError) {
         console.log(`⚠️ Could not verify current memo: ${verifyError.message}`);
       }
-      
+
       // Force create HCS-11 memo using fallback method
       console.log(`🔧 Force creating HCS-11 memo using fallback method...`);
       try {
-        const { Client, AccountUpdateTransaction, PrivateKey } = require('@hashgraph/sdk');
-        
+        const {
+          Client,
+          AccountUpdateTransaction,
+          PrivateKey,
+        } = require("@hashgraph/sdk");
+
         const client = Client.forTestnet();
-        client.setOperator(agent.hederaAccountId, PrivateKey.fromString(agent.hederaPrivateKey));
-        
+        client.setOperator(
+          agent.hederaAccountId,
+          PrivateKey.fromString(agent.hederaPrivateKey)
+        );
+
         const hcs11Memo = `hcs-11:hcs://11/${agent.hederaAccountId}`;
         console.log(`📝 Setting memo: ${hcs11Memo}`);
-        
+
         const accountUpdateTx = new AccountUpdateTransaction()
           .setAccountId(agent.hederaAccountId)
           .setAccountMemo(hcs11Memo);
-          
+
         const txResponse = await accountUpdateTx.execute(client);
         const receipt = await txResponse.getReceipt(client);
-        
-        console.log(`✅ Memo set successfully! Transaction: ${txResponse.transactionId.toString()}`);
-        
+
+        console.log(
+          `✅ Memo set successfully! Transaction: ${txResponse.transactionId.toString()}`
+        );
+
         // Update agent record
         await AgentModel.findByIdAndUpdate(agent._id, {
           hcs11Memo: hcs11Memo,
-          status: 'hcs11-memo-fixed'
+          status: "hcs11-memo-fixed",
         });
-        
+
         // Wait and verify
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        const verifyResult = await hrAgentController.verifyHCS11Memo(agent.hederaAccountId);
-        
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        const verifyResult = await hrAgentController.verifyHCS11Memo(
+          agent.hederaAccountId
+        );
+
         res.json({
           success: true,
           message: "HCS-11 memo fixed successfully",
           agent: {
             id: agent._id,
             name: agent.name,
-            accountId: agent.hederaAccountId
+            accountId: agent.hederaAccountId,
           },
           memo: hcs11Memo,
           transactionId: txResponse.transactionId.toString(),
-          verification: verifyResult
+          verification: verifyResult,
         });
-        
       } catch (fixError) {
         console.error(`❌ Failed to fix memo: ${fixError.message}`);
         res.status(500).json({
           success: false,
           error: "Failed to fix HCS-11 memo",
           details: fixError.message,
-          currentMemoStatus
+          currentMemoStatus,
         });
       }
-      
     } catch (error) {
-      console.error('Error debugging HCS-11 memo:', error);
+      console.error("Error debugging HCS-11 memo:", error);
       res.status(500).json({
         success: false,
         error: "Failed to debug HCS-11 memo",
-        details: error.message
+        details: error.message,
       });
     }
   },
@@ -3211,7 +3752,7 @@ Message verified and stored on Hedera Consensus Service.`
   async refreshAgentProfiles(req, res) {
     try {
       const { agentId } = req.params;
-      
+
       let agents = [];
       if (agentId) {
         // Refresh specific agent
@@ -3219,7 +3760,7 @@ Message verified and stored on Hedera Consensus Service.`
         if (!agent) {
           return res.status(404).json({
             success: false,
-            error: "Agent not found"
+            error: "Agent not found",
           });
         }
         agents = [agent];
@@ -3228,48 +3769,57 @@ Message verified and stored on Hedera Consensus Service.`
         agents = await AgentModel.find({ isActive: true });
       }
 
-      console.log(`🔄 Refreshing profiles for ${agents.length} agent(s) from Hedera network...`);
+      console.log(
+        `🔄 Refreshing profiles for ${agents.length} agent(s) from Hedera network...`
+      );
       const results = [];
 
       for (const agent of agents) {
-        console.log(`📡 Fetching profile for ${agent.name} (${agent.hederaAccountId})`);
-        
+        console.log(
+          `📡 Fetching profile for ${agent.name} (${agent.hederaAccountId})`
+        );
+
         try {
           const client = new HCS11Client({
-            network: process.env.HEDERA_NETWORK === 'mainnet' ? 'mainnet' : 'testnet',
+            network:
+              process.env.HEDERA_NETWORK === "mainnet" ? "mainnet" : "testnet",
             auth: {
               operatorId: agent.hederaAccountId,
               privateKey: agent.hederaPrivateKey,
             },
-            logLevel: 'info',
+            logLevel: "info",
           });
 
           const profileResult = await client.fetchProfileByAccountId(
             agent.hederaAccountId,
-            process.env.HEDERA_NETWORK === 'mainnet' ? 'mainnet' : 'testnet'
+            process.env.HEDERA_NETWORK === "mainnet" ? "mainnet" : "testnet"
           );
 
           if (profileResult.success && profileResult.profile) {
             // Parse profile
             let parsedProfile = profileResult.profile;
-            if (typeof profileResult.profile === 'string') {
+            if (typeof profileResult.profile === "string") {
               try {
-                parsedProfile = client.parseProfileFromString(profileResult.profile);
+                parsedProfile = client.parseProfileFromString(
+                  profileResult.profile
+                );
               } catch (parseError) {
-                console.log(`⚠️ Could not parse profile for ${agent.name}: ${parseError.message}`);
+                console.log(
+                  `⚠️ Could not parse profile for ${agent.name}: ${parseError.message}`
+                );
               }
             }
 
             // Extract and update information
             const updateData = {
-              lastProfileFetch: new Date()
+              lastProfileFetch: new Date(),
             };
 
             if (profileResult.profileTopicId) {
               updateData.hcs11ProfileTopicId = profileResult.profileTopicId;
             }
 
-            if (parsedProfile && typeof parsedProfile === 'object') {
+            if (parsedProfile && typeof parsedProfile === "object") {
               if (parsedProfile.inboundTopicId) {
                 updateData.inboundTopicId = parsedProfile.inboundTopicId;
               }
@@ -3289,38 +3839,42 @@ Message verified and stored on Hedera Consensus Service.`
               hederaAccountId: agent.hederaAccountId,
               success: true,
               profileTopicId: profileResult.profileTopicId,
-              inboundTopicId: parsedProfile?.inboundTopicId || agent.inboundTopicId,
-              outboundTopicId: parsedProfile?.outboundTopicId || agent.outboundTopicId,
-              updatedFields: Object.keys(updateData)
+              inboundTopicId:
+                parsedProfile?.inboundTopicId || agent.inboundTopicId,
+              outboundTopicId:
+                parsedProfile?.outboundTopicId || agent.outboundTopicId,
+              updatedFields: Object.keys(updateData),
             });
 
             console.log(`✅ Profile refreshed for ${agent.name}`);
-
           } else {
-            console.log(`❌ No profile found for ${agent.name}: ${profileResult.error}`);
+            console.log(
+              `❌ No profile found for ${agent.name}: ${profileResult.error}`
+            );
             results.push({
               agentId: agent._id,
               name: agent.name,
               hederaAccountId: agent.hederaAccountId,
               success: false,
-              error: profileResult.error || 'Profile not found'
+              error: profileResult.error || "Profile not found",
             });
           }
-
         } catch (error) {
-          console.error(`❌ Error fetching profile for ${agent.name}: ${error.message}`);
+          console.error(
+            `❌ Error fetching profile for ${agent.name}: ${error.message}`
+          );
           results.push({
             agentId: agent._id,
             name: agent.name,
             hederaAccountId: agent.hederaAccountId,
             success: false,
-            error: error.message
+            error: error.message,
           });
         }
       }
 
-      const successCount = results.filter(r => r.success).length;
-      const failCount = results.filter(r => !r.success).length;
+      const successCount = results.filter((r) => r.success).length;
+      const failCount = results.filter((r) => !r.success).length;
 
       res.json({
         success: true,
@@ -3328,18 +3882,17 @@ Message verified and stored on Hedera Consensus Service.`
         summary: {
           total: agents.length,
           successful: successCount,
-          failed: failCount
+          failed: failCount,
         },
         results: results,
-        refreshedAt: new Date().toISOString()
+        refreshedAt: new Date().toISOString(),
       });
-
     } catch (error) {
-      console.error('Error refreshing agent profiles:', error);
+      console.error("Error refreshing agent profiles:", error);
       res.status(500).json({
         success: false,
         error: "Failed to refresh agent profiles",
-        details: error.message
+        details: error.message,
       });
     }
   },
@@ -3350,11 +3903,11 @@ Message verified and stored on Hedera Consensus Service.`
   async getAgentHCS11Profile(req, res) {
     try {
       const { agentId } = req.params;
-      
+
       if (!agentId) {
         return res.status(400).json({
           success: false,
-          error: "Agent ID is required"
+          error: "Agent ID is required",
         });
       }
 
@@ -3363,39 +3916,48 @@ Message verified and stored on Hedera Consensus Service.`
       if (!agent) {
         return res.status(404).json({
           success: false,
-          error: "Agent not found"
+          error: "Agent not found",
         });
       }
 
-      console.log(`🔍 Retrieving HCS-11 profile for agent: ${agent.name} (${agent.hederaAccountId})`);
+      console.log(
+        `🔍 Retrieving HCS-11 profile for agent: ${agent.name} (${agent.hederaAccountId})`
+      );
 
       try {
         // Initialize HCS-11 client for profile retrieval
         const client = new HCS11Client({
-          network: process.env.HEDERA_NETWORK === 'mainnet' ? 'mainnet' : 'testnet',
+          network:
+            process.env.HEDERA_NETWORK === "mainnet" ? "mainnet" : "testnet",
           auth: {
             operatorId: agent.hederaAccountId,
             privateKey: agent.hederaPrivateKey,
           },
-          logLevel: 'info',
+          logLevel: "info",
         });
 
         // Fetch profile by account ID using HCS-11 standard
         const profileResult = await client.fetchProfileByAccountId(
           agent.hederaAccountId,
-          process.env.HEDERA_NETWORK === 'mainnet' ? 'mainnet' : 'testnet'
+          process.env.HEDERA_NETWORK === "mainnet" ? "mainnet" : "testnet"
         );
 
         if (profileResult.success && profileResult.profile) {
-          console.log(`✅ HCS-11 profile retrieved successfully for ${agent.name}`);
-          
+          console.log(
+            `✅ HCS-11 profile retrieved successfully for ${agent.name}`
+          );
+
           // Parse the profile if it's a string
           let parsedProfile = profileResult.profile;
-          if (typeof profileResult.profile === 'string') {
+          if (typeof profileResult.profile === "string") {
             try {
-              parsedProfile = client.parseProfileFromString(profileResult.profile);
+              parsedProfile = client.parseProfileFromString(
+                profileResult.profile
+              );
             } catch (parseError) {
-              console.log(`⚠️ Could not parse profile string: ${parseError.message}`);
+              console.log(
+                `⚠️ Could not parse profile string: ${parseError.message}`
+              );
             }
           }
 
@@ -3407,28 +3969,29 @@ Message verified and stored on Hedera Consensus Service.`
               name: agent.name,
               avatarName: agent.avatarName,
               role: agent.role,
-              hederaAccountId: agent.hederaAccountId
+              hederaAccountId: agent.hederaAccountId,
             },
             hcs11Profile: {
               raw: profileResult.profile,
               parsed: parsedProfile,
               profileTopicId: profileResult.profileTopicId,
               accountMemo: profileResult.accountMemo,
-              retrievedFrom: 'hcs11-standards-sdk'
+              retrievedFrom: "hcs11-standards-sdk",
             },
             metadata: {
               retrievedAt: new Date().toISOString(),
-              network: process.env.HEDERA_NETWORK || 'testnet',
-              sdkMethod: 'fetchProfileByAccountId'
-            }
+              network: process.env.HEDERA_NETWORK || "testnet",
+              sdkMethod: "fetchProfileByAccountId",
+            },
           });
-
         } else {
-          console.log(`❌ No HCS-11 profile found for account ${agent.hederaAccountId}`);
-          
+          console.log(
+            `❌ No HCS-11 profile found for account ${agent.hederaAccountId}`
+          );
+
           // Try to get local profile data as fallback
           const localProfile = agent.hcs11Profile || null;
-          
+
           res.json({
             success: false,
             message: "No HCS-11 profile found on network",
@@ -3438,24 +4001,23 @@ Message verified and stored on Hedera Consensus Service.`
               name: agent.name,
               avatarName: agent.avatarName,
               role: agent.role,
-              hederaAccountId: agent.hederaAccountId
+              hederaAccountId: agent.hederaAccountId,
             },
             fallback: {
               localProfile: localProfile,
               memo: agent.hcs11Memo || null,
-              profileTopicId: agent.hcs11ProfileTopicId || null
+              profileTopicId: agent.hcs11ProfileTopicId || null,
             },
             recommendations: [
               "Check if the agent has a valid HCS-11 memo set",
               "Verify the profile was properly inscribed using createAndInscribeProfile",
-              "Use POST /hr-agents/debug-memo/:agentId to fix memo issues"
-            ]
+              "Use POST /hr-agents/debug-memo/:agentId to fix memo issues",
+            ],
           });
         }
-
       } catch (hcs11Error) {
         console.error(`❌ HCS-11 client error: ${hcs11Error.message}`);
-        
+
         res.status(500).json({
           success: false,
           error: "Failed to retrieve HCS-11 profile",
@@ -3463,31 +4025,30 @@ Message verified and stored on Hedera Consensus Service.`
           agent: {
             id: agent._id,
             name: agent.name,
-            hederaAccountId: agent.hederaAccountId
+            hederaAccountId: agent.hederaAccountId,
           },
           troubleshooting: {
             possibleCauses: [
               "Agent credentials invalid",
-              "Network connectivity issues", 
+              "Network connectivity issues",
               "Profile not properly inscribed",
-              "Account memo missing or invalid"
+              "Account memo missing or invalid",
             ],
             suggestedActions: [
               "Verify agent Hedera credentials",
               "Check network connectivity",
               "Use debug-memo endpoint to fix account memo",
-              "Re-inscribe profile if necessary"
-            ]
-          }
+              "Re-inscribe profile if necessary",
+            ],
+          },
         });
       }
-
     } catch (error) {
-      console.error('Error retrieving HCS-11 profile:', error);
+      console.error("Error retrieving HCS-11 profile:", error);
       res.status(500).json({
         success: false,
         error: "Internal server error while retrieving profile",
-        details: error.message
+        details: error.message,
       });
     }
   },
@@ -3498,31 +4059,30 @@ Message verified and stored on Hedera Consensus Service.`
   async verifyAccountMemo(req, res) {
     try {
       const { accountId } = req.params;
-      
+
       if (!accountId) {
         return res.status(400).json({
           success: false,
-          error: "Account ID is required"
+          error: "Account ID is required",
         });
       }
 
       const verification = await hrAgentController.verifyHCS11Memo(accountId);
-      
+
       res.json({
         success: verification.success,
         accountId: accountId,
         verification: verification,
-        message: verification.success ? 
-          "HCS-11 memo verification successful" : 
-          `Verification failed: ${verification.error}`
+        message: verification.success
+          ? "HCS-11 memo verification successful"
+          : `Verification failed: ${verification.error}`,
       });
-
     } catch (error) {
-      console.error('Error verifying account memo:', error);
+      console.error("Error verifying account memo:", error);
       res.status(500).json({
         success: false,
         error: "Failed to verify account memo",
-        details: error.message
+        details: error.message,
       });
     }
   },
@@ -3533,15 +4093,15 @@ Message verified and stored on Hedera Consensus Service.`
   async testLangChainAgent(req, res) {
     try {
       console.log(`🧪 Testing LangChain TogetherAI Agent functionality...`);
-      
+
       // Create a test agent instance
       const testAgent = new LangChainTogetherAIAgent({
-        accountId: '0.0.000000',
-        privateKey: 'test-key',
-        network: 'testnet',
-        operationalMode: 'standard',
+        accountId: "0.0.000000",
+        privateKey: "test-key",
+        network: "testnet",
+        operationalMode: "standard",
         verbose: true,
-        skipProfileValidation: true
+        skipProfileValidation: true,
       });
 
       // Test initialization
@@ -3549,9 +4109,10 @@ Message verified and stored on Hedera Consensus Service.`
       console.log(`✅ Initialization result:`, initResult);
 
       // Test message processing
-      const testPrompt = "As an HR agent, provide a brief evaluation of a software developer candidate.";
+      const testPrompt =
+        "As an HR agent, provide a brief evaluation of a software developer candidate.";
       const response = await testAgent.processMessage(testPrompt);
-      
+
       console.log(`✅ Test message processed successfully`);
 
       res.json({
@@ -3562,19 +4123,18 @@ Message verified and stored on Hedera Consensus Service.`
           messageProcessing: {
             prompt: testPrompt,
             response: response.response,
-            metadata: response.metadata
-          }
+            metadata: response.metadata,
+          },
         },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-
     } catch (error) {
-      console.error('❌ LangChain TogetherAI Agent test failed:', error);
+      console.error("❌ LangChain TogetherAI Agent test failed:", error);
       res.status(500).json({
         success: false,
         error: "LangChain TogetherAI Agent test failed",
         details: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   },
@@ -3585,10 +4145,10 @@ Message verified and stored on Hedera Consensus Service.`
   async testMemoCreation(req, res) {
     try {
       const { agentId } = req.params;
-      
+
       if (!agentId) {
         return res.status(400).json({
-          error: "agentId is required"
+          error: "agentId is required",
         });
       }
 
@@ -3599,23 +4159,25 @@ Message verified and stored on Hedera Consensus Service.`
 
       // Test memo creation using HCS-11 standards SDK
       const profileMemo = hrAgentController.createHCS11ProfileMemo(agent);
-      
+
       // Test memo parsing
       const parsedMemo = hrAgentController.parseCompactHCS11Memo(profileMemo);
-      
+
       // Test memo verification if account exists
       let verificationResult = null;
-      if (agent.hederaAccountId && agent.hederaAccountId !== '0.0.000000') {
+      if (agent.hederaAccountId && agent.hederaAccountId !== "0.0.000000") {
         try {
-          verificationResult = await hrAgentController.verifyHCS11Memo(agent.hederaAccountId);
+          verificationResult = await hrAgentController.verifyHCS11Memo(
+            agent.hederaAccountId
+          );
         } catch (verifyError) {
           verificationResult = {
             success: false,
-            error: verifyError.message
+            error: verifyError.message,
           };
         }
       }
-      
+
       res.json({
         success: true,
         agent: {
@@ -3623,29 +4185,28 @@ Message verified and stored on Hedera Consensus Service.`
           name: agent.name,
           role: agent.role,
           avatarName: agent.avatarName,
-          hederaAccountId: agent.hederaAccountId
+          hederaAccountId: agent.hederaAccountId,
         },
         memo: {
           content: profileMemo,
           length: profileMemo ? profileMemo.length : 0,
           isValid: profileMemo ? profileMemo.length <= 100 : false,
           maxLength: 100,
-          type: 'hcs11-standards-sdk'
+          type: "hcs11-standards-sdk",
         },
         parsing: {
           canParse: !!parsedMemo,
-          parsed: parsedMemo
+          parsed: parsedMemo,
         },
         verification: verificationResult,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-
     } catch (error) {
-      console.error('❌ Error testing memo creation:', error);
+      console.error("❌ Error testing memo creation:", error);
       res.status(500).json({
         success: false,
         error: "Failed to test memo creation",
-        details: error.message
+        details: error.message,
       });
     }
   },
@@ -3662,23 +4223,29 @@ Message verified and stored on Hedera Consensus Service.`
         migration: {
           langchainEnabled: true,
           togetherAIEnabled: !!process.env.TOGETHER_API_KEY,
-          hederaEnabled: !!(process.env.HEDERA_ACCOUNT_ID && process.env.HEDERA_PRIVATE_KEY),
+          hederaEnabled: !!(
+            process.env.HEDERA_ACCOUNT_ID && process.env.HEDERA_PRIVATE_KEY
+          ),
           conversationalAgentDisabled: true, // We've migrated away from this
-          memoFormat: 'hcs-protocol' // Official HCS-11 protocol format
+          memoFormat: "hcs-protocol", // Official HCS-11 protocol format
         },
         environment: {
           nodeEnv: process.env.NODE_ENV,
           hasTogetherKey: !!process.env.TOGETHER_API_KEY,
-          hasHederaKeys: !!(process.env.HEDERA_ACCOUNT_ID && process.env.HEDERA_PRIVATE_KEY),
-          network: process.env.HEDERA_NETWORK || 'testnet'
+          hasHederaKeys: !!(
+            process.env.HEDERA_ACCOUNT_ID && process.env.HEDERA_PRIVATE_KEY
+          ),
+          network: process.env.HEDERA_NETWORK || "testnet",
         },
         hcs11ProfileCreation: {
           method: "createAndInscribeProfile",
-          description: "Uses HCS-11 standards SDK to create profile and set account memo automatically",
+          description:
+            "Uses HCS-11 standards SDK to create profile and set account memo automatically",
           autoSetsMemo: true,
           profileTopicCreated: true,
-          format: "Official HCS-11 profile inscribed on Hedera topic with account memo reference"
-        }
+          format:
+            "Official HCS-11 profile inscribed on Hedera topic with account memo reference",
+        },
       };
 
       for (const agent of agents) {
@@ -3690,25 +4257,25 @@ Message verified and stored on Hedera Consensus Service.`
           isActive: agent.isActive,
           hederaAccountId: agent.hederaAccountId,
           hasHederaKeys: !!(agent.hederaAccountId && agent.hederaPrivateKey),
-          memoStatus: 'unknown',
+          memoStatus: "unknown",
           currentMemo: null,
-          expectedMemo: null
+          expectedMemo: null,
         };
 
         // Test memo creation using HCS-11 standards SDK
         try {
           const memo = hrAgentController.createHCS11ProfileMemo(agent);
-          agentStatus.memoStatus = 'can_create';
+          agentStatus.memoStatus = "can_create";
           agentStatus.memoLength = memo.length;
           agentStatus.expectedMemo = memo;
           agentStatus.isValidLength = memo.length <= 100;
-          
+
           // Test parsing
           const parsed = hrAgentController.parseCompactHCS11Memo(memo);
           agentStatus.canParse = !!parsed;
           agentStatus.parsed = parsed;
         } catch (memoError) {
-          agentStatus.memoStatus = 'creation_failed';
+          agentStatus.memoStatus = "creation_failed";
           agentStatus.memoError = memoError.message;
         }
 
@@ -3718,18 +4285,17 @@ Message verified and stored on Hedera Consensus Service.`
       res.json({
         success: true,
         system: systemInfo,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-
     } catch (error) {
-      console.error('❌ Error checking system status:', error);
+      console.error("❌ Error checking system status:", error);
       res.status(500).json({
         success: false,
         error: "Failed to check system status",
-        details: error.message
+        details: error.message,
       });
     }
-  }
+  },
 };
 
 module.exports = hrAgentController;
