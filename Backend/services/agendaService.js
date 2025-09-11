@@ -103,7 +103,7 @@ async function initializeAgenda() {
         const topMatch = matches.find((m) => m.score > 70);
         if (topMatch) {
           try {
-            await axios.post("http://localhost:5000/hr-agents/submit-evaluation-message", {
+            await axios.post(`${process.env.HR_AGENTS_BASE_URL || 'http://localhost:5000'}/hr-agents/submit-evaluation-message`, {
               agentAId: agent._id,
               agentBId: "68c2e127bf5357b2404443c2", // master
               candidateId: topMatch.candidateId,
