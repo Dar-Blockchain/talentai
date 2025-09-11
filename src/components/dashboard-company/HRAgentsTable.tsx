@@ -28,19 +28,17 @@ import {
 } from '@mui/material';
 import {
   Visibility,
-  AttachMoney,
   LocationOn,
   Work,
   Star,
   Phone,
   Email,
   Business,
-  Schedule,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
-import { fetchHRAgents, selectHRAgents, placeHRAgentBid } from '@/store/slices/hrAgentsSlice';
+import { fetchHRAgents, selectHRAgents } from '@/store/slices/hrAgentsSlice';
 import { toast } from 'react-toastify';
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -149,10 +147,6 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { data: agents, status, error } = useSelector(selectHRAgents);
   const [selectedAgent, setSelectedAgent] = useState<TransformedHRAgent | null>(null);
-  const [bidDialogOpen, setBidDialogOpen] = useState(false);
-  const [bidAmount, setBidAmount] = useState('');
-  const [bidMessage, setBidMessage] = useState('');
-  const [isPlacingBid, setIsPlacingBid] = useState(false);
 
   useEffect(() => {
     if (companyId) {
@@ -186,41 +180,6 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
     setSelectedAgent(null);
   };
 
-  const handleBidClick = (agent: TransformedHRAgent) => {
-    setSelectedAgent(agent);
-    setBidAmount(agent.bidAmount.toString());
-    setBidDialogOpen(true);
-  };
-
-  const handleBidSubmit = async () => {
-    if (!selectedAgent || !bidAmount) return;
-
-    setIsPlacingBid(true);
-    try {
-      await dispatch(placeHRAgentBid({
-        agentId: selectedAgent._id,
-        bidAmount: parseFloat(bidAmount),
-        message: bidMessage,
-      })).unwrap();
-      
-      toast.success('Bid placed successfully!');
-      setBidDialogOpen(false);
-      setBidAmount('');
-      setBidMessage('');
-      setSelectedAgent(null);
-    } catch (error: any) {
-      toast.error(error || 'Failed to place bid');
-    } finally {
-      setIsPlacingBid(false);
-    }
-  };
-
-  const handleBidDialogClose = () => {
-    setBidDialogOpen(false);
-    setBidAmount('');
-    setBidMessage('');
-    setSelectedAgent(null);
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -586,14 +545,11 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                     </Box>
                   </Box>
 
-                  {/* Action Buttons */}
+                  {/* Action Button */}
                   <Box sx={{
-                    display: 'flex',
-                    gap: { xs: 1.5, sm: 2 },
                     mt: 'auto',
                     pt: 2,
-                    borderTop: '1px solid rgba(0,255,157,0.1)',
-                    flexDirection: { xs: 'column', sm: 'row' }
+                    borderTop: '1px solid rgba(0,255,157,0.1)'
                   }}>
                     <Button
                       variant="contained"
@@ -619,33 +575,6 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                     >
                       View Details
                     </Button>
-                    
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      startIcon={<AttachMoney />}
-                      onClick={() => handleBidClick(transformedAgents.find(t => t._id === agent.agentId)!)}
-                      sx={{
-                        borderColor: 'rgba(0, 255, 157, 0.6)',
-                        color: '#00FFC3',
-                        fontWeight: 700,
-                        borderRadius: '16px',
-                        py: { xs: 1.25, sm: 1.5 },
-                        textTransform: 'none',
-                        fontSize: { xs: '0.85rem', sm: '0.9rem' },
-                        borderWidth: '2px',
-                        backgroundColor: 'rgba(0,255,195,0.02)',
-                        '&:hover': {
-                          borderColor: '#00FFC3',
-                          backgroundColor: 'rgba(0,255,195,0.08)',
-                          transform: 'translateY(-2px)',
-                          boxShadow: '0 8px 24px rgba(0,255,195,0.2)'
-                        },
-                        transition: 'all 0.3s ease'
-                      }}
-                    >
-                      Place Bid
-                    </Button>
                   </Box>
                 </Box>
               );
@@ -656,7 +585,7 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
 
       {/* Agent Details Dialog */}
       <Dialog
-        open={!!selectedAgent && !bidDialogOpen}
+        open={!!selectedAgent}
         onClose={handleCloseDetails}
         maxWidth="md"
         fullWidth
@@ -760,74 +689,11 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
             </DialogContent>
             <DialogActions>
               <Button onClick={handleCloseDetails}>Close</Button>
-             
             </DialogActions>
           </>
         )}
       </Dialog>
 
-      {/* Bid Dialog */}
-      <Dialog
-        open={bidDialogOpen}
-        onClose={handleBidDialogClose}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Place Bid on HR Agent</DialogTitle>
-        <DialogContent>
-          {selectedAgent && (
-            <Box>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Bidding on: <strong>{selectedAgent.name}</strong>
-              </Typography>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Company: {selectedAgent.company}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                Suggested bid: ${selectedAgent.bidAmount.toLocaleString()}
-              </Typography>
-              
-              <TextField
-                autoFocus
-                margin="dense"
-                label="Bid Amount"
-                type="number"
-                fullWidth
-                variant="outlined"
-                value={bidAmount}
-                onChange={(e) => setBidAmount(e.target.value)}
-                sx={{ mt: 2 }}
-              />
-              
-              <TextField
-                margin="dense"
-                label="Message (Optional)"
-                multiline
-                rows={3}
-                fullWidth
-                variant="outlined"
-                value={bidMessage}
-                onChange={(e) => setBidMessage(e.target.value)}
-                placeholder="Add a message to the HR agent..."
-                sx={{ mt: 2 }}
-              />
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleBidDialogClose} disabled={isPlacingBid}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleBidSubmit}
-            variant="contained"
-            disabled={!bidAmount || isPlacingBid}
-            startIcon={isPlacingBid ? <CircularProgress size={20} /> : <AttachMoney />}
-          >
-            {isPlacingBid ? 'Placing Bid...' : 'Place Bid'}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </>
   );
 };
