@@ -205,8 +205,6 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
   const [progressLoading, setProgressLoading] = useState(false);
   const [progressError, setProgressError] = useState<string | null>(null);
 
-  
-
   // Fetch candidate progress data
   const fetchCandidateProgress = async () => {
     try {
@@ -274,8 +272,6 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
         const progressData = Array.isArray(result.data) ? result.data : [result.data];
         setCandidateProgress(progressData);
         console.log('Candidate Progress Data:', progressData);
-
-        // write to cache
         try {
           sessionStorage.setItem('candidateProgress', JSON.stringify({
             timestamp: Date.now(),
@@ -287,7 +283,6 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
       } else {
         // Check if it's a "no progress found" error (which is not a real error)
         if (result.message && result.message.includes('Progrès non trouvé')) {
-          // This is not an error - just no progress data yet
           console.log('No progress data found - this is normal for new users');
           setCandidateProgress([]);
           setProgressError(null);
@@ -332,11 +327,9 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
-        // Page became visible again, refresh progress data
         fetchCandidateProgress();
       }
     };
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -367,8 +360,6 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
     return 'Poor';
   };
 
-  // When both main data and progress are empty but either is still loading,
-  // show a single global loader instead of partially rendering the UI.
   if ((loading || progressLoading) && (!data || data.length === 0) && (!candidateProgress || candidateProgress.length === 0)) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -411,27 +402,15 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
         <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
           {progressLoading ? 'Loading your data...' : 'No interview data or application progress available yet.'}
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => router.push('/candidate/dashboard')}
-          sx={{
-            backgroundColor: '#02E2FF',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: '#02C2E0',
-            },
-          }}
-        >
-          Browse Jobs
-        </Button>
       </Box>
     );
   }
 
   return (
     <Box sx={{ width: '100%' }}>
+
       {/* Header Section */}
+
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a1a1a', mb: 1 }}>
           Post Interview Dashboard
@@ -440,9 +419,9 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
           Review your interview performance, feedback, and next steps
         </Typography>
       </Box>
-
-                           {/* Summary Cards */}
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
+      {/* Summary Cards */}
+    
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
           <Box sx={{ flex: '1 1 250px', minWidth: '250px' }}>
             <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
               <CardContent sx={{ color: 'white' }}>
@@ -506,9 +485,10 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
               </CardContent>
             </Card>
           </Box> */}
-        </Box>
+      </Box>
 
       {/* Candidate Progress Section */}
+    
       <Box sx={{ mb: 4 }}>
         <Typography variant="h5" sx={{ fontWeight: 600, color: '#1a1a1a', mb: 2 }}>
           My Application Progress
@@ -1351,6 +1331,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
       </Box>
 
       {/* Interview List */}
+    
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         {data.map((interview) => (
           <Card key={interview._id} sx={{ 
@@ -1599,6 +1580,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
       </Box>
 
       {/* Feedback Dialog */}
+    
       <Dialog 
         open={feedbackDialogOpen} 
         onClose={() => setFeedbackDialogOpen(false)}
@@ -1723,6 +1705,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
         
         </DialogActions>
       </Dialog>
+
     </Box>
   );
 };
