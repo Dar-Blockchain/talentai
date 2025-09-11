@@ -14,7 +14,7 @@
     "@langchain/community": "^0.3.49",
     "@langchain/core": "^0.3.66",
     "agenda": "^5.0.0",
-    "axios": "^1.8.4",
+    "axios": "^1.11.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
