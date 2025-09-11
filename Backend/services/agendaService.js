@@ -105,7 +105,7 @@ async function initializeAgenda() {
           try {
             await axios.post("http://localhost:5000/hr-agents/submit-evaluation-message", {
               agentAId: agent._id,
-              agentBId: "68bff5c35dd4c475d2209524", // master
+              agentBId: "68c2e127bf5357b2404443c2", // master
               candidateId: topMatch.candidateId,
               postId: agent.postId._id,
               message: "Please review this candidate",
