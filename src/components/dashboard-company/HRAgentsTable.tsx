@@ -266,14 +266,62 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
     return (
       <StyledCard>
         <CardContent>
-          <Box textAlign="center" py={4}>
-            <Work sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-            <Typography variant="h6" color="text.secondary">
-              No HR agents available
+          {/* Block Title */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h4" sx={{ 
+              color: '#0f172a', 
+              fontWeight: 600,
+              fontSize: { xs: '1rem', sm: '1.5rem' },
+              position: 'relative',
+              '&:after': {
+                content: '""',
+                position: 'absolute',
+                bottom: '-8px',
+                left: '0',
+                width: '60px',
+                height: '4px',
+                background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
+                borderRadius: '2px'
+              }
+            }}>
+              HR Agents
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Check back later for available HR agents
-            </Typography>
+          </Box>
+
+          <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 3,
+            py: 8,
+            px: 4,
+            background: 'linear-gradient(135deg, rgba(2,226,255,0.03) 0%, rgba(0,255,195,0.03) 100%)',
+            borderRadius: '24px',
+            border: '1px solid rgba(0,255,157,0.1)',
+            textAlign: 'center'
+          }}>
+            <Box sx={{
+              width: 80,
+              height: 80,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, rgba(2,226,255,0.1), rgba(0,255,195,0.1))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 8px 32px rgba(2,226,255,0.15)'
+            }}>
+              <Work sx={{ fontSize: 40, color: '#02E2FF' }} />
+            </Box>
+            <Box>
+              <Typography variant="h5" sx={{ color: '#1e293b', fontWeight: 700, mb: 2 }}>
+                No HR Agents Available
+              </Typography>
+              <Typography variant="body1" sx={{ color: '#64748b', maxWidth: '500px', lineHeight: 1.6, mb: 4 }}>
+                We're currently working on connecting you with the best HR agents. New agents are being onboarded regularly to help you find the perfect talent for your company.
+              </Typography>
+            </Box>
+         
           </Box>
         </CardContent>
       </StyledCard>
@@ -284,164 +332,325 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
     <>
       <StyledCard>
         <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <Typography variant="h5" fontWeight="bold">
-              HR Agents & Matches
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {agents.length} agents • {agents.reduce((total, agent: any) => total + agent.matches.length, 0)} total matches
+          {/* Block Title */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h4" sx={{ 
+              color: '#0f172a', 
+              fontWeight: 800,
+              fontSize: { xs: '1.75rem', sm: '2rem' },
+              position: 'relative',
+              '&:after': {
+                content: '""',
+                position: 'absolute',
+                bottom: '-8px',
+                left: '0',
+                width: '60px',
+                height: '4px',
+                background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
+                borderRadius: '2px'
+              }
+            }}>
+              HR Agents
             </Typography>
           </Box>
 
-          <TableContainer 
-            component={Paper} 
-            elevation={0}
-            sx={{
-              borderRadius: '16px',
-              overflow: 'hidden',
-              border: '1px solid rgba(0,0,0,0.05)',
-            }}
-          >
-            <Table>
-              <TableHead>
-                <TableRow sx={{ 
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  '& .MuiTableCell-head': {
-                    color: 'white',
-                    fontWeight: 'bold',
-                    fontSize: '0.875rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                    border: 'none',
-                    padding: '16px 12px',
-                  }
-                }}>
-                  <TableCell>Agent</TableCell>
-                  <TableCell>Job Title</TableCell>
-                  <TableCell>Matches</TableCell>
-                  <TableCell>Top Score</TableCell>
-                  <TableCell>Min Bid</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {agents.map((agent: any) => {
-                  const topScore = agent.matches.length > 0 ? Math.max(...agent.matches.map((m: any) => m.score)) : 0;
-                  const minBid = agent.matches.length > 0 ? Math.min(...agent.matches.map((m: any) => m.finalBid || 0).filter((bid: number) => bid > 0)) : 0;
-                  const status = agent.matches.length > 0 ? 'available' : 'offline';
-                  
-                  return (
-                    <TableRow 
-                      key={agent.agentId} 
-                      hover
+          {/* Header Section */}
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: { xs: 'flex-start', sm: 'center' }, 
+            mb: 4,
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: { xs: 2, sm: 0 }
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+              <Box sx={{
+                width: { xs: 36, sm: 32 },
+                height: { xs: 36, sm: 32 },
+                borderRadius: '10px',
+                display: 'grid',
+                placeItems: 'center',
+                background: 'linear-gradient(135deg, rgba(0,255,157,0.9), rgba(2,226,255,0.9))',
+                boxShadow: '0 4px 12px rgba(2,226,255,0.35)'
+              }}>
+                <Work sx={{ color: '#0f172a', fontSize: { xs: 20, sm: 18 } }} />
+              </Box>
+              <Typography variant="h6" sx={{ 
+                color: '#64748b', 
+                fontWeight: 600,
+                fontSize: { xs: '1rem', sm: '1.125rem' }
+              }}>
+                Available Agents & Matches
+              </Typography>
+            </Box>
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 1.25,
+              flexWrap: 'wrap',
+              justifyContent: { xs: 'flex-start', sm: 'flex-end' }
+            }}>
+              <Chip
+                label={`${agents.length} agents`}
+                size="small"
+                sx={{
+                  background: 'rgba(2, 226, 255, 0.12)',
+                  color: '#0f172a',
+                  fontWeight: 700,
+                  border: '1px solid rgba(0,0,0,0.08)',
+                  fontSize: { xs: '0.75rem', sm: '0.75rem' }
+                }}
+              />
+              <Chip
+                label={`${agents.reduce((total, agent: any) => total + agent.matches.length, 0)} matches`}
+                size="small"
+                sx={{
+                  background: 'rgba(0, 255, 157, 0.12)',
+                  color: '#0f172a',
+                  fontWeight: 700,
+                  border: '1px solid rgba(0,0,0,0.08)',
+                  fontSize: { xs: '0.75rem', sm: '0.75rem' }
+                }}
+              />
+            </Box>
+          </Box>
+
+          {/* Stats Summary */}
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            p: 3,
+            background: 'linear-gradient(135deg, rgba(0,255,157,0.05) 0%, rgba(2,226,255,0.05) 100%)',
+            borderRadius: '16px',
+            border: '1px solid rgba(0,255,157,0.1)',
+            mb: 3
+          }}>
+            <Typography variant="h6" sx={{ color: '#1e293b', fontWeight: 700 }}>
+              Available HR Agents
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>
+              {agents.filter((agent: any) => agent.matches.length > 0).length} active agents
+            </Typography>
+          </Box>
+
+          {/* Agent Cards */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {agents.map((agent: any) => {
+              const topScore = agent.matches.length > 0 ? Math.max(...agent.matches.map((m: any) => m.score)) : 0;
+              const minBid = agent.matches.length > 0 ? Math.min(...agent.matches.map((m: any) => m.finalBid || 0).filter((bid: number) => bid > 0)) : 0;
+              const status = agent.matches.length > 0 ? 'available' : 'offline';
+              
+              return (
+                <Box
+                  key={agent.agentId}
+                  sx={{
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+                    borderRadius: '20px',
+                    border: '1px solid rgba(0,255,157,0.15)',
+                    boxShadow: '0 8px 32px rgba(0,255,157,0.1)',
+                    p: 3,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 16px 48px rgba(0,255,157,0.15)',
+                      border: '1px solid rgba(0,255,157,0.25)'
+                    }
+                  }}
+                >
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: { xs: 'flex-start', sm: 'center' }, 
+                    mb: 2,
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: { xs: 2, sm: 0 }
+                  }}>
+                    <Box sx={{ 
+                      flex: 1, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 2,
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      textAlign: { xs: 'center', sm: 'left' }
+                    }}>
+                      <Avatar 
+                        sx={{ 
+                          bgcolor: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                          width: { xs: 64, sm: 56 },
+                          height: { xs: 64, sm: 56 },
+                          fontSize: { xs: '1.75rem', sm: '1.5rem' },
+                          fontWeight: 'bold',
+                          boxShadow: '0 8px 24px rgba(2,226,255,0.3)',
+                        }}
+                      >
+                        {agent.name.charAt(0).toUpperCase()}
+                      </Avatar>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="h6" sx={{ 
+                          color: '#1e293b', 
+                          fontWeight: 700, 
+                          mb: 0.5,
+                          fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                        }}>
+                          {agent.name.length > 30 ? `${agent.name.substring(0, 30)}...` : agent.name}
+                        </Typography>
+                        <Typography variant="body2" sx={{ 
+                          color: '#64748b', 
+                          mb: 1,
+                          fontSize: { xs: '0.9rem', sm: '0.875rem' }
+                        }}>
+                          {agent.jobTitle || 'General HR Agent'}
+                        </Typography>
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 1, 
+                          flexWrap: 'wrap',
+                          justifyContent: { xs: 'center', sm: 'flex-start' }
+                        }}>
+                          <Chip
+                            label={`ID: ${agent.agentId.slice(-8)}`}
+                            size="small"
+                            sx={{
+                              backgroundColor: 'rgba(2, 226, 255, 0.12)',
+                              color: '#0f172a',
+                              fontWeight: 600,
+                              fontSize: '0.75rem',
+                              height: 24
+                            }}
+                          />
+                          <StatusChip
+                            label={status.charAt(0).toUpperCase() + status.slice(1)}
+                            size="small"
+                            status={status}
+                          />
+                        </Box>
+                      </Box>
+                    </Box>
+                    <Box sx={{ 
+                      textAlign: { xs: 'center', sm: 'right' },
+                      mt: { xs: 1, sm: 0 }
+                    }}>
+                      <Typography variant="h4" sx={{ 
+                        color: '#00FFC3', 
+                        fontWeight: 800, 
+                        mb: 0.5,
+                        fontSize: { xs: '2rem', sm: '2.125rem' }
+                      }}>
+                        {topScore}%
+                      </Typography>
+                      <Typography variant="caption" sx={{ 
+                        color: '#64748b', 
+                        fontWeight: 600,
+                        fontSize: { xs: '0.8rem', sm: '0.75rem' }
+                      }}>
+                        Top Score
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {/* Stats Row */}
+                  <Box sx={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, 
+                    gap: 2, 
+                    mb: 3,
+                    p: 2,
+                    background: 'rgba(0,255,157,0.03)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(0,255,157,0.08)'
+                  }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ color: '#1e293b', fontWeight: 700 }}>
+                        {agent.matches.length}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
+                        Matches
+                      </Typography>
+                    </Box>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ color: '#1e293b', fontWeight: 700 }}>
+                        {minBid > 0 ? `$${minBid.toLocaleString()}` : 'No bids'}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
+                        Min Bid
+                      </Typography>
+                    </Box>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="h6" sx={{ color: '#1e293b', fontWeight: 700 }}>
+                        {agent.matches.length > 0 ? Math.round(agent.matches.reduce((sum: number, m: any) => sum + m.score, 0) / agent.matches.length) : 0}%
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
+                        Avg Score
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {/* Action Buttons */}
+                  <Box sx={{
+                    display: 'flex',
+                    gap: { xs: 1.5, sm: 2 },
+                    mt: 'auto',
+                    pt: 2,
+                    borderTop: '1px solid rgba(0,255,157,0.1)',
+                    flexDirection: { xs: 'column', sm: 'row' }
+                  }}>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      startIcon={<Visibility />}
+                      onClick={() => handleViewDetails(transformedAgents.find(t => t._id === agent.agentId)!)}
                       sx={{
-                        '&:nth-of-type(even)': {
-                          backgroundColor: 'rgba(0,0,0,0.02)',
-                        },
+                        background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+                        color: '#0f172a',
+                        fontWeight: 700,
+                        borderRadius: '16px',
+                        py: { xs: 1.25, sm: 1.5 },
+                        textTransform: 'none',
+                        fontSize: { xs: '0.85rem', sm: '0.9rem' },
+                        boxShadow: '0 4px 16px rgba(2,226,255,0.3)',
                         '&:hover': {
-                          backgroundColor: 'rgba(102, 126, 234, 0.08)',
-                          transform: 'scale(1.01)',
-                          transition: 'all 0.2s ease',
+                          background: 'linear-gradient(135deg, #00FFC3 0%, #02E2FF 100%)',
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 8px 24px rgba(2,226,255,0.4)'
                         },
-                        '& .MuiTableCell-root': {
-                          border: 'none',
-                          padding: '16px 12px',
-                        }
+                        transition: 'all 0.3s ease'
                       }}
                     >
-                      <TableCell>
-                        <Box display="flex" alignItems="center">
-                          <Avatar 
-                            sx={{ 
-                              mr: 2, 
-                              bgcolor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                              width: 40,
-                              height: 40,
-                              fontSize: '1rem',
-                              fontWeight: 'bold',
-                              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
-                            }}
-                          >
-                            {agent.name.charAt(0).toUpperCase()}
-                          </Avatar>
-                          <Box>
-                            <Typography 
-                              variant="subtitle2" 
-                              fontWeight="bold"
-                              sx={{ 
-                                color: '#1a202c',
-                                fontSize: '0.875rem',
-                                lineHeight: 1.2,
-                              }}
-                            >
-                              {agent.name.length > 30 ? `${agent.name.substring(0, 30)}...` : agent.name}
-                            </Typography>
-                            <Typography 
-                              variant="caption" 
-                              sx={{ 
-                                color: '#64748b',
-                                fontSize: '0.75rem',
-                                fontFamily: 'monospace',
-                              }}
-                            >
-                              ID: {agent.agentId.slice(-8)}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {agent.jobTitle || 'General HR'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Box display="flex" alignItems="center">
-                          <Typography variant="body2" fontWeight="bold" color="primary">
-                            {agent.matches.length}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
-                            candidates
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight="bold" color="success.main">
-                          {topScore}%
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight="bold" color="primary">
-                          {minBid > 0 ? `$${minBid.toLocaleString()}` : 'No bids'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <StatusChip
-                          label={status.charAt(0).toUpperCase() + status.slice(1)}
-                          size="small"
-                          status={status}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Box display="flex" gap={1}>
-                          <Tooltip title="View Details">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleViewDetails(transformedAgents.find(t => t._id === agent.agentId)!)}
-                              color="primary"
-                            >
-                              <Visibility />
-                            </IconButton>
-                          </Tooltip>
-                         
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                      View Details
+                    </Button>
+                    
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      startIcon={<AttachMoney />}
+                      onClick={() => handleBidClick(transformedAgents.find(t => t._id === agent.agentId)!)}
+                      sx={{
+                        borderColor: 'rgba(0, 255, 157, 0.6)',
+                        color: '#00FFC3',
+                        fontWeight: 700,
+                        borderRadius: '16px',
+                        py: { xs: 1.25, sm: 1.5 },
+                        textTransform: 'none',
+                        fontSize: { xs: '0.85rem', sm: '0.9rem' },
+                        borderWidth: '2px',
+                        backgroundColor: 'rgba(0,255,195,0.02)',
+                        '&:hover': {
+                          borderColor: '#00FFC3',
+                          backgroundColor: 'rgba(0,255,195,0.08)',
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 8px 24px rgba(0,255,195,0.2)'
+                        },
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      Place Bid
+                    </Button>
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
         </CardContent>
       </StyledCard>
 
