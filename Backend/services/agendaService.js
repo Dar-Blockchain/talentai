@@ -100,7 +100,7 @@ async function initializeAgenda() {
           console.log(`✅ [Agenda] Agent ${agentLabel} | Job: ${jobTitle} | ${matches.length} candidat(s) matché(s) | #1 Name : ${matches[0].name}  candidat matché Score :  ${matches[0].score} FinalBid : ${matches[0].finalBid} _id : ${matches[0].candidateId}`);
         
           // --- Envoi POST seulement pour le premier match avec score > 70 ---
-        const topMatch = matches.find((m) => m.score > 20);
+        const topMatch = matches.find((m) => m.score > 70);
         if (topMatch) {
          /* try {
             await axios.post(`${process.env.HR_AGENTS_BASE_URL || 'http://localhost:5000'}/hr-agents/submit-evaluation-message`, {
@@ -134,7 +134,7 @@ async function initializeAgenda() {
             );
           }
         } else {
-          console.log(`⚠️ [Agenda] Aucun candidat avec score > 30 pour agent ${agentLabel}`);
+          console.log(`⚠️ [Agenda] Aucun candidat avec score > 70 pour agent ${agentLabel}`);
         }
 
           
@@ -150,7 +150,7 @@ async function initializeAgenda() {
 
   agendaInstance.on("ready", async () => {
     await agendaInstance.start();
-    await agendaInstance.every("1 minutes", "agent:heartbeat"); // exécution toutes les 5 minutes
+    await agendaInstance.every("5 minutes", "agent:heartbeat"); // exécution toutes les 5 minutes
     await agendaInstance.now("agent:heartbeat");
     console.log("⏱️ Agenda démarré avec job agent:heartbeat toutes les 5 minutes");
   
