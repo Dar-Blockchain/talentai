@@ -337,7 +337,6 @@ module.exports.deleteSoftSkills = async (userId, softSkillsToDelete) => {
 };
 
 // Mettre à jour le finalBid
-// Mettre à jour le finalBid
 module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
   try {
     const profile = await Profile.findOne({ userId });
@@ -357,13 +356,16 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
       throw new Error("You cannot bid again if your company made the last bid");
     }
 
-    // Vérifier si la nouvelle enchère est supérieure à l'ancienne
-    if (profile.companyBid.finalBid && newBid <= profile.companyBid.finalBid) {
-      throw new Error("The new bid must be higher than the old bid");
+    // Si un bid existe déjà → on additionne
+    let finalBid;
+    if (profile.companyBid.finalBid) {
+      finalBid = profile.companyBid.finalBid + newBid;
+    } else {
+      finalBid = newBid;
     }
 
     // ✅ Mettre à jour le bid
-    profile.companyBid.finalBid = newBid;
+    profile.companyBid.finalBid = finalBid;
     profile.companyBid.company = companyId;
     profile.companyBid.post = postId;
     profile.companyBid.dateBid = new Date();
