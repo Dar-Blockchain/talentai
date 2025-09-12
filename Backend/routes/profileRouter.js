@@ -15,57 +15,57 @@ const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 
 // Auth obligatoire + logs pour toutes les routes
-router.use(requireAuthUser, authLogMiddleware("Profile"));
+router.use(authLogMiddleware("Profile"));
 
 
 // POST /profile/createOrUpdateProfile — crée/maj profil utilisateur
-router.post('/createOrUpdateProfile', profileController.createOrUpdateProfile);
+router.post('/createOrUpdateProfile', requireAuthUser,profileController.createOrUpdateProfile);
 
 // POST /profile/createOrUpdateCompanyProfile — crée/maj profil entreprise
-router.post('/createOrUpdateCompanyProfile', profileController.createOrUpdateCompanyProfile);
+router.post('/createOrUpdateCompanyProfile', requireAuthUser,profileController.createOrUpdateCompanyProfile);
 
 // GET /profile/getMyProfile — profil de l'utilisateur courant
-router.get('/getMyProfile', profileController.getMyProfile);
+router.get('/getMyProfile', requireAuthUser,profileController.getMyProfile);
 
 // GET /profile/getProfileById/:userId — profil par identifiant utilisateur
-router.get('/getProfileById/:userId', profileController.getProfileById);
+router.get('/getProfileById/:userId',requireAuthUser, profileController.getProfileById);
 
 // GET /profile/getAllProfiles — liste de tous les profils
-router.get('/getAllProfiles', profileController.getAllProfiles);
+router.get('/getAllProfiles',requireAuthUser, profileController.getAllProfiles);
 
 // DELETE /profile/deleteProfile — supprime le profil courant
-router.delete('/deleteProfile', profileController.deleteProfile);
+router.delete('/deleteProfile',requireAuthUser, profileController.deleteProfile);
 
 // GET /profile/search/skills — recherche par compétences
-router.get('/search/skills', profileController.searchProfilesBySkills);
+router.get('/search/skills',requireAuthUser, profileController.searchProfilesBySkills);
 
 // POST /profile/addSoftSkills — ajoute des soft skills
-router.post('/addSoftSkills', profileController.addSoftSkills); 
+router.post('/addSoftSkills',requireAuthUser, profileController.addSoftSkills); 
 
 // GET /profile/getSoftSkills — soft skills courants
-router.get('/getSoftSkills', profileController.getSoftSkills);
+router.get('/getSoftSkills',requireAuthUser, profileController.getSoftSkills);
 
-router.get('/getCompanyBid', profileController.getCompanyBids);
+router.get('/getCompanyBid',requireAuthUser, profileController.getCompanyBids);
 
 // GET /profile/getSoftSkillsById/:userId — soft skills par utilisateur
-router.get('/getSoftSkillsById/:userId', profileController.getSoftSkills);
+router.get('/getSoftSkillsById/:userId',requireAuthUser, profileController.getSoftSkills);
 
 router.put('/updateFinalBid', profileController.updateFinalBid);
 
-router.delete('/deleteHardSkill', profileController.deleteHardSkill);
+router.delete('/deleteHardSkill',requireAuthUser, profileController.deleteHardSkill);
 
-router.delete('/deleteSoftSkills', profileController.deleteSoftSkill);
+router.delete('/deleteSoftSkills',requireAuthUser, profileController.deleteSoftSkill);
 
-router.get('/getCompanyWithAssessments', profileController.getCompanyWithAssessments);
+router.get('/getCompanyWithAssessments',requireAuthUser, profileController.getCompanyWithAssessments);
 
-router.get("/company/stats/total", profileController.getTotalCompanies);
+router.get("/company/stats/total",requireAuthUser, profileController.getTotalCompanies);
 
-router.get("/company/stats/active-posts", profileController.getCompaniesWithActivePosts);
+router.get("/company/stats/active-posts",requireAuthUser, profileController.getCompaniesWithActivePosts);
 
-router.get("/company/stats/top-hiring", profileController.getTopHiringCompanies);
+router.get("/company/stats/top-hiring",requireAuthUser, profileController.getTopHiringCompanies);
 
-router.get("/company/stats/recent-active", profileController.getRecentActiveCompanies);
+router.get("/company/stats/recent-active",requireAuthUser, profileController.getRecentActiveCompanies);
 
-router.get("/company/stats/top-industries", profileController.getTopIndustries);
+router.get("/company/stats/top-industries",requireAuthUser, profileController.getTopIndustries);
 
 module.exports = router; 
