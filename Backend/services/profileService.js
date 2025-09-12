@@ -337,6 +337,7 @@ module.exports.deleteSoftSkills = async (userId, softSkillsToDelete) => {
 };
 
 // Mettre à jour le finalBid
+// Mettre à jour le finalBid
 module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
   try {
     const profile = await Profile.findOne({ userId });
@@ -349,14 +350,19 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
       profile.companyBid = {};
     }
 
-    const oldCompanyId = profile.companyBid.company;
+    const lastCompanyId = profile.companyBid.company;
+
+    // 🚫 Vérifier si la même company veut bider de nouveau
+    if (lastCompanyId && lastCompanyId.toString() === companyId.toString()) {
+      throw new Error("You cannot bid again if your company made the last bid");
+    }
 
     // Vérifier si la nouvelle enchère est supérieure à l'ancienne
     if (profile.companyBid.finalBid && newBid <= profile.companyBid.finalBid) {
       throw new Error("The new bid must be higher than the old bid");
     }
 
-    // Mettre à jour le bid
+    // ✅ Mettre à jour le bid
     profile.companyBid.finalBid = newBid;
     profile.companyBid.company = companyId;
     profile.companyBid.post = postId;
@@ -364,8 +370,8 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
     await profile.save();
 
     // 🔄 Supprimer l'user de l'ancienne compagnie s'il y en avait une
-    if (oldCompanyId && oldCompanyId.toString() !== companyId.toString()) {
-      const oldCompanyProfile = await Profile.findOne({ userId: oldCompanyId });
+    if (lastCompanyId && lastCompanyId.toString() !== companyId.toString()) {
+      const oldCompanyProfile = await Profile.findOne({ userId: lastCompanyId });
       if (oldCompanyProfile && oldCompanyProfile.type === "Company") {
         oldCompanyProfile.usersBidedByCompany =
           oldCompanyProfile.usersBidedByCompany.filter(
