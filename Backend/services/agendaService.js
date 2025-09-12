@@ -100,9 +100,9 @@ async function initializeAgenda() {
           console.log(`✅ [Agenda] Agent ${agentLabel} | Job: ${jobTitle} | ${matches.length} candidat(s) matché(s) | #1 Name : ${matches[0].name}  candidat matché Score :  ${matches[0].score} FinalBid : ${matches[0].finalBid} _id : ${matches[0].candidateId}`);
         
           // --- Envoi POST seulement pour le premier match avec score > 70 ---
-        const topMatch = matches.find((m) => m.score > 70);
+        const topMatch = matches.find((m) => m.score > 20);
         if (topMatch) {
-          try {
+         /* try {
             await axios.post(`${process.env.HR_AGENTS_BASE_URL || 'http://localhost:5000'}/hr-agents/submit-evaluation-message`, {
               agentAId: agent._id,
               agentBId: "68c2e127bf5357b2404443c2", // master
@@ -114,9 +114,27 @@ async function initializeAgenda() {
             console.log(`📤 [Agenda] Message envoyé pour candidat ${topMatch.name} avec score ${topMatch.score}`);
           } catch (err) {
             console.error(`❌ [Agenda] Échec envoi message pour candidat ${topMatch.name}:`, err.message);
+          }*/
+          try {
+            console.log("topMatch.candidateId", topMatch.candidateId.toString());
+            const res = await axios.put(`http://localhost:5000/profiles/updateFinalBid`, {
+              userId: topMatch.candidateId?.toString(), // candidat concerné
+              newBid: 20,
+              companyId: agent._id?.toString(),        // ⚠️ pas agent.Company !
+              postId: agent.postId._id?.toString()
+            });
+            
+            console.log(
+              `📤 [Agenda] Bid mis à jour pour candidat ${topMatch.name} (score ${topMatch.score}) → FinalBid = ${res.data.profile.companyBid.finalBid}`
+            );
+          } catch (err) {
+            console.error(
+              `❌ [Agenda] Échec updateFinalBid pour candidat ${topMatch.name}:`,
+              err.response?.data?.message || err.message
+            );
           }
         } else {
-          console.log(`⚠️ [Agenda] Aucun candidat avec score > 70 pour agent ${agentLabel}`);
+          console.log(`⚠️ [Agenda] Aucun candidat avec score > 30 pour agent ${agentLabel}`);
         }
 
           
@@ -132,7 +150,7 @@ async function initializeAgenda() {
 
   agendaInstance.on("ready", async () => {
     await agendaInstance.start();
-    await agendaInstance.every("5 minutes", "agent:heartbeat"); // exécution toutes les 5 minutes
+    await agendaInstance.every("1 minutes", "agent:heartbeat"); // exécution toutes les 5 minutes
     await agendaInstance.now("agent:heartbeat");
     console.log("⏱️ Agenda démarré avec job agent:heartbeat toutes les 5 minutes");
   
