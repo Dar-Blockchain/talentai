@@ -1,5 +1,6 @@
 const { POST_STATUS } = require("../constants/postConstants");
 const postService = require("../services/postService");
+const { sendPostEmail } = require("../utils/mailing");
 
 // Créer un nouveau post
 exports.createPost = async (req, res) => {
@@ -152,5 +153,31 @@ exports.getPostsByUserTopSkills = async (req, res) => {
       success: false,
       error: error.message,
     });
+  }
+};
+
+// Envoyer un email avec le post comme objet et détails
+exports.emailPostDetails = async (req, res) => {
+  try {
+    const { to } = req.body;
+    const postId = req.params.id;
+
+    if (!to) {
+      return res.status(400).json({ success: false, error: "Champ 'to' requis" });
+    }
+
+    const post = await postService.getPostById(postId);
+    if (!post) {
+      return res.status(404).json({ success: false, error: "Post introuvable" });
+    }
+
+    const sent = await sendPostEmail(to, post);
+    if (!sent) {
+      return res.status(500).json({ success: false, error: "Échec d'envoi de l'email" });
+    }
+
+    return res.status(200).json({ success: true, message: "Email envoyé" });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
   }
 };

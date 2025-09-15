@@ -60,4 +60,8 @@ router.get("/adsPost", postController.getPostsByUserTopSkills);
 // Description: Alias de détail de post
 router.get("/DetailsPost/:id", postController.getPostById);
 
+// POST /post/:id/send-email
+// Description: Envoie un email avec sujet= titre du post et corps= détails
+router.post("/:id/send-email", postController.emailPostDetails);
+
 module.exports = router;
