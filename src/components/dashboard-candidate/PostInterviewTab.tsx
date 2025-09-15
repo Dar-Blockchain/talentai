@@ -47,6 +47,7 @@ import {
   Assignment as AssignmentIcon,
   CheckCircleOutline as CheckCircleOutlineIcon,
   RadioButtonUnchecked as RadioButtonUncheckedIcon,
+  Email as EmailIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 
@@ -343,6 +344,60 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
     console.log('PostInterviewTab - Progress loading:', progressLoading);
     console.log('PostInterviewTab - Progress error:', progressError);
   }, [data, candidateProgress, progressLoading, progressError]);
+
+  // Handle task sending with PDF
+  const handleSendTask = async (progress: CandidateProgress, step: any) => {
+    try {
+      const token = localStorage.getItem('api_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/';
+      const apiUrl = `${apiBaseUrl}task/send-task`;
+      
+      console.log('Sending task:', {
+        postId: progress.idPost?._id,
+        stepId: step?.stepId?._id || step?._id,
+        candidateId: progress.idCandidate?._id
+      });
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          postId: progress.idPost?._id,
+          stepId: step?.stepId?._id || step?._id,
+          candidateId: progress.idCandidate?._id,
+          candidateEmail: progress.idCandidate?.email,
+          candidateName: `${progress.idCandidate?.FirstName || ''} ${progress.idCandidate?.LastName || ''}`.trim(),
+          jobTitle: progress.idPost?.jobDetails?.title,
+          stepLabel: step?.stepId?.data?.label || step?.data?.label || 'Task'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to send task');
+      }
+
+      const result = await response.json();
+      console.log('Task sent successfully:', result);
+      
+      // Show success message
+      alert('Task sent successfully! The candidate will receive an email with the PDF test.');
+      
+      // Refresh progress to update status
+      fetchCandidateProgress();
+      
+    } catch (error) {
+      console.error('Error sending task:', error);
+      alert(`Error sending task: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return '#4caf50';
@@ -1244,7 +1299,22 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                       <Button
                         variant="contained"
                         size="small"
-                        startIcon={<AssignmentIcon />}
+                        startIcon={(() => {
+                          if (progress.steps) {
+                            const sortedSteps = [...progress.steps].sort((a, b) => 
+                              (a.stepId?.order || 0) - (b.stepId?.order || 0)
+                            );
+                            const inProgressStep = sortedSteps.find(step => step.status === 'inProgress');
+                            const nextPendingStep = sortedSteps.find(step => step.status === 'pending');
+                            const currentStep = inProgressStep || nextPendingStep;
+                            
+                            const isTaskStep = currentStep?.stepId?.data?.type?.toLowerCase().includes('task') || 
+                                             progress.currentStep?.data?.type?.toLowerCase().includes('task');
+                            
+                            return isTaskStep ? <EmailIcon /> : <AssignmentIcon />;
+                          }
+                          return <AssignmentIcon />;
+                        })()}
                         disabled={(() => {
                           // Check if all steps are completed
                           if (progress.steps && progress.steps.length > 0) {
@@ -1271,16 +1341,26 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                             }
                           }
                           
-                          if (nextStep) {
-                            // Navigate with step ID from steps - stepId is an object containing _id
-                            const stepId = nextStep.stepId._id
-                            router.push(`/posts/${progress.idPost?._id}/interview?stepId=${stepId}`);
-                          } else if (progress.currentStep) {
-                            // Use current step ID
-                            router.push(`/posts/${progress.idPost?._id}/interview?stepId=${progress.currentStep._id}`);
+                          // Check if this is a task step (not an interview)
+                          const isTaskStep = nextStep?.stepId?.data?.type?.toLowerCase().includes('task') || 
+                                           progress.currentStep?.data?.type?.toLowerCase().includes('task');
+                          
+                          if (isTaskStep) {
+                            // Handle task sending with PDF
+                            handleSendTask(progress, nextStep || progress.currentStep);
                           } else {
-                            // Fallback to just the post ID
-                            router.push(`/posts/${progress.idPost?._id}/interview`);
+                            // Handle interview navigation
+                            if (nextStep) {
+                              // Navigate with step ID from steps - stepId is an object containing _id
+                              const stepId = nextStep.stepId._id
+                              router.push(`/posts/${progress.idPost?._id}/interview?stepId=${stepId}`);
+                            } else if (progress.currentStep) {
+                              // Use current step ID
+                              router.push(`/posts/${progress.idPost?._id}/interview?stepId=${progress.currentStep._id}`);
+                            } else {
+                              // Fallback to just the post ID
+                              router.push(`/posts/${progress.idPost?._id}/interview`);
+                            }
                           }
                         }}
                         sx={{
@@ -1311,11 +1391,25 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                               
                               const inProgressStep = sortedSteps.find(step => step.status === 'inProgress');
                               const nextPendingStep = sortedSteps.find(step => step.status === 'pending');
+                              const currentStep = inProgressStep || nextPendingStep;
                               
-                              if (inProgressStep) {
-                                return `Continue: ${inProgressStep.stepId?.data?.label || 'Current Step'}`;
-                              } else if (nextPendingStep) {
-                                return `Start: ${nextPendingStep.stepId?.data?.label || 'Next Step'}`;
+                              // Check if current step is a task
+                              const isTaskStep = currentStep?.stepId?.data?.type?.toLowerCase().includes('task') || 
+                                               progress.currentStep?.data?.type?.toLowerCase().includes('task');
+                              
+                              if (isTaskStep) {
+                                if (inProgressStep) {
+                                  return `Send Task: ${inProgressStep.stepId?.data?.label || 'Current Task'}`;
+                                } else if (nextPendingStep) {
+                                  return `Send Task: ${nextPendingStep.stepId?.data?.label || 'Next Task'}`;
+                                }
+                                return 'Send Task';
+                              } else {
+                                if (inProgressStep) {
+                                  return `Continue: ${inProgressStep.stepId?.data?.label || 'Current Step'}`;
+                                } else if (nextPendingStep) {
+                                  return `Start: ${nextPendingStep.stepId?.data?.label || 'Next Step'}`;
+                                }
                               }
                             }
                             return 'Continue Application';
