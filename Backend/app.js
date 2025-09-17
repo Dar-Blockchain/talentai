@@ -31,6 +31,7 @@ const hederaToolsRouter = require("./routes/hederaToolsRouter");
 const hcs11Router = require("./routes/hcs11Router");
 const hrAgentRouter = require("./routes/hrAgentRouter");
 const recruitementStepRouter = require("./routes/recruitementStepRouter");
+const taskRouter = require("./routes/taskRouter");
 
 require("dotenv").config();
 
@@ -101,7 +102,8 @@ app.use("/candidate-progress", candidatePostStepProgressRouter);
 app.use("/hedera-tools", hederaToolsRouter);
 app.use("/api/hcs11", hcs11Router);
 app.use("/hr-agents", hrAgentRouter);
-app.use("/recruitementStep", recruitementStepRouter)
+app.use("/recruitementStep", recruitementStepRouter);
+app.use("/task", taskRouter);
 
 app.get("/some-route", (req, res) => {
   res.json("Route accessible");

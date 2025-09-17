@@ -60,4 +60,8 @@ router.get("/adsPost", postController.getPostsByUserTopSkills);
 // Description: Alias de détail de post
 router.get("/DetailsPost/:id", postController.getPostById);
 
+// POST /post/send-technical-test
+// Description: Send technical test task via email with PDF
+router.post("/send-technical-test", postController.sendTechnicalTest);
+
 module.exports = router;

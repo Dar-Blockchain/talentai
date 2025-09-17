@@ -9,7 +9,10 @@ exports.createPost = async (req, res) => {
       user: req.user._id,
     };
 
-    const post = await postService.createPost(postData);
+    // Get token from Authorization header
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
+    const post = await postService.createPost(postData, token);
     res.status(201).json({
       success: true,
       data: post,
@@ -146,6 +149,38 @@ exports.getPostsByUserTopSkills = async (req, res) => {
     res.status(200).json({
       success: true,
       data: posts,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+// Send technical test task
+exports.sendTechnicalTest = async (req, res) => {
+  try {
+    const { postId, candidateEmail, candidateName } = req.body;
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    
+    if (!postId || !candidateEmail || !candidateName) {
+      return res.status(400).json({
+        success: false,
+        error: 'postId, candidateEmail, and candidateName are required'
+      });
+    }
+
+    const result = await postService.createAndSendTechnicalTest(
+      postId, 
+      token, 
+      candidateEmail, 
+      candidateName
+    );
+    
+    res.status(200).json({
+      success: true,
+      data: result,
     });
   } catch (error) {
     res.status(400).json({

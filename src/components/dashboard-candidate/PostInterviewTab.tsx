@@ -29,6 +29,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Snackbar,
 } from '@mui/material';
 import { keyframes } from '@mui/system';
 import {
@@ -206,6 +207,20 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
   const [progressLoading, setProgressLoading] = useState(false);
   const [progressError, setProgressError] = useState<string | null>(null);
 
+  // Notification state
+  const [notification, setNotification] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'info' | 'warning';
+  }>({
+    open: false,
+    message: '',
+    severity: 'info'
+  });
+
+  // Task sending state
+  const [sendingTask, setSendingTask] = useState<string | null>(null);
+
   // Fetch candidate progress data
   const fetchCandidateProgress = async () => {
     try {
@@ -345,22 +360,92 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
     console.log('PostInterviewTab - Progress error:', progressError);
   }, [data, candidateProgress, progressLoading, progressError]);
 
+  // Show notification
+  const showNotification = (message: string, severity: 'success' | 'error' | 'info' | 'warning' = 'info') => {
+    setNotification({
+      open: true,
+      message,
+      severity
+    });
+  };
+
+  // Validate progress data structure
+  const validateProgressData = (progress: CandidateProgress) => {
+    const issues = [];
+    
+    if (!progress.idPost?._id) {
+      issues.push('Post information is missing');
+    }
+    
+    if (!progress.idCandidate?._id) {
+      issues.push('Candidate information is missing');
+    }
+    
+    if (!progress.idCandidate?.email) {
+      issues.push('Candidate email is missing');
+    }
+    
+    return issues;
+  };
+
   // Handle task sending with PDF
   const handleSendTask = async (progress: CandidateProgress, step: any) => {
+    const taskId = `${progress._id}-${step?.stepId?._id || step?._id}`;
+    
     try {
+      setSendingTask(taskId);
+      
+        // Validate progress data structure first
+        const validationIssues = validateProgressData(progress);
+        if (validationIssues.length > 0) {
+          throw new Error(`Cannot send coding project: ${validationIssues.join(', ')}`);
+        }
+      
       const token = localStorage.getItem('api_token');
       if (!token) {
         throw new Error('No authentication token found');
       }
 
+      // Validate required fields
+      const postId = progress.idPost?._id;
+      const candidateEmail = progress.idCandidate?.email;
+      const candidateName = `${progress.idCandidate?.FirstName || ''} ${progress.idCandidate?.LastName || ''}`.trim() || 
+                           progress.idCandidate?.username || 
+                           'Candidate';
+
+      // Debug logging
+      console.log('Validation data:', {
+        postId,
+        candidateEmail,
+        candidateName,
+        progressId: progress._id,
+        candidateId: progress.idCandidate?._id,
+        hasIdPost: !!progress.idPost,
+        hasIdCandidate: !!progress.idCandidate
+      });
+
+      if (!postId) {
+        throw new Error('Post ID is missing. Cannot send coding project.');
+      }
+      
+      if (!candidateEmail) {
+        throw new Error('Candidate email is missing. Cannot send coding project.');
+      }
+
       const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/';
       const apiUrl = `${apiBaseUrl}task/send-task`;
       
-      console.log('Sending task:', {
-        postId: progress.idPost?._id,
+      const requestData = {
+        postId,
         stepId: step?.stepId?._id || step?._id,
-        candidateId: progress.idCandidate?._id
-      });
+        candidateId: progress.idCandidate?._id,
+        candidateEmail,
+        candidateName,
+        jobTitle: progress.idPost?.jobDetails?.title || 'Software Developer',
+        stepLabel: step?.stepId?.data?.label || step?.data?.label || 'Coding Project Assignment'
+      };
+      
+        console.log('Sending coding project with data:', requestData);
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -368,15 +453,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          postId: progress.idPost?._id,
-          stepId: step?.stepId?._id || step?._id,
-          candidateId: progress.idCandidate?._id,
-          candidateEmail: progress.idCandidate?.email,
-          candidateName: `${progress.idCandidate?.FirstName || ''} ${progress.idCandidate?.LastName || ''}`.trim(),
-          jobTitle: progress.idPost?.jobDetails?.title,
-          stepLabel: step?.stepId?.data?.label || step?.data?.label || 'Task'
-        }),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
@@ -387,15 +464,23 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
       const result = await response.json();
       console.log('Task sent successfully:', result);
       
-      // Show success message
-      alert('Task sent successfully! The candidate will receive an email with the PDF test.');
+        // Show success notification
+        showNotification(
+          'Coding project sent successfully! The candidate will receive an email with the PDF project assignment.',
+          'success'
+        );
       
       // Refresh progress to update status
       fetchCandidateProgress();
       
     } catch (error) {
       console.error('Error sending task:', error);
-      alert(`Error sending task: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        showNotification(
+          `Error sending coding project: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          'error'
+        );
+    } finally {
+      setSendingTask(null);
     }
   };
 
@@ -1272,6 +1357,18 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                         <Typography variant="caption" sx={{ display: 'block', color: '#856404', fontFamily: 'monospace' }}>
                           <strong>Created:</strong> {new Date(progress.createdAt).toLocaleString()}
                         </Typography>
+                        <Typography variant="caption" sx={{ display: 'block', color: '#856404', fontFamily: 'monospace', mt: 1 }}>
+                          <strong>Post ID:</strong> {progress.idPost?._id || 'MISSING'}
+                        </Typography>
+                        <Typography variant="caption" sx={{ display: 'block', color: '#856404', fontFamily: 'monospace' }}>
+                          <strong>Candidate Email:</strong> {progress.idCandidate?.email || 'MISSING'}
+                        </Typography>
+                        <Typography variant="caption" sx={{ display: 'block', color: '#856404', fontFamily: 'monospace' }}>
+                          <strong>Candidate Name:</strong> {`${progress.idCandidate?.FirstName || ''} ${progress.idCandidate?.LastName || ''}`.trim() || progress.idCandidate?.username || 'Candidate (default)'}
+                        </Typography>
+                        <Typography variant="caption" sx={{ display: 'block', color: '#856404', fontFamily: 'monospace' }}>
+                          <strong>Validation Issues:</strong> {validateProgressData(progress).join(', ') || 'None'}
+                        </Typography>
                       </Box>
 
                                           {/* Action Buttons */}
@@ -1320,7 +1417,9 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                           if (progress.steps && progress.steps.length > 0) {
                             return progress.steps.every(step => step.status === 'done');
                           }
-                          return false;
+                          // Check if currently sending a task for this progress
+                          const currentTaskId = `${progress._id}-${progress.currentStep?._id}`;
+                          return sendingTask === currentTaskId;
                         })()}
                         onClick={() => {
                           // Find the next step in correct order: inProgress first, then pending in order
@@ -1378,6 +1477,12 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                         }}
                                               >
                           {(() => {
+                            // Check if currently sending a task for this progress
+                            const currentTaskId = `${progress._id}-${progress.currentStep?._id}`;
+                            if (sendingTask === currentTaskId) {
+                              return 'Sending Coding Project...';
+                            }
+
                             if (progress.steps) {
                               const sortedSteps = [...progress.steps].sort((a, b) => 
                                 (a.stepId?.order || 0) - (b.stepId?.order || 0)
@@ -1399,11 +1504,11 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                               
                               if (isTaskStep) {
                                 if (inProgressStep) {
-                                  return `Send Task: ${inProgressStep.stepId?.data?.label || 'Current Task'}`;
+                                  return `Send Coding Project: ${inProgressStep.stepId?.data?.label || 'Current Task'}`;
                                 } else if (nextPendingStep) {
-                                  return `Send Task: ${nextPendingStep.stepId?.data?.label || 'Next Task'}`;
+                                  return `Send Coding Project: ${nextPendingStep.stepId?.data?.label || 'Next Task'}`;
                                 }
-                                return 'Send Task';
+                                return 'Send Coding Project';
                               } else {
                                 if (inProgressStep) {
                                   return `Continue: ${inProgressStep.stepId?.data?.label || 'Current Step'}`;
@@ -1799,6 +1904,22 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
         
         </DialogActions>
       </Dialog>
+
+      {/* Notification Snackbar */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={() => setNotification(prev => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setNotification(prev => ({ ...prev, open: false }))}
+          severity={notification.severity}
+          sx={{ width: '100%' }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
 
     </Box>
   );
