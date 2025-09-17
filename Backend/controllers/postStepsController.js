@@ -378,6 +378,36 @@ module.exports.updateNodePosition = async (req, res) => {
   }
 };
 
+// Submit task: set status to done and save github link
+module.exports.submitTask = async (req, res) => {
+  try {
+    const { nodeId } = req.params;
+    const { githubLink } = req.body;
+
+    const result = await postStepsService.submitTaskByNodeId(nodeId, githubLink);
+
+    if (result.success) {
+      return res.status(200).json({
+        success: true,
+        message: "Task submitted successfully",
+        data: result.data,
+      });
+    } else {
+      return res.status(result.error === 'Post step not found' ? 404 : 400).json({
+        success: false,
+        message: "Error submitting task",
+        error: result.error,
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
 // Delete a post step
 module.exports.deletePostStep = async (req, res) => {
   try {

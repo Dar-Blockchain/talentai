@@ -288,6 +288,32 @@ module.exports.updateNodePosition = async (nodeId, positionData) => {
   }
 }
 
+// Submit a task: save GitHub link and set status to done
+module.exports.submitTaskByNodeId = async (nodeId, githubLink) => {
+  try {
+    if (!githubLink) {
+      return { success: false, error: 'githubLink is required' };
+    }
+
+    const updatedPostStep = await Post_Steps.findOneAndUpdate(
+      { id: nodeId },
+      {
+        status: 'done',
+        'data.subtitle': githubLink,
+        updatedAt: new Date()
+      },
+      { new: true, runValidators: true }
+    ).populate('postId', 'title');
+
+    if (!updatedPostStep) {
+      return { success: false, error: 'Post step not found' };
+    }
+    return { success: true, data: updatedPostStep };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
 // Get next node number for a post
 module.exports.getNextNodeNumber = async (postId) => {
   try {

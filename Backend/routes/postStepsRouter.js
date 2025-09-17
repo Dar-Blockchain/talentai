@@ -43,6 +43,10 @@ router.put('/node/:nodeId/config', postStepsController.updateNodeConfig);
 // PUT /post-steps/node/:nodeId/position
 router.put('/node/:nodeId/position', postStepsController.updateNodePosition);
 
+// PUT /post-steps/node/:nodeId/submit-task
+// Body: { githubLink: string }
+router.put('/node/:nodeId/submit-task', postStepsController.submitTask);
+
 // Routes pour récupérer par type spécifique
 // GET /post-steps/post/:postId/type/:nodeType
 router.get('/post/:postId/type/:nodeType', postStepsController.getNodesBySpecificType);
