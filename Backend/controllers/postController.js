@@ -1,5 +1,6 @@
 const { POST_STATUS } = require("../constants/postConstants");
 const postService = require("../services/postService");
+const { sendPostEmail } = require("../utils/mailing");
 
 // Créer un nouveau post
 exports.createPost = async (req, res) => {
