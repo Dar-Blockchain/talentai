@@ -1,5 +1,7 @@
 const Post_Steps = require('../models/post_StepsModel');
 const Post = require('../models/PostModel');
+const candidatePostStepProgressService = require('./candidatePostStepProgressService');
+const CandidatePostStepProgress = require('../models/candidate_Post_Step_Progress');
 
 // Create a new post step (single or multiple)
 module.exports.createPostStep = async (postStepData) => {
@@ -295,7 +297,8 @@ module.exports.submitTaskByNodeId = async (nodeId, githubLink) => {
       return { success: false, error: 'githubLink is required' };
     }
 
-    const updatedPostStep = await Post_Steps.findOneAndUpdate(
+    // First try to update by custom node id (field `id`)
+    let updatedPostStep = await Post_Steps.findOneAndUpdate(
       { id: nodeId },
       {
         status: 'done',
@@ -305,8 +308,57 @@ module.exports.submitTaskByNodeId = async (nodeId, githubLink) => {
       { new: true, runValidators: true }
     ).populate('postId', 'title');
 
+    // Fallback: try by MongoDB _id if not found via custom id
+    if (!updatedPostStep) {
+      updatedPostStep = await Post_Steps.findByIdAndUpdate(
+        nodeId,
+        {
+          status: 'done',
+          'data.subtitle': githubLink,
+          updatedAt: new Date()
+        },
+        { new: true, runValidators: true }
+      ).populate('postId', 'title');
+    }
+
     if (!updatedPostStep) {
       return { success: false, error: 'Post step not found' };
+    }
+
+    // Also update candidate progress: mark this step done and advance currentStep
+    try {
+      // 1) Force set the matching step to done across all progresses (atomic array update)
+      await CandidatePostStepProgress.updateMany(
+        { 'steps.stepId': updatedPostStep._id },
+        {
+          $set: {
+            'steps.$[elem].status': 'done',
+            'steps.$[elem].completedAt': new Date(),
+            updatedAt: new Date()
+          }
+        },
+        {
+          arrayFilters: [ { 'elem.stepId': updatedPostStep._id } ],
+          upsert: false
+        }
+      );
+
+      // 2) For progresses where this is the currentStep, advance to the next
+      const progressesWithCurrent = await CandidatePostStepProgress.find({
+        currentStep: updatedPostStep._id,
+        'steps.stepId': updatedPostStep._id
+      }).select('_id');
+
+      for (const p of progressesWithCurrent) {
+        await candidatePostStepProgressService.updateStepStatus(
+          p._id,
+          updatedPostStep._id,
+          'done'
+        );
+      }
+    } catch (e) {
+      // Do not fail the main operation if progress update has an issue
+      console.error('Error updating candidate progress for submitted task:', e.message);
     }
     return { success: true, data: updatedPostStep };
   } catch (error) {

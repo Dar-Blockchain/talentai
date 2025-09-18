@@ -220,6 +220,10 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
 
   // Task sending state
   const [sendingTask, setSendingTask] = useState<string | null>(null);
+  // Task submission state
+  const [submittingTask, setSubmittingTask] = useState<string | null>(null);
+  const [submissionLinks, setSubmissionLinks] = useState<Record<string, string>>({});
+  const [submittedTasks, setSubmittedTasks] = useState<Record<string, boolean>>({});
 
   // Fetch candidate progress data
   const fetchCandidateProgress = async () => {
@@ -481,6 +485,69 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
         );
     } finally {
       setSendingTask(null);
+    }
+  };
+
+  // Handle candidate task submission (GitHub link)
+  const handleSubmitTask = async (stepNodeId: string) => {
+    try {
+      const token = localStorage.getItem('api_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const githubLink = submissionLinks[stepNodeId]?.trim();
+      if (!githubLink) {
+        throw new Error('Please provide a GitHub repository link');
+      }
+      // Basic URL validation
+      const urlOk = /^(https?:\/\/)([\w.-]+)\.[a-z]{2,}.*$/i.test(githubLink);
+      if (!urlOk) {
+        throw new Error('Please provide a valid URL starting with http(s)');
+      }
+
+      setSubmittingTask(stepNodeId);
+
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/';
+      const apiUrl = `${apiBaseUrl}post-steps/node/${stepNodeId}/submit-task`;
+
+      const response = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ githubLink }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to submit task');
+      }
+
+      showNotification('Task submitted successfully. We will review your repository shortly.', 'success');
+      setSubmittedTasks(prev => ({ ...prev, [stepNodeId]: true }));
+      // Optimistically update local progress state to reflect done status and saved link
+      setCandidateProgress(prev => prev.map(progress => ({
+        ...progress,
+        steps: progress.steps?.map(step => {
+          const nodeKey = (step.stepId as any)?.id || (step.stepId as any)?._id;
+          if (nodeKey === stepNodeId) {
+            const updatedStep: any = { ...step, status: 'done', completedAt: new Date().toISOString() };
+            if (step.stepId && typeof step.stepId === 'object') {
+              updatedStep.stepId = { ...(step.stepId as any), data: { ...(step.stepId as any).data, subtitle: githubLink } };
+            }
+            return updatedStep;
+          }
+          return step;
+        }) || progress.steps,
+      })));
+      // Refresh progress
+      fetchCandidateProgress();
+    } catch (error) {
+      showNotification(`Error submitting task: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+    } finally {
+      setSubmittingTask(null);
     }
   };
 
@@ -1011,6 +1078,14 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                                               <Typography variant="body2" color="textSecondary">
                                                 {step.stepId?.data?.type || 'Unknown Type'}
                                               </Typography>
+                                              {step.stepId?.data?.subtitle && (
+                                                <Typography variant="body2" sx={{ mt: 0.5 }}>
+                                                  <strong>Submitted link: </strong>
+                                                  <a href={step.stepId.data.subtitle} target="_blank" rel="noreferrer" style={{ color: '#1a73e8' }}>
+                                                    {step.stepId.data.subtitle}
+                                                  </a>
+                                                </Typography>
+                                              )}
                                             </Box>
                                             
                                             {/* Status Badge */}
@@ -1223,7 +1298,7 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                                             </Box>
                                           )}
 
-                                                                                     {/* Step Details for In Progress */}
+                                          {/* Step Details for In Progress */}
                                            {step.status === 'inProgress' && (
                                             <Box sx={{ 
                                               mt: 2, 
@@ -1293,6 +1368,56 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                                               </Box>
                                             </Box>
                                           )}
+
+                                          {/* Task Submission UI: show when step type contains 'task' */}
+                                          {step.stepId?.data?.type?.toLowerCase().includes('task') && (() => {
+                                            const nodeKey = (step.stepId as any)?.id || step.stepId?._id;
+                                            const submittedLink = step.stepId?.data?.subtitle || (step as any)?.data?.subtitle || '';
+                                            const isSubmitted = step.status === 'done' || Boolean(submittedLink) || Boolean(submittedTasks[nodeKey]);
+                                            const inputLink = submissionLinks[nodeKey] ?? submittedLink;
+                                            return (
+                                            <Box sx={{ mt: 2, p: 2, backgroundColor: '#f8f9ff', borderRadius: 2, border: '1px solid #c5d1ff' }}>
+                                              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: '#1a237e' }}>
+                                                Submit your task (GitHub Repository URL)
+                                              </Typography>
+                                              {isSubmitted && (
+                                                <Alert severity="success" sx={{ mb: 1 }}>
+                                                  You have already submitted your Git repository link.
+                                                </Alert>
+                                              )}
+                                              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                                <TextField
+                                                  size="small"
+                                                  fullWidth
+                                                  placeholder="https://github.com/username/repository"
+                                                  value={submissionLinks[nodeKey] !== undefined ? submissionLinks[nodeKey] : submittedLink}
+                                                  onChange={(e) => setSubmissionLinks(prev => ({ ...prev, [nodeKey]: e.target.value }))}
+                                                  disabled={isSubmitted}
+                                                />
+                                                <Button
+                                                  variant="contained"
+                                                  disabled={
+                                                    isSubmitted
+                                                    || submittingTask === nodeKey
+                                                    || !(inputLink || '').trim()
+                                                  }
+                                                  onClick={() => handleSubmitTask(nodeKey)}
+                                                  sx={{ textTransform: 'none' }}
+                                                >
+                                                  {submittingTask === nodeKey ? 'Submitting...' : 'Submit Task'}
+                                                </Button>
+                                              </Box>
+                                              <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+                                                Provide the link to your public repository. Ensure the README includes setup and run instructions.
+                                              </Typography>
+                                              {isSubmitted && (
+                                                <Typography variant="body2" sx={{ mt: 1, color: '#2e7d32', fontWeight: 500 }}>
+                                                  You have already submitted your Git repository link.
+                                                </Typography>
+                                              )}
+                                            </Box>
+                                            );
+                                          })()}
                                         </Card>
                                       </Box>
                                     </Box>

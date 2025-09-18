@@ -18,8 +18,8 @@ class CandidatePostStepProgressService {
       const progress = await CandidatePostStepProgress.find()
         .populate("idCandidate", "name email")
         .populate("idPost", "jobDetails.title")
-        .populate("currentStep", "data.label data.type")
-        .populate("steps.stepId", "data.label data.type order")
+        .populate("currentStep", "data.label data.type data.subtitle")
+        .populate("steps.stepId", "data.label data.type data.subtitle order id")
         .populate("steps.interviewDetails", "type overallScore createdAt")
         .sort({ createdAt: -1 });
       return { success: true, data: progress };
@@ -34,8 +34,8 @@ class CandidatePostStepProgressService {
       const progress = await CandidatePostStepProgress.findById(id)
         .populate("idCandidate", "name email")
         .populate("idPost", "jobDetails.title")
-        .populate("currentStep", "data.label data.type")
-        .populate("steps.stepId", "data.label data.type order")
+        .populate("currentStep", "data.label data.type data.subtitle")
+        .populate("steps.stepId", "data.label data.type data.subtitle order id")
         .populate("steps.interviewDetails", "type overallScore createdAt");
 
       if (!progress) {
@@ -56,8 +56,8 @@ class CandidatePostStepProgressService {
       })
         .populate("idCandidate")
         .populate("idPost")
-        .populate("currentStep")
-        .populate("steps.stepId", "data.label data.type order")
+        .populate("currentStep", "data.label data.type data.subtitle")
+        .populate("steps.stepId", "data.label data.type data.subtitle order id")
         .populate("steps.interviewDetails", "type overallScore createdAt");
 
       if (!progress) {
@@ -78,8 +78,8 @@ class CandidatePostStepProgressService {
       })
         .populate("idCandidate", "name email")
         .populate("idPost", "jobDetails.title")
-        .populate("currentStep", "data.label data.type")
-        .populate("steps.stepId", "data.label data.type order")
+        .populate("currentStep", "data.label data.type data.subtitle")
+        .populate("steps.stepId", "data.label data.type data.subtitle order id")
         .populate("steps.interviewDetails", "type overallScore createdAt");
 
       if (!progress) {
@@ -99,8 +99,8 @@ class CandidatePostStepProgressService {
       })
         .populate("idCandidate", "name email")
         .populate("idPost", "jobDetails.title")
-        .populate("currentStep", "data.label data.type")
-        .populate("steps.stepId", "data.label data.type order")
+        .populate("currentStep", "data.label data.type data.subtitle")
+        .populate("steps.stepId", "data.label data.type data.subtitle order id")
         .populate("steps.interviewDetails", "type overallScore createdAt")
         .sort({ updatedAt: -1 });
 
@@ -153,8 +153,8 @@ class CandidatePostStepProgressService {
       )
         .populate("idCandidate", "name email")
         .populate("idPost", "jobDetails.title")
-        .populate("currentStep", "data.label data.type")
-        .populate("steps.stepId", "data.label data.type order")
+        .populate("currentStep", "data.label data.type data.subtitle")
+        .populate("steps.stepId", "data.label data.type data.subtitle order id")
         .populate("steps.interviewDetails", "type overallScore createdAt");
 
       if (!updatedProgress) {
@@ -176,8 +176,8 @@ class CandidatePostStepProgressService {
       )
         .populate("idCandidate", "name email")
         .populate("idPost", "jobDetails.title")
-        .populate("currentStep", "data.label data.type")
-        .populate("steps.stepId", "data.label data.type order")
+        .populate("currentStep", "data.label data.type data.subtitle")
+        .populate("steps.stepId", "data.label data.type data.subtitle order id")
         .populate("steps.interviewDetails", "type overallScore createdAt");
 
       if (!updatedProgress) {
@@ -239,8 +239,8 @@ class CandidatePostStepProgressService {
       )
         .populate("idCandidate", "name email")
         .populate("idPost", "jobDetails.title")
-        .populate("currentStep", "data.label data.type")
-        .populate("steps.stepId", "data.label data.type order")
+        .populate("currentStep", "data.label data.type data.subtitle")
+        .populate("steps.stepId", "data.label data.type data.subtitle order id")
         .populate("steps.interviewDetails", "type overallScore createdAt");
 
       return { success: true, data: progress };
