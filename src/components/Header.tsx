@@ -128,7 +128,7 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
       <AppBar
         position="static"
         elevation={0}
-        sx={{ backgroundColor: "#fff", color: "#000" }}
+        sx={{ backgroundColor: "transparent", color: "#000", boxShadow: 'none', pt: 2 }}
       >
         <Toolbar sx={{ justifyContent: "space-between" }}>
           <Box
@@ -140,7 +140,13 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
           />
           
           {!isMobile && (
-            <Stack direction="row" spacing={4} alignItems="center">
+            <Stack direction="row" spacing={4} alignItems="center" sx={{
+              px: 2,
+              py: 1,
+              borderRadius: 999,
+              backgroundColor: '#ffffff',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.06)'
+            }}>
               {navItems.map((item) => (
                 <Link href={`/#${item.id}`} key={item.id} passHref>
                   <Box
@@ -169,13 +175,13 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
               cursor: 'pointer',
               fontFamily: 'Poppins',
               fontWeight: 500,
-              fontSize: '18px',
-              lineHeight: '100%',
-              letterSpacing: '0%',
-              color: color,
-              display: 'inline-block',
-              padding: '4px 8px',
-              borderRadius: '4px'
+              fontSize: '14px',
+              color: '#7C3AED',
+              background: '#ffffff',
+              borderRadius: 999,
+              px: 2,
+              py: 0.75,
+              boxShadow: '0 4px 14px rgba(0,0,0,0.06)'
             }}
             onClick={() => router.push(type === "company" ? '/home/candidate' : '/')}
           >
@@ -187,28 +193,39 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
             isAuthenticated ? (
               <UserAvatar />
             ) : (
-              <Button
-                variant="contained"
-                onClick={() => router.push("/signin")}
-                sx={{
-                  backgroundColor: "#000",
-                  color: "#fff",
-                  borderRadius: 999,
-                  textTransform: "none",
-                  padding: "6px 20px",
-                  fontWeight: 500,
-                  "&:hover": {
-                    backgroundColor: "#333",
-                  },
-                }}
-                endIcon={
-                  <ArrowForwardIcon
-                    sx={{ fontSize: 16, color: color }}
-                  />
-                }
-              >
-                Get Started
-              </Button>
+              <Stack direction="row" spacing={2}>
+                <Button
+                  variant="outlined"
+                  onClick={() => router.push("/signin")}
+                  sx={{
+                    backgroundColor: '#ffffff',
+                    borderColor: '#e5e7eb',
+                    color: '#111827',
+                    borderRadius: 999,
+                    textTransform: 'none',
+                    px: 2,
+                    py: 0.75,
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.06)'
+                  }}
+                >
+                  Login
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={() => router.push("/demo")}
+                  sx={{
+                    backgroundColor: '#ffffff',
+                    color: '#111827',
+                    borderRadius: 999,
+                    textTransform: 'none',
+                    px: 2,
+                    py: 0.75,
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.06)'
+                  }}
+                >
+                  Watch Demo
+                </Button>
+              </Stack>
             )
           ) : (
             <IconButton color="inherit" edge="end" onClick={handleDrawerToggle}>
