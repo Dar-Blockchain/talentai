@@ -3,8 +3,16 @@ import { Box, Button, Checkbox, Stack, Typography } from "@mui/material";
 
 const Bullet: React.FC<{ label: string }> = ({ label }) => (
   <Stack direction="row" spacing={1.5} alignItems="center">
-    <Checkbox checked readOnly size="small" sx={{ color: '#22d3a6' }} />
-    <Typography variant="body2" sx={{ color: '#D1D5DB' }}>{label}</Typography>
+    <img
+      src="/images/home/icon.png"
+      alt="Check icon"
+      style={{
+        width: 20,
+        height: 20,
+        objectFit: 'contain'
+      }}
+    />
+    <Typography variant="body2" sx={{ color: '#fff' }}>{label}</Typography>
   </Stack>
 );
 
