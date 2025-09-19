@@ -77,64 +77,22 @@ const BiasFreeEvaluation: React.FC = () => {
             boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
             border: '1px solid #E5E7EB',
             display: 'flex',
-            gap: 3
+            justifyContent: 'center',
+            alignItems: 'center'
           }}>
-            {/* Video section - 70% width */}
-            <Box sx={{ flex: 0.7 }}>
-              {/* Video placeholder */}
-              <Box sx={{ 
-                width: '100%', 
-                height: 200, 
-                bgcolor: '#1F2937', 
-                borderRadius: 2, 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                mb: 3
-              }}>
-                <Typography variant="body2" sx={{ color: '#9CA3AF' }}>Video Feed</Typography>
-              </Box>
-              
-              {/* Video section */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                <Typography variant="body2" sx={{ color: '#6B7280' }}>Recording your response</Typography>
-                <Box sx={{ width: 24, height: 24, bgcolor: '#10B981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Typography variant="caption" sx={{ color: '#fff' }}>✓</Typography>
-                </Box>
-              </Box>
-            </Box>
-
-            {/* Content section - 30% width */}
-            <Box sx={{ flex: 0.3, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              {/* Card header */}
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#111827' }}>TALENT AI</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, bgcolor: '#8B5CF6', borderRadius: '50%' }} />
-                  <Typography variant="body2" sx={{ color: '#6B7280' }}>Michael Brown</Typography>
-                </Box>
-              </Box>
-              
-              {/* Question section */}
-              <Typography variant="body2" sx={{ color: '#6B7280', mb: 2 }}>Question</Typography>
-              <Typography variant="body1" sx={{ color: '#111827', mb: 3 }}>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit?
-              </Typography>
-              
-              {/* Submit button */}
-              <Button 
-                variant="contained" 
-                sx={{ 
-                  width: '100%',
-                  textTransform: 'none',
-                  backgroundColor: '#8B5CF6',
-                  py: 1.5,
-                  '&:hover': { backgroundColor: '#7C3AED' }
-                }}
-              >
-                Submit & Continue
-              </Button>
-            </Box>
+            {/* Video iframe - Normal size */}
+            <img
+              src="/images/home/Iframe.png"
+              alt="Video Feed"
+              style={{
+                width: 'auto',
+                height: 'auto',
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain',
+                display: 'block'
+              }}
+            />
           </Box>
 
           {/* Second Block - 30% */}
