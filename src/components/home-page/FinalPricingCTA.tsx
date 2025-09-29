@@ -17,10 +17,13 @@ const FinalPricingCTA: React.FC = () => {
       backgroundColor: '#121212', 
       color: '#fff', 
       py: { xs: 8, md: 12 }, 
-      px: 3,
-      textAlign: 'center'
+      px: 0,
+      textAlign: 'center',
+      width: '100vw',
+      marginLeft: 'calc(-50vw + 50%)',
+      marginRight: 'calc(-50vw + 50%)'
     }}>
-      <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+      <Box sx={{ maxWidth: 800, mx: 'auto', px: 3 }}>
         <Typography variant="h4" sx={{ 
           fontFamily: 'Poppins, sans-serif', 
           fontWeight: 600,

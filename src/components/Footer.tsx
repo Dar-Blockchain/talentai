@@ -44,6 +44,8 @@ const Footer = ({ type }: { type: "company" | "jobseeker" }) => {
         pb: 2,
         px: 3,
         width: "100%",
+        maxWidth: 1400,
+        mx: 'auto',
       }}
     >
       <Stack

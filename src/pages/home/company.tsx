@@ -5,6 +5,7 @@ import PricingSection from "@/components/home-page/PricingSection";
 import SolutionsSection from "@/components/home-page/SolutionsSection";
 import PartnersSection from "@/components/home-page/PartnersSection";
 import AISpotlight from "@/components/home-page/AISpotlight";
+import GlobalCompanies from "@/components/home-page/GlobalCompanies";
 import BiasFreeEvaluation from "@/components/home-page/BiasFreeEvaluation";
 import Testimonials from "@/components/home-page/Testimonials";
 import FindSection from "@/components/home-page/FindSection";
@@ -24,6 +25,7 @@ const HomePage: React.FC = () => {
       <HeroSection title="Revolutionize Your Hiring with" color="#29D291D4" type="company" subtitle="AI-Powered Intelligence" />
       <AccoladesSection />
       <AISpotlight />
+      <GlobalCompanies />
       <BiasFreeEvaluation />
       <Testimonials />
       <FindSection />

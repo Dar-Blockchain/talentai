@@ -21,7 +21,9 @@ const PartnersSection = () => {
         whiteSpace: 'nowrap',
         width: '100%',
         backgroundColor: theme.palette.background.default,
-        position: 'relative'
+        position: 'relative',
+        maxWidth: 1400,
+        mx: 'auto'
       }}
     >
       <Box

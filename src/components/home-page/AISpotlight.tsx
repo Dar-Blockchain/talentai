@@ -4,7 +4,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 const AISpotlight: React.FC = () => {
   return (
-    <Box sx={{ px: 3, py: { xs: 3, md: 4 }, mb: { xs: 6, md: 8 } }}>
+    <Box sx={{ px: 3, py: { xs: 3, md: 4 }, mb: { xs: 2, md: 3 } , maxWidth: 1400, mx: 'auto' }}>
       <Box
         sx={{
           backgroundColor: "#121212",

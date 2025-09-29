@@ -41,6 +41,8 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
         color: "#000000",
         position: 'relative',
         overflow: 'hidden',
+        maxWidth: 1400,
+        mx: 'auto',
         ...(type === 'company' && {
           backgroundImage:
             `linear-gradient(#f6f8fb 1px, transparent 1px), linear-gradient(90deg, #f6f8fb 1px, transparent 1px)`,

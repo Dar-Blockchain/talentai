@@ -12,25 +12,27 @@ const Card: React.FC<{ title: string; desc: string; img: string }> = ({ title, d
     flexDirection: 'column',
     overflow: 'hidden',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-    maxWidth: { xs: '100%', sm: '350px', md: '400px' },
+    maxWidth: { xs: '100%', sm: '420px', md: '450px' },
     width: '100%'
   }}>
     <Box sx={{ 
       borderRadius: '12px 12px 0 0', 
       display: 'flex', 
-      alignItems: 'flex-start', 
+      alignItems: 'center', 
       justifyContent: 'center',
-      overflow: 'visible',
+      overflow: 'hidden',
       position: 'relative',
-      bgcolor: 'transparent'
+      bgcolor: 'transparent',
+      minHeight: { xs: '220px', sm: '250px', md: '280px' },
+      height: { xs: '220px', sm: '250px', md: '280px' }
     }}>
       <img 
         src={img} 
         alt={title} 
         style={{ 
-          width: 'auto', 
-          height: 'auto', 
-          maxWidth: 'none',
+          width: '100%', 
+          height: '100%', 
+          objectFit: 'cover',
           borderRadius: '12px 12px 0 0',
           display: 'block'
         }} 
@@ -58,8 +60,8 @@ const Card: React.FC<{ title: string; desc: string; img: string }> = ({ title, d
 
 const ManageSection: React.FC = () => {
   return (
-    <Box sx={{ backgroundColor: '#EFF0F0', py: { xs: 6, md: 10 }, px: 3, mb: { xs: 6, md: 8 } }}>
-      <Box sx={{ width: '100%', mx: 0 }}>
+    <Box sx={{ backgroundColor: '#EFF0F0', py: { xs: 6, md: 10 }, px: 3, mb: { xs: 2, md: 3 } }}>
+      <Box sx={{ maxWidth: 1400, width: '100%', mx: 'auto' }}>
         <Typography variant="overline" sx={{ color: '#22C55E', letterSpacing: 1, fontWeight: 600 }}>MANAGE</Typography>
         <Typography variant="h5" sx={{ fontFamily: 'Poppins, sans-serif', fontWeight: 600, mt: 0.5 }}>
           Speed & Efficiency: Numbers Don't Lie
@@ -71,26 +73,26 @@ const ManageSection: React.FC = () => {
         <Box sx={{ 
           display: 'flex', 
           flexDirection: { xs: 'column', sm: 'row' }, 
-          gap: 2.5, 
-          mt: 3,
+          gap: 3, 
+          mt: 4,
           alignItems: 'stretch',
           justifyContent: 'center'
         }}>
           <Box sx={{ 
-            width: { xs: '100%', sm: '350px' },
-            maxWidth: '350px'
+            width: { xs: '100%', sm: '420px', md: '450px' },
+            maxWidth: { xs: '100%', md: '450px' }
           }}>
             <Card title="Skills-Based Matching Revolution" desc="Lorem ipsum dolor sit amet, consectetur adipiscing elit." img="/images/home/Global HR Management Software (HRIS)..png" />
           </Box>
           <Box sx={{ 
-            width: { xs: '100%', sm: '350px' },
-            maxWidth: '350px'
+            width: { xs: '100%', sm: '420px', md: '450px' },
+            maxWidth: { xs: '100%', md: '450px' }
           }}>
             <Card title="Better Hires, Every Time" desc="Lorem ipsum dolor sit amet, consectetur adipiscing elit." img="/images/home/Global Contractor Management.png" />
           </Box>
           <Box sx={{ 
-            width: { xs: '100%', sm: '350px' },
-            maxWidth: '350px'
+            width: { xs: '100%', sm: '420px', md: '450px' },
+            maxWidth: { xs: '100%', md: '450px' }
           }}>
             <Card title="Remote Embedded & APIs" desc="Lorem ipsum dolor sit amet, consectetur adipiscing elit." img="/images/home/Remote Embedded and APIs..png" />
           </Box>

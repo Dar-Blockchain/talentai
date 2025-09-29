@@ -15,6 +15,8 @@ const ContactSection = ({ type, color }: { type: string; color: string }) => {
         borderRadius: "10px",
         position: "relative",
         maxHeight: "max-content",
+        maxWidth: 1400,
+        mx: 'auto',
       }}
     >
       <Stack

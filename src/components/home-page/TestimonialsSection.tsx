@@ -54,6 +54,8 @@ const TestimonialsSection = () => {
                 padding: '4rem 2rem',
                 borderRadius: '1rem',
                 margin: '2rem 0',
+                maxWidth: 1400,
+                mx: 'auto',
                 // boxShadow: '-20px 0 30px -10px rgba(131, 16, 255, 0.2)', // Ombre portée à gauche
             }}
         >

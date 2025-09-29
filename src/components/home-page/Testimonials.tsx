@@ -22,7 +22,7 @@ const items: Testimonial[] = [
   {
     quote:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commod.",
-    name: "Marisol Jiménez",
+    name: "Marisol Jarales",
     title: "Head of People",
     company: "REVERSE TECH",
     dark: false,
@@ -43,11 +43,27 @@ const items: Testimonial[] = [
     company: "TECH CORP",
     dark: true,
   },
+  {
+    quote:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo",
+    name: "Michael Chen",
+    title: "VP of Engineering",
+    company: "TECHNOVATE",
+    dark: false,
+  },
+  {
+    quote:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo",
+    name: "Emily Rodriguez",
+    title: "Head of Operations",
+    company: "INNOVATE LAB",
+    dark: true,
+  },
 ];
 
 const Testimonials: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const maxIndex = Math.max(0, items.length - 2); // Maximum index to show 2 cards
+  const maxIndex = 2; // 3 pages: 0, 1, 2
 
   const next = () => setCurrentIndex((prev) => Math.min(prev + 1, maxIndex));
   const prev = () => setCurrentIndex((prev) => Math.max(prev - 1, 0));
@@ -57,9 +73,9 @@ const Testimonials: React.FC = () => {
       backgroundColor: '#F9FAFB', 
       py: { xs: 6, md: 10 }, 
       px: 3, 
-      mb: { xs: 6, md: 8 } 
+      mb: { xs: 2, md: 3 } 
     }}>
-      <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+      <Box sx={{ maxWidth: 1400, mx: 'auto' }}>
         <Typography 
           variant="h4" 
           sx={{ 
@@ -77,44 +93,48 @@ const Testimonials: React.FC = () => {
           {/* Carousel Container */}
           <Box sx={{
             display: 'flex',
-            transform: `translateX(-${currentIndex * 50}%)`,
+            transform: `translateX(-${currentIndex * 33.33}%)`,
             transition: 'transform 0.3s ease-in-out',
-            width: `${items.length * 50}%`
+            width: '300%' // 3 pages * 100%
           }}>
             {items.map((testimonial, index) => (
               <Box 
                 key={index}
                 sx={{
-                  width: '50%',
-                  px: 2,
+                  width: '16.66%', // 100% / 6 items
+                  px: 0,
                   display: 'flex',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  marginRight: index < items.length - 1 ? '1px' : 0
                 }}
               >
                 <Box sx={{
                   width: { xs: '100%', md: 500 },
                   maxWidth: 500,
-                  bgcolor: testimonial.dark ? '#1F2937' : '#E5E7EB',
-                  color: testimonial.dark ? '#fff' : '#111827',
+                  bgcolor: testimonial.dark ? '#000000' : '#FFFFFF',
+                  color: testimonial.dark ? '#FFFFFF' : '#111827',
                   borderRadius: 2,
                   p: 4,
                   position: 'relative',
                   minHeight: 300,
                   display: 'flex',
                   flexDirection: 'column',
-                  justifyContent: 'space-between'
+                  justifyContent: 'space-between',
+                  boxShadow: testimonial.dark ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.1)'
                 }}>
                   {/* Quote */}
                   <Typography 
                     variant="body1" 
                     sx={{ 
                       mb: 3, 
-                      color: testimonial.dark ? '#D1D5DB' : '#374151',
+                      color: testimonial.dark ? '#FFFFFF' : '#111827',
                       lineHeight: 1.6,
-                      fontSize: '1rem'
+                      fontSize: '1rem',
+                      fontStyle: 'italic'
                     }}
                   >
-                    {testimonial.quote}
+                    "{testimonial.quote}"
                   </Typography>
 
                   {/* Read full story link */}
@@ -140,7 +160,7 @@ const Testimonials: React.FC = () => {
                         sx={{ 
                           width: 48, 
                           height: 48,
-                          bgcolor: testimonial.dark ? '#374151' : '#9CA3AF'
+                          bgcolor: testimonial.dark ? '#10B981' : '#9CA3AF'
                         }}
                       />
                       <Box>
@@ -167,16 +187,39 @@ const Testimonials: React.FC = () => {
                     
                     {/* Company logo */}
                     <Box sx={{ 
-                      bgcolor: testimonial.dark ? '#374151' : '#fff',
-                      px: 2,
-                      py: 1,
-                      borderRadius: 1,
-                      border: testimonial.dark ? '1px solid #4B5563' : '1px solid #D1D5DB'
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1
                     }}>
+                      <Box sx={{
+                        width: 16,
+                        height: 16,
+                        bgcolor: testimonial.dark ? '#FFFFFF' : '#111827',
+                        borderRadius: 0.5,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: testimonial.dark ? '#000000' : '#FFFFFF',
+                            fontWeight: 600,
+                            fontSize: '0.6rem'
+                          }}
+                        >
+                          {testimonial.company === 'fountain' ? 'f' : 
+                           testimonial.company === 'REVERSE TECH' ? '←' : 
+                           testimonial.company === 'EMRUSH' ? 'E' :
+                           testimonial.company === 'TECH CORP' ? 'T' :
+                           testimonial.company === 'TECHNOVATE' ? 'T' :
+                           testimonial.company === 'INNOVATE LAB' ? 'I' : 'C'}
+                        </Typography>
+                      </Box>
                       <Typography 
                         variant="caption" 
                         sx={{ 
-                          color: testimonial.dark ? '#fff' : '#111827',
+                          color: testimonial.dark ? '#FFFFFF' : '#111827',
                           fontWeight: 600,
                           fontSize: '0.75rem'
                         }}
@@ -197,7 +240,7 @@ const Testimonials: React.FC = () => {
             gap: 1, 
             mt: 4 
           }}>
-            {Array.from({ length: maxIndex + 1 }, (_, index) => (
+            {Array.from({ length: 3 }, (_, index) => (
               <Box
                 key={index}
                 onClick={() => setCurrentIndex(index)}

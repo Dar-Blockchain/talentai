@@ -20,6 +20,8 @@ const SolutionsSection = ({ type, color, title, subtitle }: SolutionsSectionProp
         py: { xs: 3, sm: 4, md: 5 },
         backgroundColor: "#ffffff",
         color: "#000000",
+        maxWidth: 1400,
+        mx: 'auto',
       }}
     >
       {" "}

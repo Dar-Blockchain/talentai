@@ -16,9 +16,9 @@ const Bullet: React.FC<{ label: string }> = ({ label }) => (
   </Stack>
 );
 
-const Pill: React.FC<{ label: string; color: string }> = ({ label, color }) => (
+const Pill: React.FC<{ label: string; color: string; icon: string }> = ({ label, color, icon }) => (
   <Box sx={{
-    p: 2,
+    p: 1.5,
     borderRadius: 2,
     bgcolor: '#F9FAFB',
     color: '#374151',
@@ -29,7 +29,7 @@ const Pill: React.FC<{ label: string; color: string }> = ({ label, color }) => (
     alignItems: 'center',
     justifyContent: 'center',
     height: '100%',
-    minHeight: 80,
+    minHeight: 90,
     cursor: 'pointer',
     transition: 'all 0.2s ease',
     '&:hover': {
@@ -38,20 +38,30 @@ const Pill: React.FC<{ label: string; color: string }> = ({ label, color }) => (
     }
   }}>
     <Box sx={{ 
-      width: 40, 
-      height: 40, 
+      width: 36, 
+      height: 36, 
       borderRadius: 2, 
       bgcolor: color, 
-      mb: 1.5,
+      mb: 1,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      fontSize: '1.5rem',
+      fontSize: '1.1rem',
       color: '#fff'
     }}>
-      ✓
+      <Box
+        component="img"
+        src={icon}
+        alt={`${label} icon`}
+        sx={{
+          width: 24,
+          height: 24,
+          objectFit: 'contain',
+          filter: 'brightness(0) invert(1)'
+        }}
+      />
     </Box>
-    <Typography variant="body2" sx={{ color: '#374151', fontWeight: 600, fontSize: '0.875rem' }}>
+    <Typography variant="body2" sx={{ color: '#374151', fontWeight: 600, fontSize: '0.8rem' }}>
       {label}
     </Typography>
   </Box>
@@ -63,27 +73,32 @@ const BiasFreeEvaluation: React.FC = () => {
       {/* Floating Video Card Section */}
       <Box sx={{ 
         position: 'relative',
-        mb: { xs: 6, md: 8 }
+        maxWidth: 1500,
+        mx: 'auto',
+        mb: { xs: 2, md: 3 }
       }}>
         {/* Floating Blocks Row */}
         <Box sx={{
           position: 'relative',
           zIndex: 2,
           display: 'flex',
-          justifyContent: 'flex-start',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
           mb: 4,
           mt: { xs: 8, md: 12 },
           px: 3,
-          gap: 3
+          gap: 4,
+          maxWidth: 1400,
+          mx: 'auto'
         }}>
-          {/* White Video Card - 70% */}
+          {/* White Video Card - 60% */}
           <Box sx={{
-            bgcolor: '#fff',
+            bgcolor: '#000',
             borderRadius: 3,
             p: 4,
             width: { xs: '90%', md: '70%' },
             boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
-            border: '1px solid #E5E7EB',
+            border: '1px solid #000',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center'
@@ -94,8 +109,9 @@ const BiasFreeEvaluation: React.FC = () => {
               alt="Video Feed"
               style={{
                 width: 'auto',
-                height: 'auto',
-                maxWidth: '100%',
+               
+                height: '110%',
+                maxWidth: '105%',
                 maxHeight: '100%',
                 objectFit: 'contain',
                 display: 'block'
@@ -103,29 +119,54 @@ const BiasFreeEvaluation: React.FC = () => {
             />
           </Box>
 
-          {/* Second Block - 30% */}
+          {/* Promotional Banner - 35% */}
           <Box sx={{
-            bgcolor: '#374151',
-            borderRadius: 3,
+            bgcolor: '#141415',
+            borderRadius: '10px',
             p: 4,
-            width: { xs: '90%', md: '30%' },
+            width: { xs: '90%', md: '35%' },
+            maxWidth: '400px',
+            height: 'auto',
+            minHeight: '236px',
+            opacity: 1,
             boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
             border: '1px solid #E5E7EB',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             color: '#fff',
-            mb: 25
+            position: 'relative'
           }}>
+            {/* Hiring time image on the right */}
+            <Box sx={{
+              position: 'absolute',
+              right: -22,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 80,
+              height: 100,
+              zIndex: 1
+            }}>
+              <img
+                src="/images/partners/hiring_time.png"
+                alt="Hiring Time"
+                
+              />
+            </Box>
+            
             <Typography 
               variant="h5" 
               sx={{ 
                 fontFamily: 'Poppins, sans-serif', 
-                fontWeight: 600, 
+                fontWeight: 400, 
                 mb: 2,
                 color: '#fff',
-                textAlign: 'center'
+                textAlign: 'left',
+                fontSize: { xs: '1.25rem', md: '1.5rem' },
+                lineHeight: 1.3,
+                zIndex: 2,
+                position: 'relative'
               }}
             >
               Watch How We Cut Hiring Time in Half
@@ -133,9 +174,18 @@ const BiasFreeEvaluation: React.FC = () => {
             <Typography 
               variant="body1" 
               sx={{ 
+                fontFamily: 'Fustat, sans-serif',
+                fontWeight: 400,
+                fontStyle: 'normal',
                 color: '#D1D5DB', 
                 mb: 3,
-                textAlign: 'center'
+                textAlign: 'left',
+                fontSize: '16px',
+                lineHeight: '24px',
+                letterSpacing: '0%',
+                verticalAlign: 'middle',
+                zIndex: 2,
+                position: 'relative'
               }}
             >
               Transform weeks of manual work into minutes of intelligent automation.
@@ -145,6 +195,13 @@ const BiasFreeEvaluation: React.FC = () => {
               sx={{ 
                 textTransform: 'none',
                 backgroundColor: '#10B981',
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                fontSize: '0.95rem',
+                fontWeight: 500,
+                zIndex: 2,
+                position: 'relative',
                 '&:hover': { backgroundColor: '#059669' }
               }}
             >
@@ -159,13 +216,13 @@ const BiasFreeEvaluation: React.FC = () => {
           color: '#fff', 
           py: { xs: 6, md: 10 }, 
           px: 3, 
-          mb: { xs: 6, md: 8 },
+          mb: { xs: 2, md: 3 },
           position: 'relative',
           zIndex: 1,
           mt: { xs: -16, md: -20 }
         }}>
         <Box sx={{ 
-          maxWidth: 1200, 
+          maxWidth: 1300, 
           mx: 'auto',
           display: 'flex',
           alignItems: 'center',
@@ -233,22 +290,23 @@ const BiasFreeEvaluation: React.FC = () => {
             <Box sx={{
               bgcolor: '#fff',
               borderRadius: 3,
-              p: 4,
-              width: 350,
-              height: 320,
+              mt: 10,
+              p: 3,
+              width: 360,
+              height: 340,
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
               gridTemplateRows: '1fr 1fr 1fr',
-              gap: 3,
+              gap: 2.5,
               boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
               border: '1px solid #E5E7EB'
             }}>
-              <Pill label="Technical" color="#8B5CF6" />
-              <Pill label="Task" color="#EF4444" />
-              <Pill label="Soft" color="#F59E0B" />
-              <Pill label="Condition" color="#A855F7" />
-              <Pill label="HR" color="#10B981" />
-              <Pill label="Email" color="#059669" />
+              <Pill label="Technical" color="#8B5CF6" icon="/images/icons/Technical.png" />
+              <Pill label="Task" color="#EF4444" icon="/images/icons/Task.png" />
+              <Pill label="Soft" color="#F59E0B" icon="/images/icons/Soft.png" />
+              <Pill label="Condition" color="#3B82F6" icon="/images/icons/Condition.png" />
+              <Pill label="HR" color="#06B6D4" icon="/images/icons/HR.png" />
+              <Pill label="Email" color="#10B981" icon="/images/icons/Email.png" />
             </Box>
           </Box>
         </Box>

@@ -3,7 +3,7 @@ import { Box, Button, Stack, Typography } from "@mui/material";
 
 const IntegrationsSection: React.FC = () => {
   return (
-    <Box sx={{ px: 3, mb: { xs: 6, md: 8 } }}>
+    <Box sx={{ px: 3, mb: { xs: 2, md: 3 } }}>
       <Box
         sx={{
           backgroundColor: "#121212",

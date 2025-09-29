@@ -130,101 +130,149 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
         elevation={0}
         sx={{ backgroundColor: "transparent", color: "#000", boxShadow: 'none', pt: 2 }}
       >
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Box
-            component="img"
-            src={type === "company" ? "/logo.svg" : "/logo-purple.svg"}
-            alt="TalentAI Logo"
-            sx={{ height: 32, cursor: 'pointer' }}
-            onClick={() => router.push(type === "company" ? '/' : '/home/candidate')}
-          />
+        <Box sx={{ maxWidth: 1400, mx: 'auto', width: '100%' }}>
+          <Toolbar sx={{ justifyContent: "space-between", px: 0, gap: 1 }}>
+            {/* Logo on the left */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer',
+                bgcolor: '#000000',
+                borderRadius: 5,
+                px: 2,
+                py: 1,
+                transition: 'all 0.2s',
+                '&:hover': {
+                  bgcolor: '#000000',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                }
+              }}
+              onClick={() => router.push(type === "company" ? '/' : '/home/candidate')}
+            >
+              <Box
+                component="img"
+                src="/images/home/TalentAiLogo.png"
+                alt="TalentAI Logo"
+                sx={{
+                  height: 32,
+                  width: 'auto',
+                  objectFit: 'contain'
+                }}
+              />
+            </Box>
+            
+            {/* Navigation in center */}
+            {!isMobile && (
+              <Stack direction="row" spacing={4} alignItems="center" sx={{
+                px: 3,
+                py: 1.5,
+                borderRadius: 999,
+                backgroundColor: '#ffffff',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.06)'
+              }}>
+                {navItems.map((item, index) => (
+                  <React.Fragment key={item.id}>
+                    <Link href={`/#${item.id}`} passHref>
+                      <Box
+                        sx={{
+                          cursor: "pointer",
+                          fontWeight: 500,
+                          color: "#374151",
+                          typography: "body1",
+                          fontSize: '14px',
+                          transition: "all 0.2s",
+                          "&:hover": {
+                            color: "#10B981",
+                          },
+                        }}
+                      >
+                        {item.label}
+                      </Box>
+                    </Link>
+                    {index === 1 && (
+                      <Box
+                        sx={{
+                          width: '1px',
+                          height: '16px',
+                          bgcolor: '#E5E7EB',
+                          mx: 1
+                        }}
+                      />
+                    )}
+                  </React.Fragment>
+                ))}
+                <Typography
+                  sx={{
+                    cursor: 'pointer',
+                    fontWeight: 500,
+                    fontSize: '14px',
+                    color: '#7C3AED',
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      color: '#5B21B6',
+                    },
+                  }}
+                  onClick={() => router.push(type === "company" ? '/home/candidate' : '/')}
+                >
+                  {link}
+                </Typography>
+              </Stack>
+            )}
           
-          {!isMobile && (
-            <Stack direction="row" spacing={4} alignItems="center" sx={{
-              px: 2,
-              py: 1,
-              borderRadius: 999,
-              backgroundColor: '#ffffff',
-              boxShadow: '0 4px 14px rgba(0,0,0,0.06)'
-            }}>
-              {navItems.map((item) => (
-                <Link href={`/#${item.id}`} key={item.id} passHref>
-                  <Box
+            {/* Action buttons on the right */}
+            {!isMobile ? (
+              // Show UserAvatar for authenticated users, buttons for others
+              isAuthenticated ? (
+                <UserAvatar />
+              ) : (
+                <Stack direction="row" spacing={2}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => router.push("/signin")}
                     sx={{
-                      cursor: "pointer",
+                      backgroundColor: '#ffffff',
+                      borderColor: '#10B981',
+                      color: '#10B981',
+                      borderRadius: 999,
+                      textTransform: 'none',
+                      px: 2,
+                      py: 0.75,
+                      fontSize: '14px',
                       fontWeight: 500,
-                      color: "#000",
-                      typography: "body1",
-                      borderBottom: "2px solid transparent",
-                      transition: "all 0.1s",
-                      "&:hover": {
-                        borderBottom: "4px solid #00FF9D",
-                        fontWeight: "bold",
-                      },
+                      boxShadow: '0 4px 14px rgba(0,0,0,0.06)',
+                      '&:hover': {
+                        borderColor: '#059669',
+                        color: '#059669',
+                        backgroundColor: '#f0fdf4'
+                      }
                     }}
                   >
-                    {item.label}
-                  </Box>
-                </Link>
-              ))}
-            </Stack>
-          )}
-          
-          <Typography
-            sx={{
-              cursor: 'pointer',
-              fontFamily: 'Poppins',
-              fontWeight: 500,
-              fontSize: '14px',
-              color: '#7C3AED',
-              background: '#ffffff',
-              borderRadius: 999,
-              px: 2,
-              py: 0.75,
-              boxShadow: '0 4px 14px rgba(0,0,0,0.06)'
-            }}
-            onClick={() => router.push(type === "company" ? '/home/candidate' : '/')}
-          >
-            {link}
-          </Typography>
-          
-          {!isMobile ? (
-            // Show UserAvatar for authenticated users, Get Started button for others
-            isAuthenticated ? (
-              <UserAvatar />
-            ) : (
-              <Stack direction="row" spacing={2}>
-                <Button
-                  variant="outlined"
-                  onClick={() => router.push("/signin")}
-                  sx={{
-                    backgroundColor: '#ffffff',
-                    borderColor: '#e5e7eb',
-                    color: '#111827',
-                    borderRadius: 999,
-                    textTransform: 'none',
-                    px: 2,
-                    py: 0.75,
-                    boxShadow: '0 4px 14px rgba(0,0,0,0.06)'
-                  }}
-                >
-                  Login
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={() => router.push("/demo")}
-                  sx={{
-                    backgroundColor: '#ffffff',
-                    color: '#111827',
-                    borderRadius: 999,
-                    textTransform: 'none',
-                    px: 2,
-                    py: 0.75,
-                    boxShadow: '0 4px 14px rgba(0,0,0,0.06)'
-                  }}
-                >
-                  Watch Demo
-                </Button>
+                    Login
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={() => router.push("/demo")}
+                    sx={{
+                      backgroundColor: '#ffffff',
+                      color: '#374151',
+                      border: 'none',
+                      borderRadius: 999,
+                      textTransform: 'none',
+                      px: 2,
+                      py: 0.75,
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      boxShadow: '0 4px 14px rgba(0,0,0,0.06)',
+                      '&:hover': {
+                        backgroundColor: '#f9fafb',
+                        color: '#111827'
+                      }
+                    }}
+                  >
+                    Watch Demo
+                  </Button>
               </Stack>
             )
           ) : (
@@ -233,6 +281,7 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
             </IconButton>
           )}
         </Toolbar>
+        </Box>
       </AppBar>
 
       <Drawer anchor="right" open={mobileOpen} onClose={handleDrawerToggle}>
