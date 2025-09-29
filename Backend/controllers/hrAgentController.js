@@ -1008,7 +1008,7 @@ const hrAgentController = {
    */
   async getAgentsByCompany(req, res) {
     try {
-      const companyId = req.user._id; 
+      const companyId = req.user._id;
 
       // Récupérer les agents
       const agents = await AgentModel.find(
@@ -1017,7 +1017,7 @@ const hrAgentController = {
       )
         .populate({ path: "postId", select: "jobDetails user" })
         .lean();
-  
+
       if (!agents || agents.length === 0) {
         return res.status(200).json({
           success: true,
@@ -1025,14 +1025,14 @@ const hrAgentController = {
           message: "Aucun agent trouvé pour cette société",
         });
       }
-  
+
       // Pour chaque agent, calculer les matches
       const agentsWithMatches = [];
       let totalMatches = 0;
-  
+
       for (const agent of agents) {
         const agentLabel = agent.name || agent._id?.toString();
-  
+
         if (!agent.postId?._id) {
           agentsWithMatches.push({
             agentId: agent._id,
@@ -1042,10 +1042,10 @@ const hrAgentController = {
           });
           continue;
         }
-  
+
         const { jobTitle, matches } = await computeMatches(agent.postId._id);
         totalMatches += matches.length;
-  
+
         agentsWithMatches.push({
           agentId: agent._id,
           name: agentLabel,
@@ -1053,7 +1053,7 @@ const hrAgentController = {
           matches: matches,
         });
       }
-  
+
       // Réponse JSON complète
       return res.status(200).json({
         success: true,

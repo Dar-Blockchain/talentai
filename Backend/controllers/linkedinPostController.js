@@ -94,7 +94,7 @@ module.exports.generateJobPost = async (req, res) => {
     Job Description:
     ${description}
     `.trim();
-    
+
     // Detailed generation prompt with 3 required skills
     const detailedPrompt = `
     As an expert technical recruiter and AI assistant, analyze this job description and generate a JSON object with only the following structure:
@@ -214,7 +214,6 @@ module.exports.generateJobPost = async (req, res) => {
       }
     }
     `.trim();
-    
 
     // Choose prompt and configuration based on type
     const prompt = type === "quick" ? quickPrompt : detailedPrompt;
@@ -343,4 +342,3 @@ ${result.linkedinPost.hashtags.map((tag) => "#" + tag).join(" ")}`;
     res.status(500).json({ error: "Failed to process job post request" });
   }
 };
-

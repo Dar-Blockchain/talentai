@@ -11,8 +11,8 @@ exports.createPost = async (req, res) => {
     };
 
     // Get token from Authorization header
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    
+    const token = req.headers.authorization?.replace("Bearer ", "");
+
     const post = await postService.createPost(postData, token);
     res.status(201).json({
       success: true,
@@ -142,7 +142,6 @@ exports.updatePostStatus = async (req, res) => {
   }
 };
 
-
 exports.getPostsByUserTopSkills = async (req, res) => {
   try {
     const userId = req.user._id; // Adapté selon comment tu passes l'id (paramètre, JWT…)
@@ -163,22 +162,22 @@ exports.getPostsByUserTopSkills = async (req, res) => {
 exports.sendTechnicalTest = async (req, res) => {
   try {
     const { postId, candidateEmail, candidateName } = req.body;
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    
+    const token = req.headers.authorization?.replace("Bearer ", "");
+
     if (!postId || !candidateEmail || !candidateName) {
       return res.status(400).json({
         success: false,
-        error: 'postId, candidateEmail, and candidateName are required'
+        error: "postId, candidateEmail, and candidateName are required",
       });
     }
 
     const result = await postService.createAndSendTechnicalTest(
-      postId, 
-      token, 
-      candidateEmail, 
+      postId,
+      token,
+      candidateEmail,
       candidateName
     );
-    
+
     res.status(200).json({
       success: true,
       data: result,
