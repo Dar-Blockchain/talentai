@@ -19,7 +19,6 @@ exports.getAll = async (req, res) => {
   }
 };
 
-
 exports.getInterviewDetailsById = async (req, res) => {
   try {
     const { id } = req.params;
