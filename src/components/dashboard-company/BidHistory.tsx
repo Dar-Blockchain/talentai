@@ -2,14 +2,13 @@ import React from 'react';
 import {
   Box,
   Typography,
-  Card,
   Chip,
   Button,
   CircularProgress,
   Alert,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+import PersonIcon from '@mui/icons-material/Person';
 import WorkIcon from '@mui/icons-material/Work';
 
 // ============================================================================
@@ -43,37 +42,19 @@ interface BidHistoryProps {
 // STYLED COMPONENTS
 // ============================================================================
 
-const StyledCard = styled(Card)(({ theme }) => ({
+const StyledCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
   marginBottom: theme.spacing(3),
   background: 'white',
-  backdropFilter: 'blur(10px)',
   borderRadius: '16px',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: '0 6px 25px rgba(0,0,0,0.3)'
-  }
+  border: '1px solid #e5e7eb',
 }));
 
 const SectionTitle = styled(Typography)(({ theme }) => ({
-  fontSize: '1.5rem',
+  fontSize: '1.25rem',
   fontWeight: 700,
-  color: 'black',
+  color: '#111827',
   marginBottom: theme.spacing(3),
-  position: 'relative',
-  '&:after': {
-    content: '""',
-    position: 'absolute',
-    bottom: '-8px',
-    left: '0',
-    width: '40px',
-    height: '3px',
-    background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
-    borderRadius: '2px'
-  }
 }));
 
 // ============================================================================
@@ -91,21 +72,20 @@ const BidHistory: React.FC<BidHistoryProps> = ({
   error,
   onPostNewJob
 }) => {
-  const GREEN_MAIN = 'rgba(0, 255, 157, 1)';
-
   return (
     <StyledCard sx={{ mt: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <SectionTitle sx={{ mb: 0 }}>Bid History</SectionTitle>
         {bids.length > 0 && (
           <Chip
             label={`${bids.length} bids`}
             size="small"
             sx={{
-              background: 'rgba(2, 226, 255, 0.12)',
-              color: '#0f172a',
-              fontWeight: 700,
-              border: '1px solid rgba(0,0,0,0.08)'
+              backgroundColor: '#eff6ff',
+              color: '#1e40af',
+              fontWeight: 600,
+              fontSize: '0.75rem',
+              border: '1px solid #bfdbfe'
             }}
           />
         )}
@@ -113,7 +93,7 @@ const BidHistory: React.FC<BidHistoryProps> = ({
       
       {status === "loading" ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-          <CircularProgress sx={{ color: '#02E2FF' }} />
+          <CircularProgress sx={{ color: '#3b82f6' }} />
         </Box>
       ) : status === "failed" ? (
         <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
@@ -123,50 +103,65 @@ const BidHistory: React.FC<BidHistoryProps> = ({
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 2,
-          py: 6,
-          px: 2,
+          gap: 3,
+          py: 8,
+          px: 4,
           textAlign: 'center',
-          background: 'linear-gradient(135deg, rgba(2,226,255,0.06) 0%, rgba(0,255,195,0.06) 100%)',
-          borderRadius: '16px',
-          border: '1px solid rgba(15,23,42,0.06)'
+          background: '#f9fafb',
+          borderRadius: '12px',
+          border: '1px solid #e5e7eb'
         }}>
           <Box sx={{
-            width: 72,
-            height: 72,
+            width: 80,
+            height: 80,
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, rgba(2,226,255,0.15), rgba(0,255,195,0.15))',
+            background: '#e0f2fe',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: 'inset 0 0 0 1px rgba(15,23,42,0.06)'
+            position: 'relative'
           }}>
-            <PersonSearchIcon sx={{ color: GREEN_MAIN, fontSize: 36 }} />
+            <PersonIcon sx={{ color: '#0369a1', fontSize: 40 }} />
+            <Box sx={{
+              position: 'absolute',
+              bottom: 8,
+              right: 8,
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              background: '#10b981',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: 'white'
+            }}>
+              a
+            </Box>
           </Box>
-          <Typography variant="h6" sx={{ color: '#0f172a', fontWeight: 800 }}>
-            No bid history yet
+          <Typography variant="h5" sx={{ 
+            color: '#10b981', 
+            fontWeight: 700,
+            fontSize: '1.5rem'
+          }}>
+            No bid history Yet
           </Typography>
-          <Typography variant="body2" sx={{ color: '#64748b', maxWidth: 520 }}>
-            Once you place bids on candidates who match your job posts, they will appear here. View matches from your job posts to place a bid.
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<WorkIcon />}
-            onClick={onPostNewJob}
-            sx={{
-              mt: 1,
-              background: 'linear-gradient(90deg, #02E2FF, #00FFC3)',
-              color: '#0f172a',
-              fontWeight: 800,
-              borderRadius: '12px',
-              px: 2.5,
-              '&:hover': {
-                background: 'linear-gradient(90deg, #00FFC3, #02E2FF)'
-              }
-            }}
-          >
-            Post New Job
-          </Button>
+          <Box sx={{ maxWidth: 480 }}>
+            <Typography variant="body1" sx={{ 
+              color: '#6b7280', 
+              lineHeight: 1.6,
+              mb: 1
+            }}>
+              Once you place bids on candidates who match your job posts, they will appear here.
+            </Typography>
+            <Typography variant="body1" sx={{ 
+              color: '#6b7280', 
+              lineHeight: 1.6
+            }}>
+              View matches from your job posts to place a bid.
+            </Typography>
+          </Box>
         </Box>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -178,41 +173,65 @@ const BidHistory: React.FC<BidHistoryProps> = ({
                 gridTemplateColumns: '1fr auto auto',
                 alignItems: 'center',
                 gap: 2,
-                background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-                borderRadius: '16px',
-                p: 2,
-                boxShadow: '0 8px 20px rgba(2,23,36,0.06)',
-                border: '1px solid rgba(15,23,42,0.06)'
+                background: 'white',
+                borderRadius: '12px',
+                p: 3,
+                border: '1px solid #e5e7eb',
+                transition: 'border-color 0.2s',
+                '&:hover': {
+                  borderColor: '#d1d5db'
+                }
               }}
             >
               <Box>
-                <Typography sx={{ color: '#0f172a', fontWeight: 700 }}>{bid.userInfo.username}</Typography>
-                <Typography sx={{ color: '#64748b', fontSize: '0.9rem' }}>{bid.userInfo.email}</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
+                <Typography sx={{ color: '#111827', fontWeight: 600, fontSize: '1rem' }}>
+                  {bid.userInfo.username}
+                </Typography>
+                <Typography sx={{ color: '#6b7280', fontSize: '0.875rem', mb: 1 }}>
+                  {bid.userInfo.email}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                   <Chip
-                    icon={<WorkIcon sx={{ fontSize: 16 }} />}
+                    icon={<WorkIcon sx={{ fontSize: 16, color: '#3b82f6' }} />}
                     label={bid.post.jobDetails.title || '—'}
                     size="small"
-                    sx={{ background: 'rgba(2, 226, 255, 0.12)', color: '#0f172a', fontWeight: 700, border: '1px solid rgba(0,0,0,0.08)' }}
+                    sx={{ 
+                      backgroundColor: '#eff6ff', 
+                      color: '#1e40af', 
+                      fontWeight: 500, 
+                      border: '1px solid #bfdbfe',
+                      '& .MuiChip-icon': { color: '#3b82f6' }
+                    }}
                   />
                   {bid.status && (
                     <Chip
                       label={bid.status === 'win' ? 'Won' : 'Lost'}
                       size="small"
                       sx={{
-                        background: bid.status === 'win' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-                        color: '#0f172a',
-                        fontWeight: 800,
-                        border: '1px solid rgba(0,0,0,0.08)'
+                        backgroundColor: bid.status === 'win' ? '#d1fae5' : '#fee2e2',
+                        color: bid.status === 'win' ? '#065f46' : '#991b1b',
+                        fontWeight: 600,
+                        border: 'none',
+                        borderRadius: '6px'
                       }}
                     />
                   )}
                 </Box>
               </Box>
-              <Typography sx={{ color: '#0f172a', fontWeight: 800, justifySelf: 'end' }}>
+              <Typography sx={{ 
+                color: '#111827', 
+                fontWeight: 700, 
+                justifySelf: 'end',
+                fontSize: '1.125rem'
+              }}>
                 ${bid.finalBid}
               </Typography>
-              <Typography sx={{ color: '#64748b', fontSize: '0.85rem', justifySelf: 'end' }}>
+              <Typography sx={{ 
+                color: '#6b7280', 
+                fontSize: '0.875rem', 
+                justifySelf: 'end',
+                fontWeight: 500
+              }}>
                 {new Date(bid.dateBid).toLocaleDateString()}
               </Typography>
             </Box>
@@ -224,3 +243,4 @@ const BidHistory: React.FC<BidHistoryProps> = ({
 };
 
 export default BidHistory;
+
