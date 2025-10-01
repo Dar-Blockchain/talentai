@@ -31,8 +31,13 @@ const Navbar: React.FC<NavbarProps> = ({ profile }) => {
   const dispatch = useDispatch<AppDispatch>();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
+  // Debug profile data
+  console.log('Navbar profile:', profile);
   const handleLogout = async () => {
     try {
+      console.log("Starting logout process...");
+      
       // First clear the token from both localStorage and cookies
       localStorage.removeItem("api_token");
       Cookies.remove("api_token", { path: "/" });
@@ -52,10 +57,14 @@ const Navbar: React.FC<NavbarProps> = ({ profile }) => {
       // Sign out from NextAuth
       await signOut({ redirect: false });
 
+      console.log("Logout successful, redirecting...");
+      
       // Redirect to signin page
       router.push("/signin");
     } catch (error) {
       console.error("Logout failed:", error);
+      // Even if there's an error, try to redirect
+      router.push("/signin");
     }
   };
   return (
@@ -115,53 +124,51 @@ const Navbar: React.FC<NavbarProps> = ({ profile }) => {
             />
           </Box>
         </Box>
-        {profile && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Button
-              variant="outlined"
-              startIcon={<GoogleIcon sx={{ color: '#4285f4' }} />}
-              sx={{
-                backgroundColor: '#ffffff',
-                borderColor: '#e5e7eb',
-                color: '#374151',
-                borderRadius: 2,
-                textTransform: 'none',
-                px: 2,
-                py: 1,
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                '&:hover': {
-                  borderColor: '#d1d5db',
-                  backgroundColor: '#f9fafb'
-                }
-              }}
-            >
-              {profile.userId?.username || 'Company Name'}
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<LogoutIcon sx={{ color: '#ef4444' }} />}
-              onClick={handleLogout}
-              sx={{
-                backgroundColor: '#ffffff',
-                borderColor: '#ef4444',
-                color: '#ef4444',
-                borderRadius: 2,
-                textTransform: 'none',
-                px: 2,
-                py: 1,
-                fontSize: '0.875rem',
-                fontWeight: 500,
-                '&:hover': {
-                  borderColor: '#dc2626',
-                  backgroundColor: '#fef2f2'
-                }
-              }}
-            >
-              Logout
-            </Button>
-          </Box>
-        )}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<GoogleIcon sx={{ color: '#4285f4' }} />}
+            sx={{
+              backgroundColor: '#ffffff',
+              borderColor: '#e5e7eb',
+              color: '#374151',
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 2,
+              py: 1,
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              '&:hover': {
+                borderColor: '#d1d5db',
+                backgroundColor: '#f9fafb'
+              }
+            }}
+          >
+            {profile?.username || profile?.companyName || profile?.name || profile?.userId?.username || 'Company Name'}
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<LogoutIcon sx={{ color: '#ef4444' }} />}
+            onClick={handleLogout}
+            sx={{
+              backgroundColor: '#ffffff',
+              borderColor: '#ef4444',
+              color: '#ef4444',
+              borderRadius: 2,
+              textTransform: 'none',
+              px: 2,
+              py: 1,
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              '&:hover': {
+                borderColor: '#dc2626',
+                backgroundColor: '#fef2f2'
+              }
+            }}
+          >
+            Logout
+          </Button>
+        </Box>
       </Toolbar>
     </AppBar>
   );

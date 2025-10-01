@@ -5,7 +5,7 @@ import JobDescriptionInput from "./components/JobDescriptionInput";
 import JobPreview from "./components/JobPreview";
 import { JobPost, PostDetailsRef, SalaryRange } from "./types";
 
-const GRADIENT_BACKGROUND = "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)";
+const CLEAN_BACKGROUND = "#ffffff";
 
 const PostDetails = forwardRef<PostDetailsRef>((props, ref) => {
   const [jobDescription, setJobDescription] = useState("");
@@ -557,7 +557,7 @@ As a ${
         flexDirection: { xs: "column", lg: "row" },
         gap: 3,
         p: 3,
-        background: GRADIENT_BACKGROUND,
+        backgroundColor: CLEAN_BACKGROUND,
         minHeight: "100vh",
       }}
     >
