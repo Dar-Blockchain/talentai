@@ -1,4 +1,5 @@
 let io;
+const intelligentInterviewController = require('./controllers/intelligentInterviewController');
 
 module.exports = {
   init: (server) => {
@@ -8,6 +9,10 @@ module.exports = {
         methods: ['GET', 'POST']
       }
     });
+
+    // Initialize intelligent interview handlers
+    intelligentInterviewController.initializeHandlers(io);
+
     return io;
   },
   getIO: () => {

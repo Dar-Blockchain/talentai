@@ -53,29 +53,47 @@ Skill Proficiency Levels:
 
 
 ### 🚨 **STRICT REQUIREMENTS**
-- Generate **exactly ${questionsCount} questions total**. 
+- Generate **exactly ${questionsCount} questions total**
 - Each question must match the skill **and** its **exact proficiency level**
-- **Questions must be clear, conversational, and answerable orally in a maximum of 2 minutes** (no written coding exercises).  
-- **DO NOT repeat questions or generate generic ones**—each must be **unique and skill-specific**.  
-- **Ensure relevance by simulating real-world challenges candidates would realistically face.**  
-- **Return ONLY a JSON array of strings**, formatted correctly with no markdown or explanations.  
+- **CRITICAL: Each question must be ONE SENTENCE MAXIMUM with ONE CONCEPT ONLY**
+
+### FORBIDDEN Question Structures (DO NOT USE):
+❌ "What is X and how does it work with Y?"
+❌ "Explain A, B, and C in your response"
+❌ "Tell me about X; also describe Y"
+❌ "What is X? How would you implement it?"
+❌ Questions with semicolons, multiple clauses, or compound structures
+
+### REQUIRED Question Structure (ALWAYS USE):
+✅ "What is Node.js?"
+✅ "How do you handle errors in JavaScript?"
+✅ "Why would you choose MongoDB over SQL?"
+✅ "When would you use async/await?"
+
+### Additional Requirements:
+- **Questions must be clear, conversational, and answerable orally in a maximum of 2 minutes** (no written coding exercises)
+- **DO NOT repeat questions or generate generic ones**—each must be **unique and skill-specific**
+- **Ensure relevance by simulating real-world challenges candidates would realistically face**
+- Start with question words (What, How, Why, When, Where)
+- Focus on ONE specific technical concept per question
+- **Return ONLY a JSON array of strings**, formatted correctly with no markdown or explanations  
 
 ### 📌 Examples of questions per proficiency level:
-Entry Level (1):  
-- "What is Node.js and what is it commonly used for?"  
+Entry Level (1):
+- "What is Node.js?"
 - "What is a document in MongoDB?"
-Junior (2):  
-- "How do you handle basic error handling in Node.js?"  
-- "How would you insert a document into a MongoDB collection?"
-Mid Level (3):  
-- "How would you design a MongoDB schema for an e-commerce application?"  
-- "Explain how you would optimize a MongoDB query for performance."
-Senior (4):  
-- "How do you design scalable Node.js applications for high concurrency?"  
-- "Describe MongoDB replication and how it ensures high availability."
-Expert (5):  
-- "Explain the internals of the Node.js event loop and how it handles asynchronous operations."  
-- "How would you architect a distributed MongoDB cluster for multi-region data consistency?"
+Junior (2):
+- "How do you handle errors in Node.js?"
+- "How would you insert a document into MongoDB?"
+Mid Level (3):
+- "How would you design a MongoDB schema for e-commerce?"
+- "How would you optimize a MongoDB query for performance?"
+Senior (4):
+- "How do you design scalable Node.js applications?"
+- "What is MongoDB replication?"
+Expert (5):
+- "How does the Node.js event loop work internally?"
+- "How would you architect a distributed MongoDB cluster?"
 
 ### **📌 Expected JSON Response Format**
 The AI must return **a single valid JSON array** containing **exactly 10 mixed questions**, like this:
@@ -103,13 +121,16 @@ Generate a total of **${questionsCount} oral technical interview questions**.
 - If an exact even distribution is not possible, distribute them **as fairly and balanced as possible**.
 - The **maximum total number of questions is 20**.
 
-# Question Requirements: 
-- Generate **exactly ${questionsCount} questions total**. 
+# Question Requirements:
+- Generate **exactly ${questionsCount} questions total**
 - Each question must match the skill **and** its **exact proficiency level**
-- **Questions must be clear, conversational, and answerable orally in a maximum of 2 minutes** (no written coding exercises).  
-- **DO NOT repeat questions or generate generic ones**—each must be **unique and skill-specific**.  
-- **Ensure relevance by simulating real-world challenges candidates would realistically face.**  
-- **Return ONLY a JSON array of strings**, formatted correctly with no markdown or explanations.  
+- **CRITICAL: Each question must be ONE SENTENCE MAXIMUM with ONE CONCEPT ONLY**
+- **FORBIDDEN**: Questions with "and", "or", semicolons, multiple clauses, or asking for multiple aspects
+- **REQUIRED**: Start with question words (What, How, Why, When) and focus on ONE specific technical concept
+- **Questions must be clear, conversational, and answerable orally in a maximum of 2 minutes** (no written coding exercises)
+- **DO NOT repeat questions or generate generic ones**—each must be **unique and skill-specific**
+- **Ensure relevance by simulating real-world challenges candidates would realistically face**
+- **Return ONLY a JSON array of strings**, formatted correctly with no markdown or explanations  
 `.trim(),
 };
 
@@ -127,44 +148,56 @@ const generateOnboardingQuestionsPrompts = {
 You are an expert interviewer generating high-quality oral interview questions.
 
 IMPORTANT RULES
-- Return ONLY a valid JSON array of ${questionsCount} strings.
-- No markdown, formatting, explanations, or extra text.
+- Return ONLY a valid JSON array of ${questionsCount} strings
+- No markdown, formatting, explanations, or extra text
+- **CRITICAL: Each question must be ONE SENTENCE MAXIMUM with ONE CONCEPT ONLY**
+
+FORBIDDEN Question Structures:
+❌ Questions with "and", "or", semicolons, multiple clauses
+❌ Asking for multiple examples or multiple aspects
+❌ Compound questions combining different concepts
+
+REQUIRED Question Structure:
+✅ Start with question words (What, How, Why, When, Where)
+✅ Focus on ONE specific aspect of the skill per question
+✅ Single sentence format only
 
 TASK
-- For the given skill, generate unique interview questions enabling to evaluate the condidate's proficiency level in that skill( proficiency level ranges from 1 to 5).
+- For the given skill, generate unique interview questions enabling to evaluate the candidate's proficiency level in that skill (proficiency level ranges from 1 to 5)
 - Each question must:
   1. Be specific to the skill and level
   2. Be answerable orally in < 2 minutes
   3. Simulate a realistic workplace scenario
   4. Be non-repetitive and non-generic
   5. NOT require code writing, implementing
+  6. Follow the structural rules above
 
 Proficiency levels:
 1 = Entry-level, 2 = Junior, 3 = Mid, 4 = Senior, 5 = Expert
 
 Example of questions in different proficiency levels, for coding and technical related skills:
-1 - Entry Level:  
-- Can you explain what "undefined" and "null" mean in JavaScript, and how they differ?
-2 - Junior:  
-- What is a JavaScript Promise, and how does it help with asynchronous code?
-3 - Mid Level:  
-- If you were designing a REST API for a task management app, how would you organize the routes and handle basic validation and errors?
-4 - Senior:  
-- How do you identify and mitigate performance issues in a Node.js application under heavy load?
-5 - Expert:  
-- How would you architect and secure internal APIs shared across microservices in a multi-tenant SaaS platform?
+1 - Entry Level:
+- What does "undefined" mean in JavaScript?
+2 - Junior:
+- What is a JavaScript Promise?
+3 - Mid Level:
+- How would you organize routes for a REST API?
+4 - Senior:
+- How do you identify performance issues in Node.js?
+5 - Expert:
+- How would you architect APIs for microservices?
 
 Example of Interview Questions by Proficiency Level – Non-Technical Skill:
 1 - Entry Level:
-- What is the purpose of a buyer persona, and how is it used in marketing?
+- What is a buyer persona?
 2 - Junior:
-- How would you analyze a competitor's social media presence to inform your own campaign strategy?
+- How would you analyze competitor social media?
 3 - Mid Level:
-- How would you design a content marketing strategy for a B2B SaaS company?
+- How would you design a content marketing strategy?
 4 - Senior:
-- How do you manage brand consistency across global campaigns and local markets?
-5. Expert:
-- With limited budget and declining acquisition metrics, how would you re-prioritize your marketing mix to maintain growth and ROI?
+- How do you manage brand consistency?
+5 - Expert:
+- How would you re-prioritize marketing mix with budget constraints?
 
 Ensure the final output is a clean JSON array of ${questionsCount} unique questions.
 `.trim(),
@@ -181,16 +214,18 @@ Instructions:
   - 2 Mid-Level questions (Level 3)
   - 2 Senior-Level questions (Level 4)
   - 2 Expert-Level questions (Level 5)
-- Each question must match both the skill and the required proficiency level.
-- Questions must be clear, specific, and suitable for oral interviews (answerable in under 2 minutes).
-- NOT requiring code writing.
-- Do not repeat or generalize questions. Each should reflect realistic, real-world challenges.
-- Return only a valid JSON array of strings. No extra text, no explanations, and no markdown formatting.
+- Each question must match both the skill and the required proficiency level
+- **CRITICAL: Each question must be ONE SENTENCE MAXIMUM with ONE CONCEPT ONLY**
+- **FORBIDDEN**: Questions with "and", "or", semicolons, multiple clauses, or asking for multiple aspects
+- Questions must be clear, specific, and suitable for oral interviews (answerable in under 2 minutes)
+- NOT requiring code writing
+- Do not repeat or generalize questions. Each should reflect realistic, real-world challenges
+- Return only a valid JSON array of strings. No extra text, no explanations, and no markdown formatting
 
 Example Output:
 [
-  "What is Node.js and what is it commonly used for?",
-  "How do you measure the success of a marketing campaign?",
+  "What is Node.js?",
+  "How do you measure marketing campaign success?",
   ...
 ]
 `.trim(),
@@ -594,16 +629,30 @@ The questions must:
 
 ### STRICT REQUIREMENTS:
 - Produce **exactly 10 distinct questions** focused solely on HR themes (no technical questions)
-- Questions must be **brief**, **clear**, **simply formulated**, and **target only one aspect or competency per question** (no complex, multi-part, or compound questions)
+- **CRITICAL: Each question must be ONE SENTENCE MAXIMUM with ONE CONCEPT ONLY**
+
+### FORBIDDEN Question Structures (DO NOT USE):
+❌ "What is X and how does it relate to Y?"
+❌ "Tell me about A, and also explain B"
+❌ "How do you handle X; what about Y?"
+❌ "Describe X. How would you implement it?"
+❌ Questions with semicolons, multiple clauses, or compound structures
+❌ Questions asking for multiple examples or multiple aspects
+
+### REQUIRED Question Structure (ALWAYS USE):
+✅ "What is your approach to handling team conflicts?"
+✅ "How do you prioritize competing deadlines?"
+✅ "Why do you think diversity matters in the workplace?"
+✅ "When have you had to adapt to a major change at work?"
+
+### Additional Requirements:
+- Start with question words (What, How, Why, When, Where, Who)
+- Focus on ONE specific workplace behavior or situation per question
 - Questions must be **conversational** and **answerable orally within 2 minutes**
 - **All questions must be appropriate for and within the specified experience level: ${experienceLevel || "Mid-level"}**
 - Tailor questions to ${targetCompany || "the company"} culture and ${
       targetRole || "role"
     } requirements
-- Consider ${experienceLevel || "experience level"} expectations and challenges
-- Format questions appropriately for ${interviewFormat || "interview format"}
-- Integrate current HR trends relevant to ${companyIndustry || "the industry"}
-- Questions must be clear, conversational, and answerable orally within 2 minutes
 - Use realistic workplace scenarios specific to ${
       targetCompany || "the target environment"
     }
@@ -651,7 +700,9 @@ ${skillsListDetails}
     } style
 - Focus on scenarios relevant to ${targetRole || "the target role"}
 - Do NOT include technical or coding questions
-- Keep questions **brief**, **clear**, **simply formulated**, and ensure each question **targets only one aspect or competency** (no complex, multi-part, or compound questions)
+- **CRITICAL: Each question must be ONE SENTENCE MAXIMUM with ONE CONCEPT ONLY**
+- **FORBIDDEN structures**: Questions with "and", "or", semicolons, multiple clauses, or asking for multiple aspects
+- **REQUIRED**: Start with question words (What, How, Why, When) and focus on ONE specific behavior/situation
 - **All questions must be appropriate for and within the specified experience level: ${experienceLevel || "Mid-level"}**
 - Keep questions succinct, specific, and suitable for oral interviews
 - Avoid vague or repetitive language; each question should be purposeful and trend-aware
@@ -663,8 +714,9 @@ ${skillsListDetails}
       targetRole || "role"
     } requirements
 
-### STRICT REQUIREMENTS:  
+### STRICT REQUIREMENTS:
 - The confidenceScore solely reflects how appropriately the response addresses the specific question asked. The response must not be assumed to be inherently correct or incorrect outside the context of the question.
+- **Each question must be ONE SENTENCE with ONE CONCEPT only - no compound or multi-part questions**
 - **Return a valid JSON array of exactly 10 strings**, no commentary or formatting
 
     `.trim();
