@@ -150,25 +150,27 @@ async function initializeAgenda() {
 
   agendaInstance.on("ready", async () => {
     await agendaInstance.start();
-    await agendaInstance.every("5 minutes", "agent:heartbeat"); // exécution toutes les 5 minutes
+    await agendaInstance.every("1 hour", "agent:heartbeat"); // exécution toutes les heures
     await agendaInstance.now("agent:heartbeat");
-    console.log("⏱️ Agenda démarré avec job agent:heartbeat toutes les 5 minutes");
+    console.log("⏱️ Agenda démarré avec job agent:heartbeat toutes les heures");
   
     // Compteur décroissant
     if (!countdownInterval) {
       countdownInterval = setInterval(() => {
         if (!lastHeartbeatAt) return;
-        const nextExpectedAt = lastHeartbeatAt.getTime() + 300000; // +5 minutes en ms
+        const nextExpectedAt = lastHeartbeatAt.getTime() + 3600000; // +1 heure en ms
         const remainingMs = nextExpectedAt - Date.now();
         const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
   
-        if (remainingSeconds % 60 === 0 || remainingSeconds <= 5) { // affichage chaque minute + dernières 5 sec
-          process.stdout.write(`\r🕒 Prochain heartbeat dans: ${remainingSeconds}s `);
+        if (remainingSeconds % 300 === 0 || remainingSeconds <= 30) { // affichage toutes les 5min + dernières 30 sec
+          const minutes = Math.floor(remainingSeconds / 60);
+          const seconds = remainingSeconds % 60;
+          process.stdout.write(`\r🕒 Prochain heartbeat dans: ${minutes}m ${seconds}s `);
         }
   
-        // Watchdog: relance si pas exécuté après 5min + 2s
+        // Watchdog: relance si pas exécuté après 1h + 2s
         if (remainingMs < -2000 && !hasWarnedForCurrentCycle) {
-          console.warn("\n⚠️  [Agenda] Aucun heartbeat détecté (>5min2s). Relance...");
+          console.warn("\n⚠️  [Agenda] Aucun heartbeat détecté (>1h2s). Relance...");
           hasWarnedForCurrentCycle = true;
           agendaInstance.now("agent:heartbeat").catch(e => {
             console.error("❌ [Agenda] Échec de relance:", e?.message);
