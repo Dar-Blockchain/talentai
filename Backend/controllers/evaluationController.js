@@ -810,6 +810,7 @@ Provide detailed, actionable feedback in JSON format only.
       );
       interviewProfile = profileOverallScore;
 
+      //overallScore is fixed
       await profileService.createOrUpdateProfile(user._id, {
         overallScore:
           profileOverallScore.overallScore === 0
