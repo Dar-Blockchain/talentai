@@ -815,7 +815,7 @@ Provide detailed, actionable feedback in JSON format only.
         overallScore:
           profileOverallScore.overallScore === 0
             ? analysis.overallScore
-            : (profileOverallScore.overallScore + analysis.overallScore) / 2,
+            : (profileOverallScore.overallScore + analysis.overallScore) / 2, //this is for the average score
         skills: analysis.skillAnalysis.map((skill) => ({
           name: skill.skillName,
           proficiencyLevel: skill.demonstratedProficiency,
