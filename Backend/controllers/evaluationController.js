@@ -810,11 +810,12 @@ Provide detailed, actionable feedback in JSON format only.
       );
       interviewProfile = profileOverallScore;
 
+      //overallScore is fixed
       await profileService.createOrUpdateProfile(user._id, {
         overallScore:
           profileOverallScore.overallScore === 0
             ? analysis.overallScore
-            : (profileOverallScore.overallScore + analysis.overallScore) / 2,
+            : (profileOverallScore.overallScore + analysis.overallScore) / 2, //this is for the average score
         skills: analysis.skillAnalysis.map((skill) => ({
           name: skill.skillName,
           proficiencyLevel: skill.demonstratedProficiency,
@@ -1321,7 +1322,7 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
                 : demonstratedExperienceLevel - 1,
           },
         ];
-
+        profile.overallScore = overallScore;
         await profile.save();
 
         const index = todoList.todos.findIndex((todo) => todo.type === "Skill");
