@@ -1321,7 +1321,7 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
                 : demonstratedExperienceLevel - 1,
           },
         ];
-
+        profile.overallScore = overallScore;
         await profile.save();
 
         const index = todoList.todos.findIndex((todo) => todo.type === "Skill");
