@@ -69,40 +69,37 @@ const JobPreview: React.FC<JobPreviewProps> = ({
           justifyContent: "center",
           alignItems: "center",
           gap: 2,
-          color: "rgba(255,255,255,0.5)",
           textAlign: "center",
           minHeight: { xs: "300px", md: "auto" },
+          backgroundColor: "#f9fafb",
+          borderRadius: "12px",
+          border: "1px solid #e5e7eb",
         }}
       >
         <Box
           sx={{
-            p: { xs: 2, sm: 3 },
+            width: 80,
+            height: 80,
             borderRadius: "50%",
-            backgroundColor: GREEN_MAIN,
+            backgroundColor: "#d1fae5",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "white",
+            mx: "auto",
+            mb: 2,
           }}
         >
-          <WorkIcon sx={{ fontSize: { xs: 32, sm: 40 } }} />
+          <WorkIcon sx={{ fontSize: 40, color: "#10b981" }} />
         </Box>
         <Typography
           variant="h6"
-          sx={{ fontSize: { xs: "1rem", sm: "1.25rem" }, color: "black" }}
-        >
-          Generated job post will appear here
-        </Typography>
-        <Typography
-          variant="body2"
-          sx={{
-            maxWidth: "80%",
-            fontSize: { xs: "0.875rem", sm: "1rem" },
-            color: "black",
+          sx={{ 
+            fontSize: "1rem", 
+            color: "#6b7280",
+            fontWeight: 500
           }}
         >
-          Enter your job description on the left and click "Generate" to
-          create a professional job posting
+          Generated job post will appear here
         </Typography>
       </Box>
     );
@@ -111,7 +108,11 @@ const JobPreview: React.FC<JobPreviewProps> = ({
   return (
     <Box
       sx={{
-        color: "#fff",
+        backgroundColor: "#ffffff",
+        borderRadius: "12px",
+        border: "1px solid #e5e7eb",
+        p: 3,
+        color: "#111827",
         fontSize: { xs: "0.875rem", sm: "1rem" },
       }}
     >

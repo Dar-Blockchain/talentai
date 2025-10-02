@@ -170,7 +170,6 @@ const DashboardCompany = () => {
         }}
       >
         {/* Navbar */}
-        <Navbar profile={profile} />
 
         <ToastContainer
           position="top-right"
@@ -186,6 +185,8 @@ const DashboardCompany = () => {
         />
         <Container maxWidth="lg">
           {/* Filter Dialog */}
+          <Navbar profile={profile} />
+
           <FilterDialog
             open={filterDialog}
             onClose={() => setFilterDialog(false)}

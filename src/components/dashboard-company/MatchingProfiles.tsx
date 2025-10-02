@@ -6,17 +6,16 @@ import {
   Button,
   Chip,
   CircularProgress,
-  Tooltip,
+  Avatar,
+  Pagination,
 } from '@mui/material';
 import ErrorIcon from '@mui/icons-material/Error';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
-import StarIcon from '@mui/icons-material/Star';
 import WorkIcon from '@mui/icons-material/Work';
 import EmailIcon from '@mui/icons-material/Email';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import CheckIcon from '@mui/icons-material/Check';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import InfoIcon from '@mui/icons-material/Info';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useRouter } from 'next/router';
 
 // Update the MatchingCandidate interface
@@ -58,6 +57,9 @@ interface MatchingProfilesProps {
   onCreateNewJob: () => void;
   onLoadMore: () => void;
   onBidDialogOpen: (candidate: MatchingCandidate) => void;
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 }
 
 const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
@@ -71,84 +73,56 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
   onCreateNewJob,
   onLoadMore,
   onBidDialogOpen,
+  currentPage = 1,
+  totalPages = 1,
+  onPageChange,
 }) => {
   const router = useRouter();
 
   return (
     <>
       {/* Header Section */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-          <Box sx={{
-            width: 32,
-            height: 32,
-            borderRadius: '10px',
-            display: 'grid',
-            placeItems: 'center',
-            background: 'linear-gradient(135deg, rgba(0,255,157,0.9), rgba(2,226,255,0.9))',
-            boxShadow: '0 4px 12px rgba(2,226,255,0.35)'
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box>
+          <Typography variant="h5" sx={{ 
+            color: '#111827', 
+            fontWeight: 700,
+            fontSize: '1.5rem',
+            position: 'relative',
+            '&:after': {
+              content: '""',
+              position: 'absolute',
+              bottom: '-8px',
+              left: 0,
+              width: '60px',
+              height: '3px',
+              backgroundColor: '#10b981',
+              borderRadius: '2px'
+            }
           }}>
-            <PersonSearchIcon sx={{ color: '#0f172a', fontSize: 18 }} />
-          </Box>
-          <Typography variant="h6" sx={{ color: '#0f172a', fontWeight: 800 }}>
             Matching Candidates
           </Typography>
-          <Tooltip title="Candidates are matched based on their skills meeting or exceeding the required level for your job posting. The match score indicates how well their skills align with your requirements.">
-            <InfoIcon sx={{ color: 'rgba(0, 255, 157, 1)', cursor: 'help' }} />
-          </Tooltip>
         </Box>
-        <Box sx={{ display: 'flex', gap: 1.25 }}>
-          <Button
-            variant="contained"
-            startIcon={<WorkIcon />}
-            onClick={onBackToJobs}
-            sx={{
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-              color: '#0f172a',
-              fontWeight: 700,
-              borderRadius: '16px',
-              px: 3,
-              py: 1.5,
-              fontSize: '0.95rem',
-              textTransform: 'none',
-              boxShadow: '0 6px 20px rgba(2,226,255,0.3)',
-              border: '2px solid transparent',
-              position: 'relative',
-              overflow: 'hidden',
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
-                zIndex: 1
-              },
-              '&:hover': {
-                background: 'linear-gradient(135deg, #00FFC3 0%, #02E2FF 100%)',
-                transform: 'translateY(-3px)',
-                boxShadow: '0 12px 28px rgba(2,226,255,0.4)',
-                border: '2px solid rgba(255,255,255,0.3)'
-              },
-              '&:active': {
-                transform: 'translateY(-1px)',
-                boxShadow: '0 6px 20px rgba(2,226,255,0.3)'
-              },
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              '& .MuiButton-startIcon': {
-                zIndex: 2,
-                position: 'relative'
-              },
-              '& .MuiButton-label': {
-                zIndex: 2,
-                position: 'relative'
-              }
-            }}
-          >
-            ← Return to Jobs
-          </Button>
-        </Box>
+        <Button
+          variant="contained"
+          startIcon={<ArrowBackIcon />}
+          onClick={onBackToJobs}
+          sx={{
+            backgroundColor: '#10b981',
+            color: 'white',
+            fontWeight: 600,
+            borderRadius: '8px',
+            px: 3,
+            py: 1,
+            fontSize: '0.875rem',
+            textTransform: 'none',
+            '&:hover': {
+              backgroundColor: '#059669',
+            }
+          }}
+        >
+          Return to Jobs
+        </Button>
       </Box>
 
       {/* Content Section */}
@@ -159,27 +133,15 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
           alignItems: 'center', 
           justifyContent: 'center', 
           py: 8,
-          background: 'linear-gradient(135deg, rgba(2,226,255,0.03) 0%, rgba(0,255,195,0.03) 100%)',
-          borderRadius: '24px',
-          border: '1px solid rgba(0,255,157,0.1)'
+          backgroundColor: '#f9fafb',
+          borderRadius: '12px',
+          border: '1px solid #e5e7eb'
         }}>
-          <Box sx={{
-            width: 80,
-            height: 80,
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, rgba(2,226,255,0.1), rgba(0,255,195,0.1))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mb: 3,
-            boxShadow: '0 8px 32px rgba(2,226,255,0.15)'
-          }}>
-            <CircularProgress sx={{ color: '#02E2FF', width: 48, height: 48 }} />
-          </Box>
-          <Typography variant="h6" sx={{ color: '#1e293b', fontWeight: 600, mb: 1 }}>
+          <CircularProgress sx={{ color: '#3b82f6', mb: 3 }} />
+          <Typography variant="h6" sx={{ color: '#111827', fontWeight: 600, mb: 1 }}>
             Finding Perfect Matches
           </Typography>
-          <Typography variant="body2" sx={{ color: '#64748b', textAlign: 'center' }}>
+          <Typography variant="body2" sx={{ color: '#6b7280', textAlign: 'center' }}>
             Analyzing candidate profiles and skills...
           </Typography>
         </Box>
@@ -191,41 +153,29 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
           justifyContent: 'center',
           py: 6,
           px: 4,
-          background: 'linear-gradient(135deg, rgba(239,68,68,0.05) 0%, rgba(220,38,38,0.05) 100%)',
-          borderRadius: '20px',
-          border: '1px solid rgba(239,68,68,0.2)',
+          backgroundColor: '#fef2f2',
+          borderRadius: '12px',
+          border: '1px solid #fecaca',
           textAlign: 'center'
         }}>
-          <Box sx={{
-            width: 64,
-            height: 64,
-            borderRadius: '50%',
-            background: 'rgba(239,68,68,0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mb: 3
-          }}>
-            <ErrorIcon sx={{ fontSize: 32, color: '#dc2626' }} />
-          </Box>
-          <Typography variant="h6" sx={{ color: '#1e293b', fontWeight: 600, mb: 2 }}>
+          <ErrorIcon sx={{ fontSize: 48, color: '#dc2626', mb: 3 }} />
+          <Typography variant="h6" sx={{ color: '#111827', fontWeight: 600, mb: 2 }}>
             Error Loading Matches
           </Typography>
-          <Typography variant="body2" sx={{ color: '#64748b', maxWidth: '400px', mb: 3 }}>
+          <Typography variant="body2" sx={{ color: '#6b7280', maxWidth: '400px', mb: 3 }}>
             {matchError}
           </Typography>
           <Button
             variant="contained"
             onClick={onRetry}
             sx={{
-              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-              color: '#0f172a',
-              fontWeight: 700,
-              borderRadius: '12px',
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              fontWeight: 600,
+              borderRadius: '8px',
               px: 3,
               '&:hover': {
-                background: 'linear-gradient(135deg, #00FFC3 0%, #02E2FF 100%)',
-                transform: 'translateY(-2px)'
+                backgroundColor: '#2563eb'
               }
             }}
           >
@@ -240,28 +190,16 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
           justifyContent: 'center',
           py: 8,
           px: 4,
-          background: 'linear-gradient(135deg, rgba(2,226,255,0.03) 0%, rgba(0,255,195,0.03) 100%)',
-          borderRadius: '24px',
-          border: '1px solid rgba(0,255,157,0.1)',
+          backgroundColor: '#f9fafb',
+          borderRadius: '12px',
+          border: '1px solid #e5e7eb',
           textAlign: 'center'
         }}>
-          <Box sx={{
-            width: 80,
-            height: 80,
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, rgba(2,226,255,0.1), rgba(0,255,195,0.1))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mb: 3,
-            boxShadow: '0 8px 32px rgba(2,226,255,0.15)'
-          }}>
-            <PersonSearchIcon sx={{ fontSize: 40, color: '#02E2FF' }} />
-          </Box>
-          <Typography variant="h5" sx={{ color: '#1e293b', fontWeight: 700, mb: 2 }}>
+          <PersonSearchIcon sx={{ fontSize: 48, color: '#6b7280', mb: 3 }} />
+          <Typography variant="h5" sx={{ color: '#111827', fontWeight: 700, mb: 2 }}>
             No Matching Candidates Found
           </Typography>
-          <Typography variant="body1" sx={{ color: '#64748b', maxWidth: '500px', mb: 4, lineHeight: 1.6 }}>
+          <Typography variant="body1" sx={{ color: '#6b7280', maxWidth: '500px', mb: 4, lineHeight: 1.6 }}>
             We couldn't find any candidates that match your job requirements. Try adjusting your filters or requirements to find more matches.
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -269,19 +207,17 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
               variant="outlined"
               onClick={onBackToJobs}
               sx={{
-                borderColor: 'rgba(0,255,157,0.6)',
-                color: '#00FFC3',
-                fontWeight: 700,
-                borderRadius: '12px',
+                borderColor: '#d1d5db',
+                color: '#374151',
+                fontWeight: 600,
+                borderRadius: '8px',
                 px: 3,
                 py: 1.5,
                 textTransform: 'none',
-                fontSize: '0.95rem',
-                borderWidth: '2px',
+                fontSize: '0.875rem',
                 '&:hover': {
-                  borderColor: '#00FFC3',
-                  backgroundColor: 'rgba(0,255,195,0.08)',
-                  transform: 'translateY(-2px)'
+                  borderColor: '#9ca3af',
+                  backgroundColor: '#f9fafb'
                 }
               }}
             >
@@ -291,17 +227,16 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
               variant="contained"
               onClick={onCreateNewJob}
               sx={{
-                background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                color: '#0f172a',
-                fontWeight: 700,
-                borderRadius: '12px',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                fontWeight: 600,
+                borderRadius: '8px',
                 px: 3,
                 py: 1.5,
                 textTransform: 'none',
-                fontSize: '0.95rem',
+                fontSize: '0.875rem',
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #00FFC3 0%, #02E2FF 100%)',
-                  transform: 'translateY(-2px)'
+                  backgroundColor: '#2563eb'
                 }
               }}
             >
@@ -314,19 +249,20 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
           {/* Stats Summary */}
           <Box sx={{
             display: 'flex',
-            justifyContent: 'space-between',
+            justifyContent: 'center',
             alignItems: 'center',
-            p: 3,
-            background: 'linear-gradient(135deg, rgba(0,255,157,0.05) 0%, rgba(2,226,255,0.05) 100%)',
-            borderRadius: '16px',
-            border: '1px solid rgba(0,255,157,0.1)',
-            mb: 2
+            p: 2,
+            backgroundColor: '#f0fdf4',
+            borderRadius: '8px',
+            border: '1px solid #bbf7d0',
+            mb: 3
           }}>
-            <Typography variant="h6" sx={{ color: '#1e293b', fontWeight: 700 }}>
+            <Typography variant="h6" sx={{ 
+              color: '#10b981', 
+              fontWeight: 600,
+              fontSize: '1rem'
+            }}>
               Found {matchingProfiles.length} matching candidates
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>
-              Showing {Math.min(displayCount, matchingProfiles.length)} of {matchingProfiles.length}
             </Typography>
           </Box>
 
@@ -335,57 +271,90 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
             <Box
               key={candidate.candidateId._id}
               sx={{
-                background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-                borderRadius: '20px',
-                border: '1px solid rgba(0,255,157,0.15)',
-                boxShadow: '0 8px 32px rgba(0,255,157,0.1)',
+                background: 'white',
+                borderRadius: '12px',
+                border: '1px solid #e5e7eb',
                 p: 3,
-                transition: 'all 0.3s ease',
+                transition: 'border-color 0.2s',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 16px 48px rgba(0,255,157,0.15)',
-                  border: '1px solid rgba(0,255,157,0.25)'
+                  borderColor: '#d1d5db'
                 }
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                <Box sx={{ flex: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                    <Typography variant="h6" sx={{ color: '#1e293b', fontWeight: 700 }}>
-                      {candidate.name || candidate.candidateId.username}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+                  <Avatar
+                    sx={{
+                      width: 60,
+                      height: 60,
+                      backgroundColor: '#f3f4f6',
+                      border: '2px solid #e5e7eb',
+                      fontSize: '1.5rem',
+                      fontWeight: 600,
+                      color: '#6b7280'
+                    }}
+                  >
+                    {(candidate.name || candidate.candidateId.username)?.charAt(0)?.toUpperCase()}
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" sx={{ 
+                      color: '#111827', 
+                      fontWeight: 600,
+                      fontSize: '1.125rem',
+                      mb: 0.5
+                    }}>
+                      {candidate.name || candidate.candidateId.username} | {candidate.candidateId.role || 'Software Engineer'}
                     </Typography>
-                    {candidate.candidateId.isVerified && (
-                      <Chip
-                        label="Verified"
-                        size="small"
-                        icon={<CheckIcon sx={{ fontSize: 16 }} />}
-                        sx={{
-                          backgroundColor: 'rgba(0,255,157,0.15)',
-                          color: '#00FFC3',
-                          fontWeight: 700,
-                          fontSize: '0.75rem'
-                        }}
-                      />
-                    )}
+                    <Typography variant="body2" sx={{ 
+                      color: '#6b7280', 
+                      fontSize: '0.875rem'
+                    }}>
+                      {candidate.candidateId.email}
+                    </Typography>
                   </Box>
-                  <Typography variant="body2" sx={{ color: '#64748b', mb: 2 }}>
-                    {candidate.candidateId.email}
-                  </Typography>
                 </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="h5" sx={{ color: '#00FFC3', fontWeight: 800, mb: 0.5 }}>
-                    {candidate.score}%
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
-                    Match Score
-                  </Typography>
+                <Box sx={{ textAlign: 'center', ml: 2 }}>
+                  <Box sx={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: '50%',
+                    border: `6px solid ${candidate.score >= 70 ? '#10b981' : candidate.score >= 50 ? '#f59e0b' : '#ef4444'}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'white',
+                    position: 'relative'
+                  }}>
+                    <Typography variant="h5" sx={{ 
+                      color: '#111827', 
+                      fontWeight: 700,
+                      fontSize: '1.5rem',
+                      lineHeight: 1
+                    }}>
+                      {candidate.score.toFixed(2)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ 
+                      color: '#6b7280', 
+                      fontWeight: 500,
+                      fontSize: '0.75rem',
+                      mt: 0.5
+                    }}>
+                      Matching Score
+                    </Typography>
+                  </Box>
                 </Box>
               </Box>
 
               {/* Skills Section */}
               <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" sx={{ color: '#1e293b', fontWeight: 700, mb: 1.5 }}>
-                  Matched Skills ({candidate.matchedSkills.length})
+                <Typography variant="subtitle2" sx={{ 
+                  color: '#111827', 
+                  fontWeight: 600, 
+                  mb: 1.5,
+                  fontSize: '0.875rem'
+                }}>
+                  Matched Skills
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {candidate.matchedSkills.slice(0, 6).map((skill, idx) => (
@@ -393,19 +362,17 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                       key={skill._id || idx}
                       label={skill.name}
                       size="small"
-                      icon={<StarIcon sx={{ color: '#00FFC3', fontSize: 16 }} />}
                       sx={{
-                        backgroundColor: 'rgba(0,255,157,0.15)',
-                        color: '#1e293b',
-                        fontWeight: 600,
+                        backgroundColor: '#f3f4f6',
+                        color: '#374151',
+                        fontWeight: 500,
                         height: 28,
-                        fontSize: '0.8rem',
-                        border: '1px solid rgba(124,77,255,0.2)',
+                        fontSize: '0.75rem',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
                         '&:hover': {
-                          backgroundColor: 'rgba(124,77,255,0.15)',
-                          transform: 'translateY(-1px)'
-                        },
-                        transition: 'all 0.2s ease'
+                          backgroundColor: '#e5e7eb'
+                        }
                       }}
                     />
                   ))}
@@ -416,9 +383,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
               <Box sx={{
                 display: 'flex',
                 gap: 2,
-                mt: 'auto',
-                pt: 2,
-                borderTop: '1px solid rgba(0,255,157,0.1)'
+                mt: 'auto'
               }}>
                 <Button
                   variant="contained"
@@ -427,22 +392,18 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                   component="a"
                   href={`mailto:${candidate?.candidateId?.email}`}
                   sx={{
-                    background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                    color: '#0f172a',
-                    fontWeight: 700,
-                    borderRadius: '16px',
+                    backgroundColor: '#10b981',
+                    color: 'white',
+                    fontWeight: 600,
+                    borderRadius: '8px',
                     py: 1.5,
                     textTransform: 'none',
-                    fontSize: '0.9rem',
-                    boxShadow: '0 4px 16px rgba(2,226,255,0.3)',
+                    fontSize: '0.875rem',
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #00FFC3 0%, #02E2FF 100%)',
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 8px 24px rgba(2,226,255,0.4)'
+                      backgroundColor: '#059669'
                     },
-                    transition: 'all 0.3s ease',
                     '&.Mui-disabled': {
-                      background: '#e5e7eb',
+                      backgroundColor: '#e5e7eb',
                       color: '#9ca3af'
                     }
                   }}
@@ -457,22 +418,18 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                   startIcon={<AttachMoneyIcon />}
                   onClick={() => onBidDialogOpen(candidate)}
                   sx={{
-                    borderColor: 'rgba(0, 255, 157, 0.6)',
-                    color: '#00FFC3',
-                    fontWeight: 700,
-                    borderRadius: '16px',
+                    borderColor: '#3b82f6',
+                    color: '#3b82f6',
+                    fontWeight: 600,
+                    borderRadius: '8px',
                     py: 1.5,
                     textTransform: 'none',
-                    fontSize: '0.9rem',
-                    borderWidth: '2px',
-                    backgroundColor: 'rgba(0,255,195,0.02)',
+                    fontSize: '0.875rem',
+                    borderWidth: '1px',
                     '&:hover': {
-                      borderColor: '#00FFC3',
-                      backgroundColor: 'rgba(0,255,195,0.08)',
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 8px 24px rgba(0,255,195,0.2)'
+                      borderColor: '#2563eb',
+                      backgroundColor: '#eff6ff'
                     },
-                    transition: 'all 0.3s ease',
                     '&.Mui-disabled': {
                       borderColor: '#e5e7eb',
                       color: '#9ca3af'
@@ -486,33 +443,30 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
             </Box>
           ))}
 
-          {/* Load More Button */}
-          {matchingProfiles.length > displayCount && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-              <Button
-                variant="contained"
-                onClick={onLoadMore}
+          {/* Pagination */}
+          {totalPages > 1 && onPageChange && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <Pagination
+                count={totalPages}
+                page={currentPage}
+                onChange={(event, page) => onPageChange(page)}
+                color="primary"
                 sx={{
-                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                  color: '#0f172a',
-                  fontWeight: 700,
-                  borderRadius: '16px',
-                  px: 4,
-                  py: 1.5,
-                  fontSize: '1rem',
-                  textTransform: 'none',
-                  boxShadow: '0 8px 24px rgba(2,226,255,0.3)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #00FFC3 0%, #02E2FF 100%)',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 12px 32px rgba(2,226,255,0.4)'
-                  },
-                  transition: 'all 0.3s ease'
+                  '& .MuiPaginationItem-root': {
+                    color: '#6b7280',
+                    '&.Mui-selected': {
+                      backgroundColor: '#10b981',
+                      color: 'white',
+                      '&:hover': {
+                        backgroundColor: '#059669'
+                      }
+                    },
+                    '&:hover': {
+                      backgroundColor: '#f3f4f6'
+                    }
+                  }
                 }}
-                endIcon={<ExpandMoreIcon />}
-              >
-                Load More Candidates
-              </Button>
+              />
             </Box>
           )}
         </Box>

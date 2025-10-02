@@ -70,6 +70,7 @@ import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
 import Cookies from 'js-cookie';
 import { selectProfile } from '@/store/slices/profileSlice';
+import Navbar from '../dashboard-company/Navbar';
 
 // Constants
 const GREEN_MAIN = '#00FF9D';
@@ -78,7 +79,7 @@ const GREEN_MAIN = '#00FF9D';
 const Container = styled(Box)({
   width: '100%',
   height: '100vh',
-  backgroundColor: '#f5f7fa',
+  backgroundColor: '#ffffff',
   display: 'flex',
   flexDirection: 'column',
 });
@@ -339,6 +340,9 @@ const RecruitmentFlowBuilder: React.FC = () => {
   const postStepsLoading = useSelector(selectPostStepsLoading);
   const postStepsError = useSelector(selectPostStepsError);
   const { profile: authProfile, loading: authLoading } = useSelector(selectProfile);
+  
+  // Debug profile data
+  console.log('RecruitmentFlowBuilder authProfile:', authProfile);
 
   // React Flow state
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -1226,52 +1230,110 @@ Ready to customize the content or add more triggers?`
 
   return (
     <Container>
+      <Navbar profile={authProfile || {}} />
+      
       <Header>
-        <Stepper
-          activeStep={activeStep}
-          alternativeLabel
-          sx={{
-            padding: 3,
-            backgroundColor: '#f9fafb', // Soft neutral background
-            borderRadius: 2,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.05)', // Gentle elevation
-          }}
-        >
-          {steps.map((label, index) => (
-            <Step key={label}>
-              <StepLabel
-                StepIconProps={{
-                  style: {
-                    color:
-                      index === activeStep
-                        ? 'rgb(47, 212, 149)' // Current step
-                        : index < activeStep
-                          ? 'rgba(47, 212, 149, 0.7)' // Completed
-                          : '#d1d5db', // Upcoming
-                    fontSize: '1.5rem',
-                  },
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          width: '100%',
+          position: 'relative'
+        }}>
+          {/* Left - Back Button */}
+          <Button
+            startIcon={<ArrowBackIcon sx={{ color: '#10b981' }} />}
+            onClick={() => router.back()}
+            sx={{
+              color: '#111827',
+              textTransform: 'none',
+              fontWeight: 500,
+              fontSize: '1rem',
+              px: 0,
+              py: 0,
+              minWidth: 'auto',
+              position: 'absolute',
+              left: 0,
+              '&:hover': {
+                backgroundColor: 'transparent',
+                color: '#059669'
+              }
+            }}
+          >
+            Back
+          </Button>
+
+          {/* Center - Progress Indicator */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {/* Step 1 */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  backgroundColor: activeStep === 0 ? '#10b981' : '#d1d5db',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: '1rem'
                 }}
               >
-                <Typography
-                  variant="body2"
-                  fontWeight={index === activeStep ? 600 : 400}
-                  sx={{
-                    color:
-                      index === activeStep
-                        ? '#1f2937' // Strong text for current
-                        : index < activeStep
-                          ? 'rgba(47, 212, 149, 0.9)' // Soft green for completed
-                          : '#9ca3af', // Gray for upcoming
-                    textTransform: 'capitalize',
-                    fontSize: '14px',
-                  }}
-                >
-                  {label}
-                </Typography>
-              </StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+                1
+              </Box>
+              <Typography
+                sx={{
+                  color: activeStep === 0 ? '#10b981' : '#9ca3af',
+                  fontWeight: 500,
+                  fontSize: '1rem'
+                }}
+              >
+                Job Description
+              </Typography>
+            </Box>
+
+            {/* Progress Line */}
+            <Box
+              sx={{
+                width: 40,
+                height: 2,
+                backgroundColor: activeStep >= 1 ? '#10b981' : '#e5e7eb',
+                borderRadius: 1
+              }}
+            />
+
+            {/* Step 2 */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  backgroundColor: activeStep === 1 ? '#10b981' : '#d1d5db',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: '1rem'
+                }}
+              >
+                2
+              </Box>
+              <Typography
+                sx={{
+                  color: activeStep === 1 ? '#10b981' : '#9ca3af',
+                  fontWeight: 500,
+                  fontSize: '1rem'
+                }}
+              >
+                Recruitment Flow
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
 
         {/* Profile Loading Indicator */}
         {authLoading && (

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Card,
   CircularProgress,
   Alert,
   TableContainer,
@@ -13,46 +12,26 @@ import {
   TableBody,
   Paper,
   Avatar,
-  LinearProgress,
   Chip,
   Button,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  IconButton,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import BusinessIcon from '@mui/icons-material/Business';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorIcon from '@mui/icons-material/Error';
-import StarIcon from '@mui/icons-material/Star';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import WorkIcon from '@mui/icons-material/Work';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import EmailIcon from '@mui/icons-material/Email';
-import InfoIcon from '@mui/icons-material/Info';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import SearchIcon from '@mui/icons-material/Search';
+import TuneIcon from '@mui/icons-material/Tune';
 import AssessmentDetailsModal from './AssessmentDetailsModal';
 
 // Styled Components
-const StyledCard = styled(Card)(({ theme }) => ({
+const StyledCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
   marginBottom: theme.spacing(3),
   background: 'white',
-  backdropFilter: 'blur(10px)',
   borderRadius: '16px',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-  '&:hover': {
-    transform: 'translateY(-2px)',
-    boxShadow: '0 6px 25px rgba(0,0,0,0.3)'
-  }
+  border: '1px solid #e5e7eb',
 }));
 
 interface CompanyProfilesAssessmentsProps {
@@ -69,7 +48,6 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
   const [assessmentSearch, setAssessmentSearch] = useState('');
   const [assessmentStatusFilter, setAssessmentStatusFilter] = useState('all');
   const [assessmentSort, setAssessmentSort] = useState('date_desc');
-  const [assessmentView, setAssessmentView] = useState<'table' | 'cards'>('table');
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
   const [assessmentModalOpen, setAssessmentModalOpen] = useState(false);
 
@@ -207,239 +185,123 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
 
     return (
       <>
-        {assessmentView === 'table' ? (
-          <TableContainer component={Paper} sx={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            border: '1px solid rgba(255,255,255,0.1)',
-            overflow: 'hidden'
-          }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ color: '#000', fontWeight: 600 }}>Candidate</TableCell>
-                  <TableCell sx={{ color: '#000', fontWeight: 600 }}>Job Title</TableCell>
-                  <TableCell sx={{ color: '#000', fontWeight: 600 }}>Assessment Date</TableCell>
-                  <TableCell sx={{ color: '#000', fontWeight: 600 }}>Overall Score</TableCell>
-                  <TableCell sx={{ color: '#000', fontWeight: 600 }}>Job Match</TableCell>
-                  <TableCell sx={{ color: '#000', fontWeight: 600 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {visibleAssessments.map((assessment) => (
-                  <TableRow key={assessment._id} sx={{ '&:hover': { backgroundColor: 'rgba(2,226,255,0.05)' } }}>
-                    <TableCell sx={{ color: '#000' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                        <Avatar sx={{ bgcolor: '#00B8D4', color: '#fff', width: 28, height: 28, fontSize: 14, fontWeight: 700 }}>
+        <TableContainer component={Paper} sx={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          border: '1px solid #e5e7eb',
+          overflow: 'hidden',
+          boxShadow: 'none'
+        }}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: '#f9fafb' }}>
+                <TableCell sx={{ color: '#6b7280', fontWeight: 600, fontSize: '0.875rem', borderBottom: '1px solid #e5e7eb' }}>
+                  Candidate
+                </TableCell>
+                <TableCell sx={{ color: '#6b7280', fontWeight: 600, fontSize: '0.875rem', borderBottom: '1px solid #e5e7eb' }}>
+                  Job Title
+                </TableCell>
+                <TableCell sx={{ color: '#6b7280', fontWeight: 600, fontSize: '0.875rem', borderBottom: '1px solid #e5e7eb' }}>
+                  Assessment Date
+                </TableCell>
+                <TableCell sx={{ color: '#6b7280', fontWeight: 600, fontSize: '0.875rem', borderBottom: '1px solid #e5e7eb' }}>
+                  Overall Score
+                </TableCell>
+                <TableCell sx={{ color: '#6b7280', fontWeight: 600, fontSize: '0.875rem', borderBottom: '1px solid #e5e7eb' }}>
+                  Job Match
+                </TableCell>
+                <TableCell sx={{ color: '#6b7280', fontWeight: 600, fontSize: '0.875rem', borderBottom: '1px solid #e5e7eb' }}>
+                  Actions
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {visibleAssessments.map((assessment, index) => {
+                const score = Number(assessment.analysis?.overallScore) || 0;
+                const isGoodMatch = score >= 70;
+                
+                return (
+                  <TableRow 
+                    key={assessment._id} 
+                    sx={{ 
+                      '&:hover': { backgroundColor: '#f9fafb' },
+                      '&:last-child td': { borderBottom: 0 }
+                    }}
+                  >
+                    <TableCell sx={{ color: '#111827', borderBottom: '1px solid #e5e7eb' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Avatar 
+                          sx={{ 
+                            bgcolor: '#f3f4f6', 
+                            color: '#111827', 
+                            width: 40, 
+                            height: 40, 
+                            fontSize: 16, 
+                            fontWeight: 600,
+                            border: '2px solid #e5e7eb'
+                          }}
+                        >
                           {(assessment?.condidateId?.userId?.username || 'U')?.[0]}
                         </Avatar>
                         <Box>
-                          <Typography sx={{ fontWeight: 600, lineHeight: 1 }}>
+                          <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>
                             {assessment.condidateId?.userId?.username || 'Unknown User'}
                           </Typography>
                           {assessment?.condidateId?.userId?.email && (
-                            <Typography variant="caption" sx={{ color: '#64748b' }}>
+                            <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.75rem' }}>
                               {assessment.condidateId.userId.email}
                             </Typography>
                           )}
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell sx={{ color: '#000' }}>
+                    <TableCell sx={{ color: '#111827', fontSize: '0.875rem', borderBottom: '1px solid #e5e7eb' }}>
                       {assessment.jobId?.jobDetails?.title || 'Unknown Job'}
                     </TableCell>
-                    <TableCell sx={{ color: '#000' }}>
-                      {new Date(assessment.timestamp).toLocaleDateString()}
+                    <TableCell sx={{ color: '#6b7280', fontSize: '0.875rem', borderBottom: '1px solid #e5e7eb' }}>
+                      {new Date(assessment.timestamp).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
                     </TableCell>
-                    <TableCell sx={{ color: '#000', minWidth: 160 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography sx={{ fontWeight: 700, minWidth: 40 }}>{assessment.analysis?.overallScore || 0}%</Typography>
-                        <LinearProgress
-                          variant="determinate"
-                          value={Number(assessment.analysis?.overallScore) || 0}
-                          sx={{
-                            flex: 1,
-                            height: 8,
-                            borderRadius: 6,
-                            backgroundColor: 'rgba(2,226,255,0.08)',
-                            '& .MuiLinearProgress-bar': {
-                              background: `linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)`
-                            }
-                          }}
-                        />
-                      </Box>
+                    <TableCell sx={{ color: '#111827', fontSize: '0.875rem', fontWeight: 600, borderBottom: '1px solid #e5e7eb' }}>
+                      {score}%
                     </TableCell>
-                    <TableCell sx={{ color: '#fff' }}>
+                    <TableCell sx={{ borderBottom: '1px solid #e5e7eb' }}>
                       <Chip
-                        label={assessment.analysis?.jobMatch?.status || 'Unknown'}
+                        label={isGoodMatch ? 'Good Match' : 'Poor Match'}
                         size="small"
                         sx={{
-                          backgroundColor: assessment.analysis?.jobMatch?.status === 'match'
-                            ? 'rgba(0,255,195,0.13)'
-                            : 'rgba(255,59,48,0.13)',
-                          color: assessment.analysis?.jobMatch?.status === 'match'
-                            ? '#00FFC3'
-                            : '#ff3b30',
-                          fontWeight: 600
+                          backgroundColor: isGoodMatch ? '#d1fae5' : '#fee2e2',
+                          color: isGoodMatch ? '#065f46' : '#991b1b',
+                          fontWeight: 600,
+                          fontSize: '0.75rem',
+                          border: 'none',
+                          borderRadius: '6px'
                         }}
                       />
                     </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        endIcon={<ArrowForwardIcon />}
+                    <TableCell sx={{ borderBottom: '1px solid #e5e7eb' }}>
+                      <IconButton
                         onClick={() => handleViewAssessmentDetails(assessment)}
                         sx={{
-                          background: 'linear-gradient(90deg, rgba(0,255,157,1) 0%, rgba(2,226,255,1) 100%)',
-                          color: '#0f172a',
-                          fontWeight: 800,
-                          borderRadius: '999px',
-                          px: 2,
-                          height: 34,
-                          textTransform: 'none',
-                          boxShadow: '0 2px 10px rgba(2,226,255,0.25)',
-                          transition: 'all .2s ease',
+                          color: '#10b981',
                           '&:hover': {
-                            background: 'linear-gradient(90deg, rgba(0,255,157,0.9) 0%, rgba(2,226,255,0.9) 100%)',
-                            boxShadow: '0 4px 16px rgba(2,226,255,0.35)',
-                            transform: 'translateY(-1px)'
+                            backgroundColor: '#d1fae5'
                           }
                         }}
                       >
-                        View Details
-                      </Button>
+                        <VisibilityIcon />
+                      </IconButton>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        ) : (
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-            {visibleAssessments.map((assessment: any) => {
-              const score = Number(assessment?.analysis?.overallScore) || 0;
-              const match = assessment?.analysis?.jobMatch?.status === 'match';
-              return (
-                <Box key={assessment._id} sx={{ width: { xs: '100%', sm: '50%', md: '33.3333%' } }}>
-                  <Paper sx={{ p: 2, borderRadius: 2, border: '1px solid rgba(2,226,255,0.1)', height: '100%' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.5 }}>
-                      <Avatar sx={{ bgcolor: '#00B8D4', color: '#fff', width: 36, height: 36, fontWeight: 700 }}>
-                        {(assessment?.condidateId?.userId?.username || 'U')?.[0]}
-                      </Avatar>
-                      <Box sx={{ minWidth: 0 }}>
-                        <Typography noWrap sx={{ fontWeight: 700 }}>
-                          {assessment?.condidateId?.userId?.username}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: '#64748b' }} noWrap>
-                          {assessment?.condidateId?.userId?.email}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Typography variant="body2" sx={{ color: '#111827', mb: 1 }} noWrap>
-                      {assessment?.jobId?.jobDetails?.title}
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 1.5 }}>
-                      <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-                        <CircularProgress variant="determinate" value={score} size={64} thickness={5} sx={{ color: match ? '#00C48C' : '#7C4DFF' }} />
-                        <Box
-                          sx={{
-                            top: 0,
-                            left: 0,
-                            bottom: 0,
-                            right: 0,
-                            position: 'absolute',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Typography variant="caption" component="div" sx={{ fontWeight: 700 }}>
-                            {score}%
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Chip
-                        icon={match ? <CheckCircleIcon sx={{ fontSize: 18, color: '#00FFC3' }} /> : <ErrorIcon sx={{ fontSize: 18, color: '#ff3b30' }} />}
-                        label={match ? 'Job match' : 'No match'}
-                        size="small"
-                        sx={{
-                          pl: 0.5,
-                          pr: 1.25,
-                          height: 30,
-                          borderRadius: '999px',
-                          fontWeight: 800,
-                          letterSpacing: 0.2,
-                          color: match ? '#065f46' : '#7f1d1d',
-                          background: match
-                            ? 'linear-gradient(90deg, rgba(0,255,195,0.16) 0%, rgba(2,226,255,0.12) 100%)'
-                            : 'linear-gradient(90deg, rgba(255,59,48,0.16) 0%, rgba(255,59,48,0.10) 100%)',
-                          border: '1px solid',
-                          borderColor: match ? 'rgba(0,255,195,0.35)' : 'rgba(255,59,48,0.35)',
-                          boxShadow: match
-                            ? '0 2px 10px rgba(0,255,195,0.15)'
-                            : '0 2px 10px rgba(255,59,48,0.12)'
-                        }}
-                      />
-                      <Button
-                        variant="contained"
-                        size="small"
-                        endIcon={<ArrowForwardIcon />}
-                        onClick={() => handleViewAssessmentDetails(assessment)}
-                        sx={{
-                          background: 'linear-gradient(90deg, rgba(0,255,157,1) 0%, rgba(2,226,255,1) 100%)',
-                          color: '#0f172a',
-                          fontWeight: 800,
-                          borderRadius: '999px',
-                          px: 2,
-                          height: 34,
-                          boxShadow: '0 2px 10px rgba(2,226,255,0.25)',
-                          textTransform: 'none',
-                          transition: 'all .2s ease',
-                          '&:hover': {
-                            background: 'linear-gradient(90deg, rgba(0,255,157,0.9) 0%, rgba(2,226,255,0.9) 100%)',
-                            boxShadow: '0 4px 16px rgba(2,226,255,0.35)',
-                            transform: 'translateY(-1px)'
-                          }
-                        }}
-                      >
-                        Details
-                      </Button>
-                    </Box>
-                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mt: 1.5 }}>
-                      {new Date(assessment?.timestamp).toLocaleDateString()}
-                    </Typography>
-                  </Paper>
-                </Box>
-              );
-            })}
-          </Box>
-        )}
-        {hasMore && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-            <Button
-              variant="contained"
-              endIcon={<ExpandMoreIcon />}
-              onClick={() => setDisplayedAssessments(prev => prev + 10)}
-              sx={{
-                background: 'linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)',
-                color: '#0f172a',
-                fontWeight: 800,
-                borderRadius: '999px',
-                px: 2.5,
-                height: 40,
-                textTransform: 'none',
-                boxShadow: '0 2px 12px rgba(2,226,255,0.25)',
-                transition: 'all .2s ease',
-                '&:hover': {
-                  background: 'linear-gradient(90deg, rgba(2,226,255,0.9) 0%, rgba(0,255,195,0.9) 100%)',
-                  boxShadow: '0 6px 18px rgba(2,226,255,0.35)',
-                  transform: 'translateY(-1px)'
-                }
-              }}
-            >
-              View More
-            </Button>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        {visibleAssessments.length === 0 && !isLoadingProfiles && (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography variant="body2" sx={{ color: '#6b7280' }}>
+              No assessments found
+            </Typography>
           </Box>
         )}
       </>
@@ -448,11 +310,61 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
 
   return (
     <StyledCard sx={{ mt: 6, mb: 6 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, gap: 2, flexWrap: 'wrap' }}>
-        <Typography variant="h5" sx={{ color: 'black', fontWeight: 800, letterSpacing: 0.2 }}>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h5" sx={{ color: '#111827', fontWeight: 700 }}>
           Company Profiles & Assessments
         </Typography>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <TextField
+            size="small"
+            placeholder="Search Candidates"
+            value={assessmentSearch}
+            onChange={(e) => setAssessmentSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: '#9ca3af', fontSize: 20 }} />
+                </InputAdornment>
+              )
+            }}
+            sx={{
+              width: 280,
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                border: '1px solid #e5e7eb',
+                '& fieldset': {
+                  border: 'none',
+                },
+                '&:hover': {
+                  borderColor: '#d1d5db',
+                }
+              }
+            }}
+          />
+          <Button
+            variant="outlined"
+            startIcon={<TuneIcon />}
+            sx={{
+              borderColor: '#e5e7eb',
+              color: '#6b7280',
+              textTransform: 'uppercase',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              borderRadius: '12px',
+              px: 2.5,
+              '&:hover': {
+                borderColor: '#d1d5db',
+                backgroundColor: '#f9fafb'
+              }
+            }}
+          >
+            SORT
+          </Button>
+        </Box>
       </Box>
+      
       {renderCompanyProfilesTable()}
 
       {/* Assessment Details Modal */}
