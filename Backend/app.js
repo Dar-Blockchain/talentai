@@ -48,7 +48,11 @@ const initializeApp = async () => {
     await connectDB();
     // Initialize Agenda scheduler after DB connection
     await initializeAgenda();
-    
+
+    console.log('🤖 Initializing intelligent interview service...');
+    // Initialize intelligent interview service
+    await intelligentInterviewService.initialize();
+
     console.log('⚡ Initializing server...');
     // Start the server only after successful DB connection
     server.listen(process.env.PORT, () => {
@@ -118,6 +122,10 @@ const server = http.createServer(app);
 
 // Initialisation centralisée de Socket.IO
 const io = socket.init(server);
+
+// Initialize intelligent interview service
+const intelligentInterviewService = require('./services/intelligentInterviewService');
+
 io.on('connection', (sock) => {
   console.log('Utilisateur connecté à Socket.IO :', sock.id);
   sock.on('join', (userId) => {

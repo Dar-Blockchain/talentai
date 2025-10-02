@@ -8,7 +8,12 @@ interface CompanyDetailsProps {
     size: string;
     location: string;
   };
-  setCompanyDetails: (details: any) => void;
+  setCompanyDetails: React.Dispatch<React.SetStateAction<{
+    name: string;
+    industry: string;
+    size: string;
+    location: string;
+  }>>;
 }
 
 const CompanyDetails = ({ companyDetails, setCompanyDetails }: CompanyDetailsProps) => {
