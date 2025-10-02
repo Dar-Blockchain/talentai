@@ -189,7 +189,7 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
         <Typography variant="h5" sx={{ color: '#111827', fontWeight: 700, mb: 3 }}>
           HR Agents
         </Typography>
-        
+
         <Box sx={{
           display: 'flex',
           flexDirection: 'column',
@@ -267,7 +267,7 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
             const topScore = agent.matches.length > 0 ? Math.max(...agent.matches.map((m: any) => m.score)) : 0;
             const minBid = agent.matches.length > 0 ? Math.min(...agent.matches.map((m: any) => m.finalBid || 0).filter((bid: number) => bid > 0)) : 0;
             const status = agent.matches.length > 0 ? 'available' : 'offline';
-            
+
             return (
               <Box
                 key={agent.agentId}
@@ -282,20 +282,20 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                   }
                 }}
               >
-                <Box sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center', 
+                <Box sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                   mb: 2
                 }}>
-                  <Box sx={{ 
-                    flex: 1, 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                  <Box sx={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 2
                   }}>
-                    <Avatar 
-                      sx={{ 
+                    <Avatar
+                      sx={{
                         bgcolor: '#f3f4f6',
                         color: '#111827',
                         width: 48,
@@ -308,24 +308,24 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                       {agent.name.charAt(0).toUpperCase()}
                     </Avatar>
                     <Box sx={{ flex: 1 }}>
-                      <Typography variant="h6" sx={{ 
-                        color: '#111827', 
-                        fontWeight: 600, 
+                      <Typography variant="h6" sx={{
+                        color: '#111827',
+                        fontWeight: 600,
                         mb: 0.5,
                         fontSize: '1rem'
                       }}>
                         {agent.name.length > 40 ? `${agent.name.substring(0, 40)}...` : agent.name}
                       </Typography>
-                      <Typography variant="body2" sx={{ 
-                        color: '#6b7280', 
+                      <Typography variant="body2" sx={{
+                        color: '#6b7280',
                         mb: 1,
                         fontSize: '0.875rem'
                       }}>
                         {agent.jobTitle || 'General HR Agent'}
                       </Typography>
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                      <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: 1
                       }}>
                         <Chip
@@ -349,16 +349,16 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                     </Box>
                   </Box>
                   <Box sx={{ textAlign: 'right' }}>
-                    <Typography variant="h4" sx={{ 
-                      color: '#10b981', 
-                      fontWeight: 700, 
+                    <Typography variant="h4" sx={{
+                      color: '#10b981',
+                      fontWeight: 700,
                       mb: 0.5,
                       fontSize: '2rem'
                     }}>
                       {topScore}%
                     </Typography>
-                    <Typography variant="caption" sx={{ 
-                      color: '#6b7280', 
+                    <Typography variant="caption" sx={{
+                      color: '#6b7280',
                       fontWeight: 500,
                       fontSize: '0.75rem'
                     }}>
@@ -368,10 +368,10 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                 </Box>
 
                 {/* Stats Row */}
-                <Box sx={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(3, 1fr)', 
-                  gap: 2, 
+                <Box sx={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: 2,
                   mb: 2,
                   p: 2,
                   background: '#f9fafb',
@@ -453,15 +453,15 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
       >
         {selectedAgent && (
           <>
-            <DialogTitle sx={{ 
-              p: 3, 
-              pb: 2, 
+            <DialogTitle sx={{
+              p: 3,
+              pb: 2,
               borderBottom: '1px solid #e5e7eb',
               backgroundColor: '#f9fafb'
             }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
-                <Typography variant="h6" sx={{ 
-                  color: '#111827', 
+                <Typography variant="h6" sx={{
+                  color: '#111827',
                   fontWeight: 700,
                   fontSize: '1.25rem'
                 }}>
@@ -473,12 +473,14 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                 />
               </Box>
             </DialogTitle>
-            <DialogContent sx={{ p: 3 }}>
+            <DialogContent sx={{
+              p: 3, mt: "10px"
+            }}>
               <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="h6" sx={{ 
-                    color: '#111827', 
-                    fontWeight: 600, 
+                  <Typography variant="h6" sx={{
+                    color: '#111827',
+                    fontWeight: 600,
                     mb: 2,
                     fontSize: '1.125rem'
                   }}>
@@ -504,9 +506,9 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                   </Box>
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="h6" sx={{ 
-                    color: '#111827', 
-                    fontWeight: 600, 
+                  <Typography variant="h6" sx={{
+                    color: '#111827',
+                    fontWeight: 600,
                     mb: 2,
                     fontSize: '1.125rem'
                   }}>
@@ -522,12 +524,12 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                   </Box>
                 </Box>
               </Box>
-              
+
               <Box sx={{ width: '100%', mt: 3 }}>
                 <Divider sx={{ my: 2, borderColor: '#e5e7eb' }} />
-                <Typography variant="h6" sx={{ 
-                  color: '#111827', 
-                  fontWeight: 600, 
+                <Typography variant="h6" sx={{
+                  color: '#111827',
+                  fontWeight: 600,
                   mb: 2,
                   fontSize: '1.125rem'
                 }}>
@@ -536,16 +538,16 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                 {selectedAgent.matches && selectedAgent.matches.length > 0 ? (
                   <Box>
                     {selectedAgent.matches.map((match, index) => (
-                      <Box key={index} sx={{ 
-                        mb: 2, 
-                        p: 3, 
-                        border: '1px solid #e5e7eb', 
+                      <Box key={index} sx={{
+                        mb: 2,
+                        p: 3,
+                        border: '1px solid #e5e7eb',
                         borderRadius: '12px',
                         backgroundColor: '#f9fafb'
                       }}>
                         <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                          <Typography variant="h6" sx={{ 
-                            color: '#111827', 
+                          <Typography variant="h6" sx={{
+                            color: '#111827',
                             fontWeight: 600,
                             fontSize: '1rem'
                           }}>
@@ -581,9 +583,9 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                           Candidate ID: {match.candidateId}
                         </Typography>
                         <Box sx={{ mt: 1 }}>
-                          <Typography variant="body2" sx={{ 
-                            color: '#111827', 
-                            fontWeight: 600, 
+                          <Typography variant="body2" sx={{
+                            color: '#111827',
+                            fontWeight: 600,
                             mb: 1,
                             fontSize: '0.875rem'
                           }}>
@@ -591,10 +593,10 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                           </Typography>
                           <Box display="flex" flexWrap="wrap" gap={1}>
                             {match.matchedSkills.map((skill, skillIndex) => (
-                              <Chip 
-                                key={skillIndex} 
-                                label={`${skill.name} (${skill.experienceLevel})`} 
-                                size="small" 
+                              <Chip
+                                key={skillIndex}
+                                label={`${skill.name} (${skill.experienceLevel})`}
+                                size="small"
                                 sx={{
                                   backgroundColor: '#f3f4f6',
                                   color: '#374151',
@@ -629,15 +631,15 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                 )}
               </Box>
             </DialogContent>
-            <DialogActions sx={{ 
-              p: 3, 
-              pt: 2, 
+            <DialogActions sx={{
+              p: 3,
+              pt: 2,
               borderTop: '1px solid #e5e7eb',
               backgroundColor: '#f9fafb'
             }}>
-              <Button 
+              <Button
                 onClick={handleCloseDetails}
-                sx={{ 
+                sx={{
                   textTransform: 'none',
                   color: '#6b7280',
                   fontWeight: 500,

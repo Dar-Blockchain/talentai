@@ -1225,30 +1225,31 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                                                   alignItems: 'center', 
                                                   gap: 2, 
                                                   mb: 2,
-                                                  p: 1.5,
-                                                  backgroundColor: 'white',
-                                                  borderRadius: 1,
-                                                  border: '1px solid #c8e6c9'
+                                                  p: 2,
+                                                  backgroundColor: '#f9fafb',
+                                                  borderRadius: '8px',
+                                                  border: '1px solid #e5e7eb'
                                                 }}>
                                                   <Box sx={{
-                                                    width: 40,
-                                                    height: 40,
-                                                    borderRadius: '50%',
-                                                    backgroundColor: '#4caf50',
+                                                    width: 48,
+                                                    height: 48,
+                                                    borderRadius: '8px',
+                                                    backgroundColor: '#f3f4f6',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
-                                                    color: 'white',
+                                                    color: '#374151',
                                                     fontWeight: 700,
-                                                    fontSize: '0.875rem'
+                                                    fontSize: '1rem',
+                                                    border: '1px solid #d1d5db'
                                                   }}>
                                                     {step.score}%
                                                   </Box>
                                                   <Box>
-                                                    <Typography variant="caption" color="textSecondary">
+                                                    <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 500 }}>
                                                       Final Score
                                                     </Typography>
-                                                    <Typography variant="body2" sx={{ fontWeight: 600, color: '#2e7d32' }}>
+                                                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#111827' }}>
                                                       {step.score >= 80 ? 'Excellent' : 
                                                        step.score >= 70 ? 'Good' : 
                                                        step.score >= 60 ? 'Average' : 'Below Average'}
@@ -1259,11 +1260,25 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                                               
                                               {/* Step Results/Feedback if available */}
                                               {step.results && (
-                                                <Box sx={{ mt: 2 }}>
-                                                  <Typography variant="body2" color="textSecondary" sx={{ fontWeight: 500, display: 'block', mb: 1 }}>
+                                                <Box sx={{ 
+                                                  mt: 2,
+                                                  p: 2,
+                                                  backgroundColor: '#f9fafb',
+                                                  borderRadius: '8px',
+                                                  border: '1px solid #e5e7eb'
+                                                }}>
+                                                  <Typography variant="body2" sx={{ 
+                                                    color: '#6b7280', 
+                                                    fontWeight: 600, 
+                                                    display: 'block', 
+                                                    mb: 1 
+                                                  }}>
                                                     📊 Results Summary
                                                   </Typography>
-                                                  <Typography variant="body2" sx={{ color: '#2e7d32', lineHeight: 1.5 }}>
+                                                  <Typography variant="body2" sx={{ 
+                                                    color: '#111827', 
+                                                    lineHeight: 1.6 
+                                                  }}>
                                                     {step.results}
                                                   </Typography>
                                                 </Box>
@@ -1271,11 +1286,25 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                                               
                                               {/* Step Feedback if available */}
                                               {step.feedback && (
-                                                <Box sx={{ mt: 2 }}>
-                                                  <Typography variant="body2" color="textSecondary" sx={{ fontWeight: 500, display: 'block', mb: 1 }}>
+                                                <Box sx={{ 
+                                                  mt: 2,
+                                                  p: 2,
+                                                  backgroundColor: '#f9fafb',
+                                                  borderRadius: '8px',
+                                                  border: '1px solid #e5e7eb'
+                                                }}>
+                                                  <Typography variant="body2" sx={{ 
+                                                    color: '#6b7280', 
+                                                    fontWeight: 600, 
+                                                    display: 'block', 
+                                                    mb: 1 
+                                                  }}>
                                                     💬 Feedback
                                                   </Typography>
-                                                  <Typography variant="body2" sx={{ color: '#2e7d32', lineHeight: 1.5 }}>
+                                                  <Typography variant="body2" sx={{ 
+                                                    color: '#111827', 
+                                                    lineHeight: 1.6 
+                                                  }}>
                                                     {step.feedback}
                                                   </Typography>
                                                 </Box>
@@ -1285,13 +1314,13 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                                               <Box sx={{ 
                                                 mt: 2, 
                                                 pt: 2, 
-                                                borderTop: '1px solid #c8e6c9',
+                                                borderTop: '1px solid #e5e7eb',
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 gap: 1
                                               }}>
-                                                <ScheduleIcon sx={{ fontSize: 16, color: '#4caf50' }} />
-                                                <Typography variant="caption" color="textSecondary">
+                                                <ScheduleIcon sx={{ fontSize: 16, color: '#6b7280' }} />
+                                                <Typography variant="caption" sx={{ color: '#6b7280' }}>
                                                   Completed: {step.completedAt ? new Date(step.completedAt).toLocaleString() : 'N/A'}
                                                 </Typography>
                                               </Box>

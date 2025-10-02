@@ -94,7 +94,8 @@ const JobDetailsDialog: React.FC<JobDetailsDialogProps> = ({ open, onClose, job 
         </IconButton>
       </DialogTitle>
       
-      <DialogContent sx={{ pt: 3 }}>
+      <DialogContent sx={{ pt: 3,         mt:"10px"
+}}>
         {/* Job Details Section */}
         <Box sx={{ mb: 4 }}>
           <Typography variant="h6" sx={{ 
