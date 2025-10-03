@@ -140,13 +140,8 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
                 display: 'flex',
                 alignItems: 'center',
                 cursor: 'pointer',
-                bgcolor: '#000000',
-                borderRadius: 5,
-                px: 2,
-                py: 1,
                 transition: 'all 0.2s',
                 '&:hover': {
-                  bgcolor: '#000000',
                   transform: 'translateY(-1px)',
                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
                 }
@@ -155,7 +150,7 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
             >
               <Box
                 component="img"
-                src="/images/home/TalentAiLogo.png"
+                src={type === "jobseeker" ? "/images/jobseeker_landing/TalentAiPurple.png" : "/images/home/TalentAiLogo.png"}
                 alt="TalentAI Logo"
                 sx={{
                   height: 32,
