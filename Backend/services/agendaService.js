@@ -101,23 +101,10 @@ async function initializeAgenda() {
         
           // --- Envoi POST seulement pour le premier match avec score > 70 ---
         const topMatch = matches.find((m) => m.score > 70);
-        if (topMatch) {
-         /* try {
-            await axios.post(`${process.env.HR_AGENTS_BASE_URL || 'http://localhost:5000'}/hr-agents/submit-evaluation-message`, {
-              agentAId: agent._id,
-              agentBId: "68c2e127bf5357b2404443c2", // master
-              candidateId: topMatch.candidateId,
-              postId: agent.postId._id,
-              message: "Please review this candidate",
-              bidAmount: topMatch.finalBid || 20
-            });
-            console.log(`📤 [Agenda] Message envoyé pour candidat ${topMatch.name} avec score ${topMatch.score}`);
-          } catch (err) {
-            console.error(`❌ [Agenda] Échec envoi message pour candidat ${topMatch.name}:`, err.message);
-          }*/
+        if (topMatch) {         
           try {
             console.log("topMatch.candidateId", topMatch.candidateId.toString());
-            const res = await axios.put(`http://localhost:5000/profiles/updateFinalBid`, {
+            const res = await axios.put(`${process.env.BASE_URL_Backend}/profiles/updateFinalBid`, {
               userId: topMatch.candidateId?.toString(), // candidat concerné
               newBid: 20,
               companyId: agent._id?.toString(),        // ⚠️ pas agent.Company !
