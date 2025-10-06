@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Box,
   Paper,
@@ -10,19 +10,44 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  IconButton,
+  Chip,
 } from "@mui/material";
 import Link from "next/link";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 export type RecommendedOpportunity = {
   _id?: string;
   id?: string;
   title?: string;
   company?: string;
+  companyName?: string;
   location?: string;
   description?: string;
   createdAt?: string | number | Date;
   type?: string; // e.g., Full-time
+  employmentType?: string;
   firstStepId?: string;
+  salary?: {
+    min: number;
+    max: number;
+    currency: string;
+  };
+  jobDetails?: {
+    title?: string;
+    employmentType?: string;
+    location?: string;
+    salary?: {
+      min: number;
+      max: number;
+      currency: string;
+    };
+    company?: string;
+    companyName?: string;
+  };
 };
 
 type RecommendedOpportunitiesProps = {
@@ -36,6 +61,7 @@ export default function RecommendedOpportunities({ data, total, emptyText = "You
   const [selectedDetails, setSelectedDetails] = useState<Record<string, any> | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleOpen = async (row: RecommendedOpportunity) => {
     setSelected(row);
@@ -64,6 +90,7 @@ export default function RecommendedOpportunities({ data, total, emptyText = "You
       setLoadingDetails(false);
     }
   };
+
   const handleClose = () => {
     setSelected(null);
     setSelectedDetails(null);
@@ -71,36 +98,234 @@ export default function RecommendedOpportunities({ data, total, emptyText = "You
     setLoadingDetails(false);
   };
 
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+  };
+
   return (
     <Box>
-      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
-        {data.length === 0 ? (
-          <Paper elevation={2} sx={{ p: 2, borderRadius: 3, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120, background: '#fff' }}>
-            <Typography variant="body1" sx={{ color: '#666', fontStyle: 'italic' }}>{emptyText}</Typography>
-          </Paper>
-        ) : (
-          data.map((row) => {
-            const id = row._id || row.id;
-            return (
-              <Box key={id} sx={{ flex: 1, minWidth: 0, display: 'flex' }}>
-                <Paper elevation={2} sx={{ p: 2, borderRadius: 3, width: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: '#fff' }}>
-                  <Typography variant="h6" sx={{ color: '#8310FF', fontWeight: 700, mb: 1, minHeight: 48 }}>
-                    {row.title || 'Untitled Post'}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#333', mb: 2, minHeight: 60 }}>
-                    {row.description ? row.description.slice(0, 90) + (row.description.length > 90 ? '...' : '') : 'No description.'}
-                  </Typography>
-                  <Box sx={{ mt: 'auto' }}>
-                    <Button onClick={() => handleOpen(row)} variant="contained" sx={{ background: '#8310FF', color: '#fff', borderRadius: 2, textTransform: 'none', fontWeight: 600, width: '100%' }}>
-                      Learn More
-                    </Button>
-                  </Box>
-                </Paper>
-              </Box>
-            );
-          })
-        )}
+      {/* Section Header */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              color: '#000000',
+              fontSize: '1.5rem',
+              position: 'relative',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                bottom: '-4px',
+                left: 0,
+                width: '120px',
+                height: '3px',
+                background: '#8310FF',
+                borderRadius: '2px',
+              },
+            }}
+          >
+            Recommended Opportunities
+          </Typography>
+        </Box>
+
+        {/* Navigation Arrows */}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <IconButton
+            onClick={scrollLeft}
+            sx={{
+              color: '#8310FF',
+              '&:hover': {
+                backgroundColor: 'rgba(131, 16, 255, 0.1)',
+              },
+            }}
+          >
+            <ChevronLeftIcon />
+          </IconButton>
+          <IconButton
+            onClick={scrollRight}
+            sx={{
+              color: '#8310FF',
+              '&:hover': {
+                backgroundColor: 'rgba(131, 16, 255, 0.1)',
+              },
+            }}
+          >
+            <ChevronRightIcon />
+          </IconButton>
+        </Box>
       </Box>
+
+      {/* Job Cards Container */}
+      {data.length === 0 ? (
+        <Paper
+          elevation={2}
+          sx={{
+            p: 4,
+            borderRadius: 3,
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 200,
+            background: '#fff',
+            border: '1px solid #E0E0E0',
+          }}
+        >
+          <Typography variant="body1" sx={{ color: '#666', fontStyle: 'italic', textAlign: 'center' }}>
+            {emptyText}
+          </Typography>
+        </Paper>
+      ) : (
+        <Box
+          ref={scrollContainerRef}
+          sx={{
+            display: 'flex',
+            gap: 3,
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            '&::-webkit-scrollbar': {
+              display: 'none',
+            },
+            pb: 2,
+          }}
+        >
+            {data.map((row) => {
+              console.log('Row from recommended opportunities:', data);
+            console.log('Row from postads:', row);
+            const id = row._id || row.id;
+            
+            // Extract job information - try multiple possible data structures
+            const jobDetails = row?.jobDetails || row;
+            const title = jobDetails?.title || row?.title || 'Technical Support Specialist';
+            const employmentType = jobDetails?.employmentType || row?.employmentType || row?.type || 'Full-time';
+            
+            // Extract real salary from your data format - try multiple paths
+            let salary = '$20,000 - $25,000'; // fallback
+            const salaryData = jobDetails?.salary || row?.salary;
+            if (salaryData) {
+              const { currency, min, max } = salaryData;
+              salary = `${currency}${min.toLocaleString()}-${max.toLocaleString()}`;
+            }
+            
+            const company = jobDetails?.company || jobDetails?.companyName || row?.company || 'Google Inc.';
+            const location = jobDetails?.location || row?.location || 'Remote';
+
+            return (
+              <Paper
+                key={id}
+                elevation={2}
+                sx={{
+                  minWidth: 400,
+                  maxWidth: 400,
+                  height: 160,
+                  p: 3,
+                  borderRadius: 2,
+                  background: '#ffffff',
+                  border: '1px solid #E0E0E0',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+                  },
+                }}
+                onClick={() => handleOpen(row)}
+              >
+                {/* Bookmark Icon */}
+                <IconButton
+                  sx={{
+                    position: 'absolute',
+                    top: 12,
+                    right: 12,
+                    color: '#666666',
+                    '&:hover': {
+                      color: '#8310FF',
+                    },
+                  }}
+                >
+                  <BookmarkBorderIcon fontSize="small" />
+                </IconButton>
+
+                {/* Top Section */}
+                <Box>
+                  {/* Job Title */}
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 700,
+                      color: '#000000',
+                      fontSize: '1.125rem',
+                      mb: 2,
+                      pr: 4,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {title}
+                  </Typography>
+
+                  {/* Employment Type and Salary */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Chip
+                      label={employmentType}
+                      size="small"
+                      sx={{
+                        backgroundColor: '#4CAF50',
+                        color: '#ffffff',
+                        fontWeight: 600,
+                        fontSize: '0.75rem',
+                        height: 24,
+                        borderRadius: 1,
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: '#666666',
+                        fontSize: '0.875rem',
+                      }}
+                    >
+                      Salary: {salary}
+                    </Typography>
+                  </Box>
+                </Box>
+
+
+                {/* Location */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <LocationOnIcon sx={{ color: '#666666', fontSize: '1rem' }} />
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: '#666666',
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    {location}
+                  </Typography>
+                </Box>
+              </Paper>
+            );
+          })}
+        </Box>
+      )}
+
+      {/* Job Details Dialog */}
       <Dialog open={!!selected} onClose={handleClose} fullWidth maxWidth="sm">
         <DialogTitle sx={{ fontWeight: 700 }}>
           {(() => {
