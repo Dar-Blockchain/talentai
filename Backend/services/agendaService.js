@@ -137,27 +137,27 @@ async function initializeAgenda() {
 
   agendaInstance.on("ready", async () => {
     await agendaInstance.start();
-    await agendaInstance.every("5 minutes", "agent:heartbeat"); // exécution toutes les 5 minutes
+    await agendaInstance.every("1 minute", "agent:heartbeat"); // exécution toutes les minutes
     await agendaInstance.now("agent:heartbeat");
-    console.log("⏱️ Agenda démarré avec job agent:heartbeat toutes les 5 minutes");
+    console.log("⏱️ Agenda démarré avec job agent:heartbeat toutes les minutes");
   
     // Compteur décroissant
     if (!countdownInterval) {
       countdownInterval = setInterval(() => {
         if (!lastHeartbeatAt) return;
-        const nextExpectedAt = lastHeartbeatAt.getTime() + 300000; // +5 minutes en ms
+        const nextExpectedAt = lastHeartbeatAt.getTime() + 60000; // +1 minute en ms
         const remainingMs = nextExpectedAt - Date.now();
         const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
   
-        if (remainingSeconds % 30 === 0 || remainingSeconds <= 30) { // affichage toutes les 30s + dernières 30 sec
+        if (remainingSeconds % 10 === 0 || remainingSeconds <= 10) { // affichage toutes les 10s + dernières 10 sec
           const minutes = Math.floor(remainingSeconds / 60);
           const seconds = remainingSeconds % 60;
           process.stdout.write(`\r🕒 Prochain heartbeat dans: ${minutes}m ${seconds}s `);
         }
   
-        // Watchdog: relance si pas exécuté après 5 min + 2s
+        // Watchdog: relance si pas exécuté après 1min + 2s
         if (remainingMs < -2000 && !hasWarnedForCurrentCycle) {
-          console.warn("\n⚠️  [Agenda] Aucun heartbeat détecté (>5m2s). Relance...");
+          console.warn("\n⚠️  [Agenda] Aucun heartbeat détecté (>1m2s). Relance...");
           hasWarnedForCurrentCycle = true;
           agendaInstance.now("agent:heartbeat").catch(e => {
             console.error("❌ [Agenda] Échec de relance:", e?.message);
