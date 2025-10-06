@@ -118,6 +118,21 @@ async function initializeAgenda() {
         const topMatch = matches.find((m) => m.score > 70);
         if (topMatch) {         
           try {
+
+            try {
+            await axios.post(`${process.env.BASE_URL_Backend }/hr-agents/submit-evaluation-message`, {
+              agentAId: agent._id,
+              agentBId: "68c2e127bf5357b2404443c2", // master
+              candidateId: topMatch.candidateId,
+              postId: agent.postId._id,
+              message: "Please review this candidate",
+              bidAmount: topMatch.finalBid || 20
+            });
+            console.log(`📤 [Agenda] Message envoyé pour candidat ${topMatch.name} avec score ${topMatch.score}`);
+          } catch (err) {
+            console.error(`❌ [Agenda] Échec envoi message pour candidat ${topMatch.name}:`, err.message);
+          }
+
             console.log("topMatch.candidateId", topMatch.candidateId.toString());
             const res = await axios.put(`${process.env.BASE_URL_Backend}/profiles/updateFinalBid`, {
               userId: topMatch.candidateId?.toString(), // candidat concerné
