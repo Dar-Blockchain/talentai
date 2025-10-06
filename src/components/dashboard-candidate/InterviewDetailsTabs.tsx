@@ -467,7 +467,6 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                         <Box>
                             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                                 <Typography variant="h6" sx={{ fontWeight: 800 }}>Onboarding</Typography>
-                                <Typography variant="body2" sx={{ color: "#666" }}>{total} item{total === 1 ? "" : "s"}</Typography>
                             </Stack>
                             <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" }, gap: 2 }}>
                                 {data.length === 0 ? (

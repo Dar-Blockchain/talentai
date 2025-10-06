@@ -360,7 +360,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                   {candidate.matchedSkills.slice(0, 6).map((skill, idx) => (
                     <Chip
                       key={skill._id || idx}
-                      label={skill.name}
+                      label={`${skill.name} (${skill.experienceLevel || skill.proficiencyLevel || 'N/A'})`}
                       size="small"
                       sx={{
                         backgroundColor: '#f3f4f6',

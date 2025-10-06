@@ -1,5 +1,5 @@
-import React from "react";
-import { Box, Button, Chip, IconButton, Typography } from "@mui/material";
+import React, { useState } from "react";
+import { Box, Button, Chip, IconButton, Typography, Paper, Tooltip } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import DeleteIcon from "@mui/icons-material/Delete";
 
@@ -34,40 +34,169 @@ function SkillBlockComponent({ skill, type, onStartTest, onDelete, greenMain }: 
   const percentage = (proficiencyLevel / 5) * 100;
 
   return (
-    <Box sx={{ p: 3, borderRadius: "20px", background: "white", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 3, transition: "all 0.3s ease", border: "1px solid rgba(0, 0, 0, 0.05)", boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 8px 25px rgba(0, 0, 0, 0.08)", border: "1px solid rgba(0, 0, 0, 0.08)" } }}>
+    <Paper
+      elevation={0}
+      sx={{
+        p: 3,
+        borderRadius: 3,
+        background: '#ffffff',
+        border: '1px solid #E0E0E0',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 3,
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          transform: 'translateY(-1px)',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+        },
+      }}
+    >
       <Box sx={{ flex: 1 }}>
-        <Typography sx={{ color: "black", fontWeight: 600, fontSize: "1.1rem", mb: 1 }}>{skill.name}</Typography>
+        <Tooltip
+          title={`Score: ${percentage.toFixed(1)}%`}
+          arrow
+          placement="top"
+        >
+          <Typography
+            sx={{
+              color: '#000000',
+              fontWeight: 600,
+              fontSize: '1.125rem',
+              mb: 1,
+              cursor: 'help',
+            }}
+          >
+            {skill.name}
+          </Typography>
+        </Tooltip>
+        
         {type === "soft" && (
-          <Typography variant="caption" sx={{ color: "rgba(0,0,0,0.6)", display: "block", mb: 1 }}>{skill.category}</Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              color: '#666666',
+              fontSize: '0.875rem',
+              mb: 1,
+            }}
+          >
+            {skill.category}
+          </Typography>
         )}
-        <Typography variant="caption" sx={{ color: "black", ml: 1, fontWeight: 500 }}>
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
           {type === "technical" ? (
             <>
               {skill.Levelconfirmed && skill.Levelconfirmed > 0 ? (
-                <Chip label={`${getLevelFromNumber(skill.Levelconfirmed)} Confirmed`} size="small" sx={{ ml: 1, backgroundColor: "rgba(0, 255, 157, 0.2)", color: "black", height: "20px", fontSize: "0.75rem" }} />
+                <Chip
+                  label={`${getLevelFromNumber(skill.Levelconfirmed)} Confirmed`}
+                  size="small"
+                  sx={{
+                    backgroundColor: '#4CAF50',
+                    color: '#ffffff',
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                    height: 24,
+                    borderRadius: 1,
+                  }}
+                />
               ) : (
-                <Chip label="No Level Confirmed" size="small" sx={{ ml: 1, backgroundColor: "rgba(255, 193, 7, 0.2)", color: "#856404", height: "20px", fontSize: "0.75rem" }} />
+                <Chip
+                  label="No Level Confirmed"
+                  size="small"
+                  sx={{
+                    backgroundColor: '#FF9800',
+                    color: '#ffffff',
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                    height: 24,
+                    borderRadius: 1,
+                  }}
+                />
               )}
             </>
           ) : (
-            skill.experienceLevel
+            <Chip
+              label={skill.experienceLevel}
+              size="small"
+              sx={{
+                backgroundColor: '#FF6B6B',
+                color: '#ffffff',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+                height: 24,
+                borderRadius: 1,
+              }}
+            />
           )}
-        </Typography>
-        <Box sx={{ height: "10px", background: "rgba(0,0,0,0.06)", borderRadius: "8px", overflow: "hidden", mt: 2, position: "relative" }}>
-          <Box sx={{ width: `${percentage}%`, height: "100%", background: type === "technical" ? "linear-gradient(90deg, #02E2FF 0%, #00FFC3 100%)" : "linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%)", borderRadius: "8px", transition: "width 0.8s cubic-bezier(0.4, 0, 0.2, 1)", position: "relative", "&::after": { content: '""', position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)", animation: "shimmer 2s infinite" } }} />
+        </Box>
+        
+        <Box
+          sx={{
+            height: '8px',
+            background: '#f0f0f0',
+            borderRadius: 2,
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
+          <Box
+            sx={{
+              width: `${percentage}%`,
+              height: '100%',
+              background: type === "technical" 
+                ? 'linear-gradient(90deg, #2196F3 0%, #21CBF3 100%)' 
+                : 'linear-gradient(90deg, #FF6B6B 0%, #FF8E53 100%)',
+              borderRadius: 2,
+              transition: 'width 0.8s ease',
+            }}
+          />
         </Box>
       </Box>
-      <Box sx={{ display: "flex", gap: 2 }}>
-        <Button variant="contained" startIcon={<PlayArrowIcon />} onClick={onStartTest} sx={{ background: greenMain, color: "#000000", "&:hover": { background: greenMain } }}>
+      
+      <Box sx={{ display: 'flex', gap: 2 }}>
+        <Button
+          variant="contained"
+          startIcon={<PlayArrowIcon />}
+          onClick={onStartTest}
+          sx={{
+            background: type === "technical" ? '#2196F3' : '#FF6B6B',
+            color: '#ffffff',
+            borderRadius: 2,
+            px: 3,
+            py: 1,
+            textTransform: 'none',
+            fontWeight: 600,
+            fontSize: '0.875rem',
+            '&:hover': {
+              background: type === "technical" ? '#1976D2' : '#FF5252',
+              transform: 'translateY(-1px)',
+            },
+          }}
+        >
           Start Test
         </Button>
+        
         {onDelete && (
-          <IconButton onClick={onDelete} size="medium" sx={{ color: "#ff3b30", background: "rgba(255,59,48,0.08)", "&:hover": { background: "rgba(255,59,48,0.12)", transform: "scale(1.1)" } }}>
+          <IconButton
+            onClick={onDelete}
+            size="medium"
+            sx={{
+              color: '#ff3b30',
+              background: 'rgba(255, 59, 48, 0.08)',
+              borderRadius: 2,
+              '&:hover': {
+                background: 'rgba(255, 59, 48, 0.12)',
+                transform: 'scale(1.05)',
+              },
+            }}
+          >
             <DeleteIcon />
           </IconButton>
         )}
       </Box>
-    </Box>
+    </Paper>
   );
 }
 
