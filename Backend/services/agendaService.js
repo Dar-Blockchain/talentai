@@ -70,8 +70,23 @@ async function initializeAgenda() {
     processEvery: "1 second", // vérifie toutes les secondes pour précision
   });
 
-  agendaInstance.define("agent:heartbeat", async () => {
+  // Logs d'observabilité des jobs Agenda
+  agendaInstance.on("start", (job) => {
+    console.log(`▶️  [Agenda] Job démarré: ${job.attrs.name} (id=${job.attrs._id})`);
+  });
+  agendaInstance.on("success", (job) => {
+    console.log(`✅ [Agenda] Job réussi: ${job.attrs.name}`);
+  });
+  agendaInstance.on("fail", (err, job) => {
+    console.error(`❌ [Agenda] Job échoué: ${job?.attrs?.name} → ${err?.message}`);
+  });
+
+  agendaInstance.define(
+    "agent:heartbeat",
+    { concurrency: 1, lockLifetime: 30000 },
+    async () => {
     try {
+      console.log("🔄 [Agenda] Heartbeat démarré");
       lastHeartbeatAt = new Date();
       hasWarnedForCurrentCycle = false;
 
@@ -137,9 +152,68 @@ async function initializeAgenda() {
 
   agendaInstance.on("ready", async () => {
     await agendaInstance.start();
-    await agendaInstance.every("1 minute", "agent:heartbeat"); // exécution toutes les minutes
+    // Nettoyage des anciennes planifications pour éviter les doublons
+    try {
+      const removed = await agendaInstance.cancel({ name: "agent:heartbeat" });
+      if (removed > 0) {
+        console.log(`🧹 [Agenda] ${removed} ancienne(s) planification(s) supprimée(s) pour agent:heartbeat`);
+      }
+    } catch (e) {
+      console.warn("⚠️  [Agenda] Échec du nettoyage des anciennes planifications:", e?.message);
+    }
+
+    await agendaInstance.every(
+      "*/1 * * * *",
+      "agent:heartbeat",
+      {},
+      {
+        timezone: process.env.TZ || "Europe/Paris",
+        skipImmediate: false,
+        unique: { name: "agent:heartbeat" },
+        insertOnly: true,
+      }
+    );
     await agendaInstance.now("agent:heartbeat");
     console.log("⏱️ Agenda démarré avec job agent:heartbeat toutes les minutes");
+
+    // Vérification: lister les jobs planifiés
+    try {
+      const jobs = await agendaInstance.jobs({ name: "agent:heartbeat" });
+      if (jobs?.length) {
+        const nexts = jobs
+          .map((j) => ({
+            id: j.attrs._id?.toString(),
+            nextRunAt: j.attrs.nextRunAt,
+            lastRunAt: j.attrs.lastRunAt,
+            lockedAt: j.attrs.lockedAt,
+            repeatInterval: j.attrs.repeatInterval,
+            timezone: j.attrs.timezone,
+          }))
+          .sort((a, b) => (a.nextRunAt || 0) - (b.nextRunAt || 0));
+        console.log(`🗓️  [Agenda] ${jobs.length} instance(s) planifiées pour agent:heartbeat`);
+        nexts.slice(0, 3).forEach((n, idx) => {
+          console.log(
+            `   • [${idx + 1}] id=${n.id} nextRunAt=${n.nextRunAt} lastRunAt=${n.lastRunAt} lockedAt=${n.lockedAt} repeatInterval=${n.repeatInterval} tz=${n.timezone}`
+          );
+        });
+        // S'il y a des doublons, on ne garde que la première et on supprime les autres
+        if (jobs.length > 1) {
+          try {
+            const toRemoveIds = jobs
+              .slice(1)
+              .map((j) => j.attrs._id);
+            const removedDup = await agendaInstance.cancel({ _id: { $in: toRemoveIds } });
+            console.log(`🧽 [Agenda] Doublons nettoyés: ${removedDup} job(s) supprimé(s)`);
+          } catch (e) {
+            console.warn("⚠️  [Agenda] Échec nettoyage des doublons:", e?.message);
+          }
+        }
+      } else {
+        console.warn("⚠️  [Agenda] Aucun job agent:heartbeat planifié trouvé juste après le démarrage");
+      }
+    } catch (e) {
+      console.warn("⚠️  [Agenda] Impossible de lister les jobs planifiés:", e?.message);
+    }
   
     // Compteur décroissant
     if (!countdownInterval) {
