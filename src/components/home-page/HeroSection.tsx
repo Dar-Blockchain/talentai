@@ -1,8 +1,11 @@
 import React, { useRef, useState } from "react";
-import { Box, Button, Typography, Stack, IconButton } from "@mui/material";
+import { Box, Button, Typography, Stack, IconButton, TextField, InputAdornment } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import PauseCircleOutlineIcon from "@mui/icons-material/PauseCircleOutline";
+import SearchIcon from "@mui/icons-material/Search";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import FilterListIcon from "@mui/icons-material/FilterList";
 import StatList from "./components/StatList";
 import { useRouter } from "next/router";
 import { BOOK_DEMO_URL } from "@/constants";
@@ -210,7 +213,7 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
               filter: 'blur(3px)',
               opacity: 0.6,
               display: { xs: 'none', md: 'block' },
-             
+
             }}>
               <Box sx={{
                 width: 280,
@@ -238,151 +241,281 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
       ) : (
         <Stack
           direction="row"
-          spacing={2}
+          spacing={4}
           sx={{
             justifyContent: "space-between",
-            alignItems: "center"
+            alignItems: "flex-start",
+            minHeight: "600px"
           }}
         >
-          <Box >
+          <Box sx={{ flex: 1, maxWidth: "600px" }}>
             <Typography
-              variant="h3"
-              fontWeight={500}
+              variant="h2"
+              fontWeight={700}
               gutterBottom
               sx={{
-                fontSize: type === 'company' ? 'clamp(1rem, 5vw, 3rem)' : "96px",
-                lineHeight: 1.3,
-                fontWeight: type === "jobseeker" ? '700' : 0,
-                mb: 0,
+                fontSize: { xs: "48px", md: "64px", lg: "72px" },
+                lineHeight: 1.2,
+                mb: 1,
+                color: "#000000"
               }}
             >
-              {title}{type == "jobseeker" && <span style={{ color: color }}>.</span>}
+              {title}<span style={{ color: color }}>.</span>
             </Typography>
-
             <Typography
-              fontWeight={800}
-              gutterBottom
               sx={{
-                fontSize: 'clamp(1rem, 5vw, 3rem)',
-                backgroundColor: color,
-                display: "inline-block",
-                px: 2,
-                py: 1,
-                borderRadius: 1,
-                lineHeight: 1.3,
-                mb: 0,
-                color: type === "jobseeker" ? "#fff" : "#000",
+                fontFamily: "Poppins",
+                fontWeight: 700, // Bold
+                fontStyle: "normal",
+                fontSize: { xs: "36px", md: "50px" }, // responsive
+                lineHeight: "100%", // matches your spec
+                mb: 3,
+                color: "#666666"
               }}
             >
               {subtitle}
             </Typography>
-            {type === "jobseeker" && (
-              <Typography
-                variant="body1"
-                color="#000000"
-                sx={{
-                  my: { xs: 2, md: 2 },
-                  maxWidth: 500,
-                  fontSize: { xs: "0.95rem", sm: "1rem" },
-                }}
-              >
-                Showcase your verified skills, stand out to top recruiters, and control your career—backed by AI and blockchain.
-              </Typography>
-            )}
-            <Stack
-              direction="row"
-              sx={{ flexWrap: "wrap", gap: '1rem', flex: { xs: 1, sm: 1, md: 'none' }, mt: 3 }}
-              mb={{ xs: 3, md: 4 }}
+            <Typography
+              variant="body1"
+              color="#666666"
+              sx={{
+                mb: 4,
+                maxWidth: 500,
+                fontSize: "16px",
+                lineHeight: 1.6,
+              }}
             >
+              Begin Your Professional Journey with TalentAI, Your Trusted Companion in Navigating the Dynamic Landscape of Career Opportunities, Offering Tailored Solutions for Your Success.
+            </Typography>
+
+            {/* Job Search Interface */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                gap: 0,
+                mb: 4,
+                p: 0,
+                backgroundColor: "#fff",
+                borderRadius: 3,
+                border: "1px solid #e5e7eb",
+                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                overflow: "hidden"
+              }}
+            >
+              <TextField
+                placeholder="Job Title"
+                variant="outlined"
+                size="medium"
+                sx={{
+                  flex: 1,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 0,
+                    border: "none",
+                    "& fieldset": {
+                      border: "none",
+                    },
+                    "&:hover fieldset": {
+                      border: "none",
+                    },
+                    "&.Mui-focused fieldset": {
+                      border: "none",
+                    },
+                  }
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon sx={{ color: "#6b7280", fontSize: "20px" }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <Box sx={{ width: "1px", backgroundColor: "#e5e7eb", my: 1 }} />
+              <TextField
+                placeholder="All Location"
+                variant="outlined"
+                size="medium"
+                sx={{
+                  flex: 1,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 0,
+                    border: "none",
+                    "& fieldset": {
+                      border: "none",
+                    },
+                    "&:hover fieldset": {
+                      border: "none",
+                    },
+                    "&.Mui-focused fieldset": {
+                      border: "none",
+                    },
+                  }
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LocationOnIcon sx={{ color: "#6b7280", fontSize: "20px" }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <Box sx={{ width: "1px", backgroundColor: "#e5e7eb", my: 1 }} />
+              <TextField
+                placeholder="Category"
+                variant="outlined"
+                size="medium"
+                sx={{
+                  flex: 1,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 0,
+                    border: "none",
+                    "& fieldset": {
+                      border: "none",
+                    },
+                    "&:hover fieldset": {
+                      border: "none",
+                    },
+                    "&.Mui-focused fieldset": {
+                      border: "none",
+                    },
+                  }
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <FilterListIcon sx={{ color: "#6b7280", fontSize: "20px" }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
               <Button
                 variant="contained"
-                onClick={() => router.push('/signin')}
                 sx={{
-                  backgroundColor: "#000",
+                  backgroundColor: color,
                   color: "#fff",
-                  borderRadius: 999,
+                  borderRadius: 0,
                   textTransform: "none",
-                  px: { xs: 2, sm: 3, md: 4 },
-                  py: { xs: 1, sm: 1, md: 1.5 },
-                  fontWeight: 500,
-                  fontSize: { xs: "0.75rem", sm: "0.85rem", md: "1rem" },
+                  px: 4,
+                  py: 2,
+                  fontWeight: 600,
+                  fontSize: "16px",
+                  minWidth: "140px",
                   "&:hover": {
-                    backgroundColor: "#333",
+                    backgroundColor: color,
+                    opacity: 0.9,
                   },
                 }}
-                endIcon={
-                  <ArrowForwardIcon
-                    fontSize="small"
-                    sx={{ color: color }}
-                  />
-                }
               >
-                {type === "company" ? "Get Early Access" : "Join Talent AI Today"}
+                Search Job
               </Button>
+            </Box>
 
-              <Button
-                variant="outlined"
-                href={BOOK_DEMO_URL}
-                target='_blank'
-                sx={{
-                  borderRadius: 999,
-                  textTransform: "none",
-                  px: { xs: 2, sm: 3, md: 4 },
-                  py: { xs: 1, sm: 1.5, md: 1.5 },
-                  fontWeight: 500,
-                  fontSize: { xs: "0.75rem", sm: "0.85rem", md: "1rem" },
-                  color: "#000",
-                  borderColor: type === "jobseeker" ? "#8310FF" : "#000",
-                }}
-                endIcon={
-                  <PlayCircleOutlineIcon sx={{ color: type === "jobseeker" ? "#8310FF" : "#000" }} />
-                }
-              >
-                {type === "company" ? "Book Demo" : "See How it Works"}
-              </Button>
-            </Stack>
+            {/* Statistics */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                gap: 0,
+                mb: 4,
+                backgroundColor: "#fff",
+                borderRadius: 2,
+                border: "1px solid #e5e7eb",
+                boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+                overflow: "hidden"
+              }}
+            >
+              <Box sx={{ flex: 1, p: 3, textAlign: "center" }}>
+                <Typography variant="h4" fontWeight={800} color="#000" sx={{ mb: 0.5 }}>
+                  100K+
+                </Typography>
+                <Typography variant="body2" color="#6b7280" sx={{ fontSize: "14px", fontWeight: 500 }}>
+                  Users
+                </Typography>
+              </Box>
+              <Box sx={{ width: "1px", backgroundColor: "#e5e7eb", my: 2 }} />
+              <Box sx={{ flex: 1, p: 3, textAlign: "center" }}>
+                <Typography variant="h4" fontWeight={800} color="#000" sx={{ mb: 0.5 }}>
+                  20K+
+                </Typography>
+                <Typography variant="body2" color="#6b7280" sx={{ fontSize: "14px", fontWeight: 500 }}>
+                  Job Vacancy
+                </Typography>
+              </Box>
+              <Box sx={{ width: "1px", backgroundColor: "#e5e7eb", my: 2 }} />
+              <Box sx={{ flex: 1, p: 3, textAlign: "center" }}>
+                <Typography variant="h4" fontWeight={800} color="#000" sx={{ mb: 0.5 }}>
+                  +500
+                </Typography>
+                <Typography variant="body2" color="#6b7280" sx={{ fontSize: "14px", fontWeight: 500 }}>
+                  Companies
+                </Typography>
+              </Box>
+            </Box>
 
-            <StatList type={type} color={color} />
+            {/* Call to Action */}
+            <Typography
+              sx={{
+                fontFamily: "Poppins",
+                fontWeight: 600, // Semibold
+                fontStyle: "normal",
+                fontSize: { xs: "28px", md: "48px" },
+                lineHeight: "145%",  // matches 145%
+                letterSpacing: "0%",
+                mb: 2,
+                mt: 20,
+                color: "#000"
+              }}
+            >
+              Your skills deserve to be shown to the world.
+            </Typography>
+
+
+
           </Box>
 
+          {/* Right Side - Get Hired Image */}
           <Box
             display={{ xs: "none", lg: "flex" }}
             sx={{
-              justifyContent: "center",
               flex: 1,
               position: "relative",
-              pt: 6,
+              justifyContent: "center",
+              alignItems: "flex-start",
+              maxWidth: "600px",
+              flexDirection: "column"
             }}
           >
-            <Box sx={{ position: "relative", width: "90%", height: type === "company" ? "100%" : "450px" }}>
+            <Box sx={{ position: "relative", width: "100%", mb: 3 }}>
               <img
-                src={type === "company" ? "/images/home/jobSeekerImage.jpg" : "/images/home/CompanyImage.jpg"}
-                alt="Hero Section"
+                src="/images/jobseeker_landing/getHired.png"
+                alt="Get Hired - TalentAI Platform"
                 style={{
                   width: "100%",
-                  height: "100%",
+                  height: "auto",
                   borderRadius: "16px",
                   position: "relative",
                   zIndex: 3,
                   objectFit: "contain",
-                  display: "block",
-                  backgroundColor: "#000"
+                  display: "block"
                 }}
               />
-              {/* <Box
-              sx={{
-                position: "absolute",
-                bottom: -20,
-                left: "30%",
-                width: "90%",
-                height: 180,
-                backgroundColor: "rgba(0, 255, 157, 0.2)",
-                borderRadius: "50%",
-                filter: "blur(60px)",
-                zIndex: 2,
-              }}
-            /> */}
             </Box>
+
+            {/* Supporting text under the image */}
+            <Typography
+              variant="body1"
+              color="#6b7280"
+              sx={{
+                fontSize: "16px",
+                lineHeight: 1.6,
+                fontWeight: 400,
+                textAlign: "left",
+                maxWidth: "100%"
+              }}
+            >
+              Work with top companies, earn on your terms, and create a career without borders. Connect directly with industry leaders through AI-powered matching, access competitive salaries and flexible opportunities that fit your lifestyle, and build a global career with remote roles that let you work anywhere.
+            </Typography>
           </Box>
         </Stack >
       )}

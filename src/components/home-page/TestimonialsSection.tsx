@@ -1,179 +1,308 @@
-import React, { useState } from "react";
-import { Box, Typography, Avatar, Card, CardContent, Stack, IconButton } from "@mui/material";
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import React, { useState } from 'react';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Avatar,
+  IconButton,
+  Stack
+} from '@mui/material';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
-const testimonials = [
+const TestimonialsSection: React.FC = () => {
+  const [currentSlide, setCurrentSlide] = useState(0);
 
+  const testimonials = [
     {
-        name: "Takwa",
-        role: "Front-end developer at Dar Blockchain",
-        quote: "It's like LinkedIn, but built for proof, not fluff.",
-        avatar: "/takwa.jpg", // Replace with real image paths
+      id: 1,
+      quote: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo",
+      name: "Luke Mckinlay",
+      title: "VP of Finance",
+      company: "fountain",
+      avatar: "/images/testimonials/luke-mckinlay.jpg",
+      isDark: true
     },
     {
-        name: "Mouna",
-        role: "Full Stack developer at Dar Blockchain",
-        quote: "I got hired by a blockchain startup within 2 weeks.",
-        avatar: "/mouna.jpg",
+      id: 2,
+      quote: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commod.",
+      name: "Marisol Jiménez",
+      title: "Head of People",
+      company: "REVERSE TECH",
+      avatar: "/images/testimonials/marisol-jimenez.jpg",
+      isDark: false
     },
     {
-        name: "Jassem",
-        role: "Back-end developer",
-        quote: "I stopped getting ghosted. Companies take me seriously now.",
-        avatar: "/jasser.jpg",
+      id: 3,
+      quote: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo",
+      name: "Sarah Johnson",
+      title: "CTO",
+      company: "TECH CORP",
+      avatar: "/images/testimonials/sarah-johnson.jpg",
+      isDark: true
     },
-];
+    {
+      id: 4,
+      quote: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo",
+      name: "Michael Chen",
+      title: "Product Manager",
+      company: "INNOVATE",
+      avatar: "/images/testimonials/michael-chen.jpg",
+      isDark: false
+    },
+    {
+      id: 5,
+      quote: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo",
+      name: "Emily Rodriguez",
+      title: "Head of Design",
+      company: "CREATIVE STUDIO",
+      avatar: "/images/testimonials/emily-rodriguez.jpg",
+      isDark: true
+    }
+  ];
 
-const TestimonialsSection = () => {
-    const [currentIndex, setCurrentIndex] = useState(0);
+  const cardsPerSlide = 2;
+  const totalSlides = Math.ceil(testimonials.length / cardsPerSlide);
 
-    const handlePrevious = () => {
-        setCurrentIndex((prevIndex) =>
-            prevIndex === 0 ? testimonials.length - 3 : prevIndex - 1
-        );
-    };
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % totalSlides);
+  };
 
-    const handleNext = () => {
-        setCurrentIndex((prevIndex) =>
-            prevIndex >= testimonials.length - 3 ? 0 : prevIndex + 1
-        );
-    };
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+  };
 
-    const visibleTestimonials = testimonials.slice(currentIndex, currentIndex + 3);
+  const goToSlide = (slideIndex: number) => {
+    setCurrentSlide(slideIndex);
+  };
 
-    return (
+  const currentTestimonials = testimonials.slice(
+    currentSlide * cardsPerSlide,
+    (currentSlide + 1) * cardsPerSlide
+  );
 
-        <Box
-            sx={{
-                // background: 'linear-gradient(135deg, rgba(131, 16, 255, 0.15) 0%, #FFFFFF 100%)',
-                backgroundImage: 'url("/images/home/backgroundPurple.png")', // 👉 remplace par ton chemin réel
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-                padding: '4rem 2rem',
-                borderRadius: '1rem',
-                margin: '2rem 0',
-                maxWidth: 1400,
-                mx: 'auto',
-                // boxShadow: '-20px 0 30px -10px rgba(131, 16, 255, 0.2)', // Ombre portée à gauche
-            }}
+  return (
+    <Box
+      sx={{
+        py: 8,
+        px: { xs: 2, md: 4 },
+        backgroundColor: '#f8f9fa'
+      }}
+    >
+      <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+        {/* Section Title */}
+        <Typography
+          variant="h3"
+          sx={{
+            fontFamily: 'Poppins, sans-serif',
+            fontWeight: 600,
+            fontSize: { xs: '28px', md: '48px' },
+            textAlign: 'center',
+            mb: 6,
+            color: '#1a1a1a'
+          }}
         >
-            {/* Title */}
-            <Typography
-                variant="h3"
-                fontWeight={600}
-                gutterBottom
+          Hear from our talents
+        </Typography>
+
+        {/* Testimonials Carousel */}
+        <Box sx={{ 
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}>
+          {/* Navigation Arrows */}
+          <IconButton
+            onClick={prevSlide}
+            sx={{
+              position: 'absolute',
+              left: { xs: -20, md: -40 },
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 2,
+              backgroundColor: 'white',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              '&:hover': {
+                backgroundColor: '#f5f5f5'
+              }
+            }}
+          >
+            <ArrowBackIosIcon sx={{ color: '#666' }} />
+          </IconButton>
+
+          <IconButton
+            onClick={nextSlide}
+            sx={{
+              position: 'absolute',
+              right: { xs: -20, md: -40 },
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 2,
+              backgroundColor: 'white',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              '&:hover': {
+                backgroundColor: '#f5f5f5'
+              }
+            }}
+          >
+            <ArrowForwardIosIcon sx={{ color: '#666' }} />
+          </IconButton>
+
+          {/* Testimonial Cards */}
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 3,
+              overflow: 'hidden',
+              px: 2,
+              justifyContent: 'center',
+              alignItems: 'stretch',
+              width: '100%'
+            }}
+          >
+            {currentTestimonials.map((testimonial, index) => (
+              <Card
+                key={testimonial.id}
                 sx={{
-                    fontSize: 'clamp(1rem, 7vw, 3.25rem)',
-                    lineHeight: 1.3,
-                    mb: 0,
+                  minWidth: 400,
+                  maxWidth: 500,
+                  flex: 1,
+                  backgroundColor: testimonial.isDark ? '#1a1a1a' : '#ffffff',
+                  borderRadius: 3,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 8px 30px rgba(0,0,0,0.15)'
+                  }
                 }}
-            >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    Real Stories,
+              >
+                <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  {/* Quote */}
+                  <Typography
+                    sx={{
+                      fontFamily: 'Poppins, sans-serif',
+                      fontSize: '16px',
+                      lineHeight: 1.6,
+                      color: testimonial.isDark ? '#ffffff' : '#1a1a1a',
+                      mb: 3,
+                      fontStyle: 'italic'
+                    }}
+                  >
+                    "{testimonial.quote}"
+                  </Typography>
+
+                  {/* Read More Link */}
+                  <Box sx={{ mb: 4 }}>
                     <Typography
-                        component="span"
-                        sx={{
-                            color: "#8310FF",
-                            fontWeight: 700,
-                            fontSize: "3rem", // 👈 Adjust size as needed
-                            mx: "0.25rem",
-                            lineHeight: 1,
-                        }}
+                      sx={{
+                        fontFamily: 'Poppins, sans-serif',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        color: testimonial.isDark ? '#ffffff' : '#8310FF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        cursor: 'pointer',
+                        '&:hover': {
+                          textDecoration: 'underline'
+                        }
+                      }}
                     >
-                        Real Impact
+                      Read full customer story
+                      <ArrowForwardIosIcon sx={{ fontSize: '14px' }} />
                     </Typography>
-                </Box>
+                  </Box>
 
-
-            </Typography>
-            <Typography
-                variant="body1"
-                color="#000000"
-                sx={{
-                    my: { xs: 2, md: 2 },
-                    fontSize: { xs: "0.95rem", sm: "1rem" },
-                }}
-            >
-                Three steps to unlock career-changing opportunities:
-            </Typography>
-
-
-            {/* Arrows */}
-            <Stack direction="row" justifyContent="end" mb={4} mr={4} mt={4} spacing={2}>
-                <IconButton
-                    onClick={handlePrevious}
-                    sx={{
-                        width: 50,
-                        height: 50,
-                        backgroundColor: "#8310FF",
-                        borderRadius: "50%",
-                        p: 1,
-                        '&:hover': {
-                            backgroundColor: "#6B0CD9",
-                        },
-                    }}
-                >
-                    <ArrowBackIosIcon sx={{ color: 'white', fontSize: 20 }} />
-                </IconButton>
-
-                <IconButton
-                    onClick={handleNext}
-                    sx={{
-                        width: 50,
-                        height: 50,
-                        backgroundColor: "#8310FF",
-                        borderRadius: "50%",
-                        p: 1,
-                        '&:hover': {
-                            backgroundColor: "#6B0CD9",
-                        },
-                    }}
-                >
-                    <ArrowForwardIosIcon sx={{ color: 'white', fontSize: 20 }} />
-                </IconButton>
-            </Stack>
-            {/* Cards */}
-            <Stack direction="row" spacing={3} justifyContent="center" flexWrap="wrap">
-                {visibleTestimonials.map((t, index) => (
-                    <Card
-                        key={index}
-                        variant="outlined"
+                  {/* Profile Section */}
+                  <Box sx={{ mt: 'auto' }}>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Avatar
+                        src={testimonial.avatar}
+                        alt={testimonial.name}
                         sx={{
-                            width: 400,
-                            height: 170,
-                            borderRadius: 3,
-                            borderColor: "#D0B7FF",
-                            backgroundColor: "#fff",
-                            '&:hover': {
-                                boxShadow: 4,
-                            },
+                          width: 56,
+                          height: 56,
+                          border: testimonial.isDark ? '2px solid #333' : '2px solid #e0e0e0'
                         }}
-                    >
-                        <CardContent sx={{ textAlign: "left", p: 3 }}>
-                            <Stack direction="row" alignItems="center" spacing={2} mb={2}>
-                                <Avatar src={t.avatar} alt={t.name} />
-                                <Box>
-                                    <Typography variant="subtitle1" fontWeight={600}>
-                                        {t.name}
-                                    </Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                        {t.role}
-                                    </Typography>
-                                </Box>
-                            </Stack>
-                            <Typography variant="body2" sx={{ color: "#000" }}>
-                                “{t.quote}”
-                            </Typography>
-                        </CardContent>
-                    </Card>
-                ))}
-            </Stack>
+                      />
+                      <Box>
+                        <Typography
+                          sx={{
+                            fontFamily: 'Poppins, sans-serif',
+                            fontSize: '16px',
+                            fontWeight: 600,
+                            color: testimonial.isDark ? '#ffffff' : '#1a1a1a',
+                            mb: 0.5
+                          }}
+                        >
+                          {testimonial.name}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontFamily: 'Poppins, sans-serif',
+                            fontSize: '14px',
+                            color: testimonial.isDark ? '#cccccc' : '#666666'
+                          }}
+                        >
+                          {testimonial.title}
+                        </Typography>
+                      </Box>
+                    </Stack>
 
+                    {/* Company Logo */}
+                    <Box sx={{ mt: 2 }}>
+                      <Typography
+                        sx={{
+                          fontFamily: 'Poppins, sans-serif',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: testimonial.isDark ? '#ffffff' : '#1a1a1a'
+                        }}
+                      >
+                        {testimonial.company}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
 
+          {/* Pagination Dots */}
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            gap: 1.5, 
+            mt: 6,
+            mb: 2
+          }}>
+            {Array.from({ length: totalSlides }).map((_, index) => (
+              <Box
+                key={index}
+                onClick={() => goToSlide(index)}
+                sx={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  backgroundColor: index === currentSlide ? '#8310FF' : '#ddd',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: index === currentSlide ? '#8310FF' : '#bbb',
+                    transform: 'scale(1.2)'
+                  }
+                }}
+              />
+            ))}
+          </Box>
         </Box>
-    );
+      </Box>
+    </Box>
+  );
 };
 
 export default TestimonialsSection;
