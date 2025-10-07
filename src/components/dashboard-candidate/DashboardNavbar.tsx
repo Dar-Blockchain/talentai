@@ -15,6 +15,7 @@ import {
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
 import SettingsIcon from '@mui/icons-material/Settings';
+import { useRouter } from 'next/router';
 
 interface DashboardNavbarProps {
   profile: any;
@@ -22,12 +23,13 @@ interface DashboardNavbarProps {
   isMobile: boolean;
 }
 
-const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ 
-  profile, 
-  onLogout, 
-  isMobile 
+const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
+  profile,
+  onLogout,
+  isMobile
 }) => {
   const GREEN_MAIN = "#7C4DFF";
+  const router = useRouter();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -75,55 +77,33 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
         }}
       >
         {/* Logo on the left - TALENT AI */}
-        <Box
-          sx={{
-            display: 'flex',
+        <Box 
+          sx={{ 
+            display: 'flex', 
             alignItems: 'center',
             cursor: 'pointer',
-            gap: 1
+            transition: 'all 0.2s',
+            '&:hover': {
+              transform: 'translateY(-1px)',
+              opacity: 0.8
+            }
           }}
-          onClick={() => window.location.href = "/"}
+          onClick={() => router.push('/home/candidate')}
         >
-          {/* TALENT text */}
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 700,
-              fontSize: '1.5rem',
-              color: '#000000',
-              letterSpacing: '-0.02em',
-              fontFamily: 'Arial, sans-serif'
-            }}
-          >
-            TALENT
-          </Typography>
-          
-          {/* Purple AI icon */}
-          <Box
-            sx={{
-              width: 32,
-              height: 32,
-              backgroundColor: '#8310FF',
-              borderRadius: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff',
-              fontWeight: 700,
-              fontSize: '0.875rem'
-            }}
-          >
-            Ai
-          </Box>
+          <img
+            src="/images/jobseeker_landing/TalentAiPurple.png"
+            alt="TalentAi"
+            style={{ height: '32px', width: 'auto' }}
+          />
         </Box>
-        
+
         {/* User Profile Section on the right */}
         {profile && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
                 gap: 1.5,
                 cursor: 'pointer',
                 padding: '8px 12px',
@@ -152,7 +132,7 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
                   👤
                 </Typography>
               </Box>
-              
+
               {/* User Name */}
               <Typography
                 sx={{
@@ -164,7 +144,7 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
               >
                 {profile.userId?.username || 'John'}
               </Typography>
-              
+
               {/* Dropdown Arrow */}
               <Box
                 sx={{

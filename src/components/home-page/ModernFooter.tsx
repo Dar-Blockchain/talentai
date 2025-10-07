@@ -43,10 +43,7 @@ const ModernFooter: React.FC = () => {
             <img
               src="/images/jobseeker_landing/TalentAiPurple.png"
               alt="TalentAi"
-              style={{
-                height: '40px',
-                width: 'auto'
-              }}
+             
             />
           </Box>
 
