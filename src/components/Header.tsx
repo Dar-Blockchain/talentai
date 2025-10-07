@@ -150,7 +150,7 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
             >
               <Box
                 component="img"
-                src={type === "jobseeker" ? "/images/jobseeker_landing/TalentAiPurple.png" : "/images/home/TalentAiLogo.png"}
+                src={logo}
                 alt="TalentAI Logo"
                 sx={{
                   height: 32,
