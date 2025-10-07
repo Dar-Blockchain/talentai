@@ -47,6 +47,8 @@ router.post('/generate-onboarding-questions', evaluationController.generateOnboa
 // Description: Analyse les réponses d'onboarding
 router.post('/analyze-onboarding-answers', evaluationController.analyzeOnboardingAnswers);
 
+router.post('/Test-AI/analyze-onboarding-answers', evaluationController.testAIanalyzeOnboardingAnswers);
+
 // POST /evaluation/generate-hr-questions
 // Description: Génère des questions RH (ressources humaines)
 router.post('/generate-hr-questions', evaluationController.generateHRQuestions);
