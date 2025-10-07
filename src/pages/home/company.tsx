@@ -20,7 +20,7 @@ import Header from "@/components/Header";
 const HomePage: React.FC = () => {
   return (
     <div style={{ backgroundColor: '#EFF0F0' }}>
-      <Header logo="/logo.svg" type="company" color="#29D291D4" link="Are you a Job Seeker?" />
+      <Header logo="/images/home/TalentaiCompany.svg" type="company" color="#29D291D4" link="Are you a Job Seeker?" />
 
       <HeroSection title="Revolutionize Your Hiring with" color="#29D291D4" type="company" subtitle="AI-Powered Intelligence" />
       <AccoladesSection />
