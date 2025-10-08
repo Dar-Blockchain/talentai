@@ -373,7 +373,9 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
 
     // 🔄 Supprimer l'user de l'ancienne compagnie s'il y en avait une
     if (lastCompanyId && lastCompanyId.toString() !== companyId.toString()) {
-      const oldCompanyProfile = await Profile.findOne({ userId: lastCompanyId });
+      const oldCompanyProfile = await Profile.findOne({
+        userId: lastCompanyId,
+      });
       if (oldCompanyProfile && oldCompanyProfile.type === "Company") {
         oldCompanyProfile.usersBidedByCompany =
           oldCompanyProfile.usersBidedByCompany.filter(
