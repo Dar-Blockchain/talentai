@@ -487,24 +487,45 @@ const { SKILL_TYPES } = require("../constants/profileConstants");
  * @returns {Object} { totalSkills, averageScore }
  */
 function calculateSkillsStats(skills = []) {
+  console.log("Étape 1 - Entrée de la fonction:", skills);
+
   if (!Array.isArray(skills) || skills.length === 0) {
+    console.log("Étape 2 - Tableau invalide ou vide");
     return { totalSkills: 0, averageScore: 0 };
   }
 
-  const totalSkills = skills.length + 1 ;
+  // Nombre total réel de skills
+  const totalSkills = skills.length;
+  console.log("Étape 3 - Nombre total de skills calculé:", totalSkills);
 
-  // On ne prend en compte que les skills avec un ScoreTest numérique
-  const validScores = skills
-    .map((s) => Number(s.ScoreTest))
-    .filter((score) => !isNaN(score));
+  // On récupère tous les scores valides (numériques)
+  const scores = skills.map((s, index) => {
+    const score = Number(s.ScoreTest);
+    console.log(
+      `Étape 4.${index + 1} - ScoreTest pour la skill ${
+        s.name || s.skill || "inconnue"
+      }:`,
+      score
+    );
+    return isNaN(score) ? 0 : score;
+  });
 
-  const averageScore =
-    validScores.length > 0
-      ? validScores.reduce((sum, score) => sum + score, 0) / validScores.length
-      : 0;
+  console.log("Étape 5 - Liste complète des scores:", scores);
 
-  return { totalSkills, averageScore };
+  // Somme totale
+  const totalScore = scores.reduce((sum, score) => sum + score, 0);
+  console.log("Étape 6 - Somme totale des scores:", totalScore);
+
+  // Moyenne = somme / nombre de skills
+  const averageScore = totalScore / totalSkills;
+  console.log("Étape 7 - Score moyen calculé:", averageScore);
+
+  const result = { totalSkills, averageScore };
+  console.log("Étape 8 - Résultat final:", result);
+
+  return result;
 }
+
 
 
 exports.analyzeProfileAnswers = async (req, res) => {
@@ -887,6 +908,15 @@ Provide detailed, actionable feedback in JSON format only.
 
     // Après avoir reçu et parsé la réponse brute de GPT en "analysis"
     if (type === "technicalSkill") {
+
+      const existingProfile = await profileService.getProfileByUserId(user._id);
+      const existingSkills = existingProfile.skills || [];
+      
+      const { totalSkills, averageScore } = calculateSkillsStats(existingSkills);
+      
+      console.log("Nombre total de skills:", totalSkills);
+      console.log("Score moyen global:", averageScore);
+
       //AddNewTechnicalSkill
       skillType = SKILL_TYPES.HARD;
       const profileOverallScore = await profileService.getProfileByUserId(
