@@ -37,11 +37,11 @@ const Pill: React.FC<{ label: string; color: string; icon: string }> = ({ label,
       boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
     }
   }}>
-    <Box sx={{ 
-      width: 36, 
-      height: 36, 
-      borderRadius: 2, 
-      bgcolor: color, 
+    <Box sx={{
+      width: 36,
+      height: 36,
+      borderRadius: 2,
+      bgcolor: color,
       mb: 1,
       display: 'flex',
       alignItems: 'center',
@@ -71,7 +71,7 @@ const BiasFreeEvaluation: React.FC = () => {
   return (
     <Box>
       {/* Floating Video Card Section */}
-      <Box sx={{ 
+      <Box sx={{
         position: 'relative',
         maxWidth: 1500,
         mx: 'auto',
@@ -109,7 +109,7 @@ const BiasFreeEvaluation: React.FC = () => {
               alt="Video Feed"
               style={{
                 width: 'auto',
-               
+
                 height: '110%',
                 maxWidth: '105%',
                 maxHeight: '100%',
@@ -151,15 +151,15 @@ const BiasFreeEvaluation: React.FC = () => {
               <img
                 src="/images/partners/hiring_time.png"
                 alt="Hiring Time"
-                
+
               />
             </Box>
-            
-            <Typography 
-              variant="h5" 
-              sx={{ 
-                fontFamily: 'Poppins, sans-serif', 
-                fontWeight: 400, 
+
+            <Typography
+              variant="h5"
+              sx={{
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: 400,
                 mb: 2,
                 color: '#fff',
                 textAlign: 'left',
@@ -171,13 +171,13 @@ const BiasFreeEvaluation: React.FC = () => {
             >
               Watch How We Cut Hiring Time in Half
             </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
+            <Typography
+              variant="body1"
+              sx={{
                 fontFamily: 'Fustat, sans-serif',
                 fontWeight: 400,
                 fontStyle: 'normal',
-                color: '#D1D5DB', 
+                color: '#D1D5DB',
                 mb: 3,
                 textAlign: 'left',
                 fontSize: '16px',
@@ -190,9 +190,9 @@ const BiasFreeEvaluation: React.FC = () => {
             >
               Transform weeks of manual work into minutes of intelligent automation.
             </Typography>
-            <Button 
-              variant="contained" 
-              sx={{ 
+            <Button
+              variant="contained"
+              sx={{
                 textTransform: 'none',
                 backgroundColor: '#10B981',
                 borderRadius: 2,
@@ -211,106 +211,105 @@ const BiasFreeEvaluation: React.FC = () => {
         </Box>
 
         {/* Bias-Free Evaluation Section */}
-        <Box sx={{ 
-          backgroundColor: '#000000', 
-          color: '#fff', 
-          py: { xs: 6, md: 10 }, 
-          px: 3, 
+        <Box sx={{
+          backgroundColor: '#000000',
+          color: '#fff',
+          py: { xs: 6, md: 10 },
+          px: 3,
           mb: { xs: 2, md: 3 },
           position: 'relative',
           zIndex: 1,
           mt: { xs: -16, md: -20 }
         }}>
-        <Box sx={{ 
-          maxWidth: 1300, 
-          mx: 'auto',
-          display: 'flex',
-          alignItems: 'center',
-          gap: { xs: 4, md: 6 }
-        }}>
-          {/* Left side - Text content */}
-          <Box sx={{ flex: 1, maxWidth: 500, mt: { xs: 8, md: 12 } }}>
-            <Typography 
-              variant="h3" 
-              sx={{ 
-                fontFamily: 'Poppins, sans-serif', 
-                fontWeight: 600, 
-                mb: 3,
-                fontSize: { xs: '2rem', md: '2.5rem' },
-                color: '#fff'
-              }}
-            >
-              Bias-Free Evaluation.
-            </Typography>
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                color: '#D1D5DB', 
-                mb: 4,
-                lineHeight: 1.6,
-                fontSize: '1.125rem'
-              }}
-            >
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-            </Typography>
-
-            <Stack spacing={2} sx={{ mb: 4 }}>
-              <Bullet label="Intelligent Candidate Engagement" />
-              <Bullet label="Instant Qualification" />
-              <Bullet label="Expertise at your fingertips" />
-            </Stack>
-
-            <Button 
-              variant="outlined" 
-              sx={{ 
-                textTransform: 'none', 
-                color: '#fff', 
-                borderColor: '#fff',
-                px: 4,
-                py: 2,
-                fontSize: '1rem',
-                fontWeight: 500,
-                borderRadius: 2,
-                '&:hover': {
-                  borderColor: '#fff',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)'
-                }
-              }}
-            >
-              Discover Recruitment Flow
-            </Button>
-          </Box>
-
-          {/* Right side - White card with icon grid */}
-          <Box sx={{ 
-            flex: 1,
-            display: { xs: 'none', md: 'flex' },
-            justifyContent: 'center'
+          <Box sx={{
+            maxWidth: 1300,
+            mx: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            gap: { xs: 4, md: 6 }
           }}>
+            {/* Left side - Text content */}
+            <Box sx={{ flex: 1, maxWidth: 500, mt: { xs: 8, md: 12 } }}>
+              <Typography
+                variant="h3"
+                sx={{
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: 600,
+                  mb: 3,
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  color: '#fff'
+                }}
+              >
+                Bias-Free Evaluation.
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  color: '#D1D5DB',
+                  mb: 4,
+                  lineHeight: 1.6,
+                  fontSize: '1.125rem'
+                }}
+              >
+                Our platform ensures that every candidate is assessed objectively, using data-driven methods that eliminate unconscious bias in recruitment decisions. This leads to fairer outcomes and a more diverse, high-performing workforce.            </Typography>
+
+              <Stack spacing={2} sx={{ mb: 4 }}>
+                <Bullet label="Intelligent Candidate Engagement" />
+                <Bullet label="Instant Qualification" />
+                <Bullet label="Expertise at your fingertips" />
+              </Stack>
+
+              <Button
+                variant="outlined"
+                sx={{
+                  textTransform: 'none',
+                  color: '#fff',
+                  borderColor: '#fff',
+                  px: 4,
+                  py: 2,
+                  fontSize: '1rem',
+                  fontWeight: 500,
+                  borderRadius: 2,
+                  '&:hover': {
+                    borderColor: '#fff',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                  }
+                }}
+              >
+                Discover Recruitment Flow
+              </Button>
+            </Box>
+
+            {/* Right side - White card with icon grid */}
             <Box sx={{
-              bgcolor: '#fff',
-              borderRadius: 3,
-              mt: 10,
-              p: 3,
-              width: 360,
-              height: 340,
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gridTemplateRows: '1fr 1fr 1fr',
-              gap: 2.5,
-              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
-              border: '1px solid #E5E7EB'
+              flex: 1,
+              display: { xs: 'none', md: 'flex' },
+              justifyContent: 'center'
             }}>
-              <Pill label="Technical" color="#8B5CF6" icon="/images/icons/Technical.png" />
-              <Pill label="Task" color="#EF4444" icon="/images/icons/Task.png" />
-              <Pill label="Soft" color="#F59E0B" icon="/images/icons/Soft.png" />
-              <Pill label="Condition" color="#3B82F6" icon="/images/icons/Condition.png" />
-              <Pill label="HR" color="#06B6D4" icon="/images/icons/HR.png" />
-              <Pill label="Email" color="#10B981" icon="/images/icons/Email.png" />
+              <Box sx={{
+                bgcolor: '#fff',
+                borderRadius: 3,
+                mt: 10,
+                p: 3,
+                width: 360,
+                height: 340,
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gridTemplateRows: '1fr 1fr 1fr',
+                gap: 2.5,
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
+                border: '1px solid #E5E7EB'
+              }}>
+                <Pill label="Technical" color="#8B5CF6" icon="/images/icons/Technical.png" />
+                <Pill label="Task" color="#EF4444" icon="/images/icons/Task.png" />
+                <Pill label="Soft" color="#F59E0B" icon="/images/icons/Soft.png" />
+                <Pill label="Condition" color="#3B82F6" icon="/images/icons/Condition.png" />
+                <Pill label="HR" color="#06B6D4" icon="/images/icons/HR.png" />
+                <Pill label="Email" color="#10B981" icon="/images/icons/Email.png" />
+              </Box>
             </Box>
           </Box>
         </Box>
-      </Box>
       </Box>
     </Box>
   );

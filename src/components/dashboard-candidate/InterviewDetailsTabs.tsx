@@ -477,7 +477,8 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                 ) : (
                                     data.map((row: any) => {
                                         const score = typeof row?.overallScore === "number" ? Math.max(0, Math.min(100, row.overallScore)) : null;
-                                        const title = row.title || row.post?.jobDetails?.title || "Onboarding";
+                                        const skillName = row.skillDetails?.[0]?.name;
+                                        const title = skillName || row.title || row.post?.jobDetails?.title || "Onboarding";
                                         const dateLabel = row.createdAt ? new Date(row.createdAt).toLocaleDateString() : null;
                                         const stage = row.stage || row.status || "Pending";
                                         const stageColor: "default" | "success" | "warning" | "error" =

@@ -234,7 +234,7 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
               lineHeight: 1.2,
             }}
           >
-            {`${quota || 0}/4`}
+            {`${quota || 0}/5`}
           </Typography>
           <Typography
             variant="body2"

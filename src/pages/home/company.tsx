@@ -32,7 +32,7 @@ const HomePage: React.FC = () => {
       <AutomateSection />
 
       <ManageSection />
-      <IntegrationsSection />
+      {/* <IntegrationsSection /> */}
       {/* <PartnersSection /> */}
       {/* <FeaturesSection type="company" color="#29D291D4" />
       <SolutionsSection type="company" color="#29D291D4" title="Why Choose" subtitle="From Guesswork to Precision—Redefine How You Hire" />

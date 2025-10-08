@@ -26,9 +26,9 @@ const Footer: React.FC = () => {
           <Typography variant="body2" sx={{ color: '#ffffff', mb: 2 }}>
             Copyright © 2025. TalentAI Inc. All rights reserved.
           </Typography>
-          <Typography variant="caption" sx={{ color: '#D1D5DB', fontSize: '0.75rem', lineHeight: 1.5 }}>
+          {/* <Typography variant="caption" sx={{ color: '#D1D5DB', fontSize: '0.75rem', lineHeight: 1.5 }}>
             *Numbers on this page are based on internal data compiled from existing customer base and speed assumption is based on the fact that standard onboarding may take 30 days and Remote's average onboarding time is 2.3 days.
-          </Typography>
+          </Typography> */}
         </Box>
 
         {/* Divider Line */}
