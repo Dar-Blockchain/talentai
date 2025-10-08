@@ -811,11 +811,18 @@ Provide detailed, actionable feedback in JSON format only.
       interviewProfile = profileOverallScore;
 
       //overallScore is fixed
+      const technicalScores = Array.isArray(analysis.skillAnalysis)
+        ? analysis.skillAnalysis
+            .map((s) => Number(s.confidenceScore) || 0)
+            .filter((v) => v > 0)
+        : [];
+      const technicalAvg =
+        technicalScores.length > 0
+          ? technicalScores.reduce((a, b) => a + b, 0) / technicalScores.length
+          : 0;
+
       await profileService.createOrUpdateProfile(user._id, {
-        overallScore:
-          profileOverallScore.overallScore === 0
-            ? analysis.overallScore
-            : (profileOverallScore.overallScore + analysis.overallScore) / 2, //this is for the average score
+        overallScore: technicalAvg,
         skills: analysis.skillAnalysis.map((skill) => ({
           name: skill.skillName,
           proficiencyLevel: skill.demonstratedProficiency,
@@ -833,15 +840,20 @@ Provide detailed, actionable feedback in JSON format only.
       skillType = SKILL_TYPES.SOFT;
       const profile = await Profile.findOne({ userId: user._id });
       interviewProfile = profile;
-      const newOverallScore =
-        profile.overallScore === 0
-          ? analysis.overallScore
-          : (profile.overallScore + analysis.overallScore) / 2;
+      const softScores = Array.isArray(analysis.skillAnalysis)
+        ? analysis.skillAnalysis
+            .map((s) => Number(s.confidenceScore) || 0)
+            .filter((v) => v > 0)
+        : [];
+      const softAvg =
+        softScores.length > 0
+          ? softScores.reduce((a, b) => a + b, 0) / softScores.length
+          : 0;
 
       const updated = await Profile.findOneAndUpdate(
         { userId: user._id },
         {
-          overallScore: newOverallScore,
+          overallScore: softAvg,
           softSkills: analysis.skillAnalysis.map((s) => ({
             name: s.skillName,
             category: s.subcategory || "",
