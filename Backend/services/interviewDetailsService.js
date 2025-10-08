@@ -3,22 +3,7 @@ const InterviewDetails = require("../models/InterviewDetailsModel");
 exports.getAllInterviewDetails = async ({ page = 1, limit = 10, sort = "-createdAt", type, profileId }) => {
   const query = {};
 
-  if (type) {
-    // If querying for "skill" type, get records with skillDetails (stored as "onboarding" type)
-    if (type === "skill") {
-      query.type = "onboarding";
-      query.skillDetails = { $exists: true, $ne: [] }; // Must have skillDetails array
-    } else if (type === "onboarding") {
-      // Onboarding tab shows onboarding records without skill assessments
-      query.type = "onboarding";
-      query.$or = [
-        { skillDetails: { $exists: false } },
-        { skillDetails: { $eq: [] } }
-      ];
-    } else {
-      query.type = type;
-    }
-  }
+  if (type) query.type = type;
   if (profileId) query.candidate = profileId;
 
   const skip = (page - 1) * limit;
