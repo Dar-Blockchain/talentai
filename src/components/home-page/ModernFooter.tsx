@@ -41,7 +41,7 @@ const ModernFooter: React.FC = () => {
           {/* Logo */}
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <img
-              src="/images/jobseeker_landing/TalentAiPurple.png"
+              src="/images/jobseeker_landing/TalentAiPurpleHome.png"
               alt="TalentAi"
              
             />
