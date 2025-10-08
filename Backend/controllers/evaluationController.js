@@ -908,31 +908,41 @@ Provide detailed, actionable feedback in JSON format only.
 
     // Après avoir reçu et parsé la réponse brute de GPT en "analysis"
     if (type === "technicalSkill") {
-
-      const existingProfile = await profileService.getProfileByUserId(user._id);
-      const existingSkills = existingProfile.skills || [];
-      
-      const { totalSkills, averageScore } = calculateSkillsStats(existingSkills);
-      
-      console.log("Nombre total de skills:", totalSkills);
-      console.log("Score moyen global:", averageScore);
-
-      //AddNewTechnicalSkill
-      skillType = SKILL_TYPES.HARD;
-      const profileOverallScore = await profileService.getProfileByUserId(
-        user._id
-      );
-      interviewProfile = profileOverallScore;
-
+      console.log("=== Début technicalSkill ===");
+    
+      // Récupération du profil existant (sécurisé)
+      const existingProfile = (await profileService.getProfileByUserId(user._id)) || {
+        overallScore: 0,
+        skills: [],
+      };
+      const existingSkills = Array.isArray(existingProfile.skills)
+        ? existingProfile.skills
+        : [];
+    
+      console.log("Étape A - existingProfile.overallScore:", existingProfile.overallScore);
+      console.log("Étape A - existingSkills:", existingSkills);
+    
+      // Utilise ta fonction utilitaire si tu veux (pour logs)
+      const { totalSkills: existingTotal, averageScore: existingAverage } =
+        calculateSkillsStats(existingSkills);
+      console.log("Étape B - existingTotal:", existingTotal, "existingAverage:", existingAverage);
+    
+      // Filtrer les skills valides venant de l'analyse GPT
+      const validSkills = Array.isArray(analysis.skillAnalysis)
+        ? analysis.skillAnalysis.filter((s) => Number(s.confidenceScore) > 0)
+        : [];
+      console.log("Étape C - validSkills de l'analyse:", validSkills.length);
+    
+      // Fonction utilitaire pour convertir score -> proficiency level
       function proficiencyFromConfidenceScore(score) {
         if (score >= 0 && score <= 20) return 1;
         if (score > 20 && score <= 30) return 2;
         if (score > 30 && score <= 50) return 3;
         if (score > 50 && score <= 80) return 4;
         if (score > 80 && score <= 100) return 5;
-        return 1; // défaut si hors bornes
+        return 1;
       }
-
+    
       const experienceLevels = [
         "Entry Level",
         "Junior",
@@ -940,85 +950,131 @@ Provide detailed, actionable feedback in JSON format only.
         "Senior",
         "Expert",
       ];
-
-      // Construction des compétences à partir des données valides
-      const validSkills = analysis.skillAnalysis.filter(
-        (skill) => Number(skill.confidenceScore) > 0
-      );
-
-      const mappedSkills = validSkills.map((skill) => {
-        const confScore = Number(skill.confidenceScore);
+    
+      // Map des nouvelles skills analysées (normalisées)
+      const newMappedSkills = validSkills.map((skill) => {
+        const confScore = Number(skill.confidenceScore) || 0;
         const profLevel = proficiencyFromConfidenceScore(confScore);
+    
+        const currentProf = Number(skill.currentProficiency) || 1;
+        const demoProf = Number(skill.demonstratedProficiency) || currentProf;
+    
         return {
+          name: skill.skillName || skill.skill || "",
           skillName: skill.skillName || skill.skill || "",
-          currentProficiency: Number(skill.currentProficiency) || 1,
-          demonstratedProficiency: Number(skill.demonstratedProficiency) || 1,
-          currentExperienceLevel: getExperienceLevel(
-            Number(skill.currentProficiency) || 1
-          ),
-          demonstratedExperienceLevel: getExperienceLevel(
-            Number(skill.demonstratedProficiency) || 1
-          ),
+          currentProficiency: currentProf,
+          demonstratedProficiency: demoProf,
+          confidenceScore: confScore,
+          proficiencyLevel: profLevel,
+          experienceLevel: experienceLevels[profLevel - 1] || experienceLevels[0],
           strengths: Array.isArray(skill.strengths) ? skill.strengths : [],
           weaknesses: Array.isArray(skill.weaknesses) ? skill.weaknesses : [],
-          confidenceScore: confScore,
-          improvement:
-            (Number(skill.demonstratedProficiency) || 1) >
-            (Number(skill.currentProficiency) || 1)
-              ? "increased"
-              : (Number(skill.demonstratedProficiency) || 1) <
-                (Number(skill.currentProficiency) || 1)
-              ? "decreased"
-              : "unchanged",
-          subcategory:
-            skill.subcategory ||
-            skillSubcategories[skill.skillName || skill.skill] ||
-            "",
-          proficiencyLevel: profLevel,
-          experienceLevel: experienceLevels[profLevel - 1],
+          subcategory: skill.subcategory || "",
+          // ScoreTest correspond au score mesuré (on garde la même convention)
+          ScoreTest: confScore,
+          Levelconfirmed:
+            demoProf === 5 && confScore > 75 ? 5 : Math.max(profLevel - 1, 0),
         };
       });
-
-      // Utiliser uniquement si on a au moins une skill valide
-      if (mappedSkills.length > 0) {
-        await profileService.createOrUpdateProfile(user._id, {
-          overallScore: averageScore,
-          skills: validSkills.map((skill) => {
-            const confScore = Number(skill.confidenceScore);
-            const profLevel = proficiencyFromConfidenceScore(confScore);
-            return {
-              name: skill.skillName || skill.skill || "",
-              proficiencyLevel: profLevel,
-              experienceLevel: experienceLevels[profLevel - 1],
-              ScoreTest: confScore,
-              Levelconfirmed:
-                skill.demonstratedProficiency === 5 &&
-                skill.confidenceScore > 75
-                  ? 5
-                  : profLevel - 1,
-            };
-          }),
-        });
-      
-          // Save interview details and update profile with interview ID
-    const interviewId = await saveInterviewDetailsForAddSkill(
-      interviewProfile,
-      analysis.overallScore,
-      analysis.skillAnalysis,
-      skillType,
-      analysis.recommendations
-    );
-
-    if (!interviewProfile.interviewDetails) {
-      interviewProfile.interviewDetails = [];
-    }
-
-    interviewProfile.interviewDetails.push(interviewId);
-    await interviewProfile.save();
-
+    
+      console.log("Étape D - newMappedSkills:", newMappedSkills);
+    
+      // Calcul des scores existants et nouveaux pour la moyenne combinée
+      const existingScores = existingSkills.map((s) => {
+        const v = Number(s.ScoreTest);
+        return isNaN(v) ? 0 : v;
+      });
+      const newScores = newMappedSkills.map((s) => {
+        const v = Number(s.ScoreTest);
+        return isNaN(v) ? 0 : v;
+      });
+    
+      console.log("Étape E - existingScores:", existingScores);
+      console.log("Étape E - newScores:", newScores);
+    
+      const combinedScores = existingScores.concat(newScores);
+      const combinedCount = combinedScores.length;
+      const combinedSum = combinedScores.reduce((acc, n) => acc + n, 0);
+      const combinedAverage = combinedCount > 0 ? combinedSum / combinedCount : 0;
+    
+      console.log(
+        "Étape F - combinedCount:",
+        combinedCount,
+        "combinedSum:",
+        combinedSum,
+        "combinedAverage:",
+        combinedAverage
+      );
+    
+      // Merge/Update des skills : on met à jour celles qui existent (par name), sinon on ajoute
+      const skillMap = new Map(existingSkills.map((s) => [s.name, { ...s }]));
+    
+      newMappedSkills.forEach((ns) => {
+        const name = ns.name;
+        if (!name) return;
+        if (skillMap.has(name)) {
+          // Update fields pertinents
+          const prev = skillMap.get(name);
+          skillMap.set(name, {
+            ...prev,
+            proficiencyLevel: ns.proficiencyLevel,
+            experienceLevel: ns.experienceLevel,
+            ScoreTest: ns.ScoreTest,
+            Levelconfirmed: ns.Levelconfirmed,
+            // tu peux ajouter d'autres champs à synchroniser
+          });
+          console.log(`Étape G - Mise à jour skill existante: ${name}`);
+        } else {
+          // Nouvelle skill
+          skillMap.set(name, {
+            name,
+            proficiencyLevel: ns.proficiencyLevel,
+            experienceLevel: ns.experienceLevel,
+            ScoreTest: ns.ScoreTest,
+            Levelconfirmed: ns.Levelconfirmed,
+            category: ns.subcategory || "",
+          });
+          console.log(`Étape G - Ajout nouvelle skill: ${name}`);
+        }
+      });
+    
+      const mergedSkills = Array.from(skillMap.values());
+      console.log("Étape H - mergedSkills (après update):", mergedSkills);
+    
+      // Sauvegarde du profil (overallScore = moyenne combinée)
+      const updatedProfilePayload = {
+        overallScore: Number(combinedAverage.toFixed(2)), // garder 2 décimales
+        skills: mergedSkills,
+      };
+    
+      console.log("Étape I - updatedProfilePayload:", updatedProfilePayload);
+    
+      await profileService.createOrUpdateProfile(user._id, updatedProfilePayload);
+      console.log("Étape J - profileService.createOrUpdateProfile terminé");
+    
+      // Save interview details and update profile with interview ID
+      const interviewId = await saveInterviewDetailsForAddSkill(
+        existingProfile,
+        analysis.overallScore,
+        analysis.skillAnalysis,
+        SKILL_TYPES.HARD,
+        analysis.recommendations
+      );
+      console.log("Étape K - interviewId créé:", interviewId);
+    
+      // push interviewId dans le profile s'il existe et save
+      if (!existingProfile.interviewDetails) existingProfile.interviewDetails = [];
+      existingProfile.interviewDetails.push(interviewId);
+      try {
+        await existingProfile.save();
+        console.log("Étape L - existingProfile sauvegardé avec interviewDetails");
+      } catch (err) {
+        console.warn("Étape L - impossible de save() existingProfile (peut être déjà géré par createOrUpdateProfile):", err.message);
       }
+    
+      console.log("=== Fin technicalSkill ===");
     }
-
+    
     // 7. Return the response
     res.status(200).json({
       success: true,
