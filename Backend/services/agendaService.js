@@ -178,7 +178,7 @@ async function initializeAgenda() {
     }
 
     await agendaInstance.every(
-      "*/1 * * * *",
+      "0 * * * *",
       "agent:heartbeat",
       {},
       {
@@ -189,7 +189,7 @@ async function initializeAgenda() {
       }
     );
     await agendaInstance.now("agent:heartbeat");
-    console.log("⏱️ Agenda démarré avec job agent:heartbeat toutes les minutes");
+    console.log("⏱️ Agenda démarré avec job agent:heartbeat toutes les heures");
 
     // Vérification: lister les jobs planifiés
     try {
@@ -234,7 +234,7 @@ async function initializeAgenda() {
     if (!countdownInterval) {
       countdownInterval = setInterval(() => {
         if (!lastHeartbeatAt) return;
-        const nextExpectedAt = lastHeartbeatAt.getTime() + 60000; // +1 minute en ms
+        const nextExpectedAt = lastHeartbeatAt.getTime() + 3600000; // +1 heure en ms
         const remainingMs = nextExpectedAt - Date.now();
         const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
   
