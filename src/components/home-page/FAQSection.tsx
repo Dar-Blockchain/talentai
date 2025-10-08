@@ -22,23 +22,23 @@ const FAQSection: React.FC = () => {
   const faqs = [
     {
       id: 0,
-      question: "Lorem ipsum dolor sit amet?",
-      answer: "Nibh quisque suscipit fermentum netus nulla cras porttitor euismod nulla. Orci, dictumst nec aliquet id ullamcorper venenatis. Fermentum sulla craspor ttitore ismod nulla."
+      question: "How does TalentAI match me with the right job opportunities?",
+      answer: "TalentAI uses advanced AI algorithms to evaluate your skills, interview performance, and professional background. Our system analyzes your responses, technical abilities, and career preferences to recommend the most suitable job opportunities that align with your expertise and career goals."
     },
     {
       id: 1,
-      question: "Lorem ipsum dolor sit amet?",
-      answer: "Nibh quisque suscipit fermentum netus nulla cras porttitor euismod nulla. Orci, dictumst nec aliquet id ullamcorper venenatis. Fermentum sulla craspor ttitore ismod nulla."
+      question: "Is TalentAI free to use for job seekers?",
+      answer: "Yes. Creating a TalentAI account, building your profile, and applying for jobs are all completely free for candidates."
     },
     {
       id: 2,
-      question: "Lorem ipsum dolor sit amet?",
-      answer: "Nibh quisque suscipit fermentum netus nulla cras porttitor euismod nulla. Orci, dictumst nec aliquet id ullamcorper venenatis. Fermentum sulla craspor ttitore ismod nulla."
+      question: "Can I apply to multiple jobs at once?",
+      answer: "Absolutely. Once your profile is verified and your skills are matched, you can apply to several opportunities instantly through our smart application dashboard."
     },
     {
       id: 3,
-      question: "Lorem ipsum dolor sit amet?",
-      answer: "Nibh quisque suscipit fermentum netus nulla cras porttitor euismod nulla. Orci, dictumst nec aliquet id ullamcorper venenatis. Fermentum sulla craspor ttitore ismod nulla."
+      question: "Is my data secure with TalentAI?",
+      answer: "Your privacy is our top priority. All user data is encrypted, and TalentAI fully complies with international data protection regulations (GDPR)."
     }
   ];
 
