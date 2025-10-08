@@ -924,11 +924,11 @@ Provide detailed, actionable feedback in JSON format only.
 
       // Utiliser uniquement si on a au moins une skill valide
       if (mappedSkills.length > 0) {
+        const averageConfidenceScore =
+          validSkills.reduce((sum, skill) => sum + Number(skill.confidenceScore || 0), 0) /
+          validSkills.length;
         await profileService.createOrUpdateProfile(user._id, {
-          overallScore:
-            profileOverallScore.overallScore === 0
-              ? analysis.overallScore
-              : (profileOverallScore.overallScore + analysis.overallScore) / 2,
+          overallScore: averageConfidenceScore,
           skills: validSkills.map((skill) => {
             const confScore = Number(skill.confidenceScore);
             const profLevel = proficiencyFromConfidenceScore(confScore);
