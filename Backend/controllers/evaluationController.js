@@ -481,6 +481,32 @@ const profileService = require("../services/profileService");
 const { HttpError } = require("../utils/httpUtils");
 const { SKILL_TYPES } = require("../constants/profileConstants");
 
+/**
+ * Calcule le score moyen et le nombre total de compétences
+ * @param {Array} skills - Tableau des compétences de l'utilisateur
+ * @returns {Object} { totalSkills, averageScore }
+ */
+function calculateSkillsStats(skills = []) {
+  if (!Array.isArray(skills) || skills.length === 0) {
+    return { totalSkills: 0, averageScore: 0 };
+  }
+
+  const totalSkills = skills.length + 1 ;
+
+  // On ne prend en compte que les skills avec un ScoreTest numérique
+  const validScores = skills
+    .map((s) => Number(s.ScoreTest))
+    .filter((score) => !isNaN(score));
+
+  const averageScore =
+    validScores.length > 0
+      ? validScores.reduce((sum, score) => sum + score, 0) / validScores.length
+      : 0;
+
+  return { totalSkills, averageScore };
+}
+
+
 exports.analyzeProfileAnswers = async (req, res) => {
   try {
     // 1. Validate request body
@@ -801,6 +827,14 @@ Provide detailed, actionable feedback in JSON format only.
     let skillType;
     let interviewProfile;
 
+    const existingProfile = await profileService.getProfileByUserId(user._id);
+    const existingSkills = existingProfile.skills || [];
+    
+    const { totalSkills, averageScore } = calculateSkillsStats(existingSkills);
+    
+    console.log("Nombre total de skills:", totalSkills);
+    console.log("Score moyen global:", averageScore);
+
     // 6. Save profile data based on assessment type
     if (type === "technical") {
       console.log("type", type);
@@ -812,10 +846,7 @@ Provide detailed, actionable feedback in JSON format only.
 
       //overallScore is fixed
       await profileService.createOrUpdateProfile(user._id, {
-        overallScore:
-          profileOverallScore.overallScore === 0
-            ? analysis.overallScore
-            : (profileOverallScore.overallScore + analysis.overallScore) / 2, //this is for the average score
+        overallScore: averageScore,
         skills: analysis.skillAnalysis.map((skill) => ({
           name: skill.skillName,
           proficiencyLevel: skill.demonstratedProficiency,
@@ -833,15 +864,11 @@ Provide detailed, actionable feedback in JSON format only.
       skillType = SKILL_TYPES.SOFT;
       const profile = await Profile.findOne({ userId: user._id });
       interviewProfile = profile;
-      const newOverallScore =
-        profile.overallScore === 0
-          ? analysis.overallScore
-          : (profile.overallScore + analysis.overallScore) / 2;
-
+    
       const updated = await Profile.findOneAndUpdate(
         { userId: user._id },
         {
-          overallScore: newOverallScore,
+          overallScore: averageScore,
           softSkills: analysis.skillAnalysis.map((s) => ({
             name: s.skillName,
             category: s.subcategory || "",
@@ -925,10 +952,7 @@ Provide detailed, actionable feedback in JSON format only.
       // Utiliser uniquement si on a au moins une skill valide
       if (mappedSkills.length > 0) {
         await profileService.createOrUpdateProfile(user._id, {
-          overallScore:
-            profileOverallScore.overallScore === 0
-              ? analysis.overallScore
-              : (profileOverallScore.overallScore + analysis.overallScore) / 2,
+          overallScore: averageScore,
           skills: validSkills.map((skill) => {
             const confScore = Number(skill.confidenceScore);
             const profLevel = proficiencyFromConfidenceScore(confScore);
@@ -964,8 +988,6 @@ Provide detailed, actionable feedback in JSON format only.
 
       }
     }
-
-
 
     // 7. Return the response
     res.status(200).json({
