@@ -945,24 +945,27 @@ Provide detailed, actionable feedback in JSON format only.
             };
           }),
         });
+      
+          // Save interview details and update profile with interview ID
+    const interviewId = await saveInterviewDetailsForAddSkill(
+      interviewProfile,
+      analysis.overallScore,
+      analysis.skillAnalysis,
+      skillType,
+      analysis.recommendations
+    );
 
-        // Save interview details and update profile with interview ID
-        const interviewId = await saveInterviewDetailsForAddSkill(
-          interviewProfile,
-          analysis.overallScore,
-          analysis.skillAnalysis,
-          skillType,
-          analysis.recommendations
-        );
+    if (!interviewProfile.interviewDetails) {
+      interviewProfile.interviewDetails = [];
+    }
 
-        if (!interviewProfile.interviewDetails) {
-          interviewProfile.interviewDetails = [];
-        }
+    interviewProfile.interviewDetails.push(interviewId);
+    await interviewProfile.save();
 
-        interviewProfile.interviewDetails.push(interviewId);
-        await interviewProfile.save();
       }
     }
+
+
 
     // 7. Return the response
     res.status(200).json({
@@ -1124,6 +1127,7 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
   try {
     const { questions, skill } = req.body;
     const user = req.user;
+
 
     if (!Array.isArray(skill)) {
       return res.status(400).json({
@@ -1292,7 +1296,7 @@ exports.analyzeOnboardingAnswers = async (req, res) => {
       analysis.skillAnalysis[0].demonstratedExperienceLevel =
         demonstratedExperienceLevel;
 
-      console.log("analysis.skillAnalysis");
+      console.log("analysis.skillAnalysis", );
       // save interview details and update profile with interview ID
       const interviewId = await saveInterviewDetailsForOnboarding(
         profile,
@@ -1391,7 +1395,7 @@ exports.testAIanalyzeOnboardingAnswers = async (req, res) => {
           "Each skill must have a name (string) and proficiencyLevel (number 1-5)",
       });
     }
-
+   
     const skillName = skill[0].name;
     const systemPrompt = analyzeOnbordingQuestionsPrompts.getSystemPrompt();
     const userPrompt = analyzeOnbordingQuestionsPrompts.getUserPrompt(
@@ -1507,6 +1511,7 @@ exports.testAIanalyzeOnboardingAnswers = async (req, res) => {
       analysis.skillAnalysis[0].requiredLevel = demonstratedExperienceLevel;
       analysis.skillAnalysis[0].demonstratedExperienceLevel =
         demonstratedExperienceLevel;
+
     } catch (error) {
       console.error("Error in analysis parsing:", error);
     }
