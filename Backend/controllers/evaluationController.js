@@ -532,7 +532,8 @@ exports.analyzeProfileAnswers = async (req, res) => {
   try {
     // 1. Validate request body
     const { type, skill, questions } = req.body;
-    const user = req.user;
+    //const id = req.user._id;
+    const id = "68e7888fa8e39aa22f8e3f57";
 
     if (!type || !Array.isArray(skill) || !Array.isArray(questions)) {
       return res.status(400).json({
@@ -848,7 +849,7 @@ Provide detailed, actionable feedback in JSON format only.
     let skillType;
     let interviewProfile;
 
-    const existingProfile = await profileService.getProfileByUserId(user._id);
+    const existingProfile = await profileService.getProfileByUserId(id);
     const existingSkills = existingProfile.skills || [];
     
     const { totalSkills, averageScore } = calculateSkillsStats(existingSkills);
@@ -860,13 +861,10 @@ Provide detailed, actionable feedback in JSON format only.
     if (type === "technical") {
       console.log("type", type);
       skillType = SKILL_TYPES.HARD;
-      const profileOverallScore = await profileService.getProfileByUserId(
-        user._id
-      );
-      interviewProfile = profileOverallScore;
+      interviewProfile = existingProfile;
 
       //overallScore is fixed
-      await profileService.createOrUpdateProfile(user._id, {
+      await profileService.createOrUpdateProfile(_id, {
         overallScore: averageScore,
         skills: analysis.skillAnalysis.map((skill) => ({
           name: skill.skillName,
@@ -883,11 +881,11 @@ Provide detailed, actionable feedback in JSON format only.
 
     if (type === "soft") {
       skillType = SKILL_TYPES.SOFT;
-      const profile = await Profile.findOne({ userId: user._id });
+      const profile = await Profile.findOne({ userId: id });
       interviewProfile = profile;
     
       const updated = await Profile.findOneAndUpdate(
-        { userId: user._id },
+        { userId: id },
         {
           overallScore: averageScore,
           softSkills: analysis.skillAnalysis.map((s) => ({
@@ -910,13 +908,9 @@ Provide detailed, actionable feedback in JSON format only.
 if (type === "technicalSkill") {
   console.log("=== Début technicalSkill ===");
 
-  // Récupération du profil existant (sécurisé)
-  const existingProfile = (await profileService.getProfileByUserId(user._id)) || {
-    overallScore: 0,
-    skills: [],
-  };
-  const existingSkills = Array.isArray(existingProfile.skills)
-    ? existingProfile.skills
+  // Réutilisation du profil et des skills existants déjà chargés plus haut
+  const existingSkillsLocal = Array.isArray(existingSkills)
+    ? existingSkills
     : [];
 
   console.log("Étape A - existingProfile.overallScore:", existingProfile.overallScore);
@@ -924,7 +918,7 @@ if (type === "technicalSkill") {
 
   // Utilisation de la fonction utilitaire pour stats
   const { totalSkills: existingTotal, averageScore: existingAverage } =
-    calculateSkillsStats(existingSkills);
+    calculateSkillsStats(existingSkillsLocal);
   console.log("Étape B - existingTotal:", existingTotal, "existingAverage:", existingAverage);
 
   // Filtrer les skills valides venant de l'analyse GPT
@@ -987,7 +981,7 @@ if (type === "technicalSkill") {
   console.log("Étape D - newMappedSkills filtrées:", newMappedSkills);
 
   // Calcul des scores existants et nouveaux pour la moyenne combinée
-  const existingScores = existingSkills.map((s) => {
+  const existingScores = existingSkillsLocal.map((s) => {
     const v = Number(s.ScoreTest);
     return isNaN(v) ? 0 : v;
   });
@@ -1011,7 +1005,7 @@ if (type === "technicalSkill") {
   );
 
   // Merge/Update des skills : on met à jour celles qui existent (par name), sinon on ajoute
-  const skillMap = new Map(existingSkills.map((s) => [s.name, { ...s }]));
+  const skillMap = new Map(existingSkillsLocal.map((s) => [s.name, { ...s }]));
 
   newMappedSkills.forEach((ns) => {
     const name = ns.name?.trim();
@@ -1047,20 +1041,22 @@ if (type === "technicalSkill") {
     .filter((s) => s.name && typeof s.name === "string" && s.name.trim() !== "");
   console.log("Étape H - mergedSkills nettoyées:", mergedSkills);
 
+  const overallScore = Number(combinedAverage.toFixed(2));
+
   // Sauvegarde du profil (overallScore = moyenne combinée)
   const updatedProfilePayload = {
-    overallScore: Number(combinedAverage.toFixed(2)),
+    overallScore: overallScore,
     skills: mergedSkills,
   };
   console.log("Étape I - updatedProfilePayload:", updatedProfilePayload);
 
-  await profileService.createOrUpdateProfile(user._id, updatedProfilePayload);
+  await profileService.createOrUpdateProfile(id, updatedProfilePayload);
   console.log("Étape J - profileService.createOrUpdateProfile terminé");
 
   // Save interview details et update profile avec interview ID
   const interviewId = await saveInterviewDetailsForAddSkill(
     existingProfile,
-    analysis.overallScore,
+    overallScore,
     analysis.skillAnalysis,
     SKILL_TYPES.HARD,
     analysis.recommendations
