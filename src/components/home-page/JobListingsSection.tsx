@@ -3,8 +3,10 @@ import { Box, Typography, Button, Card, CardContent, IconButton, Chip } from '@m
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import { useRouter } from 'next/router';
 
 const JobListingsSection = () => {
+  const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const jobs = [
@@ -186,6 +188,7 @@ const JobListingsSection = () => {
 
           <Button
             variant="contained"
+            onClick={() => router.push('/jobs')}
             sx={{
               backgroundColor: '#8310FF',
               color: '#fff',

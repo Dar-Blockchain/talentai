@@ -391,6 +391,7 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
               />
               <Button
                 variant="contained"
+                onClick={() => router.push('/jobs')}
                 sx={{
                   backgroundColor: color,
                   color: "#fff",
