@@ -933,14 +933,9 @@ if (type === "technicalSkill") {
   console.log("Étape C - validSkills filtrées:", validSkills.length);
 
   // Fonction utilitaire pour convertir score -> proficiency level
-  function proficiencyFromConfidenceScore(score) {
-    if (score >= 0 && score <= 20) return 1;
-    if (score > 20 && score <= 30) return 2;
-    if (score > 30 && score <= 50) return 3;
-    if (score > 50 && score <= 80) return 4;
-    if (score > 80 && score <= 100) return 5;
-    return 1;
-  }
+  const proficiencyFromConfidenceScore = score =>
+    [20, 30, 50, 80, 100].findIndex(limit => score <= limit) + 1 || 1;
+  
 
   const experienceLevels = [
     "Entry Level",
