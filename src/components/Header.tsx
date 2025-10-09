@@ -28,12 +28,30 @@ import dynamic from 'next/dynamic';
 import { setUserType } from "@/store/slices/userSlice";
 import UserAvatar from "./UserAvatar";
 
-const navItems = [
-  { label: "Features", id: "features" },
-  { label: "Solutions", id: "solutions" },
-  { label: "Pricing", id: "pricing" },
-  { label: "Contact", id: "contact" },
-];
+type NavItem = {
+  label: string;
+  id?: string;
+  href?: string;
+};
+
+const getNavItems = (type: string): NavItem[] => {
+  const baseItems: NavItem[] = [
+    { label: "Features", id: "features" },
+    { label: "Solutions", id: "solutions" },
+    { label: "Pricing", id: "pricing" },
+    { label: "Contact", id: "contact" },
+  ];
+  
+  // Only add "Find Jobs" for jobseeker type
+  if (type === "jobseeker") {
+    return [
+      { label: "Find Jobs", href: "/jobs" },
+      ...baseItems,
+    ];
+  }
+  
+  return baseItems;
+};
 
 type HeaderProps = {
   logo: string; // path to the logo image
@@ -94,17 +112,22 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
         onClick={() => router.push("/")}
       />
       <List>
-        {navItems.map((item) => (
-          <ListItem key={item.id}>
+        {getNavItems(type).map((item) => (
+          <ListItem 
+            key={item.id || item.href}
+            component={Link}
+            href={item.href || `/#${item.id}`}
+            sx={{ textDecoration: 'none' }}
+          >
             <ListItemText
               primary={item.label}
               sx={{
                 textAlign: "start",
                 fontWeight: 500,
-                color: "#000",
+                color: item.label === "Find Jobs" ? "#8310FF" : "#000",
                 transition: "all 0.1s",
                 "&:hover": {
-                  color: " #00FF9D",
+                  color: item.label === "Find Jobs" ? "#6B0BC7" : "#00FF9D",
                   fontWeight: "bold",
                 },
               }}
@@ -169,19 +192,19 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
                 backgroundColor: '#ffffff',
                 boxShadow: '0 4px 14px rgba(0,0,0,0.06)'
               }}>
-                {navItems.map((item, index) => (
-                  <React.Fragment key={item.id}>
-                    <Link href={`/#${item.id}`} passHref>
+                {getNavItems(type).map((item, index) => (
+                  <React.Fragment key={item.id || item.href}>
+                    <Link href={item.href || `/#${item.id}`} passHref>
                       <Box
                         sx={{
                           cursor: "pointer",
                           fontWeight: 500,
-                          color: "#374151",
+                          color: item.label === "Find Jobs" ? "#8310FF" : "#374151",
                           typography: "body1",
                           fontSize: '14px',
                           transition: "all 0.2s",
                           "&:hover": {
-                            color: "#10B981",
+                            color: item.label === "Find Jobs" ? "#6B0BC7" : "#10B981",
                           },
                         }}
                       >
