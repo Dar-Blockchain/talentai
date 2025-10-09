@@ -1,56 +1,73 @@
-import React, { useState } from 'react';
-import { Box, Typography, Button, Card, CardContent, IconButton, Chip } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, Button, Card, CardContent, IconButton, Chip, CircularProgress } from '@mui/material';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { useRouter } from 'next/router';
 
+interface Job {
+  id: string;
+  title: string;
+  type: string;
+  salary: string;
+  company: string;
+  location: string;
+  logo: string;
+}
+
 const JobListingsSection = () => {
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const jobs = [
-    {
-      title: "Technical Support Specialist",
-      type: "PART-TIME",
-      salary: "$20,000 - $25,000",
-      company: "Google Inc.",
-      location: "Tunis, Tunisia",
-      logo: "G"
-    },
-    {
-      title: "Frontend Developer",
-      type: "FULL-TIME",
-      salary: "$30,000 - $40,000",
-      company: "Microsoft",
-      location: "New York, USA",
-      logo: "M"
-    },
-    {
-      title: "UI/UX Designer",
-      type: "CONTRACT",
-      salary: "$25,000 - $35,000",
-      company: "Apple Inc.",
-      location: "California, USA",
-      logo: "A"
-    },
-    {
-      title: "Data Analyst",
-      type: "FULL-TIME",
-      salary: "$35,000 - $45,000",
-      company: "Amazon",
-      location: "Seattle, USA",
-      logo: "A"
-    },
-    {
-      title: "Product Manager",
-      type: "FULL-TIME",
-      salary: "$50,000 - $70,000",
-      company: "Meta",
-      location: "Menlo Park, USA",
-      logo: "M"
-    }
-  ];
+  // Fetch jobs from API
+  useEffect(() => {
+    const fetchLatestJobs = async () => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+        const apiUrl = `${baseUrl}post/search?limit=9&sortBy=createdAt&sortOrder=desc`;
+        
+        console.log('🔍 Fetching latest jobs for landing page');
+        
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch jobs');
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.results) {
+          // Transform API data to match component interface
+          const transformedJobs = data.results.map((job: any) => {
+            const companyName = job.user?.companyDetails?.companyName || job.user?.username || 'Company';
+            return {
+              id: job._id,
+              title: job.jobDetails?.title || 'Untitled Position',
+              type: job.jobDetails?.employmentType?.toUpperCase() || 'FULL-TIME',
+              salary: job.jobDetails?.salary?.min && job.jobDetails?.salary?.max
+                ? `${job.jobDetails.salary.currency || '$'}${job.jobDetails.salary.min.toLocaleString()} - ${job.jobDetails.salary.currency || '$'}${job.jobDetails.salary.max.toLocaleString()}`
+                : 'Salary not specified',
+              company: companyName,
+              location: job.jobDetails?.location || 'Location not specified',
+              logo: companyName.charAt(0).toUpperCase(),
+            };
+          });
+
+          setJobs(transformedJobs);
+          console.log('✅ Loaded', transformedJobs.length, 'jobs');
+        }
+      } catch (error) {
+        console.error('Error fetching latest jobs:', error);
+        // Keep empty array to show no jobs
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLatestJobs();
+  }, []);
 
   const jobsPerSlide = 3;
   const totalSlides = Math.ceil(jobs.length / jobsPerSlide);
@@ -269,32 +286,45 @@ const JobListingsSection = () => {
           </IconButton>
 
           {/* Job Cards */}
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 3,
-              overflow: 'hidden',
-              px: 2,
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}
-          >
-            {currentJobs.map((job, index) => (
-              <Card
-                key={index}
-                sx={{
-                  minWidth: 320,
-                  flex: '0 0 320px',
-                  borderRadius: 2,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  transition: 'transform 0.3s ease',
-                  backgroundColor: '#fff',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
-                  }
-                }}
-              >
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+              <CircularProgress sx={{ color: '#8310FF' }} />
+            </Box>
+          ) : jobs.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="body1" sx={{ color: '#666' }}>
+                No jobs available at the moment. Check back soon!
+              </Typography>
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 3,
+                overflow: 'hidden',
+                px: 2,
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
+              {currentJobs.map((job, index) => (
+                <Card
+                  key={job.id || index}
+                  onClick={() => router.push(`/job/${job.id}`)}
+                  sx={{
+                    minWidth: 320,
+                    flex: '0 0 320px',
+                    borderRadius: 2,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    transition: 'transform 0.3s ease',
+                    backgroundColor: '#fff',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.15)'
+                    }
+                  }}
+                >
                 <CardContent sx={{ p: 3 }}>
                   {/* Job Title and Arrow */}
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
@@ -391,35 +421,38 @@ const JobListingsSection = () => {
               </Card>
             ))}
           </Box>
+          )}
 
           {/* Pagination Dots */}
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center',
-            gap: 1.5, 
-            mt: 6,
-            mb: 2
-          }}>
-            {Array.from({ length: totalSlides }).map((_, index) => (
-              <Box
-                key={index}
-                onClick={() => goToSlide(index)}
-                sx={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: '50%',
-                  backgroundColor: index === currentSlide ? '#8310FF' : '#ddd',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: index === currentSlide ? '#8310FF' : '#bbb',
-                    transform: 'scale(1.2)'
-                  }
-                }}
-              />
-            ))}
-          </Box>
+          {!loading && jobs.length > 0 && (
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              gap: 1.5, 
+              mt: 6,
+              mb: 2
+            }}>
+              {Array.from({ length: totalSlides }).map((_, index) => (
+                <Box
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    backgroundColor: index === currentSlide ? '#8310FF' : '#ddd',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      backgroundColor: index === currentSlide ? '#8310FF' : '#bbb',
+                      transform: 'scale(1.2)'
+                    }
+                  }}
+                />
+              ))}
+            </Box>
+          )}
         </Box>
       </Box>
     </Box>
