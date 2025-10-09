@@ -219,7 +219,11 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                     </Paper>
                                 ) : (
                                     data.map((row: any) => {
-                                        const score = typeof row?.overallScore === "number" ? Math.max(0, Math.min(100, row.overallScore)) : null;
+                                        const score = typeof row.skillDetails?.[0]?.confidenceScore === "number" 
+                                            ? Math.max(0, Math.min(100, row.skillDetails[0].confidenceScore)) 
+                                            : typeof row?.overallScore === "number" 
+                                            ? Math.max(0, Math.min(100, row.overallScore)) 
+                                            : null;
                                         let level: string = "Unknown";
                                         let color: "default" | "success" | "warning" | "error" = "default";
                                         if (score !== null) {
