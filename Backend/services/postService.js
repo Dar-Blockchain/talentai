@@ -111,10 +111,114 @@ module.exports.getAllPosts = async (filters = {}) => {
     }
 
     return await Post.find(query)
-      .populate("user", "username email")
+      .populate("user", "username email companyDetails")
       .sort({ createdAt: -1 });
   } catch (error) {
     throw new Error(`Error fetching posts: ${error.message}`);
+  }
+};
+
+// Récupérer tous les posts avec recherche, filtres et pagination
+module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6) => {
+  try {
+    const {
+      search,
+      location,
+      type,
+      employmentType,
+      status = "active",
+      category,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = filters;
+
+    // Build query
+    const query = {};
+
+    // Filter by status
+    if (status) {
+      query.status = status;
+    }
+
+    // Search filter - search in title, description, requirements, and skills
+    if (search) {
+      query.$or = [
+        { "jobDetails.title": { $regex: search, $options: "i" } },
+        { "jobDetails.description": { $regex: search, $options: "i" } },
+        { "jobDetails.requirements": { $regex: search, $options: "i" } },
+        { "skillAnalysis.requiredSkills.name": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // Location filter
+    if (location && location !== "All Locations") {
+      query["jobDetails.location"] = { $regex: location, $options: "i" };
+    }
+
+    // Job type filter (Remote, On-Site, Hybrid)
+    if (type && type !== "All Types") {
+      query.$or = [
+        { "jobDetails.workType": { $regex: type, $options: "i" } },
+        { "jobDetails.type": { $regex: type, $options: "i" } },
+      ];
+    }
+
+    // Employment type filter (Full-Time, Part-Time, Contract)
+    if (employmentType && employmentType !== "All Employment Types") {
+      query["jobDetails.employmentType"] = { $regex: employmentType, $options: "i" };
+    }
+
+    // Category filter
+    if (category && category !== "All Categories") {
+      query.category = { $regex: category, $options: "i" };
+    }
+
+    // Build sort object
+    const sort = {};
+    if (sortBy === "salary") {
+      sort["jobDetails.salary.min"] = sortOrder === "asc" ? 1 : -1;
+    } else if (sortBy === "title") {
+      sort["jobDetails.title"] = sortOrder === "asc" ? 1 : -1;
+    } else {
+      sort[sortBy] = sortOrder === "asc" ? 1 : -1;
+    }
+
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+
+    // Execute query with pagination
+    const posts = await Post.find(query)
+      .populate({
+        path: "user",
+        select: "companyDetails email username",
+      })
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    // Get total count for pagination
+    const total = await Post.countDocuments(query);
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(total / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    return {
+      posts,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage,
+        hasPrevPage,
+      },
+    };
+  } catch (error) {
+    console.error("Error in getAllPostsWithSearch:", error);
+    throw new Error(`Failed to fetch posts: ${error.message}`);
   }
 };
 

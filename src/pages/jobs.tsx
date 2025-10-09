@@ -62,114 +62,10 @@ const JobSearchPage: React.FC = () => {
   const [selectedLocation, setSelectedLocation] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 6;
-
-  // Mock data - matches the design from the image
-  const mockJobs: Job[] = [
-    {
-      id: '1',
-      title: 'Fullstack JavaScript Developer',
-      company: 'TechCorp Inc.',
-      location: 'San Francisco, CA',
-      type: 'On-Site',
-      employmentType: 'Full-Time',
-      salary: { min: 120000, max: 170000, currency: 'USD' },
-      description: "We're looking for a passionate developer who thrives in fast-paced environments and enjoys working across the entire technology stack. This role offers excellent growth opportunities, mentorship from senior engineers, and the chance to work with modern technologies.",
-      datePosted: '2025-01-03',
-      skills: ['JavaScript', 'React', 'Node.js', 'MongoDB'],
-      logo: 'TC'
-    },
-    {
-      id: '2',
-      title: 'Senior Frontend Engineer',
-      company: 'InnovateLab',
-      location: 'New York, NY',
-      type: 'Hybrid',
-      employmentType: 'Full-Time',
-      salary: { min: 140000, max: 180000, currency: 'USD' },
-      description: "Join our team to build cutting-edge user interfaces that millions of users interact with daily. We're looking for someone with strong React expertise and a passion for creating exceptional user experiences.",
-      datePosted: '2025-01-02',
-      skills: ['React', 'TypeScript', 'CSS', 'Webpack'],
-      logo: 'IL'
-    },
-    {
-      id: '3',
-      title: 'Backend Developer',
-      company: 'DataFlow Systems',
-      location: 'Austin, TX',
-      type: 'Remote',
-      employmentType: 'Full-Time',
-      salary: { min: 110000, max: 150000, currency: 'USD' },
-      description: "Help us build scalable backend systems that handle millions of requests. Experience with microservices, cloud platforms, and database optimization is highly valued.",
-      datePosted: '2025-01-01',
-      skills: ['Python', 'Django', 'AWS', 'PostgreSQL'],
-      logo: 'DF'
-    },
-    {
-      id: '4',
-      title: 'Mobile App Developer',
-      company: 'AppVenture',
-      location: 'Seattle, WA',
-      type: 'On-Site',
-      employmentType: 'Full-Time',
-      salary: { min: 100000, max: 140000, currency: 'USD' },
-      description: "Create beautiful and functional mobile applications for iOS and Android. We're looking for developers who love clean code and user-centered design.",
-      datePosted: '2024-12-30',
-      skills: ['React Native', 'iOS', 'Android', 'JavaScript'],
-      logo: 'AV'
-    },
-    {
-      id: '5',
-      title: 'DevOps Engineer',
-      company: 'CloudScale',
-      location: 'Denver, CO',
-      type: 'Remote',
-      employmentType: 'Full-Time',
-      salary: { min: 130000, max: 160000, currency: 'USD' },
-      description: "Manage our cloud infrastructure and deployment pipelines. Help us scale our systems and improve our development workflows with modern DevOps practices.",
-      datePosted: '2024-12-29',
-      skills: ['Docker', 'Kubernetes', 'AWS', 'Terraform'],
-      logo: 'CS'
-    },
-    {
-      id: '6',
-      title: 'UI/UX Designer',
-      company: 'DesignStudio Pro',
-      location: 'Los Angeles, CA',
-      type: 'Hybrid',
-      employmentType: 'Full-Time',
-      salary: { min: 80000, max: 120000, currency: 'USD' },
-      description: "Design intuitive and beautiful user interfaces for web and mobile applications. Work closely with product managers and developers to create exceptional user experiences.",
-      datePosted: '2024-12-28',
-      skills: ['Figma', 'Adobe Creative Suite', 'Prototyping', 'User Research'],
-      logo: 'DS'
-    },
-    {
-      id: '7',
-      title: 'Data Scientist',
-      company: 'AnalyticsCorp',
-      location: 'Boston, MA',
-      type: 'On-Site',
-      employmentType: 'Full-Time',
-      salary: { min: 120000, max: 160000, currency: 'USD' },
-      description: "Extract insights from large datasets to drive business decisions. Work with machine learning models and statistical analysis to solve complex problems.",
-      datePosted: '2024-12-27',
-      skills: ['Python', 'R', 'Machine Learning', 'SQL'],
-      logo: 'AC'
-    },
-    {
-      id: '8',
-      title: 'Product Manager',
-      company: 'ProductVision',
-      location: 'Chicago, IL',
-      type: 'Hybrid',
-      employmentType: 'Full-Time',
-      salary: { min: 130000, max: 170000, currency: 'USD' },
-      description: "Lead product strategy and work with cross-functional teams to deliver features that users love. Experience in agile methodologies and user research preferred.",
-      datePosted: '2024-12-26',
-      skills: ['Product Strategy', 'Agile', 'User Research', 'Analytics'],
-      logo: 'PV'
-    }
-  ];
+  
+  // Pagination metadata from API
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalJobs, setTotalJobs] = useState(0);
 
   const categories = [
     'All Categories',
@@ -195,36 +91,81 @@ const JobSearchPage: React.FC = () => {
     'Remote'
   ];
 
-  useEffect(() => {
-    // Simulate API call
+  // Fetch jobs from backend API
+  const fetchJobs = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setJobs(mockJobs);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: jobsPerPage.toString(),
+        status: 'active',
+      });
+
+      // Add optional filters
+      if (searchQuery) params.append('search', searchQuery);
+      if (selectedCategory && selectedCategory !== 'All Categories') {
+        params.append('category', selectedCategory);
+      }
+      if (selectedLocation && selectedLocation !== 'All Locations') {
+        params.append('location', selectedLocation);
+      }
+
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+      const apiUrl = `${baseUrl}post/search?${params}`;
+      
+      const response = await fetch(apiUrl);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch jobs');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Transform backend data to match frontend Job interface
+        const transformedJobs = (data.results || []).map((job: any) => ({
+          id: job._id,
+          title: job.jobDetails?.title || 'Untitled Position',
+          company: job.user?.companyDetails?.companyName || 'Company',
+          location: job.jobDetails?.location || 'Location not specified',
+          type: job.jobDetails?.workType || job.jobDetails?.type || 'On-Site',
+          employmentType: job.jobDetails?.employmentType || 'Full-Time',
+          salary: {
+            min: job.jobDetails?.salary?.min || 0,
+            max: job.jobDetails?.salary?.max || 0,
+            currency: job.jobDetails?.salary?.currency || 'USD',
+          },
+          description: job.jobDetails?.description || 'No description available',
+          datePosted: job.createdAt || new Date().toISOString(),
+          skills: job.skillAnalysis?.requiredSkills?.map((skill: any) => 
+            typeof skill === 'string' ? skill : skill.name
+          ) || [],
+          logo: job.user?.companyDetails?.logo || undefined,
+        }));
+
+        setJobs(transformedJobs);
+        setTotalPages(data.totalPages || 1);
+        setTotalJobs(data.total || 0);
+      } else {
+        setError(data.message || 'Failed to fetch jobs');
+      }
+    } catch (err) {
+      setError('Error loading jobs. Please try again later.');
+      console.error('Error fetching jobs:', err);
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, []);
+    }
+  };
 
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch = !searchQuery || 
-      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesCategory = !selectedCategory || selectedCategory === 'All Categories';
-    const matchesLocation = !selectedLocation || selectedLocation === 'All Locations' || 
-      job.location.includes(selectedLocation);
-    
-    return matchesSearch && matchesCategory && matchesLocation;
-  });
-
-  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
-  const startIndex = (currentPage - 1) * jobsPerPage;
-  const endIndex = startIndex + jobsPerPage;
-  const currentJobs = filteredJobs.slice(startIndex, endIndex);
+  useEffect(() => {
+    fetchJobs();
+  }, [currentPage]);
 
   const handleSearch = () => {
     setCurrentPage(1);
-    // In a real app, this would trigger an API call
+    fetchJobs();
   };
 
   const handleJobClick = (jobId: string) => {
@@ -403,7 +344,7 @@ const JobSearchPage: React.FC = () => {
         {/* Results Header - matches the image */}
         <Box sx={{ mb: 3 }}>
           <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
-            Discover {filteredJobs.length} job listings :
+            Discover {totalJobs} job listings :
           </Typography>
         </Box>
 
@@ -425,7 +366,7 @@ const JobSearchPage: React.FC = () => {
         {!loading && !error && (
           <>
             <Grid container spacing={3} sx={{ mb: 4 }}>
-              {currentJobs.map((job) => (
+              {jobs.map((job) => (
                 <Grid size={{ xs: 12 }} key={job.id}>
                   <Card 
                     sx={{ 
@@ -590,7 +531,7 @@ const JobSearchPage: React.FC = () => {
         )}
 
         {/* No Results */}
-        {!loading && !error && filteredJobs.length === 0 && (
+        {!loading && !error && jobs.length === 0 && (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <Typography variant="h6" sx={{ color: '#666', mb: 2 }}>
               No jobs found matching your criteria

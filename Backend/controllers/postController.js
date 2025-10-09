@@ -47,6 +47,70 @@ exports.getAllPosts = async (req, res) => {
   }
 };
 
+// Récupérer tous les posts avec recherche, filtres et pagination
+exports.getAllPostsWithSearch = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 6,
+      search,
+      location,
+      type,
+      employmentType,
+      status = "active",
+      category,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
+
+    // Parse pagination parameters
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+
+    // Build filters object
+    const filters = {
+      search,
+      location,
+      type,
+      employmentType,
+      status,
+      category,
+      sortBy,
+      sortOrder,
+    };
+
+    // Get posts from service
+    const result = await postService.getAllPostsWithSearch(filters, pageNum, limitNum);
+
+    res.status(200).json({
+      success: true,
+      results: result.posts,
+      total: result.pagination.total,
+      page: result.pagination.page,
+      limit: result.pagination.limit,
+      totalPages: result.pagination.totalPages,
+      hasNextPage: result.pagination.hasNextPage,
+      hasPrevPage: result.pagination.hasPrevPage,
+      filters: {
+        search,
+        location,
+        type,
+        employmentType,
+        status,
+        category,
+        sortBy,
+        sortOrder,
+      },
+    });
+  } catch (error) {
+    console.error("Error in getAllPostsWithSearch controller:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Failed to fetch posts",
+    });
+  }
+};
+
 // Récupérer un post par son ID
 exports.getPostById = async (req, res) => {
   try {
