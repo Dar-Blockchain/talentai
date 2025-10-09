@@ -57,7 +57,7 @@ exports.getAllPostsWithSearch = async (req, res) => {
       location,
       type,
       employmentType,
-      status = "active",
+      status, // Removed default "active" to show all posts
       category,
       sortBy = "createdAt",
       sortOrder = "desc",
@@ -107,6 +107,26 @@ exports.getAllPostsWithSearch = async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message || "Failed to fetch posts",
+    });
+  }
+};
+
+// Récupérer les détails d'un post par son ID (public, no auth required)
+exports.getPostDetailsPublic = async (req, res) => {
+  try {
+    const post = await postService.getPostById(req.params.id);
+    
+    console.log('📄 Public job details requested for ID:', req.params.id);
+    
+    res.status(200).json({
+      success: true,
+      data: post,
+    });
+  } catch (error) {
+    console.error('❌ Error fetching public job details:', error);
+    res.status(404).json({
+      success: false,
+      error: error.message || 'Job not found',
     });
   }
 };

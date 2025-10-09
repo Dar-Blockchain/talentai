@@ -100,7 +100,8 @@ const JobSearchPage: React.FC = () => {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: jobsPerPage.toString(),
-        status: 'active',
+        // Temporarily removed status filter to see all posts
+        // status: 'active',
       });
 
       // Add optional filters
@@ -113,15 +114,24 @@ const JobSearchPage: React.FC = () => {
       }
 
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-      const apiUrl = `${baseUrl}post/search?${params}`;
+      const apiUrl = `${baseUrl}post/search?${params}`;  // ⚠️ SLASH IS REQUIRED!
+      
+      console.log('🔍 Fetching jobs from:', apiUrl);
       
       const response = await fetch(apiUrl);
       
+      console.log('📡 Response status:', response.status, response.statusText);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch jobs');
+        const errorText = await response.text();
+        console.error('❌ API Error:', errorText);
+        throw new Error(`Failed to fetch jobs: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('📦 API Response:', data);
+      console.log('📊 Total posts found:', data.total);
+      console.log('📄 Posts in this page:', data.results?.length || 0);
 
       if (data.success) {
         // Transform backend data to match frontend Job interface
@@ -170,12 +180,7 @@ const JobSearchPage: React.FC = () => {
 
   const handleJobClick = (jobId: string) => {
     // Navigate to job details page
-    console.log('View job details:', jobId);
-  };
-
-  const handleApply = (jobId: string) => {
-    // Handle job application
-    console.log('Apply for job:', jobId);
+    router.push(`/job/${jobId}`);
   };
 
   const formatSalary = (salary: Job['salary']) => {
@@ -462,44 +467,23 @@ const JobSearchPage: React.FC = () => {
                       </Typography>
 
                       {/* Action Buttons - matches the image */}
-                      <Stack direction="row" spacing={1}>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => handleJobClick(job.id)}
-                          sx={{
-                            flex: 1,
-                            textTransform: 'none',
-                            fontWeight: 600,
-                            borderColor: '#1976d2',
-                            color: '#1976d2',
-                            '&:hover': {
-                              borderColor: '#1565c0',
-                              backgroundColor: 'rgba(25, 118, 210, 0.04)',
-                            }
-                          }}
-                        >
-                          VIEW DETAILS
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => handleApply(job.id)}
-                          sx={{
-                            flex: 1,
-                            textTransform: 'none',
-                            fontWeight: 600,
-                            borderColor: '#e0e0e0',
-                            color: '#666',
-                            '&:hover': {
-                              borderColor: '#ccc',
-                              backgroundColor: '#f5f5f5',
-                            }
-                          }}
-                        >
-                          APPLY
-                        </Button>
-                      </Stack>
+                      <Button
+                        variant="contained"
+                        size="medium"
+                        fullWidth
+                        onClick={() => handleJobClick(job.id)}
+                        sx={{
+                          textTransform: 'none',
+                          fontWeight: 600,
+                          backgroundColor: '#8310FF',
+                          color: 'white',
+                          '&:hover': {
+                            backgroundColor: '#6B0BC7',
+                          }
+                        }}
+                      >
+                        View Details
+                      </Button>
                     </CardContent>
                   </Card>
                 </Grid>

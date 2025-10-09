@@ -126,7 +126,7 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
       location,
       type,
       employmentType,
-      status = "active",
+      status, // Removed default "active" to show all posts
       category,
       sortBy = "createdAt",
       sortOrder = "desc",
@@ -135,9 +135,12 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
     // Build query
     const query = {};
 
+    console.log('🔍 getAllPostsWithSearch called with filters:', filters);
+
     // Filter by status
     if (status) {
       query.status = status;
+      console.log('  - Filtering by status:', status);
     }
 
     // Search filter - search in title, description, requirements, and skills
@@ -186,6 +189,9 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
     // Calculate pagination
     const skip = (page - 1) * limit;
 
+    console.log('📊 Final MongoDB query:', JSON.stringify(query, null, 2));
+    console.log('📄 Pagination: page', page, 'limit', limit, 'skip', skip);
+
     // Execute query with pagination
     const posts = await Post.find(query)
       .populate({
@@ -199,6 +205,9 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
 
     // Get total count for pagination
     const total = await Post.countDocuments(query);
+
+    console.log('✅ Query results: Found', posts.length, 'posts on this page');
+    console.log('📊 Total matching posts in database:', total);
 
     // Calculate pagination metadata
     const totalPages = Math.ceil(total / limit);
