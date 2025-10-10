@@ -169,13 +169,38 @@ const JobSearchPage: React.FC = () => {
     }
   };
 
+  // Initialize search params from URL on page load and trigger search
   useEffect(() => {
-    fetchJobs();
-  }, [currentPage]);
+    if (router.isReady) {
+      const { search, location, category } = router.query;
+      
+      // Set state from URL parameters
+      if (search && typeof search === 'string') {
+        setSearchQuery(search);
+      }
+      if (location && typeof location === 'string') {
+        setSelectedLocation(location);
+      }
+      if (category && typeof category === 'string') {
+        setSelectedCategory(category);
+      }
+    }
+  }, [router.isReady, router.query]);
+
+  // Fetch jobs whenever search parameters or page changes
+  useEffect(() => {
+    if (router.isReady) {
+      fetchJobs();
+    }
+  }, [currentPage, searchQuery, selectedCategory, selectedLocation, router.isReady]);
 
   const handleSearch = () => {
-    setCurrentPage(1);
-    fetchJobs();
+    // If already on page 1, force a fetch. Otherwise, set to page 1 which will trigger fetch
+    if (currentPage === 1) {
+      fetchJobs();
+    } else {
+      setCurrentPage(1);
+    }
   };
 
   const handleJobClick = (jobId: string) => {
@@ -247,7 +272,7 @@ const JobSearchPage: React.FC = () => {
               lineHeight: 1.6
             }}
           >
-            Discover top jobs from over 22,000 listings across industries and roles. 
+            Discover top jobs from over {totalJobs > 0 ? totalJobs.toLocaleString() : '22,000'} listings across industries and roles. 
             Filter the best remote opportunities by location and category, with thousands 
             of new positions added each month.
           </Typography>

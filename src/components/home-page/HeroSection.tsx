@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Box, Button, Typography, Stack, IconButton, TextField, InputAdornment } from "@mui/material";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
@@ -19,6 +19,18 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  
+  // Job search states
+  const [jobTitle, setJobTitle] = useState('');
+  const [location, setLocation] = useState('');
+  const [category, setCategory] = useState('');
+  
+  // Statistics states
+  const [stats, setStats] = useState({
+    users: '100K+',
+    jobs: '20K+',
+    companies: '+500'
+  });
 
   const handlePlayPause = () => {
     if (videoRef.current) {
@@ -33,6 +45,55 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
 
   const handleVideoEnded = () => {
     setIsPlaying(false);
+  };
+
+  // Fetch real statistics
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+        const response = await fetch(`${baseUrl}post/public-stats`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data) {
+            const { users, posts, companies } = data.data;
+            
+            // Format numbers to match the desired style
+            const formatNumber = (num: number, prefix: boolean = false) => {
+              if (num >= 1000) {
+                const formatted = Math.floor(num / 1000);
+                return `${formatted}K+`;
+              }
+              return prefix ? `+${num}` : `${num}+`;
+            };
+            
+            setStats({
+              users: formatNumber(users, false),      // e.g., "100K+" or "500+"
+              jobs: formatNumber(posts, false),       // e.g., "20K+" or "150+"
+              companies: formatNumber(companies, true) // e.g., "+500" or "2K+"
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+
+    if (type !== 'company') {
+      fetchStats();
+    }
+  }, [type]);
+
+  // Handle job search
+  const handleJobSearch = () => {
+    const params = new URLSearchParams();
+    if (jobTitle) params.append('search', jobTitle);
+    if (location) params.append('location', location);
+    if (category) params.append('category', category);
+    
+    const queryString = params.toString();
+    router.push(`/jobs${queryString ? `?${queryString}` : ''}`);
   };
 
   return (
@@ -307,6 +368,13 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
                 placeholder="Job Title"
                 variant="outlined"
                 size="medium"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleJobSearch();
+                  }
+                }}
                 sx={{
                   flex: 1,
                   "& .MuiOutlinedInput-root": {
@@ -336,6 +404,13 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
                 placeholder="All Location"
                 variant="outlined"
                 size="medium"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleJobSearch();
+                  }
+                }}
                 sx={{
                   flex: 1,
                   "& .MuiOutlinedInput-root": {
@@ -365,6 +440,13 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
                 placeholder="Category"
                 variant="outlined"
                 size="medium"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleJobSearch();
+                  }
+                }}
                 sx={{
                   flex: 1,
                   "& .MuiOutlinedInput-root": {
@@ -391,7 +473,7 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
               />
               <Button
                 variant="contained"
-                onClick={() => router.push('/jobs')}
+                onClick={handleJobSearch}
                 sx={{
                   backgroundColor: color,
                   color: "#fff",
@@ -428,7 +510,7 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
             >
               <Box sx={{ flex: 1, p: 3, textAlign: "center" }}>
                 <Typography variant="h4" fontWeight={800} color="#000" sx={{ mb: 0.5 }}>
-                  100K+
+                  {stats.users}
                 </Typography>
                 <Typography variant="body2" color="#6b7280" sx={{ fontSize: "14px", fontWeight: 500 }}>
                   Users
@@ -437,7 +519,7 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
               <Box sx={{ width: "1px", backgroundColor: "#e5e7eb", my: 2 }} />
               <Box sx={{ flex: 1, p: 3, textAlign: "center" }}>
                 <Typography variant="h4" fontWeight={800} color="#000" sx={{ mb: 0.5 }}>
-                  20K+
+                  {stats.jobs}
                 </Typography>
                 <Typography variant="body2" color="#6b7280" sx={{ fontSize: "14px", fontWeight: 500 }}>
                   Job Vacancy
@@ -446,7 +528,7 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
               <Box sx={{ width: "1px", backgroundColor: "#e5e7eb", my: 2 }} />
               <Box sx={{ flex: 1, p: 3, textAlign: "center" }}>
                 <Typography variant="h4" fontWeight={800} color="#000" sx={{ mb: 0.5 }}>
-                  +500
+                  {stats.companies}
                 </Typography>
                 <Typography variant="body2" color="#6b7280" sx={{ fontSize: "14px", fontWeight: 500 }}>
                   Companies

@@ -25,6 +25,10 @@ router.get("/search", postController.getAllPostsWithSearch);
 // Description: Retourne les détails d'un post par son ID (public)
 router.get("/details/:id", postController.getPostDetailsPublic);
 
+// GET /post/public-stats
+// Description: Retourne les statistiques publiques (nombre d'utilisateurs, posts, entreprises)
+router.get("/public-stats", postController.getPublicStats);
+
 // Auth obligatoire + logs pour toutes les routes
 router.use(requireAuthUser, authLogMiddleware("Post"));
 
