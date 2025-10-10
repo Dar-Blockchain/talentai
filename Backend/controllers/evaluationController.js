@@ -12,6 +12,7 @@ const JobAssessmentResult = require("../models/JobAssessmentResultModel");
 const Profile = require("../models/ProfileModel");
 const TodoList = require("../models/todoListModel");
 const Post = require("../models/PostModel");
+const InterviewDetails = require("../models/InterviewDetailsModel");
 
 const postService = require("../services/postService");
 const evaluationservice = require("../services/evaluationService");
@@ -480,6 +481,7 @@ function getMasteryCategory(score) {
 const profileService = require("../services/profileService");
 const { HttpError } = require("../utils/httpUtils");
 const { SKILL_TYPES } = require("../constants/profileConstants");
+const { INTERVIEW_TYPES } = require("../constants/interviewDetailsConstants");
 
 /**
  * Calcule le score moyen et le nombre total de compétences
@@ -864,7 +866,7 @@ Provide detailed, actionable feedback in JSON format only.
       interviewProfile = existingProfile;
 
       //overallScore is fixed
-      await profileService.createOrUpdateProfile(_id, {
+      await profileService.createOrUpdateProfile(id, {
         overallScore: averageScore,
         skills: analysis.skillAnalysis.map((skill) => ({
           name: skill.skillName,
@@ -877,6 +879,61 @@ Provide detailed, actionable feedback in JSON format only.
               : skill.demonstratedProficiency - 1,
         })),
       });
+
+      // Mettre à jour le dernier InterviewDetails existant (type SKILL) si présent
+      try {
+        const lastInterview = await InterviewDetails.findOne({
+          candidate: existingProfile._id,
+          type: INTERVIEW_TYPES.SKILL,
+        })
+          .sort({ createdAt: -1 })
+          .exec();
+
+        if (lastInterview) {
+          const details = analysis.skillAnalysis.map((skill) => ({
+            name: skill.skillName,
+            type: SKILL_TYPES.HARD,
+            proficiencyLevel: skill.demonstratedProficiency,
+            confidenceScore: skill.confidenceScore,
+            questionAnswerList: Array.isArray(skill.questionAnswerList)
+              ? skill.questionAnswerList.map((qa) => ({
+                  question: qa.question,
+                  answer: qa.answer || "unanswered",
+                  status: qa.status,
+                  exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
+                }))
+              : [],
+          }));
+
+          await InterviewDetails.findByIdAndUpdate(
+            lastInterview._id,
+            {
+              $set: {
+                overallScore: averageScore,
+                skillDetails: details,
+                recommendations: analysis.recommendations,
+              },
+            },
+            { new: true }
+          );
+        } else {
+          // Si aucun n'existe, fallback à la création puis push dans le profil
+          const interviewId = await saveInterviewDetailsForAddSkill(
+            existingProfile,
+            averageScore,
+            analysis.skillAnalysis,
+            SKILL_TYPES.HARD,
+            analysis.recommendations
+          );
+
+          if (!existingProfile.interviewDetails)
+            existingProfile.interviewDetails = [];
+          existingProfile.interviewDetails.push(interviewId);
+          await existingProfile.save();
+        }
+      } catch (err) {
+        console.warn("Mise à jour de InterviewDetails échouée:", err.message);
+      }
     }
 
     if (type === "soft") {
