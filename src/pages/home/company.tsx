@@ -1,9 +1,5 @@
 import HeroSection from "@/components/home-page/HeroSection";
-import FeaturesSection from "@/components/home-page/FeaturesSection";
-import ContactSection from "@/components/home-page/ContactSection";
-import PricingSection from "@/components/home-page/PricingSection";
-import SolutionsSection from "@/components/home-page/SolutionsSection";
-import PartnersSection from "@/components/home-page/PartnersSection";
+
 import AISpotlight from "@/components/home-page/AISpotlight";
 import GlobalCompanies from "@/components/home-page/GlobalCompanies";
 import BiasFreeEvaluation from "@/components/home-page/BiasFreeEvaluation";
@@ -11,7 +7,6 @@ import Testimonials from "@/components/home-page/Testimonials";
 import FindSection from "@/components/home-page/FindSection";
 import ManageSection from "@/components/home-page/ManageSection";
 import AutomateSection from "@/components/home-page/AutomateSection";
-import IntegrationsSection from "@/components/home-page/IntegrationsSection";
 import AccoladesSection from "@/components/home-page/AccoladesSection";
 import FinalPricingCTA from "@/components/home-page/FinalPricingCTA";
 import Footer  from "@/components/home-page/Footer";
@@ -30,15 +25,7 @@ const HomePage: React.FC = () => {
       <Testimonials />
       <FindSection />
       <AutomateSection />
-
       <ManageSection />
-      {/* <IntegrationsSection /> */}
-      {/* <PartnersSection /> */}
-      {/* <FeaturesSection type="company" color="#29D291D4" />
-      <SolutionsSection type="company" color="#29D291D4" title="Why Choose" subtitle="From Guesswork to Precision—Redefine How You Hire" />
-      <PricingSection />
-      <ContactSection type="company" color="#29D291D4" />
-       <Footer type="company" /> */}
       <FinalPricingCTA />
       <Footer />
     </div>
