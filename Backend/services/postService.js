@@ -144,13 +144,26 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
     }
 
     // Search filter - search in title, description, requirements, and skills
+    // Split search terms to match partial words (e.g., "full stack" matches "Full-Stack Developer")
     if (search) {
-      query.$or = [
-        { "jobDetails.title": { $regex: search, $options: "i" } },
-        { "jobDetails.description": { $regex: search, $options: "i" } },
-        { "jobDetails.requirements": { $regex: search, $options: "i" } },
-        { "skillAnalysis.requiredSkills.name": { $regex: search, $options: "i" } },
-      ];
+      const searchTerms = search.trim().split(/\s+/);
+      const searchConditions = [];
+      
+      // For each search term, search across multiple fields
+      searchTerms.forEach(term => {
+        searchConditions.push(
+          { "jobDetails.title": { $regex: term, $options: "i" } },
+          { "jobDetails.description": { $regex: term, $options: "i" } },
+          { "jobDetails.requirements": { $regex: term, $options: "i" } },
+          { "skillAnalysis.requiredSkills.name": { $regex: term, $options: "i" } }
+        );
+      });
+      
+      // Use $or to match any of the search conditions
+      query.$or = searchConditions;
+      
+      console.log('  - Search terms:', searchTerms);
+      console.log('  - Number of search conditions:', searchConditions.length);
     }
 
     // Location filter
@@ -160,10 +173,21 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
 
     // Job type filter (Remote, On-Site, Hybrid)
     if (type && type !== "All Types") {
-      query.$or = [
+      const typeConditions = [
         { "jobDetails.workType": { $regex: type, $options: "i" } },
         { "jobDetails.type": { $regex: type, $options: "i" } },
       ];
+      
+      // If there's already an $or from search, combine using $and
+      if (query.$or) {
+        query.$and = [
+          { $or: query.$or },
+          { $or: typeConditions }
+        ];
+        delete query.$or;
+      } else {
+        query.$or = typeConditions;
+      }
     }
 
     // Employment type filter (Full-Time, Part-Time, Contract)

@@ -273,3 +273,34 @@ exports.sendTechnicalTest = async (req, res) => {
     });
   }
 };
+
+// Get public statistics (users, posts, companies)
+exports.getPublicStats = async (req, res) => {
+  try {
+    const User = require("../models/UserModel");
+    const Post = require("../models/PostModel");
+
+    // Count total users
+    const userCount = await User.countDocuments();
+
+    // Count total posts
+    const postCount = await Post.countDocuments();
+
+    // Count companies from User table (where role is 'Company')
+    const companyCount = await User.countDocuments({ role: "Company" });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        users: userCount,
+        posts: postCount,
+        companies: companyCount,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
