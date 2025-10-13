@@ -534,8 +534,8 @@ exports.analyzeProfileAnswers = async (req, res) => {
   try {
     // 1. Validate request body
     const { type, skill, questions } = req.body;
-    //const id = req.user._id;
-    const id = "68e9325a63441cf0aba40000";
+    const id = req.user._id;
+    //const id = "68e9325a63441cf0aba40000";
 
     if (!type || !Array.isArray(skill) || !Array.isArray(questions)) {
       return res.status(400).json({
