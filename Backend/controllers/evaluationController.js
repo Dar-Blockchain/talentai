@@ -535,7 +535,7 @@ exports.analyzeProfileAnswers = async (req, res) => {
     // 1. Validate request body
     const { type, skill, questions } = req.body;
     //const id = req.user._id;
-    const id = "68e7888fa8e39aa22f8e3f57";
+    const id = "68e9325a63441cf0aba40000";
 
     if (!type || !Array.isArray(skill) || !Array.isArray(questions)) {
       return res.status(400).json({
@@ -880,60 +880,67 @@ Provide detailed, actionable feedback in JSON format only.
         })),
       });
 
-      // Mettre à jour le dernier InterviewDetails existant (type SKILL) si présent
       try {
-        const lastInterview = await InterviewDetails.findOne({
-          candidate: existingProfile._id,
-          type: INTERVIEW_TYPES.SKILL,
-        })
-          .sort({ createdAt: -1 })
-          .exec();
-
-        if (lastInterview) {
-          const details = analysis.skillAnalysis.map((skill) => ({
-            name: skill.skillName,
-            type: SKILL_TYPES.HARD,
-            proficiencyLevel: skill.demonstratedProficiency,
-            confidenceScore: skill.confidenceScore,
-            questionAnswerList: Array.isArray(skill.questionAnswerList)
-              ? skill.questionAnswerList.map((qa) => ({
-                  question: qa.question,
-                  answer: qa.answer || "unanswered",
-                  status: qa.status,
-                  exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
-                }))
-              : [],
-          }));
-
-          await InterviewDetails.findByIdAndUpdate(
-            lastInterview._id,
-            {
-              $set: {
-                overallScore: averageScore,
-                skillDetails: details,
-                recommendations: analysis.recommendations,
-              },
-            },
-            { new: true }
-          );
+        // 🧩 Récupération des infos principales
+        const candidateId = existingProfile._id;
+        const skillNames = analysis.skillAnalysis.map((s) => s.skillName);
+        const interviewType = INTERVIEW_TYPES.SKILL;
+      
+        // 🔍 1️⃣ Recherche de l’interview correspondante
+        // On cherche un InterviewDetails du même candidat, de type SKILL,
+        // et contenant au moins un skill correspondant (même nom)
+        let interview = await InterviewDetails.findOne({
+          candidate: candidateId,
+          "skillDetails.name": { $in: skillNames },
+        }).sort({ updatedAt: -1 });
+      
+        // 🧠 2️⃣ Préparation des skillDetails à insérer / mettre à jour
+        const skillDetailsData = analysis.skillAnalysis.map((skill) => ({
+          name: skill.skillName,
+          type: SKILL_TYPES.HARD,
+          proficiencyLevel: skill.demonstratedProficiency,
+          confidenceScore: skill.confidenceScore,
+          questionAnswerList: Array.isArray(skill.questionAnswerList)
+            ? skill.questionAnswerList.map((qa) => ({
+                question: qa.question,
+                answer: qa.answer || "unanswered",
+                status: qa.status || "incorrect",
+                exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
+              }))
+            : [],
+        }));
+      
+        // 🧩 3️⃣ Si une interview correspondante existe → mise à jour
+        if (interview) {
+          interview.skillDetails = skillDetailsData;
+          interview.overallScore = analysis.overallScore || analysis.averageScore;
+          interview.recommendations = analysis.recommendations || [];
+          await interview.save();
         } else {
-          // Si aucun n'existe, fallback à la création puis push dans le profil
-          const interviewId = await saveInterviewDetailsForAddSkill(
-            existingProfile,
-            averageScore,
-            analysis.skillAnalysis,
-            SKILL_TYPES.HARD,
-            analysis.recommendations
-          );
-
+          // 🆕 4️⃣ Sinon → création d’une nouvelle interview
+          const newInterview = await InterviewDetails.create({
+            candidate: candidateId,
+            type: interviewType,
+            overallScore: analysis.overallScore || analysis.averageScore,
+            skillDetails: skillDetailsData,
+            recommendations: analysis.recommendations || [],
+            questions: questions?.map((q) => ({
+              question: q.question,
+              answer: q.answer,
+              status: "pending",
+            })) || [],
+          });
+      
+          // 🧷 Ajout de l’interview au profil
           if (!existingProfile.interviewDetails)
             existingProfile.interviewDetails = [];
-          existingProfile.interviewDetails.push(interviewId);
+          existingProfile.interviewDetails.push(newInterview._id);
           await existingProfile.save();
         }
       } catch (err) {
-        console.warn("Mise à jour de InterviewDetails échouée:", err.message);
+        console.warn("⚠️ Erreur mise à jour InterviewDetails:", err.message);
       }
+      
     }
 
     if (type === "soft") {
