@@ -16,7 +16,6 @@ const HomePage: React.FC = () => {
   return (
     <div style={{ backgroundColor: '#EFF0F0' }}>
       <Header logo="/images/home/TalentaiCompany.svg" type="company" color="#29D291D4" link="Are you a Job Seeker?" />
-
       <HeroSection title="Revolutionize Your Hiring with" color="#29D291D4" type="company" subtitle="AI-Powered Intelligence" />
       <AccoladesSection />
       <AISpotlight />
