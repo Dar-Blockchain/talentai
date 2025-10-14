@@ -277,6 +277,7 @@ export default function DashboardCandidate() {
   const handleCloseTestModal = useCallback(() => {
     setTestModalOpen(false);
     setSkillType("");
+    setSelectedCategory("");
     setSelectedSkill("");
     setSoftSkillType("");
     setSoftSkillLanguage("");
@@ -504,6 +505,9 @@ export default function DashboardCandidate() {
                      primaryAccentColor={GREEN_MAIN}
                      skillType={skillType}
                      onSkillTypeChange={handleSkillTypeChange}
+                     skillCategories={skillCategories}
+                     selectedCategory={selectedCategory}
+                     onSelectedCategoryChange={(v) => setSelectedCategory(v)}
                      technicalSkillsList={technicalSkillsList}
                      selectedSkill={selectedSkill}
                      onSelectedSkillChange={(v) => setSelectedSkill(v)}
@@ -519,6 +523,8 @@ export default function DashboardCandidate() {
                      router={router}
                      toast={toast}
                      getExperienceLevelFromProficiency={getExperienceLevelFromProficiency}
+                     profileSkills={profile?.skills || []}
+                     profileSoftSkills={profile?.softSkills || []}
                    />
 
               {/* Recommended Opportunities */}
