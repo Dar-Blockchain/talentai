@@ -45,7 +45,9 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
             lineHeight: 1.2,
           }}
         >
-          Welcome back, {profile?.userId?.username || "John"}
+          Welcome back, {profile?.userId?.FirstName && profile?.userId?.LastName 
+            ? `${profile.userId.FirstName} ${profile.userId.LastName}` 
+            :  profile?.userId?.username || "User"}
         </Typography>
         
         <Typography
@@ -73,7 +75,9 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
                 fontWeight: 400,
               }}
             >
-              {profile?.userId?.username || "ahmedmak"}
+              {profile?.userId?.FirstName && profile?.userId?.LastName 
+                ? `${profile.userId.FirstName} ${profile.userId.LastName}` 
+                : profile?.userId?.username || "User"}
             </Typography>
           </Box>
           

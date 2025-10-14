@@ -30,8 +30,12 @@ function SkillBlockComponent({ skill, type, onStartTest, onDelete, greenMain }: 
     return levelMap[level] || "Entry Level";
   };
 
+  // Use ScoreTest if available, otherwise fallback to proficiency level
+  const scoreTest = skill.ScoreTest || 0;
+  const percentage = scoreTest; // ScoreTest is already a percentage
+  
+  // Keep proficiency level for level badges
   const proficiencyLevel = type === "technical" ? skill.proficiencyLevel : proficiencyMap[skill.experienceLevel] || 1;
-  const percentage = (proficiencyLevel / 5) * 100;
 
   return (
     <Paper
@@ -54,23 +58,36 @@ function SkillBlockComponent({ skill, type, onStartTest, onDelete, greenMain }: 
       }}
     >
       <Box sx={{ flex: 1 }}>
-        <Tooltip
-          title={`Score: ${percentage.toFixed(1)}%`}
-          arrow
-          placement="top"
-        >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Typography
             sx={{
               color: '#000000',
               fontWeight: 600,
               fontSize: '1.125rem',
-              mb: 1,
-              cursor: 'help',
             }}
           >
             {skill.name}
           </Typography>
-        </Tooltip>
+          <Tooltip
+            title={scoreTest > 0 ? `Test Score: ${percentage.toFixed(1)}%` : 'No test score yet'}
+            arrow
+            placement="top"
+          >
+            <Chip
+              label={`${percentage.toFixed(1)}%`}
+              size="small"
+              sx={{
+                backgroundColor: scoreTest > 0 ? '#8310FF' : '#CCCCCC',
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '0.75rem',
+                height: 22,
+                borderRadius: 1,
+                cursor: 'help',
+              }}
+            />
+          </Tooltip>
+        </Box>
         
         {type === "soft" && (
           <Typography
