@@ -10,7 +10,11 @@
   }
 }
 
-html,
+html {
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
 body {
   /* max-width: 1400px; */
   overflow-x: hidden;

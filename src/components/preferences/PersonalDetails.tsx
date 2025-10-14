@@ -14,7 +14,8 @@ const PersonalDetails = ({ firstName, setFirstName, lastName, setLastName }: Per
   // Allow only letters, spaces, hyphens, and apostrophes commonly found in names
   const sanitizeName = (value: string) => {
     // Remove numbers and disallowed special characters, trim leading spaces
-    const cleaned = value.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ '’-]/g, '');
+    // Hyphen must be at the end of character class or escaped to be literal
+    const cleaned = value.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ '\-]/g, '');
     return cleaned.replace(/^\s+/, '');
   };
 
@@ -83,7 +84,7 @@ const PersonalDetails = ({ firstName, setFirstName, lastName, setLastName }: Per
           onChange={handleFirstNameChange}
           required
           variant="outlined"
-          inputProps={{ inputMode: 'text', pattern: "[A-Za-zÀ-ÖØ-öø-ÿ '’-]+" }}
+          inputProps={{ inputMode: 'text', pattern: "[A-Za-zÀ-ÖØ-öø-ÿ '\\-]+" }}
           helperText="Letters only. No numbers or special characters."
           sx={{
             '& .MuiOutlinedInput-root': {
@@ -130,7 +131,7 @@ const PersonalDetails = ({ firstName, setFirstName, lastName, setLastName }: Per
           onChange={handleLastNameChange}
           required
           variant="outlined"
-          inputProps={{ inputMode: 'text', pattern: "[A-Za-zÀ-ÖØ-öø-ÿ '’-]+" }}
+          inputProps={{ inputMode: 'text', pattern: "[A-Za-zÀ-ÖØ-öø-ÿ '\\-]+" }}
           helperText="Letters only. No numbers or special characters."
           sx={{
             '& .MuiOutlinedInput-root': {

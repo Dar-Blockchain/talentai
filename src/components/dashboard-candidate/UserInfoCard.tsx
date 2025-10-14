@@ -470,7 +470,7 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
                 mb: 1,
               }}
             >
-              No Soft skills added yet
+              No Technical skills added yet
             </Typography>
             <Typography
               variant="body2"
@@ -480,7 +480,7 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
                 mb: 3,
               }}
             >
-              Start a soft skill test to add them to your profile
+              Start a Technical skill test to add them to your profile
             </Typography>
             <Button
               onClick={() => setAddSkillDialogOpen(true)}

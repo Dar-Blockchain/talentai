@@ -295,17 +295,27 @@ export default function ReportOnBoarding() {
             </Typography>
             <Box sx={{
               display: 'flex',
-              alignItems: 'center',
+              flexDirection: 'column',
               gap: 2,
               mb: 2,
               p: 2,
               backgroundColor: 'rgba(255,255,255,0.05)',
               borderRadius: 2
             }}>
-              <TrendingUpIcon sx={{ color: '#02E2FF' }} />
-              <Typography variant="h5" sx={{ color: '#000' }}>
-                Score: {Number(results.analysis.overallScore).toFixed(2)}%
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <TrendingUpIcon sx={{ color: '#02E2FF' }} />
+                <Typography variant="h5" sx={{ color: '#000' }}>
+                  Score: {Number(results.analysis.overallScore).toFixed(2)}%
+                </Typography>
+              </Box>
+              {results.analysis.skillAnalysis && results.analysis.skillAnalysis.length > 0 && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <TrendingUpIcon sx={{ color: '#8310FF' }} />
+                  <Typography variant="h6" sx={{ color: '#000' }}>
+                    Overall Score: {Number(results.analysis.skillAnalysis[0].confidenceScore || 0).toFixed(2)}%
+                  </Typography>
+                </Box>
+              )}
             </Box>
             <Typography variant="body1" sx={{ color: '#000', mb: 2 }}>
               {results.analysis.generalAssessment}
@@ -326,10 +336,18 @@ export default function ReportOnBoarding() {
                 sx={{ backgroundColor: 'white' }}
               >
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, backgroundColor: 'white' }}>
-                  <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                     <Typography variant="h6" sx={{ color: '#8310FF' }}>
                       {skill.skillName}
                     </Typography>
+                    <Chip 
+                      label={`Confidence: ${Number(skill.confidenceScore || 0).toFixed(1)}%`}
+                      sx={{ 
+                        backgroundColor: '#8310FF', 
+                        color: '#fff',
+                        fontWeight: 600
+                      }}
+                    />
                   </Box>
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     {/* <Box sx={{ flex: 1 }}>
