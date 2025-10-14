@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -66,6 +66,9 @@ const JobSearchPage: React.FC = () => {
   // Pagination metadata from API
   const [totalPages, setTotalPages] = useState(1);
   const [totalJobs, setTotalJobs] = useState(0);
+  
+  // Track if URL params have been initialized
+  const [urlParamsLoaded, setUrlParamsLoaded] = useState(false);
 
   const categories = [
     'All Categories',
@@ -92,7 +95,7 @@ const JobSearchPage: React.FC = () => {
   ];
 
   // Fetch jobs from backend API
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -104,7 +107,7 @@ const JobSearchPage: React.FC = () => {
         // status: 'active',
       });
 
-      // Add optional filters
+      // Add optional filters - use current state values
       if (searchQuery) params.append('search', searchQuery);
       if (selectedCategory && selectedCategory !== 'All Categories') {
         params.append('category', selectedCategory);
@@ -167,14 +170,14 @@ const JobSearchPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchQuery, selectedCategory, selectedLocation]);
 
-  // Initialize search params from URL on page load and trigger search
+  // Initialize search params from URL on page load ONCE
   useEffect(() => {
-    if (router.isReady) {
+    if (router.isReady && !urlParamsLoaded) {
       const { search, location, category } = router.query;
       
-      // Set state from URL parameters
+      // Set state from URL parameters only on initial load
       if (search && typeof search === 'string') {
         setSearchQuery(search);
       }
@@ -184,15 +187,21 @@ const JobSearchPage: React.FC = () => {
       if (category && typeof category === 'string') {
         setSelectedCategory(category);
       }
+      
+      // Mark URL params as loaded
+      setUrlParamsLoaded(true);
+    } else if (router.isReady && urlParamsLoaded === false) {
+      // No URL params, mark as loaded anyway
+      setUrlParamsLoaded(true);
     }
-  }, [router.isReady, router.query]);
+  }, [router.isReady, urlParamsLoaded]);
 
-  // Fetch jobs whenever search parameters or page changes
+  // Fetch jobs whenever search parameters or page changes, but ONLY after URL params are loaded
   useEffect(() => {
-    if (router.isReady) {
+    if (router.isReady && urlParamsLoaded) {
       fetchJobs();
     }
-  }, [currentPage, searchQuery, selectedCategory, selectedLocation, router.isReady]);
+  }, [router.isReady, urlParamsLoaded, fetchJobs]);
 
   const handleSearch = () => {
     // If already on page 1, force a fetch. Otherwise, set to page 1 which will trigger fetch
@@ -239,7 +248,10 @@ const JobSearchPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
+    <Box sx={{ 
+      minHeight: '100vh', 
+      backgroundColor: '#f8f9fa'
+    }}>
       <Header 
         logo="/images/jobseeker_landing/TalentAiPurpleHome.png" 
         type="jobseeker" 
