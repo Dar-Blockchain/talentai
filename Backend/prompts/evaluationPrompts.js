@@ -275,6 +275,13 @@ Your task is to:
 
 - Provide a comprehensive, skill analysis.
 - Offer actionable recommendations for improvement.
+🟩 **Answer Evaluation Rules**:
+- If the candidate's answer is **accurate and complete**, set status = "correct".
+- If the answer is **approximately 60–70% correct** (e.g. conceptually right but missing key details, examples, or clarity), set status = "partial_correct".
+- If the answer is **mostly wrong, vague, or irrelevant**, set status = "incorrect".
+- For "incorrect" answers, always include "exampleCorrectAnswer" to guide improvement.
+
+---
 
 Proficiency levels:
 1 - Entry level: Basic concepts and definitions  
@@ -282,6 +289,8 @@ Proficiency levels:
 3 - Mid level: Intermediate concepts, Real-world application and practical problem solving  
 4 - Senior: Advanced concepts
 5 - Expert: Handling complex real-world challenges and innovations  
+
+---
 
 Confidence Score Calculation for the skill:
 - The skill has exactly 10 questions, grouped in pairs by proficiency level with different weights:
@@ -297,9 +306,11 @@ Confidence Score Calculation for the skill:
   - Weight 3 question (Q5, Q6): +10%
   - Weight 4 question (Q7, Q8): +13.33%
   - Weight 5 question (Q9, Q10): +16.67%
-- Partial correctness adds proportional weight (e.g., 60% correct → 60% × question weight contribution)
+- Partial correctness adds proportional weight (e.g., 65% correct → 0.65 × question weight contribution)
 - Incorrect or empty answers add 0%
 - Final confidenceScore = Sum of all question contributions (maximum = 100%)
+
+---
 
 todoList REQUIREMENTS:
 - Max 2 tasks
@@ -314,12 +325,17 @@ todoList REQUIREMENTS:
 - Each task must provide new skill-building value and be unique
 - External links must be valid and accessible
 
+---
+
 STRICT REQUIREMENTS:
 - Be objective and base your assessment only on the information clearly or reasonably implied in the candidate's answers.
 - Do not infer or estimate knowledge that is not supported by the content.
 - However, consider that answers were transcribed from speech and may contain minor errors or incomplete sentences.
 - When evaluating, interpret the candidate's intended meaning only if it can be reasonably and clearly inferred from the context, without making unsupported assumptions.
-- recommendations: (array of strings, required):  
+
+---
+
+recommendations: (array of strings, required):  
       Provide at least **two specific, actionable improvement tips** for the technology's use.  
       - Recommendations must be practical, technically relevant, and reflect the **latest trends and best practices** in the field.
       - At least **one external resource** (doc, course, guide, etc.) per technology is required, and it should be up-to-date and reputable.
@@ -345,15 +361,14 @@ ${questions
 Generate and return JSON in the following format:
 {
   "overallScore": 0-100,
-  "technicalLevel":"string",
-  "generalAssassment":"string",
-  "recommendations":[...], // Must NOT be empty and each item must contain meaningful advice or suggestions.
-  "nextSteps":[...],  // Must NOT be empty and each item must contain actionable steps or plans.
+  "technicalLevel": "string",
+  "generalAssassment": "string",
+  "recommendations": [...], // Must NOT be empty and each item must contain meaningful advice or suggestions.
+  "nextSteps": [...], // Must NOT be empty and each item must contain actionable steps or plans.
   "skillAnalysis": [
     {
       "skillName": "${skillName}",
       "requiredLevel": 1-5,
-      
       "demonstratedExperienceLevel": 0-5,
       "strengths": ["..."], // If none, use: ["No strengths identified for this skill"]
       "weaknesses": ["..."], // If none, use: ["No weaknesses identified for this skill"]
@@ -368,8 +383,8 @@ Generate and return JSON in the following format:
             "description": "string",
             "url": "optional string",
             "priority": "low" | "medium" | "high",
-            "dueDate": timestamp, 
-            "isCompleted": false,
+            "dueDate": timestamp,
+            "isCompleted": false
           }
         ]
       },
@@ -382,14 +397,16 @@ Generate and return JSON in the following format:
         }
       ]
     }
-  ],
+  ]
 }
 
+Ensure "partial_correct" is used when an answer is around 60–70% correct (approximately 65% accurate or partially complete).
 Ensure the "recommendations" array includes at least two specific, actionable, current best-practice improvement tips, including one with an up-to-date external resource link.
 
 Return only the valid JSON output. Do not include any commentary.
 `,
 };
+
 
 // ---------------------------------------------------------------------------
 // analyzeJobTestResultsPrompts
