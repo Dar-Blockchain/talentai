@@ -401,39 +401,134 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
   }
 };
 
-// Supprimer un skill spécifique
+// Supprimer un skill spécifique (avec nettoyage des relations et implications)
+// 🔹 Fonction pour supprimer un hard skill d’un profil utilisateur
 module.exports.deleteHardSkill = async (userId, skillToDelete) => {
   try {
+    console.log("🟢 Début de la suppression du skill:", skillToDelete, "pour l'utilisateur:", userId);
+
+    // ✅ 1) Récupérer le profil du user
     const profile = await Profile.findOne({ userId });
     if (!profile) {
+      console.error("❌ Aucun profil trouvé pour l'utilisateur:", userId);
       throw new Error("Profile not found");
     }
+    console.log("✅ Profil trouvé:", profile._id);
 
+    // ✅ 2) Vérifier la validité du skill à supprimer
     if (!skillToDelete || typeof skillToDelete !== "string") {
+      console.error("❌ Le skill à supprimer doit être une chaîne de caractères valide");
       throw new Error("The skill to be deleted must be provided as a string");
     }
 
-    // Trouver l'index du skill à supprimer
+    // ✅ 3) Chercher la position du skill dans le tableau des skills
     const skillIndex = profile.skills.findIndex(
       (skill) => skill.name === skillToDelete
     );
 
     if (skillIndex === -1) {
-      throw new Error(
-        `Le skill "${skillToDelete}" n'existe pas dans votre profil`
-      );
+      console.warn(`⚠️ Le skill "${skillToDelete}" n'existe pas dans le profil`);
+      throw new Error(`Le skill "${skillToDelete}" n'existe pas dans votre profil`);
+    }
+    console.log(`🧩 Skill "${skillToDelete}" trouvé à l'index ${skillIndex}`);
+
+    // ✅ 4) Supprimer la compétence du tableau
+    profile.skills.splice(skillIndex, 1);
+    console.log(`🗑️ Skill "${skillToDelete}" supprimé avec succès du profil`);
+
+    // ✅ 5) Recalculer le overallScore
+    const numericScores = (profile.skills || [])
+      .map((s) => Number(s.ScoreTest))
+      .filter((n) => Number.isFinite(n));
+
+    const newOverall = numericScores.length
+      ? Number(
+          (numericScores.reduce((a, b) => a + b, 0) / numericScores.length).toFixed(2)
+        )
+      : 0;
+
+    profile.overallScore = newOverall;
+    console.log("📊 Nouveau overallScore calculé:", newOverall);
+
+    // ✅ 6) Sauvegarder le profil mis à jour
+    await profile.save();
+    console.log("💾 Profil sauvegardé avec succès dans la base de données");
+
+    // ✅ 7) Supprimer les InterviewDetails liés à ce skill et retirer les relations
+    try {
+      console.log("🧹 Suppression des InterviewDetails en cours...");
+      const InterviewDetails = require("../models/InterviewDetailsModel");
+
+       // Suppression insensible à la casse du skill visé dans les tableaux skillDetails
+       const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+       const skillRegex = new RegExp(`^${escapeRegExp(skillToDelete)}$`, "i");
+
+      // 7.a Trouver les InterviewDetails à supprimer (qui contiennent ce skill)
+      const detailsToDelete = await InterviewDetails.find({
+        candidate: profile._id,
+        "skillDetails.name": { $regex: skillRegex },
+      }).select("_id");
+
+      const detailsIds = detailsToDelete.map((d) => d._id);
+
+      if (detailsIds.length > 0) {
+        // 7.b Supprimer les InterviewDetails correspondants
+        const delRes = await InterviewDetails.deleteMany({ _id: { $in: detailsIds } });
+        console.log("✅ InterviewDetails supprimés:", delRes.deletedCount);
+
+        // 7.c Retirer les références dans le profil
+        profile.interviewDetails = (profile.interviewDetails || []).filter(
+          (id) => !detailsIds.some((x) => x.toString() === id.toString())
+        );
+        await profile.save();
+      } else {
+        console.log("ℹ️ Aucun InterviewDetails à supprimer pour ce skill");
+      }
+    } catch (relErr) {
+      console.warn("⚠️ Erreur lors du nettoyage des InterviewDetails:", relErr.message);
     }
 
-    // Supprimer le skill du tableau
-    profile.skills.splice(skillIndex, 1);
-    await profile.save();
+    // ✅ 8) Nettoyer les références dans JobAssessmentResult
+    try {
+      console.log("🧹 Nettoyage des JobAssessmentResult en cours...");
+      const JobAssessmentResult = require("../models/JobAssessmentResultModel");
 
+      const res2 = await JobAssessmentResult.updateMany(
+        { condidateId: profile._id },
+        {
+          $pull: {
+            "analysis.skillAnalysis": { skillName: skillToDelete },
+            "analysis.skillProgression": { skillName: skillToDelete },
+          },
+        }
+      );
+
+      console.log("✅ Nettoyage des JobAssessmentResult terminé:", res2.modifiedCount, "documents mis à jour");
+
+      // Supprimer aussi les JobAssessmentResult qui pointent vers des InterviewDetails supprimés
+      try {
+        if (typeof detailsIds !== "undefined" && detailsIds.length > 0) {
+          const delAss = await JobAssessmentResult.deleteMany({ interviewId: { $in: detailsIds } });
+          console.log("🗑️ JobAssessmentResult supprimés (liés aux InterviewDetails supprimés):", delAss.deletedCount);
+        }
+      } catch (innerErr) {
+        console.warn("⚠️ Erreur lors de la suppression des JobAssessmentResult liés:", innerErr.message);
+      }
+    } catch (relErr) {
+      console.warn("⚠️ Erreur lors du nettoyage des JobAssessmentResult:", relErr.message);
+    }
+
+    // ✅ 9) Retourner le profil mis à jour
+    console.log("🎯 Suppression du skill terminée avec succès pour:", skillToDelete);
     return profile;
+
   } catch (error) {
-    console.error("Erreur lors de la suppression du skill:", error);
+    console.error("🚨 Erreur lors de la suppression du skill:", error.message);
     throw error;
   }
 };
+
+
 
 // Supprimer un softSkill spécifique
 module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
