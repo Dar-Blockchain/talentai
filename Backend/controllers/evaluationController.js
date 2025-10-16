@@ -534,8 +534,8 @@ exports.analyzeProfileAnswers = async (req, res) => {
   try {
     // 1. Validate request body
     const { type, skill, questions } = req.body;
-    const id = req.user._id;
-    //const id = "68e9325a63441cf0aba40000";
+    //const id = req.user._id;
+    const id = "68ee2102be5ff00e190c770b";
 
     if (!type || !Array.isArray(skill) || !Array.isArray(questions)) {
       return res.status(400).json({
@@ -913,7 +913,7 @@ Provide detailed, actionable feedback in JSON format only.
         // 🧩 3️⃣ Si une interview correspondante existe → mise à jour
         if (interview) {
           interview.skillDetails = skillDetailsData;
-          interview.overallScore = analysis.overallScore || analysis.averageScore;
+          interview.overallScore = averageScore || analysis.averageScore;
           interview.recommendations = analysis.recommendations || [];
           await interview.save();
         } else {
@@ -921,7 +921,7 @@ Provide detailed, actionable feedback in JSON format only.
           const newInterview = await InterviewDetails.create({
             candidate: candidateId,
             type: interviewType,
-            overallScore: analysis.overallScore || analysis.averageScore,
+            overallScore: averageScore || analysis.averageScore,
             skillDetails: skillDetailsData,
             recommendations: analysis.recommendations || [],
             questions: questions?.map((q) => ({
