@@ -535,7 +535,7 @@ exports.analyzeProfileAnswers = async (req, res) => {
     // 1. Validate request body
     const { type, skill, questions } = req.body;
     const id = req.user._id;
-    //const id = "68e9325a63441cf0aba40000";
+    //const id = "68ee2102be5ff00e190c770b";
 
     if (!type || !Array.isArray(skill) || !Array.isArray(questions)) {
       return res.status(400).json({
@@ -865,18 +865,68 @@ Provide detailed, actionable feedback in JSON format only.
       skillType = SKILL_TYPES.HARD;
       interviewProfile = existingProfile;
 
-      //overallScore is fixed
+      // Merge existing skills with new analysis results.
+      // For each existing skill, keep its ScoreTest unless analysis provides a new confidenceScore for that skill.
+      const skillMapForMerge = new Map();
+
+      // Seed with existing skills
+      (existingSkills || []).forEach((s) => {
+        const name = (s.name || s.skill || "").trim();
+        if (!name) return;
+        skillMapForMerge.set(name, {
+          name,
+          proficiencyLevel: Number(s.proficiencyLevel) || 1,
+          experienceLevel: s.experienceLevel || getExperienceLevel(Number(s.proficiencyLevel) || 1),
+          ScoreTest: Number(s.ScoreTest) || 0,
+          Levelconfirmed: s.Levelconfirmed || 0,
+        });
+      });
+
+      // Apply analysis updates (override ScoreTest for matching skill names, or add new skill)
+      (analysis.skillAnalysis || []).forEach((skill) => {
+        const name = (skill.skillName || skill.skill || "").trim();
+        if (!name) return;
+        const conf = Number(skill.confidenceScore) || 0;
+        const demo = Number(skill.demonstratedProficiency) || Number(skill.currentProficiency) || 1;
+
+        if (skillMapForMerge.has(name)) {
+          const prev = skillMapForMerge.get(name);
+          prev.ScoreTest = conf;
+          prev.proficiencyLevel = demo;
+          prev.experienceLevel = getExperienceLevel(demo);
+          prev.Levelconfirmed = demo === 5 && conf > 75 ? 5 : Math.max(demo - 1, 0);
+          skillMapForMerge.set(name, prev);
+        } else {
+          skillMapForMerge.set(name, {
+            name,
+            proficiencyLevel: demo,
+            experienceLevel: getExperienceLevel(demo),
+            ScoreTest: conf,
+            Levelconfirmed: demo === 5 && conf > 75 ? 5 : Math.max(demo - 1, 0),
+          });
+        }
+      });
+
+      // Build merged skills array and compute overall average from merged ScoreTest
+      const mergedSkillsForProfile = Array.from(skillMapForMerge.values()).filter(
+        (s) => s.name && typeof s.name === "string" && s.name.trim() !== ""
+      );
+
+      const mergedScores = mergedSkillsForProfile.map((s) => Number(s.ScoreTest) || 0);
+      const mergedCount = mergedScores.length;
+      const mergedSum = mergedScores.reduce((acc, n) => acc + n, 0);
+      const overallScoreMerged = mergedCount > 0 ? Number((mergedSum / mergedCount).toFixed(2)) : 0;
+
+      console.log('Computed overallScoreMerged from merged skills:', overallScoreMerged, 'mergedSkillsCount:', mergedCount);
+
       await profileService.createOrUpdateProfile(id, {
-        overallScore: averageScore,
-        skills: analysis.skillAnalysis.map((skill) => ({
-          name: skill.skillName,
-          proficiencyLevel: skill.demonstratedProficiency,
-          experienceLevel: getExperienceLevel(skill.demonstratedProficiency),
-          ScoreTest: skill.confidenceScore,
-          Levelconfirmed:
-            skill.demonstratedProficiency === 5 && skill.confidenceScore > 75
-              ? 5
-              : skill.demonstratedProficiency - 1,
+        overallScore: overallScoreMerged,
+        skills: mergedSkillsForProfile.map((s) => ({
+          name: s.name,
+          proficiencyLevel: s.proficiencyLevel,
+          experienceLevel: s.experienceLevel,
+          ScoreTest: s.ScoreTest,
+          Levelconfirmed: s.Levelconfirmed,
         })),
       });
 
@@ -913,7 +963,8 @@ Provide detailed, actionable feedback in JSON format only.
         // 🧩 3️⃣ Si une interview correspondante existe → mise à jour
         if (interview) {
           interview.skillDetails = skillDetailsData;
-          interview.overallScore = analysis.overallScore || analysis.averageScore;
+          // Use the overallFromNew computed above (from confidenceScore)
+          interview.overallScore = overallScoreMerged;
           interview.recommendations = analysis.recommendations || [];
           await interview.save();
         } else {
@@ -921,7 +972,8 @@ Provide detailed, actionable feedback in JSON format only.
           const newInterview = await InterviewDetails.create({
             candidate: candidateId,
             type: interviewType,
-            overallScore: analysis.overallScore || analysis.averageScore,
+            // Persist the overall score computed from new confidenceScore values
+            overallScore: overallScoreMerged,
             skillDetails: skillDetailsData,
             recommendations: analysis.recommendations || [],
             questions: questions?.map((q) => ({

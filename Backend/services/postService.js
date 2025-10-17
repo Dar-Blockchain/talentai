@@ -378,13 +378,12 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
   if (!user) {
     throw new Error("User not found.");
   }
-  if (
-    !user.profile ||
-    !Array.isArray(user.profile.skills) ||
-    user.profile.skills.length === 0
-  ) {
-    // No skills means nothing to recommend → return empty list instead of throwing
-    return [];
+
+  if (!user.profile || !Array.isArray(user.profile.skills) || user.profile.skills.length === 0) {
+    return {
+      success: false,
+      message: "Aucun skill trouvé. Ajoutez au moins une compétence à votre profil pour obtenir des recommandations.",
+    };
   }
 
   // Normalize skills to a list of names
@@ -393,7 +392,10 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
     .filter(Boolean);
 
   if (skillNames.length === 0) {
-    return [];
+    return {
+      success: false,
+      message: "Aucun skill valide trouvé dans le profil. Ajoutez au moins une compétence pour recevoir des recommandations.",
+    };
   }
 
   // Find posts that match at least one of the user's skills
@@ -404,30 +406,29 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
     .lean();
 
   if (!candidatePosts || candidatePosts.length === 0) {
-    return [];
+    return {
+      success: false,
+      message: "Pas de recommandations pour le moment. Nous n'avons trouvé aucun poste correspondant à vos compétences.",
+    };
   }
 
   // Score posts by the number of matching required skills
   const scored = candidatePosts.map((post) => {
-    const required = (post.skillAnalysis?.requiredSkills || []).map(
-      (rs) => rs.name
-    );
-    const matchCount = required.reduce(
-      (acc, name) => acc + (skillNames.includes(name) ? 1 : 0),
-      0
-    );
+    const required = (post.skillAnalysis?.requiredSkills || []).map((rs) => rs.name);
+    const matchCount = required.reduce((acc, name) => acc + (skillNames.includes(name) ? 1 : 0), 0);
     return { post, matchCount };
   });
 
   // Sort by match count desc, then most recent
-  scored.sort(
-    (a, b) =>
-      b.matchCount - a.matchCount ||
-      new Date(b.post.createdAt) - new Date(a.post.createdAt)
-  );
+  scored.sort((a, b) => b.matchCount - a.matchCount || new Date(b.post.createdAt) - new Date(a.post.createdAt));
 
   // Return top 3 recommendations
-  return scored.slice(0, 3).map((s) => s.post);
+  const top = scored.slice(0, 3).map((s) => s.post);
+  return {
+    success: true,
+    posts: top,
+    message: top.length > 0 ? `${top.length} recommandation(s) trouvée(s)` : "Pas de recommandations pour le moment.",
+  };
 };
 
 // Create technical test using AI prompts based on post technologies
