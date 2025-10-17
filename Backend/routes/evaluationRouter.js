@@ -9,6 +9,7 @@
 const express = require('express');
 const router = express.Router();
 const evaluationController  = require('../controllers/evaluationController');
+const OnbordingController  = require('../controllers/evaluationControllers/Onbording/OnbordingController');
 
 // Import des middlewares
 const { requireAuthUser } = require('../middleware/authMiddleware');
@@ -42,10 +43,10 @@ router.post('/analyze-job-test-results', evaluationController.analyzeJobTestResu
 
 // POST /evaluation/generate-onboarding-questions
 // Description: Génère des questions pour l'onboarding
-router.post('/generate-onboarding-questions', evaluationController.generateOnboardingQuestions);
+router.post('/generate-onboarding-questions', OnbordingController.generateOnboardingQuestions);
 // POST /evaluation/analyze-onboarding-answers
 // Description: Analyse les réponses d'onboarding
-router.post('/analyze-onboarding-answers', evaluationController.analyzeOnboardingAnswers);
+router.post('/analyze-onboarding-answers', OnbordingController.analyzeOnboardingAnswers);
 
 // POST /evaluation/generate-hr-questions
 // Description: Génère des questions RH (ressources humaines)
