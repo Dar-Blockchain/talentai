@@ -26,7 +26,6 @@ import {
   Work as WorkIcon,
   AttachMoney as MoneyIcon,
   Business as BusinessIcon,
-  CalendarToday as CalendarIcon,
   FilterList as FilterIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
