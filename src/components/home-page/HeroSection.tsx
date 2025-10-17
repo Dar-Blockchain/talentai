@@ -1,6 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Box, Button, Typography, Stack, TextField, InputAdornment } from "@mui/material";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import SearchIcon from "@mui/icons-material/Search";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import FilterListIcon from "@mui/icons-material/FilterList";
