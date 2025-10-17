@@ -101,8 +101,8 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
       sx={{
         px: 3,
         py: { xs: 6, md: 10 },
-        backgroundColor: "#ffffff",
-        color: "#000000",
+background: "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rgba(255, 255, 255, 0) 59.69%, #FFFFFF 100%)",
+      color: "#000000",
         position: 'relative',
         overflow: 'hidden',
         maxWidth: 1400,

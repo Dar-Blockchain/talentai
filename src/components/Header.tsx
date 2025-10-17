@@ -24,7 +24,7 @@ import { useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { useDispatch } from "react-redux";
 import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 import { setUserType } from "@/store/slices/userSlice";
 import UserAvatar from "./UserAvatar";
 
@@ -35,22 +35,32 @@ type NavItem = {
 };
 
 const getNavItems = (type: string): NavItem[] => {
-  const baseItems: NavItem[] = [
-    { label: "Features", id: "features" },
-    { label: "Solutions", id: "solutions" },
-    { label: "Pricing", id: "pricing" },
-    { label: "Contact", id: "contact" },
-  ];
-  
-  // Only add "Find Jobs" for jobseeker type
-  if (type === "jobseeker") {
+  if (type === "company") {
+    // For companies (employers)
     return [
-      { label: "Find Jobs", href: "/jobs" },
-      ...baseItems,
+      { label: "Features", id: "features" },
+      { label: "Solutions", id: "solutions" },
+      { label: "Contact", id: "contact" },
+      { label: "Are You a Job Seeker?", href: "/home/candidate/" },
     ];
   }
-  
-  return baseItems;
+
+  if (type === "jobseeker") {
+    // For candidates (job seekers)
+    return [
+      { label: "Home", href: "/home/candidate/" },
+      { label: "Find Jobs", href: "/jobs/" },
+      { label: "About Us", id: "about" },
+      { label: "Are You Hiring?", href: "/home/company/" },
+    ];
+  }
+
+  // Default (if type not specified)
+  return [
+    { label: "Features", id: "features" },
+    { label: "Solutions", id: "solutions" },
+    { label: "Contact", id: "contact" },
+  ];
 };
 
 type HeaderProps = {
@@ -77,7 +87,7 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
   useEffect(() => {
     if (type) {
       localStorage.setItem("userType", type);
-      dispatch(setUserType(type as "company" | "jobseeker")); 
+      dispatch(setUserType(type as "company" | "jobseeker"));
     }
   }, [type, dispatch]);
 
@@ -108,16 +118,16 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
         component="img"
         src={logo}
         alt="TalentAI Logo"
-        sx={{ height: 32, mb: 2, cursor: 'pointer' }}
+        sx={{ height: 32, mb: 2, cursor: "pointer" }}
         onClick={() => router.push("/")}
       />
       <List>
         {getNavItems(type).map((item) => (
-          <ListItem 
+          <ListItem
             key={item.id || item.href}
             component={Link}
             href={item.href || `/#${item.id}`}
-            sx={{ textDecoration: 'none' }}
+            sx={{ textDecoration: "none" }}
           >
             <ListItemText
               primary={item.label}
@@ -153,94 +163,124 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
       <AppBar
         position="static"
         elevation={0}
-        sx={{ backgroundColor: "transparent", color: "#000", boxShadow: 'none', pt: 2 }}
+        sx={{
+          backgroundColor: "#FDFEFE",
+          color: "#000",
+          boxShadow: "none",
+          pt: 2,
+          pb: 2
+        }}
       >
-        <Box sx={{ maxWidth: 1400, mx: 'auto', width: '100%' }}>
+        <Box sx={{ maxWidth: 1400, mx: "auto", width: "100%" }}>
           <Toolbar sx={{ justifyContent: "space-between", px: 0, gap: 1 }}>
-            {/* Logo on the left */}
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-1px)',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-                }
-              }}
-              onClick={() => router.push(type === "company" ? '/' : '/home/candidate')}
-            >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              {/* Logo on the left */}
               <Box
-                component="img"
-                src={logo}
-                alt="TalentAI Logo"
                 sx={{
-                  height: 32,
-                  width: 'auto',
-                  objectFit: 'contain'
+                  backgroundColor: "white",
+                  borderRadius: "50px",
+                  display: "inline-flex", // keeps it tightly wrapped around the inner box
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: 48,
+                  width: 166,
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
                 }}
-              />
-            </Box>
-            
-            {/* Navigation in center */}
-            {!isMobile && (
-              <Stack direction="row" spacing={4} alignItems="center" sx={{
-                px: 3,
-                py: 1.5,
-                borderRadius: 999,
-                backgroundColor: '#ffffff',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.06)'
-              }}>
-                {getNavItems(type).map((item, index) => (
-                  <React.Fragment key={item.id || item.href}>
-                    <Link href={item.href || `/#${item.id}`} passHref>
-                      <Box
-                        sx={{
-                          cursor: "pointer",
-                          fontWeight: 500,
-                          color: item.label === "Find Jobs" ? "#8310FF" : "#374151",
-                          typography: "body1",
-                          fontSize: '14px',
-                          transition: "all 0.2s",
-                          "&:hover": {
-                            color: item.label === "Find Jobs" ? "#6B0BC7" : "#10B981",
-                          },
-                        }}
-                      >
-                        {item.label}
-                      </Box>
-                    </Link>
-                    {index === 1 && (
-                      <Box
-                        sx={{
-                          width: '1px',
-                          height: '16px',
-                          bgcolor: '#E5E7EB',
-                          mx: 1
-                        }}
-                      />
-                    )}
-                  </React.Fragment>
-                ))}
-                <Typography
+              >
+                <Box
                   sx={{
-                    cursor: 'pointer',
-                    fontWeight: 500,
-                    fontSize: '14px',
-                    color: '#7C3AED',
-                    transition: "all 0.2s",
-                    "&:hover": {
-                      color: '#5B21B6',
-                    },
+                    backgroundColor: "#141415",
+                    borderRadius: "50px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    height: 44,
+                    width: 162,
                   }}
-                  onClick={() => router.push(type === "company" ? '/home/candidate' : '/')}
+                  onClick={() =>
+                    router.push(type === "company" ? "/" : "/home/candidate")
+                  }
                 >
-                  {link}
-                </Typography>
-              </Stack>
-            )}
-          
+                  <Box
+                    component="img"
+                    src={logo}
+                    alt="TalentAI Logo"
+                    sx={{ height: 25 }}
+                  />
+                </Box>
+              </Box>
+
+              {/* Navigation in center */}
+              {!isMobile && (
+                <Stack
+                  direction="row"
+                  spacing={4}
+                  alignItems="center"
+                  sx={{
+                    px: 3,
+                    py: 1.5,
+                    borderRadius: 999,
+                    backgroundColor: "#ffffff",
+                    boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
+                  }}
+                >
+                  {getNavItems(type).map((item, index) => {
+                    const isLast = index === getNavItems(type).length - 1;
+                    const isSelected =
+                      router.asPath === item.href ||
+                      router.asPath === `/#${item.id}`;
+
+                    // Determine color for the last item based on type
+                    const lastItemColor =
+                      type === "jobseeker"
+                        ? "#4DD9A3"
+                        : type === "company"
+                        ? "#BD85FF"
+                        : "#180D00";
+
+                    return (
+                      <React.Fragment key={item.id || item.href}>
+                        {/* Add separator bar before the last item */}
+                        {isLast && (
+                          <Box
+                            sx={{
+                              width: "1px",
+                              height: "16px",
+                              bgcolor: "#E5E7EB",
+                              mx: 1,
+                            }}
+                          />
+                        )}
+
+                        <Link href={item.href || `/#${item.id}`} passHref>
+                          <Box
+                            sx={{
+                              cursor: "pointer",
+                              fontWeight: isLast ? 600 : isSelected ? 600 : 400,
+                              fontSize: "14px",
+                              transition: "all 0.2s",
+                              color: isLast
+                                ? lastItemColor
+                                : isSelected
+                                ? "#180D00"
+                                : "#878786", // green/yellow for last item, black if selected, gray if not
+                              "&:hover": {
+                                color: isLast ? lastItemColor : "#180D00",
+                                fontWeight: 600,
+                              },
+                            }}
+                          >
+                            {item.label}
+                          </Box>
+                        </Link>
+                      </React.Fragment>
+                    );
+                  })}
+                </Stack>
+              )}
+            </Box>
+
             {/* Action buttons on the right */}
             {!isMobile ? (
               // Show UserAvatar for authenticated users, buttons for others
@@ -252,21 +292,21 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
                     variant="outlined"
                     onClick={() => router.push("/signin")}
                     sx={{
-                      backgroundColor: '#ffffff',
-                      borderColor: '#10B981',
-                      color: '#10B981',
+                      backgroundColor: "#ffffff",
+                      color: type === "jobseeker" ? "#BD85FF" : "#4DD9A3",
                       borderRadius: 999,
-                      textTransform: 'none',
+                      border: "none",
+                      textTransform: "none",
                       px: 2,
                       py: 0.75,
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      boxShadow: '0 4px 14px rgba(0,0,0,0.06)',
-                      '&:hover': {
-                        borderColor: '#059669',
-                        color: '#059669',
-                        backgroundColor: '#f0fdf4'
-                      }
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
+                      "&:hover": {
+                        color: "white",
+                        backgroundColor:
+                          type === "jobseeker" ? "#BD85FF" : "#4DD9A3",
+                      },
                     }}
                   >
                     Login
@@ -275,32 +315,36 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
                     variant="outlined"
                     onClick={() => router.push("/demo")}
                     sx={{
-                      backgroundColor: '#ffffff',
-                      color: '#374151',
-                      border: 'none',
+                      backgroundColor: "#ffffff",
+                      color: "#383A3D",
+                      border: "none",
                       borderRadius: 999,
-                      textTransform: 'none',
+                      textTransform: "none",
                       px: 2,
                       py: 0.75,
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      boxShadow: '0 4px 14px rgba(0,0,0,0.06)',
-                      '&:hover': {
-                        backgroundColor: '#f9fafb',
-                        color: '#111827'
-                      }
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
+                      "&:hover": {
+                        backgroundColor: "#f9fafb",
+                        color: "#111827",
+                      },
                     }}
                   >
-                    Watch Demo
+                    {type === "jobseeker" ? "Sign-up" : "Watch Demo"}
                   </Button>
-              </Stack>
-            )
-          ) : (
-            <IconButton color="inherit" edge="end" onClick={handleDrawerToggle}>
-              <MenuIcon />
-            </IconButton>
-          )}
-        </Toolbar>
+                </Stack>
+              )
+            ) : (
+              <IconButton
+                color="inherit"
+                edge="end"
+                onClick={handleDrawerToggle}
+              >
+                <MenuIcon />
+              </IconButton>
+            )}
+          </Toolbar>
         </Box>
       </AppBar>
 
