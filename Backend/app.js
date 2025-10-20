@@ -69,7 +69,7 @@ const initializeApp = async () => {
   }
 };
 // Middleware
-//app.use(blockPostmanRequests);
+app.use(blockPostmanRequests);
 app.use(express.json());
 app.use(
   cors({
