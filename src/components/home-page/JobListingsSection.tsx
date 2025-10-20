@@ -95,94 +95,33 @@ const JobListingsSection = () => {
       <Box
         sx={{
           display: 'flex',
+          justifyContent: 'center',
           alignItems: 'center',
           mb: 8,
-          maxWidth: 1200,
+          maxWidth: 1300,
           mx: 'auto',
           px: 4,
-          minHeight: 400
+          minHeight: 300
         }}
       >
-        {/* Left Side - Graphic Element */}
-        <Box
+        {/* Centered Card */}
+        <Card
           sx={{
-            flex: 0.6,
-            height: 300,
-            position: 'relative',
-            mr: 4
+            width: '100%',
+            p: 6,
+            borderRadius: 3,
+            backgroundColor: '#ffffff',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+            textAlign: 'left'
           }}
         >
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 20,
-              left: 20,
-              width: 120,
-              height: 80,
-              backgroundColor: 'rgba(131, 16, 255, 0.1)',
-              borderRadius: 3,
-              transform: 'rotate(-5deg)'
-            }}
-          />
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 60,
-              left: 80,
-              width: 100,
-              height: 60,
-              backgroundColor: 'rgba(131, 16, 255, 0.15)',
-              borderRadius: 3,
-              transform: 'rotate(10deg)'
-            }}
-          />
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 100,
-              left: 40,
-              width: 140,
-              height: 70,
-              backgroundColor: 'rgba(131, 16, 255, 0.08)',
-              borderRadius: 3,
-              transform: 'rotate(-8deg)'
-            }}
-          />
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 140,
-              left: 100,
-              width: 90,
-              height: 50,
-              backgroundColor: 'rgba(131, 16, 255, 0.12)',
-              borderRadius: 3,
-              transform: 'rotate(5deg)'
-            }}
-          />
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 180,
-              left: 60,
-              width: 110,
-              height: 65,
-              backgroundColor: 'rgba(131, 16, 255, 0.06)',
-              borderRadius: 3,
-              transform: 'rotate(-3deg)'
-            }}
-          />
-        </Box>
-
-        {/* Right Side - Text and Button */}
-        <Box sx={{ flex: 0.4 }}>
           <Typography
-            variant="h3"
+            variant="h4"
             sx={{
               fontFamily: 'Poppins',
               fontWeight: 700,
-              fontSize: { xs: '28px', md: '36px' },
-              color: '#333',
+              fontSize: { xs: '24px', md: '32px' },
+              color: '#000000',
               mb: 3,
               lineHeight: 1.2
             }}
@@ -195,7 +134,7 @@ const JobListingsSection = () => {
             sx={{
               fontFamily: 'Poppins',
               fontSize: '16px',
-              color: '#666',
+              color: '#666666',
               mb: 4,
               lineHeight: 1.6
             }}
@@ -208,10 +147,10 @@ const JobListingsSection = () => {
             onClick={() => router.push('/jobs')}
             sx={{
               backgroundColor: '#8310FF',
-              color: '#fff',
+              color: '#ffffff',
               px: 4,
               py: 1.5,
-              borderRadius: 2,
+              borderRadius: 3,
               textTransform: 'none',
               fontSize: '16px',
               fontWeight: 600,
@@ -222,17 +161,17 @@ const JobListingsSection = () => {
           >
             Search Job
           </Button>
-        </Box>
+        </Card>
       </Box>
 
       {/* Job Listings Section */}
-      <Box sx={{ maxWidth: 1200, mx: 'auto', px: 4 }}>
+      <Box sx={{ maxWidth: 1300, mx: 'auto', px: 8 }}>
         <Typography
           variant="h3"
           sx={{
             fontFamily: 'Poppins',
             fontWeight: 700,
-            fontSize: { xs: '24px', md: '32px' },
+            fontSize: { xs: '24px', md: '48px' },
             color: '#333',
             mb: 6,
             textAlign: 'left'
