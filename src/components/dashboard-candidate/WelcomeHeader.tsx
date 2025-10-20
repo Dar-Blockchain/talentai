@@ -1,6 +1,5 @@
 import React from "react";
 import { Box, Stack, Typography, Avatar, Button, Card } from "@mui/material";
-import WorkIcon from "@mui/icons-material/Work";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PersonIcon from "@mui/icons-material/Person";

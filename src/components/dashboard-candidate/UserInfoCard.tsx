@@ -1,8 +1,5 @@
 import React from "react";
 import { Box, Button, CircularProgress, Typography, Paper } from "@mui/material";
-import DescriptionIcon from "@mui/icons-material/Description";
-import PersonIcon from "@mui/icons-material/Person";
-import WorkIcon from "@mui/icons-material/Work";
 import AddIcon from "@mui/icons-material/Add";
 
 export type UserInfoCardProps = {

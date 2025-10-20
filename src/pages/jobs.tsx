@@ -26,7 +26,6 @@ import {
   Work as WorkIcon,
   AttachMoney as MoneyIcon,
   Business as BusinessIcon,
-  CalendarToday as CalendarIcon,
   FilterList as FilterIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
@@ -296,7 +295,7 @@ const JobSearchPage: React.FC = () => {
       backgroundColor: '#f8f9fa'
     }}>
       <Header 
-        logo="/images/jobseeker_landing/TalentAiPurpleHome.png" 
+        logo="/images/home/logocandidate.png" 
         type="jobseeker" 
         color="#8310FF" 
         link="Are you hiring?" 
