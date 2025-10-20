@@ -15,9 +15,6 @@ import {
   Typography,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import LogoutIcon from "@mui/icons-material/Logout";
-import GoogleIcon from "@mui/icons-material/Google";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
@@ -77,7 +74,7 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch<AppDispatch>();
-  const { profile, loading, error } = useSelector(selectProfile);
+  const { profile } = useSelector(selectProfile);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
