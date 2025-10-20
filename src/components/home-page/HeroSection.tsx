@@ -14,12 +14,12 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  
+
   // Job search states
   const [jobTitle, setJobTitle] = useState('');
   const [location, setLocation] = useState('');
   const [category, setCategory] = useState('');
-  
+
   // Statistics states
   const [stats, setStats] = useState({
     users: '100K+',
@@ -48,12 +48,12 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
       try {
         const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
         const response = await fetch(`${baseUrl}post/public-stats`);
-        
+
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.data) {
             const { users, posts, companies } = data.data;
-            
+
             // Format numbers to match the desired style
             const formatNumber = (num: number, prefix: boolean = false) => {
               if (num >= 1000) {
@@ -62,7 +62,7 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
               }
               return prefix ? `+${num}` : `${num}+`;
             };
-            
+
             setStats({
               users: formatNumber(users, false),      // e.g., "100K+" or "500+"
               jobs: formatNumber(posts, false),       // e.g., "20K+" or "150+"
@@ -86,7 +86,7 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
     if (jobTitle) params.append('search', jobTitle);
     if (location) params.append('location', location);
     if (category) params.append('category', category);
-    
+
     const queryString = params.toString();
     router.push(`/jobs${queryString ? `?${queryString}` : ''}`);
   };
@@ -96,11 +96,11 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
       sx={{
         px: 3,
         py: { xs: 6, md: 10 },
-background: "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rgba(255, 255, 255, 0) 59.69%, #FFFFFF 100%)",
-      color: "#000000",
+        background: "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rgba(255, 255, 255, 0) 59.69%, #FFFFFF 100%)",
+        color: "#000000",
         position: 'relative',
         overflow: 'hidden',
-        maxWidth: 1400,
+        maxWidth: 1600,
         mx: 'auto',
         ...(type === 'company' && {
           backgroundImage:
@@ -112,7 +112,7 @@ background: "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rg
     >
       {type === 'company' ? (
         <>
-          <Box sx={{ width: '100%', mx: 0, textAlign: 'center' }}>
+          <Box sx={{ width: '100%', textAlign: 'center' }}>
             <Typography
               variant="h2"
               sx={{
@@ -322,7 +322,8 @@ background: "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rg
           sx={{
             justifyContent: "space-between",
             alignItems: { xs: "center", lg: "flex-start" },
-            minHeight: { xs: "auto", lg: "600px" }
+            minHeight: { xs: "auto", lg: "600px" },
+            ml: 8
           }}
         >
           <Box sx={{ flex: 1, maxWidth: { xs: "100%", lg: "600px" }, width: "100%" }}>
@@ -592,9 +593,9 @@ background: "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rg
               display: "flex"
             }}
           >
-            <Box sx={{ 
-              position: "relative", 
-              width: "100%", 
+            <Box sx={{
+              position: "relative",
+              width: "100%",
               mb: { xs: 2, lg: 3 },
               px: { xs: 2, sm: 4, lg: 0 }
             }}>
