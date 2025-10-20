@@ -1,5 +1,7 @@
 // generateQuestions.js
 require("dotenv").config();
+const { Together } = require("together-ai");
+const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
 const { HttpError } = require("../../../utils/httpUtils");
 const { SKILL_TYPES } = require("../../../constants/profileConstants");
@@ -14,6 +16,7 @@ const {
 } = require("../../../utils/evaluationUtils");
 
 const techniqueService = require("../../../services/evaluation/techniqueQuestionsService");
+
 
 exports.generateTechniqueQuestions = async (req, res) => {
   try {
