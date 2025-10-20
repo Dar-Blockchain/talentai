@@ -101,53 +101,161 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
 
   const drawer = (
     <Box
-      onClick={handleDrawerToggle}
       sx={{
         background: "#fff",
         width: "100%",
         height: "100%",
         color: "#000",
         textAlign: "center",
-        p: 3,
+        p: { xs: 2, sm: 3 },
+        display: "flex",
+        flexDirection: "column",
       }}
     >
+      {/* Logo */}
       <Box
-        component="img"
-        src={logo}
-        alt="TalentAI Logo"
-        sx={{ height: 32, mb: 2, cursor: "pointer" }}
-        onClick={() => router.push("/")}
-      />
-      <List>
-        {getNavItems(type).map((item) => (
-          <ListItem
-            key={item.id || item.href}
-            component={Link}
-            href={item.href || `/#${item.id}`}
-            sx={{ textDecoration: "none" }}
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          mb: 3,
+        }}
+      >
+        <Box
+          sx={{
+            backgroundColor: "white",
+            borderRadius: "50px",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            height: { xs: 40, sm: 48 },
+            width: { xs: 138, sm: 166 },
+            boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
+          }}
+        >
+          <Box
+            sx={{
+              backgroundColor: "#141415",
+              borderRadius: "50px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              height: { xs: 36, sm: 44 },
+              width: { xs: 134, sm: 162 },
+            }}
+            onClick={() => {
+              router.push(type === "company" ? "/" : "/home/candidate");
+              handleDrawerToggle();
+            }}
           >
-            <ListItemText
-              primary={item.label}
+            <Box
+              component="img"
+              src={logo}
+              alt="TalentAI Logo"
+              sx={{ height: { xs: 20, sm: 25 } }}
+            />
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Navigation Links */}
+      <List sx={{ flex: 1 }}>
+        {getNavItems(type).map((item, index) => {
+          const isLast = index === getNavItems(type).length - 1;
+          const lastItemColor =
+            type === "jobseeker"
+              ? "#4DD9A3"
+              : type === "company"
+              ? "#BD85FF"
+              : "#180D00";
+
+          return (
+            <ListItem
+              key={item.id || item.href}
+              component={Link}
+              href={item.href || `/#${item.id}`}
+              onClick={handleDrawerToggle}
               sx={{
-                textAlign: "start",
-                fontWeight: 500,
-                color: item.label === "Find Jobs" ? "#8310FF" : "#000",
-                transition: "all 0.1s",
+                textDecoration: "none",
+                borderRadius: 2,
+                mb: 1,
                 "&:hover": {
-                  color: item.label === "Find Jobs" ? "#6B0BC7" : "#00FF9D",
-                  fontWeight: "bold",
+                  backgroundColor: "#f9fafb",
                 },
               }}
-            />
-          </ListItem>
-        ))}
-        {/* Show UserAvatar in mobile drawer when authenticated */}
-        {isAuthenticated && (
-          <ListItem sx={{ justifyContent: "center", mt: 2 }}>
-            <UserAvatar />
-          </ListItem>
-        )}
+            >
+              <ListItemText
+                primary={item.label}
+                sx={{
+                  textAlign: "start",
+                  "& .MuiTypography-root": {
+                    fontWeight: isLast ? 600 : 500,
+                    fontSize: { xs: "14px", sm: "16px" },
+                    color: isLast ? lastItemColor : "#000",
+                    transition: "all 0.2s",
+                  },
+                }}
+              />
+            </ListItem>
+          );
+        })}
       </List>
+
+      {/* Bottom Section - Auth Buttons or UserAvatar */}
+      <Box sx={{ mt: "auto", pt: 2, borderTop: "1px solid #E5E7EB" }}>
+        {isAuthenticated ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+            <UserAvatar />
+          </Box>
+        ) : (
+          <Stack spacing={2}>
+            <Button
+              variant="contained"
+              onClick={() => {
+                router.push("/signin");
+                handleDrawerToggle();
+              }}
+              sx={{
+                backgroundColor: type === "jobseeker" ? "#BD85FF" : "#4DD9A3",
+                color: "#ffffff",
+                borderRadius: 999,
+                textTransform: "none",
+                py: 1.5,
+                fontSize: { xs: "14px", sm: "16px" },
+                fontWeight: 600,
+                boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
+                "&:hover": {
+                  backgroundColor: type === "jobseeker" ? "#9c5fd4" : "#3bc98a",
+                },
+              }}
+            >
+              Login
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                router.push("/demo");
+                handleDrawerToggle();
+              }}
+              sx={{
+                color: "#383A3D",
+                borderColor: "#E5E7EB",
+                borderRadius: 999,
+                textTransform: "none",
+                py: 1.5,
+                fontSize: { xs: "14px", sm: "16px" },
+                fontWeight: 600,
+                "&:hover": {
+                  backgroundColor: "#f9fafb",
+                  borderColor: "#D1D5DB",
+                },
+              }}
+            >
+              {type === "jobseeker" ? "Sign-up" : "Watch Demo"}
+            </Button>
+          </Stack>
+        )}
+      </Box>
     </Box>
   );
 
@@ -164,23 +272,23 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
           backgroundColor: "#FDFEFE",
           color: "#000",
           boxShadow: "none",
-          pt: 2,
-          pb: 2
+          pt: { xs: 1, md: 2 },
+          pb: { xs: 1, md: 2 }
         }}
       >
-        <Box sx={{ maxWidth: 1400, mx: "auto", width: "100%" }}>
-          <Toolbar sx={{ justifyContent: "space-between", px: 0, gap: 1 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <Box sx={{ maxWidth: 1400, mx: "auto", width: "100%", px: { xs: 2, sm: 3, md: 4 } }}>
+          <Toolbar sx={{ justifyContent: "space-between", px: 0, gap: 1, minHeight: { xs: '56px', md: '64px' } }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, md: 2 } }}>
               {/* Logo on the left */}
               <Box
                 sx={{
                   backgroundColor: "white",
                   borderRadius: "50px",
-                  display: "inline-flex", // keeps it tightly wrapped around the inner box
+                  display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  height: 48,
-                  width: 166,
+                  height: { xs: 40, md: 48 },
+                  width: { xs: 138, md: 166 },
                   boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
                 }}
               >
@@ -192,8 +300,8 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
                     alignItems: "center",
                     justifyContent: "center",
                     cursor: "pointer",
-                    height: 44,
-                    width: 162,
+                    height: { xs: 36, md: 44 },
+                    width: { xs: 134, md: 162 },
                   }}
                   onClick={() =>
                     router.push(type === "company" ? "/" : "/home/candidate")
@@ -203,7 +311,7 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
                     component="img"
                     src={logo}
                     alt="TalentAI Logo"
-                    sx={{ height: 25 }}
+                    sx={{ height: { xs: 20, md: 25 } }}
                   />
                 </Box>
               </Box>
@@ -261,7 +369,7 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
                                 ? lastItemColor
                                 : isSelected
                                 ? "#180D00"
-                                : "#878786", // green/yellow for last item, black if selected, gray if not
+                                : "#878786",
                               "&:hover": {
                                 color: isLast ? lastItemColor : "#180D00",
                                 fontWeight: 600,
@@ -337,15 +445,35 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
                 color="inherit"
                 edge="end"
                 onClick={handleDrawerToggle}
+                sx={{
+                  backgroundColor: "#ffffff",
+                  borderRadius: "50%",
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
+                  width: { xs: 40, sm: 48 },
+                  height: { xs: 40, sm: 48 },
+                  "&:hover": {
+                    backgroundColor: "#f9fafb",
+                  },
+                }}
               >
-                <MenuIcon />
+                <MenuIcon sx={{ fontSize: { xs: 20, sm: 24 } }} />
               </IconButton>
             )}
           </Toolbar>
         </Box>
       </AppBar>
 
-      <Drawer anchor="right" open={mobileOpen} onClose={handleDrawerToggle}>
+      <Drawer 
+        anchor="right" 
+        open={mobileOpen} 
+        onClose={handleDrawerToggle}
+        sx={{
+          '& .MuiDrawer-paper': {
+            width: { xs: '75%', sm: '300px' },
+            maxWidth: '300px',
+          }
+        }}
+      >
         {drawer}
       </Drawer>
     </>

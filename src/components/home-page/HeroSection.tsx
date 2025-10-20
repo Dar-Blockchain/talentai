@@ -187,17 +187,17 @@ background: "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rg
           <Box sx={{
             width: '100%',
             position: 'relative',
-            height: { xs: 200, md: 250 },
+            height: { xs: 150, sm: 200, md: 250 },
+            mb: { xs: 4, md: 0 }
           }}>
-            {/* Left blur cards */}
+            {/* Left blur cards - Desktop only */}
             <Box sx={{
               position: 'absolute',
-              left: { xs: 8, md: 24 },
+              left: { md: 24 },
               bottom: 0,
               filter: 'blur(3px)',
               opacity: 0.6,
-              display: { xs: 'none', md: 'block' },
-
+              display: { xs: 'none', lg: 'block' },
             }}>
               <Box sx={{
                 width: 280,
@@ -224,52 +224,73 @@ background: "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rg
             {/* Center cards */}
             <Box sx={{
               position: 'absolute',
-              left: { xs: '50%', md: '50%' },
+              left: '50%',
               transform: 'translateX(-50%)',
               bottom: 0,
               display: 'flex',
-              gap: 0,
-              animation: 'slideUp 1s ease-out'
+              gap: { xs: 0, sm: 1 },
+              animation: 'slideUp 1s ease-out',
+              width: { xs: '90%', sm: 'auto' },
+              justifyContent: 'center'
             }}>
               {/* Candidate Profile Card */}
-              <img
+              <Box
+                component="img"
                 src="/images/home/Michael.png"
                 alt="Michael Brown Profile"
+                sx={{
+                  display: { xs: 'none', md: 'block' },
+                  height: { md: 200, lg: 240 },
+                  width: 'auto',
+                  objectFit: 'contain'
+                }}
               />
 
               {/* AI Insights Card - Main focus */}
               <Box sx={{
-                width: { xs: 280, md: 320 },
-                height: { xs: 200, md: 240 },
+                width: { xs: '100%', sm: 280, md: 320 },
+                height: { xs: 150, sm: 200, md: 240 },
                 bgcolor: '#fff',
                 borderRadius: 3,
-
                 zIndex: 2,
-
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}>
                 <img
                   src="/images/home/Ai.png"
                   alt="AI Insights Dashboard"
-
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain'
+                  }}
                 />
               </Box>
 
               {/* Hiring Pipeline Card */}
-              <img
+              <Box
+                component="img"
                 src="/images/home/Hiring.png"
                 alt="Hiring Pipeline Dashboard"
+                sx={{
+                  display: { xs: 'none', md: 'block' },
+                  height: { md: 200, lg: 240 },
+                  width: 'auto',
+                  objectFit: 'contain'
+                }}
               />
             </Box>
 
-            {/* Right blur cards */}
+            {/* Right blur cards - Desktop only */}
             <Box sx={{
               position: 'absolute',
-              right: { xs: 8, md: 1 },
+              right: { md: 1 },
               bottom: 0,
               filter: 'blur(3px)',
               opacity: 0.6,
-              display: { xs: 'none', md: 'block' },
-
+              display: { xs: 'none', lg: 'block' },
             }}>
               <Box sx={{
                 width: 280,
@@ -296,24 +317,25 @@ background: "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rg
         </>
       ) : (
         <Stack
-          direction="row"
-          spacing={4}
+          direction={{ xs: "column", lg: "row" }}
+          spacing={{ xs: 3, lg: 4 }}
           sx={{
             justifyContent: "space-between",
-            alignItems: "flex-start",
-            minHeight: "600px"
+            alignItems: { xs: "center", lg: "flex-start" },
+            minHeight: { xs: "auto", lg: "600px" }
           }}
         >
-          <Box sx={{ flex: 1, maxWidth: "600px" }}>
+          <Box sx={{ flex: 1, maxWidth: { xs: "100%", lg: "600px" }, width: "100%" }}>
             <Typography
               variant="h2"
               fontWeight={700}
               gutterBottom
               sx={{
-                fontSize: { xs: "48px", md: "64px", lg: "72px" },
+                fontSize: { xs: "32px", sm: "48px", md: "64px", lg: "72px" },
                 lineHeight: 1.2,
                 mb: 1,
-                color: "#000000"
+                color: "#000000",
+                textAlign: { xs: "center", lg: "left" }
               }}
             >
               {title}<span style={{ color: color }}>.</span>
@@ -321,12 +343,13 @@ background: "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rg
             <Typography
               sx={{
                 fontFamily: "Poppins",
-                fontWeight: 700, // Bold
+                fontWeight: 700,
                 fontStyle: "normal",
-                fontSize: { xs: "36px", md: "50px" }, // responsive
-                lineHeight: "100%", // matches your spec
+                fontSize: { xs: "24px", sm: "36px", md: "50px" },
+                lineHeight: "100%",
                 mb: 3,
-                color: "#666666"
+                color: "#666666",
+                textAlign: { xs: "center", lg: "left" }
               }}
             >
               {subtitle}
@@ -336,9 +359,11 @@ background: "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rg
               color="#666666"
               sx={{
                 mb: 4,
-                maxWidth: 500,
-                fontSize: "16px",
+                maxWidth: { xs: "100%", lg: 500 },
+                fontSize: { xs: "14px", md: "16px" },
                 lineHeight: 1.6,
+                textAlign: { xs: "center", lg: "left" },
+                px: { xs: 2, sm: 0 }
               }}
             >
               Begin Your Professional Journey with TalentAI, Your Trusted Companion in Navigating the Dynamic Landscape of Career Opportunities, Offering Tailored Solutions for Your Success.
@@ -535,14 +560,16 @@ background: "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rg
             <Typography
               sx={{
                 fontFamily: "Poppins",
-                fontWeight: 600, // Semibold
+                fontWeight: 600,
                 fontStyle: "normal",
-                fontSize: { xs: "28px", md: "48px" },
-                lineHeight: "145%",  // matches 145%
+                fontSize: { xs: "20px", sm: "28px", md: "48px" },
+                lineHeight: "145%",
                 letterSpacing: "0%",
                 mb: 2,
-                mt: 20,
-                color: "#000"
+                mt: { xs: 8, md: 20 },
+                color: "#000",
+                textAlign: { xs: "center", lg: "left" },
+                px: { xs: 2, sm: 0 }
               }}
             >
               Your skills deserve to be shown to the world.
@@ -554,17 +581,23 @@ background: "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rg
 
           {/* Right Side - Get Hired Image */}
           <Box
-            display={{ xs: "none", lg: "flex" }}
             sx={{
               flex: 1,
               position: "relative",
               justifyContent: "center",
-              alignItems: "flex-start",
-              maxWidth: "600px",
-              flexDirection: "column"
+              alignItems: { xs: "center", lg: "flex-start" },
+              maxWidth: { xs: "100%", lg: "600px" },
+              width: "100%",
+              flexDirection: "column",
+              display: "flex"
             }}
           >
-            <Box sx={{ position: "relative", width: "100%", mb: 3 }}>
+            <Box sx={{ 
+              position: "relative", 
+              width: "100%", 
+              mb: { xs: 2, lg: 3 },
+              px: { xs: 2, sm: 4, lg: 0 }
+            }}>
               <img
                 src="/images/jobseeker_landing/getHired.png"
                 alt="Get Hired - TalentAI Platform"
@@ -585,11 +618,12 @@ background: "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rg
               variant="body1"
               color="#6b7280"
               sx={{
-                fontSize: "16px",
+                fontSize: { xs: "14px", md: "16px" },
                 lineHeight: 1.6,
                 fontWeight: 400,
-                textAlign: "left",
-                maxWidth: "100%"
+                textAlign: { xs: "center", lg: "left" },
+                maxWidth: "100%",
+                px: { xs: 2, sm: 4, lg: 0 }
               }}
             >
               Work with top companies, earn on your terms, and create a career without borders. Connect directly with industry leaders through AI-powered matching, access competitive salaries and flexible opportunities that fit your lifestyle, and build a global career with remote roles that let you work anywhere.
