@@ -725,7 +725,7 @@ export default function Report() {
               fontWeight: 700
             }}
           >
-            {assessmentType === 'technical' ? 'Technical' : 'Soft Skills'} Assessment Results
+            {assessmentType === 'technicalSkill' ? 'Technical' : 'Soft Skills'} Assessment Results
           </Typography>
 
           {results ? (
@@ -745,7 +745,7 @@ export default function Report() {
                 }}>
                   <TrendingUpIcon sx={{ color: '#02E2FF' }} />
                   <Typography variant="h5" sx={{ color: '#000' }}>
-                    Score: {Number(results.analysis.overallScore).toFixed(2)}%
+                    Score: {Number(results.analysis.skillAnalysis[0].confidenceScore).toFixed(2)}%
                   </Typography>
                   <Chip
                     label={results.analysis.technicalLevel}

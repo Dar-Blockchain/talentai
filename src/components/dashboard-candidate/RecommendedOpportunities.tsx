@@ -64,11 +64,18 @@ export default function RecommendedOpportunities({ data, total, emptyText = "You
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleOpen = async (row: RecommendedOpportunity) => {
+    console.log('Opening modal with row:', row);
     setSelected(row);
     setSelectedDetails(null);
     setDetailsError(null);
     const id = row._id || row.id;
-    if (!id) return;
+    console.log('Job ID:', id);
+    
+    if (!id) {
+      console.warn('No ID found for job');
+      return;
+    }
+    
     try {
       setLoadingDetails(true);
       const token =
@@ -77,14 +84,24 @@ export default function RecommendedOpportunities({ data, total, emptyText = "You
           : null;
       const base = process.env.NEXT_PUBLIC_API_BASE_URL || '';
       const url = `${base}post/getPostById/${id}`;
+      console.log('Fetching job details from:', url);
+      
       const res = await fetch(url, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
+      
+      console.log('Response status:', res.status);
+      
       if (!res.ok) throw new Error('Failed to load job details');
+      
       const json = await res.json();
+      console.log('API Response:', json);
+      
       const full = json?.data || json;
+      console.log('Setting details to:', full);
       setSelectedDetails(full || null);
     } catch (e: any) {
+      console.error('Error loading job details:', e);
       setDetailsError(e?.message || 'Unable to load job details');
     } finally {
       setLoadingDetails(false);
@@ -326,97 +343,213 @@ export default function RecommendedOpportunities({ data, total, emptyText = "You
       )}
 
       {/* Job Details Dialog */}
-      <Dialog open={!!selected} onClose={handleClose} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ fontWeight: 700 }}>
+      <Dialog 
+        open={!!selected} 
+        onClose={handleClose} 
+        fullWidth 
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            minHeight: 400
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, pb: 2, borderBottom: '1px solid #E0E0E0' }}>
           {(() => {
+            console.log('Rendering dialog title - selected:', selected, 'selectedDetails:', selectedDetails);
             const job: any = selectedDetails || selected;
             const details = job?.jobDetails || job;
-            return details?.title || 'Opportunity details';
+            const title = details?.title || 'Opportunity Details';
+            console.log('Dialog title:', title);
+            return title;
           })()}
         </DialogTitle>
-        <DialogContent dividers sx={{ maxHeight: 600 }}>
-          {loadingDetails ? (
+        <DialogContent dividers sx={{ maxHeight: 600, minHeight: 300, py: 3 }}>
+          {loadingDetails && !selected ? (
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 4 }}>
-              <CircularProgress size={24} />
+              <CircularProgress size={24} sx={{ color: '#8310FF' }} />
+              <Typography variant="body2" sx={{ ml: 2, color: '#666' }}>
+                Loading job details...
+              </Typography>
             </Box>
-          ) : detailsError ? (
-            <Typography variant="body2" color="error">{detailsError}</Typography>
+          ) : detailsError && !selected ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="body2" color="error" sx={{ mb: 2 }}>{detailsError}</Typography>
+              <Typography variant="body2" sx={{ color: '#666', fontSize: '0.875rem' }}>
+                Please try again or contact support if the issue persists.
+              </Typography>
+            </Box>
           ) : (
             (() => {
               const job: any = selectedDetails || selected;
-              if (!job) return null;
+              console.log('Modal job data:', job);
+              
+              if (!job) {
+                return (
+                  <Box sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography variant="body2" sx={{ color: '#666' }}>
+                      No job details available.
+                    </Typography>
+                  </Box>
+                );
+              }
+
               const details: any = job.jobDetails || job;
               const createdAt = job.createdAt || job.created_at || job.postedAt;
-              const location = details.location;
-              const type = details.employmentType || details.type || details.jobType;
+              const location = details.location || 'Location not specified';
+              const type = details.employmentType || details.type || details.jobType || 'Full-time';
               const experience = details.experienceLevel || details.experience || details.seniority;
               const salaryRange = details.salary || details.salaryRange || details.compensation;
               const salary = salaryRange && typeof salaryRange === 'object'
-                ? `${salaryRange.currency || ''} ${salaryRange.min ?? ''}${salaryRange.max != null ? ' - ' + salaryRange.max : ''}`.trim()
+                ? `${salaryRange.currency || '$'} ${salaryRange.min?.toLocaleString() ?? ''}${salaryRange.max != null ? ' - ' + salaryRange.max.toLocaleString() : ''}`.trim()
                 : (typeof salaryRange === 'string' ? salaryRange : undefined);
-              const description = details.description;
+              const description = details.description || 'No description available.';
               const responsibilities: string[] = Array.isArray(details.responsibilities) ? details.responsibilities : [];
               const requirements: string[] = Array.isArray(details.requirements) ? details.requirements : [];
+              const company = details.company || details.companyName || job.company || job.companyName;
+
+              console.log('Rendering modal content:', {
+                job,
+                details,
+                location,
+                type,
+                salary,
+                company,
+                description,
+                requirements: requirements.length,
+                responsibilities: responsibilities.length
+              });
 
               return (
-                <Stack spacing={2}>
-                  <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                <Stack spacing={3}>
+                  {/* Loading overlay for additional details */}
+                  {loadingDetails && (
+                    <Box sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 1, 
+                      p: 2, 
+                      bgcolor: '#F3F4F6', 
+                      borderRadius: 2 
+                    }}>
+                      <CircularProgress size={16} sx={{ color: '#8310FF' }} />
+                      <Typography variant="caption" sx={{ color: '#666' }}>
+                        Loading additional details...
+                      </Typography>
+                    </Box>
+                  )}
+                  {/* Company Info */}
+                  {company && (
+                    <Box sx={{ pb: 2, borderBottom: '1px solid #E0E0E0' }}>
+                      <Typography variant="subtitle2" sx={{ color: '#666', mb: 0.5 }}>
+                        Company
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 600, color: '#000' }}>
+                        {company}
+                      </Typography>
+                    </Box>
+                  )}
+
+                  {/* Job Info Tags */}
+                  <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" sx={{ gap: 1 }}>
                     {location && (
-                      <Box sx={{ px: 1, py: 0.25, bgcolor: '#F3E8FF', color: '#6B21A8', borderRadius: 1 }}>
-                        <Typography variant="caption">{location}</Typography>
-                      </Box>
+                      <Chip
+                        icon={<LocationOnIcon sx={{ fontSize: '16px !important' }} />}
+                        label={location}
+                        size="small"
+                        sx={{ 
+                          bgcolor: '#F3E8FF', 
+                          color: '#6B21A8',
+                          '& .MuiChip-icon': { color: '#6B21A8' }
+                        }}
+                      />
                     )}
                     {type && (
-                      <Box sx={{ px: 1, py: 0.25, bgcolor: '#EEF2FF', color: '#4338CA', borderRadius: 1 }}>
-                        <Typography variant="caption">{type}</Typography>
-                      </Box>
+                      <Chip
+                        label={type}
+                        size="small"
+                        sx={{ bgcolor: '#EEF2FF', color: '#4338CA' }}
+                      />
                     )}
                     {experience && (
-                      <Box sx={{ px: 1, py: 0.25, bgcolor: '#ECFDF5', color: '#065F46', borderRadius: 1 }}>
-                        <Typography variant="caption">{experience}</Typography>
-                      </Box>
+                      <Chip
+                        label={experience}
+                        size="small"
+                        sx={{ bgcolor: '#ECFDF5', color: '#065F46' }}
+                      />
                     )}
                     {salary && (
-                      <Box sx={{ px: 1, py: 0.25, bgcolor: '#FFF7ED', color: '#9A3412', borderRadius: 1 }}>
-                        <Typography variant="caption">{salary}</Typography>
-                      </Box>
+                      <Chip
+                        label={salary}
+                        size="small"
+                        sx={{ bgcolor: '#FFF7ED', color: '#9A3412' }}
+                      />
                     )}
                     {createdAt && (
-                      <Typography variant="caption" sx={{ color: '#666', ml: 'auto' }}>
-                        Posted {(() => { const d = new Date(createdAt); return isNaN(d.getTime()) ? createdAt : d.toLocaleDateString(); })()}
+                      <Typography variant="caption" sx={{ color: '#666', ml: 'auto !important' }}>
+                        Posted {(() => { 
+                          const d = new Date(createdAt); 
+                          return isNaN(d.getTime()) ? createdAt : d.toLocaleDateString(); 
+                        })()}
                       </Typography>
                     )}
                   </Stack>
 
+                  {/* Description */}
                   {description && (
                     <Box>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>About the role</Typography>
-                      <Typography variant="body2" sx={{ color: '#333', whiteSpace: 'pre-line' }}>{description}</Typography>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: '#000' }}>
+                        About the role
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#333', whiteSpace: 'pre-line', lineHeight: 1.6 }}>
+                        {description}
+                      </Typography>
                     </Box>
                   )}
 
-                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-                    {requirements.length > 0 && (
-                      <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Requirements</Typography>
-                        <Stack spacing={0.5}>
-                          {requirements.map((req, i) => (
-                            <Typography key={i} variant="body2">• {req}</Typography>
-                          ))}
-                        </Stack>
-                      </Box>
-                    )}
-                    {responsibilities.length > 0 && (
-                      <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Responsibilities</Typography>
-                        <Stack spacing={0.5}>
-                          {responsibilities.map((resp, i) => (
-                            <Typography key={i} variant="body2">• {resp}</Typography>
-                          ))}
-                        </Stack>
-                      </Box>
-                    )}
-                  </Box>
+                  {/* Requirements & Responsibilities */}
+                  {(requirements.length > 0 || responsibilities.length > 0) && (
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
+                      {requirements.length > 0 && (
+                        <Box>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: '#000' }}>
+                            Requirements
+                          </Typography>
+                          <Stack spacing={0.5}>
+                            {requirements.map((req, i) => (
+                              <Typography key={i} variant="body2" sx={{ color: '#333', lineHeight: 1.6 }}>
+                                • {req}
+                              </Typography>
+                            ))}
+                          </Stack>
+                        </Box>
+                      )}
+                      {responsibilities.length > 0 && (
+                        <Box>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: '#000' }}>
+                            Responsibilities
+                          </Typography>
+                          <Stack spacing={0.5}>
+                            {responsibilities.map((resp, i) => (
+                              <Typography key={i} variant="body2" sx={{ color: '#333', lineHeight: 1.6 }}>
+                                • {resp}
+                              </Typography>
+                            ))}
+                          </Stack>
+                        </Box>
+                      )}
+                    </Box>
+                  )}
+
+                  {/* No additional info message */}
+                  {!description && requirements.length === 0 && responsibilities.length === 0 && (
+                    <Box sx={{ textAlign: 'center', py: 3, bgcolor: '#F9FAFB', borderRadius: 2 }}>
+                      <Typography variant="body2" sx={{ color: '#666' }}>
+                        Additional details will be provided during the application process.
+                      </Typography>
+                    </Box>
+                  )}
                 </Stack>
               );
             })()
