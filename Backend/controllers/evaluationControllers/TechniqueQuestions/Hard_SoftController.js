@@ -1,4 +1,5 @@
 // generateQuestions.js
+const { Together } = require("together-ai");
 require("dotenv").config();
 
 const { HttpError } = require("../../../utils/httpUtils");
@@ -13,25 +14,147 @@ const {
   saveInterviewDetailsForAddSkill,
 } = require("../../../utils/evaluationUtils");
 
-const techniqueService = require("../../../services/evaluation/techniqueQuestionsService");
+// Configure the Together AI client
+const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
 exports.generateTechniqueQuestions = async (req, res) => {
   try {
     const { skill, experienceLevel, proficiencyLevel } = req.body;
 
-    const result = await techniqueService.generateTechniqueQuestions({
-      skill,
-      experienceLevel,
-      proficiencyLevel,
-      userId: req.user._id,
+    if (!skill) {
+      return res.status(400).json({ error: "Missing 'skill' field" });
+    }
+
+    const profile = await Profile.findOne({ userId: req.user._id });
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found" });
+    }
+
+    const now = new Date();
+    const daysSinceLastUpdate =
+      (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
+    if (daysSinceLastUpdate >= 30) {
+      profile.quota = 0;
+      profile.quotaUpdatedAt = now;
+    }
+
+    if (profile.quota >= 5) {
+      return res
+        .status(403)
+        .json({ error: "You have reached your test limit (5)" });
+    }
+
+    // Determine mode: Specific level OR Mixed levels (1 to 5)
+    let prompt;
+    if (experienceLevel && proficiencyLevel) {
+      if (proficiencyLevel < 1 || proficiencyLevel > 5) {
+        return res
+          .status(400)
+          .json({ error: "Proficiency level must be between 1 and 5" });
+      }
+
+      prompt = `
+You are an experienced technical interviewer specialized in ${skill}.
+You are generating questions for a **technical test** designed to evaluate candidates with ${experienceLevel} and proficiency level ${proficiencyLevel}/5.
+
+Generate **exactly 10** technical questions as follows:
+- For levels 1 and 2: generate simpler or theoretical questions focused on fundamentals and basic concepts.
+- For levels 3, 4, and 5: generate situational technical questions that:
+  - Present real-world scenarios requiring decision-making
+  - Focus on problem-solving and best practices
+  - Encourage reflection on experience and common pitfalls
+  - Assess applied knowledge and reasoning, not just theory
+
+**Important: All questions must be answered orally. Do NOT ask for any live coding, code writing, or writing of syntax.**
+Questions should simulate challenges candidates would face on the job.
+
+Return ONLY a JSON array of strings, like:
+[
+  "Question 1?",
+  "Question 2?"
+]
+`.trim();
+
+      //situational 3 ,4 ,5
+    } else {
+      // Only skill provided → Mixed difficulty
+      prompt = `
+You are a professional interviewer for the skill ${skill}.
+Generate **exactly 10** interview questions for a **technical test**, covering difficulty levels 1 to 5:
+- 2 questions at level 1 (simple real-world context)
+- 2 at level 2 (basic problem-solving or reflection)
+- 2 at level 3 (intermediate scenario or best practice dilemma)
+- 2 at level 4 (complex problem-solving with trade-offs)
+- 2 at level 5 (expert-level decision-making in high-impact situations)
+
+All questions must be:
+- Situational and scenario-based
+- Focused on applied knowledge, reasoning, and decision-making
+- Representative of challenges candidates would encounter in real projects
+- **Answerable orally only, with no live coding, no code writing, and no syntax recall**
+
+Return ONLY a JSON array of strings, like:
+[
+  "Question 1?",
+  "Question 2?"
+]
+`.trim();
+    }
+
+    // 5️⃣ Call TogetherAI API
+    const stream = await together.chat.completions.create({
+      model: "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8",
+      messages: [
+        {
+          role: "system",
+          content: `You are a technical interviewer generating skill-based questions.`,
+        },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: 1000,
+      temperature: 0.7,
+      stream: true,
     });
 
-    res.json(result);
+    let raw = "";
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) raw += content;
+    }
+
+    // Try extracting JSON
+    let questions;
+    const jsonMatch = raw.match(/\[([\s\S]*)\]/);
+    if (jsonMatch) {
+      try {
+        questions = JSON.parse("[" + jsonMatch[1] + "]");
+      } catch (e) {
+        console.warn("JSON parse failed, fallback:", e);
+      }
+    }
+
+    // Fallback if not a clean JSON array
+    if (!Array.isArray(questions)) {
+      questions = raw
+        .split(/\n(?=\d+\.\s)/)
+        .map((q) => q.replace(/^\d+\.\s*/, "").trim())
+        .filter(Boolean);
+    }
+
+    profile.quota += 1;
+    await profile.save();
+
+    res.json({
+      skill,
+      mode: experienceLevel && proficiencyLevel ? "targeted" : "mixed",
+      experienceLevel: experienceLevel || "all",
+      proficiencyLevel: proficiencyLevel || "1-5",
+      questions,
+      totalQuestions: questions.length,
+      newQuota: profile.quota,
+    });
   } catch (error) {
     console.error("Error generating technical questions:", error);
-    if (error && error.status) {
-      return res.status(error.status).json({ error: error.message });
-    }
     res.status(500).json({ error: "Failed to generate technical questions" });
   }
 };
