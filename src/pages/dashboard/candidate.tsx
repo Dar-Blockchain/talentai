@@ -407,10 +407,31 @@ export default function DashboardCandidate() {
         return res.json();
       })
       .then((json) => {
-        if (json.success && Array.isArray(json.data)) {
-          setAdPost(json.data);
-        } else if (json.success && json.data) {
-          setAdPost([json.data]);
+        console.log('Ad Post API Response:', json);
+        
+        // Handle nested data structure: json.data.posts or json.data.data.posts
+        let posts = [];
+        
+        if (json.success && json.data) {
+          // Check for nested posts array
+          if (Array.isArray(json.data.posts)) {
+            posts = json.data.posts;
+          } else if (json.data.data && Array.isArray(json.data.data.posts)) {
+            posts = json.data.data.posts;
+          } else if (Array.isArray(json.data)) {
+            posts = json.data;
+          } else if (json.data.data && Array.isArray(json.data.data)) {
+            posts = json.data.data;
+          } else {
+            posts = [json.data];
+          }
+        }
+        
+        console.log('Processed posts:', posts);
+        console.log('Number of posts:', posts.length);
+        
+        if (posts.length > 0) {
+          setAdPost(posts);
         } else {
           setAdError("No ad data available");
         }
