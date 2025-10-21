@@ -13,7 +13,7 @@ exports.generateTechniqueQuestions = async (req, res) => {
       userId: req.user._id,
     });
 
-    res.json(result);
+    res.status(200).json(result);
   } catch (error) {
     console.error("Error generating technical questions:", error);
     if (error && error.status) {
