@@ -1,7 +1,5 @@
 // generateQuestions.js
-require("dotenv").config();
-
-
+const analyzeProfileService = require("../../../services/evaluation/analyzeProfileService");
 const techniqueService = require("../../../services/evaluation/techniqueQuestionsService");
 
 exports.generateTechniqueQuestions = async (req, res) => {
@@ -25,7 +23,6 @@ exports.generateTechniqueQuestions = async (req, res) => {
   }
 };
 
-const analyzeProfileService = require("../../../services/evaluation/analyzeProfileService");
 
 exports.analyzeProfileAnswers = async (req, res) => {
   return analyzeProfileService.analyzeProfileAnswers(req, res);
