@@ -127,7 +127,7 @@ async function analyzeProfileAnswers(req, res) {
     });
 
     // 2. Prepare the data for GPT analysis (prompts are extracted to helper)
-    const { getSystemPrompt, getUserPrompt } = require("../../prompts/Hard_SoftPrompts");
+    const { getSystemPrompt, getUserPrompt } = require("../../prompts/Hard_SoftPromptsAnalyse");
     const systemContent = getSystemPrompt(type);
     const userContent = getUserPrompt(type, skill, questions);
 
