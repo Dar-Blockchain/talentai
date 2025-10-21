@@ -14,14 +14,6 @@ const {
   saveInterviewDetailsForAddSkill,
 } = require("../../utils/evaluationUtils");
 
-// Helper function to categorize scores
-function getScoreCategory(score) {
-  if (score >= 90) return "Excellent Match";
-  if (score >= 70) return "Good Match";
-  if (score >= 40) return "Partial Match";
-  return "Low Match";
-}
-
 // Helper function to get experience level from proficiency level
 function getExperienceLevel(proficiencyLevel) {
   const levels = ["Entry Level", "Junior", "Mid Level", "Senior", "Expert"];
@@ -86,7 +78,8 @@ async function analyzeProfileAnswers(req, res) {
   try {
     // 1. Validate request body
     const { type, skill, questions } = req.body;
-    const id = req.user._id;
+   // const id = req.user._id;
+    const id = "68f221b2a2455196ee88fec0";
 
     if (!type || !Array.isArray(skill) || !Array.isArray(questions)) {
       return res.status(400).json({
