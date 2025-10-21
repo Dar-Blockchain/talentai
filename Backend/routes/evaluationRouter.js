@@ -11,6 +11,7 @@ const router = express.Router();
 const evaluationController  = require('../controllers/evaluationController');
 const OnbordingController  = require('../controllers/evaluationControllers/Onbording/OnbordingController');
 const Hard_SoftController  = require('../controllers/evaluationControllers/TechniqueQuestions/Hard_SoftController');
+const SoftSkillController  = require('../controllers/evaluationControllers/SoftSkillQuestions/SoftSkillController');
 
 // Import des middlewares
 const { requireAuthUser } = require('../middleware/authMiddleware');
@@ -47,7 +48,7 @@ router.post('/generate-questions', evaluationController.generateQuestions);
 router.post('/job/:id/generate-technique-questions', requireAuthUser, evaluationController.generateTechniqueQuestionsForJob);
 // POST /evaluation/generate-soft-skill-questions
 // Description: Génère des questions d'évaluation soft skills
-router.post('/generate-soft-skill-questions', evaluationController.generateSoftSkillQuestions);
+router.post('/generate-soft-skill-questions', SoftSkillController.generateSoftSkillQuestions);
 
 // POST /evaluation/analyze-job-test-results
 // Description: Analyse les résultats d'un test d'évaluation lié à un job
