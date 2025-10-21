@@ -78,8 +78,8 @@ async function analyzeProfileAnswers(req, res) {
   try {
     // 1. Validate request body
     const { type, skill, questions } = req.body;
-   // const id = req.user._id;
-    const id = "68f221b2a2455196ee88fec0";
+    const id = req.user._id;
+   // const id = "68f221b2a2455196ee88fec0";
 
     if (!type || !Array.isArray(skill) || !Array.isArray(questions)) {
       return res.status(400).json({
