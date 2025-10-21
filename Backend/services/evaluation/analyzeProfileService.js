@@ -20,6 +20,8 @@ const InterviewDetails = require("../../models/InterviewDetailsModel");
 const {
   saveInterviewDetailsForAddSkill,
 } = require("../../utils/evaluationUtils");
+// Also use saveInterviewDetails for soft skills (HR)
+const { saveInterviewDetails } = require("../../utils/evaluationUtils");
 
 // Helper function to get experience level from proficiency level
 function getExperienceLevel(proficiencyLevel) {
@@ -516,6 +518,30 @@ async function analyzeProfileAnswers(req, res) {
         { new: true }
       );
       console.log("Updated profile softSkills:", updated.softSkills);
+
+      // Save InterviewDetails for soft skills (HR interview)
+      try {
+        const interviewId = await saveInterviewDetails(
+          profile || updated,
+          averageScore,
+          analysis.skillAnalysis,
+          null,
+          analysis.recommendations || []
+        );
+
+        // Attach interview id to profile if possible
+        const profileToUpdate = profile || updated;
+        if (!profileToUpdate.interviewDetails) profileToUpdate.interviewDetails = [];
+        profileToUpdate.interviewDetails.push(interviewId);
+        try {
+          await profileToUpdate.save();
+        } catch (err) {
+          // If save fails, log but continue
+          console.warn("Could not save profile with soft interview id:", err.message);
+        }
+      } catch (err) {
+        console.warn("Failed to save InterviewDetails for soft skills:", err.message);
+      }
     }
 
     // Après avoir reçu et parsé la réponse brute de GPT en "analysis"
