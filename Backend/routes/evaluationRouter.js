@@ -45,7 +45,7 @@ router.post('/generate-questions', evaluationController.generateQuestions);
 // POST /evaluation/job/:id/generate-technique-questions
 // Params: id (identifiant du job)
 // Description: Génère des questions techniques spécifiques à un job
-router.post('/job/:id/generate-technique-questions', requireAuthUser, evaluationController.generateTechniqueQuestionsForJob);
+router.post('/job/:id/generate-technique-questions', evaluationController.generateTechniqueQuestionsForJob);
 // POST /evaluation/generate-soft-skill-questions
 // Description: Génère des questions d'évaluation soft skills
 router.post('/generate-soft-skill-questions', SoftSkillController.generateSoftSkillQuestions);
