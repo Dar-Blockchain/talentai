@@ -1,6 +1,13 @@
 require("dotenv").config();
 const { Together } = require("together-ai");
-const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
+
+function getTogetherClient() {
+  const apiKey = process.env.TOGETHER_API_KEY;
+  if (!apiKey) {
+    throw { status: 500, message: "TOGETHER_API_KEY is not configured on the server" };
+  }
+  return new Together({ apiKey });
+}
 
 const { HttpError } = require("../../utils/httpUtils");
 const { SKILL_TYPES } = require("../../constants/profileConstants");
@@ -78,8 +85,8 @@ async function analyzeProfileAnswers(req, res) {
   try {
     // 1. Validate request body
     const { type, skill, questions } = req.body;
-    const id = req.user._id;
-   // const id = "68f221b2a2455196ee88fec0";
+   // const id = req.user._id;
+    const id = "68f221b2a2455196ee88fec0";
 
     if (!type || !Array.isArray(skill) || !Array.isArray(questions)) {
       return res.status(400).json({
@@ -119,83 +126,17 @@ async function analyzeProfileAnswers(req, res) {
       }
     });
 
-    // 2. Prepare the data for GPT analysis
-    const prompt = `
-As an expert ${type} interviewer, analyze the following assessment:
+    // 2. Prepare the data for GPT analysis (prompts are extracted to helper)
+    const { getSystemPrompt, getUserPrompt } = require("../../prompts/Hard_SoftPrompts");
+    const systemContent = getSystemPrompt(type);
+    const userContent = getUserPrompt(type, skill, questions);
 
-Assessment Type: ${type}
-Skills being assessed: 
-${skill
-      .map(
-        (s) =>
-          `- ${s.name} (Current Proficiency Level: ${s.proficiencyLevel}/5${
-            s.subcategory ? `, Subcategory: ${s.subcategory}` : ""
-          })`
-      )
-      .join("\n")}
-
-Questions and Answers:
-${questions.map((qa) => `Q: ${qa.question}\nA: ${qa.answer}`).join("\n\n")}
-
-Based on this ${type} assessment, provide a detailed analysis in the following JSON format ONLY (no additional text):
-{
-  "overallScore": 85,
-  "skillAnalysis": [
-    {
-      "skillName": "Teamwork",
-      "currentProficiency": 3,
-      "demonstratedProficiency": 4,
-      "strengths": ["Good communication"],
-      "weaknesses": ["Needs improvement in conflict resolution"],
-      "confidenceScore": 80,
-      "improvement": "increased",
-      "subcategory": "conflict-resolution",  // optional, if applicable
-      "questionAnswerList": [
-        {
-          "question": string,
-          "answer": string,
-          "status": "correct" | "partial_correct" | "incorrect",
-          "exampleCorrectAnswer": string (optional, only if status is "incorrect")
-        }
-      ]
-    },
-  ],
-  "generalAssessment": "Strong foundational knowledge with some areas for improvement",
-  "recommendations": [
-    "Focus on advanced communication techniques",
-    "Practice conflict management"
-  ],
-  "technicalLevel": "intermediate",
-  "nextSteps": [
-    "Suggested learning resources",
-    "Practice projects to undertake"
-  ],
-  "assessmentType": "${type}",
-  "evaluationContext": "Based on ${type} interview standards"
-}`;
-
-    const response = await together.chat.completions.create({
+  const together = getTogetherClient();
+  const response = await together.chat.completions.create({
       model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
       messages: [
-        {
-          role: "system",
-          content: `You are an expert ${type} interviewer specializing in evaluating developer skills. 
-Analyze both the answers and the progression from their current proficiency levels.
-Provide detailed, actionable feedback in JSON format only.
-
-#STRICT REQUIREMENTS FOR RECOMMENDATIONS:
- "recommendations": (array of strings, required):  
- -must be an array of strings.
- -Provide at least **two specific, actionable improvement tips** for the technology's use in this project.  
- - Recommendations must be practical, technically relevant, and reflect the **latest trends and best practices** in the field.
- - At least **one external resource** (doc, course, guide, etc.) per technology is required, and it should be up-to-date and reputable.
- - **Do not provide vague advice.**  
- - Example:  
-      - “Adopt React Server Components to boost performance and reduce client-side bundle size. Detailed guide and best practices: https://react.dev/reference/react-server/components”
-      - “Use TypeScript 5.x to enhance type safety and leverage new language features. Official release notes and migration tips: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html”
-`,
-        },
-        { role: "user", content: prompt },
+        { role: "system", content: systemContent },
+        { role: "user", content: userContent },
       ],
       max_tokens: 2500,
       temperature: 0.7,
