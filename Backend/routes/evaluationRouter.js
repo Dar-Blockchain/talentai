@@ -10,7 +10,7 @@ const express = require('express');
 const router = express.Router();
 const evaluationController  = require('../controllers/evaluationController');
 const OnbordingController  = require('../controllers/evaluationControllers/Onbording/OnbordingController');
-const Hard_SoftController  = require('../controllers/evaluationControllers/TechniqueQuestions/Hard_SoftController');
+const Hard_SoftController  = require('../controllers/evaluationControllers/Hard_SoftQuestions/Hard_SoftController');
 const SoftSkillController  = require('../controllers/evaluationControllers/SoftSkillQuestions/SoftSkillController');
 
 // Import des middlewares
