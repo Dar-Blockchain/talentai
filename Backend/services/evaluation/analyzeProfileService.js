@@ -521,11 +521,13 @@ async function analyzeProfileAnswers(req, res) {
 
       // Save InterviewDetails for soft skills (HR interview)
       try {
-        const interviewId = await saveInterviewDetails(
+        // Use the add-skill saver so InterviewDetails.type === INTERVIEW_TYPES.SKILL
+        // and skillDetails.type === SKILL_TYPES.SOFT
+        const interviewId = await saveInterviewDetailsForAddSkill(
           profile || updated,
           averageScore,
           analysis.skillAnalysis,
-          null,
+          SKILL_TYPES.SOFT,
           analysis.recommendations || []
         );
 
