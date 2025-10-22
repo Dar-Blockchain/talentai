@@ -19,6 +19,8 @@ import {
   Alert,
   Pagination,
   Divider,
+  Autocomplete,
+  Paper,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -79,25 +81,258 @@ const JobSearchPage: React.FC = () => {
   const categories = [
     'All Categories',
     'Software Development',
+    'Web Development',
+    'Mobile Development',
+    'Frontend Development',
+    'Backend Development',
+    'Full Stack Development',
     'Data Science',
+    'Data Analysis',
+    'Data Engineering',
+    'Machine Learning',
+    'Artificial Intelligence',
     'Design',
+    'UI/UX Design',
+    'Graphic Design',
+    'Product Design',
     'Product Management',
+    'Project Management',
     'DevOps',
+    'Cloud Engineering',
+    'System Administration',
     'Marketing',
-    'Sales'
+    'Digital Marketing',
+    'Content Marketing',
+    'Social Media Marketing',
+    'Sales',
+    'Business Development',
+    'Customer Success',
+    'Human Resources',
+    'Recruiting',
+    'Finance',
+    'Accounting',
+    'Operations',
+    'Quality Assurance',
+    'Testing',
+    'Security',
+    'Cybersecurity',
+    'Network Engineering',
+    'Database Administration',
+    'Business Analysis',
+    'Consulting',
+    'Customer Support',
+    'Technical Writing',
+    'Research',
+    'Education',
+    'Training',
+    'Legal',
+    'Healthcare',
+    'Real Estate',
+    'Retail',
+    'Manufacturing',
+    'Logistics',
+    'Supply Chain',
+    'Other'
   ];
 
   const locations = [
     'All Locations',
-    'San Francisco, CA',
-    'New York, NY',
-    'Austin, TX',
-    'Seattle, WA',
-    'Denver, CO',
-    'Los Angeles, CA',
-    'Boston, MA',
-    'Chicago, IL',
-    'Remote'
+    'Remote',
+    'Afghanistan',
+    'Albania',
+    'Algeria',
+    'Andorra',
+    'Angola',
+    'Antigua and Barbuda',
+    'Argentina',
+    'Armenia',
+    'Australia',
+    'Austria',
+    'Azerbaijan',
+    'Bahamas',
+    'Bahrain',
+    'Bangladesh',
+    'Barbados',
+    'Belarus',
+    'Belgium',
+    'Belize',
+    'Benin',
+    'Bhutan',
+    'Bolivia',
+    'Bosnia and Herzegovina',
+    'Botswana',
+    'Brazil',
+    'Brunei',
+    'Bulgaria',
+    'Burkina Faso',
+    'Burundi',
+    'Cabo Verde',
+    'Cambodia',
+    'Cameroon',
+    'Canada',
+    'Central African Republic',
+    'Chad',
+    'Chile',
+    'China',
+    'Colombia',
+    'Comoros',
+    'Congo',
+    'Costa Rica',
+    'Croatia',
+    'Cuba',
+    'Cyprus',
+    'Czech Republic',
+    'Democratic Republic of the Congo',
+    'Denmark',
+    'Djibouti',
+    'Dominica',
+    'Dominican Republic',
+    'Ecuador',
+    'Egypt',
+    'El Salvador',
+    'Equatorial Guinea',
+    'Eritrea',
+    'Estonia',
+    'Eswatini',
+    'Ethiopia',
+    'Fiji',
+    'Finland',
+    'France',
+    'Gabon',
+    'Gambia',
+    'Georgia',
+    'Germany',
+    'Ghana',
+    'Greece',
+    'Grenada',
+    'Guatemala',
+    'Guinea',
+    'Guinea-Bissau',
+    'Guyana',
+    'Haiti',
+    'Honduras',
+    'Hungary',
+    'Iceland',
+    'India',
+    'Indonesia',
+    'Iran',
+    'Iraq',
+    'Ireland',
+    'Israel',
+    'Italy',
+    'Jamaica',
+    'Japan',
+    'Jordan',
+    'Kazakhstan',
+    'Kenya',
+    'Kiribati',
+    'Kuwait',
+    'Kyrgyzstan',
+    'Laos',
+    'Latvia',
+    'Lebanon',
+    'Lesotho',
+    'Liberia',
+    'Libya',
+    'Liechtenstein',
+    'Lithuania',
+    'Luxembourg',
+    'Madagascar',
+    'Malawi',
+    'Malaysia',
+    'Maldives',
+    'Mali',
+    'Malta',
+    'Marshall Islands',
+    'Mauritania',
+    'Mauritius',
+    'Mexico',
+    'Micronesia',
+    'Moldova',
+    'Monaco',
+    'Mongolia',
+    'Montenegro',
+    'Morocco',
+    'Mozambique',
+    'Myanmar',
+    'Namibia',
+    'Nauru',
+    'Nepal',
+    'Netherlands',
+    'New Zealand',
+    'Nicaragua',
+    'Niger',
+    'Nigeria',
+    'North Korea',
+    'North Macedonia',
+    'Norway',
+    'Oman',
+    'Pakistan',
+    'Palau',
+    'Palestine',
+    'Panama',
+    'Papua New Guinea',
+    'Paraguay',
+    'Peru',
+    'Philippines',
+    'Poland',
+    'Portugal',
+    'Qatar',
+    'Romania',
+    'Russia',
+    'Rwanda',
+    'Saint Kitts and Nevis',
+    'Saint Lucia',
+    'Saint Vincent and the Grenadines',
+    'Samoa',
+    'San Marino',
+    'Sao Tome and Principe',
+    'Saudi Arabia',
+    'Senegal',
+    'Serbia',
+    'Seychelles',
+    'Sierra Leone',
+    'Singapore',
+    'Slovakia',
+    'Slovenia',
+    'Solomon Islands',
+    'Somalia',
+    'South Africa',
+    'South Korea',
+    'South Sudan',
+    'Spain',
+    'Sri Lanka',
+    'Sudan',
+    'Suriname',
+    'Sweden',
+    'Switzerland',
+    'Syria',
+    'Taiwan',
+    'Tajikistan',
+    'Tanzania',
+    'Thailand',
+    'Timor-Leste',
+    'Togo',
+    'Tonga',
+    'Trinidad and Tobago',
+    'Tunisia',
+    'Turkey',
+    'Turkmenistan',
+    'Tuvalu',
+    'Uganda',
+    'Ukraine',
+    'United Arab Emirates',
+    'United Kingdom',
+    'United States',
+    'Uruguay',
+    'Uzbekistan',
+    'Vanuatu',
+    'Vatican City',
+    'Venezuela',
+    'Vietnam',
+    'Yemen',
+    'Zambia',
+    'Zimbabwe'
   ];
 
   // Fetch jobs from backend API
@@ -356,50 +591,136 @@ const JobSearchPage: React.FC = () => {
               />
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
-              <FormControl fullWidth>
-                <InputLabel>Category</InputLabel>
-                <Select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <FilterIcon sx={{ color: '#8310FF' }} />
-                    </InputAdornment>
+              <Autocomplete
+                value={selectedCategory}
+                onChange={(event, newValue) => {
+                  setSelectedCategory(newValue || '');
+                }}
+                options={categories}
+                getOptionLabel={(option) => option}
+                isOptionEqualToValue={(option, value) => option === value}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Category"
+                    placeholder="Search categories..."
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <FilterIcon sx={{ color: '#8310FF' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      }
+                    }}
+                  />
+                )}
+                PaperComponent={({ children, ...other }) => (
+                  <Paper 
+                    {...other} 
+                    sx={{ 
+                      maxHeight: 300,
+                      '& .MuiAutocomplete-listbox': {
+                        maxHeight: 300,
+                        '& .MuiAutocomplete-option': {
+                          padding: '8px 16px',
+                          fontSize: '0.9rem',
+                          '&:hover': {
+                            backgroundColor: 'rgba(131, 16, 255, 0.08)',
+                          },
+                          '&.Mui-focused': {
+                            backgroundColor: 'rgba(131, 16, 255, 0.12)',
+                          }
+                        }
+                      }
+                    }}
+                  >
+                    {children}
+                  </Paper>
+                )}
+                renderOption={(props, option) => (
+                  <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center' }}>
+                    <FilterIcon sx={{ color: '#8310FF', mr: 1, fontSize: 16 }} />
+                    {option}
+                  </Box>
+                )}
+                noOptionsText="No categories found"
+                sx={{
+                  '& .MuiAutocomplete-inputRoot': {
+                    paddingRight: '14px !important',
                   }
-                  sx={{
-                    borderRadius: 2,
-                  }}
-                >
-                  {categories.map((category) => (
-                    <MenuItem key={category} value={category}>
-                      {category}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                }}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
-              <FormControl fullWidth>
-                <InputLabel>All Location</InputLabel>
-                <Select
-                  value={selectedLocation}
-                  onChange={(e) => setSelectedLocation(e.target.value)}
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <LocationIcon sx={{ color: '#8310FF' }} />
-                    </InputAdornment>
+              <Autocomplete
+                value={selectedLocation}
+                onChange={(event, newValue) => {
+                  setSelectedLocation(newValue || '');
+                }}
+                options={locations}
+                getOptionLabel={(option) => option}
+                isOptionEqualToValue={(option, value) => option === value}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Location"
+                    placeholder="Search countries..."
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LocationIcon sx={{ color: '#8310FF' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      }
+                    }}
+                  />
+                )}
+                PaperComponent={({ children, ...other }) => (
+                  <Paper 
+                    {...other} 
+                    sx={{ 
+                      maxHeight: 300,
+                      '& .MuiAutocomplete-listbox': {
+                        maxHeight: 300,
+                        '& .MuiAutocomplete-option': {
+                          padding: '8px 16px',
+                          fontSize: '0.9rem',
+                          '&:hover': {
+                            backgroundColor: 'rgba(131, 16, 255, 0.08)',
+                          },
+                          '&.Mui-focused': {
+                            backgroundColor: 'rgba(131, 16, 255, 0.12)',
+                          }
+                        }
+                      }
+                    }}
+                  >
+                    {children}
+                  </Paper>
+                )}
+                renderOption={(props, option) => (
+                  <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center' }}>
+                    <LocationIcon sx={{ color: '#8310FF', mr: 1, fontSize: 16 }} />
+                    {option}
+                  </Box>
+                )}
+                noOptionsText="No countries found"
+                sx={{
+                  '& .MuiAutocomplete-inputRoot': {
+                    paddingRight: '14px !important',
                   }
-                  sx={{
-                    borderRadius: 2,
-                  }}
-                >
-                  {locations.map((location) => (
-                    <MenuItem key={location} value={location}>
-                      {location}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                }}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 2 }}>
               <Button
