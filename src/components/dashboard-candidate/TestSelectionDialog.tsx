@@ -87,7 +87,7 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
     try {
       if (skillType === "technical" && selectedSkill) {
         router.push(
-          `/interview?type=technicalSkill&skill=${selectedSkill}`
+          `/interview/hr?type=technical&skill=${selectedSkill}`
         );
       } else if (skillType === "soft" && softSkillType) {
         const proficiencyMap: { [key: string]: number } = {
@@ -121,7 +121,7 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
           queryParams.append("subcategory", softSkillSubcategory);
         }
 
-        router.push(`/interview?${queryParams.toString()}`);
+        router.push(`/interview/hr?${queryParams.toString()}`);
       }
       onClose();
     } catch (error) {

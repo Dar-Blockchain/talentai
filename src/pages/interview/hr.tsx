@@ -49,6 +49,7 @@ import { RootState } from '@/store/store';
 import { useSelector } from 'react-redux';
 import dynamic from 'next/dynamic';
 import { io } from 'socket.io-client';
+import { buildInterviewConfigFromURL, URLParams } from '@/utils/interviewConfigBuilder';
 
 // Interview Configuration Types
 interface InterviewConfig {
@@ -680,6 +681,34 @@ const IntelligentInterviewTest = () => {
   const [silenceDebugLog, setSilenceDebugLog] = useState<string[]>([]);
   const [transcriptDebugLog, setTranscriptDebugLog] = useState<string[]>([]);
 
+  // Parse URL query parameters and build dynamic interview config
+  useEffect(() => {
+    if (!router.isReady) return;
+
+    const urlParams: URLParams = {
+      type: router.query.type as any,
+      skill: router.query.skill as string,
+      proficiency: router.query.proficiency as string,
+      category: router.query.category as string,
+      company: router.query.company as string,
+      role: router.query.role as string,
+      language: router.query.language as string,
+      difficulty: router.query.difficulty as string,
+      duration: router.query.duration as string,
+    };
+
+    console.log('📋 Building interview config from URL params:', urlParams);
+
+    // Only rebuild config if we have URL params (skip on initial default load)
+    if (urlParams.type || urlParams.skill) {
+      const dynamicConfig = buildInterviewConfigFromURL(urlParams);
+      console.log('✅ Generated dynamic interview config:', dynamicConfig);
+      setInterviewConfig(dynamicConfig);
+    } else {
+      console.log('ℹ️  No URL params detected, using default HR interview config');
+    }
+  }, [router.isReady, router.query]);
+
   // Security States
   const [securityViolationCount, setSecurityViolationCount] = useState(0);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
@@ -895,20 +924,27 @@ const IntelligentInterviewTest = () => {
     connectionInitialized.current = true;
 
     // Use WSL IP for Windows to WSL communication
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://172.23.207.114:5000';
+    // Remove trailing slash to prevent double slash in namespace path
+    const baseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://172.23.207.114:5000').replace(/\/$/, '');
     console.log('🔗 Attempting to connect to:', `${baseUrl}/interview`);
+    console.log('🔗 Socket.IO will connect to namespace: /interview');
 
     const socket = io(`${baseUrl}/interview`, {
-      transports: ['polling', 'websocket'], // Start with polling for stability
-      forceNew: false, // Allow connection reuse
+      path: '/socket.io/', // Explicit path to match backend
+      transports: ['websocket', 'polling'], // Try websocket first, fallback to polling
+      forceNew: false,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 20000,
       upgrade: true,
-      rememberUpgrade: false, // Don't remember upgrades in dev mode
-      autoConnect: true
+      rememberUpgrade: false,
+      autoConnect: true,
+      withCredentials: false, // Disable credentials to match backend cookie: false
+      extraHeaders: {
+        'Access-Control-Allow-Origin': '*'
+      }
     });
 
     socketRef.current = socket;

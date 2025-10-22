@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -12,6 +12,11 @@ import CategoryIcon from '@mui/icons-material/Category';
 import GroupsIcon from '@mui/icons-material/Groups';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { useRouter } from 'next/router';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch } from '@/store/store';
+import { fetchTokenBalance, selectTokenBalance, selectTokenLoading } from '@/store/slices/tokenSlice';
+import TokenBalanceCard from './TokenBalanceCard';
+import PaymentGatewayTAI from './PaymentGatewayTAI';
 
 // Styled Components
 const ProfileHeader = styled(Box)(({ theme }) => ({
@@ -63,6 +68,29 @@ interface CompanyInfoHeaderProps {
 
 const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const tokenBalance = useSelector(selectTokenBalance);
+  const tokenLoading = useSelector(selectTokenLoading);
+  const [paymentGatewayOpen, setPaymentGatewayOpen] = useState(false);
+
+  // Fetch token balance on component mount
+  useEffect(() => {
+    dispatch(fetchTokenBalance());
+  }, [dispatch]);
+
+  const handleBuyTokens = () => {
+    setPaymentGatewayOpen(true);
+  };
+
+  const handleRefreshBalance = async () => {
+    await dispatch(fetchTokenBalance());
+  };
+
+  const handlePurchaseComplete = (tokens: number) => {
+    // Refresh balance after purchase
+    dispatch(fetchTokenBalance());
+    setPaymentGatewayOpen(false);
+  };
 
   return (
     <ProfileHeader>
@@ -115,7 +143,7 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
         {/* Info Cards */}
         <Box sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
           gap: 2,
         }}>
           <Box sx={{
@@ -207,7 +235,24 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
               </Typography>
             </Box>
           </Box>
+
+          {/* Token Balance Card */}
+          <Box>
+            <TokenBalanceCard
+              balance={tokenBalance}
+              onBuyTokens={handleBuyTokens}
+              onRefresh={handleRefreshBalance}
+              loading={tokenLoading}
+            />
+          </Box>
         </Box>
+
+        {/* Payment Gateway Dialog */}
+        <PaymentGatewayTAI
+          open={paymentGatewayOpen}
+          onClose={() => setPaymentGatewayOpen(false)}
+          onPurchaseComplete={handlePurchaseComplete}
+        />
       </Box>
     </ProfileHeader>
   );

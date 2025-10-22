@@ -32,6 +32,8 @@ const hcs11Router = require("./routes/hcs11Router");
 const hrAgentRouter = require("./routes/hrAgentRouter");
 const recruitementStepRouter = require("./routes/recruitementStepRouter");
 const taskRouter = require("./routes/taskRouter");
+const tokenRouter = require("./routes/tokenRouter");
+const paymentRouter = require("./routes/paymentRouter");
 
 require("dotenv").config();
 
@@ -59,6 +61,12 @@ const initializeApp = async () => {
       console.log('');
       console.log('🎉 TalentAI Backend successfully started!');
       console.log(`🚀 Server running on port ${process.env.PORT}`);
+
+      // Initialize interview namespace AFTER server is listening
+      console.log('🎙️  Initializing interview WebSocket namespace...');
+      intelligentInterviewController.initializeHandlers(io);
+      console.log('✅ Interview namespace /interview initialized and ready');
+
       console.log(`📖 API Documentation: http://localhost:${process.env.PORT}/api/docs`);
       console.log(`💡 Hedera clients will initialize on first use (lazy loading)`);
       console.log('');
@@ -108,6 +116,8 @@ app.use("/api/hcs11", hcs11Router);
 app.use("/hr-agents", hrAgentRouter);
 app.use("/recruitementStep", recruitementStepRouter);
 app.use("/task", taskRouter);
+app.use("/tokens", tokenRouter);
+app.use("/payment", paymentRouter);
 
 app.get("/some-route", (req, res) => {
   res.json("Route accessible");
@@ -123,11 +133,13 @@ const server = http.createServer(app);
 // Initialisation centralisée de Socket.IO
 const io = socket.init(server);
 
-// Initialize intelligent interview service
+// Require services at module level (but don't initialize namespace yet)
 const intelligentInterviewService = require('./services/intelligentInterviewService');
+const intelligentInterviewController = require('./controllers/intelligentInterviewController');
 
+// Basic Socket.IO default namespace handler
 io.on('connection', (sock) => {
-  console.log('Utilisateur connecté à Socket.IO :', sock.id);
+  console.log('Utilisateur connecté à Socket.IO (default namespace):', sock.id);
   sock.on('join', (userId) => {
     sock.join(userId);
     console.log(`Utilisateur ${userId} a rejoint sa room.`);
