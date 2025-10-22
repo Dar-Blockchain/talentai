@@ -11,10 +11,8 @@ import {
 } from '@mui/material';
 import ErrorIcon from '@mui/icons-material/Error';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
-import WorkIcon from '@mui/icons-material/Work';
 import EmailIcon from '@mui/icons-material/Email';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import CheckIcon from '@mui/icons-material/Check';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useRouter } from 'next/router';
 
@@ -360,7 +358,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                   {candidate.matchedSkills.slice(0, 6).map((skill, idx) => (
                     <Chip
                       key={skill._id || idx}
-                      label={skill.name}
+                      label={`${skill.name} (${skill.experienceLevel || skill.proficiencyLevel || 'N/A'})`}
                       size="small"
                       sx={{
                         backgroundColor: '#f3f4f6',

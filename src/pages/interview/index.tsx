@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import {
-  AppBar,
   Toolbar,
   Typography,
   Box,
@@ -13,16 +12,16 @@ import {
   LinearProgress,
   Paper,
   styled,
-  IconButton,
   CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CallEndIcon from '@mui/icons-material/CallEnd';
+import MicIcon from '@mui/icons-material/Mic';
+import MicOffIcon from '@mui/icons-material/MicOff';
 import { v4 as uuidv4 } from 'uuid';
 import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
@@ -35,96 +34,71 @@ const NEXTJS_QUESTIONS: string[] = [];
 // Add this after imports
 const GREEN_MAIN = 'rgba(0, 255, 157, 1)';
 
-// --- Styled Components ---
-const StyledAppBar = styled(AppBar)(({ theme }) => ({
-  backdropFilter: 'blur(10px)',
-  borderBottom: '1px solid rgba(255,255,255,0.1)',
-  backgroundColor: "#8310FF"
-}));
 
-const RecordingControls = styled(Box)(({ theme }) => ({
-  position: 'absolute',
-  top: 16,
-  left: '50%',
-  transform: 'translateX(-50%)',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: 2,
-  zIndex: 2,
-  background: 'rgba(0, 0, 0, 0.5)',
-  padding: theme.spacing(2),
-  borderRadius: '16px',
-  backdropFilter: 'blur(10px)',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
-  minWidth: '280px', // Base width for mobile
-  maxWidth: '90%', // Limit width on mobile
-  [theme.breakpoints.up('sm')]: {
-    minWidth: '300px',
-    maxWidth: '300px',
-  },
-}));
-
-const RecordingButton = styled(Button)(({ theme }) => ({
-  width: '100%',
-  padding: theme.spacing(1.5),
-  fontSize: '1.1rem',
-  fontWeight: 600,
-  borderRadius: '12px',
+// New prominent Question Panel styled component
+const QuestionPanel = styled(Paper)(({ theme }) => ({
+  position: 'sticky',
+  top: 0,
+  zIndex: 1000,
+  background: 'linear-gradient(135deg, rgba(131, 16, 255, 0.95) 0%, rgba(0, 184, 212, 0.95) 100%)',
+  backdropFilter: 'blur(15px)',
+  border: '2px solid rgba(255, 255, 255, 0.2)',
+  borderRadius: '0 0 20px 20px',
+  padding: theme.spacing(3, 2),
+  marginBottom: theme.spacing(3),
+  color: '#fff',
+  boxShadow: '0 8px 32px rgba(131, 16, 255, 0.3)',
   transition: 'all 0.3s ease',
-  '&:hover': {
-    transform: 'scale(1.02)',
+  animation: 'slideInFromTop 0.5s ease-out',
+  [theme.breakpoints.up('sm')]: {
+    padding: theme.spacing(4, 3),
+    borderRadius: '0 0 24px 24px',
+  },
+  '&.question-highlight': {
+    transform: 'translateY(2px)',
+    boxShadow: '0 12px 40px rgba(131, 16, 255, 0.4)',
+    animation: 'questionPulse 0.6s ease-out',
+  },
+  '@keyframes questionPulse': {
+    '0%': {
+      transform: 'scale(1)',
+      boxShadow: '0 8px 32px rgba(131, 16, 255, 0.3)',
+    },
+    '50%': {
+      transform: 'scale(1.01)',
+      boxShadow: '0 16px 48px rgba(131, 16, 255, 0.5)',
+    },
+    '100%': {
+      transform: 'scale(1)',
+      boxShadow: '0 8px 32px rgba(131, 16, 255, 0.3)',
+    },
+  },
+  '@keyframes slideInFromTop': {
+    '0%': { transform: 'translateY(-100%)' },
+    '100%': { transform: 'translateY(0)' },
   },
 }));
 
-const TranscriptDisplay = styled(Typography)(({ theme }) => ({
-  color: '#fff',
-  textAlign: 'center',
-  maxWidth: '90%',
-  background: 'rgba(0, 0, 0, 0.6)',
-  padding: theme.spacing(2),
-  borderRadius: '12px',
-  backdropFilter: 'blur(5px)',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
-  marginTop: theme.spacing(1),
-  maxHeight: '150px',
-  overflowY: 'auto',
-  '&::-webkit-scrollbar': {
-    width: '6px',
-  },
-  '&::-webkit-scrollbar-thumb': {
-    background: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: '3px',
-  },
-}));
-
-const QuestionOverlay = styled(Box)(({ theme }) => ({
-  position: 'absolute',
-  bottom: 0,
-  width: '100%',
-  background: 'linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.7), transparent)',
-  color: '#fff',
-  padding: theme.spacing(2, 1.5), // Responsive padding
-  backdropFilter: 'blur(5px)',
-  minHeight: '80px', // Ensure minimum height on mobile
+const QuestionContent = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'center',
-  [theme.breakpoints.up('sm')]: {
-    padding: theme.spacing(3),
-    minHeight: 'auto',
+  gap: theme.spacing(2),
+  minHeight: '60px',
+  [theme.breakpoints.down('sm')]: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: theme.spacing(1),
   },
 }));
 
-const NavigationBar = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(2),
-  backdropFilter: 'blur(10px)',
-  borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-  display: 'flex',
-  justifyContent: 'center', // Center the button on mobile
-  alignItems: 'center',
-  [theme.breakpoints.up('sm')]: {
-    justifyContent: 'space-between',
+const QuestionText = styled(Typography)(({ theme }) => ({
+  flex: 1,
+  fontSize: '1.3rem',
+  fontWeight: 600,
+  lineHeight: 1.4,
+  textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '1.1rem',
   },
 }));
 
@@ -229,94 +203,6 @@ const TestLimitModal = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-const VoiceActivityIndicator = styled(Box, {
-  shouldForwardProp: (prop) => prop !== 'isActive'
-})<{ isActive: boolean }>(({ theme, isActive }) => ({
-  position: 'relative',
-  width: '48px',
-  height: '48px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginTop: theme.spacing(2),
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: '50%',
-    background: isActive ? '#02E2FF' : 'rgba(255, 255, 255, 0.1)',
-    transition: 'all 0.3s ease',
-  },
-}));
-
-const VoiceWaves = styled(Box)(({ theme }) => ({
-  position: 'absolute',
-  width: '100%',
-  height: '100%',
-  '&::before, &::after': {
-    content: '""',
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    borderRadius: '50%',
-    border: '2px solid #02E2FF',
-    animation: 'wave 1.5s ease-out infinite',
-  },
-  '&::before': {
-    width: '100%',
-    height: '100%',
-    animationDelay: '0s',
-  },
-  '&::after': {
-    width: '100%',
-    height: '100%',
-    animationDelay: '0.75s',
-  },
-  '@keyframes wave': {
-    '0%': {
-      transform: 'translate(-50%, -50%) scale(1)',
-      opacity: 0.8,
-    },
-    '100%': {
-      transform: 'translate(-50%, -50%) scale(1.5)',
-      opacity: 0,
-    },
-  },
-}));
-
-const VoiceIcon = styled(Box)(({ theme }) => ({
-  position: 'relative',
-  width: '24px',
-  height: '24px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    width: '8px',
-    height: '8px',
-    borderRadius: '50%',
-    background: '#fff',
-    animation: 'pulse 1s ease-in-out infinite',
-  },
-  '@keyframes pulse': {
-    '0%': {
-      transform: 'scale(1)',
-      opacity: 1,
-    },
-    '50%': {
-      transform: 'scale(1.2)',
-      opacity: 0.8,
-    },
-    '100%': {
-      transform: 'scale(1)',
-      opacity: 1,
-    },
-  },
-}));
 
 export default function Test() {
   const theme = useTheme();
@@ -352,6 +238,8 @@ export default function Test() {
   const [streamingToken, setStreamingToken] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const partialTranscriptRef = useRef<string>('');
+  const accumulatedTranscriptRef = useRef<string>(''); // Track accumulated text for current question
 
   // --- Security Violation State ---
   const [securityViolationCount, setSecurityViolationCount] = useState(0);
@@ -361,6 +249,9 @@ export default function Test() {
 
   // Add new state for test limit error
   const [showTestLimitError, setShowTestLimitError] = useState(false);
+
+  // Question Display States
+  const [questionHighlight, setQuestionHighlight] = useState(false);
 
   // Fetch questions from API
   const fetchQuestions = async () => {
@@ -540,11 +431,12 @@ export default function Test() {
           if (prev <= 1) {
             if (current < questions.length - 1) {
               setCurrent(c => c + 1);
-              return 120; // Reset timer to 120 seconds (2 minutes)
+              return prev; // Don't reset here - let question change effect handle it
             } else {
               stopRecording();
               saveTestResults();
               router.push('/interview/report');
+              return 0;
             }
           }
           return prev - 1;
@@ -558,7 +450,16 @@ export default function Test() {
   useEffect(() => {
     currentIndexRef.current = current;
     setTimeLeft(120); // Reset to 120 seconds (2 minutes)
-    // Show any existing transcript for the new question
+    partialTranscriptRef.current = ''; // Clear partial transcript
+    accumulatedTranscriptRef.current = ''; // Clear accumulated transcript for new question
+    
+    // Trigger question highlight animation
+    setQuestionHighlight(true);
+    setTimeout(() => setQuestionHighlight(false), 600);
+  }, [current]); // Only reset timer when question number changes
+
+  // Update displayed transcript when question changes or transcriptions update
+  useEffect(() => {
     setCurrentTranscript(transcriptions[current] || '');
   }, [current, transcriptions]);
 
@@ -655,27 +556,29 @@ export default function Test() {
           const text = data.text;
           if (text?.trim()) {
             if (data.message_type === 'FinalTranscript') {
-              // For final transcripts, add to the stored transcription for this question
+              // Update accumulated ref
+              accumulatedTranscriptRef.current = (accumulatedTranscriptRef.current + ' ' + text).trim();
+              
+              // Store in transcriptions state
               setTranscriptions(prevT => {
-                const currentQuestionText = prevT[currentIndexRef.current] || '';
-                const updatedQuestionText = (currentQuestionText + ' ' + text).trim();
-
-                // Also update the current transcript to show the accumulated text
-                setCurrentTranscript(updatedQuestionText);
-
                 return {
                   ...prevT,
-                  [currentIndexRef.current]: updatedQuestionText
+                  [currentIndexRef.current]: accumulatedTranscriptRef.current
                 };
               });
+              
+              // Update display
+              setCurrentTranscript(accumulatedTranscriptRef.current);
+              
+              // Clear partial transcript ref after final
+              partialTranscriptRef.current = '';
             } else {
-              // For partial transcripts, show accumulated text + current partial
-              setTranscriptions(prevT => {
-                const currentQuestionText = prevT[currentIndexRef.current] || '';
-                const displayText = currentQuestionText ? (currentQuestionText + ' ' + text).trim() : text;
-                setCurrentTranscript(displayText);
-                return prevT; // Don't update stored transcriptions for partials
-              });
+              // For partial transcripts, show accumulated + partial without storing
+              partialTranscriptRef.current = text;
+              const displayText = accumulatedTranscriptRef.current 
+                ? (accumulatedTranscriptRef.current + ' ' + text).trim() 
+                : text;
+              setCurrentTranscript(displayText);
             }
           }
         }
@@ -966,17 +869,31 @@ export default function Test() {
   }, []);
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: { xs: 1, sm: 4 }, // Responsive padding
-        px: { xs: 0, sm: 2 }, // Add horizontal padding on larger screens
-      }}
-    >
+    <>
+      <style jsx global>{`
+        @keyframes pulse {
+          0% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.8; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+          0% { transform: translateY(20px); opacity: 0; }
+          100% { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Smooth scrolling for better UX */
+        html {
+          scroll-behavior: smooth;
+        }
+
+        /* Enhanced focus outline for accessibility */
+        .MuiButton-root:focus-visible {
+          outline: 2px solid #00ff9d;
+          outline-offset: 2px;
+        }
+      `}</style>
+      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Add Test Limit Error Modal */}
       <TestLimitModal
         open={showTestLimitError}
@@ -1183,9 +1100,15 @@ export default function Test() {
         </DialogActions>
       </GuidelinesModal>
 
-      <StyledAppBar position="static" elevation={0}>
+      {/* Top Header Bar */}
+      <Paper elevation={3} sx={{
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        color: 'white',
+        borderRadius: 0,
+        mb: 0
+      }}>
         <Toolbar sx={{ 
-          flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
+          flexDirection: { xs: 'column', sm: 'row' },
           alignItems: { xs: 'stretch', sm: 'center' },
           gap: { xs: 1, sm: 0 },
           py: { xs: 1, sm: 0 },
@@ -1194,24 +1117,20 @@ export default function Test() {
             variant="h6"
             sx={{
               flexGrow: 1,
-              background: 'black',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
               fontWeight: 700,
-              fontSize: { xs: '1rem', sm: '1.25rem' }, // Responsive font size
-              textAlign: { xs: 'center', sm: 'left' }, // Center on mobile
+              fontSize: { xs: '1rem', sm: '1.25rem' },
+              textAlign: { xs: 'center', sm: 'left' },
             }}
           >
-            Skill Test ({current + 1}/{questions.length || '-'})
+            Technical Skill Test ({current + 1}/{questions.length || '-'})
           </Typography>
           {hasStartedTest && (
             <Typography 
               variant="subtitle1" 
               sx={{ 
-                color: '#fff', 
                 mr: { xs: 0, sm: 2 },
-                fontSize: { xs: '0.875rem', sm: '1rem' }, // Responsive font size
-                textAlign: { xs: 'center', sm: 'left' }, // Center on mobile
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                textAlign: { xs: 'center', sm: 'left' },
               }}
             >
               {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')} min
@@ -1229,11 +1148,11 @@ export default function Test() {
               borderColor: 'white',
               textTransform: 'none',
               borderRadius: 2,
-              px: { xs: 2, sm: 3 }, // Responsive padding
-              py: { xs: 0.5, sm: 1 }, // Responsive padding
-              fontSize: { xs: '0.875rem', sm: '1rem' }, // Responsive font size
-              width: { xs: '100%', sm: 'auto' }, // Full width on mobile
-              '&:hover': { backgroundColor: 'red' },
+              px: { xs: 2, sm: 3 },
+              py: { xs: 0.5, sm: 1 },
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              width: { xs: '100%', sm: 'auto' },
+              '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)', borderColor: 'white' },
             }}
           >
             End Test
@@ -1244,159 +1163,215 @@ export default function Test() {
           value={((current + 1) / (questions.length || 1)) * 100}
           sx={{
             height: 4,
-            backgroundColor: 'rgba(255,255,255,0.1)',
+            backgroundColor: 'rgba(255,255,255,0.2)',
             '& .MuiLinearProgress-bar': {
-              backgroundColor: GREEN_MAIN,
+              backgroundColor: '#00ff9d',
             },
           }}
         />
-      </StyledAppBar>
+      </Paper>
 
-      <Container
-        maxWidth="md"
-        sx={{
-          flexGrow: 1,
-          py: { xs: 2, sm: 4 }, // Responsive padding
-          px: { xs: 1, sm: 2 }, // Add horizontal padding for mobile
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'transparent',
-          boxShadow: 'none',
-          minHeight: { xs: '60vh', sm: 'auto' }, // Ensure minimum height on mobile
-        }}
-      >
-        <Paper
-          elevation={12}
-          sx={{
+      <Container maxWidth="md" sx={{ py: 4, flexGrow: 1 }}>
+        {/* Prominent Question Panel - Always visible during test */}
+        {hasStartedTest && !isGenerating && questions[current] && (
+          <QuestionPanel
+            elevation={6}
+            className={questionHighlight ? 'question-highlight' : ''}
+          >
+            <QuestionContent>
+              <QuestionText variant="body1">
+                {questions[current] || "Loading next question..."}
+              </QuestionText>
+            </QuestionContent>
+          </QuestionPanel>
+        )}
+
+        {/* Compact Camera Preview */}
+        <Paper elevation={2} sx={{
+          p: 2,
+          mb: 3,
+          ...(hasStartedTest ? {
+            position: 'relative',
+            maxWidth: '300px',
+            ml: 'auto',
+            mr: 0
+          } : {})
+        }}>
+          <Typography variant="subtitle1" gutterBottom sx={{ fontSize: '1rem' }}>
+            Camera Preview
+          </Typography>
+          <Box sx={{
             position: 'relative',
             width: '100%',
-            pt: { xs: '75%', sm: '56.25%' }, // Responsive aspect ratio (4:3 on mobile, 16:9 on desktop)
-            borderRadius: { xs: 2, sm: 4 }, // Responsive border radius
+            maxWidth: hasStartedTest ? '280px' : '400px',
+            aspectRatio: '4/3',
+            mx: hasStartedTest ? 0 : 'auto',
+            borderRadius: '12px',
             overflow: 'hidden',
-            background: 'rgba(255,255,255,0.98)',
-            boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
-            maxHeight: { xs: '70vh', sm: 'none' }, // Limit height on mobile
-          }}
-        >
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              transform: 'scaleX(-1)',
-              borderRadius: '24px',
-              boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
-              border: '2px solid #e0f7fa',
-            }}
-          />
+            boxShadow: '0 2px 12px 0 rgba(0,0,0,0.08)',
+            border: '1px solid #e0f7fa',
+            bgcolor: '#f5f5f5',
+            transition: 'all 0.3s ease'
+          }}>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                transform: 'scaleX(-1)',
+              }}
+            />
+            
+            {isGenerating && (
+              <Box sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 1,
+                color: '#666'
+              }}>
+                <CircularProgress size={24} />
+                <Typography variant="caption">Generating questions...</Typography>
+              </Box>
+            )}
+          </Box>
+        </Paper>
 
-          <RecordingControls>
-            <RecordingButton
+        {/* Enhanced Transcript Display */}
+        {hasStartedTest && (
+          <Paper elevation={3} sx={{
+            p: 3,
+            mb: 3,
+            background: 'linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(248,249,250,1) 100%)',
+            border: '2px solid #e3f2fd'
+          }}>
+            <Box display="flex" alignItems="center" gap={1} mb={2}>
+              <MicIcon sx={{ color: currentTranscript.length > 0 ? '#4caf50' : '#9e9e9e' }} />
+              <Typography variant="h6" color="secondary" sx={{ fontWeight: 600 }}>
+                Your Response
+              </Typography>
+              {currentTranscript.length > 0 && (
+                <Box sx={{
+                  ml: 1,
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  backgroundColor: '#4caf50',
+                  animation: 'pulse 1s ease-in-out infinite'
+                }} />
+              )}
+            </Box>
+            <Box sx={{
+              minHeight: 120,
+              border: currentTranscript ? '2px solid #4caf50' : '1px solid #e0e0e0',
+              borderRadius: 2,
+              p: 3,
+              bgcolor: currentTranscript ? 'rgba(76, 175, 80, 0.05)' : '#fafafa',
+              transition: 'all 0.3s ease',
+              position: 'relative'
+            }}>
+              <Typography variant="body1" sx={{
+                fontStyle: currentTranscript ? 'normal' : 'italic',
+                color: currentTranscript ? 'text.primary' : 'text.secondary',
+                fontSize: '1.1rem',
+                lineHeight: 1.6
+              }}>
+                {currentTranscript || "Speak your response..."}
+              </Typography>
+            </Box>
+          </Paper>
+        )}
+
+        {/* Start Test Button (when not started) */}
+        {!hasStartedTest && !isGenerating && (
+          <Box textAlign="center" py={4}>
+            <Typography variant="h5" gutterBottom>
+              Ready to Start Your Test?
+            </Typography>
+            <Typography variant="body1" color="text.secondary" mb={4}>
+              Make sure you're in a quiet environment with your camera and microphone ready.
+            </Typography>
+            <Button
               variant="contained"
-              onClick={hasStartedTest ? undefined : startTest}
-              disabled={isGenerating || hasStartedTest || isConnecting}
-              sx={{
-                backgroundColor: GREEN_MAIN,
+              size="large"
+              onClick={startTest}
+              disabled={isGenerating || isConnecting}
+              sx={{ 
+                px: 4, 
+                py: 1.5,
+                background: GREEN_MAIN,
                 '&:hover': {
-                  backgroundColor: GREEN_MAIN,
-                },
-                '&.Mui-disabled': {
-                  backgroundColor: hasStartedTest ? '#ff4444' : 'rgba(255, 255, 255, 0.12)',
-                  color: hasStartedTest ? '#fff' : 'rgba(255, 255, 255, 0.3)',
+                  background: GREEN_MAIN,
                 }
               }}
             >
-              {isConnecting
-                ? 'Connecting...'
-                : hasStartedTest
-                  ? `Recording (${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')} min)`
-                  : 'Start Test'
-              }
-            </RecordingButton>
-            {hasStartedTest && (
-              <VoiceActivityIndicator isActive={currentTranscript.length > 0}>
-                <VoiceWaves />
-                <VoiceIcon />
-              </VoiceActivityIndicator>
-            )}
-          </RecordingControls>
-
-          <QuestionOverlay>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: '#fff',
-                fontSize: { xs: '1rem', sm: '1.25rem' }, // Responsive font size
-                lineHeight: { xs: 1.3, sm: 1.4 }, // Responsive line height
-                textAlign: 'center',
-                px: { xs: 1, sm: 0 }, // Add horizontal padding on mobile
-                wordBreak: 'break-word', // Prevent text overflow
-                maxWidth: '100%',
-              }}
-            >
-              {isGenerating ? (
-                <Box sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
-                }}>
-                  <span>Generating your interview questions</span>
-                  <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
-                    ...
-                  </Box>
-                </Box>
-              ) : questions[current]}
-            </Typography>
-          </QuestionOverlay>
-        </Paper>
+              {isConnecting ? 'Connecting...' : 'Start Test'}
+            </Button>
+          </Box>
+        )}
       </Container>
 
-      <NavigationBar>
-        {/* <IconButton onClick={handlePrev} disabled={current === 0} sx={{ color: '#fff' }}>
-          <ArrowBackIcon />
-        </IconButton> */}
-        <Button
-          variant="contained"
-          endIcon={<ArrowForwardIcon />}
-          onClick={handleNext}
-          disabled={isGenerating || (current > 0 && nextButtonDisabled)}
-          sx={{
-            textTransform: 'none',
-            background: nextButtonDisabled ? 'rgba(255, 255, 255, 0.12)' : GREEN_MAIN,
-            borderRadius: 2,
-            px: { xs: 3, sm: 4 }, // Responsive padding
-            py: { xs: 1, sm: 1.5 }, // Responsive padding
-            fontSize: { xs: '0.875rem', sm: '1rem' }, // Responsive font size
-            fontWeight: 600,
-            width: { xs: '100%', sm: 'auto' }, // Full width on mobile
-            maxWidth: { xs: '300px', sm: 'none' }, // Max width on mobile
-            boxShadow: '0 2px 8px 0 rgba(0,255,157,0.10)',
-            '&:hover': {
-              background: nextButtonDisabled ? 'rgba(255, 255, 255, 0.12)' : GREEN_MAIN,
-            },
-            '&.Mui-disabled': {
-              color: 'black',
-            }
-          }}
-        >
-          {current < questions.length - 1
-            ? `Next Question${nextButtonDisabled ? ` (${buttonTimer}s)` : ''}`
-            : 'Finish Test'}
-        </Button>
-      </NavigationBar>
-    </Box>
+      {/* Bottom Navigation */}
+      <Paper elevation={3} sx={{
+        position: 'sticky',
+        bottom: 0,
+        mt: 'auto',
+        borderRadius: 0,
+        borderTop: '1px solid rgba(0,0,0,0.1)',
+        background: 'white',
+        zIndex: 100
+      }}>
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          p: 2,
+          gap: 2
+        }}>
+          <Button
+            variant="contained"
+            endIcon={<ArrowForwardIcon />}
+            onClick={handleNext}
+            disabled={isGenerating || (current > 0 && nextButtonDisabled)}
+            sx={{
+              textTransform: 'none',
+              background: nextButtonDisabled ? 'rgba(0,0,0,0.12)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              borderRadius: 2,
+              px: { xs: 3, sm: 4 },
+              py: { xs: 1, sm: 1.5 },
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              fontWeight: 600,
+              width: { xs: '100%', sm: 'auto' },
+              maxWidth: { xs: '300px', sm: 'none' },
+              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+              '&:hover': {
+                background: nextButtonDisabled ? 'rgba(0,0,0,0.12)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                boxShadow: '0 6px 16px rgba(102, 126, 234, 0.5)',
+              },
+              '&.Mui-disabled': {
+                background: 'rgba(0,0,0,0.12)',
+                color: 'rgba(0,0,0,0.26)',
+              }
+            }}
+          >
+            {current < questions.length - 1
+              ? `Next Question${nextButtonDisabled ? ` (${buttonTimer}s)` : ''}`
+              : 'Finish Test'}
+          </Button>
+        </Box>
+      </Paper>
+      </Box>
+    </>
   );
 }

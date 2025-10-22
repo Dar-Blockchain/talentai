@@ -15,6 +15,19 @@ const postController = require("../controllers/postController");
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 const { controledAcces } = require('../middleware/controledAcces'); // Importez le middleware
 
+// Public routes - no authentication required
+
+// GET /post/search
+// Description: Retourne tous les posts avec recherche, filtres et pagination (public)
+router.get("/search", postController.getAllPostsWithSearch);
+
+// GET /post/details/:id
+// Description: Retourne les détails d'un post par son ID (public)
+router.get("/details/:id", postController.getPostDetailsPublic);
+
+// GET /post/public-stats
+// Description: Retourne les statistiques publiques (nombre d'utilisateurs, posts, entreprises)
+router.get("/public-stats", postController.getPublicStats);
 
 // Auth obligatoire + logs pour toutes les routes
 router.use(requireAuthUser, authLogMiddleware("Post"));

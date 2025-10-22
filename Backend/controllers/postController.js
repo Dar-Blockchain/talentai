@@ -47,6 +47,90 @@ exports.getAllPosts = async (req, res) => {
   }
 };
 
+// Récupérer tous les posts avec recherche, filtres et pagination
+exports.getAllPostsWithSearch = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 6,
+      search,
+      location,
+      type,
+      employmentType,
+      status, // Removed default "active" to show all posts
+      category,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
+
+    // Parse pagination parameters
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+
+    // Build filters object
+    const filters = {
+      search,
+      location,
+      type,
+      employmentType,
+      status,
+      category,
+      sortBy,
+      sortOrder,
+    };
+
+    // Get posts from service
+    const result = await postService.getAllPostsWithSearch(filters, pageNum, limitNum);
+
+    res.status(200).json({
+      success: true,
+      results: result.posts,
+      total: result.pagination.total,
+      page: result.pagination.page,
+      limit: result.pagination.limit,
+      totalPages: result.pagination.totalPages,
+      hasNextPage: result.pagination.hasNextPage,
+      hasPrevPage: result.pagination.hasPrevPage,
+      filters: {
+        search,
+        location,
+        type,
+        employmentType,
+        status,
+        category,
+        sortBy,
+        sortOrder,
+      },
+    });
+  } catch (error) {
+    console.error("Error in getAllPostsWithSearch controller:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Failed to fetch posts",
+    });
+  }
+};
+
+// Récupérer les détails d'un post par son ID (public, no auth required)
+exports.getPostDetailsPublic = async (req, res) => {
+  try {
+    const post = await postService.getPostById(req.params.id);
+    
+    console.log('📄 Public job details requested for ID:', req.params.id);
+    
+    res.status(200).json({
+      success: true,
+      data: post,
+    });
+  } catch (error) {
+    console.error('❌ Error fetching public job details:', error);
+    res.status(404).json({
+      success: false,
+      error: error.message || 'Job not found',
+    });
+  }
+};
+
 // Récupérer un post par son ID
 exports.getPostById = async (req, res) => {
   try {
@@ -184,6 +268,37 @@ exports.sendTechnicalTest = async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+// Get public statistics (users, posts, companies)
+exports.getPublicStats = async (req, res) => {
+  try {
+    const User = require("../models/UserModel");
+    const Post = require("../models/PostModel");
+
+    // Count total users
+    const userCount = await User.countDocuments();
+
+    // Count total posts
+    const postCount = await Post.countDocuments();
+
+    // Count companies from User table (where role is 'Company')
+    const companyCount = await User.countDocuments({ role: "Company" });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        users: userCount,
+        posts: postCount,
+        companies: companyCount,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
       success: false,
       error: error.message,
     });

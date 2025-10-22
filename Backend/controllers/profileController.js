@@ -8,16 +8,28 @@ module.exports.createOrUpdateProfile = async (req, res) => {
     const userId = req.user._id;
     const profileData = req.body;
 
-    // Valider les données requises
+    // Validation des champs requis
     if (!profileData.type) {
       return res.status(400).json({ message: "Le type de profil est requis" });
     }
 
-    // Utiliser le service pour créer ou mettre à jour le profil
-    const profile = await profileService.createOrUpdateProfile(
-      userId,
-      profileData
-    );
+    // Vérification du prénom et nom (pas de caractères spéciaux)
+    const nameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ\s'-]+$/; // autorise lettres, espaces, accents, tirets et apostrophes
+
+    if (profileData.FirstName && !nameRegex.test(profileData.FirstName)) {
+      return res
+        .status(400)
+        .json({ message: "Le prénom ne doit pas contenir de caractères spéciaux" });
+    }
+
+    if (profileData.LastName && !nameRegex.test(profileData.LastName)) {
+      return res
+        .status(400)
+        .json({ message: "Le nom ne doit pas contenir de caractères spéciaux" });
+    }
+
+    // Création ou mise à jour du profil
+    const profile = await profileService.createOrUpdateProfile(userId, profileData);
 
     res.status(200).json({
       message: "Profil créé/mis à jour avec succès",
@@ -25,14 +37,12 @@ module.exports.createOrUpdateProfile = async (req, res) => {
     });
   } catch (error) {
     console.error("Erreur lors de la création/mise à jour du profil:", error);
-    res
-      .status(500)
-      .json({
-        message:
-          error.message || "Erreur lors de la création/mise à jour du profil",
-      });
+    res.status(500).json({
+      message: error.message || "Erreur lors de la création/mise à jour du profil",
+    });
   }
 };
+
 
 // Créer ou mettre à jour un profil
 module.exports.createOrUpdateCompanyProfile = async (req, res) => {

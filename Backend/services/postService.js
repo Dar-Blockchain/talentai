@@ -111,10 +111,147 @@ module.exports.getAllPosts = async (filters = {}) => {
     }
 
     return await Post.find(query)
-      .populate("user", "username email")
+      .populate("user", "username email companyDetails")
       .sort({ createdAt: -1 });
   } catch (error) {
     throw new Error(`Error fetching posts: ${error.message}`);
+  }
+};
+
+// Récupérer tous les posts avec recherche, filtres et pagination
+module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6) => {
+  try {
+    const {
+      search,
+      location,
+      type,
+      employmentType,
+      status, // Removed default "active" to show all posts
+      category,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = filters;
+
+    // Build query
+    const query = {};
+
+    console.log('🔍 getAllPostsWithSearch called with filters:', filters);
+
+    // Filter by status
+    if (status) {
+      query.status = status;
+      console.log('  - Filtering by status:', status);
+    }
+
+    // Search filter - search in title, description, requirements, and skills
+    // Split search terms to match partial words (e.g., "full stack" matches "Full-Stack Developer")
+    if (search) {
+      const searchTerms = search.trim().split(/\s+/);
+      const searchConditions = [];
+      
+      // For each search term, search across multiple fields
+      searchTerms.forEach(term => {
+        searchConditions.push(
+          { "jobDetails.title": { $regex: term, $options: "i" } },
+          { "jobDetails.description": { $regex: term, $options: "i" } },
+          { "jobDetails.requirements": { $regex: term, $options: "i" } },
+          { "skillAnalysis.requiredSkills.name": { $regex: term, $options: "i" } }
+        );
+      });
+      
+      // Use $or to match any of the search conditions
+      query.$or = searchConditions;
+      
+      console.log('  - Search terms:', searchTerms);
+      console.log('  - Number of search conditions:', searchConditions.length);
+    }
+
+    // Location filter
+    if (location && location !== "All Locations") {
+      query["jobDetails.location"] = { $regex: location, $options: "i" };
+    }
+
+    // Job type filter (Remote, On-Site, Hybrid)
+    if (type && type !== "All Types") {
+      const typeConditions = [
+        { "jobDetails.workType": { $regex: type, $options: "i" } },
+        { "jobDetails.type": { $regex: type, $options: "i" } },
+      ];
+      
+      // If there's already an $or from search, combine using $and
+      if (query.$or) {
+        query.$and = [
+          { $or: query.$or },
+          { $or: typeConditions }
+        ];
+        delete query.$or;
+      } else {
+        query.$or = typeConditions;
+      }
+    }
+
+    // Employment type filter (Full-Time, Part-Time, Contract)
+    if (employmentType && employmentType !== "All Employment Types") {
+      query["jobDetails.employmentType"] = { $regex: employmentType, $options: "i" };
+    }
+
+    // Category filter
+    if (category && category !== "All Categories") {
+      query.category = { $regex: category, $options: "i" };
+    }
+
+    // Build sort object
+    const sort = {};
+    if (sortBy === "salary") {
+      sort["jobDetails.salary.min"] = sortOrder === "asc" ? 1 : -1;
+    } else if (sortBy === "title") {
+      sort["jobDetails.title"] = sortOrder === "asc" ? 1 : -1;
+    } else {
+      sort[sortBy] = sortOrder === "asc" ? 1 : -1;
+    }
+
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+
+    console.log('📊 Final MongoDB query:', JSON.stringify(query, null, 2));
+    console.log('📄 Pagination: page', page, 'limit', limit, 'skip', skip);
+
+    // Execute query with pagination
+    const posts = await Post.find(query)
+      .populate({
+        path: "user",
+        select: "companyDetails email username",
+      })
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    // Get total count for pagination
+    const total = await Post.countDocuments(query);
+
+    console.log('✅ Query results: Found', posts.length, 'posts on this page');
+    console.log('📊 Total matching posts in database:', total);
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(total / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    return {
+      posts,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage,
+        hasPrevPage,
+      },
+    };
+  } catch (error) {
+    console.error("Error in getAllPostsWithSearch:", error);
+    throw new Error(`Failed to fetch posts: ${error.message}`);
   }
 };
 
@@ -241,13 +378,12 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
   if (!user) {
     throw new Error("User not found.");
   }
-  if (
-    !user.profile ||
-    !Array.isArray(user.profile.skills) ||
-    user.profile.skills.length === 0
-  ) {
-    // No skills means nothing to recommend → return empty list instead of throwing
-    return [];
+
+  if (!user.profile || !Array.isArray(user.profile.skills) || user.profile.skills.length === 0) {
+    return {
+      success: false,
+      message: "Aucun skill trouvé. Ajoutez au moins une compétence à votre profil pour obtenir des recommandations.",
+    };
   }
 
   // Normalize skills to a list of names
@@ -256,7 +392,10 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
     .filter(Boolean);
 
   if (skillNames.length === 0) {
-    return [];
+    return {
+      success: false,
+      message: "Aucun skill valide trouvé dans le profil. Ajoutez au moins une compétence pour recevoir des recommandations.",
+    };
   }
 
   // Find posts that match at least one of the user's skills
@@ -267,30 +406,29 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
     .lean();
 
   if (!candidatePosts || candidatePosts.length === 0) {
-    return [];
+    return {
+      success: false,
+      message: "Pas de recommandations pour le moment. Nous n'avons trouvé aucun poste correspondant à vos compétences.",
+    };
   }
 
   // Score posts by the number of matching required skills
   const scored = candidatePosts.map((post) => {
-    const required = (post.skillAnalysis?.requiredSkills || []).map(
-      (rs) => rs.name
-    );
-    const matchCount = required.reduce(
-      (acc, name) => acc + (skillNames.includes(name) ? 1 : 0),
-      0
-    );
+    const required = (post.skillAnalysis?.requiredSkills || []).map((rs) => rs.name);
+    const matchCount = required.reduce((acc, name) => acc + (skillNames.includes(name) ? 1 : 0), 0);
     return { post, matchCount };
   });
 
   // Sort by match count desc, then most recent
-  scored.sort(
-    (a, b) =>
-      b.matchCount - a.matchCount ||
-      new Date(b.post.createdAt) - new Date(a.post.createdAt)
-  );
+  scored.sort((a, b) => b.matchCount - a.matchCount || new Date(b.post.createdAt) - new Date(a.post.createdAt));
 
   // Return top 3 recommendations
-  return scored.slice(0, 3).map((s) => s.post);
+  const top = scored.slice(0, 3).map((s) => s.post);
+  return {
+    success: true,
+    posts: top,
+    message: top.length > 0 ? `${top.length} recommandation(s) trouvée(s)` : "Pas de recommandations pour le moment.",
+  };
 };
 
 // Create technical test using AI prompts based on post technologies

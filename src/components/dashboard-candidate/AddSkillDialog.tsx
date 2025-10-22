@@ -88,9 +88,18 @@ function AddSkillDialogComponent(props: AddSkillDialogProps) {
   };
 
   const categoryOptions = Object.keys(skillCategories || {});
-  const skillOptions = selectedCategory
+  
+  // Get existing skill names
+  const existingSkillNames = (profileSkills || []).map(s => s.name.toLowerCase());
+  
+  // Filter out skills that user already has
+  const allSkillOptions = selectedCategory
     ? skillCategories[selectedCategory] || []
     : technicalSkillsList;
+  
+  const skillOptions = allSkillOptions.filter(
+    skill => !existingSkillNames.includes(skill.toLowerCase())
+  );
 
   const filterSkills = (options: string[], { inputValue }: { inputValue: string }) => {
     const q = (inputValue || '').trim().toLowerCase();
@@ -184,57 +193,63 @@ function AddSkillDialogComponent(props: AddSkillDialogProps) {
             )}
           />
 
-          <Autocomplete<string>
-            fullWidth
-            options={skillOptions}
-            value={newSkillName}
-            onChange={(_, value: string | null) => onSkillSelection(value)}
-            filterOptions={filterSkills}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Skill Name"
-                InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
+          {selectedCategory && skillOptions.length === 0 ? (
+            <Typography sx={{ color: '#666', p: 2, textAlign: 'center', fontStyle: 'italic', backgroundColor: '#f5f5f5', borderRadius: 2 }}>
+              You already have all skills in this category!
+            </Typography>
+          ) : (
+            <Autocomplete<string>
+              fullWidth
+              options={skillOptions}
+              value={newSkillName}
+              onChange={(_, value: string | null) => onSkillSelection(value)}
+              filterOptions={filterSkills}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Skill Name"
+                  InputLabelProps={{ sx: { color: "rgba(0,0,0,0.7)" } }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      backgroundColor: "white",
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "rgba(0,0,0,0.2)",
+                      },
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "rgba(0,0,0,0.3)",
+                      },
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: primaryAccentColor,
+                      },
+                    },
+                    "& .MuiInputLabel-root": {
+                      color: "rgba(0,0,0,0.7)",
+                      "&.Mui-focused": {
+                        color: primaryAccentColor,
+                      },
+                    },
+                  }}
+                />
+              )}
+              PaperComponent={(paperProps) => (
+                <Paper
+                  {...paperProps}
+                  sx={{
                     backgroundColor: "white",
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "rgba(0,0,0,0.2)",
+                    "& .MuiAutocomplete-option": {
+                      color: "black",
+                      '&[aria-selected="true"]': {
+                        backgroundColor: "rgba(0, 255, 157, 0.1)",
+                      },
+                      "&:hover": {
+                        backgroundColor: "rgba(0, 255, 157, 0.05)",
+                      },
                     },
-                    "&:hover .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "rgba(0,0,0,0.3)",
-                    },
-                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                      borderColor: primaryAccentColor,
-                    },
-                  },
-                  "& .MuiInputLabel-root": {
-                    color: "rgba(0,0,0,0.7)",
-                    "&.Mui-focused": {
-                      color: primaryAccentColor,
-                    },
-                  },
-                }}
-              />
-            )}
-            PaperComponent={(paperProps) => (
-              <Paper
-                {...paperProps}
-                sx={{
-                  backgroundColor: "white",
-                  "& .MuiAutocomplete-option": {
-                    color: "black",
-                    '&[aria-selected="true"]': {
-                      backgroundColor: "rgba(0, 255, 157, 0.1)",
-                    },
-                    "&:hover": {
-                      backgroundColor: "rgba(0, 255, 157, 0.05)",
-                    },
-                  },
-                }}
-              />
-            )}
-          />
+                  }}
+                />
+              )}
+            />
+          )}
         </Box>
       </DialogContent>
       <DialogActions

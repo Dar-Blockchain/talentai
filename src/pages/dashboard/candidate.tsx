@@ -57,16 +57,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
     transform: "translateY(-4px)",
     boxShadow: "0 20px 50px rgba(0, 0, 0, 0.12), 0 0 30px rgba(0, 0, 0, 0.08)",
   },
-  "&::before": {
-    content: '""',
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: "4px",
-    background: "linear-gradient(90deg, #8310FF 0%, #02E2FF 50%, #00FFC3 100%)",
-    borderRadius: "24px 24px 0 0",
-  },
+ 
 }));
 
 const SectionTitle = styled(Typography)(({ theme }) => ({
@@ -286,6 +277,7 @@ export default function DashboardCandidate() {
   const handleCloseTestModal = useCallback(() => {
     setTestModalOpen(false);
     setSkillType("");
+    setSelectedCategory("");
     setSelectedSkill("");
     setSoftSkillType("");
     setSoftSkillLanguage("");
@@ -415,10 +407,31 @@ export default function DashboardCandidate() {
         return res.json();
       })
       .then((json) => {
-        if (json.success && Array.isArray(json.data)) {
-          setAdPost(json.data);
-        } else if (json.success && json.data) {
-          setAdPost([json.data]);
+        console.log('Ad Post API Response:', json);
+        
+        // Handle nested data structure: json.data.posts or json.data.data.posts
+        let posts = [];
+        
+        if (json.success && json.data) {
+          // Check for nested posts array
+          if (Array.isArray(json.data.posts)) {
+            posts = json.data.posts;
+          } else if (json.data.data && Array.isArray(json.data.data.posts)) {
+            posts = json.data.data.posts;
+          } else if (Array.isArray(json.data)) {
+            posts = json.data;
+          } else if (json.data.data && Array.isArray(json.data.data)) {
+            posts = json.data.data;
+          } else {
+            posts = [json.data];
+          }
+        }
+        
+        console.log('Processed posts:', posts);
+        console.log('Number of posts:', posts.length);
+        
+        if (posts.length > 0) {
+          setAdPost(posts);
         } else {
           setAdError("No ad data available");
         }
@@ -440,6 +453,16 @@ export default function DashboardCandidate() {
         title: ad.jobDetails?.title,
         description: ad.jobDetails?.description || '',
         firstStepId: (ad?.post_Steps && ad.post_Steps.length > 0) ? ad.post_Steps[0] : undefined,
+        // Include all job details for the RecommendedOpportunities component
+        jobDetails: ad.jobDetails,
+        employmentType: ad.jobDetails?.employmentType,
+        location: ad.jobDetails?.location,
+        salary: ad.jobDetails?.salary,
+        company: ad.jobDetails?.company,
+        companyName: ad.jobDetails?.companyName,
+        experienceLevel: ad.jobDetails?.experienceLevel,
+        requirements: ad.jobDetails?.requirements,
+        responsibilities: ad.jobDetails?.responsibilities,
       };
       return processedAd;
     });
@@ -480,8 +503,6 @@ export default function DashboardCandidate() {
           >
             <Container maxWidth="lg">
               {/* Profile Header */}
-              <ProfileHeader>
-                <Box sx={{ position: "relative", zIndex: 2 }}>
                   <WelcomeHeader
                     profile={profile}
                     quota={profile?.quota || 0}
@@ -493,8 +514,6 @@ export default function DashboardCandidate() {
                     }}
                     onCvBuilder={() => router.push("/resume-builder")}
                   />
-                </Box>
-              </ProfileHeader>
                                      {/* Edit Profile Modal */}
                    <EditProfileModal
                      open={editProfileOpen}
@@ -511,6 +530,9 @@ export default function DashboardCandidate() {
                      primaryAccentColor={GREEN_MAIN}
                      skillType={skillType}
                      onSkillTypeChange={handleSkillTypeChange}
+                     skillCategories={skillCategories}
+                     selectedCategory={selectedCategory}
+                     onSelectedCategoryChange={(v) => setSelectedCategory(v)}
                      technicalSkillsList={technicalSkillsList}
                      selectedSkill={selectedSkill}
                      onSelectedSkillChange={(v) => setSelectedSkill(v)}
@@ -526,17 +548,18 @@ export default function DashboardCandidate() {
                      router={router}
                      toast={toast}
                      getExperienceLevelFromProficiency={getExperienceLevelFromProficiency}
+                     profileSkills={profile?.skills || []}
+                     profileSoftSkills={profile?.softSkills || []}
                    />
 
-              {/* Recommended Opportunities - Subcomponent */}
-              <StyledCard sx={{ mb: 4, background: '#f8fafc', border: '2px dashed #8310FF' }}>
-                <SectionTitle sx={{ color: '#8310FF', fontSize: '1.5rem', mb: 4 }}>Recommended Opportunities</SectionTitle>
+              {/* Recommended Opportunities */}
+              <StyledCard sx={{ mb: 4 }}>
                 {adLoading ? (
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
                     <CircularProgress size={32} sx={{ color: '#8310FF' }} />
                   </Box>
                 ) : adError ? (
-                  <Box sx={{ color: '#c62828', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 120 }}>
+                  <Box sx={{ color: '#c62828', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
                     <Typography>{adError}</Typography>
                   </Box>
                 ) : (

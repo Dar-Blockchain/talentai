@@ -37,6 +37,10 @@ export type TestSelectionDialogProps = {
   skillType: string;
   onSkillTypeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 
+  skillCategories?: { [key: string]: string[] };
+  selectedCategory?: string;
+  onSelectedCategoryChange?: (value: string) => void;
+
   technicalSkillsList: string[];
   selectedSkill: string;
   onSelectedSkillChange: (value: string) => void;
@@ -57,6 +61,10 @@ export type TestSelectionDialogProps = {
   router: any;
   toast: any;
   getExperienceLevelFromProficiency: (proficiency: number) => string;
+  
+  // User's existing skills to filter out
+  profileSkills?: Array<{ name: string }>;
+  profileSoftSkills?: Array<{ name: string; category?: string }>;
 };
 
 function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
@@ -66,6 +74,9 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
     primaryAccentColor,
     skillType,
     onSkillTypeChange,
+    skillCategories,
+    selectedCategory,
+    onSelectedCategoryChange,
     technicalSkillsList,
     selectedSkill,
     onSelectedSkillChange,
@@ -81,13 +92,29 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
     router,
     toast,
     getExperienceLevelFromProficiency,
+    profileSkills = [],
+    profileSoftSkills = [],
   } = props;
+
+  // Filter out skills that user already has
+  const existingTechnicalSkillNames = profileSkills.map(s => s.name);
+  const existingSoftSkillNames = profileSoftSkills.map(s => s.name);
+  
+  const availableTechnicalSkills = selectedCategory && skillCategories
+    ? skillCategories[selectedCategory]?.filter(skill => !existingTechnicalSkillNames.includes(skill)) || []
+    : technicalSkillsList.filter(skill => !existingTechnicalSkillNames.includes(skill));
+  
+  const availableSoftSkills = softSkills.filter(skill => !existingSoftSkillNames.includes(skill.name));
 
   const handleTestSubmit = async () => {
     try {
-      if (skillType === "technical" && selectedSkill) {
+      if (skillType === "technical" && selectedSkill && selectedCategory) {
         router.push(
+<<<<<<< HEAD
           `/interview/hr?type=technical&skill=${selectedSkill}`
+=======
+          `/interview?type=technicalSkill&skill=${selectedSkill}&category=${selectedCategory}`
+>>>>>>> fa967f14233b661ecafa382cf202b08ff66579b9
         );
       } else if (skillType === "soft" && softSkillType) {
         const proficiencyMap: { [key: string]: number } = {
@@ -131,7 +158,7 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
   };
 
   const isSubmitDisabled =
-    (skillType === "technical" && !selectedSkill) ||
+    (skillType === "technical" && (!selectedCategory || !selectedSkill)) ||
     (skillType === "soft" &&
       (!softSkillType ||
         (softSkillType === "Communication" && !softSkillLanguage) ||
@@ -240,16 +267,22 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
 
         {skillType === "technical" && (
           <Box>
-            <Typography sx={{ color: primaryAccentColor }}>
-              Select Technical Skill
+            <Typography sx={{ color: primaryAccentColor, mb: 1 }}>
+              Select Category
             </Typography>
 
             <Autocomplete
               fullWidth
-              options={technicalSkillsList}
-              value={selectedSkill}
-              onChange={(_, value) => onSelectedSkillChange(value || "")}
+              options={skillCategories ? Object.keys(skillCategories) : []}
+              value={selectedCategory || null}
+              onChange={(_, value) => {
+                if (onSelectedCategoryChange) {
+                  onSelectedCategoryChange(value || "");
+                  onSelectedSkillChange(""); // Reset skill when category changes
+                }
+              }}
               filterOptions={filterStartsFirstStrings}
+              sx={{ mb: 2 }}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -300,6 +333,77 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
                 />
               )}
             />
+
+            {selectedCategory && (
+              <>
+                <Typography sx={{ color: primaryAccentColor, mb: 1 }}>
+                  Select Technical Skill
+                </Typography>
+
+                {availableTechnicalSkills.length === 0 ? (
+                  <Typography sx={{ color: '#666', p: 2, textAlign: 'center', fontStyle: 'italic' }}>
+                    You already have all skills in this category!
+                  </Typography>
+                ) : (
+                  <Autocomplete
+                    fullWidth
+                    options={availableTechnicalSkills}
+                    value={selectedSkill}
+                    onChange={(_, value) => onSelectedSkillChange(value || "")}
+                    filterOptions={filterStartsFirstStrings}
+                    renderInput={(params) => (
+                <TextField
+                  {...params}
+                  InputLabelProps={{ sx: { color: primaryAccentColor } }}
+                  InputProps={{
+                    ...params.InputProps,
+                    sx: {
+                      color: "#000000",
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        borderColor: "rgba(0,0,0,0.2)",
+                      },
+                      "&:hover .MuiOutlinedInput-notchedOutline": {
+                        borderColor: primaryAccentColor,
+                      },
+                      "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: primaryAccentColor,
+                      },
+                      "&.Mui-focused": {
+                        "& .MuiInputLabel-root": {
+                          color: primaryAccentColor,
+                        },
+                      },
+                      "& .MuiInputLabel-root": {
+                        "&.Mui-focused": {
+                          color: primaryAccentColor,
+                        },
+                      },
+                    },
+                  }}
+                />
+              )}
+              PaperComponent={(paperProps) => (
+                <Paper
+                  {...paperProps}
+                  sx={{
+                    backgroundColor: "white",
+                    color: "black",
+                    "& .MuiAutocomplete-option": {
+                      color: "black",
+                      '&[aria-selected="true"]': {
+                        backgroundColor: "rgba(131, 16, 255, 0.05)",
+                      },
+                      "&:hover": {
+                        backgroundColor: "rgba(131, 16, 255, 0.05)",
+                      },
+                    },
+                  }}
+                />
+              )}
+            />
+                )}
+              </>
+            )}
           </Box>
         )}
 
@@ -309,13 +413,19 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
               Select Soft Skill
             </Typography>
 
-            <Autocomplete
-              fullWidth
-              options={softSkills}
-              value={softSkills.find((s) => s.name === softSkillType) || null}
-              onChange={(_, value) => onSoftSkillChange(value?.name || "")}
-              getOptionLabel={(option) => option.name}
-              filterOptions={filterStartsFirstSoft}
+            {availableSoftSkills.length === 0 ? (
+              <Typography sx={{ color: '#666', p: 2, textAlign: 'center', fontStyle: 'italic' }}>
+                You already have all soft skills!
+              </Typography>
+            ) : (
+              <>
+                <Autocomplete
+                  fullWidth
+                  options={availableSoftSkills}
+                  value={availableSoftSkills.find((s) => s.name === softSkillType) || null}
+                  onChange={(_, value) => onSoftSkillChange(value?.name || "")}
+                  getOptionLabel={(option) => option.name}
+                  filterOptions={filterStartsFirstSoft}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -433,10 +543,10 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
               <Autocomplete
                 fullWidth
                 options={
-                  softSkills.find((s) => s.name === softSkillType)?.subcategories || []
+                  availableSoftSkills.find((s) => s.name === softSkillType)?.subcategories || []
                 }
                 value={
-                  softSkills
+                  availableSoftSkills
                     .find((s) => s.name === softSkillType)
                     ?.subcategories?.find((sub) => sub.value === softSkillSubcategory) || null
                 }
@@ -495,6 +605,8 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
                   />
                 )}
               />
+            )}
+              </>
             )}
           </Box>
         )}

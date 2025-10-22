@@ -9,6 +9,9 @@
 const express = require('express');
 const router = express.Router();
 const evaluationController  = require('../controllers/evaluationController');
+const OnbordingController  = require('../controllers/evaluationControllers/Onbording/OnbordingController');
+const Hard_SoftController  = require('../controllers/evaluationControllers/Hard_SoftQuestions/Hard_SoftController');
+const SoftSkillController  = require('../controllers/evaluationControllers/SoftSkillQuestions/SoftSkillController');
 
 // Import des middlewares
 const { requireAuthUser } = require('../middleware/authMiddleware');
@@ -19,33 +22,39 @@ const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 // Toutes les routes ci-dessous nécessitent un utilisateur Candidat authentifié
 router.use(requireAuthUser, controledAcces('Candidat'), authLogMiddleware("Evaluation"));
 
+// POST /evaluation/generate-onboarding-questions
+// Description: Génère des questions pour l'onboarding
+router.post('/generate-onboarding-questions', OnbordingController.generateOnboardingQuestions);
+
+// POST /evaluation/analyze-onboarding-answers
+// Description: Analyse les réponses d'onboarding
+router.post('/analyze-onboarding-answers', OnbordingController.analyzeOnboardingAnswers);
+
+// POST /evaluation/generate-technique-questions
+// Description: Génère des questions techniques génériques
+router.post('/generate-technique-questions', Hard_SoftController.generateTechniqueQuestions);
+
+// POST /evaluation/analyze-profile-answers
+// Description: Analyse les réponses d'un profil aux questions générales
+router.post('/analyze-profile-answers', Hard_SoftController.analyzeProfileAnswers);
 
 // POST /evaluation/generate-questions
 // Description: Génère un set de questions générales d'évaluation
 router.post('/generate-questions', evaluationController.generateQuestions);
-// POST /evaluation/generate-technique-questions
-// Description: Génère des questions techniques génériques
-router.post('/generate-technique-questions', evaluationController.generateTechniqueQuestions);
+
 // POST /evaluation/job/:id/generate-technique-questions
 // Params: id (identifiant du job)
 // Description: Génère des questions techniques spécifiques à un job
-router.post('/job/:id/generate-technique-questions', requireAuthUser, evaluationController.generateTechniqueQuestionsForJob);
+router.post('/job/:id/generate-technique-questions', evaluationController.generateTechniqueQuestionsForJob);
 // POST /evaluation/generate-soft-skill-questions
 // Description: Génère des questions d'évaluation soft skills
-router.post('/generate-soft-skill-questions', evaluationController.generateSoftSkillQuestions);
-// POST /evaluation/analyze-profile-answers
-// Description: Analyse les réponses d'un profil aux questions générales
-router.post('/analyze-profile-answers', evaluationController.analyzeProfileAnswers);
+router.post('/generate-soft-skill-questions', SoftSkillController.generateSoftSkillQuestions);
+
 // POST /evaluation/analyze-job-test-results
 // Description: Analyse les résultats d'un test d'évaluation lié à un job
 router.post('/analyze-job-test-results', evaluationController.analyzeJobTestResults);
 
-// POST /evaluation/generate-onboarding-questions
-// Description: Génère des questions pour l'onboarding
-router.post('/generate-onboarding-questions', evaluationController.generateOnboardingQuestions);
-// POST /evaluation/analyze-onboarding-answers
-// Description: Analyse les réponses d'onboarding
-router.post('/analyze-onboarding-answers', evaluationController.analyzeOnboardingAnswers);
+
 
 // POST /evaluation/generate-hr-questions
 // Description: Génère des questions RH (ressources humaines)

@@ -219,7 +219,11 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                     </Paper>
                                 ) : (
                                     data.map((row: any) => {
-                                        const score = typeof row?.overallScore === "number" ? Math.max(0, Math.min(100, row.overallScore)) : null;
+                                        const score = typeof row.skillDetails?.[0]?.confidenceScore === "number" 
+                                            ? Math.max(0, Math.min(100, row.skillDetails[0].confidenceScore)) 
+                                            : typeof row?.overallScore === "number" 
+                                            ? Math.max(0, Math.min(100, row.overallScore)) 
+                                            : null;
                                         let level: string = "Unknown";
                                         let color: "default" | "success" | "warning" | "error" = "default";
                                         if (score !== null) {
@@ -228,8 +232,14 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                             else if (score >= 50) { level = "Intermediate"; color = "warning"; }
                                             else { level = "Beginner"; color = "error"; }
                                         }
-                                        const title = row.post?.jobDetails?.title || row.skillName || "Skill Assessment";
+                                        const skillName = row.skillDetails?.[0]?.name;
+                                        const title = skillName || row.post?.jobDetails?.title || row.skillName || "Skill Assessment";
                                         const dateLabel = row.createdAt ? new Date(row.createdAt).toLocaleDateString() : null;
+                                        const skillType = row.skillDetails?.[0]?.type || "hard";
+                                        const proficiencyLevel = row.skillDetails?.[0]?.proficiencyLevel;
+                                        const confidenceScore = row.skillDetails?.[0]?.confidenceScore;
+                                        const totalQuestions = row.skillDetails?.[0]?.questionAnswerList?.length || 0;
+                                        const correctAnswers = row.skillDetails?.[0]?.questionAnswerList?.filter((qa: any) => qa.status === "correct").length || 0;
                                         return (
                                             <Paper
                                                 key={row._id || row.id}
@@ -240,19 +250,11 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                                     height: "100%",
                                                     overflow: "hidden",
                                                     position: "relative",
-                                                    borderColor: "rgba(131,16,255,0.12)",
+                                                    borderColor: "#E0E0E0",
                                                     transition: "all .2s ease",
                                                     "&:hover": { boxShadow: "0 10px 30px rgba(0,0,0,.08)", transform: "translateY(-2px)" },
                                                 }}
                                             >
-                                                <Box sx={{
-                                                    position: "absolute",
-                                                    top: 0,
-                                                    left: 0,
-                                                    right: 0,
-                                                    height: 4,
-                                                    background: "linear-gradient(90deg, #8310FF 0%, #02E2FF 50%, #00FFC3 100%)",
-                                                }} />
                                                 <Stack spacing={1.25}>
                                                     <Stack direction="row" alignItems="center" justifyContent="space-between">
                                                         <Typography sx={{ fontWeight: 800 }}>{title}</Typography>
@@ -314,27 +316,49 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                                     )}
 
                                                     <Divider sx={{ my: 1 }} />
-                                                    <Stack direction="row" spacing={1}>
-                                                        {row.tags?.slice(0, 3).map((t: string, idx: number) => (
-                                                            <Chip key={`${t}-${idx}`} size="small" label={t} variant="outlined" />
-                                                        ))}
+                                                    <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
+                                                        {skillType && (
+                                                            <Chip 
+                                                                size="small" 
+                                                                label={`${skillType} skill`} 
+                                                                variant="outlined" 
+                                                                sx={{ textTransform: "capitalize", fontWeight: 600 }} 
+                                                            />
+                                                        )}
+                                                        {proficiencyLevel && (
+                                                            <Chip 
+                                                                size="small" 
+                                                                label={`Level ${proficiencyLevel}`} 
+                                                                variant="outlined" 
+                                                                color="primary"
+                                                                sx={{ fontWeight: 600 }}
+                                                            />
+                                                        )}
+                                                     
+                                                        {totalQuestions > 0 && (
+                                                            <Chip 
+                                                                size="small" 
+                                                                label={`${correctAnswers}/${totalQuestions} correct`} 
+                                                                variant="outlined"
+                                                                sx={{ fontWeight: 600 }}
+                                                            />
+                                                        )}
                                                     </Stack>
 
                                                     <Stack direction="row" justifyContent="flex-end" sx={{ mt: 0.5 }}>
                                                         <Button
                                                             onClick={() => router.push(`/interview/report/${row._id || row.id}`)}
                                                             size="small"
+                                                            variant="contained"
                                                             sx={{
                                                                 textTransform: "none",
                                                                 fontWeight: 700,
                                                                 px: 2,
-                                                                background: "linear-gradient(135deg, #02E2FF 0%, #00FFC3 50%, #8310FF 100%)",
+                                                                backgroundColor: "#8310FF",
                                                                 color: "#fff",
                                                                 borderRadius: 2,
-                                                                boxShadow: "0 4px 16px rgba(131,16,255,.25)",
                                                                 "&:hover": {
-                                                                    background: "linear-gradient(135deg, #02D2FF 0%, #00F0C3 50%, #7610E5 100%)",
-                                                                    boxShadow: "0 6px 18px rgba(131,16,255,.35)",
+                                                                    backgroundColor: "#6B0BC7",
                                                                 },
                                                             }}
                                                         >
@@ -385,19 +409,11 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                                     height: "100%",
                                                     overflow: "hidden",
                                                     position: "relative",
-                                                    borderColor: "rgba(131,16,255,0.12)",
+                                                    borderColor: "#E0E0E0",
                                                     transition: "all .2s ease",
                                                     "&:hover": { boxShadow: "0 10px 30px rgba(0,0,0,.08)", transform: "translateY(-2px)" },
                                                 }}
                                             >
-                                                <Box sx={{
-                                                    position: "absolute",
-                                                    top: 0,
-                                                    left: 0,
-                                                    right: 0,
-                                                    height: 4,
-                                                    background: "linear-gradient(90deg, #00FFC3 0%, #02E2FF 50%, #8310FF 100%)",
-                                                }} />
                                                 <Stack spacing={1.5}>
                                                     <Stack direction="row" alignItems="center" justifyContent="space-between">
                                                         <Typography sx={{ fontWeight: 800 }}>{title}</Typography>
@@ -439,17 +455,16 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                                         <Button
                                                             onClick={() => router.push(`/interview/report/${row._id || row.id}`)}
                                                             size="small"
+                                                            variant="contained"
                                                             sx={{
                                                                 textTransform: "none",
                                                                 fontWeight: 700,
                                                                 px: 2,
-                                                                background: "linear-gradient(135deg, #8310FF 0%, #02E2FF 50%, #00FFC3 100%)",
+                                                                backgroundColor: "#8310FF",
                                                                 color: "#fff",
                                                                 borderRadius: 2,
-                                                                boxShadow: "0 4px 16px rgba(131,16,255,.25)",
                                                                 "&:hover": {
-                                                                    background: "linear-gradient(135deg, #7610E5 0%, #02D2FF 50%, #00F0C3 100%)",
-                                                                    boxShadow: "0 6px 18px rgba(131,16,255,.35)",
+                                                                    backgroundColor: "#6B0BC7",
                                                                 },
                                                             }}
                                                         >
@@ -467,7 +482,7 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                         <Box>
                             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                                 <Typography variant="h6" sx={{ fontWeight: 800 }}>Onboarding</Typography>
-                                <Typography variant="body2" sx={{ color: "#666" }}>{total} item{total === 1 ? "" : "s"}</Typography>
+                                <Typography variant="body2" sx={{ color: "#666" }}>{total} result{total === 1 ? "" : "s"}</Typography>
                             </Stack>
                             <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" }, gap: 2 }}>
                                 {data.length === 0 ? (
@@ -478,12 +493,28 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                 ) : (
                                     data.map((row: any) => {
                                         const score = typeof row?.overallScore === "number" ? Math.max(0, Math.min(100, row.overallScore)) : null;
-                                        const title = row.title || row.post?.jobDetails?.title || "Onboarding";
+                                        const skillName = row.skillDetails?.[0]?.name;
+                                        const title = skillName || row.title || row.post?.jobDetails?.title || "Onboarding";
                                         const dateLabel = row.createdAt ? new Date(row.createdAt).toLocaleDateString() : null;
-                                        const stage = row.stage || row.status || "Pending";
-                                        const stageColor: "default" | "success" | "warning" | "error" =
-                                            stage.toString().toLowerCase().includes("complete") ? "success" :
-                                            stage.toString().toLowerCase().includes("progress") ? "warning" : "default";
+                                        const updatedLabel = row.updatedAt ? new Date(row.updatedAt).toLocaleDateString() : null;
+                                        
+                                        // Score-based level
+                                        let level: string = "Not Started";
+                                        let levelColor: "default" | "success" | "warning" | "error" = "default";
+                                        if (score !== null) {
+                                            if (score >= 85) { level = "Excellent"; levelColor = "success"; }
+                                            else if (score >= 70) { level = "Good"; levelColor = "success"; }
+                                            else if (score >= 50) { level = "Average"; levelColor = "warning"; }
+                                            else { level = "Needs Work"; levelColor = "error"; }
+                                        }
+                                        
+                                        // Extract additional data
+                                        const skillDetails = row.skillDetails?.[0];
+                                        const proficiencyLevel = skillDetails?.proficiencyLevel;
+                                        const totalQuestions = skillDetails?.questionAnswerList?.length || 0;
+                                        const correctAnswers = skillDetails?.questionAnswerList?.filter((qa: any) => qa.status === "correct").length || 0;
+                                        const partialAnswers = skillDetails?.questionAnswerList?.filter((qa: any) => qa.status === "partial_correct").length || 0;
+                                        const recommendationsCount = row.recommendations?.length || 0;
                                         return (
                                             <Paper
                                                 key={row._id || row.id}
@@ -494,55 +525,136 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                                     height: "100%",
                                                     overflow: "hidden",
                                                     position: "relative",
-                                                    borderColor: "rgba(131,16,255,0.12)",
+                                                    borderColor: "#E0E0E0",
                                                     transition: "all .2s ease",
                                                     "&:hover": { boxShadow: "0 10px 30px rgba(0,0,0,.08)", transform: "translateY(-2px)" },
                                                 }}
                                             >
-                                                <Box sx={{
-                                                    position: "absolute",
-                                                    top: 0,
-                                                    left: 0,
-                                                    right: 0,
-                                                    height: 4,
-                                                    background: "linear-gradient(90deg, #02E2FF 0%, #00FFC3 50%, #8310FF 100%)",
-                                                }} />
                                                 <Stack spacing={1.25}>
                                                     <Stack direction="row" alignItems="center" justifyContent="space-between">
-                                                        <Typography sx={{ fontWeight: 800 }}>{title}</Typography>
-                                                        <Chip size="small" color={stageColor} label={stage} sx={{ fontWeight: 700 }} />
+                                                        <Typography sx={{ fontWeight: 800, fontSize: "1rem" }}>{title}</Typography>
+                                                        {score !== null && (
+                                                            <Chip size="small" color={levelColor} label={level} sx={{ fontWeight: 700 }} />
+                                                        )}
                                                     </Stack>
-                                                    <Stack direction="row" spacing={1} alignItems="center" sx={{ color: "#7a7a7a" }}>
-                                                        <CalendarTodayIcon sx={{ fontSize: 18 }} />
-                                                        <Typography variant="body2">{dateLabel || "—"}</Typography>
+                                                    
+                                                    <Stack direction="row" spacing={1} alignItems="center" sx={{ color: "#7a7a7a", flexWrap: "wrap" }}>
+                                                        <CalendarTodayIcon sx={{ fontSize: 16 }} />
+                                                        <Typography variant="caption">{dateLabel || "—"}</Typography>
+                                                        {updatedLabel && updatedLabel !== dateLabel && (
+                                                            <>
+                                                                <Typography variant="caption" sx={{ mx: 0.5 }}>•</Typography>
+                                                                <Typography variant="caption">Updated: {updatedLabel}</Typography>
+                                                            </>
+                                                        )}
                                                     </Stack>
+
                                                     {score !== null ? (
-                                                        <Box>
-                                                            <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.75 }}>
-                                                                <Typography variant="caption" sx={{ color: "#666" }}>Completion</Typography>
-                                                                <Typography variant="caption" sx={{ color: "#333", fontWeight: 700 }}>{score}%</Typography>
+                                                        <Stack direction="row" spacing={2} alignItems="center">
+                                                            <Box sx={{ position: "relative", display: "inline-flex" }}>
+                                                                <CircularProgress variant="determinate" value={score} size={56} thickness={5} sx={{
+                                                                    color: "#ece7fb",
+                                                                }} />
+                                                                <CircularProgress variant="determinate" value={score} size={56} thickness={5} sx={{
+                                                                    position: "absolute",
+                                                                    left: 0,
+                                                                    top: 0,
+                                                                    color: "#8310FF",
+                                                                }} />
+                                                                <Box sx={{
+                                                                    top: 0,
+                                                                    left: 0,
+                                                                    bottom: 0,
+                                                                    right: 0,
+                                                                    position: "absolute",
+                                                                    display: "flex",
+                                                                    alignItems: "center",
+                                                                    justifyContent: "center",
+                                                                }}>
+                                                                    <Typography variant="caption" sx={{ fontWeight: 800, fontSize: "0.7rem", color: "#333" }}>{`${score}%`}</Typography>
+                                                                </Box>
+                                                            </Box>
+                                                            <Box sx={{ flex: 1 }}>
+                                                                <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
+                                                                    <Typography variant="caption" sx={{ color: "#666", fontWeight: 600 }}>Overall Score</Typography>
+                                                                    <Typography variant="caption" sx={{ color: "#333", fontWeight: 700 }}>{level}</Typography>
+                                                                </Stack>
+                                                                <LinearProgress variant="determinate" value={score} sx={{ height: 6, borderRadius: 4, "& .MuiLinearProgress-bar": { backgroundColor: "#8310FF" } }} />
+                                                            </Box>
+                                                        </Stack>
+                                                    ) : (
+                                                        <Typography variant="body2" sx={{ color: "#666", fontStyle: "italic" }}>No score available</Typography>
+                                                    )}
+
+                                                    <Divider sx={{ my: 0.5 }} />
+
+                                                    {/* Skill Details Section */}
+                                                    {totalQuestions > 0 && (
+                                                        <Stack spacing={0.5}>
+                                                            <Typography variant="caption" sx={{ color: "#666", fontWeight: 600 }}>Assessment Details:</Typography>
+                                                            <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 0.5 }}>
+                                                                {proficiencyLevel && (
+                                                                    <Chip 
+                                                                        size="small" 
+                                                                        label={`Level ${proficiencyLevel}`} 
+                                                                        variant="outlined" 
+                                                                        color="primary"
+                                                                        sx={{ fontWeight: 600, fontSize: "0.7rem" }}
+                                                                    />
+                                                                )}
+                                                                <Chip 
+                                                                    size="small" 
+                                                                    label={`${totalQuestions} questions`} 
+                                                                    variant="outlined"
+                                                                    sx={{ fontWeight: 600, fontSize: "0.7rem" }}
+                                                                />
+                                                                {correctAnswers > 0 && (
+                                                                    <Chip 
+                                                                        size="small" 
+                                                                        label={`${correctAnswers} correct`} 
+                                                                        variant="outlined"
+                                                                        color="success"
+                                                                        sx={{ fontWeight: 600, fontSize: "0.7rem" }}
+                                                                    />
+                                                                )}
+                                                                {partialAnswers > 0 && (
+                                                                    <Chip 
+                                                                        size="small" 
+                                                                        label={`${partialAnswers} partial`} 
+                                                                        variant="outlined"
+                                                                        color="warning"
+                                                                        sx={{ fontWeight: 600, fontSize: "0.7rem" }}
+                                                                    />
+                                                                )}
                                                             </Stack>
-                                                            <LinearProgress variant="determinate" value={score} sx={{ height: 8, borderRadius: 6, "& .MuiLinearProgress-bar": { backgroundColor: "#8310FF" } }} />
+                                                        </Stack>
+                                                    )}
+
+                                                    {/* Recommendations */}
+                                                    {recommendationsCount > 0 && (
+                                                        <Box sx={{ backgroundColor: "#f8f9fc", p: 1.5, borderRadius: 2 }}>
+                                                            <Stack direction="row" alignItems="center" spacing={1}>
+                                                                <TrendingUpIcon sx={{ fontSize: 16, color: "#8310FF" }} />
+                                                                <Typography variant="caption" sx={{ color: "#333", fontWeight: 700 }}>
+                                                                    {recommendationsCount} Recommendation{recommendationsCount > 1 ? 's' : ''} Available
+                                                                </Typography>
+                                                            </Stack>
                                                         </Box>
-                                                    ) : null}
-                                                    {row.description && (
-                                                        <Typography variant="body2" sx={{ color: "#333" }} noWrap title={row.description}>{row.description}</Typography>
                                                     )}
                                                     <Stack direction="row" justifyContent="flex-end" sx={{ mt: 0.5 }}>
                                                         <Button
                                                             onClick={() => router.push(`/interview/report/${row._id || row.id}`)}
                                                             size="small"
+                                                            variant="contained"
                                                             sx={{
                                                                 textTransform: "none",
                                                                 fontWeight: 700,
                                                                 px: 2,
-                                                                background: "linear-gradient(135deg, #02E2FF 0%, #00FFC3 50%, #8310FF 100%)",
+                                                                backgroundColor: "#8310FF",
                                                                 color: "#fff",
                                                                 borderRadius: 2,
-                                                                boxShadow: "0 4px 16px rgba(131,16,255,.25)",
                                                                 "&:hover": {
-                                                                    background: "linear-gradient(135deg, #02D2FF 0%, #00F0C3 50%, #7610E5 100%)",
-                                                                    boxShadow: "0 6px 18px rgba(131,16,255,.35)",
+                                                                    backgroundColor: "#6B0BC7",
                                                                 },
                                                             }}
                                                         >
