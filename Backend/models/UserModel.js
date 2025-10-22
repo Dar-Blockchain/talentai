@@ -71,9 +71,12 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
-    //  pubkey: { type: String, default: null },
-    //  privkey: { type: String, default: null },
-    //  accountId: { type: String, default: null },
+    // Hedera account information
+    hederaAccountId: { type: String, default: null },
+    hederaPrivateKey: { type: String, default: null },
+    hederaPublicKey: { type: String, default: null },
+    // Gas fee balance for transaction fees (in HBAR)
+    gasFeeBalance: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );

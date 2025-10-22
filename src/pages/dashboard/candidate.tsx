@@ -247,7 +247,7 @@ export default function DashboardCandidate() {
         // Use default proficiency level of 1 if not defined
         const proficiencyLevel = skill.proficiencyLevel || 1;
         router.push(
-          `/interview?type=technical&skill=${skill.name}&proficiency=${proficiencyLevel}`
+          `/interview/hr?type=technical&skill=${skill.name}&proficiency=${proficiencyLevel}`
         );
       } else {
         setSoftSkillType(skill.name);
@@ -265,7 +265,7 @@ export default function DashboardCandidate() {
         };
         setSoftSkillProficiency(proficiencyMap[skill.experienceLevel] || 1);
         router.push(
-          `/interview?type=soft&skill=${skill.name}&category=${skill.category
+          `/interview/hr?type=soft&skill=${skill.name}&category=${skill.category
           }&proficiency=${proficiencyMap[skill.experienceLevel] || 1}`
         );
       }
@@ -507,7 +507,11 @@ export default function DashboardCandidate() {
                     profile={profile}
                     quota={profile?.quota || 0}
                     onStartTest={handleStartTest}
-                    onHrInterview={() => router.push("/interview/hr")}
+                    onHrInterview={() => {
+                      const experienceLevel = profile?.requiredExperienceLevel || 'Mid-Level';
+                      const role = profile?.targetRole || 'Software Engineer';
+                      router.push(`/interview/hr?type=hr&role=${encodeURIComponent(role)}&proficiency=${encodeURIComponent(experienceLevel)}`);
+                    }}
                     onCvBuilder={() => router.push("/resume-builder")}
                   />
                                      {/* Edit Profile Modal */}

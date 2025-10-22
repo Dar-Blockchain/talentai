@@ -11,14 +11,12 @@ import {
   Stack,
   Grid,
   InputAdornment,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
   CircularProgress,
   Alert,
   Pagination,
   Divider,
+  Autocomplete,
+  Paper,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -31,6 +29,7 @@ import {
 import { useRouter } from 'next/router';
 import Header from '@/components/Header';
 import SimpleFooter from '@/components/SimpleFooter';
+import { JOB_CATEGORIES, JOB_LOCATIONS } from '@/constants/jobConstants';
 
 interface Job {
   id: string;
@@ -76,29 +75,6 @@ const JobSearchPage: React.FC = () => {
   const [jobDetailsLoading, setJobDetailsLoading] = useState(false);
   const [jobDetailsError, setJobDetailsError] = useState<string | null>(null);
 
-  const categories = [
-    'All Categories',
-    'Software Development',
-    'Data Science',
-    'Design',
-    'Product Management',
-    'DevOps',
-    'Marketing',
-    'Sales'
-  ];
-
-  const locations = [
-    'All Locations',
-    'San Francisco, CA',
-    'New York, NY',
-    'Austin, TX',
-    'Seattle, WA',
-    'Denver, CO',
-    'Los Angeles, CA',
-    'Boston, MA',
-    'Chicago, IL',
-    'Remote'
-  ];
 
   // Fetch jobs from backend API
   const fetchJobs = useCallback(async () => {
@@ -356,50 +332,136 @@ const JobSearchPage: React.FC = () => {
               />
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
-              <FormControl fullWidth>
-                <InputLabel>Category</InputLabel>
-                <Select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <FilterIcon sx={{ color: '#8310FF' }} />
-                    </InputAdornment>
+              <Autocomplete
+                value={selectedCategory}
+                onChange={(event, newValue) => {
+                  setSelectedCategory(newValue || '');
+                }}
+                options={JOB_CATEGORIES}
+                getOptionLabel={(option) => option}
+                isOptionEqualToValue={(option, value) => option === value}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Category"
+                    placeholder="Search categories..."
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <FilterIcon sx={{ color: '#8310FF' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      }
+                    }}
+                  />
+                )}
+                PaperComponent={({ children, ...other }) => (
+                  <Paper 
+                    {...other} 
+                    sx={{ 
+                      maxHeight: 300,
+                      '& .MuiAutocomplete-listbox': {
+                        maxHeight: 300,
+                        '& .MuiAutocomplete-option': {
+                          padding: '8px 16px',
+                          fontSize: '0.9rem',
+                          '&:hover': {
+                            backgroundColor: 'rgba(131, 16, 255, 0.08)',
+                          },
+                          '&.Mui-focused': {
+                            backgroundColor: 'rgba(131, 16, 255, 0.12)',
+                          }
+                        }
+                      }
+                    }}
+                  >
+                    {children}
+                  </Paper>
+                )}
+                renderOption={(props, option) => (
+                  <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center' }}>
+                    <FilterIcon sx={{ color: '#8310FF', mr: 1, fontSize: 16 }} />
+                    {option}
+                  </Box>
+                )}
+                noOptionsText="No categories found"
+                sx={{
+                  '& .MuiAutocomplete-inputRoot': {
+                    paddingRight: '14px !important',
                   }
-                  sx={{
-                    borderRadius: 2,
-                  }}
-                >
-                  {categories.map((category) => (
-                    <MenuItem key={category} value={category}>
-                      {category}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                }}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
-              <FormControl fullWidth>
-                <InputLabel>All Location</InputLabel>
-                <Select
-                  value={selectedLocation}
-                  onChange={(e) => setSelectedLocation(e.target.value)}
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <LocationIcon sx={{ color: '#8310FF' }} />
-                    </InputAdornment>
+              <Autocomplete
+                value={selectedLocation}
+                onChange={(event, newValue) => {
+                  setSelectedLocation(newValue || '');
+                }}
+                options={JOB_LOCATIONS}
+                getOptionLabel={(option) => option}
+                isOptionEqualToValue={(option, value) => option === value}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Location"
+                    placeholder="Search countries..."
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LocationIcon sx={{ color: '#8310FF' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      }
+                    }}
+                  />
+                )}
+                PaperComponent={({ children, ...other }) => (
+                  <Paper 
+                    {...other} 
+                    sx={{ 
+                      maxHeight: 300,
+                      '& .MuiAutocomplete-listbox': {
+                        maxHeight: 300,
+                        '& .MuiAutocomplete-option': {
+                          padding: '8px 16px',
+                          fontSize: '0.9rem',
+                          '&:hover': {
+                            backgroundColor: 'rgba(131, 16, 255, 0.08)',
+                          },
+                          '&.Mui-focused': {
+                            backgroundColor: 'rgba(131, 16, 255, 0.12)',
+                          }
+                        }
+                      }
+                    }}
+                  >
+                    {children}
+                  </Paper>
+                )}
+                renderOption={(props, option) => (
+                  <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center' }}>
+                    <LocationIcon sx={{ color: '#8310FF', mr: 1, fontSize: 16 }} />
+                    {option}
+                  </Box>
+                )}
+                noOptionsText="No countries found"
+                sx={{
+                  '& .MuiAutocomplete-inputRoot': {
+                    paddingRight: '14px !important',
                   }
-                  sx={{
-                    borderRadius: 2,
-                  }}
-                >
-                  {locations.map((location) => (
-                    <MenuItem key={location} value={location}>
-                      {location}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                }}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 2 }}>
               <Button

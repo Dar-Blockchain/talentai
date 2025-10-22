@@ -3,6 +3,7 @@ const User = require("../models/UserModel");
 const Post = require("../models/PostModel");
 const Agent = require("../models/AgentModel");
 const agentService = require("./AgentService");
+const hederaService = require("./hederaService");
 const { POST_STATUS } = require("../constants/postConstants");
 
 // Créer ou mettre à jour un profil utilisateur
@@ -103,6 +104,39 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
 
     // Ensure user role is updated to Company
     await User.findByIdAndUpdate(userId, { role: "Company" });
+
+    // Create Hedera account if user doesn't have one
+    if (!user.hederaAccountId) {
+      console.log('🔧 Creating Hedera account for new company user...');
+      try {
+        const hederaAccount = await hederaService.createHederaAccount();
+
+        // Update user with Hedera account info
+        const updatedUser = await User.findByIdAndUpdate(
+          userId,
+          {
+            hederaAccountId: hederaAccount.hederaAccountId,
+            hederaPrivateKey: hederaAccount.hederaPrivateKey,
+            hederaPublicKey: hederaAccount.hederaPublicKey
+          },
+          { new: true }
+        );
+
+        console.log(`✅ Hedera account created for company user: ${hederaAccount.hederaAccountId}`);
+        console.log('Updated user Hedera fields:', {
+          hederaAccountId: updatedUser.hederaAccountId,
+          hederaPublicKey: updatedUser.hederaPublicKey,
+          hasPrivateKey: !!updatedUser.hederaPrivateKey
+        });
+      } catch (hederaError) {
+        console.error('❌ Failed to create Hedera account during company profile creation:', hederaError);
+        console.error('Error details:', hederaError.message);
+        // Don't fail the entire profile creation if Hedera account creation fails
+        console.log('⚠️  Company profile will be created without Hedera account. Account can be created later during first payment.');
+      }
+    } else {
+      console.log('ℹ️  User already has Hedera account:', user.hederaAccountId);
+    }
 
     let profile = await Profile.findOne({ userId });
 

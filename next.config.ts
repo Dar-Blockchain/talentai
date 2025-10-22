@@ -7,6 +7,7 @@ const nextConfig = {
   output: 'standalone',
   experimental: {
     outputFileTracingRoot: process.cwd(),
+    isrMemoryCacheSize: 0, // disable ISR memory cache to fix HMR issues
   },
   images: {
     unoptimized: true,

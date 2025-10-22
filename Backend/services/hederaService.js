@@ -24,8 +24,7 @@ const getServiceClient = () => {
         process.env.HEDERA_ACCOUNT_ID,
         process.env.HEDERA_PRIVATE_KEY
       );
-      serviceClient.setNetworkTimeout(10000);
-      
+
       console.log('✅ Hedera Service client initialized successfully');
     } catch (error) {
       console.error('❌ Error initializing Hedera Service client:', error.message);
@@ -36,8 +35,53 @@ const getServiceClient = () => {
 };
 
 /**
- * Creates a new Hedera wallet and returns the public and private keys.
- * @returns {Promise<{pubkey: string, privkey: string}>}
+ * Creates a new Hedera account without initial balance (as per requirements)
+ * @returns {Promise<{hederaPublicKey: string, hederaPrivateKey: string, hederaAccountId: string}>}
+ */
+module.exports.createHederaAccount = async () => {
+  try {
+    console.log('🔧 Creating new Hedera account...');
+
+    const client = getServiceClient();
+    if (!client) {
+      throw new Error('Hedera service client not available');
+    }
+
+    // Generate new key pair
+    const privateKey = PrivateKey.generate();
+    const publicKey = privateKey.publicKey;
+
+    // Create account without initial balance
+    const transaction = new AccountCreateTransaction()
+      .setKey(publicKey)
+      .setInitialBalance(new Hbar(0)) // No initial balance as per requirements
+      .setMaxAutomaticTokenAssociations(100) // Allow automatic token associations
+      .setAccountMemo('TalentAI Company Account')
+      .freezeWith(client);
+
+    // Sign and execute transaction
+    const signedTransaction = await transaction.sign(privateKey);
+    const response = await signedTransaction.execute(client);
+    const receipt = await response.getReceipt(client);
+
+    const newAccountId = receipt.accountId;
+
+    console.log(`✅ Hedera account created successfully: ${newAccountId}`);
+
+    return {
+      hederaAccountId: newAccountId.toString(),
+      hederaPrivateKey: privateKey.toString(),
+      hederaPublicKey: publicKey.toString(),
+    };
+  } catch (error) {
+    console.error("❌ Error creating Hedera account:", error);
+    throw new Error(`Failed to create Hedera account: ${error.message}`);
+  }
+};
+
+/**
+ * Legacy function for backward compatibility
+ * @deprecated Use createHederaAccount instead
  */
 module.exports.createHederaWallet = async () => {
   try {

@@ -79,13 +79,22 @@ export default function SignIn() {
     setError("");
     setSuccess("");
     try {
-      await dispatch(registerUser(emailToSend)).unwrap();
+      console.log('Attempting to register user with email:', emailToSend);
+      const result = await dispatch(registerUser(emailToSend)).unwrap();
+      console.log('Registration successful:', result);
       setShowVerification(true);
       setSuccess(
         `Please verify your email - we've sent a code to ${emailToSend}`
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      console.error('Registration failed:', err);
+      if (typeof err === 'string') {
+        setError(err);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Registration failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -136,7 +145,14 @@ export default function SignIn() {
         returnUrl,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Verification failed");
+      console.error('OTP verification failed:', err);
+      if (typeof err === 'string') {
+        setError(err);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("OTP verification failed. Please try again.");
+      }
       setVerifying(false);
     }
   };
