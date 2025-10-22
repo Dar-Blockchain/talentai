@@ -110,11 +110,7 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
     try {
       if (skillType === "technical" && selectedSkill && selectedCategory) {
         router.push(
-<<<<<<< HEAD
-          `/interview/hr?type=technical&skill=${selectedSkill}`
-=======
           `/interview?type=technicalSkill&skill=${selectedSkill}&category=${selectedCategory}`
->>>>>>> fa967f14233b661ecafa382cf202b08ff66579b9
         );
       } else if (skillType === "soft" && softSkillType) {
         const proficiencyMap: { [key: string]: number } = {
