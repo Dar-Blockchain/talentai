@@ -2485,16 +2485,7 @@ const IntelligentInterviewTest = () => {
                     >
                       Start {interviewConfig.interviewType === 'TECHNICAL_SKILL' ? 'Technical Assessment' : 'Interview'}
                     </Button>
-                    {interviewConfig.interviewType === 'HR_INTERVIEW' && (
-                      <Button
-                        variant="outlined"
-                        size="large"
-                        onClick={() => setShowTechnicalConfig(true)}
-                        sx={{ px: 4, py: 1.5 }}
-                      >
-                        Configure Technical Skills
-                      </Button>
-                    )}
+                    
                   </Box>
                   {(cameraStatus !== 'granted' && cameraStatus !== 'requesting') && (
                     <Typography variant="caption" color="warning.main" sx={{ mt: 1, display: 'block' }}>

@@ -322,8 +322,12 @@ export default function DashboardCandidate() {
         setSelectedSkill(skill.name);
         // Use default proficiency level of 1 if not defined
         const proficiencyLevel = skill.proficiencyLevel || 1;
+        const experienceLevel = skill.experienceLevel || 'Mid Level';
+        // Auto-generate role based on skill (same as config builder)
+        const role = `${skill.name} Developer`;
+        
         router.push(
-          `/interview/hr?type=technical&skill=${skill.name}&proficiency=${proficiencyLevel}`
+          `/interview/hr/?type=technical&skill=${skill.name}&proficiency=${proficiencyLevel}&role=${role}&company=TalentAI&difficulty=intermediate&duration=45`
         );
       } else {
         setSoftSkillType(skill.name);
@@ -340,9 +344,12 @@ export default function DashboardCandidate() {
           Expert: 5,
         };
         setSoftSkillProficiency(proficiencyMap[skill.experienceLevel] || 1);
+        // Auto-generate role based on soft skill (same as config builder)
+        const role = `${skill.name} Professional`;
+        
         router.push(
-          `/interview/hr?type=soft&skill=${skill.name}&category=${skill.category
-          }&proficiency=${proficiencyMap[skill.experienceLevel] || 1}`
+          `/interview/hr/?type=soft&skill=${skill.name}&category=${skill.category
+          }&proficiency=${proficiencyMap[skill.experienceLevel] || 1}&role=${role}&company=TalentAI`
         );
       }
     } else {

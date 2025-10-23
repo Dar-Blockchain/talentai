@@ -100,7 +100,7 @@ export default function TechnicalSkillsConfig({ onStartInterview, initialConfig 
     }
 
     // Redirect to HR interview page with technical parameters
-    const url = `/interview/hr?${params.toString()}`;
+    const url = `/interview/hr/?${params.toString()}`;
     router.push(url);
   };
 

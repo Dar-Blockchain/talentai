@@ -109,8 +109,20 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
   const handleTestSubmit = async () => {
     try {
       if (skillType === "technical" && selectedSkill && selectedCategory) {
+        const proficiencyMap: { [key: string]: number } = {
+          "Entry Level": 1,
+          Junior: 2,
+          "Mid Level": 3,
+          Senior: 4,
+          Expert: 5,
+        };
+        const proficiency = proficiencyMap[getExperienceLevelFromProficiency(softSkillProficiency)] || 3;
+        
+        // Auto-generate role based on skill (same as config builder)
+        const role = `${selectedSkill} Developer`;
+        
         router.push(
-          `/interview?type=technicalSkill&skill=${selectedSkill}&category=${selectedCategory}`
+          `/interview/hr/?type=technical&skill=${selectedSkill}&proficiency=${proficiency}&role=${role}&company=TalentAI&difficulty=intermediate&duration=45`
         );
       } else if (skillType === "soft" && softSkillType) {
         const proficiencyMap: { [key: string]: number } = {
@@ -125,10 +137,15 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
           getExperienceLevelFromProficiency(softSkillProficiency)
           ] || 1;
 
+        // Auto-generate role based on soft skill (same as config builder)
+        const role = `${softSkillType} Professional`;
+        
         const queryParams = new URLSearchParams();
         queryParams.append("type", "soft");
         queryParams.append("skill", softSkillType);
         queryParams.append("proficiency", proficiency.toString());
+        queryParams.append("role", role);
+        queryParams.append("company", "TalentAI");
 
         if (softSkillType === "Communication") {
           if (!softSkillLanguage) {
@@ -144,7 +161,7 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
           queryParams.append("subcategory", softSkillSubcategory);
         }
 
-        router.push(`/interview/hr?${queryParams.toString()}`);
+        router.push(`/interview/hr/?${queryParams.toString()}`);
       }
       onClose();
     } catch (error) {

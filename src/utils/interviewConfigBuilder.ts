@@ -104,6 +104,7 @@ export function buildInterviewConfigFromURL(params: URLParams): InterviewConfig 
   if (params.type === 'technical') {
     // Technical skill validation
     experienceLevel = PROFICIENCY_MAP[params.proficiency || '3'] || params.proficiency || 'Mid Level';
+    // Auto-generate role based on skill if not provided
     targetRole = params.role || `${params.skill || 'Software'} Developer`;
     
     // Handle multiple skills in test reason
@@ -115,7 +116,8 @@ export function buildInterviewConfigFromURL(params: URLParams): InterviewConfig 
   } else if (params.type === 'soft') {
     // Soft skill assessment
     experienceLevel = PROFICIENCY_MAP[params.proficiency || '3'] || params.proficiency || 'Mid Level';
-    targetRole = params.role || 'Professional';
+    // Auto-generate role based on soft skill if not provided
+    targetRole = params.role || `${params.skill || 'Soft Skills'} Professional`;
     testReason = `Assess ${params.skill || 'soft skill'} in ${params.category || 'general'} context at ${experienceLevel} level`;
 
   } else if (params.type === 'salary') {
@@ -141,7 +143,7 @@ export function buildInterviewConfigFromURL(params: URLParams): InterviewConfig 
     interviewType,
     testReason,
     context: {
-      targetCompany: params.company || 'Target Company',
+      targetCompany: (params.type === 'technical' || params.type === 'soft') ? 'TalentAI' : (params.company || 'Target Company'),
       targetRole,
       experienceLevel,
       interviewGoal: getInterviewGoal(interviewType, params)
