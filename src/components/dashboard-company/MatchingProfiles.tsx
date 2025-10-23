@@ -58,6 +58,7 @@ interface MatchingProfilesProps {
   currentPage?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
+  totalCandidates?: number;
 }
 
 const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
@@ -74,6 +75,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
   currentPage = 1,
   totalPages = 1,
   onPageChange,
+  totalCandidates = 0,
 }) => {
   const router = useRouter();
 
@@ -260,12 +262,17 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
               fontWeight: 600,
               fontSize: '1rem'
             }}>
-              Found {matchingProfiles.length} matching candidates
+              Found {totalCandidates || matchingProfiles.length} matching candidates
+              {totalPages > 1 && (
+                <span style={{ color: '#6b7280', fontSize: '0.9rem', marginLeft: '8px' }}>
+                  (Page {currentPage} of {totalPages})
+                </span>
+              )}
             </Typography>
           </Box>
 
           {/* Candidate Cards */}
-          {matchingProfiles.slice(0, displayCount).map((candidate, index) => (
+          {matchingProfiles.map((candidate, index) => (
             <Box
               key={candidate.candidateId._id}
               sx={{
@@ -441,14 +448,46 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
             </Box>
           ))}
 
+          {/* Load More Button - Only show if not using pagination */}
+          {totalPages <= 1 && matchingProfiles.length > displayCount && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <Button
+                variant="outlined"
+                onClick={onLoadMore}
+                sx={{
+                  borderColor: '#10b981',
+                  color: '#10b981',
+                  fontWeight: 600,
+                  px: 4,
+                  py: 1.5,
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontSize: '1rem',
+                  '&:hover': {
+                    backgroundColor: '#10b981',
+                    color: 'white',
+                    borderColor: '#10b981'
+                  }
+                }}
+              >
+                Load More Candidates ({matchingProfiles.length - displayCount} remaining)
+              </Button>
+            </Box>
+          )}
+
           {/* Pagination */}
           {totalPages > 1 && onPageChange && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 4, gap: 2 }}>
+              <Typography variant="body2" sx={{ color: '#6b7280' }}>
+                Showing {((currentPage - 1) * displayCount) + 1} to {Math.min(currentPage * displayCount, totalCandidates || matchingProfiles.length)} of {totalCandidates || matchingProfiles.length} candidates
+              </Typography>
               <Pagination
                 count={totalPages}
                 page={currentPage}
                 onChange={(event, page) => onPageChange(page)}
                 color="primary"
+                showFirstButton
+                showLastButton
                 sx={{
                   '& .MuiPaginationItem-root': {
                     color: '#6b7280',

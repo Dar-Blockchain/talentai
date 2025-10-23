@@ -88,7 +88,9 @@ const DashboardCompany = () => {
   const [selectedJob, setSelectedJob] = useState("");
   const isLoadingJobs = useSelector(selectMyPostsLoading);
   const jobsError = useSelector(selectMyPostsError);
-  const [displayCount, setDisplayCount] = useState(3); // Change initial display count to 3
+  const [displayCount, setDisplayCount] = useState(3); // For job posts pagination
+  const [candidatesPerPage] = useState(3); // Candidates per page
+  const [currentCandidatesPage, setCurrentCandidatesPage] = useState(1); // Current page for candidates
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const isDeleting = useSelector(selectDeletePostLoading);
   const [bidDialogOpen, setBidDialogOpen] = useState(false);
@@ -158,6 +160,17 @@ const DashboardCompany = () => {
   const handleBidDialogClose = () => {
     setBidDialogOpen(false);
     setSelectedCandidate(null);
+  };
+
+  // Calculate pagination data for candidates
+  const totalCandidatesPages = Math.ceil(matchingProfiles.length / candidatesPerPage);
+  const startIndex = (currentCandidatesPage - 1) * candidatesPerPage;
+  const endIndex = startIndex + candidatesPerPage;
+  const currentCandidates = matchingProfiles.slice(startIndex, endIndex);
+
+  // Handle page change for candidates
+  const handleCandidatesPageChange = (page: number) => {
+    setCurrentCandidatesPage(page);
   };
 
   return (
@@ -236,16 +249,20 @@ const DashboardCompany = () => {
               ) : (
                 <StyledCard>
                   <MatchingProfiles
-                    matchingProfiles={matchingProfiles}
+                    matchingProfiles={currentCandidates}
                     isLoadingMatches={isLoadingMatches}
                     matchError={matchError}
-                    displayCount={displayCount}
+                    displayCount={candidatesPerPage}
                     selectedJob={selectedJob}
                     onRetry={handleFilterApply}
                     onBackToJobs={() => setSelectedJob("")}
                     onCreateNewJob={() => router.push("/posts/create")}
-                    onLoadMore={() => setDisplayCount((prev) => prev + 3)}
+                    onLoadMore={() => {}} // Not used with pagination
                     onBidDialogOpen={handleBidDialogOpen}
+                    currentPage={currentCandidatesPage}
+                    totalPages={totalCandidatesPages}
+                    onPageChange={handleCandidatesPageChange}
+                    totalCandidates={matchingProfiles.length}
                   />
                 </StyledCard>
               )}
