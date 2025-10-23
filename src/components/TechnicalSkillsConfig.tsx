@@ -13,11 +13,10 @@ import {
   Select,
   MenuItem,
   Chip,
-  Grid,
   Paper,
   Divider
 } from '@mui/material';
-import { CodeIcon, SettingsIcon, PlayArrowIcon } from '@mui/icons-material';
+import { Code, Settings, PlayArrow } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 
 interface TechnicalSkillsConfigProps {
@@ -108,7 +107,7 @@ export default function TechnicalSkillsConfig({ onStartInterview, initialConfig 
     <Card elevation={3} sx={{ maxWidth: 800, mx: 'auto' }}>
       <CardContent sx={{ p: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <CodeIcon sx={{ fontSize: 32, color: 'primary.main', mr: 2 }} />
+          <Code sx={{ fontSize: 32, color: 'primary.main', mr: 2 }} />
           <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
             Technical Skills Assessment
           </Typography>
@@ -118,11 +117,18 @@ export default function TechnicalSkillsConfig({ onStartInterview, initialConfig 
           Configure your technical skills interview to evaluate specific competencies and problem-solving abilities.
         </Typography>
 
-        <Grid container spacing={3}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: 3 
+        }}>
           {/* Skills Selection */}
-          <Grid item xs={12}>
+          <Box sx={{ 
+            flex: '1 1 100%',
+            minWidth: 0
+          }}>
             <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-              <SettingsIcon sx={{ mr: 1 }} />
+              <Settings sx={{ mr: 1 }} />
               Select Technical Skills
             </Typography>
             <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
@@ -142,10 +148,18 @@ export default function TechnicalSkillsConfig({ onStartInterview, initialConfig 
                 Selected: {selectedSkills.length} skill{selectedSkills.length !== 1 ? 's' : ''}
               </Typography>
             </Paper>
-          </Grid>
+          </Box>
 
           {/* Configuration Fields */}
-          <Grid item xs={12} md={6}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', md: 'row' }, 
+            gap: 3 
+          }}>
+            <Box sx={{ 
+              flex: { xs: '1 1 100%', md: '1 1 50%' },
+              minWidth: 0
+            }}>
             <TextField
               fullWidth
               label="Target Role"
@@ -153,9 +167,12 @@ export default function TechnicalSkillsConfig({ onStartInterview, initialConfig 
               onChange={(e) => handleConfigChange('role', e.target.value)}
               placeholder="e.g., Senior Software Engineer"
             />
-          </Grid>
+            </Box>
 
-          <Grid item xs={12} md={6}>
+            <Box sx={{ 
+              flex: { xs: '1 1 100%', md: '1 1 50%' },
+              minWidth: 0
+            }}>
             <TextField
               fullWidth
               label="Target Company"
@@ -163,9 +180,12 @@ export default function TechnicalSkillsConfig({ onStartInterview, initialConfig 
               onChange={(e) => handleConfigChange('company', e.target.value)}
               placeholder="e.g., Google, Microsoft"
             />
-          </Grid>
+            </Box>
 
-          <Grid item xs={12} md={6}>
+            <Box sx={{ 
+              flex: { xs: '1 1 100%', md: '1 1 50%' },
+              minWidth: 0
+            }}>
             <FormControl fullWidth>
               <InputLabel>Experience Level</InputLabel>
               <Select
@@ -180,9 +200,12 @@ export default function TechnicalSkillsConfig({ onStartInterview, initialConfig 
                 ))}
               </Select>
             </FormControl>
-          </Grid>
+            </Box>
 
-          <Grid item xs={12} md={6}>
+            <Box sx={{ 
+              flex: { xs: '1 1 100%', md: '1 1 50%' },
+              minWidth: 0
+            }}>
             <FormControl fullWidth>
               <InputLabel>Difficulty Level</InputLabel>
               <Select
@@ -197,9 +220,12 @@ export default function TechnicalSkillsConfig({ onStartInterview, initialConfig 
                 ))}
               </Select>
             </FormControl>
-          </Grid>
+            </Box>
 
-          <Grid item xs={12} md={6}>
+            <Box sx={{ 
+              flex: { xs: '1 1 100%', md: '1 1 50%' },
+              minWidth: 0
+            }}>
             <FormControl fullWidth>
               <InputLabel>Interview Duration</InputLabel>
               <Select
@@ -214,9 +240,12 @@ export default function TechnicalSkillsConfig({ onStartInterview, initialConfig 
                 ))}
               </Select>
             </FormControl>
-          </Grid>
+            </Box>
 
-          <Grid item xs={12} md={6}>
+            <Box sx={{ 
+              flex: { xs: '1 1 100%', md: '1 1 50%' },
+              minWidth: 0
+            }}>
             <FormControl fullWidth>
               <InputLabel>Language</InputLabel>
               <Select
@@ -230,8 +259,9 @@ export default function TechnicalSkillsConfig({ onStartInterview, initialConfig 
                 <MenuItem value="de">German</MenuItem>
               </Select>
             </FormControl>
-          </Grid>
-        </Grid>
+            </Box>
+          </Box>
+        </Box>
 
         <Divider sx={{ my: 3 }} />
 
@@ -266,7 +296,7 @@ export default function TechnicalSkillsConfig({ onStartInterview, initialConfig 
             size="large"
             onClick={handleStartInterview}
             disabled={selectedSkills.length === 0}
-            startIcon={<PlayArrowIcon />}
+            startIcon={<PlayArrow />}
             sx={{ px: 4, py: 1.5 }}
           >
             Start Technical Assessment
