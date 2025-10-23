@@ -50,6 +50,7 @@ import { useSelector } from 'react-redux';
 import dynamic from 'next/dynamic';
 import { io } from 'socket.io-client';
 import { buildInterviewConfigFromURL, URLParams } from '@/utils/interviewConfigBuilder';
+import TechnicalSkillsConfig from '@/components/TechnicalSkillsConfig';
 
 // Interview Configuration Types
 interface InterviewConfig {
@@ -675,6 +676,7 @@ const IntelligentInterviewTest = () => {
   const [alertSeverity, setAlertSeverity] = useState<'success' | 'error' | 'warning' | 'info'>('info');
   const [duration, setDuration] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [showTechnicalConfig, setShowTechnicalConfig] = useState(false);
 
   // Debug States
   const [debugMode, setDebugMode] = useState(false);
@@ -688,6 +690,7 @@ const IntelligentInterviewTest = () => {
     const urlParams: URLParams = {
       type: router.query.type as any,
       skill: router.query.skill as string,
+      skills: router.query.skills as string,
       proficiency: router.query.proficiency as string,
       category: router.query.category as string,
       company: router.query.company as string,
@@ -699,13 +702,19 @@ const IntelligentInterviewTest = () => {
 
     console.log('📋 Building interview config from URL params:', urlParams);
 
-    // Only rebuild config if we have URL params (skip on initial default load)
-    if (urlParams.type || urlParams.skill) {
-      const dynamicConfig = buildInterviewConfigFromURL(urlParams);
-      console.log('✅ Generated dynamic interview config:', dynamicConfig);
-      setInterviewConfig(dynamicConfig);
-    } else {
-      console.log('ℹ️  No URL params detected, using default HR interview config');
+    // Always rebuild config based on URL params or use defaults
+    const dynamicConfig = buildInterviewConfigFromURL(urlParams);
+    console.log('✅ Generated dynamic interview config:', dynamicConfig);
+    setInterviewConfig(dynamicConfig);
+
+    // Log configuration details for technical skills
+    if (urlParams.type === 'technical' || dynamicConfig.interviewType === 'TECHNICAL_SKILL') {
+      console.log('🔧 Technical skills interview configured:', {
+        skill: urlParams.skill,
+        proficiency: urlParams.proficiency,
+        role: urlParams.role,
+        company: urlParams.company
+      });
     }
   }, [router.isReady, router.query]);
 
@@ -1310,6 +1319,13 @@ const IntelligentInterviewTest = () => {
       if (timer) clearInterval(timer);
     };
   }, [interviewStatus, duration]);
+
+  // Handle technical skills configuration
+  const handleTechnicalConfig = (config: any) => {
+    setInterviewConfig(config);
+    setShowTechnicalConfig(false);
+    startInterview();
+  };
 
   // Start interview function
   const startInterview = async () => {
@@ -2336,11 +2352,23 @@ const IntelligentInterviewTest = () => {
           textAlign: 'center'
         }}>
           <Typography variant="h4" gutterBottom>
-            HR Interview Simulation
+            {interviewConfig.interviewType === 'TECHNICAL_SKILL' ? 'Technical Skills Interview' :
+             interviewConfig.interviewType === 'SOFT_SKILL' ? 'Soft Skills Interview' :
+             interviewConfig.interviewType === 'SALARY_INTERVIEW' ? 'Salary Negotiation Interview' :
+             interviewConfig.interviewType === 'PSYCHOTECHNIC' ? 'Psychotechnic Assessment' :
+             'HR Interview Simulation'}
           </Typography>
           <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-            Intelligent Real-time Interview with AI
+            {interviewConfig.interviewType === 'TECHNICAL_SKILL' ? 
+              `Intelligent Technical Assessment - ${interviewConfig.context.targetRole}` :
+              'Intelligent Real-time Interview with AI'
+            }
           </Typography>
+          {interviewConfig.interviewType === 'TECHNICAL_SKILL' && (
+            <Typography variant="body2" sx={{ opacity: 0.8, mt: 1 }}>
+              {interviewConfig.testReason}
+            </Typography>
+          )}
 
           {/* Status Indicators */}
           <Box display="flex" justifyContent="center" gap={2} mt={2} flexWrap="wrap">
@@ -2407,27 +2435,73 @@ const IntelligentInterviewTest = () => {
         {/* Interview Content */}
         <Box sx={{ p: 4 }}>
           {interviewStatus === 'idle' && (
-            <Box textAlign="center" py={4}>
-              <Typography variant="h5" gutterBottom>
-                Ready to Start Your Interview?
-              </Typography>
-              <Typography variant="body1" color="text.secondary" mb={4}>
-                This is an AI-powered interview simulation that adapts to your responses and provides real-time feedback.
-              </Typography>
-              <Button
-                variant="contained"
-                size="large"
-                onClick={startInterview}
-                disabled={!isHydrated || connectionStatus !== 'connected' || cameraStatus !== 'granted'}
-                startIcon={<PlayArrowIcon />}
-                sx={{ px: 4, py: 1.5 }}
-              >
-                Start Interview
-              </Button>
-              {(cameraStatus !== 'granted' && cameraStatus !== 'requesting') && (
-                <Typography variant="caption" color="warning.main" sx={{ mt: 1, display: 'block' }}>
-                  Camera access required to start interview
-                </Typography>
+            <Box>
+              {showTechnicalConfig ? (
+                <TechnicalSkillsConfig 
+                  onStartInterview={handleTechnicalConfig}
+                  initialConfig={interviewConfig}
+                />
+              ) : (
+                <Box textAlign="center" py={4}>
+                  <Typography variant="h5" gutterBottom>
+                    Ready to Start Your {interviewConfig.interviewType === 'TECHNICAL_SKILL' ? 'Technical Skills' : 'Interview'} Assessment?
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" mb={4}>
+                    {interviewConfig.interviewType === 'TECHNICAL_SKILL' ? 
+                      `This is an AI-powered technical skills assessment that evaluates your ${interviewConfig.context.targetRole} capabilities. The system will ask technical questions and provide real-time feedback on your responses.` :
+                      'This is an AI-powered interview simulation that adapts to your responses and provides real-time feedback.'
+                    }
+                  </Typography>
+                  {interviewConfig.interviewType === 'TECHNICAL_SKILL' && (
+                    <Box sx={{ 
+                      p: 2, 
+                      bgcolor: 'rgba(131, 16, 255, 0.1)', 
+                      borderRadius: 2, 
+                      mb: 3,
+                      border: '1px solid rgba(131, 16, 255, 0.2)'
+                    }}>
+                      <Typography variant="body2" color="primary" sx={{ fontWeight: 600, mb: 1 }}>
+                        Assessment Details:
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        • <strong>Skills:</strong> {router.query.skills ? 
+                          router.query.skills.toString().split(',').map(s => s.trim()).join(', ') : 
+                          router.query.skill || 'Technical Skills'}<br/>
+                        • <strong>Role:</strong> {interviewConfig.context.targetRole}<br/>
+                        • <strong>Level:</strong> {interviewConfig.context.experienceLevel}<br/>
+                        • <strong>Company:</strong> {interviewConfig.context.targetCompany}<br/>
+                        • <strong>Duration:</strong> {interviewConfig.sessionSettings?.duration || 30} minutes
+                      </Typography>
+                    </Box>
+                  )}
+                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <Button
+                      variant="contained"
+                      size="large"
+                      onClick={startInterview}
+                      disabled={!isHydrated || connectionStatus !== 'connected' || cameraStatus !== 'granted'}
+                      startIcon={<PlayArrowIcon />}
+                      sx={{ px: 4, py: 1.5 }}
+                    >
+                      Start {interviewConfig.interviewType === 'TECHNICAL_SKILL' ? 'Technical Assessment' : 'Interview'}
+                    </Button>
+                    {interviewConfig.interviewType === 'HR_INTERVIEW' && (
+                      <Button
+                        variant="outlined"
+                        size="large"
+                        onClick={() => setShowTechnicalConfig(true)}
+                        sx={{ px: 4, py: 1.5 }}
+                      >
+                        Configure Technical Skills
+                      </Button>
+                    )}
+                  </Box>
+                  {(cameraStatus !== 'granted' && cameraStatus !== 'requesting') && (
+                    <Typography variant="caption" color="warning.main" sx={{ mt: 1, display: 'block' }}>
+                      Camera access required to start interview
+                    </Typography>
+                  )}
+                </Box>
               )}
             </Box>
           )}

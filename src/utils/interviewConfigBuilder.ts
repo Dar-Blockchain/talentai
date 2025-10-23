@@ -6,6 +6,7 @@
 export interface URLParams {
   type?: 'hr' | 'technical' | 'soft' | 'salary' | 'psycho';
   skill?: string;           // e.g., "React", "Communication"
+  skills?: string;          // Multiple skills: "React,Node.js,JavaScript"
   proficiency?: string;     // 1-5 or "Entry Level", "Senior"
   category?: string;        // For soft skills: "English", "Leadership"
   company?: string;         // e.g., "Google", "Meta"
@@ -59,9 +60,18 @@ const PROFICIENCY_MAP: { [key: string]: string } = {
  * Get interview goal based on interview type and parameters
  */
 function getInterviewGoal(interviewType: string, params: URLParams): string {
+  // Handle multiple skills for technical interviews
+  const getSkillsText = () => {
+    if (params.skills) {
+      const skillsList = params.skills.split(',').map(s => s.trim());
+      return skillsList.length > 1 ? skillsList.join(', ') : skillsList[0];
+    }
+    return params.skill || 'technical';
+  };
+
   const goals: { [key: string]: string } = {
     'HR_INTERVIEW': 'Assess behavioral competencies and cultural fit',
-    'TECHNICAL_SKILL': `Validate ${params.skill || 'technical'} proficiency and problem-solving ability`,
+    'TECHNICAL_SKILL': `Validate ${getSkillsText()} proficiency and problem-solving ability`,
     'SOFT_SKILL': `Evaluate ${params.skill || 'soft skill'} effectiveness and application`,
     'SALARY_INTERVIEW': 'Discuss compensation expectations and market alignment',
     'PSYCHOTECHNIC': 'Assess cognitive abilities and personality traits'
@@ -95,7 +105,12 @@ export function buildInterviewConfigFromURL(params: URLParams): InterviewConfig 
     // Technical skill validation
     experienceLevel = PROFICIENCY_MAP[params.proficiency || '3'] || params.proficiency || 'Mid Level';
     targetRole = params.role || `${params.skill || 'Software'} Developer`;
-    testReason = `Validate ${params.skill || 'technical'} expertise at ${experienceLevel} level`;
+    
+    // Handle multiple skills in test reason
+    const skillsText = params.skills ? 
+      params.skills.split(',').map(s => s.trim()).join(', ') : 
+      (params.skill || 'technical');
+    testReason = `Validate ${skillsText} expertise at ${experienceLevel} level`;
 
   } else if (params.type === 'soft') {
     // Soft skill assessment
