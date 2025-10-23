@@ -168,11 +168,22 @@ export default function DashboardCandidate() {
     username: "",
     email: "",
     experienceLevel: "",
+    targetRole: "",
   });
 
   const [addSkillDialogOpen, setAddSkillDialogOpen] = useState(false);
   const [newSkill, setNewSkill] = useState({ name: "", proficiencyLevel: 1 });
   const [addSoftSkillDialogOpen, setAddSoftSkillDialogOpen] = useState(false);
+
+  const [notification, setNotification] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'error' | 'success' | 'info' | 'warning';
+  }>({
+    open: false,
+    message: '',
+    severity: 'error'
+  });
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -183,16 +194,27 @@ export default function DashboardCandidate() {
 
   useEffect(() => {
     if (profile) {
+      console.log('🔄 Profile data updated:', {
+        username: profile.userId.username,
+        email: profile.userId.email,
+        experienceLevel: profile.requiredExperienceLevel,
+        targetRole: profile.targetRole
+      });
       setFormData({
         username: profile.userId.username,
         email: profile.userId.email,
         experienceLevel: profile.requiredExperienceLevel || "",
+        targetRole: profile.targetRole || "",
       });
     }
   }, [profile]);
 
   const handleEditProfileClose = () => {
     setEditProfileOpen(false);
+  };
+
+  const handleCloseNotification = () => {
+    setNotification(prev => ({ ...prev, open: false }));
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -206,10 +228,64 @@ export default function DashboardCandidate() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        console.error("No token found");
+        return;
+      }
+
+      // Prepare profile update data
+      const profileUpdateData = {
+        username: formData.username,
+        email: formData.email,
+        requiredExperienceLevel: formData.experienceLevel,
+        targetRole: formData.targetRole,
+      };
+
+      console.log('🔧 Sending profile update data:', profileUpdateData);
+      console.log('🔧 API Base URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
+      console.log('🔧 Full URL:', `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateProfile`);
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/updateProfile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(profileUpdateData)
+      });
+
+      console.log('📡 Profile update response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ Profile update failed:', errorData);
+        throw new Error(errorData.message || 'Failed to update profile');
+      }
+
+      const result = await response.json();
+      console.log('✅ Profile updated successfully:', result);
+      console.log('🔍 Updated profile data:', result.profile);
+
+      // Close modal and refresh profile data
       handleEditProfileClose();
+      console.log('🔄 Refreshing profile data...');
       dispatch(getMyProfile());
+
+      // Show success notification
+      setNotification({
+        open: true,
+        message: 'Profile updated successfully!',
+        severity: 'success'
+      });
+
     } catch (error) {
       console.error("Error updating profile:", error);
+      setNotification({
+        open: true,
+        message: error instanceof Error ? error.message : 'Failed to update profile',
+        severity: 'error'
+      });
     }
   };
 
@@ -302,19 +378,6 @@ export default function DashboardCandidate() {
     setSoftSkillLanguage("");
   }, []);
 
-  const [notification, setNotification] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'error' | 'success' | 'info' | 'warning';
-  }>({
-    open: false,
-    message: '',
-    severity: 'error'
-  });
-
-  const handleCloseNotification = () => {
-    setNotification(prev => ({ ...prev, open: false }));
-  };
 
   // Add new handler for skill selection
   const handleSkillSelection = (value: string | null) => {
@@ -492,6 +555,7 @@ export default function DashboardCandidate() {
           <DashboardNavbar
             profile={profile}
             onLogout={handleLogout}
+            onEditProfile={() => setEditProfileOpen(true)}
             isMobile={isMobile}
           />
           <Box

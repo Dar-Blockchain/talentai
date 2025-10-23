@@ -46,6 +46,7 @@ export interface Profile {
     softSkills: SoftSkill[];
     requiredSkills: string[];
     requiredExperienceLevel: string;
+    targetRole?: string;
     companyDetails?: CompanyDetails;
     createdAt: string;
     updatedAt: string;

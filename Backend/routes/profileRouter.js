@@ -21,6 +21,12 @@ router.use(authLogMiddleware("Profile"));
 // POST /profile/createOrUpdateProfile — crée/maj profil utilisateur
 router.post('/createOrUpdateProfile', requireAuthUser,profileController.createOrUpdateProfile);
 
+// GET /profile/test-update — test endpoint
+router.get('/test-update', profileController.testUpdateProfile);
+
+// PUT /profile/updateProfile — met à jour les champs du profil
+router.put('/updateProfile', requireAuthUser, profileController.updateProfile);
+
 // POST /profile/createOrUpdateCompanyProfile — crée/maj profil entreprise
 router.post('/createOrUpdateCompanyProfile', requireAuthUser,profileController.createOrUpdateCompanyProfile);
 

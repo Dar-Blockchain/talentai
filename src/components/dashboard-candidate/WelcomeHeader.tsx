@@ -5,6 +5,8 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PersonIcon from "@mui/icons-material/Person";
 import DescriptionIcon from "@mui/icons-material/Description";
 import EmailIcon from "@mui/icons-material/Email";
+import WorkIcon from "@mui/icons-material/Work";
+import SchoolIcon from "@mui/icons-material/School";
 
 type WelcomeHeaderProps = {
   profile: any;
@@ -93,6 +95,38 @@ export default function WelcomeHeader({ profile, quota, onStartTest, onHrIntervi
               {profile?.userId?.email || "ahmed@mail.com"}
             </Typography>
           </Box>
+
+          {profile?.targetRole && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <WorkIcon sx={{ color: "#8310FF", fontSize: "1.2rem" }} />
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#000000",
+                  fontSize: "0.875rem",
+                  fontWeight: 400,
+                }}
+              >
+                {profile.targetRole}
+              </Typography>
+            </Box>
+          )}
+
+          {profile?.requiredExperienceLevel && (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <SchoolIcon sx={{ color: "#8310FF", fontSize: "1.2rem" }} />
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#000000",
+                  fontSize: "0.875rem",
+                  fontWeight: 400,
+                }}
+              >
+                {profile.requiredExperienceLevel}
+              </Typography>
+            </Box>
+          )}
           
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <CalendarTodayIcon sx={{ color: "#8310FF", fontSize: "1.2rem" }} />

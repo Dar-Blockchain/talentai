@@ -802,3 +802,27 @@ exports.getTopIndustries = async () => {
     { $limit: 5 },
   ]);
 };
+
+// Update specific profile fields
+module.exports.updateProfileFields = async (userId, updateData) => {
+  try {
+    console.log('🔧 Updating profile fields for user:', userId);
+    console.log('🔧 Update data:', updateData);
+    
+    const profile = await Profile.findOneAndUpdate(
+      { userId },
+      { $set: updateData },
+      { new: true }
+    );
+    
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+    
+    console.log('✅ Profile fields updated successfully');
+    return profile;
+  } catch (error) {
+    console.error('❌ Error updating profile fields:', error);
+    throw error;
+  }
+};

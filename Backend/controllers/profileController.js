@@ -1,6 +1,7 @@
 const profileService = require("../services/profileService");
 const Agent = require("../models/AgentModel");
 const agentService = require("../services/AgentService");
+const User = require("../models/UserModel");
 
 // Créer ou mettre à jour un profil
 module.exports.createOrUpdateProfile = async (req, res) => {
@@ -426,5 +427,80 @@ exports.getTopIndustries = async (req, res) => {
   } catch (error) {
     console.error("Error getting top industries:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Test endpoint to verify the route is working
+module.exports.testUpdateProfile = async (req, res) => {
+  try {
+    res.status(200).json({
+      success: true,
+      message: "Update profile route is working",
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// New comprehensive update profile API
+module.exports.updateProfile = async (req, res) => {
+  try {
+    console.log('🔧 Update Profile API called');
+    const userId = req.user._id;
+    const { username, email, requiredExperienceLevel, targetRole } = req.body;
+
+    console.log('🔧 User ID:', userId);
+    console.log('🔧 Update data:', { username, email, requiredExperienceLevel, targetRole });
+
+    // Validate required fields
+    if (!username && !email && !requiredExperienceLevel && !targetRole) {
+      return res.status(400).json({ 
+        success: false,
+        message: "At least one field must be provided for update" 
+      });
+    }
+
+    // Update User model fields (username, email)
+    const userUpdateData = {};
+    if (username) userUpdateData.username = username;
+    if (email) userUpdateData.email = email;
+
+    if (Object.keys(userUpdateData).length > 0) {
+      console.log('🔧 Updating User model with:', userUpdateData);
+      await User.findByIdAndUpdate(userId, userUpdateData, { new: true });
+      console.log('✅ User model updated successfully');
+    }
+
+    // Update Profile model fields (requiredExperienceLevel, targetRole)
+    const profileUpdateData = {};
+    if (requiredExperienceLevel) profileUpdateData.requiredExperienceLevel = requiredExperienceLevel;
+    if (targetRole) profileUpdateData.targetRole = targetRole;
+
+    if (Object.keys(profileUpdateData).length > 0) {
+      console.log('🔧 Updating Profile model with:', profileUpdateData);
+      await profileService.updateProfileFields(userId, profileUpdateData);
+      console.log('✅ Profile model updated successfully');
+    }
+
+    // Fetch updated profile with populated user data
+    const updatedProfile = await profileService.getProfileByUserId(userId);
+    
+    console.log('✅ Profile update completed successfully');
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      profile: updatedProfile
+    });
+
+  } catch (error) {
+    console.error('❌ Error updating profile:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to update profile"
+    });
   }
 };

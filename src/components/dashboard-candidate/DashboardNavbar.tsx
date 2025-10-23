@@ -20,12 +20,14 @@ import { useRouter } from 'next/router';
 interface DashboardNavbarProps {
   profile: any;
   onLogout: () => void;
+  onEditProfile: () => void;
   isMobile: boolean;
 }
 
 const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
   profile,
   onLogout,
+  onEditProfile,
   isMobile
 }) => {
   const GREEN_MAIN = "#7C4DFF";
@@ -193,7 +195,7 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
                 </ListItemIcon>
                 <ListItemText>Profile</ListItemText>
               </MenuItem>
-              <MenuItem onClick={handleClose}>
+              <MenuItem onClick={() => { handleClose(); onEditProfile(); }}>
                 <ListItemIcon>
                   <SettingsIcon sx={{ fontSize: '1.2rem', color: '#666' }} />
                 </ListItemIcon>
