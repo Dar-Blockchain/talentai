@@ -101,5 +101,5 @@ Le candidat obtient donc **93.3% de correspondance** avec le poste.
 
 ---
 
-**Auteur :** Hatem Azaiez  
+**Auteur :** Med Aziz Ben Ismail  
 **Dernière mise à jour :** Octobre 2025  
