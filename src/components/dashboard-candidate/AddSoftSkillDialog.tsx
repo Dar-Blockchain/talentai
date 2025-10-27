@@ -107,7 +107,7 @@ function AddSoftSkillDialogComponent(props: AddSoftSkillDialogProps) {
         queryParams.append("subcategory", softSkillSubcategory);
       }
 
-      router.push(`/interview/hr?${queryParams.toString()}`);
+      router.push(`/interview?${queryParams.toString()}`);
       onClose();
     } catch (error) {
       console.error("Error in soft skill submission:", error);

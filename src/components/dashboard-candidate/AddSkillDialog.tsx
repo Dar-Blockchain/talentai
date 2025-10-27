@@ -74,7 +74,7 @@ function AddSkillDialogComponent(props: AddSkillDialogProps) {
       // Redirect to test for the selected skill
       if (selectedSkill) {
         router.push(
-          `/interview/hr?type=technical&skill=${encodeURIComponent(selectedSkill)}`
+          `/interview?type=technical&skill=${encodeURIComponent(selectedSkill)}`
         );
       }
     } catch (error) {

@@ -144,7 +144,7 @@ function TestSelectionDialogComponent(props: TestSelectionDialogProps) {
           queryParams.append("subcategory", softSkillSubcategory);
         }
 
-        router.push(`/interview/hr?${queryParams.toString()}`);
+        router.push(`/interview?${queryParams.toString()}`);
       }
       onClose();
     } catch (error) {

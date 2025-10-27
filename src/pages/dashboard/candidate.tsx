@@ -323,7 +323,7 @@ export default function DashboardCandidate() {
         // Use default proficiency level of 1 if not defined
         const proficiencyLevel = skill.proficiencyLevel || 1;
         router.push(
-          `/interview/hr?type=technical&skill=${skill.name}&proficiency=${proficiencyLevel}`
+          `/interview?type=technical&skill=${skill.name}&proficiency=${proficiencyLevel}`
         );
       } else {
         setSoftSkillType(skill.name);
@@ -341,7 +341,7 @@ export default function DashboardCandidate() {
         };
         setSoftSkillProficiency(proficiencyMap[skill.experienceLevel] || 1);
         router.push(
-          `/interview/hr?type=soft&skill=${skill.name}&category=${skill.category
+          `/interview?type=soft&skill=${skill.name}&category=${skill.category
           }&proficiency=${proficiencyMap[skill.experienceLevel] || 1}`
         );
       }

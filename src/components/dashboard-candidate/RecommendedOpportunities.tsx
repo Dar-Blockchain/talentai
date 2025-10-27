@@ -183,164 +183,199 @@ export default function RecommendedOpportunities({ data, total, emptyText = "You
       </Box>
 
       {/* Job Cards Container */}
-      {data.length === 0 ? (
-        <Paper
-          elevation={2}
-          sx={{
-            p: 4,
-            borderRadius: 3,
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: 200,
-            background: '#fff',
-            border: '1px solid #E0E0E0',
-          }}
-        >
-          <Typography variant="body1" sx={{ color: '#666', fontStyle: 'italic', textAlign: 'center' }}>
-            {emptyText}
-          </Typography>
-        </Paper>
-      ) : (
-        <Box
-          ref={scrollContainerRef}
-          sx={{
-            display: 'flex',
-            gap: 3,
-            overflowX: 'auto',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            '&::-webkit-scrollbar': {
-              display: 'none',
-            },
-            pb: 2,
-          }}
-        >
-            {data.map((row) => {
-              console.log('Row from recommended opportunities:', data);
-            console.log('Row from postads:', row);
-            const id = row._id || row.id;
-            
-            // Extract job information - try multiple possible data structures
-            const jobDetails = row?.jobDetails || row;
-            const title = jobDetails?.title || row?.title || 'Technical Support Specialist';
-            const employmentType = jobDetails?.employmentType || row?.employmentType || row?.type || 'Full-time';
-            
-            // Extract real salary from your data format - try multiple paths
-            let salary = '$20,000 - $25,000'; // fallback
-            const salaryData = jobDetails?.salary || row?.salary;
-            if (salaryData) {
-              const { currency, min, max } = salaryData;
-              salary = `${currency}${min.toLocaleString()}-${max.toLocaleString()}`;
-            }
-            
-            const company = jobDetails?.company || jobDetails?.companyName || row?.company || 'Google Inc.';
-            const location = jobDetails?.location || row?.location || 'Remote';
+      {(() => {
+        // Filter out any rows that don't have a valid title
+        const validData = data.filter((row) => {
+          const jobDetails = row?.jobDetails || row;
+          const title = jobDetails?.title || row?.title;
+          // Only show cards with actual titles
+          return !!title;
+        });
 
-            return (
-              <Paper
-                key={id}
-                elevation={2}
-                sx={{
-                  minWidth: 400,
-                  maxWidth: 400,
-                  height: 160,
-                  p: 3,
-                  borderRadius: 2,
-                  background: '#ffffff',
-                  border: '1px solid #E0E0E0',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-                  position: 'relative',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
-                  },
+        // If no valid data, show empty state
+        if (validData.length === 0) {
+          return (
+            <Paper
+              elevation={2}
+              sx={{
+                p: 4,
+                borderRadius: 3,
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: 200,
+                background: 'linear-gradient(135deg, rgba(131, 16, 255, 0.1) 0%, rgba(0, 184, 212, 0.1) 100%)',
+                border: '2px solid #8310FF',
+                borderStyle: 'dashed',
+              }}
+            >
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: '#8310FF', 
+                  fontStyle: 'italic', 
+                  textAlign: 'center',
+                  fontWeight: 500,
+                  fontSize: '1.1rem',
                 }}
-                onClick={() => handleOpen(row)}
               >
-                {/* Bookmark Icon */}
-                <IconButton
+                {emptyText}
+              </Typography>
+            </Paper>
+          );
+        }
+
+        // Render valid cards
+        return (
+          <Box
+            ref={scrollContainerRef}
+            sx={{
+              display: 'flex',
+              gap: 3,
+              overflowX: 'auto',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              '&::-webkit-scrollbar': {
+                display: 'none',
+              },
+              pb: 2,
+            }}
+          >
+            {validData.map((row) => {
+              console.log('Row from recommended opportunities:', data);
+              console.log('Row from postads:', row);
+              const id = row._id || row.id;
+              
+              // Extract job information - try multiple possible data structures
+              const jobDetails = row?.jobDetails || row;
+              const title = jobDetails?.title || row?.title;
+              const employmentType = jobDetails?.employmentType || row?.employmentType || row?.type;
+              
+              // Extract real salary from your data format - try multiple paths
+              let salary: string | undefined = undefined;
+              const salaryData = jobDetails?.salary || row?.salary;
+              if (salaryData) {
+                const { currency, min, max } = salaryData;
+                salary = `${currency}${min.toLocaleString()}-${max.toLocaleString()}`;
+              }
+              
+              const company = jobDetails?.company || jobDetails?.companyName || row?.company;
+              const location = jobDetails?.location || row?.location;
+
+              return (
+                <Paper
+                  key={id}
+                  elevation={2}
                   sx={{
-                    position: 'absolute',
-                    top: 12,
-                    right: 12,
-                    color: '#666666',
+                    minWidth: 400,
+                    maxWidth: 400,
+                    height: 160,
+                    p: 3,
+                    borderRadius: 2,
+                    background: '#ffffff',
+                    border: '1px solid #E0E0E0',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+                    position: 'relative',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
                     '&:hover': {
-                      color: '#8310FF',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
                     },
                   }}
+                  onClick={() => handleOpen(row)}
                 >
-                  <BookmarkBorderIcon fontSize="small" />
-                </IconButton>
-
-                {/* Top Section */}
-                <Box>
-                  {/* Job Title */}
-                  <Typography
-                    variant="h6"
+                  {/* Bookmark Icon */}
+                  <IconButton
                     sx={{
-                      fontWeight: 700,
-                      color: '#000000',
-                      fontSize: '1.125rem',
-                      mb: 2,
-                      pr: 4,
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    {title}
-                  </Typography>
-
-                  {/* Employment Type and Salary */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Chip
-                      label={employmentType}
-                      size="small"
-                      sx={{
-                        backgroundColor: '#4CAF50',
-                        color: '#ffffff',
-                        fontWeight: 600,
-                        fontSize: '0.75rem',
-                        height: 24,
-                        borderRadius: 1,
-                      }}
-                    />
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: '#666666',
-                        fontSize: '0.875rem',
-                      }}
-                    >
-                      Salary: {salary}
-                    </Typography>
-                  </Box>
-                </Box>
-
-
-                {/* Location */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <LocationOnIcon sx={{ color: '#666666', fontSize: '1rem' }} />
-                  <Typography
-                    variant="body2"
-                    sx={{
+                      position: 'absolute',
+                      top: 12,
+                      right: 12,
                       color: '#666666',
-                      fontSize: '0.875rem',
+                      '&:hover': {
+                        color: '#8310FF',
+                      },
                     }}
                   >
-                    {location}
-                  </Typography>
-                </Box>
-              </Paper>
-            );
-          })}
-        </Box>
-      )}
+                    <BookmarkBorderIcon fontSize="small" />
+                  </IconButton>
+
+                  {/* Top Section */}
+                  <Box>
+                    {/* Job Title */}
+                    {title && (
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontWeight: 700,
+                          color: '#000000',
+                          fontSize: '1.125rem',
+                          mb: 2,
+                          pr: 4,
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {title}
+                      </Typography>
+                    )}
+
+                    {/* Employment Type and Salary */}
+                    {(employmentType || salary) && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        {employmentType && (
+                          <Chip
+                            label={employmentType}
+                            size="small"
+                            sx={{
+                              backgroundColor: '#4CAF50',
+                              color: '#ffffff',
+                              fontWeight: 600,
+                              fontSize: '0.75rem',
+                              height: 24,
+                              borderRadius: 1,
+                            }}
+                          />
+                        )}
+                        {salary && (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: '#666666',
+                              fontSize: '0.875rem',
+                            }}
+                          >
+                            Salary: {salary}
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+                  </Box>
+
+                  {/* Location */}
+                  {location && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <LocationOnIcon sx={{ color: '#666666', fontSize: '1rem' }} />
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: '#666666',
+                          fontSize: '0.875rem',
+                        }}
+                      >
+                        {location}
+                      </Typography>
+                    </Box>
+                  )}
+                </Paper>
+              );
+            })}
+          </Box>
+        );
+      })()}
 
       {/* Job Details Dialog */}
       <Dialog 
