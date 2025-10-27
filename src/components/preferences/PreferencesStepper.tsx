@@ -32,8 +32,7 @@ function ColorlibStepIcon(props: CustomStepIconProps) {
   const companyIcons: Record<string, React.ReactElement> = {
     1: <BusinessIcon />,        // Company Details
     2: <DesignServicesIcon />,  // Required Skills
-    3: <AnalyticsIcon />,       // Experience Level
-    4: <CheckCircleIcon />      // Review
+    3: <CheckCircleIcon />      // Review
   };
   
   // Candidate flow icons

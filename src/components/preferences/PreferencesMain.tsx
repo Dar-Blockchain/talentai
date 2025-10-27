@@ -6,7 +6,6 @@ import UserTypeSelection from './UserTypeSelection';
 import PersonalDetails from './PersonalDetails';
 import CompanyDetails from './CompanyDetails';
 import SkillsSelection from './SkillsSelection';
-import ExperienceLevel from './ExperienceLevel';
 import ProficiencyRating from './ProficiencyRating';
 import HederaQCM from './HederaQCM';
 import Review from './Review';
@@ -77,7 +76,7 @@ const PreferencesMain: React.FC = () => {
           size: companyDetails.size,
           location: companyDetails.location,
           requiredSkills: requiredSkills,
-          requiredExperienceLevel: experienceLevel,
+          requiredExperienceLevel: 'Entry Level', // Default experience level
           hederaExperience: hederaExp === 'yes' ? hedQcm : undefined
         };
 
@@ -229,13 +228,6 @@ const PreferencesMain: React.FC = () => {
           />
         );
 
-      case 'Experience Level':
-        return (
-          <ExperienceLevel
-            experienceLevel={experienceLevel}
-            setExperienceLevel={setExperienceLevel}
-          />
-        );
 
       case 'Hedera QCM':
         return (

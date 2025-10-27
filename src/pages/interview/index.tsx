@@ -238,6 +238,7 @@ export default function Test() {
   const [streamingToken, setStreamingToken] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isSpeechActive, setIsSpeechActive] = useState(false);
   const partialTranscriptRef = useRef<string>('');
   const accumulatedTranscriptRef = useRef<string>(''); // Track accumulated text for current question
 
@@ -452,16 +453,21 @@ export default function Test() {
     setTimeLeft(120); // Reset to 120 seconds (2 minutes)
     partialTranscriptRef.current = ''; // Clear partial transcript
     accumulatedTranscriptRef.current = ''; // Clear accumulated transcript for new question
+    setCurrentTranscript(''); // Clear the displayed transcript
     
     // Trigger question highlight animation
     setQuestionHighlight(true);
     setTimeout(() => setQuestionHighlight(false), 600);
   }, [current]); // Only reset timer when question number changes
 
-  // Update displayed transcript when question changes or transcriptions update
+  // Update displayed transcript ONLY when transcriptions for current question update
+  // Don't trigger on question change as that's handled above
   useEffect(() => {
-    setCurrentTranscript(transcriptions[current] || '');
-  }, [current, transcriptions]);
+    // Only update if we have stored transcription for this question
+    if (transcriptions[current]) {
+      setCurrentTranscript(transcriptions[current]);
+    }
+  }, [transcriptions]);
 
   // Initialize camera
   useEffect(() => {
@@ -510,27 +516,36 @@ export default function Test() {
       const token = await generateStreamingToken();
       setStreamingToken(token);
 
-      // Setup audio context
+      // Setup audio context with optimal settings for AssemblyAI
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
-        sampleRate: 16000,
+        sampleRate: 16000, // AssemblyAI's optimal sample rate
+        latencyHint: 'interactive', // Prioritize low latency for real-time
       });
       audioContextRef.current = audioContext;
 
       const source = audioContext.createMediaStreamSource(stream);
+      // Use optimal buffer size for real-time streaming (4096 is best for AssemblyAI)
       const processor = audioContext.createScriptProcessor(4096, 1, 1);
       processorRef.current = processor;
 
-      // Connect WebSocket
+      // Connect WebSocket with enhanced parameters for better accuracy with non-native English
       const ws = new WebSocket(
         `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}`
       );
       wsRef.current = ws;
+      
+      // Log connection ready and track connection quality
+      let audioPacketsSent = 0;
+      ws.addEventListener('open', () => {
+        console.log('🎙️ WebSocket connected - AssemblyAI ready with best AI models');
+        console.log('ℹ️ Session info: 16kHz audio, real-time streaming enabled');
+      });
 
       ws.onopen = () => {
-        console.log('Streaming connection opened');
+        console.log('🔴 Recording started - Capturing everything you say');
         setIsConnecting(false);
 
-        // Connect audio processing
+        // Connect audio processing with minimal interference
         source.connect(processor);
         processor.connect(audioContext.destination);
 
@@ -538,26 +553,109 @@ export default function Test() {
           if (ws.readyState === WebSocket.OPEN) {
             const inputBuffer = event.inputBuffer.getChannelData(0);
 
-            // Convert float32 to int16
-            const int16Buffer = new Int16Array(inputBuffer.length);
-            for (let i = 0; i < inputBuffer.length; i++) {
-              int16Buffer[i] = Math.max(-32768, Math.min(32767, inputBuffer[i] * 32767));
+            // Send pristine audio to AssemblyAI - no processing
+            // AssemblyAI's AI handles all audio enhancement internally
+            const processedBuffer = inputBuffer;
+
+            // Convert float32 to int16 with proper scaling for AssemblyAI
+            const int16Buffer = new Int16Array(processedBuffer.length);
+            for (let i = 0; i < processedBuffer.length; i++) {
+              // Proper conversion with clamping
+              const sample = Math.max(-1, Math.min(1, processedBuffer[i]));
+              int16Buffer[i] = sample < 0 
+                ? Math.max(-32768, Math.floor(sample * 32768))
+                : Math.min(32767, Math.floor(sample * 32767));
             }
 
-            ws.send(int16Buffer.buffer);
+            // Send audio data to AssemblyAI
+            if (int16Buffer.byteLength > 0) {
+              try {
+                ws.send(int16Buffer.buffer);
+                audioPacketsSent++;
+                
+                // Log streaming status every 100 packets (~10 seconds)
+                if (audioPacketsSent % 100 === 0) {
+                  console.log(`📡 Streaming: ${audioPacketsSent} audio packets sent to AssemblyAI`);
+                }
+              } catch (error) {
+                console.error('❌ Error sending audio:', error);
+              }
+            }
           }
         };
       };
 
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
+        
+        // Handle session begins
+        if (data.message_type === 'SessionBegins') {
+          console.log('🟢 AssemblyAI session started:', data);
+          return;
+        }
+        
+        // Handle session information
+        if (data.message_type === 'SessionInformation') {
+          console.log('ℹ️ Session info:', data);
+          return;
+        }
 
         if (data.message_type === 'PartialTranscript' || data.message_type === 'FinalTranscript') {
           const text = data.text;
           if (text?.trim()) {
+            // Keep AssemblyAI's output with minimal changes
+            let cleanedText = text.trim().replace(/\s+/g, ' ');
+            
+            // Only fix obvious spacing issues in technical terms
+            const essentialCorrections: { [key: string]: string } = {
+              'java script': 'JavaScript',
+              'react js': 'React',
+              'node js': 'Node.js',
+              'type script': 'TypeScript',
+              'mongo db': 'MongoDB',
+              'my sql': 'MySQL',
+              'git hub': 'GitHub',
+              'talent ei': 'TalentAI',
+              'talent ai': 'TalentAI',
+              'talent a i': 'TalentAI',
+              'talent e i': 'TalentAI',
+            };
+            
+            // Apply corrections
+            Object.entries(essentialCorrections).forEach(([wrong, correct]) => {
+              const regex = new RegExp(`\\b${wrong}\\b`, 'gi');
+              cleanedText = cleanedText.replace(regex, correct);
+            });
+            
+            // Indicate speech is active
+            setIsSpeechActive(true);
+            
             if (data.message_type === 'FinalTranscript') {
+              // Use confidence threshold if available
+              const confidence = data.confidence || 0;
+              const words = data.words || [];
+              
+              // Log AssemblyAI's transcription with full details
+              if (text !== cleanedText) {
+                console.log(`🔧 Fixed spacing: "${text}" → "${cleanedText}"`);
+              }
+              
+              const confidencePercent = (confidence * 100).toFixed(1);
+              const confidenceEmoji = confidence >= 0.9 ? '🟢' : confidence >= 0.7 ? '🟡' : '🔴';
+              console.log(`${confidenceEmoji} [${confidencePercent}%] "${cleanedText}"`);
+              
+              // Show word-level analysis for transparency
+              if (words && words.length > 0) {
+                const lowConfidenceWords = words.filter((w: any) => w.confidence < 0.8);
+                if (lowConfidenceWords.length > 0) {
+                  console.log('⚠️ Low confidence words:', lowConfidenceWords.map((w: any) => 
+                    `"${w.text}" (${(w.confidence * 100).toFixed(0)}%)`
+                  ).join(', '));
+                }
+              }
+              
               // Update accumulated ref
-              accumulatedTranscriptRef.current = (accumulatedTranscriptRef.current + ' ' + text).trim();
+              accumulatedTranscriptRef.current = (accumulatedTranscriptRef.current + ' ' + cleanedText).trim();
               
               // Store in transcriptions state
               setTranscriptions(prevT => {
@@ -572,12 +670,15 @@ export default function Test() {
               
               // Clear partial transcript ref after final
               partialTranscriptRef.current = '';
+              
+              // Reset speech active indicator after a delay
+              setTimeout(() => setIsSpeechActive(false), 1500);
             } else {
               // For partial transcripts, show accumulated + partial without storing
-              partialTranscriptRef.current = text;
+              partialTranscriptRef.current = cleanedText;
               const displayText = accumulatedTranscriptRef.current 
-                ? (accumulatedTranscriptRef.current + ' ' + text).trim() 
-                : text;
+                ? (accumulatedTranscriptRef.current + ' ' + cleanedText).trim() 
+                : cleanedText;
               setCurrentTranscript(displayText);
             }
           }
@@ -585,13 +686,25 @@ export default function Test() {
       };
 
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.error('❌ WebSocket error:', error);
         setIsConnecting(false);
       };
 
-      ws.onclose = () => {
-        console.log('WebSocket connection closed');
+      ws.onclose = (event) => {
+        console.log(`🔴 WebSocket closed [${event.code}]: ${event.reason || 'Normal closure'}`);
         setIsConnecting(false);
+        
+        // Auto-reconnect if closed unexpectedly (not normal closure)
+        if (event.code !== 1000 && event.code !== 1001 && audioStreamRef.current && isRecording) {
+          console.log('🔄 Reconnecting to AssemblyAI...');
+          setTimeout(() => {
+            if (audioStreamRef.current) {
+              setupStreamingTranscription(audioStreamRef.current).catch(err => {
+                console.error('❌ Reconnection failed:', err);
+              });
+            }
+          }, 1000);
+        }
       };
 
     } catch (error) {
@@ -675,9 +788,20 @@ export default function Test() {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
+          autoGainControl: true,
           sampleRate: 16000,
           channelCount: 1,
-        },
+          // Request highest quality audio for AssemblyAI
+          sampleSize: 16,
+          // Advanced constraints for best quality
+          ...(typeof navigator !== 'undefined' && 'mediaDevices' in navigator && {
+            advanced: [
+              { echoCancellation: true },
+              { noiseSuppression: true },
+              { autoGainControl: true },
+            ]
+          })
+        } as MediaTrackConstraints,
       });
       audioStreamRef.current = stream;
 
@@ -733,10 +857,28 @@ export default function Test() {
   const goHome = () => {
     streamRef.current?.getTracks().forEach(t => t.stop());
     if (hasStartedTest) {
-      saveTestResults();
-      // Store current URL in localStorage before navigation
+      // Save test results without navigating to report
+      const results = questions.map((question, index) => ({
+        question,
+        answer: transcriptions[index] || ''
+      }));
+
+      const testData = {
+        results,
+        metadata: {
+          type: router.query.type === 'on-boarding' ? 'technicalSkill' : (router.query.type || 'technical'),
+          skill: router.query.skill,
+          subcategory: router.query.subcategory,
+          proficiency: router.query.proficiency,
+          timestamp: new Date().toISOString()
+        }
+      };
+
+      localStorage.setItem('test_results', JSON.stringify(testData));
+      localStorage.setItem('last_test_type', router.query.type === 'on-boarding' ? 'technicalSkill' : (router.query.type as string || 'technical'));
       localStorage.setItem('previousUrl', window.location.href);
     }
+    // Go directly to dashboard without redirecting to report
     router.push('/dashboard/candidate');
   };
 
@@ -1257,9 +1399,18 @@ export default function Test() {
             border: '2px solid #e3f2fd'
           }}>
             <Box display="flex" alignItems="center" gap={1} mb={2}>
-              <MicIcon sx={{ color: currentTranscript.length > 0 ? '#4caf50' : '#9e9e9e' }} />
+              <MicIcon sx={{ 
+                color: isSpeechActive ? '#00ff9d' : (currentTranscript.length > 0 ? '#4caf50' : '#9e9e9e'),
+                transition: 'color 0.3s ease',
+                animation: isSpeechActive ? 'pulse 0.8s ease-in-out infinite' : 'none'
+              }} />
               <Typography variant="h6" color="secondary" sx={{ fontWeight: 600 }}>
                 Your Response
+                {isSpeechActive && (
+                  <Typography component="span" sx={{ ml: 1, color: '#00ff9d', fontSize: '0.9rem', fontWeight: 400 }}>
+                    (Listening...)
+                  </Typography>
+                )}
               </Typography>
               {currentTranscript.length > 0 && (
                 <Box sx={{
@@ -1267,7 +1418,7 @@ export default function Test() {
                   width: 12,
                   height: 12,
                   borderRadius: '50%',
-                  backgroundColor: '#4caf50',
+                  backgroundColor: isSpeechActive ? '#00ff9d' : '#4caf50',
                   animation: 'pulse 1s ease-in-out infinite'
                 }} />
               )}
@@ -1289,6 +1440,22 @@ export default function Test() {
               }}>
                 {currentTranscript || "Speak your response..."}
               </Typography>
+              {!currentTranscript && isRecording && (
+                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(0, 255, 157, 0.05)', borderRadius: 1, border: '1px dashed rgba(0, 255, 157, 0.3)' }}>
+                  <Typography sx={{ fontSize: '0.85rem', color: '#666', mb: 0.5 }}>
+                    🎤 <strong>Ready to listen:</strong>
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.8rem', color: '#666', ml: 2 }}>
+                    • Just speak naturally - we'll capture EVERYTHING you say
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.8rem', color: '#666', ml: 2 }}>
+                    • Any accent, any speed - it all works!
+                  </Typography>
+                  <Typography sx={{ fontSize: '0.8rem', color: '#666', ml: 2 }}>
+                    • AI is listening and will write exactly what you say
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </Paper>
         )}

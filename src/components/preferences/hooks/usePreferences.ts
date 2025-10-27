@@ -43,7 +43,7 @@ export const usePreferences = () => {
     const baseSteps = ['Select Type'];
     if (userType) {
       if (userType === 'company') {
-        baseSteps.push('Company Details', 'Required Skills', 'Experience Level', 'Review');
+        baseSteps.push('Company Details', 'Required Skills', 'Review');
       } else {
         baseSteps.push('Personal Details', 'Select Skills');
         if (hederaExp === 'yes') baseSteps.push('Hedera QCM');
@@ -107,8 +107,6 @@ export const usePreferences = () => {
           return companyDetails.name && companyDetails.industry && companyDetails.size && companyDetails.location;
         case 'Required Skills':
           return requiredSkills.length > 0;
-        case 'Experience Level':
-          return experienceLevel !== '';
         default:
           return true;
       }

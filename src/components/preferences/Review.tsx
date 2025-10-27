@@ -159,20 +159,6 @@ const Review: React.FC<ReviewProps> = ({
                 )}
               </Box>
             </Paper>
-
-            {/* Experience Level Section */}
-            <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: `2px solid ${GREEN_MAIN}20` }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                <AnalyticsIcon sx={{ color: GREEN_MAIN, fontSize: 28 }} />
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
-                  Required Experience Level
-                </Typography>
-              </Box>
-              <Typography variant="body1" sx={{ color: '#333', fontWeight: 600 }}>
-                {experienceLevel || 'Not specified'}
-              </Typography>
-            </Paper>
-
             {/* Hedera Experience Section */}
             {hederaExp === 'yes' && (
               <Paper elevation={2} sx={{ p: 4, borderRadius: 3, border: '2px solid #02E2FF20', background: 'linear-gradient(135deg, #02E2FF08 0%, #00FFC308 100%)' }}>

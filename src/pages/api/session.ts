@@ -20,7 +20,10 @@ export default async function handler(
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          expires_in: 1800 // 30 minutes
+          expires_in: 1800, // 30 minutes
+          // Enable all accuracy features
+          disable_partial_transcripts: false,
+          enable_extra_session_information: true
         }),
       });
 

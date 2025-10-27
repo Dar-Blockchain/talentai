@@ -163,7 +163,7 @@ const SkillsSelection: React.FC<SkillsSelectionProps> = ({
           <CodeIcon sx={{ fontSize: 40, color: 'white' }} />
         </Box>
         <Typography variant="h4" gutterBottom sx={{ color: 'black', fontWeight: 700, mb: 2 }}>
-          {userType === 'company' ? 'Required Skills Selection' : 'Skill Assessment'}
+          {userType === 'company' ? 'Skills you might be looking for ' : 'Skill Assessment'}
         </Typography>
         <Typography variant="body1" sx={{ color: '#666', maxWidth: 600, mx: 'auto', lineHeight: 1.6 }}>
           {userType === 'company' 

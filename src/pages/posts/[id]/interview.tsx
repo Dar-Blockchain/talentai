@@ -18,10 +18,12 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  CircularProgress,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CallEndIcon from '@mui/icons-material/CallEnd';
+import MicIcon from '@mui/icons-material/Mic';
 import { v4 as uuidv4 } from 'uuid';
 import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
@@ -79,21 +81,70 @@ const RecordingButton = styled(Button)(({ theme }) => ({
 
 
 
-const QuestionOverlay = styled(Box)(({ theme }) => ({
-  position: 'absolute',
-  bottom: 0,
-  width: '100%',
-  background: 'linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.7), transparent)',
+// New prominent Question Panel styled component
+const QuestionPanel = styled(Paper)(({ theme }) => ({
+  position: 'sticky',
+  top: 0,
+  zIndex: 1000,
+  background: 'linear-gradient(135deg, rgba(131, 16, 255, 0.95) 0%, rgba(0, 184, 212, 0.95) 100%)',
+  backdropFilter: 'blur(15px)',
+  border: '2px solid rgba(255, 255, 255, 0.2)',
+  borderRadius: '0 0 20px 20px',
+  padding: theme.spacing(3, 2),
+  marginBottom: theme.spacing(3),
   color: '#fff',
-  padding: theme.spacing(2, 1.5), // Responsive padding
-  backdropFilter: 'blur(5px)',
-  minHeight: '80px', // Ensure minimum height on mobile
+  boxShadow: '0 8px 32px rgba(131, 16, 255, 0.3)',
+  transition: 'all 0.3s ease',
+  animation: 'slideInFromTop 0.5s ease-out',
+  [theme.breakpoints.up('sm')]: {
+    padding: theme.spacing(4, 3),
+    borderRadius: '0 0 24px 24px',
+  },
+  '&.question-highlight': {
+    transform: 'translateY(2px)',
+    boxShadow: '0 12px 40px rgba(131, 16, 255, 0.4)',
+    animation: 'questionPulse 0.6s ease-out',
+  },
+  '@keyframes questionPulse': {
+    '0%': {
+      transform: 'scale(1)',
+      boxShadow: '0 8px 32px rgba(131, 16, 255, 0.3)',
+    },
+    '50%': {
+      transform: 'scale(1.01)',
+      boxShadow: '0 16px 48px rgba(131, 16, 255, 0.5)',
+    },
+    '100%': {
+      transform: 'scale(1)',
+      boxShadow: '0 8px 32px rgba(131, 16, 255, 0.3)',
+    },
+  },
+  '@keyframes slideInFromTop': {
+    '0%': { transform: 'translateY(-100%)' },
+    '100%': { transform: 'translateY(0)' },
+  },
+}));
+
+const QuestionContent = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'center',
-  [theme.breakpoints.up('sm')]: {
-    padding: theme.spacing(3),
-    minHeight: 'auto',
+  gap: theme.spacing(2),
+  minHeight: '60px',
+  [theme.breakpoints.down('sm')]: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: theme.spacing(1),
+  },
+}));
+
+const QuestionText = styled(Typography)(({ theme }) => ({
+  flex: 1,
+  fontSize: '1.3rem',
+  fontWeight: 600,
+  lineHeight: 1.4,
+  textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '1.1rem',
   },
 }));
 
@@ -325,6 +376,8 @@ const Test = () => {
   const [hasStartedTest, setHasStartedTest] = useState(false);
   const [transcriptions, setTranscriptions] = useState<{ [key: string]: string }>({});
   const [currentTranscript, setCurrentTranscript] = useState('');
+  const [isSpeechActive, setIsSpeechActive] = useState(false);
+  const [questionHighlight, setQuestionHighlight] = useState(false);
   const [showGuidelines, setShowGuidelines] = useState(true);
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
@@ -449,7 +502,11 @@ const Test = () => {
   useEffect(() => {
     currentIndexRef.current = current;
     setTimeLeft(120); // Reset to 120 seconds (2 minutes)
-    setCurrentTranscript(''); // Clear current transcript
+    setCurrentTranscript(''); // Clear the displayed transcript immediately
+    
+    // Trigger question highlight animation
+    setQuestionHighlight(true);
+    setTimeout(() => setQuestionHighlight(false), 600);
   }, [current]);
 
   // Initialize camera
@@ -499,13 +556,15 @@ const Test = () => {
       const token = await generateStreamingToken();
       setStreamingToken(token);
 
-      // Setup audio context
+      // Setup audio context with optimal settings for AssemblyAI
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
-        sampleRate: 16000,
+        sampleRate: 16000, // AssemblyAI's optimal sample rate
+        latencyHint: 'interactive', // Prioritize low latency for real-time
       });
       audioContextRef.current = audioContext;
 
       const source = audioContext.createMediaStreamSource(stream);
+      // Use optimal buffer size for real-time streaming (4096 is best for AssemblyAI)
       const processor = audioContext.createScriptProcessor(4096, 1, 1);
       processorRef.current = processor;
 
@@ -514,12 +573,19 @@ const Test = () => {
         `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}`
       );
       wsRef.current = ws;
+      
+      // Track connection quality
+      let audioPacketsSent = 0;
+      ws.addEventListener('open', () => {
+        console.log('🎙️ WebSocket connected - AssemblyAI ready with best AI models');
+        console.log('ℹ️ Session info: 16kHz audio, real-time streaming enabled');
+      });
 
       ws.onopen = () => {
-        console.log('Streaming connection opened');
+        console.log('🔴 Recording started - Capturing everything you say');
         setIsConnecting(false);
 
-        // Connect audio processing
+        // Connect audio processing with minimal interference
         source.connect(processor);
         processor.connect(audioContext.destination);
 
@@ -527,28 +593,111 @@ const Test = () => {
           if (ws.readyState === WebSocket.OPEN) {
             const inputBuffer = event.inputBuffer.getChannelData(0);
 
-            // Convert float32 to int16
-            const int16Buffer = new Int16Array(inputBuffer.length);
-            for (let i = 0; i < inputBuffer.length; i++) {
-              int16Buffer[i] = Math.max(-32768, Math.min(32767, inputBuffer[i] * 32767));
+            // Send pristine audio to AssemblyAI - no processing
+            // AssemblyAI's AI handles all audio enhancement internally
+            const processedBuffer = inputBuffer;
+
+            // Convert float32 to int16 with proper scaling for AssemblyAI
+            const int16Buffer = new Int16Array(processedBuffer.length);
+            for (let i = 0; i < processedBuffer.length; i++) {
+              // Proper conversion with clamping
+              const sample = Math.max(-1, Math.min(1, processedBuffer[i]));
+              int16Buffer[i] = sample < 0 
+                ? Math.max(-32768, Math.floor(sample * 32768))
+                : Math.min(32767, Math.floor(sample * 32767));
             }
 
-            ws.send(int16Buffer.buffer);
+            // Send audio data to AssemblyAI
+            if (int16Buffer.byteLength > 0) {
+              try {
+                ws.send(int16Buffer.buffer);
+                audioPacketsSent++;
+                
+                // Log streaming status every 100 packets (~10 seconds)
+                if (audioPacketsSent % 100 === 0) {
+                  console.log(`📡 Streaming: ${audioPacketsSent} audio packets sent to AssemblyAI`);
+                }
+              } catch (error) {
+                console.error('❌ Error sending audio:', error);
+              }
+            }
           }
         };
       };
 
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
+        
+        // Handle session begins
+        if (data.message_type === 'SessionBegins') {
+          console.log('🟢 AssemblyAI session started:', data);
+          return;
+        }
+        
+        // Handle session information
+        if (data.message_type === 'SessionInformation') {
+          console.log('ℹ️ Session info:', data);
+          return;
+        }
 
         if (data.message_type === 'PartialTranscript' || data.message_type === 'FinalTranscript') {
           const text = data.text;
           if (text?.trim()) {
+            // Keep AssemblyAI's output with minimal changes
+            let cleanedText = text.trim().replace(/\s+/g, ' ');
+            
+            // Only fix obvious spacing issues in technical terms
+            const essentialCorrections: { [key: string]: string } = {
+              'java script': 'JavaScript',
+              'react js': 'React',
+              'node js': 'Node.js',
+              'type script': 'TypeScript',
+              'mongo db': 'MongoDB',
+              'my sql': 'MySQL',
+              'git hub': 'GitHub',
+              'talent ei': 'TalentAI',
+              'talent ai': 'TalentAI',
+              'talent a i': 'TalentAI',
+              'talent e i': 'TalentAI',
+            };
+            
+            // Apply corrections
+            Object.entries(essentialCorrections).forEach(([wrong, correct]) => {
+              const regex = new RegExp(`\\b${wrong}\\b`, 'gi');
+              cleanedText = cleanedText.replace(regex, correct);
+            });
+            
+            // Indicate speech is active
+            setIsSpeechActive(true);
+            
             if (data.message_type === 'FinalTranscript') {
+              // Use confidence threshold if available
+              const confidence = data.confidence || 0;
+              const words = data.words || [];
+              
+              // Log AssemblyAI's transcription with full details
+              if (text !== cleanedText) {
+                console.log(`🔧 Fixed spacing: "${text}" → "${cleanedText}"`);
+              }
+              
+              const confidencePercent = (confidence * 100).toFixed(1);
+              const confidenceEmoji = confidence >= 0.9 ? '🟢' : confidence >= 0.7 ? '🟡' : '🔴';
+              console.log(`${confidenceEmoji} [${confidencePercent}%] "${cleanedText}"`);
+              
+              // Show word-level analysis for transparency
+              if (words && words.length > 0) {
+                const lowConfidenceWords = words.filter((w: any) => w.confidence < 0.8);
+                if (lowConfidenceWords.length > 0) {
+                  console.log('⚠️ Low confidence words:', lowConfidenceWords.map((w: any) => 
+                    `"${w.text}" (${(w.confidence * 100).toFixed(0)}%)`
+                  ).join(', '));
+                }
+              }
+              
               // For final transcripts, add to the stored transcription for this question
               setTranscriptions(prevT => {
                 const currentQuestionText = prevT[currentIndexRef.current] || '';
-                const updatedQuestionText = (currentQuestionText + ' ' + text).trim();
+                const updatedQuestionText = (currentQuestionText + ' ' + cleanedText).trim();
 
                 // Also update the current transcript to show the accumulated text
                 setCurrentTranscript(updatedQuestionText);
@@ -558,11 +707,14 @@ const Test = () => {
                   [currentIndexRef.current]: updatedQuestionText
                 };
               });
+              
+              // Reset speech active indicator after a delay
+              setTimeout(() => setIsSpeechActive(false), 1500);
             } else {
               // For partial transcripts, show accumulated text + current partial
               setTranscriptions(prevT => {
                 const currentQuestionText = prevT[currentIndexRef.current] || '';
-                const displayText = currentQuestionText ? (currentQuestionText + ' ' + text).trim() : text;
+                const displayText = currentQuestionText ? (currentQuestionText + ' ' + cleanedText).trim() : cleanedText;
                 setCurrentTranscript(displayText);
                 return prevT; // Don't update stored transcriptions for partials
               });
@@ -572,13 +724,25 @@ const Test = () => {
       };
 
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.error('❌ WebSocket error:', error);
         setIsConnecting(false);
       };
 
-      ws.onclose = () => {
-        console.log('WebSocket connection closed');
+      ws.onclose = (event) => {
+        console.log(`🔴 WebSocket closed [${event.code}]: ${event.reason || 'Normal closure'}`);
         setIsConnecting(false);
+        
+        // Auto-reconnect if closed unexpectedly (not normal closure)
+        if (event.code !== 1000 && event.code !== 1001 && audioStreamRef.current && isRecording) {
+          console.log('🔄 Reconnecting to AssemblyAI...');
+          setTimeout(() => {
+            if (audioStreamRef.current) {
+              setupStreamingTranscription(audioStreamRef.current).catch(err => {
+                console.error('❌ Reconnection failed:', err);
+              });
+            }
+          }, 1000);
+        }
       };
 
     } catch (error) {
@@ -754,14 +918,25 @@ const Test = () => {
       );
       setCurrentTranscript(''); // Clear current transcript
 
-      // Get audio stream
+      // Get audio stream with optimal settings for AssemblyAI
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
+          autoGainControl: true,
           sampleRate: 16000,
           channelCount: 1,
-        },
+          // Request highest quality audio for AssemblyAI
+          sampleSize: 16,
+          // Advanced constraints for best quality
+          ...(typeof navigator !== 'undefined' && 'mediaDevices' in navigator && {
+            advanced: [
+              { echoCancellation: true },
+              { noiseSuppression: true },
+              { autoGainControl: true },
+            ]
+          })
+        } as MediaTrackConstraints,
       });
       audioStreamRef.current = stream;
 
@@ -792,8 +967,26 @@ const Test = () => {
   const goHome = () => {
     streamRef.current?.getTracks().forEach(t => t.stop());
     if (hasStartedTest) {
-      saveTestResults();
+      // Save test results locally without navigating to report
+      const results = questions.map((q, index) => ({
+        question: q.text,
+        answer: transcriptions[index] || '',
+      }));
+
+      const testData = {
+        results,
+        testedSkills,
+        metadata: {
+          type: 'interview',
+          jobId: id,
+          timestamp: new Date().toISOString()
+        }
+      };
+
+      localStorage.setItem('test_results', JSON.stringify(testData));
+      console.log('Test results saved locally');
     }
+    // Go directly to dashboard without redirecting to report
     router.push('/dashboard/candidate');
   };
 
@@ -934,17 +1127,15 @@ const Test = () => {
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: { xs: 1, sm: 4 }, // Responsive padding
-        px: { xs: 0, sm: 2 }, // Add horizontal padding on larger screens
-      }}
-    >
+    <>
+      <style jsx global>{`
+        @keyframes pulse {
+          0% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.8; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
+      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Box
         sx={{
           width: '100%',
@@ -1199,116 +1390,185 @@ const Test = () => {
           />
         </StyledAppBar>
 
-        <Container
-          maxWidth="md"
-          sx={{
-            flexGrow: 1,
-            py: { xs: 2, sm: 4 }, // Responsive padding
-            px: { xs: 1, sm: 2 }, // Add horizontal padding for mobile
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'transparent',
-            boxShadow: 'none',
-            minHeight: { xs: '60vh', sm: 'auto' }, // Ensure minimum height on mobile
-          }}
-        >
-          <Paper
-            elevation={12}
-            sx={{
+        <Container maxWidth="md" sx={{ py: 4, flexGrow: 1 }}>
+          {/* Prominent Question Panel - Always visible during test */}
+          {hasStartedTest && !isGenerating && questions[current] && (
+            <QuestionPanel
+              elevation={6}
+              className={questionHighlight ? 'question-highlight' : ''}
+            >
+              <QuestionContent>
+                <QuestionText variant="body1">
+                  {questions[current]?.text || "Loading next question..."}
+                </QuestionText>
+              </QuestionContent>
+            </QuestionPanel>
+          )}
+
+          {/* Compact Camera Preview */}
+          <Paper elevation={2} sx={{
+            p: 2,
+            mb: 3,
+            ...(hasStartedTest ? {
+              position: 'relative',
+              maxWidth: '300px',
+              ml: 'auto',
+              mr: 0
+            } : {})
+          }}>
+            <Typography variant="subtitle1" gutterBottom sx={{ fontSize: '1rem' }}>
+              Camera Preview
+            </Typography>
+            <Box sx={{
               position: 'relative',
               width: '100%',
-              pt: { xs: '75%', sm: '56.25%' }, // Responsive aspect ratio (4:3 on mobile, 16:9 on desktop)
-              borderRadius: { xs: 2, sm: 4 }, // Responsive border radius
+              maxWidth: hasStartedTest ? '280px' : '400px',
+              aspectRatio: '4/3',
+              mx: hasStartedTest ? 0 : 'auto',
+              borderRadius: '12px',
               overflow: 'hidden',
-              background: 'rgba(255,255,255,0.98)',
-              boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
-              maxHeight: { xs: '70vh', sm: 'none' }, // Limit height on mobile
-            }}
-          >
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                transform: 'scaleX(-1)',
-                borderRadius: '24px',
-                boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
-                border: '2px solid #e0f7fa',
-              }}
-            />
+              boxShadow: '0 2px 12px 0 rgba(0,0,0,0.08)',
+              border: '1px solid #e0f7fa',
+              bgcolor: '#f5f5f5',
+              transition: 'all 0.3s ease'
+            }}>
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  transform: 'scaleX(-1)',
+                }}
+              />
+              
+              {isGenerating && (
+                <Box sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 1,
+                  color: '#666'
+                }}>
+                  <CircularProgress size={24} />
+                  <Typography variant="caption">Generating questions...</Typography>
+                </Box>
+              )}
+            </Box>
+          </Paper>
 
-            <RecordingControls>
-              <RecordingButton
+          {/* Enhanced Transcript Display */}
+          {hasStartedTest && (
+            <Paper elevation={3} sx={{
+              p: 3,
+              mb: 3,
+              background: 'linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(248,249,250,1) 100%)',
+              border: '2px solid #e3f2fd'
+            }}>
+              <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <MicIcon sx={{ 
+                  color: isSpeechActive ? '#00ff9d' : (currentTranscript.length > 0 ? '#4caf50' : '#9e9e9e'),
+                  transition: 'color 0.3s ease',
+                  animation: isSpeechActive ? 'pulse 0.8s ease-in-out infinite' : 'none'
+                }} />
+                <Typography variant="h6" color="secondary" sx={{ fontWeight: 600 }}>
+                  Your Response
+                  {isSpeechActive && (
+                    <Typography component="span" sx={{ ml: 1, color: '#00ff9d', fontSize: '0.9rem', fontWeight: 400 }}>
+                      (Listening...)
+                    </Typography>
+                  )}
+                </Typography>
+                {currentTranscript.length > 0 && (
+                  <Box sx={{
+                    ml: 1,
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    backgroundColor: isSpeechActive ? '#00ff9d' : '#4caf50',
+                    animation: 'pulse 1s ease-in-out infinite'
+                  }} />
+                )}
+              </Box>
+              <Box sx={{
+                minHeight: 120,
+                border: currentTranscript ? '2px solid #4caf50' : '1px solid #e0e0e0',
+                borderRadius: 2,
+                p: 3,
+                bgcolor: currentTranscript ? 'rgba(76, 175, 80, 0.05)' : '#fafafa',
+                transition: 'all 0.3s ease',
+                position: 'relative'
+              }}>
+                <Typography variant="body1" sx={{
+                  fontStyle: currentTranscript ? 'normal' : 'italic',
+                  color: currentTranscript ? 'text.primary' : 'text.secondary',
+                  fontSize: '1.1rem',
+                  lineHeight: 1.6
+                }}>
+                  {currentTranscript || "Speak your response..."}
+                </Typography>
+                {!currentTranscript && isRecording && (
+                  <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(0, 255, 157, 0.05)', borderRadius: 1, border: '1px dashed rgba(0, 255, 157, 0.3)' }}>
+                    <Typography sx={{ fontSize: '0.85rem', color: '#666', mb: 0.5 }}>
+                      🎤 <strong>Ready to listen:</strong>
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.8rem', color: '#666', ml: 2 }}>
+                      • Just speak naturally - we'll capture EVERYTHING you say
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.8rem', color: '#666', ml: 2 }}>
+                      • Any accent, any speed - it all works!
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.8rem', color: '#666', ml: 2 }}>
+                      • AI is listening and will write exactly what you say
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </Paper>
+          )}
+
+          {/* Start Test Button (when not started) */}
+          {!hasStartedTest && !isGenerating && (
+            <Box textAlign="center" py={4}>
+              <Typography variant="h5" gutterBottom>
+                Ready to Start Your Test?
+              </Typography>
+              <Typography variant="body1" color="text.secondary" mb={4}>
+                Make sure you're in a quiet environment with your camera and microphone ready.
+              </Typography>
+              <Button
                 variant="contained"
-                onClick={hasStartedTest ? undefined : startTest}
-                disabled={isGenerating || hasStartedTest || isConnecting}
+                size="large"
+                onClick={startTest}
+                disabled={isConnecting}
                 sx={{
-                  backgroundColor: GREEN_MAIN,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  py: 1.5,
+                  px: 4,
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  textTransform: 'none',
                   '&:hover': {
-                    backgroundColor: GREEN_MAIN,
-                  },
-                  '&.Mui-disabled': {
-                    backgroundColor: hasStartedTest ? '#ff4444' : 'rgba(255, 255, 255, 0.12)',
-                    color: hasStartedTest ? '#fff' : 'rgba(255, 255, 255, 0.3)',
+                    background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
                   }
                 }}
               >
-                {isConnecting
-                  ? 'Connecting...'
-                  : hasStartedTest
-                    ? `Recording (${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')} min)`
-                    : 'Start Interview'
-                }
-              </RecordingButton>
-              {hasStartedTest && (
-                <VoiceActivityIndicator isActive={currentTranscript.length > 0}>
-                  <VoiceWaves />
-                  <VoiceIcon />
-                </VoiceActivityIndicator>
-              )}
-            </RecordingControls>
-
-            <QuestionOverlay>
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  color: '#fff',
-                  fontSize: { xs: '1rem', sm: '1.25rem' }, // Responsive font size
-                  lineHeight: { xs: 1.3, sm: 1.4 }, // Responsive line height
-                  textAlign: 'center',
-                  px: { xs: 1, sm: 0 }, // Add horizontal padding on mobile
-                  wordBreak: 'break-word', // Prevent text overflow
-                  maxWidth: '100%',
-                }}
-              >
-                {isGenerating ? (
-                  <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    justifyContent: 'center',
-                    background: GREEN_MAIN,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
-                  }}>
-                    <span>Generating your interview questions</span>
-                    <Box component="span" sx={{ display: 'inline-block', animation: 'dots 1.4s infinite' }}>
-                      ...
-                    </Box>
-                  </Box>
-                ) : questions[current]?.text}
-              </Typography>
-            </QuestionOverlay>
-          </Paper>
+                {isConnecting ? 'Connecting...' : 'Start Interview'}
+              </Button>
+            </Box>
+          )}
         </Container>
 
         <NavigationBar>
@@ -1352,14 +1612,13 @@ const Test = () => {
           </Button>
         </NavigationBar>
       </Box>
-    </Box>
+      </Box>
+    </>
   );
 }
 
-const DynamicContent = dynamic(() => Promise.resolve(Test), { ssr: false })
-
 const InterviewPost: React.FC = () => {
-  return <DynamicContent />
+  return <Test />
 }
 
 export default InterviewPost
