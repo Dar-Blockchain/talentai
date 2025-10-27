@@ -401,6 +401,8 @@ async function saveInterviewDetailsForAddSkill(
       answer: qa.answer || "unanswered",
       status: qa.status,
       exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
+      partialCorrectPercentage: qa.partialCorrectPercentage || null,
+      partialCorrectReason: qa.partialCorrectReason || null,
     })),
   }));
 
