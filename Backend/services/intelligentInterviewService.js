@@ -728,9 +728,13 @@ class IntelligentInterviewService {
       };
     } catch (error) {
       console.error('❌ Failed to generate greeting:', error.message);
-      // Fallback greeting
+      // Fallback greeting based on interview type
+      let fallbackGreeting = '';
+      
+      fallbackGreeting = `Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's start our conversation!`;
+      
       return {
-        content: `Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's start our conversation!`,
+        content: fallbackGreeting,
         metadata: { fallback: true }
       };
     }
@@ -1274,15 +1278,21 @@ class IntelligentInterviewService {
    * Helper method to build greeting prompt
    */
   buildGreetingPrompt(config) {
-    return `
-      Generate a personalized greeting for this interview:
-
+    // Handle different interview types
+    let contextInfo = '';
+    
+    contextInfo = `
       Interview Type: ${config.interviewType}
       Target Company: ${config.context.targetCompany}
       Target Role: ${config.context.targetRole}
       Experience Level: ${config.context.experienceLevel}
       Test Reason: ${config.testReason}
+      `;
 
+    return `
+      Generate a personalized greeting for this interview:
+
+      ${contextInfo}
       Interviewer Persona: ${JSON.stringify(config.interviewerPersona)}
       Company Culture: ${JSON.stringify(config.companyProfile.culture)}
 
