@@ -280,7 +280,13 @@ Your task is to:
 - If the answer is **approximately 60–70% correct** (e.g. conceptually right but missing key details, examples, or clarity), set status = "partial_correct".
 - If the answer is **mostly wrong, vague, or irrelevant**, set status = "incorrect".
 - For "incorrect" answers, always include "exampleCorrectAnswer" to guide improvement.
-
+- In case of "partial_correct" answers:
+- Include a new field "partialCorrectPercentage" (number between 60 and 70) representing how much of the answer was correct.
+- Include a new field "partialCorrectReason" (string) explaining why the answer is only partially correct — for example, missing examples, incomplete logic, or conceptual confusion.
+- Every question must therefore include:
+-"status"
+-"partialCorrectPercentage" (only if "status" = "partial_correct")
+-"partialCorrectReason" (only if "status" = "partial_correct")
 ---
 
 Proficiency levels:
