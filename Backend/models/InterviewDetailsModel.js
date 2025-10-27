@@ -16,6 +16,8 @@ const questionAnswerSchema = new mongoose.Schema(
       default: "incorrect"
     },
     exampleCorrectAnswer: { type: String, required: false },
+    partialCorrectPercentage: { type: Number, required: false },
+    partialCorrectReason: { type: String, required: false },
   },
   { _id: false }
 );
