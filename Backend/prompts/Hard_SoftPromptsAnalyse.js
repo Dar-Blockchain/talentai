@@ -13,7 +13,21 @@ Provide detailed, actionable feedback in JSON format only.
  - Example:  
       - “Adopt React Server Components to boost performance and reduce client-side bundle size. Detailed guide and best practices: https://react.dev/reference/react-server/components”
       - “Use TypeScript 5.x to enhance type safety and leverage new language features. Official release notes and migration tips: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html”
-`;
+
+🟩 **Answer Evaluation Rules**:
+- If the candidate's answer is **accurate and complete**, set status = "correct".
+- If the answer is **approximately 60–70% correct** (e.g. conceptually right but missing key details, examples, or clarity), set status = "partial_correct".
+- If the answer is **mostly wrong, vague, or irrelevant**, set status = "incorrect".
+- For "incorrect" answers, always include "exampleCorrectAnswer" to guide improvement.
+- In case of "partial_correct" answers:
+- Include a new field "partialCorrectPercentage" (number between 60 and 70) representing how much of the answer was correct.
+- Include a new field "partialCorrectReason" (string) explaining why the answer is only partially correct — for example, missing examples, incomplete logic, or conceptual confusion.
+- Every question must therefore include:
+-"status"
+-"partialCorrectPercentage" (only if "status" = "partial_correct")
+-"partialCorrectReason" (only if "status" = "partial_correct")
+      `
+;
 }
 
 function getUserPrompt(type, skillList, questions) {
@@ -28,7 +42,57 @@ function getUserPrompt(type, skillList, questions) {
     .map((qa) => `Q: ${qa.question}\\nA: ${qa.answer}`)
     .join(
       "\\n\\n"
-    )}\n\nBased on this ${type} assessment, provide a detailed analysis in the following JSON format ONLY (no additional text):\n{\n  "overallScore": 85,\n  "skillAnalysis": [\n    {\n      "skillName": "Teamwork",\n      "currentProficiency": 3,\n      "demonstratedProficiency": 4,\n      "strengths": ["Good communication"],\n      "weaknesses": ["Needs improvement in conflict resolution"],\n      "confidenceScore": 80,\n      "improvement": "increased",\n      "subcategory": "conflict-resolution",  // optional, if applicable\n      "questionAnswerList": [\n        {\n          "question": string,\n          "answer": string,\n          "status": "correct" | "partial_correct" | "incorrect",\n          "exampleCorrectAnswer": string (optional, only if status is "incorrect")\n        }\n      ]\n    },\n  ],\n  "generalAssessment": "Strong foundational knowledge with some areas for improvement",\n  "recommendations": [\n    "Focus on advanced communication techniques",\n    "Practice conflict management"\n  ],\n  "technicalLevel": "intermediate",\n  "nextSteps": [\n    "Suggested learning resources",\n    "Practice projects to undertake"\n  ],\n  "assessmentType": "${type}",\n  "evaluationContext": "Based on ${type} interview standards"\n}`;
+    )}\n
+Based on this ${type} assessment, provide a detailed analysis in the following JSON format ONLY (no additional text):
+
+{
+  "overallScore": 85,
+  "skillAnalysis": [
+    {
+      "skillName": "Teamwork",
+      "currentProficiency": 3,
+      "demonstratedProficiency": 4,
+      "strengths": ["Good communication"],
+      "weaknesses": ["Needs improvement in conflict resolution"],
+      "confidenceScore": 80,
+      "improvement": "increased",
+      "subcategory": "conflict-resolution", // optional, if applicable
+      "questionAnswerList": [
+        {
+          "question": "string",
+          "answer": "string",
+          "status": "correct" | "partial_correct" | "incorrect",
+          "exampleCorrectAnswer": "string (optional, only if status is 'incorrect')"
+        }
+      ]
+    }
+  ],
+  "generalAssessment": "Strong foundational knowledge with some areas for improvement",
+  "recommendations": [
+    "Focus on advanced communication techniques",
+    "Practice conflict management"
+  ],
+  "technicalLevel": "intermediate",
+  "nextSteps": [
+    "Suggested learning resources",
+    "Practice projects to undertake"
+  ],
+  "assessmentType": "${type}",
+  "evaluationContext": "Based on ${type} interview standards"
+}
+  
+🟩 **Answer Evaluation Rules**:
+- If the candidate's answer is **accurate and complete**, set status = "correct".
+- If the answer is **approximately 60–70% correct** (e.g. conceptually right but missing key details, examples, or clarity), set status = "partial_correct".
+- If the answer is **mostly wrong, vague, or irrelevant**, set status = "incorrect".
+- For "incorrect" answers, always include "exampleCorrectAnswer" to guide improvement.
+- In case of "partial_correct" answers:
+- Include a new field "partialCorrectPercentage" (number between 60 and 70) representing how much of the answer was correct.
+- Include a new field "partialCorrectReason" (string) explaining why the answer is only partially correct — for example, missing examples, incomplete logic, or conceptual confusion.
+- Every question must therefore include:
+-"status"
+-"partialCorrectPercentage" (only if "status" = "partial_correct")
+-"partialCorrectReason" (only if "status" = "partial_correct")`;
 }
 
 module.exports = { getSystemPrompt, getUserPrompt };
