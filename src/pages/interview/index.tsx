@@ -243,6 +243,11 @@ export default function Test() {
   const accumulatedTranscriptRef = useRef<string>(''); // Track accumulated text for current question
   const lastTranscriptTimeRef = useRef<number>(Date.now());
   const audioLevelRef = useRef<number>(0);
+  const lastFinalTranscriptRef = useRef<string>(''); // Track last final transcript to prevent duplicates
+  const transcriptCountRef = useRef<number>(0); // Track transcript count for rate limiting
+  const lastTranscriptBatchTimeRef = useRef<number>(Date.now()); // Track batch time
+  const websocketHealthCheckRef = useRef<NodeJS.Timeout | null>(null); // WebSocket health check interval
+  const lastWebSocketActivityRef = useRef<number>(Date.now()); // Track last WS activity
   
   // Add question session ID to filter stale transcripts
   const questionSessionIdRef = useRef<number>(0);
@@ -511,6 +516,7 @@ export default function Test() {
     setTimeLeft(120); // Reset to 120 seconds (2 minutes)
     partialTranscriptRef.current = ''; // Clear partial transcript
     accumulatedTranscriptRef.current = ''; // Clear accumulated transcript for new question
+    lastFinalTranscriptRef.current = ''; // Clear last final transcript for deduplication
     setCurrentTranscript(''); // Clear the displayed transcript
     
     // Increment question session ID to reject old transcripts
@@ -583,21 +589,69 @@ export default function Test() {
   useEffect(() => {
     (async () => {
       try {
+        console.log('🎥 Requesting camera access...');
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'user' },
+          video: { 
+            facingMode: 'user',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
           audio: false,
         });
+        console.log('✅ Camera access granted');
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          videoRef.current.onloadedmetadata = () => videoRef.current?.play();
+          videoRef.current.onloadedmetadata = () => {
+            console.log('📹 Video metadata loaded, starting playback');
+            videoRef.current?.play().then(() => {
+              console.log('▶️ Video playing successfully');
+            }).catch((err) => {
+              console.error('❌ Video play error:', err);
+            });
+          };
         }
       } catch (e) {
-        console.error('Camera error', e);
+        console.error('❌ Camera error:', e);
+        alert('Camera access denied. Please enable camera permissions in your browser settings.');
       }
     })();
-    return () => streamRef.current?.getTracks().forEach(t => t.stop());
+    return () => {
+      console.log('🛑 Stopping camera stream');
+      streamRef.current?.getTracks().forEach(t => t.stop());
+    };
   }, []);
+
+  // Calculate text similarity using Levenshtein distance
+  const calculateSimilarity = (str1: string, str2: string): number => {
+    const len1 = str1.length;
+    const len2 = str2.length;
+    const matrix: number[][] = [];
+
+    // Initialize matrix
+    for (let i = 0; i <= len1; i++) {
+      matrix[i] = [i];
+    }
+    for (let j = 0; j <= len2; j++) {
+      matrix[0][j] = j;
+    }
+
+    // Calculate Levenshtein distance
+    for (let i = 1; i <= len1; i++) {
+      for (let j = 1; j <= len2; j++) {
+        const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j - 1] + cost
+        );
+      }
+    }
+
+    // Convert distance to similarity (0-1)
+    const maxLen = Math.max(len1, len2);
+    return maxLen === 0 ? 1 : 1 - matrix[len1][len2] / maxLen;
+  };
 
   // Generate temporary token for streaming
   const generateStreamingToken = async (): Promise<string> => {
@@ -656,6 +710,30 @@ export default function Test() {
         console.log('🌍 Recording started - Capturing speech from ANY accent worldwide');
         console.log('🎯 AI will understand: American, British, Australian, Indian, African, European, Asian accents');
         setIsConnecting(false);
+        lastWebSocketActivityRef.current = Date.now();
+
+        // Start WebSocket health monitoring
+        websocketHealthCheckRef.current = setInterval(() => {
+          const timeSinceActivity = Date.now() - lastWebSocketActivityRef.current;
+          
+          // If no activity for 30 seconds and WebSocket is open, warn
+          if (timeSinceActivity > 30000 && ws.readyState === WebSocket.OPEN) {
+            console.warn('⚠️ WebSocket inactive for 30s - connection may be stale');
+          }
+          
+          // If no activity for 60 seconds, attempt reconnection
+          if (timeSinceActivity > 60000 && ws.readyState === WebSocket.OPEN && audioStreamRef.current) {
+            console.error('❌ WebSocket inactive for 60s - forcing reconnection');
+            ws.close();
+            setTimeout(() => {
+              if (audioStreamRef.current) {
+                setupStreamingTranscription(audioStreamRef.current).catch(err => {
+                  console.error('❌ Health check reconnection failed:', err);
+                });
+              }
+            }, 1000);
+          }
+        }, 10000); // Check every 10 seconds
 
         // Connect audio processing with minimal interference
         source.connect(processor);
@@ -721,6 +799,9 @@ export default function Test() {
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         
+        // Update WebSocket activity timestamp
+        lastWebSocketActivityRef.current = Date.now();
+        
         // Handle session begins
         if (data.message_type === 'SessionBegins') {
           console.log('🟢 AssemblyAI session started:', data);
@@ -773,6 +854,171 @@ export default function Test() {
             setIsSpeechActive(true);
             
             if (data.message_type === 'FinalTranscript') {
+              // MULTI-LAYER DEDUPLICATION SYSTEM
+              
+              // Layer 1: Exact duplicate check
+              if (cleanedText === lastFinalTranscriptRef.current) {
+                console.log('🚫 Duplicate final transcript detected and blocked:', cleanedText.substring(0, 50));
+                return; // Skip this duplicate
+              }
+              
+              // Layer 2: Check if this text already exists at the end of accumulated transcript
+              if (accumulatedTranscriptRef.current.endsWith(cleanedText)) {
+                console.log('🚫 Transcript already exists at end, blocking duplicate:', cleanedText.substring(0, 50));
+                return;
+              }
+              
+              // Layer 2.5: Check if accumulated ends with this text (trimmed comparison)
+              const trimmedAccumulated = accumulatedTranscriptRef.current.trim();
+              const trimmedCurrent = cleanedText.trim();
+              if (trimmedAccumulated.endsWith(trimmedCurrent) && trimmedCurrent.length > 0) {
+                console.log('🚫 Trimmed transcript already exists at end, blocking duplicate:', cleanedText.substring(0, 50));
+                return;
+              }
+              
+              // Layer 3: Similarity check - prevent near-duplicates (90%+ similar)
+              if (lastFinalTranscriptRef.current && cleanedText.length > 10) {
+                const similarity = calculateSimilarity(cleanedText, lastFinalTranscriptRef.current);
+                if (similarity > 0.9) {
+                  console.log(`🚫 Near-duplicate detected (${(similarity * 100).toFixed(1)}% similar), blocking:`, cleanedText.substring(0, 50));
+                  return;
+                }
+              }
+              
+              // Layer 4: Check for substring duplicates in accumulated text (lowered threshold from 20 to 15)
+              if (accumulatedTranscriptRef.current.length > 0 && cleanedText.length > 15) {
+                const accumulated = accumulatedTranscriptRef.current.toLowerCase().trim();
+                const current = cleanedText.toLowerCase().trim();
+                
+                // Check if the current text is already in accumulated
+                if (accumulated.includes(current)) {
+                  console.log('🚫 Transcript substring already exists, blocking duplicate:', cleanedText.substring(0, 50));
+                  return;
+                }
+                
+                // Also check if accumulated ends with current (case-insensitive)
+                if (accumulated.endsWith(current)) {
+                  console.log('🚫 Accumulated text already ends with this, blocking duplicate:', cleanedText.substring(0, 50));
+                  return;
+                }
+              }
+              
+              // Layer 4.5: Check for repeated patterns (same text appearing twice in a row)
+              const accumulatedWords = accumulatedTranscriptRef.current.split(' ');
+              const currentWords = cleanedText.split(' ');
+              if (accumulatedWords.length >= currentWords.length && currentWords.length > 3) {
+                const lastNWords = accumulatedWords.slice(-currentWords.length).join(' ').toLowerCase();
+                const currentText = currentWords.join(' ').toLowerCase();
+                if (lastNWords === currentText) {
+                  console.log('🚫 Repeated pattern detected, blocking duplicate:', cleanedText.substring(0, 50));
+                  return;
+                }
+              }
+              
+              // Layer 4.6: Check if current is a completion/correction of previous fragments
+              // Aggressively detect and remove incomplete fragments
+              if (accumulatedTranscriptRef.current.length > 0 && cleanedText.length > 15) {
+                const accumulated = accumulatedTranscriptRef.current;
+                const recentText = accumulated.split(' ').slice(-30).join(' '); // Last ~30 words
+                
+                // Split into fragments (by periods, question marks, or just spaces if no punctuation)
+                const fragments = recentText.split(/[.!?]\s+/).filter(f => f.trim().length > 0);
+                const lastFragment = fragments[fragments.length - 1] || '';
+                
+                // Extract key words (3+ letters) from both
+                const fragmentWords = lastFragment.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
+                const currentTextLower = cleanedText.toLowerCase();
+                const currentKeyWords = currentTextLower.split(/\s+/).filter((w: string) => w.length > 2);
+                
+                let matchCount = 0;
+                fragmentWords.forEach(word => {
+                  if (currentTextLower.includes(word)) matchCount++;
+                });
+                
+                // More aggressive: If 50%+ of fragment words are in current (lowered from 70%)
+                // OR if current starts with similar words
+                const matchRatio = fragmentWords.length > 0 ? matchCount / fragmentWords.length : 0;
+                const startsWithSimilar = fragmentWords.length > 0 && currentKeyWords.length > 0 &&
+                  fragmentWords.slice(0, 3).filter(w => currentTextLower.includes(w)).length >= 2;
+                
+                // Detect if this is a completion/correction
+                const isCompletion = (matchRatio > 0.5 && currentWords.length >= fragmentWords.length) || 
+                                     (startsWithSimilar && currentWords.length > fragmentWords.length);
+                
+                if (isCompletion) {
+                  console.log(`🔄 Detected correction/completion (${(matchRatio * 100).toFixed(0)}% match) - replacing fragments with final version`);
+                  
+                  // Remove ALL recent fragments that match
+                  let updatedTranscript = accumulated;
+                  
+                  // More aggressive cleanup - remove last 1-3 incomplete fragments
+                  const allFragments = updatedTranscript.split(/(?<=[.!?])\s+/);
+                  let fragmentsToRemove = 0;
+                  
+                  // Check last 3 fragments
+                  for (let i = allFragments.length - 1; i >= Math.max(0, allFragments.length - 3); i--) {
+                    const frag = allFragments[i].toLowerCase();
+                    const fragWords = frag.split(/\s+/).filter(w => w.length > 2);
+                    let matches = 0;
+                    fragWords.forEach(w => {
+                      if (currentTextLower.includes(w)) matches++;
+                    });
+                    
+                    // If this fragment has 40%+ match with current, remove it
+                    if (fragWords.length > 0 && (matches / fragWords.length) > 0.4) {
+                      fragmentsToRemove++;
+                    } else {
+                      break; // Stop if we find a non-matching fragment
+                    }
+                  }
+                  
+                  if (fragmentsToRemove > 0) {
+                    updatedTranscript = allFragments.slice(0, -fragmentsToRemove).join(' ').trim();
+                    console.log(`✏️ Cleaned up ${fragmentsToRemove} incomplete fragment(s), adding final version`);
+                  } else if (allFragments.length === 1) {
+                    // Only one fragment total, clear it
+                    updatedTranscript = '';
+                    console.log('✏️ Clearing single incomplete fragment');
+                  }
+                  
+                  // Update the accumulated ref with the corrected version
+                  accumulatedTranscriptRef.current = updatedTranscript;
+                }
+              }
+              
+              // Layer 5: Minimum length validation (reduced from 2 to 1)
+              if (cleanedText.length < 1) {
+                console.log('🚫 Transcript empty, ignoring');
+                return;
+              }
+              
+              // Layer 6: Rate limiting - prevent transcript flooding
+              const now = Date.now();
+              const timeSinceLastBatch = now - lastTranscriptBatchTimeRef.current;
+              
+              if (timeSinceLastBatch < 1000) {
+                transcriptCountRef.current++;
+                // Allow max 15 transcripts per second (increased from 10)
+                if (transcriptCountRef.current > 15) {
+                  console.warn('⚠️ Rate limit exceeded, slowing down transcript processing');
+                  return;
+                }
+              } else {
+                // Reset counter every second
+                transcriptCountRef.current = 1;
+                lastTranscriptBatchTimeRef.current = now;
+              }
+              
+              // Layer 7: Minimum time between transcripts (reduced from 100ms to 50ms)
+              // Only apply if we have a previous transcript (allow first one through immediately)
+              if (lastFinalTranscriptRef.current && timeSinceLastBatch < 50) {
+                console.log('🚫 Transcripts coming too fast, throttling');
+                return;
+              }
+              
+              // Update last final transcript
+              lastFinalTranscriptRef.current = cleanedText;
+              
               // Use confidence threshold if available
               const confidence = data.confidence || 0;
               const words = data.words || [];
@@ -835,6 +1081,12 @@ export default function Test() {
       ws.onclose = (event) => {
         console.log(`🔴 WebSocket closed [${event.code}]: ${event.reason || 'Normal closure'}`);
         setIsConnecting(false);
+        
+        // Clear health check interval
+        if (websocketHealthCheckRef.current) {
+          clearInterval(websocketHealthCheckRef.current);
+          websocketHealthCheckRef.current = null;
+        }
         
         // Auto-reconnect if closed unexpectedly (not normal closure)
         if (event.code !== 1000 && event.code !== 1001 && audioStreamRef.current && isRecording) {
@@ -1463,24 +1715,92 @@ export default function Test() {
             className={questionHighlight ? 'question-highlight' : ''}
           >
             <QuestionContent>
-              <QuestionText variant="body1">
+              <QuestionText 
+                variant="body1"
+                sx={{
+                  filter: isConnecting ? 'blur(4px)' : 'blur(0px)',
+                  opacity: isConnecting ? 0.4 : 1,
+                  transition: 'all 0.5s ease-in-out',
+                  pointerEvents: isConnecting ? 'none' : 'auto'
+                }}
+              >
                 {questions[current] || "Loading next question..."}
               </QuestionText>
             </QuestionContent>
           </QuestionPanel>
         )}
 
-        {/* Compact Camera Preview */}
-        <Paper elevation={2} sx={{
-          p: 2,
-          mb: 3,
-          ...(hasStartedTest ? {
-            position: 'relative',
-            maxWidth: '300px',
-            ml: 'auto',
-            mr: 0
-          } : {})
-        }}>
+        {/* Camera and Status Indicator on Same Line */}
+        <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'flex-start' }}>
+          {/* Status Indicator - Left Side */}
+          {hasStartedTest && (
+            <Box sx={{ flex: 1 }}>
+              {!isConnecting && isRecording && (
+                <Paper elevation={3} sx={{
+                  p: 2,
+                  background: 'linear-gradient(135deg, #00ff9d 0%, #00d4ff 100%)',
+                  animation: 'pulse 2s ease-in-out infinite',
+                  boxShadow: '0 8px 30px rgba(0, 255, 157, 0.4)',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2
+                }}>
+                  <Box sx={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    bgcolor: '#fff',
+                    animation: 'pulse 1.5s ease-in-out infinite',
+                    boxShadow: '0 0 15px rgba(255,255,255,0.9)',
+                    flexShrink: 0
+                  }} />
+                  <Typography variant="body1" sx={{ 
+                    color: '#fff', 
+                    fontWeight: 700,
+                    textShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                  }}>
+                    🎤 You Can Speak Now!
+                  </Typography>
+                </Paper>
+              )}
+              
+              {isConnecting && (
+                <Paper elevation={3} sx={{
+                  p: 2,
+                  background: 'linear-gradient(135deg, #ffa726 0%, #ff7043 100%)',
+                  boxShadow: '0 8px 30px rgba(255, 167, 38, 0.4)',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2
+                }}>
+                  <CircularProgress size={20} sx={{ color: '#fff', flexShrink: 0 }} />
+                  <Typography variant="body1" sx={{ 
+                    color: '#fff', 
+                    fontWeight: 700,
+                    textShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                  }}>
+                    🔄 Connecting...
+                  </Typography>
+                </Paper>
+              )}
+            </Box>
+          )}
+
+          {/* Compact Camera Preview - Right Side */}
+          <Paper elevation={2} sx={{
+            p: 2,
+            ...(hasStartedTest ? {
+              position: 'relative',
+              width: '300px',
+              flexShrink: 0
+            } : {
+              flex: 1
+            })
+          }}>
           <Typography variant="subtitle1" gutterBottom sx={{ fontSize: '1rem' }}>
             Camera Preview
           </Typography>
@@ -1531,6 +1851,7 @@ export default function Test() {
             )}
           </Box>
         </Paper>
+        </Box>
 
         {/* Enhanced Transcript Display */}
         {hasStartedTest && (
