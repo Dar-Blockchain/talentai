@@ -239,6 +239,77 @@ export default function CandidateInterviewDetailPage() {
                                     )}
                                 </Box>
                             )} */}
+                            {/* Assessment Result Section for onboarding/hard skill tests */}
+                            {data.type === 'onboarding' && data.overallScore !== undefined && (
+                                <Box sx={{ mb: 4, p: 3, background: '#e6f7fa', borderRadius: 3, border: '1px solid #b2ebf2' }}>
+                                    <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
+                                        Assessment Summary
+                                    </Typography>
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 3 }}>
+                                        Overall Score: <Chip label={`${data.overallScore}%`} color="success" size="small" />
+                                    </Typography>
+                                    {Array.isArray(data.skillDetails) && data.skillDetails.length > 0 && (
+                                        <>
+                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Skills Assessed:</Typography>
+                                            {data.skillDetails.map((skill: any, idx: number) => (
+                                                <Box key={idx} sx={{ mb: 3, p: 2, background: '#fff', borderRadius: 2, border: '1px solid #ddd' }}>
+                                                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: GREEN_MAIN }}>
+                                                        {skill.name}
+                                                    </Typography>
+                                                    <Chip label={`Type: ${skill.type}`} size="small" sx={{ mr: 1, mb: 1 }} />
+                                                    <Chip label={`Proficiency: ${skill.proficiencyLevel}`} size="small" sx={{ mr: 1, mb: 1 }} />
+                                                    <Chip label={`Confidence: ${skill.confidenceScore}%`} color="success" size="small" sx={{ mb: 2 }} />
+                                                    
+                                                    {Array.isArray(skill.questionAnswerList) && skill.questionAnswerList.length > 0 && (
+                                                        <Box sx={{ mt: 2 }}>
+                                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Question & Answer Details:</Typography>
+                                                            {skill.questionAnswerList.map((qa: any, qIdx: number) => {
+                                                                const statusColor = qa.status === 'correct' ? '#388e3c' : 
+                                                                                     qa.status === 'partial_correct' ? '#ffa000' : '#d32f2f';
+                                                                const statusIcon = qa.status === 'correct' ? '✓' : qa.status === 'partial_correct' ? '~' : '✗';
+                                                                
+                                                                return (
+                                                                    <Box key={qIdx} sx={{ mb: 2, p: 2, background: '#f9f9f9', borderRadius: 2 }}>
+                                                                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                                                                            Q{qIdx + 1}: {qa.question}
+                                                                        </Typography>
+                                                                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontStyle: 'italic' }}>
+                                                                            Your Answer: {qa.answer}
+                                                                        </Typography>
+                                                                        <Chip 
+                                                                            label={`${statusIcon} ${qa.status.replace('_', ' ').toUpperCase()}`}
+                                                                            size="small"
+                                                                            sx={{ background: statusColor, color: '#fff', fontWeight: 600, mb: 1 }}
+                                                                        />
+                                                                        {qa.partialCorrectPercentage && (
+                                                                            <Chip 
+                                                                                label={`${qa.partialCorrectPercentage}% Correct`}
+                                                                                size="small"
+                                                                                sx={{ ml: 1, background: '#ffa000', color: '#fff' }}
+                                                                            />
+                                                                        )}
+                                                                        {qa.partialCorrectReason && (
+                                                                           <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#666', fontStyle: 'italic' }}>
+                                                                                {qa.partialCorrectReason}
+                                                                            </Typography>
+                                                                        )}
+                                                                        {qa.exampleCorrectAnswer && (
+                                                                            <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#1976d2', fontStyle: 'italic' }}>
+                                                                                Example: {qa.exampleCorrectAnswer}
+                                                                            </Typography>
+                                                                        )}
+                                                                    </Box>
+                                                                );
+                                                            })}
+                                                        </Box>
+                                                    )}
+                                                </Box>
+                                            ))}
+                                        </>
+                                    )}
+                                </Box>
+                            )}
+                            
                             {/* Assessment Result Section */}
                             {data.jobAssessmentResult?.analysis && (
                                 <Box sx={{ mb: 4, p: 3, background: '#e6f7fa', borderRadius: 3, border: '1px solid #b2ebf2' }}>
@@ -338,63 +409,6 @@ export default function CandidateInterviewDetailPage() {
                                         })}
                                     </ul>
                                 </Box>
-                            )}
-                            <Divider sx={{ mb: 3 }} />
-                            <Typography variant="h6" sx={{ fontWeight: 700, color: GREEN_MAIN, mb: 2 }}>
-                                Interview Q&A Details
-                            </Typography>
-                            {Array.isArray(data.skillDetails) && data.skillDetails.length > 0 ? (
-                                data.skillDetails.map((s: any, i: number) => (
-                                    <Box key={i} sx={{ mb: 3 }}>
-                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1, color: '#191919' }}>
-                                            {s.name || '-'}
-                                        </Typography>
-                                        {Array.isArray(s.questionAnswerList) && s.questionAnswerList.length > 0 ? (
-                                            s.questionAnswerList.map((qa: any, idx: number) => {
-                                                let statusColor = '#1976d2';
-                                                let StatusIcon = RemoveCircleIcon;
-                                                let statusLabel = qa.status ? qa.status.replace('_', ' ') : 'unknown';
-                                                if (qa.status === 'correct') {
-                                                    statusColor = '#388e3c';
-                                                    StatusIcon = CheckCircleIcon;
-                                                    statusLabel = 'correct';
-                                                } else if (qa.status === 'partial_correct') {
-                                                    statusColor = '#ffa000';
-                                                    StatusIcon = ErrorIcon;
-                                                    statusLabel = 'partial correct';
-                                                } else if (qa.status === 'incorrect') {
-                                                    statusColor = '#d32f2f';
-                                                    StatusIcon = RemoveCircleIcon;
-                                                    statusLabel = 'incorrect';
-                                                }
-                                                return (
-                                                    <Box key={idx} sx={{ mb: 1, pl: 2 }}>
-                                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                                            Q{idx + 1}: {qa.question || '-'}
-                                                        </Typography>
-                                                        <Typography variant="body2" sx={{ color: 'text.secondary', ml: 2 }}>
-                                                            A{idx + 1}: {qa.answer || '-'}
-                                                        </Typography>
-                                                        <Typography variant="body2" sx={{ color: statusColor, ml: 4, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                            <StatusIcon fontSize="small" sx={{ color: statusColor, mr: 0.5 }} />
-                                                            Status: {statusLabel}
-                                                        </Typography>
-                                                        <Typography variant="body2" sx={{ color: 'success.main', ml: 4, fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                            <CheckCircleIcon fontSize="small" sx={{ color: '#388e3c', mr: 0.5 }} />
-                                                            Example Correct Answer: {qa.exampleCorrectAnswer ? qa.exampleCorrectAnswer : '-'}
-                                                        </Typography>
-                                                    </Box>
-                                                );
-                                            })
-                                        ) : (
-                                            <Typography variant="body2" sx={{ color: 'text.secondary', pl: 2 }}>
-                                                No questions/answers.
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                ))
-                            ) : (
-                                <Typography>No Q&A details available.</Typography>
                             )}
                         </>
                     )}

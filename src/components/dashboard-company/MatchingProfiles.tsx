@@ -76,6 +76,21 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
   onPageChange,
 }) => {
   const router = useRouter();
+  
+  // Client-side pagination if not provided by parent
+  const itemsPerPage = 3;
+  const calculatedTotalPages = Math.ceil(matchingProfiles.length / itemsPerPage);
+  const [localPage, setLocalPage] = React.useState(1);
+  
+  // Use provided pagination or fallback to local
+  const page = onPageChange ? currentPage : localPage;
+  const handlePageChange = onPageChange || ((newPage: number) => setLocalPage(newPage));
+  
+  // Get items for current page
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedCandidates = matchingProfiles.slice(startIndex, endIndex);
+  const effectiveTotalPages = totalPages > 1 ? totalPages : calculatedTotalPages;
 
   return (
     <>
@@ -255,17 +270,27 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
             border: '1px solid #bbf7d0',
             mb: 3
           }}>
-            <Typography variant="h6" sx={{ 
-              color: '#10b981', 
-              fontWeight: 600,
-              fontSize: '1rem'
-            }}>
-              Found {matchingProfiles.length} matching candidates
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography variant="h6" sx={{ 
+                color: '#10b981', 
+                fontWeight: 600,
+                fontSize: '1rem'
+              }}>
+                Found {matchingProfiles.length} matching candidates
+              </Typography>
+              {effectiveTotalPages > 1 && (
+                <Typography variant="body2" sx={{ 
+                  color: '#6b7280',
+                  fontSize: '0.875rem'
+                }}>
+                  (Showing {startIndex + 1}-{Math.min(endIndex, matchingProfiles.length)} of {matchingProfiles.length})
+                </Typography>
+              )}
+            </Box>
           </Box>
 
           {/* Candidate Cards */}
-          {matchingProfiles.slice(0, displayCount).map((candidate, index) => (
+          {paginatedCandidates.map((candidate, index) => (
             <Box
               key={candidate.candidateId._id}
               sx={{
@@ -442,12 +467,12 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
           ))}
 
           {/* Pagination */}
-          {totalPages > 1 && onPageChange && (
+          {effectiveTotalPages > 1 && (
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
               <Pagination
-                count={totalPages}
-                page={currentPage}
-                onChange={(event, page) => onPageChange(page)}
+                count={effectiveTotalPages}
+                page={page}
+                onChange={(event, newPage) => handlePageChange(newPage)}
                 color="primary"
                 sx={{
                   '& .MuiPaginationItem-root': {
