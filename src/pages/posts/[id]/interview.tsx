@@ -486,14 +486,20 @@ const Test = () => {
       timer = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
-            if (current < questions.length - 1) {
-              setCurrent(c => c + 1);
-              return 120; // Reset timer to 120 seconds (2 minutes)
-            } else {
-              stopRecording();
-              saveTestResults();
-              router.push(`/posts/${id}/report?postId=${id}${stepId ? `&stepId=${stepId}` : ''}`);
-            }
+            // Use functional update to avoid race conditions and skip issues
+            setCurrent(c => {
+              if (c < questions.length - 1) {
+                console.log(`⏱️ Timer finished - Moving to question ${c + 2}`);
+                return c + 1;
+              } else {
+                console.log('⏱️ Timer finished - All questions completed');
+                stopRecording();
+                saveTestResults();
+                router.push(`/posts/${id}/report?postId=${id}${stepId ? `&stepId=${stepId}` : ''}`);
+                return c;
+              }
+            });
+            return 0; // Return 0 to prevent further timer ticks
           }
           return prev - 1;
         });
@@ -775,10 +781,11 @@ const Test = () => {
               // Reset speech active indicator after a delay
               setTimeout(() => setIsSpeechActive(false), 1500);
             } else {
-              // For partial transcripts, show accumulated text + current partial
+              // For partial transcripts, show immediately for faster response
               setTranscriptions(prevT => {
                 const currentQuestionText = prevT[currentIndexRef.current] || '';
                 const displayText = currentQuestionText ? (currentQuestionText + ' ' + cleanedText).trim() : cleanedText;
+                // Update display immediately without waiting for final transcript
                 setCurrentTranscript(displayText);
                 return prevT; // Don't update stored transcriptions for partials
               });

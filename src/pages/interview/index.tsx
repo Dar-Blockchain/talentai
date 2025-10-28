@@ -434,15 +434,20 @@ export default function Test() {
       timer = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
-            if (current < questions.length - 1) {
-              setCurrent(c => c + 1);
-              return prev; // Don't reset here - let question change effect handle it
-            } else {
-              stopRecording();
-              saveTestResults();
-              router.push('/interview/report');
-              return 0;
-            }
+            // Use functional update to avoid race conditions and skip issues
+            setCurrent(c => {
+              if (c < questions.length - 1) {
+                console.log(`⏱️ Timer finished - Moving to question ${c + 2}`);
+                return c + 1;
+              } else {
+                console.log('⏱️ Timer finished - All questions completed');
+                stopRecording();
+                saveTestResults();
+                router.push('/interview/report');
+                return c;
+              }
+            });
+            return 0; // Return 0 to prevent further timer ticks
           }
           return prev - 1;
         });
