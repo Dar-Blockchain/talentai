@@ -344,8 +344,25 @@ async function analyzeProfileAnswers(req, res) {
     console.log("Score moyen global:", averageScore);
 
     // 6. Save profile data based on assessment type
+    /**
+     * Bloc de traitement pour les assessments techniques (type === "technical").
+     * But :
+     *  - fusionner les compétences existantes avec les résultats de l'analyse
+     *  - mettre à jour le profil (overallScore + skills)
+     *  - créer / mettre à jour un document InterviewDetails lié au candidat
+     *
+     * Entrées attendues :
+     *  - existingProfile (profil récupéré depuis profileService)
+     *  - existingSkills (tableau de compétences dans le profil)
+     *  - analysis.skillAnalysis (résultats renvoyés par le modèle)
+     *
+     * Effets secondaires :
+     *  - appelle profileService.createOrUpdateProfile
+     *  - crée/met à jour InterviewDetails
+     *  - modifie existingProfile.interviewDetails
+     */
     if (type === "technical") {
-      console.log("type", type);
+      console.log("[technical] Enter technical processing block. type:", type);
       skillType = SKILL_TYPES.HARD;
       interviewProfile = existingProfile;
 
@@ -354,88 +371,96 @@ async function analyzeProfileAnswers(req, res) {
       const skillMapForMerge = new Map();
 
       // Seed with existing skills
-      (existingSkills || []).forEach((s) => {
+      console.log("[technical] Seeding skillMapForMerge with existing skills count:", (existingSkills || []).length);
+      (existingSkills || []).forEach((s, idx) => {
         const name = (s.name || s.skill || "").trim();
-        if (!name) return;
-        skillMapForMerge.set(name, {
+        if (!name) {
+          console.log(`[technical] Skipping existing skill at index ${idx} because name is empty.`);
+          return;
+        }
+        const seeded = {
           name,
           proficiencyLevel: Number(s.proficiencyLevel) || 1,
           experienceLevel:
-            s.experienceLevel ||
-            getExperienceLevel(Number(s.proficiencyLevel) || 1),
+            s.experienceLevel || getExperienceLevel(Number(s.proficiencyLevel) || 1),
           ScoreTest: Number(s.ScoreTest) || 0,
           Levelconfirmed: s.Levelconfirmed || 0,
-        });
+        };
+        skillMapForMerge.set(name, seeded);
+        console.log(`[technical] Seeded skill '${name}':`, seeded);
       });
 
       // Apply analysis updates (override ScoreTest for matching skill names, or add new skill)
-      (analysis.skillAnalysis || []).forEach((skill) => {
+      console.log("[technical] Applying analysis.skillAnalysis items count:", (analysis.skillAnalysis || []).length);
+      (analysis.skillAnalysis || []).forEach((skill, idx) => {
         const name = (skill.skillName || skill.skill || "").trim();
-        if (!name) return;
+        if (!name) {
+          console.log(`[technical] Skipping analysis entry at index ${idx} because skillName is empty.`);
+          return;
+        }
         const conf = Number(skill.confidenceScore) || 0;
-        const demo =
-          Number(skill.demonstratedProficiency) ||
-          Number(skill.currentProficiency) ||
-          1;
+        const demo = Number(skill.demonstratedProficiency) || Number(skill.currentProficiency) || 1;
+        console.log(`[technical] Processing analyzed skill '${name}' (index ${idx}) - confidence:${conf}, demonstrated:${demo}`);
 
         if (skillMapForMerge.has(name)) {
-  const prev = skillMapForMerge.get(name);
-  prev.ScoreTest = conf;
+          const prev = skillMapForMerge.get(name);
+          console.log(`[technical] Found existing seeded skill '${name}' before update:`, prev);
+          prev.ScoreTest = conf;
 
-  // Augmenter les niveaux si ScoreTest > 60
-  if (conf > 20) {
-    prev.proficiencyLevel = Math.min(prev.proficiencyLevel + 1, 5); // max 5
-    prev.Levelconfirmed = Math.min((prev.Levelconfirmed || 0) + 1, 5);
-  } else {
-    prev.proficiencyLevel = demo;
-    prev.Levelconfirmed = demo === 5 && conf > 75 ? 5 : Math.max(demo - 1, 0);
-  }
+          // Augmenter les niveaux si ScoreTest > 60
+          if (conf > 20) {
+            prev.proficiencyLevel = Math.min(prev.proficiencyLevel + 1, 5); // max 5
+            prev.Levelconfirmed = Math.min((prev.proficiencyLevel - 1) , 5);
+            console.log(`[technical] Updated '${name}' by increment due to confidence (${conf}) -> proficiencyLevel:${prev.proficiencyLevel}, Levelconfirmed:${prev.Levelconfirmed}`);
+          } else {
+            prev.proficiencyLevel = demo;
+            prev.Levelconfirmed = demo === 5 && conf > 75 ? 5 : Math.max(demo - 1, 0);
+            console.log(`[technical] Updated '${name}' using demonstrated level -> proficiencyLevel:${prev.proficiencyLevel}, Levelconfirmed:${prev.Levelconfirmed}`);
+          }
 
-  prev.experienceLevel = getExperienceLevel(prev.proficiencyLevel);
-  skillMapForMerge.set(name, prev);
-} else {
-  let newProf = demo;
-  let newLevelConfirmed = demo === 5 && conf > 75 ? 5 : Math.max(demo - 1, 0);
+          prev.experienceLevel = getExperienceLevel(prev.proficiencyLevel);
+          skillMapForMerge.set(name, prev);
+          console.log(`[technical] Final merged entry for '${name}':`, prev);
+        } else {
+          let newProf = demo;
+          let newLevelConfirmed = demo === 5 && conf > 75 ? 5 : Math.max(demo - 1, 0);
 
-  if (conf > 60) {
-    newProf = Math.min(newProf + 1, 5);
-    newLevelConfirmed = Math.min(newLevelConfirmed + 1, 5);
-  }
+          if (conf > 60) {
+            newProf = Math.min(newProf + 1, 5);
+            newLevelConfirmed = Math.min(newLevelConfirmed + 1, 5);
+            console.log(`[technical] New skill '${name}' boosted due to high confidence (${conf}) -> newProf:${newProf}, newLevelConfirmed:${newLevelConfirmed}`);
+          }
 
-  skillMapForMerge.set(name, {
-    name,
-    proficiencyLevel: newProf,
-    experienceLevel: getExperienceLevel(newProf),
-    ScoreTest: conf,
-    Levelconfirmed: newLevelConfirmed,
-  });
-}
+          const created = {
+            name,
+            proficiencyLevel: newProf,
+            experienceLevel: getExperienceLevel(newProf),
+            ScoreTest: conf,
+            Levelconfirmed: newLevelConfirmed,
+          };
 
+          skillMapForMerge.set(name, created);
+          console.log(`[technical] Added new merged skill '${name}':`, created);
+        }
       });
 
       // Build merged skills array and compute overall average from merged ScoreTest
-      const mergedSkillsForProfile = Array.from(
-        skillMapForMerge.values()
-      ).filter(
+      const mergedSkillsForProfile = Array.from(skillMapForMerge.values()).filter(
         (s) => s.name && typeof s.name === "string" && s.name.trim() !== ""
       );
 
-      const mergedScores = mergedSkillsForProfile.map(
-        (s) => Number(s.ScoreTest) || 0
-      );
+      console.log("[technical] Total merged skills count:", mergedSkillsForProfile.length);
+      const mergedScores = mergedSkillsForProfile.map((s) => Number(s.ScoreTest) || 0);
       const mergedCount = mergedScores.length;
       const mergedSum = mergedScores.reduce((acc, n) => acc + n, 0);
-      const overallScoreMerged =
-        mergedCount > 0 ? Number((mergedSum / mergedCount).toFixed(2)) : 0;
+      const overallScoreMerged = mergedCount > 0 ? Number((mergedSum / mergedCount).toFixed(2)) : 0;
 
-      console.log(
-        "Computed overallScoreMerged from merged skills:",
-        overallScoreMerged,
-        "mergedSkillsCount:",
-        mergedCount
-      );
+      console.log("[technical] Computed overallScoreMerged from merged skills:", overallScoreMerged, "mergedSkillsCount:", mergedCount, "mergedSum:", mergedSum);
 
-      await profileService.createOrUpdateProfile(id, {
+      console.log("[technical] Persisting profile with overallScore and updated skills...");
+      mergedSkillsForProfile[0].Levelconfirmed = mergedSkillsForProfile[0].proficiencyLevel - 1;
+      console.log("[technical] Merged skills prepared for profile update:", mergedSkillsForProfile);
+      const pro = await profileService.createOrUpdateProfile(id, {
         overallScore: overallScoreMerged,
         skills: mergedSkillsForProfile.map((s) => ({
           name: s.name,
@@ -445,6 +470,7 @@ async function analyzeProfileAnswers(req, res) {
           Levelconfirmed: s.Levelconfirmed,
         })),
       });
+      console.log("[technical] profileService.createOrUpdateProfile completed for user:", pro);
 
       try {
         // 🧩 Récupération des infos principales
@@ -453,12 +479,13 @@ async function analyzeProfileAnswers(req, res) {
         const interviewType = INTERVIEW_TYPES.SKILL;
 
         // 🔍 1️⃣ Recherche de l’interview correspondante
-        // On cherche un InterviewDetails du même candidat, de type SKILL,
-        // et contenant au moins un skill correspondant (même nom)
+        console.log("[technical] Looking for existing InterviewDetails for candidate:", candidateId);
         let interview = await InterviewDetails.findOne({
           candidate: candidateId,
           "skillDetails.name": { $in: skillNames },
         }).sort({ updatedAt: -1 });
+
+        console.log("[technical] InterviewDetails lookup result:", !!interview ? `found (id:${interview._id})` : "not found");
 
         // 🧠 2️⃣ Préparation des skillDetails à insérer / mettre à jour
         const skillDetailsData = analysis.skillAnalysis.map((skill) => ({
@@ -476,24 +503,26 @@ async function analyzeProfileAnswers(req, res) {
             : [],
         }));
 
-        // 🧩 3️⃣ Si une interview correspondante existe → mise à jour
-        console.debug("skillDetailsData (sample):", JSON.stringify(skillDetailsData, null, 2));
+        console.debug("[technical] skillDetailsData (sample):", JSON.stringify(skillDetailsData.slice(0, 5), null, 2));
         if (interview) {
+          console.log("[technical] Updating existing InterviewDetails (id):", interview._id);
           interview.skillDetails = skillDetailsData;
           // Use the overallFromNew computed above (from confidenceScore)
           interview.overallScore = overallScoreMerged;
           interview.recommendations = analysis.recommendations || [];
           try {
             await interview.save();
+            console.log("[technical] InterviewDetails saved (updated) id:", interview._id);
           } catch (errSave) {
-            console.error("Error saving existing InterviewDetails:", errSave && errSave.message ? errSave.message : errSave);
-            if (errSave && errSave.errors) console.error("Validation errors:", errSave.errors);
+            console.error("[technical] Error saving existing InterviewDetails:", errSave && errSave.message ? errSave.message : errSave);
+            if (errSave && errSave.errors) console.error("[technical] Validation errors:", errSave.errors);
             throw errSave;
           }
         } else {
           // 🆕 4️⃣ Sinon → création d’une nouvelle interview
           try {
-            console.debug("Creating new InterviewDetails with questions sample:", JSON.stringify(questions?.slice(0,3) || [], null, 2));
+            console.log("[technical] Creating new InterviewDetails for candidate:", candidateId);
+            console.debug("[technical] Creating new InterviewDetails with questions sample:", JSON.stringify(questions?.slice(0, 3) || [], null, 2));
             const newInterview = await InterviewDetails.create({
               candidate: candidateId,
               type: interviewType,
@@ -510,19 +539,21 @@ async function analyzeProfileAnswers(req, res) {
                 })) || [],
             });
 
+            console.log("[technical] Created InterviewDetails id:", newInterview._id);
+
             // 🧷 Ajout de l’interview au profil
-            if (!existingProfile.interviewDetails)
-              existingProfile.interviewDetails = [];
+            if (!existingProfile.interviewDetails) existingProfile.interviewDetails = [];
             existingProfile.interviewDetails.push(newInterview._id);
             await existingProfile.save();
+            console.log("[technical] existingProfile updated with new interview id and saved (profile id):", existingProfile._id);
           } catch (errCreate) {
-            console.error("Error creating new InterviewDetails:", errCreate && errCreate.message ? errCreate.message : errCreate);
-            if (errCreate && errCreate.errors) console.error("Validation errors:", errCreate.errors);
+            console.error("[technical] Error creating new InterviewDetails:", errCreate && errCreate.message ? errCreate.message : errCreate);
+            if (errCreate && errCreate.errors) console.error("[technical] Validation errors:", errCreate.errors);
             throw errCreate;
           }
         }
       } catch (err) {
-        console.warn("⚠️ Erreur mise à jour InterviewDetails:", err.message);
+        console.warn("⚠️ Erreur mise à jour InterviewDetails:", err && err.message ? err.message : err);
       }
     }
 
