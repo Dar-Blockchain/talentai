@@ -401,6 +401,8 @@ const Test = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
   const audioStreamRef = useRef<MediaStream | null>(null);
+  const lastTranscriptTimeRef = useRef<number>(Date.now());
+  const audioLevelRef = useRef<number>(0);
   
   // Add question session ID to filter stale transcripts
   const questionSessionIdRef = useRef<number>(0);
@@ -412,6 +414,39 @@ const Test = () => {
 
   // Transcription states
   const [isTranscribing, setIsTranscribing] = useState(false);
+  
+  // Cleanup effect - close AssemblyAI session when leaving the page
+  useEffect(() => {
+    return () => {
+      console.log('🧹 Cleaning up interview session...');
+      // Close WebSocket connection
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      
+      // Stop audio context
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+      
+      // Disconnect processor
+      if (processorRef.current) {
+        processorRef.current.disconnect();
+        processorRef.current = null;
+      }
+      
+      // Stop audio tracks
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach(track => track.stop());
+        audioStreamRef.current = null;
+      }
+      
+      console.log('✅ Interview session cleaned up');
+    };
+  }, []);
+  
   useEffect(() => {
     if (!isAuthenticated && id) {
       const target = `/posts/${id}/interview${stepId ? `?stepId=${stepId}` : ''}`;
@@ -673,6 +708,14 @@ const Test = () => {
           if (ws.readyState === WebSocket.OPEN) {
             const inputBuffer = event.inputBuffer.getChannelData(0);
 
+            // Calculate audio level for monitoring
+            let sum = 0;
+            for (let i = 0; i < inputBuffer.length; i++) {
+              sum += inputBuffer[i] * inputBuffer[i];
+            }
+            const rms = Math.sqrt(sum / inputBuffer.length);
+            audioLevelRef.current = rms;
+
             // Send pristine audio to AssemblyAI - no processing
             // AssemblyAI's AI handles all audio enhancement internally
             const processedBuffer = inputBuffer;
@@ -693,13 +736,25 @@ const Test = () => {
                 ws.send(int16Buffer.buffer);
                 audioPacketsSent++;
                 
-                // Log streaming status every 100 packets (~10 seconds)
+                // Log streaming status every 100 packets (~10 seconds) with audio level
                 if (audioPacketsSent % 100 === 0) {
-                  console.log(`📡 Streaming: ${audioPacketsSent} audio packets sent to AssemblyAI`);
+                  const timeSinceLastTranscript = (Date.now() - lastTranscriptTimeRef.current) / 1000;
+                  console.log(`📡 Streaming: ${audioPacketsSent} packets | Audio level: ${(rms * 100).toFixed(2)}% | Last transcript: ${timeSinceLastTranscript.toFixed(1)}s ago`);
+                  
+                  // Warn if no transcripts received for a while despite audio
+                  if (timeSinceLastTranscript > 15 && rms > 0.01) {
+                    console.warn('⚠️ Audio is being sent but no transcripts received! Check microphone or try speaking louder.');
+                  }
                 }
               } catch (error) {
                 console.error('❌ Error sending audio:', error);
+                console.error('WebSocket state:', ws.readyState);
               }
+            }
+          } else {
+            // Log connection issues
+            if (audioPacketsSent % 50 === 0) {
+              console.warn(`⚠️ WebSocket not ready (state: ${ws.readyState}), cannot send audio`);
             }
           }
         };
@@ -726,6 +781,9 @@ const Test = () => {
             console.log('⏸️ Blocking stale transcript during transition:', data.text?.substring(0, 30));
             return; // Reject this transcript completely
           }
+          
+          // Update last transcript time
+          lastTranscriptTimeRef.current = Date.now();
           
           const text = data.text;
           if (text?.trim()) {
