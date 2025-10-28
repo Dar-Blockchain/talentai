@@ -405,6 +405,7 @@ const Test = () => {
   // Add question session ID to filter stale transcripts
   const questionSessionIdRef = useRef<number>(0);
   const isTransitioningRef = useRef(false);
+  const isTimerTransitioning = useRef(false); // Prevent double timer transitions
 
   // MediaRecorder references
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -481,32 +482,47 @@ const Test = () => {
 
   // Timer only runs when test has started
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (hasStartedTest && timeLeft > 0) {
-      timer = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            // Use functional update to avoid race conditions and skip issues
-            setCurrent(c => {
-              if (c < questions.length - 1) {
-                console.log(`⏱️ Timer finished - Moving to question ${c + 2}`);
-                return c + 1;
-              } else {
-                console.log('⏱️ Timer finished - All questions completed');
-                stopRecording();
-                saveTestResults();
-                router.push(`/posts/${id}/report?postId=${id}${stepId ? `&stepId=${stepId}` : ''}`);
-                return c;
-              }
-            });
-            return 0; // Return 0 to prevent further timer ticks
+    if (!hasStartedTest) return;
+    
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          // Prevent double execution
+          if (isTimerTransitioning.current) {
+            return 120; // Already transitioning, just reset timer
           }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [current, timeLeft, questions.length, hasStartedTest, router]);
+          
+          isTimerTransitioning.current = true;
+          
+          // Use currentIndexRef to avoid stale closure
+          setCurrent(c => {
+            const nextQuestion = c + 1;
+            if (nextQuestion < questions.length) {
+              console.log(`⏱️ Timer finished - Moving from question ${c + 1} to ${nextQuestion + 1}`);
+              // Reset the lock after a delay to allow next transition
+              setTimeout(() => {
+                isTimerTransitioning.current = false;
+              }, 1000);
+              return nextQuestion;
+            } else {
+              console.log('⏱️ Timer finished - All questions completed');
+              stopRecording();
+              saveTestResults();
+              router.push(`/posts/${id}/report?postId=${id}${stepId ? `&stepId=${stepId}` : ''}`);
+              return c;
+            }
+          });
+          return 120; // Reset timer for next question
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    return () => {
+      clearInterval(timer);
+      isTimerTransitioning.current = false;
+    };
+  }, [hasStartedTest, questions.length]);
 
   // Reset timer when question changes
   useEffect(() => {
