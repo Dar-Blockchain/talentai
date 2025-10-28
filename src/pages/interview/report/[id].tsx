@@ -254,11 +254,11 @@ export default function CandidateInterviewDetailPage() {
                                     )}
                                 </Box>
                             )} */}
-                            {/* Assessment Result Section for onboarding/hard skill tests */}
-                            {(data.type === 'onboarding' || !data.type) && data.overallScore !== undefined && (
+                            {/* Assessment Result Section for onboarding/skill tests */}
+                            {(data.type === 'onboarding' || data.type === 'skill' || !data.type) && data.overallScore !== undefined && (
                                 <Box sx={{ mb: 4, p: 3, background: '#e6f7fa', borderRadius: 3, border: '1px solid #b2ebf2' }}>
                                     <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
-                                        Assessment Summary
+                                        {data.type === 'skill' ? 'Skill Assessment Summary' : 'Assessment Summary'}
                                     </Typography>
                                     <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 3 }}>
                                         Overall Score: <Chip label={`${data.overallScore}%`} color="success" size="small" />
@@ -327,6 +327,52 @@ export default function CandidateInterviewDetailPage() {
                                             No skill details available for this interview.
                                         </Alert>
                                     )}
+                                </Box>
+                            )}
+                            
+                            {/* Recommendations Section */}
+                            {Array.isArray(data.recommendations) && data.recommendations.length > 0 && (
+                                <Box sx={{ mb: 4, p: 3, background: '#f3f0ff', borderRadius: 3, border: '1px solid #d1c4e9' }}>
+                                    <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
+                                        📚 Learning Recommendations
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ mb: 2, color: '#666' }}>
+                                        Based on your assessment, here are some resources to help you improve:
+                                    </Typography>
+                                    {data.recommendations.map((rec: string, idx: number) => (
+                                        <Box key={idx} sx={{ 
+                                            mb: 2, 
+                                            p: 2, 
+                                            background: '#fff', 
+                                            borderRadius: 2, 
+                                            border: '1px solid #e0e0e0',
+                                            '&:hover': {
+                                                boxShadow: '0 4px 12px rgba(131, 16, 255, 0.1)',
+                                                transform: 'translateY(-2px)',
+                                                transition: 'all 0.3s ease'
+                                            }
+                                        }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                                                <Box sx={{
+                                                    minWidth: 24,
+                                                    height: 24,
+                                                    borderRadius: '50%',
+                                                    background: GREEN_MAIN,
+                                                    color: '#fff',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontSize: '0.875rem',
+                                                    fontWeight: 700
+                                                }}>
+                                                    {idx + 1}
+                                                </Box>
+                                                <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.6 }}>
+                                                    {rec}
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+                                    ))}
                                 </Box>
                             )}
                             
