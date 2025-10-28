@@ -49,6 +49,8 @@ export default function CandidateInterviewDetailPage() {
                 });
                 if (!res.ok) throw new Error('Failed to fetch interview details');
                 const json = await res.json();
+                console.log('📊 Interview Details API Response:', json);
+                console.log('📋 Interview Data:', json.data);
                 setData(json.data);
             } catch (e: any) {
                 setError(e.message || 'Error fetching data');
@@ -109,18 +111,31 @@ export default function CandidateInterviewDetailPage() {
                         <Alert severity="info">No data found for this interview.</Alert>
                     ) : (
                         <>
+                            {(() => { 
+                                console.log('🎯 Rendering data:', {
+                                    hasType: !!data.type,
+                                    hasOverallScore: data.overallScore !== undefined,
+                                    hasSkillDetails: !!data.skillDetails,
+                                    skillDetailsLength: data.skillDetails?.length,
+                                    hasPost: !!data.post,
+                                    hasRecommendations: !!data.recommendations
+                                }); 
+                                return null; 
+                            })()}
                             <Box sx={{ mb: 3 }}>
                                 <Typography variant="subtitle1" sx={{ color: '#191919', fontWeight: 600 }}>
-                                    Type: <Chip label={data.type || '-'} color="primary" size="small" />
+                                    Type: <Chip label={data.type || 'onboarding'} color="primary" size="small" />
                                 </Typography>
                                 <Typography variant="subtitle1" sx={{ color: '#191919', fontWeight: 600 }}>
-                                    Overall Score: <Chip label={data.overallScore ?? '-'} color="success" size="small" />
+                                    Overall Score: <Chip label={data.overallScore !== undefined ? `${data.overallScore}%` : '-'} color="success" size="small" />
                                 </Typography>
+                                {data.post?.jobDetails?.title && (
+                                    <Typography variant="subtitle1" sx={{ color: '#191919', fontWeight: 600 }}>
+                                        Post Name: {data.post.jobDetails.title}
+                                    </Typography>
+                                )}
                                 <Typography variant="subtitle1" sx={{ color: '#191919', fontWeight: 600 }}>
-                                    Post Name: {data.post?.jobDetails?.title || '-'}
-                                </Typography>
-                                <Typography variant="subtitle1" sx={{ color: '#191919', fontWeight: 600 }}>
-                                    Date: {data.createdAt ? new Date(data.createdAt).toLocaleString() : '-'}
+                                    Date: {data.createdAt ? new Date(data.createdAt).toLocaleString() : data.updatedAt ? new Date(data.updatedAt).toLocaleString() : '-'}
                                 </Typography>
                                 {data.post?.jobDetails?.status && (
                                     <Typography variant="subtitle1" sx={{ color: '#191919', fontWeight: 600 }}>
@@ -240,7 +255,7 @@ export default function CandidateInterviewDetailPage() {
                                 </Box>
                             )} */}
                             {/* Assessment Result Section for onboarding/hard skill tests */}
-                            {data.type === 'onboarding' && data.overallScore !== undefined && (
+                            {(data.type === 'onboarding' || !data.type) && data.overallScore !== undefined && (
                                 <Box sx={{ mb: 4, p: 3, background: '#e6f7fa', borderRadius: 3, border: '1px solid #b2ebf2' }}>
                                     <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
                                         Assessment Summary
@@ -248,7 +263,8 @@ export default function CandidateInterviewDetailPage() {
                                     <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 3 }}>
                                         Overall Score: <Chip label={`${data.overallScore}%`} color="success" size="small" />
                                     </Typography>
-                                    {Array.isArray(data.skillDetails) && data.skillDetails.length > 0 && (
+                                    {(() => { console.log('🎓 Skill Details:', data.skillDetails); return null; })()}
+                                    {Array.isArray(data.skillDetails) && data.skillDetails.length > 0 ? (
                                         <>
                                             <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Skills Assessed:</Typography>
                                             {data.skillDetails.map((skill: any, idx: number) => (
@@ -306,6 +322,10 @@ export default function CandidateInterviewDetailPage() {
                                                 </Box>
                                             ))}
                                         </>
+                                    ) : (
+                                        <Alert severity="info" sx={{ mt: 2 }}>
+                                            No skill details available for this interview.
+                                        </Alert>
                                     )}
                                 </Box>
                             )}
