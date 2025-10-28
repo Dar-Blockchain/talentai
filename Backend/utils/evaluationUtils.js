@@ -392,21 +392,60 @@ async function saveInterviewDetailsForAddSkill(
   skillType,
   recommendations
 ) {
-  const details = skillAnalysis.map((skill) => ({
-    name: skill.skillName,
-    type: skillType,
-    proficiencyLevel: skill.demonstratedProficiency,
-    // experienceLevel : PROFICIENCY_TO_EXPERIENCE_VALUE[skill.proficiencyLevel],
-    confidenceScore: skill.confidenceScore,
-    questionAnswerList: (skill.questionAnswerList || []).map((qa) => ({
-      question: qa.question,
-      answer: qa.answer || "unanswered",
-      status: qa.status,
+  // Normalize incoming skillType to one of SKILL_TYPES values
+  let normalizedSkillType = SKILL_TYPES.HARD; // default
+  if (typeof skillType === "string") {
+    const st = skillType.toLowerCase();
+    if (st === "soft" || st === "softskill" || st === "soft_skill") {
+      normalizedSkillType = SKILL_TYPES.SOFT;
+    } else if (st === "hard" || st === "technical" || st === "technicalskill" || st === "technical_skill") {
+      normalizedSkillType = SKILL_TYPES.HARD;
+    } else if (st === SKILL_TYPES.SOFT) {
+      normalizedSkillType = SKILL_TYPES.SOFT;
+    } else if (st === SKILL_TYPES.HARD) {
+      normalizedSkillType = SKILL_TYPES.HARD;
+    }
+  }
+
+  // Helper to infer proficiency level from experience label if needed
+  const experienceLabelToProficiency = (label) => {
+    if (!label) return undefined;
+    const found = Object.values(SKILL_LEVELS).find(
+      (lvl) => lvl.experienceLevel && lvl.experienceLevel.toLowerCase() === String(label).toLowerCase()
+    );
+    return found ? found.proficiencyLevel : undefined;
+  };
+
+  const details = (skillAnalysis || []).map((skill) => {
+    // Prefer numeric demonstratedProficiency if present, else try to infer from demonstratedExperienceLevel
+    let prof = undefined;
+    if (skill.demonstratedProficiency !== undefined && skill.demonstratedProficiency !== null) {
+      prof = Number(skill.demonstratedProficiency);
+    } else if (skill.demonstratedExperienceLevel) {
+      prof = experienceLabelToProficiency(skill.demonstratedExperienceLevel);
+    } else if (skill.proficiencyLevel !== undefined) {
+      prof = Number(skill.proficiencyLevel);
+    }
+
+    const qList = (skill.questionAnswerList || []).map((qa) => ({
+      question: qa.question || "",
+      answer: qa.answer || "No answer provided",
+      status: qa.status || "incorrect",
       exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
       partialCorrectPercentage: qa.partialCorrectPercentage || null,
       partialCorrectReason: qa.partialCorrectReason || null,
-    })),
-  }));
+    }));
+
+    return {
+      name: skill.skillName || skill.name || "",
+      type: normalizedSkillType,
+      proficiencyLevel: Number.isFinite(prof) ? prof : undefined,
+      experienceLevel: skill.demonstratedExperienceLevel || skill.experienceLevel || undefined,
+      // confidenceScore may be under different keys
+      confidenceScore: skill.confidenceScore || skill.confidence || undefined,
+      questionAnswerList: qList,
+    };
+  });
 
   const interviewDetails = new InterviewDetails({
     candidate: profile._id,
@@ -416,8 +455,18 @@ async function saveInterviewDetailsForAddSkill(
     recommendations: recommendations,
   });
 
-  await interviewDetails.save();
-  return interviewDetails._id;
+  try {
+    console.debug("saveInterviewDetailsForAddSkill: saving InterviewDetails, details sample:", JSON.stringify(details, null, 2));
+    await interviewDetails.save();
+    return interviewDetails._id;
+  } catch (err) {
+    console.error("Error saving interview details for add-skill:", err && err.message ? err.message : err);
+    if (err && err.errors) {
+      console.error("Validation errors:", err.errors);
+    }
+    // Re-throw so callers can handle the error and we don't silently swallow it
+    throw err;
+  }
 }
 
 /**
