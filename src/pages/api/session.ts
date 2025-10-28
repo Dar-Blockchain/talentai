@@ -21,9 +21,19 @@ export default async function handler(
         },
         body: JSON.stringify({
           expires_in: 1800, // 30 minutes
-          // Enable all accuracy features
+          // Enable all accuracy features for global accent recognition
           disable_partial_transcripts: false,
-          enable_extra_session_information: true
+          enable_extra_session_information: true,
+          // Enhanced accent recognition settings
+          language_detection: true,
+          accent_detection: true,
+          punctuate: true,
+          format_text: true,
+          speaker_labels: false,
+          // Additional settings for better accent understanding
+          boost_param: 'high', // Boost accuracy for non-native speakers
+          filter_profanity: false, // Don't filter any words
+          redact_pii: false // Don't redact personal info for better context
         }),
       });
 

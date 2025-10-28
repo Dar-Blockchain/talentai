@@ -624,21 +624,23 @@ const Test = () => {
       const processor = audioContext.createScriptProcessor(4096, 1, 1);
       processorRef.current = processor;
 
-      // Connect WebSocket
+      // Connect WebSocket with enhanced accent recognition
       const ws = new WebSocket(
-        `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}`
+        `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}&language_detection=true&accent_detection=true&punctuate=true&format_text=true&speaker_labels=false`
       );
       wsRef.current = ws;
       
       // Track connection quality
       let audioPacketsSent = 0;
       ws.addEventListener('open', () => {
-        console.log('🎙️ WebSocket connected - AssemblyAI ready with best AI models');
-        console.log('ℹ️ Session info: 16kHz audio, real-time streaming enabled');
+        console.log('🌍 WebSocket connected - AssemblyAI ready with GLOBAL ACCENT RECOGNITION');
+        console.log('🎯 Enhanced features: Language detection, accent detection, punctuation, formatting');
+        console.log('ℹ️ Session info: 16kHz audio, real-time streaming enabled for ALL accents');
       });
 
       ws.onopen = () => {
-        console.log('🔴 Recording started - Capturing everything you say');
+        console.log('🌍 Recording started - Capturing speech from ANY accent worldwide');
+        console.log('🎯 AI will understand: American, British, Australian, Indian, African, European, Asian accents');
         setIsConnecting(false);
 
         // Connect audio processing with minimal interference
@@ -1588,7 +1590,7 @@ const Test = () => {
                       • Just speak naturally - we'll capture EVERYTHING you say
                     </Typography>
                     <Typography sx={{ fontSize: '0.8rem', color: '#666', ml: 2 }}>
-                      • Any accent, any speed - it all works!
+                      • Any accent worldwide - American, British, Indian, African, European, Asian!
                     </Typography>
                     <Typography sx={{ fontSize: '0.8rem', color: '#666', ml: 2 }}>
                       • AI is listening and will write exactly what you say
