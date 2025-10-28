@@ -4,51 +4,36 @@ function normalizeSkillName(name) {
   return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
 }
 
-module.exports.calculateSkillMatchScore = (jobSkills, candidateSkills) => {
+const calculateSkillMatchScore = (
+  jobSkills,
+  candidateSkills,
+  SkillPrincipalCoeff = 1.5,  // Poids des skills principaux
+  SkillSecCoeff = 1           // Poids des skills secondaires
+) => {
   let totalScore = 0;
-  const maxPossibleScore = jobSkills.length * 100; // 100% par compétence
+  let totalPossibleScore = 0;
 
-  jobSkills.forEach((jobSkill) => {
-    const normJobSkill = normalizeSkillName(jobSkill.name);
-
+  jobSkills.forEach(jobSkill => {
     const candidateSkill = candidateSkills.find(
-      (s) => normalizeSkillName(s.name) === normJobSkill
+      s => s.name.toLowerCase() === jobSkill.name.toLowerCase()
     );
 
+    // Détermine le coefficient à utiliser
+    const coeff = jobSkill.isPrimary ? SkillPrincipalCoeff : SkillSecCoeff;
+
+    // Chaque skill contribue au score total pondéré
+    totalPossibleScore += 100 * coeff;
+
     if (candidateSkill) {
-      // Utiliser Levelconfirmed au lieu de proficiencyLevel
-      const jobLevel = jobSkill.level;
-      const candidateLevel = candidateSkill.Levelconfirmed;
+      const jobLevel = convertLevelToNumber(jobSkill.level);
+      const candidateLevel = convertLevelToNumber(candidateSkill.proficiencyLevel);
 
-      let skillScore = 0; // Initialiser skillScore à 0
-
-      if (jobLevel <= candidateLevel) {
-        // Calculer la différence de niveau
-        const levelDifference = candidateLevel - jobLevel;
-
-        // Appliquer des ajustements en fonction de la différence de niveau
-        if (levelDifference === 0) {
-          skillScore = 100;
-        } else if (levelDifference === 1) {
-          skillScore = 70;
-        } else if (levelDifference === 2) {
-          skillScore = 50;
-        } else if (levelDifference === 3) {
-          skillScore = 30;
-        } else if (levelDifference === 4) {
-          skillScore = 10;
-        } else {
-          skillScore = 0;
-        }
-      } else {
-      //  console.log(`Missing levels for ${normJobSkill}`);
-      }
-
-      totalScore += Math.min(skillScore, 100);
+      // Calcul du score de correspondance (0–100)
+      const skillScore = (candidateLevel / jobLevel) * 100;
+      totalScore += Math.min(skillScore, 100) * coeff;
     }
   });
 
-  const matchPercentage =
-    Math.round((totalScore / maxPossibleScore) * 1000) / 10;
-  return matchPercentage;
+  // Calcule le pourcentage global de correspondance
+  return Math.round((totalScore / totalPossibleScore) * 1000) / 10; // arrondi à 1 décimale
 };
