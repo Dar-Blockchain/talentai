@@ -241,6 +241,10 @@ export default function Test() {
   const [isSpeechActive, setIsSpeechActive] = useState(false);
   const partialTranscriptRef = useRef<string>('');
   const accumulatedTranscriptRef = useRef<string>(''); // Track accumulated text for current question
+  
+  // Add question session ID to filter stale transcripts
+  const questionSessionIdRef = useRef<number>(0);
+  const isTransitioningRef = useRef(false);
 
   // --- Security Violation State ---
   const [securityViolationCount, setSecurityViolationCount] = useState(0);
@@ -455,6 +459,58 @@ export default function Test() {
     accumulatedTranscriptRef.current = ''; // Clear accumulated transcript for new question
     setCurrentTranscript(''); // Clear the displayed transcript
     
+    // Increment question session ID to reject old transcripts
+    questionSessionIdRef.current = questionSessionIdRef.current + 1;
+    const currentQuestionSession = questionSessionIdRef.current;
+    
+    console.log(`📋 Question ${current + 1} - Session ID: ${currentQuestionSession}`);
+    
+    // Block transcripts during transition
+    isTransitioningRef.current = true;
+    
+    // Reset transcription connection when changing questions
+    if (hasStartedTest && current > 0 && audioStreamRef.current) {
+      console.log('🔄 Question changed - resetting transcription connection...');
+      
+      // Close existing WebSocket connection
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+
+      // Stop and disconnect audio processor
+      if (processorRef.current) {
+        processorRef.current.disconnect();
+        processorRef.current = null;
+      }
+
+      // Close audio context
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+
+      // Reconnect with fresh WebSocket after a brief delay
+      setTimeout(async () => {
+        if (audioStreamRef.current && isRecording) {
+          try {
+            await setupStreamingTranscription(audioStreamRef.current);
+            console.log(`✅ Transcription reset - Now accepting session ${questionSessionIdRef.current}`);
+            // Allow transcripts after successful reconnection
+            setTimeout(() => {
+              isTransitioningRef.current = false;
+            }, 500);
+          } catch (error) {
+            console.error('❌ Failed to reset transcription connection:', error);
+            isTransitioningRef.current = false;
+          }
+        }
+      }, 300); // Small delay to ensure clean disconnection
+    } else {
+      // For first question, allow transcripts immediately
+      isTransitioningRef.current = false;
+    }
+    
     // Trigger question highlight animation
     setQuestionHighlight(true);
     setTimeout(() => setQuestionHighlight(false), 600);
@@ -601,6 +657,12 @@ export default function Test() {
         }
 
         if (data.message_type === 'PartialTranscript' || data.message_type === 'FinalTranscript') {
+          // CRITICAL: Block transcripts during question transitions
+          if (isTransitioningRef.current) {
+            console.log('⏸️ Blocking stale transcript during transition:', data.text?.substring(0, 30));
+            return; // Reject this transcript completely
+          }
+          
           const text = data.text;
           if (text?.trim()) {
             // Keep AssemblyAI's output with minimal changes
