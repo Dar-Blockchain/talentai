@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./swagger.json");
 const blockPostmanRequests = require("./middleware/blockPostmanRequests");
+const resetQuotaJob = require("./cron/resetQuota");
 
 const http = require("http");
 const connectDB = require("./config/database");
@@ -36,6 +37,9 @@ const tokenRouter = require("./routes/tokenRouter");
 const paymentRouter = require("./routes/paymentRouter");
 
 require("dotenv").config();
+
+// 🧠 Import et exécution automatique du CRON job
+require("./cron/resetQuota");
 
 const app = express();
 
@@ -77,7 +81,7 @@ const initializeApp = async () => {
   }
 };
 // Middleware
-app.use(blockPostmanRequests);
+//app.use(blockPostmanRequests);
 app.use(express.json());
 app.use(
   cors({
