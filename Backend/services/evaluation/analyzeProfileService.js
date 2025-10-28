@@ -379,22 +379,38 @@ async function analyzeProfileAnswers(req, res) {
           1;
 
         if (skillMapForMerge.has(name)) {
-          const prev = skillMapForMerge.get(name);
-          prev.ScoreTest = conf;
-          prev.proficiencyLevel = demo;
-          prev.experienceLevel = getExperienceLevel(demo);
-          prev.Levelconfirmed =
-            demo === 5 && conf > 75 ? 5 : Math.max(demo - 1, 0);
-          skillMapForMerge.set(name, prev);
-        } else {
-          skillMapForMerge.set(name, {
-            name,
-            proficiencyLevel: demo,
-            experienceLevel: getExperienceLevel(demo),
-            ScoreTest: conf,
-            Levelconfirmed: demo === 5 && conf > 75 ? 5 : Math.max(demo - 1, 0),
-          });
-        }
+  const prev = skillMapForMerge.get(name);
+  prev.ScoreTest = conf;
+
+  // Augmenter les niveaux si ScoreTest > 60
+  if (conf > 20) {
+    prev.proficiencyLevel = Math.min(prev.proficiencyLevel + 1, 5); // max 5
+    prev.Levelconfirmed = Math.min((prev.Levelconfirmed || 0) + 1, 5);
+  } else {
+    prev.proficiencyLevel = demo;
+    prev.Levelconfirmed = demo === 5 && conf > 75 ? 5 : Math.max(demo - 1, 0);
+  }
+
+  prev.experienceLevel = getExperienceLevel(prev.proficiencyLevel);
+  skillMapForMerge.set(name, prev);
+} else {
+  let newProf = demo;
+  let newLevelConfirmed = demo === 5 && conf > 75 ? 5 : Math.max(demo - 1, 0);
+
+  if (conf > 60) {
+    newProf = Math.min(newProf + 1, 5);
+    newLevelConfirmed = Math.min(newLevelConfirmed + 1, 5);
+  }
+
+  skillMapForMerge.set(name, {
+    name,
+    proficiencyLevel: newProf,
+    experienceLevel: getExperienceLevel(newProf),
+    ScoreTest: conf,
+    Levelconfirmed: newLevelConfirmed,
+  });
+}
+
       });
 
       // Build merged skills array and compute overall average from merged ScoreTest
@@ -461,34 +477,49 @@ async function analyzeProfileAnswers(req, res) {
         }));
 
         // 🧩 3️⃣ Si une interview correspondante existe → mise à jour
+        console.debug("skillDetailsData (sample):", JSON.stringify(skillDetailsData, null, 2));
         if (interview) {
           interview.skillDetails = skillDetailsData;
           // Use the overallFromNew computed above (from confidenceScore)
           interview.overallScore = overallScoreMerged;
           interview.recommendations = analysis.recommendations || [];
-          await interview.save();
+          try {
+            await interview.save();
+          } catch (errSave) {
+            console.error("Error saving existing InterviewDetails:", errSave && errSave.message ? errSave.message : errSave);
+            if (errSave && errSave.errors) console.error("Validation errors:", errSave.errors);
+            throw errSave;
+          }
         } else {
           // 🆕 4️⃣ Sinon → création d’une nouvelle interview
-          const newInterview = await InterviewDetails.create({
-            candidate: candidateId,
-            type: interviewType,
-            // Persist the overall score computed from new confidenceScore values
-            overallScore: overallScoreMerged,
-            skillDetails: skillDetailsData,
-            recommendations: analysis.recommendations || [],
-            questions:
-              questions?.map((q) => ({
-                question: q.question,
-                answer: q.answer,
-                status: "pending",
-              })) || [],
-          });
+          try {
+            console.debug("Creating new InterviewDetails with questions sample:", JSON.stringify(questions?.slice(0,3) || [], null, 2));
+            const newInterview = await InterviewDetails.create({
+              candidate: candidateId,
+              type: interviewType,
+              // Persist the overall score computed from new confidenceScore values
+              overallScore: overallScoreMerged,
+              skillDetails: skillDetailsData,
+              recommendations: analysis.recommendations || [],
+              questions:
+                questions?.map((q) => ({
+                  question: q.question,
+                  answer: q.answer,
+                  // Use a valid ANSWER_STATUS default ("incorrect") instead of "pending"
+                  status: q.status || "incorrect",
+                })) || [],
+            });
 
-          // 🧷 Ajout de l’interview au profil
-          if (!existingProfile.interviewDetails)
-            existingProfile.interviewDetails = [];
-          existingProfile.interviewDetails.push(newInterview._id);
-          await existingProfile.save();
+            // 🧷 Ajout de l’interview au profil
+            if (!existingProfile.interviewDetails)
+              existingProfile.interviewDetails = [];
+            existingProfile.interviewDetails.push(newInterview._id);
+            await existingProfile.save();
+          } catch (errCreate) {
+            console.error("Error creating new InterviewDetails:", errCreate && errCreate.message ? errCreate.message : errCreate);
+            if (errCreate && errCreate.errors) console.error("Validation errors:", errCreate.errors);
+            throw errCreate;
+          }
         }
       } catch (err) {
         console.warn("⚠️ Erreur mise à jour InterviewDetails:", err.message);
