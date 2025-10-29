@@ -58,27 +58,6 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                 const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/?page=${pageNum + 1
                     }&limit=${limit}&type=${type}&profileId=${realProfileId}`;
 
-                // Simple session cache with TTL to avoid redundant re-fetching on quick returns
-                const cacheKey = `interviewDetails:${realProfileId}:${type}:${pageNum}:${limit}`;
-                const ttlMs = 2 * 60 * 1000; // 2 minutes
-                try {
-                    const cachedRaw = sessionStorage.getItem(cacheKey);
-                    if (cachedRaw) {
-                        const cached = JSON.parse(cachedRaw);
-                        if (cached && cached.timestamp && (Date.now() - cached.timestamp) < ttlMs) {
-                            const cachedResults = Array.isArray(cached.results) ? cached.results : [];
-                            const cachedTotal = (typeof cached.total === 'number' && cached.total > 0)
-                                ? cached.total
-                                : cachedResults.length;
-                            setData(cachedResults);
-                            setTotal(cachedTotal);
-                            setLoading(false);
-                            return;
-                        }
-                    }
-                } catch (_) {
-                    // ignore cache errors
-                }
                 const res = await fetch(url, {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                 });
@@ -92,17 +71,6 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                     results.length;
                 setData(results);
                 setTotal(inferredTotal);
-
-                // write to cache
-                try {
-                    sessionStorage.setItem(cacheKey, JSON.stringify({
-                        timestamp: Date.now(),
-                        results,
-                        total: inferredTotal,
-                    }));
-                } catch (_) {
-                    // ignore cache write failure
-                }
             } catch (e: any) {
                 setError(e.message || "Error fetching data");
             } finally {
