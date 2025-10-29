@@ -11,7 +11,7 @@ const { requireAuthUser } = require('../middleware/authMiddleware');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 
 // Auth obligatoire pour toutes les routes
-//router.use(requireAuthUser);
+router.use(requireAuthUser);
 
 // GET /recruitment-steps/generate-questions/:postStepId — génère les questions
 router.get('/generate-questions/:postStepId', recruitementStepController.generateQuestions);
