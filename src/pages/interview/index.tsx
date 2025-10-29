@@ -860,24 +860,39 @@ export default function Test() {
             if (data.message_type === 'FinalTranscript') {
               // MULTI-LAYER DEDUPLICATION SYSTEM
               
+              // Enhanced duplicate detection
+              
               // Layer 1: Exact duplicate check
               if (cleanedText === lastFinalTranscriptRef.current) {
-                console.log('🚫 Duplicate final transcript detected and blocked:', cleanedText.substring(0, 50));
-                return; // Skip this duplicate
-              }
-              
-              // Layer 2: Check if this text already exists at the end of accumulated transcript
-              if (accumulatedTranscriptRef.current.endsWith(cleanedText)) {
-                console.log('🚫 Transcript already exists at end, blocking duplicate:', cleanedText.substring(0, 50));
+                console.log('🚫 Layer 1: Exact duplicate blocked:', cleanedText.substring(0, 50));
                 return;
               }
               
-              // Layer 2.5: Check if accumulated ends with this text (trimmed comparison)
-              const trimmedAccumulated = accumulatedTranscriptRef.current.trim();
-              const trimmedCurrent = cleanedText.trim();
-              if (trimmedAccumulated.endsWith(trimmedCurrent) && trimmedCurrent.length > 0) {
-                console.log('🚫 Trimmed transcript already exists at end, blocking duplicate:', cleanedText.substring(0, 50));
+              // Layer 2: Check if this text already exists at the end
+              const currentAccumulated = accumulatedTranscriptRef.current.trim();
+              const currentText = cleanedText.trim();
+              
+              if (currentAccumulated.endsWith(currentText) && currentText.length > 5) {
+                console.log('🚫 Layer 2: Text already at end, blocked:', cleanedText.substring(0, 50));
                 return;
+              }
+              
+              // Layer 2.5: Check last N words to prevent re-adding recent text
+              if (currentAccumulated.length > 0 && currentText.length > 10) {
+                const accWords = currentAccumulated.toLowerCase().split(/\s+/);
+                const currWords = currentText.toLowerCase().split(/\s+/);
+                
+                // If we have enough words, check if the last few match
+                if (accWords.length >= 5 && currWords.length >= 3) {
+                  const lastAccWords = accWords.slice(-Math.min(currWords.length, 10)).join(' ');
+                  const currWordsJoined = currWords.join(' ');
+                  
+                  // Check if current text is a substring of recent accumulated text
+                  if (lastAccWords.includes(currWordsJoined)) {
+                    console.log('🚫 Layer 2.5: Recent words match, blocked:', cleanedText.substring(0, 50));
+                    return;
+                  }
+                }
               }
               
               // Layer 3: Similarity check - prevent near-duplicates (90%+ similar)
@@ -1046,7 +1061,7 @@ export default function Test() {
                 }
               }
               
-              // Update accumulated ref
+              // Update accumulated ref FIRST (synchronous)
               const newAccumulated = (accumulatedTranscriptRef.current + ' ' + cleanedText).trim();
               accumulatedTranscriptRef.current = newAccumulated;
               
@@ -1056,19 +1071,23 @@ export default function Test() {
                 questionIndex: currentIndexRef.current
               });
               
-              // Store in transcriptions state
-              setTranscriptions(prevT => {
-                const updated = {
+              // Use queueMicrotask to batch state updates and ensure they happen in order
+              queueMicrotask(() => {
+                // Update both states in the same microtask to prevent race conditions
+                const currentIndex = currentIndexRef.current;
+                const textToSet = accumulatedTranscriptRef.current;
+                
+                // Update storage
+                setTranscriptions(prevT => ({
                   ...prevT,
-                  [currentIndexRef.current]: newAccumulated
-                };
-                console.log('💾 Transcriptions state updated:', updated[currentIndexRef.current]?.substring(0, 50));
-                return updated;
+                  [currentIndex]: textToSet
+                }));
+                
+                // Update display
+                setCurrentTranscript(textToSet);
+                
+                console.log('💾📺 States updated:', textToSet.substring(0, 50));
               });
-              
-              // Update display
-              setCurrentTranscript(newAccumulated);
-              console.log('📺 Display updated:', newAccumulated.substring(0, 50));
               
               // Clear partial transcript ref after final
               partialTranscriptRef.current = '';

@@ -1072,8 +1072,10 @@ const Test = () => {
                 
                 const updatedQuestionText = (currentQuestionText + ' ' + cleanedText).trim();
 
-                // Also update the current transcript to show the accumulated text
-                setCurrentTranscript(updatedQuestionText);
+                // Use queueMicrotask to batch state updates and ensure they happen in order
+                queueMicrotask(() => {
+                  setCurrentTranscript(updatedQuestionText);
+                });
 
                 return {
                   ...prevT,
