@@ -408,7 +408,7 @@ async function analyzeProfileAnswers(req, res) {
           prev.ScoreTest = conf;
 
           // Augmenter les niveaux si ScoreTest > 60
-          if (conf > 20) {
+          if (conf > 60) {
             prev.proficiencyLevel = Math.min(prev.proficiencyLevel + 1, 5); // max 5
             prev.Levelconfirmed = Math.min((prev.proficiencyLevel - 1) , 5);
             console.log(`[technical] Updated '${name}' by increment due to confidence (${conf}) -> proficiencyLevel:${prev.proficiencyLevel}, Levelconfirmed:${prev.Levelconfirmed}`);
@@ -458,18 +458,53 @@ async function analyzeProfileAnswers(req, res) {
       console.log("[technical] Computed overallScoreMerged from merged skills:", overallScoreMerged, "mergedSkillsCount:", mergedCount, "mergedSum:", mergedSum);
 
       console.log("[technical] Persisting profile with overallScore and updated skills...");
-      mergedSkillsForProfile[0].Levelconfirmed = mergedSkillsForProfile[0].proficiencyLevel - 1;
-      console.log("[technical] Merged skills prepared for profile update:", mergedSkillsForProfile);
-      const pro = await profileService.createOrUpdateProfile(id, {
-        overallScore: overallScoreMerged,
-        skills: mergedSkillsForProfile.map((s) => ({
-          name: s.name,
-          proficiencyLevel: s.proficiencyLevel,
-          experienceLevel: s.experienceLevel,
-          ScoreTest: s.ScoreTest,
-          Levelconfirmed: s.Levelconfirmed,
-        })),
+      
+      // S'assurer que Levelconfirmed est toujours proficiencyLevel - 1 pour toutes les skills
+      const finalSkills = mergedSkillsForProfile.map(skill => {
+        const updatedSkill = {
+          ...skill,
+          Levelconfirmed: Math.max(0, skill.proficiencyLevel - 1) // Assure que Levelconfirmed ne soit jamais négatif
+        };
+        console.log(`[technical] Setting Levelconfirmed for skill '${skill.name}':`, {
+          proficiencyLevel: skill.proficiencyLevel,
+          Levelconfirmed: updatedSkill.Levelconfirmed
+        });
+        return updatedSkill;
       });
+
+      console.log("[technical] Final skills prepared for profile update:", JSON.stringify(finalSkills, null, 2));
+      
+      // Utiliser directement le modèle Profile pour assurer la mise à jour de Levelconfirmed
+      const pro = await Profile.findOneAndUpdate(
+        { userId: id },
+        {
+          $set: {
+            overallScore: overallScoreMerged,
+            skills: finalSkills.map((s) => ({
+              name: s.name,
+              proficiencyLevel: s.proficiencyLevel,
+              experienceLevel: s.experienceLevel,
+              ScoreTest: s.ScoreTest,
+              Levelconfirmed: s.Levelconfirmed,
+            }))
+          }
+        },
+        { new: true }
+      );
+      
+      if (!pro) {
+        console.error("[technical] Profile not found for update. Creating new profile...");
+        pro = await profileService.createOrUpdateProfile(id, {
+          overallScore: overallScoreMerged,
+          skills: finalSkills.map((s) => ({
+            name: s.name,
+            proficiencyLevel: s.proficiencyLevel,
+            experienceLevel: s.experienceLevel,
+            ScoreTest: s.ScoreTest,
+            Levelconfirmed: s.Levelconfirmed,
+          })),
+        });
+      }
       console.log("[technical] profileService.createOrUpdateProfile completed for user:", pro);
 
       try {
