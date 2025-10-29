@@ -283,7 +283,7 @@ async function saveInterviewDetails(
     confidenceScore: skill.confidenceScore,
     questionAnswerList: (skill.questionAnswerList || []).map((qa) => ({
       question: qa.question,
-      answer: qa.answer || "unanswered",
+      answer: qa.answer && qa.answer.trim() !== "" ? qa.answer : "No answer provided",
       status: qa.status,
       exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
     })),
@@ -318,7 +318,7 @@ async function saveInterviewDetailsForJob(
     confidenceScore: skill.confidenceScore,
     questionAnswerList: (skill.questionAnswerList || []).map((qa) => ({
       question: qa.question,
-      answer: qa.answer || "unanswered",
+      answer: qa.answer && qa.answer.trim() !== "" ? qa.answer : "No answer provided",
       status: qa.status,
       exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
     })),
@@ -366,7 +366,7 @@ async function saveInterviewDetailsForOnboarding(
     confidenceScore: skill.confidenceScore,
     questionAnswerList: (skill.questionAnswerList || []).map((qa) => ({
       question: qa.question,
-      answer: qa.answer || "unanswered",
+      answer: qa.answer && qa.answer.trim() !== "" ? qa.answer : "No answer provided",
       status: qa.status,
       exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
       partialCorrectPercentage: qa.partialCorrectPercentage || null,
@@ -429,7 +429,7 @@ async function saveInterviewDetailsForAddSkill(
 
     const qList = (skill.questionAnswerList || []).map((qa) => ({
       question: qa.question || "",
-      answer: qa.answer || "No answer provided",
+      answer: qa.answer && qa.answer.trim() !== "" ? qa.answer : "No answer provided",
       status: qa.status || "incorrect",
       exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
       partialCorrectPercentage: qa.partialCorrectPercentage || null,
