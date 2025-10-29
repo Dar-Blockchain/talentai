@@ -9,7 +9,7 @@ const { requireAuthUser } = require("../middleware/authMiddleware");
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 
 // Apply logging middleware to all token routes
-router.use(authLogMiddleware("Token"));
+//router.use(authLogMiddleware("Token"));
 
 // All token routes require authentication
 router.use(requireAuthUser);

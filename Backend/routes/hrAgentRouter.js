@@ -18,7 +18,7 @@ const { requireAuthUser } = require('../middleware/authMiddleware');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 
 // Auth requis + journalisation
-router.use( authLogMiddleware("HRAgent"));
+//router.use( authLogMiddleware("HRAgent"));
 
 /**
  * @route POST /hr-agents/initialize

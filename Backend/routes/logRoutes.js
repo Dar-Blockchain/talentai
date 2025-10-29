@@ -17,7 +17,8 @@ const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 
 // Toutes les routes ci-dessous nécessitent un admin authentifié
-router.use(requireAuthUser, controledAcces('Admin'), authLogMiddleware("Log"));
+//router.use(requireAuthUser, controledAcces('Admin'), authLogMiddleware("Log"));
+router.use(requireAuthUser, controledAcces('Admin'));
 
 
 // GET /logs/getAllLogs

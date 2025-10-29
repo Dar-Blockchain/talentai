@@ -15,7 +15,7 @@ const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 
 // Auth obligatoire + logs pour toutes les routes
-router.use(authLogMiddleware("Profile"));
+//router.use(authLogMiddleware("Profile"));
 
 
 // POST /profile/createOrUpdateProfile — crée/maj profil utilisateur

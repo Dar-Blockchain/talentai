@@ -12,7 +12,8 @@ const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 const taskController = require("../controllers/taskController");
 
 // Auth obligatoire + logs pour toutes les routes
-router.use(requireAuthUser, authLogMiddleware("Task"));
+router.use(requireAuthUser);
+//router.use(requireAuthUser, authLogMiddleware("Task"));
 
 // POST /task/send-task
 // Description: Send technical test task via email with PDF

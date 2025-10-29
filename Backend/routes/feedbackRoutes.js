@@ -19,7 +19,8 @@ const { controledAcces } = require('../middleware/controledAcces'); // Importez 
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 
-router.use(requireAuthUser, authLogMiddleware("Feedback"));
+//router.use(requireAuthUser, authLogMiddleware("Feedback"));
+router.use(requireAuthUser);
 
 
 // POST /feedback/addFeedback

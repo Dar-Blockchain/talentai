@@ -17,7 +17,8 @@ const { controledAcces } = require('../middleware/controledAcces');
 
 
 // Auth candidat obligatoire + logs
-router.use(requireAuthUser, controledAcces('Candidat'), authLogMiddleware("Todo"));
+router.use(requireAuthUser, controledAcces('Candidat') );
+//router.use(requireAuthUser, controledAcces('Candidat'), authLogMiddleware("Todo"));
 
 
 // POST /todo/profile — génère une todo list pour le profil de l'utilisateur

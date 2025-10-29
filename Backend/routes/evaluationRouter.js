@@ -20,7 +20,8 @@ const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 
 // Toutes les routes ci-dessous nécessitent un utilisateur Candidat authentifié
-router.use(requireAuthUser, controledAcces('Candidat'), authLogMiddleware("Evaluation"));
+router.use(requireAuthUser, controledAcces('Candidat'));
+//router.use(requireAuthUser, controledAcces('Candidat'), authLogMiddleware("Evaluation"));
 
 // POST /evaluation/generate-onboarding-questions
 // Description: Génère des questions pour l'onboarding
