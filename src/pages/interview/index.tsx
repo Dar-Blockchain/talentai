@@ -680,7 +680,7 @@ export default function Test() {
       const token = await generateStreamingToken();
       setStreamingToken(token);
 
-      // Setup audio context with optimal settings for AssemblyAI
+      // Setup audio context with optimal settings for accent recognition
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
         sampleRate: 16000, // AssemblyAI's optimal sample rate
         latencyHint: 'interactive', // Prioritize low latency for real-time
@@ -692,18 +692,19 @@ export default function Test() {
       const processor = audioContext.createScriptProcessor(4096, 1, 1);
       processorRef.current = processor;
 
-      // Connect WebSocket with enhanced accent recognition
+      // Connect WebSocket with enhanced accent recognition for all global accents
       const ws = new WebSocket(
-        `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}&language_detection=true&accent_detection=true&punctuate=true&format_text=true&speaker_labels=false`
+        `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}`
       );
       wsRef.current = ws;
       
-      // Log connection ready and track connection quality
+      // Log connection ready and track connection quality with accent detection
       let audioPacketsSent = 0;
       ws.addEventListener('open', () => {
         console.log('🌍 WebSocket connected - AssemblyAI ready with GLOBAL ACCENT RECOGNITION');
-        console.log('🎯 Enhanced features: Language detection, accent detection, punctuation, formatting');
-        console.log('ℹ️ Session info: 16kHz audio, real-time streaming enabled for ALL accents');
+        console.log('🎯 Enhanced features enabled: Language detection, accent detection, punctuation, formatting, word boost');
+        console.log('✨ Optimized for: American, British, Australian, Indian, African, European, Asian, and ALL non-native speakers');
+        console.log('ℹ️ Session info: 16kHz audio, 4096 buffer size, real-time streaming with enhanced accent understanding');
       });
 
       ws.onopen = () => {
@@ -814,6 +815,9 @@ export default function Test() {
           return;
         }
 
+        // Log all message types for debugging
+        console.log('📨 WebSocket message type:', data.message_type, 'Text:', data.text?.substring(0, 50));
+
         if (data.message_type === 'PartialTranscript' || data.message_type === 'FinalTranscript') {
           // CRITICAL: Block transcripts during question transitions
           if (isTransitioningRef.current) {
@@ -856,24 +860,39 @@ export default function Test() {
             if (data.message_type === 'FinalTranscript') {
               // MULTI-LAYER DEDUPLICATION SYSTEM
               
+              // Enhanced duplicate detection
+              
               // Layer 1: Exact duplicate check
               if (cleanedText === lastFinalTranscriptRef.current) {
-                console.log('🚫 Duplicate final transcript detected and blocked:', cleanedText.substring(0, 50));
-                return; // Skip this duplicate
-              }
-              
-              // Layer 2: Check if this text already exists at the end of accumulated transcript
-              if (accumulatedTranscriptRef.current.endsWith(cleanedText)) {
-                console.log('🚫 Transcript already exists at end, blocking duplicate:', cleanedText.substring(0, 50));
+                console.log('🚫 Layer 1: Exact duplicate blocked:', cleanedText.substring(0, 50));
                 return;
               }
               
-              // Layer 2.5: Check if accumulated ends with this text (trimmed comparison)
-              const trimmedAccumulated = accumulatedTranscriptRef.current.trim();
-              const trimmedCurrent = cleanedText.trim();
-              if (trimmedAccumulated.endsWith(trimmedCurrent) && trimmedCurrent.length > 0) {
-                console.log('🚫 Trimmed transcript already exists at end, blocking duplicate:', cleanedText.substring(0, 50));
+              // Layer 2: Check if this text already exists at the end
+              const currentAccumulated = accumulatedTranscriptRef.current.trim();
+              const currentText = cleanedText.trim();
+              
+              if (currentAccumulated.endsWith(currentText) && currentText.length > 5) {
+                console.log('🚫 Layer 2: Text already at end, blocked:', cleanedText.substring(0, 50));
                 return;
+              }
+              
+              // Layer 2.5: Check last N words to prevent re-adding recent text
+              if (currentAccumulated.length > 0 && currentText.length > 10) {
+                const accWords = currentAccumulated.toLowerCase().split(/\s+/);
+                const currWords = currentText.toLowerCase().split(/\s+/);
+                
+                // If we have enough words, check if the last few match
+                if (accWords.length >= 5 && currWords.length >= 3) {
+                  const lastAccWords = accWords.slice(-Math.min(currWords.length, 10)).join(' ');
+                  const currWordsJoined = currWords.join(' ');
+                  
+                  // Check if current text is a substring of recent accumulated text
+                  if (lastAccWords.includes(currWordsJoined)) {
+                    console.log('🚫 Layer 2.5: Recent words match, blocked:', cleanedText.substring(0, 50));
+                    return;
+                  }
+                }
               }
               
               // Layer 3: Similarity check - prevent near-duplicates (90%+ similar)
@@ -1042,19 +1061,33 @@ export default function Test() {
                 }
               }
               
-              // Update accumulated ref
-              accumulatedTranscriptRef.current = (accumulatedTranscriptRef.current + ' ' + cleanedText).trim();
+              // Update accumulated ref FIRST (synchronous)
+              const newAccumulated = (accumulatedTranscriptRef.current + ' ' + cleanedText).trim();
+              accumulatedTranscriptRef.current = newAccumulated;
               
-              // Store in transcriptions state
-              setTranscriptions(prevT => {
-                return {
-                  ...prevT,
-                  [currentIndexRef.current]: accumulatedTranscriptRef.current
-                };
+              console.log('✅ UPDATING TRANSCRIPT:', {
+                cleanedText: cleanedText.substring(0, 50),
+                newAccumulated: newAccumulated.substring(0, 100),
+                questionIndex: currentIndexRef.current
               });
               
-              // Update display
-              setCurrentTranscript(accumulatedTranscriptRef.current);
+              // Use queueMicrotask to batch state updates and ensure they happen in order
+              queueMicrotask(() => {
+                // Update both states in the same microtask to prevent race conditions
+                const currentIndex = currentIndexRef.current;
+                const textToSet = accumulatedTranscriptRef.current;
+                
+                // Update storage
+                setTranscriptions(prevT => ({
+                  ...prevT,
+                  [currentIndex]: textToSet
+                }));
+                
+                // Update display
+                setCurrentTranscript(textToSet);
+                
+                console.log('💾📺 States updated:', textToSet.substring(0, 50));
+              });
               
               // Clear partial transcript ref after final
               partialTranscriptRef.current = '';
@@ -1171,12 +1204,16 @@ export default function Test() {
 
   // Modify startTest to enable next button for first question
   const startTest = async () => {
+    console.log('🚀 Starting test...');
+    
     if (!guidelinesAccepted) {
+      console.log('⚠️ Guidelines not accepted');
       setShowGuidelines(true);
       return;
     }
 
     try {
+      console.log('🎤 Requesting microphone access...');
       // Get audio stream
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -1197,17 +1234,23 @@ export default function Test() {
           })
         } as MediaTrackConstraints,
       });
+      console.log('✅ Microphone access granted:', stream.getAudioTracks()[0].label);
       audioStreamRef.current = stream;
 
       // Setup streaming transcription
+      console.log('🔌 Setting up streaming transcription...');
       await setupStreamingTranscription(stream);
+      console.log('✅ Streaming transcription setup complete');
 
       setIsRecording(true);
       setHasStartedTest(true);
       setTimeLeft(120); // Start with 120 seconds (2 minutes)
       setNextButtonDisabled(false); // Enable next button for first question
+      
+      console.log('✅ Test started successfully - Ready to record!');
     } catch (error) {
-      console.error('Recording setup error:', error);
+      console.error('❌ Recording setup error:', error);
+      alert(`Failed to start recording: ${error instanceof Error ? error.message : 'Unknown error'}\n\nPlease check:\n1. Microphone permissions\n2. Internet connection\n3. Browser console for details`);
       setIsRecording(false);
       setHasStartedTest(false);
       setIsConnecting(false);

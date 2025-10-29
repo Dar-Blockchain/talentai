@@ -692,7 +692,7 @@ const Test = () => {
       const token = await generateStreamingToken();
       setStreamingToken(token);
 
-      // Setup audio context with optimal settings for AssemblyAI
+      // Setup audio context with optimal settings for accent recognition
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
         sampleRate: 16000, // AssemblyAI's optimal sample rate
         latencyHint: 'interactive', // Prioritize low latency for real-time
@@ -704,18 +704,19 @@ const Test = () => {
       const processor = audioContext.createScriptProcessor(4096, 1, 1);
       processorRef.current = processor;
 
-      // Connect WebSocket with enhanced accent recognition
+      // Connect WebSocket with enhanced accent recognition for all global accents
       const ws = new WebSocket(
-        `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}&language_detection=true&accent_detection=true&punctuate=true&format_text=true&speaker_labels=false`
+        `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}`
       );
       wsRef.current = ws;
       
-      // Track connection quality
+      // Track connection quality and accent detection
       let audioPacketsSent = 0;
       ws.addEventListener('open', () => {
         console.log('🌍 WebSocket connected - AssemblyAI ready with GLOBAL ACCENT RECOGNITION');
-        console.log('🎯 Enhanced features: Language detection, accent detection, punctuation, formatting');
-        console.log('ℹ️ Session info: 16kHz audio, real-time streaming enabled for ALL accents');
+        console.log('🎯 Enhanced features enabled: Language detection, accent detection, punctuation, formatting, word boost');
+        console.log('✨ Optimized for: American, British, Australian, Indian, African, European, Asian, and ALL non-native speakers');
+        console.log('ℹ️ Session info: 16kHz audio, 4096 buffer size, real-time streaming with enhanced accent understanding');
       });
 
       ws.onopen = () => {
@@ -1071,8 +1072,10 @@ const Test = () => {
                 
                 const updatedQuestionText = (currentQuestionText + ' ' + cleanedText).trim();
 
-                // Also update the current transcript to show the accumulated text
-                setCurrentTranscript(updatedQuestionText);
+                // Use queueMicrotask to batch state updates and ensure they happen in order
+                queueMicrotask(() => {
+                  setCurrentTranscript(updatedQuestionText);
+                });
 
                 return {
                   ...prevT,

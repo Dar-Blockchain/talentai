@@ -11,6 +11,7 @@ import {
     Chip,
     Stack,
     Divider,
+    Link,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { styled } from '@mui/material/styles';
@@ -19,6 +20,127 @@ import ErrorIcon from '@mui/icons-material/Error';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 
 const GREEN_MAIN = '#8310FF';
+
+// Utility function to detect and convert URLs to clickable links
+const LinkifiedText = ({ text, ...props }: { text: string } & any) => {
+    if (!text) return null;
+    
+    // Regular expression to match URLs
+    const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9.-]+\.(com|org|net|edu|gov|io|co|ai|dev|tech|app)[^\s]*)/gi;
+    
+    const parts = text.split(urlRegex).filter(Boolean);
+    
+    return (
+        <Typography {...props}>
+            {parts.map((part: string, index: number) => {
+                if (!part) return null;
+                
+                // Check if this part is a URL
+                if (part.match(/^https?:\/\//i)) {
+                    return (
+                        <Link
+                            key={index}
+                            href={part}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{
+                                color: '#8310FF',
+                                textDecoration: 'underline',
+                                '&:hover': {
+                                    color: '#6B0BC7',
+                                    textDecoration: 'underline',
+                                }
+                            }}
+                        >
+                            {part}
+                        </Link>
+                    );
+                } else if (part.match(/^www\./i) || part.match(/[a-zA-Z0-9.-]+\.(com|org|net|edu|gov|io|co|ai|dev|tech|app)/i)) {
+                    const href = part.startsWith('www.') ? `https://${part}` : `https://${part}`;
+                    return (
+                        <Link
+                            key={index}
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{
+                                color: '#8310FF',
+                                textDecoration: 'underline',
+                                '&:hover': {
+                                    color: '#6B0BC7',
+                                    textDecoration: 'underline',
+                                }
+                            }}
+                        >
+                            {part}
+                        </Link>
+                    );
+                }
+                
+                return <span key={index}>{part}</span>;
+            })}
+        </Typography>
+    );
+};
+
+// Component to render list items with clickable links
+const LinkifiedListItem = ({ text, style }: { text: string; style?: React.CSSProperties }) => {
+    if (!text) return null;
+    
+    const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9.-]+\.(com|org|net|edu|gov|io|co|ai|dev|tech|app)[^\s]*)/gi;
+    const parts = text.split(urlRegex).filter(Boolean);
+    
+    return (
+        <li style={style}>
+            {parts.map((part: string, index: number) => {
+                if (!part) return null;
+                
+                if (part.match(/^https?:\/\//i)) {
+                    return (
+                        <Link
+                            key={index}
+                            href={part}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{
+                                color: '#8310FF',
+                                textDecoration: 'underline',
+                                '&:hover': {
+                                    color: '#6B0BC7',
+                                    textDecoration: 'underline',
+                                }
+                            }}
+                        >
+                            {part}
+                        </Link>
+                    );
+                } else if (part.match(/^www\./i) || part.match(/[a-zA-Z0-9.-]+\.(com|org|net|edu|gov|io|co|ai|dev|tech|app)/i)) {
+                    const href = part.startsWith('www.') ? `https://${part}` : `https://${part}`;
+                    return (
+                        <Link
+                            key={index}
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{
+                                color: '#8310FF',
+                                textDecoration: 'underline',
+                                '&:hover': {
+                                    color: '#6B0BC7',
+                                    textDecoration: 'underline',
+                                }
+                            }}
+                        >
+                            {part}
+                        </Link>
+                    );
+                }
+                
+                return <span key={index}>{part}</span>;
+            })}
+        </li>
+    );
+};
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(4),
@@ -150,7 +272,7 @@ export default function CandidateInterviewDetailPage() {
                                         Job Details
                                     </Typography>
                                     <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>{data.post.jobDetails.title}</Typography>
-                                    <Typography variant="body2" sx={{ mb: 1 }}>{data.post.jobDetails.description}</Typography>
+                                    <LinkifiedText text={data.post.jobDetails.description} variant="body2" sx={{ mb: 1 }} />
                                  
                                     {/* <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Salary:</Typography>
                                     <Typography variant="body2" sx={{ mb: 2 }}>{data.post.jobDetails.salary ? `${data.post.jobDetails.salary.min} - ${data.post.jobDetails.salary.max} ${data.post.jobDetails.salary.currency}` : '-'}</Typography>
@@ -286,12 +408,16 @@ export default function CandidateInterviewDetailPage() {
                                                                 
                                                                 return (
                                                                     <Box key={qIdx} sx={{ mb: 2, p: 2, background: '#f9f9f9', borderRadius: 2 }}>
-                                                                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-                                                                            Q{qIdx + 1}: {qa.question}
-                                                                        </Typography>
-                                                                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1, fontStyle: 'italic' }}>
-                                                                            Your Answer: {qa.answer}
-                                                                        </Typography>
+                                                                        <LinkifiedText 
+                                                                            text={`Q${qIdx + 1}: ${qa.question}`}
+                                                                            variant="body2" 
+                                                                            sx={{ fontWeight: 600, mb: 1 }} 
+                                                                        />
+                                                                        <LinkifiedText 
+                                                                            text={`Your Answer: ${qa.answer}`}
+                                                                            variant="body2" 
+                                                                            sx={{ color: 'text.secondary', mb: 1, fontStyle: 'italic' }} 
+                                                                        />
                                                                         <Chip 
                                                                             label={`${statusIcon} ${qa.status.replace('_', ' ').toUpperCase()}`}
                                                                             size="small"
@@ -305,14 +431,18 @@ export default function CandidateInterviewDetailPage() {
                                                                             />
                                                                         )}
                                                                         {qa.partialCorrectReason && (
-                                                                           <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#666', fontStyle: 'italic' }}>
-                                                                                {qa.partialCorrectReason}
-                                                                            </Typography>
+                                                                           <LinkifiedText 
+                                                                                text={qa.partialCorrectReason}
+                                                                                variant="caption" 
+                                                                                sx={{ display: 'block', mt: 1, color: '#666', fontStyle: 'italic' }} 
+                                                                            />
                                                                         )}
                                                                         {qa.exampleCorrectAnswer && (
-                                                                            <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#1976d2', fontStyle: 'italic' }}>
-                                                                                Example: {qa.exampleCorrectAnswer}
-                                                                            </Typography>
+                                                                            <LinkifiedText 
+                                                                                text={`Example: ${qa.exampleCorrectAnswer}`}
+                                                                                variant="caption" 
+                                                                                sx={{ display: 'block', mt: 1, color: '#1976d2', fontStyle: 'italic' }} 
+                                                                            />
                                                                         )}
                                                                     </Box>
                                                                 );
@@ -367,9 +497,11 @@ export default function CandidateInterviewDetailPage() {
                                                 }}>
                                                     {idx + 1}
                                                 </Box>
-                                                <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.6 }}>
-                                                    {rec}
-                                                </Typography>
+                                                <LinkifiedText 
+                                                    text={rec}
+                                                    variant="body2" 
+                                                    sx={{ flex: 1, lineHeight: 1.6 }} 
+                                                />
                                             </Box>
                                         </Box>
                                     ))}
@@ -404,13 +536,13 @@ export default function CandidateInterviewDetailPage() {
                                                     <Typography variant="body2" sx={{ color: 'green', mb: 0.5 }}>Strengths:</Typography>
                                                     <ul style={{ margin: 0, paddingLeft: 20 }}>
                                                         {skill.strengths?.map((str: string, i: number) => (
-                                                            <li key={i} style={{ color: '#388e3c' }}>{str}</li>
+                                                            <LinkifiedListItem key={i} text={str} style={{ color: '#388e3c' }} />
                                                         ))}
                                                     </ul>
                                                     <Typography variant="body2" sx={{ color: 'red', mb: 0.5 }}>Weaknesses:</Typography>
                                                     <ul style={{ margin: 0, paddingLeft: 20 }}>
                                                         {skill.weaknesses?.map((w: string, i: number) => (
-                                                            <li key={i} style={{ color: '#d32f2f' }}>{w}</li>
+                                                            <LinkifiedListItem key={i} text={w} style={{ color: '#d32f2f' }} />
                                                         ))}
                                                     </ul>
                                                     <Typography variant="body2" sx={{ mb: 0.5 }}>Confidence Score: {skill.confidenceScore}</Typography>
@@ -424,7 +556,7 @@ export default function CandidateInterviewDetailPage() {
                                             <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Recommendations:</Typography>
                                             <ul style={{ margin: 0, paddingLeft: 20 }}>
                                                 {data.jobAssessmentResult.analysis.recommendations.map((rec: string, idx: number) => (
-                                                    <li key={idx} style={{ color: '#1976d2' }}>{rec}</li>
+                                                    <LinkifiedListItem key={idx} text={rec} style={{ color: '#1976d2' }} />
                                                 ))}
                                             </ul>
                                         </>
@@ -434,7 +566,7 @@ export default function CandidateInterviewDetailPage() {
                                             <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Next Steps:</Typography>
                                             <ul style={{ margin: 0, paddingLeft: 20 }}>
                                                 {data.jobAssessmentResult.analysis.nextSteps.map((step: string, idx: number) => (
-                                                    <li key={idx} style={{ color: '#388e3c' }}>{step}</li>
+                                                    <LinkifiedListItem key={idx} text={step} style={{ color: '#388e3c' }} />
                                                 ))}
                                             </ul>
                                         </>
@@ -444,38 +576,14 @@ export default function CandidateInterviewDetailPage() {
                                             <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 2, mb: 1 }}>Key Gaps:</Typography>
                                             <ul style={{ margin: 0, paddingLeft: 20 }}>
                                                 {data.jobAssessmentResult.analysis.jobMatch.keyGaps.map((gap: string, idx: number) => (
-                                                    <li key={idx} style={{ color: '#d32f2f' }}>{gap}</li>
+                                                    <LinkifiedListItem key={idx} text={gap} style={{ color: '#d32f2f' }} />
                                                 ))}
                                             </ul>
                                         </>
                                     )}
                                 </Box>
                             )}
-                            {((data.type === 'onboarding' || data.type === 'hr' || data.type === 'skill') && Array.isArray(data.recommendations) && data.recommendations.length > 0) && (
-                                <Box sx={{ mb: 4, p: 3, background: '#f3f0ff', borderRadius: 3, border: '1px solid #eee' }}>
-                                    <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
-                                        Recommendations
-                                    </Typography>
-                                    <ul style={{ margin: 0, paddingLeft: 20 }}>
-                                        {data.recommendations.map((rec: string, idx: number) => {
-                                            // Regex to find URLs
-                                            const urlRegex = /(https?:\/\/[^\s]+)/g;
-                                            const parts = rec.split(urlRegex);
-                                            return (
-                                                <li key={idx} style={{ color: '#1976d2', marginBottom: 4 }}>
-                                                    {parts.map((part, i) =>
-                                                        urlRegex.test(part) ? (
-                                                            <a key={i} href={part} target="_blank" rel="noopener noreferrer" style={{ color: '#1565c0', textDecoration: 'underline', wordBreak: 'break-all' }}>{part}</a>
-                                                        ) : (
-                                                            <span key={i}>{part}</span>
-                                                        )
-                                                    )}
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                </Box>
-                            )}
+                        
                         </>
                     )}
                 </StyledPaper>
