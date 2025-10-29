@@ -694,7 +694,7 @@ export default function Test() {
 
       // Connect WebSocket with enhanced accent recognition for all global accents
       const ws = new WebSocket(
-        `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}&language_detection=true&accent_detection=true&punctuate=true&format_text=true&speaker_labels=false&word_boost=true&disable_partial_transcripts=false`
+        `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}`
       );
       wsRef.current = ws;
       
@@ -814,6 +814,9 @@ export default function Test() {
           console.log('ℹ️ Session info:', data);
           return;
         }
+
+        // Log all message types for debugging
+        console.log('📨 WebSocket message type:', data.message_type, 'Text:', data.text?.substring(0, 50));
 
         if (data.message_type === 'PartialTranscript' || data.message_type === 'FinalTranscript') {
           // CRITICAL: Block transcripts during question transitions
@@ -1044,18 +1047,28 @@ export default function Test() {
               }
               
               // Update accumulated ref
-              accumulatedTranscriptRef.current = (accumulatedTranscriptRef.current + ' ' + cleanedText).trim();
+              const newAccumulated = (accumulatedTranscriptRef.current + ' ' + cleanedText).trim();
+              accumulatedTranscriptRef.current = newAccumulated;
+              
+              console.log('✅ UPDATING TRANSCRIPT:', {
+                cleanedText: cleanedText.substring(0, 50),
+                newAccumulated: newAccumulated.substring(0, 100),
+                questionIndex: currentIndexRef.current
+              });
               
               // Store in transcriptions state
               setTranscriptions(prevT => {
-                return {
+                const updated = {
                   ...prevT,
-                  [currentIndexRef.current]: accumulatedTranscriptRef.current
+                  [currentIndexRef.current]: newAccumulated
                 };
+                console.log('💾 Transcriptions state updated:', updated[currentIndexRef.current]?.substring(0, 50));
+                return updated;
               });
               
               // Update display
-              setCurrentTranscript(accumulatedTranscriptRef.current);
+              setCurrentTranscript(newAccumulated);
+              console.log('📺 Display updated:', newAccumulated.substring(0, 50));
               
               // Clear partial transcript ref after final
               partialTranscriptRef.current = '';
@@ -1172,12 +1185,16 @@ export default function Test() {
 
   // Modify startTest to enable next button for first question
   const startTest = async () => {
+    console.log('🚀 Starting test...');
+    
     if (!guidelinesAccepted) {
+      console.log('⚠️ Guidelines not accepted');
       setShowGuidelines(true);
       return;
     }
 
     try {
+      console.log('🎤 Requesting microphone access...');
       // Get audio stream
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -1198,17 +1215,23 @@ export default function Test() {
           })
         } as MediaTrackConstraints,
       });
+      console.log('✅ Microphone access granted:', stream.getAudioTracks()[0].label);
       audioStreamRef.current = stream;
 
       // Setup streaming transcription
+      console.log('🔌 Setting up streaming transcription...');
       await setupStreamingTranscription(stream);
+      console.log('✅ Streaming transcription setup complete');
 
       setIsRecording(true);
       setHasStartedTest(true);
       setTimeLeft(120); // Start with 120 seconds (2 minutes)
       setNextButtonDisabled(false); // Enable next button for first question
+      
+      console.log('✅ Test started successfully - Ready to record!');
     } catch (error) {
-      console.error('Recording setup error:', error);
+      console.error('❌ Recording setup error:', error);
+      alert(`Failed to start recording: ${error instanceof Error ? error.message : 'Unknown error'}\n\nPlease check:\n1. Microphone permissions\n2. Internet connection\n3. Browser console for details`);
       setIsRecording(false);
       setHasStartedTest(false);
       setIsConnecting(false);

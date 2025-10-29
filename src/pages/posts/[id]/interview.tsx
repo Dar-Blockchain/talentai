@@ -706,7 +706,7 @@ const Test = () => {
 
       // Connect WebSocket with enhanced accent recognition for all global accents
       const ws = new WebSocket(
-        `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}&language_detection=true&accent_detection=true&punctuate=true&format_text=true&speaker_labels=false&word_boost=true&disable_partial_transcripts=false`
+        `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}`
       );
       wsRef.current = ws;
       
