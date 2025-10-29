@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  Alert,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -387,6 +388,7 @@ const Test = () => {
   const [showFirstViolationModal, setShowFirstViolationModal] = useState(false);
   const violationHandledRef = useRef(false);
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const [error, setError] = useState<string | null>(null);
 
   // Add new state for button timer
   const [nextButtonDisabled, setNextButtonDisabled] = useState(true);
@@ -461,31 +463,57 @@ const Test = () => {
 
   // Fetch questions when profile is complete
   useEffect(() => {
+    // Check if stepId is missing
+    if (isProfileComplete && !stepId && router.isReady) {
+      console.error('❌ Missing stepId in URL');
+      setError('Missing stepId parameter in URL. This interview requires a stepId to load questions.');
+      setIsGenerating(false);
+      return;
+    }
+
     if (isProfileComplete && stepId) {
       const fetchQuestions = async () => {
         try {
           setIsGenerating(true);
           const token = Cookies.get('api_token');
+          console.log('🔑 Token check:', { 
+            exists: !!token, 
+            length: token?.length,
+            preview: token?.substring(0, 20) + '...'
+          });
+
           if (!token) {
-            console.log('No token found, redirecting to signin');
+            console.log('❌ No token found, redirecting to signin');
             const target = `/posts/${id}/interview${stepId ? `?stepId=${stepId}` : ''}`;
             router.push(`/signin?returnUrl=${encodeURIComponent(target)}`);
             return;
           }
 
+          console.log(`📥 Fetching questions for stepId: ${stepId}`);
+          
           // Use the new recruitment step API endpoint
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}recruitementStep/generate-questions/${stepId}`, {
+          const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}recruitementStep/generate-questions/${stepId}`;
+          console.log('📡 Request URL:', url);
+          console.log('📡 Request headers:', { Authorization: `Bearer ${token.substring(0, 20)}...` });
+          
+          const response = await fetch(url, {
             method: 'GET',
             headers: {
-              'Authorization': `Bearer ${token}`
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
             }
           });
 
+          console.log(`📡 API Response status: ${response.status}`);
+
           if (!response.ok) {
-            throw new Error('Failed to fetch questions');
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            console.error('❌ API Error:', errorData);
+            throw new Error(errorData.error || errorData.message || `Failed to fetch questions (${response.status})`);
           }
 
           const data: JobQuestionsResponse = await response.json();
+          console.log('✅ Questions received:', data.questions?.length || 0);
           setTestedSkills(data.testedSkills || []);
 
           const formattedQuestions: Question[] = data.questions.map((question, index) => {
@@ -507,8 +535,9 @@ const Test = () => {
             }), {})
           );
         } catch (error) {
-          console.error('Error fetching questions:', error);
-          router.push('/');
+          console.error('❌ Error fetching questions:', error);
+          setError(`Failed to load questions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          // Don't redirect - let user see the error
         } finally {
           setIsGenerating(false);
         }
@@ -516,7 +545,7 @@ const Test = () => {
 
       fetchQuestions();
     }
-  }, [isProfileComplete, stepId]);
+  }, [isProfileComplete, stepId, router.isReady, id]);
 
 
 
@@ -1278,11 +1307,14 @@ const Test = () => {
         }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch questions');
-      }
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            console.error('❌ API Error Response:', errorData);
+            throw new Error(errorData.error || errorData.message || `HTTP ${response.status}: Failed to fetch questions`);
+          }
 
-      const data: JobQuestionsResponse = await response.json();
+          const data: JobQuestionsResponse = await response.json();
+          console.log('✅ Questions loaded:', data.questions?.length || 0);
       setTestedSkills(data.testedSkills || []);
       const formattedQuestions: Question[] = data.questions.map((question, index) => {
         // Handle case where requiredSkills might not be available
@@ -1804,6 +1836,39 @@ const Test = () => {
         </StyledAppBar>
 
         <Container maxWidth="md" sx={{ py: 4, flexGrow: 1 }}>
+          {/* Error Display */}
+          {error && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              <strong>Error:</strong> {error}
+              <br />
+              <strong>Details:</strong>
+              <ul style={{ marginTop: 8, marginBottom: 0 }}>
+                <li>Post ID: {id}</li>
+                <li>Step ID: {stepId || '❌ Missing!'}</li>
+                <li>Check browser console (F12) for more details</li>
+              </ul>
+              {!stepId && (
+                <>
+                  <br />
+                  <strong>How to fix:</strong>
+                  <br />
+                  <Button 
+                    variant="contained" 
+                    color="primary"
+                    onClick={() => router.push(`/posts/${id}`)}
+                    sx={{ mt: 1 }}
+                  >
+                    Go to Post Page to Get Correct URL
+                  </Button>
+                  <br />
+                  <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
+                    The correct URL should look like: <code>/posts/{id}/interview?stepId=YOUR_STEP_ID</code>
+                  </Typography>
+                </>
+              )}
+            </Alert>
+          )}
+          
           {/* Prominent Question Panel - Always visible during test */}
           {hasStartedTest && !isGenerating && questions[current] && (
             <QuestionPanel

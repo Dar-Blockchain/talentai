@@ -67,15 +67,22 @@ const initialState: ProfileState = {
     error: null,
 };
 
+let getMyProfileCallCount = 0;
+
 export const getMyProfile = createAsyncThunk<Profile, void, { rejectValue: string }>(
     'profile/getMyProfile',
     async (_, { rejectWithValue }) => {
+        const callId = ++getMyProfileCallCount;
+        console.log(`🔑 [ProfileSlice][Call-${callId}] getMyProfile CALLED`);
+        
         try {
             const token = localStorage.getItem('api_token');
             if (!token) {
+                console.error(`❌ [ProfileSlice][Call-${callId}] No token found`);
                 return rejectWithValue('No authentication token found');
             }
 
+            console.log(`📡 [ProfileSlice][Call-${callId}] Fetching profile from API...`);
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
                 method: 'GET',
                 headers: {
@@ -86,12 +93,15 @@ export const getMyProfile = createAsyncThunk<Profile, void, { rejectValue: strin
 
             if (!response.ok) {
                 const error = await response.json();
+                console.error(`❌ [ProfileSlice][Call-${callId}] API error:`, error);
                 return rejectWithValue(error.message || 'Failed to fetch profile');
             }
 
             const data = await response.json();
+            console.log(`✅ [ProfileSlice][Call-${callId}] Profile fetched successfully`);
             return data;
         } catch (error) {
+            console.error(`❌ [ProfileSlice][Call-${callId}] Exception:`, error);
             return rejectWithValue('An error occurred while fetching profile');
         }
     }

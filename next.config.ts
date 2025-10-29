@@ -3,7 +3,7 @@
 import type { Configuration as WebpackConfig } from 'webpack';
 
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false, // Temporarily disabled to debug duplicate API calls
   output: 'standalone',
   experimental: {
     outputFileTracingRoot: process.cwd(),

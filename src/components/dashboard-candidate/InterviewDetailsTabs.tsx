@@ -48,19 +48,42 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
     const [total, setTotal] = useState(0);
     const router = useRouter();
 
+    // Use ref to store profile ID to prevent unnecessary re-fetches
+    const profileIdRef = useRef(profile?._id);
+    const abortControllerRef = useRef<AbortController | null>(null);
+    const requestIdRef = useRef(0);
+    const componentIdRef = useRef(Math.random().toString(36).substring(7));
+    
+    console.log(`🎭 [InterviewDetailsTabs-${componentIdRef.current}] Component render`);
+    
+    // Update ref when profile changes, but don't trigger re-fetch
+    useEffect(() => {
+        profileIdRef.current = profile?._id;
+    }, [profile]);
+
     const fetchData = useCallback(
-        async (type: string, pageNum: number, limit: number) => {
+        async (type: string, pageNum: number, limit: number, signal?: AbortSignal) => {
+            const requestId = ++requestIdRef.current;
+            const componentId = componentIdRef.current;
+            
+            console.log(`🚀 [Comp-${componentId}][Req-${requestId}] STARTING fetch:`, { type, page: pageNum + 1, limit });
+            
             setLoading(true);
             setError(null);
+            
             try {
                 const token = localStorage.getItem("api_token");
-                const realProfileId = profile?._id;
+                const realProfileId = profileIdRef.current;
                 const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/?page=${pageNum + 1
                     }&limit=${limit}&type=${type}&profileId=${realProfileId}`;
 
+                console.log(`📡 [Comp-${componentId}][Req-${requestId}] Making HTTP request to:`, url);
+
                 const res = await fetch(url, {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
+                    signal: signal, // Support cancellation
                 });
+                
                 if (!res.ok) throw new Error("Failed to fetch interview details");
                 const json = await res.json();
                 const results = Array.isArray(json.results) ? json.results : (Array.isArray(json.data) ? json.data : []);
@@ -71,24 +94,45 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                     results.length;
                 setData(results);
                 setTotal(inferredTotal);
+                
+                console.log(`✅ [Comp-${componentId}][Req-${requestId}] SUCCESS - Data loaded:`, results.length, 'items');
             } catch (e: any) {
+                // Don't show error if request was aborted
+                if (e.name === 'AbortError') {
+                    console.log(`⏭️ [Comp-${componentId}][Req-${requestId}] CANCELLED`);
+                    return;
+                }
+                console.error(`❌ [Comp-${componentId}][Req-${requestId}] ERROR:`, e);
                 setError(e.message || "Error fetching data");
             } finally {
                 setLoading(false);
             }
         },
-        [profile]
+        [] // Remove profile dependency - use ref instead
     );
 
-    const mountedOnce = useRef(false);
     useEffect(() => {
-        // Guard against double-invocation in React StrictMode in development
-        if (!mountedOnce.current) {
-            mountedOnce.current = true;
-            fetchData(tab, page, rowsPerPage);
-            return;
+        const componentId = componentIdRef.current;
+        console.log(`🔵 [Comp-${componentId}] useEffect TRIGGERED - dependencies:`, { tab, page, rowsPerPage });
+        
+        // Cancel previous request if any
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            console.log(`🚫 [Comp-${componentId}] Cancelling previous request`);
         }
-        fetchData(tab, page, rowsPerPage);
+        
+        // Create new abort controller for this request
+        const abortController = new AbortController();
+        abortControllerRef.current = abortController;
+        
+        console.log(`🔄 [Comp-${componentId}] Calling fetchData...`);
+        fetchData(tab, page, rowsPerPage, abortController.signal);
+        
+        // Cleanup function to cancel request on unmount or when dependencies change
+        return () => {
+            console.log(`🧹 [Comp-${componentId}] useEffect CLEANUP called`);
+            abortController.abort();
+        };
     }, [tab, page, rowsPerPage, fetchData]);
 
     const handleTabChange = (_: any, newValue: string) => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   getMyProfile,
@@ -189,6 +189,7 @@ export default function DashboardCandidate() {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
+    console.log('🔄 [DASHBOARD] Fetching profile...');
     dispatch(getMyProfile());
   }, [dispatch]);
 
@@ -455,8 +456,17 @@ export default function DashboardCandidate() {
   const [adLoading, setAdLoading] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
   const [adPost, setAdPost] = useState<any[]>([]);
+  const adsFetchedRef = useRef(false);
 
   useEffect(() => {
+    // Prevent duplicate API calls
+    if (adsFetchedRef.current) {
+      console.log('⏭️ [DASHBOARD] Ads already fetched, skipping...');
+      return;
+    }
+
+    console.log('🔄 [DASHBOARD] Fetching recommended posts...');
+    adsFetchedRef.current = true;
     setAdLoading(true);
     setAdError(null);
     const token = localStorage.getItem("api_token");

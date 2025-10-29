@@ -184,13 +184,26 @@ export default function RecommendedOpportunities({ data, total, emptyText = "You
 
       {/* Job Cards Container */}
       {(() => {
-        // Filter out any rows that don't have a valid title
+        // Filter out any rows that don't have a valid title AND firstStepId
         const validData = data.filter((row) => {
           const jobDetails = row?.jobDetails || row;
           const title = jobDetails?.title || row?.title;
-          // Only show cards with actual titles
-          return !!title;
+          const firstStepId = row?.firstStepId;
+          
+          // Debug: Log jobs without stepId
+          if (!firstStepId && title) {
+            console.log('🚫 Filtering out job without stepId:', {
+              id: row._id || row.id,
+              title,
+              firstStepId
+            });
+          }
+          
+          // Only show cards with actual titles AND firstStepId (required for interview)
+          return !!title && !!firstStepId;
         });
+
+        console.log(`✅ Showing ${validData.length} jobs with stepId out of ${data.length} total jobs`);
 
         // If no valid data, show empty state
         if (validData.length === 0) {
@@ -592,12 +605,26 @@ export default function RecommendedOpportunities({ data, total, emptyText = "You
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} sx={{ textTransform: 'none' }}>Close</Button>
-          {!!(selected?._id || selected?.id) && (
-            <Link href={`/posts/${selected?._id || selected?.id}/interview${selected?.firstStepId ? `?stepId=${selected.firstStepId}` : ''}`} passHref legacyBehavior>
+          {!!(selected?._id || selected?.id) && selected?.firstStepId ? (
+            <Link href={`/posts/${selected._id || selected.id}/interview?stepId=${selected.firstStepId}`} passHref legacyBehavior>
               <Button variant="contained" sx={{ background: '#8310FF', textTransform: 'none' }}>
                 Proceed
               </Button>
             </Link>
+          ) : (
+            <Button 
+              variant="contained" 
+              disabled 
+              sx={{ 
+                background: '#cccccc', 
+                textTransform: 'none',
+                '&.Mui-disabled': {
+                  color: '#666666'
+                }
+              }}
+            >
+              Interview Not Available
+            </Button>
           )}
         </DialogActions>
       </Dialog>
