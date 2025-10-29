@@ -24,16 +24,28 @@ export default async function handler(
           // Enable all accuracy features for global accent recognition
           disable_partial_transcripts: false,
           enable_extra_session_information: true,
-          // Enhanced accent recognition settings
-          language_detection: true,
-          accent_detection: true,
-          punctuate: true,
-          format_text: true,
-          speaker_labels: false,
-          // Additional settings for better accent understanding
-          boost_param: 'high', // Boost accuracy for non-native speakers
-          filter_profanity: false, // Don't filter any words
-          redact_pii: false // Don't redact personal info for better context
+          
+          // Enhanced accent recognition settings for all global accents
+          language_detection: true,      // Auto-detect languages and code-switching
+          accent_detection: true,         // Detect and adapt to various accents
+          punctuate: true,                // Add punctuation for better context
+          format_text: true,              // Format text with proper capitalization
+          speaker_labels: false,          // Not needed for single-speaker interviews
+          
+          // Advanced settings for better non-native speaker understanding
+          word_boost: true,               // Boost custom vocabulary and technical terms
+          boost_param: 'high',            // High accuracy boost for non-native speakers
+          filter_profanity: false,        // Don't filter any words (technical terms might be flagged)
+          redact_pii: false,              // Don't redact personal info for better context understanding
+          
+          // Audio quality optimization
+          audio_start_from: 0,            // Process from beginning
+          audio_end_at: null,             // Process entire audio stream
+          
+          // Enhanced processing for accented speech
+          disfluencies: true,             // Capture filler words (um, uh) - natural for non-native speakers
+          multichannel: false,            // Single channel (mono) audio
+          dual_channel: false             // Not using dual channel
         }),
       });
 
