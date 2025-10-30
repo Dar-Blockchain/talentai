@@ -75,15 +75,30 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
         throw new Error('Failed to fetch company profiles');
       }
 
-        const data = await response.json();
-        const normalized = Array.isArray(data)
-          ? data
-          : Array.isArray((data as any)?.results)
-            ? (data as any).results
-            : Array.isArray((data as any)?.data)
-              ? (data as any).data
-              : [];
-        setCompanyProfiles(normalized);
+      const data = await response.json();
+      let normalized: any[] = [];
+      if (Array.isArray(data)) {
+        normalized = data;
+      } else if (Array.isArray((data as any)?.results)) {
+        normalized = (data as any).results;
+      } else if (Array.isArray((data as any)?.data)) {
+        normalized = (data as any).data;
+      } else if (Array.isArray((data as any)?.assessments)) {
+        // New API shape: { companyId, totalCandidates, assessments: [...] }
+        normalized = (data as any).assessments.map((a: any) => ({
+          _id: `${a.candidateId || 'cand'}-${a.jobId || 'job'}`,
+          candidateName: a.candidateInfo?.name || '',
+          candidateEmail: a.candidateInfo?.email || '',
+          jobTitle: a.jobInfo?.title || '',
+          timestamp: a.assessmentSummary?.latestAssessment || a.timestamp,
+          overallScore: Number(a.assessmentSummary?.jobMatch?.percentage ?? a.assessmentSummary?.averageOverallScore ?? 0) || 0,
+          jobMatchStatus: a.assessmentSummary?.jobMatch?.status || undefined,
+          raw: a,
+        }));
+      } else {
+        normalized = [];
+      }
+      setCompanyProfiles(normalized);
     } catch (error) {
       setProfilesError('Failed to fetch company profiles');
       console.error('Error fetching company profiles:', error);
@@ -148,27 +163,49 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
       );
     }
 
+    // Helpers to support multiple API shapes
+    const getCandidateName = (a: any) => (a?.condidateId?.userId?.username || a?.candidateName || a?.candidateInfo?.name || '').toLowerCase();
+    const getCandidateEmail = (a: any) => (a?.condidateId?.userId?.email || a?.candidateEmail || a?.candidateInfo?.email || '');
+    const getJobTitle = (a: any) => (a?.jobId?.jobDetails?.title || a?.jobTitle || a?.jobInfo?.title || '').toLowerCase();
+    const getScore = (a: any) => {
+      const s1 = Number(a?.analysis?.overallScore);
+      if (!Number.isNaN(s1) && s1 > 0) return s1;
+      const s2 = Number(a?.overallScore);
+      if (!Number.isNaN(s2)) return s2;
+      const s3 = Number(a?.assessmentSummary?.jobMatch?.percentage);
+      if (!Number.isNaN(s3)) return s3;
+      const s4 = Number(a?.assessmentSummary?.averageOverallScore);
+      if (!Number.isNaN(s4)) return s4;
+      return 0;
+    };
+    const getDate = (a: any) => new Date(a?.timestamp || a?.assessmentSummary?.latestAssessment || 0).getTime();
+    const getStatus = (a: any) => {
+      const explicit = (a?.jobMatchStatus || a?.assessmentSummary?.jobMatch?.status || '').toString().toLowerCase();
+      if (explicit.includes('good')) return 'good';
+      if (explicit.includes('poor')) return 'poor';
+      return getScore(a) >= 70 ? 'good' : 'poor';
+    };
+
     // Apply search, filter, and sort
     const normalizedSearch = assessmentSearch.toLowerCase().trim();
     const filteredAssessments = companyProfiles.filter((assessment: any) => {
-      const candidateName = assessment?.condidateId?.userId?.username?.toLowerCase?.() || '';
-      const jobTitle = assessment?.jobId?.jobDetails?.title?.toLowerCase?.() || '';
+      const candidateName = getCandidateName(assessment);
+      const jobTitle = getJobTitle(assessment);
       const matchesSearch = !normalizedSearch || candidateName.includes(normalizedSearch) || jobTitle.includes(normalizedSearch);
-      const score = Number(assessment?.analysis?.overallScore) || 0;
-      const computedStatus = score >= 70 ? 'good' : 'poor';
-      const matchesStatus = assessmentStatusFilter === 'all' || assessmentStatusFilter === computedStatus;
+      const status = getStatus(assessment);
+      const matchesStatus = assessmentStatusFilter === 'all' || assessmentStatusFilter === status;
       return matchesSearch && matchesStatus;
     });
 
     const sortedAssessments = [...filteredAssessments].sort((a: any, b: any) => {
-      const scoreA = Number(a?.analysis?.overallScore) || 0;
-      const scoreB = Number(b?.analysis?.overallScore) || 0;
-      const nameA = (a?.condidateId?.userId?.username || '').toLowerCase();
-      const nameB = (b?.condidateId?.userId?.username || '').toLowerCase();
-      const jobA = (a?.jobId?.jobDetails?.title || '').toLowerCase();
-      const jobB = (b?.jobId?.jobDetails?.title || '').toLowerCase();
-      const dateA = new Date(a?.timestamp || 0).getTime();
-      const dateB = new Date(b?.timestamp || 0).getTime();
+      const scoreA = getScore(a);
+      const scoreB = getScore(b);
+      const nameA = getCandidateName(a);
+      const nameB = getCandidateName(b);
+      const jobA = getJobTitle(a);
+      const jobB = getJobTitle(b);
+      const dateA = getDate(a);
+      const dateB = getDate(b);
       switch (assessmentSort) {
         case 'date_asc':
           return dateA - dateB;
@@ -227,8 +264,8 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
             </TableHead>
             <TableBody>
               {visibleAssessments.map((assessment, index) => {
-                const score = Number(assessment.analysis?.overallScore) || 0;
-                const isGoodMatch = score >= 70;
+                const score = getScore(assessment);
+                const isGoodMatch = getStatus(assessment) === 'good';
                 
                 return (
                   <TableRow 
@@ -255,24 +292,24 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
                         </Avatar>
                         <Box>
                           <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>
-                            {assessment.condidateId?.userId?.username || 'Unknown User'}
+                            {assessment?.condidateId?.userId?.username || assessment?.candidateName || assessment?.candidateInfo?.name || 'Unknown User'}
                           </Typography>
-                          {assessment?.condidateId?.userId?.email && (
+                          {(assessment?.condidateId?.userId?.email || getCandidateEmail(assessment)) && (
                             <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.75rem' }}>
-                              {assessment.condidateId.userId.email}
+                              {assessment?.condidateId?.userId?.email || getCandidateEmail(assessment)}
                             </Typography>
                           )}
                         </Box>
                       </Box>
                     </TableCell>
                     <TableCell sx={{ color: '#111827', fontSize: '0.875rem', borderBottom: '1px solid #e5e7eb' }}>
-                      {assessment.jobId?.jobDetails?.title || 'Unknown Job'}
+                      {assessment?.jobId?.jobDetails?.title || assessment?.jobTitle || assessment?.jobInfo?.title || 'Unknown Job'}
                     </TableCell>
                     <TableCell sx={{ color: '#6b7280', fontSize: '0.875rem', borderBottom: '1px solid #e5e7eb' }}>
-                      {new Date(assessment.timestamp).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                      {new Date(getDate(assessment)).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
                     </TableCell>
                     <TableCell sx={{ color: '#111827', fontSize: '0.875rem', fontWeight: 600, borderBottom: '1px solid #e5e7eb' }}>
-                      {score}%
+                      {Math.round(score)}%
                     </TableCell>
                     <TableCell sx={{ borderBottom: '1px solid #e5e7eb' }}>
                       <Chip

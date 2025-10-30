@@ -30,38 +30,8 @@ import CloseIcon from '@mui/icons-material/Close';
 // TYPES & INTERFACES
 // ============================================================================
 
-interface Assessment {
-  _id: string;
-  condidateId: {
-    userId: {
-      username: string;
-      email: string;
-    };
-    skills: Array<{
-      _id: string;
-      name: string;
-      experienceLevel: string;
-    }>;
-  };
-  jobId: {
-    jobDetails: {
-      title: string;
-    };
-  };
-  analysis: {
-    overallScore: number;
-    jobMatch: {
-      status: string;
-    };
-    skillAnalysis: Array<{
-      skillName: string;
-      requiredLevel: string;
-      match: string;
-    }>;
-    recommendations: string[];
-  };
-  timestamp: string;
-}
+// Allow both legacy and new assessment shapes
+type Assessment = any;
 
 interface AssessmentDetailsModalProps {
   open: boolean;
@@ -85,6 +55,27 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
 }) => {
   if (!assessment) return null;
 
+  // Helpers to support both data shapes
+  const getCandidateName = () => assessment?.condidateId?.userId?.username || assessment?.candidateName || assessment?.candidateInfo?.name || 'Unknown User';
+  const getCandidateEmail = () => assessment?.condidateId?.userId?.email || assessment?.candidateEmail || assessment?.candidateInfo?.email || '';
+  const getJobTitle = () => assessment?.jobId?.jobDetails?.title || assessment?.jobTitle || assessment?.jobInfo?.title || 'Unknown Job';
+  const getOverall = () => Number(assessment?.analysis?.overallScore ?? assessment?.overallScore ?? assessment?.assessmentSummary?.jobMatch?.percentage ?? assessment?.assessmentSummary?.averageOverallScore ?? 0) || 0;
+  const getTimestamp = () => assessment?.timestamp || assessment?.assessmentSummary?.latestAssessment || new Date().toISOString();
+  const candidateSkills = assessment?.condidateId?.skills || assessment?.candidateInfo?.skills || [];
+  const steps = assessment?.raw?.assessmentSummary?.steps || assessment?.assessmentSummary?.steps || [];
+  const topSkillAnalysis = Array.isArray(assessment?.analysis?.skillAnalysis)
+    ? assessment.analysis.skillAnalysis
+    : (Array.isArray(steps) && steps.length > 0 && Array.isArray(steps[steps.length - 1]?.analysis?.skillAnalysis))
+      ? steps[steps.length - 1].analysis.skillAnalysis
+      : [];
+  const recommendations = Array.isArray(assessment?.analysis?.recommendations)
+    ? assessment.analysis.recommendations
+    : Array.isArray(assessment?.assessmentSummary?.recommendations)
+      ? assessment.assessmentSummary.recommendations
+      : (Array.isArray(steps) && steps.length > 0 && Array.isArray(steps[steps.length - 1]?.analysis?.recommendations))
+        ? steps[steps.length - 1].analysis.recommendations
+        : [];
+
   return (
     <Dialog
       open={open}
@@ -97,14 +88,14 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
           boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
           border: '1px solid #e5e7eb',
           maxHeight: '95vh',
-          
+
           overflow: 'hidden'
         }
       }}
     >
-      <DialogTitle sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <DialogTitle sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
         pb: 1,
         borderBottom: '1px solid #e5e7eb',
@@ -122,8 +113,8 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
             <StarIcon sx={{ color: '#1e293b', fontSize: 24 }} />
           </Box>
           <Box>
-            <Typography variant="h6" sx={{ 
-              color: '#111827', 
+            <Typography variant="h6" sx={{
+              color: '#111827',
               fontWeight: 700,
               fontSize: '1.25rem'
             }}>
@@ -138,10 +129,10 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      
-      <DialogContent sx={{ 
+
+      <DialogContent sx={{
         p: 3,
-        mt:"10px",
+        mt: "10px",
 
         overflowY: 'auto',
         maxHeight: 'calc(95vh - 200px)'
@@ -175,43 +166,43 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                   fontWeight: 700,
                   color: 'white'
                 }}>
-                  {(assessment?.condidateId?.userId?.username || 'U')?.[0]}
+                  {(getCandidateName() || 'U')?.[0]}
                 </Box>
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography variant="h5" sx={{ 
-                    fontWeight: 700, 
+                  <Typography variant="h5" sx={{
+                    fontWeight: 700,
                     color: '#111827',
                     mb: 1
                   }} noWrap>
-                    {assessment?.condidateId?.userId?.username}
+                    {getCandidateName()}
                   </Typography>
-                  {assessment?.condidateId?.userId?.email && (
-                    <Typography variant="body2" sx={{ 
-                      color: '#6b7280', 
+                  {getCandidateEmail() && (
+                    <Typography variant="body2" sx={{
+                      color: '#6b7280',
                       mb: 1,
                       display: 'flex',
                       alignItems: 'center',
                       gap: 1
                     }} noWrap>
                       <EmailIcon sx={{ fontSize: 16, color: '#6b7280' }} />
-                      {assessment?.condidateId?.userId?.email}
+                      {getCandidateEmail()}
                     </Typography>
                   )}
-                  <Typography variant="h6" sx={{ 
-                    color: '#10b981', 
+                  <Typography variant="h6" sx={{
+                    color: '#10b981',
                     fontWeight: 600,
                     mb: 1
                   }} noWrap>
-                    {assessment?.jobId?.jobDetails?.title}
+                    {getJobTitle()}
                   </Typography>
-                  <Typography variant="body2" sx={{ 
+                  <Typography variant="body2" sx={{
                     color: '#6b7280',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1
                   }}>
                     <InfoIcon sx={{ fontSize: 14, color: '#10b981' }} />
-                    Assessment Date: {new Date(assessment.timestamp).toLocaleDateString('en-US', {
+                    Assessment Date: {new Date(getTimestamp()).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric'
@@ -219,41 +210,41 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                   </Typography>
                 </Box>
               </Box>
-              
+
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                 <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-                  <CircularProgress 
-                    variant="determinate" 
-                    value={Number(assessment.analysis.overallScore) || 0} 
-                    size={80} 
-                    thickness={4} 
-                    sx={{ 
+                  <CircularProgress
+                    variant="determinate"
+                    value={getOverall()}
+                    size={80}
+                    thickness={4}
+                    sx={{
                       color: '#10b981'
-                    }} 
+                    }}
                   />
                   <Box sx={{
-                    top: 0, left: 0, bottom: 0, right: 0, 
-                    position: 'absolute', 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                    top: 0, left: 0, bottom: 0, right: 0,
+                    position: 'absolute',
+                    display: 'flex',
+                    alignItems: 'center',
                     justifyContent: 'center'
                   }}>
-                    <Typography variant="h5" component="div" sx={{ 
+                    <Typography variant="h5" component="div" sx={{
                       fontWeight: 700,
                       color: '#111827'
                     }}>
-                      {assessment.analysis.overallScore}%
+                      {Math.round(getOverall())}%
                     </Typography>
                   </Box>
                 </Box>
-                
+
                 <Box sx={{ textAlign: 'center' }}>
                   <Chip
-                    label={assessment.analysis?.jobMatch?.status}
+                    label={(assessment?.analysis?.jobMatch?.status || assessment?.assessmentSummary?.jobMatch?.status || '').toString()}
                     size="medium"
                     sx={{
-                      backgroundColor: assessment.analysis?.jobMatch?.status === 'match' 
-                        ? '#10b981' 
+                      backgroundColor: (assessment?.analysis?.jobMatch?.status || assessment?.assessmentSummary?.jobMatch?.status || '').toString().toLowerCase().includes('good')
+                        ? '#10b981'
                         : '#ef4444',
                       color: 'white',
                       fontWeight: 600,
@@ -262,9 +253,9 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                       borderRadius: '8px'
                     }}
                   />
-                  <Typography variant="caption" sx={{ 
-                    color: '#64748b', 
-                    display: 'block', 
+                  <Typography variant="caption" sx={{
+                    color: '#64748b',
+                    display: 'block',
                     mt: 1,
                     fontWeight: 600
                   }}>
@@ -277,33 +268,13 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
 
           {/* Candidate Skills */}
           <Box sx={{ mb: 4 }}>
-            <Typography variant="h6" sx={{ 
-              color: '#111827', 
-              mb: 3, 
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.5
-            }}>
-              <Box sx={{
-                width: 28,
-                height: 28,
-                borderRadius: '8px',
-                backgroundColor: '#10b981',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <StarIcon sx={{ fontSize: 18, color: 'white' }} />
-              </Box>
-              Candidate Skills ({assessment.condidateId.skills.length})
-            </Typography>
-            <Box sx={{ 
+
+            <Box sx={{
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', sm: 'repeat(auto-fit, minmax(250px, 1fr))' },
               gap: 2
             }}>
-              {assessment.condidateId.skills.map((skill: any, index: number) => (
+              {candidateSkills.map((skill: any, index: number) => (
                 <Box
                   key={skill._id}
                   sx={{
@@ -313,8 +284,8 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                     border: '1px solid #e2e8f0'
                   }}
                 >
-                  <Typography variant="subtitle1" sx={{ 
-                    color: '#111827', 
+                  <Typography variant="subtitle1" sx={{
+                    color: '#111827',
                     fontWeight: 600,
                     mb: 1
                   }}>
@@ -337,10 +308,10 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
             </Box>
           </Box>
 
-          {/* Assessment Results */}
+          {/* Assessment Results (summary) */}
           <Box sx={{ mb: 4 }}>
-            <Typography variant="h6" sx={{ 
-              color: '#111827', 
+            <Typography variant="h6" sx={{
+              color: '#111827',
               mb: 3,
               fontWeight: 700,
               display: 'flex',
@@ -360,7 +331,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
               </Box>
               Assessment Results
             </Typography>
-            <Box sx={{ 
+            <Box sx={{
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', md: 'repeat(auto-fit, minmax(200px, 1fr))' },
               gap: 3
@@ -372,21 +343,21 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                 border: '1px solid #bae6fd',
                 textAlign: 'center'
               }}>
-                <Typography variant="h4" sx={{ 
-                  color: '#10b981', 
+                <Typography variant="h4" sx={{
+                  color: '#10b981',
                   fontWeight: 700,
                   mb: 1
                 }}>
-                  {assessment.analysis.overallScore}%
+                  {Math.round(getOverall())}%
                 </Typography>
-                <Typography variant="subtitle1" sx={{ 
+                <Typography variant="subtitle1" sx={{
                   color: '#6b7280',
                   fontWeight: 600
                 }}>
                   Overall Score
                 </Typography>
               </Box>
-              
+
               <Box sx={{
                 backgroundColor: '#fef3c7',
                 borderRadius: '12px',
@@ -394,14 +365,14 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                 border: '1px solid #fcd34d',
                 textAlign: 'center'
               }}>
-                <Typography variant="h4" sx={{ 
-                  color: '#f59e0b', 
+                <Typography variant="h4" sx={{
+                  color: '#f59e0b',
                   fontWeight: 700,
                   mb: 1
                 }}>
-                  {assessment.analysis?.jobMatch?.status === 'match' ? '✓' : '✗'}
+                  {(assessment?.analysis?.jobMatch?.status || assessment?.assessmentSummary?.jobMatch?.status || '').toString().toLowerCase().includes('good') ? '✓' : '✗'}
                 </Typography>
-                <Typography variant="subtitle1" sx={{ 
+                <Typography variant="subtitle1" sx={{
                   color: '#6b7280',
                   fontWeight: 600
                 }}>
@@ -411,16 +382,89 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
             </Box>
           </Box>
 
+          {/* All Tests / Steps */}
+          {Array.isArray(steps) && steps.length > 0 && (
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{
+                color: '#111827',
+                mb: 2,
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5
+              }}>
+                <Box sx={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '8px',
+                  backgroundColor: '#02E2FF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <WorkIcon sx={{ fontSize: 18, color: 'white' }} />
+                </Box>
+                Tests History ({steps.length})
+              </Typography>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {steps.map((step: any, idx: number) => {
+                  const stepScore = Number(step?.analysis?.jobMatch?.percentage ?? step?.analysis?.overallScore ?? 0) || 0;
+                  const status = (step?.analysis?.jobMatch?.status || '').toString();
+                  const date = new Date(step?.timestamp).toLocaleString();
+                  return (
+                    <Box key={step?.interviewId || idx} sx={{
+                      p: 2,
+                      borderRadius: '10px',
+                      border: '1px solid #e5e7eb',
+                      backgroundColor: '#ffffff'
+                    }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography sx={{ fontWeight: 700, color: '#111827' }}>Interview #{idx + 1}</Typography>
+                        <Typography variant="caption" sx={{ color: '#6b7280' }}>{date}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                        <Chip label={`Score: ${Math.round(stepScore)}%`} size="small" color={stepScore >= 70 ? 'success' : 'default'} />
+                        {status && (
+                          <Chip label={status} size="small" sx={{ bgcolor: status.toLowerCase().includes('good') ? '#10b981' : '#ef4444', color: 'white' }} />
+                        )}
+                        <Chip label={`${step?.numberOfQuestions || 0} questions`} size="small" variant="outlined" />
+                      </Box>
+                      {Array.isArray(step?.analysis?.skillAnalysis) && step.analysis.skillAnalysis.length > 0 && (
+                        <Box sx={{ mt: 1 }}>
+                          <Typography variant="subtitle2" sx={{ color: '#374151', fontWeight: 700, mb: 1 }}>Skills Analysis</Typography>
+                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 1.5 }}>
+                            {step.analysis.skillAnalysis.map((s: any, i: number) => (
+                              <Box key={`${s?.skillName || 'skill'}-${i}`} sx={{ p: 1.5, border: '1px solid #f1f5f9', borderRadius: '8px', backgroundColor: '#f8fafc' }}>
+                                <Typography sx={{ fontWeight: 700, color: '#111827', mb: 0.5 }}>{s?.skillName}</Typography>
+                                {Array.isArray(s?.strengths) && s.strengths.length > 0 && (
+                                  <Typography variant="caption" sx={{ display: 'block', color: '#059669' }}>Strengths: {s.strengths.join(', ')}</Typography>
+                                )}
+                                {Array.isArray(s?.weaknesses) && s.weaknesses.length > 0 && (
+                                  <Typography variant="caption" sx={{ display: 'block', color: '#b91c1c' }}>Weaknesses: {s.weaknesses.join(', ')}</Typography>
+                                )}
+                              </Box>
+                            ))}
+                          </Box>
+                        </Box>
+                      )}
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
+
           {/* Skill Analysis */}
-          <Box sx={{ 
-            mb: 4, 
+          <Box sx={{
+            mb: 4,
             backgroundColor: '#f8fafc',
-            borderRadius: '12px', 
-            padding: '20px', 
+            borderRadius: '12px',
+            padding: '20px',
             border: '1px solid #e2e8f0'
           }}>
-            <Typography variant="h6" sx={{ 
-              color: '#111827', 
+            <Typography variant="h6" sx={{
+              color: '#111827',
               mb: 3,
               fontWeight: 700,
               display: 'flex',
@@ -438,34 +482,34 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
               }}>
                 <WorkIcon sx={{ fontSize: 18, color: 'white' }} />
               </Box>
-              Skill Analysis ({assessment.analysis.skillAnalysis.length} skills)
+              Skill Analysis ({topSkillAnalysis.length} skills)
             </Typography>
-            
+
             <Box sx={{
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', md: 'repeat(auto-fit, minmax(300px, 1fr))' },
               gap: 3
             }}>
-              {assessment.analysis.skillAnalysis.map((skill: any, index: number) => {
+              {topSkillAnalysis.map((skill: any, index: number) => {
                 // Check if this is a soft skill (no requiredLevel field or requiredLevel is null/undefined)
                 const isSoftSkill = !skill.requiredLevel || skill.requiredLevel === null || skill.requiredLevel === undefined;
 
                 return (
-                  <Box key={index} sx={{ 
+                  <Box key={index} sx={{
                     backgroundColor: '#ffffff',
                     borderRadius: '8px',
                     padding: '16px',
                     border: '1px solid #e5e7eb'
                   }}>
-                    <Typography variant="subtitle1" sx={{ 
-                      color: '#111827', 
+                    <Typography variant="subtitle1" sx={{
+                      color: '#111827',
                       mb: 2,
                       fontWeight: 600,
                       textAlign: 'center'
                     }}>
                       {skill.skillName}
                     </Typography>
-                    
+
                     {isSoftSkill ? (
                       // Soft skill display - only skillName and confidenceScore
                       <Box sx={{
@@ -475,14 +519,14 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                         textAlign: 'center',
                         border: '1px solid #bae6fd'
                       }}>
-                        <Typography variant="body2" sx={{ 
+                        <Typography variant="body2" sx={{
                           color: '#6b7280',
                           mb: 1,
                           fontWeight: 500
                         }}>
                           Confidence Score
                         </Typography>
-                        <Typography sx={{ 
+                        <Typography sx={{
                           color: '#111827',
                           fontWeight: 700,
                           fontSize: '1.25rem'
@@ -492,7 +536,7 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                       </Box>
                     ) : (
                       // Technical skill display - full details
-                      <Box sx={{ 
+                      <Box sx={{
                         display: 'grid',
                         gridTemplateColumns: '1fr 1fr',
                         gap: 2
@@ -504,14 +548,14 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                           textAlign: 'center',
                           border: '1px solid #e2e8f0'
                         }}>
-                          <Typography variant="body2" sx={{ 
+                          <Typography variant="body2" sx={{
                             color: '#6b7280',
                             mb: 1,
                             fontWeight: 500
                           }}>
                             Required Level
                           </Typography>
-                          <Typography sx={{ 
+                          <Typography sx={{
                             color: '#111827',
                             fontWeight: 600,
                             fontSize: '1rem'
@@ -519,19 +563,19 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                             {skill.requiredLevel}
                           </Typography>
                         </Box>
-                        
+
                         <Box sx={{
-                          backgroundColor: skill.match === 'match' 
-                            ? '#f0fdf4' 
+                          backgroundColor: skill.match === 'match'
+                            ? '#f0fdf4'
                             : '#fef2f2',
                           borderRadius: '8px',
                           padding: '12px',
                           textAlign: 'center',
-                          border: `1px solid ${skill.match === 'match' 
-                            ? '#bbf7d0' 
+                          border: `1px solid ${skill.match === 'match'
+                            ? '#bbf7d0'
                             : '#fecaca'}`
                         }}>
-                          <Typography variant="body2" sx={{ 
+                          <Typography variant="body2" sx={{
                             color: '#6b7280',
                             mb: 1,
                             fontWeight: 500
@@ -542,8 +586,8 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                             label={skill.match}
                             size="small"
                             sx={{
-                              backgroundColor: skill.match === 'match' 
-                                ? '#10b981' 
+                              backgroundColor: skill.match === 'match'
+                                ? '#10b981'
                                 : '#ef4444',
                               color: 'white',
                               fontWeight: 600,
@@ -563,8 +607,8 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
 
           {/* Recommendations */}
           <Box>
-            <Typography variant="h6" sx={{ 
-              color: '#111827', 
+            <Typography variant="h6" sx={{
+              color: '#111827',
               mb: 3,
               fontWeight: 700,
               display: 'flex',
@@ -582,9 +626,9 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
               }}>
                 <AutoAwesomeIcon sx={{ fontSize: 18, color: 'white' }} />
               </Box>
-              Recommendations ({assessment.analysis.recommendations.length})
+              Recommendations ({recommendations.length})
             </Typography>
-            
+
             <Box sx={{
               backgroundColor: '#fffbeb',
               borderRadius: '12px',
@@ -592,8 +636,8 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
               border: '1px solid #fed7aa'
             }}>
               <List sx={{ p: 0 }}>
-                {assessment.analysis.recommendations.map((rec: string, index: number) => (
-                  <ListItem key={index} sx={{ 
+                {recommendations.map((rec: string, index: number) => (
+                  <ListItem key={index} sx={{
                     py: 1.5,
                     px: 0,
                     '&:not(:last-child)': {
@@ -613,16 +657,16 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                         <ArrowForwardIcon sx={{ fontSize: 14, color: 'white' }} />
                       </Box>
                     </ListItemIcon>
-                    <ListItemText 
-                      primary={rec} 
-                      sx={{ 
+                    <ListItemText
+                      primary={rec}
+                      sx={{
                         color: '#111827',
                         '& .MuiListItemText-primary': {
                           fontWeight: 500,
                           lineHeight: 1.5,
                           fontSize: '0.95rem'
                         }
-                      }} 
+                      }}
                     />
                   </ListItem>
                 ))}
@@ -631,9 +675,9 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
           </Box>
         </Box>
       </DialogContent>
-      
-      <DialogActions sx={{ 
-        p: 3, 
+
+      <DialogActions sx={{
+        p: 3,
         borderTop: '1px solid #e5e7eb',
         backgroundColor: '#f9fafb'
       }}>
