@@ -10,7 +10,7 @@ function normalizeSkillName(name) {
  * Chaque compétence vaut jusqu’à 100 points (parfait = 100%, écart max = 0%).
  * La moyenne pondérée finale est renvoyée sur 100.
  */
-module.exports.calculateSkillMatchScore = (jobSkills, candidateSkills) => {
+const calculateSkillMatchScore = (jobSkills, candidateSkills) => {
   if (!Array.isArray(jobSkills) || !Array.isArray(candidateSkills)) return 0;
 
   let totalScore = 0;
