@@ -20,6 +20,7 @@ import {
   DialogActions,
   CircularProgress,
   Alert,
+  TextField,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -378,6 +379,12 @@ const Test = () => {
   const [transcriptions, setTranscriptions] = useState<{ [key: string]: string }>({});
   const [currentTranscript, setCurrentTranscript] = useState('');
   const [isSpeechActive, setIsSpeechActive] = useState(false);
+
+  // Word-level editing state for correcting individual words
+  const [editingWordIndex, setEditingWordIndex] = useState<number | null>(null);
+  const [editingWordValue, setEditingWordValue] = useState('');
+  const isEditingRef = useRef(false);
+  useEffect(() => { isEditingRef.current = editingWordIndex !== null; }, [editingWordIndex]);
   const [questionHighlight, setQuestionHighlight] = useState(false);
   const [showGuidelines, setShowGuidelines] = useState(true);
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
@@ -415,6 +422,31 @@ const Test = () => {
   const questionSessionIdRef = useRef<number>(0);
   const isTransitioningRef = useRef(false);
   const isTimerTransitioning = useRef(false); // Prevent double timer transitions
+
+  // Block copy/cut/paste and context menu while test is active
+  useEffect(() => {
+    if (!hasStartedTest) return;
+    const blockEvent = (e: Event) => { e.preventDefault(); };
+    const blockKeyCombos = (e: KeyboardEvent) => {
+      const isMac = navigator.platform.toUpperCase().includes('MAC');
+      const mod = isMac ? e.metaKey : e.ctrlKey;
+      if ((mod && ['c','v','x','C','V','X'].includes(e.key)) || (e.shiftKey && e.key === 'Insert')) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('copy', blockEvent);
+    window.addEventListener('cut', blockEvent);
+    window.addEventListener('paste', blockEvent);
+    window.addEventListener('contextmenu', blockEvent);
+    window.addEventListener('keydown', blockKeyCombos, { capture: true });
+    return () => {
+      window.removeEventListener('copy', blockEvent);
+      window.removeEventListener('cut', blockEvent);
+      window.removeEventListener('paste', blockEvent);
+      window.removeEventListener('contextmenu', blockEvent);
+      window.removeEventListener('keydown', blockKeyCombos, { capture: true } as any);
+    };
+  }, [hasStartedTest]);
 
   // MediaRecorder references
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -598,6 +630,7 @@ const Test = () => {
     currentIndexRef.current = current;
     setTimeLeft(120); // Reset to 120 seconds (2 minutes)
     setCurrentTranscript(''); // Clear the displayed transcript immediately
+    setEditingWordIndex(null); // Reset editing state
     lastFinalTranscriptRef.current = ''; // Clear last final transcript for deduplication
     
     // Increment question session ID to reject old transcripts
@@ -860,6 +893,11 @@ const Test = () => {
           if (isTransitioningRef.current) {
             console.log('⏸️ Blocking stale transcript during transition:', data.text?.substring(0, 30));
             return; // Reject this transcript completely
+          }
+
+          // While user is editing, do not overwrite their manual changes
+          if (isEditingRef.current) {
+            return;
           }
           
           // Update last transcript time
@@ -2036,9 +2074,14 @@ const Test = () => {
                     </Typography>
                   )}
                 </Typography>
+                {currentTranscript && editingWordIndex === null && (
+                  <Typography variant="caption" sx={{ ml: 'auto', color: '#666', fontStyle: 'italic' }}>
+                    Click any word to correct it
+                  </Typography>
+                )}
                 {currentTranscript.length > 0 && (
                   <Box sx={{
-                    ml: 1,
+                    ml: editingWordIndex === null ? 1 : 'auto',
                     width: 12,
                     height: 12,
                     borderRadius: '50%',
@@ -2056,14 +2099,97 @@ const Test = () => {
                 transition: 'all 0.3s ease',
                 position: 'relative'
               }}>
-                <Typography variant="body1" sx={{
-                  fontStyle: currentTranscript ? 'normal' : 'italic',
-                  color: currentTranscript ? 'text.primary' : 'text.secondary',
-                  fontSize: '1.1rem',
-                  lineHeight: 1.6
-                }}>
-                  {currentTranscript || "Speak your response..."}
-                </Typography>
+                {currentTranscript ? (
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexWrap: 'wrap', 
+                    gap: 0.5,
+                    fontSize: '1.1rem',
+                    lineHeight: 1.8
+                  }}>
+                    {currentTranscript.split(/(\s+)/).map((segment, idx) => {
+                      const isSpace = /^\s+$/.test(segment);
+                      if (isSpace) return <span key={idx}>{segment}</span>;
+                      
+                      const wordIndex = currentTranscript.split(/\s+/).indexOf(segment);
+                      const isEditing = editingWordIndex === wordIndex;
+                      
+                      return isEditing ? (
+                        <TextField
+                          key={idx}
+                          autoFocus
+                          size="small"
+                          value={editingWordValue}
+                          onChange={(e) => setEditingWordValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              const words = currentTranscript.split(/\s+/);
+                              words[wordIndex] = editingWordValue.trim();
+                              const updated = words.join(' ');
+                              const qId = questions[current]?.id;
+                              if (qId) {
+                                setTranscriptions(prev => ({ ...prev, [qId]: updated }));
+                              }
+                              setCurrentTranscript(updated);
+                              setEditingWordIndex(null);
+                            } else if (e.key === 'Escape') {
+                              setEditingWordIndex(null);
+                            }
+                          }}
+                          onBlur={() => {
+                            const words = currentTranscript.split(/\s+/);
+                            words[wordIndex] = editingWordValue.trim();
+                            const updated = words.join(' ');
+                            const qId = questions[current]?.id;
+                            if (qId) {
+                              setTranscriptions(prev => ({ ...prev, [qId]: updated }));
+                            }
+                            setCurrentTranscript(updated);
+                            setEditingWordIndex(null);
+                          }}
+                          sx={{
+                            '& .MuiInputBase-input': {
+                              padding: '2px 4px',
+                              fontSize: '1.1rem',
+                              minWidth: '60px'
+                            }
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          key={idx}
+                          component="span"
+                          onClick={() => {
+                            setEditingWordIndex(wordIndex);
+                            setEditingWordValue(segment);
+                          }}
+                          sx={{
+                            cursor: 'pointer',
+                            px: 0.5,
+                            py: 0.25,
+                            borderRadius: 1,
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                              bgcolor: 'rgba(131, 16, 255, 0.1)',
+                              boxShadow: '0 0 0 1px rgba(131, 16, 255, 0.3)'
+                            }
+                          }}
+                        >
+                          {segment}
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                ) : (
+                  <Typography variant="body1" sx={{
+                    fontStyle: 'italic',
+                    color: 'text.secondary',
+                    fontSize: '1.1rem',
+                    lineHeight: 1.6
+                  }}>
+                    Speak your response...
+                  </Typography>
+                )}
                 {!currentTranscript && isRecording && (
                   <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(0, 255, 157, 0.05)', borderRadius: 1, border: '1px dashed rgba(0, 255, 157, 0.3)' }}>
                     <Typography sx={{ fontSize: '0.85rem', color: '#666', mb: 0.5 }}>
