@@ -367,6 +367,7 @@ module.exports.getCompanyBids = async (req, res) => {
 exports.getCompanyWithAssessments = async (req, res) => {
   try {
     const { id } = req.user.profile;
+    //const id = "68ff674d5d0454e0505e4d75"; // For testing purpose
     
     const { jobId } = req.params; 
     

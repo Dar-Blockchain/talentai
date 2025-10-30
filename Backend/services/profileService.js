@@ -647,49 +647,120 @@ module.exports.getCompanyBids = async (companyId) => {
   }
 };
 
+// services/profileService.js
 module.exports.getCompanyProfileWithAssessments = async (id, jobId) => {
   try {
     const mongoose = require("mongoose");
-    // Ensure id is a string or ObjectId, not Buffer
+
     const safeId = Buffer.isBuffer(id)
       ? new mongoose.Types.ObjectId(id.toString("hex"))
-      : id;
+      : new mongoose.Types.ObjectId(id);
 
-    const profile = await Profile.findById(safeId)
-      .where("type")
-      .equals("Company")
-      .populate({
-        path: "assessmentResults",
-        populate: [
-          {
-            path: "condidateId",
-            model: "Profile",
-            populate: {
-              path: "userId",
-              model: "User",
-            },
+    // ✅ Aggregation pipeline
+    const pipeline = [
+      // 1️⃣ Match by company (and optional job)
+      {
+        $match: {
+          companyId: safeId,
+          ...(jobId ? { jobId: new mongoose.Types.ObjectId(jobId) } : {})
+        }
+      },
+      // 2️⃣ Group all JobAssessmentResults per candidate + job
+      {
+        $group: {
+          _id: {
+            candidateId: "$condidateId",
+            jobId: "$jobId"
           },
-          { path: "jobId", model: "Post" },
-        ],
-      });
+          companyId: { $first: "$companyId" },
+          steps: {
+            $push: {
+              interviewId: "$interviewId",
+              timestamp: "$timestamp",
+              assessmentType: "$assessmentType",
+              numberOfQuestions: "$numberOfQuestions",
+              analysis: "$analysis" // keep full analysis object
+            }
+          },
+          latestAssessment: { $max: "$timestamp" },
+          totalAssessments: { $sum: 1 },
+          averageOverallScore: { $avg: "$analysis.overallScore" }
+        }
+      },
+      // 3️⃣ Join candidate info
+      {
+        $lookup: {
+          from: "profiles",
+          localField: "_id.candidateId",
+          foreignField: "_id",
+          as: "candidateInfo"
+        }
+      },
+      { $unwind: "$candidateInfo" },
+      // 4️⃣ Join user info (username/email)
+      {
+        $lookup: {
+          from: "users",
+          localField: "candidateInfo.userId",
+          foreignField: "_id",
+          as: "userInfo"
+        }
+      },
+      { $unwind: "$userInfo" },
+      // 5️⃣ Join job info
+      {
+        $lookup: {
+          from: "posts",
+          localField: "_id.jobId",
+          foreignField: "_id",
+          as: "jobInfo"
+        }
+      },
+      { $unwind: "$jobInfo" },
+      // 6️⃣ Reshape output
+      {
+        $project: {
+          _id: 0,
+          candidateId: "$_id.candidateId",
+          jobId: "$_id.jobId",
+          companyId: 1,
+          candidateInfo: {
+            name: "$userInfo.username",
+            email: "$userInfo.email",
+            skills: "$candidateInfo.skills",
+            softSkills: "$candidateInfo.softSkills"
+          },
+          jobInfo: {
+            title: "$jobInfo.jobDetails.title",
+            description: "$jobInfo.jobDetails.description"
+          },
+          assessmentSummary: {
+            steps: "$steps",
+            latestAssessment: "$latestAssessment",
+            totalAssessments: "$totalAssessments",
+            averageOverallScore: "$averageOverallScore"
+          }
+        }
+      },
+      // 7️⃣ Sort by latest assessment date
+      {
+        $sort: { "assessmentSummary.latestAssessment": -1 }
+      }
+    ];
 
-    if (!profile) {
-      throw new Error("Profil introuvable ou non une entreprise.");
-    }
+    const results = await mongoose.model("JobAssessmentResult").aggregate(pipeline);
 
-    const assessmentResults = jobId
-      ? profile.assessmentResults.filter(
-          (result) => result.jobId._id?.toString() === jobId
-        )
-      : profile.assessmentResults;
-
-    return assessmentResults;
+    return {
+      companyId: safeId,
+      totalCandidates: results.length,
+      assessments: results
+    };
   } catch (error) {
-    throw new Error(
-      "Erreur lors de la récupération des assessments : " + error.message
-    );
+    console.error("Aggregation error:", error);
+    throw new Error("Erreur lors de l'agrégation: " + error.message);
   }
 };
+
 
 exports.getTotalCompanies = async () => {
   return await Profile.countDocuments({ type: "Company" });
