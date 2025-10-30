@@ -760,17 +760,30 @@ const JobSearchPage: React.FC = () => {
             {!jobDetailsLoading && !jobDetailsError && jobDetails && (
               <Card sx={{ 
                 borderRadius: 3,
-                border: '1px solid #e0e0e0',
+                border: '1px solid rgba(255,255,255,0.5)',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                background: 'rgba(255,255,255,0.6)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(12px)',
               }}>
-                <CardContent sx={{ p: 4 }}>
+                <CardContent sx={{ p: 0 }}>
+                  {/* Visible Title Only */}
+                  <Box sx={{ p: 4, pb: 0 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#2b2152', mb: 2 }}>
+                      {jobDetails.jobDetails.title}
+                    </Typography>
+                  </Box>
+
+                  {/* Everything else blurred */}
+                  <Box sx={{ position: 'relative', mt: 1 }}>
+                    <Box sx={{ p: 4, filter: 'blur(6px)', userSelect: 'none', pointerEvents: 'none' }} aria-hidden>
                   {/* Company Logo and Title */}
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 3 }}>
                     {jobDetails.user?.companyDetails?.logo && (
                       <Box
                         component="img"
                         src={jobDetails.user.companyDetails.logo}
-                        alt={jobDetails.user.companyDetails.companyName}
+                        // alt={jobDetails.user.companyDetails.companyName}
                         sx={{
                           width: 60,
                           height: 60,
@@ -783,9 +796,6 @@ const JobSearchPage: React.FC = () => {
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="h5" sx={{ fontWeight: 700, color: '#2b2152', mb: 1 }}>
                         {jobDetails.jobDetails.title}
-                      </Typography>
-                      <Typography variant="h6" sx={{ color: '#666', mb: 2 }}>
-                        {jobDetails.user?.companyDetails?.companyName || jobDetails.user?.username}
                       </Typography>
                     </Box>
                   </Box>
@@ -890,6 +900,9 @@ const JobSearchPage: React.FC = () => {
                     </Box>
                   )}
 
+                    </Box>
+                    <Box sx={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.4)' }} />
+                  </Box>
                 </CardContent>
               </Card>
             )}
@@ -898,8 +911,11 @@ const JobSearchPage: React.FC = () => {
             {!jobDetailsLoading && !jobDetailsError && !jobDetails && (
               <Card sx={{ 
                 borderRadius: 3,
-                border: '1px solid #e0e0e0',
+                border: '1px solid rgba(255,255,255,0.5)',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                background: 'rgba(255,255,255,0.6)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
               }}>
                 <CardContent sx={{ p: 4, textAlign: 'center' }}>
                   <Typography variant="h6" sx={{ color: '#666', mb: 2 }}>

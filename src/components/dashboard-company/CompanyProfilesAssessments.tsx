@@ -75,8 +75,15 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
         throw new Error('Failed to fetch company profiles');
       }
 
-      const data = await response.json();
-      setCompanyProfiles(data);
+        const data = await response.json();
+        const normalized = Array.isArray(data)
+          ? data
+          : Array.isArray((data as any)?.results)
+            ? (data as any).results
+            : Array.isArray((data as any)?.data)
+              ? (data as any).data
+              : [];
+        setCompanyProfiles(normalized);
     } catch (error) {
       setProfilesError('Failed to fetch company profiles');
       console.error('Error fetching company profiles:', error);
