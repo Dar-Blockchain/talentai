@@ -17,6 +17,8 @@ import {
   IconButton,
   TextField,
   InputAdornment,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import BusinessIcon from '@mui/icons-material/Business';
@@ -145,8 +147,9 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
       const candidateName = assessment?.condidateId?.userId?.username?.toLowerCase?.() || '';
       const jobTitle = assessment?.jobId?.jobDetails?.title?.toLowerCase?.() || '';
       const matchesSearch = !normalizedSearch || candidateName.includes(normalizedSearch) || jobTitle.includes(normalizedSearch);
-      const status = assessment?.analysis?.jobMatch?.status || '';
-      const matchesStatus = assessmentStatusFilter === 'all' || status === assessmentStatusFilter;
+      const score = Number(assessment?.analysis?.overallScore) || 0;
+      const computedStatus = score >= 70 ? 'good' : 'poor';
+      const matchesStatus = assessmentStatusFilter === 'all' || assessmentStatusFilter === computedStatus;
       return matchesSearch && matchesStatus;
     });
 
@@ -343,25 +346,42 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
               }
             }}
           />
-          <Button
-            variant="outlined"
-            startIcon={<TuneIcon />}
+          <Select
+            size="small"
+            value={assessmentStatusFilter}
+            onChange={(e) => setAssessmentStatusFilter(e.target.value as string)}
+            displayEmpty
             sx={{
-              borderColor: '#e5e7eb',
-              color: '#6b7280',
-              textTransform: 'uppercase',
-              fontWeight: 600,
-              fontSize: '0.875rem',
+              minWidth: 160,
+              backgroundColor: 'white',
               borderRadius: '12px',
-              px: 2.5,
-              '&:hover': {
-                borderColor: '#d1d5db',
-                backgroundColor: '#f9fafb'
-              }
+              '& .MuiOutlinedInput-notchedOutline': { border: '1px solid #e5e7eb' }
             }}
           >
-            SORT
-          </Button>
+            <MenuItem value="all">All matches</MenuItem>
+            <MenuItem value="good">Good match (&gt;= 70)</MenuItem>
+            <MenuItem value="poor">Poor match (&lt; 70)</MenuItem>
+          </Select>
+          <Select
+            size="small"
+            value={assessmentSort}
+            onChange={(e) => setAssessmentSort(e.target.value as string)}
+            sx={{
+              minWidth: 200,
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              '& .MuiOutlinedInput-notchedOutline': { border: '1px solid #e5e7eb' }
+            }}
+          >
+            <MenuItem value="date_desc">Newest first</MenuItem>
+            <MenuItem value="date_asc">Oldest first</MenuItem>
+            <MenuItem value="score_desc">Highest score</MenuItem>
+            <MenuItem value="score_asc">Lowest score</MenuItem>
+            <MenuItem value="candidate_asc">Candidate A→Z</MenuItem>
+            <MenuItem value="candidate_desc">Candidate Z→A</MenuItem>
+            <MenuItem value="job_asc">Job A→Z</MenuItem>
+            <MenuItem value="job_desc">Job Z→A</MenuItem>
+          </Select>
         </Box>
       </Box>
       
