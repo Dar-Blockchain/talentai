@@ -5,7 +5,7 @@
  * ajouter `requireAuthUser` et une journalisation.
  */
 const express = require("express");
-const { matchCandidatesToJob } = require("../controllers/newMatchingController");
+const { matchCandidatesToJob } = require("../controllers/matchingController");
 
 const router = express.Router();
 
