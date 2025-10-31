@@ -606,22 +606,23 @@ const Test = () => {
   useEffect(() => {
     currentIndexRef.current = current;
     setTimeLeft(120); // Reset to 120 seconds (2 minutes)
-    setCurrentTranscript(''); // Clear the displayed transcript immediately
-    lastFinalTranscriptRef.current = ''; // Clear last final transcript for deduplication
-    accumulatedTranscriptRef.current = ''; // Clear accumulated transcript for new question
-    lastPartialWordsRef.current = []; // Clear word-by-word tracking
+    
+    // Clear ALL transcript-related state IMMEDIATELY
+    setCurrentTranscript('');
+    lastFinalTranscriptRef.current = '';
+    accumulatedTranscriptRef.current = '';
+    lastPartialWordsRef.current = [];
     
     // Reset sequence tracking for new question
     transcriptSequenceRef.current = 0;
     pendingUpdateRef.current = false;
     
-    // Increment question session ID to reject old transcripts
-    questionSessionIdRef.current = questionSessionIdRef.current + 1;
+    // Session ID already incremented in handleNext, just log it
     const currentQuestionSession = questionSessionIdRef.current;
     
-    console.log(`📋 Question ${current + 1} - Session ID: ${currentQuestionSession} - Transcript state reset`);
+    console.log(`📋 Question ${current + 1} - Session ID: ${currentQuestionSession} - ALL transcript state cleared`);
     
-    // Block transcripts during transition
+    // Keep blocking transcripts during transition (already set in handleNext)
     isTransitioningRef.current = true;
     
     // Reset transcription connection when changing questions
@@ -875,6 +876,13 @@ const Test = () => {
           if (isTransitioningRef.current) {
             console.log('⏸️ Blocking stale transcript during transition:', data.text?.substring(0, 30));
             return; // Reject this transcript completely
+          }
+          
+          // CRITICAL: Verify this transcript belongs to current question session
+          const currentSessionId = questionSessionIdRef.current;
+          if (!data.text || data.text.trim() === '') {
+            console.log('⏸️ Blocking empty transcript');
+            return;
           }
           
           // Update last transcript time
@@ -1369,6 +1377,19 @@ const Test = () => {
 
   const handlePrev = () => setCurrent(c => Math.max(0, c - 1));
   const handleNext = () => {
+    // IMMEDIATELY block all incoming transcripts before state changes
+    console.log('🛑 NEXT CLICKED - Blocking all transcripts immediately');
+    isTransitioningRef.current = true;
+    
+    // Increment session ID IMMEDIATELY to reject any pending transcripts
+    questionSessionIdRef.current = questionSessionIdRef.current + 1;
+    
+    // Clear all transcript buffers immediately
+    lastPartialWordsRef.current = [];
+    pendingUpdateRef.current = false;
+    
+    console.log(`🔒 Session locked. New session will be: ${questionSessionIdRef.current + 1}`);
+    
     if (current < questions.length - 1) {
       setCurrent(c => c + 1);
     } else {
