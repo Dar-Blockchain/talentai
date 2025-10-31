@@ -72,7 +72,7 @@ async function generateOnboardingQuestions({ user, skills, questionsCount = 10 }
   return questions;
 }
 
-async function analyzeOnboardingAnswers({ user, questions, skill }) {
+async function  analyzeOnboardingAnswers({ user, questions, skill }) {
   if (!user) throw { status: 404, message: "User not found." };
 
   if (!Array.isArray(skill)) {
@@ -167,22 +167,23 @@ async function analyzeOnboardingAnswers({ user, questions, skill }) {
     if (missingFields.length > 0) throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
 
     const overallScore = analysis.overallScore;
+    const confidenceScore = analysis.skillAnalysis[0].confidenceScore;
     let demonstratedExperienceLevel;
     let experienceLevelString = "";
 
-    if (overallScore < 6) {
+    if (confidenceScore < 6) {
       demonstratedExperienceLevel = 0;
       experienceLevelString = "NoLevel";
-    } else if (overallScore < 16.32) {
+    } else if (confidenceScore < 16.32) {
       demonstratedExperienceLevel = 1;
       experienceLevelString = "Entry Level";
-    } else if (overallScore < 30.32) {
+    } else if (confidenceScore < 30.32) {
       demonstratedExperienceLevel = 2;
       experienceLevelString = "Junior";
-    } else if (overallScore < 48.31) {
+    } else if (confidenceScore < 48.31) {
       demonstratedExperienceLevel = 3;
       experienceLevelString = "Mid Level";
-    } else if (overallScore < 69.33) {
+    } else if (confidenceScore < 69.33) {
       demonstratedExperienceLevel = 4;
       experienceLevelString = "Senior";
     } else {
@@ -195,10 +196,11 @@ async function analyzeOnboardingAnswers({ user, questions, skill }) {
       analysis.skillAnalysis[0].requiredLevel = demonstratedExperienceLevel;
       analysis.skillAnalysis[0].demonstratedExperienceLevel = demonstratedExperienceLevel;
     }
-
+        if (confidenceScore > 0) {
     const interviewId = await saveInterviewDetailsForOnboarding(profile, overallScore, analysis.skillAnalysis, analysis.recommendations);
-
+     
     profile.interviewDetails.push(interviewId);
+        }
     await profile.save();
 
     if (demonstratedExperienceLevel > 0) {
