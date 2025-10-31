@@ -895,12 +895,12 @@ export default function Test() {
                 return;
               }
               
-              // Check 2: Text already exists anywhere in accumulated (case-insensitive, word-boundary aware)
+              // Check 2: ENHANCED paragraph-level duplicate detection
               const currentAccumulated = accumulatedTranscriptRef.current.toLowerCase().trim();
               const currentTextLower = cleanedText.toLowerCase().trim();
               
               if (currentAccumulated.length > 0 && cleanedText.length > 10) {
-                // Check if this exact text is already present
+                // Check if this exact text is already present (case-insensitive)
                 if (currentAccumulated.includes(currentTextLower)) {
                   console.log('🚫 Text already in transcript, blocking duplicate:', cleanedText.substring(0, 50));
                   return;
@@ -912,18 +912,66 @@ export default function Test() {
                   return;
                 }
                 
-                // Check word-level overlap (last 5 words of accumulated vs first 5 words of current)
-                const accWords = currentAccumulated.split(/\s+/);
-                const currWords = currentTextLower.split(/\s+/);
+                // ENHANCED: Check if current text CONTAINS the accumulated text (might be a superset)
+                // This catches cases where AssemblyAI resends the entire paragraph
+                if (currentTextLower.includes(currentAccumulated) && currentAccumulated.length > 20) {
+                  console.log('🚫 Current contains accumulated transcript (superset), blocking:', cleanedText.substring(0, 50));
+                  return;
+                }
                 
-                if (accWords.length >= 5 && currWords.length >= 5) {
-                  const lastAccWords = accWords.slice(-5).join(' ');
-                  const firstCurrWords = currWords.slice(0, 5).join(' ');
+                // ENHANCED: Check similarity ratio for near-duplicates
+                // Calculate Jaccard similarity on word sets
+                const accWords = new Set(currentAccumulated.split(/\s+/));
+                const currWords = new Set(currentTextLower.split(/\s+/));
+                const intersection = new Set([...accWords].filter(w => currWords.has(w)));
+                const union = new Set([...accWords, ...currWords]);
+                const jaccardSimilarity = intersection.size / union.size;
+                
+                // If 80%+ similar and current is not significantly longer, it's likely a duplicate
+                if (jaccardSimilarity > 0.8 && cleanedText.length < currentAccumulated.length * 1.5) {
+                  console.log(`🚫 High similarity (${(jaccardSimilarity * 100).toFixed(1)}%) detected, blocking duplicate:`, cleanedText.substring(0, 50));
+                  return;
+                }
+                
+                // Check word-level overlap (last 5 words of accumulated vs first 5 words of current)
+                const accWordsArray = currentAccumulated.split(/\s+/);
+                const currWordsArray = currentTextLower.split(/\s+/);
+                
+                if (accWordsArray.length >= 5 && currWordsArray.length >= 5) {
+                  const lastAccWords = accWordsArray.slice(-5).join(' ');
+                  const firstCurrWords = currWordsArray.slice(0, 5).join(' ');
                   
                   // If significant overlap, might be duplicate
                   if (lastAccWords === firstCurrWords) {
                     console.log('🚫 Word-level overlap detected, blocking:', cleanedText.substring(0, 50));
                     return;
+                  }
+                }
+                
+                // ENHANCED: Check if the new text is just a repetition of the last sentence
+                const accSentences = currentAccumulated.split(/[.!?]+/).filter((s: string) => s.trim().length > 0);
+                const currSentences = currentTextLower.split(/[.!?]+/).filter((s: string) => s.trim().length > 0);
+                
+                if (accSentences.length > 0 && currSentences.length > 0) {
+                  const lastAccSentence = accSentences[accSentences.length - 1].trim();
+                  const firstCurrSentence = currSentences[0].trim();
+                  
+                  // Simple Levenshtein-based similarity check
+                  const maxLen = Math.max(lastAccSentence.length, firstCurrSentence.length);
+                  if (maxLen > 0) {
+                    // Simple similarity: check if one contains most of the other
+                    const containmentRatio = Math.min(
+                      lastAccSentence.length / maxLen,
+                      firstCurrSentence.length / maxLen
+                    );
+                    
+                    if (containmentRatio > 0.85 && (
+                      lastAccSentence.includes(firstCurrSentence.substring(0, Math.min(20, firstCurrSentence.length))) ||
+                      firstCurrSentence.includes(lastAccSentence.substring(0, Math.min(20, lastAccSentence.length)))
+                    )) {
+                      console.log('🚫 Sentence-level duplicate detected, blocking:', cleanedText.substring(0, 50));
+                      return;
+                    }
                   }
                 }
               }
