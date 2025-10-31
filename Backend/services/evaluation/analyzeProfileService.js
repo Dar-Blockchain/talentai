@@ -681,7 +681,7 @@ async function analyzeProfileAnswers(req, res) {
 
       // Fonction utilitaire pour convertir score -> proficiency level
       const proficiencyFromConfidenceScore = (score) =>
-        [20, 30, 50, 80, 100].findIndex((limit) => score <= limit) + 1 || 1;
+        [6, 16, 30, 48, 69].findIndex((limit) => score <= limit) + 1 || 1;
 
       const experienceLevels = [
         "Entry Level",
@@ -803,6 +803,7 @@ async function analyzeProfileAnswers(req, res) {
       await profileService.createOrUpdateProfile(id, updatedProfilePayload);
       console.log("Étape J - profileService.createOrUpdateProfile terminé");
 
+      if(existingProfile.overallScore >0){
       // Save interview details et update profile avec interview ID
       const interviewId = await saveInterviewDetailsForAddSkill(
         existingProfile,
@@ -817,6 +818,8 @@ async function analyzeProfileAnswers(req, res) {
       if (!existingProfile.interviewDetails)
         existingProfile.interviewDetails = [];
       existingProfile.interviewDetails.push(interviewId);
+      }
+
       try {
         await existingProfile.save();
         console.log(
