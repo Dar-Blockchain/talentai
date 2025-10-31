@@ -57,7 +57,7 @@ const initializeApp = async () => {
 
     console.log('🤖 Initializing intelligent interview service...');
     // Initialize intelligent interview service
-    //  await intelligentInterviewService.initialize();
+     await intelligentInterviewService.initialize();
 
     console.log('⚡ Initializing server...');
     // Start the server only after successful DB connection
