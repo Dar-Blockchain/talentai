@@ -1105,8 +1105,22 @@ const Test = () => {
               
               // Use queueMicrotask for atomic state update
               queueMicrotask(() => {
+                // FINAL SAFETY CHECK: Verify we're still on the same question
+                if (isTransitioningRef.current) {
+                  console.log('🚫 Blocking state update - transition in progress');
+                  pendingUpdateRef.current = false;
+                  return;
+                }
+                
                 const currentIndex = currentIndexRef.current;
                 const textToSet = accumulatedTranscriptRef.current;
+                
+                // Double-check that accumulated text isn't empty (might have been cleared)
+                if (!textToSet || textToSet.trim().length === 0) {
+                  console.log('🚫 Blocking state update - accumulated text was cleared');
+                  pendingUpdateRef.current = false;
+                  return;
+                }
                 
                 // Update both states atomically
                 setTranscriptions(prevT => ({
@@ -1442,6 +1456,7 @@ const Test = () => {
     isTransitioningRef.current = true;
     
     // Increment session ID IMMEDIATELY to reject any pending transcripts
+    const oldSessionId = questionSessionIdRef.current;
     questionSessionIdRef.current = questionSessionIdRef.current + 1;
     
     // Clear ALL transcript buffers and refs immediately to prevent race conditions
@@ -1454,7 +1469,19 @@ const Test = () => {
     // Clear the displayed transcript immediately
     setCurrentTranscript('');
     
-    console.log(`🔒 Session locked. New session will be: ${questionSessionIdRef.current + 1}`);
+    // CRITICAL: Clear the transcriptions entry for the NEXT question to prevent old data
+    if (current < questions.length - 1) {
+      const nextQuestionIndex = current + 1;
+      setTranscriptions(prevT => {
+        const newTranscriptions = { ...prevT };
+        // Clear any existing text for the next question
+        delete newTranscriptions[nextQuestionIndex];
+        console.log(`🗑️ Cleared transcription data for question ${nextQuestionIndex + 1}`);
+        return newTranscriptions;
+      });
+    }
+    
+    console.log(`🔒 Session locked. Old: ${oldSessionId}, New: ${questionSessionIdRef.current}`);
     
     if (current < questions.length - 1) {
       setCurrent(c => c + 1);
