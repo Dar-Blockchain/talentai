@@ -68,4 +68,5 @@ const convertLevelToNumber = (level) => {
   return levels[level] || 1; // Default to Beginner if unknown
 };
 
+
 module.exports = { calculateSkillMatchScore };
