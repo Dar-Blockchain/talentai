@@ -81,8 +81,21 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
             fullWidth
             label="Minimum Salary"
             type="number"
-            value={salaryRange.min}
-            onChange={(e) => onSalaryChange("min", e.target.value)}
+            value={salaryRange.min.toString()} // render as string
+            onChange={(e) => {
+              // Remove leading zeros
+              let value = e.target.value.replace(/^0+/, '');
+              
+              // If empty, default to 0
+              if (value === '') value = '0';
+
+              // Parse to integer and clamp to 0
+              let numberValue = parseInt(value, 10);
+              if (isNaN(numberValue) || numberValue < 0) numberValue = 0;
+
+              onSalaryChange("min", numberValue);
+            }}
+            inputProps={{ min: 0 }}
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
@@ -99,14 +112,31 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
               },
             }}
           />
+
+
+
+
         </Box>
         <Box sx={{ flex: 2 }}>
           <TextField
             fullWidth
             label="Maximum Salary"
             type="number"
-            value={salaryRange.max}
-            onChange={(e) => onSalaryChange("max", e.target.value)}
+            value={salaryRange.max.toString()} // always render as string
+            onChange={(e) => {
+              // Remove leading zeros
+              let value = e.target.value.replace(/^0+/, '');
+
+              // If empty, default to 0
+              if (value === '') value = '0';
+
+              // Parse to integer and clamp to 0
+              let numberValue = parseInt(value, 10);
+              if (isNaN(numberValue) || numberValue < 0) numberValue = 0;
+
+              onSalaryChange("max", numberValue);
+            }}
+            inputProps={{ min: salaryRange.min }} // prevents typing below min
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
@@ -123,6 +153,7 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
               },
             }}
           />
+
         </Box>
       </Box>
     </Box>
