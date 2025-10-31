@@ -20,7 +20,6 @@ import {
   DialogActions,
   CircularProgress,
   Alert,
-  TextField,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -379,12 +378,6 @@ const Test = () => {
   const [transcriptions, setTranscriptions] = useState<{ [key: string]: string }>({});
   const [currentTranscript, setCurrentTranscript] = useState('');
   const [isSpeechActive, setIsSpeechActive] = useState(false);
-
-  // Word-level editing state for correcting individual words
-  const [editingWordIndex, setEditingWordIndex] = useState<number | null>(null);
-  const [editingWordValue, setEditingWordValue] = useState('');
-  const isEditingRef = useRef(false);
-  useEffect(() => { isEditingRef.current = editingWordIndex !== null; }, [editingWordIndex]);
   const [questionHighlight, setQuestionHighlight] = useState(false);
   const [showGuidelines, setShowGuidelines] = useState(true);
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
@@ -422,31 +415,15 @@ const Test = () => {
   const questionSessionIdRef = useRef<number>(0);
   const isTransitioningRef = useRef(false);
   const isTimerTransitioning = useRef(false); // Prevent double timer transitions
-
-  // Block copy/cut/paste and context menu while test is active
-  useEffect(() => {
-    if (!hasStartedTest) return;
-    const blockEvent = (e: Event) => { e.preventDefault(); };
-    const blockKeyCombos = (e: KeyboardEvent) => {
-      const isMac = navigator.platform.toUpperCase().includes('MAC');
-      const mod = isMac ? e.metaKey : e.ctrlKey;
-      if ((mod && ['c','v','x','C','V','X'].includes(e.key)) || (e.shiftKey && e.key === 'Insert')) {
-        e.preventDefault();
-      }
-    };
-    window.addEventListener('copy', blockEvent);
-    window.addEventListener('cut', blockEvent);
-    window.addEventListener('paste', blockEvent);
-    window.addEventListener('contextmenu', blockEvent);
-    window.addEventListener('keydown', blockKeyCombos, { capture: true });
-    return () => {
-      window.removeEventListener('copy', blockEvent);
-      window.removeEventListener('cut', blockEvent);
-      window.removeEventListener('paste', blockEvent);
-      window.removeEventListener('contextmenu', blockEvent);
-      window.removeEventListener('keydown', blockKeyCombos, { capture: true } as any);
-    };
-  }, [hasStartedTest]);
+  
+  // Add sequence tracking for transcript ordering
+  const transcriptSequenceRef = useRef<number>(0);
+  const pendingUpdateRef = useRef<boolean>(false);
+  const accumulatedTranscriptRef = useRef<string>(''); // Track accumulated text for current question
+  
+  // Word-by-word streaming state
+  const lastPartialWordsRef = useRef<string[]>([]);
+  const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // MediaRecorder references
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -630,14 +607,19 @@ const Test = () => {
     currentIndexRef.current = current;
     setTimeLeft(120); // Reset to 120 seconds (2 minutes)
     setCurrentTranscript(''); // Clear the displayed transcript immediately
-    setEditingWordIndex(null); // Reset editing state
     lastFinalTranscriptRef.current = ''; // Clear last final transcript for deduplication
+    accumulatedTranscriptRef.current = ''; // Clear accumulated transcript for new question
+    lastPartialWordsRef.current = []; // Clear word-by-word tracking
+    
+    // Reset sequence tracking for new question
+    transcriptSequenceRef.current = 0;
+    pendingUpdateRef.current = false;
     
     // Increment question session ID to reject old transcripts
     questionSessionIdRef.current = questionSessionIdRef.current + 1;
     const currentQuestionSession = questionSessionIdRef.current;
     
-    console.log(`📋 Question ${current + 1} - Session ID: ${currentQuestionSession}`);
+    console.log(`📋 Question ${current + 1} - Session ID: ${currentQuestionSession} - Transcript state reset`);
     
     // Block transcripts during transition
     isTransitioningRef.current = true;
@@ -894,11 +876,6 @@ const Test = () => {
             console.log('⏸️ Blocking stale transcript during transition:', data.text?.substring(0, 30));
             return; // Reject this transcript completely
           }
-
-          // While user is editing, do not overwrite their manual changes
-          if (isEditingRef.current) {
-            return;
-          }
           
           // Update last transcript time
           lastTranscriptTimeRef.current = Date.now();
@@ -933,234 +910,187 @@ const Test = () => {
             setIsSpeechActive(true);
             
             if (data.message_type === 'FinalTranscript') {
-              // MULTI-LAYER DEDUPLICATION SYSTEM
+              // SIMPLIFIED & ROBUST DEDUPLICATION
+              // Increment sequence to track order
+              const currentSequence = ++transcriptSequenceRef.current;
               
-              // Layer 1: Exact duplicate check
+              // Basic validation
+              if (cleanedText.length < 1) {
+                console.log('🚫 Empty transcript, ignoring');
+                return;
+              }
+              
+              // Check 1: Exact duplicate of last final transcript
               if (cleanedText === lastFinalTranscriptRef.current) {
-                console.log('🚫 Duplicate final transcript detected and blocked:', cleanedText.substring(0, 50));
-                return; // Skip this duplicate
-              }
-              
-              // Layer 1.5: Check against current question's existing transcript using ref
-              const currentQuestionTextCheck = transcriptions[currentIndexRef.current] || '';
-              
-              // Check if this exact text already exists at the end
-              if (currentQuestionTextCheck.endsWith(cleanedText)) {
-                console.log('🚫 Transcript already exists at end, blocking duplicate:', cleanedText.substring(0, 50));
+                console.log('🚫 Exact duplicate blocked:', cleanedText.substring(0, 50));
                 return;
               }
               
-              // Check trimmed versions
-              const trimmedExisting = currentQuestionTextCheck.trim();
-              const trimmedCurrent = cleanedText.trim();
-              if (trimmedExisting.endsWith(trimmedCurrent) && trimmedCurrent.length > 0) {
-                console.log('🚫 Trimmed transcript already exists at end, blocking duplicate:', cleanedText.substring(0, 50));
-                return;
-              }
+              // Check 2: Text already exists anywhere in accumulated (case-insensitive, word-boundary aware)
+              const currentAccumulated = accumulatedTranscriptRef.current.toLowerCase().trim();
+              const currentTextLower = cleanedText.toLowerCase().trim();
               
-              // Check for substring duplicates (lowered threshold from 20 to 15)
-              if (currentQuestionTextCheck.length > 0 && cleanedText.length > 15) {
-                const existing = currentQuestionTextCheck.toLowerCase().trim();
-                const current = cleanedText.toLowerCase().trim();
-                
-                if (existing.includes(current)) {
-                  console.log('🚫 Transcript substring already exists, blocking duplicate:', cleanedText.substring(0, 50));
+              if (currentAccumulated.length > 0 && cleanedText.length > 10) {
+                // Check if this exact text is already present
+                if (currentAccumulated.includes(currentTextLower)) {
+                  console.log('🚫 Text already in transcript, blocking duplicate:', cleanedText.substring(0, 50));
                   return;
                 }
                 
-                if (existing.endsWith(current)) {
-                  console.log('🚫 Accumulated text already ends with this, blocking duplicate:', cleanedText.substring(0, 50));
+                // Check if accumulated ends with this text
+                if (currentAccumulated.endsWith(currentTextLower)) {
+                  console.log('🚫 Text already at end, blocking:', cleanedText.substring(0, 50));
                   return;
                 }
-              }
-              
-              // Check for repeated patterns (same text appearing twice in a row)
-              const existingWords = currentQuestionTextCheck.split(' ');
-              const currentWords = cleanedText.split(' ');
-              if (existingWords.length >= currentWords.length && currentWords.length > 3) {
-                const lastNWords = existingWords.slice(-currentWords.length).join(' ').toLowerCase();
-                const currentText = currentWords.join(' ').toLowerCase();
-                if (lastNWords === currentText) {
-                  console.log('🚫 Repeated pattern detected, blocking duplicate:', cleanedText.substring(0, 50));
-                  return;
-                }
-              }
-              
-              // Check if current is a completion/correction of previous fragments
-              // Aggressively detect and remove incomplete fragments
-              let shouldReplaceFragments = false;
-              let fragmentsToRemoveCount = 0;
-              
-              if (currentQuestionTextCheck.length > 0 && cleanedText.length > 15) {
-                const recentText = currentQuestionTextCheck.split(' ').slice(-30).join(' '); // Last ~30 words
                 
-                // Split into fragments
-                const fragments = recentText.split(/[.!?]\s+/).filter(f => f.trim().length > 0);
-                const lastFragment = fragments[fragments.length - 1] || '';
+                // Check word-level overlap (last 5 words of accumulated vs first 5 words of current)
+                const accWords = currentAccumulated.split(/\s+/);
+                const currWords = currentTextLower.split(/\s+/);
                 
-                // Extract key words (2+ letters) from both
-                const fragmentWords = lastFragment.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
-                const currentTextLower = cleanedText.toLowerCase();
-                const currentKeyWords = currentTextLower.split(/\s+/).filter((w: string) => w.length > 2);
-                
-                let matchCount = 0;
-                fragmentWords.forEach(word => {
-                  if (currentTextLower.includes(word)) matchCount++;
-                });
-                
-                // More aggressive: If 50%+ of fragment words are in current (lowered from 70%)
-                // OR if current starts with similar words
-                const matchRatio = fragmentWords.length > 0 ? matchCount / fragmentWords.length : 0;
-                const startsWithSimilar = fragmentWords.length > 0 && currentKeyWords.length > 0 &&
-                  fragmentWords.slice(0, 3).filter(w => currentTextLower.includes(w)).length >= 2;
-                
-                // Detect if this is a completion/correction
-                const isCompletion = (matchRatio > 0.5 && currentWords.length >= fragmentWords.length) || 
-                                     (startsWithSimilar && currentWords.length > fragmentWords.length);
-                
-                if (isCompletion) {
-                  console.log(`🔄 Detected correction/completion (${(matchRatio * 100).toFixed(0)}% match) - will replace fragments`);
-                  shouldReplaceFragments = true;
+                if (accWords.length >= 5 && currWords.length >= 5) {
+                  const lastAccWords = accWords.slice(-5).join(' ');
+                  const firstCurrWords = currWords.slice(0, 5).join(' ');
                   
-                  // Count how many fragments to remove
-                  const allFragments = currentQuestionTextCheck.split(/(?<=[.!?])\s+/);
+                  // If significant overlap, might be duplicate
+                  if (lastAccWords === firstCurrWords) {
+                    console.log('🚫 Word-level overlap detected, blocking:', cleanedText.substring(0, 50));
+                    return;
+                  }
+                }
+              }
+              
+              // Check 2.5: Detect if current is a correction/completion of incomplete previous text
+              let shouldRemoveIncomplete = false;
+              let wordsToRemove = 0;
+              
+              if (accumulatedTranscriptRef.current.length > 0 && cleanedText.length > 15) {
+                const accumulatedWords = accumulatedTranscriptRef.current.split(/\s+/);
+                const currentWords = cleanedText.toLowerCase().split(/\s+/);
+                
+                // Check if first 3-5 words of current match last 3-5 words of accumulated
+                const checkLength = Math.min(5, Math.min(accumulatedWords.length, currentWords.length));
+                
+                if (checkLength >= 3) {
+                  const lastAccWords = accumulatedWords.slice(-checkLength).map(w => w.toLowerCase());
+                  const firstCurrWords = currentWords.slice(0, checkLength);
                   
-                  // Check last 3 fragments
-                  for (let i = allFragments.length - 1; i >= Math.max(0, allFragments.length - 3); i--) {
-                    const frag = allFragments[i].toLowerCase();
-                    const fragWords = frag.split(/\s+/).filter(w => w.length > 2);
-                    let matches = 0;
-                    fragWords.forEach(w => {
-                      if (currentTextLower.includes(w)) matches++;
-                    });
-                    
-                    // If this fragment has 40%+ match with current, remove it
-                    if (fragWords.length > 0 && (matches / fragWords.length) > 0.4) {
-                      fragmentsToRemoveCount++;
-                    } else {
-                      break; // Stop if we find a non-matching fragment
+                  // Count matching words
+                  let matchCount = 0;
+                  for (let i = 0; i < checkLength; i++) {
+                    if (lastAccWords[i] === firstCurrWords[i]) {
+                      matchCount++;
                     }
                   }
                   
-                  if (fragmentsToRemoveCount === 0 && allFragments.length === 1) {
-                    fragmentsToRemoveCount = 1; // Remove the single fragment
+                  // If 60%+ words match AND current is longer, this is likely a correction
+                  if (matchCount / checkLength >= 0.6 && cleanedText.split(/\s+/).length > checkLength) {
+                    shouldRemoveIncomplete = true;
+                    // Remove the last few words that are being corrected
+                    wordsToRemove = checkLength;
+                    console.log(`🔄 Detected correction - removing last ${wordsToRemove} incomplete words`);
                   }
                 }
               }
               
-              // Layer 2: Similarity check - prevent near-duplicates (90%+ similar)
-              if (lastFinalTranscriptRef.current && cleanedText.length > 10) {
-                const similarity = calculateSimilarity(cleanedText, lastFinalTranscriptRef.current);
-                if (similarity > 0.9) {
-                  console.log(`🚫 Near-duplicate detected (${(similarity * 100).toFixed(1)}% similar), blocking:`, cleanedText.substring(0, 50));
-                  return;
-                }
-              }
-              
-              // Layer 3: Minimum length validation (reduced from 2 to 1)
-              if (cleanedText.length < 1) {
-                console.log('🚫 Transcript empty, ignoring');
+              // Check 3: If pending update, wait for it
+              if (pendingUpdateRef.current) {
+                console.log('⏳ Pending update in progress, queuing...');
+                // Queue this update to happen after the pending one
+                setTimeout(() => {
+                  // Recursive call after pending is done
+                  ws.onmessage?.(event);
+                }, 50);
                 return;
               }
               
-              // Layer 4: Rate limiting - prevent transcript flooding
-              const now = Date.now();
-              const timeSinceLastBatch = now - lastTranscriptBatchTimeRef.current;
+              // Mark as pending
+              pendingUpdateRef.current = true;
               
-              if (timeSinceLastBatch < 1000) {
-                transcriptCountRef.current++;
-                // Allow max 15 transcripts per second (increased from 10)
-                if (transcriptCountRef.current > 15) {
-                  console.warn('⚠️ Rate limit exceeded, slowing down transcript processing');
-                  return;
-                }
-              } else {
-                // Reset counter every second
-                transcriptCountRef.current = 1;
-                lastTranscriptBatchTimeRef.current = now;
-              }
-              
-              // Layer 5: Minimum time between transcripts (reduced from 100ms to 50ms)
-              // Only apply if we have a previous transcript (allow first one through immediately)
-              if (lastFinalTranscriptRef.current && timeSinceLastBatch < 50) {
-                console.log('🚫 Transcripts coming too fast, throttling');
-                return;
-              }
-              
-              // Update last final transcript
+              // Update refs FIRST (synchronous)
               lastFinalTranscriptRef.current = cleanedText;
               
-              // Use confidence threshold if available
-              const confidence = data.confidence || 0;
-              const words = data.words || [];
-              
-              // Log AssemblyAI's transcription with full details
-              if (text !== cleanedText) {
-                console.log(`🔧 Fixed spacing: "${text}" → "${cleanedText}"`);
+              // If this is a correction, remove the incomplete words first
+              let baseText = accumulatedTranscriptRef.current;
+              if (shouldRemoveIncomplete && wordsToRemove > 0) {
+                const words = baseText.split(/\s+/);
+                baseText = words.slice(0, -wordsToRemove).join(' ').trim();
+                console.log(`✂️ Removed ${wordsToRemove} words. Before: "${accumulatedTranscriptRef.current.substring(Math.max(0, accumulatedTranscriptRef.current.length - 60))}" After: "${baseText.substring(Math.max(0, baseText.length - 60))}"`);
               }
               
+              const newAccumulated = baseText 
+                ? baseText + ' ' + cleanedText 
+                : cleanedText;
+              accumulatedTranscriptRef.current = newAccumulated.trim();
+              
+              // Log
+              const confidence = data.confidence || 0;
               const confidencePercent = (confidence * 100).toFixed(1);
               const confidenceEmoji = confidence >= 0.9 ? '🟢' : confidence >= 0.7 ? '🟡' : '🔴';
-              console.log(`${confidenceEmoji} [${confidencePercent}%] "${cleanedText}"`);
+              console.log(`${confidenceEmoji} [Seq:${currentSequence}][${confidencePercent}%] "${cleanedText}"`);
               
-              // Show word-level analysis for transparency
-              if (words && words.length > 0) {
-                const lowConfidenceWords = words.filter((w: any) => w.confidence < 0.8);
-                if (lowConfidenceWords.length > 0) {
-                  console.log('⚠️ Low confidence words:', lowConfidenceWords.map((w: any) => 
-                    `"${w.text}" (${(w.confidence * 100).toFixed(0)}%)`
-                  ).join(', '));
+              console.log('✅ ADDING:', {
+                new: cleanedText.substring(0, 50),
+                accumulated: newAccumulated.substring(Math.max(0, newAccumulated.length - 80)),
+                questionIndex: currentIndexRef.current,
+                sequence: currentSequence
+              });
+              
+              // Use queueMicrotask for atomic state update
+              queueMicrotask(() => {
+                const currentIndex = currentIndexRef.current;
+                const textToSet = accumulatedTranscriptRef.current;
+                
+                // Update both states atomically
+                setTranscriptions(prevT => ({
+                  ...prevT,
+                  [currentIndex]: textToSet
+                }));
+                
+                setCurrentTranscript(textToSet);
+                
+                // Clear pending flag
+                pendingUpdateRef.current = false;
+                
+                console.log('💾 State updated [Seq:' + currentSequence + ']:', textToSet.substring(Math.max(0, textToSet.length - 60)));
+              });
+              
+              // Clear partial and word tracking
+              lastPartialWordsRef.current = [];
+              
+              // Reset speech active indicator
+              setTimeout(() => setIsSpeechActive(false), 1500);
+            } else {
+              // ⚡ PARTIAL TRANSCRIPT - Stream words one by one as user speaks
+              
+              // Split into words to detect new words
+              const newWords = cleanedText.split(/\s+/);
+              const lastWords = lastPartialWordsRef.current;
+              
+              // Find newly added words
+              const addedWords: string[] = [];
+              for (let i = 0; i < newWords.length; i++) {
+                if (i >= lastWords.length || newWords[i] !== lastWords[i]) {
+                  // This is a new or changed word
+                  addedWords.push(...newWords.slice(i));
+                  break;
                 }
               }
               
-              // For final transcripts, add to the stored transcription for this question
-              setTranscriptions(prevT => {
-                let currentQuestionText = prevT[currentIndexRef.current] || '';
-                
-                // If this is a correction/completion, remove the incomplete fragments first
-                if (shouldReplaceFragments && fragmentsToRemoveCount > 0) {
-                  const sentenceArray = currentQuestionText.split(/(?<=[.!?])\s+/);
-                  if (fragmentsToRemoveCount > 0 && sentenceArray.length >= fragmentsToRemoveCount) {
-                    // Remove the specified number of fragments
-                    currentQuestionText = sentenceArray.slice(0, -fragmentsToRemoveCount).join(' ').trim();
-                    console.log(`✏️ Cleaned up ${fragmentsToRemoveCount} incomplete fragment(s)`);
-                  } else {
-                    // Clear everything for replacement
-                    currentQuestionText = '';
-                    console.log('✏️ Clearing all fragments for replacement');
-                  }
-                }
-                
-                // Also check if this text already exists at the end
-                if (currentQuestionText.endsWith(cleanedText)) {
-                  console.log('🚫 Transcript already exists at end, blocking duplicate');
-                  return prevT; // Don't add duplicate
-                }
-                
-                const updatedQuestionText = (currentQuestionText + ' ' + cleanedText).trim();
-
-                // Use queueMicrotask to batch state updates and ensure they happen in order
-                queueMicrotask(() => {
-                  setCurrentTranscript(updatedQuestionText);
-                });
-
-                return {
-                  ...prevT,
-                  [currentIndexRef.current]: updatedQuestionText
-                };
-              });
+              // Update last words reference
+              lastPartialWordsRef.current = newWords;
               
-              // Reset speech active indicator after a delay
-              setTimeout(() => setIsSpeechActive(false), 1500);
-            } else {
-              // For partial transcripts, show immediately for faster response
-              setTranscriptions(prevT => {
-                const currentQuestionText = prevT[currentIndexRef.current] || '';
-                const displayText = currentQuestionText ? (currentQuestionText + ' ' + cleanedText).trim() : cleanedText;
-                // Update display immediately without waiting for final transcript
-                setCurrentTranscript(displayText);
-                return prevT; // Don't update stored transcriptions for partials
-              });
+              // Show full display immediately (word-by-word effect happens naturally with partials)
+              const displayText = accumulatedTranscriptRef.current 
+                ? (accumulatedTranscriptRef.current + ' ' + cleanedText).trim() 
+                : cleanedText;
+              
+              // Log new words appearing
+              if (addedWords.length > 0) {
+                console.log(`⚡ [WORD-BY-WORD] New words: "${addedWords.join(' ')}"`);
+              }
+              
+              // Update display immediately - AssemblyAI already sends partials word-by-word
+              setCurrentTranscript(displayText);
             }
           }
         }
@@ -2074,20 +2004,20 @@ const Test = () => {
                     </Typography>
                   )}
                 </Typography>
-                {currentTranscript && editingWordIndex === null && (
-                  <Typography variant="caption" sx={{ ml: 'auto', color: '#666', fontStyle: 'italic' }}>
-                    Click any word to correct it
-                  </Typography>
-                )}
                 {currentTranscript.length > 0 && (
-                  <Box sx={{
-                    ml: editingWordIndex === null ? 1 : 'auto',
-                    width: 12,
-                    height: 12,
-                    borderRadius: '50%',
-                    backgroundColor: isSpeechActive ? '#00ff9d' : '#4caf50',
-                    animation: 'pulse 1s ease-in-out infinite'
-                  }} />
+                  <>
+                    <Box sx={{
+                      ml: 1,
+                      width: 12,
+                      height: 12,
+                      borderRadius: '50%',
+                      backgroundColor: isSpeechActive ? '#00ff9d' : '#4caf50',
+                      animation: 'pulse 1s ease-in-out infinite'
+                    }} />
+                    <Typography sx={{ ml: 'auto', fontSize: '0.75rem', color: '#8310FF', fontStyle: 'italic' }}>
+                      ✏️ Click any word to edit
+                    </Typography>
+                  </>
                 )}
               </Box>
               <Box sx={{
@@ -2103,82 +2033,74 @@ const Test = () => {
                   <Box sx={{ 
                     display: 'flex', 
                     flexWrap: 'wrap', 
-                    gap: 0.5,
+                    gap: '6px',
                     fontSize: '1.1rem',
-                    lineHeight: 1.8
+                    lineHeight: 1.8,
                   }}>
-                    {currentTranscript.split(/(\s+)/).map((segment, idx) => {
-                      const isSpace = /^\s+$/.test(segment);
-                      if (isSpace) return <span key={idx}>{segment}</span>;
-                      
-                      const wordIndex = currentTranscript.split(/\s+/).indexOf(segment);
-                      const isEditing = editingWordIndex === wordIndex;
-                      
-                      return isEditing ? (
-                        <TextField
-                          key={idx}
-                          autoFocus
-                          size="small"
-                          value={editingWordValue}
-                          onChange={(e) => setEditingWordValue(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              const words = currentTranscript.split(/\s+/);
-                              words[wordIndex] = editingWordValue.trim();
-                              const updated = words.join(' ');
-                              const qId = questions[current]?.id;
-                              if (qId) {
-                                setTranscriptions(prev => ({ ...prev, [qId]: updated }));
-                              }
-                              setCurrentTranscript(updated);
-                              setEditingWordIndex(null);
-                            } else if (e.key === 'Escape') {
-                              setEditingWordIndex(null);
-                            }
-                          }}
-                          onBlur={() => {
-                            const words = currentTranscript.split(/\s+/);
-                            words[wordIndex] = editingWordValue.trim();
-                            const updated = words.join(' ');
-                            const qId = questions[current]?.id;
-                            if (qId) {
-                              setTranscriptions(prev => ({ ...prev, [qId]: updated }));
-                            }
-                            setCurrentTranscript(updated);
-                            setEditingWordIndex(null);
-                          }}
-                          sx={{
-                            '& .MuiInputBase-input': {
-                              padding: '2px 4px',
-                              fontSize: '1.1rem',
-                              minWidth: '60px'
-                            }
-                          }}
-                        />
-                      ) : (
-                        <Box
-                          key={idx}
-                          component="span"
-                          onClick={() => {
-                            setEditingWordIndex(wordIndex);
-                            setEditingWordValue(segment);
-                          }}
-                          sx={{
-                            cursor: 'pointer',
-                            px: 0.5,
-                            py: 0.25,
-                            borderRadius: 1,
-                            transition: 'all 0.2s ease',
-                            '&:hover': {
-                              bgcolor: 'rgba(131, 16, 255, 0.1)',
-                              boxShadow: '0 0 0 1px rgba(131, 16, 255, 0.3)'
-                            }
-                          }}
-                        >
-                          {segment}
-                        </Box>
-                      );
-                    })}
+                    {currentTranscript.split(/\s+/).map((word, index) => (
+                      <Box
+                        key={index}
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e) => {
+                          const editedWord = e.currentTarget.textContent || '';
+                          console.log(`✏️ User edited word ${index}: "${word}" → "${editedWord}"`);
+                          
+                          // Reconstruct the full transcript with the edited word
+                          const words = currentTranscript.split(/\s+/);
+                          words[index] = editedWord;
+                          const newTranscript = words.join(' ');
+                          
+                          // Update everything
+                          setTranscriptions(prevT => ({
+                            ...prevT,
+                            [currentIndexRef.current]: newTranscript
+                          }));
+                          accumulatedTranscriptRef.current = newTranscript;
+                          setCurrentTranscript(newTranscript);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.currentTarget.blur(); // Exit edit mode on Enter or Space
+                          }
+                        }}
+                        onCopy={(e) => {
+                          e.preventDefault();
+                          console.log('🚫 Copy disabled during interview');
+                        }}
+                        onCut={(e) => {
+                          e.preventDefault();
+                          console.log('🚫 Cut disabled during interview');
+                        }}
+                        onPaste={(e) => {
+                          e.preventDefault();
+                          console.log('🚫 Paste disabled during interview');
+                        }}
+                        onContextMenu={(e) => {
+                          e.preventDefault(); // Disable right-click menu
+                          console.log('🚫 Right-click disabled during interview');
+                        }}
+                        sx={{
+                          padding: '2px 4px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          color: 'text.primary',
+                          outline: 'none',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            backgroundColor: 'rgba(131, 16, 255, 0.08)',
+                          },
+                          '&:focus': {
+                            backgroundColor: 'rgba(131, 16, 255, 0.15)',
+                            boxShadow: '0 0 0 2px rgba(131, 16, 255, 0.3)',
+                            fontWeight: 600,
+                          }
+                        }}
+                      >
+                        {word}
+                      </Box>
+                    ))}
                   </Box>
                 ) : (
                   <Typography variant="body1" sx={{
