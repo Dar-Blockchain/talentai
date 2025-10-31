@@ -93,7 +93,7 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
               let numberValue = parseInt(value, 10);
               if (isNaN(numberValue) || numberValue < 0) numberValue = 0;
 
-              onSalaryChange("min", numberValue);
+              onSalaryChange("min", numberValue.toString());
             }}
             inputProps={{ min: 0 }}
             sx={{
@@ -134,7 +134,7 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
               let numberValue = parseInt(value, 10);
               if (isNaN(numberValue) || numberValue < 0) numberValue = 0;
 
-              onSalaryChange("max", numberValue);
+              onSalaryChange("max", numberValue.toString());
             }}
             inputProps={{ min: salaryRange.min }} // prevents typing below min
             sx={{
