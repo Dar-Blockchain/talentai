@@ -1432,9 +1432,15 @@ const Test = () => {
     // Increment session ID IMMEDIATELY to reject any pending transcripts
     questionSessionIdRef.current = questionSessionIdRef.current + 1;
     
-    // Clear all transcript buffers immediately
+    // Clear ALL transcript buffers and refs immediately to prevent race conditions
+    accumulatedTranscriptRef.current = '';
+    lastFinalTranscriptRef.current = '';
     lastPartialWordsRef.current = [];
     pendingUpdateRef.current = false;
+    transcriptSequenceRef.current = 0;
+    
+    // Clear the displayed transcript immediately
+    setCurrentTranscript('');
     
     console.log(`🔒 Session locked. New session will be: ${questionSessionIdRef.current + 1}`);
     
