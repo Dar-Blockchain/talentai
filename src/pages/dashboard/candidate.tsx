@@ -638,6 +638,7 @@ export default function DashboardCandidate() {
                   </Box>
                 ) : (
                   <RecommendedOpportunities
+                    profile={profile}
                     data={memoizedAdData}
                     total={memoizedAdTotal}
                     emptyText="You need to pass a test with a score of 'Good' or >20% to see recommended opportunities"

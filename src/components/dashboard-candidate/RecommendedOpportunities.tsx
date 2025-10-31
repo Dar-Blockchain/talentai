@@ -51,12 +51,13 @@ export type RecommendedOpportunity = {
 };
 
 type RecommendedOpportunitiesProps = {
+  profile: any;
   data: RecommendedOpportunity[];
   total?: number;
   emptyText?: string;
 };
 
-export default function RecommendedOpportunities({ data, total, emptyText = "You need to pass a test with a score of 'Good' or >20% to see recommended opportunities" }: RecommendedOpportunitiesProps) {
+export default function RecommendedOpportunities({profile, data, total, emptyText = "You need to pass a test with a score of 'Good' or >20% to see recommended opportunities" }: RecommendedOpportunitiesProps) {
   const [selected, setSelected] = useState<RecommendedOpportunity | null>(null);
   const [selectedDetails, setSelectedDetails] = useState<Record<string, any> | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
@@ -605,7 +606,7 @@ export default function RecommendedOpportunities({ data, total, emptyText = "You
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} sx={{ textTransform: 'none' }}>Close</Button>
-          {!!(selected?._id || selected?.id) && selected?.firstStepId ? (
+          {!!(selected?._id || selected?.id) && selected?.firstStepId && (profile?.quota < 5) ? (
             <Link href={`/posts/${selected._id || selected.id}/interview?stepId=${selected.firstStepId}`} passHref legacyBehavior>
               <Button variant="contained" sx={{ background: '#8310FF', textTransform: 'none' }}>
                 Proceed
