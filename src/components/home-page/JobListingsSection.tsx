@@ -165,6 +165,7 @@ const JobListingsSection = () => {
       </Box>
 
       {/* Job Listings Section */}
+      {jobs.length > 0 && 
       <Box sx={{ maxWidth: 1300, mx: 'auto', px: 8 }}>
         <Typography
           variant="h3"
@@ -228,12 +229,6 @@ const JobListingsSection = () => {
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
               <CircularProgress sx={{ color: '#8310FF' }} />
-            </Box>
-          ) : jobs.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography variant="body1" sx={{ color: '#666' }}>
-                No jobs available at the moment. Check back soon!
-              </Typography>
             </Box>
           ) : (
             <Box
@@ -394,6 +389,7 @@ const JobListingsSection = () => {
           )}
         </Box>
       </Box>
+    }
     </Box>
   );
 };
