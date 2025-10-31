@@ -9,9 +9,10 @@ export type SkillBlockProps = {
   onStartTest: () => void;
   onDelete?: () => void;
   greenMain: string;
+  profile: any;
 };
 
-function SkillBlockComponent({ skill, type, onStartTest, onDelete, greenMain }: SkillBlockProps) {
+function SkillBlockComponent({ profile, skill, type, onStartTest, onDelete, greenMain }: SkillBlockProps) {
   const proficiencyMap: { [key: string]: number } = {
     "Entry Level": 1,
     Junior: 2,
@@ -191,6 +192,7 @@ function SkillBlockComponent({ skill, type, onStartTest, onDelete, greenMain }: 
               transform: 'translateY(-1px)',
             },
           }}
+          disabled={profile.quota >= 5}
         >
           Start Test
         </Button>

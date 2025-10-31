@@ -288,6 +288,7 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
                 backgroundColor: 'rgba(255, 107, 107, 0.04)',
               },
             }}
+            disabled={profile?.quota >= 5}
           >
             Add Soft Skill
           </Button>
@@ -297,6 +298,7 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {profile.softSkills.map((skill: any) => (
               <SkillBlock
+                profile={profile}
                 key={`${skill.name}-${skill.category}`}
                 skill={skill}
                 type="soft"
@@ -354,6 +356,7 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
                   backgroundColor: 'rgba(255, 107, 107, 0.04)',
                 },
               }}
+              disabled={profile?.quota >= 5}
             >
               Add Your First Skill
             </Button>
@@ -404,6 +407,7 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
                 backgroundColor: 'rgba(33, 150, 243, 0.04)',
               },
             }}
+            disabled={profile?.quota >= 5}
           >
             Add Technical Skill
           </Button>
@@ -416,6 +420,7 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
               ?.slice(0, visibleSkills)
               ?.map((skill: any) => (
                 <SkillBlock
+                  profile={profile}
                   key={skill.name}
                   skill={skill}
                   type="technical"
@@ -496,6 +501,7 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
                   backgroundColor: 'rgba(33, 150, 243, 0.04)',
                 },
               }}
+              disabled={profile?.quota >= 5}
             >
               Add Your First Skill
             </Button>
