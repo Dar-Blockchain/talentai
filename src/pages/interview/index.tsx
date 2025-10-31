@@ -354,8 +354,8 @@ export default function Test() {
             },
             body: JSON.stringify({
               skill: router.query.skill,
-              experienceLevel: router.query.type === 'technicalSkill' ? null : selectedSkill?.experienceLevel || 'Entry Level',
-              proficiencyLevel: router.query.type === 'technicalSkill' ? null : selectedSkill?.proficiencyLevel || 1
+              experienceLevel: router.query.type === 'technicalSkill' ? null : selectedSkill?.experienceLevel || '',
+              proficiencyLevel: router.query.type === 'technicalSkill' ? null : selectedSkill?.proficiencyLevel || ''
             })
           });
 
