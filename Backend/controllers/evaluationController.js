@@ -251,7 +251,12 @@ exports.generateHRQuestions = async (req, res) => {
     if (!profile) {
       throw new HttpError(500, `profile not found.`);
     }
+    profile.quota += 1;
+    await profile.save();
 
+    if (profile.quota >= 5) {
+      throw { status: 403, message: "You have reached your test limit (5)" };
+    }
     // Extract form data from request body for personalization
     const formData = {
       targetCompany: req.body.targetCompany,
