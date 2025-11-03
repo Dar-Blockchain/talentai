@@ -105,7 +105,7 @@ When you speak, you should see:
 
 **Solutions:**
 1. Check internet connection
-2. Verify API key in `src/pages/api/session.ts`
+2. Verify API key in `src/server/api/session.ts`
 3. Check if AssemblyAI service is down
 4. Try refreshing the page
 

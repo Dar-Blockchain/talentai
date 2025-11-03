@@ -1,4 +1,4 @@
-// pages/api/whisper.ts
+// server/api/whisper.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from "openai";
 import { IncomingForm } from 'formidable';
