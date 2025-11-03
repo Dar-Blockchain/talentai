@@ -9,7 +9,7 @@
 const express = require('express');
 const router = express.Router();
 const evaluationController  = require('../controllers/evaluationController');
-const OnbordingController  = require('../controllers/evaluationControllers/Onbording/OnbordingController');
+const OnbordingController  = require('../controllers/evaluationControllers/OnbordingController');
 const Hard_SoftController  = require('../controllers/evaluationControllers/GenerateQuestions_AnalyseHard_Soft/Hard_SoftController');
 const SoftSkillController  = require('../controllers/evaluationControllers/SoftSkillQuestions/SoftSkillController');
 
