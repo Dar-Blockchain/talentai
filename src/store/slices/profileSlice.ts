@@ -71,16 +71,18 @@ let getMyProfileCallCount = 0;
 
 export const getMyProfile = createAsyncThunk<Profile, void, { rejectValue: string }>(
     'profile/getMyProfile',
-    async (_, { rejectWithValue }) => {
+    async (_, { rejectWithValue, getState }) => {
         const callId = ++getMyProfileCallCount;
         console.log(`🔑 [ProfileSlice][Call-${callId}] getMyProfile CALLED`);
         
+        // Early check - if no token, reject immediately without API call
+        const token = localStorage.getItem('api_token');
+        if (!token) {
+            console.error(`❌ [ProfileSlice][Call-${callId}] No token found - skipping API call`);
+            return rejectWithValue('No authentication token found');
+        }
+        
         try {
-            const token = localStorage.getItem('api_token');
-            if (!token) {
-                console.error(`❌ [ProfileSlice][Call-${callId}] No token found`);
-                return rejectWithValue('No authentication token found');
-            }
 
             console.log(`📡 [ProfileSlice][Call-${callId}] Fetching profile from API...`);
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {

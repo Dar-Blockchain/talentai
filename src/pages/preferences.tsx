@@ -102,29 +102,29 @@ function Preferences() {
   // Handle logout
   const handleLogout = async () => {
     try {
-      // Clear the token from both localStorage and cookies
+      // Clear Redux state FIRST to prevent components from trying to fetch
+      dispatch(clearProfile());
+      dispatch(logout());
+      
+      // Then clear the token and storage
       localStorage.removeItem('api_token');
       Cookies.remove('api_token', { path: '/' });
-
-      // Clear all other data
       localStorage.clear();
-
+      
       // Clear all other cookies
       Object.keys(Cookies.get()).forEach(cookieName => {
         Cookies.remove(cookieName, { path: '/' });
       });
 
-      // Clear Redux state
-      dispatch(clearProfile());
-      dispatch(logout());
-
-      // Sign out from NextAuth
-      await signOut({ redirect: false });
-
-      // Redirect to signin page
-      router.push('/signin');
+      // Sign out from NextAuth (don't await to make redirect faster)
+      signOut({ redirect: false }).catch(console.error);
+      
+      // Redirect immediately (don't wait for async operations)
+      window.location.href = '/signin';
     } catch (error) {
       console.error('Logout failed:', error);
+      // Even on error, redirect to signin
+      window.location.href = '/signin';
     }
   };
 
