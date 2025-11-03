@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   TextField,
@@ -7,11 +7,17 @@ import {
   Select,
   MenuItem,
   InputAdornment,
+  Chip,
+  IconButton,
+  Stack,
+  Button,
 } from "@mui/material";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import WorkIcon from "@mui/icons-material/Work";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
 const GREEN_MAIN = "#00FF9D";
 
@@ -28,8 +34,30 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
     return null;
   }
 
+  const { jobDetails } = editedJob;
+  const [newSkill, setNewSkill] = useState("");
+
+  useEffect(() => {
+    console.log(editedJob, "editedJob in JobDetailsForm");
+  }, [editedJob]);
+
+  const handleAddSkill = () => {
+    if (newSkill.trim() === "") return;
+    const updatedSkills = [...(jobDetails.requiredSkills || []), newSkill.trim()];
+    onInputChange("requiredSkills", updatedSkills);
+    setNewSkill("");
+  };
+
+  const handleDeleteSkill = (skillToDelete: string) => {
+    const updatedSkills = (jobDetails.requiredSkills || []).filter(
+      (skill: string) => skill !== skillToDelete
+    );
+    onInputChange("requiredSkills", updatedSkills);
+  };
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      {/* LOCATION & EMPLOYMENT TYPE */}
       <Box
         sx={{
           display: "flex",
@@ -37,25 +65,27 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
           flexDirection: { xs: "column", sm: "row" },
         }}
       >
-        <TextField
-          fullWidth
-          label="Location"
-          value={editedJob.jobDetails.location}
-          onChange={(e) => onInputChange("location", e.target.value)}
-          InputLabelProps={{
-            sx: {
+        {/* LOCATION TYPE SELECT */}
+        <FormControl fullWidth>
+          <InputLabel
+            sx={{
               color: GREEN_MAIN,
               fontSize: "1rem",
               fontWeight: 600,
-            },
-          }}
-          InputProps={{
-            startAdornment: (
+            }}
+          >
+            Location
+          </InputLabel>
+          <Select
+            value={jobDetails.location || ""}
+            onChange={(e) => onInputChange("location", e.target.value)}
+            label="Location"
+            startAdornment={
               <InputAdornment position="start">
                 <LocationOnIcon sx={{ color: GREEN_MAIN }} />
               </InputAdornment>
-            ),
-            sx: {
+            }
+            sx={{
               color: "#0F172A",
               "& .MuiOutlinedInput-notchedOutline": {
                 borderColor: GREEN_MAIN,
@@ -69,9 +99,18 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
                 borderColor: GREEN_MAIN,
                 borderWidth: "2px",
               },
-            },
-          }}
-        />
+              "& .MuiSelect-icon": {
+                color: GREEN_MAIN,
+              },
+            }}
+          >
+            <MenuItem value="Remote">Remote</MenuItem>
+            <MenuItem value="On-site">On-site</MenuItem>
+            <MenuItem value="Hybrid">Hybrid</MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* EMPLOYMENT TYPE */}
         <FormControl fullWidth>
           <InputLabel
             sx={{
@@ -83,7 +122,7 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
             Employment Type
           </InputLabel>
           <Select
-            value={editedJob.jobDetails.employmentType}
+            value={jobDetails.employmentType || ""}
             onChange={(e) => onInputChange("employmentType", e.target.value)}
             label="Employment Type"
             startAdornment={
@@ -117,6 +156,8 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
           </Select>
         </FormControl>
       </Box>
+
+      {/* SALARY SECTION */}
       <Box
         sx={{
           display: "flex",
@@ -135,10 +176,10 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
             Currency
           </InputLabel>
           <Select
-            value={editedJob.jobDetails.salary.currency}
+            value={jobDetails.salary.currency || ""}
             onChange={(e) =>
               onInputChange("salary", {
-                ...editedJob.jobDetails.salary,
+                ...jobDetails.salary,
                 currency: e.target.value,
               })
             }
@@ -172,15 +213,16 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
             <MenuItem value="£">£ (GBP)</MenuItem>
           </Select>
         </FormControl>
+
         <TextField
           sx={{ flex: 2 }}
           label="Minimum Salary"
           type="number"
-          value={editedJob.jobDetails.salary.min}
+          value={jobDetails.salary.min || ""}
           onChange={(e) =>
             onInputChange("salary", {
-              ...editedJob.jobDetails.salary,
-              min: parseInt(e.target.value) || 0,
+              ...jobDetails.salary,
+              min: Number(e.target.value) || 0,
             })
           }
           InputLabelProps={{
@@ -208,15 +250,16 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
             },
           }}
         />
+
         <TextField
           sx={{ flex: 2 }}
           label="Maximum Salary"
           type="number"
-          value={editedJob.jobDetails.salary.max}
+          value={jobDetails.salary.max || ""}
           onChange={(e) =>
             onInputChange("salary", {
-              ...editedJob.jobDetails.salary,
-              max: parseInt(e.target.value) || 0,
+              ...jobDetails.salary,
+              max: Number(e.target.value) || 0,
             })
           }
           InputLabelProps={{
@@ -245,25 +288,28 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
           }}
         />
       </Box>
-      <TextField
-        fullWidth
-        label="Experience Level"
-        value={editedJob.jobDetails.experienceLevel}
-        onChange={(e) => onInputChange("experienceLevel", e.target.value)}
-        InputLabelProps={{
-          sx: {
+
+      {/* EXPERIENCE LEVEL */}
+      <FormControl fullWidth>
+        <InputLabel
+          sx={{
             color: GREEN_MAIN,
             fontSize: "1rem",
             fontWeight: 600,
-          },
-        }}
-        InputProps={{
-          startAdornment: (
+          }}
+        >
+          Experience Level
+        </InputLabel>
+        <Select
+          value={jobDetails.experienceLevel || ""}
+          onChange={(e) => onInputChange("experienceLevel", e.target.value)}
+          label="Experience Level"
+          startAdornment={
             <InputAdornment position="start">
               <TrendingUpIcon sx={{ color: GREEN_MAIN }} />
             </InputAdornment>
-          ),
-          sx: {
+          }
+          sx={{
             color: "#0F172A",
             "& .MuiOutlinedInput-notchedOutline": {
               borderColor: GREEN_MAIN,
@@ -277,9 +323,18 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
               borderColor: GREEN_MAIN,
               borderWidth: "2px",
             },
-          },
-        }}
-      />
+            "& .MuiSelect-icon": {
+              color: GREEN_MAIN,
+            },
+          }}
+        >
+          <MenuItem value="Internship">Internship</MenuItem>
+          <MenuItem value="Junior">Junior</MenuItem>
+          <MenuItem value="Mid-level">Mid-level</MenuItem>
+          <MenuItem value="Senior">Senior</MenuItem>
+          <MenuItem value="Lead">Lead</MenuItem>
+        </Select>
+      </FormControl>
     </Box>
   );
 };
