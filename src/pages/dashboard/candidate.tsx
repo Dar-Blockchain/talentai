@@ -188,10 +188,8 @@ export default function DashboardCandidate() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  useEffect(() => {
-    console.log('🔄 [DASHBOARD] Fetching profile...');
-    dispatch(getMyProfile());
-  }, [dispatch]);
+  // Profile fetching is handled by CandidateOnly wrapper component
+  // No need to fetch here to avoid duplicate requests
 
   useEffect(() => {
     if (profile) {

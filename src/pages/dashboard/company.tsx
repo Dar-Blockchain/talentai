@@ -109,9 +109,11 @@ const DashboardCompany = () => {
   };
 
   useEffect(() => {
-    dispatch(getMyProfile());
     dispatch(fetchBids());
-    // Fetch HR agents when profile is loaded
+  }, [dispatch]);
+
+  // Fetch HR agents when profile is loaded (profile fetching is handled by CompanyOnly wrapper)
+  useEffect(() => {
     if (profile?._id) {
       dispatch(fetchHRAgents(profile._id));
     }
