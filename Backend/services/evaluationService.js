@@ -44,7 +44,14 @@ module.exports.generateTechniqueQuestionsForJob = async (
 ) => {
   try {
     const userSkills = user.profile.skills;
+    const profile = await Profile.findOne({ userId: user._id });
 
+    profile.quota += 1;
+    await profile.save();
+
+    if (profile.quota >= 5) {
+      throw { status: 403, message: "You have reached your test limit (5)" };
+    }
     // Filter out skills the user already has (at or above the required proficiency level).
     // Only generate questiosn for skills, that the job requires that the user lacks or hasn't mastered yet.
     let skillListToTest = jobRequiredSkillList.filter((reqSkill) => {
@@ -201,7 +208,7 @@ exports.analyzeJobTestResults = async ({
     profile,
     analysis.overallScore,
     analysis.skillAnalysis,
-    jobId, 
+    jobId,
     analysis.recommendations
   );
 
@@ -248,71 +255,97 @@ exports.analyzeJobTestResults = async ({
  */
 module.exports.startIntelligentHRInterview = async (profile, formData) => {
   try {
-    console.log('🧠 Starting intelligent HR interview with AI capabilities...');
+    console.log("🧠 Starting intelligent HR interview with AI capabilities...");
 
     const sessionId = `hr_${profile._id}_${Date.now()}`;
 
     // Create intelligent interview configuration
     const interviewConfig = {
-      interviewType: 'HR_INTERVIEW',
-      testReason: formData.testReason || 'HR behavioral interview assessment',
+      interviewType: "HR_INTERVIEW",
+      testReason: formData.testReason || "HR behavioral interview assessment",
       context: {
-        targetCompany: formData.targetCompany || 'Target Company',
-        targetRole: formData.targetRole || 'Software Engineer',
-        experienceLevel: formData.experienceLevel || 'Mid-level',
-        interviewGoal: 'Assess behavioral competencies, communication skills, and cultural fit'
+        targetCompany: formData.targetCompany || "Target Company",
+        targetRole: formData.targetRole || "Software Engineer",
+        experienceLevel: formData.experienceLevel || "Mid-level",
+        interviewGoal:
+          "Assess behavioral competencies, communication skills, and cultural fit",
       },
       models: {
         fastModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
         thinkingModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-        analysisModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
+        analysisModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
       },
       sessionSettings: {
         duration: 30,
-        language: 'en',
-        difficulty: 'adaptive',
+        language: "en",
+        difficulty: "adaptive",
         silenceTimeout: 10000,
-        maxSilencePrompts: 3
+        maxSilencePrompts: 3,
       },
       intelligenceContext: {
         focusAreas: [
           {
-            area: 'Communication Skills',
-            indicators: ['Clear articulation', 'Active listening', 'Professional tone', 'Question handling'],
+            area: "Communication Skills",
+            indicators: [
+              "Clear articulation",
+              "Active listening",
+              "Professional tone",
+              "Question handling",
+            ],
             weight: 25,
-            depth: 'deep'
+            depth: "deep",
           },
           {
-            area: 'Problem Solving',
-            indicators: ['Analytical thinking', 'Creative solutions', 'Decision making', 'Complex situations'],
+            area: "Problem Solving",
+            indicators: [
+              "Analytical thinking",
+              "Creative solutions",
+              "Decision making",
+              "Complex situations",
+            ],
             weight: 25,
-            depth: 'deep'
+            depth: "deep",
           },
           {
-            area: 'Leadership & Teamwork',
-            indicators: ['Team collaboration', 'Conflict resolution', 'Leadership examples', 'Mentoring others'],
+            area: "Leadership & Teamwork",
+            indicators: [
+              "Team collaboration",
+              "Conflict resolution",
+              "Leadership examples",
+              "Mentoring others",
+            ],
             weight: 20,
-            depth: 'moderate'
+            depth: "moderate",
           },
           {
-            area: 'Adaptability',
-            indicators: ['Change management', 'Learning agility', 'Flexibility', 'Stress handling'],
+            area: "Adaptability",
+            indicators: [
+              "Change management",
+              "Learning agility",
+              "Flexibility",
+              "Stress handling",
+            ],
             weight: 15,
-            depth: 'moderate'
+            depth: "moderate",
           },
           {
-            area: 'Cultural Fit',
-            indicators: ['Company values alignment', 'Work style', 'Motivation', 'Long-term goals'],
+            area: "Cultural Fit",
+            indicators: [
+              "Company values alignment",
+              "Work style",
+              "Motivation",
+              "Long-term goals",
+            ],
             weight: 15,
-            depth: 'moderate'
-          }
-        ]
+            depth: "moderate",
+          },
+        ],
       },
       candidateProfile: {
         skills: profile.skills,
         experience: profile.experience,
-        communicationStyle: 'unknown' // Will be learned
-      }
+        communicationStyle: "unknown", // Will be learned
+      },
     };
 
     // Start intelligent interview session
@@ -322,7 +355,7 @@ module.exports.startIntelligentHRInterview = async (profile, formData) => {
       profile._id
     );
 
-    console.log('✅ Intelligent HR interview started successfully');
+    console.log("✅ Intelligent HR interview started successfully");
 
     return {
       success: true,
@@ -331,14 +364,17 @@ module.exports.startIntelligentHRInterview = async (profile, formData) => {
       config: interviewSession.config,
       metadata: {
         aiPowered: true,
-        intelligenceLevel: 'advanced',
-        focusAreas: interviewConfig.intelligenceContext.focusAreas.map(area => area.area)
-      }
+        intelligenceLevel: "advanced",
+        focusAreas: interviewConfig.intelligenceContext.focusAreas.map(
+          (area) => area.area
+        ),
+      },
     };
-
   } catch (error) {
-    console.error('❌ Failed to start intelligent HR interview:', error);
-    throw new Error(`Failed to start intelligent HR interview: ${error.message}`);
+    console.error("❌ Failed to start intelligent HR interview:", error);
+    throw new Error(
+      `Failed to start intelligent HR interview: ${error.message}`
+    );
   }
 };
 
@@ -454,71 +490,97 @@ exports.analyzeHRAnswers = async ({ questions, user, formData }) => {
  */
 module.exports.startIntelligentHRInterview = async (profile, formData) => {
   try {
-    console.log('🧠 Starting intelligent HR interview with AI capabilities...');
+    console.log("🧠 Starting intelligent HR interview with AI capabilities...");
 
     const sessionId = `hr_${profile._id}_${Date.now()}`;
 
     // Create intelligent interview configuration
     const interviewConfig = {
-      interviewType: 'HR_INTERVIEW',
-      testReason: formData.testReason || 'HR behavioral interview assessment',
+      interviewType: "HR_INTERVIEW",
+      testReason: formData.testReason || "HR behavioral interview assessment",
       context: {
-        targetCompany: formData.targetCompany || 'Target Company',
-        targetRole: formData.targetRole || 'Software Engineer',
-        experienceLevel: formData.experienceLevel || 'Mid-level',
-        interviewGoal: 'Assess behavioral competencies, communication skills, and cultural fit'
+        targetCompany: formData.targetCompany || "Target Company",
+        targetRole: formData.targetRole || "Software Engineer",
+        experienceLevel: formData.experienceLevel || "Mid-level",
+        interviewGoal:
+          "Assess behavioral competencies, communication skills, and cultural fit",
       },
       models: {
         fastModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
         thinkingModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-        analysisModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
+        analysisModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
       },
       sessionSettings: {
         duration: 30,
-        language: 'en',
-        difficulty: 'adaptive',
+        language: "en",
+        difficulty: "adaptive",
         silenceTimeout: 10000,
-        maxSilencePrompts: 3
+        maxSilencePrompts: 3,
       },
       intelligenceContext: {
         focusAreas: [
           {
-            area: 'Communication Skills',
-            indicators: ['Clear articulation', 'Active listening', 'Professional tone', 'Question handling'],
+            area: "Communication Skills",
+            indicators: [
+              "Clear articulation",
+              "Active listening",
+              "Professional tone",
+              "Question handling",
+            ],
             weight: 25,
-            depth: 'deep'
+            depth: "deep",
           },
           {
-            area: 'Problem Solving',
-            indicators: ['Analytical thinking', 'Creative solutions', 'Decision making', 'Complex situations'],
+            area: "Problem Solving",
+            indicators: [
+              "Analytical thinking",
+              "Creative solutions",
+              "Decision making",
+              "Complex situations",
+            ],
             weight: 25,
-            depth: 'deep'
+            depth: "deep",
           },
           {
-            area: 'Leadership & Teamwork',
-            indicators: ['Team collaboration', 'Conflict resolution', 'Leadership examples', 'Mentoring others'],
+            area: "Leadership & Teamwork",
+            indicators: [
+              "Team collaboration",
+              "Conflict resolution",
+              "Leadership examples",
+              "Mentoring others",
+            ],
             weight: 20,
-            depth: 'moderate'
+            depth: "moderate",
           },
           {
-            area: 'Adaptability',
-            indicators: ['Change management', 'Learning agility', 'Flexibility', 'Stress handling'],
+            area: "Adaptability",
+            indicators: [
+              "Change management",
+              "Learning agility",
+              "Flexibility",
+              "Stress handling",
+            ],
             weight: 15,
-            depth: 'moderate'
+            depth: "moderate",
           },
           {
-            area: 'Cultural Fit',
-            indicators: ['Company values alignment', 'Work style', 'Motivation', 'Long-term goals'],
+            area: "Cultural Fit",
+            indicators: [
+              "Company values alignment",
+              "Work style",
+              "Motivation",
+              "Long-term goals",
+            ],
             weight: 15,
-            depth: 'moderate'
-          }
-        ]
+            depth: "moderate",
+          },
+        ],
       },
       candidateProfile: {
         skills: profile.skills,
         experience: profile.experience,
-        communicationStyle: 'unknown' // Will be learned
-      }
+        communicationStyle: "unknown", // Will be learned
+      },
     };
 
     // Start intelligent interview session
@@ -528,7 +590,7 @@ module.exports.startIntelligentHRInterview = async (profile, formData) => {
       profile._id
     );
 
-    console.log('✅ Intelligent HR interview started successfully');
+    console.log("✅ Intelligent HR interview started successfully");
 
     return {
       success: true,
@@ -537,13 +599,16 @@ module.exports.startIntelligentHRInterview = async (profile, formData) => {
       config: interviewSession.config,
       metadata: {
         aiPowered: true,
-        intelligenceLevel: 'advanced',
-        focusAreas: interviewConfig.intelligenceContext.focusAreas.map(area => area.area)
-      }
+        intelligenceLevel: "advanced",
+        focusAreas: interviewConfig.intelligenceContext.focusAreas.map(
+          (area) => area.area
+        ),
+      },
     };
-
   } catch (error) {
-    console.error('❌ Failed to start intelligent HR interview:', error);
-    throw new Error(`Failed to start intelligent HR interview: ${error.message}`);
+    console.error("❌ Failed to start intelligent HR interview:", error);
+    throw new Error(
+      `Failed to start intelligent HR interview: ${error.message}`
+    );
   }
 };
