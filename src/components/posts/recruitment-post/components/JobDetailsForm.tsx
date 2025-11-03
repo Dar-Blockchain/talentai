@@ -176,13 +176,25 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
             Currency
           </InputLabel>
           <Select
-            value={jobDetails.salary.currency || ""}
-            onChange={(e) =>
+            value={
+              jobDetails?.salary?.currency === "USD"
+                ? "$"
+                : jobDetails?.salary?.currency === "EUR"
+                ? "€"
+                : jobDetails?.salary?.currency === "GBP"
+                ? "£"
+                : ""
+            }
+            onChange={(e) => {
+              const symbol = e.target.value
+              const currency =
+                symbol === "$" ? "USD" : symbol === "€" ? "EUR" : "GBP"
+
               onInputChange("salary", {
                 ...jobDetails.salary,
-                currency: e.target.value,
+                currency,
               })
-            }
+            }}
             label="Currency"
             startAdornment={
               <InputAdornment position="start">
@@ -213,6 +225,7 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
             <MenuItem value="£">£ (GBP)</MenuItem>
           </Select>
         </FormControl>
+
 
         <TextField
           sx={{ flex: 2 }}
