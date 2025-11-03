@@ -4,7 +4,7 @@
  */
 
 export interface URLParams {
-  type?: 'hr' | 'technical' | 'soft' | 'salary' | 'psycho';
+  type?: 'hr' | 'technical' | 'technicalSkill' | 'soft' | 'salary' | 'psycho';
   skill?: string;           // e.g., "React", "Communication"
   proficiency?: string;     // 1-5 or "Entry Level", "Senior"
   category?: string;        // For soft skills: "English", "Leadership"
@@ -79,6 +79,7 @@ export function buildInterviewConfigFromURL(params: URLParams): InterviewConfig 
   const interviewTypeMap: { [key: string]: InterviewConfig['interviewType'] } = {
     'hr': 'HR_INTERVIEW',
     'technical': 'TECHNICAL_SKILL',
+    'technicalSkill': 'TECHNICAL_SKILL',
     'soft': 'SOFT_SKILL',
     'salary': 'SALARY_INTERVIEW',
     'psycho': 'PSYCHOTECHNIC'
@@ -91,7 +92,7 @@ export function buildInterviewConfigFromURL(params: URLParams): InterviewConfig 
   let targetRole = '';
   let experienceLevel = '';
 
-  if (params.type === 'technical') {
+  if (params.type === 'technical' || params.type === 'technicalSkill') {
     // Technical skill validation
     experienceLevel = PROFICIENCY_MAP[params.proficiency || '3'] || params.proficiency || 'Mid Level';
     targetRole = params.role || `${params.skill || 'Software'} Developer`;

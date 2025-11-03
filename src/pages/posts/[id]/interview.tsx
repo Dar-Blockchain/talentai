@@ -934,81 +934,93 @@ const Test = () => {
                 return;
               }
               
-              // Check 2: ENHANCED paragraph-level duplicate detection
+              // Check 2: AGGRESSIVE real-time duplicate detection
               const currentAccumulated = accumulatedTranscriptRef.current.toLowerCase().trim();
               const currentTextLower = cleanedText.toLowerCase().trim();
               
-              if (currentAccumulated.length > 0 && cleanedText.length > 10) {
-                // Check if this exact text is already present (case-insensitive)
+              if (currentAccumulated.length > 0 && cleanedText.length > 5) {
+                // Check 2.1: Exact substring match (case-insensitive)
                 if (currentAccumulated.includes(currentTextLower)) {
                   console.log('🚫 Text already in transcript, blocking duplicate:', cleanedText.substring(0, 50));
                   return;
                 }
                 
-                // Check if accumulated ends with this text
+                // Check 2.2: Accumulated ends with this text
                 if (currentAccumulated.endsWith(currentTextLower)) {
                   console.log('🚫 Text already at end, blocking:', cleanedText.substring(0, 50));
                   return;
                 }
                 
-                // ENHANCED: Check if current text CONTAINS the accumulated text (might be a superset)
-                // This catches cases where AssemblyAI resends the entire paragraph
-                if (currentTextLower.includes(currentAccumulated) && currentAccumulated.length > 20) {
+                // Check 2.3: Current contains accumulated (superset)
+                if (currentTextLower.includes(currentAccumulated) && currentAccumulated.length > 15) {
                   console.log('🚫 Current contains accumulated transcript (superset), blocking:', cleanedText.substring(0, 50));
                   return;
                 }
                 
-                // ENHANCED: Check similarity ratio for near-duplicates
-                // Calculate Jaccard similarity on word sets
+                // Check 2.4: AGGRESSIVE Jaccard similarity for near-duplicates (lowered threshold for real-time)
                 const accWords = new Set(currentAccumulated.split(/\s+/));
                 const currWords = new Set(currentTextLower.split(/\s+/));
                 const intersection = new Set([...accWords].filter(w => currWords.has(w)));
                 const union = new Set([...accWords, ...currWords]);
                 const jaccardSimilarity = intersection.size / union.size;
                 
-                // If 80%+ similar and current is not significantly longer, it's likely a duplicate
-                if (jaccardSimilarity > 0.8 && cleanedText.length < currentAccumulated.length * 1.5) {
+                // More aggressive: 70%+ similar (down from 80%) and not significantly longer
+                if (jaccardSimilarity > 0.7 && cleanedText.length < currentAccumulated.length * 1.4) {
                   console.log(`🚫 High similarity (${(jaccardSimilarity * 100).toFixed(1)}%) detected, blocking duplicate:`, cleanedText.substring(0, 50));
                   return;
                 }
                 
-                // Check word-level overlap (last 5 words of accumulated vs first 5 words of current)
+                // Check 2.5: AGGRESSIVE word-level overlap detection (check up to 10 words)
                 const accWordsArray = currentAccumulated.split(/\s+/);
                 const currWordsArray = currentTextLower.split(/\s+/);
                 
-                if (accWordsArray.length >= 5 && currWordsArray.length >= 5) {
-                  const lastAccWords = accWordsArray.slice(-5).join(' ');
-                  const firstCurrWords = currWordsArray.slice(0, 5).join(' ');
+                // Check last 3-10 words of accumulated vs first 3-10 words of current
+                for (let checkSize = 3; checkSize <= Math.min(10, accWordsArray.length, currWordsArray.length); checkSize++) {
+                  const lastAccWords = accWordsArray.slice(-checkSize).join(' ');
+                  const firstCurrWords = currWordsArray.slice(0, checkSize).join(' ');
                   
-                  // If significant overlap, might be duplicate
                   if (lastAccWords === firstCurrWords) {
-                    console.log('🚫 Word-level overlap detected, blocking:', cleanedText.substring(0, 50));
+                    console.log(`🚫 Word-level overlap detected (${checkSize} words), blocking:`, cleanedText.substring(0, 50));
                     return;
                   }
                 }
                 
-                // ENHANCED: Check if the new text is just a repetition of the last sentence
-                const accSentences = currentAccumulated.split(/[.!?]+/).filter((s: string) => s.trim().length > 0);
-                const currSentences = currentTextLower.split(/[.!?]+/).filter((s: string) => s.trim().length > 0);
+                // Check 2.6: Sliding window overlap detection (catches partial duplicates anywhere)
+                // Check if any 4+ word sequence from current appears in accumulated
+                if (currWordsArray.length >= 4) {
+                  for (let i = 0; i <= currWordsArray.length - 4; i++) {
+                    const window = currWordsArray.slice(i, i + 4).join(' ');
+                    if (currentAccumulated.includes(window)) {
+                      console.log('🚫 Sliding window duplicate detected (4-word match):', window);
+                      return;
+                    }
+                  }
+                }
                 
-                if (accSentences.length > 0 && currSentences.length > 0) {
-                  const lastAccSentence = accSentences[accSentences.length - 1].trim();
-                  const firstCurrSentence = currSentences[0].trim();
+                // Check 2.7: Reverse overlap check - check if accumulated ends with start of current
+                if (accWordsArray.length >= 3 && currWordsArray.length >= 3) {
+                  // Check last 50% of accumulated vs first 50% of current for overlaps
+                  const lastHalfAcc = accWordsArray.slice(-Math.ceil(accWordsArray.length / 2)).join(' ');
+                  const firstHalfCurr = currWordsArray.slice(0, Math.ceil(currWordsArray.length / 2)).join(' ');
                   
-                  // Simple Levenshtein-based similarity check
-                  const maxLen = Math.max(lastAccSentence.length, firstCurrSentence.length);
-                  if (maxLen > 0) {
-                    // Simple similarity: check if one contains most of the other
-                    const containmentRatio = Math.min(
-                      lastAccSentence.length / maxLen,
-                      firstCurrSentence.length / maxLen
-                    );
-                    
-                    if (containmentRatio > 0.85 && (
-                      lastAccSentence.includes(firstCurrSentence.substring(0, Math.min(20, firstCurrSentence.length))) ||
-                      firstCurrSentence.includes(lastAccSentence.substring(0, Math.min(20, lastAccSentence.length)))
-                    )) {
-                      console.log('🚫 Sentence-level duplicate detected, blocking:', cleanedText.substring(0, 50));
+                  if (lastHalfAcc.includes(firstHalfCurr) || firstHalfCurr.includes(lastHalfAcc)) {
+                    console.log('🚫 Half-text overlap detected, blocking:', cleanedText.substring(0, 50));
+                    return;
+                  }
+                }
+                
+                // Check 2.8: Character-level similarity for very short phrases
+                if (cleanedText.length <= 30 && currentAccumulated.length > 0) {
+                  const similarity = 1 - (Math.abs(currentTextLower.length - currentAccumulated.length) / Math.max(currentTextLower.length, currentAccumulated.length));
+                  if (similarity > 0.85) {
+                    // Check edit distance
+                    let matches = 0;
+                    const minLen = Math.min(currentTextLower.length, currentAccumulated.length);
+                    for (let i = 0; i < minLen; i++) {
+                      if (currentTextLower[i] === currentAccumulated[i]) matches++;
+                    }
+                    if (matches / minLen > 0.8) {
+                      console.log('🚫 Character-level similarity detected for short phrase, blocking:', cleanedText.substring(0, 50));
                       return;
                     }
                   }
@@ -1093,8 +1105,22 @@ const Test = () => {
               
               // Use queueMicrotask for atomic state update
               queueMicrotask(() => {
+                // FINAL SAFETY CHECK: Verify we're still on the same question
+                if (isTransitioningRef.current) {
+                  console.log('🚫 Blocking state update - transition in progress');
+                  pendingUpdateRef.current = false;
+                  return;
+                }
+                
                 const currentIndex = currentIndexRef.current;
                 const textToSet = accumulatedTranscriptRef.current;
+                
+                // Double-check that accumulated text isn't empty (might have been cleared)
+                if (!textToSet || textToSet.trim().length === 0) {
+                  console.log('🚫 Blocking state update - accumulated text was cleared');
+                  pendingUpdateRef.current = false;
+                  return;
+                }
                 
                 // Update both states atomically
                 setTranscriptions(prevT => ({
@@ -1430,13 +1456,32 @@ const Test = () => {
     isTransitioningRef.current = true;
     
     // Increment session ID IMMEDIATELY to reject any pending transcripts
+    const oldSessionId = questionSessionIdRef.current;
     questionSessionIdRef.current = questionSessionIdRef.current + 1;
     
-    // Clear all transcript buffers immediately
+    // Clear ALL transcript buffers and refs immediately to prevent race conditions
+    accumulatedTranscriptRef.current = '';
+    lastFinalTranscriptRef.current = '';
     lastPartialWordsRef.current = [];
     pendingUpdateRef.current = false;
+    transcriptSequenceRef.current = 0;
     
-    console.log(`🔒 Session locked. New session will be: ${questionSessionIdRef.current + 1}`);
+    // Clear the displayed transcript immediately
+    setCurrentTranscript('');
+    
+    // CRITICAL: Clear the transcriptions entry for the NEXT question to prevent old data
+    if (current < questions.length - 1) {
+      const nextQuestionIndex = current + 1;
+      setTranscriptions(prevT => {
+        const newTranscriptions = { ...prevT };
+        // Clear any existing text for the next question
+        delete newTranscriptions[nextQuestionIndex];
+        console.log(`🗑️ Cleared transcription data for question ${nextQuestionIndex + 1}`);
+        return newTranscriptions;
+      });
+    }
+    
+    console.log(`🔒 Session locked. Old: ${oldSessionId}, New: ${questionSessionIdRef.current}`);
     
     if (current < questions.length - 1) {
       setCurrent(c => c + 1);
