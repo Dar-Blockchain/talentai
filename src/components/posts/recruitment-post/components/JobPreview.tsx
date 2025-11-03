@@ -337,7 +337,7 @@ const JobPreview: React.FC<JobPreviewProps> = ({
         </Box>
 
         {/* Job Details */}
-        <Box sx={{ mb: 3 }}>
+        {editedJob && editedJob.jobDetails && <Box sx={{ mb: 3 }}>
           <Typography
             variant="h6"
             sx={{ color: "#0F172A", mb: 2, fontWeight: 700 }}
@@ -350,14 +350,18 @@ const JobPreview: React.FC<JobPreviewProps> = ({
               onInputChange={onInputChange}
             />
           ) : (
-            <JobInfoDisplay jobDetails={generatedJob.jobDetails} />
+            <JobInfoDisplay jobDetails={editedJob.jobDetails} />
           )}
-        </Box>
+        </Box>}
 
         {/* Required Skills */}
         <SkillsList
-          skills={generatedJob.skillAnalysis.requiredSkills}
+          skills={editedJob?.skillAnalysis?.requiredSkills || []}
           title="Required Skills"
+          editable={isEditing}
+          onSkillsChange={(updatedSkills) =>
+            onInputChange("skills", updatedSkills)
+          }
         />
 
         {/* Description */}

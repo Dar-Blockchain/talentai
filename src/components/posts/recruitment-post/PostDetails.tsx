@@ -224,51 +224,84 @@ const PostDetails = forwardRef<PostDetailsRef>((props, ref) => {
     setEditedJob(null);
   };
 
-  const handleInputChange = (field: string, value: any): void => {
-    if (!editedJob || !editedJob.jobDetails) return;
+const handleInputChange = (field: string, value: any): void => {
+  if (!editedJob || !editedJob.jobDetails) return;
 
-    if (field === "salary") {
-      setEditedJob((prev) => prev ? ({
-        ...prev,
-        jobDetails: {
-          ...prev.jobDetails,
-          salary: {
-            ...prev.jobDetails.salary,
-            ...value,
-          },
-        },
-      }) : null);
-    } else if (field === "requirements") {
-      setEditedJob((prev) => prev ? ({
-        ...prev,
-        jobDetails: {
-          ...prev.jobDetails,
-          requirements: Array.isArray(value)
-            ? value
-            : value.split("\n").filter((item: string) => item.trim() !== ""),
-        },
-      }) : null);
-    } else if (field === "responsibilities") {
-      setEditedJob((prev) => prev ? ({
-        ...prev,
-        jobDetails: {
-          ...prev.jobDetails,
-          responsibilities: Array.isArray(value)
-            ? value
-            : value.split("\n").filter((item: string) => item.trim() !== ""),
-        },
-      }) : null);
-    } else {
-      // Handle direct jobDetails fields like title, description, location, employmentType, experienceLevel
-      setEditedJob((prev) => prev ? ({
-        ...prev,
-        jobDetails: {
-          ...prev.jobDetails,
-          [field]: value,
-        },
-      }) : null);
-    }
-  };
+  if (field === "salary") {
+    setEditedJob((prev) =>
+      prev
+        ? {
+            ...prev,
+            jobDetails: {
+              ...prev.jobDetails,
+              salary: {
+                ...prev.jobDetails.salary,
+                ...value,
+              },
+            },
+          }
+        : null
+    );
+  } else if (field === "requirements") {
+    setEditedJob((prev) =>
+      prev
+        ? {
+            ...prev,
+            jobDetails: {
+              ...prev.jobDetails,
+              requirements: Array.isArray(value)
+                ? value
+                : value
+                    .split("\n")
+                    .filter((item: string) => item.trim() !== ""),
+            },
+          }
+        : null
+    );
+  } else if (field === "responsibilities") {
+    setEditedJob((prev) =>
+      prev
+        ? {
+            ...prev,
+            jobDetails: {
+              ...prev.jobDetails,
+              responsibilities: Array.isArray(value)
+                ? value
+                : value
+                    .split("\n")
+                    .filter((item: string) => item.trim() !== ""),
+            },
+          }
+        : null
+    );
+  } else if (field === "skills") {
+    // Update requiredSkills in skillAnalysis
+    setEditedJob((prev) =>
+      prev
+        ? {
+            ...prev,
+            skillAnalysis: {
+              ...prev.skillAnalysis,
+              requiredSkills: value,
+            },
+          }
+        : null
+    );
+  } else {
+    setEditedJob((prev) =>
+      prev
+        ? {
+            ...prev,
+            jobDetails: {
+              ...prev.jobDetails,
+              [field]: value,
+            },
+          }
+        : null
+    );
+  }
+};
+
 
   const handleShareLinkedIn = async (): Promise<void> => {
     setIsPosting(true);
