@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { postRecruitmentSteps, selectPostStepsLoading, selectPostStepsError } from '../../store/slices/postSlice';
-import { RootState } from '../../store/store';
 import {
   Box,
   Typography,
@@ -21,12 +20,9 @@ import {
   Alert,
   Chip,
   CircularProgress,
-  InputAdornment,
   Dialog,
   DialogTitle,
   DialogContent,
-  Card,
-  Avatar
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import dynamic from 'next/dynamic';
@@ -68,7 +64,6 @@ import { toast } from "react-hot-toast";
 import EmailIcon from '@mui/icons-material/Email';
 import ConditionIcon from '@mui/icons-material/AccountTree';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
 import EngineeringIcon from '@mui/icons-material/Engineering';
 import PsychologyIcon from '@mui/icons-material/Psychology';

@@ -21,18 +21,13 @@ import {
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 import MicIcon from '@mui/icons-material/Mic';
-import MicOffIcon from '@mui/icons-material/MicOff';
-import { v4 as uuidv4 } from 'uuid';
 import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
 
-// Remove hardcoded questions
-const NEXTJS_QUESTIONS: string[] = [];
 
 // Add this after imports
-const GREEN_MAIN = 'rgba(0, 255, 157, 1)';
 
 
 // New prominent Question Panel styled component
