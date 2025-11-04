@@ -44,7 +44,7 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(2);
+    const [rowsPerPage, setRowsPerPage] = useState(3);
     const [total, setTotal] = useState(0);
     const router = useRouter();
 
@@ -738,7 +738,7 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                 onPageChange={handleChangePage}
                                 rowsPerPage={rowsPerPage}
                                 onRowsPerPageChange={handleChangeRowsPerPage}
-                                rowsPerPageOptions={[2, 5, 10]}
+                                rowsPerPageOptions={[3, 5, 10]}
                                 sx={
                                     normalizedTab === "post_interview"
                                         ? {
