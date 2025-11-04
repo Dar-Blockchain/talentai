@@ -29,10 +29,8 @@ import {
   Avatar
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import ReactFlow, {
-  MiniMap,
-  Controls,
-  Background,
+import dynamic from 'next/dynamic';
+import {
   useNodesState,
   useEdgesState,
   addEdge,
@@ -42,9 +40,29 @@ import ReactFlow, {
   NodeTypes,
   Handle,
   Position,
-  useReactFlow,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+
+// Lazy load ReactFlow to improve initial page load performance
+const ReactFlow = dynamic(
+  () => import('reactflow').then((mod) => mod.default),
+  { ssr: false }
+);
+
+const MiniMap = dynamic(
+  () => import('reactflow').then((mod) => mod.MiniMap),
+  { ssr: false }
+);
+
+const Controls = dynamic(
+  () => import('reactflow').then((mod) => mod.Controls),
+  { ssr: false }
+);
+
+const Background = dynamic(
+  () => import('reactflow').then((mod) => mod.Background),
+  { ssr: false }
+);
 import { toast } from "react-hot-toast";
 // Icons
 import EmailIcon from '@mui/icons-material/Email';
@@ -382,13 +400,21 @@ const RecruitmentFlowBuilder: React.FC = () => {
         profileType: authProfile?.type
       });
 
-      // Wait for profile to load if it's not available yet
+      // Wait for profile to load if it's not available yet (with timeout)
       if (!authProfile && authLoading) {
         console.log('Profile still loading, waiting...');
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Reduced wait time with timeout - check every 100ms
+        let waited = 0;
+        const maxWait = 2000; // 2 seconds max (reduced from original 2s fixed wait)
+        const checkInterval = 100; // Check every 100ms
+        
+        while (!authProfile && waited < maxWait) {
+          await new Promise(resolve => setTimeout(resolve, checkInterval));
+          waited += checkInterval;
+        }
 
         if (!authProfile) {
-          throw new Error('Company profile not loaded - please try again');
+          throw new Error('Company profile not loaded - please refresh the page and try again');
         }
       }
 
@@ -1057,6 +1083,7 @@ Ready to customize the content or add more triggers?`
       console.log('No auth profile found, component may need to wait for profile to load');
     }
   }, [authProfile, authLoading]);
+
 
   const handleBack = () => {
     if (activeStep > 0) {
