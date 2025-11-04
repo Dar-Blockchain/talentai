@@ -23,13 +23,6 @@ async function generateTechniqueQuestions({ skill, experienceLevel, proficiencyL
   const profile = await Profile.findOne({ userId });
   if (!profile) throw { status: 404, message: "Profile not found" };
 
-  const now = new Date();
-  const daysSinceLastUpdate = (now - new Date(profile.quotaUpdatedAt)) / (1000 * 60 * 60 * 24);
-  if (daysSinceLastUpdate >= 30) {
-    profile.quota = 0;
-    profile.quotaUpdatedAt = now;
-  }
-
   if (profile.quota >= 5) {
     throw { status: 403, message: "You have reached your test limit (5)" };
   }

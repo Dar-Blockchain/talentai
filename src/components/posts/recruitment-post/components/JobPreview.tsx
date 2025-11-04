@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect} from "react";
 import {
   Box,
   Typography,
@@ -49,6 +49,7 @@ const JobPreview: React.FC<JobPreviewProps> = ({
   linkedinCopySuccess,
   jobPostError,
 }) => {
+  useEffect(()=> {console.log(editedJob, "editedJob")}, [editedJob])
   if (jobPostError) {
     return (
       <Box sx={{ p: 3 }}>
@@ -356,7 +357,7 @@ const JobPreview: React.FC<JobPreviewProps> = ({
 
         {/* Required Skills */}
         <SkillsList
-          skills={editedJob?.skillAnalysis?.requiredSkills || []}
+          skills={editedJob?.skillAnalysis?.requiredSkills || generatedJob?.skillAnalysis?.requiredSkills || []}
           title="Required Skills"
           editable={isEditing}
           onSkillsChange={(updatedSkills) =>

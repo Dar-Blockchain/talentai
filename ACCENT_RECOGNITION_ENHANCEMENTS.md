@@ -5,7 +5,7 @@ Enhanced interview and test session handling with advanced accent recognition se
 
 ## Files Modified
 
-### 1. **src/pages/api/session.ts**
+### 1. **src/server/api/session.ts**
 Enhanced the AssemblyAI token generation with comprehensive accent recognition settings:
 
 #### New Features Added:
