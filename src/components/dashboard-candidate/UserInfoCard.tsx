@@ -172,7 +172,7 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
           </Box>
           
           {/* Overall Score Circle */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', ml: 4 }}>
+          {/* <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', ml: 4 }}>
             <Box sx={{ position: 'relative', width: 120, height: 120 }}>
               <CircularProgress
                 variant="determinate"
@@ -241,7 +241,7 @@ function UserInfoCardComponent(props: UserInfoCardProps) {
             >
               Overall Score
             </Typography>
-          </Box>
+          </Box> */}
         </Box>
       </Box>
 
