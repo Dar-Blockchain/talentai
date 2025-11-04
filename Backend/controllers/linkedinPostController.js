@@ -47,19 +47,23 @@ module.exports.generateJobPost = async (req, res) => {
             "name": "Skill 1",
             "level": "1-5 (based on years of experience in the job post)",
             "importance": "Required/Preferred",
-            "category": "Frontend/Backend/Other"
+            "category": "Frontend/Backend/Other",
+            "percentage": 0
           },
           {
             "name": "Skill 2",
             "level": "1-5 (based on years of experience in the job post)",
             "importance": "Required/Preferred",
-            "category": "Frontend/Backend/Other"
+            "category": "Frontend/Backend/Other",
+            "percentage": 0
           },
           {
             "name": "Skill 3",
             "level": "1-5 (based on years of experience in the job post)",
             "importance": "Required/Preferred",
-            "category": "Frontend/Backend/Other"
+            "category": "Frontend/Backend/Other",
+            "percentage": 0
+
           }
         ],
         "suggestedSkills": {
@@ -90,7 +94,11 @@ module.exports.generateJobPost = async (req, res) => {
       - 10 years = level 4
       - 15+ years = level 5
     - Return only valid JSON. Avoid markdown or code blocks.
-    
+    - The sum of all skill percentages must equal 100%.  
+    - LIA must determine the percentage distribution based on importance, frequency, and context in the job description.  
+    - If not specified, distribute evenly and logically.  
+    - Return only valid JSON. Avoid markdown or code blocks.
+
     Job Description:
     ${description}
     `.trim();
@@ -114,6 +122,11 @@ module.exports.generateJobPost = async (req, res) => {
       - 5 years = level 3
       - 10 years = level 4
       - 15+ years = level 5
+      - Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
+      - The total sum of all percentages must equal exactly 100%.
+      - LIA must infer the percentage distribution based on the importance, frequency, and emphasis of each skill mentioned in the job description.
+      - If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
+      - Core and frequently mentioned skills should receive higher percentages.
     
     Job Description:
     ${description}
@@ -137,25 +150,29 @@ module.exports.generateJobPost = async (req, res) => {
       },
       "skillAnalysis": {
         "requiredSkills": [
-          {
-            "name": "Skill 1",
-            "level": "Required level (1-5) based on years of experience",
-            "importance": "Required/Preferred",
-            "category": "Frontend/Backend/DevOps/etc."
-          },
-          {
-            "name": "Skill 2",
-            "level": "Required level (1-5) based on years of experience",
-            "importance": "Required/Preferred",
-            "category": "Frontend/Backend/DevOps/etc."
-          },
-          {
-            "name": "Skill 3",
-            "level": "Required level (1-5) based on years of experience",
-            "importance": "Required/Preferred",
-            "category": "Frontend/Backend/DevOps/etc."
-          }
-        ],
+  {
+    "name": "Skill 1",
+    "level": "Required level (1-5) based on years of experience",
+    "importance": "Required/Preferred",
+    "category": "Frontend/Backend/DevOps/etc.",
+    "percentage": 0
+  },
+  {
+    "name": "Skill 2",
+    "level": "Required level (1-5) based on years of experience",
+    "importance": "Required/Preferred",
+    "category": "Frontend/Backend/DevOps/etc.",
+    "percentage": 0
+  },
+  {
+    "name": "Skill 3",
+    "level": "Required level (1-5) based on years of experience",
+    "importance": "Required/Preferred",
+    "category": "Frontend/Backend/DevOps/etc.",
+    "percentage": 0
+  }
+],
+
         "suggestedSkills": {
           "technical": [
             {
