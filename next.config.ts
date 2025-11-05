@@ -5,10 +5,7 @@ import type { Configuration as WebpackConfig } from 'webpack';
 const nextConfig = {
   reactStrictMode: false, // Temporarily disabled to debug duplicate API calls
   output: 'standalone',
-  experimental: {
-    outputFileTracingRoot: process.cwd(),
-    isrMemoryCacheSize: 0, // disable ISR memory cache to fix HMR issues
-  },
+  outputFileTracingRoot: process.cwd(),
   images: {
     unoptimized: true,
     remotePatterns: [
