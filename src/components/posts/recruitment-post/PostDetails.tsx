@@ -589,31 +589,48 @@ As a ${
         height: "100%",
         display: "flex",
         flexDirection: { xs: "column", lg: "row" },
-        gap: 3,
-        p: 3,
+        gap: { xs: 2, sm: 3 },
+        p: { xs: 1, sm: 2, md: 3 },
         backgroundColor: CLEAN_BACKGROUND,
-        minHeight: "100vh",
+        minHeight: { xs: "auto", lg: "100vh" },
+        overflow: { xs: "visible", lg: "hidden" },
+        WebkitOverflowScrolling: "touch", // Smooth scrolling on iOS
       }}
     >
       {/* Job Description Input Panel */}
-      <JobDescriptionInput
-        jobDescription={jobDescription}
-        onJobDescriptionChange={setJobDescription}
-        salaryRange={salaryRange}
-        onSalaryChange={handleSalaryChange}
-        onGenerateJob={handleGenerateJob}
-        isQuickGenerating={isQuickGenerating}
-        isDetailedGenerating={isDetailedGenerating}
-        isSalaryRangeValid={isSalaryRangeValid}
-      />
+      <Box
+        sx={{
+          width: { xs: "100%", lg: "50%" },
+          height: { xs: "auto", lg: "auto" },
+          minHeight: { xs: "auto", lg: "100vh" },
+          flexShrink: 0,
+        }}
+      >
+        <JobDescriptionInput
+          jobDescription={jobDescription}
+          onJobDescriptionChange={setJobDescription}
+          salaryRange={salaryRange}
+          onSalaryChange={handleSalaryChange}
+          onGenerateJob={handleGenerateJob}
+          isQuickGenerating={isQuickGenerating}
+          isDetailedGenerating={isDetailedGenerating}
+          isSalaryRangeValid={isSalaryRangeValid}
+        />
+      </Box>
 
       {/* Job Preview Panel */}
       <Box
         sx={{
-          width: { xs: "100%", md: "50%" },
-          height: { xs: "50%", md: "auto" },
-          p: { xs: 2, sm: 3 },
-          overflowY: "auto",
+          width: { xs: "100%", lg: "50%" },
+          height: { xs: "auto", lg: "auto" },
+          minHeight: { xs: "300px", lg: "auto" },
+          p: { xs: 1, sm: 2, md: 3 },
+          overflowY: "visible",
+          overflowX: "hidden",
+          WebkitOverflowScrolling: "touch",
+          position: "relative",
+          flexShrink: 0,
+          display: "block", // Always visible on all screen sizes
         }}
       >
         {jobPostError && (

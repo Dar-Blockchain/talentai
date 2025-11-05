@@ -53,7 +53,7 @@ const JobDescriptionInput: React.FC<JobDescriptionInputProps> = ({
   return (
     <Card
       sx={{
-        width: { xs: "100%", lg: "50%" },
+        width: { xs: "100%", lg: "100%" },
         height: "fit-content",
         background: CARD_BG,
         borderRadius: 4,
@@ -94,7 +94,9 @@ const JobDescriptionInput: React.FC<JobDescriptionInputProps> = ({
               backgroundClip: "text",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
-              fontSize: "1.5rem",
+              fontSize: { xs: "1.75rem", sm: "2rem", md: "2.25rem" },
+              width: "100%",
+              maxWidth: "100%",
             }}
           >
             Create Job Post
@@ -103,13 +105,35 @@ const JobDescriptionInput: React.FC<JobDescriptionInputProps> = ({
         subheader={
           <Typography
             variant="body2"
-            sx={{ color: "#475569", mt: 0.5, fontWeight: 500 }}
+            sx={{ 
+              color: "#475569", 
+              mt: 0.5, 
+              fontWeight: 500,
+              fontSize: { xs: "0.875rem", sm: "1rem", md: "1.125rem" },
+              width: "100%",
+              maxWidth: "100%",
+            }}
           >
             Describe your ideal candidate and generate a professional job
             posting
           </Typography>
         }
-        sx={{ pb: 1 }}
+        sx={{ 
+          pb: 1,
+          width: "100%",
+          "& .MuiCardHeader-content": {
+            width: "100%",
+            maxWidth: "100%",
+          },
+          "& .MuiCardHeader-title": {
+            width: "100%",
+            maxWidth: "100%",
+          },
+          "& .MuiCardHeader-subheader": {
+            width: "100%",
+            maxWidth: "100%",
+          },
+        }}
       />
       <Divider sx={{ borderColor: "rgba(0, 255, 157, 0.1)" }} />
       <CardContent sx={{ p: 3 }}>
@@ -253,6 +277,7 @@ Benefits:
           sx={{
             display: "flex",
             flexDirection: { xs: "column", sm: "row" },
+            justifyContent: "flex-end",
             gap: 2,
             mt: 4,
           }}
@@ -271,7 +296,8 @@ Benefits:
               )
             }
             sx={{
-              flex: 1,
+              flex: { xs: 1, sm: "none" },
+              minWidth: { xs: "100%", sm: 180 },
               background: GRADIENT_PRIMARY,
               borderRadius: 3,
               py: 1.5,
@@ -307,7 +333,8 @@ Benefits:
               )
             }
             sx={{
-              flex: 1,
+              flex: { xs: 1, sm: "none" },
+              minWidth: { xs: "100%", sm: 180 },
               borderColor: PURPLE_ACCENT,
               color: PURPLE_ACCENT,
               borderRadius: 3,
