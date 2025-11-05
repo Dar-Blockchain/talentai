@@ -9,12 +9,15 @@ const Profile = require("./ProfileModel");
 const questionAnswerSchema = new mongoose.Schema(
   {
     question: { type: String, required: true },
-    answer: { type: String, required: true },
+    answer: { type: String, required: true, default: "No answer provided" },
     status: {
       type: String,
       enum: Object.values(ANSWER_STATUS),
+      default: "incorrect"
     },
     exampleCorrectAnswer: { type: String, required: false },
+    partialCorrectPercentage: { type: Number, required: false },
+    partialCorrectReason: { type: String, required: false },
   },
   { _id: false }
 );
@@ -104,10 +107,17 @@ const interviewDetailsSchema = new mongoose.Schema(
 
     interviewContext: { type: interviewContextSchema, required: false },
 
+    // Questions d'entretien au niveau principal
+    questions: {
+      type: [questionAnswerSchema],
+      default: []
+    },
+
     overallScore: { type: Number },
     skillDetails: {
       type: [skillDetailsSchema],
     },
+    recommendations: { type: [String] },
     createdAt: {
       type: Number,
       default: Date.now(),
@@ -115,5 +125,17 @@ const interviewDetailsSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Virtual populate to get post_Steps through the post relationship
+interviewDetailsSchema.virtual('postSteps', {
+  ref: 'Post_Steps',
+  localField: 'post',
+  foreignField: 'postId',
+  justOne: false
+});
+
+// Ensure virtual fields are serialized
+interviewDetailsSchema.set('toJSON', { virtuals: true });
+interviewDetailsSchema.set('toObject', { virtuals: true });
 
 module.exports = mongoose.model("InterviewDetails", interviewDetailsSchema);

@@ -10,7 +10,7 @@ const profileSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["Candidate", "Company"],
+      enum: ["Candidate", "Company","jury"],
       required: true,
     },
 
@@ -34,7 +34,8 @@ const profileSchema = new mongoose.Schema(
         experienceLevel: String,
         NumberTestPassed: Number,
         ScoreTest: Number,
-        Levelconfirmed: { type: Number, default: 0 },
+        Levelconfirmed: Number,
+        isPrimary: Boolean,
       },
     ],
 
@@ -46,6 +47,7 @@ const profileSchema = new mongoose.Schema(
         proficiencyLevel: Number, // 0-5
         experienceLevel: String, // NoLevel , Entry Level..
         ScoreTest: Number,
+        isPrimary: Boolean,
       },
     ],
 
@@ -71,12 +73,19 @@ const profileSchema = new mongoose.Schema(
     requiredSkills: [String],
     requiredExperienceLevel: {
       type: String,
-      enum: ["Entry Level", "Mid Level", "Senior", "Lead/Expert"],
+      enum: ["Entry Level", "Junior", "Mid Level", "Senior", "Expert"],
+    },
+
+    targetRole: {
+      type: String,
+      default: "",
     },
 
     assessmentResults: [
       { type: mongoose.Schema.Types.ObjectId, ref: "JobAssessmentResult" },
     ],
+
+    // projectAssessments removed (ProjectAssessment feature deprecated)
 
     // Bid received by user (if type is Candidate)
     companyBid: {

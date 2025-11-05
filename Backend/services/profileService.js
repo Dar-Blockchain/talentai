@@ -3,6 +3,7 @@ const User = require("../models/UserModel");
 const Post = require("../models/PostModel");
 const Agent = require("../models/AgentModel");
 const agentService = require("./AgentService");
+const hederaService = require("./hederaService");
 const { POST_STATUS } = require("../constants/postConstants");
 
 // Créer ou mettre à jour un profil utilisateur
@@ -14,7 +15,11 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
     }
 
     // S'assurer que le rôle utilisateur est bien défini
-    await User.findByIdAndUpdate(userId, { FirstName:profileData.FirstName,LastName:profileData.LastName,role: "Candidat" });
+    await User.findByIdAndUpdate(userId, {
+      FirstName: profileData.FirstName,
+      LastName: profileData.LastName,
+      role: "Candidat",
+    });
 
     // Recherche profil existant
     let profile = await Profile.findOne({ userId });
@@ -27,6 +32,16 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
         skills: profileData.skills || [],
         overallScore: profileData.overallScore || 0,
       });
+
+      if (
+        profileData.skills.length === 1 &&
+        typeof profileData.skills[0]?.skill === "string"
+      ) {
+        console.log("heyaa: ", profile);
+        profile.skills = [];
+        await profile.save();
+        console.log("heybb: ", profile);
+      }
     } else {
       // Mise à jour overallScore si fourni
       if (typeof profileData.overallScore === "number") {
@@ -51,6 +66,16 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
             profile.skills.push(newSkill);
           }
         });
+
+        if (
+          profileData.skills.length === 1 &&
+          typeof profileData.skills[0]?.skill === "string"
+        ) {
+          console.log("hey11: ", profile);
+          profile.skills = [];
+          await profile.save();
+          console.log("hey22: ", profile);
+        }
       }
 
       // Mise à jour du type de profil si fourni
@@ -79,6 +104,39 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
 
     // Ensure user role is updated to Company
     await User.findByIdAndUpdate(userId, { role: "Company" });
+
+    // Create Hedera account if user doesn't have one
+    if (!user.hederaAccountId) {
+      console.log('🔧 Creating Hedera account for new company user...');
+      try {
+        const hederaAccount = await hederaService.createHederaAccount();
+
+        // Update user with Hedera account info
+        const updatedUser = await User.findByIdAndUpdate(
+          userId,
+          {
+            hederaAccountId: hederaAccount.hederaAccountId,
+            hederaPrivateKey: hederaAccount.hederaPrivateKey,
+            hederaPublicKey: hederaAccount.hederaPublicKey
+          },
+          { new: true }
+        );
+
+        console.log(`✅ Hedera account created for company user: ${hederaAccount.hederaAccountId}`);
+        console.log('Updated user Hedera fields:', {
+          hederaAccountId: updatedUser.hederaAccountId,
+          hederaPublicKey: updatedUser.hederaPublicKey,
+          hasPrivateKey: !!updatedUser.hederaPrivateKey
+        });
+      } catch (hederaError) {
+        console.error('❌ Failed to create Hedera account during company profile creation:', hederaError);
+        console.error('Error details:', hederaError.message);
+        // Don't fail the entire profile creation if Hedera account creation fails
+        console.log('⚠️  Company profile will be created without Hedera account. Account can be created later during first payment.');
+      }
+    } else {
+      console.log('ℹ️  User already has Hedera account:', user.hederaAccountId);
+    }
 
     let profile = await Profile.findOne({ userId });
 
@@ -325,23 +383,33 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
       profile.companyBid = {};
     }
 
-    const oldCompanyId = profile.companyBid.company;
+    const lastCompanyId = profile.companyBid.company;
 
-    // Vérifier si la nouvelle enchère est supérieure à l'ancienne
-    if (profile.companyBid.finalBid && newBid <= profile.companyBid.finalBid) {
-      throw new Error("The new bid must be higher than the old bid");
+    // 🚫 Vérifier si la même company veut bider de nouveau
+    if (lastCompanyId && lastCompanyId.toString() === companyId.toString()) {
+      throw new Error("You cannot bid again if your company made the last bid");
     }
 
-    // Mettre à jour le bid
-    profile.companyBid.finalBid = newBid;
+    // Si un bid existe déjà → on additionne
+    let finalBid;
+    if (profile.companyBid.finalBid) {
+      finalBid = profile.companyBid.finalBid + newBid;
+    } else {
+      finalBid = newBid;
+    }
+
+    // ✅ Mettre à jour le bid
+    profile.companyBid.finalBid = finalBid;
     profile.companyBid.company = companyId;
     profile.companyBid.post = postId;
     profile.companyBid.dateBid = new Date();
     await profile.save();
 
     // 🔄 Supprimer l'user de l'ancienne compagnie s'il y en avait une
-    if (oldCompanyId && oldCompanyId.toString() !== companyId.toString()) {
-      const oldCompanyProfile = await Profile.findOne({ userId: oldCompanyId });
+    if (lastCompanyId && lastCompanyId.toString() !== companyId.toString()) {
+      const oldCompanyProfile = await Profile.findOne({
+        userId: lastCompanyId,
+      });
       if (oldCompanyProfile && oldCompanyProfile.type === "Company") {
         oldCompanyProfile.usersBidedByCompany =
           oldCompanyProfile.usersBidedByCompany.filter(
@@ -367,39 +435,134 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
   }
 };
 
-// Supprimer un skill spécifique
+// Supprimer un skill spécifique (avec nettoyage des relations et implications)
+// 🔹 Fonction pour supprimer un hard skill d’un profil utilisateur
 module.exports.deleteHardSkill = async (userId, skillToDelete) => {
   try {
+    console.log("🟢 Début de la suppression du skill:", skillToDelete, "pour l'utilisateur:", userId);
+
+    // ✅ 1) Récupérer le profil du user
     const profile = await Profile.findOne({ userId });
     if (!profile) {
+      console.error("❌ Aucun profil trouvé pour l'utilisateur:", userId);
       throw new Error("Profile not found");
     }
+    console.log("✅ Profil trouvé:", profile._id);
 
+    // ✅ 2) Vérifier la validité du skill à supprimer
     if (!skillToDelete || typeof skillToDelete !== "string") {
+      console.error("❌ Le skill à supprimer doit être une chaîne de caractères valide");
       throw new Error("The skill to be deleted must be provided as a string");
     }
 
-    // Trouver l'index du skill à supprimer
+    // ✅ 3) Chercher la position du skill dans le tableau des skills
     const skillIndex = profile.skills.findIndex(
       (skill) => skill.name === skillToDelete
     );
 
     if (skillIndex === -1) {
-      throw new Error(
-        `Le skill "${skillToDelete}" n'existe pas dans votre profil`
-      );
+      console.warn(`⚠️ Le skill "${skillToDelete}" n'existe pas dans le profil`);
+      throw new Error(`Le skill "${skillToDelete}" n'existe pas dans votre profil`);
+    }
+    console.log(`🧩 Skill "${skillToDelete}" trouvé à l'index ${skillIndex}`);
+
+    // ✅ 4) Supprimer la compétence du tableau
+    profile.skills.splice(skillIndex, 1);
+    console.log(`🗑️ Skill "${skillToDelete}" supprimé avec succès du profil`);
+
+    // ✅ 5) Recalculer le overallScore
+    const numericScores = (profile.skills || [])
+      .map((s) => Number(s.ScoreTest))
+      .filter((n) => Number.isFinite(n));
+
+    const newOverall = numericScores.length
+      ? Number(
+          (numericScores.reduce((a, b) => a + b, 0) / numericScores.length).toFixed(2)
+        )
+      : 0;
+
+    profile.overallScore = newOverall;
+    console.log("📊 Nouveau overallScore calculé:", newOverall);
+
+    // ✅ 6) Sauvegarder le profil mis à jour
+    await profile.save();
+    console.log("💾 Profil sauvegardé avec succès dans la base de données");
+
+    // ✅ 7) Supprimer les InterviewDetails liés à ce skill et retirer les relations
+    try {
+      console.log("🧹 Suppression des InterviewDetails en cours...");
+      const InterviewDetails = require("../models/InterviewDetailsModel");
+
+       // Suppression insensible à la casse du skill visé dans les tableaux skillDetails
+       const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+       const skillRegex = new RegExp(`^${escapeRegExp(skillToDelete)}$`, "i");
+
+      // 7.a Trouver les InterviewDetails à supprimer (qui contiennent ce skill)
+      const detailsToDelete = await InterviewDetails.find({
+        candidate: profile._id,
+        "skillDetails.name": { $regex: skillRegex },
+      }).select("_id");
+
+      const detailsIds = detailsToDelete.map((d) => d._id);
+
+      if (detailsIds.length > 0) {
+        // 7.b Supprimer les InterviewDetails correspondants
+        const delRes = await InterviewDetails.deleteMany({ _id: { $in: detailsIds } });
+        console.log("✅ InterviewDetails supprimés:", delRes.deletedCount);
+
+        // 7.c Retirer les références dans le profil
+        profile.interviewDetails = (profile.interviewDetails || []).filter(
+          (id) => !detailsIds.some((x) => x.toString() === id.toString())
+        );
+        await profile.save();
+      } else {
+        console.log("ℹ️ Aucun InterviewDetails à supprimer pour ce skill");
+      }
+    } catch (relErr) {
+      console.warn("⚠️ Erreur lors du nettoyage des InterviewDetails:", relErr.message);
     }
 
-    // Supprimer le skill du tableau
-    profile.skills.splice(skillIndex, 1);
-    await profile.save();
+    // ✅ 8) Nettoyer les références dans JobAssessmentResult
+    try {
+      console.log("🧹 Nettoyage des JobAssessmentResult en cours...");
+      const JobAssessmentResult = require("../models/JobAssessmentResultModel");
 
+      const res2 = await JobAssessmentResult.updateMany(
+        { condidateId: profile._id },
+        {
+          $pull: {
+            "analysis.skillAnalysis": { skillName: skillToDelete },
+            "analysis.skillProgression": { skillName: skillToDelete },
+          },
+        }
+      );
+
+      console.log("✅ Nettoyage des JobAssessmentResult terminé:", res2.modifiedCount, "documents mis à jour");
+
+      // Supprimer aussi les JobAssessmentResult qui pointent vers des InterviewDetails supprimés
+      try {
+        if (typeof detailsIds !== "undefined" && detailsIds.length > 0) {
+          const delAss = await JobAssessmentResult.deleteMany({ interviewId: { $in: detailsIds } });
+          console.log("🗑️ JobAssessmentResult supprimés (liés aux InterviewDetails supprimés):", delAss.deletedCount);
+        }
+      } catch (innerErr) {
+        console.warn("⚠️ Erreur lors de la suppression des JobAssessmentResult liés:", innerErr.message);
+      }
+    } catch (relErr) {
+      console.warn("⚠️ Erreur lors du nettoyage des JobAssessmentResult:", relErr.message);
+    }
+
+    // ✅ 9) Retourner le profil mis à jour
+    console.log("🎯 Suppression du skill terminée avec succès pour:", skillToDelete);
     return profile;
+
   } catch (error) {
-    console.error("Erreur lors de la suppression du skill:", error);
+    console.error("🚨 Erreur lors de la suppression du skill:", error.message);
     throw error;
   }
 };
+
+
 
 // Supprimer un softSkill spécifique
 module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
@@ -484,43 +647,120 @@ module.exports.getCompanyBids = async (companyId) => {
   }
 };
 
+// services/profileService.js
 module.exports.getCompanyProfileWithAssessments = async (id, jobId) => {
   try {
-    const profile = await Profile.findById(id)
-      .where("type")
-      .equals("Company")
-      .populate({
-        path: "assessmentResults",
-        populate: [
-          {
-            path: "condidateId",
-            model: "Profile",
-            populate: {
-              path: "userId",
-              model: "User",
-            },
+    const mongoose = require("mongoose");
+
+    const safeId = Buffer.isBuffer(id)
+      ? new mongoose.Types.ObjectId(id.toString("hex"))
+      : new mongoose.Types.ObjectId(id);
+
+    // ✅ Aggregation pipeline
+    const pipeline = [
+      // 1️⃣ Match by company (and optional job)
+      {
+        $match: {
+          companyId: safeId,
+          ...(jobId ? { jobId: new mongoose.Types.ObjectId(jobId) } : {})
+        }
+      },
+      // 2️⃣ Group all JobAssessmentResults per candidate + job
+      {
+        $group: {
+          _id: {
+            candidateId: "$condidateId",
+            jobId: "$jobId"
           },
-          { path: "jobId", model: "Post" },
-        ],
-      });
+          companyId: { $first: "$companyId" },
+          steps: {
+            $push: {
+              interviewId: "$interviewId",
+              timestamp: "$timestamp",
+              assessmentType: "$assessmentType",
+              numberOfQuestions: "$numberOfQuestions",
+              analysis: "$analysis" // keep full analysis object
+            }
+          },
+          latestAssessment: { $max: "$timestamp" },
+          totalAssessments: { $sum: 1 },
+          averageOverallScore: { $avg: "$analysis.overallScore" }
+        }
+      },
+      // 3️⃣ Join candidate info
+      {
+        $lookup: {
+          from: "profiles",
+          localField: "_id.candidateId",
+          foreignField: "_id",
+          as: "candidateInfo"
+        }
+      },
+      { $unwind: "$candidateInfo" },
+      // 4️⃣ Join user info (username/email)
+      {
+        $lookup: {
+          from: "users",
+          localField: "candidateInfo.userId",
+          foreignField: "_id",
+          as: "userInfo"
+        }
+      },
+      { $unwind: "$userInfo" },
+      // 5️⃣ Join job info
+      {
+        $lookup: {
+          from: "posts",
+          localField: "_id.jobId",
+          foreignField: "_id",
+          as: "jobInfo"
+        }
+      },
+      { $unwind: "$jobInfo" },
+      // 6️⃣ Reshape output
+      {
+        $project: {
+          _id: 0,
+          candidateId: "$_id.candidateId",
+          jobId: "$_id.jobId",
+          companyId: 1,
+          candidateInfo: {
+            name: "$userInfo.username",
+            email: "$userInfo.email",
+            skills: "$candidateInfo.skills",
+            softSkills: "$candidateInfo.softSkills"
+          },
+          jobInfo: {
+            title: "$jobInfo.jobDetails.title",
+            description: "$jobInfo.jobDetails.description"
+          },
+          assessmentSummary: {
+            steps: "$steps",
+            latestAssessment: "$latestAssessment",
+            totalAssessments: "$totalAssessments",
+            averageOverallScore: "$averageOverallScore"
+          }
+        }
+      },
+      // 7️⃣ Sort by latest assessment date
+      {
+        $sort: { "assessmentSummary.latestAssessment": -1 }
+      }
+    ];
 
-    if (!profile) {
-      throw new Error("Profil introuvable ou non une entreprise.");
-    }
+    const results = await mongoose.model("JobAssessmentResult").aggregate(pipeline);
 
-    const assessmentResults = jobId
-      ? profile.assessmentResults.filter(
-          (result) => result.jobId._id?.toString() === jobId
-        )
-      : profile.assessmentResults;
-
-    return assessmentResults;
+    return {
+      companyId: safeId,
+      totalCandidates: results.length,
+      assessments: results
+    };
   } catch (error) {
-    throw new Error(
-      "Erreur lors de la récupération des assessments : " + error.message
-    );
+    console.error("Aggregation error:", error);
+    throw new Error("Erreur lors de l'agrégation: " + error.message);
   }
 };
+
 
 exports.getTotalCompanies = async () => {
   return await Profile.countDocuments({ type: "Company" });
@@ -634,3 +874,26 @@ exports.getTopIndustries = async () => {
   ]);
 };
 
+// Update specific profile fields
+module.exports.updateProfileFields = async (userId, updateData) => {
+  try {
+    console.log('🔧 Updating profile fields for user:', userId);
+    console.log('🔧 Update data:', updateData);
+    
+    const profile = await Profile.findOneAndUpdate(
+      { userId },
+      { $set: updateData },
+      { new: true }
+    );
+    
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+    
+    console.log('✅ Profile fields updated successfully');
+    return profile;
+  } catch (error) {
+    console.error('❌ Error updating profile fields:', error);
+    throw error;
+  }
+};

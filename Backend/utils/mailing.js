@@ -139,7 +139,7 @@ const getEmailTemplate = (otp) => `
     </body>
     </html>
 `;
-module.exports.sendOTP = async (email, otp) => {
+const sendOTP = async (email, otp) => {
   const mailOptions = {
     from: '"TalenIA" <contact@talentai.bid>',
     to: email,
@@ -156,3 +156,179 @@ module.exports.sendOTP = async (email, otp) => {
     return false;
   }
 };
+
+const getActivationTemplate = (activationLink, project) => `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Invitation to Confirm Your Contribution to – ${project.name}</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; margin:0; padding:0; background-color:#F7FAFC;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F7FAFC;">
+      <tr>
+        <td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" style="background-color:#FFFFFF; border-collapse:collapse;">
+            <!-- Header -->
+            <tr>
+              <td style="background-color:#2B6CB0; color:#ffffff; text-align:center; padding:32px 20px 20px 20px;">
+                <img src="https://talentai.bid/images/favicon.ico" alt="TalenIA Logo" width="64" height="64" style="display:block; margin:0 auto 12px auto;" onerror="this.style.display='none'" />
+                <h1 style="margin:0; font-size:24px;">Confirm your contribution to project <strong>${project.name}</strong></h1>
+              </td>
+            </tr>
+
+            <!-- Content -->
+            <tr>
+              <td style="padding:36px 32px 24px 32px; color:#2D3748;">
+                <p style="font-size:16px; margin:18px 0;">Hello,</p>
+                <p style="font-size:16px; margin:18px 0;">
+                 
+                  To validate your role as a contributor and access the project <strong>${project.name}</strong>'s evaluation on TalenIA, please confirm your participation by clicking the button below.
+                 </p>
+
+                <table align="center" cellpadding="0" cellspacing="0" role="presentation" style="margin:32px auto 18px auto;">
+                  <tr>
+                    <td bgcolor="#2B6CB0" style="padding:14px 24px; text-align:center;">
+                      <a href="${activationLink}" target="_blank" style="color:#ffffff; font-size:16px; font-weight:bold; text-decoration:none; display:inline-block;">
+                        Confirm
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="font-size:14px; color:#4A5568; margin-top:18px;">
+                  If you are not involved in this project, you may safely ignore this message.
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="text-align:center; color:#718096; font-size:14px; background-color:#F7FAFC; padding:20px 10px 16px 10px;">
+                Need help? Contact us at 
+                <a href="mailto:support@talentai.bid" style="color:#2B6CB0; text-decoration:none;">support@talentai.bid</a><br/>
+o                <span style="display:block; margin-top:8px;">&copy; ${new Date().getFullYear()} TalenIA. All rights reserved.</span>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+`;
+
+
+// Fonction d’envoi d’email d’activation
+const sendActivationEmail = async (to, activationLink, project) => {
+  const mailOptions = {
+    from: '"TalenIA" <contact@talentai.bid>',
+    to,
+    subject: `Confirm your contributor role – Project: ${project.name}`,
+    html: getActivationTemplate(activationLink, project),
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Email d'activation envoyé à ${to}`);
+    return true;
+  } catch (error) {
+    console.error("❌ Échec d'envoi:", error.message);
+    return false;
+  }
+};
+
+// Gabarit email pour un Post
+const getPostEmailTemplate = (post) => {
+  const title = post?.jobDetails?.title || "Job Post";
+  const description = post?.jobDetails?.description || "";
+  const requirements = Array.isArray(post?.jobDetails?.requirements) ? post.jobDetails.requirements : [];
+  const responsibilities = Array.isArray(post?.jobDetails?.responsibilities) ? post.jobDetails.responsibilities : [];
+  const location = post?.jobDetails?.location || "";
+  const employmentType = post?.jobDetails?.employmentType || "";
+  const experienceLevel = post?.jobDetails?.experienceLevel || "";
+  const salary = post?.jobDetails?.salary;
+
+  const salaryText = salary ? `${salary.min} - ${salary.max} ${salary.currency}` : "";
+
+  return `
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="utf-8" />
+      <title>${title}</title>
+      <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; color: #2D3748; background:#F7FAFC; margin:0; padding:0; }
+        .container { max-width: 720px; margin: 20px auto; background:#fff; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.08); overflow:hidden; }
+        .header { background: linear-gradient(135deg, #2B6CB0 0%, #1A365D 100%); color:#fff; padding:24px; }
+        .header h1 { margin:0; font-size:22px; }
+        .section { padding:20px 24px; }
+        h2 { font-size:18px; margin:0 0 10px; color:#1A365D; }
+        p { line-height:1.6; }
+        ul { padding-left: 18px; margin: 8px 0; }
+        .meta { display:flex; flex-wrap:wrap; gap:12px; color:#4A5568; font-size:14px; }
+        .footer { padding:16px 24px; font-size:12px; color:#718096; background:#F7FAFC; }
+        .badge { background:#EBF8FF; border:1px solid #BEE3F8; color:#2B6CB0; padding:6px 10px; border-radius:16px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>${title}</h1>
+        </div>
+        <div class="section">
+          <div class="meta">
+            ${location ? `<span class="badge">📍 ${location}</span>` : ''}
+            ${employmentType ? `<span class="badge">💼 ${employmentType}</span>` : ''}
+            ${experienceLevel ? `<span class="badge">⭐ ${experienceLevel}</span>` : ''}
+            ${salaryText ? `<span class="badge">💰 ${salaryText}</span>` : ''}
+          </div>
+        </div>
+        <div class="section">
+          <h2>Description</h2>
+          <p>${description}</p>
+        </div>
+        ${requirements.length ? `
+        <div class="section">
+          <h2>Exigences</h2>
+          <ul>
+            ${requirements.map(r => `<li>${r}</li>`).join('')}
+          </ul>
+        </div>` : ''}
+        ${responsibilities.length ? `
+        <div class="section">
+          <h2>Responsabilités</h2>
+          <ul>
+            ${responsibilities.map(r => `<li>${r}</li>`).join('')}
+          </ul>
+        </div>` : ''}
+        <div class="footer">
+          Cet email a été envoyé automatiquement par TalenIA.
+        </div>
+      </div>
+    </body>
+  </html>`;
+};
+
+// Envoi d'un email contenant les détails d'un Post
+const sendPostEmail = async (to, post) => {
+  const subject = post?.jobDetails?.title || 'Job Post';
+  const html = getPostEmailTemplate(post);
+  const mailOptions = {
+    from: '"TalenIA" <contact@talentai.bid>',
+    to,
+    subject,
+    html,
+  };
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Email de post envoyé à ${to} (sujet: ${subject})`);
+    return true;
+  } catch (error) {
+    console.error('❌ Échec d’envoi email post:', error.message);
+    return false;
+  }
+};
+
+// Exporter les fonctions
+module.exports = { sendActivationEmail , sendOTP, sendPostEmail };

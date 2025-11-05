@@ -3,10 +3,11 @@
 import type { Configuration as WebpackConfig } from 'webpack';
 
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false, // Temporarily disabled to debug duplicate API calls
   output: 'standalone',
   experimental: {
     outputFileTracingRoot: process.cwd(),
+    isrMemoryCacheSize: 0, // disable ISR memory cache to fix HMR issues
   },
   images: {
     unoptimized: true,
@@ -33,6 +34,16 @@ const nextConfig = {
     return config;
   },
   trailingSlash: true,
+
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/home/company',
+        permanent: true, // use false if it's temporary
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -1,9 +1,8 @@
 const InterviewDetails = require("../models/InterviewDetailsModel");
 const TodoList = require("../models/todoListModel");
 const { SKILL_TYPES, SKILL_LEVELS } = require("../constants/profileConstants");
-const {INTERVIEW_TYPES} = require("../constants/interviewDetailsConstants");
+const { INTERVIEW_TYPES } = require("../constants/interviewDetailsConstants");
 const { getExperienceLevelLabel } = require("./skillUtils");
-
 
 const PROFICIENCY_TO_EXPERIENCE_VALUE = Object.fromEntries(
   Object.values(SKILL_LEVELS).map((level) => [
@@ -220,7 +219,6 @@ function processAnalysisData(analysis) {
 
   analysis.jobMatch.percentage = analysis.overallScore;
   analysis.jobMatch.status = status;
-  
 }
 
 async function updateTodoListWithNewSkills(todoList, analysis) {
@@ -269,16 +267,23 @@ async function updateTodoListWithNewSkills(todoList, analysis) {
   await todoList.save();
 }
 
-async function saveInterviewDetails(profile, overallScore, skillAnalysis, formData) {
+async function saveInterviewDetails(
+  profile,
+  overallScore,
+  skillAnalysis,
+  formData,
+  recommendations
+) {
+  console.log("check : recommendations", recommendations);
   const details = skillAnalysis.map((skill) => ({
-    name: skill.skillName, 
+    name: skill.skillName,
     type: SKILL_TYPES.SOFT,
-    proficiencyLevel: skill.proficiencyLevel, 
+    proficiencyLevel: skill.proficiencyLevel,
     // experienceLevel : PROFICIENCY_TO_EXPERIENCE_VALUE[skill.proficiencyLevel],
-    confidenceScore : skill.confidenceScore , 
+    confidenceScore: skill.confidenceScore,
     questionAnswerList: (skill.questionAnswerList || []).map((qa) => ({
       question: qa.question,
-      answer: qa.answer || "unanswered",
+      answer: qa.answer && qa.answer.trim() !== "" ? qa.answer : "No answer provided",
       status: qa.status,
       exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
     })),
@@ -286,41 +291,198 @@ async function saveInterviewDetails(profile, overallScore, skillAnalysis, formDa
 
   const interviewDetails = new InterviewDetails({
     candidate: profile._id,
-    type: INTERVIEW_TYPES.HR, 
+    type: INTERVIEW_TYPES.HR,
     overallScore: overallScore,
-    interviewContext: formData?formData: null,
+    interviewContext: formData ? formData : null,
     skillDetails: details,
+    recommendations: recommendations,
   });
 
   await interviewDetails.save();
-  return interviewDetails._id; 
+  return interviewDetails._id;
 }
 
-async function saveInterviewDetailsForJob(profile, overallScore, skillAnalysis, jobId) {
+async function saveInterviewDetailsForJob(
+  profile,
+  overallScore,
+  skillAnalysis,
+  jobId, 
+  recommendations,
+  questions = null
+) {
   const details = skillAnalysis.map((skill) => ({
-    name: skill.skillName, 
+    name: skill.skillName,
     type: SKILL_TYPES.HARD,
-    proficiencyLevel: skill.demonstratedExperienceLevel, 
+    proficiencyLevel: skill.demonstratedExperienceLevel,
     // experienceLevel : PROFICIENCY_TO_EXPERIENCE_VALUE[skill.proficiencyLevel],
-    confidenceScore : skill.confidenceScore , 
+    confidenceScore: skill.confidenceScore,
     questionAnswerList: (skill.questionAnswerList || []).map((qa) => ({
       question: qa.question,
-      answer: qa.answer || "unanswered",
+      answer: qa.answer && qa.answer.trim() !== "" ? qa.answer : "No answer provided",
       status: qa.status,
       exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
     })),
   }));
 
-  const interviewDetails = new InterviewDetails({
+  const interviewDetailsData = {
     candidate: profile._id,
     post: jobId,
-    type: INTERVIEW_TYPES.POST, 
+    type: INTERVIEW_TYPES.POST,
     overallScore: overallScore,
     skillDetails: details,
+    recommendations: recommendations,
+  };
+
+  // Ajouter les questions si elles sont fournies
+  if (questions && Array.isArray(questions)) {
+    interviewDetailsData.questions = questions.map((qa) => {
+      const hasAnswer = qa.answer && qa.answer.trim() !== "";
+      return {
+        question: qa.question,
+        answer: hasAnswer ? qa.answer : "No answer provided",
+        status: hasAnswer ? (qa.status || "correct") : "incorrect",
+        exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
+      };
+    });
+  }
+
+  const interviewDetails = new InterviewDetails(interviewDetailsData);
+
+  await interviewDetails.save();
+  return interviewDetails._id;
+}
+
+async function saveInterviewDetailsForOnboarding(
+  profile,
+  overallScore,
+  skillAnalysis,
+  recommendations
+) {
+  const details = skillAnalysis.map((skill) => ({
+    name: skill.skillName,
+    type: SKILL_TYPES.HARD,
+    proficiencyLevel: skill.demonstratedExperienceLevel,
+    // experienceLevel : PROFICIENCY_TO_EXPERIENCE_VALUE[skill.proficiencyLevel],
+    confidenceScore: skill.confidenceScore,
+    questionAnswerList: (skill.questionAnswerList || []).map((qa) => ({
+      question: qa.question,
+      answer: qa.answer && qa.answer.trim() !== "" ? qa.answer : "No answer provided",
+      status: qa.status,
+      exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
+      partialCorrectPercentage: qa.partialCorrectPercentage || null,
+      partialCorrectReason: qa.partialCorrectReason || null,
+    })),
+  }));
+  const interviewDetails = new InterviewDetails({
+    candidate: profile._id,
+    type: INTERVIEW_TYPES.ONBOARDING,
+    overallScore: overallScore,
+    skillDetails: details,
+    recommendations: recommendations,
   });
 
   await interviewDetails.save();
-  return interviewDetails._id; 
+  return interviewDetails._id;
+}
+
+async function saveInterviewDetailsForAddSkill(
+  profile,
+  overallScore,
+  skillAnalysis,
+  skillType,
+  recommendations
+) {
+  // Normalize incoming skillType to one of SKILL_TYPES values
+  let normalizedSkillType = SKILL_TYPES.HARD; // default
+  if (typeof skillType === "string") {
+    const st = skillType.toLowerCase();
+    if (st === "soft" || st === "softskill" || st === "soft_skill") {
+      normalizedSkillType = SKILL_TYPES.SOFT;
+    } else if (st === "hard" || st === "technical" || st === "technicalskill" || st === "technical_skill") {
+      normalizedSkillType = SKILL_TYPES.HARD;
+    } else if (st === SKILL_TYPES.SOFT) {
+      normalizedSkillType = SKILL_TYPES.SOFT;
+    } else if (st === SKILL_TYPES.HARD) {
+      normalizedSkillType = SKILL_TYPES.HARD;
+    }
+  }
+
+  // Helper to infer proficiency level from experience label if needed
+  const experienceLabelToProficiency = (label) => {
+    if (!label) return undefined;
+    const found = Object.values(SKILL_LEVELS).find(
+      (lvl) => lvl.experienceLevel && lvl.experienceLevel.toLowerCase() === String(label).toLowerCase()
+    );
+    return found ? found.proficiencyLevel : undefined;
+  };
+
+  const details = (skillAnalysis || []).map((skill) => {
+    // Prefer numeric demonstratedProficiency if present, else try to infer from demonstratedExperienceLevel
+    let prof = undefined;
+    if (skill.demonstratedProficiency !== undefined && skill.demonstratedProficiency !== null) {
+      prof = Number(skill.demonstratedProficiency);
+    } else if (skill.demonstratedExperienceLevel) {
+      prof = experienceLabelToProficiency(skill.demonstratedExperienceLevel);
+    } else if (skill.proficiencyLevel !== undefined) {
+      prof = Number(skill.proficiencyLevel);
+    }
+
+    const qList = (skill.questionAnswerList || []).map((qa) => ({
+      question: qa.question || "",
+      answer: qa.answer && qa.answer.trim() !== "" ? qa.answer : "No answer provided",
+      status: qa.status || "incorrect",
+      exampleCorrectAnswer: qa.exampleCorrectAnswer || null,
+      partialCorrectPercentage: qa.partialCorrectPercentage || null,
+      partialCorrectReason: qa.partialCorrectReason || null,
+    }));
+
+    return {
+      name: skill.skillName || skill.name || "",
+      type: normalizedSkillType,
+      proficiencyLevel: Number.isFinite(prof) ? prof : undefined,
+      experienceLevel: skill.demonstratedExperienceLevel || skill.experienceLevel || undefined,
+      // confidenceScore may be under different keys
+      confidenceScore: skill.confidenceScore || skill.confidence || undefined,
+      questionAnswerList: qList,
+    };
+  });
+
+  const interviewDetails = new InterviewDetails({
+    candidate: profile._id,
+    type: INTERVIEW_TYPES.SKILL,
+    overallScore: overallScore,
+    skillDetails: details,
+    recommendations: recommendations,
+  });
+
+  try {
+    console.debug("saveInterviewDetailsForAddSkill: saving InterviewDetails, details sample:", JSON.stringify(details, null, 2));
+    await interviewDetails.save();
+    return interviewDetails._id;
+  } catch (err) {
+    console.error("Error saving interview details for add-skill:", err && err.message ? err.message : err);
+    if (err && err.errors) {
+      console.error("Validation errors:", err.errors);
+    }
+    // Re-throw so callers can handle the error and we don't silently swallow it
+    throw err;
+  }
+}
+
+/**
+ * Calculates the overallScore for HR analysis as the average of confidenceScores of the skills.
+ * @param {Array} skillAnalysis - Array of skill analysis objects, each with a confidenceScore property.
+ * @returns {number} The average confidenceScore (0-100, rounded to nearest integer)
+ */
+function handleHROverallScore(skillAnalysis) {
+  if (!Array.isArray(skillAnalysis) || skillAnalysis.length === 0) return 0;
+  const total = skillAnalysis.reduce(
+    (sum, skill) =>
+      sum +
+      (typeof skill.confidenceScore === "number" ? skill.confidenceScore : 0),
+    0
+  );
+  return Math.round(total / skillAnalysis.length);
 }
 
 module.exports = {
@@ -333,5 +495,8 @@ module.exports = {
   updateTodoListWithNewSkills,
   handleAddSoftSkills,
   saveInterviewDetails,
-  saveInterviewDetailsForJob
+  saveInterviewDetailsForJob,
+  saveInterviewDetailsForOnboarding,
+  saveInterviewDetailsForAddSkill,
+  handleHROverallScore,
 };

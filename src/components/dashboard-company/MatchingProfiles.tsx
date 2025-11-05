@@ -3,189 +3,499 @@ import React from 'react';
 import {
   Box,
   Typography,
-  CircularProgress,
-  Alert,
   Button,
-  Chip
+  Chip,
+  CircularProgress,
+  Avatar,
+  Pagination,
 } from '@mui/material';
+import ErrorIcon from '@mui/icons-material/Error';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
-import StarIcon from '@mui/icons-material/Star';
-import WorkIcon from '@mui/icons-material/Work';
 import EmailIcon from '@mui/icons-material/Email';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useRouter } from 'next/router';
 
-export interface MatchingCandidate {
-  candidateId?: {
+// Update the MatchingCandidate interface
+interface MatchingCandidate {
+  candidateId: {
     _id: string;
-    username?: string;
-    email?: string;
-    isVerified?: boolean;
-    role?: string;
+    username: string;
+    email: string;
+    isVerified: boolean;
+    role: string;
   };
-  finalBid?: number;
-  score?: number;
-  matchedSkills?: Array<{ _id?: string; name?: string; experienceLevel?: string; proficiencyLevel?: number; ScoreTest?: number }>;
-  requiredSkills?: Array<{ _id?: string; name?: string; level?: string }>;
+  name: string;
+  score: number;
+  finalBid: number;
+  matchedSkills: Array<{
+    name: string;
+    proficiencyLevel: number;
+    experienceLevel: string;
+    _id: string;
+    ScoreTest?: number;
+  }>;
+  requiredSkills: Array<{
+    name: string;
+    level: string;
+    importance: string;
+    category: string;
+    _id: string;
+  }>;
 }
 
 interface MatchingProfilesProps {
-  isLoading: boolean;
-  error: string | null;
-  profiles: MatchingCandidate[];
+  matchingProfiles: MatchingCandidate[];
+  isLoadingMatches: boolean;
+  matchError: string | null;
   displayCount: number;
-  onShowMore: () => void;
-  onBid: (candidate: MatchingCandidate) => void;
-  selectedJobId?: string;
+  selectedJob: string;
+  onRetry: () => void;
+  onBackToJobs: () => void;
+  onCreateNewJob: () => void;
+  onLoadMore: () => void;
+  onBidDialogOpen: (candidate: MatchingCandidate) => void;
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 }
 
-export const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
-  isLoading,
-  error,
-  profiles,
+const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
+  matchingProfiles,
+  isLoadingMatches,
+  matchError,
   displayCount,
-  onShowMore,
-  onBid,
-  selectedJobId
+  selectedJob,
+  onRetry,
+  onBackToJobs,
+  onCreateNewJob,
+  onLoadMore,
+  onBidDialogOpen,
+  currentPage = 1,
+  totalPages = 1,
+  onPageChange,
 }) => {
-  // slice to displayCount
-  const visible = profiles.slice(0, displayCount);
-
-  if (isLoading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-        <CircularProgress sx={{ color: '#02E2FF' }} />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>;
-  }
-
-  if (profiles.length === 0) {
-    return (
-      <Box sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: 6,
-        px: 3,
-        backgroundColor: 'white',
-        borderRadius: '16px',
-        textAlign: 'center',
-        boxShadow: '0px 0px 2px 0px rgba(0, 255, 157, 1)'
-      }}>
-        <PersonSearchIcon sx={{ fontSize: 48, color: 'rgba(0, 255, 157, 1)', mb: 2 }} />
-        <Typography variant="h6" sx={{ color: 'black', fontWeight: 600, mb: 1 }}>
-          No Matching Candidates Found
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'black', maxWidth: '400px' }}>
-          We couldn't find any candidates that match your job requirements. Try adjusting your filters or requirements to find more matches.
-        </Typography>
-      </Box>
-    );
-  }
+  const router = useRouter();
+  
+  // Client-side pagination if not provided by parent
+  const itemsPerPage = 3;
+  const calculatedTotalPages = Math.ceil(matchingProfiles.length / itemsPerPage);
+  const [localPage, setLocalPage] = React.useState(1);
+  
+  // Use provided pagination or fallback to local
+  const page = onPageChange ? currentPage : localPage;
+  const handlePageChange = onPageChange || ((newPage: number) => setLocalPage(newPage));
+  
+  // Get items for current page
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedCandidates = matchingProfiles.slice(startIndex, endIndex);
+  const effectiveTotalPages = totalPages > 1 ? totalPages : calculatedTotalPages;
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      {visible.map(candidate => (
-        <Box key={candidate.candidateId?._id || Math.random()} sx={{ p: 3, background: 'white', borderRadius: '16px', boxShadow: '0 0 10px rgba(0,0,0,0.1)' }}>
-          {/* Header */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, pb: 1, borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-              <Box sx={{ width: 48, height: 48, borderRadius: '12px', background: 'rgba(0,255,157,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', color: 'black' }}>
-                {candidate.candidateId?.username?.charAt(0).toUpperCase() || '?'}
-              </Box>
-              <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                  <Typography variant="h6" sx={{ color: 'black', fontWeight: 600 }}>
-                    {candidate.candidateId?.username || 'Anonymous'}
-                  </Typography>
-                  {candidate.candidateId?.isVerified && (
-                    <StarIcon sx={{ fontSize: 16, color: '#4ade80' }} />
-                  )}
-                </Box>
-                <Typography variant="body2" sx={{ color: 'black' }}>{candidate.candidateId?.email || 'No email'}</Typography>
-                <Typography variant="caption" sx={{ color: 'black' }}>{candidate.candidateId?.role || 'Role N/A'}</Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Box sx={{ background: 'rgba(0,255,157,1)', p: 1, borderRadius: '8px', textAlign: 'center' }}>
-                <Typography sx={{ fontWeight: 600 }}>{candidate.finalBid || 0}$</Typography>
-                <Typography variant="caption">Current Bid</Typography>
-              </Box>
-              <Box sx={{ background: 'rgba(0,255,157,1)', p: 1, borderRadius: '8px', textAlign: 'center' }}>
-                <Typography sx={{ fontWeight: 600 }}>{candidate.score || 0}%</Typography>
-                <Typography variant="caption">Match Score</Typography>
-              </Box>
-            </Box>
-          </Box>
+    <>
+      {/* Header Section */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box>
+          <Typography variant="h5" sx={{ 
+            color: '#111827', 
+            fontWeight: 700,
+            fontSize: '1.5rem',
+            position: 'relative',
+            '&:after': {
+              content: '""',
+              position: 'absolute',
+              bottom: '-8px',
+              left: 0,
+              width: '60px',
+              height: '3px',
+              backgroundColor: '#10b981',
+              borderRadius: '2px'
+            }
+          }}>
+            Matching Candidates
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<ArrowBackIcon />}
+          onClick={onBackToJobs}
+          sx={{
+            backgroundColor: '#10b981',
+            color: 'white',
+            fontWeight: 600,
+            borderRadius: '8px',
+            px: 3,
+            py: 1,
+            fontSize: '0.875rem',
+            textTransform: 'none',
+            '&:hover': {
+              backgroundColor: '#059669',
+            }
+          }}
+        >
+          Return to Jobs
+        </Button>
+      </Box>
 
-          {/* Matched Skills */}
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-              <StarIcon sx={{ color: 'rgba(0,255,157,1)' }} /> Matched Skills
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {candidate.matchedSkills?.map(skill => (
-                <Box key={skill._id || Math.random()} sx={{ background: 'rgba(0,255,157,1)', p: 1, borderRadius: '8px', flex: '1 1 calc(50% - 8px)' }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography sx={{ fontWeight: 500 }}>{skill.name}</Typography>
-                    <Chip label={skill.experienceLevel} size="small" />
-                  </Box>
-                  <Box sx={{ width: '100%', height: 4, background: 'rgba(0,0,0,0.1)', borderRadius: 2, overflow: 'hidden' }}>
-                    <Box sx={{ width: `${(skill.proficiencyLevel! / 5) * 100}%`, height: '100%', background: 'linear-gradient(90deg,#02E2FF,#00FFC3)' }} />
-                  </Box>
-                  {skill.ScoreTest && (
-                    <Typography variant="caption" sx={{ display: 'block', textAlign: 'right' }}>Test Score: {skill.ScoreTest}%</Typography>
-                  )}
-                </Box>
-              ))}
-            </Box>
-          </Box>
-
-          {/* Required Skills */}
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-              <WorkIcon sx={{ color: 'rgba(0,255,157,1)' }} /> Required Skills
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, background: 'rgba(0,0,0,0.05)', p: 1, borderRadius: '8px' }}>
-              {candidate.requiredSkills?.map(skill => (
-                <Chip key={skill._id || Math.random()} label={`${skill.name} (${skill.level})`} size="small" />
-              ))}
-            </Box>
-          </Box>
-
-          {/* Actions */}
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              variant="contained"
-              fullWidth
-              startIcon={<EmailIcon />}
-              href={`mailto:${candidate.candidateId?.email}`}
-              disabled={!candidate.candidateId?.email}
-            >
-              Contact
-            </Button>
+      {/* Content Section */}
+      {isLoadingMatches ? (
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          py: 8,
+          backgroundColor: '#f9fafb',
+          borderRadius: '12px',
+          border: '1px solid #e5e7eb'
+        }}>
+          <CircularProgress sx={{ color: '#3b82f6', mb: 3 }} />
+          <Typography variant="h6" sx={{ color: '#111827', fontWeight: 600, mb: 1 }}>
+            Finding Perfect Matches
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#6b7280', textAlign: 'center' }}>
+            Analyzing candidate profiles and skills...
+          </Typography>
+        </Box>
+      ) : matchError ? (
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          py: 6,
+          px: 4,
+          backgroundColor: '#fef2f2',
+          borderRadius: '12px',
+          border: '1px solid #fecaca',
+          textAlign: 'center'
+        }}>
+          <ErrorIcon sx={{ fontSize: 48, color: '#dc2626', mb: 3 }} />
+          <Typography variant="h6" sx={{ color: '#111827', fontWeight: 600, mb: 2 }}>
+            Error Loading Matches
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#6b7280', maxWidth: '400px', mb: 3 }}>
+            {matchError}
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={onRetry}
+            sx={{
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              fontWeight: 600,
+              borderRadius: '8px',
+              px: 3,
+              '&:hover': {
+                backgroundColor: '#2563eb'
+              }
+            }}
+          >
+            Try Again
+          </Button>
+        </Box>
+      ) : !matchingProfiles || matchingProfiles.length === 0 ? (
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          py: 8,
+          px: 4,
+          backgroundColor: '#f9fafb',
+          borderRadius: '12px',
+          border: '1px solid #e5e7eb',
+          textAlign: 'center'
+        }}>
+          <PersonSearchIcon sx={{ fontSize: 48, color: '#6b7280', mb: 3 }} />
+          <Typography variant="h5" sx={{ color: '#111827', fontWeight: 700, mb: 2 }}>
+            No Matching Candidates Found
+          </Typography>
+          <Typography variant="body1" sx={{ color: '#6b7280', maxWidth: '500px', mb: 4, lineHeight: 1.6 }}>
+            We couldn't find any candidates that match your job requirements. Try adjusting your filters or requirements to find more matches.
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
             <Button
               variant="outlined"
-              fullWidth
-              startIcon={<AttachMoneyIcon />}
-              onClick={() => onBid(candidate)}
-              disabled={!candidate.candidateId || !selectedJobId}
+              onClick={onBackToJobs}
+              sx={{
+                borderColor: '#d1d5db',
+                color: '#374151',
+                fontWeight: 600,
+                borderRadius: '8px',
+                px: 3,
+                py: 1.5,
+                textTransform: 'none',
+                fontSize: '0.875rem',
+                '&:hover': {
+                  borderColor: '#9ca3af',
+                  backgroundColor: '#f9fafb'
+                }
+              }}
             >
-              Place Bid
+              ← Back to Jobs
+            </Button>
+            <Button
+              variant="contained"
+              onClick={onCreateNewJob}
+              sx={{
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                fontWeight: 600,
+                borderRadius: '8px',
+                px: 3,
+                py: 1.5,
+                textTransform: 'none',
+                fontSize: '0.875rem',
+                '&:hover': {
+                  backgroundColor: '#2563eb'
+                }
+              }}
+            >
+              Create New Job
             </Button>
           </Box>
         </Box>
-      ))}
+      ) : (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {/* Stats Summary */}
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            p: 2,
+            backgroundColor: '#f0fdf4',
+            borderRadius: '8px',
+            border: '1px solid #bbf7d0',
+            mb: 3
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography variant="h6" sx={{ 
+                color: '#10b981', 
+                fontWeight: 600,
+                fontSize: '1rem'
+              }}>
+                Found {matchingProfiles.length} matching candidates
+              </Typography>
+              {effectiveTotalPages > 1 && (
+                <Typography variant="body2" sx={{ 
+                  color: '#6b7280',
+                  fontSize: '0.875rem'
+                }}>
+                  (Showing {startIndex + 1}-{Math.min(endIndex, matchingProfiles.length)} of {matchingProfiles.length})
+                </Typography>
+              )}
+            </Box>
+          </Box>
 
-      {profiles.length > displayCount && (
-        <Button variant="outlined" onClick={onShowMore} sx={{ mt: 2 }}>
-          Show More
-        </Button>
+          {/* Candidate Cards */}
+          {paginatedCandidates.map((candidate, index) => (
+            <Box
+              key={candidate.candidateId._id}
+              sx={{
+                background: 'white',
+                borderRadius: '12px',
+                border: '1px solid #e5e7eb',
+                p: 3,
+                transition: 'border-color 0.2s',
+                '&:hover': {
+                  borderColor: '#d1d5db'
+                }
+              }}
+            >
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+                  <Avatar
+                    sx={{
+                      width: 60,
+                      height: 60,
+                      backgroundColor: '#f3f4f6',
+                      border: '2px solid #e5e7eb',
+                      fontSize: '1.5rem',
+                      fontWeight: 600,
+                      color: '#6b7280'
+                    }}
+                  >
+                    {(candidate.name || candidate.candidateId.username)?.charAt(0)?.toUpperCase()}
+                  </Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" sx={{ 
+                      color: '#111827', 
+                      fontWeight: 600,
+                      fontSize: '1.125rem',
+                      mb: 0.5
+                    }}>
+                      {candidate.name || candidate.candidateId.username} | {candidate.candidateId.role || 'Software Engineer'}
+                    </Typography>
+                    <Typography variant="body2" sx={{ 
+                      color: '#6b7280', 
+                      fontSize: '0.875rem'
+                    }}>
+                      {candidate.candidateId.email}
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ textAlign: 'center', ml: 2 }}>
+                  <Box sx={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: '50%',
+                    border: `6px solid ${candidate.score >= 70 ? '#10b981' : candidate.score >= 50 ? '#f59e0b' : '#ef4444'}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'white',
+                    position: 'relative'
+                  }}>
+                    <Typography variant="h5" sx={{ 
+                      color: '#111827', 
+                      fontWeight: 700,
+                      fontSize: '1.5rem',
+                      lineHeight: 1
+                    }}>
+                      {candidate.score.toFixed(2)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ 
+                      color: '#6b7280', 
+                      fontWeight: 500,
+                      fontSize: '0.75rem',
+                      mt: 0.5
+                    }}>
+                      Matching Score
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Skills Section */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ 
+                  color: '#111827', 
+                  fontWeight: 600, 
+                  mb: 1.5,
+                  fontSize: '0.875rem'
+                }}>
+                  Matched Skills
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {candidate.matchedSkills.slice(0, 6).map((skill, idx) => (
+                    <Chip
+                      key={skill._id || idx}
+                      label={`${skill.name} (${skill.experienceLevel || skill.proficiencyLevel || 'N/A'})`}
+                      size="small"
+                      sx={{
+                        backgroundColor: '#f3f4f6',
+                        color: '#374151',
+                        fontWeight: 500,
+                        height: 28,
+                        fontSize: '0.75rem',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '6px',
+                        '&:hover': {
+                          backgroundColor: '#e5e7eb'
+                        }
+                      }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+
+              {/* Action Buttons */}
+              <Box sx={{
+                display: 'flex',
+                gap: 2,
+                mt: 'auto'
+              }}>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  startIcon={<EmailIcon />}
+                  component="a"
+                  href={`mailto:${candidate?.candidateId?.email}`}
+                  sx={{
+                    backgroundColor: '#10b981',
+                    color: 'white',
+                    fontWeight: 600,
+                    borderRadius: '8px',
+                    py: 1.5,
+                    textTransform: 'none',
+                    fontSize: '0.875rem',
+                    '&:hover': {
+                      backgroundColor: '#059669'
+                    },
+                    '&.Mui-disabled': {
+                      backgroundColor: '#e5e7eb',
+                      color: '#9ca3af'
+                    }
+                  }}
+                  disabled={!candidate?.candidateId?.email}
+                >
+                  Contact Candidate
+                </Button>
+                
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  startIcon={<AttachMoneyIcon />}
+                  onClick={() => onBidDialogOpen(candidate)}
+                  sx={{
+                    borderColor: '#3b82f6',
+                    color: '#3b82f6',
+                    fontWeight: 600,
+                    borderRadius: '8px',
+                    py: 1.5,
+                    textTransform: 'none',
+                    fontSize: '0.875rem',
+                    borderWidth: '1px',
+                    '&:hover': {
+                      borderColor: '#2563eb',
+                      backgroundColor: '#eff6ff'
+                    },
+                    '&.Mui-disabled': {
+                      borderColor: '#e5e7eb',
+                      color: '#9ca3af'
+                    }
+                  }}
+                  disabled={!candidate?.candidateId?._id || !selectedJob}
+                >
+                  Place Bid
+                </Button>
+              </Box>
+            </Box>
+          ))}
+
+          {/* Pagination */}
+          {effectiveTotalPages > 1 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <Pagination
+                count={effectiveTotalPages}
+                page={page}
+                onChange={(event, newPage) => handlePageChange(newPage)}
+                color="primary"
+                sx={{
+                  '& .MuiPaginationItem-root': {
+                    color: '#6b7280',
+                    '&.Mui-selected': {
+                      backgroundColor: '#10b981',
+                      color: 'white',
+                      '&:hover': {
+                        backgroundColor: '#059669'
+                      }
+                    },
+                    '&:hover': {
+                      backgroundColor: '#f3f4f6'
+                    }
+                  }
+                }}
+              />
+            </Box>
+          )}
+        </Box>
       )}
-    </Box>
+    </>
   );
 };
+
+export default MatchingProfiles;

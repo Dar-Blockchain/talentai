@@ -1,0 +1,4 @@
+# .nextignore
+node_modules
+.next
+public/uploads

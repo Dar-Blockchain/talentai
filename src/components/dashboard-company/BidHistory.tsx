@@ -1,73 +1,239 @@
 import React from 'react';
-import { Box, Typography, CircularProgress, Alert, Card, styled } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Chip,
+  Button,
+  CircularProgress,
+  Alert,
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import PersonIcon from '@mui/icons-material/Person';
+import WorkIcon from '@mui/icons-material/Work';
 
-// Styled Component for the container card
-const StyledCard = styled(Card)(({ theme }) => ({
-  marginTop: theme.spacing(4),
-  padding: theme.spacing(2),
-  background: 'white',
-  borderRadius: '16px',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-}));
+// ============================================================================
+// TYPES & INTERFACES
+// ============================================================================
 
-// Define the shape of a bid history item
-interface BidHistoryItem {
+interface Bid {
   _id: string;
-  userInfo: { username: string; email: string };
-  post?: { jobDetails?: { title: string } };
+  userInfo: {
+    username: string;
+    email: string;
+  };
+  post: {
+    jobDetails: {
+      title: string;
+    };
+  };
+  status: 'win' | 'lose';
   finalBid: number;
   dateBid: string;
 }
 
-// Props for the BidHistory component
 interface BidHistoryProps {
-  data: BidHistoryItem[];
-  status: 'loading' | 'idle' | 'succeeded' | 'failed';
+  bids: Bid[];
+  status: string;
   error: string | null;
+  onPostNewJob: () => void;
 }
 
-// BidHistory component
-export const BidHistory: React.FC<BidHistoryProps> = ({ data, status, error }) => {
+// ============================================================================
+// STYLED COMPONENTS
+// ============================================================================
+
+const StyledCard = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(3),
+  marginBottom: theme.spacing(3),
+  background: 'white',
+  borderRadius: '16px',
+  border: '1px solid #e5e7eb',
+}));
+
+const SectionTitle = styled(Typography)(({ theme }) => ({
+  fontSize: '1.25rem',
+  fontWeight: 700,
+  color: '#111827',
+  marginBottom: theme.spacing(3),
+}));
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
+/**
+ * BidHistory Component
+ * 
+ * Displays and manages bid history for company jobs
+ */
+const BidHistory: React.FC<BidHistoryProps> = ({
+  bids,
+  status,
+  error,
+  onPostNewJob
+}) => {
   return (
-    <StyledCard>
-      <Typography variant="h5" sx={{ marginBottom: 2 }}>Bid History</Typography>
-      {status === 'loading' ? (
+    <StyledCard sx={{ mt: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <SectionTitle sx={{ mb: 0 }}>Bid History</SectionTitle>
+        {bids.length > 0 && (
+          <Chip
+            label={`${bids.length} bids`}
+            size="small"
+            sx={{
+              backgroundColor: '#eff6ff',
+              color: '#1e40af',
+              fontWeight: 600,
+              fontSize: '0.75rem',
+              border: '1px solid #bfdbfe'
+            }}
+          />
+        )}
+      </Box>
+      
+      {status === "loading" ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-          <CircularProgress />
+          <CircularProgress sx={{ color: '#3b82f6' }} />
         </Box>
-      ) : status === 'failed' ? (
+      ) : status === "failed" ? (
         <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
-      ) : data.length === 0 ? (
-        <Alert severity="info" sx={{ mb: 2 }}>No bid history found.</Alert>
+      ) : bids.length === 0 ? (
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 3,
+          py: 8,
+          px: 4,
+          textAlign: 'center',
+          background: '#f9fafb',
+          borderRadius: '12px',
+          border: '1px solid #e5e7eb'
+        }}>
+          <Box sx={{
+            width: 80,
+            height: 80,
+            borderRadius: '50%',
+            background: '#e0f2fe',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative'
+          }}>
+            <PersonIcon sx={{ color: '#0369a1', fontSize: 40 }} />
+            <Box sx={{
+              position: 'absolute',
+              bottom: 8,
+              right: 8,
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              background: '#10b981',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: 'white'
+            }}>
+              a
+            </Box>
+          </Box>
+          <Typography variant="h5" sx={{ 
+            color: '#10b981', 
+            fontWeight: 700,
+            fontSize: '1.5rem'
+          }}>
+            No bid history Yet
+          </Typography>
+          <Box sx={{ maxWidth: 480 }}>
+            <Typography variant="body1" sx={{ 
+              color: '#6b7280', 
+              lineHeight: 1.6,
+              mb: 1
+            }}>
+              Once you place bids on candidates who match your job posts, they will appear here.
+            </Typography>
+            <Typography variant="body1" sx={{ 
+              color: '#6b7280', 
+              lineHeight: 1.6
+            }}>
+              View matches from your job posts to place a bid.
+            </Typography>
+          </Box>
+        </Box>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {data.map(bid => (
+          {bids.map((bid: Bid) => (
             <Box
               key={bid._id}
               sx={{
-                display: 'flex',
+                display: 'grid',
+                gridTemplateColumns: '1fr auto auto',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                gap: 2,
                 background: 'white',
-                borderRadius: '10px',
-                p: 2,
-                boxShadow: '0 0 10px rgba(0,0,0,0.1)',
-                border: '1px solid rgba(255,255,255,0.08)'
+                borderRadius: '12px',
+                p: 3,
+                border: '1px solid #e5e7eb',
+                transition: 'border-color 0.2s',
+                '&:hover': {
+                  borderColor: '#d1d5db'
+                }
               }}
             >
               <Box>
-                <Typography sx={{ fontWeight: 600 }}>{bid.userInfo.username}</Typography>
-                <Typography sx={{ fontSize: '0.9rem' }}>{bid.userInfo.email}</Typography>
-                {bid.post?.jobDetails?.title && (
-                  <Typography sx={{ fontSize: '0.85rem' }}>{bid.post.jobDetails.title}</Typography>
-                )}
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Typography sx={{ fontWeight: 600, color: 'rgba(0, 255, 157, 1)' }}>${bid.finalBid}</Typography>
-                <Typography sx={{ fontSize: '0.8rem' }}>
-                  {new Date(bid.dateBid).toLocaleDateString()}
+                <Typography sx={{ color: '#111827', fontWeight: 600, fontSize: '1rem' }}>
+                  {bid.userInfo.username}
                 </Typography>
+                <Typography sx={{ color: '#6b7280', fontSize: '0.875rem', mb: 1 }}>
+                  {bid.userInfo.email}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                  <Chip
+                    icon={<WorkIcon sx={{ fontSize: 16, color: '#3b82f6' }} />}
+                    label={bid.post.jobDetails.title || '—'}
+                    size="small"
+                    sx={{ 
+                      backgroundColor: '#eff6ff', 
+                      color: '#1e40af', 
+                      fontWeight: 500, 
+                      border: '1px solid #bfdbfe',
+                      '& .MuiChip-icon': { color: '#3b82f6' }
+                    }}
+                  />
+                  {bid.status && (
+                    <Chip
+                      label={bid.status === 'win' ? 'Won' : 'Lost'}
+                      size="small"
+                      sx={{
+                        backgroundColor: bid.status === 'win' ? '#d1fae5' : '#fee2e2',
+                        color: bid.status === 'win' ? '#065f46' : '#991b1b',
+                        fontWeight: 600,
+                        border: 'none',
+                        borderRadius: '6px'
+                      }}
+                    />
+                  )}
+                </Box>
               </Box>
+              <Typography sx={{ 
+                color: '#111827', 
+                fontWeight: 700, 
+                justifySelf: 'end',
+                fontSize: '1.125rem'
+              }}>
+                ${bid.finalBid}
+              </Typography>
+              <Typography sx={{ 
+                color: '#6b7280', 
+                fontSize: '0.875rem', 
+                justifySelf: 'end',
+                fontWeight: 500
+              }}>
+                {new Date(bid.dateBid).toLocaleDateString()}
+              </Typography>
             </Box>
           ))}
         </Box>
@@ -75,3 +241,6 @@ export const BidHistory: React.FC<BidHistoryProps> = ({ data, status, error }) =
     </StyledCard>
   );
 };
+
+export default BidHistory;
+

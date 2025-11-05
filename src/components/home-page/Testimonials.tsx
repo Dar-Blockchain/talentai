@@ -1,0 +1,315 @@
+import React, { useState } from "react";
+import { Box, Button, Typography, Avatar } from "@mui/material";
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+
+type Testimonial = {
+  quote: string;
+  name: string;
+  title: string;
+  company: string;
+  dark?: boolean;
+};
+
+const items: Testimonial[] = [
+  {
+    quote:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo",
+    name: "Luke McKinley",
+    title: "VP of Finance",
+    company: "fountain",
+    dark: true,
+  },
+  {
+    quote:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commod.",
+    name: "Marisol Jarales",
+    title: "Head of People",
+    company: "REVERSE TECH",
+    dark: false,
+  },
+  {
+    quote:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo",
+    name: "John Smith",
+    title: "CEO",
+    company: "EMRUSH",
+    dark: false,
+  },
+  {
+    quote:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo",
+    name: "Sarah Johnson",
+    title: "CTO",
+    company: "TECH CORP",
+    dark: true,
+  },
+  {
+    quote:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo",
+    name: "Michael Chen",
+    title: "VP of Engineering",
+    company: "TECHNOVATE",
+    dark: false,
+  },
+  {
+    quote:
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo",
+    name: "Emily Rodriguez",
+    title: "Head of Operations",
+    company: "INNOVATE LAB",
+    dark: true,
+  },
+];
+
+// Sub-component: Section Header
+const SectionHeader = () => (
+  <Typography 
+    variant="h4" 
+    sx={{ 
+      textAlign: 'center', 
+      fontFamily: 'Poppins, sans-serif', 
+      fontWeight: 600, 
+      mb: 6,
+      color: '#111827'
+    }}
+  >
+    A word from our customers
+  </Typography>
+);
+
+// Sub-component: Company Logo
+const CompanyLogo = ({ company, isDark }: { company: string; isDark: boolean }) => {
+  const getCompanyIcon = (companyName: string) => {
+    switch (companyName) {
+      case 'fountain': return 'f';
+      case 'REVERSE TECH': return '←';
+      case 'EMRUSH': return 'E';
+      case 'TECH CORP': return 'T';
+      case 'TECHNOVATE': return 'T';
+      case 'INNOVATE LAB': return 'I';
+      default: return 'C';
+    }
+  };
+
+  return (
+    <Box sx={{ 
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1
+    }}>
+      <Box sx={{
+        width: 16,
+        height: 16,
+        bgcolor: isDark ? '#FFFFFF' : '#111827',
+        borderRadius: 0.5,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <Typography 
+          variant="caption" 
+          sx={{ 
+            color: isDark ? '#000000' : '#FFFFFF',
+            fontWeight: 600,
+            fontSize: '0.6rem'
+          }}
+        >
+          {getCompanyIcon(company)}
+        </Typography>
+      </Box>
+      <Typography 
+        variant="caption" 
+        sx={{ 
+          color: isDark ? '#FFFFFF' : '#111827',
+          fontWeight: 600,
+          fontSize: '0.75rem'
+        }}
+      >
+        {company}
+      </Typography>
+    </Box>
+  );
+};
+
+// Sub-component: Customer Info
+const CustomerInfo = ({ testimonial }: { testimonial: Testimonial }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Avatar 
+        sx={{ 
+          width: 48, 
+          height: 48,
+          bgcolor: testimonial.dark ? '#10B981' : '#9CA3AF'
+        }}
+      />
+      <Box>
+        <Typography 
+          variant="body2" 
+          sx={{ 
+            fontWeight: 600,
+            color: testimonial.dark ? '#fff' : '#111827'
+          }}
+        >
+          {testimonial.name}
+        </Typography>
+        <Typography 
+          variant="caption" 
+          sx={{ 
+            color: testimonial.dark ? '#9CA3AF' : '#6B7280',
+            display: 'block'
+          }}
+        >
+          {testimonial.title}
+        </Typography>
+      </Box>
+    </Box>
+    
+    <CompanyLogo company={testimonial.company} isDark={testimonial.dark || false} />
+  </Box>
+);
+
+// Sub-component: Read More Button
+const ReadMoreButton = ({ isDark }: { isDark: boolean }) => (
+  <Button 
+    variant="text" 
+    sx={{ 
+      textTransform: 'none', 
+      color: isDark ? '#fff' : '#3B82F6',
+      alignSelf: 'flex-start',
+      p: 0,
+      mb: 3,
+      '&:hover': { backgroundColor: 'transparent' }
+    }} 
+    endIcon={<ArrowForwardIosIcon fontSize="small" />}
+  >
+    Read full customer story
+  </Button>
+);
+
+// Sub-component: Testimonial Card
+const TestimonialCard = ({ testimonial, index }: { testimonial: Testimonial; index: number }) => (
+  <Box 
+    key={index}
+    sx={{
+      width: '16.66%', // 100% / 6 items
+      px: 0,
+      display: 'flex',
+      justifyContent: 'center',
+      flexShrink: 0,
+      marginRight: index < items.length - 1 ? '1px' : 0
+    }}
+  >
+    <Box sx={{
+      width: { xs: '100%', md: 500 },
+      maxWidth: 500,
+      bgcolor: testimonial.dark ? '#000000' : '#FFFFFF',
+      color: testimonial.dark ? '#FFFFFF' : '#111827',
+      borderRadius: 2,
+      p: 4,
+      position: 'relative',
+      minHeight: 300,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      boxShadow: testimonial.dark ? 'none' : '0 1px 3px rgba(0, 0, 0, 0.1)'
+    }}>
+      {/* Quote */}
+      <Typography 
+        variant="body1" 
+        sx={{ 
+          mb: 3, 
+          color: testimonial.dark ? '#FFFFFF' : '#111827',
+          lineHeight: 1.6,
+          fontSize: '1rem',
+          fontStyle: 'italic'
+        }}
+      >
+        "{testimonial.quote}"
+      </Typography>
+
+      {/* Read full story link */}
+      <ReadMoreButton isDark={testimonial.dark || false} />
+
+      {/* Customer info */}
+      <CustomerInfo testimonial={testimonial} />
+    </Box>
+  </Box>
+);
+
+// Sub-component: Carousel Container
+const CarouselContainer = ({ currentIndex }: { currentIndex: number }) => (
+  <Box sx={{
+    display: 'flex',
+    transform: `translateX(-${currentIndex * 33.33}%)`,
+    transition: 'transform 0.3s ease-in-out',
+    width: '300%' // 3 pages * 100%
+  }}>
+    {items.map((testimonial, index) => (
+      <TestimonialCard 
+        key={index}
+        testimonial={testimonial} 
+        index={index} 
+      />
+    ))}
+  </Box>
+);
+
+// Sub-component: Navigation Indicators
+const NavigationIndicators = ({ 
+  currentIndex, 
+  onIndexChange 
+}: { 
+  currentIndex: number; 
+  onIndexChange: (index: number) => void; 
+}) => (
+  <Box sx={{ 
+    display: 'flex', 
+    justifyContent: 'center', 
+    gap: 1, 
+    mt: 4 
+  }}>
+    {Array.from({ length: 3 }, (_, index) => (
+      <Box
+        key={index}
+        onClick={() => onIndexChange(index)}
+        sx={{
+          width: currentIndex === index ? 24 : 8,
+          height: 8,
+          borderRadius: currentIndex === index ? 1 : '50%',
+          bgcolor: currentIndex === index ? '#111827' : '#D1D5DB',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease'
+        }}
+      />
+    ))}
+  </Box>
+);
+
+const Testimonials: React.FC = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  return (
+    <Box sx={{ 
+      backgroundColor: '#F9FAFB', 
+      py: { xs: 6, md: 10 }, 
+      px: 3, 
+      mb: { xs: 2, md: 3 } 
+    }}>
+      <Box sx={{ maxWidth: 1400, mx: 'auto' }}>
+        <SectionHeader />
+
+        <Box sx={{ position: 'relative', overflow: 'hidden' }}>
+          <CarouselContainer currentIndex={currentIndex} />
+          <NavigationIndicators 
+            currentIndex={currentIndex} 
+            onIndexChange={setCurrentIndex} 
+          />
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+export default Testimonials;
+
+

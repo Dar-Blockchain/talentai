@@ -44,6 +44,8 @@ const Footer = ({ type }: { type: "company" | "jobseeker" }) => {
         pb: 2,
         px: 3,
         width: "100%",
+        maxWidth: 1400,
+        mx: 'auto',
       }}
     >
       <Stack
@@ -52,39 +54,27 @@ const Footer = ({ type }: { type: "company" | "jobseeker" }) => {
         flexWrap="wrap"
         sx={{ gap: "1rem" }}
       >
-<Box sx={{ minWidth: 200 }}>
-  <Stack direction="row" alignItems="center" spacing={2}>
-    <Box
-      component="img"
-      src={type === "company" ? "/logo.svg" : "/logojobSeeker.svg"}
-      alt="TalentAI Logo"
-      sx={{ height: 32, cursor: "pointer" }}
-      onClick={() => router.push(type === "company" ? '/' : '/jobseekerLanding')}
-    />
-    <Box
-      component="img"
-      src="/images/partners/nvidia1.jpg" // Replace with your actual badge path
-      alt="Partner Badge"
-      sx={{ height: 52 }}
-    />
-  </Stack>
-
-  <Typography variant="body2" sx={{ mt: 2, lineHeight: "160%" }}>
-    {type === "company" ? (
-      <>
-        Verified Talent. <br />
-        Decentralized Hiring. <br />
-        AI-Powered Speed.
-      </>
-    ) : (
-      <>
-        TalentAI | Empowering Real Talent <br />
-        Join the hiring revolution.
-      </>
-    )}
-  </Typography>
-</Box>
-
+        <Box sx={{ minWidth: 200 }}>
+          <Box
+            component="img"
+            src={type === "company" ? "/logo.svg" : "/logo-purple.svg"}
+            alt="TalentAI Logo"
+            sx={{ height: 32 }}
+            onClick={() => router.push(type === "company" ? '/' : '/home/candidate')}
+          />
+          <Typography variant="body2" sx={{ mt: 2, lineHeight: "160%" }}>
+            {type === "company" ? (
+              <>
+                Verified Talent. <br />
+                Decentralized Hiring. <br />
+                AI-Powered Speed.
+              </>
+            ) : (
+              <>
+                TalentAI | Empowering Real Talent      <br />   Join the hiring revolution.        </>
+            )}
+          </Typography>
+        </Box>
         <Stack
           direction="row"
           justifyContent="space-between"

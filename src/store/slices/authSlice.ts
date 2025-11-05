@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 interface AuthState {
+  profile: any | null;
   user: any | null;
   isLoading: boolean;
   error: string | null;
@@ -10,6 +11,7 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
+  profile: null,
   user: null,
   isLoading: false,
   error: null,
@@ -25,10 +27,19 @@ export const registerUser = createAsyncThunk(
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/register`, { email });
       return response.data;
     } catch (error: any) {
-      if (error.response && error.response.data.message) {
-        return rejectWithValue(error.response.data.message);
+      console.error('Registration error:', error);
+
+      if (error.response) {
+        // Server responded with error status
+        const message = error.response.data?.message || `Server error: ${error.response.status}`;
+        return rejectWithValue(message);
+      } else if (error.request) {
+        // Request was made but no response received
+        return rejectWithValue('Network error: Unable to connect to server');
+      } else {
+        // Something else happened
+        return rejectWithValue(error.message || 'Registration failed. Please try again.');
       }
-      return rejectWithValue('Registration failed. Please try again.');
     }
   }
 );
@@ -37,10 +48,10 @@ export const verifyOTP = createAsyncThunk(
   'auth/verifyOTP',
   async ({ email, otp, location }: { email: string; otp: string; location?: any }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/verify-otp`, { 
-        email, 
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/verify-otp`, {
+        email,
         otp,
-        location 
+        location
       });
       // Store token in localStorage
       if (response.data.token) {
@@ -48,10 +59,19 @@ export const verifyOTP = createAsyncThunk(
       }
       return response.data;
     } catch (error: any) {
-      if (error.response && error.response.data.message) {
-        return rejectWithValue(error.response.data.message);
+      console.error('OTP verification error:', error);
+
+      if (error.response) {
+        // Server responded with error status
+        const message = error.response.data?.message || `Server error: ${error.response.status}`;
+        return rejectWithValue(message);
+      } else if (error.request) {
+        // Request was made but no response received
+        return rejectWithValue('Network error: Unable to connect to server');
+      } else {
+        // Something else happened
+        return rejectWithValue(error.message || 'Verification failed. Please try again.');
       }
-      return rejectWithValue('Verification failed. Please try again.');
     }
   }
 );
@@ -64,10 +84,15 @@ const authSlice = createSlice({
       state.error = null;
     },
     logout: (state) => {
+      state.profile = null;
       state.user = null;
+      state.isLoading = false;
       state.isAuthenticated = false;
       state.error = null;
       state.token = null;
+    },
+    setUser: (state, action) => {
+      state.user = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -78,7 +103,7 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.isAuthenticated = true;
+        state.isAuthenticated = false;
         state.user = action.payload;
         state.error = null;
       })
@@ -94,6 +119,11 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = null;
         state.token = action.payload.token;
+        if (action.payload.user) {
+          state.profile = action.payload.profile;
+          state.user = action.payload.user;
+          state.isAuthenticated = true;
+        }
       })
       .addCase(verifyOTP.rejected, (state, action) => {
         state.isLoading = false;
@@ -102,5 +132,5 @@ const authSlice = createSlice({
   }
 });
 
-export const { clearError, logout } = authSlice.actions;
+export const { clearError, logout, setUser } = authSlice.actions;
 export default authSlice.reducer; 

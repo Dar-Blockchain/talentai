@@ -58,7 +58,7 @@ async function appendLog(req, res, startTime, logType) {
 
   // Log location information (from ipinfo)
   const location = req.location || { city: 'Unknown', region: 'Unknown', country: 'Unknown' };
-console.log("location",location)
+  //console.log("location",location)
   // Save the log to MongoDB
   const log = new Log({
     type: logType, // Use logType here

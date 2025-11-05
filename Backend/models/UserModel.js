@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
     },
     LastName: {
       type: String,
-   },
+    },
     email: {
       type: String,
       required: true,
@@ -30,6 +30,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isHaker: {
+      type: Boolean,
+      default: false,
+    },
     warnings: { type: Number, default: 0 }, // au lieu de warning
     lastLogin: {
       type: Date,
@@ -37,11 +41,12 @@ const userSchema = new mongoose.Schema(
     },
     ip: String,
     Localisation: String,
-    role: { type: String, enum: ["Company", "Candidat","Admin"] },
+    role: { type: String, enum: ["Company", "jury", "Candidat", "Admin"] },
     profile: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Profile",
     },
+    // project reference removed (Project domain deprecated)
     post: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -54,13 +59,24 @@ const userSchema = new mongoose.Schema(
         date: { type: Date, default: Date.now },
         ip: String,
         localisation: String,
-        method: { type: String, enum: ['OTP', 'Password', 'OAuth'], default: 'OTP' },
-        status: { type: String, enum: ['Success', 'Failed'], default: 'Success' }
-      }
-    ]
-    //  pubkey: { type: String, default: null },
-    //  privkey: { type: String, default: null },
-    //  accountId: { type: String, default: null },
+        method: {
+          type: String,
+          enum: ["OTP", "Password", "OAuth"],
+          default: "OTP",
+        },
+        status: {
+          type: String,
+          enum: ["Success", "Failed"],
+          default: "Success",
+        },
+      },
+    ],
+    // Hedera account information
+    hederaAccountId: { type: String, default: null },
+    hederaPrivateKey: { type: String, default: null },
+    hederaPublicKey: { type: String, default: null },
+    // Gas fee balance for transaction fees (in HBAR)
+    gasFeeBalance: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );

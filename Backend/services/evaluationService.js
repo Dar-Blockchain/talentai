@@ -30,9 +30,11 @@ const {
   handleAddSoftSkills,
   saveInterviewDetails,
   saveInterviewDetailsForJob,
+  handleHROverallScore,
 } = require("../utils/evaluationUtils");
 
 const InterviewDetails = require("../models/InterviewDetailsModel");
+const intelligentInterviewService = require("./intelligentInterviewService");
 
 const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
 
@@ -42,7 +44,14 @@ module.exports.generateTechniqueQuestionsForJob = async (
 ) => {
   try {
     const userSkills = user.profile.skills;
+    const profile = await Profile.findOne({ userId: user._id });
 
+    profile.quota += 1;
+    await profile.save();
+
+    if (profile.quota >= 5) {
+      throw { status: 403, message: "You have reached your test limit (5)" };
+    }
     // Filter out skills the user already has (at or above the required proficiency level).
     // Only generate questiosn for skills, that the job requires that the user lacks or hasn't mastered yet.
     let skillListToTest = jobRequiredSkillList.filter((reqSkill) => {
@@ -152,7 +161,7 @@ exports.analyzeJobTestResults = async ({
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    max_tokens: 2500,
+    max_tokens: 3000,
     temperature: 0.6,
     stream: true,
   });
@@ -199,7 +208,8 @@ exports.analyzeJobTestResults = async ({
     profile,
     analysis.overallScore,
     analysis.skillAnalysis,
-    jobId
+    jobId,
+    analysis.recommendations
   );
 
   // VIII. Save JobAssessmentResult
@@ -236,6 +246,136 @@ exports.analyzeJobTestResults = async ({
   await profile.save();
 
   return { analysis };
+};
+
+// ===== AI-INTELLIGENT EVALUATION METHODS =====
+
+/**
+ * Start intelligent HR interview with full AI capabilities
+ */
+module.exports.startIntelligentHRInterview = async (profile, formData) => {
+  try {
+    console.log("🧠 Starting intelligent HR interview with AI capabilities...");
+
+    const sessionId = `hr_${profile._id}_${Date.now()}`;
+
+    // Create intelligent interview configuration
+    const interviewConfig = {
+      interviewType: "HR_INTERVIEW",
+      testReason: formData.testReason || "HR behavioral interview assessment",
+      context: {
+        targetCompany: formData.targetCompany || "Target Company",
+        targetRole: formData.targetRole || "Software Engineer",
+        experienceLevel: formData.experienceLevel || "Mid-level",
+        interviewGoal:
+          "Assess behavioral competencies, communication skills, and cultural fit",
+      },
+      models: {
+        fastModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        thinkingModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        analysisModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+      },
+      sessionSettings: {
+        duration: 30,
+        language: "en",
+        difficulty: "adaptive",
+        silenceTimeout: 10000,
+        maxSilencePrompts: 3,
+      },
+      intelligenceContext: {
+        focusAreas: [
+          {
+            area: "Communication Skills",
+            indicators: [
+              "Clear articulation",
+              "Active listening",
+              "Professional tone",
+              "Question handling",
+            ],
+            weight: 25,
+            depth: "deep",
+          },
+          {
+            area: "Problem Solving",
+            indicators: [
+              "Analytical thinking",
+              "Creative solutions",
+              "Decision making",
+              "Complex situations",
+            ],
+            weight: 25,
+            depth: "deep",
+          },
+          {
+            area: "Leadership & Teamwork",
+            indicators: [
+              "Team collaboration",
+              "Conflict resolution",
+              "Leadership examples",
+              "Mentoring others",
+            ],
+            weight: 20,
+            depth: "moderate",
+          },
+          {
+            area: "Adaptability",
+            indicators: [
+              "Change management",
+              "Learning agility",
+              "Flexibility",
+              "Stress handling",
+            ],
+            weight: 15,
+            depth: "moderate",
+          },
+          {
+            area: "Cultural Fit",
+            indicators: [
+              "Company values alignment",
+              "Work style",
+              "Motivation",
+              "Long-term goals",
+            ],
+            weight: 15,
+            depth: "moderate",
+          },
+        ],
+      },
+      candidateProfile: {
+        skills: profile.skills,
+        experience: profile.experience,
+        communicationStyle: "unknown", // Will be learned
+      },
+    };
+
+    // Start intelligent interview session
+    const interviewSession = await intelligentInterviewService.startInterview(
+      sessionId,
+      interviewConfig,
+      profile._id
+    );
+
+    console.log("✅ Intelligent HR interview started successfully");
+
+    return {
+      success: true,
+      sessionId,
+      greeting: interviewSession.greeting,
+      config: interviewSession.config,
+      metadata: {
+        aiPowered: true,
+        intelligenceLevel: "advanced",
+        focusAreas: interviewConfig.intelligenceContext.focusAreas.map(
+          (area) => area.area
+        ),
+      },
+    };
+  } catch (error) {
+    console.error("❌ Failed to start intelligent HR interview:", error);
+    throw new Error(
+      `Failed to start intelligent HR interview: ${error.message}`
+    );
+  }
 };
 
 module.exports.generateHRQuestions = async (profile, formData) => {
@@ -301,8 +441,8 @@ exports.analyzeHRAnswers = async ({ questions, user, formData }) => {
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    max_tokens: 2500,
-    temperature: 0.6,
+    max_tokens: 2048,
+    temperature: 0.3,
     stream: true,
   });
 
@@ -315,6 +455,10 @@ exports.analyzeHRAnswers = async ({ questions, user, formData }) => {
   // I. parse AI response
   let analysis = await parseAIResponse(raw);
 
+  console.log("old value", analysis.overallScore);
+  analysis.overallScore = handleHROverallScore(analysis.skillAnalysis);
+  console.log("new value", analysis.overallScore);
+
   // II.
   // store softskills in the candidate's profile (if any are proven)
   // update todoList : Pass HR Test : isCompleted
@@ -324,7 +468,8 @@ exports.analyzeHRAnswers = async ({ questions, user, formData }) => {
     profile,
     analysis.overallScore,
     analysis.skillAnalysis,
-    formData
+    formData,
+    analysis.recommendations
   );
 
   profile.quota++;
@@ -336,4 +481,134 @@ exports.analyzeHRAnswers = async ({ questions, user, formData }) => {
   await profile.save();
 
   return { analysis };
+};
+
+// ===== AI-INTELLIGENT EVALUATION METHODS =====
+
+/**
+ * Start intelligent HR interview with full AI capabilities
+ */
+module.exports.startIntelligentHRInterview = async (profile, formData) => {
+  try {
+    console.log("🧠 Starting intelligent HR interview with AI capabilities...");
+
+    const sessionId = `hr_${profile._id}_${Date.now()}`;
+
+    // Create intelligent interview configuration
+    const interviewConfig = {
+      interviewType: "HR_INTERVIEW",
+      testReason: formData.testReason || "HR behavioral interview assessment",
+      context: {
+        targetCompany: formData.targetCompany || "Target Company",
+        targetRole: formData.targetRole || "Software Engineer",
+        experienceLevel: formData.experienceLevel || "Mid-level",
+        interviewGoal:
+          "Assess behavioral competencies, communication skills, and cultural fit",
+      },
+      models: {
+        fastModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        thinkingModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+        analysisModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+      },
+      sessionSettings: {
+        duration: 30,
+        language: "en",
+        difficulty: "adaptive",
+        silenceTimeout: 10000,
+        maxSilencePrompts: 3,
+      },
+      intelligenceContext: {
+        focusAreas: [
+          {
+            area: "Communication Skills",
+            indicators: [
+              "Clear articulation",
+              "Active listening",
+              "Professional tone",
+              "Question handling",
+            ],
+            weight: 25,
+            depth: "deep",
+          },
+          {
+            area: "Problem Solving",
+            indicators: [
+              "Analytical thinking",
+              "Creative solutions",
+              "Decision making",
+              "Complex situations",
+            ],
+            weight: 25,
+            depth: "deep",
+          },
+          {
+            area: "Leadership & Teamwork",
+            indicators: [
+              "Team collaboration",
+              "Conflict resolution",
+              "Leadership examples",
+              "Mentoring others",
+            ],
+            weight: 20,
+            depth: "moderate",
+          },
+          {
+            area: "Adaptability",
+            indicators: [
+              "Change management",
+              "Learning agility",
+              "Flexibility",
+              "Stress handling",
+            ],
+            weight: 15,
+            depth: "moderate",
+          },
+          {
+            area: "Cultural Fit",
+            indicators: [
+              "Company values alignment",
+              "Work style",
+              "Motivation",
+              "Long-term goals",
+            ],
+            weight: 15,
+            depth: "moderate",
+          },
+        ],
+      },
+      candidateProfile: {
+        skills: profile.skills,
+        experience: profile.experience,
+        communicationStyle: "unknown", // Will be learned
+      },
+    };
+
+    // Start intelligent interview session
+    const interviewSession = await intelligentInterviewService.startInterview(
+      sessionId,
+      interviewConfig,
+      profile._id
+    );
+
+    console.log("✅ Intelligent HR interview started successfully");
+
+    return {
+      success: true,
+      sessionId,
+      greeting: interviewSession.greeting,
+      config: interviewSession.config,
+      metadata: {
+        aiPowered: true,
+        intelligenceLevel: "advanced",
+        focusAreas: interviewConfig.intelligenceContext.focusAreas.map(
+          (area) => area.area
+        ),
+      },
+    };
+  } catch (error) {
+    console.error("❌ Failed to start intelligent HR interview:", error);
+    throw new Error(
+      `Failed to start intelligent HR interview: ${error.message}`
+    );
+  }
 };

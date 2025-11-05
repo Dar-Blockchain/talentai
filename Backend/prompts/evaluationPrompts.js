@@ -1,3 +1,24 @@
+// ============================================================================
+// Prompts pour l'évaluation des candidats
+// ---------------------------------------------------------------------------
+// Ce module contient tous les prompts utilisés par l'IA pour:
+// - Générer des questions d'entretien techniques et RH
+// - Analyser les réponses des candidats
+// - Évaluer les niveaux de compétence
+// - Produire des recommandations personnalisées
+// 
+// Chaque objet contient getSystemPrompt() et getUserPrompt() pour structurer
+// les interactions avec l'IA (Together AI, OpenAI, etc.).
+// ============================================================================
+
+// ---------------------------------------------------------------------------
+// generateJobQuestionsPrompts
+// ---------------------------------------------------------------------------
+// But: générer des questions d'entretien techniques pour un poste spécifique
+// Utilisé par: les contrôleurs d'évaluation pour créer des tests sur mesure
+// 
+// getSystemPrompt: définit le rôle de l'IA et les règles de génération
+// getUserPrompt: fournit les détails du poste et des compétences requises
 const generateJobQuestionsPrompts = {
   getSystemPrompt: (questionsCount) =>
     `
@@ -32,29 +53,47 @@ Skill Proficiency Levels:
 
 
 ### 🚨 **STRICT REQUIREMENTS**
-- Generate **exactly ${questionsCount} questions total**. 
+- Generate **exactly ${questionsCount} questions total**
 - Each question must match the skill **and** its **exact proficiency level**
-- **Questions must be clear, conversational, and answerable orally in a maximum of 2 minutes** (no written coding exercises).  
-- **DO NOT repeat questions or generate generic ones**—each must be **unique and skill-specific**.  
-- **Ensure relevance by simulating real-world challenges candidates would realistically face.**  
-- **Return ONLY a JSON array of strings**, formatted correctly with no markdown or explanations.  
+- **CRITICAL: Each question must be ONE SENTENCE MAXIMUM with ONE CONCEPT ONLY**
+
+### FORBIDDEN Question Structures (DO NOT USE):
+❌ "What is X and how does it work with Y?"
+❌ "Explain A, B, and C in your response"
+❌ "Tell me about X; also describe Y"
+❌ "What is X? How would you implement it?"
+❌ Questions with semicolons, multiple clauses, or compound structures
+
+### REQUIRED Question Structure (ALWAYS USE):
+✅ "What is Node.js?"
+✅ "How do you handle errors in JavaScript?"
+✅ "Why would you choose MongoDB over SQL?"
+✅ "When would you use async/await?"
+
+### Additional Requirements:
+- **Questions must be clear, conversational, and answerable orally in a maximum of 2 minutes** (no written coding exercises)
+- **DO NOT repeat questions or generate generic ones**—each must be **unique and skill-specific**
+- **Ensure relevance by simulating real-world challenges candidates would realistically face**
+- Start with question words (What, How, Why, When, Where)
+- Focus on ONE specific technical concept per question
+- **Return ONLY a JSON array of strings**, formatted correctly with no markdown or explanations  
 
 ### 📌 Examples of questions per proficiency level:
-Entry Level (1):  
-- "What is Node.js and what is it commonly used for?"  
+Entry Level (1):
+- "What is Node.js?"
 - "What is a document in MongoDB?"
-Junior (2):  
-- "How do you handle basic error handling in Node.js?"  
-- "How would you insert a document into a MongoDB collection?"
-Mid Level (3):  
-- "How would you design a MongoDB schema for an e-commerce application?"  
-- "Explain how you would optimize a MongoDB query for performance."
-Senior (4):  
-- "How do you design scalable Node.js applications for high concurrency?"  
-- "Describe MongoDB replication and how it ensures high availability."
-Expert (5):  
-- "Explain the internals of the Node.js event loop and how it handles asynchronous operations."  
-- "How would you architect a distributed MongoDB cluster for multi-region data consistency?"
+Junior (2):
+- "How do you handle errors in Node.js?"
+- "How would you insert a document into MongoDB?"
+Mid Level (3):
+- "How would you design a MongoDB schema for e-commerce?"
+- "How would you optimize a MongoDB query for performance?"
+Senior (4):
+- "How do you design scalable Node.js applications?"
+- "What is MongoDB replication?"
+Expert (5):
+- "How does the Node.js event loop work internally?"
+- "How would you architect a distributed MongoDB cluster?"
 
 ### **📌 Expected JSON Response Format**
 The AI must return **a single valid JSON array** containing **exactly 10 mixed questions**, like this:
@@ -82,60 +121,83 @@ Generate a total of **${questionsCount} oral technical interview questions**.
 - If an exact even distribution is not possible, distribute them **as fairly and balanced as possible**.
 - The **maximum total number of questions is 20**.
 
-# Question Requirements: 
-- Generate **exactly ${questionsCount} questions total**. 
+# Question Requirements:
+- Generate **exactly ${questionsCount} questions total**
 - Each question must match the skill **and** its **exact proficiency level**
-- **Questions must be clear, conversational, and answerable orally in a maximum of 2 minutes** (no written coding exercises).  
-- **DO NOT repeat questions or generate generic ones**—each must be **unique and skill-specific**.  
-- **Ensure relevance by simulating real-world challenges candidates would realistically face.**  
-- **Return ONLY a JSON array of strings**, formatted correctly with no markdown or explanations.  
+- **CRITICAL: Each question must be ONE SENTENCE MAXIMUM with ONE CONCEPT ONLY**
+- **FORBIDDEN**: Questions with "and", "or", semicolons, multiple clauses, or asking for multiple aspects
+- **REQUIRED**: Start with question words (What, How, Why, When) and focus on ONE specific technical concept
+- **Questions must be clear, conversational, and answerable orally in a maximum of 2 minutes** (no written coding exercises)
+- **DO NOT repeat questions or generate generic ones**—each must be **unique and skill-specific**
+- **Ensure relevance by simulating real-world challenges candidates would realistically face**
+- **Return ONLY a JSON array of strings**, formatted correctly with no markdown or explanations  
 `.trim(),
 };
 
+// ---------------------------------------------------------------------------
+// generateOnboardingQuestionsPrompts
+// ---------------------------------------------------------------------------
+// But: générer des questions pour évaluer une compétence spécifique lors de l'onboarding
+// Utilisé par: l'évaluation des compétences individuelles (pas pour un poste complet)
+// 
+// Différence avec generateJobQuestionsPrompts: se concentre sur une seule compétence
+// avec des questions réparties sur tous les niveaux (1-5)
 const generateOnboardingQuestionsPrompts = {
   getSystemPrompt: (questionsCount) =>
     `
 You are an expert interviewer generating high-quality oral interview questions.
 
 IMPORTANT RULES
-- Return ONLY a valid JSON array of ${questionsCount} strings.
-- No markdown, formatting, explanations, or extra text.
+- Return ONLY a valid JSON array of ${questionsCount} strings
+- No markdown, formatting, explanations, or extra text
+- **CRITICAL: Each question must be ONE SENTENCE MAXIMUM with ONE CONCEPT ONLY**
+
+FORBIDDEN Question Structures:
+❌ Questions with "and", "or", semicolons, multiple clauses
+❌ Asking for multiple examples or multiple aspects
+❌ Compound questions combining different concepts
+
+REQUIRED Question Structure:
+✅ Start with question words (What, How, Why, When, Where)
+✅ Focus on ONE specific aspect of the skill per question
+✅ Single sentence format only
 
 TASK
-- For the given skill, generate unique interview questions enabling to evaluate the condidate's proficiency level in that skill( proficiency level ranges from 1 to 5).
+- For the given skill, generate unique interview questions enabling to evaluate the candidate's proficiency level in that skill (proficiency level ranges from 1 to 5)
 - Each question must:
   1. Be specific to the skill and level
   2. Be answerable orally in < 2 minutes
   3. Simulate a realistic workplace scenario
   4. Be non-repetitive and non-generic
   5. NOT require code writing, implementing
+  6. Follow the structural rules above
 
 Proficiency levels:
 1 = Entry-level, 2 = Junior, 3 = Mid, 4 = Senior, 5 = Expert
 
 Example of questions in different proficiency levels, for coding and technical related skills:
-1 - Entry Level:  
-- Can you explain what "undefined" and "null" mean in JavaScript, and how they differ?
-2 - Junior:  
-- What is a JavaScript Promise, and how does it help with asynchronous code?
-3 - Mid Level:  
-- If you were designing a REST API for a task management app, how would you organize the routes and handle basic validation and errors?
-4 - Senior:  
-- How do you identify and mitigate performance issues in a Node.js application under heavy load?
-5 - Expert:  
-- How would you architect and secure internal APIs shared across microservices in a multi-tenant SaaS platform?
+1 - Entry Level:
+- What does "undefined" mean in JavaScript?
+2 - Junior:
+- What is a JavaScript Promise?
+3 - Mid Level:
+- How would you organize routes for a REST API?
+4 - Senior:
+- How do you identify performance issues in Node.js?
+5 - Expert:
+- How would you architect APIs for microservices?
 
 Example of Interview Questions by Proficiency Level – Non-Technical Skill:
 1 - Entry Level:
-- What is the purpose of a buyer persona, and how is it used in marketing?
+- What is a buyer persona?
 2 - Junior:
-- How would you analyze a competitor's social media presence to inform your own campaign strategy?
+- How would you analyze competitor social media?
 3 - Mid Level:
-- How would you design a content marketing strategy for a B2B SaaS company?
+- How would you design a content marketing strategy?
 4 - Senior:
-- How do you manage brand consistency across global campaigns and local markets?
-5. Expert:
-- With limited budget and declining acquisition metrics, how would you re-prioritize your marketing mix to maintain growth and ROI?
+- How do you manage brand consistency?
+5 - Expert:
+- How would you re-prioritize marketing mix with budget constraints?
 
 Ensure the final output is a clean JSON array of ${questionsCount} unique questions.
 `.trim(),
@@ -152,21 +214,33 @@ Instructions:
   - 2 Mid-Level questions (Level 3)
   - 2 Senior-Level questions (Level 4)
   - 2 Expert-Level questions (Level 5)
-- Each question must match both the skill and the required proficiency level.
-- Questions must be clear, specific, and suitable for oral interviews (answerable in under 2 minutes).
-- NOT requiring code writing.
-- Do not repeat or generalize questions. Each should reflect realistic, real-world challenges.
-- Return only a valid JSON array of strings. No extra text, no explanations, and no markdown formatting.
+- Each question must match both the skill and the required proficiency level
+- **CRITICAL: Each question must be ONE SENTENCE MAXIMUM with ONE CONCEPT ONLY**
+- **FORBIDDEN**: Questions with "and", "or", semicolons, multiple clauses, or asking for multiple aspects
+- Questions must be clear, specific, and suitable for oral interviews (answerable in under 2 minutes)
+- NOT requiring code writing
+- Do not repeat or generalize questions. Each should reflect realistic, real-world challenges
+- Return only a valid JSON array of strings. No extra text, no explanations, and no markdown formatting
 
 Example Output:
 [
-  "What is Node.js and what is it commonly used for?",
-  "How do you measure the success of a marketing campaign?",
+  "What is Node.js?",
+  "How do you measure marketing campaign success?",
   ...
 ]
 `.trim(),
 };
 
+// ---------------------------------------------------------------------------
+// analyzeOnbordingQuestionsPrompts
+// ---------------------------------------------------------------------------
+// But: analyser les réponses d'un candidat à des questions d'onboarding
+// Utilisé par: l'évaluation des compétences individuelles
+// 
+// Particularités:
+// - Système de pondération par niveau (questions 1-2 = poids 1, 3-4 = poids 2, etc.)
+// - Génération de todoList avec tâches d'amélioration
+// - Calcul de confidenceScore basé sur les poids
 const analyzeOnbordingQuestionsPrompts = {
   getSystemPrompt: () =>
     `
@@ -193,8 +267,27 @@ Your task is to:
         - dueDate: timestamp in milliseconds
         - isCompleted: false
     }
+- questionAnswerList: an array of question-answer pairs, with the following rules:
+    - question string,
+    - answer: string,
+    - status: "correct" | "partial_correct" | "incorrect",
+    - exampleCorrectAnswer: string (optional, only if status is "incorrect")        
+
 - Provide a comprehensive, skill analysis.
 - Offer actionable recommendations for improvement.
+🟩 **Answer Evaluation Rules**:
+- If the candidate's answer is **accurate and complete**, set status = "correct".
+- If the answer is **approximately 60–70% correct** (e.g. conceptually right but missing key details, examples, or clarity), set status = "partial_correct".
+- If the answer is **mostly wrong, vague, or irrelevant**, set status = "incorrect".
+- For "incorrect" answers, always include "exampleCorrectAnswer" to guide improvement.
+- In case of "partial_correct" answers:
+- Include a new field "partialCorrectPercentage" (number between 60 and 70) representing how much of the answer was correct.
+- Include a new field "partialCorrectReason" (string) explaining why the answer is only partially correct — for example, missing examples, incomplete logic, or conceptual confusion.
+- Every question must therefore include:
+-"status"
+-"partialCorrectPercentage" (only if "status" = "partial_correct")
+-"partialCorrectReason" (only if "status" = "partial_correct")
+---
 
 Proficiency levels:
 1 - Entry level: Basic concepts and definitions  
@@ -202,6 +295,8 @@ Proficiency levels:
 3 - Mid level: Intermediate concepts, Real-world application and practical problem solving  
 4 - Senior: Advanced concepts
 5 - Expert: Handling complex real-world challenges and innovations  
+
+---
 
 Confidence Score Calculation for the skill:
 - The skill has exactly 10 questions, grouped in pairs by proficiency level with different weights:
@@ -217,9 +312,11 @@ Confidence Score Calculation for the skill:
   - Weight 3 question (Q5, Q6): +10%
   - Weight 4 question (Q7, Q8): +13.33%
   - Weight 5 question (Q9, Q10): +16.67%
-- Partial correctness adds proportional weight (e.g., 60% correct → 60% × question weight contribution)
+- Partial correctness adds proportional weight (e.g., 65% correct → 0.65 × question weight contribution)
 - Incorrect or empty answers add 0%
 - Final confidenceScore = Sum of all question contributions (maximum = 100%)
+
+---
 
 todoList REQUIREMENTS:
 - Max 2 tasks
@@ -234,12 +331,24 @@ todoList REQUIREMENTS:
 - Each task must provide new skill-building value and be unique
 - External links must be valid and accessible
 
+---
+
 STRICT REQUIREMENTS:
 - Be objective and base your assessment only on the information clearly or reasonably implied in the candidate's answers.
 - Do not infer or estimate knowledge that is not supported by the content.
 - However, consider that answers were transcribed from speech and may contain minor errors or incomplete sentences.
 - When evaluating, interpret the candidate's intended meaning only if it can be reasonably and clearly inferred from the context, without making unsupported assumptions.
 
+---
+
+recommendations: (array of strings, required):  
+      Provide at least **two specific, actionable improvement tips** for the technology's use.  
+      - Recommendations must be practical, technically relevant, and reflect the **latest trends and best practices** in the field.
+      - At least **one external resource** (doc, course, guide, etc.) per technology is required, and it should be up-to-date and reputable.
+      - **Do not provide vague advice.**  
+      Example:  
+        - "Adopt React Server Components to boost performance and reduce client-side bundle size. Detailed guide and best practices: https://react.dev/reference/react-server/components"
+        - "Use TypeScript 5.x to enhance type safety and leverage new language features. Official release notes and migration tips: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html"
 
 Respond strictly in JSON format only, without any additional explanations or text.
 `,
@@ -258,15 +367,14 @@ ${questions
 Generate and return JSON in the following format:
 {
   "overallScore": 0-100,
-  "technicalLevel":"string",
-  "generalAssassment":"string",
-  "recommendations":[...],
-  "nextSteps":[...],
+  "technicalLevel": "string",
+  "generalAssassment": "string",
+  "recommendations": [...], // Must NOT be empty and each item must contain meaningful advice or suggestions.
+  "nextSteps": [...], // Must NOT be empty and each item must contain actionable steps or plans.
   "skillAnalysis": [
     {
       "skillName": "${skillName}",
       "requiredLevel": 1-5,
-      
       "demonstratedExperienceLevel": 0-5,
       "strengths": ["..."], // If none, use: ["No strengths identified for this skill"]
       "weaknesses": ["..."], // If none, use: ["No weaknesses identified for this skill"]
@@ -281,19 +389,42 @@ Generate and return JSON in the following format:
             "description": "string",
             "url": "optional string",
             "priority": "low" | "medium" | "high",
-            "dueDate": timestamp, 
-            "isCompleted": false,
+            "dueDate": timestamp,
+            "isCompleted": false
           }
         ]
-      }
+      },
+      "questionAnswerList": [
+        {
+          "question": string,
+          "answer": string,
+          "status": "correct" | "partial_correct" | "incorrect",
+          "exampleCorrectAnswer": string (optional, only if status is "incorrect")
+        }
+      ]
     }
-  ],
+  ]
 }
+
+Ensure "partial_correct" is used when an answer is around 60–70% correct (approximately 65% accurate or partially complete).
+Ensure the "recommendations" array includes at least two specific, actionable, current best-practice improvement tips, including one with an up-to-date external resource link.
 
 Return only the valid JSON output. Do not include any commentary.
 `,
 };
 
+
+// ---------------------------------------------------------------------------
+// analyzeJobTestResultsPrompts
+// ---------------------------------------------------------------------------
+// But: analyser les résultats d'un test complet pour un poste (multi-compétences)
+// Utilisé par: l'évaluation finale d'un candidat pour un poste spécifique
+// 
+// Différences avec analyzeOnbordingQuestionsPrompts:
+// - Évalue plusieurs compétences simultanément
+// - Calcule un score global pondéré
+// - Produit un jobMatch avec pourcentage et statut
+// - Système de scoring égal (pas de pondération par niveau)
 const analyzeJobTestResultsPrompts = {
   getSystemPrompt: () =>
     `
@@ -314,7 +445,7 @@ Your role is to:
 4 - Senior  
 5 - Expert
 
-**Confidence Score Rules (per skill):**
+**Confidence Score Rules (per skill)**:
 - Every question has equal weight
 - Each answer is scored:
   - Fully correct → 1 point
@@ -456,10 +587,30 @@ Return a valid JSON object with the following structure:
   ]
 }
 
+#STRICT REQUIREMENTS FOR RECOMMENDATIONS:
+ - recommendations: (array of strings, required):  
+      Provide at least **two specific, actionable improvement tips** for the technology's use.  
+      - Recommendations must be practical, technically relevant, and reflect the **latest trends and best practices** in the field.
+      - At least **one external resource** (doc, course, guide, etc.) per technology is required, and it should be up-to-date and reputable.
+      - **Do not provide vague advice.**  
+      Example:  
+        - "Adopt React Server Components to boost performance and reduce client-side bundle size. Detailed guide and best practices: https://react.dev/reference/react-server/components"
+        - "Use TypeScript 5.x to enhance type safety and leverage new language features. Official release notes and migration tips: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html"
+
 Return **valid JSON only**
 `.trim(),
 };
 
+// ---------------------------------------------------------------------------
+// generateHRQuestionsPrompts
+// ---------------------------------------------------------------------------
+// But: générer des questions RH (soft skills) personnalisées selon l'entreprise
+// Utilisé par: l'évaluation des compétences comportementales et culturelles
+// 
+// Particularités:
+// - Personnalisation selon l'entreprise, le rôle, le niveau d'expérience
+// - Focus sur les soft skills (pas de questions techniques)
+// - Intégration des valeurs RH modernes (DEI, bien-être, etc.)
 const generateHRQuestionsPrompts = {
   getSystemPrompt: (formData) => {
     // Extract form data for personalization
@@ -499,15 +650,32 @@ The questions must:
 - Be clearly phrased, non-redundant, and avoid vague or generic wording
 - Align with ${simulationGoal || "interview preparation"} goals
 
-### Requirements:
+### STRICT REQUIREMENTS:
 - Produce **exactly 10 distinct questions** focused solely on HR themes (no technical questions)
+- **CRITICAL: Each question must be ONE SENTENCE MAXIMUM with ONE CONCEPT ONLY**
+
+### FORBIDDEN Question Structures (DO NOT USE):
+❌ "What is X and how does it relate to Y?"
+❌ "Tell me about A, and also explain B"
+❌ "How do you handle X; what about Y?"
+❌ "Describe X. How would you implement it?"
+❌ Questions with semicolons, multiple clauses, or compound structures
+❌ Questions asking for multiple examples or multiple aspects
+
+### REQUIRED Question Structure (ALWAYS USE):
+✅ "What is your approach to handling team conflicts?"
+✅ "How do you prioritize competing deadlines?"
+✅ "Why do you think diversity matters in the workplace?"
+✅ "When have you had to adapt to a major change at work?"
+
+### Additional Requirements:
+- Start with question words (What, How, Why, When, Where, Who)
+- Focus on ONE specific workplace behavior or situation per question
+- Questions must be **conversational** and **answerable orally within 2 minutes**
+- **All questions must be appropriate for and within the specified experience level: ${experienceLevel || "Mid-level"}**
 - Tailor questions to ${targetCompany || "the company"} culture and ${
       targetRole || "role"
     } requirements
-- Consider ${experienceLevel || "experience level"} expectations and challenges
-- Format questions appropriately for ${interviewFormat || "interview format"}
-- Integrate current HR trends relevant to ${companyIndustry || "the industry"}
-- Questions must be clear, conversational, and answerable orally within 2 minutes
 - Use realistic workplace scenarios specific to ${
       targetCompany || "the target environment"
     }
@@ -555,6 +723,10 @@ ${skillsListDetails}
     } style
 - Focus on scenarios relevant to ${targetRole || "the target role"}
 - Do NOT include technical or coding questions
+- **CRITICAL: Each question must be ONE SENTENCE MAXIMUM with ONE CONCEPT ONLY**
+- **FORBIDDEN structures**: Questions with "and", "or", semicolons, multiple clauses, or asking for multiple aspects
+- **REQUIRED**: Start with question words (What, How, Why, When) and focus on ONE specific behavior/situation
+- **All questions must be appropriate for and within the specified experience level: ${experienceLevel || "Mid-level"}**
 - Keep questions succinct, specific, and suitable for oral interviews
 - Avoid vague or repetitive language; each question should be purposeful and trend-aware
 - Align with ${simulationGoal || "interview preparation"} objectives
@@ -564,27 +736,41 @@ ${skillsListDetails}
   - Relevance to ${targetCompany || "company"} culture and ${
       targetRole || "role"
     } requirements
+
+### STRICT REQUIREMENTS:
+- The confidenceScore solely reflects how appropriately the response addresses the specific question asked. The response must not be assumed to be inherently correct or incorrect outside the context of the question.
+- **Each question must be ONE SENTENCE with ONE CONCEPT only - no compound or multi-part questions**
 - **Return a valid JSON array of exactly 10 strings**, no commentary or formatting
 
     `.trim();
   },
 };
 
+// ---------------------------------------------------------------------------
+// analyzeHRAnswersPrompts
+// ---------------------------------------------------------------------------
+// But: analyser les réponses aux questions RH et évaluer les soft skills
+// Utilisé par: l'évaluation finale des compétences comportementales
+// 
+// Particularités:
+// - Infère automatiquement 3 soft skills à partir des questions
+// - Évalue la pertinence des réponses (pas la "justesse" absolue)
+// - Focus sur les compétences comportementales et culturelles
 const analyzeHRAnswersPrompts = {
   getSystemPrompt: () =>
     `
-You are a senior HR interviewer and analyst. Your task is to evaluate a candidate’s oral interview responses (transcribed with possible minor errors or incomplete phrases) and extract the key soft skills being assessed.
+You are a senior HR interviewer and analyst. Your task is to evaluate a candidate's oral interview responses (transcribed with possible minor errors or incomplete phrases) and extract the key soft skills being assessed.
 
 Your analysis must:
 1. **Infer the 3 soft skills most consistently evaluated across all questions**.
-2. **Assess the candidate’s proficiency** in those 3 soft skills only.
+2. **Assess the candidate's proficiency** in those 3 soft skills only.
 3. **Follow scoring and structuring instructions strictly**.
 
 
 Your task:
 - Analyze answers to produce:
-  - overallScore (0-100) reflecting cultural and behavioral fit
-  - recommendations (array of strings) for candidate development or company considerations
+  - overallScore (0-100) 
+  - recommendations (array of strings) 
   - nextSteps (array of strings) actionable hiring or HR follow-up steps
   - skillAnalysis (array) with detailed evaluation per skill, including:
     - skillName
@@ -596,9 +782,9 @@ Your task:
       - question
       - answer
       - status: "correct", "partial_correct", or "incorrect"
-      - exampleCorrectAnswer (optional: if status of answer is "incorrect")
+      - exampleCorrectAnswer (required if status of answer is "incorrect" or "partial_correct")
 
-**Confidence Score Rules (per skill):**
+**Confidence Score Rules (per skill)**:
 - Every question is mapped to one skill only (you may assume an even split).
 - Each answer is scored:
   - Fully relevant/correct → 1 point → status: "correct"
@@ -617,10 +803,27 @@ Use this scale to assign proficiencyLevel:
 4 = senior: Advanced handling, leadership or cross-team examples  
 5 = expert: Strategic thinking, mentoring, and systemic problem-solving
 
-###Strict Requirements:
-- Infer only 3 soft skills from the content of the questions
-- Never guess or assume skills not evidenced in answers
-- Never infer strengths or positive traits from empty, incorrect, or irrelevant answers.
+### Strict Requirements:
+- Any answer that includes placeholder, generic filler text (e.g., "this is a correct answer") without substantive content must be marked as "incorrect".
+- Do not infer partial correctness from keywords alone; relevance and substance are mandatory.
+- Do not assume correctness based on phrasing alone.
+- Do not mark vague or unrelated responses as "correct" or "partial_correct".
+- Infer only 3 soft skills from the questions.
+- Never infer strengths from empty or irrelevant answers.
+- Do not fabricate detail beyond what is supported in the responses.
+
+#STRICT REQUIREMENTS FOR RECOMMENDATIONS:
+ "recommendations": (array of strings, required):  
+ -must be an array of strings.
+ -Provide at least **two specific, actionable improvement tips**.  
+ - Recommendations must be practical, relevant, and reflect the **latest trends and best practices** in the field.
+ - At least **one external resource** (doc, course, guide, etc.) is required, and it should be up-to-date and reputable.
+ - **Do not provide vague advice.**  
+ - Example:  
+      - "Focus on advanced team management techniques to handle diverse team dynamics. Recommended resource: 'Managing Teams: Pocket Mentor' by Harvard Business Review Press."
+      - "Develop a deeper understanding of different work styles and perspectives to enhance collaboration. Suggested learning resource: 'The Five Dysfunctions of a Team: A Leadership Fable' by Patrick Lencioni."
+
+
 - Return **valid JSON only**(no extra explanation or notes)
     `.trim(),
 
@@ -639,7 +842,7 @@ ${questions
 Generate and return JSON in the following format:
 {
   "overallScore": 0-100,
-  "recommendations": ["string"],  // Actionable advice to help the candidate improve and pass the HR test at this company
+  "recommendations": ["string"],  
   "nextSteps": ["string"],        // Concrete steps the candidate should take next to strengthen their soft skills and readiness
   "skillAnalysis": [
     {
@@ -654,17 +857,26 @@ Generate and return JSON in the following format:
           "question": "string",
           "answer": "string",
           "status": "correct" | "partial_correct" | "incorrect",
-          "exampleCorrectAnswer": "string (optional)"
+          "exampleCorrectAnswer": "string" (required if status is "incorrect" or "partial_correct")
         }
       ],
     }
   ]
 }
 
-Return **valid JSON only**
+### Strict Requirements:
+- Any answer containing placeholders, boilerplate, or non-substantive filler (e.g., "this is a correct answer") must be marked as "incorrect" — regardless of context and it reduces the confidence score drastically.
+- Do not infer correctness or partial correctness based solely on keywords. An answer must contain relevant, contextual content that meaningfully addresses the question.
+- Phrasing or sentence structure that appears professional or formal does not imply correctness. Only substance and relevance determine answer quality.
+- Any answer that is vague, off-topic, or loosely related to the question must not be labeled as "correct" or "partial_correct".
+- Infer only 3 soft skills from the questions.
+- Never infer strengths from empty or irrelevant answers.
+- Do not fabricate detail beyond what is supported in the responses.
+- Return **valid JSON only** — no extra text or explanation.
     `.trim(),
 };
 
+// Export de tous les prompts pour usage dans les contrôleurs d'évaluation
 module.exports = {
   generateJobQuestionsPrompts,
   generateOnboardingQuestionsPrompts,

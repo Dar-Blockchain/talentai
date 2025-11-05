@@ -1,55 +1,77 @@
+/**
+ * Routes de profil utilisateur et d'entreprise
+ *
+ * Middlewares globaux appliqués:
+ * - requireAuthUser: nécessite un utilisateur authentifié
+ * - LogMiddleware("Profile"): journalise les requêtes de profil
+ */
 const express = require('express');
 const router = express.Router();
 const profileController = require('../controllers/profileController');
+
+// Import des middlewares
 const { requireAuthUser } = require('../middleware/authMiddleware');
+const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
-// Routes protégées par authentification
-router.use(requireAuthUser);
 
-// Créer ou mettre à jour un profil
-router.post('/createOrUpdateProfile', profileController.createOrUpdateProfile);
+// Auth obligatoire + logs pour toutes les routes
+//router.use(authLogMiddleware("Profile"));
 
-// Créer ou mettre à jour un profil entreprise
-router.post('/createOrUpdateCompanyProfile', profileController.createOrUpdateCompanyProfile);
 
-// Récupérer le profil de l'utilisateur connecté
-router.get('/getMyProfile', profileController.getMyProfile);
+// POST /profile/createOrUpdateProfile — crée/maj profil utilisateur
+router.post('/createOrUpdateProfile', requireAuthUser,profileController.createOrUpdateProfile);
 
-// Récupérer un profil par ID utilisateur
-router.get('/getProfileById/:userId', profileController.getProfileById);
+// GET /profile/test-update — test endpoint
+router.get('/test-update', profileController.testUpdateProfile);
 
-// Récupérer tous les profils
-router.get('/getAllProfiles', profileController.getAllProfiles);
+// PUT /profile/updateProfile — met à jour les champs du profil
+router.put('/updateProfile', requireAuthUser, profileController.updateProfile);
 
-// Supprimer un profil
-router.delete('/deleteProfile', profileController.deleteProfile);
+// POST /profile/createOrUpdateCompanyProfile — crée/maj profil entreprise
+router.post('/createOrUpdateCompanyProfile', requireAuthUser,profileController.createOrUpdateCompanyProfile);
 
-// Rechercher des profils par compétences
-router.get('/search/skills', profileController.searchProfilesBySkills);
+// GET /profile/getMyProfile — profil de l'utilisateur courant
+router.get('/getMyProfile', requireAuthUser,profileController.getMyProfile);
 
-// Ajouter des soft skills
-router.post('/addSoftSkills', profileController.addSoftSkills); 
+// GET /profile/getProfileById/:userId — profil par identifiant utilisateur
+router.get('/getProfileById/:userId',requireAuthUser, profileController.getProfileById);
 
-// Récupérer les soft skills
-router.get('/getSoftSkills', profileController.getSoftSkills);
+// GET /profile/getAllProfiles — liste de tous les profils
+router.get('/getAllProfiles',requireAuthUser, profileController.getAllProfiles);
 
-router.get('/getCompanyBid', profileController.getCompanyBids);
+// DELETE /profile/deleteProfile — supprime le profil courant
+router.delete('/deleteProfile',requireAuthUser, profileController.deleteProfile);
 
-// Récupérer les soft skills par ID
-router.get('/getSoftSkillsById/:userId', profileController.getSoftSkills);
+// GET /profile/search/skills — recherche par compétences
+router.get('/search/skills',requireAuthUser, profileController.searchProfilesBySkills);
+
+// POST /profile/addSoftSkills — ajoute des soft skills
+router.post('/addSoftSkills',requireAuthUser, profileController.addSoftSkills); 
+
+// GET /profile/getSoftSkills — soft skills courants
+router.get('/getSoftSkills',requireAuthUser, profileController.getSoftSkills);
+
+router.get('/getCompanyBid',requireAuthUser, profileController.getCompanyBids);
+
+// GET /profile/getSoftSkillsById/:userId — soft skills par utilisateur
+router.get('/getSoftSkillsById/:userId',requireAuthUser, profileController.getSoftSkills);
 
 router.put('/updateFinalBid', profileController.updateFinalBid);
 
-router.delete('/deleteHardSkill', profileController.deleteHardSkill);
+router.delete('/deleteHardSkill',requireAuthUser, profileController.deleteHardSkill);
 
-router.delete('/deleteSoftSkills', profileController.deleteSoftSkill);
+router.delete('/deleteSoftSkills',requireAuthUser, profileController.deleteSoftSkill);
 
-router.get('/getCompanyWithAssessments/:jobId?', profileController.getCompanyWithAssessments);
+router.get('/getCompanyWithAssessments',requireAuthUser, profileController.getCompanyWithAssessments);
 
-router.get("/company/stats/total", profileController.getTotalCompanies);
-router.get("/company/stats/active-posts", profileController.getCompaniesWithActivePosts);
-router.get("/company/stats/top-hiring", profileController.getTopHiringCompanies);
-router.get("/company/stats/recent-active", profileController.getRecentActiveCompanies);
-router.get("/company/stats/top-industries", profileController.getTopIndustries);
+router.get("/company/stats/total",requireAuthUser, profileController.getTotalCompanies);
+
+router.get("/company/stats/active-posts",requireAuthUser, profileController.getCompaniesWithActivePosts);
+
+router.get("/company/stats/top-hiring",requireAuthUser, profileController.getTopHiringCompanies);
+
+router.get("/company/stats/recent-active",requireAuthUser, profileController.getRecentActiveCompanies);
+
+router.get("/company/stats/top-industries",requireAuthUser, profileController.getTopIndustries);
 
 module.exports = router; 

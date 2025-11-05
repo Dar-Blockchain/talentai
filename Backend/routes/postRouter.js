@@ -1,33 +1,81 @@
+/**
+ * Routes des offres (posts)
+ *
+ * Middlewares globaux appliqués:
+ * - requireAuthUser: nécessite un utilisateur authentifié
+ * - LogMiddleware("Post"): journalise les requêtes liées aux posts
+ * - controledAcces: certaines routes peuvent nécessiter un rôle spécifique côté contrôleur
+ */
 const express = require("express");
 const router = express.Router();
 const { requireAuthUser } = require("../middleware/authMiddleware");
+
+// Import des middlewares
 const postController = require("../controllers/postController");
+const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
+const { controledAcces } = require('../middleware/controledAcces'); // Importez le middleware
 
-// Routes protégées par authentification
+// Public routes - no authentication required
+
+// GET /post/search
+// Description: Retourne tous les posts avec recherche, filtres et pagination (public)
+router.get("/search", postController.getAllPostsWithSearch);
+
+// GET /post/details/:id
+// Description: Retourne les détails d'un post par son ID (public)
+router.get("/details/:id", postController.getPostDetailsPublic);
+
+// GET /post/public-stats
+// Description: Retourne les statistiques publiques (nombre d'utilisateurs, posts, entreprises)
+router.get("/public-stats", postController.getPublicStats);
+
+// Auth obligatoire + logs pour toutes les routes
 router.use(requireAuthUser);
+//router.use(requireAuthUser, authLogMiddleware("Post"));
 
-// Route pour créer un post
+
+// POST /post/save-post
+// Description: Crée un post
 router.post("/save-post", postController.createPost);
 
-// Route pour récupérer tous les posts
+// GET /post/get-all-posts
+// Description: Retourne tous les posts
 router.get("/get-all-posts", postController.getAllPosts);
 
-// Route pour récupérer les posts de l'utilisateur connecté
+// GET /post/my-posts
+// Description: Posts de l'utilisateur courant
 router.get("/my-posts", postController.getUserPosts);
 
-// Route pour récupérer les posts d'un utilisateur spécifique
+// GET /post/user/:userId
+// Description: Posts d'un utilisateur spécifique
 router.get("/user/:userId", postController.getUserPosts);
 
-// Route pour récupérer un post spécifique
+// GET /post/getPostById/:id
+// Description: Détails d'un post
 router.get("/getPostById/:id", postController.getPostById);
 
-// Route pour mettre à jour un post
+// PUT /post/updatePost/:id
+// Description: Met à jour un post
 router.put("/updatePost/:id", postController.updatePost);
 
-// Route pour changer le statut d'un post
+// PATCH /post/updatePostStatus/:id
+// Description: Modifie le statut d'un post (actif/brouillon, etc.)
 router.patch("/updatePostStatus/:id", postController.updatePostStatus);
 
-// Route pour supprimer un post
+// DELETE /post/deletePost/:id
+// Description: Supprime un post
 router.delete("/deletePost/:id", postController.deletePost);
+
+// GET /post/adsPost
+// Description: 3 posts proposés à partir des 3 premières compétences du profil
+router.get("/adsPost", postController.getPostsByUserTopSkills);
+
+// GET /post/DetailsPost/:id
+// Description: Alias de détail de post
+router.get("/DetailsPost/:id", postController.getPostById);
+
+// POST /post/send-technical-test
+// Description: Send technical test task via email with PDF
+router.post("/send-technical-test", postController.sendTechnicalTest);
 
 module.exports = router;

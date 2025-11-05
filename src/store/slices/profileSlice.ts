@@ -11,6 +11,8 @@ interface User {
     updatedAt: string;
     role: string;
     profile: string;
+    FirstName?: string;
+    LastName?: string;
 }
 
 interface CompanyDetails {
@@ -44,6 +46,7 @@ export interface Profile {
     softSkills: SoftSkill[];
     requiredSkills: string[];
     requiredExperienceLevel: string;
+    targetRole?: string;
     companyDetails?: CompanyDetails;
     createdAt: string;
     updatedAt: string;
@@ -64,15 +67,24 @@ const initialState: ProfileState = {
     error: null,
 };
 
+let getMyProfileCallCount = 0;
+
 export const getMyProfile = createAsyncThunk<Profile, void, { rejectValue: string }>(
     'profile/getMyProfile',
-    async (_, { rejectWithValue }) => {
+    async (_, { rejectWithValue, getState }) => {
+        const callId = ++getMyProfileCallCount;
+        console.log(`🔑 [ProfileSlice][Call-${callId}] getMyProfile CALLED`);
+        
+        // Early check - if no token, reject immediately without API call
+        const token = localStorage.getItem('api_token');
+        if (!token) {
+            console.error(`❌ [ProfileSlice][Call-${callId}] No token found - skipping API call`);
+            return rejectWithValue('No authentication token found');
+        }
+        
         try {
-            const token = localStorage.getItem('api_token');
-            if (!token) {
-                return rejectWithValue('No authentication token found');
-            }
 
+            console.log(`📡 [ProfileSlice][Call-${callId}] Fetching profile from API...`);
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
                 method: 'GET',
                 headers: {
@@ -83,12 +95,15 @@ export const getMyProfile = createAsyncThunk<Profile, void, { rejectValue: strin
 
             if (!response.ok) {
                 const error = await response.json();
+                console.error(`❌ [ProfileSlice][Call-${callId}] API error:`, error);
                 return rejectWithValue(error.message || 'Failed to fetch profile');
             }
 
             const data = await response.json();
+            console.log(`✅ [ProfileSlice][Call-${callId}] Profile fetched successfully`);
             return data;
         } catch (error) {
+            console.error(`❌ [ProfileSlice][Call-${callId}] Exception:`, error);
             return rejectWithValue('An error occurred while fetching profile');
         }
     }
