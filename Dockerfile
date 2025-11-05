@@ -15,8 +15,6 @@ ARG NEXTAUTH_SECRET
 ARG GOOGLE_CLIENT_ID
 ARG GOOGLE_CLIENT_SECRET
 ARG ASSEMBLYAI_API_KEY
-ARG NODE_ENV=production
-
 # Set environment variables from build arguments
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 ENV OPENAI_API_KEY=$OPENAI_API_KEY
@@ -28,13 +26,12 @@ ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
 ENV GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
 ENV GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
 ENV ASSEMBLYAI_API_KEY=$ASSEMBLYAI_API_KEY
-ENV NODE_ENV=$NODE_ENV
 
 # Copy package.json, package-lock.json, next.config.js to the container
 COPY package.json package-lock.json next.config.ts tsconfig.json ./
 
-# Install dependencies
-RUN npm install
+# Install all dependencies including devDependencies (needed for TypeScript build)
+RUN npm ci
 
 # Copy the entire project
 COPY . .
