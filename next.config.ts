@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 
-import type { Configuration as WebpackConfig } from 'webpack';
+import type { NextConfig } from 'next';
 
-const nextConfig = {
+const nextConfig: NextConfig = {
   reactStrictMode: false, // Temporarily disabled to debug duplicate API calls
   output: 'standalone',
   outputFileTracingRoot: process.cwd(),
@@ -18,7 +18,7 @@ const nextConfig = {
   },
   assetPrefix: '',
   distDir: '.next',
-  webpack: (config: WebpackConfig) => {
+  webpack: (config) => {
     if (config.module?.rules) {
       config.module.rules.push({
         test: /\.(png|jpe?g|gif|svg|ico)$/i,
