@@ -123,13 +123,13 @@ app.use("/task", taskRouter);
 app.use("/tokens", tokenRouter);
 app.use("/payment", paymentRouter);
 
-app.get("/some-route", (req, res) => {
-  res.json("Route accessible");
-});
-// Route de base
-app.get("/", (req, res) => {
-  res.json({ message: "Bienvenue sur l'API Express!" });
-});
+// app.get("/some-route", (req, res) => {
+//   res.json("Route accessible");
+// });
+// // Route de base
+// app.get("/", (req, res) => {
+//   res.json({ message: "Bienvenue sur l'API Express!" });
+// });
 
 // Démarrage du serveur HTTP
 const server = http.createServer(app);
