@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -12,8 +12,10 @@ import {
   Button,
   Slider,
   FormHelperText,
+  Alert,
+  Paper,
 } from "@mui/material";
-import { Add, Close } from "@mui/icons-material";
+import { Add, Close, InfoOutlined } from "@mui/icons-material";
 
 const GREEN_MAIN = "#00FF9D";
 
@@ -73,9 +75,11 @@ const SkillsList: React.FC<SkillsListProps> = ({
   onSkillsChange,
 }) => {
   const [openDialog, setOpenDialog] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [newSkillName, setNewSkillName] = useState("");
   const [newSkillLevel, setNewSkillLevel] = useState(1);
   const [newSkillCategory, setNewSkillCategory] = useState("");
+  const [newSkillPercentage, setNewSkillPercentage] = useState<number | undefined>(undefined);
   const [error, setError] = useState("");
 
   const handleRemoveSkill = (index: number) => {
@@ -83,7 +87,34 @@ const SkillsList: React.FC<SkillsListProps> = ({
     onSkillsChange?.(updated);
   };
 
-  const handleAddSkill = () => {
+  const handleEditSkill = (index: number) => {
+    const skill = skills[index];
+    setEditingIndex(index);
+    setNewSkillName(skill.name);
+    setNewSkillLevel(parseInt(skill.level) || 1);
+    setNewSkillCategory(skill.category || "");
+    setNewSkillPercentage(skill.percentage);
+    setError("");
+    setOpenDialog(true);
+  };
+
+  const handleAddNewSkill = () => {
+    setEditingIndex(null);
+    setNewSkillName("");
+    setNewSkillLevel(1);
+    setNewSkillCategory("");
+    setNewSkillPercentage(undefined);
+    setError("");
+    setOpenDialog(true);
+  };
+
+  const calculateTotalPercentage = (skillsList: Skill[]): number => {
+    return skillsList.reduce((sum, skill) => {
+      return sum + (skill.percentage || 0);
+    }, 0);
+  };
+
+  const handleSaveSkill = () => {
     if (!newSkillName.trim()) {
       setError("Skill name is required");
       return;
@@ -94,28 +125,146 @@ const SkillsList: React.FC<SkillsListProps> = ({
       return;
     }
 
-    const newSkill: Skill = {
+    if (newSkillPercentage === undefined || newSkillPercentage === null) {
+      setError("Percentage is required and must be between 0 and 100");
+      return;
+    }
+
+    if (newSkillPercentage < 0 || newSkillPercentage > 100) {
+      setError("Percentage must be between 0 and 100");
+      return;
+    }
+
+    const updatedSkill: Skill = {
       name: newSkillName.trim(),
       level: newSkillLevel.toString(),
       category: newSkillCategory.trim() || undefined,
+      percentage: newSkillPercentage,
     };
 
-    onSkillsChange?.([...skills, newSkill]);
+    let updatedSkills: Skill[];
+    if (editingIndex !== null) {
+      // Update existing skill
+      updatedSkills = skills.map((skill, index) => 
+        index === editingIndex ? updatedSkill : skill
+      );
+    } else {
+      // Add new skill
+      updatedSkills = [...skills, updatedSkill];
+    }
+
+    // Validate total percentage equals 100%
+    const totalPercentage = calculateTotalPercentage(updatedSkills);
+    if (totalPercentage !== 100) {
+      setError(`Total percentage must equal 100%. Current total: ${totalPercentage}%`);
+      return;
+    }
+
+    onSkillsChange?.(updatedSkills);
+
     setNewSkillName("");
     setNewSkillLevel(1);
     setNewSkillCategory("");
+    setNewSkillPercentage(undefined);
     setError("");
+    setEditingIndex(null);
     setOpenDialog(false);
+  };
+
+  // Calculate current total percentage
+  const totalPercentage = useMemo(() => {
+    return calculateTotalPercentage(skills);
+  }, [skills]);
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setEditingIndex(null);
+    setNewSkillName("");
+    setNewSkillLevel(1);
+    setNewSkillCategory("");
+    setNewSkillPercentage(undefined);
+    setError("");
   };
 
   return (
     <Box sx={{ mb: 3 }}>
-      <Typography
-        variant="h6"
-        sx={{ color: "#0F172A", mb: 2, fontWeight: 700 }}
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+        <Typography
+          variant="h6"
+          sx={{ color: "#0F172A", fontWeight: 700 }}
+        >
+          {title}
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{
+            color: totalPercentage === 100 ? "#00C853" : totalPercentage > 100 ? "#FF4D4D" : "#FF9800",
+            fontWeight: 600,
+            fontSize: "0.875rem",
+          }}
+        >
+          Total: {totalPercentage}%
+          {totalPercentage !== 100 && (
+            <span style={{ marginLeft: "8px" }}>
+              ({totalPercentage < 100 ? `Need ${100 - totalPercentage}% more` : `${totalPercentage - 100}% over`})
+            </span>
+          )}
+        </Typography>
+      </Box>
+
+      {totalPercentage !== 100 && editable && (
+        <Alert 
+          severity={totalPercentage > 100 ? "error" : "warning"} 
+          sx={{ mb: 2, fontSize: "0.875rem" }}
+        >
+          {totalPercentage < 100 
+            ? `Total percentage must equal 100%. Please add ${100 - totalPercentage}% more.`
+            : `Total percentage exceeds 100%. Please reduce by ${totalPercentage - 100}%.`}
+        </Alert>
+      )}
+
+      {/* Percentage Explanation */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 1.5,
+          mb: 2,
+          backgroundColor: "#F0F9FF",
+          border: "1px solid #BAE6FD",
+          borderRadius: 2,
+        }}
       >
-        {title}
-      </Typography>
+        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1 }}>
+          <InfoOutlined sx={{ color: "#0284C7", fontSize: "1.2rem", mt: 0.2, flexShrink: 0 }} />
+          <Box>
+            <Typography
+              variant="body2"
+              sx={{
+                color: "#0C4A6E",
+                fontWeight: 600,
+                mb: 0.5,
+                fontSize: "0.875rem",
+              }}
+            >
+              About Skill Percentages
+            </Typography>
+            <Typography
+              variant="body2"
+              component="div"
+              sx={{
+                color: "#075985",
+                fontSize: "0.8125rem",
+                lineHeight: 1.5,
+              }}
+            >
+              The percentages represent the <Box component="span" sx={{ fontWeight: 600 }}>relative importance</Box> of each skill for this role. 
+              These percentages will be used to <Box component="span" sx={{ fontWeight: 600 }}>match candidates</Box> to your job requirements. 
+              Skills with higher percentages will have more weight in the matching algorithm, helping you find candidates 
+              who best fit your most critical skill needs. The total must equal 100% to ensure accurate candidate matching.
+            </Typography>
+          </Box>
+        </Box>
+      </Paper>
 
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
         {skills.map((skill: Skill, index: number) => {
@@ -130,6 +279,7 @@ const SkillsList: React.FC<SkillsListProps> = ({
               key={index}
               label={label}
               onDelete={editable ? () => handleRemoveSkill(index) : undefined}
+              onClick={editable ? () => handleEditSkill(index) : undefined}
             />
           );
         })}
@@ -138,7 +288,7 @@ const SkillsList: React.FC<SkillsListProps> = ({
           <Chip
             icon={<Add sx={{ fontSize: 18 }} />}
             label="Add Skill"
-            onClick={() => setOpenDialog(true)}
+            onClick={handleAddNewSkill}
             sx={{
               border: `1px dashed ${GREEN_MAIN}`,
               color: GREEN_MAIN,
@@ -153,10 +303,10 @@ const SkillsList: React.FC<SkillsListProps> = ({
         )}
       </Box>
 
-      {/* Add Skill Dialog */}
+      {/* Add/Edit Skill Dialog */}
       <Dialog
         open={openDialog}
-        onClose={() => setOpenDialog(false)}
+        onClose={handleCloseDialog}
         PaperProps={{
           sx: {
             borderRadius: 3,
@@ -166,7 +316,7 @@ const SkillsList: React.FC<SkillsListProps> = ({
         }}
       >
         <DialogTitle sx={{ fontWeight: 700, fontSize: "1.25rem", color: "#0F172A" }}>
-          Add New Skill
+          {editingIndex !== null ? "Edit Skill" : "Add New Skill"}
         </DialogTitle>
 
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
@@ -196,6 +346,32 @@ const SkillsList: React.FC<SkillsListProps> = ({
           </Box>
 
           <TextField
+            label="Percentage (0-100) *"
+            type="number"
+            fullWidth
+            required
+            value={newSkillPercentage !== undefined ? newSkillPercentage : ''}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === '') {
+                setNewSkillPercentage(undefined);
+              } else {
+                const numValue = parseInt(value);
+                if (!isNaN(numValue)) {
+                  setNewSkillPercentage(numValue);
+                }
+              }
+            }}
+            inputProps={{ min: 0, max: 100 }}
+            helperText={
+              editingIndex !== null
+                ? `Required: Set the importance percentage for candidate matching. This determines how much weight this skill has when matching candidates. Current total: ${calculateTotalPercentage(skills.filter((_, i) => i !== editingIndex))}%`
+                : `Required: Set the importance percentage for candidate matching. Higher percentages mean this skill is more critical for the role. Current total: ${totalPercentage}%`
+            }
+            error={!!error && (error.includes("Percentage") || error.includes("Total"))}
+          />
+
+          <TextField
             label="Category (optional)"
             fullWidth
             value={newSkillCategory}
@@ -207,16 +383,13 @@ const SkillsList: React.FC<SkillsListProps> = ({
 
         <DialogActions sx={{ justifyContent: "space-between", mt: 1 }}>
           <Button
-            onClick={() => {
-              setOpenDialog(false);
-              setError("");
-            }}
+            onClick={handleCloseDialog}
             sx={{ color: "#FF4D4D", fontWeight: 600 }}
           >
             Cancel
           </Button>
           <Button
-            onClick={handleAddSkill}
+            onClick={handleSaveSkill}
             variant="contained"
             sx={{
               backgroundColor: GREEN_MAIN,
@@ -227,7 +400,7 @@ const SkillsList: React.FC<SkillsListProps> = ({
               },
             }}
           >
-            Add Skill
+            {editingIndex !== null ? "Save Changes" : "Add Skill"}
           </Button>
         </DialogActions>
       </Dialog>
