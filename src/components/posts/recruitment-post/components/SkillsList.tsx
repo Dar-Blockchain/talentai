@@ -23,6 +23,7 @@ interface Skill {
   importance?: string;
   category?: string;
   experienceLevel?: string;
+  percentage?: number;
 }
 
 interface SkillsListProps {
@@ -117,13 +118,21 @@ const SkillsList: React.FC<SkillsListProps> = ({
       </Typography>
 
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-        {skills.map((skill: Skill, index: number) => (
-          <SkillChip
-            key={index}
-            label={`${skill.name} (${getExperienceLevelFromNumber(skill.level)})`}
-            onDelete={editable ? () => handleRemoveSkill(index) : undefined}
-          />
-        ))}
+        {skills.map((skill: Skill, index: number) => {
+          const levelText = getExperienceLevelFromNumber(skill.level);
+          const percentageText = skill.percentage !== undefined ? `${skill.percentage}%` : '';
+          const label = percentageText 
+            ? `${skill.name} (${levelText}) - ${percentageText}`
+            : `${skill.name} (${levelText})`;
+          
+          return (
+            <SkillChip
+              key={index}
+              label={label}
+              onDelete={editable ? () => handleRemoveSkill(index) : undefined}
+            />
+          );
+        })}
 
         {editable && (
           <Chip

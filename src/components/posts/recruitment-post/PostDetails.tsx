@@ -99,10 +99,11 @@ const PostDetails = forwardRef<PostDetailsRef>((props, ref) => {
             requiredSkills: data.skillAnalysis.requiredSkills.map((skill: any) => ({
               name: skill.name,
               level: skill.level.toString(),
-              importance: "Required",
-              category: skill.name.includes('React') || skill.name.includes('JavaScript') ? 'Frontend' :
+              importance: skill.importance || "Required",
+              category: skill.category || (skill.name.includes('React') || skill.name.includes('JavaScript') ? 'Frontend' :
                 skill.name.includes('Git') ? 'Version Control' :
-                  'General'
+                  'General'),
+              percentage: skill.percentage
             })),
             suggestedSkills: {
               technical: data.skillAnalysis.suggestedSkills.technical.map((skill: any) => ({
