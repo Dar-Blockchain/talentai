@@ -373,18 +373,11 @@ const WalletConnect: React.FC<WalletConnectProps> = ({
 
           <ConnectButton
             onClick={connectWallet}
-            disabled={walletStatus === 'connecting' || !isHashConnectReady}
+            disabled={!isHashConnectReady}
             startIcon={<AccountBalanceWalletIcon />}
           >
-            {!isHashConnectReady ? 'Loading HashConnect...' :
-             walletStatus === 'connecting' ? 'Opening Wallet...' : 'Connect Wallet'}
+            {!isHashConnectReady ? 'Loading HashConnect...' : 'Connect Wallet'}
           </ConnectButton>
-
-          {walletStatus === 'connecting' && (
-            <Typography variant="body2" sx={{ mt: 2, textAlign: 'center', color: 'text.secondary' }}>
-              If the wallet modal doesn't appear, check if HashPack extension is installed or try refreshing the page.
-            </Typography>
-          )}
         </Box>
       )}
 

@@ -12,7 +12,6 @@ import {
   Card,
   CardContent,
   Chip,
-  Grid,
   Stepper,
   Step,
   StepLabel,
@@ -125,7 +124,11 @@ const GradientTab = styled(Tab)(({ theme }) => ({
   },
 }));
 
-const PlanCard = styled(Card)(({ theme, selected }: { theme?: any; selected?: boolean }) => ({
+interface PlanCardProps {
+  selected?: boolean;
+}
+
+const PlanCard = styled(Card)<PlanCardProps>(({ theme, selected }) => ({
   cursor: 'pointer',
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
   border: selected ? '3px solid #FFD700' : '2px solid rgba(255, 255, 255, 0.2)',
@@ -400,25 +403,27 @@ const PaymentGatewayTAI: React.FC<PaymentGatewayTAIProps> = ({
           </IconButton>
         </Box>
 
-        <Grid
-          container
-          spacing={isMobile ? 2 : 3}
+        <Box
           sx={{
             maxWidth: '1200px',
             margin: '0 auto',
             px: isMobile ? 2 : 3,
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: isMobile ? 2 : 3,
           }}
         >
           {pricingData.plans.map((plan) => (
-            <Grid
-              item
-              xs={12}
-              sm={6}
-              md={4}
+            <Box
               key={plan.id}
               sx={{
                 display: 'flex',
                 justifyContent: 'center',
+                width: {
+                  xs: '100%',
+                  sm: 'calc(50% - 12px)',
+                  md: 'calc(33.333% - 16px)',
+                },
               }}
             >
               <PlanCard
@@ -552,9 +557,9 @@ const PaymentGatewayTAI: React.FC<PaymentGatewayTAIProps> = ({
                   </Box>
                 </CardContent>
               </PlanCard>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       </Box>
     );
   };
