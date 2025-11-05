@@ -24,7 +24,6 @@ import {
   Card,
   CardContent,
   Chip,
-  Grid,
 } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
@@ -71,6 +70,13 @@ interface InterviewConfig {
     language?: string;
     difficulty?: string;
     silenceTimeout?: number;
+    silenceIntelligence?: {
+      enabled: boolean;
+      adaptiveThresholds: boolean;
+      maxSilencePrompts: number;
+      naturalPauseDetection: boolean;
+      contextAwareThresholds: boolean;
+    };
   };
 }
 
@@ -111,6 +117,8 @@ interface RealTimeReport {
   scores: { [key: string]: number };
   overallProgress: number;
   lastUpdated: string;
+  aiInsights?: string[];
+  trends?: string[];
 }
 
 // Add this after imports
@@ -1169,18 +1177,24 @@ const IntelligentInterviewTest = () => {
       } catch (error) {
         console.error('❌ Camera initialization error:', error);
 
-        if (error.name === 'NotAllowedError') {
-          setCameraStatus('denied');
-          setCameraError('Camera access was denied');
-          showNotification('Please allow camera access to use this feature', 'warning');
-        } else if (error.name === 'NotFoundError') {
-          setCameraStatus('error');
-          setCameraError('No camera found');
-          showNotification('No camera device found', 'error');
+        if (error instanceof DOMException) {
+          if (error.name === 'NotAllowedError') {
+            setCameraStatus('denied');
+            setCameraError('Camera access was denied');
+            showNotification('Please allow camera access to use this feature', 'warning');
+          } else if (error.name === 'NotFoundError') {
+            setCameraStatus('error');
+            setCameraError('No camera found');
+            showNotification('No camera device found', 'error');
+          } else {
+            setCameraStatus('error');
+            setCameraError(error.message);
+            showNotification('Camera access error: ' + error.message, 'error');
+          }
         } else {
           setCameraStatus('error');
-          setCameraError(error.message);
-          showNotification('Camera access error: ' + error.message, 'error');
+          setCameraError('An unknown error occurred');
+          showNotification('Camera access error', 'error');
         }
       }
     };
@@ -2108,9 +2122,9 @@ const IntelligentInterviewTest = () => {
 
           {/* Collapsible Content */}
           {coverageDashboardExpanded && (
-            <Grid container spacing={2} sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, p: 3 }}>
             {/* Overall Coverage */}
-            <Grid item xs={12} md={4}>
+            <Box sx={{ width: { xs: '100%', md: 'calc(33.333% - 11px)' } }}>
               <Card sx={{ height: '100%', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
                 <CardContent>
                   <Typography variant="subtitle1" sx={{ color: '#8310FF', fontWeight: 600, mb: 2 }}>
@@ -2139,10 +2153,10 @@ const IntelligentInterviewTest = () => {
                   />
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
 
             {/* AI Insights */}
-            <Grid item xs={12} md={8}>
+            <Box sx={{ width: { xs: '100%', md: 'calc(66.666% - 11px)' } }}>
               <Card sx={{ height: '100%', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
                 <CardContent>
                   <Typography variant="subtitle1" sx={{ color: '#8310FF', fontWeight: 600, mb: 2 }}>
@@ -2166,18 +2180,18 @@ const IntelligentInterviewTest = () => {
                   )}
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
 
             {/* Coverage Areas Breakdown */}
-            <Grid item xs={12}>
+            <Box sx={{ width: '100%' }}>
               <Card sx={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
                 <CardContent>
                   <Typography variant="subtitle1" sx={{ color: '#8310FF', fontWeight: 600, mb: 3 }}>
                     Competency Coverage Analysis
                   </Typography>
-                  <Grid container spacing={2}>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                     {coverage?.areas && Object.entries(coverage.areas).map(([areaName, areaData]: [string, any]) => (
-                      <Grid item xs={12} sm={6} md={4} key={areaName}>
+                      <Box key={areaName} sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 11px)' } }}>
                         <Box sx={{
                           p: 2,
                           borderRadius: 2,
@@ -2228,16 +2242,16 @@ const IntelligentInterviewTest = () => {
                             </Typography>
                           )}
                         </Box>
-                      </Grid>
+                      </Box>
                     ))}
-                  </Grid>
+                  </Box>
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
 
             {/* Real-time Recommendations */}
             {realTimeReport?.recommendations && realTimeReport.recommendations.length > 0 && (
-              <Grid item xs={12} md={6}>
+              <Box sx={{ width: { xs: '100%', md: 'calc(50% - 8px)' } }}>
                 <Card sx={{ height: '100%', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
                   <CardContent>
                     <Typography variant="subtitle1" sx={{ color: '#8310FF', fontWeight: 600, mb: 2 }}>
@@ -2262,12 +2276,12 @@ const IntelligentInterviewTest = () => {
                     </Box>
                   </CardContent>
                 </Card>
-              </Grid>
+              </Box>
             )}
 
             {/* Performance Trends */}
             {realTimeReport?.trends && realTimeReport.trends.length > 0 && (
-              <Grid item xs={12} md={6}>
+              <Box sx={{ width: { xs: '100%', md: 'calc(50% - 8px)' } }}>
                 <Card sx={{ height: '100%', background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
                   <CardContent>
                     <Typography variant="subtitle1" sx={{ color: '#8310FF', fontWeight: 600, mb: 2 }}>
@@ -2293,12 +2307,12 @@ const IntelligentInterviewTest = () => {
                     </Box>
                   </CardContent>
                 </Card>
-              </Grid>
+              </Box>
             )}
 
             {/* AI Decision History */}
             {interviewStatus === 'active' && (
-              <Grid item xs={12}>
+              <Box sx={{ width: '100%' }}>
                 <Card sx={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
                   <CardContent>
                     <Typography variant="subtitle1" sx={{ color: '#8310FF', fontWeight: 600, mb: 2 }}>
@@ -2319,9 +2333,9 @@ const IntelligentInterviewTest = () => {
                     </Box>
                   </CardContent>
                 </Card>
-              </Grid>
+              </Box>
             )}
-            </Grid>
+            </Box>
           )}
         </Paper>
       )}

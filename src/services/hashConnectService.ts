@@ -156,7 +156,7 @@ class HashConnectService {
     try {
       // Connection status changes - check if event exists
       if (this.hashConnect.connectionStatusChangeEvent) {
-        this.hashConnect.connectionStatusChangeEvent.on((status) => {
+        this.hashConnect.connectionStatusChangeEvent.on((status: any) => {
           console.log('HashConnect connection status changed:', status);
 
           const mappedStatus = this.mapConnectionState(status);
@@ -172,7 +172,7 @@ class HashConnectService {
 
       // Pairing events - check if event exists
       if (this.hashConnect.pairingEvent) {
-        this.hashConnect.pairingEvent.on((pairing) => {
+        this.hashConnect.pairingEvent.on((pairing: any) => {
           console.log('HashConnect pairing event:', pairing);
           this.handleWalletConnected();
         });
@@ -180,14 +180,14 @@ class HashConnectService {
 
       // Found extension event - check if event exists
       if (this.hashConnect.foundExtensionEvent) {
-        this.hashConnect.foundExtensionEvent.on((walletMetadata) => {
+        this.hashConnect.foundExtensionEvent.on((walletMetadata: any) => {
           console.log('HashPack extension found:', walletMetadata);
         });
       }
 
       // Alternative event listeners for modern HashConnect
       if (this.hashConnect.on) {
-        this.hashConnect.on('accountsChanged', (accounts) => {
+        this.hashConnect.on('accountsChanged', (accounts:any) => {
           console.log('Accounts changed:', accounts);
           if (accounts && accounts.length > 0) {
             this.handleWalletConnected();
@@ -196,7 +196,7 @@ class HashConnectService {
           }
         });
 
-        this.hashConnect.on('chainChanged', (chainId) => {
+        this.hashConnect.on('chainChanged', (chainId:any) => {
           console.log('Chain changed:', chainId);
         });
       }

@@ -7,11 +7,25 @@ const salarySchema = new mongoose.Schema({
   currency: { type: String, required: true },
 });
 
+
 const skillSchema = new mongoose.Schema({
   name: { type: String, required: true },
   level: { type: String },
   importance: { type: String },
   category: { type: String },
+  percentage: {
+    type: Number,
+    min: 0,
+    max: 100,
+    required: false,
+    validate: {
+      validator: function (v) {
+        // Autorise undefined (pas encore calculé), mais valide la plage
+        return v === undefined || (v >= 0 && v <= 100);
+      },
+      message: (props) => `${props.value} is not a valid percentage (must be between 0 and 100)!`,
+    },
+  },
 });
 
 const suggestedSkillSchema = new mongoose.Schema({

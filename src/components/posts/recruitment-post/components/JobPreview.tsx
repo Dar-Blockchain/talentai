@@ -112,19 +112,24 @@ const JobPreview: React.FC<JobPreviewProps> = ({
         backgroundColor: "#ffffff",
         borderRadius: "12px",
         border: "1px solid #e5e7eb",
-        p: 3,
+        p: { xs: 2, sm: 3 },
         color: "#111827",
         fontSize: { xs: "0.875rem", sm: "1rem" },
+        width: "100%",
+        maxWidth: "100%",
+        overflow: "visible",
+        minHeight: { xs: "auto", sm: "auto" },
       }}
     >
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: { xs: 2, sm: 4 } }}>
         <Box
           sx={{
             display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
             justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2,
-            gap: 2,
+            alignItems: { xs: "flex-start", sm: "center" },
+            mb: { xs: 1.5, sm: 2 },
+            gap: { xs: 1, sm: 2 },
           }}
         >
           {isEditing ? (
@@ -180,7 +185,13 @@ const JobPreview: React.FC<JobPreviewProps> = ({
               {generatedJob.jobDetails.title}
             </Typography>
           )}
-          <Box sx={{ display: "flex", gap: 1 }}>
+          <Box sx={{ 
+            display: "flex", 
+            gap: { xs: 0.5, sm: 1 },
+            flexWrap: { xs: "wrap", sm: "nowrap" },
+            width: { xs: "100%", sm: "auto" },
+            justifyContent: { xs: "flex-start", sm: "flex-end" },
+          }}>
             {!isEditing ? (
               <>
                 <Tooltip title="Edit job details" arrow>
@@ -191,8 +202,8 @@ const JobPreview: React.FC<JobPreviewProps> = ({
                       backdropFilter: "blur(15px)",
                       color: "#1E293B",
                       borderRadius: 2.5,
-                      width: 48,
-                      height: 48,
+                      width: { xs: 40, sm: 48 },
+                      height: { xs: 40, sm: 48 },
                       border: "2px solid rgba(255, 255, 255, 0.8)",
                       boxShadow:
                         "0 8px 32px rgba(0, 255, 157, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.6)",

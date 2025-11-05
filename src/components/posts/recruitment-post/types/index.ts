@@ -21,6 +21,7 @@ export interface JobPost {
       importance: string;
       category: string;
       experienceLevel: string;
+      percentage?: number;
     }>;
     suggestedSkills: {
       technical: Array<{

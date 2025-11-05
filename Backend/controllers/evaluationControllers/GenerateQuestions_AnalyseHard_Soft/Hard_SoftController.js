@@ -1,6 +1,6 @@
 // generateQuestions.js
-const analyzeProfileService = require("../../../services/evaluation/analyzeProfileService");
-const techniqueService = require("../../../services/evaluation/techniqueQuestionsService");
+const analyzeProfileService = require("../../../services/evaluationServices/analyzeProfileService");
+const techniqueService = require("../../../services/evaluationServices/techniqueQuestionsService");
 
 exports.generateTechniqueQuestions = async (req, res) => {
   try {
