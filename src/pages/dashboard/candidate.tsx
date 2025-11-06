@@ -25,7 +25,7 @@ import { useRouter } from "next/router";
 import Cookies from "js-cookie";
 import { signOut } from "next-auth/react";
 import { toast } from "react-hot-toast";
-import { isTokenExpired, handleTokenExpiration } from "@/utils/tokenUtils";
+import { isTokenExpired, handleTokenExpiration, validateAndSyncToken, isCookieExpired } from "@/utils/tokenUtils";
 import CandidateOnly from "@/components/CandidateOnly";
 import SkillBlock from "@/components/dashboard-candidate/SkillBlock";
 import InterviewDetailsTabs from "@/components/dashboard-candidate/InterviewDetailsTabs";
@@ -470,7 +470,24 @@ export default function DashboardCandidate() {
     adsFetchedRef.current = true;
     setAdLoading(true);
     setAdError(null);
-    const token = localStorage.getItem("api_token");
+    
+    // Check cookie expiration first
+    if (isCookieExpired() && localStorage.getItem("api_token")) {
+      console.warn('🔒 [DASHBOARD] Cookie expired before API call');
+      setAdLoading(false);
+      handleTokenExpiration();
+      return;
+    }
+
+    // Validate and sync token
+    if (!validateAndSyncToken()) {
+      console.warn('🔒 [DASHBOARD] Token validation failed before API call');
+      setAdLoading(false);
+      handleTokenExpiration();
+      return;
+    }
+
+    const token = localStorage.getItem("api_token") || Cookies.get("api_token");
     
     // Check if token is expired before making API call
     if (token && isTokenExpired(token)) {

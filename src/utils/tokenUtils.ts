@@ -53,22 +53,108 @@ export function isTokenExpired(token: string | null): boolean {
 export function getToken(): string | null {
   if (typeof window === 'undefined') return null;
   
-  // Try localStorage first
-  const localToken = localStorage.getItem('api_token');
-  if (localToken) return localToken;
-  
-  // Fallback to cookies
+  // Try cookie first (more reliable for expiration)
   const cookieToken = Cookies.get('api_token');
-  return cookieToken || null;
+  if (cookieToken) return cookieToken;
+  
+  // Fallback to localStorage
+  const localToken = localStorage.getItem('api_token');
+  return localToken || null;
+}
+
+/**
+ * Check if cookie is expired or missing
+ * @returns true if cookie is missing, false if it exists
+ */
+export function isCookieExpired(): boolean {
+  if (typeof window === 'undefined') return true;
+  
+  const cookieToken = Cookies.get('api_token');
+  return !cookieToken;
 }
 
 /**
  * Check if the current token is expired
+ * Only checks JWT expiration, not cookie expiration
  * @returns true if token is expired or missing, false otherwise
  */
 export function isCurrentTokenExpired(): boolean {
-  const token = getToken();
+  if (typeof window === 'undefined') return true;
+  
+  // Get token from localStorage or cookie (prefer cookie, but allow localStorage)
+  const cookieToken = Cookies.get('api_token');
+  const localToken = localStorage.getItem('api_token');
+  const token = cookieToken || localToken;
+  
+  // If no token at all, it's expired
+  if (!token) {
+    return true;
+  }
+  
+  // Check JWT expiration only (don't clear localStorage if cookie is missing)
   return isTokenExpired(token);
+}
+
+/**
+ * Check if cookie was deleted and clear localStorage if so
+ * This keeps cookie and localStorage in sync
+ * @returns true if cookie was deleted (and localStorage was cleared), false otherwise
+ */
+export function checkAndClearIfCookieDeleted(): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  const cookieToken = Cookies.get('api_token');
+  const localToken = localStorage.getItem('api_token');
+  
+  // If cookie is missing but localStorage has token, cookie was deleted - clear localStorage
+  if (!cookieToken && localToken) {
+    console.warn('🔒 Cookie deleted - clearing localStorage token to keep them in sync');
+    localStorage.removeItem('api_token');
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Validate token and sync cookie with localStorage
+ * If cookie is deleted, clears localStorage to keep them in sync
+ * @returns true if token is valid and synced, false otherwise
+ */
+export function validateAndSyncToken(): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  const cookieToken = Cookies.get('api_token');
+  const localToken = localStorage.getItem('api_token');
+  
+  // If cookie is missing but localStorage has token, cookie was deleted - clear localStorage
+  if (!cookieToken && localToken) {
+    console.warn('🔒 Cookie deleted - clearing localStorage token to keep them in sync');
+    localStorage.removeItem('api_token');
+    return false;
+  }
+  
+  // If cookie exists but localStorage doesn't, sync localStorage
+  if (cookieToken && !localToken) {
+    localStorage.setItem('api_token', cookieToken);
+  }
+  
+  // If both exist but are different, prefer cookie (more reliable)
+  if (cookieToken && localToken && cookieToken !== localToken) {
+    console.warn('🔒 Token mismatch - syncing localStorage with cookie');
+    localStorage.setItem('api_token', cookieToken);
+  }
+  
+  // Get token (prefer cookie)
+  const token = cookieToken || localToken;
+  
+  // If no token at all, it's invalid
+  if (!token) {
+    return false;
+  }
+  
+  // Check JWT expiration
+  return !isTokenExpired(token);
 }
 
 /**
@@ -84,23 +170,30 @@ export function clearTokens(): void {
 
 /**
  * Handle token expiration - clear tokens and redirect to login
+ * This handles both cookie expiration and JWT expiration
+ * Uses the centralized redirectToLogin to prevent loops
  * @param currentPath - Optional current path to use as returnUrl
  */
 export function handleTokenExpiration(currentPath?: string): void {
   if (typeof window === 'undefined') return;
   
-  // Don't redirect if already on signin page
-  if (window.location.pathname === '/signin') {
+  // Don't redirect if already on signin page (check pathname only, ignore query params)
+  const currentPathname = window.location.pathname;
+  if (currentPathname === '/signin' || currentPathname.startsWith('/signin/')) {
+    // Just clear tokens, don't redirect
+    clearTokens();
     return;
   }
   
+  // Clear both cookie and localStorage
   clearTokens();
   
+  // Use centralized redirect function to prevent loops
+  const { redirectToLogin } = require('./authRedirect');
   const path = currentPath || window.location.pathname + window.location.search;
-  const loginUrl = `/signin${path !== '/signin' ? `?returnUrl=${encodeURIComponent(path)}` : ''}`;
   
-  console.warn('🔒 Token expired - Redirecting to login');
-  window.location.href = loginUrl;
+  console.warn('🔒 Token expired (cookie or JWT) - Clearing tokens and redirecting to login');
+  redirectToLogin(null, path);
 }
 
 /**

@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import { isCurrentTokenExpired, handleTokenExpiration, isTokenExpired, getToken } from '@/utils/tokenUtils';
+import { isCurrentTokenExpired, handleTokenExpiration, isTokenExpired, getToken, validateAndSyncToken, isCookieExpired } from '@/utils/tokenUtils';
 
 interface AuthState {
   profile: any | null;
@@ -29,18 +29,35 @@ if (typeof window !== 'undefined') {
   axios.interceptors.request.use(
     (config) => {
       // Check token expiration before making API calls
-      if (window.location.pathname !== '/signin') {
+      const pathname = window.location.pathname;
+      if (pathname !== '/signin' && !pathname.startsWith('/signin/')) {
         const token = getToken();
         
-        // If token exists but is expired, clear it and redirect
+        // Only check JWT expiration, not cookie expiration (cookie might be missing but token valid)
+        // If token exists but is expired (JWT), clear it and redirect
         if (token && isTokenExpired(token)) {
           if (!isHandling401) {
             isHandling401 = true;
-            console.warn('🔒 Axios: Token expired before API call', config.url);
+            console.warn('🔒 Axios: Token expired (JWT) before API call', config.url);
             handleTokenExpiration();
           }
           // Cancel the request
           return Promise.reject(new Error('Token expired'));
+        }
+        
+        // Don't check cookie expiration in axios interceptor - let components handle it
+        // Just sync tokens if cookie exists
+        const cookieToken = Cookies.get('api_token');
+        const localToken = localStorage.getItem('api_token');
+        
+        // Sync localStorage with cookie if cookie exists
+        if (cookieToken && !localToken) {
+          localStorage.setItem('api_token', cookieToken);
+        }
+        
+        // If both exist but are different, prefer cookie
+        if (cookieToken && localToken && cookieToken !== localToken) {
+          localStorage.setItem('api_token', cookieToken);
         }
       }
       return config;
@@ -56,7 +73,8 @@ if (typeof window !== 'undefined') {
     (error) => {
       if (error.response?.status === 401 && !isHandling401) {
         // Don't redirect if already on signin page
-        if (window.location.pathname !== '/signin') {
+        const pathname = window.location.pathname;
+        if (pathname !== '/signin' && !pathname.startsWith('/signin/')) {
           isHandling401 = true;
           console.warn('🔒 Axios: Received 401 Unauthorized - Token expired or invalid');
           handleTokenExpiration();
