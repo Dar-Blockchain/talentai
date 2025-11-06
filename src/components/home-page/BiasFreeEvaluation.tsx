@@ -7,12 +7,24 @@ const Bullet: React.FC<{ label: string }> = ({ label }) => (
       src="/images/home/icon.png"
       alt="Check icon"
       style={{
-        width: 20,
-        height: 20,
+        width: 30,
+        height: 30,
         objectFit: 'contain'
       }}
     />
-    <Typography variant="body2" sx={{ color: '#fff' }}>{label}</Typography>
+    <Typography 
+      variant="body2" 
+      sx={{
+        fontFamily: 'Fustat',
+        fontWeight: 400,
+        fontStyle: 'normal',
+        fontSize: '16px',
+        lineHeight: '24px',
+        letterSpacing: 0,
+        verticalAlign: 'middle'
+      }}>
+        {label}
+    </Typography>
   </Stack>
 );
 
@@ -20,18 +32,19 @@ const Pill: React.FC<{ label: string; color: string; icon: string }> = ({ label,
   <Box sx={{
     p: 1.5,
     borderRadius: 2,
-    bgcolor: '#F9FAFB',
+    bgcolor: 'while',
     color: '#374151',
-    border: '1px solid #E5E7EB',
     textAlign: 'center',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     height: '100%',
-    minHeight: 90,
+    minHeight: 'auto',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
+    boxShadow: '0px 0px 9.96px 0px rgba(0, 0, 0, 0.06)',
+    border: '1.63px solid rgba(0, 0, 0, 0.06)',
     '&:hover': {
       transform: 'translateY(-2px)',
       boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
@@ -41,13 +54,11 @@ const Pill: React.FC<{ label: string; color: string; icon: string }> = ({ label,
       width: 36,
       height: 36,
       borderRadius: 2,
-      bgcolor: color,
-      mb: 1,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       fontSize: '1.1rem',
-      color: '#fff'
+      pb: 1.2
     }}>
       <Box
         component="img"
@@ -57,11 +68,15 @@ const Pill: React.FC<{ label: string; color: string; icon: string }> = ({ label,
           width: 24,
           height: 24,
           objectFit: 'contain',
-          filter: 'brightness(0) invert(1)'
         }}
       />
     </Box>
-    <Typography variant="body2" sx={{ color: '#374151', fontWeight: 600, fontSize: '0.8rem' }}>
+    <Typography variant="body2" sx={{ color: '#374151', fontFamily: 'Poppins',
+  fontWeight: 500,
+  fontStyle: 'normal', // 'Medium' devient 'normal'
+  fontSize: '16.33px',
+  lineHeight: '100%',
+  letterSpacing: '0%' }}>
       {label}
     </Typography>
   </Box>
@@ -75,8 +90,39 @@ const BiasFreeEvaluation: React.FC = () => {
         position: 'relative',
         maxWidth: 1500,
         mx: 'auto',
-        mb: { xs: 2, md: 3 }
+        mb: { xs: 2, md: 3 }, mt: 10
       }}>
+        <Box sx={{mx: 3}}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontFamily: 'Inter',
+              fontWeight: 400,
+              fontStyle: 'normal',
+              fontSize: '36px',
+              lineHeight: '43.2px',
+              letterSpacing: 0,
+              verticalAlign: 'middle',
+              mb: 1
+            }}
+            >
+              The inteligent hiring platform you deserve
+            </Typography>
+            <Typography
+              variant="h5"
+              sx={{
+                fontFamily: 'Fustat',
+                fontWeight: 400,
+                fontStyle: 'normal',
+                fontSize: '16px',
+                lineHeight: '24px',
+                letterSpacing: 0,
+                verticalAlign: 'middle'
+              }}
+            >
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+            </Typography>
+        </Box>
         {/* Floating Blocks Row */}
         <Box sx={{
           position: 'relative',
@@ -85,7 +131,7 @@ const BiasFreeEvaluation: React.FC = () => {
           justifyContent: 'space-between',
           alignItems: 'flex-start',
           mb: 4,
-          mt: { xs: 8, md: 12 },
+          mt: { xs: 3, md: 5 },
           px: 3,
           gap: 4,
           maxWidth: 1400,
@@ -212,7 +258,7 @@ const BiasFreeEvaluation: React.FC = () => {
 
         {/* Bias-Free Evaluation Section */}
         <Box sx={{
-          backgroundColor: '#000000',
+          backgroundColor: 'rgba(20, 20, 21, 1)',
           color: '#fff',
           py: { xs: 6, md: 10 },
           px: 3,
@@ -229,15 +275,18 @@ const BiasFreeEvaluation: React.FC = () => {
             gap: { xs: 4, md: 6 }
           }}>
             {/* Left side - Text content */}
-            <Box sx={{ flex: 1, maxWidth: 500, mt: { xs: 8, md: 12 } }}>
+            <Box sx={{ flex: 1, maxWidth: 500, ml: 6, mt: { xs: 8, md: 12 } }}>
               <Typography
                 variant="h3"
                 sx={{
-                  fontFamily: 'Poppins, sans-serif',
-                  fontWeight: 600,
-                  mb: 3,
-                  fontSize: { xs: '2rem', md: '2.5rem' },
-                  color: '#fff'
+                  fontFamily: 'Inter',
+                  fontWeight: 400,
+                  fontStyle: 'normal',
+                  fontSize: '36px',
+                  lineHeight: '43.2px',
+                  letterSpacing: 0,
+                  verticalAlign: 'middle',
+                  mb: 1
                 }}
               >
                 Bias-Free Evaluation.
@@ -245,10 +294,13 @@ const BiasFreeEvaluation: React.FC = () => {
               <Typography
                 variant="body1"
                 sx={{
-                  color: '#D1D5DB',
-                  mb: 4,
-                  lineHeight: 1.6,
-                  fontSize: '1.125rem'
+                  fontFamily: 'Fustat',
+                  fontWeight: 400,
+                  fontStyle: 'normal',
+                  fontSize: '16px',
+                  lineHeight: '24px',
+                  letterSpacing: 0,
+                  mb: 2
                 }}
               >
                 Our platform ensures that every candidate is assessed objectively, using data-driven methods that eliminate unconscious bias in recruitment decisions. This leads to fairer outcomes and a more diverse, high-performing workforce.            </Typography>
@@ -265,11 +317,17 @@ const BiasFreeEvaluation: React.FC = () => {
                   textTransform: 'none',
                   color: '#fff',
                   borderColor: '#fff',
-                  px: 4,
-                  py: 2,
-                  fontSize: '1rem',
-                  fontWeight: 500,
-                  borderRadius: 2,
+                  borderRadius: '2px',
+                  maxWidth: 235,
+                  height: 48,
+                  fontFamily: 'Fustat',
+                  fontWeight: 400,
+                  fontStyle: 'normal',
+                  fontSize: '16px',
+                  lineHeight: '24px',
+                  letterSpacing: 0,
+                  textAlign: 'center',
+                  verticalAlign: 'middle',
                   '&:hover': {
                     borderColor: '#fff',
                     backgroundColor: 'rgba(255, 255, 255, 0.1)'
@@ -287,25 +345,25 @@ const BiasFreeEvaluation: React.FC = () => {
               justifyContent: 'center'
             }}>
               <Box sx={{
-                bgcolor: '#fff',
+                bgcolor: 'rgba(251, 252, 254, 1)',
                 borderRadius: 3,
                 mt: 10,
                 p: 3,
                 width: 360,
-                height: 340,
+                height: 'auto',
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
                 gridTemplateRows: '1fr 1fr 1fr',
                 gap: 2.5,
                 boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
-                border: '1px solid #E5E7EB'
+                border: '1.97px solid rgba(98, 111, 134, 0.15)'
               }}>
-                <Pill label="Technical" color="#8B5CF6" icon="/images/icons/Technical.png" />
-                <Pill label="Task" color="#EF4444" icon="/images/icons/Task.png" />
-                <Pill label="Soft" color="#F59E0B" icon="/images/icons/Soft.png" />
-                <Pill label="Condition" color="#3B82F6" icon="/images/icons/Condition.png" />
-                <Pill label="HR" color="#06B6D4" icon="/images/icons/HR.png" />
-                <Pill label="Email" color="#10B981" icon="/images/icons/Email.png" />
+                <Pill label="Technical" color="#8B5CF6" icon="/icons/technical.svg" />
+                <Pill label="Task" color="#EF4444" icon="/icons/task.svg" />
+                <Pill label="Soft" color="#F59E0B" icon="/icons/soft.svg" />
+                <Pill label="Condition" color="#3B82F6" icon="/icons/condition.svg" />
+                <Pill label="HR" color="#06B6D4" icon="/icons/hr.svg" />
+                <Pill label="Email" color="#10B981" icon="/icons/email.svg" />
               </Box>
             </Box>
           </Box>

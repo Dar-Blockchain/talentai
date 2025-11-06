@@ -269,7 +269,7 @@ const Header = ({ logo, type, color, link }: HeaderProps) => {
         position="static"
         elevation={0}
         sx={{
-          backgroundColor: "#FDFEFE",
+          backgroundColor: type === "company" ? "#eff0f0" : "#FDFEFE",
           color: "#000",
           boxShadow: "none",
           pt: { xs: 1, md: 2 },

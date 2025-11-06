@@ -95,19 +95,21 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
     <Box
       sx={{
         px: 3,
-        py: { xs: 6, md: 10 },
+        pt: 4,
         background: "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rgba(255, 255, 255, 0) 59.69%, #FFFFFF 100%)",
         color: "#000000",
         position: 'relative',
         overflow: 'hidden',
-        maxWidth: 1600,
+        maxWidth: '98%',
+        borderRadius: '10px',
         mx: 'auto',
-        ...(type === 'company' && {
-          backgroundImage:
-            `linear-gradient(#f6f8fb 1px, transparent 1px), linear-gradient(90deg, #f6f8fb 1px, transparent 1px)`,
-          backgroundSize: '48px 48px',
-          backgroundPosition: 'center top',
-        })
+        ...(type === 'company' && { backgroundImage: `
+      linear-gradient(0deg, #F3F7FB, #F3F7FB),
+      linear-gradient(90deg, rgba(0, 255, 157, 0.15) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(0, 255, 157, 0.15) 1px, transparent 1px)
+    `,
+    backgroundSize: "80px 80px", // controls grid spacing
+    backgroundBlendMode: "overlay",})
       }}
     >
       {type === 'company' ? (

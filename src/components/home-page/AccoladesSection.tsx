@@ -8,7 +8,7 @@ const AccoladesSection: React.FC = () => {
       justifyContent: 'center',
       alignItems: 'center',
       gap: 4,
-      mt: 6,
+      mt: 4,
       flexWrap: 'wrap'
     }}>
       {/* NVIDIA Badge Image */}
