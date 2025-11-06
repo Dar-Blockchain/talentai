@@ -26,7 +26,8 @@ import type { RootState } from "../store/store";
 import Cookies from 'js-cookie';
 import { useDispatch } from 'react-redux';
 import { clearProfile } from '@/store/slices/profileSlice';
-import { logout } from '@/store/slices/authSlice';
+import { logout, setLoggingOut } from '@/store/slices/authSlice';
+import { resetRedirectState } from '@/utils/authRedirect';
 import { signOut } from 'next-auth/react';
 
 export default function UserAvatar() {
@@ -90,6 +91,10 @@ export default function UserAvatar() {
   const handleLogoutClick = async () => {
     handleMenuClose();
     try {
+      // Set logout flag to prevent axios interceptors from triggering redirects
+      setLoggingOut(true);
+      resetRedirectState();
+      
       // Clear Redux state FIRST to prevent components from trying to fetch
       dispatch(clearProfile());
       dispatch(logout());
@@ -112,6 +117,8 @@ export default function UserAvatar() {
     } catch (error) {
       console.error('Logout failed:', error);
       // Even on error, redirect to signin
+      setLoggingOut(true);
+      resetRedirectState();
       window.location.href = '/signin';
     }
   };

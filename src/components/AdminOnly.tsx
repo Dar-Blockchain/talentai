@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../store/store';
 import { selectProfile, getMyProfile } from '../store/slices/profileSlice';
+import { isLoggingOutCheck } from '../store/slices/authSlice';
 import { redirectToLogin, isRedirectingToLogin } from '@/utils/authRedirect';
 import { isTokenExpired, handleTokenExpiration, validateAndSyncToken, isCookieExpired } from '@/utils/tokenUtils';
 import Cookies from 'js-cookie';
@@ -113,8 +114,8 @@ export default function AdminOnly({ children }: AdminOnlyProps) {
     }
 
     // Fetch profile if not already loaded and not loading
-    // Only fetch if we haven't redirected and token check passed
-    if (!profile && !profileLoading && hasCheckedTokenRef.current && !hasRedirectedRef.current && !isRedirectingToLogin()) {
+    // Only fetch if we haven't redirected and token check passed and not logging out
+    if (!profile && !profileLoading && hasCheckedTokenRef.current && !hasRedirectedRef.current && !isRedirectingToLogin() && !isLoggingOutCheck()) {
       dispatch(getMyProfile());
       return;
     }
@@ -127,14 +128,14 @@ export default function AdminOnly({ children }: AdminOnlyProps) {
           // Retry once more
           setRetryCount(prev => prev + 1);
           setTimeout(() => {
-            // Check if we've already redirected or are in the process of redirecting
-            if (hasRedirectedRef.current || isRedirectingToLogin()) {
+            // Check if we've already redirected or are in the process of redirecting or logging out
+            if (hasRedirectedRef.current || isRedirectingToLogin() || isLoggingOutCheck()) {
               setIsChecking(false);
               return;
             }
             
             const tokenStillExists = localStorage.getItem('api_token');
-            if (tokenStillExists && !hasRedirectedRef.current) {
+            if (tokenStillExists && !hasRedirectedRef.current && !isLoggingOutCheck()) {
               // Verify token is not expired before retrying
               if (!isTokenExpired(tokenStillExists)) {
                 dispatch(getMyProfile());

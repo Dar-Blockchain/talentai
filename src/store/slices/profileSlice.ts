@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../store';
+import { isLoggingOutCheck, getAbortSignal } from './authSlice';
 
 interface User {
     _id: string;
@@ -75,6 +76,12 @@ export const getMyProfile = createAsyncThunk<Profile, void, { rejectValue: strin
         const callId = ++getMyProfileCallCount;
         console.log(`🔑 [ProfileSlice][Call-${callId}] getMyProfile CALLED`);
         
+        // CRITICAL: Check if logging out - abort immediately
+        if (isLoggingOutCheck()) {
+            console.log(`🚫 [ProfileSlice][Call-${callId}] Logout in progress - aborting API call`);
+            return rejectWithValue('Logout in progress');
+        }
+        
         // Early check - if no token, reject immediately without API call
         const token = localStorage.getItem('api_token');
         if (!token) {
@@ -82,8 +89,10 @@ export const getMyProfile = createAsyncThunk<Profile, void, { rejectValue: strin
             return rejectWithValue('No authentication token found');
         }
         
+        // Get abort signal for this request
+        const abortSignal = getAbortSignal();
+        
         try {
-
             console.log(`📡 [ProfileSlice][Call-${callId}] Fetching profile from API...`);
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
                 method: 'GET',
@@ -91,7 +100,14 @@ export const getMyProfile = createAsyncThunk<Profile, void, { rejectValue: strin
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
+                signal: abortSignal || undefined, // Add abort signal to cancel request
             });
+
+            // Check again if logging out after fetch
+            if (isLoggingOutCheck()) {
+                console.log(`🚫 [ProfileSlice][Call-${callId}] Logout detected after fetch - aborting`);
+                return rejectWithValue('Logout in progress');
+            }
 
             if (!response.ok) {
                 // Handle 401 Unauthorized - token expired or invalid
@@ -108,9 +124,21 @@ export const getMyProfile = createAsyncThunk<Profile, void, { rejectValue: strin
             }
 
             const data = await response.json();
+            
+            // Final check before returning data
+            if (isLoggingOutCheck()) {
+                console.log(`🚫 [ProfileSlice][Call-${callId}] Logout detected after response - aborting`);
+                return rejectWithValue('Logout in progress');
+            }
+            
             console.log(`✅ [ProfileSlice][Call-${callId}] Profile fetched successfully`);
             return data;
-        } catch (error) {
+        } catch (error: any) {
+            // Handle abort errors gracefully
+            if (error.name === 'AbortError' || isLoggingOutCheck()) {
+                console.log(`🚫 [ProfileSlice][Call-${callId}] Request aborted due to logout`);
+                return rejectWithValue('Logout in progress');
+            }
             console.error(`❌ [ProfileSlice][Call-${callId}] Exception:`, error);
             return rejectWithValue('An error occurred while fetching profile');
         }

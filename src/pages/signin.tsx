@@ -20,7 +20,7 @@ import {
   LockClock as LockClockIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
-import { registerUser, verifyOTP } from "@/store/slices/authSlice";
+import { registerUser, verifyOTP, setLoggingOut } from "@/store/slices/authSlice";
 import type { RootState, AppDispatch } from "@/store/store";
 import Cookies from "js-cookie";
 import { getUserLocation } from "@/utils/api";
@@ -226,6 +226,9 @@ export default function SignIn() {
     // This prevents infinite redirect loops when cookie expires
     const { resetRedirectStateIfOnSignin } = require('@/utils/authRedirect');
     resetRedirectStateIfOnSignin();
+    
+    // Reset logout flag when landing on signin page
+    setLoggingOut(false);
     
     // Check if we have expired/invalid tokens and clear them
     const token = localStorage.getItem('api_token');

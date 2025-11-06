@@ -6,7 +6,8 @@ import {
   clearProfile,
 } from "@/store/slices/profileSlice";
 import {
-  logout
+  logout,
+  setLoggingOut
 } from "@/store/slices/authSlice";
 import { AppDispatch } from "@/store/store";
 import {
@@ -26,6 +27,7 @@ import Cookies from "js-cookie";
 import { signOut } from "next-auth/react";
 import { toast } from "react-hot-toast";
 import { isTokenExpired, handleTokenExpiration, validateAndSyncToken, isCookieExpired } from "@/utils/tokenUtils";
+import { resetRedirectState } from "@/utils/authRedirect";
 import CandidateOnly from "@/components/CandidateOnly";
 import SkillBlock from "@/components/dashboard-candidate/SkillBlock";
 import InterviewDetailsTabs from "@/components/dashboard-candidate/InterviewDetailsTabs";
@@ -291,6 +293,10 @@ export default function DashboardCandidate() {
 
   const handleLogout = async () => {
     try {
+      // Set logout flag to prevent axios interceptors from triggering redirects
+      setLoggingOut(true);
+      resetRedirectState();
+      
       // Clear Redux state FIRST to prevent components from trying to fetch
       dispatch(clearProfile());
       dispatch(logout());
@@ -313,6 +319,8 @@ export default function DashboardCandidate() {
     } catch (error) {
       console.error("Logout failed:", error);
       // Even on error, redirect to signin
+      setLoggingOut(true);
+      resetRedirectState();
       window.location.href = "/signin";
     }
   };

@@ -6,7 +6,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store/store';
 import { signOut } from 'next-auth/react';
 import { clearProfile } from '@/store/slices/profileSlice';
-import { logout } from '@/store/slices/authSlice';
+import { logout, setLoggingOut } from '@/store/slices/authSlice';
+import { resetRedirectState } from '@/utils/authRedirect';
 import Cookies from 'js-cookie';
 import { PreferencesHeader,PreferencesMain } from '@/components/preferences';
 import { usePreferences } from '@/components/preferences/hooks/usePreferences';
@@ -116,6 +117,10 @@ function Preferences() {
   // Handle logout
   const handleLogout = async () => {
     try {
+      // Set logout flag to prevent axios interceptors from triggering redirects
+      setLoggingOut(true);
+      resetRedirectState();
+      
       // Clear Redux state FIRST to prevent components from trying to fetch
       dispatch(clearProfile());
       dispatch(logout());
@@ -138,6 +143,8 @@ function Preferences() {
     } catch (error) {
       console.error('Logout failed:', error);
       // Even on error, redirect to signin
+      setLoggingOut(true);
+      resetRedirectState();
       window.location.href = '/signin';
     }
   };

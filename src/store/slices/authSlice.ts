@@ -21,6 +21,39 @@ const initialState: AuthState = {
   token: null
 };
 
+// Global flag to skip interceptor checks during logout
+let isLoggingOut = false;
+// AbortController to cancel all pending requests during logout
+let globalAbortController: AbortController | null = null;
+
+// Export function to set logout flag
+export const setLoggingOut = (value: boolean) => {
+  isLoggingOut = value;
+  if (value) {
+    // Cancel all pending requests when logout starts
+    if (globalAbortController) {
+      globalAbortController.abort();
+    }
+    globalAbortController = new AbortController();
+  } else {
+    // Reset abort controller when logout is complete
+    globalAbortController = null;
+  }
+};
+
+// Export function to get abort signal for API calls
+export const getAbortSignal = (): AbortSignal | null => {
+  if (isLoggingOut && globalAbortController) {
+    return globalAbortController.signal;
+  }
+  return null;
+};
+
+// Export function to check if logging out
+export const isLoggingOutCheck = (): boolean => {
+  return isLoggingOut;
+};
+
 // Setup axios interceptors for token expiration checking and 401 responses
 if (typeof window !== 'undefined') {
   let isHandling401 = false;
@@ -28,6 +61,11 @@ if (typeof window !== 'undefined') {
   // Request interceptor: Check token expiration before making requests
   axios.interceptors.request.use(
     (config) => {
+      // Skip all checks if we're logging out
+      if (isLoggingOut) {
+        return config;
+      }
+
       // Check token expiration before making API calls
       const pathname = window.location.pathname;
       if (pathname !== '/signin' && !pathname.startsWith('/signin/')) {
@@ -71,6 +109,11 @@ if (typeof window !== 'undefined') {
   axios.interceptors.response.use(
     (response) => response,
     (error) => {
+      // Skip 401 handling if we're logging out
+      if (isLoggingOut) {
+        return Promise.reject(error);
+      }
+
       if (error.response?.status === 401 && !isHandling401) {
         // Don't redirect if already on signin page
         const pathname = window.location.pathname;
