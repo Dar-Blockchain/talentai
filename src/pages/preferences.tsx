@@ -42,7 +42,10 @@ function Preferences() {
         const token = localStorage.getItem('api_token');
         
         if (!token) {
-          router.push('/signin');
+          // Don't redirect if already on signin page
+          if (router.pathname !== '/signin') {
+            router.push('/signin');
+          }
           return;
         }
 
@@ -53,6 +56,17 @@ function Preferences() {
             'Content-Type': 'application/json',
           },
         });
+
+        // Handle 401 - token expired
+        if (response.status === 401) {
+          // Clear tokens and redirect
+          localStorage.removeItem('api_token');
+          Cookies.remove('api_token');
+          if (router.pathname !== '/signin') {
+            router.push('/signin');
+          }
+          return;
+        }
 
         // If profile exists and is valid, check returnUrl
         if (response.ok) {

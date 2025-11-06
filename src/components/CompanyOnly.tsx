@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '../store/store';
 import { selectProfile, getMyProfile } from '../store/slices/profileSlice';
+import { redirectToLogin, isRedirectingToLogin } from '@/utils/authRedirect';
 import {
   Box,
   CircularProgress,
@@ -16,97 +17,100 @@ interface CompanyOnlyProps {
 export default function CompanyOnly({ children }: CompanyOnlyProps) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
-  const { profile, loading: profileLoading } = useSelector(selectProfile);
+  const { profile, loading: profileLoading, error: profileError } = useSelector(selectProfile);
   const [isChecking, setIsChecking] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
+  const hasRedirectedRef = useRef(false);
+  const hasCheckedTokenRef = useRef(false);
 
+  // Single useEffect to handle all authentication checks
   useEffect(() => {
-    // Check if we have a token first
-    const token = localStorage.getItem('api_token');
-    if (!token) {
-      console.log("No token found, redirecting to signin");
-      router.push('/signin');
+    // Prevent multiple redirects
+    if (hasRedirectedRef.current || isRedirectingToLogin()) {
       return;
     }
 
-    // Fetch profile if not already loaded
-    if (!profile && !profileLoading) {
+    // Don't check if already on signin page
+    if (router.pathname === '/signin') {
+      setIsChecking(false);
+      return;
+    }
+
+    // Check token first
+    const token = localStorage.getItem('api_token');
+    if (!token) {
+      if (!hasCheckedTokenRef.current) {
+        hasCheckedTokenRef.current = true;
+        hasRedirectedRef.current = true;
+        console.log("No token found, redirecting to signin");
+        redirectToLogin(router);
+      }
+      return;
+    }
+
+    // Check if profile fetch failed due to 401
+    if (profileError && profileError.includes('Token expired') && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
+      console.log("Token expired, redirecting to signin");
+      redirectToLogin(router);
+      return;
+    }
+
+    // Fetch profile if not already loaded and not loading
+    if (!profile && !profileLoading && !hasCheckedTokenRef.current) {
+      hasCheckedTokenRef.current = true;
       dispatch(getMyProfile());
-    }
-  }, [dispatch, profile, profileLoading, router]);
-
-  useEffect(() => {
-    // Check for token first - if no token, redirect immediately without retries
-    const token = localStorage.getItem('api_token');
-    if (!token) {
-      console.log("No token found, redirecting to signin");
-      router.push('/signin');
       return;
     }
 
+    // Handle profile loading states
     if (!profileLoading) {
       if (!profile) {
-        // Check token again before retrying
-        const hasToken = localStorage.getItem('api_token');
-        if (!hasToken) {
-          console.log("Token removed, redirecting to signin");
-          router.push('/signin');
-          return;
-        }
-        
-        // No profile found, but let's retry a few times before redirecting
-        if (retryCount < 3) {
-          console.log(`Profile not found, retrying... (${retryCount + 1}/3)`);
+        // No profile found after fetch
+        if (retryCount < 2) {
+          // Retry once more
           setRetryCount(prev => prev + 1);
           setTimeout(() => {
-            // Double-check token before making request
-            if (localStorage.getItem('api_token')) {
+            const tokenStillExists = localStorage.getItem('api_token');
+            if (tokenStillExists && !hasRedirectedRef.current) {
               dispatch(getMyProfile());
-            } else {
-              router.push('/signin');
+            } else if (!tokenStillExists && !hasRedirectedRef.current) {
+              hasRedirectedRef.current = true;
+              redirectToLogin(router);
             }
           }, 1000);
           return;
         } else {
-          // After 3 retries, redirect to signin
-          console.log("Profile not found after retries, redirecting to signin");
-          router.push('/signin');
+          // After retries, redirect if no profile
+          if (!hasRedirectedRef.current) {
+            hasRedirectedRef.current = true;
+            console.log("Profile not found after retries, redirecting to signin");
+            redirectToLogin(router);
+          }
           return;
         }
       }
 
-      // Check user role and redirect accordingly (align with CandidateOnly)
+      // Profile exists - check role
       const role = profile?.userId?.role;
       if (role === 'Candidat' || role === 'Candidate') {
-        // Candidate user trying to access company page, redirect to candidate dashboard
-        console.log("Candidate user detected, redirecting to candidate dashboard");
         router.push('/dashboard/candidate');
         return;
       } else if (role === 'Admin') {
-        // Admin user trying to access company page, redirect to admin dashboard
-        console.log("Admin user detected, redirecting to admin dashboard");
         router.push('/dashboard/admin');
         return;
       } else if (role !== 'Company') {
-        // Unknown role, redirect to signin
-        console.log("Unknown role, redirecting to signin");
-        router.push('/signin');
+        if (!hasRedirectedRef.current) {
+          hasRedirectedRef.current = true;
+          redirectToLogin(router);
+        }
         return;
       }
 
       // User is a company, allow access
-      console.log("User is company, allowing access");
       setIsChecking(false);
     }
-  }, [profile, profileLoading, router, retryCount, dispatch]);
-
-  // Early exit if no token (prevents any fetch attempts)
-  useEffect(() => {
-    const token = localStorage.getItem('api_token');
-    if (!token && !profileLoading) {
-      router.push('/signin');
-    }
-  }, [router, profileLoading]);
+  }, [profile, profileLoading, profileError, router, retryCount, dispatch]);
 
   // Show loading while checking permissions
   if (profileLoading || isChecking) {

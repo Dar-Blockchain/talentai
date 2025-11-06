@@ -94,7 +94,15 @@ export const getMyProfile = createAsyncThunk<Profile, void, { rejectValue: strin
             });
 
             if (!response.ok) {
-                const error = await response.json();
+                // Handle 401 Unauthorized - token expired or invalid
+                if (response.status === 401) {
+                    console.warn(`⚠️ [ProfileSlice][Call-${callId}] Unauthorized (401) - Token expired or invalid`);
+                    // Clear profile from state
+                    // Don't redirect here - let components handle it
+                    return rejectWithValue('Token expired or invalid - Please login again');
+                }
+                
+                const error = await response.json().catch(() => ({ message: 'Failed to fetch profile' }));
                 console.error(`❌ [ProfileSlice][Call-${callId}] API error:`, error);
                 return rejectWithValue(error.message || 'Failed to fetch profile');
             }

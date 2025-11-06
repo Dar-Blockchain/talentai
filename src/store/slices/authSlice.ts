@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import Cookies from 'js-cookie';
 
 interface AuthState {
   profile: any | null;
@@ -18,6 +19,37 @@ const initialState: AuthState = {
   isAuthenticated: false,
   token: null
 };
+
+// Setup axios interceptor for 401 responses (token expiration)
+if (typeof window !== 'undefined') {
+  let isHandling401 = false;
+
+  axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401 && !isHandling401) {
+        // Don't redirect if already on signin page
+        if (window.location.pathname !== '/signin') {
+          isHandling401 = true;
+          console.warn('🔒 Axios: Received 401 Unauthorized - Token expired or invalid');
+          
+          // Clear tokens
+          localStorage.removeItem('api_token');
+          Cookies.remove('api_token');
+          
+          // Redirect to login
+          const currentPath = window.location.pathname + window.location.search;
+          const loginUrl = `/signin${currentPath !== '/signin' ? `?returnUrl=${encodeURIComponent(currentPath)}` : ''}`;
+          
+          setTimeout(() => {
+            window.location.href = loginUrl;
+          }, 100);
+        }
+      }
+      return Promise.reject(error);
+    }
+  );
+}
 
 // Register user thunk
 export const registerUser = createAsyncThunk(

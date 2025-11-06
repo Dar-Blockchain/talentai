@@ -28,7 +28,7 @@ const theme = createTheme({
   },
 });
 
-// Wrapper component to handle token storage
+// Wrapper component to handle token storage and global 401 handling
 function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
 
@@ -42,6 +42,57 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
       localStorage.setItem("api_token", session.accessToken);
     }
   }, [session]);
+
+  // Global fetch interceptor to handle 401 responses
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Flag to prevent multiple redirects
+    let isHandling401 = false;
+
+    // Store original fetch
+    const originalFetch = window.fetch;
+
+    // Override fetch to intercept 401 responses
+    window.fetch = async function(...args) {
+      const response = await originalFetch.apply(this, args);
+      
+      // Handle 401 Unauthorized responses (only for API calls)
+      if (response.status === 401) {
+        const url = args[0] as string;
+        const isApiCall = url && (
+          url.includes(process.env.NEXT_PUBLIC_API_BASE_URL || '') ||
+          url.startsWith('/api/') ||
+          url.includes('api')
+        );
+
+        if (isApiCall && !isHandling401 && window.location.pathname !== '/signin') {
+          isHandling401 = true;
+          console.warn('🔒 Global: Received 401 Unauthorized - Token expired or invalid');
+          
+          // Clear tokens
+          localStorage.removeItem('api_token');
+          Cookies.remove('api_token');
+          
+          // Redirect to login with current path as returnUrl
+          const currentPath = window.location.pathname + window.location.search;
+          const loginUrl = `/signin${currentPath !== '/signin' ? `?returnUrl=${encodeURIComponent(currentPath)}` : ''}`;
+          
+          // Use setTimeout to prevent immediate redirect loops
+          setTimeout(() => {
+            window.location.href = loginUrl;
+          }, 100);
+        }
+      }
+      
+      return response;
+    };
+
+    // Cleanup: restore original fetch
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, []);
 
   return <>{children}</>;
 }
