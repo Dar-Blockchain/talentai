@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -16,7 +16,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '@/store/store';
 import { fetchTokenBalance, selectTokenBalance, selectTokenLoading } from '@/store/slices/tokenSlice';
 import TokenBalanceCard from './TokenBalanceCard';
-import PaymentGatewayTAI from './PaymentGatewayTAI';
 
 // Styled Components
 const ProfileHeader = styled(Box)(({ theme }) => ({
@@ -71,25 +70,28 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
   const dispatch = useDispatch<AppDispatch>();
   const tokenBalance = useSelector(selectTokenBalance);
   const tokenLoading = useSelector(selectTokenLoading);
-  const [paymentGatewayOpen, setPaymentGatewayOpen] = useState(false);
 
-  // Fetch token balance on component mount
+  // Fetch token balance on component mount and when returning from payment
   useEffect(() => {
     dispatch(fetchTokenBalance());
   }, [dispatch]);
 
+  // Refresh balance if returning from payment page
+  useEffect(() => {
+    const { refreshBalance } = router.query;
+    if (refreshBalance === 'true') {
+      dispatch(fetchTokenBalance());
+      // Clean up the query parameter
+      router.replace('/dashboard/company', undefined, { shallow: true });
+    }
+  }, [router.query, dispatch, router]);
+
   const handleBuyTokens = () => {
-    setPaymentGatewayOpen(true);
+    router.push('/payment');
   };
 
   const handleRefreshBalance = async () => {
     await dispatch(fetchTokenBalance());
-  };
-
-  const handlePurchaseComplete = (tokens: number) => {
-    // Refresh balance after purchase
-    dispatch(fetchTokenBalance());
-    setPaymentGatewayOpen(false);
   };
 
   return (
@@ -246,13 +248,6 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
             />
           </Box>
         </Box>
-
-        {/* Payment Gateway Dialog */}
-        <PaymentGatewayTAI
-          open={paymentGatewayOpen}
-          onClose={() => setPaymentGatewayOpen(false)}
-          onPurchaseComplete={handlePurchaseComplete}
-        />
       </Box>
     </ProfileHeader>
   );

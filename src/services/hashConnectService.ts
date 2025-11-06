@@ -36,6 +36,8 @@ export interface HashConnectEvents {
 class HederaWalletService {
   private dAppConnector: DAppConnector | null = null;
   private events: Partial<HashConnectEvents> = {};
+  private initialized = false;
+  private initializing = false;
 
   // Configuration
   private readonly env = process.env.NEXT_PUBLIC_HEDERA_NETWORK || 'testnet';
@@ -50,15 +52,35 @@ class HederaWalletService {
   };
 
   constructor() {
-    if (typeof window !== 'undefined') {
-      this.init();
+    // Don't auto-init - prevents multiple WalletConnect Core initializations
+  }
+
+  /**
+   * Ensure service is initialized (lazy initialization)
+   */
+  private async ensureInitialized(): Promise<void> {
+    if (typeof window === 'undefined') return;
+
+    // Already initialized
+    if (this.initialized && this.dAppConnector) return;
+
+    // Currently initializing, wait
+    if (this.initializing) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      return this.ensureInitialized();
     }
+
+    // Start initialization
+    await this.init();
   }
 
   /**
    * Initialize DAppConnector
    */
   private async init(): Promise<void> {
+    if (this.initialized) return;
+
+    this.initializing = true;
     try {
       const ledgerId = this.env === 'mainnet' ? LedgerId.MAINNET : LedgerId.TESTNET;
       const chainId = this.env === 'mainnet' ? HederaChainId.Mainnet : HederaChainId.Testnet;
@@ -79,10 +101,13 @@ class HederaWalletService {
 
       await this.dAppConnector.init({ logger: 'error' });
 
+      this.initialized = true;
       this.events.onInitialized?.();
     } catch (error) {
       console.error('Init failed:', error);
       this.events.onError?.(`Initialization failed: ${error}`);
+    } finally {
+      this.initializing = false;
     }
   }
 
@@ -143,12 +168,19 @@ class HederaWalletService {
    */
   public setEventHandlers(events: Partial<HashConnectEvents>): void {
     this.events = { ...this.events, ...events };
+
+    // Trigger initialization when event handlers are set
+    if (typeof window !== 'undefined') {
+      this.ensureInitialized();
+    }
   }
 
   /**
    * Connect wallet
    */
   public async connectWallet(): Promise<void> {
+    await this.ensureInitialized();
+
     if (!this.dAppConnector) {
       throw new Error('Not initialized');
     }
@@ -183,6 +215,8 @@ class HederaWalletService {
    */
   public async sendHbarTransaction(amount: number): Promise<TransactionResult> {
     try {
+      await this.ensureInitialized();
+
       if (!this.dAppConnector) {
         throw new Error('Not initialized');
       }
@@ -192,28 +226,43 @@ class HederaWalletService {
         throw new Error('No connected account');
       }
 
+      if (!this.dAppConnector.signers || this.dAppConnector.signers.length === 0) {
+        throw new Error('No signer available');
+      }
+
       const senderAccountId = AccountId.fromString(accountId);
       const targetAccountId = AccountId.fromString(this.targetAccountId);
-      const client = this.env === 'mainnet' ? Client.forMainnet() : Client.forTestnet();
+      const signer = this.dAppConnector.signers[0];
 
+      console.log('🔄 Building transaction...');
+
+      // Build transaction
       const transaction = new TransferTransaction()
         .addHbarTransfer(senderAccountId, new Hbar(-amount))
         .addHbarTransfer(targetAccountId, new Hbar(amount))
-        .setTransactionMemo('TalentAI Token Purchase')
-        .freezeWith(client);
+        .setTransactionMemo('TalentAI Token Purchase');
 
-      const signer = this.dAppConnector.signers[0];
-      const signedTransaction = await signer.signTransaction(transaction);
-      const txResponse = await signedTransaction.execute(client);
-      const receipt = await txResponse.getReceipt(client);
+      console.log('📝 Signing and executing transaction with signer...');
 
-      client.close();
+      // Use the signer's call method which handles everything
+      // This method freezes, signs (wallet popup), and executes
+      const response = await signer.call(transaction);
+
+      console.log('✅ Transaction response:', response);
+
+      // The response should have transactionId
+      const transactionId = response?.transactionId?.toString() || '';
+
+      if (!transactionId) {
+        throw new Error('No transaction ID received from signer');
+      }
 
       return {
-        transactionId: txResponse.transactionId.toString(),
+        transactionId,
         status: 'success'
       };
     } catch (error) {
+      console.error('❌ Transaction error:', error);
       return {
         transactionId: '',
         status: 'error',
@@ -249,7 +298,7 @@ class HederaWalletService {
    * Check if ready
    */
   public isReady(): boolean {
-    return !!this.dAppConnector;
+    return this.initialized && !!this.dAppConnector;
   }
 
   /**
