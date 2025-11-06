@@ -163,10 +163,7 @@ const WalletConnect: React.FC<WalletConnectProps> = ({
     // No timeout needed as we now rely on the onInitialized callback
   }, []);
 
-  // Check if HashPack is available
-  const isHashPackAvailable = () => {
-    return hashConnectService.isHashPackAvailable();
-  };
+  // Note: With Hedera Wallet Connect, all compatible wallets are supported automatically
 
   const connectWallet = async () => {
     try {
@@ -339,17 +336,20 @@ const WalletConnect: React.FC<WalletConnectProps> = ({
             </Alert>
           )}
 
-          {isHashConnectReady && !isHashPackAvailable() && (
+          {isHashConnectReady && walletStatus === 'disconnected' && (
             <Alert severity="info" sx={{ mb: 3 }}>
               <Typography variant="body2">
-                No wallet detected. You can connect using:
+                Connect your wallet to continue. Supported wallets:
               </Typography>
               <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  • HashPack Extension (recommended)
+                  • HashPack Wallet (recommended)
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  • WalletConnect compatible wallets
+                  • Kabila Wallet
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  • All WalletConnect compatible wallets
                 </Typography>
               </Box>
               <Button
