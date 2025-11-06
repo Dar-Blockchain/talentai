@@ -8,6 +8,10 @@ import {
   CircularProgress,
   Avatar,
   Pagination,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import ErrorIcon from '@mui/icons-material/Error';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
@@ -77,10 +81,18 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
 }) => {
   const router = useRouter();
   
-  // Client-side pagination if not provided by parent
-  const itemsPerPage = 3;
+  // Items per page selector - user can choose 5, 10, or 20
+  const [itemsPerPage, setItemsPerPage] = React.useState<number>(10);
   const calculatedTotalPages = Math.ceil(matchingProfiles.length / itemsPerPage);
   const [localPage, setLocalPage] = React.useState(1);
+  
+  // Reset to page 1 when items per page changes
+  React.useEffect(() => {
+    setLocalPage(1);
+    if (onPageChange) {
+      onPageChange(1);
+    }
+  }, [itemsPerPage, onPageChange]);
   
   // Use provided pagination or fallback to local
   const page = onPageChange ? currentPage : localPage;
@@ -91,11 +103,16 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
   const endIndex = startIndex + itemsPerPage;
   const paginatedCandidates = matchingProfiles.slice(startIndex, endIndex);
   const effectiveTotalPages = totalPages > 1 ? totalPages : calculatedTotalPages;
+  
+  const handleItemsPerPageChange = (event: any) => {
+    const newItemsPerPage = parseInt(event.target.value, 10);
+    setItemsPerPage(newItemsPerPage);
+  };
 
   return (
     <>
       {/* Header Section */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Box>
           <Typography variant="h5" sx={{ 
             color: '#111827', 
@@ -116,26 +133,55 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
             Matching Candidates
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<ArrowBackIcon />}
-          onClick={onBackToJobs}
-          sx={{
-            backgroundColor: '#10b981',
-            color: 'white',
-            fontWeight: 600,
-            borderRadius: '8px',
-            px: 3,
-            py: 1,
-            fontSize: '0.875rem',
-            textTransform: 'none',
-            '&:hover': {
-              backgroundColor: '#059669',
-            }
-          }}
-        >
-          Return to Jobs
-        </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          {/* Items per page selector */}
+          <FormControl size="small" sx={{ minWidth: 120 }}>
+            <InputLabel id="items-per-page-label">Per Page</InputLabel>
+            <Select
+              labelId="items-per-page-label"
+              id="items-per-page-select"
+              value={itemsPerPage}
+              label="Per Page"
+              onChange={handleItemsPerPageChange}
+              sx={{
+                borderRadius: '8px',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#d1d5db',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#10b981',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#10b981',
+                },
+              }}
+            >
+              <MenuItem value={5}>5</MenuItem>
+              <MenuItem value={10}>10</MenuItem>
+              <MenuItem value={20}>20</MenuItem>
+            </Select>
+          </FormControl>
+          <Button
+            variant="contained"
+            startIcon={<ArrowBackIcon />}
+            onClick={onBackToJobs}
+            sx={{
+              backgroundColor: '#10b981',
+              color: 'white',
+              fontWeight: 600,
+              borderRadius: '8px',
+              px: 3,
+              py: 1,
+              fontSize: '0.875rem',
+              textTransform: 'none',
+              '&:hover': {
+                backgroundColor: '#059669',
+              }
+            }}
+          >
+            Return to Jobs
+          </Button>
+        </Box>
       </Box>
 
       {/* Content Section */}
@@ -262,15 +308,17 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
           {/* Stats Summary */}
           <Box sx={{
             display: 'flex',
-            justifyContent: 'center',
+            justifyContent: 'space-between',
             alignItems: 'center',
             p: 2,
             backgroundColor: '#f0fdf4',
             borderRadius: '8px',
             border: '1px solid #bbf7d0',
-            mb: 3
+            mb: 3,
+            flexWrap: 'wrap',
+            gap: 2
           }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
               <Typography variant="h6" sx={{ 
                 color: '#10b981', 
                 fontWeight: 600,
@@ -287,6 +335,13 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                 </Typography>
               )}
             </Box>
+            <Typography variant="body2" sx={{ 
+              color: '#6b7280',
+              fontSize: '0.875rem',
+              fontWeight: 500
+            }}>
+              {itemsPerPage} per page
+            </Typography>
           </Box>
 
           {/* Candidate Cards */}
