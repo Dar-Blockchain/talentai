@@ -20,8 +20,6 @@ const nextConfig: NextConfig = {
   assetPrefix: '',
   distDir: '.next',
   webpack: (config) => {
-<<<<<<< HEAD
-=======
     // Handle @hashgraph/hedera-wallet-connect ESM issues
     config.resolve = config.resolve || {};
     config.resolve.extensionAlias = {
@@ -31,7 +29,6 @@ const nextConfig: NextConfig = {
     };
 
     // Image asset handling
->>>>>>> transcription-v2
     if (config.module?.rules) {
       config.module.rules.push({
         test: /\.(png|jpe?g|gif|svg|ico)$/i,
