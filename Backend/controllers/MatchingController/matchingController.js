@@ -1,6 +1,6 @@
-const { calculateSkillMatchScore } = require("../services/matchingService");
-const JobPost = require("../models/PostModel");
-const Profile = require("../models/ProfileModel");
+const { calculateSkillMatchScore } = require("../../services/MatchingService/matchingService");
+const JobPost = require("../../models/PostModel");
+const Profile = require("../../models/ProfileModel");
 
 function normalizeSkillName(name) {
   if (!name) return "";

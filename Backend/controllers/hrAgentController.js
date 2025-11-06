@@ -22,7 +22,7 @@ const {
 } = require("@hashgraphonline/standards-sdk");
 const JobPost = require("../models/PostModel");
 const Profile = require("../models/ProfileModel");
-const { calculateSkillMatchScore } = require("../services/matchingService");
+const { calculateSkillMatchScore } = require("../services/MatchingService/matchingService");
 
 // utilitaire pour normaliser les noms de skills
 function normalizeSkillName(name) {
