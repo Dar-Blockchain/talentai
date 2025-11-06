@@ -209,7 +209,7 @@ const BiasFreeEvaluation: React.FC = () => {
                 mb: 2,
                 color: '#fff',
                 textAlign: 'left',
-                fontSize: { xs: '1.25rem', md: '1.5rem' },
+                fontSize: { xs: '1rem', md: '1.25rem' },
                 lineHeight: 1.3,
                 zIndex: 2,
                 position: 'relative'
@@ -226,7 +226,7 @@ const BiasFreeEvaluation: React.FC = () => {
                 color: '#D1D5DB',
                 mb: 3,
                 textAlign: 'left',
-                fontSize: '16px',
+                fontSize: '14px',
                 lineHeight: '24px',
                 letterSpacing: '0%',
                 verticalAlign: 'middle',

@@ -1,29 +1,68 @@
 import React from "react";
-import { Box, Link, Stack, Typography, IconButton, Divider } from "@mui/material";
-import LinkedInIcon from '@mui/icons-material/LinkedIn';
-import YouTubeIcon from '@mui/icons-material/YouTube';
-import TwitterIcon from '@mui/icons-material/Twitter';
-import InstagramIcon from '@mui/icons-material/Instagram';
-import FacebookIcon from '@mui/icons-material/Facebook';
+import {
+  Box,
+  Link,
+  Stack,
+  Typography,
+  IconButton,
+  Divider,
+} from "@mui/material";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import YouTubeIcon from "@mui/icons-material/YouTube";
+import TwitterIcon from "@mui/icons-material/Twitter";
+import InstagramIcon from "@mui/icons-material/Instagram";
+import FacebookIcon from "@mui/icons-material/Facebook";
 
-const FooterLink: React.FC<{ children: React.ReactNode; href?: string }> = ({ children, href = '#' }) => (
-  <Link href={href} underline="none" sx={{ color: '#ffffff', fontSize: '0.875rem', '&:hover': { color: '#D1D5DB' } }}>
+const FooterLink: React.FC<{ children: React.ReactNode; href?: string }> = ({
+  children,
+  href = "#",
+}) => (
+  <Link
+    href={href}
+    underline="none"
+    sx={{
+      color: "#ffffff",
+      fontFamily: "Fustat",
+      fontWeight: 400,
+      fontStyle: "normal",
+      fontSize: "12px",
+      lineHeight: "18px",
+      letterSpacing: "0",
+      verticalAlign: "middle",
+      "&:hover": { color: "#D1D5DB" },
+    }}
+  >
     {children}
   </Link>
 );
 
 const Footer: React.FC = () => {
   return (
-    <Box sx={{ 
-      backgroundColor: '#121212', 
-      color: '#fff', 
-      py: 4, 
-      px: 3 
-    }}>
-      <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+    <Box
+      sx={{
+        backgroundColor: "#121212",
+        color: "#fff",
+        py: 4,
+        px: 3,
+        pb: { xs: 4, md: 6 },
+      }}
+    >
+      <Box sx={{ maxWidth: 1200, mx: "auto" }}>
         {/* Top Section - Copyright and Disclaimer */}
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="body2" sx={{ color: '#ffffff', mb: 2 }}>
+        <Box sx={{ mb: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "rgba(255, 255, 255, 0.5)",
+              fontFamily: "Fustat",
+              fontWeight: 400,
+              fontStyle: "normal",
+              fontSize: "10px",
+              lineHeight: "15px",
+              letterSpacing: "0%",
+              verticalAlign: "middle",
+            }}
+          >
             Copyright © 2025. TalentAI Inc. All rights reserved.
           </Typography>
           {/* <Typography variant="caption" sx={{ color: '#D1D5DB', fontSize: '0.75rem', lineHeight: 1.5 }}>
@@ -32,13 +71,16 @@ const Footer: React.FC = () => {
         </Box>
 
         {/* Divider Line */}
-        <Divider sx={{ borderColor: '#374151', mb: 3 }} />
+        <Divider
+          sx={{ mb: 2, borderBottom: "1px solid rgba(255, 255, 255, 0.15)" }}
+        />
 
         {/* Bottom Section - Links and Social Media */}
-        <Stack 
-          direction={{ xs: 'column', md: 'row' }} 
-          justifyContent="space-between" 
-          alignItems={{ xs: 'flex-start', md: 'center' }}
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          justifyContent="flex-end"
+          gap={{ xs: 3, md: 6 }}
+          alignItems={{ xs: "flex-start", md: "center" }}
           spacing={{ xs: 2, md: 0 }}
         >
           {/* Policy Links */}
@@ -52,65 +94,65 @@ const Footer: React.FC = () => {
 
           {/* Social Media Icons */}
           <Stack direction="row" spacing={1.5}>
-            <IconButton 
-              sx={{ 
-                color: '#ffffff', 
-                backgroundColor: '#ffffff', 
-                width: 32, 
+            <IconButton
+              sx={{
+                color: "#ffffff",
+                backgroundColor: "#ffffff",
+                width: 32,
                 height: 32,
-                '&:hover': { backgroundColor: '#f3f4f6' }
-              }} 
+                "&:hover": { backgroundColor: "#f3f4f6" },
+              }}
               size="small"
             >
-              <YouTubeIcon sx={{ color: '#121212', fontSize: '1rem' }} />
+              <YouTubeIcon sx={{ color: "#121212", fontSize: "1rem" }} />
             </IconButton>
-            <IconButton 
-              sx={{ 
-                color: '#ffffff', 
-                backgroundColor: '#ffffff', 
-                width: 32, 
+            <IconButton
+              sx={{
+                color: "#ffffff",
+                backgroundColor: "#ffffff",
+                width: 32,
                 height: 32,
-                '&:hover': { backgroundColor: '#f3f4f6' }
-              }} 
+                "&:hover": { backgroundColor: "#f3f4f6" },
+              }}
               size="small"
             >
-              <LinkedInIcon sx={{ color: '#121212', fontSize: '1rem' }} />
+              <LinkedInIcon sx={{ color: "#121212", fontSize: "1rem" }} />
             </IconButton>
-            <IconButton 
-              sx={{ 
-                color: '#ffffff', 
-                backgroundColor: '#ffffff', 
-                width: 32, 
+            <IconButton
+              sx={{
+                color: "#ffffff",
+                backgroundColor: "#ffffff",
+                width: 32,
                 height: 32,
-                '&:hover': { backgroundColor: '#f3f4f6' }
-              }} 
+                "&:hover": { backgroundColor: "#f3f4f6" },
+              }}
               size="small"
             >
-              <TwitterIcon sx={{ color: '#121212', fontSize: '1rem' }} />
+              <TwitterIcon sx={{ color: "#121212", fontSize: "1rem" }} />
             </IconButton>
-            <IconButton 
-              sx={{ 
-                color: '#ffffff', 
-                backgroundColor: '#ffffff', 
-                width: 32, 
+            <IconButton
+              sx={{
+                color: "#ffffff",
+                backgroundColor: "#ffffff",
+                width: 32,
                 height: 32,
-                '&:hover': { backgroundColor: '#f3f4f6' }
-              }} 
+                "&:hover": { backgroundColor: "#f3f4f6" },
+              }}
               size="small"
             >
-              <InstagramIcon sx={{ color: '#121212', fontSize: '1rem' }} />
+              <InstagramIcon sx={{ color: "#121212", fontSize: "1rem" }} />
             </IconButton>
-            <IconButton 
-              sx={{ 
-                color: '#ffffff', 
-                backgroundColor: '#ffffff', 
-                width: 32, 
+            <IconButton
+              sx={{
+                color: "#ffffff",
+                backgroundColor: "#ffffff",
+                width: 32,
                 height: 32,
-                '&:hover': { backgroundColor: '#f3f4f6' }
-              }} 
+                "&:hover": { backgroundColor: "#f3f4f6" },
+              }}
               size="small"
             >
-              <FacebookIcon sx={{ color: '#121212', fontSize: '1rem' }} />
+              <FacebookIcon sx={{ color: "#121212", fontSize: "1rem" }} />
             </IconButton>
           </Stack>
         </Stack>
