@@ -41,8 +41,9 @@ ENV TOGETHER_API_KEY=$TOGETHER_API_KEY
 # Copy package.json and package-lock.json into the container
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies and skip Puppeteer chromium download
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+RUN npm ci --only=production
 
 # Copy the rest of the backend code (excluding .env file)
 COPY . .
@@ -87,11 +88,17 @@ ENV LINKEDIN_CLIENT_SECRET=$LINKEDIN_CLIENT_SECRET
 ENV LINKEDIN_REDIRECT_URI=$LINKEDIN_REDIRECT_URI
 ENV TOGETHER_API_KEY=$TOGETHER_API_KEY
 
+# Install system dependencies for Puppeteer if needed
+RUN apt-get update && apt-get install -y \
+    wget \
+    ca-certificates \
+    fonts-liberation \
+    libnss3 \
+    libxss1 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy the installed dependencies and source code from the builder stage
 COPY --from=builder /app ./
-
-# Install only production dependencies (for smaller image size)
-RUN npm install --force
 
 # Expose the port your Express app will run on
 EXPOSE $PORT
