@@ -12,6 +12,7 @@ import { useSession } from "next-auth/react";
 import Cookies from "js-cookie";
 import Head from "next/head";
 import ScrollToTop from "@/components/ScrollToTop";
+import { isCurrentTokenExpired, handleTokenExpiration, isTokenExpired, getToken } from "@/utils/tokenUtils";
 
 const theme = createTheme({
   palette: {
@@ -54,35 +55,66 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
     // Store original fetch
     const originalFetch = window.fetch;
 
-    // Override fetch to intercept 401 responses
+    // Helper function to check if URL is an API call
+    const isApiCall = (url: string | Request | URL): boolean => {
+      if (!url) return false;
+      let urlString: string;
+      if (typeof url === 'string') {
+        urlString = url;
+      } else if (url instanceof URL) {
+        urlString = url.href;
+      } else {
+        urlString = url.url;
+      }
+      
+      // Check for API base URL
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+      if (apiBaseUrl && urlString.includes(apiBaseUrl)) return true;
+      
+      // Check for common API patterns
+      if (urlString.startsWith('/api/')) return true;
+      
+      // Check for IP addresses with ports (like http://172.23.17.170:5000)
+      const ipPortPattern = /^https?:\/\/(\d{1,3}\.){3}\d{1,3}:\d+/;
+      if (ipPortPattern.test(urlString)) return true;
+      
+      // Check for localhost with port
+      if (urlString.includes('localhost:') || urlString.includes('127.0.0.1:')) return true;
+      
+      // Check if URL contains 'api' and is not a Next.js internal route
+      if (urlString.includes('/api/') && !urlString.startsWith('/_next/')) return true;
+      
+      return false;
+    };
+
+    // Override fetch to check token expiration and intercept 401 responses
     window.fetch = async function(...args) {
+      const url = args[0];
+      
+      // Check token expiration before making API calls
+      if (isApiCall(url) && window.location.pathname !== '/signin') {
+        const token = getToken();
+        
+        // If token exists but is expired, clear it and redirect
+        if (token && isTokenExpired(token)) {
+          if (!isHandling401) {
+            isHandling401 = true;
+            console.warn('🔒 Global: Token expired before API call', url);
+            handleTokenExpiration();
+          }
+          // Return a rejected promise to prevent the API call
+          return Promise.reject(new Error('Token expired'));
+        }
+      }
+      
       const response = await originalFetch.apply(this, args);
       
       // Handle 401 Unauthorized responses (only for API calls)
       if (response.status === 401) {
-        const url = args[0] as string;
-        const isApiCall = url && (
-          url.includes(process.env.NEXT_PUBLIC_API_BASE_URL || '') ||
-          url.startsWith('/api/') ||
-          url.includes('api')
-        );
-
-        if (isApiCall && !isHandling401 && window.location.pathname !== '/signin') {
+        if (isApiCall(url) && !isHandling401 && window.location.pathname !== '/signin') {
           isHandling401 = true;
-          console.warn('🔒 Global: Received 401 Unauthorized - Token expired or invalid');
-          
-          // Clear tokens
-          localStorage.removeItem('api_token');
-          Cookies.remove('api_token');
-          
-          // Redirect to login with current path as returnUrl
-          const currentPath = window.location.pathname + window.location.search;
-          const loginUrl = `/signin${currentPath !== '/signin' ? `?returnUrl=${encodeURIComponent(currentPath)}` : ''}`;
-          
-          // Use setTimeout to prevent immediate redirect loops
-          setTimeout(() => {
-            window.location.href = loginUrl;
-          }, 100);
+          console.warn('🔒 Global: Received 401 Unauthorized - Token expired or invalid', url);
+          handleTokenExpiration();
         }
       }
       

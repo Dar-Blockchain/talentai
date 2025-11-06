@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../store/store';
 import { selectProfile, getMyProfile } from '../store/slices/profileSlice';
 import { redirectToLogin, isRedirectingToLogin } from '@/utils/authRedirect';
+import { isTokenExpired, handleTokenExpiration } from '@/utils/tokenUtils';
 import {
   Box,
   CircularProgress,
@@ -44,6 +45,17 @@ export default function CandidateOnly({ children }: CandidateOnlyProps) {
         hasRedirectedRef.current = true;
         console.log("No token found, redirecting to signin");
         redirectToLogin(router);
+      }
+      return;
+    }
+
+    // Check if token is expired (even if it exists in localStorage)
+    if (isTokenExpired(token)) {
+      if (!hasCheckedTokenRef.current) {
+        hasCheckedTokenRef.current = true;
+        hasRedirectedRef.current = true;
+        console.log("Token expired, clearing and redirecting to signin");
+        handleTokenExpiration();
       }
       return;
     }

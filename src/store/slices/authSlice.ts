@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { isCurrentTokenExpired, handleTokenExpiration, isTokenExpired, getToken } from '@/utils/tokenUtils';
 
 interface AuthState {
   profile: any | null;
@@ -20,10 +21,36 @@ const initialState: AuthState = {
   token: null
 };
 
-// Setup axios interceptor for 401 responses (token expiration)
+// Setup axios interceptors for token expiration checking and 401 responses
 if (typeof window !== 'undefined') {
   let isHandling401 = false;
 
+  // Request interceptor: Check token expiration before making requests
+  axios.interceptors.request.use(
+    (config) => {
+      // Check token expiration before making API calls
+      if (window.location.pathname !== '/signin') {
+        const token = getToken();
+        
+        // If token exists but is expired, clear it and redirect
+        if (token && isTokenExpired(token)) {
+          if (!isHandling401) {
+            isHandling401 = true;
+            console.warn('🔒 Axios: Token expired before API call', config.url);
+            handleTokenExpiration();
+          }
+          // Cancel the request
+          return Promise.reject(new Error('Token expired'));
+        }
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
+
+  // Response interceptor: Handle 401 responses
   axios.interceptors.response.use(
     (response) => response,
     (error) => {
@@ -32,18 +59,7 @@ if (typeof window !== 'undefined') {
         if (window.location.pathname !== '/signin') {
           isHandling401 = true;
           console.warn('🔒 Axios: Received 401 Unauthorized - Token expired or invalid');
-          
-          // Clear tokens
-          localStorage.removeItem('api_token');
-          Cookies.remove('api_token');
-          
-          // Redirect to login
-          const currentPath = window.location.pathname + window.location.search;
-          const loginUrl = `/signin${currentPath !== '/signin' ? `?returnUrl=${encodeURIComponent(currentPath)}` : ''}`;
-          
-          setTimeout(() => {
-            window.location.href = loginUrl;
-          }, 100);
+          handleTokenExpiration();
         }
       }
       return Promise.reject(error);

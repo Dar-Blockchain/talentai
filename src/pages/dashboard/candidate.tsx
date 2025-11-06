@@ -25,6 +25,7 @@ import { useRouter } from "next/router";
 import Cookies from "js-cookie";
 import { signOut } from "next-auth/react";
 import { toast } from "react-hot-toast";
+import { isTokenExpired, handleTokenExpiration } from "@/utils/tokenUtils";
 import CandidateOnly from "@/components/CandidateOnly";
 import SkillBlock from "@/components/dashboard-candidate/SkillBlock";
 import InterviewDetailsTabs from "@/components/dashboard-candidate/InterviewDetailsTabs";
@@ -470,12 +471,30 @@ export default function DashboardCandidate() {
     setAdLoading(true);
     setAdError(null);
     const token = localStorage.getItem("api_token");
+    
+    // Check if token is expired before making API call
+    if (token && isTokenExpired(token)) {
+      console.warn('🔒 [DASHBOARD] Token expired before API call');
+      setAdLoading(false);
+      handleTokenExpiration();
+      return;
+    }
+    
     const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL;
     
     fetch(`${apiBase}post/adsPost`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
       .then((res) => {
+        // Handle 401 Unauthorized - token expired
+        if (res.status === 401) {
+          console.warn('🔒 [DASHBOARD] 401 Unauthorized - Token expired');
+          // Clear tokens
+          localStorage.removeItem('api_token');
+          Cookies.remove('api_token');
+          // Redirect will be handled by global interceptor, but we prevent further processing
+          throw new Error("Unauthorized - Please login again");
+        }
         if (!res.ok) throw new Error("Failed to fetch ad post");
         return res.json();
       })
