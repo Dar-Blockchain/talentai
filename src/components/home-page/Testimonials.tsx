@@ -200,8 +200,8 @@ const TestimonialCard = ({ testimonial, index }: { testimonial: Testimonial; ind
     }}
   >
     <Box sx={{
-      width: { xs: '100%', md: 500 },
-      maxWidth: 500,
+      width: { xs: '95%', md:  '95%' },
+      maxWidth: '100%',
       bgcolor: testimonial.dark ? '#000000' : '#FFFFFF',
       color: testimonial.dark ? '#FFFFFF' : '#111827',
       borderRadius: 2,
@@ -290,8 +290,7 @@ const Testimonials: React.FC = () => {
 
   return (
     <Box sx={{ 
-      backgroundColor: '#F9FAFB', 
-      py: { xs: 6, md: 10 }, 
+      py: { xs: 3, md: 6 }, 
       px: 3, 
       mb: { xs: 2, md: 3 } 
     }}>
@@ -311,5 +310,3 @@ const Testimonials: React.FC = () => {
 };
 
 export default Testimonials;
-
-
