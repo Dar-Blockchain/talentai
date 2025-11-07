@@ -4,6 +4,7 @@ import JobListingsSection from "@/components/home-page/JobListingsSection";
 import ModernFooter from "@/components/home-page/ModernFooter";
 import TestimonialsSection from "@/components/home-page/TestimonialsSection";
 import FAQSection from "@/components/home-page/FAQSection";
+import Footer from "@/components/home-page/Footer";
 
 const JobSeekerLanding: React.FC = () => {
   return (
@@ -17,9 +18,11 @@ const JobSeekerLanding: React.FC = () => {
     >
       <HowItWorksSection />
       <JobListingsSection />
-      <TestimonialsSection />
-      <FAQSection />
-      <ModernFooter />
+      {/* <TestimonialsSection /> */}
+      {/* <FAQSection type="candidate"/> */}
+      {/* <ModernFooter /> */}
+      <Footer />
+
     </LandingPageLayout>
   );
 };

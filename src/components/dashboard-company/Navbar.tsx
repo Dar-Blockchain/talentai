@@ -19,7 +19,8 @@ import Cookies from "js-cookie";
 import {
   clearProfile,
 } from "@/store/slices/profileSlice";
-import { logout } from "@/store/slices/authSlice";
+import { logout, setLoggingOut } from "@/store/slices/authSlice";
+import { resetRedirectState } from "@/utils/authRedirect";
 import { signOut } from "next-auth/react";
 
 interface NavbarProps {
@@ -37,6 +38,10 @@ const Navbar: React.FC<NavbarProps> = ({ profile }) => {
   const handleLogout = async () => {
     try {
       console.log("Starting logout process...");
+      
+      // Set logout flag to prevent axios interceptors from triggering redirects
+      setLoggingOut(true);
+      resetRedirectState();
       
       // Clear Redux state FIRST to prevent components from trying to fetch
       dispatch(clearProfile());
@@ -60,6 +65,8 @@ const Navbar: React.FC<NavbarProps> = ({ profile }) => {
     } catch (error) {
       console.error("Logout failed:", error);
       // Even on error, redirect to signin
+      setLoggingOut(true);
+      resetRedirectState();
       window.location.href = "/signin";
     }
   };

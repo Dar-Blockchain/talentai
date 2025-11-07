@@ -386,7 +386,7 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
     };
   }
 
-  // Normalize skills to a list of names
+  // Extraire les noms des compétences
   const skillNames = user.profile.skills
     .map((s) => (typeof s === "string" ? s : s?.name))
     .filter(Boolean);
@@ -398,9 +398,15 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
     };
   }
 
-  // Find posts that match at least one of the user's skills
+  // 🔍 Trouver les IDs de postes pour lesquels l'utilisateur a déjà passé un test
+  const testedPosts = await JobAssessmentResult.find({
+    condidateId: user.profile._id,
+  }).distinct("jobId");
+
+  // 🧩 Trouver les postes correspondants aux skills, mais exclure ceux déjà testés
   const candidatePosts = await Post.find({
     "skillAnalysis.requiredSkills.name": { $in: skillNames },
+    _id: { $nin: testedPosts }, // <-- exclure les posts déjà testés
   })
     .sort({ createdAt: -1 })
     .lean();
@@ -408,26 +414,38 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
   if (!candidatePosts || candidatePosts.length === 0) {
     return {
       success: false,
-      message: "Pas de recommandations pour le moment. Nous n'avons trouvé aucun poste correspondant à vos compétences.",
+      message:
+        "Pas de recommandations pour le moment. Nous n'avons trouvé aucun poste correspondant à vos compétences ou tous ont déjà été testés.",
     };
   }
 
-  // Score posts by the number of matching required skills
+  // 🧮 Calculer le score selon le nombre de compétences correspondantes
   const scored = candidatePosts.map((post) => {
     const required = (post.skillAnalysis?.requiredSkills || []).map((rs) => rs.name);
-    const matchCount = required.reduce((acc, name) => acc + (skillNames.includes(name) ? 1 : 0), 0);
+    const matchCount = required.reduce(
+      (acc, name) => acc + (skillNames.includes(name) ? 1 : 0),
+      0
+    );
     return { post, matchCount };
   });
 
-  // Sort by match count desc, then most recent
-  scored.sort((a, b) => b.matchCount - a.matchCount || new Date(b.post.createdAt) - new Date(a.post.createdAt));
+  // Trier : plus de correspondances d'abord, puis le plus récent
+  scored.sort(
+    (a, b) =>
+      b.matchCount - a.matchCount ||
+      new Date(b.post.createdAt) - new Date(a.post.createdAt)
+  );
 
-  // Return top 3 recommendations
+  // Garder les 3 meilleurs postes
   const top = scored.slice(0, 3).map((s) => s.post);
+
   return {
     success: true,
     posts: top,
-    message: top.length > 0 ? `${top.length} recommandation(s) trouvée(s)` : "Pas de recommandations pour le moment.",
+    message:
+      top.length > 0
+        ? `${top.length} recommandation(s) trouvée(s)`
+        : "Pas de recommandations pour le moment.",
   };
 };
 

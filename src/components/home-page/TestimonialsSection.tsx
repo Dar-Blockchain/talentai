@@ -21,7 +21,7 @@ const TestimonialsSection: React.FC = () => {
       name: "Luke Mckinlay",
       title: "VP of Finance",
       company: "fountain",
-      avatar: "/images/testimonials/luke-mckinlay.jpg",
+      avatar: "",
       isDark: true
     },
     {
@@ -30,7 +30,7 @@ const TestimonialsSection: React.FC = () => {
       name: "Marisol Jiménez",
       title: "Head of People",
       company: "REVERSE TECH",
-      avatar: "/images/testimonials/marisol-jimenez.jpg",
+      avatar: "",
       isDark: false
     },
     {
@@ -39,7 +39,7 @@ const TestimonialsSection: React.FC = () => {
       name: "Sarah Johnson",
       title: "CTO",
       company: "TECH CORP",
-      avatar: "/images/testimonials/sarah-johnson.jpg",
+      avatar: "",
       isDark: true
     },
     {
@@ -48,7 +48,7 @@ const TestimonialsSection: React.FC = () => {
       name: "Michael Chen",
       title: "Product Manager",
       company: "INNOVATE",
-      avatar: "/images/testimonials/michael-chen.jpg",
+      avatar: "",
       isDark: false
     },
     {
@@ -57,7 +57,7 @@ const TestimonialsSection: React.FC = () => {
       name: "Emily Rodriguez",
       title: "Head of Design",
       company: "CREATIVE STUDIO",
-      avatar: "/images/testimonials/emily-rodriguez.jpg",
+      avatar: "",
       isDark: true
     }
   ];

@@ -177,13 +177,19 @@ const AssessmentDetailsModal: React.FC<AssessmentDetailsModalProps> = ({
                     {getCandidateName()}
                   </Typography>
                   {getCandidateEmail() && (
-                    <Typography variant="body2" sx={{
-                      color: '#6b7280',
-                      mb: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1
-                    }} noWrap>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: '#6b7280',
+                        mb: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        filter: 'blur(4px)',
+                        userSelect: 'none',
+                      }}
+                      noWrap
+                    >
                       <EmailIcon sx={{ fontSize: 16, color: '#6b7280' }} />
                       {getCandidateEmail()}
                     </Typography>

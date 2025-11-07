@@ -178,7 +178,7 @@ async function initializeAgenda() {
     }
 
     await agendaInstance.every(
-      "0 * * * *",
+      "0 0 * * *",
       "agent:heartbeat",
       {},
       {
@@ -234,7 +234,7 @@ async function initializeAgenda() {
     if (!countdownInterval) {
       countdownInterval = setInterval(() => {
         if (!lastHeartbeatAt) return;
-        const nextExpectedAt = lastHeartbeatAt.getTime() + 3600000; // +1 heure en ms
+        const nextExpectedAt = lastHeartbeatAt.getTime() + 24 * 3600000; // +1 heure en ms
         const remainingMs = nextExpectedAt - Date.now();
         const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
   

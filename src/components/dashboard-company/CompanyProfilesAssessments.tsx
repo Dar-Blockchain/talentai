@@ -295,7 +295,15 @@ const CompanyProfilesAssessments: React.FC<CompanyProfilesAssessmentsProps> = ({
                             {assessment?.condidateId?.userId?.username || assessment?.candidateName || assessment?.candidateInfo?.name || 'Unknown User'}
                           </Typography>
                           {(assessment?.condidateId?.userId?.email || getCandidateEmail(assessment)) && (
-                            <Typography variant="caption" sx={{ color: '#6b7280', fontSize: '0.75rem' }}>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: '#6b7280',
+                                fontSize: '0.75rem',
+                                filter: 'blur(4px)',
+                                userSelect: 'none',
+                              }}
+                            >
                               {assessment?.condidateId?.userId?.email || getCandidateEmail(assessment)}
                             </Typography>
                           )}

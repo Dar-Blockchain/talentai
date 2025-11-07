@@ -20,7 +20,7 @@ import {
   LockClock as LockClockIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
-import { registerUser, verifyOTP } from "@/store/slices/authSlice";
+import { registerUser, verifyOTP, setLoggingOut } from "@/store/slices/authSlice";
 import type { RootState, AppDispatch } from "@/store/store";
 import Cookies from "js-cookie";
 import { getUserLocation } from "@/utils/api";
@@ -221,11 +221,55 @@ export default function SignIn() {
   // Set isClient to true on mount to prevent hydration issues
   useEffect(() => {
     setIsClient(true);
+    
+    // CRITICAL: Reset redirect state and clear tokens on signin page mount
+    // This prevents infinite redirect loops when cookie expires
+    const { resetRedirectStateIfOnSignin } = require('@/utils/authRedirect');
+    resetRedirectStateIfOnSignin();
+    
+    // Reset logout flag when landing on signin page
+    setLoggingOut(false);
+    
+    // Check if we have expired/invalid tokens and clear them
+    const token = localStorage.getItem('api_token');
+    if (token) {
+      const { isTokenExpired } = require('@/utils/tokenUtils');
+      if (isTokenExpired(token)) {
+        console.log('🔒 Signin: Clearing expired token on mount');
+        localStorage.removeItem('api_token');
+        // Also clear cookie if present (using imported Cookies)
+        Cookies.remove('api_token');
+      }
+    }
   }, []);
 
   // Auto-redirect if user is already authenticated but has no profile
   useEffect(() => {
     if (!isClient) return; // Don't run on server
+    
+    // CRITICAL: Verify token is valid before redirecting
+    // This prevents redirect loops when cookie expires
+    const token = localStorage.getItem('api_token');
+    const cookieToken = Cookies.get('api_token');
+    
+    // If no valid token, don't redirect - user needs to sign in
+    if (!token && !cookieToken) {
+      setCheckingAuth(false);
+      return;
+    }
+    
+    // If token exists, verify it's not expired
+    if (token) {
+      const { isTokenExpired } = require('@/utils/tokenUtils');
+      if (isTokenExpired(token)) {
+        console.log('🔒 Signin: Token expired, clearing and staying on signin');
+        localStorage.removeItem('api_token');
+        Cookies.remove('api_token');
+        setCheckingAuth(false);
+        return;
+      }
+    }
+    
     if (
       router.isReady &&
       safeUser &&
@@ -271,7 +315,7 @@ export default function SignIn() {
       // No user or still loading, stop checking
       setCheckingAuth(false);
     }
-  }, [router.isReady, safeUser, safeProfile, router, safeIsLoading, isClient]);
+  }, [router.isReady, safeUser, safeProfile, router, safeIsLoading, isClient, isAuthenticated]);
 
   // Set checkingAuth to false when we're done checking
   useEffect(() => {

@@ -33,6 +33,7 @@ const hcs11Router = require("./routes/hcs11Router");
 const hrAgentRouter = require("./routes/hrAgentRouter");
 const recruitementStepRouter = require("./routes/recruitementStepRouter");
 const taskRouter = require("./routes/taskRouter");
+const agentConfigRouter = require("./routes/agentConfigRouter");
 const tokenRouter = require("./routes/tokenRouter");
 const paymentRouter = require("./routes/paymentRouter");
 
@@ -120,6 +121,7 @@ app.use("/api/hcs11", hcs11Router);
 app.use("/hr-agents", hrAgentRouter);
 app.use("/recruitementStep", recruitementStepRouter);
 app.use("/task", taskRouter);
+app.use('/agent-config', agentConfigRouter);
 app.use("/tokens", tokenRouter);
 app.use("/payment", paymentRouter);
 

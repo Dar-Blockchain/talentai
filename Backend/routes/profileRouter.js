@@ -56,7 +56,7 @@ router.get('/getCompanyBid',requireAuthUser, profileController.getCompanyBids);
 // GET /profile/getSoftSkillsById/:userId — soft skills par utilisateur
 router.get('/getSoftSkillsById/:userId',requireAuthUser, profileController.getSoftSkills);
 
-router.put('/updateFinalBid', profileController.updateFinalBid);
+router.put('/updateFinalBid',requireAuthUser, profileController.updateFinalBid);
 
 router.delete('/deleteHardSkill',requireAuthUser, profileController.deleteHardSkill);
 
