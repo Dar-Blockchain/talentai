@@ -62,7 +62,7 @@ const agentConfigSchema = new mongoose.Schema({
   maxCandidatesToBid: {
     type: Number,
     min: 0,
-    default: 3,
+    default: 1,
     description: "Nombre max de candidats que l'agent peut bidder",
   },
 
