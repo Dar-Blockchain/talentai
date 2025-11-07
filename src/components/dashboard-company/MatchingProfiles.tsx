@@ -383,10 +383,15 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                     }}>
                       {candidate.name || candidate.candidateId.username} | {candidate.candidateId.role || 'Software Engineer'}
                     </Typography>
-                    <Typography variant="body2" sx={{ 
-                      color: '#6b7280', 
-                      fontSize: '0.875rem'
-                    }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: '#6b7280',
+                        fontSize: '0.875rem',
+                        filter: 'blur(4px)',
+                        userSelect: 'none'
+                      }}
+                    >
                       {candidate.candidateId.email}
                     </Typography>
                   </Box>
