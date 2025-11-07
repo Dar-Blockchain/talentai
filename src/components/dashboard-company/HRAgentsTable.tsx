@@ -12,6 +12,11 @@ import {
   CircularProgress,
   Alert,
   Divider,
+  Pagination,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import {
   Visibility,
@@ -113,6 +118,8 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { data: agents, status, error } = useSelector(selectHRAgents);
   const [selectedAgent, setSelectedAgent] = useState<TransformedHRAgent | null>(null);
+  const [page, setPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
   useEffect(() => {
     if (companyId) {
@@ -137,6 +144,30 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   })) || [];
+
+  const totalPages = Math.max(1, Math.ceil((agents?.length || 0) / itemsPerPage));
+  const startIndex = (page - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedAgents = agents?.slice(startIndex, endIndex) || [];
+
+  useEffect(() => {
+    setPage(1);
+  }, [itemsPerPage, agents?.length]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const handleItemsPerPageChange = (event: any) => {
+    const value = Number(event.target.value);
+    setItemsPerPage(value);
+  };
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+  };
 
   const handleViewDetails = (agent: TransformedHRAgent) => {
     setSelectedAgent(agent);
@@ -231,11 +262,36 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
     <>
       <StyledCard>
         {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
           <Typography variant="h5" sx={{ color: '#111827', fontWeight: 700 }}>
             HR Agents
           </Typography>
-          <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel id="hr-agents-per-page-label">Per Page</InputLabel>
+              <Select
+                labelId="hr-agents-per-page-label"
+                value={itemsPerPage}
+                label="Per Page"
+                onChange={handleItemsPerPageChange}
+                sx={{
+                  borderRadius: '8px',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#d1d5db',
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#3b82f6',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#3b82f6',
+                  },
+                }}
+              >
+                <MenuItem value={3}>3</MenuItem>
+                <MenuItem value={5}>5</MenuItem>
+                <MenuItem value={10}>10</MenuItem>
+              </Select>
+            </FormControl>
             <Chip
               label={`${agents.length} agents`}
               size="small"
@@ -258,12 +314,21 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                 border: '1px solid #bbf7d0'
               }}
             />
+            <Typography
+              variant="body2"
+              sx={{
+                color: '#6b7280',
+                fontWeight: 500,
+              }}
+            >
+              Showing {startIndex + 1}-{Math.min(endIndex, agents.length)} of {agents.length}
+            </Typography>
           </Box>
         </Box>
 
         {/* Agent Cards */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {agents.map((agent: any) => {
+          {paginatedAgents.map((agent: any) => {
             const topScore = agent.matches.length > 0 ? Math.max(...agent.matches.map((m: any) => m.score)) : 0;
             const minBid = agent.matches.length > 0 ? Math.min(...agent.matches.map((m: any) => m.finalBid || 0).filter((bid: number) => bid > 0)) : 0;
             const status = agent.matches.length > 0 ? 'available' : 'offline';
@@ -435,6 +500,42 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
             );
           })}
         </Box>
+
+        {totalPages > 1 && (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mt: 3,
+              gap: 1.5,
+              textAlign: 'center',
+            }}
+          >
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+              sx={{
+                '& .MuiPaginationItem-root': {
+                  color: '#6b7280',
+                  '&.Mui-selected': {
+                    backgroundColor: '#3b82f6',
+                    color: '#ffffff',
+                    '&:hover': {
+                      backgroundColor: '#2563eb',
+                    },
+                  },
+                  '&:hover': {
+                    backgroundColor: '#f3f4f6',
+                  },
+                },
+              }}
+            />
+          </Box>
+        )}
       </StyledCard>
 
       {/* Agent Details Dialog */}
