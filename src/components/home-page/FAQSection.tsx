@@ -139,7 +139,7 @@ const FAQSection: React.FC<FAQSectionProps> = ({ type }) => {
               >
                 <AccordionSummary
                   expandIcon={
-                    <IconButton
+                    <Box
                       sx={{
                         width: 32,
                         height: 32,
@@ -157,7 +157,7 @@ const FAQSection: React.FC<FAQSectionProps> = ({ type }) => {
                       ) : (
                         <AddIcon sx={{ fontSize: "16px" }} />
                       )}
-                    </IconButton>
+                    </Box>
                   }
                   sx={{
                     px: 4,

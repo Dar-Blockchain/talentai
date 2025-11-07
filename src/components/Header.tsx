@@ -602,7 +602,7 @@ const Header = ({ logo, type }: HeaderProps) => {
           letterSpacing: "0.3px",
         }}
       >
-        {profile.type === "Candidate"
+        {profile?.type === "Candidate"
           ? "Candidate Account"
           : "Company Account"}
       </Typography>
@@ -630,17 +630,17 @@ const Header = ({ logo, type }: HeaderProps) => {
         letterSpacing: "0.4px",
         textTransform: "uppercase",
         backgroundColor:
-          profile.type !== "Candidate"
+          profile?.type !== "Candidate"
             ? "rgba(139, 92, 246, 0.12)"
             : "rgba(16, 185, 129, 0.12)",
-        color: profile.type !== "Candidate" ? "#7C3AED" : "#059669",
+        color: profile?.type !== "Candidate" ? "#7C3AED" : "#059669",
         boxShadow:
-          profile.type !== "Candidate"
+          profile?.type !== "Candidate"
             ? "0 0 4px rgba(124,58,237,0.2)"
             : "0 0 4px rgba(5,150,105,0.2)",
       }}
     >
-      {profile.type}
+      {profile?.type}
     </Box>
   </Box>
 
