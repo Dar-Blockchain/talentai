@@ -15,7 +15,6 @@ import {
 } from '@mui/material';
 import ErrorIcon from '@mui/icons-material/Error';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
-import EmailIcon from '@mui/icons-material/Email';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useRouter } from 'next/router';
@@ -463,38 +462,13 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
               </Box>
 
               {/* Action Buttons */}
-              <Box sx={{
-                display: 'flex',
-                gap: 2,
-                mt: 'auto'
-              }}>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  startIcon={<EmailIcon />}
-                  component="a"
-                  href={`mailto:${candidate?.candidateId?.email}`}
-                  sx={{
-                    backgroundColor: '#10b981',
-                    color: 'white',
-                    fontWeight: 600,
-                    borderRadius: '8px',
-                    py: 1.5,
-                    textTransform: 'none',
-                    fontSize: '0.875rem',
-                    '&:hover': {
-                      backgroundColor: '#059669'
-                    },
-                    '&.Mui-disabled': {
-                      backgroundColor: '#e5e7eb',
-                      color: '#9ca3af'
-                    }
-                  }}
-                  disabled={!candidate?.candidateId?.email}
-                >
-                  Contact Candidate
-                </Button>
-                
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  mt: 'auto'
+                }}
+              >
                 <Button
                   variant="outlined"
                   fullWidth
