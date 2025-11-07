@@ -18,7 +18,7 @@ const JobSeekerLanding: React.FC = () => {
       <HowItWorksSection />
       <JobListingsSection />
       <TestimonialsSection />
-      <FAQSection />
+      <FAQSection type="candidate"/>
       <ModernFooter />
     </LandingPageLayout>
   );

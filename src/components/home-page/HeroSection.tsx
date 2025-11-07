@@ -122,14 +122,14 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
                 fontWeight: 600,
                 fontStyle: 'normal',
                 fontSize: { xs: '32px', sm: '40px', md: '48px' },
-                lineHeight: '164%',
+                lineHeight: '104%',
                 letterSpacing: 0,
                 textAlign: 'center',
                 verticalAlign: 'middle',
-                mb: 1,
+                mb: 3,
               }}
             >
-              Revolutionize Your Hiring
+              Automate Hiring with AI Agents<br /> & Blockchain Credentials
             </Typography>
             <Typography
               variant="body1"
@@ -148,22 +148,21 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
                 verticalAlign: 'middle',
               }}
             >
-              Streamline recruitment from sourcing to onboarding with AI-powered workflows that
-              cut hiring time in half while finding the perfect candidates every time.
+              Reduce hiring time by 75%. AI conducts natural video interviews. Candidates earn blockchain-verified credentials they own forever.
             </Typography>
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center" sx={{ mb: { xs: 6, md: 10 } }}>
               <Button
                 variant="contained"
-                onClick={() => router.push('/contact')}
+                onClick={() => window.open('https://calendly.com/talentai-demo', '_blank')}
                 sx={{
-                  backgroundColor: '#22d3a6',
+                  backgroundColor: 'rgba(12, 218, 139, 1)',
                   color: '#0b1b1f',
                   boxShadow: 'none',
-                  borderRadius: 2,
+                  borderRadius: 0.5,
                   textTransform: 'none',
                   px: 3,
-                  '&:hover': { backgroundColor: '#20c39a' }
+                  '&:hover': { backgroundColor: 'rgba(12, 218, 139, 0.7)' }
                 }}
               >
                 Request a Demo
@@ -173,148 +172,40 @@ const HeroSection = ({ color, title, subtitle, type }: HeroSectionProps) => {
                 variant="outlined"
                 onClick={() => router.push('/signin')}
                 sx={{
-                  borderColor: '#0b1b1f',
+                  borderColor: 'rgba(12, 218, 139, 1)',
                   color: '#0b1b1f',
-                  borderRadius: 2,
+                  borderRadius: 0.5,
                   textTransform: 'none',
+                  fontWeight: 500,
                   px: 3,
                 }}
               >
-                Get Early Access
+                Sign-in
               </Button>
             </Stack>
           </Box>
 
           {/* Showcase cards */}
           <Box sx={{
-            width: '100%',
+            width: '95%',
             position: 'relative',
             height: { xs: 150, sm: 200, md: 250 },
-            mb: { xs: 4, md: 0 }
+            mb: { xs: 4, md: 0 },
+            maxWidth: '1300px',
+            margin: '20px auto'
           }}>
-            {/* Left blur cards - Desktop only */}
-            <Box sx={{
-              position: 'absolute',
-              left: { md: 24 },
-              bottom: 0,
-              filter: 'blur(3px)',
-              opacity: 0.6,
-              display: { xs: 'none', lg: 'block' },
-            }}>
-              <Box sx={{
-                width: 280,
-                height: 250,
-                bgcolor: '#fff',
-                borderRadius: 3,
-                boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-                p: 2,
-                overflow: 'hidden'
-              }}>
-                <img
-                  src="/images/home/Ai.png"
+<img
+                  src="/images/home/heroSection.png"
                   alt="AI Insights Blur"
                   style={{
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
-                    borderRadius: '8px'
+                    borderRadius: '8px',
                   }}
                 />
-              </Box>
-            </Box>
 
-            {/* Center cards */}
-            <Box sx={{
-              position: 'absolute',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              bottom: 0,
-              display: 'flex',
-              gap: { xs: 0, sm: 1 },
-              animation: 'slideUp 1s ease-out',
-              width: { xs: '90%', sm: 'auto' },
-              justifyContent: 'center'
-            }}>
-              {/* Candidate Profile Card */}
-              <Box
-                component="img"
-                src="/images/home/Michael.png"
-                alt="Michael Brown Profile"
-                sx={{
-                  display: { xs: 'none', md: 'block' },
-                  height: { md: 200, lg: 240 },
-                  width: 'auto',
-                  objectFit: 'contain'
-                }}
-              />
 
-              {/* AI Insights Card - Main focus */}
-              <Box sx={{
-                width: { xs: '100%', sm: 280, md: 320 },
-                height: { xs: 150, sm: 200, md: 240 },
-                bgcolor: '#fff',
-                borderRadius: 3,
-                zIndex: 2,
-                overflow: 'hidden',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <img
-                  src="/images/home/Ai.png"
-                  alt="AI Insights Dashboard"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain'
-                  }}
-                />
-              </Box>
-
-              {/* Hiring Pipeline Card */}
-              <Box
-                component="img"
-                src="/images/home/Hiring.png"
-                alt="Hiring Pipeline Dashboard"
-                sx={{
-                  display: { xs: 'none', md: 'block' },
-                  height: { md: 200, lg: 240 },
-                  width: 'auto',
-                  objectFit: 'contain'
-                }}
-              />
-            </Box>
-
-            {/* Right blur cards - Desktop only */}
-            <Box sx={{
-              position: 'absolute',
-              right: { md: 1 },
-              bottom: 0,
-              filter: 'blur(3px)',
-              opacity: 0.6,
-              display: { xs: 'none', lg: 'block' },
-            }}>
-              <Box sx={{
-                width: 280,
-                height: 220,
-                bgcolor: '#fff',
-                borderRadius: 3,
-                boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-                p: 2,
-                overflow: 'hidden'
-              }}>
-                <img
-                  src="/images/home/Michael.png"
-                  alt="Michael Brown Profile Blur"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    borderRadius: '8px'
-                  }}
-                />
-              </Box>
-            </Box>
           </Box>
         </>
       ) : (
