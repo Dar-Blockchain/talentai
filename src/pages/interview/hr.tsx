@@ -843,21 +843,22 @@ const IntelligentInterviewTest = () => {
       // Get V3 turn detection config based on question type
       const turnDetectionConfig = getTurnDetectionConfig(currentMessage?.type || 'general');
 
-      // Configure realtime transcriber with token (secure browser auth)
+      // Configure realtime transcriber with V3 endpoint for advanced turn detection
+      // Note: Type assertion needed as SDK 4.19.0 doesn't have v3 params in types yet
       const transcriber = client.realtime.transcriber({
         token: tempToken,
+        realtimeUrl: 'wss://streaming.assemblyai.com/v3/ws', // V3 endpoint for turn detection
         sampleRate: 16_000,
         encoding: 'pcm_s16le',
-
-        // V3 Turn Detection - Uses semantic + acoustic features for intelligent end-of-turn detection
-        end_of_turn_confidence_threshold: turnDetectionConfig.end_of_turn_confidence_threshold,
-        min_end_of_turn_silence_when_confident: turnDetectionConfig.min_end_of_turn_silence_when_confident,
-        max_turn_silence: turnDetectionConfig.max_turn_silence,
 
         // Accuracy improvements
         wordBoost: extractTechnicalKeywords(interviewConfig),
         disablePartialTranscripts: false,
-      });
+
+        // V3 Turn Detection - Uses semantic + acoustic features for intelligent end-of-turn detection
+        // These params are not in SDK types yet but work with v3 endpoint
+        ...turnDetectionConfig as any,
+      } as any);
 
       transcriberRef.current = transcriber;
 
@@ -874,7 +875,8 @@ const IntelligentInterviewTest = () => {
       });
 
       // 🎯 Handle turn completion (end of user response) - THIS REPLACES SILENCE DETECTION!
-      transcriber.on('turn', (turn: any) => {
+      // Note: 'turn' event is v3-only, not in SDK types yet
+      (transcriber as any).on('turn', (turn: any) => {
         const finalText = turn.text?.trim();
         if (!finalText) return;
 
@@ -928,7 +930,7 @@ const IntelligentInterviewTest = () => {
           // Update agent state
           setAgentState('thinking');
           setAgentMessage('AI is analyzing your response...');
-          setSpeechPhase('waiting');
+          setSpeechPhase('thinking');
 
           addTranscriptDebugLog(`📤 Sent to backend: ${finalText.length} chars`);
 
@@ -1342,9 +1344,9 @@ const IntelligentInterviewTest = () => {
       setAccumulatedTranscript('');
       setCurrentTranscript('');
       setFinalTranscriptSent(false);
-      setAgentState('listening');
+      setAgentState('waiting');
       setAgentMessage('Listening to your answer...');
-      setSpeechPhase('listening');
+      setSpeechPhase('reading');
 
       addTranscriptDebugLog(`🆕 New question received, state reset`);
     }
