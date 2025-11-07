@@ -28,8 +28,8 @@ const HomePage: React.FC = () => {
       <GlobalCompanies />
       <BiasFreeEvaluation />
       <SolutionsSection/>
-      <Testimonials />
-      <FAQSection type="company"/>
+      {/* <Testimonials /> */}
+      {/* <FAQSection type="company"/> */}
       
       {/* <FindSection /> */}
       {/* <AutomateSection /> */}

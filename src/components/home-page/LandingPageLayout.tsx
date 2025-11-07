@@ -2,6 +2,8 @@ import { Box } from "@mui/material";
 import Header from "@/components/Header";
 import HeroSection from "@/components/home-page/HeroSection";
 import { ReactNode } from "react";
+import CompanyHeroSection from "./company/HeroSection";
+import CandidateHeroSection from "./candidate/HeroSection";
 
 interface LandingPageLayoutProps {
   logo: string;
@@ -27,7 +29,8 @@ const LandingPageLayout: React.FC<LandingPageLayoutProps> = ({
   return (
     <Box style={backgroundColor ? { backgroundColor } : undefined}>
       <Header logo={logo} type={type} color={color} link={headerLink} />
-      <HeroSection title={heroTitle} color={color} type={type} subtitle={heroSubtitle} />
+      {type === "company" && <CompanyHeroSection title={heroTitle} color={color} subtitle={heroSubtitle}/>}
+      {type === "jobseeker" &&  <CandidateHeroSection title={heroTitle} color={color} subtitle={heroSubtitle}/>}
       {children}
     </Box>
   );

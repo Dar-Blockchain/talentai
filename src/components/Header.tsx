@@ -717,7 +717,7 @@ const Header = ({ logo, type }: HeaderProps) => {
                   </Button>
                   <Button
                     variant="outlined"
-                    onClick={() => type === "jobseeker" ? router.push('/signin') :window.open('https://calendly.com/talentai-demo', '_blank')}
+                    onClick={() => type === "jobseeker" ? router.push('/signin') :window.open('https://www.youtube.com/watch?v=_wGI7HxQQHU', '_blank')}
                     sx={{
                       backgroundColor: "#ffffff",
                       color: "#383A3D",
@@ -733,7 +733,7 @@ const Header = ({ logo, type }: HeaderProps) => {
                       },
                     }}
                   >
-                    {type === "jobseeker" ? "Sign-up" : "Book a Demo"}
+                    {type === "jobseeker" ? "Sign-up" : "Watch Demo"}
                   </Button>
                 </Stack>
               )

@@ -21,6 +21,7 @@ const SolutionsSection = ({ type, color, title, subtitle }: SolutionsSectionProp
         color: "#000000",
         display: 'flex',
         flexDirection: 'column',
+        mb: 4
       }}
     >
       {" "}
