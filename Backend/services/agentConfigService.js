@@ -2,6 +2,9 @@ const AgentConfig = require('../models/AgentConfigModel');
 
 module.exports = {
   create: async (data) => {
+    const Agent = require('../models/AgentModel');
+    const Post = require('../models/PostModel');
+
     // Ensure unique constraints by checking existing agentId/postId
     const existingByAgent = await AgentConfig.findOne({ agentId: data.agentId });
     if (existingByAgent) throw new Error('AgentConfig already exists for this agent');
@@ -9,8 +12,26 @@ module.exports = {
     const existingByPost = await AgentConfig.findOne({ postId: data.postId });
     if (existingByPost) throw new Error('AgentConfig already exists for this post');
 
+    // Vérifier que l'Agent et le Post existent
+    const agent = await Agent.findById(data.agentId);
+    if (!agent) throw new Error('Agent not found');
+
+    const post = await Post.findById(data.postId);
+    if (!post) throw new Error('Post not found');
+
+    // Créer la config
     const cfg = new AgentConfig(data);
-    return await cfg.save();
+    const savedConfig = await cfg.save();
+
+    // Mettre à jour l'Agent avec la référence à la config
+    agent.agentConfig = savedConfig._id;
+    await agent.save();
+
+    // Mettre à jour le Post avec la référence à la config
+    post.agentConfig = savedConfig._id;
+    await post.save();
+
+    return savedConfig;
   },
 
   getById: async (id) => {
@@ -54,8 +75,19 @@ module.exports = {
   },
 
   remove: async (id) => {
-    const cfg = await AgentConfig.findByIdAndDelete(id);
+    const Agent = require('../models/AgentModel');
+    const Post = require('../models/PostModel');
+
+    // Trouver la config avant de la supprimer
+    const cfg = await AgentConfig.findById(id);
     if (!cfg) throw new Error('AgentConfig not found');
+
+    // Supprimer les références dans Agent et Post
+    await Agent.findByIdAndUpdate(cfg.agentId, { $unset: { agentConfig: 1 } });
+    await Post.findByIdAndUpdate(cfg.postId, { $unset: { agentConfig: 1 } });
+
+    // Supprimer la config
+    await cfg.deleteOne();
     return cfg;
   },
 };
