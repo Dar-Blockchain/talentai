@@ -9,6 +9,8 @@ import AutomateSection from "@/components/home-page/AutomateSection";
 import AccoladesSection from "@/components/home-page/AccoladesSection";
 import FinalPricingCTA from "@/components/home-page/FinalPricingCTA";
 import Footer from "@/components/home-page/Footer";
+import FAQSection from "@/components/home-page/FAQSection";
+import SolutionsSection from "@/components/home-page/company/HowItWorksSection";
 
 const HomePage: React.FC = () => {
   return (
@@ -25,11 +27,14 @@ const HomePage: React.FC = () => {
       <AISpotlight />
       <GlobalCompanies />
       <BiasFreeEvaluation />
+      <SolutionsSection/>
       <Testimonials />
-      <FindSection />
-      <AutomateSection />
-      <ManageSection />
-      <FinalPricingCTA />
+      <FAQSection type="company"/>
+      
+      {/* <FindSection /> */}
+      {/* <AutomateSection /> */}
+      {/* <ManageSection /> */}
+      {/* <FinalPricingCTA /> */}
       <Footer />
     </LandingPageLayout>
   );

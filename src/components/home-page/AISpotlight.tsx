@@ -45,7 +45,7 @@ const AISpotlight: React.FC = () => {
             candidate outreach to final offer acceptance.
           </Typography>
 
-          <Button
+          {/* <Button
             variant="contained"
             sx={{
               mt: 3,
@@ -60,7 +60,7 @@ const AISpotlight: React.FC = () => {
             href="#features"
           >
             Explore the product
-          </Button>
+          </Button> */}
         </Box>
 
         {/* Right AI Spotlight Image */}

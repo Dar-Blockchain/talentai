@@ -84,7 +84,7 @@ const Pill: React.FC<{ label: string; color: string; icon: string }> = ({ label,
 
 const BiasFreeEvaluation: React.FC = () => {
   return (
-    <Box>
+    <Box id='features'>
       {/* Floating Video Card Section */}
       <Box sx={{
         position: 'relative',
@@ -120,7 +120,7 @@ const BiasFreeEvaluation: React.FC = () => {
                 verticalAlign: 'middle'
               }}
             >
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+              End-to-end recruitment automation powered by conversational AI and Hedera blockchain.
             </Typography>
         </Box>
         {/* Floating Blocks Row */}
@@ -306,11 +306,15 @@ const BiasFreeEvaluation: React.FC = () => {
                 Our platform ensures that every candidate is assessed objectively, using data-driven methods that eliminate unconscious bias in recruitment decisions. This leads to fairer outcomes and a more diverse, high-performing workforce.            </Typography>
 
               <Stack spacing={2} sx={{ mb: 4 }}>
-                <Bullet label="Intelligent Candidate Engagement" />
-                <Bullet label="Instant Qualification" />
-                <Bullet label="Expertise at your fingertips" />
-              </Stack>
+                <Bullet label="Conversational AI Interviews" />
+                <Bullet label="Blockchain-Verified Credentials" />
+                <Bullet label="Interview-to-Earn Rewards" />
 
+                <Bullet label="Drag-&-Drop Pipeline Builder" />
+                <Bullet label="Automated Decision-Making" />
+                <Bullet label="Fair Credit Pricing" />
+              </Stack>
+{/* 
               <Button
                 variant="outlined"
                 sx={{
@@ -335,7 +339,7 @@ const BiasFreeEvaluation: React.FC = () => {
                 }}
               >
                 Discover Recruitment Flow
-              </Button>
+              </Button> */}
             </Box>
 
             {/* Right side - White card with icon grid */}

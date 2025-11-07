@@ -22,29 +22,20 @@ const GlobalCompanies: React.FC = () => {
       borderRadius: 3,
       position: 'relative',
       overflow: 'hidden',
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '1px',
-        background: 'linear-gradient(90deg, transparent 0%, #e2e8f0 50%, transparent 100%)',
-      }
     }}>
       {/* Title */}
       <Typography 
         sx={{ 
-          fontFamily: 'Inter, sans-serif',
-          fontWeight: 400,
-          fontStyle: 'normal',
-          fontSize: '14px',
-          lineHeight: '21px',
-          letterSpacing: '0.7px',
-          textAlign: 'center',
-          verticalAlign: 'middle',
-          textTransform: 'uppercase',
-          color: '#1e293b',
+          fontFamily: "Inter",
+          fontWeight: 600,
+          fontStyle: "normal",
+          fontSize: "14px",
+          lineHeight: "21px",
+          letterSpacing: "0.7px",
+          textAlign: "center",
+          verticalAlign: "middle",
+          textTransform: "uppercase",
+          color: 'rgba(89, 91, 95, 1)',
           mb: 6
         }}
       >
