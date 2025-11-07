@@ -50,6 +50,17 @@ const agentSchema = new mongoose.Schema({
   postId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Post",
+    unique: true,
+    sparse: true,
+    description: "Référence one-to-one vers un Post (un Agent lié à un seul Post)",
+  },
+  // Référence vers la configuration associée (one-to-one)
+  agentConfig: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'AgentConfig',
+    unique: true,
+    sparse: true,
+    description: 'Référence optionnelle vers AgentConfig (one-to-one)',
   },
 });
 
