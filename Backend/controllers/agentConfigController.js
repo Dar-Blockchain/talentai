@@ -4,8 +4,9 @@ exports.createAgentConfig = async (req, res) => {
   try {
     const payload = req.body;
     // Optionally attach owner info from req.user (company) if needed
-    const cfg = await agentConfigService.create(payload);
-    res.status(201).json({ success: true, data: cfg });
+    // Use upsert: create new or update existing based on agentId/postId
+    const cfg = await agentConfigService.upsert(payload);
+    res.status(200).json({ success: true, data: cfg });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }
