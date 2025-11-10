@@ -112,11 +112,14 @@ const Container = styled(Box)({
   flexDirection: 'column',
 });
 
-const Header = styled(Box)({
+const Header = styled(Box)(({ theme }) => ({
   padding: '20px 40px',
   backgroundColor: 'white',
   borderBottom: '1px solid #e1e5e9',
-});
+  [theme.breakpoints.down('sm')]: {
+    padding: '16px 20px',
+  },
+}));
 
 const MainContent = styled(Box)({
   flex: 1,
@@ -136,14 +139,20 @@ const Sidebar = styled(Box)({
   overflowY: 'auto',
 });
 
-const Footer = styled(Box)({
+const Footer = styled(Box)(({ theme }) => ({
   padding: '20px 40px',
   backgroundColor: 'white',
   borderTop: '1px solid #e1e5e9',
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-});
+  [theme.breakpoints.down('sm')]: {
+    padding: '16px 20px',
+    flexDirection: 'column',
+    gap: '12px',
+    alignItems: 'stretch',
+  },
+}));
 
 const ActionButton = styled(Box)<{ actionType: string }>(({ actionType }) => ({
   width: '90px',
@@ -1417,18 +1426,19 @@ Ready to customize the content or add more triggers?`
         }}>
           {/* Left - Back Button */}
           <Button
-            startIcon={<ArrowBackIcon sx={{ color: '#10b981' }} />}
+            startIcon={<ArrowBackIcon sx={{ color: '#10b981', fontSize: { xs: 18, sm: 20 } }} />}
             onClick={() => router.back()}
             sx={{
               color: '#111827',
               textTransform: 'none',
               fontWeight: 500,
-              fontSize: '1rem',
+              fontSize: { xs: '0.875rem', sm: '1rem' },
               px: 0,
               py: 0,
               minWidth: 'auto',
               position: 'absolute',
               left: 0,
+              display: { xs: 'none', md: 'flex' },
               '&:hover': {
                 backgroundColor: 'transparent',
                 color: '#059669'
@@ -1439,7 +1449,13 @@ Ready to customize the content or add more triggers?`
           </Button>
 
           {/* Center - Progress Indicator */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: { xs: 1, sm: 2 },
+            overflow: 'auto',
+            maxWidth: { xs: 'calc(100vw - 120px)', sm: '100%' },
+          }}>
             {steps.map((label, index) => {
               const isActive = activeStep === index;
               const isCompleted = activeStep > index;
@@ -1448,11 +1464,11 @@ Ready to customize the content or add more triggers?`
 
               return (
                 <React.Fragment key={label}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
                     <Box
                       sx={{
-                        width: 32,
-                        height: 32,
+                        width: { xs: 28, sm: 32 },
+                        height: { xs: 28, sm: 32 },
                         borderRadius: '50%',
                         backgroundColor: circleColor,
                         display: 'flex',
@@ -1460,8 +1476,9 @@ Ready to customize the content or add more triggers?`
                         justifyContent: 'center',
                         color: 'white',
                         fontWeight: 600,
-                        fontSize: '1rem',
-                        transition: 'all 0.2s ease'
+                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                        transition: 'all 0.2s ease',
+                        flexShrink: 0,
                       }}
                     >
                       {index + 1}
@@ -1470,7 +1487,9 @@ Ready to customize the content or add more triggers?`
                       sx={{
                         color: textColor,
                         fontWeight: 500,
-                        fontSize: '1rem'
+                        fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' },
+                        display: { xs: 'none', sm: 'block' },
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {label}
@@ -1479,11 +1498,12 @@ Ready to customize the content or add more triggers?`
                   {index < steps.length - 1 && (
                     <Box
                       sx={{
-                        width: 40,
+                        width: { xs: 20, sm: 40 },
                         height: 2,
                         backgroundColor: activeStep > index ? '#10b981' : '#e5e7eb',
                         borderRadius: 1,
-                        transition: 'all 0.3s ease'
+                        transition: 'all 0.3s ease',
+                        flexShrink: 0,
                       }}
                     />
                   )}
@@ -1590,7 +1610,12 @@ Ready to customize the content or add more triggers?`
           Save
         </Button> */}
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: 2,
+          width: { xs: '100%', sm: 'auto' },
+        }}>
           <Button
             variant="outlined"
             startIcon={<ArrowBackIcon />}
@@ -1598,14 +1623,15 @@ Ready to customize the content or add more triggers?`
             disabled={activeStep === 0}
             sx={{
               borderRadius: '8px',
-              paddingX: 2.5,
-              paddingY: 1.25,
+              paddingX: { xs: 2, sm: 2.5 },
+              paddingY: { xs: 1, sm: 1.25 },
               fontWeight: 500,
-              fontSize: '0.875rem',
+              fontSize: { xs: '0.8rem', sm: '0.875rem' },
               borderColor: '#64748b',
               color: '#1e293b',
               textTransform: 'none',
               transition: 'all 0.3s ease',
+              flex: { xs: 1, sm: 'initial' },
               '&:hover': {
                 backgroundColor: '#f1f5f9',
                 borderColor: '#475569',
@@ -1640,15 +1666,16 @@ Ready to customize the content or add more triggers?`
               }
               sx={{
                 borderRadius: '8px',
-                px: 3,
-                py: 1.5,
+                px: { xs: 2, sm: 3 },
+                py: { xs: 1, sm: 1.5 },
                 fontWeight: 600,
-                fontSize: '0.9rem',
+                fontSize: { xs: '0.8rem', sm: '0.9rem' },
                 textTransform: 'none',
                 color: '#ffffff',
                 background: 'linear-gradient(90deg, rgb(47, 212, 149) 0%, rgb(5, 150, 105) 100%)',
                 boxShadow: '0 2px 10px rgba(47, 212, 149, 0.4)',
                 transition: 'all 0.3s ease',
+                flex: { xs: 1, sm: 'initial' },
                 '&:hover': {
                   background: 'linear-gradient(90deg, rgb(38, 180, 128) 0%, rgb(4, 120, 85) 100%)',
                 },
@@ -1684,15 +1711,16 @@ Ready to customize the content or add more triggers?`
               onClick={handleNext}
               sx={{
                 borderRadius: '8px',
-                px: 3,
-                py: 1.5,
+                px: { xs: 2, sm: 3 },
+                py: { xs: 1, sm: 1.5 },
                 fontWeight: 600,
-                fontSize: '0.9rem',
+                fontSize: { xs: '0.8rem', sm: '0.9rem' },
                 textTransform: 'none',
                 color: '#ffffff',
                 background: 'linear-gradient(90deg, rgb(47, 212, 149) 0%, rgb(5, 150, 105) 100%)',
                 boxShadow: '0 2px 10px rgba(47, 212, 149, 0.4)',
                 transition: 'all 0.3s ease',
+                flex: { xs: 1, sm: 'initial' },
                 '&:hover': {
                   background: 'linear-gradient(90deg, rgb(38, 180, 128) 0%, rgb(4, 120, 85) 100%)',
                 },

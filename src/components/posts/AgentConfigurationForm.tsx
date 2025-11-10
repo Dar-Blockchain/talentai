@@ -119,6 +119,9 @@ const Wrapper = styled(Box)(({ theme }) => ({
   overflowY: 'auto',
   minHeight: '100vh',
   position: 'relative',
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2),
+  },
   '&::before': {
     content: '""',
     position: 'absolute',
@@ -147,9 +150,17 @@ const HeroCard = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(5),
   overflow: 'hidden',
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  [theme.breakpoints.down('sm')]: {
+    borderRadius: 20,
+    padding: theme.spacing(3),
+    marginBottom: theme.spacing(3),
+  },
   '&:hover': {
     transform: 'translateY(-2px)',
     boxShadow: '0 25px 70px -25px rgba(15, 23, 42, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.6) inset',
+    [theme.breakpoints.down('sm')]: {
+      transform: 'none',
+    },
   },
   '&::before': {
     content: '""',
@@ -192,9 +203,18 @@ const HeroIconBubble = styled(Box)(({ theme }) => ({
   boxShadow: '0 20px 40px -20px rgba(14, 165, 233, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.3) inset',
   color: '#ffffff',
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  flexShrink: 0,
+  [theme.breakpoints.down('sm')]: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+  },
   '&:hover': {
     transform: 'scale(1.05) rotate(5deg)',
     boxShadow: '0 25px 50px -15px rgba(14, 165, 233, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.4) inset',
+    [theme.breakpoints.down('sm')]: {
+      transform: 'scale(1.02)',
+    },
   },
 }));
 
@@ -207,6 +227,10 @@ const SectionCard = styled(Paper)(({ theme }) => ({
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   position: 'relative',
   overflow: 'hidden',
+  [theme.breakpoints.down('sm')]: {
+    borderRadius: 20,
+    padding: theme.spacing(3),
+  },
   '&::before': {
     content: '""',
     position: 'absolute',
@@ -221,6 +245,9 @@ const SectionCard = styled(Paper)(({ theme }) => ({
   '&:hover': {
     transform: 'translateY(-3px)',
     boxShadow: '0 20px 50px -20px rgba(15, 23, 42, 0.2), 0 0 0 1px rgba(255, 255, 255, 1) inset',
+    [theme.breakpoints.down('sm')]: {
+      transform: 'translateY(-1px)',
+    },
     '&::before': {
       opacity: 1,
     },
@@ -244,6 +271,9 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
   WebkitBackgroundClip: 'text',
   WebkitTextFillColor: 'transparent',
   backgroundClip: 'text',
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '1.1rem',
+  },
 }));
 
 const SubtleText = styled(Typography)(({ theme }) => ({
@@ -305,11 +335,18 @@ const ToggleContainer = styled(Box)(({ theme }) => ({
   flexDirection: 'column',
   gap: theme.spacing(2),
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  [theme.breakpoints.down('sm')]: {
+    padding: theme.spacing(2),
+    borderRadius: 16,
+  },
   '&:hover': {
     backgroundColor: 'rgba(248, 250, 252, 0.9)',
     border: '1px solid rgba(203, 213, 225, 0.8)',
     transform: 'translateX(4px)',
     boxShadow: '0 4px 12px -4px rgba(15, 23, 42, 0.1)',
+    [theme.breakpoints.down('sm')]: {
+      transform: 'translateX(2px)',
+    },
   },
 }));
 
@@ -411,12 +448,19 @@ const MainLayout = styled(Box)(({ theme }) => ({
   gap: theme.spacing(3),
   gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
   alignItems: 'start',
+  [theme.breakpoints.down('md')]: {
+    gridTemplateColumns: '1fr',
+  },
 }));
 
 const FieldGrid = styled(Box)(({ theme }) => ({
   display: 'grid',
   gap: theme.spacing(3),
   gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+  [theme.breakpoints.down('sm')]: {
+    gridTemplateColumns: '1fr',
+    gap: theme.spacing(2.5),
+  },
 }));
 
 const AgentConfigurationForm: React.FC<AgentConfigurationFormProps> = ({
@@ -510,7 +554,7 @@ const AgentConfigurationForm: React.FC<AgentConfigurationFormProps> = ({
           >
             <HeroTitleGroup>
               <HeroIconBubble>
-                <SmartToyIcon sx={{ fontSize: 34 }} />
+                <SmartToyIcon sx={{ fontSize: { xs: 28, sm: 34 } }} />
               </HeroIconBubble>
               <Box>
                 <Typography
@@ -523,6 +567,7 @@ const AgentConfigurationForm: React.FC<AgentConfigurationFormProps> = ({
                     backgroundClip: 'text',
                     letterSpacing: '-0.03em',
                     lineHeight: 1.2,
+                    fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' },
                   }}
                 >
                   Agent Control Center
@@ -534,7 +579,7 @@ const AgentConfigurationForm: React.FC<AgentConfigurationFormProps> = ({
                     maxWidth: 560,
                     mt: 1.5,
                     lineHeight: 1.7,
-                    fontSize: '0.95rem',
+                    fontSize: { xs: '0.875rem', sm: '0.95rem' },
                   }}
                 >
                   Fine-tune bidding guardrails, pacing, and automation rules to align your AI recruiter
@@ -547,11 +592,11 @@ const AgentConfigurationForm: React.FC<AgentConfigurationFormProps> = ({
                 label={value.isActive ? 'Status: Active' : 'Status: Paused'}
                 sx={{
                   borderRadius: 999,
-                  px: 2.5,
-                  py: 1,
+                  px: { xs: 2, sm: 2.5 },
+                  py: { xs: 0.8, sm: 1 },
                   height: 'auto',
                   fontWeight: 700,
-                  fontSize: '0.85rem',
+                  fontSize: { xs: '0.75rem', sm: '0.85rem' },
                   backgroundColor: value.isActive
                     ? 'rgba(16, 185, 129, 0.15)'
                     : 'rgba(148, 163, 184, 0.2)',
@@ -575,11 +620,11 @@ const AgentConfigurationForm: React.FC<AgentConfigurationFormProps> = ({
                 label={value.autoSubmitTopMatch ? 'Automation: Enabled' : 'Automation: Manual review'}
                 sx={{
                   borderRadius: 999,
-                  px: 2.5,
-                  py: 1,
+                  px: { xs: 2, sm: 2.5 },
+                  py: { xs: 0.8, sm: 1 },
                   height: 'auto',
                   fontWeight: 700,
-                  fontSize: '0.85rem',
+                  fontSize: { xs: '0.75rem', sm: '0.85rem' },
                   backgroundColor: value.autoSubmitTopMatch
                     ? 'rgba(6, 182, 212, 0.15)'
                     : 'rgba(148, 163, 184, 0.15)',
@@ -604,11 +649,11 @@ const AgentConfigurationForm: React.FC<AgentConfigurationFormProps> = ({
                   label={`Agent Persona: ${agentSummary.agentName}`}
                   sx={{
                     borderRadius: 999,
-                    px: 2.5,
-                    py: 1,
+                    px: { xs: 2, sm: 2.5 },
+                    py: { xs: 0.8, sm: 1 },
                     height: 'auto',
                     fontWeight: 700,
-                    fontSize: '0.85rem',
+                    fontSize: { xs: '0.75rem', sm: '0.85rem' },
                     backgroundColor: 'rgba(99, 102, 241, 0.12)',
                     color: '#4338ca',
                     border: '1px solid rgba(99, 102, 241, 0.25)',
@@ -622,36 +667,6 @@ const AgentConfigurationForm: React.FC<AgentConfigurationFormProps> = ({
                 />
               )}
             </HeroActions>
-          </Stack>
-          <Stack
-            direction="row"
-            spacing={1.5}
-            alignItems="center"
-            sx={{
-              color: 'rgba(15, 23, 42, 0.6)',
-              backgroundColor: 'rgba(248, 250, 252, 0.5)',
-              borderRadius: 3,
-              padding: 2,
-              border: '1px solid rgba(226, 232, 240, 0.5)',
-            }}
-          >
-            <InfoOutlinedIcon sx={{ fontSize: 18, color: '#0ea5e9' }} />
-            <Typography variant="body2" sx={{ fontSize: '0.875rem', lineHeight: 1.6 }}>
-              Configurations sync instantly with the backend endpoint{' '}
-              <code
-                style={{
-                  fontFamily: 'monospace',
-                  backgroundColor: 'rgba(100, 116, 139, 0.1)',
-                  padding: '2px 8px',
-                  borderRadius: '6px',
-                  fontSize: '0.85rem',
-                  color: '#0ea5e9',
-                  fontWeight: 600,
-                }}
-              >
-                POST /agent-config/createAgentConfig
-              </code>
-            </Typography>
           </Stack>
         </HeroInner>
       </HeroCard>
