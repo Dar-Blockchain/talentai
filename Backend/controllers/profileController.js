@@ -322,9 +322,9 @@ module.exports.deleteSoftSkill = async (req, res) => {
 // Mettre à jour le finalBid
 module.exports.updateFinalBid = async (req, res) => {
   try {
-    const { newBid, userId, postId} = req.body;
+    const { newBid, userId, postId , companyId} = req.body;
 
-    const companyId = req.user._id;
+    //const companyId = req.user._id;
     
     if (typeof newBid !== "number" || newBid <= 0) {
       return res
