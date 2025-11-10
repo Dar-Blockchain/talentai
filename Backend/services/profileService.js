@@ -390,12 +390,10 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
       throw new Error("You cannot bid again if your company made the last bid");
     }
 
-    // Si un bid existe déjà → on additionne
-    let finalBid;
-    if (profile.companyBid.finalBid) {
-      finalBid = profile.companyBid.finalBid + newBid;
-    } else {
-      finalBid = newBid;
+    // Vérifier si le nouveau bid est plus grand que l'ancien
+    let finalBid = newBid;
+    if (profile.companyBid.finalBid && newBid <= profile.companyBid.finalBid) {
+      throw new Error("Le nouveau bid doit être supérieur au bid actuel");
     }
 
     // ✅ Mettre à jour le bid
