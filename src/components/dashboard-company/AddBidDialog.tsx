@@ -24,6 +24,7 @@ interface AddBidDialogProps {
   onClose: () => void;
   selectedCandidate: any;
   selectedJob: string;
+  companyId: string;
 }
 
 const AddBidDialog: React.FC<AddBidDialogProps> = ({
@@ -31,21 +32,29 @@ const AddBidDialog: React.FC<AddBidDialogProps> = ({
   onClose,
   selectedCandidate,
   selectedJob,
+  companyId,
 }) => {
   const [bidAmount, setBidAmount] = useState('');
   const [isSubmittingBid, setIsSubmittingBid] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
 
-  const handleBidSubmit = async () => {
+  const handleBidClick = () => {
+    if (!selectedCandidate || !bidAmount) return;
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmBid = async () => {
     try {
-      if (!selectedCandidate || !bidAmount) return;
       setIsSubmittingBid(true);
       const params = {
         newBid: Number(bidAmount),
         userId: selectedCandidate.candidateId._id,
-        postId: selectedJob
+        postId: selectedJob,
+        companyId: companyId
       };
       await dispatch(placeBid(params)).unwrap();
+      setShowConfirmation(false);
       onClose();
       toast.success("Bid submitted successfully!", {
         position: "top-right",
@@ -73,8 +82,13 @@ const AddBidDialog: React.FC<AddBidDialogProps> = ({
     }
   };
 
+  const handleCancelConfirmation = () => {
+    setShowConfirmation(false);
+  };
+
   const handleClose = () => {
     setBidAmount('');
+    setShowConfirmation(false);
     onClose();
   };
 
@@ -229,7 +243,7 @@ const AddBidDialog: React.FC<AddBidDialogProps> = ({
         </Button>
         <Button
           variant="contained"
-          onClick={handleBidSubmit}
+          onClick={handleBidClick}
           disabled={!bidAmount || parseFloat(bidAmount) <= 0 || isSubmittingBid}
           sx={{
             background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
@@ -243,16 +257,101 @@ const AddBidDialog: React.FC<AddBidDialogProps> = ({
             }
           }}
         >
-          {isSubmittingBid ? (
-            <>
-              <CircularProgress size={20} sx={{ mr: 1, color: '#fff' }} />
-              Submitting...
-            </>
-          ) : (
-            'Submit Bid'
-          )}
+          Submit Bid
         </Button>
       </DialogActions>
+
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={showConfirmation}
+        onClose={handleCancelConfirmation}
+        maxWidth="xs"
+        fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              background: 'white',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '16px',
+              border: '1px solid rgba(255,255,255,0.1)',
+            }
+          }
+        }}
+      >
+        <DialogTitle sx={{
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
+          color: 'black',
+          fontWeight: 600,
+        }}>
+          Confirm Bid
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Typography sx={{ color: 'black', mb: 2 }}>
+            Are you sure you want to place a bid of{' '}
+            <Box component="span" sx={{ fontWeight: 700, color: '#02E2FF' }}>
+              ${bidAmount}
+            </Box>
+            {' '}for candidate{' '}
+            <Box component="span" sx={{ fontWeight: 700 }}>
+              {selectedCandidate?.candidateId?.username}
+            </Box>
+            ?
+          </Typography>
+          <Box sx={{
+            background: 'rgba(2,226,255,0.1)',
+            borderRadius: '8px',
+            p: 2,
+            border: '1px solid rgba(2,226,255,0.3)',
+          }}>
+            <Typography variant="body2" sx={{ color: 'black', fontWeight: 500 }}>
+              Current bid: ${selectedCandidate?.finalBid || 0}
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'black', fontWeight: 500, mt: 0.5 }}>
+              New bid: ${bidAmount}
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{
+          p: 2,
+          borderTop: '1px solid rgba(255,255,255,0.1)'
+        }}>
+          <Button
+            onClick={handleCancelConfirmation}
+            sx={{
+              color: 'black',
+              mr: 1
+            }}
+            disabled={isSubmittingBid}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirmBid}
+            disabled={isSubmittingBid}
+            sx={{
+              background: 'linear-gradient(135deg, #02E2FF 0%, #00FFC3 100%)',
+              color: 'black',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #00C3FF 0%, #00E2B8 100%)',
+              },
+              '&.Mui-disabled': {
+                background: 'grey',
+                color: 'rgba(255,255,255,0.3)'
+              }
+            }}
+          >
+            {isSubmittingBid ? (
+              <>
+                <CircularProgress size={20} sx={{ mr: 1, color: '#fff' }} />
+                Submitting...
+              </>
+            ) : (
+              'Confirm'
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Dialog>
   );
 };

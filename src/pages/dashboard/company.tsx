@@ -273,6 +273,7 @@ const DashboardCompany = () => {
             onClose={handleBidDialogClose}
             selectedCandidate={selectedCandidate}
             selectedJob={selectedJob}
+            companyId={profile?.userId?._id || ''}
           />
           {/* Company Profiles & Assessments Section */}
           <CompanyProfilesAssessments profile={profile} />
