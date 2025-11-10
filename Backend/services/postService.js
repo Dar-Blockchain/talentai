@@ -258,7 +258,7 @@ module.exports.getAllPostsWithSearch = async (filters = {}, page = 1, limit = 6)
 // Récupérer un post par son ID
 module.exports.getPostById = async (postId) => {
   try {
-    const post = await Post.findById(postId).populate("user", "username email");
+    const post = await Post.findById(postId).populate("user", "username email").populate("post_Steps").populate('agentConfig').populate('agentId');
     if (!post) {
       throw new Error("Post not found");
     }
@@ -300,6 +300,8 @@ module.exports.getPostsByUserId = async (userId) => {
     return await Post.find({ user: userId })
       .populate("user", "username email")
       .populate("post_Steps") // Populate the post_Steps reference
+      .populate('agentConfig')
+      .populate('agentId')
       .sort({ createdAt: -1 });
   } catch (error) {
     throw new Error(`Error fetching user posts: ${error.message}`);
