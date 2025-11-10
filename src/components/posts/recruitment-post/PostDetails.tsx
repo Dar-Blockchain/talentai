@@ -1,4 +1,4 @@
-import React, { useState, useImperativeHandle, forwardRef } from "react";
+import React, { useState, useImperativeHandle, forwardRef, useEffect } from "react";
 import { Box, Alert } from "@mui/material";
 import Cookies from "js-cookie";
 import JobDescriptionInput from "./components/JobDescriptionInput";
@@ -7,7 +7,11 @@ import { JobPost, PostDetailsRef, SalaryRange } from "./types";
 
 const CLEAN_BACKGROUND = "#ffffff";
 
-const PostDetails = forwardRef<PostDetailsRef>((props, ref) => {
+interface PostDetailsProps {
+  onReadyChange?: (ready: boolean) => void;
+}
+
+const PostDetails = forwardRef<PostDetailsRef, PostDetailsProps>(({ onReadyChange }, ref) => {
   const [jobDescription, setJobDescription] = useState("");
   const [salaryRange, setSalaryRange] = useState<SalaryRange>({
     currency: "$",
@@ -29,6 +33,10 @@ const PostDetails = forwardRef<PostDetailsRef>((props, ref) => {
   );
   const [postedJobId, setPostedJobId] = useState<string | null>(null);
   const [jobPostDialog, setJobPostDialog] = useState(false);
+
+  useEffect(() => {
+    onReadyChange?.(generatedJob !== null && !isSaving);
+  }, [generatedJob, isSaving, onReadyChange]);
 
   // Helper Functions
   const isSalaryRangeValid = (): boolean => {

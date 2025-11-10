@@ -11,7 +11,6 @@ import {
   IconButton,
   Tooltip,
   Modal,
-  Paper,
   TextField,
   FormControl,
   InputLabel,
@@ -78,6 +77,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 import PostDetails from './recruitment-post/PostDetails';
 import { PostDetailsRef } from './recruitment-post/types';
+import AgentConfigurationForm, { AgentConfigurationFormValues } from './AgentConfigurationForm';
 import { AppDispatch } from '@/store/store';
 import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
@@ -87,6 +87,21 @@ import Navbar from '../dashboard-company/Navbar';
 
 // Constants
 const GREEN_MAIN = '#00FF9D';
+
+const DEFAULT_AGENT_CONFIG: AgentConfigurationFormValues = {
+  agentId: '',
+  postId: '',
+  thresholdPercent: 80,
+  bidBudgetMin: 20,
+  bidBudgetMax: 500,
+  bidStep: 10,
+  maxCandidatesToBid: 2,
+  agentLifetimeDays: 30,
+  bidLifetimeDays: 7,
+  autoSubmitTopMatch: true,
+  maxDailySpending: 150,
+  isActive: true,
+};
 
 // Styled components
 const Container = styled(Box)({
@@ -348,6 +363,11 @@ interface ChatMessage {
 const RecruitmentFlowBuilder: React.FC = () => {
   const router = useRouter();
 
+  const apiBaseUrl = React.useMemo(() => {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/';
+    return base.endsWith('/') ? base : `${base}/`;
+  }, []);
+
   // Redux
   const dispatch = useDispatch<AppDispatch>();
   const postStepsLoading = useSelector(selectPostStepsLoading);
@@ -375,11 +395,41 @@ const RecruitmentFlowBuilder: React.FC = () => {
   const [isSavingJob, setIsSavingJob] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [savedJobId, setSavedJobId] = useState<string | null>(null);
+  const [agentConfig, setAgentConfig] = useState<AgentConfigurationFormValues>({ ...DEFAULT_AGENT_CONFIG });
+  const [isSavingAgentConfig, setIsSavingAgentConfig] = useState(false);
+  const [registeredAgentId, setRegisteredAgentId] = useState<string | null>(null);
+  const [registeredAgentName, setRegisteredAgentName] = useState<string | null>(null);
   const [isSavingSteps, setIsSavingSteps] = useState(false);
   const [isRegisteringAgent, setIsRegisteringAgent] = useState(false);
+  const [postDetailsReady, setPostDetailsReady] = useState(false);
 
   // Refs
   const postDetailsRef = useRef<PostDetailsRef>(null);
+
+  React.useEffect(() => {
+    if (savedJobId) {
+      setAgentConfig((prev) => ({
+        ...prev,
+        postId: savedJobId,
+      }));
+    }
+  }, [savedJobId]);
+
+  React.useEffect(() => {
+    if (registeredAgentId) {
+      setAgentConfig((prev) => ({
+        ...prev,
+        agentId: registeredAgentId,
+      }));
+    }
+  }, [registeredAgentId]);
+
+  const handleAgentConfigChange = useCallback((update: Partial<AgentConfigurationFormValues>) => {
+    setAgentConfig((prev) => ({
+      ...prev,
+      ...update,
+    }));
+  }, []);
 
   // Function to register HR Agent for the post
   const registerHRAgent = async (jobId: string) => {
@@ -513,11 +563,11 @@ const RecruitmentFlowBuilder: React.FC = () => {
 
       // Try multiple token sources
       let token: string | undefined = Cookies.get("api_token");
-      if (!token) {
-        token = localStorage.getItem('api_token') || undefined;
-      }
-      if (!token) {
-        token = localStorage.getItem('token') || undefined;
+      if (!token && typeof window !== 'undefined') {
+        token =
+          window.localStorage.getItem('api_token') ||
+          window.localStorage.getItem('token') ||
+          undefined;
       }
 
       if (!token) {
@@ -536,7 +586,7 @@ const RecruitmentFlowBuilder: React.FC = () => {
           console.log(`Attempt ${attempt}/3: Making HR agent registration request...`);
 
           response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}hr-agents/initialize`,
+            `${apiBaseUrl}hr-agents/initialize`,
             {
               method: "POST",
               headers: {
@@ -618,6 +668,23 @@ const RecruitmentFlowBuilder: React.FC = () => {
       console.log('HR Agent registered successfully:', result);
       toast.success('HR Agent registered successfully for this post');
 
+      const firstAgent =
+        (Array.isArray(result?.data) && result.data.length > 0 && result.data[0]) ||
+        result?.agent ||
+        null;
+      const derivedAgentId =
+        firstAgent?._id ||
+        firstAgent?.id ||
+        (typeof firstAgent === 'object' && 'agent' in firstAgent && (firstAgent as any).agent?._id);
+
+      if (derivedAgentId) {
+        setRegisteredAgentId(derivedAgentId);
+      }
+
+      if (firstAgent && typeof firstAgent === 'object' && 'name' in firstAgent) {
+        setRegisteredAgentName((firstAgent as any).name as string);
+      }
+
       return result;
     } catch (error) {
       console.error('Error registering HR agent:', error);
@@ -629,9 +696,9 @@ const RecruitmentFlowBuilder: React.FC = () => {
   };
 
   const steps = [
-    'Job Details',              // Step 1: Job title, description, etc.
-    'Recruitment Flow',         // Step 2: Define recruitment sequence
-    // 'Final Review'              // Step 3: Confirm all before publishing
+    'Job Details',
+    'Agent Configuration',
+    'Recruitment Flow',
   ];
   // Define node types for React Flow
   const nodeTypes: NodeTypes = useMemo(() => ({ custom: CustomNode }), []);
@@ -961,10 +1028,8 @@ Ready to customize the content or add more triggers?`
   };
 
   const handleNext = async () => {
-    // Clear any previous save errors
     setSaveError(null);
 
-    // Check if profile is loaded
     if (!authProfile && authLoading) {
       setSaveError('Profile is still loading. Please wait a moment and try again.');
       return;
@@ -975,7 +1040,6 @@ Ready to customize the content or add more triggers?`
       return;
     }
 
-    // If we're on the Job Post step (step 0), save the job first
     if (activeStep === 0) {
       if (!postDetailsRef.current?.canProceed()) {
         setSaveError('Please generate a job post before proceeding to the next step.');
@@ -990,16 +1054,21 @@ Ready to customize the content or add more triggers?`
           return;
         }
 
-        // Use the actual job ID returned from the save operation
         setSavedJobId(saveResult.jobId);
+        setAgentConfig({
+          ...DEFAULT_AGENT_CONFIG,
+          postId: saveResult.jobId,
+          agentId: '',
+        });
+        setPostDetailsReady(false);
+        setRegisteredAgentId(null);
+        setRegisteredAgentName(null);
 
-        // Register HR Agent for this post
         try {
           await registerHRAgent(saveResult.jobId);
         } catch (agentError) {
           console.error('Error registering HR agent:', agentError);
-          // Don't block the flow if agent registration fails
-          toast.error('Warning: HR agent registration failed, but job was saved.');
+          toast.error('Warning: HR agent registration failed. You can retry or specify the agent manually later.');
         }
       } catch (error) {
         console.error('Error during job save:', error);
@@ -1008,19 +1077,121 @@ Ready to customize the content or add more triggers?`
       } finally {
         setIsSavingJob(false);
       }
+
+      setActiveStep((prev) => prev + 1);
+      return;
     }
 
-    if (activeStep < steps.length - 1) {
-      setActiveStep(activeStep + 1);
-    } else {
-      // Final step - save the sequence
+    if (activeStep === 1) {
+      if (!savedJobId) {
+        setSaveError('No job ID available. Please save the job post before configuring the agent.');
+        return;
+      }
+
+      const normalizedAgentId = agentConfig.agentId?.trim();
+      if (!normalizedAgentId) {
+        setSaveError('Agent ID is missing. Please wait for the agent to finish registering or contact support.');
+        return;
+      }
+
+      const numericFields: Array<keyof AgentConfigurationFormValues> = [
+        'thresholdPercent',
+        'bidBudgetMin',
+        'bidBudgetMax',
+        'bidStep',
+        'maxCandidatesToBid',
+        'agentLifetimeDays',
+        'bidLifetimeDays',
+        'maxDailySpending',
+      ];
+
+      const incompleteField = numericFields.find((field) => {
+        const value = agentConfig[field];
+        return value === undefined || value === null || Number.isNaN(Number(value));
+      });
+
+      if (incompleteField) {
+        setSaveError('Please complete all agent configuration fields before continuing.');
+        return;
+      }
+
+      let token: string | undefined = Cookies.get("api_token");
+      if (!token && typeof window !== 'undefined') {
+        token =
+          window.localStorage.getItem('api_token') ||
+          window.localStorage.getItem('token') ||
+          undefined;
+      }
+
+      if (!token) {
+        setSaveError('No authentication token found. Please log in again.');
+        return;
+      }
+
+      const payload = {
+        agentId: normalizedAgentId,
+        postId: savedJobId,
+        thresholdPercent: Number(agentConfig.thresholdPercent),
+        bidBudgetMin: Number(agentConfig.bidBudgetMin),
+        bidBudgetMax: Number(agentConfig.bidBudgetMax),
+        bidStep: Number(agentConfig.bidStep),
+        maxCandidatesToBid: Number(agentConfig.maxCandidatesToBid),
+        agentLifetimeDays: Number(agentConfig.agentLifetimeDays),
+        bidLifetimeDays: Number(agentConfig.bidLifetimeDays),
+        autoSubmitTopMatch: Boolean(agentConfig.autoSubmitTopMatch),
+        maxDailySpending: Number(agentConfig.maxDailySpending),
+        isActive: Boolean(agentConfig.isActive),
+      };
+
+      setIsSavingAgentConfig(true);
+      try {
+        const response = await fetch(`${apiBaseUrl}agent-config/createAgentConfig`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const rawResponse = await response.text();
+        let responseBody: any = {};
+        try {
+          responseBody = rawResponse ? JSON.parse(rawResponse) : {};
+        } catch (parseError) {
+          console.warn('Failed to parse agent config response as JSON:', parseError);
+        }
+
+        if (!response.ok || responseBody?.success === false) {
+          const errorMessage =
+            (responseBody && typeof responseBody === 'object' && (responseBody.error || responseBody.message)) ||
+            `Failed to save agent configuration (HTTP ${response.status}).`;
+          setSaveError(errorMessage);
+          toast.error(errorMessage);
+          return;
+        }
+
+        toast.success('Agent configuration saved successfully.');
+        setActiveStep((prev) => prev + 1);
+      } catch (error) {
+        console.error('Error saving agent configuration:', error);
+        setSaveError('An error occurred while saving the agent configuration. Please try again.');
+        toast.error('An error occurred while saving the agent configuration.');
+      } finally {
+        setIsSavingAgentConfig(false);
+      }
+
+      return;
+    }
+
+    if (activeStep === steps.length - 1) {
       if (!savedJobId) {
         setSaveError('No job ID available. Please save the job post first.');
         return;
       }
 
       try {
-        setIsSavingSteps(true)
+        setIsSavingSteps(true);
         const sequenceData = nodes.map((node, index) => ({
           ...node,
           order: index,
@@ -1034,10 +1205,8 @@ Ready to customize the content or add more triggers?`
             }))
         }));
 
-
         console.log('Sending steps to API:', sequenceData);
 
-        // Call the Redux action to save the sequence
         const result = await dispatch(postRecruitmentSteps({
           postId: savedJobId,
           steps: sequenceData
@@ -1045,22 +1214,17 @@ Ready to customize the content or add more triggers?`
 
         if (postRecruitmentSteps.fulfilled.match(result)) {
           console.log('Sequence saved successfully:', result.payload);
-          setIsSavingSteps(false)
           toast.success("Job post created successfully! Your recruitment flow has been saved.");
-          // You can add success notification here
-          router.push('/dashboard/company')
+          router.push('/dashboard/company');
         } else {
-          setIsSavingSteps(false)
-
           console.error('Failed to save sequence:', result.payload);
           setSaveError(`Failed to save sequence: ${result.payload}`);
         }
-
       } catch (error) {
-        setIsSavingSteps(false)
-
         console.error('Error saving sequence:', error);
         setSaveError('An error occurred while saving the sequence. Please try again.');
+      } finally {
+        setIsSavingSteps(false);
       }
     }
   };
@@ -1090,9 +1254,25 @@ Ready to customize the content or add more triggers?`
     switch (activeStep) {
       case 0:
         return (
-          <PostDetails ref={postDetailsRef} />
+          <PostDetails
+            ref={postDetailsRef}
+            onReadyChange={setPostDetailsReady}
+          />
         );
       case 1:
+        return (
+          <AgentConfigurationForm
+            value={agentConfig}
+            onChange={handleAgentConfigChange}
+            disabled={!savedJobId || isSavingAgentConfig || isRegisteringAgent}
+            loading={isSavingAgentConfig}
+            errorMessage={activeStep === 1 ? saveError : null}
+            agentSummary={{
+              agentName: registeredAgentName ?? undefined,
+            }}
+          />
+        );
+      case 2:
         return (
           <Box sx={{ flex: 1, height: '100%', position: 'relative' }}>
             <ReactFlow
@@ -1218,33 +1398,6 @@ Ready to customize the content or add more triggers?`
             )}
           </Box>
         );
-      case 2:
-        return (
-          <Box sx={{ flex: 1, p: 3 }}>
-            <Typography variant="h5" sx={{ mb: 3, color: '#1f2937' }}>
-              Review & Launch
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 3, color: '#6b7280' }}>
-              Review your sequence configuration before launching.
-            </Typography>
-            <Paper sx={{ p: 3, maxWidth: 800 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Sequence Summary
-              </Typography>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                  Nodes: {nodes.length}
-                </Typography>
-                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                  Connections: {edges.length}
-                </Typography>
-              </Box>
-              <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                Your sequence is ready to be launched. Click "Launch Sequence" to start sending.
-              </Typography>
-            </Paper>
-          </Box>
-        );
       default:
         return null;
     }
@@ -1287,73 +1440,56 @@ Ready to customize the content or add more triggers?`
 
           {/* Center - Progress Indicator */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {/* Step 1 */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box
-                sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  backgroundColor: activeStep === 0 ? '#10b981' : '#d1d5db',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontWeight: 600,
-                  fontSize: '1rem'
-                }}
-              >
-                1
-              </Box>
-              <Typography
-                sx={{
-                  color: activeStep === 0 ? '#10b981' : '#9ca3af',
-                  fontWeight: 500,
-                  fontSize: '1rem'
-                }}
-              >
-                Job Description
-              </Typography>
-            </Box>
+            {steps.map((label, index) => {
+              const isActive = activeStep === index;
+              const isCompleted = activeStep > index;
+              const circleColor = isActive || isCompleted ? '#10b981' : '#d1d5db';
+              const textColor = isActive ? '#10b981' : isCompleted ? '#059669' : '#9ca3af';
 
-            {/* Progress Line */}
-            <Box
-              sx={{
-                width: 40,
-                height: 2,
-                backgroundColor: activeStep >= 1 ? '#10b981' : '#e5e7eb',
-                borderRadius: 1
-              }}
-            />
-
-            {/* Step 2 */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box
-                sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  backgroundColor: activeStep === 1 ? '#10b981' : '#d1d5db',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontWeight: 600,
-                  fontSize: '1rem'
-                }}
-              >
-                2
-              </Box>
-              <Typography
-                sx={{
-                  color: activeStep === 1 ? '#10b981' : '#9ca3af',
-                  fontWeight: 500,
-                  fontSize: '1rem'
-                }}
-              >
-                Recruitment Flow
-              </Typography>
-            </Box>
+              return (
+                <React.Fragment key={label}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        backgroundColor: circleColor,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontWeight: 600,
+                        fontSize: '1rem',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      {index + 1}
+                    </Box>
+                    <Typography
+                      sx={{
+                        color: textColor,
+                        fontWeight: 500,
+                        fontSize: '1rem'
+                      }}
+                    >
+                      {label}
+                    </Typography>
+                  </Box>
+                  {index < steps.length - 1 && (
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 2,
+                        backgroundColor: activeStep > index ? '#10b981' : '#e5e7eb',
+                        borderRadius: 1,
+                        transition: 'all 0.3s ease'
+                      }}
+                    />
+                  )}
+                </React.Fragment>
+              );
+            })}
           </Box>
         </Box>
 
@@ -1409,11 +1545,19 @@ Ready to customize the content or add more triggers?`
             </Typography>
           </Box>
         )}
+
+        {saveError && (
+          <Box sx={{ mt: 2 }}>
+            <Alert severity="error" sx={{ borderRadius: 1 }}>
+              {saveError}
+            </Alert>
+          </Box>
+        )}
       </Header>
 
 
       <MainContent>
-        {activeStep === 1 && (
+        {activeStep === 2 && (
           <Sidebar>
             {menuItems.map((item) => {
               const IconComponent = item.icon;
@@ -1458,37 +1602,42 @@ Ready to customize the content or add more triggers?`
               paddingY: 1.25,
               fontWeight: 500,
               fontSize: '0.875rem',
-              borderColor: '#64748b', // Slate-500
-              color: '#1e293b', // Slate-800
+              borderColor: '#64748b',
+              color: '#1e293b',
               textTransform: 'none',
               transition: 'all 0.3s ease',
               '&:hover': {
-                backgroundColor: '#f1f5f9', // Slate-100
-                borderColor: '#475569', // Slate-600
+                backgroundColor: '#f1f5f9',
+                borderColor: '#475569',
               },
               '&.Mui-disabled': {
-                borderColor: '#cbd5e1', // Slate-300
-                color: '#94a3b8', // Slate-400
-                backgroundColor: '#f8fafc', // subtle disabled background
+                borderColor: '#cbd5e1',
+                color: '#94a3b8',
+                backgroundColor: '#f8fafc',
               }
             }}
           >
             Back
           </Button>
 
-
           {activeStep < steps.length - 1 ? (
             <Button
               variant="contained"
               endIcon={
-                isSavingJob || isSavingSteps || isRegisteringAgent ? (
+                isSavingJob || isSavingSteps || isRegisteringAgent || isSavingAgentConfig ? (
                   <CircularProgress size={16} sx={{ color: 'white' }} />
                 ) : (
                   <ArrowForwardIcon />
                 )
               }
               onClick={handleNext}
-              disabled={isSavingSteps || isSavingJob || isRegisteringAgent || (activeStep === 0 && postDetailsRef.current?.canProceed())}
+              disabled={
+                isSavingSteps ||
+                isSavingJob ||
+                isRegisteringAgent ||
+                isSavingAgentConfig ||
+                (activeStep === 0 && !postDetailsReady)
+              }
               sx={{
                 borderRadius: '8px',
                 px: 3,
@@ -1513,13 +1662,14 @@ Ready to customize the content or add more triggers?`
                 ? 'Saving Job...'
                 : isRegisteringAgent
                   ? 'Creating AI Agent...'
-                  : postStepsLoading
-                    ? 'Confirm...'
-                    : activeStep === steps.length - 1
-                      ? 'Save Sequence'
-                      : 'Next'}
+                  : isSavingAgentConfig
+                    ? 'Saving Agent Config...'
+                    : postStepsLoading
+                      ? 'Confirm...'
+                      : activeStep === 1
+                        ? 'Save & Continue'
+                        : 'Next'}
             </Button>
-
           ) : (
             <Button
               variant="contained"
@@ -1548,7 +1698,7 @@ Ready to customize the content or add more triggers?`
                 },
               }}
             >
-              Confirm
+              {isSavingSteps ? 'Saving Flow...' : 'Launch Flow'}
             </Button>
           )}
         </Box>
