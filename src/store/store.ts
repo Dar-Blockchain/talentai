@@ -18,6 +18,7 @@ import userReducer from './slices/userSlice';
 import postReducer from './slices/postSlice';
 import hrAgentsReducer from './slices/hrAgentsSlice';
 import tokenReducer from './slices/tokenSlice';
+import agentConfigReducer from './slices/agentConfigSlice';
 
 const rootReducer = combineReducers({
   user: userReducer,
@@ -29,7 +30,8 @@ const rootReducer = combineReducers({
   // project slice removed
   post: postReducer,
   hrAgents: hrAgentsReducer,
-  token: tokenReducer
+  token: tokenReducer,
+  agentConfig: agentConfigReducer
 });
 
 const persistConfig = {

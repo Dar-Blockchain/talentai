@@ -229,6 +229,7 @@ const DashboardCompany = () => {
                   }}
                   onLoadMore={() => setDisplayCount((prev: number) => prev + 3)}
                   onCreateNewJob={() => router.push("/posts/create")}
+                  onRefresh={fetchMyJobs}
                   deleteDialogOpen={deleteDialogOpen}
                   isDeleting={isDeleting}
                   jobToDelete={jobToDelete}

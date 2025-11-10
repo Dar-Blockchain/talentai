@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, Chip, Stack, Divider, IconButton, List, ListItem, ListItemText, Accordion, AccordionSummary, AccordionDetails, Grid, LinearProgress } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, Chip, Stack, Divider, IconButton, List, ListItem, ListItemText, Accordion, AccordionSummary, AccordionDetails, LinearProgress, TextField, Switch, FormControlLabel, CircularProgress } from '@mui/material';
 import { Stepper, Step, StepLabel } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
@@ -13,21 +13,145 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import SettingsIcon from '@mui/icons-material/Settings';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 import Link from 'next/link';
+import { useDispatch, useSelector } from 'react-redux';
+import { updateAgentConfig, resetUpdateStatus } from '@/store/slices/agentConfigSlice';
+import { AppDispatch, RootState } from '@/store/store';
+import { toast } from 'react-toastify';
 
 interface JobDetailsDialogProps {
   open: boolean;
   onClose: () => void;
   job: any | null;
+  onRefresh?: () => void;
 }
 
-const JobDetailsDialog: React.FC<JobDetailsDialogProps> = ({ open, onClose, job }) => {
+const JobDetailsDialog: React.FC<JobDetailsDialogProps> = ({ open, onClose, job, onRefresh }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { status: updateStatus, error: updateError } = useSelector((state: RootState) => state.agentConfig.updateConfig);
+
   const details = job?.jobDetails || job;
   const createdAt = job?.createdAt || job?.created_at || job?.postedAt;
   const steps: any[] = Array.isArray(job?.post_Steps) ? [...job.post_Steps].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0)) : [];
   const firstStep = steps[0];
   const firstStepData = firstStep?.data;
   const postId = job?._id || job?.id;
+
+  // Edit mode state for agent configuration
+  const [isEditingAgentConfig, setIsEditingAgentConfig] = useState(false);
+  const [agentConfigForm, setAgentConfigForm] = useState({
+    thresholdPercent: 0,
+    bidBudgetMin: 0,
+    bidBudgetMax: 0,
+    bidStep: 0,
+    maxCandidatesToBid: 0,
+    agentLifetimeDays: 0,
+    bidLifetimeDays: 0,
+    autoSubmitTopMatch: false,
+    maxDailySpending: 0,
+    isActive: false
+  });
+
+  // Initialize form with job data when job changes
+  useEffect(() => {
+    if (job?.agentConfig) {
+      setAgentConfigForm({
+        thresholdPercent: job.agentConfig.thresholdPercent || 0,
+        bidBudgetMin: job.agentConfig.bidBudgetMin || 0,
+        bidBudgetMax: job.agentConfig.bidBudgetMax || 0,
+        bidStep: job.agentConfig.bidStep || 0,
+        maxCandidatesToBid: job.agentConfig.maxCandidatesToBid || 0,
+        agentLifetimeDays: job.agentConfig.agentLifetimeDays || 0,
+        bidLifetimeDays: job.agentConfig.bidLifetimeDays || 0,
+        autoSubmitTopMatch: job.agentConfig.autoSubmitTopMatch || false,
+        maxDailySpending: job.agentConfig.maxDailySpending || 0,
+        isActive: job.agentConfig.isActive || false
+      });
+    }
+  }, [job]);
+
+  // Handle form changes
+  const handleAgentConfigChange = (field: string, value: any) => {
+    setAgentConfigForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handle save agent config
+  const handleSaveAgentConfig = async () => {
+    if (!job?.agentConfig?._id) {
+      toast.error("Agent configuration ID not found", {
+        position: "top-right",
+        autoClose: 3000,
+        theme: "dark",
+      });
+      return;
+    }
+
+    try {
+      await dispatch(updateAgentConfig({
+        id: job.agentConfig._id,
+        data: agentConfigForm
+      })).unwrap();
+
+      toast.success("Agent configuration updated successfully!", {
+        position: "top-right",
+        autoClose: 3000,
+        theme: "dark",
+      });
+
+      // Refresh data from server to get the latest values
+      if (onRefresh) {
+        await onRefresh();
+        // Exit edit mode after data is refreshed
+        setIsEditingAgentConfig(false);
+      } else {
+        // Fallback: Update the job object with new values if no refresh function provided
+        if (job?.agentConfig) {
+          Object.assign(job.agentConfig, agentConfigForm);
+        }
+        setIsEditingAgentConfig(false);
+      }
+    } catch (error: any) {
+      toast.error(error || "Failed to update agent configuration", {
+        position: "top-right",
+        autoClose: 3000,
+        theme: "dark",
+      });
+    }
+  };
+
+  // Handle cancel edit
+  const handleCancelAgentConfigEdit = () => {
+    // Reset form to original values
+    if (job?.agentConfig) {
+      setAgentConfigForm({
+        thresholdPercent: job.agentConfig.thresholdPercent || 0,
+        bidBudgetMin: job.agentConfig.bidBudgetMin || 0,
+        bidBudgetMax: job.agentConfig.bidBudgetMax || 0,
+        bidStep: job.agentConfig.bidStep || 0,
+        maxCandidatesToBid: job.agentConfig.maxCandidatesToBid || 0,
+        agentLifetimeDays: job.agentConfig.agentLifetimeDays || 0,
+        bidLifetimeDays: job.agentConfig.bidLifetimeDays || 0,
+        autoSubmitTopMatch: job.agentConfig.autoSubmitTopMatch || false,
+        maxDailySpending: job.agentConfig.maxDailySpending || 0,
+        isActive: job.agentConfig.isActive || false
+      });
+    }
+    setIsEditingAgentConfig(false);
+  };
+
+  // Reset update status when dialog closes
+  useEffect(() => {
+    if (!open) {
+      dispatch(resetUpdateStatus());
+      setIsEditingAgentConfig(false);
+    }
+  }, [open, dispatch]);
 
   // Derive interview link using steps[0].data when available
   const computeInterviewHref = (): string | null => {
@@ -710,22 +834,38 @@ const JobDetailsDialog: React.FC<JobDetailsDialogProps> = ({ open, onClose, job 
                   </Typography>
                 </Box>
                 <Chip
-                  label={job.agentConfig.isActive ? 'Active' : 'Inactive'}
+                  label={isEditingAgentConfig ? agentConfigForm.isActive ? 'Active' : 'Inactive' : job.agentConfig.isActive ? 'Active' : 'Inactive'}
                   size="small"
                   sx={{
-                    backgroundColor: job.agentConfig.isActive ? '#d1fae5' : '#fee2e2',
-                    color: job.agentConfig.isActive ? '#065f46' : '#991b1b',
+                    backgroundColor: (isEditingAgentConfig ? agentConfigForm.isActive : job.agentConfig.isActive) ? '#d1fae5' : '#fee2e2',
+                    color: (isEditingAgentConfig ? agentConfigForm.isActive : job.agentConfig.isActive) ? '#065f46' : '#991b1b',
                     fontWeight: 700,
                     fontSize: '0.8rem',
                     px: 1.5,
                     height: 28
                   }}
                 />
+                {!isEditingAgentConfig && (
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsEditingAgentConfig(true);
+                    }}
+                    sx={{
+                      color: '#10b981',
+                      '&:hover': { backgroundColor: '#d1fae5' }
+                    }}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                )}
               </Stack>
             </AccordionSummary>
             <AccordionDetails sx={{ p: 3, backgroundColor: '#fafbfc' }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+              {!isEditingAgentConfig ? (
+                // Read-only mode
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                   <Box sx={{ p: 2, backgroundColor: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
                     <Typography variant="caption" sx={{ color: '#166534', fontWeight: 500 }}>Match Threshold</Typography>
                     <Typography variant="h6" sx={{ color: '#166534', fontWeight: 700 }}>{job.agentConfig.thresholdPercent}%</Typography>
@@ -741,8 +881,6 @@ const JobDetailsDialog: React.FC<JobDetailsDialogProps> = ({ open, onClose, job 
                       }}
                     />
                   </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
                   <Box sx={{ p: 2, backgroundColor: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
                     <Typography variant="caption" sx={{ color: '#1e40af', fontWeight: 500 }}>Bid Budget Range</Typography>
                     <Typography variant="h6" sx={{ color: '#1e40af', fontWeight: 700 }}>
@@ -750,41 +888,257 @@ const JobDetailsDialog: React.FC<JobDetailsDialogProps> = ({ open, onClose, job 
                     </Typography>
                     <Typography variant="caption" sx={{ color: '#3b82f6' }}>Step: ${job.agentConfig.bidStep}</Typography>
                   </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
                   <Box sx={{ p: 2, backgroundColor: '#fef3c7', borderRadius: '8px', border: '1px solid #fde68a' }}>
                     <Typography variant="caption" sx={{ color: '#92400e', fontWeight: 500 }}>Max Daily Spending</Typography>
                     <Typography variant="h6" sx={{ color: '#92400e', fontWeight: 700 }}>${job.agentConfig.maxDailySpending}</Typography>
                   </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
                   <Box sx={{ p: 2, backgroundColor: '#fce7f3', borderRadius: '8px', border: '1px solid #fbcfe8' }}>
                     <Typography variant="caption" sx={{ color: '#9f1239', fontWeight: 500 }}>Max Candidates</Typography>
                     <Typography variant="h6" sx={{ color: '#9f1239', fontWeight: 700 }}>{job.agentConfig.maxCandidatesToBid}</Typography>
                   </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
                   <Box sx={{ p: 2, backgroundColor: '#f3f4f6', borderRadius: '8px', border: '1px solid #d1d5db' }}>
                     <Typography variant="caption" sx={{ color: '#374151', fontWeight: 500 }}>Agent Lifetime</Typography>
                     <Typography variant="body1" sx={{ color: '#111827', fontWeight: 600 }}>{job.agentConfig.agentLifetimeDays} days</Typography>
                   </Box>
-                </Grid>
-                <Grid item xs={12} sm={6}>
                   <Box sx={{ p: 2, backgroundColor: '#f3f4f6', borderRadius: '8px', border: '1px solid #d1d5db' }}>
                     <Typography variant="caption" sx={{ color: '#374151', fontWeight: 500 }}>Bid Lifetime</Typography>
                     <Typography variant="body1" sx={{ color: '#111827', fontWeight: 600 }}>{job.agentConfig.bidLifetimeDays} days</Typography>
                   </Box>
-                </Grid>
-                {job.agentConfig.autoSubmitTopMatch && (
-                  <Grid item xs={12}>
-                    <Box sx={{ p: 2, backgroundColor: '#e0e7ff', borderRadius: '8px', border: '1px solid #c7d2fe' }}>
+                  {job.agentConfig.autoSubmitTopMatch && (
+                    <Box sx={{ p: 2, backgroundColor: '#e0e7ff', borderRadius: '8px', border: '1px solid #c7d2fe', gridColumn: '1 / -1' }}>
                       <Typography variant="body2" sx={{ color: '#3730a3', fontWeight: 500 }}>
                         🤖 Auto-submit top matches is enabled
                       </Typography>
                     </Box>
-                  </Grid>
-                )}
-              </Grid>
+                  )}
+                </Box>
+              ) : (
+                // Edit mode
+                <Box>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.5 }}>
+                      <TextField
+                        label="Match Threshold (%)"
+                        type="number"
+                        fullWidth
+                        size="small"
+                        value={agentConfigForm.thresholdPercent}
+                        onChange={(e) => handleAgentConfigChange('thresholdPercent', Number(e.target.value))}
+                        inputProps={{ min: 0, max: 100 }}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'white',
+                            '&:hover fieldset': { borderColor: '#10b981' },
+                            '&.Mui-focused fieldset': { borderColor: '#10b981' }
+                          },
+                          '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' }
+                        }}
+                      />
+                      <TextField
+                        label="Bid Budget Min ($)"
+                        type="number"
+                        fullWidth
+                        size="small"
+                        value={agentConfigForm.bidBudgetMin}
+                        onChange={(e) => handleAgentConfigChange('bidBudgetMin', Number(e.target.value))}
+                        inputProps={{ min: 0 }}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'white',
+                            '&:hover fieldset': { borderColor: '#10b981' },
+                            '&.Mui-focused fieldset': { borderColor: '#10b981' }
+                          },
+                          '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' }
+                        }}
+                      />
+                      <TextField
+                        label="Bid Budget Max ($)"
+                        type="number"
+                        fullWidth
+                        size="small"
+                        value={agentConfigForm.bidBudgetMax}
+                        onChange={(e) => handleAgentConfigChange('bidBudgetMax', Number(e.target.value))}
+                        inputProps={{ min: 0 }}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'white',
+                            '&:hover fieldset': { borderColor: '#10b981' },
+                            '&.Mui-focused fieldset': { borderColor: '#10b981' }
+                          },
+                          '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' }
+                        }}
+                      />
+                      <TextField
+                        label="Bid Step ($)"
+                        type="number"
+                        fullWidth
+                        size="small"
+                        value={agentConfigForm.bidStep}
+                        onChange={(e) => handleAgentConfigChange('bidStep', Number(e.target.value))}
+                        inputProps={{ min: 0 }}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'white',
+                            '&:hover fieldset': { borderColor: '#10b981' },
+                            '&.Mui-focused fieldset': { borderColor: '#10b981' }
+                          },
+                          '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' }
+                        }}
+                      />
+                      <TextField
+                        label="Max Daily Spending ($)"
+                        type="number"
+                        fullWidth
+                        size="small"
+                        value={agentConfigForm.maxDailySpending}
+                        onChange={(e) => handleAgentConfigChange('maxDailySpending', Number(e.target.value))}
+                        inputProps={{ min: 0 }}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'white',
+                            '&:hover fieldset': { borderColor: '#10b981' },
+                            '&.Mui-focused fieldset': { borderColor: '#10b981' }
+                          },
+                          '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' }
+                        }}
+                      />
+                      <TextField
+                        label="Max Candidates to Bid"
+                        type="number"
+                        fullWidth
+                        size="small"
+                        value={agentConfigForm.maxCandidatesToBid}
+                        onChange={(e) => handleAgentConfigChange('maxCandidatesToBid', Number(e.target.value))}
+                        inputProps={{ min: 0 }}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'white',
+                            '&:hover fieldset': { borderColor: '#10b981' },
+                            '&.Mui-focused fieldset': { borderColor: '#10b981' }
+                          },
+                          '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' }
+                        }}
+                      />
+                      <TextField
+                        label="Agent Lifetime (days)"
+                        type="number"
+                        fullWidth
+                        size="small"
+                        value={agentConfigForm.agentLifetimeDays}
+                        onChange={(e) => handleAgentConfigChange('agentLifetimeDays', Number(e.target.value))}
+                        inputProps={{ min: 0 }}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'white',
+                            '&:hover fieldset': { borderColor: '#10b981' },
+                            '&.Mui-focused fieldset': { borderColor: '#10b981' }
+                          },
+                          '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' }
+                        }}
+                      />
+                      <TextField
+                        label="Bid Lifetime (days)"
+                        type="number"
+                        fullWidth
+                        size="small"
+                        value={agentConfigForm.bidLifetimeDays}
+                        onChange={(e) => handleAgentConfigChange('bidLifetimeDays', Number(e.target.value))}
+                        inputProps={{ min: 0 }}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            backgroundColor: 'white',
+                            '&:hover fieldset': { borderColor: '#10b981' },
+                            '&.Mui-focused fieldset': { borderColor: '#10b981' }
+                          },
+                          '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' }
+                        }}
+                      />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={agentConfigForm.autoSubmitTopMatch}
+                            onChange={(e) => handleAgentConfigChange('autoSubmitTopMatch', e.target.checked)}
+                            sx={{
+                              '& .MuiSwitch-switchBase.Mui-checked': { color: '#10b981' },
+                              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#10b981' }
+                            }}
+                          />
+                        }
+                        label="Auto-submit Top Matches"
+                        sx={{
+                          backgroundColor: 'white',
+                          px: 2,
+                          py: 0.5,
+                          borderRadius: '8px',
+                          border: '1px solid #e5e7eb',
+                          m: 0,
+                          width: '100%'
+                        }}
+                      />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={agentConfigForm.isActive}
+                            onChange={(e) => handleAgentConfigChange('isActive', e.target.checked)}
+                            sx={{
+                              '& .MuiSwitch-switchBase.Mui-checked': { color: '#10b981' },
+                              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#10b981' }
+                            }}
+                          />
+                        }
+                        label="Agent Active"
+                        sx={{
+                          backgroundColor: 'white',
+                          px: 2,
+                          py: 0.5,
+                          borderRadius: '8px',
+                          border: '1px solid #e5e7eb',
+                          m: 0,
+                          width: '100%'
+                        }}
+                      />
+                  </Box>
+
+                  {/* Action Buttons */}
+                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<CancelIcon />}
+                      onClick={handleCancelAgentConfigEdit}
+                      disabled={updateStatus === 'loading'}
+                      sx={{
+                        borderColor: '#e5e7eb',
+                        color: '#6b7280',
+                        '&:hover': {
+                          borderColor: '#d1d5db',
+                          backgroundColor: '#f9fafb'
+                        }
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="contained"
+                      startIcon={updateStatus === 'loading' ? <CircularProgress size={16} sx={{ color: 'white' }} /> : <SaveIcon />}
+                      onClick={handleSaveAgentConfig}
+                      disabled={updateStatus === 'loading'}
+                      sx={{
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: 'white',
+                        fontWeight: 600,
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                        },
+                        '&.Mui-disabled': {
+                          background: '#9ca3af',
+                          color: 'white'
+                        }
+                      }}
+                    >
+                      {updateStatus === 'loading' ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </Box>
+                </Box>
+              )}
             </AccordionDetails>
           </Accordion>
         )}

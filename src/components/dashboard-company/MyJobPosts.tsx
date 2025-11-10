@@ -52,6 +52,7 @@ interface MyJobPostsProps {
   onDeleteJob: (jobId: string) => void;
   onLoadMore: () => void;
   onCreateNewJob: () => void;
+  onRefresh?: () => void;
   // Delete dialog control from parent
   deleteDialogOpen: boolean;
   isDeleting: boolean;
@@ -69,6 +70,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   onDeleteJob,
   onLoadMore,
   onCreateNewJob,
+  onRefresh,
   deleteDialogOpen,
   isDeleting,
   jobToDelete,
@@ -77,7 +79,12 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
 }) => {
   // State for job details modal
   const [jobDetailsModalOpen, setJobDetailsModalOpen] = useState(false);
-  const [selectedJobForDetails, setSelectedJobForDetails] = useState<any>(null);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+
+  // Get the latest job data from myJobs array based on selectedJobId
+  const selectedJobForDetails = selectedJobId
+    ? myJobs.find((job: any) => job._id === selectedJobId)
+    : null;
   
   // State for search and sort
   const [searchQuery, setSearchQuery] = useState('');
@@ -123,13 +130,13 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
 
   // Handlers for job details modal
   const handleViewJobDetails = (job: any) => {
-    setSelectedJobForDetails(job);
+    setSelectedJobId(job._id);
     setJobDetailsModalOpen(true);
   };
 
   const handleCloseJobDetailsModal = () => {
     setJobDetailsModalOpen(false);
-    setSelectedJobForDetails(null);
+    setSelectedJobId(null);
   };
   
   // Handler for pagination
@@ -442,7 +449,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
         </>
       )}
 
-      <JobDetailsDialog open={jobDetailsModalOpen} onClose={handleCloseJobDetailsModal} job={selectedJobForDetails} />
+      <JobDetailsDialog open={jobDetailsModalOpen} onClose={handleCloseJobDetailsModal} job={selectedJobForDetails} onRefresh={onRefresh} />
 
       {/* Delete Job Post Dialog */}
       <DeleteJobPostDialog
