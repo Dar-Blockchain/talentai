@@ -87,9 +87,8 @@ const getNavItems = (type: string): NavItem[] => {
   }
   if (type === "jobseeker") {
     return [
-      { label: "Home", href: "/home/candidate/" },
       { label: "Find Jobs", href: "/jobs/" },
-      { label: "About Us", id: "about" },
+      { label: "How It Works", id: "howitworks" },
       { label: "Are You Hiring?", href: "/home/company/" },
     ];
   }

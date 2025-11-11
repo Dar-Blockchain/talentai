@@ -9,8 +9,6 @@ import {
   Autocomplete,
   Paper,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import { JOB_LOCATIONS } from "@/constants/jobConstants";
@@ -22,9 +20,6 @@ type HeroSectionProps = {
 };
 const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
   const router = useRouter();
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-
   // Job search states
   const [jobTitle, setJobTitle] = useState("");
   const [location, setLocation] = useState("");
