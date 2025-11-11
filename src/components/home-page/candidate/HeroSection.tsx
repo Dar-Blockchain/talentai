@@ -9,7 +9,6 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import { useRouter } from "next/router";
 type HeroSectionProps = {
   color?: string;
@@ -24,7 +23,6 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
   // Job search states
   const [jobTitle, setJobTitle] = useState("");
   const [location, setLocation] = useState("");
-  const [category, setCategory] = useState("");
 
   // Statistics states
   const [stats, setStats] = useState({
@@ -75,7 +73,6 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
     const params = new URLSearchParams();
     if (jobTitle) params.append("search", jobTitle);
     if (location) params.append("location", location);
-    if (category) params.append("category", category);
 
     const queryString = params.toString();
     router.push(`/jobs${queryString ? `?${queryString}` : ""}`);
@@ -238,44 +235,6 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
                 startAdornment: (
                   <InputAdornment position="start">
                     <LocationOnIcon
-                      sx={{ color: "#6b7280", fontSize: "20px" }}
-                    />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <Box sx={{ width: "1px", backgroundColor: "#e5e7eb", my: 1 }} />
-            <TextField
-              placeholder="Category"
-              variant="outlined"
-              size="medium"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  handleJobSearch();
-                }
-              }}
-              sx={{
-                flex: 1,
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 0,
-                  border: "none",
-                  "& fieldset": {
-                    border: "none",
-                  },
-                  "&:hover fieldset": {
-                    border: "none",
-                  },
-                  "&.Mui-focused fieldset": {
-                    border: "none",
-                  },
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <FilterListIcon
                       sx={{ color: "#6b7280", fontSize: "20px" }}
                     />
                   </InputAdornment>

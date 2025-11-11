@@ -29,7 +29,7 @@ import {
 import { useRouter } from 'next/router';
 import Header from '@/components/Header';
 import SimpleFooter from '@/components/SimpleFooter';
-import { JOB_CATEGORIES, JOB_LOCATIONS } from '@/constants/jobConstants';
+import { JOB_LOCATIONS } from '@/constants/jobConstants';
 
 interface Job {
   id: string;
@@ -57,7 +57,6 @@ const JobSearchPage: React.FC = () => {
   
   // Search and filter states
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 6;
@@ -91,9 +90,7 @@ const JobSearchPage: React.FC = () => {
 
       // Add optional filters - use current state values
       if (searchQuery) params.append('search', searchQuery);
-      if (selectedCategory && selectedCategory !== 'All Categories') {
-        params.append('category', selectedCategory);
-      }
+      // Don't send category to backend - we'll filter on frontend
       if (selectedLocation && selectedLocation !== 'All Locations') {
         params.append('location', selectedLocation);
       }
@@ -134,7 +131,7 @@ const JobSearchPage: React.FC = () => {
           },
           description: job.jobDetails?.description || 'No description available',
           datePosted: job.createdAt || new Date().toISOString(),
-          skills: job.skillAnalysis?.requiredSkills?.map((skill: any) => 
+          skills: job.skillAnalysis?.requiredSkills?.map((skill: any) =>
             typeof skill === 'string' ? skill : skill.name
           ) || [],
           logo: job.user?.companyDetails?.logo || undefined,
@@ -152,13 +149,13 @@ const JobSearchPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchQuery, selectedCategory, selectedLocation]);
+  }, [currentPage, searchQuery, selectedLocation]);
 
   // Initialize search params from URL on page load ONCE
   useEffect(() => {
     if (router.isReady && !urlParamsLoaded) {
-      const { search, location, category } = router.query;
-      
+      const { search, location } = router.query;
+
       // Set state from URL parameters only on initial load
       if (search && typeof search === 'string') {
         setSearchQuery(search);
@@ -166,10 +163,7 @@ const JobSearchPage: React.FC = () => {
       if (location && typeof location === 'string') {
         setSelectedLocation(location);
       }
-      if (category && typeof category === 'string') {
-        setSelectedCategory(category);
-      }
-      
+
       // Mark URL params as loaded
       setUrlParamsLoaded(true);
     } else if (router.isReady && urlParamsLoaded === false) {
@@ -311,7 +305,7 @@ const JobSearchPage: React.FC = () => {
         {/* Search Bar - matches the image design */}
         <Card sx={{ p: 3, mb: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
           <Grid container spacing={2} alignItems="center">
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, md: 5 }}>
               <TextField
                 fullWidth
                 placeholder="Job Title"
@@ -331,73 +325,7 @@ const JobSearchPage: React.FC = () => {
                 }}
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
-              <Autocomplete
-                value={selectedCategory}
-                onChange={(event, newValue) => {
-                  setSelectedCategory(newValue || '');
-                }}
-                options={JOB_CATEGORIES}
-                getOptionLabel={(option) => option}
-                isOptionEqualToValue={(option, value) => option === value}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Category"
-                    placeholder="Search categories..."
-                    InputProps={{
-                      ...params.InputProps,
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <FilterIcon sx={{ color: '#8310FF' }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                      }
-                    }}
-                  />
-                )}
-                PaperComponent={({ children, ...other }) => (
-                  <Paper 
-                    {...other} 
-                    sx={{ 
-                      maxHeight: 300,
-                      '& .MuiAutocomplete-listbox': {
-                        maxHeight: 300,
-                        '& .MuiAutocomplete-option': {
-                          padding: '8px 16px',
-                          fontSize: '0.9rem',
-                          '&:hover': {
-                            backgroundColor: 'rgba(131, 16, 255, 0.08)',
-                          },
-                          '&.Mui-focused': {
-                            backgroundColor: 'rgba(131, 16, 255, 0.12)',
-                          }
-                        }
-                      }
-                    }}
-                  >
-                    {children}
-                  </Paper>
-                )}
-                renderOption={(props, option) => (
-                  <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center' }}>
-                    <FilterIcon sx={{ color: '#8310FF', mr: 1, fontSize: 16 }} />
-                    {option}
-                  </Box>
-                )}
-                noOptionsText="No categories found"
-                sx={{
-                  '& .MuiAutocomplete-inputRoot': {
-                    paddingRight: '14px !important',
-                  }
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 5 }}>
               <Autocomplete
                 value={selectedLocation}
                 onChange={(event, newValue) => {
@@ -427,9 +355,9 @@ const JobSearchPage: React.FC = () => {
                   />
                 )}
                 PaperComponent={({ children, ...other }) => (
-                  <Paper 
-                    {...other} 
-                    sx={{ 
+                  <Paper
+                    {...other}
+                    sx={{
                       maxHeight: 300,
                       '& .MuiAutocomplete-listbox': {
                         maxHeight: 300,
