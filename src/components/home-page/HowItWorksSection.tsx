@@ -100,7 +100,7 @@ const HowItWorksSection = () => {
             fontWeight: 700,
             fontSize: { xs: '32px', md: '48px' },
             mb: 6,
-            color: '#fff'
+            color: 'rgba(204, 204, 204, 1)'
           }}
         >
           How it works
@@ -158,7 +158,7 @@ const HowItWorksSection = () => {
                     fontFamily: 'Poppins',
                     fontWeight: currentStep === step.step ? 600 : 500,
                     fontSize: { xs: '16px', md: '18px' },
-                    color: '#fff',
+                    color: currentStep === step.step ? 'rgba(230, 230, 230, 1)' : 'rgba(153, 153, 153, 1)',
                     transition: 'all 0.3s ease'
                   }}
                 >
