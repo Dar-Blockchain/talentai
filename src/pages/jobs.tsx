@@ -334,17 +334,28 @@ const JobSearchPage: React.FC = () => {
                 options={JOB_LOCATIONS}
                 getOptionLabel={(option) => option}
                 isOptionEqualToValue={(option, value) => option === value}
+                filterOptions={(options, state) => {
+                  // Custom filtering for better search experience
+                  const inputValue = state.inputValue.toLowerCase();
+                  if (!inputValue) return options;
+
+                  return options.filter(option =>
+                    option.toLowerCase().includes(inputValue)
+                  );
+                }}
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Location"
-                    placeholder="Search countries..."
+                    placeholder="Search locations..."
                     InputProps={{
                       ...params.InputProps,
                       startAdornment: (
-                        <InputAdornment position="start">
-                          <LocationIcon sx={{ color: '#8310FF' }} />
-                        </InputAdornment>
+                        <>
+                          <InputAdornment position="start">
+                            <LocationIcon sx={{ color: '#8310FF' }} />
+                          </InputAdornment>
+                          {params.InputProps.startAdornment}
+                        </>
                       ),
                     }}
                     sx={{
@@ -358,17 +369,23 @@ const JobSearchPage: React.FC = () => {
                   <Paper
                     {...other}
                     sx={{
-                      maxHeight: 300,
+                      maxHeight: 400,
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                       '& .MuiAutocomplete-listbox': {
-                        maxHeight: 300,
+                        maxHeight: 400,
                         '& .MuiAutocomplete-option': {
-                          padding: '8px 16px',
+                          padding: '10px 16px',
                           fontSize: '0.9rem',
+                          transition: 'all 0.2s ease',
                           '&:hover': {
                             backgroundColor: 'rgba(131, 16, 255, 0.08)',
                           },
                           '&.Mui-focused': {
                             backgroundColor: 'rgba(131, 16, 255, 0.12)',
+                          },
+                          '&[aria-selected="true"]': {
+                            backgroundColor: 'rgba(131, 16, 255, 0.15)',
+                            fontWeight: 600,
                           }
                         }
                       }
@@ -378,15 +395,38 @@ const JobSearchPage: React.FC = () => {
                   </Paper>
                 )}
                 renderOption={(props, option) => (
-                  <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center' }}>
-                    <LocationIcon sx={{ color: '#8310FF', mr: 1, fontSize: 16 }} />
-                    {option}
+                  <Box
+                    component="li"
+                    {...props}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1
+                    }}
+                  >
+                    <LocationIcon sx={{ color: '#8310FF', fontSize: 18 }} />
+                    <Typography sx={{ fontSize: '0.9rem' }}>{option}</Typography>
                   </Box>
                 )}
-                noOptionsText="No countries found"
+                noOptionsText="No locations found"
+                clearOnEscape
+                autoHighlight
+                openOnFocus
                 sx={{
                   '& .MuiAutocomplete-inputRoot': {
                     paddingRight: '14px !important',
+                  },
+                  '& .MuiAutocomplete-clearIndicator': {
+                    color: '#8310FF',
+                    '&:hover': {
+                      backgroundColor: 'rgba(131, 16, 255, 0.08)',
+                    }
+                  },
+                  '& .MuiAutocomplete-popupIndicator': {
+                    color: '#8310FF',
+                    '&:hover': {
+                      backgroundColor: 'rgba(131, 16, 255, 0.08)',
+                    }
                   }
                 }}
               />
