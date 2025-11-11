@@ -616,90 +616,285 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
   return (
     <Box sx={{ width: '100%' }}>
 
-      {/* Header Section */}
-
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a1a1a', mb: 1 }}>
-          Post Interview Dashboard
-        </Typography>
-        <Typography variant="body1" color="textSecondary">
-          Review your interview performance, feedback, and next steps
-        </Typography>
+      {/* Modern Header Section with Gradient Background */}
+      <Box sx={{
+        position: 'relative',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+        borderRadius: 4,
+        p: 4,
+        mb: 4,
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
+          pointerEvents: 'none',
+        }
+      }}>
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+            <Box>
+              <Typography
+                variant="h3"
+                sx={{
+                  fontWeight: 800,
+                  color: 'white',
+                  mb: 1,
+                  textShadow: '0 2px 10px rgba(0,0,0,0.2)',
+                  letterSpacing: '-0.02em'
+                }}
+              >
+                Post Interview Dashboard
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  fontSize: '1.1rem',
+                  maxWidth: 600
+                }}
+              >
+                Track your interview performance, application progress, and receive personalized feedback
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => router.push('/jobs')}
+                sx={{
+                  backgroundColor: 'white',
+                  color: '#667eea',
+                  fontWeight: 600,
+                  px: 3,
+                  py: 1.5,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                Browse Jobs
+              </Button>
+            </Box>
+          </Box>
+        </Box>
       </Box>
-      {/* Summary Cards */}
-    
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
-          <Box sx={{ flex: '1 1 250px', minWidth: '250px' }}>
-            <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-              <CardContent sx={{ color: 'white' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                      {data.length + candidateProgress.length}
-                    </Typography>
-                    <Typography variant="body2">Total Applications</Typography>
+      {/* Enhanced Summary Cards with 3D Effects */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 5 }}>
+          <Box sx={{ flex: '1 1 280px', minWidth: '280px' }}>
+            <Card sx={{
+              height: '100%',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              position: 'relative',
+              overflow: 'visible',
+              borderRadius: 3,
+              transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+              '&:hover': {
+                transform: 'translateY(-8px) scale(1.02)',
+                boxShadow: '0 20px 40px rgba(102, 126, 234, 0.4)',
+              },
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'radial-gradient(circle at top right, rgba(255, 255, 255, 0.3) 0%, transparent 60%)',
+                pointerEvents: 'none',
+              }
+            }}>
+              <CardContent sx={{ color: 'white', position: 'relative', zIndex: 1, p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                  <Box sx={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: '16px',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    backdropFilter: 'blur(10px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
+                  }}>
+                    <AssessmentIcon sx={{ fontSize: 32 }} />
                   </Box>
-                  <AssessmentIcon sx={{ fontSize: 40, opacity: 0.8 }} />
+                  <Box sx={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    backdropFilter: 'blur(10px)',
+                    px: 2,
+                    py: 0.5,
+                    borderRadius: 2,
+                  }}>
+                    <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                      TOTAL
+                    </Typography>
+                  </Box>
                 </Box>
+                <Typography variant="h3" sx={{ fontWeight: 800, mb: 0.5, textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
+                  {data.length + candidateProgress.length}
+                </Typography>
+                <Typography variant="body2" sx={{ opacity: 0.95, fontSize: '1rem', fontWeight: 500 }}>
+                  Total Applications
+                </Typography>
               </CardContent>
             </Card>
           </Box>
-          
-          <Box sx={{ flex: '1 1 250px', minWidth: '250px' }}>
-            <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }}>
-              <CardContent sx={{ color: 'white' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                      {data.filter(item => item.overallScore && item.overallScore >= 70).length}
-                    </Typography>
-                    <Typography variant="body2">Passed Interviews</Typography>
+
+          <Box sx={{ flex: '1 1 280px', minWidth: '280px' }}>
+            <Card sx={{
+              height: '100%',
+              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              position: 'relative',
+              overflow: 'visible',
+              borderRadius: 3,
+              transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+              '&:hover': {
+                transform: 'translateY(-8px) scale(1.02)',
+                boxShadow: '0 20px 40px rgba(240, 147, 251, 0.4)',
+              },
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'radial-gradient(circle at top right, rgba(255, 255, 255, 0.3) 0%, transparent 60%)',
+                pointerEvents: 'none',
+              }
+            }}>
+              <CardContent sx={{ color: 'white', position: 'relative', zIndex: 1, p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                  <Box sx={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: '16px',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    backdropFilter: 'blur(10px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
+                  }}>
+                    <CheckCircleIcon sx={{ fontSize: 32 }} />
                   </Box>
-                  <CheckCircleIcon sx={{ fontSize: 40, opacity: 0.8 }} />
+                  <Box sx={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    backdropFilter: 'blur(10px)',
+                    px: 2,
+                    py: 0.5,
+                    borderRadius: 2,
+                  }}>
+                    <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                      PASSED
+                    </Typography>
+                  </Box>
                 </Box>
+                <Typography variant="h3" sx={{ fontWeight: 800, mb: 0.5, textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
+                  {data.filter(item => item.overallScore && item.overallScore >= 70).length}
+                </Typography>
+                <Typography variant="body2" sx={{ opacity: 0.95, fontSize: '1rem', fontWeight: 500 }}>
+                  Passed Interviews
+                </Typography>
               </CardContent>
             </Card>
           </Box>
-          
-          <Box sx={{ flex: '1 1 250px', minWidth: '250px' }}>
-            <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' }}>
-              <CardContent sx={{ color: 'white' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                      {candidateProgress.length}
-                    </Typography>
-                    <Typography variant="body2">Active Applications</Typography>
+
+          <Box sx={{ flex: '1 1 280px', minWidth: '280px' }}>
+            <Card sx={{
+              height: '100%',
+              background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+              position: 'relative',
+              overflow: 'visible',
+              borderRadius: 3,
+              transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+              '&:hover': {
+                transform: 'translateY(-8px) scale(1.02)',
+                boxShadow: '0 20px 40px rgba(79, 172, 254, 0.4)',
+              },
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'radial-gradient(circle at top right, rgba(255, 255, 255, 0.3) 0%, transparent 60%)',
+                pointerEvents: 'none',
+              }
+            }}>
+              <CardContent sx={{ color: 'white', position: 'relative', zIndex: 1, p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                  <Box sx={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: '16px',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    backdropFilter: 'blur(10px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 8px 16px rgba(0, 0, 0, 0.1)',
+                  }}>
+                    <AssignmentIcon sx={{ fontSize: 32 }} />
                   </Box>
-                  <AssignmentIcon sx={{ fontSize: 40, opacity: 0.8 }} />
+                  <Box sx={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    backdropFilter: 'blur(10px)',
+                    px: 2,
+                    py: 0.5,
+                    borderRadius: 2,
+                  }}>
+                    <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                      ACTIVE
+                    </Typography>
+                  </Box>
                 </Box>
+                <Typography variant="h3" sx={{ fontWeight: 800, mb: 0.5, textShadow: '0 2px 10px rgba(0,0,0,0.2)' }}>
+                  {candidateProgress.length}
+                </Typography>
+                <Typography variant="body2" sx={{ opacity: 0.95, fontSize: '1rem', fontWeight: 500 }}>
+                  Active Applications
+                </Typography>
               </CardContent>
             </Card>
           </Box>
-          
-          {/* <Box sx={{ flex: '1 1 250px', minWidth: '250px' }}>
-            <Card sx={{ height: '100%', background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' }}>
-              <CardContent sx={{ color: 'white' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                      {data.filter(item => item.recommendations && item.recommendations.length > 0).length}
-                    </Typography>
-                    <Typography variant="body2">With Feedback</Typography>
-                  </Box>
-                  <FeedbackIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-                </Box>
-              </CardContent>
-            </Card>
-          </Box> */}
       </Box>
 
       {/* Candidate Progress Section */}
-    
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" sx={{ fontWeight: 600, color: '#1a1a1a', mb: 2 }}>
-          My Application Progress
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+          <Box>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: '#1a1a1a', mb: 0.5, letterSpacing: '-0.01em' }}>
+              My Application Progress
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              Track your ongoing applications and interview steps
+            </Typography>
+          </Box>
+          <Chip
+            label={`${candidateProgress.length} Active`}
+            sx={{
+              backgroundColor: '#4facfe20',
+              color: '#4facfe',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              px: 2,
+              py: 2.5,
+            }}
+          />
+        </Box>
         
         {progressLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -752,18 +947,37 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
             </Button>
           </Box>
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {candidateProgress.map((progress) => (
-              <Accordion key={progress._id} sx={{ 
-                border: '1px solid #e0e0e0',
+              <Accordion key={progress._id} sx={{
+                borderRadius: 3,
+                border: '2px solid #e9ecef',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                overflow: 'hidden',
                 '&:before': { display: 'none' },
-                '&.Mui-expanded': { margin: '8px 0' }
+                '&.Mui-expanded': {
+                  margin: '8px 0',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                },
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  transform: 'translateY(-2px)',
+                }
               }}>
                 <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
+                  expandIcon={<ExpandMoreIcon sx={{ color: '#667eea' }} />}
                   sx={{
-                    backgroundColor: '#f8f9fa',
-                    '&:hover': { backgroundColor: '#e9ecef' }
+                    background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
+                    borderBottom: '1px solid #e9ecef',
+                    minHeight: 80,
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%)',
+                    },
+                    '&.Mui-expanded': {
+                      borderBottom: '2px solid #667eea',
+                    },
+                    transition: 'all 0.3s ease',
                   }}
                 >
                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
@@ -778,33 +992,34 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                            {progress.idPost?.jobDetails?.experienceLevel || 'Experience level not specified'} • {progress.idPost?.status || 'Status not specified'}
                          </Typography>
                        </Box>
-                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                       {/* Progress Indicator */}
-                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 1 }}>
-                         <Box sx={{ 
-                           width: 60, 
-                           height: 60, 
-                           borderRadius: '50%', 
-                           border: '3px solid #e9ecef',
+                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                       {/* Enhanced Progress Indicator */}
+                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                         <Box sx={{
+                           width: 70,
+                           height: 70,
+                           borderRadius: '50%',
+                           border: '4px solid #e9ecef',
                            position: 'relative',
                            display: 'flex',
                            alignItems: 'center',
                            justifyContent: 'center',
-                           backgroundColor: '#f8f9fa'
+                           backgroundColor: 'white',
+                           boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                          }}>
-                           <Typography variant="caption" sx={{ fontWeight: 600, color: '#666' }}>
+                           <Typography variant="h6" sx={{ fontWeight: 700, color: '#667eea', fontSize: '0.95rem' }}>
                              {progress.steps ? Math.round((progress.steps.filter(step => step.status === 'done').length / progress.steps.length) * 100) : 0}%
                            </Typography>
                            <Box sx={{
                              position: 'absolute',
-                             top: 0,
-                             left: 0,
-                             right: 0,
-                             bottom: 0,
+                             top: -4,
+                             left: -4,
+                             right: -4,
+                             bottom: -4,
                              borderRadius: '50%',
-                                                           background: `conic-gradient(#02E2FF ${progress.steps ? (progress.steps.filter(step => step.status === 'done').length / progress.steps.length) * 360 : 0}deg, #e9ecef 0deg)`,
-                             mask: 'radial-gradient(transparent 55%, black 55%)',
-                             WebkitMask: 'radial-gradient(transparent 55%, black 55%)'
+                             background: `conic-gradient(from 0deg, #667eea 0deg, #4facfe ${progress.steps ? (progress.steps.filter(step => step.status === 'done').length / progress.steps.length) * 360 : 0}deg, #e9ecef ${progress.steps ? (progress.steps.filter(step => step.status === 'done').length / progress.steps.length) * 360 : 0}deg)`,
+                             mask: 'radial-gradient(transparent 60%, black 60%)',
+                             WebkitMask: 'radial-gradient(transparent 60%, black 60%)',
                            }} />
                          </Box>
                        </Box>
@@ -970,76 +1185,174 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                                                                {/* Steps Breakdown */}
                       {progress.steps && progress.steps.length > 0 && (
                         <Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#333' }}>
-                              Application Steps
-                            </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                             <Box sx={{ 
-                                 width: 32, 
-                                 height: 32, 
-                                 borderRadius: '50%', 
-                                 backgroundColor: '#02E2FF',
-                                 display: 'flex',
-                                 alignItems: 'center',
-                                 justifyContent: 'center',
-                                 color: 'white',
-                                 fontSize: '0.75rem',
-                                 fontWeight: 600
-                               }}>
-                                 {progress.steps?.filter(step => step.status === 'done').length || 0}
-                               </Box>
-                              <Typography variant="body2" color="textSecondary">
-                                of {progress.steps?.length || 0} completed
+                          {/* Enhanced Section Header with Gradient Background */}
+                          <Box sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            mb: 4,
+                            p: 3,
+                            borderRadius: 3,
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            '&::before': {
+                              content: '""',
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              background: 'radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.15) 0%, transparent 50%)',
+                              pointerEvents: 'none',
+                            }
+                          }}>
+                            <Box sx={{ position: 'relative', zIndex: 1 }}>
+                              <Typography variant="h5" sx={{
+                                fontWeight: 700,
+                                color: 'white',
+                                mb: 0.5,
+                                textShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                letterSpacing: '-0.01em'
+                              }}>
+                                Application Steps
                               </Typography>
+                              <Typography variant="body2" sx={{
+                                color: 'rgba(255, 255, 255, 0.9)',
+                                fontSize: '0.9rem'
+                              }}>
+                                Track your progress through each stage
+                              </Typography>
+                            </Box>
+                            <Box sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 2,
+                              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                              backdropFilter: 'blur(10px)',
+                              px: 3,
+                              py: 2,
+                              borderRadius: 3,
+                              position: 'relative',
+                              zIndex: 1,
+                              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                            }}>
+                              <Box sx={{
+                                width: 48,
+                                height: 48,
+                                borderRadius: '12px',
+                                background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                fontSize: '1.1rem',
+                                fontWeight: 700,
+                                boxShadow: '0 4px 12px rgba(79, 172, 254, 0.4)',
+                              }}>
+                                {progress.steps?.filter(step => step.status === 'done').length || 0}
+                              </Box>
+                              <Box>
+                                <Typography variant="caption" sx={{
+                                  color: 'rgba(255, 255, 255, 0.8)',
+                                  fontWeight: 500,
+                                  display: 'block',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px',
+                                  fontSize: '0.7rem'
+                                }}>
+                                  Completed
+                                </Typography>
+                                <Typography variant="h6" sx={{
+                                  color: 'white',
+                                  fontWeight: 700,
+                                  lineHeight: 1
+                                }}>
+                                  {progress.steps?.filter(step => step.status === 'done').length || 0} / {progress.steps?.length || 0}
+                                </Typography>
+                              </Box>
                             </Box>
                           </Box>
                           
                           {/* Steps Timeline */}
                           <Box sx={{ position: 'relative' }}>
-                            {/* Vertical Timeline Line */}
+                            {/* Enhanced Vertical Timeline Line with Gradient */}
                             <Box sx={{
                               position: 'absolute',
-                              left: 24,
+                              left: 28,
                               top: 0,
                               bottom: 0,
-                              width: 2,
-                              backgroundColor: '#e0e0e0',
-                              zIndex: 1
+                              width: 4,
+                              background: 'linear-gradient(180deg, #667eea 0%, #4facfe 50%, #00f2fe 100%)',
+                              borderRadius: 2,
+                              zIndex: 1,
+                              opacity: 0.6,
+                              boxShadow: '0 0 10px rgba(102, 126, 234, 0.3)',
+                            }} />
+                            {/* Background Timeline Line */}
+                            <Box sx={{
+                              position: 'absolute',
+                              left: 26,
+                              top: 0,
+                              bottom: 0,
+                              width: 8,
+                              backgroundColor: '#f5f5f5',
+                              borderRadius: 4,
+                              zIndex: 0
                             }} />
                             
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                               {progress.steps
                                 .sort((a, b) => (a.stepId?.data?.config?.nodeNumber || 0) - (b.stepId?.data?.config?.nodeNumber || 0))
                                 .map((step, index) => (
-                                                                     <Box key={step.stepId?._id || index} sx={{ 
-                                     position: 'relative', 
+                                                                     <Box key={step.stepId?._id || index} sx={{
+                                     position: 'relative',
                                      zIndex: 2,
                                      animation: `${slideIn} 0.5s ease-out ${index * 0.1}s both`
                                    }}>
                                      {/* Step Timeline Item */}
                                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3 }}>
-                                      {/* Step Number Circle */}
+                                      {/* Enhanced Step Number Circle with Gradient */}
                                       <Box sx={{
-                                        width: 48,
-                                        height: 48,
-                                        borderRadius: '50%',
-                                                                                 backgroundColor: step.status === 'done' ? '#4caf50' : 
-                                                        step.status === 'inProgress' ? '#ff9800' : '#e0e0e0',
+                                        width: 60,
+                                        height: 60,
+                                        borderRadius: '16px',
+                                        background: step.status === 'done'
+                                          ? 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)'
+                                          : step.status === 'inProgress'
+                                          ? 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)'
+                                          : 'linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         color: 'white',
-                                        fontWeight: 600,
-                                        fontSize: '0.875rem',
-                                        border: '3px solid white',
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                        zIndex: 3
+                                        fontWeight: 700,
+                                        fontSize: '1rem',
+                                        border: '4px solid white',
+                                        boxShadow: step.status === 'done'
+                                          ? '0 4px 16px rgba(76, 175, 80, 0.4)'
+                                          : step.status === 'inProgress'
+                                          ? '0 4px 16px rgba(255, 152, 0, 0.4)'
+                                          : '0 4px 12px rgba(0,0,0,0.1)',
+                                        zIndex: 3,
+                                        position: 'relative',
+                                        transition: 'all 0.3s ease',
+                                        '&::after': step.status === 'done' ? {
+                                          content: '""',
+                                          position: 'absolute',
+                                          top: -2,
+                                          right: -2,
+                                          width: 20,
+                                          height: 20,
+                                          borderRadius: '50%',
+                                          background: '#4facfe',
+                                          boxShadow: '0 2px 8px rgba(79, 172, 254, 0.6)',
+                                        } : {},
                                       }}>
-                                                                                 {step.status === 'done' ? (
-                                           <CheckCircleOutlineIcon sx={{ fontSize: 24 }} />
+                                        {step.status === 'done' ? (
+                                           <CheckCircleOutlineIcon sx={{ fontSize: 32 }} />
                                          ) : (
-                                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                          <Typography variant="h6" sx={{ fontWeight: 800 }}>
                                             {index + 1}
                                           </Typography>
                                         )}
@@ -1047,21 +1360,53 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                                       
                                       {/* Step Content */}
                                       <Box sx={{ flex: 1, minWidth: 0 }}>
-                                                                                 <Card sx={{ 
-                                           p: 3, 
-                                           border: step.status === 'done' ? '2px solid #4caf50' : 
-                                                  step.status === 'inProgress' ? '2px solid #ff9800' : '1px solid #e0e0e0',
-                                           backgroundColor: step.status === 'done' ? '#f8fff8' : 
-                                                         step.status === 'inProgress' ? '#fff8e1' : '#ffffff',
-                                           boxShadow: step.status === 'done' ? '0 4px 20px rgba(76, 175, 80, 0.15)' :
-                                                     step.status === 'inProgress' ? '0 4px 20px rgba(255, 152, 0, 0.15)' :
-                                                     '0 2px 8px rgba(0,0,0,0.08)',
-                                          transition: 'all 0.3s ease',
-                                                                                     '&:hover': {
-                                             transform: 'translateY(-2px)',
-                                             boxShadow: step.status === 'done' ? '0 8px 30px rgba(76, 175, 80, 0.25)' :
-                                                       step.status === 'inProgress' ? '0 8px 30px rgba(255, 152, 0, 0.25)' :
-                                                       '0 4px 15px rgba(0,0,0,0.12)',
+                                        <Card sx={{
+                                           p: 3,
+                                           borderRadius: 3,
+                                           border: step.status === 'done'
+                                             ? '3px solid transparent'
+                                             : step.status === 'inProgress'
+                                             ? '3px solid transparent'
+                                             : '2px solid #e9ecef',
+                                           background: step.status === 'done'
+                                             ? 'linear-gradient(white, white) padding-box, linear-gradient(135deg, #4caf50 0%, #45a049 100%) border-box'
+                                             : step.status === 'inProgress'
+                                             ? 'linear-gradient(white, white) padding-box, linear-gradient(135deg, #ff9800 0%, #f57c00 100%) border-box'
+                                             : '#ffffff',
+                                           backgroundColor: step.status === 'done'
+                                             ? 'rgba(76, 175, 80, 0.02)'
+                                             : step.status === 'inProgress'
+                                             ? 'rgba(255, 152, 0, 0.02)'
+                                             : '#ffffff',
+                                           boxShadow: step.status === 'done'
+                                             ? '0 8px 24px rgba(76, 175, 80, 0.2)'
+                                             : step.status === 'inProgress'
+                                             ? '0 8px 24px rgba(255, 152, 0, 0.2)'
+                                             : '0 4px 12px rgba(0,0,0,0.08)',
+                                          transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                           position: 'relative',
+                                           overflow: 'hidden',
+                                           '&::before': {
+                                             content: '""',
+                                             position: 'absolute',
+                                             top: 0,
+                                             left: 0,
+                                             right: 0,
+                                             bottom: 0,
+                                             background: step.status === 'done'
+                                               ? 'radial-gradient(circle at top right, rgba(76, 175, 80, 0.08) 0%, transparent 60%)'
+                                               : step.status === 'inProgress'
+                                               ? 'radial-gradient(circle at top right, rgba(255, 152, 0, 0.08) 0%, transparent 60%)'
+                                               : 'none',
+                                             pointerEvents: 'none',
+                                           },
+                                           '&:hover': {
+                                             transform: 'translateY(-4px) scale(1.01)',
+                                             boxShadow: step.status === 'done'
+                                               ? '0 12px 32px rgba(76, 175, 80, 0.3)'
+                                               : step.status === 'inProgress'
+                                               ? '0 12px 32px rgba(255, 152, 0, 0.3)'
+                                               : '0 8px 20px rgba(0,0,0,0.15)',
                                            }
                                         }}>
                                                                                     {/* Step Header */}
@@ -1088,18 +1433,35 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                                               )}
                                             </Box>
                                             
-                                            {/* Status Badge */}
+                                            {/* Enhanced Status Badge with Glassmorphism */}
                                             <Chip
-                                              label={step.status === 'done' ? 'Completed' : 
-                                                     step.status === 'inProgress' ? 'In Progress' : 'Pending'}
-                                              size="small"
+                                              label={step.status === 'done' ? '✓ Completed' :
+                                                     step.status === 'inProgress' ? '⟳ In Progress' : '⏱ Pending'}
+                                              size="medium"
                                               sx={{
-                                                backgroundColor: step.status === 'done' ? '#4caf5020' : 
-                                                               step.status === 'inProgress' ? '#ff980020' : '#9e9e9e20',
-                                                color: step.status === 'done' ? '#2e7d32' : 
+                                                background: step.status === 'done'
+                                                  ? 'linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(69, 160, 73, 0.2))'
+                                                  : step.status === 'inProgress'
+                                                  ? 'linear-gradient(135deg, rgba(255, 152, 0, 0.15), rgba(245, 124, 0, 0.2))'
+                                                  : 'linear-gradient(135deg, rgba(158, 158, 158, 0.12), rgba(117, 117, 117, 0.15))',
+                                                backdropFilter: 'blur(10px)',
+                                                color: step.status === 'done' ? '#2e7d32' :
                                                        step.status === 'inProgress' ? '#f57c00' : '#757575',
-                                                fontWeight: 600,
-                                                textTransform: 'capitalize'
+                                                fontWeight: 700,
+                                                textTransform: 'capitalize',
+                                                px: 2,
+                                                py: 2.5,
+                                                fontSize: '0.85rem',
+                                                border: step.status === 'done'
+                                                  ? '2px solid rgba(76, 175, 80, 0.3)'
+                                                  : step.status === 'inProgress'
+                                                  ? '2px solid rgba(255, 152, 0, 0.3)'
+                                                  : '2px solid rgba(158, 158, 158, 0.2)',
+                                                boxShadow: step.status === 'done'
+                                                  ? '0 4px 12px rgba(76, 175, 80, 0.2)'
+                                                  : step.status === 'inProgress'
+                                                  ? '0 4px 12px rgba(255, 152, 0, 0.2)'
+                                                  : '0 2px 8px rgba(0, 0, 0, 0.08)',
                                               }}
                                             />
                                           </Box>
@@ -1151,39 +1513,73 @@ const PostInterviewTab: React.FC<PostInterviewTabProps> = ({ data, loading, erro
                                              </Box>
                                            )}
                                           
-                                          {/* Step Progress Bar */}
+                                          {/* Enhanced Step Progress Bar */}
                                           <Box sx={{ mb: 2 }}>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                              <Typography variant="caption" color="textSecondary" sx={{ fontWeight: 500 }}>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
+                                              <Typography variant="body2" sx={{
+                                                fontWeight: 600,
+                                                color: '#333',
+                                                fontSize: '0.9rem'
+                                              }}>
                                                 Progress
                                               </Typography>
-                                                                                             <Typography variant="caption" sx={{ 
-                                                 fontWeight: 600,
-                                                 color: step.status === 'done' ? '#2e7d32' : 
-                                                        step.status === 'inProgress' ? '#f57c00' : '#757575'
+                                              <Typography variant="body2" sx={{
+                                                fontWeight: 700,
+                                                color: step.status === 'done' ? '#2e7d32' :
+                                                       step.status === 'inProgress' ? '#f57c00' : '#757575',
+                                                fontSize: '0.9rem'
                                                }}>
-                                                 {step.status === 'done' ? '100%' : 
+                                                 {step.status === 'done' ? '100%' :
                                                     step.status === 'inProgress' ? '50%' : '0%'}
                                                </Typography>
                                             </Box>
-                                                                                         <LinearProgress
-                                               variant="determinate"
-                                               value={step.status === 'done' ? 100 : step.status === 'inProgress' ? 50 : 0}
-                                              sx={{
-                                                height: 8,
-                                                borderRadius: 4,
-                                                backgroundColor: '#e9ecef',
-                                                                                                 '& .MuiLinearProgress-bar': {
-                                                   backgroundColor: step.status === 'done' ? '#4caf50' : 
-                                                                step.status === 'inProgress' ? '#ff9800' : '#9e9e9e',
-                                                   borderRadius: 4,
-                                                   background: step.status === 'done' ? 'linear-gradient(90deg, #4caf50 0%, #45a049 100%)' :
-                                                              step.status === 'inProgress' ? 'linear-gradient(90deg, #ff9800 0%, #f57c00 100%)' :
-                                                              'linear-gradient(90deg, #9e9e9e 0%, #757575 100%)',
-                                                 },
-                                              }}
-                                            />
+                                            <Box sx={{
+                                              position: 'relative',
+                                              height: 12,
+                                              borderRadius: 6,
+                                              backgroundColor: '#f5f5f5',
+                                              overflow: 'hidden',
+                                              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.06)',
+                                            }}>
+                                              <Box sx={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                height: '100%',
+                                                width: step.status === 'done' ? '100%' : step.status === 'inProgress' ? '50%' : '0%',
+                                                background: step.status === 'done'
+                                                  ? 'linear-gradient(90deg, #4caf50 0%, #66bb6a 50%, #4caf50 100%)'
+                                                  : step.status === 'inProgress'
+                                                  ? 'linear-gradient(90deg, #ff9800 0%, #ffa726 50%, #ff9800 100%)'
+                                                  : 'linear-gradient(90deg, #9e9e9e 0%, #bdbdbd 100%)',
+                                                borderRadius: 6,
+                                                transition: 'width 0.6s ease, background 0.3s ease',
+                                                boxShadow: step.status === 'done'
+                                                  ? '0 2px 8px rgba(76, 175, 80, 0.4)'
+                                                  : step.status === 'inProgress'
+                                                  ? '0 2px 8px rgba(255, 152, 0, 0.4)'
+                                                  : 'none',
+                                                '&::after': step.status === 'inProgress' ? {
+                                                  content: '""',
+                                                  position: 'absolute',
+                                                  top: 0,
+                                                  right: 0,
+                                                  bottom: 0,
+                                                  width: '30%',
+                                                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
+                                                  animation: 'shimmer 2s infinite',
+                                                } : {},
+                                              }} />
+                                            </Box>
                                           </Box>
+                                          <style>
+                                            {`
+                                              @keyframes shimmer {
+                                                0% { transform: translateX(-100%); }
+                                                100% { transform: translateX(400%); }
+                                              }
+                                            `}
+                                          </style>
 
                                                                                      {/* Step Results - Show for completed steps */}
                                            {step.status === 'done' && (

@@ -563,35 +563,116 @@ module.exports.deleteHardSkill = async (userId, skillToDelete) => {
 
 
 // Supprimer un softSkill spécifique
+// 🔹 Fonction pour supprimer un soft skill d'un profil utilisateur avec la même logique que deleteHardSkill
 module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
   try {
+    console.log("🟢 Début de la suppression du softSkill:", softSkillToDelete, "pour l'utilisateur:", userId);
+
+    // ✅ 1) Récupérer le profil du user
     const profile = await Profile.findOne({ userId });
     if (!profile) {
+      console.error("❌ Aucun profil trouvé pour l'utilisateur:", userId);
       throw new Error("Profile not found");
     }
+    console.log("✅ Profil trouvé:", profile._id);
 
+    // ✅ 2) Vérifier la validité du softSkill à supprimer
     if (!softSkillToDelete || typeof softSkillToDelete !== "string") {
+      console.error("❌ Le softSkill à supprimer doit être une chaîne de caractères valide");
       throw new Error("The skill to be deleted must be provided as a string");
     }
 
-    // Trouver l'index du softSkill à supprimer
+    // ✅ 3) Chercher la position du softSkill dans le tableau des softSkills
     const softSkillIndex = profile.softSkills.findIndex(
       (skill) => skill.name === softSkillToDelete
     );
 
     if (softSkillIndex === -1) {
+      console.warn(`⚠️ Le softSkill "${softSkillToDelete}" n'existe pas dans le profil`);
       throw new Error(
         `Le softSkill "${softSkillToDelete}" n'existe pas dans votre profil`
       );
     }
+    console.log(`🧩 SoftSkill "${softSkillToDelete}" trouvé à l'index ${softSkillIndex}`);
 
-    // Supprimer le softSkill du tableau
+    // ✅ 4) Supprimer le softSkill du tableau
     profile.softSkills.splice(softSkillIndex, 1);
-    await profile.save();
+    console.log(`🗑️ SoftSkill "${softSkillToDelete}" supprimé avec succès du profil`);
 
+    // ✅ 5) Sauvegarder le profil mis à jour
+    await profile.save();
+    console.log("💾 Profil sauvegardé avec succès dans la base de données");
+
+    // ✅ 6) Supprimer les InterviewDetails liés à ce softSkill et retirer les relations
+    try {
+      console.log("🧹 Suppression des InterviewDetails en cours...");
+      const InterviewDetails = require("../models/InterviewDetailsModel");
+
+      // Suppression insensible à la casse du softSkill visé dans les tableaux skillDetails
+      const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const softSkillRegex = new RegExp(`^${escapeRegExp(softSkillToDelete)}$`, "i");
+
+      // 6.a Trouver les InterviewDetails à supprimer (qui contiennent ce softSkill)
+      const detailsToDelete = await InterviewDetails.find({
+        candidate: profile._id,
+        "skillDetails.name": { $regex: softSkillRegex },
+      }).select("_id");
+
+      const detailsIds = detailsToDelete.map((d) => d._id);
+
+      if (detailsIds.length > 0) {
+        // 6.b Supprimer les InterviewDetails correspondants
+        const delRes = await InterviewDetails.deleteMany({ _id: { $in: detailsIds } });
+        console.log("✅ InterviewDetails supprimés:", delRes.deletedCount);
+
+        // 6.c Retirer les références dans le profil
+        profile.interviewDetails = (profile.interviewDetails || []).filter(
+          (id) => !detailsIds.some((x) => x.toString() === id.toString())
+        );
+        await profile.save();
+      } else {
+        console.log("ℹ️ Aucun InterviewDetails à supprimer pour ce softSkill");
+      }
+    } catch (relErr) {
+      console.warn("⚠️ Erreur lors du nettoyage des InterviewDetails:", relErr.message);
+    }
+
+    // ✅ 7) Nettoyer les références dans JobAssessmentResult
+    try {
+      console.log("🧹 Nettoyage des JobAssessmentResult en cours...");
+      const JobAssessmentResult = require("../models/JobAssessmentResultModel");
+
+      const res2 = await JobAssessmentResult.updateMany(
+        { condidateId: profile._id },
+        {
+          $pull: {
+            "analysis.skillAnalysis": { skillName: softSkillToDelete },
+            "analysis.skillProgression": { skillName: softSkillToDelete },
+          },
+        }
+      );
+
+      console.log("✅ Nettoyage des JobAssessmentResult terminé:", res2.modifiedCount, "documents mis à jour");
+
+      // Supprimer aussi les JobAssessmentResult qui pointent vers des InterviewDetails supprimés
+      try {
+        if (typeof detailsIds !== "undefined" && detailsIds.length > 0) {
+          const delAss = await JobAssessmentResult.deleteMany({ interviewId: { $in: detailsIds } });
+          console.log("🗑️ JobAssessmentResult supprimés (liés aux InterviewDetails supprimés):", delAss.deletedCount);
+        }
+      } catch (innerErr) {
+        console.warn("⚠️ Erreur lors de la suppression des JobAssessmentResult liés:", innerErr.message);
+      }
+    } catch (relErr) {
+      console.warn("⚠️ Erreur lors du nettoyage des JobAssessmentResult:", relErr.message);
+    }
+
+    // ✅ 8) Retourner le profil mis à jour
+    console.log("🎯 Suppression du softSkill terminée avec succès pour:", softSkillToDelete);
     return profile;
+
   } catch (error) {
-    console.error("Erreur lors de la suppression du softSkill:", error);
+    console.error("🚨 Erreur lors de la suppression du softSkill:", error.message);
     throw error;
   }
 };
