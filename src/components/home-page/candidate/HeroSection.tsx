@@ -9,7 +9,6 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import { useRouter } from "next/router";
 import Image from "next/image";
 
@@ -26,7 +25,6 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
   // Job search states
   const [jobTitle, setJobTitle] = useState("");
   const [location, setLocation] = useState("");
-  const [category, setCategory] = useState("");
 
   // Statistics states
   const [stats, setStats] = useState({
@@ -77,7 +75,6 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
     const params = new URLSearchParams();
     if (jobTitle) params.append("search", jobTitle);
     if (location) params.append("location", location);
-    if (category) params.append("category", category);
 
     const queryString = params.toString();
     router.push(`/jobs${queryString ? `?${queryString}` : ""}`);
@@ -274,60 +271,6 @@ background: 'linear-gradient(180deg, rgba(255, 255, 255, 0) 59.69%, #FFFFFF 100%
                   <InputAdornment position="start">
                                         <Image
           src="/icons/location.svg"
-          alt="search"
-          width={24}
-          height={24}
-          style={{ opacity: 0.7 }}
-        />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <Box sx={{ width: "1px", backgroundColor: "#e5e7eb", my: 1 }} />
-            <TextField
-              placeholder="Category"
-              variant="outlined"
-              size="medium"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  handleJobSearch();
-                }
-              }}
-              sx={{
-                flex: 1,
-                "&.MuiFormControl-root": {
-                      justifyContent: "space-around",
-
-                },
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 0,
-                  border: "none",
-                  "& fieldset": {
-                    border: "none",
-                  },
-                  "&:hover fieldset": {
-                    border: "none",
-                  },
-                  "&.Mui-focused fieldset": {
-                    border: "none",
-                  },
-                                    "& .MuiInputBase-input": {
-                                      padding: "5px 10px",
-                                      paddingLeft: 0,
-      "&::placeholder": {
-        fontSize: "14px",
-        color: "rgba(135, 135, 134, 1)",
-      },
-    },
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                                                            <Image
-          src="/icons/category.svg"
           alt="search"
           width={24}
           height={24}
