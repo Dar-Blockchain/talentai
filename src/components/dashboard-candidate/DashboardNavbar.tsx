@@ -195,7 +195,7 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
                 </ListItemIcon>
                 <ListItemText>Profile</ListItemText>
               </MenuItem>
-              <MenuItem onClick={() => { handleClose(); onEditProfile(); }}>
+              <MenuItem onClick={() => { handleClose(); router.push('/settings/profile'); }}>
                 <ListItemIcon>
                   <SettingsIcon sx={{ fontSize: '1.2rem', color: '#666' }} />
                 </ListItemIcon>
