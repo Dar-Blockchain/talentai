@@ -90,7 +90,7 @@ const JobListingsSection = () => {
   );
 
   return (
-    <Box sx={{ backgroundColor: '#f8f9fa', py: 8 }}>
+    <Box sx={{ py: 6 }}>
       {/* Promotional Banner */}
       <Box
         sx={{
@@ -109,8 +109,8 @@ const JobListingsSection = () => {
           sx={{
             width: '100%',
             p: 6,
-            borderRadius: 3,
-            backgroundColor: '#ffffff',
+            borderRadius: '24px',
+            backgroundColor: 'rgba(248, 250, 252, 1)',
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
             textAlign: 'left'
           }}
@@ -122,7 +122,7 @@ const JobListingsSection = () => {
               fontWeight: 700,
               fontSize: { xs: '24px', md: '32px' },
               color: '#000000',
-              mb: 3,
+              mb: 2,
               lineHeight: 1.2
             }}
           >
@@ -135,7 +135,7 @@ const JobListingsSection = () => {
               fontFamily: 'Poppins',
               fontSize: '16px',
               color: '#666666',
-              mb: 4,
+              mb: 3,
               lineHeight: 1.6
             }}
           >
@@ -149,8 +149,8 @@ const JobListingsSection = () => {
               backgroundColor: '#8310FF',
               color: '#ffffff',
               px: 4,
-              py: 1.5,
-              borderRadius: 3,
+              py: 1,
+              borderRadius: '50px',
               textTransform: 'none',
               fontSize: '16px',
               fontWeight: 600,
@@ -166,7 +166,7 @@ const JobListingsSection = () => {
 
       {/* Job Listings Section */}
       {jobs.length > 0 && 
-      <Box sx={{ maxWidth: 1300, mx: 'auto', px: 8 }}>
+      <Box sx={{ maxWidth: 1300, mx: 'auto', px: 4 }}>
         <Typography
           variant="h3"
           sx={{
@@ -248,8 +248,9 @@ const JobListingsSection = () => {
                   sx={{
                     minWidth: 320,
                     flex: '0 0 320px',
-                    borderRadius: 2,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(228, 229, 232, 1)',
+                    boxShadow: '0px 2px 18px 0px rgba(24, 25, 28, 0.03)',
                     transition: 'transform 0.3s ease',
                     backgroundColor: '#fff',
                     cursor: 'pointer',

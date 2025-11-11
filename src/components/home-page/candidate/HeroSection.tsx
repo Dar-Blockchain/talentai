@@ -11,6 +11,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { useRouter } from "next/router";
+import Image from "next/image";
+
 type HeroSectionProps = {
   color?: string;
   title?: string;
@@ -82,17 +84,15 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
   };
 
   return (
+    <Box sx={{width: "100%"
+}}>
     <Box
       sx={{
         px: 3,
         pt: 4,
-        background:
-          "linear-gradient(0deg, #F3F7FB, #F3F7FB), linear-gradient(180deg, rgba(255, 255, 255, 0) 59.69%, #FFFFFF 100%)",
-        color: "#000000",
+background: 'linear-gradient(180deg, rgba(255, 255, 255, 0) 59.69%, #FFFFFF 100%),linear-gradient(0deg, #F3F7FB, #F3F7FB)',        color: "#000000",
         position: "relative",
         overflow: "hidden",
-        maxWidth: "100%",
-        borderRadius: "10px",
         mx: "auto",
       }}
     >
@@ -103,7 +103,8 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
           justifyContent: "space-between",
           alignItems: { xs: "center", lg: "flex-start" },
           minHeight: { xs: "auto", lg: "600px" },
-          ml: 8,
+          maxWidth: 1300,
+          mx: "auto",
         }}
       >
         <Box
@@ -132,15 +133,16 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               fontSize: { xs: "24px", sm: "36px", md: "50px" },
               lineHeight: "100%",
               mb: 3,
-              color: "#666666",
+              color: "rgba(68, 68, 68, 1)",
               textAlign: { xs: "center", lg: "left" },
             }}
           >
             {subtitle}
+            <span style={{ color: color }}>.</span>
           </Typography>
           <Typography
             variant="body1"
-            color="#666666"
+            color="rgba(135, 135, 134, 1)"
             sx={{
               mb: 4,
               maxWidth: { xs: "100%", lg: 500 },
@@ -162,9 +164,9 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               flexDirection: { xs: "column", sm: "row" },
               gap: 0,
               mb: 4,
-              p: 0,
+              p: 1,
               backgroundColor: "#fff",
-              borderRadius: 3,
+              borderRadius: 50,
               border: "1px solid #e5e7eb",
               boxShadow:
                 "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
@@ -184,6 +186,10 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               }}
               sx={{
                 flex: 1,
+                                "&.MuiFormControl-root": {
+                      justifyContent: "space-around",
+
+                },
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 0,
                   border: "none",
@@ -196,12 +202,28 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
                   "&.Mui-focused fieldset": {
                     border: "none",
                   },
+                  "& .MuiInputBase-input": {
+                                                          padding: "5px 10px",
+                                      paddingLeft: 0,
+
+      "&::placeholder": {
+        fontSize: "14px",
+        color: "rgba(135, 135, 134, 1)",
+      },
+    },
                 },
               }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: "#6b7280", fontSize: "20px" }} />
+                    <Image
+          src="/icons/search.svg" // ✅ path inside /public folder
+          alt="search"
+          width={24}
+          height={24}
+          style={{ opacity: 0.7 }}
+        />
+                    {/* <SearchIcon sx={{ color: "#6b7280", fontSize: "20px" }} /> */}
                   </InputAdornment>
                 ),
               }}
@@ -220,6 +242,10 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               }}
               sx={{
                 flex: 1,
+                                "&.MuiFormControl-root": {
+                      justifyContent: "space-around",
+
+                },
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 0,
                   border: "none",
@@ -232,14 +258,27 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
                   "&.Mui-focused fieldset": {
                     border: "none",
                   },
+                                    "& .MuiInputBase-input": {
+                                                                            padding: "5px 10px",
+                                      paddingLeft: 0,
+
+      "&::placeholder": {
+        fontSize: "14px",
+        color: "rgba(135, 135, 134, 1)",
+      },
+    },
                 },
               }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LocationOnIcon
-                      sx={{ color: "#6b7280", fontSize: "20px" }}
-                    />
+                                        <Image
+          src="/icons/location.svg"
+          alt="search"
+          width={24}
+          height={24}
+          style={{ opacity: 0.7 }}
+        />
                   </InputAdornment>
                 ),
               }}
@@ -258,6 +297,10 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               }}
               sx={{
                 flex: 1,
+                "&.MuiFormControl-root": {
+                      justifyContent: "space-around",
+
+                },
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 0,
                   border: "none",
@@ -270,14 +313,26 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
                   "&.Mui-focused fieldset": {
                     border: "none",
                   },
+                                    "& .MuiInputBase-input": {
+                                      padding: "5px 10px",
+                                      paddingLeft: 0,
+      "&::placeholder": {
+        fontSize: "14px",
+        color: "rgba(135, 135, 134, 1)",
+      },
+    },
                 },
               }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <FilterListIcon
-                      sx={{ color: "#6b7280", fontSize: "20px" }}
-                    />
+                                                            <Image
+          src="/icons/category.svg"
+          alt="search"
+          width={24}
+          height={24}
+          style={{ opacity: 0.7 }}
+        />
                   </InputAdornment>
                 ),
               }}
@@ -288,10 +343,10 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               sx={{
                 backgroundColor: color,
                 color: "#fff",
-                borderRadius: 0,
+                borderRadius: 50,
                 textTransform: "none",
-                px: 4,
-                py: 2,
+                px: 2,
+                py: 1,
                 fontWeight: 600,
                 fontSize: "16px",
                 minWidth: "140px",
@@ -312,15 +367,17 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               flexDirection: { xs: "column", sm: "row" },
               gap: 0,
               mb: 4,
-              backgroundColor: "#fff",
-              borderRadius: 2,
-              border: "1px solid #e5e7eb",
-              boxShadow:
-                "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
               overflow: "hidden",
             }}
           >
-            <Box sx={{ flex: 1, p: 3, textAlign: "center" }}>
+            <Box sx={{ flex: 1, p: 3, textAlign: "left" }}>
+                            <Typography
+                variant="body2"
+                color="#6b7280"
+                sx={{ fontSize: "14px", fontWeight: 500 }}
+              >
+                Users
+              </Typography>
               <Typography
                 variant="h4"
                 fontWeight={800}
@@ -329,16 +386,17 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               >
                 {stats.users}
               </Typography>
-              <Typography
+
+            </Box>
+            <Box sx={{ width: "1px", backgroundColor: "#e5e7eb", my: 2 }} />
+            <Box sx={{ flex: 1, p: 3, textAlign: "left" }}>
+                            <Typography
                 variant="body2"
                 color="#6b7280"
                 sx={{ fontSize: "14px", fontWeight: 500 }}
               >
-                Users
+                Job Vacancy
               </Typography>
-            </Box>
-            <Box sx={{ width: "1px", backgroundColor: "#e5e7eb", my: 2 }} />
-            <Box sx={{ flex: 1, p: 3, textAlign: "center" }}>
               <Typography
                 variant="h4"
                 fontWeight={800}
@@ -347,16 +405,17 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               >
                 {stats.jobs}
               </Typography>
-              <Typography
+
+            </Box>
+            <Box sx={{ width: "1px", backgroundColor: "#e5e7eb", my: 2 }} />
+            <Box sx={{ flex: 1, p: 3, textAlign: "left" }}>
+                            <Typography
                 variant="body2"
                 color="#6b7280"
                 sx={{ fontSize: "14px", fontWeight: 500 }}
               >
-                Job Vacancy
+                Companies
               </Typography>
-            </Box>
-            <Box sx={{ width: "1px", backgroundColor: "#e5e7eb", my: 2 }} />
-            <Box sx={{ flex: 1, p: 3, textAlign: "center" }}>
               <Typography
                 variant="h4"
                 fontWeight={800}
@@ -365,34 +424,11 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
               >
                 {stats.companies}
               </Typography>
-              <Typography
-                variant="body2"
-                color="#6b7280"
-                sx={{ fontSize: "14px", fontWeight: 500 }}
-              >
-                Companies
-              </Typography>
+
             </Box>
           </Box>
 
-          {/* Call to Action */}
-          <Typography
-            sx={{
-              fontFamily: "Poppins",
-              fontWeight: 600,
-              fontStyle: "normal",
-              fontSize: { xs: "20px", sm: "28px", md: "48px" },
-              lineHeight: "145%",
-              letterSpacing: "0%",
-              mb: 2,
-              mt: { xs: 8, md: 20 },
-              color: "#000",
-              textAlign: { xs: "center", lg: "left" },
-              px: { xs: 2, sm: 0 },
-            }}
-          >
-            Your skills deserve to be shown to the world.
-          </Typography>
+          
         </Box>
 
         {/* Right Side - Get Hired Image */}
@@ -417,7 +453,7 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
             }}
           >
             <img
-              src="/images/jobseeker_landing/getHired.png"
+              src="/images/jobseeker_landing/heroSection.png"
               alt="Get Hired - TalentAI Platform"
               style={{
                 width: "100%",
@@ -431,17 +467,39 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
             />
           </Box>
 
-          {/* Supporting text under the image */}
+          
+        </Box>
+      </Stack>
+      </Box>
+      <Box sx={{display: "flex", justifyContent: 'space-between', px: 3, mt:2, mb: 4,         maxWidth: 1300, mx: 'auto'
+}}>
+        {/* Call to Action */}
+          <Typography
+            sx={{
+              fontFamily: "Poppins",
+              fontWeight: 600,
+              fontStyle: "normal",
+              fontSize: { xs: "20px", sm: "28px", md: "48px" },
+              lineHeight: "145%",
+              letterSpacing: "0%",
+              color: "#000",
+              textAlign: { xs: "center", lg: "left" },
+            }}
+          >
+            Your skills deserve to be<br/> shown to the world.
+          </Typography>
+        {/* Supporting text under the image */}
           <Typography
             variant="body1"
             color="#6b7280"
             sx={{
-              fontSize: { xs: "14px", md: "16px" },
+              fontSize: "14px",
               lineHeight: 1.6,
               fontWeight: 400,
               textAlign: { xs: "center", lg: "left" },
-              maxWidth: "100%",
-              px: { xs: 2, sm: 4, lg: 0 },
+              maxWidth: 500,
+              display: 'flex',
+              alignItems: 'center'
             }}
           >
             Work with top companies, earn on your terms, and create a career
@@ -450,8 +508,8 @@ const CandidateHeroSection = ({ color, title, subtitle }: HeroSectionProps) => {
             opportunities that fit your lifestyle, and build a global career
             with remote roles that let you work anywhere.
           </Typography>
+
         </Box>
-      </Stack>
     </Box>
   );
 };

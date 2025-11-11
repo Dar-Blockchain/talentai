@@ -14,7 +14,7 @@ const JobSeekerLanding: React.FC = () => {
       color="#8310FF"
       headerLink="Are you hiring?"
       heroTitle="Get Hired"
-      heroSubtitle="For Who You Really Are."
+      heroSubtitle="For Who You Really Are"
     >
       <HowItWorksSection />
       <JobListingsSection />

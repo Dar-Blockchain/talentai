@@ -279,7 +279,6 @@ const BiasFreeEvaluation: React.FC = () => {
               <Typography
                 variant="h3"
                 sx={{
-                  fontFamily: 'Inter',
                   fontWeight: 400,
                   fontStyle: 'normal',
                   fontSize: '36px',
