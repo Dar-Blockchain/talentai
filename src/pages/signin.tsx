@@ -688,7 +688,7 @@ export default function SignIn() {
             <Box sx={{ textAlign: "center", mt: 2 }}>
               <Button
                 startIcon={<ArrowBackIcon />}
-                onClick={() => router.push("/")}
+                onClick={() => userType === "company" ? router.push("/home/company") : router.push("/home/candidate")}
                 sx={{
                   color:
                     userType === "company"
