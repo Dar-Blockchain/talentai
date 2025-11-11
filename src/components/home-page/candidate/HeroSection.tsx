@@ -6,11 +6,14 @@ import {
   Stack,
   TextField,
   InputAdornment,
+  Autocomplete,
+  Paper,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { useRouter } from "next/router";
 import Image from "next/image";
+import { JOB_LOCATIONS } from "@/constants/jobConstants";
 
 type HeroSectionProps = {
   color?: string;
@@ -226,58 +229,157 @@ background: 'linear-gradient(180deg, rgba(255, 255, 255, 0) 59.69%, #FFFFFF 100%
               }}
             />
             <Box sx={{ width: "1px", backgroundColor: "#e5e7eb", my: 1 }} />
-            <TextField
-              placeholder="All Location"
-              variant="outlined"
-              size="medium"
+            <Autocomplete
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === "Enter") {
-                  handleJobSearch();
+              onChange={(event, newValue) => {
+                setLocation(newValue || '');
+              }}
+              options={JOB_LOCATIONS}
+              getOptionLabel={(option) => option}
+              isOptionEqualToValue={(option, value) => option === value}
+              filterOptions={(options, state) => {
+                // Custom filtering for better search experience
+                const inputValue = state.inputValue.toLowerCase();
+                if (!inputValue) return options;
+
+                return options.filter(option =>
+                  option.toLowerCase().includes(inputValue)
+                );
+              }}
+              freeSolo
+              onInputChange={(event, newInputValue) => {
+                if (event?.type === 'change') {
+                  setLocation(newInputValue);
                 }
               }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="All Location"
+                  variant="outlined"
+                  size="medium"
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      handleJobSearch();
+                    }
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 0,
+                      border: "none",
+                      "& fieldset": {
+                        border: "none",
+                      },
+                      "&:hover fieldset": {
+                        border: "none",
+                      },
+                      "&.Mui-focused fieldset": {
+                        border: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        padding: "5px 10px",
+                        paddingLeft: 0,
+                        "&::placeholder": {
+                          fontSize: "14px",
+                          color: "rgba(135, 135, 134, 1)",
+                        },
+                      },
+                    },
+                  }}
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <InputAdornment position="start">
+                          <Image
+                            src="/icons/location.svg"
+                            alt="location"
+                            width={24}
+                            height={24}
+                            style={{ opacity: 0.7 }}
+                          />
+                        </InputAdornment>
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              PaperComponent={({ children, ...other }) => (
+                <Paper
+                  {...other}
+                  sx={{
+                    maxHeight: 400,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                    borderRadius: 2,
+                    mt: 1,
+                    '& .MuiAutocomplete-listbox': {
+                      maxHeight: 400,
+                      '& .MuiAutocomplete-option': {
+                        padding: '10px 16px',
+                        fontSize: '0.9rem',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          backgroundColor: `${color}14`,
+                        },
+                        '&.Mui-focused': {
+                          backgroundColor: `${color}1F`,
+                        },
+                        '&[aria-selected="true"]': {
+                          backgroundColor: `${color}26`,
+                          fontWeight: 600,
+                        }
+                      }
+                    }
+                  }}
+                >
+                  {children}
+                </Paper>
+              )}
+              renderOption={(props, option) => (
+                <Box
+                  component="li"
+                  {...props}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}
+                >
+                  <Image
+                    src="/icons/location.svg"
+                    alt="location"
+                    width={18}
+                    height={18}
+                    style={{ opacity: 0.7 }}
+                  />
+                  <Typography sx={{ fontSize: '0.9rem' }}>{option}</Typography>
+                </Box>
+              )}
+              noOptionsText="No locations found"
+              clearOnEscape
+              autoHighlight
+              openOnFocus
               sx={{
                 flex: 1,
-                                "&.MuiFormControl-root": {
-                      justifyContent: "space-around",
-
+                "&.MuiFormControl-root": {
+                  justifyContent: "space-around",
                 },
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 0,
-                  border: "none",
-                  "& fieldset": {
-                    border: "none",
-                  },
-                  "&:hover fieldset": {
-                    border: "none",
-                  },
-                  "&.Mui-focused fieldset": {
-                    border: "none",
-                  },
-                                    "& .MuiInputBase-input": {
-                                                                            padding: "5px 10px",
-                                      paddingLeft: 0,
-
-      "&::placeholder": {
-        fontSize: "14px",
-        color: "rgba(135, 135, 134, 1)",
-      },
-    },
+                '& .MuiAutocomplete-inputRoot': {
+                  paddingRight: '14px !important',
                 },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                                        <Image
-          src="/icons/location.svg"
-          alt="search"
-          width={24}
-          height={24}
-          style={{ opacity: 0.7 }}
-        />
-                  </InputAdornment>
-                ),
+                '& .MuiAutocomplete-clearIndicator': {
+                  color: color,
+                  '&:hover': {
+                    backgroundColor: `${color}14`,
+                  }
+                },
+                '& .MuiAutocomplete-popupIndicator': {
+                  color: color,
+                  '&:hover': {
+                    backgroundColor: `${color}14`,
+                  }
+                }
               }}
             />
             <Button
