@@ -13,7 +13,7 @@ const profileSchema = new mongoose.Schema(
       enum: ["Candidate", "Company","jury"],
       required: true,
     },
-
+    user_image : { type : String, required : false , default : 'client.png'},
     // Quota for the user
     quota: { type: Number, default: 0 },
     quotaUpdatedAt: {
