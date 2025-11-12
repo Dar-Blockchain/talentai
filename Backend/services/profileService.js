@@ -1,10 +1,10 @@
 const Profile = require("../models/ProfileModel");
 const User = require("../models/UserModel");
 const Post = require("../models/PostModel");
-const Agent = require("../models/AgentModel");
-const agentService = require("./AgentService");
 const hederaService = require("./hederaService");
 const { POST_STATUS } = require("../constants/postConstants");
+const fs = require("fs");
+const path = require("path");
 
 // Créer ou mettre à jour un profil utilisateur
 module.exports.createOrUpdateProfile = async (userId, profileData) => {
@@ -176,6 +176,48 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
     throw error;
   }
 };
+
+
+exports.updateUserImage = async (userId, newFilename) => {
+  if (!userId) {
+    throw new Error("ID utilisateur manquant.");
+  }
+  if (!newFilename) {
+    throw new Error("Nom de fichier image manquant.");
+  }
+
+  // 1️⃣ Récupérer l'utilisateur existant pour connaître l'ancienne image
+  const existingUser = await Profile.findById(userId);
+  if (!existingUser) {
+    throw new Error("Profile non trouvé.");
+  }
+
+  const oldImage = existingUser.user_image;
+
+  // 2️⃣ Mettre à jour l'image dans la base
+  const updatedUser = await Profile.findByIdAndUpdate(
+    existingUser._id,
+    { user_image: newFilename },
+    { new: true }
+  );
+
+  // 3️⃣ Supprimer l’ancienne image si elle existe
+  if (oldImage && oldImage !== newFilename) {
+    const oldImagePath = path.join(__dirname, "..", "public", "images", "User", oldImage);
+
+    fs.access(oldImagePath, fs.constants.F_OK, (err) => {
+      if (!err) {
+        fs.unlink(oldImagePath, (unlinkErr) => {
+          if (unlinkErr) console.error("Erreur suppression ancienne image:", unlinkErr);
+          else console.log("Ancienne image supprimée :", oldImage);
+        });
+      }
+    });
+  }
+
+  return updatedUser;
+};
+
 
 // Récupérer un profil par ID utilisateur
 // services/profileService.js

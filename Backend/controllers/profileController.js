@@ -1,6 +1,4 @@
 const profileService = require("../services/profileService");
-const Agent = require("../models/AgentModel");
-const agentService = require("../services/AgentService");
 const User = require("../models/UserModel");
 
 // Créer ou mettre à jour un profil
@@ -44,7 +42,6 @@ module.exports.createOrUpdateProfile = async (req, res) => {
   }
 };
 
-
 // Créer ou mettre à jour un profil
 module.exports.createOrUpdateCompanyProfile = async (req, res) => {
   try {
@@ -71,6 +68,29 @@ module.exports.createOrUpdateCompanyProfile = async (req, res) => {
       .json({
         message: error.message || "Error creating/updating company profile",
       });
+  }
+};
+
+exports.updateUserImage = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "Aucune image n’a été fournie." });
+    }
+
+    const { filename } = req.file;
+    console.log("Nouvelle image :", filename);
+
+    const updatedUser = await profileService.updateUserImage(userId, filename);
+
+    res.status(200).json({
+      message: "Image mise à jour avec succès.",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
   }
 };
 

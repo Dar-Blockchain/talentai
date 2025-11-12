@@ -12,7 +12,7 @@ const profileController = require('../controllers/profileController');
 // Import des middlewares
 const { requireAuthUser } = require('../middleware/authMiddleware');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
-
+const uploadfile = require('../middleware/uploadfile');
 
 // Auth obligatoire + logs pour toutes les routes
 //router.use(authLogMiddleware("Profile"));
@@ -29,6 +29,8 @@ router.put('/updateProfile', requireAuthUser, profileController.updateProfile);
 
 // POST /profile/createOrUpdateCompanyProfile — crée/maj profil entreprise
 router.post('/createOrUpdateCompanyProfile', requireAuthUser,profileController.createOrUpdateCompanyProfile);
+
+router.put('/Update_Profile_Picture',uploadfile.single("user_image"),requireAuthUser, profileController.updateUserImage);
 
 // GET /profile/getMyProfile — profil de l'utilisateur courant
 router.get('/getMyProfile', requireAuthUser,profileController.getMyProfile);
