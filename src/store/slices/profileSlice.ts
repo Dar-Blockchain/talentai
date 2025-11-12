@@ -14,6 +14,7 @@ interface User {
     profile: string;
     FirstName?: string;
     LastName?: string;
+    user_image?: string;
 }
 
 interface CompanyDetails {
@@ -54,6 +55,7 @@ export interface Profile {
     overallScore: string;
     quota: number;
     quotaUpdatedAt: string;
+    user_image?: string;
 }
 
 interface ProfileState {

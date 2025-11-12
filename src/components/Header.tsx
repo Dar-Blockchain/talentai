@@ -489,6 +489,11 @@ const Header = ({ logo, type }: HeaderProps) => {
                   >
                     {/* User Avatar */}
                     <Avatar
+                      src={
+                        profile?.user_image || profile?.userId?.user_image
+                          ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile?.user_image || profile?.userId?.user_image}`
+                          : undefined
+                      }
                       {...stringAvatar(profile?.userId?.username || "Unnamed")}
                     />
 

@@ -118,22 +118,24 @@ const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
               onClick={handleClick}
             >
               {/* User Avatar */}
-              <Box
+              <Avatar
+                src={
+                  profile?.user_image || profile?.userId?.user_image
+                    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile?.user_image || profile?.userId?.user_image}`
+                    : undefined
+                }
+                alt={profile?.userId?.username || 'User'}
                 sx={{
                   width: 40,
                   height: 40,
                   backgroundColor: '#E3F2FD',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#1976D2'
+                  color: '#1976D2',
+                  fontWeight: 500,
+                  fontSize: '1rem'
                 }}
               >
-                <Typography sx={{ fontSize: '1.2rem', fontWeight: 500 }}>
-                  👤
-                </Typography>
-              </Box>
+                {profile?.userId?.username?.charAt(0)?.toUpperCase() || 'U'}
+              </Avatar>
 
               {/* User Name */}
               <Typography
