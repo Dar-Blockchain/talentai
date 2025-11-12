@@ -73,7 +73,8 @@ const tokenTransactionSchema = new mongoose.Schema({
 
 // Indexes for efficient queries
 tokenTransactionSchema.index({ userId: 1, createdAt: -1 });
-tokenTransactionSchema.index({ transactionId: 1 });
+// transactionId is declared unique on the field level; avoid adding a duplicate index here
+// tokenTransactionSchema.index({ transactionId: 1 });
 tokenTransactionSchema.index({ type: 1, status: 1 });
 tokenTransactionSchema.index({ hederaTransactionHash: 1 });
 

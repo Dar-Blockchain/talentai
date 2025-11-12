@@ -32,7 +32,6 @@ const tokenBalanceSchema = new mongoose.Schema({
 });
 
 // Index for efficient queries
-tokenBalanceSchema.index({ userId: 1 });
 tokenBalanceSchema.index({ lastUpdated: -1 });
 
 // Virtual for total transactions value

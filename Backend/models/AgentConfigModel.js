@@ -12,14 +12,12 @@ const agentConfigSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Agent',
     required: true,
-    unique: true,
     description: "Agent lié (one-to-one)",
   },
   postId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Post',
     required: true,
-    unique: true,
     description: "Post lié (one-to-one)",
   },
 
