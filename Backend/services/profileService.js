@@ -185,9 +185,9 @@ exports.updateUserImage = async (userId, newFilename) => {
   if (!newFilename) {
     throw new Error("Nom de fichier image manquant.");
   }
-
+console.log("Updating profile image for userId:", userId.toString(), "with new filename:", newFilename);
   // 1️⃣ Récupérer l'utilisateur existant pour connaître l'ancienne image
-  const existingUser = await Profile.findById(userId);
+const existingUser = await Profile.findOne({ userId: userId.toString() });
   if (!existingUser) {
     throw new Error("Profile non trouvé.");
   }
