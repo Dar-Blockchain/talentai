@@ -75,6 +75,7 @@ const ProfileSettingsPage: React.FC = () => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const [profile, setProfile] = useState<UserProfile>({
     username: '',
@@ -90,72 +91,82 @@ const ProfileSettingsPage: React.FC = () => {
     avatar: '',
   });
 
+  // Load user profile data
+  const fetchProfile = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('api_token');
+      if (!token) {
+        router.push('/signin');
+        return;
+      }
+
+      // Fetch profile data
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Extract data from nested userId object if available
+        const userData = data.userId || data;
+
+        // Construct avatar URL if user_image exists
+        let avatarUrl = '';
+        if (data.user_image || userData.user_image) {
+          const imageName = data.user_image || userData.user_image;
+          avatarUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${imageName}`;
+        } else {
+          avatarUrl = data.avatar || userData.avatar || '';
+        }
+
+        setProfile({
+          username: userData.username || user.username || '',
+          email: userData.email || user.email || '',
+          requiredExperienceLevel: data.requiredExperienceLevel || 'Mid-Level',
+          targetRole: data.targetRole || '',
+          firstName: data.FirstName || userData.FirstName || user.username?.split(' ')[0] || '',
+          lastName: data.LastName || userData.LastName || user.username?.split(' ')[1] || '',
+          gender: data.gender || userData.gender || 'Male',
+          country: data.country || data.companyDetails?.location || userData.country || 'Tunisia',
+          language: data.language || userData.language || 'English',
+          timezone: data.timezone || userData.timezone || 'UTC+01:00',
+          avatar: avatarUrl,
+        });
+
+        console.log('✅ Profile data loaded:', {
+          profileType: data.type,
+          username: userData.username,
+          email: userData.email,
+          requiredExperienceLevel: data.requiredExperienceLevel,
+          targetRole: data.targetRole,
+          hasCompanyDetails: !!data.companyDetails,
+          skills: data.skills?.length || 0,
+          softSkills: data.softSkills?.length || 0,
+          avatarUrl: avatarUrl,
+        });
+      } else {
+        console.error('Failed to load profile:', response.status);
+        setError('Failed to load profile data');
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setError('An error occurred while loading your profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!user) {
       router.push('/signin');
       return;
     }
-
-    // Load user profile data
-    const fetchProfile = async () => {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem('api_token');
-        if (!token) {
-          router.push('/signin');
-          return;
-        }
-
-        // Fetch profile data
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/getMyProfile`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-
-          // Extract data from nested userId object if available
-          const userData = data.userId || data;
-
-          setProfile({
-            username: userData.username || user.username || '',
-            email: userData.email || user.email || '',
-            requiredExperienceLevel: data.requiredExperienceLevel || 'Mid-Level',
-            targetRole: data.targetRole || '',
-            firstName: data.FirstName || userData.FirstName || user.username?.split(' ')[0] || '',
-            lastName: data.LastName || userData.LastName || user.username?.split(' ')[1] || '',
-            gender: data.gender || userData.gender || 'Male',
-            country: data.country || data.companyDetails?.location || userData.country || 'Tunisia',
-            language: data.language || userData.language || 'English',
-            timezone: data.timezone || userData.timezone || 'UTC+01:00',
-            avatar: data.avatar || userData.avatar || '',
-          });
-
-          console.log('✅ Profile data loaded:', {
-            profileType: data.type,
-            username: userData.username,
-            email: userData.email,
-            requiredExperienceLevel: data.requiredExperienceLevel,
-            targetRole: data.targetRole,
-            hasCompanyDetails: !!data.companyDetails,
-            skills: data.skills?.length || 0,
-            softSkills: data.softSkills?.length || 0,
-          });
-        } else {
-          console.error('Failed to load profile:', response.status);
-          setError('Failed to load profile data');
-        }
-      } catch (err) {
-        console.error('Error fetching profile:', err);
-        setError('An error occurred while loading your profile');
-      } finally {
-        setLoading(false);
-      }
-    };
 
     fetchProfile();
   }, [user, router]);
@@ -166,6 +177,65 @@ const ProfileSettingsPage: React.FC = () => {
 
   const handleSelectChange = (event: SelectChangeEvent<string>, field: keyof UserProfile) => {
     setProfile(prev => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image size should be less than 5MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem('api_token');
+      if (!token) {
+        router.push('/signin');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('user_image', file);
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/Update_Profile_Picture`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Profile picture updated:', data);
+
+        // Refresh profile data to get the updated image
+        setUploadingImage(false);
+        await fetchProfile();
+
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3000);
+      } else {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to upload image' }));
+        console.error('Failed to upload profile picture:', errorData);
+        setError(errorData.message || 'Failed to upload profile picture. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Error uploading profile picture:', err);
+      setError(err.message || 'An error occurred while uploading your profile picture.');
+      setUploadingImage(false);
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -401,24 +471,43 @@ const ProfileSettingsPage: React.FC = () => {
                               boxShadow: '0 4px 12px rgba(131, 16, 255, 0.2)',
                             }}
                           >
-                            {profile.firstName.charAt(0)}{profile.lastName.charAt(0)}
+                            {profile.firstName?.charAt(0)}{profile.lastName?.charAt(0)}
                           </Avatar>
-                          <IconButton
-                            sx={{
-                              position: 'absolute',
-                              bottom: -5,
-                              right: -5,
-                              backgroundColor: '#8310FF',
-                              color: 'white',
-                              width: 36,
-                              height: 36,
-                              '&:hover': {
-                                backgroundColor: '#6a0dd4',
-                              },
-                            }}
-                          >
-                            <PhotoCameraIcon sx={{ fontSize: 18 }} />
-                          </IconButton>
+                          <input
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            id="profile-picture-upload"
+                            type="file"
+                            onChange={handleImageUpload}
+                            disabled={uploadingImage}
+                          />
+                          <label htmlFor="profile-picture-upload">
+                            <IconButton
+                              component="span"
+                              disabled={uploadingImage}
+                              sx={{
+                                position: 'absolute',
+                                bottom: -5,
+                                right: -5,
+                                backgroundColor: '#8310FF',
+                                color: 'white',
+                                width: 36,
+                                height: 36,
+                                '&:hover': {
+                                  backgroundColor: '#6a0dd4',
+                                },
+                                '&.Mui-disabled': {
+                                  backgroundColor: '#9ca3af',
+                                },
+                              }}
+                            >
+                              {uploadingImage ? (
+                                <CircularProgress size={18} sx={{ color: 'white' }} />
+                              ) : (
+                                <PhotoCameraIcon sx={{ fontSize: 18 }} />
+                              )}
+                            </IconButton>
+                          </label>
                         </Box>
                         <Box>
                           <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
