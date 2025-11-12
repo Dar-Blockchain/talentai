@@ -193,7 +193,7 @@ const existingUser = await Profile.findOne({ userId: userId.toString() });
   }
 
   const oldImage = existingUser.user_image;
-
+  console.log("Old image filename:", oldImage);
   // 2️⃣ Mettre à jour l'image dans la base
   const updatedUser = await Profile.findByIdAndUpdate(
     existingUser._id,
@@ -203,8 +203,8 @@ const existingUser = await Profile.findOne({ userId: userId.toString() });
 
   // 3️⃣ Supprimer l’ancienne image si elle existe
   if (oldImage && oldImage !== newFilename) {
-    const oldImagePath = path.join(__dirname, "..", "public", "images", "User", oldImage);
-
+    const oldImagePath = path.join(__dirname, "..", "public", "images", "Users", oldImage);
+console.log("Old image path to delete:", oldImagePath);
     fs.access(oldImagePath, fs.constants.F_OK, (err) => {
       if (!err) {
         fs.unlink(oldImagePath, (unlinkErr) => {
