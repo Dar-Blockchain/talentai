@@ -2,6 +2,7 @@ const Agenda = require("agenda");
 const Agent = require("../models/AgentModel");
 const JobPost = require("../models/PostModel");
 const Profile = require("../models/ProfileModel");
+const AgentConfig = require("../models/AgentConfigModel");
 const { calculateSkillMatchScore } = require("./MatchingService/matchingService");
 const axios = require("axios");
 
@@ -108,53 +109,82 @@ async function initializeAgenda() {
           continue;
         }
 
-        const { jobTitle, matches } = await computeMatches(agent.postId._id);
-        totalMatches += matches.length;
-        // Log seulement s'il y a des matches ou des erreurs
-        if (matches.length > 0) {
-          console.log(`✅ [Agenda] Agent ${agentLabel} | Job: ${jobTitle} | ${matches.length} candidat(s) matché(s) | #1 Name : ${matches[0].name}  candidat matché Score :  ${matches[0].score} FinalBid : ${matches[0].finalBid} _id : ${matches[0].candidateId}`);
-        
-          // --- Envoi POST seulement pour le premier match avec score > 70 ---
-        const topMatch = matches.find((m) => m.score > 70);
-        if (topMatch) {         
-          try {
-
-            try {
-            await axios.post(`${process.env.BASE_URL_Backend }/hr-agents/submit-evaluation-message`, {
-              agentAId: agent._id,
-              agentBId: "68c2e127bf5357b2404443c2", // master
-              candidateId: topMatch.candidateId,
-              postId: agent.postId._id,
-              message: "Please review this candidate",
-              bidAmount: topMatch.finalBid || 20
-            });
-            console.log(`📤 [Agenda] Message envoyé pour candidat ${topMatch.name} avec score ${topMatch.score}`);
-          } catch (err) {
-            console.error(`❌ [Agenda] Échec envoi message pour candidat ${topMatch.name}:`, err.message);
-          }
-
-            console.log("topMatch.candidateId", topMatch.candidateId.toString());
-            const res = await axios.put(`${process.env.BASE_URL_Backend}/profiles/updateFinalBid`, {
-              userId: topMatch.candidateId?.toString(), // candidat concerné
-              newBid: 20,
-              companyId: agent._id?.toString(),        // ⚠️ pas agent.Company !
-              postId: agent.postId._id?.toString()
-            });
-            
-            console.log(
-              `📤 [Agenda] Bid mis à jour pour candidat ${topMatch.name} (score ${topMatch.score}) → FinalBid = ${res.data.profile.companyBid.finalBid}`
-            );
-          } catch (err) {
-            console.error(
-              `❌ [Agenda] Échec updateFinalBid pour candidat ${topMatch.name}:`,
-              err.response?.data?.message || err.message
-            );
-          }
-        } else {
-          console.log(`⚠️ [Agenda] Aucun candidat avec score > 70 pour agent ${agentLabel}`);
+        // Charger la configuration manuelle de l'agent
+        const agentConfig = await AgentConfig.findOne({ agentId: agent._id }).lean();
+        if (!agentConfig) {
+          console.warn(`⚠️  [Agenda] Aucune configuration trouvée pour agent ${agentLabel}. Configuration par défaut utilisée.`);
         }
 
-          
+        // Valeurs de la configuration (ou valeurs par défaut)
+        const thresholdPercent = agentConfig?.thresholdPercent ?? 70;
+        const bidBudgetMin = agentConfig?.bidBudgetMin ?? 10;
+        const bidBudgetMax = agentConfig?.bidBudgetMax ?? 1000;
+        const bidStep = agentConfig?.bidStep ?? 5;
+        const maxCandidatesToBid = agentConfig?.maxCandidatesToBid ?? 1;
+        const autoSubmitTopMatch = agentConfig?.autoSubmitTopMatch ?? true;
+        const maxDailySpending = agentConfig?.maxDailySpending ?? 200;
+
+        const { jobTitle, matches } = await computeMatches(agent.postId._id);
+        totalMatches += matches.length;
+        
+        // Log seulement s'il y a des matches ou des erreurs
+        if (matches.length > 0) {
+          console.log(`✅ [Agenda] Agent ${agentLabel} | Job: ${jobTitle} | ${matches.length} candidat(s) matché(s) | Config: threshold=${thresholdPercent}%, maxBid=${maxCandidatesToBid}`);
+          console.log(`   #1 Name: ${matches[0].name} | Score: ${matches[0].score} | FinalBid: ${matches[0].finalBid} | ID: ${matches[0].candidateId}`);
+        
+          // --- Envoi POST et bid pour les meilleurs matches respectant le seuil ---
+          const topMatches = matches
+            .filter((m) => m.score >= thresholdPercent)
+            .slice(0, maxCandidatesToBid);
+
+          if (topMatches.length === 0) {
+            console.log(`⚠️ [Agenda] Aucun candidat avec score >= ${thresholdPercent}% pour agent ${agentLabel}`);
+          } else {
+            for (let idx = 0; idx < topMatches.length; idx++) {
+              const topMatch = topMatches[idx];
+              const bidAmount = Math.max(bidBudgetMin, Math.min(bidBudgetMax, topMatch.finalBid || bidBudgetMin + bidStep));
+
+              try {
+                // Soumission du message d'évaluation si autoSubmitTopMatch est activé
+                if (autoSubmitTopMatch) {
+                  try {
+                    await axios.post(`${process.env.BASE_URL_Backend}/hr-agents/submit-evaluation-message`, {
+                      agentAId: agent._id,
+                      agentBId: "68c2e127bf5357b2404443c2", // master
+                      candidateId: topMatch.candidateId,
+                      postId: agent.postId._id,
+                      message: `Candidate review request (Score: ${topMatch.score}%, Bid: $${bidAmount})`,
+                      bidAmount: bidAmount
+                    });
+                    console.log(`📤 [Agenda] Message envoyé pour candidat ${topMatch.name} (score ${topMatch.score}%, bid $${bidAmount})`);
+                  } catch (err) {
+                    console.error(`❌ [Agenda] Échec envoi message pour candidat ${topMatch.name}:`, err.message);
+                  }
+                }
+
+                // Mise à jour du bid final
+                try {
+                  const res = await axios.put(`${process.env.BASE_URL_Backend}/profiles/updateFinalBid`, {
+                    userId: topMatch.candidateId?.toString(),
+                    newBid: bidAmount,
+                    companyId: agent._id?.toString(),
+                    postId: agent.postId._id?.toString()
+                  });
+                  
+                  console.log(
+                    `� [Agenda] Bid mis à jour pour candidat ${topMatch.name} (score ${topMatch.score}%, bid $${bidAmount}) → FinalBid = $${res.data.profile.companyBid.finalBid}`
+                  );
+                } catch (err) {
+                  console.error(
+                    `❌ [Agenda] Échec updateFinalBid pour candidat ${topMatch.name}:`,
+                    err.response?.data?.message || err.message
+                  );
+                }
+              } catch (err) {
+                console.error(`❌ [Agenda] Erreur traitement candidat ${topMatch.name}:`, err.message);
+              }
+            }
+          }
         }
       }
 
