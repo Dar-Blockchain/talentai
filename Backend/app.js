@@ -28,14 +28,14 @@ const interviewDetailsRouter = require("./routes/interviewDetailsRouter");
 const notificationRouter = require("./routes/notificationRouter");
 const postStepsRouter = require("./routes/postStepsRouter");
 const candidatePostStepProgressRouter = require("./routes/candidatePostStepProgressRouter");
-const hederaToolsRouter = require("./routes/hederaToolsRouter");
-const hcs11Router = require("./routes/hcs11Router");
+const hederaToolsRouter = require("./routes/HederaRoutes/hederaToolsRouter");
+const hcs11Router = require("./routes/HederaRoutes/hcs11Router");
 const hrAgentRouter = require("./routes/hrAgentRouter");
 const recruitementStepRouter = require("./routes/recruitementStepRouter");
 const taskRouter = require("./routes/taskRouter");
 const agentConfigRouter = require("./routes/agentConfigRouter");
-const tokenRouter = require("./routes/tokenRouter");
-const paymentRouter = require("./routes/paymentRouter");
+const tokenRouter = require("./routes/HederaRoutes/tokenRouter");
+const paymentRouter = require("./routes/HederaRoutes/paymentRouter");
 
 require("dotenv").config();
 

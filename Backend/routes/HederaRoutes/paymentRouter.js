@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const paymentController = require("../controllers/paymentController");
-const { requireAuthUser } = require("../middleware/authMiddleware");
+const paymentController = require("../../controllers/HederaControllers/paymentController");
+const { requireAuthUser } = require("../../middleware/authMiddleware");
 
 // All payment routes require authentication
 router.use(requireAuthUser);
