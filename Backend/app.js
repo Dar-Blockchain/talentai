@@ -1,3 +1,18 @@
+// Suppress noisy deprecation warnings for the builtin `punycode` module
+// (some older nested dependencies still require it). We only silence
+// the specific DEP0040 punycode deprecation so other warnings remain visible.
+process.on('warning', (warning) => {
+  try {
+    if (warning.name === 'DeprecationWarning' && /punycode/.test(warning.stack || warning.message)) {
+      // intentionally ignore punycode deprecation
+      return;
+    }
+  } catch (e) {
+    // if anything goes wrong, fall back to default logging below
+  }
+  console.warn(warning.name + ': ' + warning.message);
+});
+
 const express = require("express");
 const cors = require("cors");
 const path = require("path");

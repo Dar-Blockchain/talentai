@@ -4,8 +4,8 @@
   "description": "Un projet Express.js",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js",
+    "start": "node -r ./suppress-punycode.js app.js",
+    "dev": "nodemon --exec \"node -r ./suppress-punycode.js app.js\"",
     "create-token": "node scripts/createTalentAIToken.js"
   },
   "dependencies": {
@@ -42,5 +42,9 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
+  }
+  ,
+  "overrides": {
+    "tr46": "^5.1.1"
   }
 }
