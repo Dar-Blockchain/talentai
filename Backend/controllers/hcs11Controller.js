@@ -1,4 +1,4 @@
-const hcs11Service = require('../../services/hcs11Service');
+const hcs11Service = require('../services/hcs11Service');
 
 /**
  * @swagger
@@ -438,7 +438,7 @@ const createCompanyAgent = async (req, res) => {
 
     // Step 1: Create Hedera wallet for this company agent
     console.log('💰 Creating Hedera Account...');
-    const { createHederaWallet } = require('../../services/hederaService');
+    const { createHederaWallet } = require('../services/hederaService');
     const hederaWallet = await createHederaWallet();
     
     console.log('✅ Hedera Account Created:');
@@ -546,7 +546,7 @@ const createCompanyAgent = async (req, res) => {
     };
 
     // Use the existing HR agent profile creation function
-    const hrAgentController = require('../hrAgentController');
+    const hrAgentController = require('./hrAgentController');
     const profileResult = await hrAgentController.createAgentHCS11Profile(companyAgent);
 
     if (profileResult.success) {

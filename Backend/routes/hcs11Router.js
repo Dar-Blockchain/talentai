@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const hcs11Controller = require('../../controllers/HederaControllers/hcs11Controller');
-const { requireAuthUser } = require('../../middleware/authMiddleware');
+const hcs11Controller = require('../controllers/hcs11Controller');
+const { requireAuthUser } = require('../middleware/authMiddleware');
 
 // Apply auth middleware to all HCS-11 routes
 router.use(requireAuthUser);

@@ -4,9 +4,9 @@
  */
 const express = require("express");
 const router = express.Router();
-const tokenController = require("../../controllers/HederaControllers/tokenController");
-const { requireAuthUser } = require("../../middleware/authMiddleware");
-const authLogMiddleware = require("../../middleware/SystemeLogs/LogMiddleware");
+const tokenController = require("../controllers/tokenController");
+const { requireAuthUser } = require("../middleware/authMiddleware");
+const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 
 // Apply logging middleware to all token routes
 //router.use(authLogMiddleware("Token"));
