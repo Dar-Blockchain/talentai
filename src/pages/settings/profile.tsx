@@ -459,10 +459,13 @@ const ProfileSettingsPage: React.FC = () => {
                     mb: 4
                   }}>
                     <Typography variant="h5" sx={{ fontWeight: 700, color: '#1a1a1a', mb: 0.5 }}>
-                      Personal Information
+                      {profile.profileType === 'Company' ? 'Company Information' : 'Personal Information'}
                     </Typography>
                     <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                      Manage your personal details and profile information
+                      {profile.profileType === 'Company'
+                        ? 'Manage your company details and profile information'
+                        : 'Manage your personal details and profile information'
+                      }
                     </Typography>
                   </Box>
 
@@ -543,7 +546,7 @@ const ProfileSettingsPage: React.FC = () => {
                             </IconButton>
                           </label>
                         </Box>
-                        <Box>
+                        <Box sx={{ flex: 1 }}>
                           <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
                             {profile.profileType === 'Company'
                               ? profile.companyName || 'Company Name'
@@ -553,11 +556,43 @@ const ProfileSettingsPage: React.FC = () => {
                           <Typography variant="body2" sx={{ color: '#6b7280', mb: 1 }}>
                             {profile.email}
                           </Typography>
-                          {profile.profileType === 'Company' && profile.industry && (
-                            <Typography variant="caption" sx={{ color: '#9ca3af' }}>
-                              {profile.industry}
-                            </Typography>
+
+                          {/* Company-specific details */}
+                          {profile.profileType === 'Company' && (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 1 }}>
+                              {profile.industry && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                  <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 500 }}>
+                                    Industry:
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 600 }}>
+                                    {profile.industry}
+                                  </Typography>
+                                </Box>
+                              )}
+                              {profile.companySize && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                  <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 500 }}>
+                                    Size:
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 600 }}>
+                                    {profile.companySize}
+                                  </Typography>
+                                </Box>
+                              )}
+                              {profile.location && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                  <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 500 }}>
+                                    Location:
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 600 }}>
+                                    {profile.location}
+                                  </Typography>
+                                </Box>
+                              )}
+                            </Box>
                           )}
+
                           <Button
                             variant="outlined"
                             size="small"
