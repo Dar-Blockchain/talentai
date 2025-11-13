@@ -186,13 +186,22 @@ async function initializeAgenda() {
                   });
                   
                   console.log(
-                    `� [Agenda] Bid mis à jour pour candidat ${topMatch.name} (score ${topMatch.score}%, bid $${bidAmount}) → FinalBid = $${res.data.profile.companyBid.finalBid}`
+                    `📈 [Agenda] Bid mis à jour pour candidat ${topMatch.name} (score ${topMatch.score}%, bid $${bidAmount}) → FinalBid = $${res.data.profile.companyBid.finalBid}`
                   );
                 } catch (err) {
-                  console.error(
-                    `❌ [Agenda] Échec updateFinalBid pour candidat ${topMatch.name}:`,
-                    err.response?.data?.message || err.message
-                  );
+                  const errorMsg = err.response?.data?.message || err.message;
+                  
+                  // Si c'est une erreur de "bid déjà fait par cette company", c'est normal et on continue
+                  if (errorMsg && errorMsg.includes("cannot bid again if your company made the last bid")) {
+                    console.info(
+                      `ℹ️ [Agenda] Agent ${agentLabel} a déjà enchéri pour candidat ${topMatch.name}. Passage au candidat suivant.`
+                    );
+                  } else {
+                    console.error(
+                      `❌ [Agenda] Échec updateFinalBid pour candidat ${topMatch.name}:`,
+                      errorMsg
+                    );
+                  }
                 }
               } catch (err) {
                 console.error(`❌ [Agenda] Erreur traitement candidat ${topMatch.name}:`, err.message);
