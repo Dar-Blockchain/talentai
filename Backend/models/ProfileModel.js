@@ -14,6 +14,16 @@ const profileSchema = new mongoose.Schema(
       required: true,
     },
     user_image : { type : String, required : false , default : 'client.png'},
+    firstName: { type: String, required: false },
+    lastName: { type: String, required: false },
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other", "Prefer not to say"],
+      required: false,
+    },
+    country: { type: String, required: false },
+    language: { type: String, required: false },
+    timeZone: { type: String, required: false },
     // Quota for the user
     quota: { type: Number, default: 0 },
     quotaUpdatedAt: {
@@ -69,7 +79,8 @@ const profileSchema = new mongoose.Schema(
         required: true,
       },*/
     },
-
+    
+    
     requiredSkills: [String],
     requiredExperienceLevel: {
       type: String,

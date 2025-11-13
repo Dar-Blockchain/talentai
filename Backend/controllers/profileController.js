@@ -474,17 +474,54 @@ module.exports.updateProfile = async (req, res) => {
   try {
     console.log('🔧 Update Profile API called');
     const userId = req.user._id;
-    const { username, email, requiredExperienceLevel, targetRole } = req.body;
+    const {
+      username,
+      email,
+      requiredExperienceLevel,
+      targetRole,
+      firstName,
+      lastName,
+      gender,
+      country,
+      language,
+      timeZone,
+    } = req.body;
 
     console.log('🔧 User ID:', userId);
-    console.log('🔧 Update data:', { username, email, requiredExperienceLevel, targetRole });
+    console.log('🔧 Update data:', { username, email, requiredExperienceLevel, targetRole, firstName, lastName, gender, country, language, timeZone });
 
-    // Validate required fields
-    if (!username && !email && !requiredExperienceLevel && !targetRole) {
-      return res.status(400).json({ 
+    // Validate that at least one updatable field is provided
+    if (
+      !username &&
+      !email &&
+      !requiredExperienceLevel &&
+      !targetRole &&
+      !firstName &&
+      !lastName &&
+      !gender &&
+      !country &&
+      !language &&
+      !timeZone
+    ) {
+      return res.status(400).json({
         success: false,
-        message: "At least one field must be provided for update" 
+        message: "At least one field must be provided for update",
       });
+    }
+
+    // Name validation (allow letters, accents, spaces, hyphens, apostrophes)
+    const nameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ\s'-]+$/;
+    if (firstName && !nameRegex.test(firstName)) {
+      return res.status(400).json({ success: false, message: "Le prénom ne doit pas contenir de caractères spéciaux" });
+    }
+    if (lastName && !nameRegex.test(lastName)) {
+      return res.status(400).json({ success: false, message: "Le nom ne doit pas contenir de caractères spéciaux" });
+    }
+
+    // Gender validation
+    const allowedGenders = ["Male", "Female", "Other", "Prefer not to say"];
+    if (gender && !allowedGenders.includes(gender)) {
+      return res.status(400).json({ success: false, message: "Valeur de gender invalide" });
     }
 
     // Update User model fields (username, email)
@@ -502,6 +539,12 @@ module.exports.updateProfile = async (req, res) => {
     const profileUpdateData = {};
     if (requiredExperienceLevel) profileUpdateData.requiredExperienceLevel = requiredExperienceLevel;
     if (targetRole) profileUpdateData.targetRole = targetRole;
+    if (firstName) profileUpdateData.firstName = firstName;
+    if (lastName) profileUpdateData.lastName = lastName;
+    if (gender) profileUpdateData.gender = gender;
+    if (country) profileUpdateData.country = country;
+    if (language) profileUpdateData.language = language;
+    if (timeZone) profileUpdateData.timeZone = timeZone;
 
     if (Object.keys(profileUpdateData).length > 0) {
       console.log('🔧 Updating Profile model with:', profileUpdateData);
