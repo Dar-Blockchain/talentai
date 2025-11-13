@@ -42,17 +42,18 @@ import Header from '@/components/Header';
 import SimpleFooter from '@/components/SimpleFooter';
 
 interface UserProfile {
+  // Editable fields
   username: string;
   email: string;
   requiredExperienceLevel: string;
   targetRole: string;
-  // Display-only fields (not sent to backend)
-  firstName?: string;
-  lastName?: string;
-  gender?: string;
-  country?: string;
-  language?: string;
-  timezone?: string;
+  firstName: string;
+  lastName: string;
+  gender: string;
+  country: string;
+  language: string;
+  timezone: string;
+  // Display-only fields
   avatar?: string;
   profileType?: 'Candidate' | 'Company';
   // Company-specific fields
@@ -70,6 +71,25 @@ const experienceLevels = [
   'Lead',
   'Principal',
   'Executive'
+];
+
+const countries = [
+  'United States', 'Canada', 'United Kingdom', 'Australia', 'Germany',
+  'France', 'Spain', 'Italy', 'Netherlands', 'Sweden', 'Norway', 'Denmark',
+  'Tunisia', 'Morocco', 'Egypt', 'Algeria', 'Libya', 'Saudi Arabia', 'UAE',
+  'Other'
+];
+
+const languages = [
+  'English', 'French', 'Spanish', 'German', 'Arabic', 'Chinese', 'Japanese',
+  'Portuguese', 'Russian', 'Italian', 'Dutch', 'Korean', 'Other'
+];
+
+const timezones = [
+  'UTC-12:00', 'UTC-11:00', 'UTC-10:00', 'UTC-09:00', 'UTC-08:00', 'UTC-07:00',
+  'UTC-06:00', 'UTC-05:00', 'UTC-04:00', 'UTC-03:00', 'UTC-02:00', 'UTC-01:00',
+  'UTC+00:00', 'UTC+01:00', 'UTC+02:00', 'UTC+03:00', 'UTC+04:00', 'UTC+05:00',
+  'UTC+06:00', 'UTC+07:00', 'UTC+08:00', 'UTC+09:00', 'UTC+10:00', 'UTC+11:00', 'UTC+12:00'
 ];
 
 const ProfileSettingsPage: React.FC = () => {
@@ -141,8 +161,8 @@ const ProfileSettingsPage: React.FC = () => {
           email: userData.email || user.email || '',
           requiredExperienceLevel: data.requiredExperienceLevel || 'Mid-Level',
           targetRole: data.targetRole || '',
-          firstName: data.FirstName || userData.FirstName || user.username?.split(' ')[0] || '',
-          lastName: data.LastName || userData.LastName || user.username?.split(' ')[1] || '',
+          firstName: data.firstName  || user.username?.split(' ')[0] || '',
+          lastName: data.lastName  || user.username?.split(' ')[1] || '',
           gender: data.gender || userData.gender || 'Male',
           country: data.country || data.companyDetails?.location || userData.country || 'Tunisia',
           language: data.language || userData.language || 'English',
@@ -266,20 +286,42 @@ const ProfileSettingsPage: React.FC = () => {
         return;
       }
 
-      // Build update payload with only the fields backend accepts
+      // Build update payload with all editable fields
       const updatePayload: any = {};
 
+      // Fields for all users
       if (profile.username?.trim()) {
         updatePayload.username = profile.username.trim();
       }
 
       // Only include these fields for Candidates
       if (profile.profileType === 'Candidate') {
+        if (profile.email?.trim()) {
+          updatePayload.email = profile.email.trim();
+        }
         if (profile.requiredExperienceLevel) {
           updatePayload.requiredExperienceLevel = profile.requiredExperienceLevel;
         }
         if (profile.targetRole?.trim()) {
           updatePayload.targetRole = profile.targetRole.trim();
+        }
+        if (profile.firstName?.trim()) {
+          updatePayload.firstName = profile.firstName.trim();
+        }
+        if (profile.lastName?.trim()) {
+          updatePayload.lastName = profile.lastName.trim();
+        }
+        if (profile.gender) {
+          updatePayload.gender = profile.gender;
+        }
+        if (profile.country) {
+          updatePayload.country = profile.country;
+        }
+        if (profile.language) {
+          updatePayload.language = profile.language;
+        }
+        if (profile.timezone) {
+          updatePayload.timezone = profile.timezone;
         }
       }
 
@@ -617,7 +659,7 @@ const ProfileSettingsPage: React.FC = () => {
 
                       {/* Form Fields - Different for Candidate vs Company */}
                       {profile.profileType === 'Candidate' ? (
-                        // Candidate Fields
+                        // Candidate Fields - All Editable
                         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
                           <TextField
                             label="Username"
@@ -636,6 +678,139 @@ const ProfileSettingsPage: React.FC = () => {
                               },
                             }}
                           />
+
+                          <TextField
+                            label="Email"
+                            value={profile.email}
+                            onChange={(e) => handleInputChange('email', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            type="email"
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
+
+                          <TextField
+                            label="First Name"
+                            value={profile.firstName}
+                            onChange={(e) => handleInputChange('firstName', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
+
+                          <TextField
+                            label="Last Name"
+                            value={profile.lastName}
+                            onChange={(e) => handleInputChange('lastName', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
+
+                          <FormControl fullWidth disabled={!isEditing}>
+                            <InputLabel>Gender</InputLabel>
+                            <Select
+                              value={profile.gender}
+                              onChange={(e) => handleSelectChange(e, 'gender')}
+                              label="Gender"
+                              sx={{
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: '#8310FF',
+                                },
+                              }}
+                            >
+                              <MenuItem value="Male">Male</MenuItem>
+                              <MenuItem value="Female">Female</MenuItem>
+                              <MenuItem value="Prefer not to say">Prefer not to say</MenuItem>
+                            </Select>
+                          </FormControl>
+
+                          <FormControl fullWidth disabled={!isEditing}>
+                            <InputLabel>Country</InputLabel>
+                            <Select
+                              value={profile.country}
+                              onChange={(e) => handleSelectChange(e, 'country')}
+                              label="Country"
+                              sx={{
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: '#8310FF',
+                                },
+                              }}
+                            >
+                              {countries.map((country) => (
+                                <MenuItem key={country} value={country}>
+                                  {country}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+
+                          <FormControl fullWidth disabled={!isEditing}>
+                            <InputLabel>Language</InputLabel>
+                            <Select
+                              value={profile.language}
+                              onChange={(e) => handleSelectChange(e, 'language')}
+                              label="Language"
+                              sx={{
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: '#8310FF',
+                                },
+                              }}
+                            >
+                              {languages.map((lang) => (
+                                <MenuItem key={lang} value={lang}>
+                                  {lang}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+
+                          <FormControl fullWidth disabled={!isEditing}>
+                            <InputLabel>Time Zone</InputLabel>
+                            <Select
+                              value={profile.timezone}
+                              onChange={(e) => handleSelectChange(e, 'timezone')}
+                              label="Time Zone"
+                              sx={{
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: '#8310FF',
+                                },
+                              }}
+                            >
+                              {timezones.map((tz) => (
+                                <MenuItem key={tz} value={tz}>
+                                  {tz}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
 
                           <FormControl fullWidth disabled={!isEditing}>
                             <InputLabel>Experience Level</InputLabel>
@@ -665,7 +840,6 @@ const ProfileSettingsPage: React.FC = () => {
                             fullWidth
                             placeholder="e.g., Software Engineer, Product Manager"
                             sx={{
-                              gridColumn: { xs: '1 / -1', sm: 'span 2' },
                               '& .MuiOutlinedInput-root': {
                                 '&.Mui-focused fieldset': {
                                   borderColor: '#8310FF',
@@ -700,103 +874,12 @@ const ProfileSettingsPage: React.FC = () => {
                         </Box>
                       )}
 
-                      {/* Display-only fields - Different for Candidate vs Company */}
-                      <Box sx={{ mt: 4 }}>
-                        <Typography variant="subtitle2" sx={{ color: '#6b7280', mb: 2, fontWeight: 600 }}>
-                          Additional Information (Read-only)
-                        </Typography>
-
-                        {profile.profileType === 'Candidate' ? (
-                          // Candidate Read-only Fields
-                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
-                            <TextField
-                              label="Email"
-                              value={profile.email}
-                              disabled
-                              fullWidth
-                              type="email"
-                              sx={{
-                                gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                                '& .MuiInputBase-input.Mui-disabled': {
-                                  WebkitTextFillColor: '#6b7280',
-                                },
-                              }}
-                            />
-
-                            <TextField
-                              label="First Name"
-                              value={profile.firstName}
-                              disabled
-                              fullWidth
-                              sx={{
-                                '& .MuiInputBase-input.Mui-disabled': {
-                                  WebkitTextFillColor: '#6b7280',
-                                },
-                              }}
-                            />
-
-                            <TextField
-                              label="Last Name"
-                              value={profile.lastName}
-                              disabled
-                              fullWidth
-                              sx={{
-                                '& .MuiInputBase-input.Mui-disabled': {
-                                  WebkitTextFillColor: '#6b7280',
-                                },
-                              }}
-                            />
-
-                            <TextField
-                              label="Gender"
-                              value={profile.gender}
-                              disabled
-                              fullWidth
-                              sx={{
-                                '& .MuiInputBase-input.Mui-disabled': {
-                                  WebkitTextFillColor: '#6b7280',
-                                },
-                              }}
-                            />
-
-                            <TextField
-                              label="Country"
-                              value={profile.country}
-                              disabled
-                              fullWidth
-                              sx={{
-                                '& .MuiInputBase-input.Mui-disabled': {
-                                  WebkitTextFillColor: '#6b7280',
-                                },
-                              }}
-                            />
-
-                            <TextField
-                              label="Language"
-                              value={profile.language}
-                              disabled
-                              fullWidth
-                              sx={{
-                                '& .MuiInputBase-input.Mui-disabled': {
-                                  WebkitTextFillColor: '#6b7280',
-                                },
-                              }}
-                            />
-
-                            <TextField
-                              label="Time Zone"
-                              value={profile.timezone}
-                              disabled
-                              fullWidth
-                              sx={{
-                                '& .MuiInputBase-input.Mui-disabled': {
-                                  WebkitTextFillColor: '#6b7280',
-                                },
-                              }}
-                            />
-                          </Box>
-                        ) : (
-                          // Company Read-only Fields
+                      {/* Display-only fields - Only for Company */}
+                      {profile.profileType === 'Company' && (
+                        <Box sx={{ mt: 4 }}>
+                          <Typography variant="subtitle2" sx={{ color: '#6b7280', mb: 2, fontWeight: 600 }}>
+                            Additional Information (Read-only)
+                          </Typography>
                           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
                             <TextField
                               label="Email"
@@ -862,8 +945,8 @@ const ProfileSettingsPage: React.FC = () => {
                               }}
                             />
                           </Box>
-                        )}
-                      </Box>
+                        </Box>
+                      )}
 
                       {isEditing && (
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
