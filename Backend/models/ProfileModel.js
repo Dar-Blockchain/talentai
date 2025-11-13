@@ -24,6 +24,17 @@ const profileSchema = new mongoose.Schema(
     country: { type: String, required: false },
     language: { type: String, required: false },
     timeZone: { type: String, required: false },
+    
+    // Contact Information
+    contactInformation: {
+      email: { type: String, required: false },
+      phone: { type: String, required: false },
+      address: { type: String, required: false },
+      linkedinUrl: { type: String, required: false },
+      githubUrl: { type: String, required: false },
+      personalWebsite: { type: String, required: false },
+      location: { type: String, required: false },
+    },
     // Quota for the user
     quota: { type: Number, default: 0 },
     quotaUpdatedAt: {

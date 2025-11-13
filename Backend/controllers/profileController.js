@@ -456,6 +456,7 @@ module.exports.updateProfile = async (req, res) => {
     const {
       username, email, requiredExperienceLevel, targetRole,
       firstName, lastName, gender, country, language, timeZone,
+      contactInformation,
     } = req.body;
 
     // Prepare potential updates
@@ -465,7 +466,7 @@ module.exports.updateProfile = async (req, res) => {
     };
 
     // Check if at least one field is provided
-    if (!Object.values(allUpdates).some(val => val)) {
+    if (!Object.values(allUpdates).some(val => val) && !contactInformation) {
       return res.status(400).json({
         success: false,
         message: "At least one field must be provided for update",
@@ -484,6 +485,11 @@ module.exports.updateProfile = async (req, res) => {
       requiredExperienceLevel, targetRole, firstName, lastName,
       gender, country, language, timeZone,
     });
+
+    // Add contactInformation if provided
+    if (contactInformation) {
+      profileUpdateData.contactInformation = contactInformation;
+    }
 
     // Execute updates in parallel
     const updatePromises = [];
