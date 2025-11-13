@@ -12,7 +12,7 @@ let lastHeartbeatAt = null;
 let countdownInterval = null;
 let hasWarnedForCurrentCycle = false;
 
-// utilitaire pour normaliser les noms de skills
+// Utility to normalize skill names
 function normalizeSkillName(name) {
   if (!name) return "";
   const part = name.split(".")[0].trim();
@@ -68,18 +68,18 @@ async function initializeAgenda() {
 
   agendaInstance = new Agenda({
     db: { address: process.env.MONGODB_URI, collection: "agendaJobs" },
-    processEvery: "1 second", // vérifie toutes les secondes pour précision
+    processEvery: "1 second", // Check every second for precision
   });
 
-  // Logs d'observabilité des jobs Agenda
+  // Logs for observability of Agenda jobs
   agendaInstance.on("start", (job) => {
-    console.log(`▶️  [Agenda] Job démarré: ${job.attrs.name} (id=${job.attrs._id})`);
+    console.log(`▶️  [Agenda] Job started: ${job.attrs.name} (id=${job.attrs._id})`);
   });
   agendaInstance.on("success", (job) => {
-    console.log(`✅ [Agenda] Job réussi: ${job.attrs.name}`);
+    console.log(`✅ [Agenda] Job succeeded: ${job.attrs.name}`);
   });
   agendaInstance.on("fail", (err, job) => {
-    console.error(`❌ [Agenda] Job échoué: ${job?.attrs?.name} → ${err?.message}`);
+    console.error(`❌ [Agenda] Job failed: ${job?.attrs?.name} → ${err?.message}`);
   });
 
   agendaInstance.define(
@@ -87,7 +87,7 @@ async function initializeAgenda() {
     { concurrency: 1, lockLifetime: 30000 },
     async () => {
     try {
-      console.log("🔄 [Agenda] Heartbeat démarré");
+      console.log("🔄 [Agenda] Heartbeat started");
       lastHeartbeatAt = new Date();
       hasWarnedForCurrentCycle = false;
 
@@ -96,7 +96,7 @@ async function initializeAgenda() {
         .lean();
 
       if (!agents || agents.length === 0) {
-        console.log("🔄 [Agenda] Aucun agent trouvé");
+        console.log("🔄 [Agenda] No agents found");
         return;
       }
 
@@ -105,17 +105,17 @@ async function initializeAgenda() {
         const agentLabel = agent.name || agent._id?.toString();
 
         if (!agent.postId?._id) {
-          console.log(`⚠️  [Agenda] Agent ${agentLabel} sans postId`);
+          console.log(`⚠️  [Agenda] Agent ${agentLabel} without postId`);
           continue;
         }
 
-        // Charger la configuration manuelle de l'agent
+        // Load agent manual configuration
         const agentConfig = await AgentConfig.findOne({ agentId: agent._id }).lean();
         if (!agentConfig) {
-          console.warn(`⚠️  [Agenda] Aucune configuration trouvée pour agent ${agentLabel}. Configuration par défaut utilisée.`);
+          console.warn(`⚠️  [Agenda] No configuration found for agent ${agentLabel}. Default configuration used.`);
         }
 
-        // Valeurs de la configuration (ou valeurs par défaut)
+        // Configuration values (or defaults)
         const thresholdPercent = agentConfig?.thresholdPercent ?? 70;
         const bidBudgetMin = agentConfig?.bidBudgetMin ?? 10;
         const bidBudgetMax = agentConfig?.bidBudgetMax ?? 1000;
@@ -127,39 +127,39 @@ async function initializeAgenda() {
         const { jobTitle, matches } = await computeMatches(agent.postId._id);
         totalMatches += matches.length;
         
-        // Log seulement s'il y a des matches ou des erreurs
+        // Log only if there are matches or errors
         if (matches.length > 0) {
-          console.log(`✅ [Agenda] Agent ${agentLabel} | Job: ${jobTitle} | ${matches.length} candidat(s) matché(s) | Config: threshold=${thresholdPercent}%, maxBid=${maxCandidatesToBid}`);
+          console.log(`✅ [Agenda] Agent ${agentLabel} | Job: ${jobTitle} | ${matches.length} candidate(s) matched | Config: threshold=${thresholdPercent}%, maxBid=${maxCandidatesToBid}`);
           console.log(`   #1 Name: ${matches[0].name} | Score: ${matches[0].score} | FinalBid: ${matches[0].finalBid} | ID: ${matches[0].candidateId}`);
         
-          // --- Envoi POST et bid pour les meilleurs matches respectant le seuil ---
+          // --- Send POST and bid for top matches respecting threshold ---
           const topMatches = matches
             .filter((m) => m.score >= thresholdPercent)
             .slice(0, maxCandidatesToBid);
 
           if (topMatches.length === 0) {
-            console.log(`⚠️ [Agenda] Aucun candidat avec score >= ${thresholdPercent}% pour agent ${agentLabel}`);
+            console.log(`⚠️ [Agenda] No candidate with score >= ${thresholdPercent}% for agent ${agentLabel}`);
           } else {
             for (let idx = 0; idx < topMatches.length; idx++) {
               const topMatch = topMatches[idx];
               
-              // 🔧 Calcul du bid avec incrément bidStep si nécessaire
+              // 🔧 Calculate bid with bidStep increment if necessary
               const currentFinalBid = topMatch.finalBid ? Number(topMatch.finalBid) : 0;
-              // Si le bid existe, ajouter bidStep ; sinon, commencer par bidBudgetMin
+              // If bid exists, add bidStep; otherwise, start with bidBudgetMin
               const nextBid = currentFinalBid > 0 ? currentFinalBid + bidStep : bidBudgetMin;
-              // Respecter les limites [min, max]
+              // Respect [min, max] limits
               const bidAmount = Math.max(bidBudgetMin, Math.min(bidBudgetMax, nextBid));
 
-              // 💰 Vérifier si le plafond de dépense est atteint
+              // 💰 Check if spending ceiling is reached
               if (bidAmount >= bidBudgetMax && nextBid > bidBudgetMax) {
                 console.warn(
-                  `⚠️  [Agenda] Plafond de dépense atteint pour agent ${agentLabel} (bid calculé: ${nextBid}, plafond: ${bidBudgetMax}). Candidat ${topMatch.name} ne peut pas être enchéri.`
+                  `⚠️  [Agenda] Spending ceiling reached for agent ${agentLabel} (calculated bid: ${nextBid}, ceiling: ${bidBudgetMax}). Candidate ${topMatch.name} cannot be bid on.`
                 );
-                continue; // Passer au candidat suivant
+                continue; // Move to next candidate
               }
 
               try {
-                // Soumission du message d'évaluation si autoSubmitTopMatch est activé
+                // Submit evaluation message if autoSubmitTopMatch is enabled
                 if (autoSubmitTopMatch) {
                   try {
                     await axios.post(`${process.env.BASE_URL_Backend}/hr-agents/submit-evaluation-message`, {
@@ -170,13 +170,13 @@ async function initializeAgenda() {
                       message: `Candidate review request (Score: ${topMatch.score}%, Bid: $${bidAmount})`,
                       bidAmount: bidAmount
                     });
-                    console.log(`📤 [Agenda] Message envoyé pour candidat ${topMatch.name} (score ${topMatch.score}%, bid $${bidAmount})`);
+                    console.log(`📤 [Agenda] Message sent for candidate ${topMatch.name} (score ${topMatch.score}%, bid $${bidAmount})`);
                   } catch (err) {
-                    console.error(`❌ [Agenda] Échec envoi message pour candidat ${topMatch.name}:`, err.message);
+                    console.error(`❌ [Agenda] Failed to send message for candidate ${topMatch.name}:`, err.message);
                   }
                 }
 
-                // Mise à jour du bid final
+                // Update final bid
                 try {
                   const res = await axios.put(`${process.env.BASE_URL_Backend}/profiles/updateFinalBid`, {
                     userId: topMatch.candidateId?.toString(),
@@ -186,48 +186,48 @@ async function initializeAgenda() {
                   });
                   
                   console.log(
-                    `📈 [Agenda] Bid mis à jour pour candidat ${topMatch.name} (score ${topMatch.score}%, bid $${bidAmount}) → FinalBid = $${res.data.profile.companyBid.finalBid}`
+                    `📈 [Agenda] Bid updated for candidate ${topMatch.name} (score ${topMatch.score}%, bid $${bidAmount}) → FinalBid = $${res.data.profile.companyBid.finalBid}`
                   );
                 } catch (err) {
                   const errorMsg = err.response?.data?.message || err.message;
                   
-                  // Si c'est une erreur de "bid déjà fait par cette company", c'est normal et on continue
+                  // If it's an error of "bid already made by this company", it's normal and we continue
                   if (errorMsg && errorMsg.includes("cannot bid again if your company made the last bid")) {
                     console.info(
-                      `ℹ️ [Agenda] Agent ${agentLabel} a déjà enchéri pour candidat ${topMatch.name}. Passage au candidat suivant.`
+                      `ℹ️ [Agenda] Agent ${agentLabel} has already bid for candidate ${topMatch.name}. Moving to next candidate.`
                     );
                   } else {
                     console.error(
-                      `❌ [Agenda] Échec updateFinalBid pour candidat ${topMatch.name}:`,
+                      `❌ [Agenda] Failed updateFinalBid for candidate ${topMatch.name}:`,
                       errorMsg
                     );
                   }
                 }
               } catch (err) {
-                console.error(`❌ [Agenda] Erreur traitement candidat ${topMatch.name}:`, err.message);
+                console.error(`❌ [Agenda] Error processing candidate ${topMatch.name}:`, err.message);
               }
             }
           }
         }
       }
 
-      // Log de résumé seulement
-      console.log(`🔄 [Agenda] Heartbeat terminé - ${agents.length} agent(s) traité(s), ${totalMatches} match(es) total`);
+      // Summary log only
+      console.log(`🔄 [Agenda] Heartbeat completed - ${agents.length} agent(s) processed, ${totalMatches} total match(es)`);
     } catch (err) {
-      console.error("❌ [Agenda] Erreur heartbeat:", err.message);
+      console.error("❌ [Agenda] Heartbeat error:", err.message);
     }
   });
 
   agendaInstance.on("ready", async () => {
     await agendaInstance.start();
-    // Nettoyage des anciennes planifications pour éviter les doublons
+    // Clean up old schedules to avoid duplicates
     try {
       const removed = await agendaInstance.cancel({ name: "agent:heartbeat" });
       if (removed > 0) {
-        console.log(`🧹 [Agenda] ${removed} ancienne(s) planification(s) supprimée(s) pour agent:heartbeat`);
+        console.log(`🧹 [Agenda] ${removed} old schedule(s) removed for agent:heartbeat`);
       }
     } catch (e) {
-      console.warn("⚠️  [Agenda] Échec du nettoyage des anciennes planifications:", e?.message);
+      console.warn("⚠️  [Agenda] Failed to clean up old schedules:", e?.message);
     }
 
     await agendaInstance.every(
@@ -242,9 +242,9 @@ async function initializeAgenda() {
       }
     );
     await agendaInstance.now("agent:heartbeat");
-    console.log("⏱️ Agenda démarré avec job agent:heartbeat toutes les heures");
+    console.log("⏱️ Agenda started with agent:heartbeat job every hour");
 
-    // Vérification: lister les jobs planifiés
+    // Verification: list scheduled jobs
     try {
       const jobs = await agendaInstance.jobs({ name: "agent:heartbeat" });
       if (jobs?.length) {
@@ -258,51 +258,51 @@ async function initializeAgenda() {
             timezone: j.attrs.timezone,
           }))
           .sort((a, b) => (a.nextRunAt || 0) - (b.nextRunAt || 0));
-        console.log(`🗓️  [Agenda] ${jobs.length} instance(s) planifiées pour agent:heartbeat`);
+        console.log(`🗓️  [Agenda] ${jobs.length} schedule(s) planned for agent:heartbeat`);
         nexts.slice(0, 3).forEach((n, idx) => {
           console.log(
             `   • [${idx + 1}] id=${n.id} nextRunAt=${n.nextRunAt} lastRunAt=${n.lastRunAt} lockedAt=${n.lockedAt} repeatInterval=${n.repeatInterval} tz=${n.timezone}`
           );
         });
-        // S'il y a des doublons, on ne garde que la première et on supprime les autres
+        // If there are duplicates, keep only the first one and remove others
         if (jobs.length > 1) {
           try {
             const toRemoveIds = jobs
               .slice(1)
               .map((j) => j.attrs._id);
             const removedDup = await agendaInstance.cancel({ _id: { $in: toRemoveIds } });
-            console.log(`🧽 [Agenda] Doublons nettoyés: ${removedDup} job(s) supprimé(s)`);
+            console.log(`🧽 [Agenda] Duplicates cleaned: ${removedDup} job(s) removed`);
           } catch (e) {
-            console.warn("⚠️  [Agenda] Échec nettoyage des doublons:", e?.message);
+            console.warn("⚠️  [Agenda] Failed to clean up duplicates:", e?.message);
           }
         }
       } else {
-        console.warn("⚠️  [Agenda] Aucun job agent:heartbeat planifié trouvé juste après le démarrage");
+        console.warn("⚠️  [Agenda] No agent:heartbeat job found scheduled right after startup");
       }
     } catch (e) {
-      console.warn("⚠️  [Agenda] Impossible de lister les jobs planifiés:", e?.message);
+      console.warn("⚠️  [Agenda] Unable to list scheduled jobs:", e?.message);
     }
   
-    // Compteur décroissant
+    // Countdown timer
     if (!countdownInterval) {
       countdownInterval = setInterval(() => {
         if (!lastHeartbeatAt) return;
-        const nextExpectedAt = lastHeartbeatAt.getTime() + 24 * 3600000; // +1 heure en ms
+        const nextExpectedAt = lastHeartbeatAt.getTime() + 24 * 3600000; // +1 hour in ms
         const remainingMs = nextExpectedAt - Date.now();
         const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
   
-        if (remainingSeconds % 10 === 0 || remainingSeconds <= 10) { // affichage toutes les 10s + dernières 10 sec
+        if (remainingSeconds % 10 === 0 || remainingSeconds <= 10) { // display every 10s + last 10 sec
           const minutes = Math.floor(remainingSeconds / 60);
           const seconds = remainingSeconds % 60;
-          process.stdout.write(`\r🕒 Prochain heartbeat dans: ${minutes}m ${seconds}s `);
+          process.stdout.write(`\r🕒 Next heartbeat in: ${minutes}m ${seconds}s `);
         }
   
-        // Watchdog: relance si pas exécuté après 1min + 2s
+        // Watchdog: restart if not executed after 1min + 2s
         if (remainingMs < -2000 && !hasWarnedForCurrentCycle) {
-          console.warn("\n⚠️  [Agenda] Aucun heartbeat détecté (>1m2s). Relance...");
+          console.warn("\n⚠️  [Agenda] No heartbeat detected (>1m2s). Restarting...");
           hasWarnedForCurrentCycle = true;
           agendaInstance.now("agent:heartbeat").catch(e => {
-            console.error("❌ [Agenda] Échec de relance:", e?.message);
+            console.error("❌ [Agenda] Restart failed:", e?.message);
           });
         }
       }, 2000);
