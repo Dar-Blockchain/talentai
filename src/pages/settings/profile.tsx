@@ -54,6 +54,12 @@ interface UserProfile {
   language?: string;
   timezone?: string;
   avatar?: string;
+  profileType?: 'Candidate' | 'Company';
+  // Company-specific fields
+  companyName?: string;
+  industry?: string;
+  companySize?: string;
+  location?: string;
 }
 
 const experienceLevels = [
@@ -89,6 +95,11 @@ const ProfileSettingsPage: React.FC = () => {
     language: 'English',
     timezone: 'UTC+01:00',
     avatar: '',
+    profileType: 'Candidate',
+    companyName: '',
+    industry: '',
+    companySize: '',
+    location: '',
   });
 
   // Load user profile data
@@ -137,6 +148,12 @@ const ProfileSettingsPage: React.FC = () => {
           language: data.language || userData.language || 'English',
           timezone: data.timezone || userData.timezone || 'UTC+01:00',
           avatar: avatarUrl,
+          profileType: data.type || 'Candidate',
+          // Company-specific fields
+          companyName: data.companyDetails?.name || '',
+          industry: data.companyDetails?.industry || '',
+          companySize: data.companyDetails?.size || '',
+          location: data.companyDetails?.location || '',
         });
 
         console.log('✅ Profile data loaded:', {
@@ -255,11 +272,15 @@ const ProfileSettingsPage: React.FC = () => {
       if (profile.username?.trim()) {
         updatePayload.username = profile.username.trim();
       }
-      if (profile.requiredExperienceLevel) {
-        updatePayload.requiredExperienceLevel = profile.requiredExperienceLevel;
-      }
-      if (profile.targetRole?.trim()) {
-        updatePayload.targetRole = profile.targetRole.trim();
+
+      // Only include these fields for Candidates
+      if (profile.profileType === 'Candidate') {
+        if (profile.requiredExperienceLevel) {
+          updatePayload.requiredExperienceLevel = profile.requiredExperienceLevel;
+        }
+        if (profile.targetRole?.trim()) {
+          updatePayload.targetRole = profile.targetRole.trim();
+        }
       }
 
       // Check if we have at least one field to update
@@ -326,7 +347,8 @@ const ProfileSettingsPage: React.FC = () => {
     }
   };
 
-  const menuItems = [
+  // Different menu items for Candidate vs Company
+  const getCandidateMenuItems = () => [
     { id: 'personal', label: 'Personal Information', icon: <PersonIcon /> },
     { id: 'contact', label: 'Contact Information', icon: <ContactMailIcon /> },
     { id: 'resume', label: 'Resume & Documents', icon: <DescriptionIcon /> },
@@ -334,6 +356,15 @@ const ProfileSettingsPage: React.FC = () => {
     { id: 'notifications', label: 'Notifications', icon: <NotificationsIcon /> },
     { id: 'billing', label: 'Billing & Subscriptions', icon: <PaymentIcon /> },
   ];
+
+  const getCompanyMenuItems = () => [
+    { id: 'personal', label: 'Company Information', icon: <PersonIcon /> },
+    { id: 'contact', label: 'Contact Information', icon: <ContactMailIcon /> },
+    { id: 'notifications', label: 'Notifications', icon: <NotificationsIcon /> },
+    { id: 'billing', label: 'Billing & Subscriptions', icon: <PaymentIcon /> },
+  ];
+
+  const menuItems = profile.profileType === 'Company' ? getCompanyMenuItems() : getCandidateMenuItems();
 
   if (!user) {
     return null;
@@ -471,7 +502,10 @@ const ProfileSettingsPage: React.FC = () => {
                               boxShadow: '0 4px 12px rgba(131, 16, 255, 0.2)',
                             }}
                           >
-                            {profile.firstName?.charAt(0)}{profile.lastName?.charAt(0)}
+                            {profile.profileType === 'Company'
+                              ? profile.companyName?.charAt(0)?.toUpperCase() || 'C'
+                              : `${profile.firstName?.charAt(0)}${profile.lastName?.charAt(0)}`
+                            }
                           </Avatar>
                           <input
                             accept="image/*"
@@ -511,11 +545,19 @@ const ProfileSettingsPage: React.FC = () => {
                         </Box>
                         <Box>
                           <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
-                            {profile.firstName} {profile.lastName}
+                            {profile.profileType === 'Company'
+                              ? profile.companyName || 'Company Name'
+                              : `${profile.firstName} ${profile.lastName}`
+                            }
                           </Typography>
                           <Typography variant="body2" sx={{ color: '#6b7280', mb: 1 }}>
                             {profile.email}
                           </Typography>
+                          {profile.profileType === 'Company' && profile.industry && (
+                            <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+                              {profile.industry}
+                            </Typography>
+                          )}
                           <Button
                             variant="outlined"
                             size="small"
@@ -538,159 +580,254 @@ const ProfileSettingsPage: React.FC = () => {
 
                       <Divider sx={{ my: 3 }} />
 
-                      {/* Form Fields */}
-                      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
-                        <TextField
-                          label="Username"
-                          value={profile.username}
-                          onChange={(e) => handleInputChange('username', e.target.value)}
-                          disabled={!isEditing}
-                          fullWidth
-                          sx={{
-                            '& .MuiOutlinedInput-root': {
-                              '&.Mui-focused fieldset': {
-                                borderColor: '#8310FF',
-                              },
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                              color: '#8310FF',
-                            },
-                          }}
-                        />
-
-                        <FormControl fullWidth disabled={!isEditing}>
-                          <InputLabel>Experience Level</InputLabel>
-                          <Select
-                            value={profile.requiredExperienceLevel}
-                            onChange={(e) => handleSelectChange(e, 'requiredExperienceLevel')}
-                            label="Experience Level"
-                            sx={{
-                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#8310FF',
-                              },
-                            }}
-                          >
-                            {experienceLevels.map((level) => (
-                              <MenuItem key={level} value={level}>
-                                {level}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-
-                        <TextField
-                          label="Target Role"
-                          value={profile.targetRole}
-                          onChange={(e) => handleInputChange('targetRole', e.target.value)}
-                          disabled={!isEditing}
-                          fullWidth
-                          placeholder="e.g., Software Engineer, Product Manager"
-                          sx={{
-                            gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                            '& .MuiOutlinedInput-root': {
-                              '&.Mui-focused fieldset': {
-                                borderColor: '#8310FF',
-                              },
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                              color: '#8310FF',
-                            },
-                          }}
-                        />
-                      </Box>
-
-                      {/* Display-only fields */}
-                      <Box sx={{ mt: 4 }}>
-                        <Typography variant="subtitle2" sx={{ color: '#6b7280', mb: 2, fontWeight: 600 }}>
-                          Additional Information (Read-only)
-                        </Typography>
+                      {/* Form Fields - Different for Candidate vs Company */}
+                      {profile.profileType === 'Candidate' ? (
+                        // Candidate Fields
                         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
                           <TextField
-                            label="Email"
-                            value={profile.email}
-                            disabled
+                            label="Username"
+                            value={profile.username}
+                            onChange={(e) => handleInputChange('username', e.target.value)}
+                            disabled={!isEditing}
                             fullWidth
-                            type="email"
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
+
+                          <FormControl fullWidth disabled={!isEditing}>
+                            <InputLabel>Experience Level</InputLabel>
+                            <Select
+                              value={profile.requiredExperienceLevel}
+                              onChange={(e) => handleSelectChange(e, 'requiredExperienceLevel')}
+                              label="Experience Level"
+                              sx={{
+                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                  borderColor: '#8310FF',
+                                },
+                              }}
+                            >
+                              {experienceLevels.map((level) => (
+                                <MenuItem key={level} value={level}>
+                                  {level}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+
+                          <TextField
+                            label="Target Role"
+                            value={profile.targetRole}
+                            onChange={(e) => handleInputChange('targetRole', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            placeholder="e.g., Software Engineer, Product Manager"
                             sx={{
                               gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                              '& .MuiInputBase-input.Mui-disabled': {
-                                WebkitTextFillColor: '#6b7280',
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
                               },
-                            }}
-                          />
-
-                          <TextField
-                            label="First Name"
-                            value={profile.firstName}
-                            disabled
-                            fullWidth
-                            sx={{
-                              '& .MuiInputBase-input.Mui-disabled': {
-                                WebkitTextFillColor: '#6b7280',
-                              },
-                            }}
-                          />
-
-                          <TextField
-                            label="Last Name"
-                            value={profile.lastName}
-                            disabled
-                            fullWidth
-                            sx={{
-                              '& .MuiInputBase-input.Mui-disabled': {
-                                WebkitTextFillColor: '#6b7280',
-                              },
-                            }}
-                          />
-
-                          <TextField
-                            label="Gender"
-                            value={profile.gender}
-                            disabled
-                            fullWidth
-                            sx={{
-                              '& .MuiInputBase-input.Mui-disabled': {
-                                WebkitTextFillColor: '#6b7280',
-                              },
-                            }}
-                          />
-
-                          <TextField
-                            label="Country"
-                            value={profile.country}
-                            disabled
-                            fullWidth
-                            sx={{
-                              '& .MuiInputBase-input.Mui-disabled': {
-                                WebkitTextFillColor: '#6b7280',
-                              },
-                            }}
-                          />
-
-                          <TextField
-                            label="Language"
-                            value={profile.language}
-                            disabled
-                            fullWidth
-                            sx={{
-                              '& .MuiInputBase-input.Mui-disabled': {
-                                WebkitTextFillColor: '#6b7280',
-                              },
-                            }}
-                          />
-
-                          <TextField
-                            label="Time Zone"
-                            value={profile.timezone}
-                            disabled
-                            fullWidth
-                            sx={{
-                              '& .MuiInputBase-input.Mui-disabled': {
-                                WebkitTextFillColor: '#6b7280',
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
                               },
                             }}
                           />
                         </Box>
+                      ) : (
+                        // Company Fields - Only Username
+                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 3 }}>
+                          <TextField
+                            label="Username"
+                            value={profile.username}
+                            onChange={(e) => handleInputChange('username', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
+                        </Box>
+                      )}
+
+                      {/* Display-only fields - Different for Candidate vs Company */}
+                      <Box sx={{ mt: 4 }}>
+                        <Typography variant="subtitle2" sx={{ color: '#6b7280', mb: 2, fontWeight: 600 }}>
+                          Additional Information (Read-only)
+                        </Typography>
+
+                        {profile.profileType === 'Candidate' ? (
+                          // Candidate Read-only Fields
+                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
+                            <TextField
+                              label="Email"
+                              value={profile.email}
+                              disabled
+                              fullWidth
+                              type="email"
+                              sx={{
+                                gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                                '& .MuiInputBase-input.Mui-disabled': {
+                                  WebkitTextFillColor: '#6b7280',
+                                },
+                              }}
+                            />
+
+                            <TextField
+                              label="First Name"
+                              value={profile.firstName}
+                              disabled
+                              fullWidth
+                              sx={{
+                                '& .MuiInputBase-input.Mui-disabled': {
+                                  WebkitTextFillColor: '#6b7280',
+                                },
+                              }}
+                            />
+
+                            <TextField
+                              label="Last Name"
+                              value={profile.lastName}
+                              disabled
+                              fullWidth
+                              sx={{
+                                '& .MuiInputBase-input.Mui-disabled': {
+                                  WebkitTextFillColor: '#6b7280',
+                                },
+                              }}
+                            />
+
+                            <TextField
+                              label="Gender"
+                              value={profile.gender}
+                              disabled
+                              fullWidth
+                              sx={{
+                                '& .MuiInputBase-input.Mui-disabled': {
+                                  WebkitTextFillColor: '#6b7280',
+                                },
+                              }}
+                            />
+
+                            <TextField
+                              label="Country"
+                              value={profile.country}
+                              disabled
+                              fullWidth
+                              sx={{
+                                '& .MuiInputBase-input.Mui-disabled': {
+                                  WebkitTextFillColor: '#6b7280',
+                                },
+                              }}
+                            />
+
+                            <TextField
+                              label="Language"
+                              value={profile.language}
+                              disabled
+                              fullWidth
+                              sx={{
+                                '& .MuiInputBase-input.Mui-disabled': {
+                                  WebkitTextFillColor: '#6b7280',
+                                },
+                              }}
+                            />
+
+                            <TextField
+                              label="Time Zone"
+                              value={profile.timezone}
+                              disabled
+                              fullWidth
+                              sx={{
+                                '& .MuiInputBase-input.Mui-disabled': {
+                                  WebkitTextFillColor: '#6b7280',
+                                },
+                              }}
+                            />
+                          </Box>
+                        ) : (
+                          // Company Read-only Fields
+                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
+                            <TextField
+                              label="Email"
+                              value={profile.email}
+                              disabled
+                              fullWidth
+                              type="email"
+                              sx={{
+                                gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                                '& .MuiInputBase-input.Mui-disabled': {
+                                  WebkitTextFillColor: '#6b7280',
+                                },
+                              }}
+                            />
+
+                            <TextField
+                              label="Company Name"
+                              value={profile.companyName}
+                              disabled
+                              fullWidth
+                              sx={{
+                                gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                                '& .MuiInputBase-input.Mui-disabled': {
+                                  WebkitTextFillColor: '#6b7280',
+                                },
+                              }}
+                            />
+
+                            <TextField
+                              label="Industry"
+                              value={profile.industry}
+                              disabled
+                              fullWidth
+                              sx={{
+                                '& .MuiInputBase-input.Mui-disabled': {
+                                  WebkitTextFillColor: '#6b7280',
+                                },
+                              }}
+                            />
+
+                            <TextField
+                              label="Company Size"
+                              value={profile.companySize}
+                              disabled
+                              fullWidth
+                              sx={{
+                                '& .MuiInputBase-input.Mui-disabled': {
+                                  WebkitTextFillColor: '#6b7280',
+                                },
+                              }}
+                            />
+
+                            <TextField
+                              label="Location"
+                              value={profile.location}
+                              disabled
+                              fullWidth
+                              sx={{
+                                gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                                '& .MuiInputBase-input.Mui-disabled': {
+                                  WebkitTextFillColor: '#6b7280',
+                                },
+                              }}
+                            />
+                          </Box>
+                        )}
                       </Box>
 
                       {isEditing && (
