@@ -432,11 +432,26 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
       throw new Error("You cannot bid again if your company made the last bid");
     }
 
-    // Vérifier si le nouveau bid est plus grand que l'ancien
-    let finalBid = newBid;
-    if (profile.companyBid.finalBid && newBid <= profile.companyBid.finalBid) {
-      throw new Error("Le nouveau bid doit être supérieur au bid actuel");
+    // Valider et normaliser les valeurs de bid en nombres
+    const currentFinalBid =
+      profile.companyBid && profile.companyBid.finalBid
+        ? Number(profile.companyBid.finalBid)
+        : null;
+
+    const parsedNewBid = Number(newBid);
+    if (!Number.isFinite(parsedNewBid) || parsedNewBid <= 0) {
+      throw new Error("Nouveau bid invalide. Le bid doit être un nombre positif.");
     }
+
+    // Vérifier si le nouveau bid est strictement supérieur à l'ancien (si présent)
+    if (currentFinalBid !== null && parsedNewBid <= currentFinalBid) {
+      throw new Error(
+        `Le nouveau bid doit être strictement supérieur au bid actuel (${currentFinalBid}). Reçu: ${parsedNewBid}`
+      );
+    }
+
+    // ✅ Mettre à jour le bid
+    let finalBid = parsedNewBid;
 
     // ✅ Mettre à jour le bid
     profile.companyBid.finalBid = finalBid;
