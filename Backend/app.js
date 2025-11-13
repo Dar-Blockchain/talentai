@@ -1,3 +1,18 @@
+// Suppress noisy deprecation warnings for the builtin `punycode` module
+// (some older nested dependencies still require it). We only silence
+// the specific DEP0040 punycode deprecation so other warnings remain visible.
+process.on('warning', (warning) => {
+  try {
+    if (warning.name === 'DeprecationWarning' && /punycode/.test(warning.stack || warning.message)) {
+      // intentionally ignore punycode deprecation
+      return;
+    }
+  } catch (e) {
+    // if anything goes wrong, fall back to default logging below
+  }
+  console.warn(warning.name + ': ' + warning.message);
+});
+
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -28,14 +43,14 @@ const interviewDetailsRouter = require("./routes/interviewDetailsRouter");
 const notificationRouter = require("./routes/notificationRouter");
 const postStepsRouter = require("./routes/postStepsRouter");
 const candidatePostStepProgressRouter = require("./routes/candidatePostStepProgressRouter");
-const hederaToolsRouter = require("./routes/hederaToolsRouter");
-const hcs11Router = require("./routes/hcs11Router");
+const hederaToolsRouter = require("./routes/HederaRoutes/hederaToolsRouter");
+const hcs11Router = require("./routes/HederaRoutes/hcs11Router");
 const hrAgentRouter = require("./routes/hrAgentRouter");
 const recruitementStepRouter = require("./routes/recruitementStepRouter");
 const taskRouter = require("./routes/taskRouter");
 const agentConfigRouter = require("./routes/agentConfigRouter");
-const tokenRouter = require("./routes/tokenRouter");
-const paymentRouter = require("./routes/paymentRouter");
+const tokenRouter = require("./routes/HederaRoutes/tokenRouter");
+const paymentRouter = require("./routes/HederaRoutes/paymentRouter");
 
 require("dotenv").config();
 

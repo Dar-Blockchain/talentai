@@ -1,6 +1,6 @@
-const tokenService = require("../services/tokenService");
-const hederaMirrorNodeService = require("../services/hederaMirrorNodeService");
-const User = require("../models/UserModel");
+const tokenService = require("../../services/tokenService");
+const hederaMirrorNodeService = require("../../services/hederaMirrorNodeService");
+const User = require("../../models/UserModel");
 
 // Get user's token balance (fetched from Hedera Mirror Node in real-time)
 module.exports.getBalance = async (req, res) => {
