@@ -14,7 +14,7 @@ const { requireAuthUser } = require('../middleware/authMiddleware');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 
 // Auth requis + journalisation
-router.use(requireAuthUser);
+router.use(requireAuthUser, authLogMiddleware("HederaTools"));
 //router.use(requireAuthUser, authLogMiddleware("HederaTools"));
 
 // Routes Hedera Tools - Appels directs sans LLM

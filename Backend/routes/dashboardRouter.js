@@ -17,8 +17,7 @@ const { controledAcces } = require('../middleware/controledAcces'); // Importez 
 
 
 // Toutes les routes ci-dessous nécessitent un admin authentifié
-router.use(requireAuthUser, controledAcces('Admin'));
-//router.use(requireAuthUser, controledAcces('Admin'), authLogMiddleware("Dashboard"));
+router.use(requireAuthUser, controledAcces('Admin'), authLogMiddleware("Dashboard"));
 
 // GET /dashboard/getAllUsers
 // Description: Récupère la liste de tous les utilisateurs

@@ -18,8 +18,7 @@ const { controledAcces } = require('../middleware/controledAcces'); // Importez 
 
 
 // Auth candidat obligatoire + logs
-router.use(requireAuthUser, controledAcces('Candidat'));
-//router.use(requireAuthUser, controledAcces('Candidat'), authLogMiddleware("Resume"));
+router.use(requireAuthUser, controledAcces('Candidat'), authLogMiddleware("Resume"));
 
 
 // CRUD CV

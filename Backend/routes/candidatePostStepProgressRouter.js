@@ -8,9 +8,10 @@ const express = require('express');
 const router = express.Router();
 const candidatePostStepProgressController = require('../controllers/candidatePostStepProgressController');
 const {requireAuthUser} = require('../middleware/authMiddleware');
+const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 // Auth obligatoire pour toutes les routes
-router.use(requireAuthUser);
+router.use(requireAuthUser,authLogMiddleware("CandidatePostStepProgress"));
 
 // CRUD de base
 // GET /candidate-post-step-progress/getUserProgress: progression de l'utilisateur courant

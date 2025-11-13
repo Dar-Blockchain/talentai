@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const hcs11Controller = require('../controllers/hcs11Controller');
 const { requireAuthUser } = require('../middleware/authMiddleware');
+const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 // Apply auth middleware to all HCS-11 routes
-router.use(requireAuthUser);
+router.use(requireAuthUser, authLogMiddleware("HCS-11"));
 
 /**
  * @swagger

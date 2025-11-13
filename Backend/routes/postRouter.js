@@ -30,8 +30,7 @@ router.get("/details/:id", postController.getPostDetailsPublic);
 router.get("/public-stats", postController.getPublicStats);
 
 // Auth obligatoire + logs pour toutes les routes
-router.use(requireAuthUser);
-//router.use(requireAuthUser, authLogMiddleware("Post"));
+router.use(requireAuthUser, authLogMiddleware("Post"));
 
 
 // POST /post/save-post

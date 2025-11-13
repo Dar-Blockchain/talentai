@@ -2,9 +2,10 @@ const express = require("express");
 const router = express.Router();
 const paymentController = require("../controllers/paymentController");
 const { requireAuthUser } = require("../middleware/authMiddleware");
+const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 // All payment routes require authentication
-router.use(requireAuthUser);
+router.use(requireAuthUser, authLogMiddleware("Payment"));
 
 /**
  * @swagger

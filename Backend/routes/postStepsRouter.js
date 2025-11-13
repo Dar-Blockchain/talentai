@@ -8,12 +8,13 @@ const express = require('express');
 const router = express.Router();
 const postStepsController = require('../controllers/postStepsController');
 const {requireAuthUser} = require('../middleware/authMiddleware');
+const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 // Routes publiques (si nécessaire)
 // router.get('/public', postStepsController.getAllPostSteps);
 
 // Auth obligatoire pour toutes les routes ci-dessous
-router.use(requireAuthUser);
+router.use(requireAuthUser, authLogMiddleware("PostSteps"));
 
 // CRUD de base
 // POST/GET/PUT/DELETE /post-steps
