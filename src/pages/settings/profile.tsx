@@ -53,6 +53,13 @@ interface UserProfile {
   country: string;
   language: string;
   timezone: string;
+  // Contact Information fields
+  phone?: string;
+  address?: string;
+  linkedinUrl?: string;
+  githubUrl?: string;
+  personalWebsite?: string;
+  location?: string;
   // Display-only fields
   avatar?: string;
   profileType?: 'Candidate' | 'Company';
@@ -60,7 +67,6 @@ interface UserProfile {
   companyName?: string;
   industry?: string;
   companySize?: string;
-  location?: string;
 }
 
 const experienceLevels = [
@@ -114,12 +120,17 @@ const ProfileSettingsPage: React.FC = () => {
     country: 'Tunisia',
     language: 'English',
     timezone: 'UTC+01:00',
+    phone: '',
+    address: '',
+    linkedinUrl: '',
+    githubUrl: '',
+    personalWebsite: '',
+    location: '',
     avatar: '',
     profileType: 'Candidate',
     companyName: '',
     industry: '',
     companySize: '',
-    location: '',
   });
 
   // Load user profile data
@@ -167,13 +178,19 @@ const ProfileSettingsPage: React.FC = () => {
           country: data.country || data.companyDetails?.location || userData.country || 'Tunisia',
           language: data.language || userData.language || 'English',
           timezone: data.timezone || userData.timezone || 'UTC+01:00',
+          // Contact Information
+          phone: data.contactInformation?.phone || '',
+          address: data.contactInformation?.address || '',
+          linkedinUrl: data.contactInformation?.linkedinUrl || '',
+          githubUrl: data.contactInformation?.githubUrl || '',
+          personalWebsite: data.contactInformation?.personalWebsite || '',
+          location: data.contactInformation?.location || '',
           avatar: avatarUrl,
           profileType: data.type || 'Candidate',
           // Company-specific fields
           companyName: data.companyDetails?.name || '',
           industry: data.companyDetails?.industry || '',
           companySize: data.companyDetails?.size || '',
-          location: data.companyDetails?.location || '',
         });
 
         console.log('✅ Profile data loaded:', {
@@ -322,6 +339,19 @@ const ProfileSettingsPage: React.FC = () => {
         }
         if (profile.timezone) {
           updatePayload.timezone = profile.timezone;
+        }
+
+        // Contact Information - only include if any contact field has changed
+        if (activeTab === 'contact' || profile.phone || profile.address || profile.linkedinUrl || profile.githubUrl || profile.personalWebsite || profile.location) {
+          updatePayload.contactInformation = {
+            email: profile.email?.trim() || '',
+            phone: profile.phone?.trim() || '',
+            address: profile.address?.trim() || '',
+            linkedinUrl: profile.linkedinUrl?.trim() || '',
+            githubUrl: profile.githubUrl?.trim() || '',
+            personalWebsite: profile.personalWebsite?.trim() || '',
+            location: profile.location?.trim() || '',
+          };
         }
       }
 
@@ -987,8 +1017,240 @@ const ProfileSettingsPage: React.FC = () => {
               </Card>
             )}
 
+            {/* Contact Information Tab */}
+            {activeTab === 'contact' && (
+              <Card sx={{
+                borderRadius: 3,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                mb: 3,
+              }}>
+                <CardContent sx={{ p: 4 }}>
+                  {loading && !profile.username ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
+                      <CircularProgress sx={{ color: '#8310FF' }} />
+                    </Box>
+                  ) : (
+                    <>
+                      {/* Header */}
+                      <Box sx={{ mb: 4 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                          <Typography variant="h6" sx={{ fontWeight: 600, color: '#111827' }}>
+                            Contact Information
+                          </Typography>
+
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={<EditIcon />}
+                            onClick={() => setIsEditing(!isEditing)}
+                            sx={{
+                              borderColor: '#8310FF',
+                              color: '#8310FF',
+                              textTransform: 'none',
+                              '&:hover': {
+                                borderColor: '#6a0dd4',
+                                backgroundColor: 'rgba(131, 16, 255, 0.04)',
+                              },
+                            }}
+                          >
+                            {isEditing ? 'Cancel' : 'Edit'}
+                          </Button>
+                        </Box>
+                        <Typography variant="body2" sx={{ color: '#6b7280' }}>
+                          Manage your contact details and social profiles
+                        </Typography>
+                      </Box>
+
+                      <Divider sx={{ my: 3 }} />
+
+                      {/* Contact Information Fields */}
+                      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
+                        <TextField
+                          label="Email"
+                          value={profile.email}
+                          onChange={(e) => handleInputChange('email', e.target.value)}
+                          disabled={!isEditing}
+                          fullWidth
+                          type="email"
+                          sx={{
+                            gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                            '& .MuiOutlinedInput-root': {
+                              '&.Mui-focused fieldset': {
+                                borderColor: '#8310FF',
+                              },
+                            },
+                            '& .MuiInputLabel-root.Mui-focused': {
+                              color: '#8310FF',
+                            },
+                          }}
+                        />
+
+                        <TextField
+                          label="Phone Number"
+                          value={profile.phone}
+                          onChange={(e) => handleInputChange('phone', e.target.value)}
+                          disabled={!isEditing}
+                          fullWidth
+                          type="tel"
+                          placeholder="+33612345678"
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              '&.Mui-focused fieldset': {
+                                borderColor: '#8310FF',
+                              },
+                            },
+                            '& .MuiInputLabel-root.Mui-focused': {
+                              color: '#8310FF',
+                            },
+                          }}
+                        />
+
+                        <TextField
+                          label="Location"
+                          value={profile.location}
+                          onChange={(e) => handleInputChange('location', e.target.value)}
+                          disabled={!isEditing}
+                          fullWidth
+                          placeholder="Paris, France"
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              '&.Mui-focused fieldset': {
+                                borderColor: '#8310FF',
+                              },
+                            },
+                            '& .MuiInputLabel-root.Mui-focused': {
+                              color: '#8310FF',
+                            },
+                          }}
+                        />
+
+                        <TextField
+                          label="Address"
+                          value={profile.address}
+                          onChange={(e) => handleInputChange('address', e.target.value)}
+                          disabled={!isEditing}
+                          fullWidth
+                          multiline
+                          rows={2}
+                          placeholder="123 Rue de Paris"
+                          sx={{
+                            gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                            '& .MuiOutlinedInput-root': {
+                              '&.Mui-focused fieldset': {
+                                borderColor: '#8310FF',
+                              },
+                            },
+                            '& .MuiInputLabel-root.Mui-focused': {
+                              color: '#8310FF',
+                            },
+                          }}
+                        />
+
+                        <TextField
+                          label="LinkedIn URL"
+                          value={profile.linkedinUrl}
+                          onChange={(e) => handleInputChange('linkedinUrl', e.target.value)}
+                          disabled={!isEditing}
+                          fullWidth
+                          type="url"
+                          placeholder="https://linkedin.com/in/yourprofile"
+                          sx={{
+                            gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                            '& .MuiOutlinedInput-root': {
+                              '&.Mui-focused fieldset': {
+                                borderColor: '#8310FF',
+                              },
+                            },
+                            '& .MuiInputLabel-root.Mui-focused': {
+                              color: '#8310FF',
+                            },
+                          }}
+                        />
+
+                        <TextField
+                          label="GitHub URL"
+                          value={profile.githubUrl}
+                          onChange={(e) => handleInputChange('githubUrl', e.target.value)}
+                          disabled={!isEditing}
+                          fullWidth
+                          type="url"
+                          placeholder="https://github.com/yourprofile"
+                          sx={{
+                            gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                            '& .MuiOutlinedInput-root': {
+                              '&.Mui-focused fieldset': {
+                                borderColor: '#8310FF',
+                              },
+                            },
+                            '& .MuiInputLabel-root.Mui-focused': {
+                              color: '#8310FF',
+                            },
+                          }}
+                        />
+
+                        <TextField
+                          label="Personal Website"
+                          value={profile.personalWebsite}
+                          onChange={(e) => handleInputChange('personalWebsite', e.target.value)}
+                          disabled={!isEditing}
+                          fullWidth
+                          type="url"
+                          placeholder="https://yourwebsite.com"
+                          sx={{
+                            gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                            '& .MuiOutlinedInput-root': {
+                              '&.Mui-focused fieldset': {
+                                borderColor: '#8310FF',
+                              },
+                            },
+                            '& .MuiInputLabel-root.Mui-focused': {
+                              color: '#8310FF',
+                            },
+                          }}
+                        />
+                      </Box>
+
+                      {isEditing && (
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
+                          <Button
+                            variant="outlined"
+                            onClick={() => setIsEditing(false)}
+                            sx={{
+                              textTransform: 'none',
+                              borderColor: '#d1d5db',
+                              color: '#6b7280',
+                              '&:hover': {
+                                borderColor: '#9ca3af',
+                                backgroundColor: 'rgba(107, 114, 128, 0.04)',
+                              },
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            variant="contained"
+                            onClick={handleSaveProfile}
+                            disabled={loading}
+                            sx={{
+                              textTransform: 'none',
+                              backgroundColor: '#8310FF',
+                              '&:hover': {
+                                backgroundColor: '#6a0dd4',
+                              },
+                            }}
+                          >
+                            {loading ? <CircularProgress size={24} color="inherit" /> : 'Save Changes'}
+                          </Button>
+                        </Box>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Placeholder for other tabs */}
-            {activeTab !== 'personal' && (
+            {activeTab !== 'personal' && activeTab !== 'contact' && (
               <Card sx={{
                 borderRadius: 3,
                 boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
