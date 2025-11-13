@@ -16,7 +16,7 @@ const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 
 // Journalisation de toutes les requêtes de ce routeur
-//router.use(authLogMiddleware("Auth"));
+router.use(authLogMiddleware("Auth"));
 
 // POST /auth/register
 // Accès: Public

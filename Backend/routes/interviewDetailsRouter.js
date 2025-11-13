@@ -17,8 +17,7 @@ const { requireAuthUser } = require("../middleware/authMiddleware");
 
 
 // Toutes les routes ci-dessous nécessitent un candidat authentifié
-router.use(requireAuthUser, controledAcces('Candidat'));
-//router.use(requireAuthUser, controledAcces('Candidat'), authLogMiddleware("InterviewDetails"));
+router.use(requireAuthUser, controledAcces('Candidat'), authLogMiddleware("InterviewDetails"));
 
 
 // GET /interview-details/

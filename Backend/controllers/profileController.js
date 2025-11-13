@@ -1,4 +1,10 @@
 const profileService = require("../services/profileService");
+const {
+  VALIDATION,
+  buildUpdateData,
+  validateUpdateFields,
+  validateProfileCreationFields,
+} = require("../helpers/validationHelpers");
 
 // Créer ou mettre à jour un profil
 module.exports.createOrUpdateProfile = async (req, res) => {
@@ -12,18 +18,9 @@ module.exports.createOrUpdateProfile = async (req, res) => {
     }
 
     // Vérification du prénom et nom (pas de caractères spéciaux)
-    const nameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ\s'-]+$/; // autorise lettres, espaces, accents, tirets et apostrophes
-
-    if (profileData.FirstName && !nameRegex.test(profileData.FirstName)) {
-      return res
-        .status(400)
-        .json({ message: "Le prénom ne doit pas contenir de caractères spéciaux" });
-    }
-
-    if (profileData.LastName && !nameRegex.test(profileData.LastName)) {
-      return res
-        .status(400)
-        .json({ message: "Le nom ne doit pas contenir de caractères spéciaux" });
+    const validationError = validateProfileCreationFields(profileData);
+    if (validationError) {
+      return res.status(400).json({ message: validationError });
     }
 
     // Création ou mise à jour du profil
@@ -452,37 +449,6 @@ exports.getTopIndustries = async (req, res) => {
   }
 };
 
-// Helper function to build update data object conditionally
-const buildUpdateData = (fields) => {
-  const result = {};
-  Object.entries(fields).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      result[key] = value;
-    }
-  });
-  return result;
-};
-
-// Validation constants & regexes (move to top for reusability)
-const VALIDATION = {
-  nameRegex: /^[A-Za-zÀ-ÖØ-öø-ÿ\s'-]+$/,
-  genders: ["Male", "Female", "Other", "Prefer not to say"],
-};
-
-// Validation helper
-const validateUpdateFields = (data) => {
-  if (data.firstName && !VALIDATION.nameRegex.test(data.firstName)) {
-    return "Le prénom ne doit pas contenir de caractères spéciaux";
-  }
-  if (data.lastName && !VALIDATION.nameRegex.test(data.lastName)) {
-    return "Le nom ne doit pas contenir de caractères spéciaux";
-  }
-  if (data.gender && !VALIDATION.genders.includes(data.gender)) {
-    return "Valeur de gender invalide";
-  }
-  return null;
-};
-
 // Optimized update profile API
 module.exports.updateProfile = async (req, res) => {
   try {
@@ -490,6 +456,7 @@ module.exports.updateProfile = async (req, res) => {
     const {
       username, email, requiredExperienceLevel, targetRole,
       firstName, lastName, gender, country, language, timeZone,
+      contactInformation,
     } = req.body;
 
     // Prepare potential updates
@@ -499,7 +466,7 @@ module.exports.updateProfile = async (req, res) => {
     };
 
     // Check if at least one field is provided
-    if (!Object.values(allUpdates).some(val => val)) {
+    if (!Object.values(allUpdates).some(val => val) && !contactInformation) {
       return res.status(400).json({
         success: false,
         message: "At least one field must be provided for update",
@@ -518,6 +485,11 @@ module.exports.updateProfile = async (req, res) => {
       requiredExperienceLevel, targetRole, firstName, lastName,
       gender, country, language, timeZone,
     });
+
+    // Add contactInformation if provided
+    if (contactInformation) {
+      profileUpdateData.contactInformation = contactInformation;
+    }
 
     // Execute updates in parallel
     const updatePromises = [];
