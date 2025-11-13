@@ -1018,3 +1018,37 @@ module.exports.updateProfileFields = async (userId, updateData) => {
     throw error;
   }
 };
+
+// Update user fields in a centralized service (map camelCase to existing User schema fields)
+module.exports.updateUserFields = async (userId, userUpdateData) => {
+  try {
+    if (!userId) throw new Error('Missing userId');
+
+    // Map camelCase to actual User model fields where needed
+    const mapped = { ...userUpdateData };
+    if (mapped.firstName !== undefined) {
+      mapped.FirstName = mapped.firstName;
+      delete mapped.firstName;
+    }
+    if (mapped.lastName !== undefined) {
+      mapped.LastName = mapped.lastName;
+      delete mapped.lastName;
+    }
+
+    // Avoid accidentally setting undefined values
+    Object.keys(mapped).forEach((k) => {
+      if (mapped[k] === undefined) delete mapped[k];
+    });
+
+    const updatedUser = await User.findByIdAndUpdate(userId, mapped, { new: true });
+
+    if (!updatedUser) { 
+      throw new Error('User not found');  
+    }
+
+    return updatedUser;
+  } catch (error) {
+    console.error('❌ Error updating user fields:', error);
+    throw error;
+  }
+};

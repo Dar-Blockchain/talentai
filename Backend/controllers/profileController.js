@@ -1,5 +1,4 @@
 const profileService = require("../services/profileService");
-const User = require("../models/UserModel");
 
 // Créer ou mettre à jour un profil
 module.exports.createOrUpdateProfile = async (req, res) => {
@@ -453,120 +452,100 @@ exports.getTopIndustries = async (req, res) => {
   }
 };
 
-// Test endpoint to verify the route is working
-module.exports.testUpdateProfile = async (req, res) => {
-  try {
-    res.status(200).json({
-      success: true,
-      message: "Update profile route is working",
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message
-    });
-  }
+// Helper function to build update data object conditionally
+const buildUpdateData = (fields) => {
+  const result = {};
+  Object.entries(fields).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      result[key] = value;
+    }
+  });
+  return result;
 };
 
-// New comprehensive update profile API
+// Validation constants & regexes (move to top for reusability)
+const VALIDATION = {
+  nameRegex: /^[A-Za-zÀ-ÖØ-öø-ÿ\s'-]+$/,
+  genders: ["Male", "Female", "Other", "Prefer not to say"],
+};
+
+// Validation helper
+const validateUpdateFields = (data) => {
+  if (data.firstName && !VALIDATION.nameRegex.test(data.firstName)) {
+    return "Le prénom ne doit pas contenir de caractères spéciaux";
+  }
+  if (data.lastName && !VALIDATION.nameRegex.test(data.lastName)) {
+    return "Le nom ne doit pas contenir de caractères spéciaux";
+  }
+  if (data.gender && !VALIDATION.genders.includes(data.gender)) {
+    return "Valeur de gender invalide";
+  }
+  return null;
+};
+
+// Optimized update profile API
 module.exports.updateProfile = async (req, res) => {
   try {
-    console.log('🔧 Update Profile API called');
     const userId = req.user._id;
     const {
-      username,
-      email,
-      requiredExperienceLevel,
-      targetRole,
-      firstName,
-      lastName,
-      gender,
-      country,
-      language,
-      timeZone,
+      username, email, requiredExperienceLevel, targetRole,
+      firstName, lastName, gender, country, language, timeZone,
     } = req.body;
 
-    console.log('🔧 User ID:', userId);
-    console.log('🔧 Update data:', { username, email, requiredExperienceLevel, targetRole, firstName, lastName, gender, country, language, timeZone });
+    // Prepare potential updates
+    const allUpdates = {
+      username, email, requiredExperienceLevel, targetRole,
+      firstName, lastName, gender, country, language, timeZone,
+    };
 
-    // Validate that at least one updatable field is provided
-    if (
-      !username &&
-      !email &&
-      !requiredExperienceLevel &&
-      !targetRole &&
-      !firstName &&
-      !lastName &&
-      !gender &&
-      !country &&
-      !language &&
-      !timeZone
-    ) {
+    // Check if at least one field is provided
+    if (!Object.values(allUpdates).some(val => val)) {
       return res.status(400).json({
         success: false,
         message: "At least one field must be provided for update",
       });
     }
 
-    // Name validation (allow letters, accents, spaces, hyphens, apostrophes)
-    const nameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ\s'-]+$/;
-    if (firstName && !nameRegex.test(firstName)) {
-      return res.status(400).json({ success: false, message: "Le prénom ne doit pas contenir de caractères spéciaux" });
-    }
-    if (lastName && !nameRegex.test(lastName)) {
-      return res.status(400).json({ success: false, message: "Le nom ne doit pas contenir de caractères spéciaux" });
+    // Validate fields
+    const validationError = validateUpdateFields(allUpdates);
+    if (validationError) {
+      return res.status(400).json({ success: false, message: validationError });
     }
 
-    // Gender validation
-    const allowedGenders = ["Male", "Female", "Other", "Prefer not to say"];
-    if (gender && !allowedGenders.includes(gender)) {
-      return res.status(400).json({ success: false, message: "Valeur de gender invalide" });
-    }
+    // Separate user and profile updates
+    const userUpdateData = buildUpdateData({ username, email });
+    const profileUpdateData = buildUpdateData({
+      requiredExperienceLevel, targetRole, firstName, lastName,
+      gender, country, language, timeZone,
+    });
 
-    // Update User model fields (username, email)
-    const userUpdateData = {};
-    if (username) userUpdateData.username = username;
-    if (email) userUpdateData.email = email;
-
+    // Execute updates in parallel
+    const updatePromises = [];
     if (Object.keys(userUpdateData).length > 0) {
-      console.log('🔧 Updating User model with:', userUpdateData);
-      await User.findByIdAndUpdate(userId, userUpdateData, { new: true });
-      console.log('✅ User model updated successfully');
+      updatePromises.push(profileService.updateUserFields(userId, userUpdateData));
     }
-
-    // Update Profile model fields (requiredExperienceLevel, targetRole)
-    const profileUpdateData = {};
-    if (requiredExperienceLevel) profileUpdateData.requiredExperienceLevel = requiredExperienceLevel;
-    if (targetRole) profileUpdateData.targetRole = targetRole;
-    if (firstName) profileUpdateData.firstName = firstName;
-    if (lastName) profileUpdateData.lastName = lastName;
-    if (gender) profileUpdateData.gender = gender;
-    if (country) profileUpdateData.country = country;
-    if (language) profileUpdateData.language = language;
-    if (timeZone) profileUpdateData.timeZone = timeZone;
-
     if (Object.keys(profileUpdateData).length > 0) {
-      console.log('🔧 Updating Profile model with:', profileUpdateData);
-      await profileService.updateProfileFields(userId, profileUpdateData);
-      console.log('✅ Profile model updated successfully');
+      updatePromises.push(profileService.updateProfileFields(userId, profileUpdateData));
     }
 
-    // Fetch updated profile with populated user data
+    if (updatePromises.length > 0) {
+      await Promise.all(updatePromises);
+    }
+
+    // Fetch and return updated profile
     const updatedProfile = await profileService.getProfileByUserId(userId);
-    
-    console.log('✅ Profile update completed successfully');
+
     res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      profile: updatedProfile
+      profile: updatedProfile,
     });
 
   } catch (error) {
     console.error('❌ Error updating profile:', error);
     res.status(500).json({
       success: false,
-      message: error.message || "Failed to update profile"
+      message: error.message || "Failed to update profile",
     });
   }
 };
