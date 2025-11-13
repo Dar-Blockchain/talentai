@@ -142,7 +142,21 @@ async function initializeAgenda() {
           } else {
             for (let idx = 0; idx < topMatches.length; idx++) {
               const topMatch = topMatches[idx];
-              const bidAmount = Math.max(bidBudgetMin, Math.min(bidBudgetMax, topMatch.finalBid || bidBudgetMin + bidStep));
+              
+              // 🔧 Calcul du bid avec incrément bidStep si nécessaire
+              const currentFinalBid = topMatch.finalBid ? Number(topMatch.finalBid) : 0;
+              // Si le bid existe, ajouter bidStep ; sinon, commencer par bidBudgetMin
+              const nextBid = currentFinalBid > 0 ? currentFinalBid + bidStep : bidBudgetMin;
+              // Respecter les limites [min, max]
+              const bidAmount = Math.max(bidBudgetMin, Math.min(bidBudgetMax, nextBid));
+
+              // 💰 Vérifier si le plafond de dépense est atteint
+              if (bidAmount >= bidBudgetMax && nextBid > bidBudgetMax) {
+                console.warn(
+                  `⚠️  [Agenda] Plafond de dépense atteint pour agent ${agentLabel} (bid calculé: ${nextBid}, plafond: ${bidBudgetMax}). Candidat ${topMatch.name} ne peut pas être enchéri.`
+                );
+                continue; // Passer au candidat suivant
+              }
 
               try {
                 // Soumission du message d'évaluation si autoSubmitTopMatch est activé

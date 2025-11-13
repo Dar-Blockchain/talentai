@@ -2,6 +2,7 @@ const Profile = require("../models/ProfileModel");
 const User = require("../models/UserModel");
 const Post = require("../models/PostModel");
 const hederaService = require("./hederaService");
+const AgentConfig = require("../models/AgentConfigModel");
 const { POST_STATUS } = require("../constants/postConstants");
 const fs = require("fs");
 const path = require("path");
@@ -441,6 +442,33 @@ module.exports.updateFinalBid = async (userId, newBid, companyId, postId) => {
     const parsedNewBid = Number(newBid);
     if (!Number.isFinite(parsedNewBid) || parsedNewBid <= 0) {
       throw new Error("Nouveau bid invalide. Le bid doit être un nombre positif.");
+    }
+
+    // --- Vérifier le plafond de dépense (bidBudgetMax) si configuré pour cet agent ---
+    try {
+      const agentConfig = await AgentConfig.findOne({ agentId: companyId });
+      const bidBudgetMax = agentConfig?.bidBudgetMax ?? null;
+
+      if (bidBudgetMax !== null && Number.isFinite(Number(bidBudgetMax))) {
+        // Calculer la somme des bids actuellement attribués à cette company/agent
+        const bids = await Profile.find({ 'companyBid.company': companyId }).select('companyBid.finalBid');
+        const currentSpent = bids.reduce((sum, p) => {
+          const v = p?.companyBid?.finalBid ? Number(p.companyBid.finalBid) : 0;
+          return sum + (Number.isFinite(v) ? v : 0);
+        }, 0);
+
+        if (currentSpent + parsedNewBid > Number(bidBudgetMax)) {
+          throw new Error(
+            `Budget maximum atteint ou dépassé : plafond=${bidBudgetMax}, dépensé=${currentSpent}. Le nouveau bid de ${parsedNewBid} le dépasserait.`
+          );
+        }
+      }
+    } catch (e) {
+      // Ne pas bloquer le flow si la vérification échoue pour une raison non critique
+      if (e.message && e.message.includes('Budget maximum')) {
+        throw e; // remonter le message explicite au contrôleur
+      }
+      console.warn('⚠️ Erreur lors de la vérification du bidBudgetMax :', e.message);
     }
 
     // Vérifier si le nouveau bid est strictement supérieur à l'ancien (si présent)
