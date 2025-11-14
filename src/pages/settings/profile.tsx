@@ -76,11 +76,9 @@ interface UserProfile {
 const experienceLevels = [
   'Entry Level',
   'Junior',
-  'Mid-Level',
+  'Mid Level',
   'Senior',
-  'Lead',
-  'Principal',
-  'Executive'
+  'Expert'
 ];
 
 const countries = [
@@ -147,7 +145,7 @@ const ProfileSettingsPage: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile>({
     username: '',
     email: '',
-    requiredExperienceLevel: 'Mid-Level',
+    requiredExperienceLevel: 'Mid Level',
     targetRole: '',
     firstName: '',
     lastName: '',
@@ -210,7 +208,7 @@ const ProfileSettingsPage: React.FC = () => {
         setProfile({
           username: userData.username || user.username || '',
           email: userData.email || user.email || data.companyDetails?.email || '',
-          requiredExperienceLevel: data.requiredExperienceLevel || data.companyDetails?.requiredExperienceLevel || 'Mid-Level',
+          requiredExperienceLevel: data.requiredExperienceLevel || data.companyDetails?.requiredExperienceLevel || 'Mid Level',
           targetRole: data.targetRole || '',
           firstName: data.firstName  || user.username?.split(' ')[0] || '',
           lastName: data.lastName  || user.username?.split(' ')[1] || '',
@@ -410,12 +408,12 @@ const ProfileSettingsPage: React.FC = () => {
             location: profile.location?.trim() || '',
             email: profile.email?.trim() || '',
             employmentType: profile.employmentType || 'Remote',
-            requiredExperienceLevel: profile.requiredExperienceLevel || 'Mid-Level',
+            requiredExperienceLevel: profile.requiredExperienceLevel || 'Mid Level',
           };
 
           console.log('Updating company profile with payload:', companyPayload);
 
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profile/createOrUpdateCompanyProfile`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/createOrUpdateCompanyProfile`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -1183,7 +1181,7 @@ const ProfileSettingsPage: React.FC = () => {
                           >
                             <InputLabel>Required Experience Level</InputLabel>
                             <Select
-                              value={profile.requiredExperienceLevel || 'Mid-Level'}
+                              value={profile.requiredExperienceLevel || 'Mid Level'}
                               onChange={(e) => handleSelectChange(e, 'requiredExperienceLevel')}
                               label="Required Experience Level"
                             >
