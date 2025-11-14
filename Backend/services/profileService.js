@@ -145,10 +145,12 @@ exports.createOrUpdateCompanyProfile = async (userId, profileData) => {
       userId,
       type: "Company",
       companyDetails: {
+        email:profileData.email,
         name: profileData.name,
         industry: profileData.industry,
         size: profileData.size,
         location: profileData.location,
+        employmentType: profileData.employmentType, // Add employment type support
       },
       requiredSkills: profileData.requiredSkills || [],
       requiredExperienceLevel:

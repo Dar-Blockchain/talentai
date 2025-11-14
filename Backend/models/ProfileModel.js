@@ -80,15 +80,16 @@ const profileSchema = new mongoose.Schema(
 
     // Company details (if type is Company)
     companyDetails: {
+      email:String,
       name: String,
       industry: String,
       size: String,
       location: String,
-      /*employmentType: {
+      employmentType: {
         type: String,
         enum: ["Remote", "Hybrid", "On-site"],
-        required: true,
-      },*/
+        required: false
+      },
     },
     
     

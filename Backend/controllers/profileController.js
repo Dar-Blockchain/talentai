@@ -38,7 +38,7 @@ module.exports.createOrUpdateProfile = async (req, res) => {
   }
 };
 
-// Créer ou mettre à jour un profil
+// Create or update a company profile
 module.exports.createOrUpdateCompanyProfile = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -48,7 +48,12 @@ module.exports.createOrUpdateCompanyProfile = async (req, res) => {
       return res.status(400).json({ message: "Company name is required" });
     }
 
-    // Remove agent creation and update profile creation
+    // Validate employmentType if provided
+    if (profileData.employmentType && !["Remote", "Hybrid", "On-site"].includes(profileData.employmentType)) {
+      return res.status(400).json({ message: "Invalid employment type. Must be 'Remote', 'Hybrid', or 'On-site'" });
+    }
+
+    // Create or update company profile with employment type support
     const profile = await profileService.createOrUpdateCompanyProfile(
       userId,
       profileData
