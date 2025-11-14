@@ -10,10 +10,10 @@ const profileSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["Candidate", "Company","jury"],
+      enum: ["Candidate", "Company", "jury"],
       required: true,
     },
-    user_image : { type : String, required : false , default : 'client.png'},
+    user_image: { type: String, required: false, default: "client.png" },
     firstName: { type: String, required: false },
     lastName: { type: String, required: false },
     gender: {
@@ -24,7 +24,7 @@ const profileSchema = new mongoose.Schema(
     country: { type: String, required: false },
     language: { type: String, required: false },
     timeZone: { type: String, required: false },
-    
+
     // Contact Information
     contactInformation: {
       email: { type: String, required: false },
@@ -80,7 +80,7 @@ const profileSchema = new mongoose.Schema(
 
     // Company details (if type is Company)
     companyDetails: {
-      email:String,
+      email: String,
       name: String,
       industry: String,
       size: String,
@@ -88,11 +88,10 @@ const profileSchema = new mongoose.Schema(
       employmentType: {
         type: String,
         enum: ["Remote", "Hybrid", "On-site"],
-        required: false
+        required: false,
       },
     },
-    
-    
+
     requiredSkills: [String],
     requiredExperienceLevel: {
       type: String,

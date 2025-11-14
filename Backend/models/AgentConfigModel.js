@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 /**
  * AgentConfig
@@ -10,13 +10,13 @@ const mongoose = require('mongoose');
 const agentConfigSchema = new mongoose.Schema({
   agentId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Agent',
+    ref: "Agent",
     required: true,
     description: "Agent lié (one-to-one)",
   },
   postId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Post',
+    ref: "Post",
     required: true,
     description: "Post lié (one-to-one)",
   },
@@ -28,7 +28,7 @@ const agentConfigSchema = new mongoose.Schema({
     min: 0,
     max: 100,
     default: 70,
-    description: 'Seuil en pourcentage pour valider un candidat',
+    description: "Seuil en pourcentage pour valider un candidat",
   },
 
   // Budget pour les bids
@@ -37,7 +37,7 @@ const agentConfigSchema = new mongoose.Schema({
     required: true,
     min: 0,
     default: 10,
-    description: 'Montant minimum de bid autorisé',
+    description: "Montant minimum de bid autorisé",
   },
   bidBudgetMax: {
     type: Number,
@@ -84,13 +84,15 @@ const agentConfigSchema = new mongoose.Schema({
   autoSubmitTopMatch: {
     type: Boolean,
     default: true,
-    description: 'Si vrai, soumet automatiquement un message d\'évaluation pour le top match dépassant le threshold',
+    description:
+      "Si vrai, soumet automatiquement un message d'évaluation pour le top match dépassant le threshold",
   },
   maxDailySpending: {
     type: Number,
     min: 0,
     default: 200,
-    description: "Plafond de dépense journalier pour cet agent (peut limiter bidBudgetMax)",
+    description:
+      "Plafond de dépense journalier pour cet agent (peut limiter bidBudgetMax)",
   },
 
   // Historique / statut
@@ -100,7 +102,7 @@ const agentConfigSchema = new mongoose.Schema({
 });
 
 // Mise à jour du timestamp updatedAt
-agentConfigSchema.pre('save', function (next) {
+agentConfigSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
   next();
 });
@@ -110,22 +112,22 @@ agentConfigSchema.index({ agentId: 1 }, { unique: true, sparse: true });
 agentConfigSchema.index({ postId: 1 }, { unique: true, sparse: true });
 
 // Virtuals pour faciliter le populate réciproque
-agentConfigSchema.virtual('agent', {
-  ref: 'Agent',
-  localField: 'agentId',
-  foreignField: '_id',
+agentConfigSchema.virtual("agent", {
+  ref: "Agent",
+  localField: "agentId",
+  foreignField: "_id",
   justOne: true,
 });
 
-agentConfigSchema.virtual('post', {
-  ref: 'Post',
-  localField: 'postId',
-  foreignField: '_id',
+agentConfigSchema.virtual("post", {
+  ref: "Post",
+  localField: "postId",
+  foreignField: "_id",
   justOne: true,
 });
 
 // Inclure les virtuals lors de la sérialisation
-agentConfigSchema.set('toObject', { virtuals: true });
-agentConfigSchema.set('toJSON', { virtuals: true });
+agentConfigSchema.set("toObject", { virtuals: true });
+agentConfigSchema.set("toJSON", { virtuals: true });
 
-module.exports = mongoose.model('AgentConfig', agentConfigSchema);
+module.exports = mongoose.model("AgentConfig", agentConfigSchema);

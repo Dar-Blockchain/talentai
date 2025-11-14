@@ -13,7 +13,7 @@ const questionAnswerSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: Object.values(ANSWER_STATUS),
-      default: "incorrect"
+      default: "incorrect",
     },
     exampleCorrectAnswer: { type: String, required: false },
     partialCorrectPercentage: { type: Number, required: false },
@@ -91,7 +91,7 @@ const interviewDetailsSchema = new mongoose.Schema(
       ref: "Post",
       required: false,
     },
-    
+
     // jobAssessmentResult: only by interview of type : "post"
     jobAssessmentResult: {
       type: mongoose.Schema.Types.ObjectId,
@@ -110,7 +110,7 @@ const interviewDetailsSchema = new mongoose.Schema(
     // Questions d'entretien au niveau principal
     questions: {
       type: [questionAnswerSchema],
-      default: []
+      default: [],
     },
 
     overallScore: { type: Number },
@@ -127,15 +127,15 @@ const interviewDetailsSchema = new mongoose.Schema(
 );
 
 // Virtual populate to get post_Steps through the post relationship
-interviewDetailsSchema.virtual('postSteps', {
-  ref: 'Post_Steps',
-  localField: 'post',
-  foreignField: 'postId',
-  justOne: false
+interviewDetailsSchema.virtual("postSteps", {
+  ref: "Post_Steps",
+  localField: "post",
+  foreignField: "postId",
+  justOne: false,
 });
 
 // Ensure virtual fields are serialized
-interviewDetailsSchema.set('toJSON', { virtuals: true });
-interviewDetailsSchema.set('toObject', { virtuals: true });
+interviewDetailsSchema.set("toJSON", { virtuals: true });
+interviewDetailsSchema.set("toObject", { virtuals: true });
 
 module.exports = mongoose.model("InterviewDetails", interviewDetailsSchema);

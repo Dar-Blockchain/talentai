@@ -30,8 +30,6 @@ const SkillAnalysisSchema = new mongoose.Schema(
     confidenceScore: Number,
     match: String,
     levelGap: Number,
-
-    
   },
   { _id: false }
 );
@@ -74,7 +72,11 @@ const JobAssessmentResultSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
   assessmentType: { type: String, default: "job" },
   numberOfQuestions: Number,
-  interviewId: { type: mongoose.Schema.Types.ObjectId, ref: "InterviewDetails", required: true },
+  interviewId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "InterviewDetails",
+    required: true,
+  },
   analysis: AnalysisSchema,
 });
 

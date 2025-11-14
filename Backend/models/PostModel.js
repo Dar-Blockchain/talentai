@@ -7,7 +7,6 @@ const salarySchema = new mongoose.Schema({
   currency: { type: String, required: true },
 });
 
-
 const skillSchema = new mongoose.Schema({
   name: { type: String, required: true },
   level: { type: String },
@@ -23,7 +22,8 @@ const skillSchema = new mongoose.Schema({
         // Autorise undefined (pas encore calculé), mais valide la plage
         return v === undefined || (v >= 0 && v <= 100);
       },
-      message: (props) => `${props.value} is not a valid percentage (must be between 0 and 100)!`,
+      message: (props) =>
+        `${props.value} is not a valid percentage (must be between 0 and 100)!`,
     },
   },
 });
@@ -99,9 +99,9 @@ const postSchema = new mongoose.Schema({
   //   default: "drafts",
   // },
 
-  availableFrom: Number, 
-  availableUntil: Number, 
-    status: {
+  availableFrom: Number,
+  availableUntil: Number,
+  status: {
     type: String,
     enum: Object.values(POST_STATUS),
     default: POST_STATUS.DRAFT,
@@ -123,15 +123,17 @@ const postSchema = new mongoose.Schema({
   // Référence vers la configuration associée (one-to-one)
   agentConfig: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'AgentConfig',
+    ref: "AgentConfig",
     unique: true,
     sparse: true,
     description: "Référence optionnelle vers AgentConfig (one-to-one)",
   },
-  post_Steps: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Post_Steps",
-  }],  
+  post_Steps: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post_Steps",
+    },
+  ],
 });
 
 const Post = mongoose.model("Post", postSchema);

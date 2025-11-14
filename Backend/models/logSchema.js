@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const logSchema = new mongoose.Schema({
   type: String,
@@ -13,13 +13,13 @@ const logSchema = new mongoose.Schema({
   executionTime: Number,
   location: String,
   body: String,
-  timestamp: { type: Date, default: Date.now }
+  timestamp: { type: Date, default: Date.now },
 });
 
-logSchema.statics.getTotalLogsCount = async function() {
+logSchema.statics.getTotalLogsCount = async function () {
   return await this.countDocuments();
 };
 
-const Log = mongoose.model('Log', logSchema);
+const Log = mongoose.model("Log", logSchema);
 
 module.exports = Log;
