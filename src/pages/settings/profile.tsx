@@ -63,10 +63,14 @@ interface UserProfile {
   // Display-only fields
   avatar?: string;
   profileType?: 'Candidate' | 'Company';
-  // Company-specific fields
+  // Company-specific fields (all editable)
   companyName?: string;
+  name?: string;
   industry?: string;
   companySize?: string;
+  size?: string;
+  employmentType?: string;
+  requiredSkills?: string[];
 }
 
 const experienceLevels = [
@@ -96,6 +100,37 @@ const timezones = [
   'UTC-06:00', 'UTC-05:00', 'UTC-04:00', 'UTC-03:00', 'UTC-02:00', 'UTC-01:00',
   'UTC+00:00', 'UTC+01:00', 'UTC+02:00', 'UTC+03:00', 'UTC+04:00', 'UTC+05:00',
   'UTC+06:00', 'UTC+07:00', 'UTC+08:00', 'UTC+09:00', 'UTC+10:00', 'UTC+11:00', 'UTC+12:00'
+];
+
+const employmentTypes = [
+  'Remote',
+  'Hybrid',
+  'On-site'
+];
+
+const companySizes = [
+  '1-10',
+  '11-50',
+  '51-200',
+  '201-500',
+  '500-1000',
+  '1000+'
+];
+
+const industries = [
+  'Technology',
+  'Finance',
+  'Healthcare',
+  'Education',
+  'Retail',
+  'Manufacturing',
+  'Consulting',
+  'Media & Entertainment',
+  'Real Estate',
+  'Transportation',
+  'Energy',
+  'Telecommunications',
+  'Other'
 ];
 
 const ProfileSettingsPage: React.FC = () => {
@@ -128,9 +163,14 @@ const ProfileSettingsPage: React.FC = () => {
     location: '',
     avatar: '',
     profileType: 'Candidate',
+    // Company fields
     companyName: '',
+    name: '',
     industry: '',
     companySize: '',
+    size: '',
+    employmentType: 'Remote',
+    requiredSkills: [],
   });
 
   // Load user profile data
@@ -169,8 +209,8 @@ const ProfileSettingsPage: React.FC = () => {
 
         setProfile({
           username: userData.username || user.username || '',
-          email: userData.email || user.email || '',
-          requiredExperienceLevel: data.requiredExperienceLevel || 'Mid-Level',
+          email: userData.email || user.email || data.companyDetails?.email || '',
+          requiredExperienceLevel: data.requiredExperienceLevel || data.companyDetails?.requiredExperienceLevel || 'Mid-Level',
           targetRole: data.targetRole || '',
           firstName: data.firstName  || user.username?.split(' ')[0] || '',
           lastName: data.lastName  || user.username?.split(' ')[1] || '',
@@ -184,13 +224,17 @@ const ProfileSettingsPage: React.FC = () => {
           linkedinUrl: data.contactInformation?.linkedinUrl || '',
           githubUrl: data.contactInformation?.githubUrl || '',
           personalWebsite: data.contactInformation?.personalWebsite || '',
-          location: data.contactInformation?.location || '',
+          location: data.contactInformation?.location || data.companyDetails?.location || '',
           avatar: avatarUrl,
           profileType: data.type || 'Candidate',
           // Company-specific fields
           companyName: data.companyDetails?.name || '',
+          name: data.companyDetails?.name || '',
           industry: data.companyDetails?.industry || '',
           companySize: data.companyDetails?.size || '',
+          size: data.companyDetails?.size || '',
+          employmentType: data.companyDetails?.employmentType || 'Remote',
+          requiredSkills: data.companyDetails?.requiredSkills || data.requiredSkills || [],
         });
 
         console.log('✅ Profile data loaded:', {
@@ -355,17 +399,57 @@ const ProfileSettingsPage: React.FC = () => {
         }
       }
 
-      // For Companies - only contact information
-      if (profile.profileType === 'Company' && activeTab === 'contact') {
-        // Contact Information for Companies (no GitHub field)
-        updatePayload.contactInformation = {
-          email: profile.email?.trim() || '',
-          phone: profile.phone?.trim() || '',
-          address: profile.address?.trim() || '',
-          linkedinUrl: profile.linkedinUrl?.trim() || '',
-          personalWebsite: profile.personalWebsite?.trim() || '',
-          location: profile.location?.trim() || '',
-        };
+      // For Companies - Handle company profile and contact information separately
+      if (profile.profileType === 'Company') {
+        if (activeTab === 'personal') {
+          // Use createOrUpdateCompanyProfile endpoint for company information
+          const companyPayload = {
+            name: profile.name?.trim() || profile.companyName?.trim() || '',
+            industry: profile.industry || '',
+            size: profile.size || profile.companySize || '',
+            location: profile.location?.trim() || '',
+            email: profile.email?.trim() || '',
+            employmentType: profile.employmentType || 'Remote',
+            requiredExperienceLevel: profile.requiredExperienceLevel || 'Mid-Level',
+          };
+
+          console.log('Updating company profile with payload:', companyPayload);
+
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}profile/createOrUpdateCompanyProfile`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(companyPayload),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Company profile updated successfully:', data);
+            setSaveSuccess(true);
+            setIsEditing(false);
+            setTimeout(() => setSaveSuccess(false), 3000);
+            // Refresh profile data
+            await fetchProfile();
+          } else {
+            const errorData = await response.json().catch(() => ({ message: 'Failed to update company profile' }));
+            console.error('Failed to update company profile:', errorData);
+            setError(errorData.message || 'Failed to update company profile. Please try again.');
+          }
+          setLoading(false);
+          return;
+        } else if (activeTab === 'contact') {
+          // Contact Information for Companies (no GitHub field)
+          updatePayload.contactInformation = {
+            email: profile.email?.trim() || '',
+            phone: profile.phone?.trim() || '',
+            address: profile.address?.trim() || '',
+            linkedinUrl: profile.linkedinUrl?.trim() || '',
+            personalWebsite: profile.personalWebsite?.trim() || '',
+            location: profile.location?.trim() || '',
+          };
+        }
       }
 
       // Check if we have at least one field to update
@@ -591,7 +675,7 @@ const ProfileSettingsPage: React.FC = () => {
                             }}
                           >
                             {profile.profileType === 'Company'
-                              ? profile.companyName?.charAt(0)?.toUpperCase() || 'C'
+                              ? (profile.name || profile.companyName)?.charAt(0)?.toUpperCase() || 'C'
                               : `${profile.firstName?.charAt(0)}${profile.lastName?.charAt(0)}`
                             }
                           </Avatar>
@@ -634,7 +718,7 @@ const ProfileSettingsPage: React.FC = () => {
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
                             {profile.profileType === 'Company'
-                              ? profile.companyName || 'Company Name'
+                              ? profile.name || profile.companyName || 'Company Name'
                               : `${profile.firstName} ${profile.lastName}`
                             }
                           </Typography>
@@ -655,13 +739,13 @@ const ProfileSettingsPage: React.FC = () => {
                                   </Typography>
                                 </Box>
                               )}
-                              {profile.companySize && (
+                              {(profile.size || profile.companySize) && (
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                   <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 500 }}>
                                     Size:
                                   </Typography>
                                   <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 600 }}>
-                                    {profile.companySize}
+                                    {profile.size || profile.companySize}
                                   </Typography>
                                 </Box>
                               )}
@@ -672,6 +756,26 @@ const ProfileSettingsPage: React.FC = () => {
                                   </Typography>
                                   <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 600 }}>
                                     {profile.location}
+                                  </Typography>
+                                </Box>
+                              )}
+                              {profile.employmentType && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                  <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 500 }}>
+                                    Type:
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 600 }}>
+                                    {profile.employmentType}
+                                  </Typography>
+                                </Box>
+                              )}
+                              {profile.requiredExperienceLevel && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                  <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 500 }}>
+                                    Experience:
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 600 }}>
+                                    {profile.requiredExperienceLevel}
                                   </Typography>
                                 </Box>
                               )}
@@ -917,77 +1021,177 @@ const ProfileSettingsPage: React.FC = () => {
                         </Box>
                       )}
 
-                      {/* Display-only fields - Only for Company */}
+                      {/* Editable Company Fields */}
                       {profile.profileType === 'Company' && (
-                        <Box sx={{ mt: 4 }}>
-                          <Typography variant="subtitle2" sx={{ color: '#6b7280', mb: 2, fontWeight: 600 }}>
-                            Additional Information (Read-only)
-                          </Typography>
-                          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
-                            <TextField
-                              label="Email"
-                              value={profile.email}
-                              disabled
-                              fullWidth
-                              type="email"
-                              sx={{
-                                gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                                '& .MuiInputBase-input.Mui-disabled': {
-                                  WebkitTextFillColor: '#6b7280',
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3, mt: 4 }}>
+                          <TextField
+                            label="Company Email"
+                            value={profile.email}
+                            onChange={(e) => handleInputChange('email', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            type="email"
+                            sx={{
+                              gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
                                 },
-                              }}
-                            />
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
 
-                            <TextField
-                              label="Company Name"
-                              value={profile.companyName}
-                              disabled
-                              fullWidth
-                              sx={{
-                                gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                                '& .MuiInputBase-input.Mui-disabled': {
-                                  WebkitTextFillColor: '#6b7280',
+                          <TextField
+                            label="Company Name"
+                            value={profile.name || profile.companyName}
+                            onChange={(e) => {
+                              handleInputChange('name', e.target.value);
+                              handleInputChange('companyName', e.target.value);
+                            }}
+                            disabled={!isEditing}
+                            fullWidth
+                            sx={{
+                              gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
                                 },
-                              }}
-                            />
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
 
-                            <TextField
+                          <FormControl
+                            fullWidth
+                            disabled={!isEditing}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          >
+                            <InputLabel>Industry</InputLabel>
+                            <Select
+                              value={profile.industry || ''}
+                              onChange={(e) => handleSelectChange(e, 'industry')}
                               label="Industry"
-                              value={profile.industry}
-                              disabled
-                              fullWidth
-                              sx={{
-                                '& .MuiInputBase-input.Mui-disabled': {
-                                  WebkitTextFillColor: '#6b7280',
-                                },
-                              }}
-                            />
+                            >
+                              {industries.map((ind) => (
+                                <MenuItem key={ind} value={ind}>{ind}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
 
-                            <TextField
+                          <FormControl
+                            fullWidth
+                            disabled={!isEditing}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          >
+                            <InputLabel>Company Size</InputLabel>
+                            <Select
+                              value={profile.size || profile.companySize || ''}
+                              onChange={(e) => {
+                                handleSelectChange(e, 'size');
+                                handleSelectChange(e, 'companySize');
+                              }}
                               label="Company Size"
-                              value={profile.companySize}
-                              disabled
-                              fullWidth
-                              sx={{
-                                '& .MuiInputBase-input.Mui-disabled': {
-                                  WebkitTextFillColor: '#6b7280',
-                                },
-                              }}
-                            />
+                            >
+                              {companySizes.map((size) => (
+                                <MenuItem key={size} value={size}>{size}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
 
-                            <TextField
-                              label="Location"
-                              value={profile.location}
-                              disabled
-                              fullWidth
-                              sx={{
-                                gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                                '& .MuiInputBase-input.Mui-disabled': {
-                                  WebkitTextFillColor: '#6b7280',
+                          <TextField
+                            label="Location"
+                            value={profile.location}
+                            onChange={(e) => handleInputChange('location', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            placeholder="Paris, France"
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
                                 },
-                              }}
-                            />
-                          </Box>
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
+
+                          <FormControl
+                            fullWidth
+                            disabled={!isEditing}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          >
+                            <InputLabel>Employment Type</InputLabel>
+                            <Select
+                              value={profile.employmentType || 'Remote'}
+                              onChange={(e) => handleSelectChange(e, 'employmentType')}
+                              label="Employment Type"
+                            >
+                              {employmentTypes.map((type) => (
+                                <MenuItem key={type} value={type}>{type}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+
+                          <FormControl
+                            fullWidth
+                            disabled={!isEditing}
+                            sx={{
+                              gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          >
+                            <InputLabel>Required Experience Level</InputLabel>
+                            <Select
+                              value={profile.requiredExperienceLevel || 'Mid-Level'}
+                              onChange={(e) => handleSelectChange(e, 'requiredExperienceLevel')}
+                              label="Required Experience Level"
+                            >
+                              {experienceLevels.map((level) => (
+                                <MenuItem key={level} value={level}>{level}</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
                         </Box>
                       )}
 
