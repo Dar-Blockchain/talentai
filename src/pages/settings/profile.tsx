@@ -341,7 +341,7 @@ const ProfileSettingsPage: React.FC = () => {
           updatePayload.timezone = profile.timezone;
         }
 
-        // Contact Information - only include if any contact field has changed
+        // Contact Information for Candidates
         if (activeTab === 'contact' || profile.phone || profile.address || profile.linkedinUrl || profile.githubUrl || profile.personalWebsite || profile.location) {
           updatePayload.contactInformation = {
             email: profile.email?.trim() || '',
@@ -353,6 +353,19 @@ const ProfileSettingsPage: React.FC = () => {
             location: profile.location?.trim() || '',
           };
         }
+      }
+
+      // For Companies - only contact information
+      if (profile.profileType === 'Company' && activeTab === 'contact') {
+        // Contact Information for Companies (no GitHub field)
+        updatePayload.contactInformation = {
+          email: profile.email?.trim() || '',
+          phone: profile.phone?.trim() || '',
+          address: profile.address?.trim() || '',
+          linkedinUrl: profile.linkedinUrl?.trim() || '',
+          personalWebsite: profile.personalWebsite?.trim() || '',
+          location: profile.location?.trim() || '',
+        };
       }
 
       // Check if we have at least one field to update
@@ -1057,158 +1070,290 @@ const ProfileSettingsPage: React.FC = () => {
                           </Button>
                         </Box>
                         <Typography variant="body2" sx={{ color: '#6b7280' }}>
-                          Manage your contact details and social profiles
+                          {profile.profileType === 'Company'
+                            ? 'Manage your company contact details and professional presence'
+                            : 'Manage your contact details and social profiles'
+                          }
                         </Typography>
                       </Box>
 
                       <Divider sx={{ my: 3 }} />
 
-                      {/* Contact Information Fields */}
-                      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
-                        <TextField
-                          label="Email"
-                          value={profile.email}
-                          onChange={(e) => handleInputChange('email', e.target.value)}
-                          disabled={!isEditing}
-                          fullWidth
-                          type="email"
-                          sx={{
-                            gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                            '& .MuiOutlinedInput-root': {
-                              '&.Mui-focused fieldset': {
-                                borderColor: '#8310FF',
+                      {/* Contact Information Fields - Different for Candidate vs Company */}
+                      {profile.profileType === 'Candidate' ? (
+                        // Candidate Contact Fields
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
+                          <TextField
+                            label="Email"
+                            value={profile.email}
+                            onChange={(e) => handleInputChange('email', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            type="email"
+                            sx={{
+                              gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
                               },
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                              color: '#8310FF',
-                            },
-                          }}
-                        />
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
 
-                        <TextField
-                          label="Phone Number"
-                          value={profile.phone}
-                          onChange={(e) => handleInputChange('phone', e.target.value)}
-                          disabled={!isEditing}
-                          fullWidth
-                          type="tel"
-                          placeholder="+33612345678"
-                          sx={{
-                            '& .MuiOutlinedInput-root': {
-                              '&.Mui-focused fieldset': {
-                                borderColor: '#8310FF',
+                          <TextField
+                            label="Phone Number"
+                            value={profile.phone}
+                            onChange={(e) => handleInputChange('phone', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            type="tel"
+                            placeholder="+33612345678"
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
                               },
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                              color: '#8310FF',
-                            },
-                          }}
-                        />
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
 
-                        <TextField
-                          label="Location"
-                          value={profile.location}
-                          onChange={(e) => handleInputChange('location', e.target.value)}
-                          disabled={!isEditing}
-                          fullWidth
-                          placeholder="Paris, France"
-                          sx={{
-                            '& .MuiOutlinedInput-root': {
-                              '&.Mui-focused fieldset': {
-                                borderColor: '#8310FF',
+                          <TextField
+                            label="Location"
+                            value={profile.location}
+                            onChange={(e) => handleInputChange('location', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            placeholder="Paris, France"
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
                               },
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                              color: '#8310FF',
-                            },
-                          }}
-                        />
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
 
-                        <TextField
-                          label="Address"
-                          value={profile.address}
-                          onChange={(e) => handleInputChange('address', e.target.value)}
-                          disabled={!isEditing}
-                          fullWidth
-                          multiline
-                          rows={2}
-                          placeholder="123 Rue de Paris"
-                          sx={{
-                            gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                            '& .MuiOutlinedInput-root': {
-                              '&.Mui-focused fieldset': {
-                                borderColor: '#8310FF',
+                          <TextField
+                            label="Address"
+                            value={profile.address}
+                            onChange={(e) => handleInputChange('address', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            multiline
+                            rows={2}
+                            placeholder="123 Rue de Paris"
+                            sx={{
+                              gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
                               },
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                              color: '#8310FF',
-                            },
-                          }}
-                        />
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
 
-                        <TextField
-                          label="LinkedIn URL"
-                          value={profile.linkedinUrl}
-                          onChange={(e) => handleInputChange('linkedinUrl', e.target.value)}
-                          disabled={!isEditing}
-                          fullWidth
-                          type="url"
-                          placeholder="https://linkedin.com/in/yourprofile"
-                          sx={{
-                            gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                            '& .MuiOutlinedInput-root': {
-                              '&.Mui-focused fieldset': {
-                                borderColor: '#8310FF',
+                          <TextField
+                            label="LinkedIn URL"
+                            value={profile.linkedinUrl}
+                            onChange={(e) => handleInputChange('linkedinUrl', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            type="url"
+                            placeholder="https://linkedin.com/in/yourprofile"
+                            sx={{
+                              gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
                               },
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                              color: '#8310FF',
-                            },
-                          }}
-                        />
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
 
-                        <TextField
-                          label="GitHub URL"
-                          value={profile.githubUrl}
-                          onChange={(e) => handleInputChange('githubUrl', e.target.value)}
-                          disabled={!isEditing}
-                          fullWidth
-                          type="url"
-                          placeholder="https://github.com/yourprofile"
-                          sx={{
-                            gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                            '& .MuiOutlinedInput-root': {
-                              '&.Mui-focused fieldset': {
-                                borderColor: '#8310FF',
+                          <TextField
+                            label="GitHub URL"
+                            value={profile.githubUrl}
+                            onChange={(e) => handleInputChange('githubUrl', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            type="url"
+                            placeholder="https://github.com/yourprofile"
+                            sx={{
+                              gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
                               },
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                              color: '#8310FF',
-                            },
-                          }}
-                        />
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
 
-                        <TextField
-                          label="Personal Website"
-                          value={profile.personalWebsite}
-                          onChange={(e) => handleInputChange('personalWebsite', e.target.value)}
-                          disabled={!isEditing}
-                          fullWidth
-                          type="url"
-                          placeholder="https://yourwebsite.com"
-                          sx={{
-                            gridColumn: { xs: '1 / -1', sm: 'span 2' },
-                            '& .MuiOutlinedInput-root': {
-                              '&.Mui-focused fieldset': {
-                                borderColor: '#8310FF',
+                          <TextField
+                            label="Personal Website"
+                            value={profile.personalWebsite}
+                            onChange={(e) => handleInputChange('personalWebsite', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            type="url"
+                            placeholder="https://yourwebsite.com"
+                            sx={{
+                              gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
                               },
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                              color: '#8310FF',
-                            },
-                          }}
-                        />
-                      </Box>
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
+                        </Box>
+                      ) : (
+                        // Company Contact Fields
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
+                          <TextField
+                            label="Company Email"
+                            value={profile.email}
+                            onChange={(e) => handleInputChange('email', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            type="email"
+                            sx={{
+                              gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
+
+                          <TextField
+                            label="Main Phone Number"
+                            value={profile.phone}
+                            onChange={(e) => handleInputChange('phone', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            type="tel"
+                            placeholder="+33123456789"
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
+
+                          <TextField
+                            label="Location"
+                            value={profile.location}
+                            onChange={(e) => handleInputChange('location', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            placeholder="Paris, France"
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
+
+                          <TextField
+                            label="Company Address"
+                            value={profile.address}
+                            onChange={(e) => handleInputChange('address', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            multiline
+                            rows={2}
+                            placeholder="123 Business Avenue, Suite 100"
+                            sx={{
+                              gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
+
+                          <TextField
+                            label="LinkedIn Company Page"
+                            value={profile.linkedinUrl}
+                            onChange={(e) => handleInputChange('linkedinUrl', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            type="url"
+                            placeholder="https://linkedin.com/company/yourcompany"
+                            sx={{
+                              gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
+
+                          <TextField
+                            label="Company Website"
+                            value={profile.personalWebsite}
+                            onChange={(e) => handleInputChange('personalWebsite', e.target.value)}
+                            disabled={!isEditing}
+                            fullWidth
+                            type="url"
+                            placeholder="https://yourcompany.com"
+                            sx={{
+                              gridColumn: { xs: '1 / -1', sm: 'span 2' },
+                              '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                  borderColor: '#8310FF',
+                                },
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#8310FF',
+                              },
+                            }}
+                          />
+                        </Box>
+                      )}
 
                       {isEditing && (
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
