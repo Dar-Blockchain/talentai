@@ -12,18 +12,18 @@ Cette documentation fournit une analyse détaillée de l'utilisation des tokens 
 
 | Interview Type | Fast Model | Thinking Model | Analysis Model |
 |----------------|------------|----------------|----------------|
-| **HR Interview** | Llama-3.2-11B-Vision-Instruct-Turbo | Meta-Llama-3.1-70B-Instruct-Turbo | Meta-Llama-3.1-405B-Instruct-Turbo |
+| **HR Interview** | Llama-Guard-3-11B-Vision-Turbo | Meta-Llama-3.1-70B-Instruct-Turbo | Meta-Llama-3.1-405B-Instruct-Turbo |
 | **Technical Skill** | Llama-3.2-3B-Instruct-Turbo | Meta-Llama-3.1-70B-Instruct-Turbo | Meta-Llama-3.1-405B-Instruct-Turbo |
-| **Soft Skill** | Llama-3.2-11B-Vision-Instruct-Turbo | Meta-Llama-3.1-70B-Instruct-Turbo | Meta-Llama-3.1-70B-Instruct-Turbo |
-| **Salary Interview** | Llama-3.2-11B-Vision-Instruct-Turbo | Meta-Llama-3.1-70B-Instruct-Turbo | Meta-Llama-3.1-70B-Instruct-Turbo |
-| **Psychotechnic** | Llama-3.2-11B-Vision-Instruct-Turbo | Meta-Llama-3.1-405B-Instruct-Turbo | Meta-Llama-3.1-405B-Instruct-Turbo |
+| **Soft Skill** | Llama-Guard-3-11B-Vision-Turbo | Meta-Llama-3.1-70B-Instruct-Turbo | Meta-Llama-3.1-70B-Instruct-Turbo |
+| **Salary Interview** | Llama-Guard-3-11B-Vision-Turbo | Meta-Llama-3.1-70B-Instruct-Turbo | Meta-Llama-3.1-70B-Instruct-Turbo |
+| **Psychotechnic** | Llama-Guard-3-11B-Vision-Turbo | Meta-Llama-3.1-405B-Instruct-Turbo | Meta-Llama-3.1-405B-Instruct-Turbo |
 
 ### Pricing Together AI (Octobre 2025)
 
 | Modèle | Input ($/M tokens) | Output ($/M tokens) | Utilisation |
 |--------|-------------------|---------------------|-------------|
 | **Llama-3.2-3B-Instruct-Turbo** | $0.04 | $0.04 | Questions rapides |
-| **Llama-3.2-11B-Vision-Instruct-Turbo** | $0.18 | $0.18 | Génération de salutations |
+| **Llama-Guard-3-11B-Vision-Turbo** | $0.18 | $0.18 | Génération de salutations |
 | **Meta-Llama-3.1-70B-Instruct-Turbo** | $0.88 | $0.88 | Analyse principale |
 | **Meta-Llama-3.1-405B-Instruct-Turbo** | $3.50 | $3.50 | Analyse approfondie |
 
@@ -259,7 +259,7 @@ Output Attendu: ~600 tokens (rapport structuré)
 
 ### 6. **Greeting Generation** (Salutation initiale)
 
-**Modèle**: Llama-3.2-11B-Vision-Instruct-Turbo
+**Modèle**: Llama-Guard-3-11B-Vision-Turbo
 **Température**: 0.6
 **Max Tokens**: 200
 

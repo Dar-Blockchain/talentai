@@ -28,42 +28,100 @@ class RedisSessionManager {
    */
   async initialize() {
     try {
+      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+      console.log('🔌 [Redis] Initializing Redis client...');
+      console.log('🔌 [Redis] Connection URL:', redisUrl);
+      console.log('🔌 [Redis] Environment:', process.env.NODE_ENV || 'development');
+
       this.client = redis.createClient({
-        url: process.env.REDIS_URL || 'redis://localhost:6379',
+        url: redisUrl,
         retry_strategy: (options) => {
+          console.log(`🔄 [Redis] Retry attempt ${options.attempt}:`, {
+            error: options.error?.message,
+            errorCode: options.error?.code,
+            totalRetryTime: options.total_retry_time,
+            attemptNumber: options.attempt
+          });
+
           if (options.error && options.error.code === 'ECONNREFUSED') {
-            console.error('Redis server connection refused');
+            console.error('❌ [Redis] Connection refused - Redis server not running or unreachable');
             return new Error('Redis server connection refused');
           }
           if (options.total_retry_time > 1000 * 60 * 60) {
+            console.error('❌ [Redis] Retry time exhausted (>1 hour)');
             return new Error('Retry time exhausted');
           }
           if (options.attempt > 10) {
+            console.error('❌ [Redis] Max retry attempts reached (10)');
             return undefined;
           }
-          return Math.min(options.attempt * 100, 3000);
+
+          const delay = Math.min(options.attempt * 100, 3000);
+          console.log(`⏳ [Redis] Retrying in ${delay}ms...`);
+          return delay;
         }
       });
 
+      // Enhanced event listeners
       this.client.on('error', (err) => {
-        console.error('Redis Client Error:', err);
+        console.error('❌ [Redis] Client Error:', {
+          message: err.message,
+          code: err.code,
+          errno: err.errno,
+          syscall: err.syscall,
+          address: err.address,
+          port: err.port,
+          stack: err.stack
+        });
         this.isConnected = false;
       });
 
       this.client.on('connect', () => {
-        console.log('✅ Redis connected successfully');
+        console.log('✅ [Redis] TCP connection established');
         this.isConnected = true;
       });
 
       this.client.on('ready', () => {
-        console.log('✅ Redis client ready');
+        console.log('✅ [Redis] Client ready to accept commands');
         this.isConnected = true;
       });
 
+      this.client.on('reconnecting', () => {
+        console.log('🔄 [Redis] Attempting to reconnect...');
+        this.isConnected = false;
+      });
+
+      this.client.on('end', () => {
+        console.log('⚠️  [Redis] Connection closed');
+        this.isConnected = false;
+      });
+
+      console.log('⏳ [Redis] Attempting to connect...');
       await this.client.connect();
+
+      console.log('🏓 [Redis] Testing connection with PING...');
+      const pingResult = await this.client.ping();
+      console.log('✅ [Redis] PING successful:', pingResult);
+
+      console.log('✅ [Redis] Initialization complete - Ready to accept commands');
+      console.log('📊 [Redis] Client status:', {
+        isConnected: this.isConnected,
+        isReady: this.client.isReady,
+        isOpen: this.client.isOpen
+      });
+
       return true;
     } catch (error) {
-      console.error('❌ Failed to initialize Redis:', error.message);
+      console.error('❌ [Redis] Failed to initialize:', {
+        message: error.message,
+        code: error.code,
+        errno: error.errno,
+        syscall: error.syscall,
+        address: error.address,
+        port: error.port,
+        stack: error.stack
+      });
+      console.error('⚠️  [Redis] Redis will be unavailable - Interview service will operate in degraded mode');
       return false;
     }
   }
@@ -73,6 +131,19 @@ class RedisSessionManager {
    */
   async createSession(sessionId, config, candidateId) {
     try {
+      console.log('📝 [Redis] Creating new session:', sessionId);
+      console.log('📊 [Redis] Pre-creation connection check:', {
+        isConnected: this.isConnected,
+        clientExists: !!this.client,
+        clientIsReady: this.client?.isReady,
+        clientIsOpen: this.client?.isOpen
+      });
+
+      if (!this.client || !this.isConnected) {
+        console.error('❌ [Redis] Cannot create session - Redis client not connected');
+        throw new Error('Redis client not connected');
+      }
+
       const sessionData = {
         sessionId,
         candidateId,
@@ -111,12 +182,44 @@ class RedisSessionManager {
       };
 
       const key = this.sessionPrefix + sessionId;
-      await this.client.setEx(key, this.sessionTTL, JSON.stringify(sessionData));
+      const jsonData = JSON.stringify(sessionData);
+      const dataSize = Buffer.byteLength(jsonData, 'utf8');
 
-      console.log(`✅ Created interview session: ${sessionId}`);
+      console.log('💾 [Redis] Storing session data:', {
+        key: key,
+        ttl: this.sessionTTL,
+        dataSize: `${dataSize} bytes`,
+        candidateId: candidateId
+      });
+
+      await this.client.setEx(key, this.sessionTTL, jsonData);
+      console.log('✅ [Redis] Session data stored successfully');
+
+      // Verify storage with immediate read
+      console.log('🔍 [Redis] Verifying session storage...');
+      const storedData = await this.client.get(key);
+      if (storedData) {
+        console.log('✅ [Redis] Session verified - data retrieved successfully');
+        const parsed = JSON.parse(storedData);
+        console.log('📋 [Redis] Stored session info:', {
+          sessionId: parsed.sessionId,
+          candidateId: parsed.candidateId,
+          status: parsed.status,
+          startTime: parsed.startTime
+        });
+      } else {
+        console.error('⚠️  [Redis] WARNING: Session data not found after storage!');
+      }
+
+      console.log(`✅ [Redis] Created interview session: ${sessionId}`);
       return sessionData;
     } catch (error) {
-      console.error('❌ Failed to create session:', error.message);
+      console.error('❌ [Redis] Failed to create session:', {
+        sessionId: sessionId,
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
       throw error;
     }
   }

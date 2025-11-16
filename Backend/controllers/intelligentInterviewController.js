@@ -28,22 +28,36 @@ class IntelligentInterviewController {
           const { config, candidateId } = data;
           const sessionId = uuidv4();
 
-          console.log(`🚀 Starting interview session: ${sessionId} for candidate: ${candidateId}`);
+          console.log(`🚀 [Controller] Starting interview session: ${sessionId} for candidate: ${candidateId}`);
+          console.log(`📋 [Controller] Config received:`, {
+            interviewType: config.interviewType,
+            targetRole: config.context?.targetRole,
+            hasModels: !!config.models
+          });
 
           // Store session mapping
           this.activeSessions.set(sessionId, socket.id);
           socket.sessionId = sessionId;
+          console.log(`✅ [Controller] Session mapping stored`);
 
           // Start interview with AI service
+          console.log(`⏳ [Controller] Calling intelligentInterviewService.startInterview()...`);
           const result = await this.service.startInterview(sessionId, config, candidateId);
+          console.log(`✅ [Controller] Service returned:`, {
+            success: result.success,
+            sessionId: result.sessionId,
+            greetingLength: result.greeting?.length
+          });
 
           // Send success response with greeting
+          console.log(`📤 [Controller] Emitting interview_started event to client...`);
           socket.emit('interview_started', {
             success: true,
             sessionId,
             greeting: result.greeting,
             config: result.config
           });
+          console.log(`✅ [Controller] interview_started event emitted`);
 
           // Send initial greeting message
           socket.emit('interviewer_message', {
@@ -53,13 +67,34 @@ class IntelligentInterviewController {
             sessionId
           });
 
-          console.log(`✅ Interview session started successfully: ${sessionId}`);
+          console.log(`✅ [Controller] Interview session started successfully: ${sessionId}`);
 
         } catch (error) {
-          console.error('❌ Failed to start interview:', error.message);
+          console.error('❌ [Controller] Failed to start interview:', {
+            message: error.message,
+            code: error.code,
+            errno: error.errno,
+            syscall: error.syscall
+          });
+          console.error('❌ [Controller] Stack trace:', error.stack);
+
+          // Check if it's a Redis-specific error
+          const isRedisError = error.message?.includes('Redis') ||
+                               error.code === 'ECONNREFUSED' ||
+                               error.syscall === 'connect';
+
+          console.error('🔍 [Controller] Error analysis:', {
+            isRedisError: isRedisError,
+            errorType: error.constructor.name,
+            errorCode: error.code
+          });
+
           socket.emit('interview_error', {
             error: 'Failed to start interview',
-            message: error.message
+            message: error.message,
+            details: error.stack,
+            isRedisError: isRedisError,
+            hint: isRedisError ? 'Check if Redis server is running: redis-cli ping' : null
           });
         }
       });
@@ -67,7 +102,7 @@ class IntelligentInterviewController {
       // Handle candidate responses
       socket.on('candidate_response', async (data) => {
         try {
-          const { transcript, audioMetadata } = data;
+          const { transcript, audioMetadata, v3Turn, turnOrder } = data;
           const sessionId = socket.sessionId;
 
           if (!sessionId) {
@@ -76,6 +111,12 @@ class IntelligentInterviewController {
           }
 
           console.log(`💬 Processing candidate response in session: ${sessionId}`);
+          if (v3Turn) {
+            console.log(`✅ V3 Turn ${turnOrder || 'N/A'} detected with ${transcript?.length || 0} chars`);
+          }
+
+          // Reset inter-turn pause timer when new turn is received
+          this.resetInterTurnPauseTimer(socket, sessionId);
 
           // Process response with AI service
           const decision = await this.service.processCandidateResponse(
@@ -87,11 +128,31 @@ class IntelligentInterviewController {
           // Handle different decision types
           await this.handleAIDecision(socket, sessionId, decision);
 
+          // Send acknowledgment that message was processed successfully
+          socket.emit('response_processed', {
+            status: 'success',
+            transcript: transcript.substring(0, 100), // First 100 chars
+            decisionType: decision.type || 'continue',
+            timestamp: new Date().toISOString()
+          });
+
+          console.log(`✅ Response processed and acknowledged for session: ${sessionId}`);
+
+          // Start inter-turn pause monitoring after AI responds
+          this.startInterTurnPauseMonitoring(socket, sessionId);
+
         } catch (error) {
           console.error('❌ Failed to process candidate response:', error.message);
           socket.emit('interview_error', {
             error: 'Failed to process response',
             message: error.message
+          });
+
+          // Send failure acknowledgment
+          socket.emit('response_processed', {
+            status: 'error',
+            error: error.message,
+            timestamp: new Date().toISOString()
           });
         }
       });
@@ -278,6 +339,9 @@ class IntelligentInterviewController {
 
         if (socket.sessionId) {
           try {
+            // Clean up inter-turn pause timer
+            this.resetInterTurnPauseTimer(socket, socket.sessionId);
+
             // Mark session as interrupted
             const session = await this.service.sessionManager.getSession(socket.sessionId);
             if (session && session.status === 'active') {
@@ -488,6 +552,72 @@ class IntelligentInterviewController {
         error: error.message,
         timestamp: new Date().toISOString()
       };
+    }
+  }
+
+  /**
+   * Start monitoring inter-turn pauses (silence BETWEEN complete responses)
+   * V3 handles turn detection, this monitors silence after interviewer asks next question
+   */
+  startInterTurnPauseMonitoring(socket, sessionId) {
+    // Clear any existing timer
+    this.resetInterTurnPauseTimer(socket, sessionId);
+
+    // Set pause monitoring timer (6 seconds - longer than V3's max_turn_silence)
+    const INTER_TURN_PAUSE_THRESHOLD = 6000; // 6 seconds
+
+    const timerId = setTimeout(async () => {
+      console.log(`⏸️ Inter-turn pause detected in session: ${sessionId}`);
+      console.log(`🔇 SILENCE EVENT: ${INTER_TURN_PAUSE_THRESHOLD / 1000} seconds elapsed without speech from candidate`);
+
+      try {
+        // Track as inter-turn pause (not in-turn silence)
+        const silenceDuration = INTER_TURN_PAUSE_THRESHOLD / 1000;
+        console.log(`📊 Tracking silence event: duration=${silenceDuration}s, type=inter-turn`);
+        const silenceResponse = await this.service.handleSilence(sessionId, silenceDuration);
+
+        // Send silence response to client
+        socket.emit('silence_response', {
+          action: silenceResponse.action,
+          content: silenceResponse.content,
+          silenceCount: silenceResponse.silenceCount,
+          timestamp: new Date().toISOString(),
+          isInterTurnPause: true // Flag to distinguish from in-turn silence
+        });
+
+        // If it's a prompt, also send as interviewer message
+        if (silenceResponse.action === 'silence_prompt') {
+          socket.emit('interviewer_message', {
+            type: 'silence_prompt',
+            content: silenceResponse.content,
+            timestamp: new Date().toISOString(),
+            sessionId
+          });
+        }
+      } catch (error) {
+        console.error('❌ Failed to handle inter-turn pause:', error.message);
+      }
+    }, INTER_TURN_PAUSE_THRESHOLD);
+
+    // Store timer on socket for cleanup
+    if (!socket.interTurnTimers) {
+      socket.interTurnTimers = new Map();
+    }
+    socket.interTurnTimers.set(sessionId, timerId);
+
+    console.log(`🔊 Inter-turn pause monitoring started for session: ${sessionId} (${INTER_TURN_PAUSE_THRESHOLD}ms threshold)`);
+  }
+
+  /**
+   * Reset inter-turn pause timer when activity is detected
+   */
+  resetInterTurnPauseTimer(socket, sessionId) {
+    if (socket.interTurnTimers && socket.interTurnTimers.has(sessionId)) {
+      const timerId = socket.interTurnTimers.get(sessionId);
+      clearTimeout(timerId);
+      socket.interTurnTimers.delete(sessionId);
+      console.log(`🔇 Inter-turn pause timer RESET for session: ${sessionId} (user activity detected)`);
+      console.log(`✅ Silence monitoring paused - waiting for next complete response`);
     }
   }
 }

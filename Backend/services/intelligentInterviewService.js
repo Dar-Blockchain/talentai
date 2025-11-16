@@ -637,13 +637,47 @@ class IntelligentInterviewService {
    */
   async initialize() {
     try {
-      // Initialize Redis connection
-      await this.sessionManager.initialize();
-      console.log('✅ Intelligent Interview Service initialized');
-      return true;
+      // Initialize Redis connection with timeout to prevent blocking
+      console.log('🔌 [Service] Attempting to connect to Redis...');
+      const redisInitialized = await Promise.race([
+        this.sessionManager.initialize(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Redis connection timeout after 5 seconds')), 5000)
+        )
+      ]).catch(err => {
+        console.error('⚠️  [Service] Redis initialization failed:', err.message);
+        console.warn('⚠️  [Service] Interview service will continue WITHOUT Redis (in-memory mode)');
+        console.warn('⚠️  [Service] Sessions will not persist across server restarts');
+        console.warn('💡 [Service] To fix: Run `redis-server` or `sudo service redis-server start` in WSL');
+        return false;
+      });
+
+      if (redisInitialized) {
+        console.log('✅ [Service] Intelligent Interview Service initialized with Redis');
+        console.log('💾 [Service] Sessions will be stored in Redis with 2-hour TTL');
+
+        // Test Redis connection with ping
+        try {
+          const pingTest = await this.sessionManager.client.ping();
+          console.log('🏓 [Service] Redis connectivity test:', pingTest);
+          console.log('📊 [Service] Redis status:', {
+            isConnected: this.sessionManager.isConnected,
+            isReady: this.sessionManager.isReady()
+          });
+        } catch (pingError) {
+          console.error('❌ [Service] Redis ping test failed:', pingError.message);
+          console.warn('⚠️  [Service] Redis may not be fully operational');
+        }
+      } else {
+        console.log('⚠️  [Service] Intelligent Interview Service initialized WITHOUT Redis (degraded mode)');
+        console.log('⚠️  [Service] Interview features may be limited');
+      }
+
+      return true;  // Always return true to not block server startup
     } catch (error) {
-      console.error('❌ Failed to initialize Intelligent Interview Service:', error.message);
-      return false;
+      console.error('❌ [Service] Failed to initialize Intelligent Interview Service:', error.message);
+      console.warn('⚠️  [Service] Server will continue without interview service');
+      return true;  // Don't block server startup
     }
   }
 
@@ -652,28 +686,65 @@ class IntelligentInterviewService {
    */
   async startInterview(sessionId, userConfig, candidateId) {
     try {
+      console.log(`🚀 [Service] Starting interview session: ${sessionId} for candidate: ${candidateId}`);
+
+      // Check Redis connection status before proceeding
+      console.log('🔍 [Service] Checking Redis connection status...');
+      console.log('📊 [Service] Redis state:', {
+        isConnected: this.sessionManager.isConnected,
+        isReady: this.sessionManager.isReady(),
+        clientExists: !!this.sessionManager.client
+      });
+
+      if (!this.sessionManager.isConnected || !this.sessionManager.client) {
+        console.error('❌ [Service] Redis is NOT connected - Cannot start interview');
+        throw new Error('Redis connection not available. Please ensure Redis is running.');
+      }
+
       // Create intelligent configuration
       const config = configManager.createIntelligentConfig(userConfig);
       configManager.validateConfig(config);
+      console.log('✅ [Service] Config validated');
 
       // Create session in Redis
+      console.log('💾 [Service] Calling createSession...');
       const session = await this.sessionManager.createSession(sessionId, config, candidateId);
+      console.log('✅ [Service] Session created in Redis');
 
-      // Generate intelligent greeting
-      const greeting = await this.generateIntelligentGreeting(config);
+      // Generate intelligent greeting with error handling
+      let greeting;
+      try {
+        console.log('🤖 Generating AI greeting...');
+        greeting = await this.generateIntelligentGreeting(config);
+        console.log('✅ AI greeting generated');
+      } catch (greetingError) {
+        console.error('⚠️ AI greeting failed, using fallback:', greetingError.message);
+        // Use fallback greeting immediately
+        greeting = {
+          content: `Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's start our conversation!`,
+          metadata: { fallback: true, error: greetingError.message }
+        };
+      }
 
       // Add greeting to conversation
+      console.log('💬 [Service] Adding greeting to conversation...');
       await this.sessionManager.addConversationEntry(sessionId, {
         type: 'interviewer',
         content: greeting.content,
         model: config.models.fastModel,
         metadata: greeting.metadata
       });
+      console.log('✅ [Service] Greeting added to conversation');
 
       // Update session status
+      console.log('📊 [Service] Updating session status to active...');
       await this.sessionManager.updateSession(sessionId, { status: 'active' });
+      console.log('✅ [Service] Session status updated to active');
 
-      return {
+      console.log('📤 [Service] Preparing to return result to controller...');
+      console.log(`✅ [Service] Interview ${sessionId} started successfully - returning to controller`);
+
+      const result = {
         success: true,
         sessionId,
         greeting: greeting.content,
@@ -683,8 +754,22 @@ class IntelligentInterviewService {
           silenceTimeout: config.sessionSettings.silenceTimeout
         }
       };
+
+      console.log('✅ [Service] Result prepared:', {
+        success: result.success,
+        sessionId: result.sessionId,
+        greetingLength: result.greeting.length,
+        configType: result.config.interviewType
+      });
+
+      return result;
     } catch (error) {
-      console.error('❌ Failed to start interview:', error.message);
+      console.error('❌ [Service] CRITICAL: Failed to start interview:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
+      console.error('❌ [Service] Full error object:', error);
       throw error;
     }
   }
@@ -727,15 +812,28 @@ class IntelligentInterviewService {
         }
       };
     } catch (error) {
-      console.error('❌ Failed to generate greeting:', error.message);
+      console.error('❌ [Greeting] Failed to generate AI greeting:', {
+        message: error.message,
+        status: error.status,
+        code: error.code,
+        type: error.type,
+        model: config.models.fastModel
+      });
+      console.error('❌ [Greeting] Error details:', error);
+
       // Fallback greeting based on interview type
-      let fallbackGreeting = '';
-      
-      fallbackGreeting = `Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's start our conversation!`;
-      
+      const fallbackGreeting = `Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's start our conversation!`;
+
+      console.log('⚠️  [Greeting] Using fallback greeting:', fallbackGreeting.substring(0, 50) + '...');
+
       return {
         content: fallbackGreeting,
-        metadata: { fallback: true }
+        metadata: {
+          fallback: true,
+          error: error.message,
+          errorCode: error.code,
+          attemptedModel: config.models.fastModel
+        }
       };
     }
   }
