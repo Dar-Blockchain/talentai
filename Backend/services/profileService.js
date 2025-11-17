@@ -7,29 +7,47 @@ const { POST_STATUS } = require("../constants/postConstants");
 const fs = require("fs");
 const path = require("path");
 
-// Créer ou mettre à jour un profil utilisateur
+// Create or update a candidate profile
 module.exports.createOrUpdateProfile = async (userId, profileData) => {
   try {
     const user = await User.findById(userId);
     if (!user) {
-      throw new Error("Utilisateur non trouvé");
+      throw new Error("User not found");
     }
 
-    // S'assurer que le rôle utilisateur est bien défini
-    await User.findByIdAndUpdate(userId, {
-      FirstName: profileData.FirstName,
-      LastName: profileData.LastName,
-      role: "Candidat",
-    });
+    // Map frontend camelCase to backend field names and ensure proper updates
+    const updateUserData = {
+      FirstName: profileData.firstName || profileData.FirstName,
+      LastName: profileData.lastName || profileData.LastName,
+      role: "Candidate",
+    };
 
-    // Recherche profil existant
+    // Update user with correct field names
+    await User.findByIdAndUpdate(userId, updateUserData);
+
+    // Find or create profile
     let profile = await Profile.findOne({ userId });
 
     if (!profile) {
-      // Créer un nouveau profil s'il n'existe pas
+      // Create new profile
       profile = await Profile.create({
         userId,
         type: profileData.type || "Candidate",
+        firstName: profileData.firstName || profileData.FirstName,
+        lastName: profileData.lastName || profileData.LastName,
+        age: profileData.age,
+        gender: profileData.gender,
+        educationLevel: profileData.educationLevel,
+        country: profileData.country,
+        language: profileData.language,
+        timeZone: profileData.timeZone,
+        expectedSalary: profileData.expectedSalary ? {
+          min: profileData.expectedSalary.min,
+          max: profileData.expectedSalary.max,
+          currency: profileData.expectedSalary.currency || "EUR"
+        } : undefined,
+        preferredContractType: profileData.preferredContractType,
+        workModePreference: profileData.workModePreference,
         skills: profileData.skills || [],
         overallScore: profileData.overallScore || 0,
       });
@@ -38,18 +56,38 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
         profileData.skills.length === 1 &&
         typeof profileData.skills[0]?.skill === "string"
       ) {
-        console.log("heyaa: ", profile);
         profile.skills = [];
         await profile.save();
-        console.log("heybb: ", profile);
       }
     } else {
-      // Mise à jour overallScore si fourni
+      // Update existing profile
+      profile.firstName = profileData.firstName || profileData.FirstName || profile.firstName;
+      profile.lastName = profileData.lastName || profileData.LastName || profile.lastName;
+      profile.age = profileData.age || profile.age;
+      profile.gender = profileData.gender || profile.gender;
+      profile.educationLevel = profileData.educationLevel || profile.educationLevel;
+      profile.country = profileData.country || profile.country;
+      profile.language = profileData.language || profile.language;
+      profile.timeZone = profileData.timeZone || profile.timeZone;
+      
+      // Update salary expectations
+      if (profileData.expectedSalary) {
+        profile.expectedSalary = {
+          min: profileData.expectedSalary.min,
+          max: profileData.expectedSalary.max,
+          currency: profileData.expectedSalary.currency || "EUR"
+        };
+      }
+      
+      profile.preferredContractType = profileData.preferredContractType || profile.preferredContractType;
+      profile.workModePreference = profileData.workModePreference || profile.workModePreference;
+      
+      // Update overall score if provided
       if (typeof profileData.overallScore === "number") {
         profile.overallScore = profileData.overallScore;
       }
 
-      // Mise à jour ou ajout des skills
+      // Merge skills
       if (Array.isArray(profileData.skills)) {
         profileData.skills.forEach((newSkill) => {
           const existingSkill = profile.skills.find(
@@ -58,8 +96,6 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
           if (existingSkill) {
             existingSkill.proficiencyLevel = newSkill.proficiencyLevel;
             existingSkill.experienceLevel = newSkill.experienceLevel;
-
-            // ✅ Ajoute explicitement la mise à jour du ScoreTest
             if (typeof newSkill.ScoreTest === "number") {
               existingSkill.ScoreTest = newSkill.ScoreTest;
             }
@@ -72,25 +108,20 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
           profileData.skills.length === 1 &&
           typeof profileData.skills[0]?.skill === "string"
         ) {
-          console.log("hey11: ", profile);
           profile.skills = [];
-          await profile.save();
-          console.log("hey22: ", profile);
         }
       }
 
-      // Mise à jour du type de profil si fourni
       profile.type = profileData.type || profile.type;
-
       await profile.save();
     }
 
-    // Mise à jour de la référence du profil dans User
+    // Update profile reference in User
     await User.findByIdAndUpdate(userId, { profile: profile._id });
 
     return profile;
   } catch (error) {
-    console.error("Erreur lors de la création/mise à jour du profil:", error);
+    console.error("Error creating/updating candidate profile:", error);
     throw error;
   }
 };

@@ -6,34 +6,72 @@ const {
   validateProfileCreationFields,
 } = require("../helpers/validationHelpers");
 
-// Créer ou mettre à jour un profil
+// Create or update a candidate profile (with onboarding fields support)
 module.exports.createOrUpdateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
     const profileData = req.body;
 
-    // Validation des champs requis
+    // Validation: profile type is required
     if (!profileData.type) {
-      return res.status(400).json({ message: "Le type de profil est requis" });
+      return res.status(400).json({ message: "Profile type is required" });
     }
 
-    // Vérification du prénom et nom (pas de caractères spéciaux)
-    const validationError = validateProfileCreationFields(profileData);
-    if (validationError) {
-      return res.status(400).json({ message: validationError });
+    // Validation: firstName and lastName (handle both camelCase and PascalCase)
+    const firstName = profileData.firstName || profileData.FirstName;
+    const lastName = profileData.lastName || profileData.LastName;
+
+    if (!firstName || !lastName) {
+      return res.status(400).json({ message: "First name and last name are required" });
     }
 
-    // Création ou mise à jour du profil
+    // Validation: age should be a valid number if provided
+    if (profileData.age && isNaN(parseInt(profileData.age, 10))) {
+      return res.status(400).json({ message: "Age must be a valid number" });
+    }
+
+    // Validation: gender enum check
+    if (profileData.gender && !["Male", "Female", "Other", "Prefer not to say"].includes(profileData.gender)) {
+      return res.status(400).json({ message: "Invalid gender value" });
+    }
+
+    // Validation: workModePreference enum check
+    if (profileData.workModePreference && !["Remote", "Hybrid", "On-site"].includes(profileData.workModePreference)) {
+      return res.status(400).json({ message: "Invalid work mode preference. Must be 'Remote', 'Hybrid', or 'On-site'" });
+    }
+
+    // Validation: expectedSalary structure
+    if (profileData.expectedSalary) {
+      const { min, max, currency } = profileData.expectedSalary;
+      
+      if (min !== null && min !== undefined && (isNaN(min) || min < 0)) {
+        return res.status(400).json({ message: "Expected salary min must be a positive number" });
+      }
+      
+      if (max !== null && max !== undefined && (isNaN(max) || max < 0)) {
+        return res.status(400).json({ message: "Expected salary max must be a positive number" });
+      }
+      
+      if (min !== null && max !== null && min > max) {
+        return res.status(400).json({ message: "Expected salary min cannot be greater than max" });
+      }
+      
+      if (!currency || typeof currency !== "string") {
+        return res.status(400).json({ message: "Currency must be a valid string (e.g., EUR, USD, GBP)" });
+      }
+    }
+
+    // Create or update the profile
     const profile = await profileService.createOrUpdateProfile(userId, profileData);
 
     res.status(200).json({
-      message: "Profil créé/mis à jour avec succès",
+      message: "Profile created/updated successfully",
       profile,
     });
   } catch (error) {
-    console.error("Erreur lors de la création/mise à jour du profil:", error);
+    console.error("Error creating/updating candidate profile:", error);
     res.status(500).json({
-      message: error.message || "Erreur lors de la création/mise à jour du profil",
+      message: error.message || "Error creating/updating candidate profile",
     });
   }
 };
