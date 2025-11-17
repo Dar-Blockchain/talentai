@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, forwardRef, useImperativeHandle } from "react";
-import { Box, Tabs, Tab, Typography, Button } from "@mui/material";
+import {
+  Box,
+  Tabs,
+  Tab,
+  Typography,
+  Button,
+  TextField,
+  InputAdornment,
+} from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import { CATEGORIES, skillsByCategory } from "../data/skillsData";
 
 type SelectSkillsProps = {
@@ -25,6 +34,7 @@ const SelectSkills = forwardRef(({ preferences }: SelectSkillsProps, ref) => {
     skills[0] || null
   );
   const [error, setError] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Expose validate() method to parent
   useImperativeHandle(ref, () => ({
@@ -37,6 +47,12 @@ const SelectSkills = forwardRef(({ preferences }: SelectSkillsProps, ref) => {
       return true;
     },
   }));
+
+  // Filter skills by search term
+  const filteredSkills = skillsByCategory[activeTab].filter((skill) =>
+    skill.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <Box sx={{ width: "100%", p: 3 }}>
       {/* Tabs */}
@@ -45,10 +61,11 @@ const SelectSkills = forwardRef(({ preferences }: SelectSkillsProps, ref) => {
         onChange={(e, val) => {
           setActiveTab(val);
           setSelectedSkill(null);
+          setSearchTerm(""); // reset search when changing tab
         }}
         variant="scrollable"
-        scrollButtons="auto" // shows arrows only when needed
-        allowScrollButtonsMobile // enables arrows on mobile
+        scrollButtons="auto"
+        allowScrollButtonsMobile
         textColor="inherit"
         TabIndicatorProps={{
           style: {
@@ -63,9 +80,8 @@ const SelectSkills = forwardRef(({ preferences }: SelectSkillsProps, ref) => {
           },
           "& .MuiTabs-flexContainer": {
             gap: 3,
-            justifyContent: "flex-start", // align first tab left
+            justifyContent: "flex-start",
           },
-          // optionally remove margin around arrows
           "& .MuiTabs-scrollButtons": {
             color: colors.mauve,
           },
@@ -113,48 +129,71 @@ const SelectSkills = forwardRef(({ preferences }: SelectSkillsProps, ref) => {
         Select your {CATEGORIES.find((c) => c.id === activeTab)?.label} skills
       </Typography>
 
+      {/* Search Input with Icon */}
+      <TextField
+        placeholder="Search skills..."
+        fullWidth
+        size="small"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        sx={{ mb: 3 }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon sx={{ color: colors.gray }} />
+            </InputAdornment>
+          ),
+        }}
+      />
+
       {/* Skills Buttons */}
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-        {skillsByCategory[activeTab].map((skill) => {
-          const isSelected = selectedSkill === skill;
-          return (
-            <Button
-              key={skill}
-              variant="outlined"
-              onClick={() => {
-                setSelectedSkill(skill);
-                setSkills([skill]);
-                setError(false);
-              }}
-              sx={{
-                flex: 1,
-                minWidth: "167px",
-                borderRadius: "8px",
-                borderWidth: "2px",
-                borderColor: isSelected
-                  ? "rgba(163, 98, 239, 1)"
-                  : "rgba(136, 176, 211, 1)",
-                color: isSelected ? "white" : "rgba(136, 176, 211, 1)",
-                backgroundColor: isSelected
-                  ? "rgba(163, 98, 239, 1)"
-                  : "transparent",
-                textTransform: "none",
-                fontFamily: "Poppins",
-                fontWeight: 500,
-                fontSize: "14px",
-                height: "47px",
-                padding: "17px 24px",
-                "&:hover": {
-                  borderColor: "rgba(163, 98, 239, 1)",
-                  backgroundColor: "rgba(163, 98, 239, 1)",
-                  color: "white",
-                },
-              }}
-            >
-              {skill}
-            </Button>
-          );
-        })}
+        {filteredSkills.length > 0 ? (
+          filteredSkills.map((skill) => {
+            const isSelected = selectedSkill === skill;
+            return (
+              <Button
+                key={skill}
+                variant="outlined"
+                onClick={() => {
+                  setSelectedSkill(skill);
+                  setSkills([skill]);
+                  setError(false);
+                }}
+                sx={{
+                  flex: 1,
+                  minWidth: "167px",
+                  borderRadius: "8px",
+                  borderWidth: "2px",
+                  borderColor: isSelected
+                    ? "rgba(163, 98, 239, 1)"
+                    : "rgba(136, 176, 211, 1)",
+                  color: isSelected ? "white" : "rgba(136, 176, 211, 1)",
+                  backgroundColor: isSelected
+                    ? "rgba(163, 98, 239, 1)"
+                    : "transparent",
+                  textTransform: "none",
+                  fontFamily: "Poppins",
+                  fontWeight: 500,
+                  fontSize: "14px",
+                  height: "47px",
+                  padding: "17px 24px",
+                  "&:hover": {
+                    borderColor: "rgba(163, 98, 239, 1)",
+                    backgroundColor: "rgba(163, 98, 239, 1)",
+                    color: "white",
+                  },
+                }}
+              >
+                {skill}
+              </Button>
+            );
+          })
+        ) : (
+          <Typography sx={{ color: "gray", mt: 1 }}>
+            No skills found
+          </Typography>
+        )}
       </Box>
 
       {/* Helper Text */}
@@ -170,6 +209,7 @@ const SelectSkills = forwardRef(({ preferences }: SelectSkillsProps, ref) => {
         For now you can select only one skill, you can add more skills from the
         dashboard.
       </Typography>
+
       {/* Error message */}
       {error && (
         <Typography

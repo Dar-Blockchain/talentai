@@ -169,10 +169,9 @@ export const getMyProfile = createAsyncThunk<
   }
 });
 
-// ---------- Async thunk for create/update profile ----------
 export const createOrUpdateProfile = createAsyncThunk<
-  Profile, // return type
-  any, // argument type (profile data)
+  Profile, 
+  any, 
   { rejectValue: string }
 >("profile/createOrUpdateProfile", async (profileData, { rejectWithValue }) => {
   const token = localStorage.getItem("api_token");
@@ -181,9 +180,15 @@ export const createOrUpdateProfile = createAsyncThunk<
     return rejectWithValue("No authentication token found");
   }
 
+  // Determine endpoint based on user type
+  const endpoint =
+    profileData.type === "company"
+      ? "profiles/createOrUpdateCompanyProfile"
+      : "profiles/createOrUpdateProfile";
+
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}profiles/createOrUpdateProfile`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}`,
       {
         method: "POST",
         headers: {
@@ -199,16 +204,16 @@ export const createOrUpdateProfile = createAsyncThunk<
         .json()
         .catch(() => ({ message: "Failed to create/update profile" }));
       console.error("API error:", error);
-      return rejectWithValue(
-        error.message || "Failed to create/update profile"
-      );
+      return rejectWithValue(error.message || "Failed to create/update profile");
     }
 
     const data = await response.json();
     return data;
   } catch (error: any) {
     console.error("Exception while creating/updating profile:", error);
-    return rejectWithValue("An error occurred while creating/updating profile");
+    return rejectWithValue(
+      "An error occurred while creating/updating profile"
+    );
   }
 });
 
@@ -252,7 +257,7 @@ const profileSlice = createSlice({
         createOrUpdateProfile.fulfilled,
         (state: ProfileState, action: PayloadAction<Profile>) => {
           state.loading = false;
-          state.profile = action.payload;
+          // state.profile = action.payload;
         }
       )
       .addCase(

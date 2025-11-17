@@ -28,10 +28,9 @@ export const usePreferences = () => {
     preferredContractType: "",
     workModePreference: "",
 
-    // Salary fields (fixed)
-    salaryCurrency: "$", // $, €, £, TND...
-    salaryMin: "",      // 1200
-    salaryMax: "",      // 1500
+    salaryCurrency: "$",
+    salaryMin: "",
+    salaryMax: "",
   });
 
   // Skills

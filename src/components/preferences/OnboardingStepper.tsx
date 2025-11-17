@@ -1,10 +1,9 @@
 "use client";
 import * as React from "react";
-import { Box, Stepper, Step, StepLabel, StepConnector, Typography, Button, styled } from "@mui/material";
+import { Box, Stepper, Step, StepLabel, StepConnector, Typography, Button, styled, CircularProgress } from "@mui/material";
 import Check from "@mui/icons-material/Check";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
-
 import RoleSelection from "./RoleSelection";
 import CandidateDetails from "./candidate/CandidateDetails";
 import SelectSkills from "./candidate/SelectSkills";
@@ -12,10 +11,10 @@ import CompanyDetails from "./company/CompanyDetails";
 import SkillsStack from "./company/SkillsStack";
 import CandidateReview from "./candidate/CandidateReview";
 import CompanyReview from "./company/CompanyReview";
-
 import { candidateSteps, candidateStepsInfo, companySteps, companyStepsInfo } from "./data/onboardingData";
 import { createOrUpdateProfile, selectProfile } from "@/store/slices/profileSlice";
 import { AppDispatch } from "@/store/store";
+
 // ---------- Custom Connector ----------
 const SplitLineConnector = styled(StepConnector)<{ userType?: string }>(({ userType }) => ({
   [`&.MuiStepConnector-root`]: { top: "22px", transform: "translateY(-50%)", position: "absolute", left: "calc(-50% + 22.5px)", right: "calc(50% + 22.5px)", zIndex: 0, padding: "0 5px" },
@@ -60,6 +59,7 @@ const OnboardingStepper: React.FC<OnboardingStepperProps> = ({ preferences }) =>
   const dispatch = useDispatch<AppDispatch>();
   const profileState = useSelector(selectProfile);
   const [activeStep, setActiveStep] = React.useState(0);
+  const [loading, setLoading] = React.useState(false); // ✅ Loading state
 
   const { userType, candidateDetails, skills, companyDetails } = preferences;
   const steps = userType === "candidate" ? candidateSteps : companySteps;
@@ -81,9 +81,10 @@ const OnboardingStepper: React.FC<OnboardingStepperProps> = ({ preferences }) =>
   const handleBack = () => setActiveStep(prev => Math.max(prev - 1, 0));
 
   const handleSaveAndRedirect = async () => {
+    setLoading(true); // ✅ start loading
     const profileData = userType === "company"
-      ? { ...companyDetails, requiredSkills: skills, requiredExperienceLevel: "Entry Level" }
-      : { ...candidateDetails, skills, type: "Candidate", salary: { min: candidateDetails.salaryMin || null, max: candidateDetails.salaryMax || null, currency: candidateDetails.salaryCurrency || null } };
+      ? { ...companyDetails, requiredSkills: skills, requiredExperienceLevel: "Entry Level", type: "company" }
+      : { ...candidateDetails, skills: skills.map((skill) => ({ skill })), type: "Candidate", salary: { min: candidateDetails.salaryMin || null, max: candidateDetails.salaryMax || null, currency: candidateDetails.salaryCurrency || null } };
 
     try {
       const resultAction = await dispatch(createOrUpdateProfile(profileData));
@@ -98,6 +99,8 @@ const OnboardingStepper: React.FC<OnboardingStepperProps> = ({ preferences }) =>
       }
     } catch (error) {
       console.error("Error saving profile:", error);
+    } finally {
+      setLoading(false); // ✅ stop loading
     }
   };
 
@@ -139,13 +142,14 @@ const OnboardingStepper: React.FC<OnboardingStepperProps> = ({ preferences }) =>
 
       {/* Buttons */}
       <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
-        <Button disabled={activeStep === 0} onClick={handleBack} variant="outlined"
+        <Button disabled={activeStep === 0 || loading} onClick={handleBack} variant="outlined"
           sx={{ width: "163px", height: "40px", borderColor: userType === "candidate" ? "rgba(189, 133, 255, 1)" : "rgba(12, 218, 139, 1)", color: userType === "candidate" ? "rgba(189, 133, 255, 1)" : "rgba(12, 218, 139, 1)", borderRadius: "24px", px: 4, textTransform: "none" }}>
           Back
         </Button>
         <Button onClick={activeStep === steps.length - 1 ? handleSaveAndRedirect : handleNext} variant="contained"
-          sx={{ width: "163px", height: "40px", backgroundColor: "rgba(25, 25, 25, 1)", color: "#fff", borderRadius: "24px", px: 2, textTransform: "none", "&:hover": { backgroundColor: "rgba(25, 25, 25, 0.8)" } }}>
-          {activeStep === steps.length - 1 ? (userType === "candidate" ? "Start My Test" : "Go to Dashboard") : "Next"}
+          disabled={loading}
+          sx={{ width: "163px", height: "40px", backgroundColor: "rgba(25, 25, 25, 1)", color: "#fff", borderRadius: "24px", px: 2, textTransform: "none", "&:hover": { backgroundColor: "rgba(25, 25, 25, 0.8)" }, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {loading ? <CircularProgress size={20} color="inherit" /> : activeStep === steps.length - 1 ? (userType === "candidate" ? "Start My Test" : "Go to Dashboard") : "Next"}
         </Button>
       </Box>
     </Box>
