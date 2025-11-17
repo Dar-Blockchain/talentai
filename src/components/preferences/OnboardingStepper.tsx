@@ -81,10 +81,10 @@ const OnboardingStepper: React.FC<OnboardingStepperProps> = ({ preferences }) =>
   const handleBack = () => setActiveStep(prev => Math.max(prev - 1, 0));
 
   const handleSaveAndRedirect = async () => {
-    setLoading(true); // ✅ start loading
+    setLoading(true);
     const profileData = userType === "company"
       ? { ...companyDetails, requiredSkills: skills, requiredExperienceLevel: "Entry Level", type: "company" }
-      : { ...candidateDetails, skills: skills.map((skill) => ({ skill })), type: "Candidate", salary: { min: candidateDetails.salaryMin || null, max: candidateDetails.salaryMax || null, currency: candidateDetails.salaryCurrency || null } };
+      : { ...candidateDetails, skills: skills.map((skill) => ({ name: skill })), type: "Candidate", expectedSalary: { min: candidateDetails.salaryMin || null, max: candidateDetails.salaryMax || null, currency: candidateDetails.salaryCurrency || null } };
 
     try {
       const resultAction = await dispatch(createOrUpdateProfile(profileData));
