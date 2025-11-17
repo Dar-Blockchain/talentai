@@ -38,7 +38,7 @@ const profileSchema = new mongoose.Schema(
     preferredContractType: { type: String, required: false },
     workModePreference: {
       type: String,
-      enum: ["Remote", "Hybrid", "On-site"],
+   //   enum: ["Remote", "Hybrid", "On-site"],
       required: false,
     },
 
