@@ -16,14 +16,31 @@ const profileSchema = new mongoose.Schema(
     user_image: { type: String, required: false, default: "client.png" },
     firstName: { type: String, required: false },
     lastName: { type: String, required: false },
+    age: { type: String, required: false },
     gender: {
       type: String,
       enum: ["Male", "Female", "Other", "Prefer not to say"],
       required: false,
     },
+    educationLevel: { type: String, required: false },
     country: { type: String, required: false },
     language: { type: String, required: false },
     timeZone: { type: String, required: false },
+
+    // Salary expectations
+    expectedSalary: {
+      min: { type: Number, required: false },
+      max: { type: Number, required: false },
+      currency: { type: String, required: false, default: "EUR" },
+    },
+
+    // Work preferences
+    preferredContractType: { type: String, required: false },
+    workModePreference: {
+      type: String,
+      enum: ["Remote", "Hybrid", "On-site"],
+      required: false,
+    },
 
     // Contact Information
     contactInformation: {
