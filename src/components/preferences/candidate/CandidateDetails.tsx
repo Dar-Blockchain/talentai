@@ -91,14 +91,19 @@ const CandidateDetails = forwardRef(
       validate: validateAll,
     }));
 
+    // Helper function to append asterisk for required fields
+    const RequiredLabel = ({ label }: { label: string }) => (
+      <Typography sx={{ mb: 0.5, fontWeight: 500, fontSize: "14px" }}>
+        {label} <span style={{ color: "red" }}>*</span>
+      </Typography>
+    );
+
     return (
       <Box sx={{ maxWidth: 900 }}>
         <Stack direction="row" flexWrap="wrap" spacing={2} useFlexGap>
           {/* First Name */}
           <Box sx={{ flex: "1 1 45%", minWidth: "300px" }}>
-            <Typography sx={{ mb: 0.5, fontWeight: 500, fontSize: "14px" }}>
-              First Name
-            </Typography>
+            <RequiredLabel label="First Name" />
             <TextField
               fullWidth
               placeholder="Enter your first name"
@@ -112,9 +117,7 @@ const CandidateDetails = forwardRef(
 
           {/* Last Name */}
           <Box sx={{ flex: "1 1 45%", minWidth: "300px" }}>
-            <Typography sx={{ mb: 0.5, fontWeight: 500, fontSize: "14px" }}>
-              Last Name
-            </Typography>
+            <RequiredLabel label="Last Name" />
             <TextField
               fullWidth
               placeholder="Enter your last name"
@@ -128,9 +131,7 @@ const CandidateDetails = forwardRef(
 
           {/* Age */}
           <Box sx={{ flex: "1 1 45%", minWidth: "300px" }}>
-            <Typography sx={{ mb: 0.5, fontWeight: 500, fontSize: "14px" }}>
-              Age
-            </Typography>
+            <RequiredLabel label="Age" />
             <TextField
               fullWidth
               placeholder="Enter your age"
@@ -144,9 +145,7 @@ const CandidateDetails = forwardRef(
 
           {/* Gender */}
           <Box sx={{ flex: "1 1 45%", minWidth: "300px" }}>
-            <Typography sx={{ mb: 0.5, fontWeight: 500, fontSize: "14px" }}>
-              Gender
-            </Typography>
+            <RequiredLabel label="Gender" />
             <TextField
               select
               fullWidth
@@ -169,9 +168,7 @@ const CandidateDetails = forwardRef(
 
           {/* Education Level */}
           <Box sx={{ flex: "1 1 45%", minWidth: "300px" }}>
-            <Typography sx={{ mb: 0.5, fontWeight: 500, fontSize: "14px" }}>
-              Education Level
-            </Typography>
+            <RequiredLabel label="Education Level" />
             <TextField
               fullWidth
               placeholder="Highest level of education"
