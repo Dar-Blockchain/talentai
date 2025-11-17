@@ -30,16 +30,6 @@ module.exports.createOrUpdateProfile = async (req, res) => {
       return res.status(400).json({ message: "Age must be a valid number" });
     }
 
-    // Validation: gender enum check
-    if (profileData.gender && !["Male", "Female", "Other", "Prefer not to say"].includes(profileData.gender)) {
-      return res.status(400).json({ message: "Invalid gender value" });
-    }
-
-    // Validation: workModePreference enum check (optional)
-    if (profileData.workModePreference && !["Remote", "Hybrid", "On-site"].includes(profileData.workModePreference)) {
-      return res.status(400).json({ message: "Invalid work mode preference. Must be 'Remote', 'Hybrid', or 'On-site'" });
-    }
-
     // Validation: preferredContractType (optional)
     if (profileData.preferredContractType && typeof profileData.preferredContractType !== "string") {
       return res.status(400).json({ message: "Preferred contract type must be a valid string" });
