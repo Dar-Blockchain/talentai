@@ -35,12 +35,22 @@ module.exports.createOrUpdateProfile = async (req, res) => {
       return res.status(400).json({ message: "Invalid gender value" });
     }
 
-    // Validation: workModePreference enum check
+    // Validation: workModePreference enum check (optional)
     if (profileData.workModePreference && !["Remote", "Hybrid", "On-site"].includes(profileData.workModePreference)) {
       return res.status(400).json({ message: "Invalid work mode preference. Must be 'Remote', 'Hybrid', or 'On-site'" });
     }
 
-    // Validation: expectedSalary structure
+    // Validation: preferredContractType (optional)
+    if (profileData.preferredContractType && typeof profileData.preferredContractType !== "string") {
+      return res.status(400).json({ message: "Preferred contract type must be a valid string" });
+    }
+
+    // Validation: location (optional)
+    if (profileData.location && typeof profileData.location !== "string") {
+      return res.status(400).json({ message: "Location must be a valid string" });
+    }
+
+    // Validation: expectedSalary structure (optional)
     if (profileData.expectedSalary) {
       const { min, max, currency } = profileData.expectedSalary;
       
@@ -56,7 +66,7 @@ module.exports.createOrUpdateProfile = async (req, res) => {
         return res.status(400).json({ message: "Expected salary min cannot be greater than max" });
       }
       
-      if (!currency || typeof currency !== "string") {
+      if (currency && typeof currency !== "string") {
         return res.status(400).json({ message: "Currency must be a valid string (e.g., EUR, USD, GBP)" });
       }
     }
