@@ -15,18 +15,28 @@ export default async function handler(
     if (req.method === 'POST' && req.body.action === 'generate_token') {
       const { AssemblyAI } = await import('assemblyai');
 
-      const apiKey = process.env.ASSEMBLYAI_API_KEY!;
+      // Validate API key presence
+      const apiKey = process.env.ASSEMBLYAI_API_KEY;
+      if (!apiKey) {
+        console.error('❌ ASSEMBLYAI_API_KEY environment variable is not set');
+        return res.status(500).json({
+          error: 'Server configuration error',
+          details: 'AssemblyAI API key is not configured',
+        });
+      }
+
       console.log('🔑 V3 Token Request via SDK:');
-      console.log('  - API Key:', apiKey ? `${apiKey.substring(0, 8)}...${apiKey.substring(apiKey.length - 4)}` : 'MISSING!');
+      console.log('  - API Key:', `${apiKey.substring(0, 8)}...${apiKey.substring(apiKey.length - 4)}`);
+      console.log('  - SDK Version: 4.19.0');
 
       const client = new AssemblyAI({
         apiKey: apiKey,
       });
 
       try {
+        // Only use required parameter to maximize compatibility
         const token = await client.streaming.createTemporaryToken({
           expires_in_seconds: 600, // 10 minutes
-          max_session_duration_seconds: 10800, // 3 hours
         });
 
         console.log('✅ V3 Token Generated Successfully via SDK:');
@@ -36,7 +46,14 @@ export default async function handler(
         return res.status(200).json({ token });
       } catch (tokenError) {
         console.error('❌ V3 Token Generation FAILED:', tokenError);
-        throw new Error(`Failed to generate V3 token: ${tokenError instanceof Error ? tokenError.message : 'Unknown error'}`);
+        console.error('  - Error type:', tokenError instanceof Error ? tokenError.constructor.name : typeof tokenError);
+        console.error('  - Error message:', tokenError instanceof Error ? tokenError.message : String(tokenError));
+        console.error('  - Error stack:', tokenError instanceof Error ? tokenError.stack : 'N/A');
+
+        return res.status(500).json({
+          error: 'Failed to generate streaming token',
+          details: tokenError instanceof Error ? tokenError.message : 'Unknown error',
+        });
       }
     }
 
