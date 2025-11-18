@@ -194,7 +194,7 @@ const OnboardingStepper: React.FC<OnboardingStepperProps> = ({
       profileData = {
         ...cleanedCandidateDetails,
         skills: skills.map((skill) => ({ name: skill })),
-        type: "Candidate",
+        type: "Candidat",
         expectedSalary,
       };
     }
