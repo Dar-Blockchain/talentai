@@ -1,4 +1,4 @@
-export const genders = ["Male", "Female", "Non-binary", "Prefer not to say"];
+export const genders = ["Male", "Female"];
 
 export const contractTypes = ["Full-time", "Part-time", "Contract", "Internship"];
 
