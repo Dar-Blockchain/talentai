@@ -169,6 +169,7 @@ class RedisSessionManager {
           interactionStyle: 'unknown',
           adaptationNeeded: false
         },
+        behaviorTrackerData: null, // Intelligent Response System behavior tracker state
         realTimeReport: {
           strengths: [],
           weaknesses: [],

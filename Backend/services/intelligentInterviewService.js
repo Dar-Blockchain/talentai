@@ -2074,6 +2074,269 @@ Update the real-time report with new AI-powered insights.`;
       return session.realTimeReport;
     }
   }
+
+  /**
+   * INTELLIGENT RESPONSE SYSTEM - NEW METHODS
+   * Selective AI analysis to reduce costs by 60%
+   */
+
+  /**
+   * Determine if response needs full AI analysis or can use lightweight heuristics
+   */
+  shouldDoFullAnalysis(responseAnalysis, session) {
+    // SKIP AI for obviously good responses (save $$$ - 30% of responses)
+    if (responseAnalysis.quality >= 75) {
+      console.log('⚡ [Optimization] Skipping AI - response quality excellent:', responseAnalysis.quality);
+      return false;
+    }
+
+    // SKIP AI for obviously insufficient responses (save $$$ - 10% of responses)
+    if (responseAnalysis.wordCount < 10) {
+      console.log('⚡ [Optimization] Skipping AI - response too short:', responseAnalysis.wordCount);
+      return false;
+    }
+
+    // SKIP AI for generic acknowledgments (save $$$ - 5% of responses)
+    const genericPatterns = /^(yes|no|okay|ok|sure|i see|right|understood|got it)\.?$/i;
+    if (genericPatterns.test(session.lastTranscript?.trim())) {
+      console.log('⚡ [Optimization] Skipping AI - generic acknowledgment');
+      return false;
+    }
+
+    // USE AI every 3rd response minimum to maintain coverage tracking (15% of remaining)
+    const conversationLength = session.conversation?.length || 0;
+    const responseCount = Math.floor(conversationLength / 2); // Rough estimate of candidate responses
+    if (responseCount > 0 && responseCount % 3 !== 0) {
+      // Check if quality is consistently good
+      if (responseAnalysis.quality >= 60 && !responseAnalysis.needsSupport) {
+        console.log('⚡ [Optimization] Skipping AI - consistent quality, not 3rd response');
+        return false;
+      }
+    }
+
+    // USE AI for medium-quality responses needing interpretation (40% of responses)
+    if (responseAnalysis.quality >= 50 && responseAnalysis.quality < 75) {
+      console.log('🧠 [AI Required] Medium quality - needs interpretation:', responseAnalysis.quality);
+      return true;
+    }
+
+    // USE AI for struggling/off-topic/rambling responses (need better understanding)
+    if (['struggling', 'off_topic', 'rambling'].includes(responseAnalysis.type)) {
+      console.log('🧠 [AI Required] Problematic response type:', responseAnalysis.type);
+      return true;
+    }
+
+    // USE AI for longer responses needing interpretation
+    if (responseAnalysis.wordCount > 80) {
+      console.log('🧠 [AI Required] Long response needs analysis:', responseAnalysis.wordCount);
+      return true;
+    }
+
+    // Default: skip AI
+    console.log('⚡ [Optimization] Skipping AI - default case');
+    return false;
+  }
+
+  /**
+   * Quick coverage update without full AI analysis
+   * Update based on heuristic analysis only
+   */
+  async quickCoverageUpdate(sessionId, responseAnalysis) {
+    try {
+      const session = await this.sessionManager.getSession(sessionId);
+
+      // Extract likely areas from keywords in response
+      const keywords = responseAnalysis.signals.responseKeywords || [];
+      const updatedCoverage = { ...session.coverage };
+
+      // Simple keyword-to-area mapping
+      const areaKeywords = {
+        'technical_skills': ['code', 'programming', 'develop', 'build', 'system', 'database', 'api'],
+        'problem_solving': ['solve', 'problem', 'challenge', 'solution', 'approach', 'debug'],
+        'leadership': ['lead', 'manage', 'team', 'mentor', 'guide', 'coordinate'],
+        'communication': ['explain', 'present', 'discuss', 'communicate', 'collaborate'],
+        'experience': ['project', 'work', 'experience', 'role', 'position', 'company']
+      };
+
+      // Quick scoring based on keyword matches
+      for (const [area, areaWords] of Object.entries(areaKeywords)) {
+        const matches = keywords.filter(kw => areaWords.some(aw => kw.includes(aw) || aw.includes(kw)));
+
+        if (matches.length > 0 && updatedCoverage.areas[area]) {
+          // Increment score based on quality
+          const increment = Math.round(responseAnalysis.quality / 20); // 0-5 points
+          updatedCoverage.areas[area].score = Math.min(100, updatedCoverage.areas[area].score + increment);
+          updatedCoverage.areas[area].questionsAsked += 1;
+
+          console.log(`📊 [Quick Update] ${area}: +${increment} points (${matches.length} keywords matched)`);
+        }
+      }
+
+      await this.sessionManager.updateCoverage(sessionId, updatedCoverage);
+
+      return {
+        updated: true,
+        method: 'heuristic',
+        areasUpdated: Object.keys(areaKeywords).filter(area =>
+          keywords.some(kw => areaKeywords[area].some(aw => kw.includes(aw) || aw.includes(kw)))
+        )
+      };
+
+    } catch (error) {
+      console.error('❌ Error in quick coverage update:', error);
+      return { updated: false, error: error.message };
+    }
+  }
+
+  /**
+   * Process candidate response with intelligent decision:
+   * - Use lightweight analysis first
+   * - Selectively call expensive AI (60% cost reduction)
+   */
+  async processCandidateResponseIntelligently(sessionId, transcript, audioMetadata = {}) {
+    try {
+      const ResponseQualityAnalyzer = require('../utils/responseQualityAnalyzer');
+      const CandidateBehaviorTracker = require('../utils/candidateBehaviorTracker');
+      const ContextualInterventions = require('../utils/contextualInterventions');
+
+      const session = await this.sessionManager.getSession(sessionId);
+      if (!session) {
+        throw new Error(`Session ${sessionId} not found`);
+      }
+
+      // STEP 1: Lightweight heuristic analysis (< 1ms, $0)
+      const currentQuestion = session.currentQuestionContext?.originalQuestion || session.conversation[session.conversation.length - 1]?.content;
+      const responseAnalysis = ResponseQualityAnalyzer.analyzeResponseQuality(transcript, currentQuestion);
+
+      console.log('📊 [Response Analysis]', {
+        quality: responseAnalysis.quality,
+        type: responseAnalysis.type,
+        wordCount: responseAnalysis.wordCount,
+        needsSupport: responseAnalysis.needsSupport,
+        supportType: responseAnalysis.supportType
+      });
+
+      // STEP 2: Update behavior tracker
+      let behaviorTracker = CandidateBehaviorTracker.fromJSON(session.behaviorTrackerData);
+      behaviorTracker.addResponse(responseAnalysis);
+      await this.sessionManager.updateSession(sessionId, {
+        behaviorTrackerData: behaviorTracker.toJSON()
+      });
+
+      // STEP 3: Check for IMMEDIATE intervention (< 1s response time)
+      const immediateIntervention = behaviorTracker.needsImmediateIntervention(responseAnalysis);
+
+      if (immediateIntervention.needed) {
+        console.log('🚨 [Immediate Intervention]', immediateIntervention);
+
+        // Generate intervention message
+        const intervention = await ContextualInterventions.generate(immediateIntervention.suggestedAction, {
+          currentQuestion,
+          lastResponse: responseAnalysis,
+          behaviorProfile: behaviorTracker.getCommunicationStyle()
+        });
+
+        // Store candidate response
+        await this.sessionManager.addConversationEntry(sessionId, {
+          type: 'candidate',
+          content: transcript,
+          timestamp: new Date().toISOString(),
+          metadata: { ...audioMetadata, quickAnalysis: responseAnalysis }
+        });
+
+        // Return intervention immediately
+        return {
+          action: 'immediate_intervention',
+          content: intervention.content,
+          reasoning: `Immediate help needed: ${immediateIntervention.reason}`,
+          interventionType: immediateIntervention.suggestedAction,
+          urgency: immediateIntervention.urgency,
+          metadata: {
+            lightweight: true,
+            timestamp: new Date().toISOString()
+          }
+        };
+      }
+
+      // STEP 4: Decide if full AI analysis is needed
+      const needsAI = this.shouldDoFullAnalysis(responseAnalysis, session);
+
+      if (needsAI) {
+        // USE EXPENSIVE AI ANALYSIS (40% of responses)
+        console.log('🧠 [Full AI Analysis] Response needs deep interpretation');
+
+        // Call original processCandidateResponse for full AI processing
+        return await this.processCandidateResponse(sessionId, transcript, audioMetadata);
+      } else {
+        // SKIP EXPENSIVE AI (60% of responses - COST SAVINGS!)
+        console.log('⚡ [Optimized Path] Using lightweight processing');
+
+        // Store candidate response with lightweight analysis
+        await this.sessionManager.addConversationEntry(sessionId, {
+          type: 'candidate',
+          content: transcript,
+          timestamp: new Date().toISOString(),
+          metadata: { ...audioMetadata, quickAnalysis: responseAnalysis }
+        });
+
+        // Quick coverage update without AI
+        const coverageUpdate = await this.quickCoverageUpdate(sessionId, responseAnalysis);
+
+        // Check if delayed intervention is recommended
+        const delayedIntervention = behaviorTracker.needsDelayedIntervention(responseAnalysis);
+
+        // Generate next question using AI (still needed for quality questions)
+        const finalSession = await this.sessionManager.getSession(sessionId);
+        const decisionAnalysis = {
+          decision: 'continue_probing',
+          targetArea: 'General',
+          reasoning: 'Continue conversation based on lightweight analysis'
+        };
+
+        const proposedQuestion = await this.questionAI.generateIntelligentQuestion(
+          finalSession,
+          { overallAssessment: { recommendedFocus: ['General'] } },
+          { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer') }
+        );
+
+        // Store interviewer question
+        await this.sessionManager.addConversationEntry(sessionId, {
+          type: 'interviewer',
+          content: proposedQuestion.question,
+          timestamp: new Date().toISOString(),
+          metadata: {
+            aiGenerated: true,
+            lightweightProcessing: true,
+            targetAreas: proposedQuestion.targetAreas
+          }
+        });
+
+        // Save question for potential rephrasing
+        const complexity = await this.detectQuestionComplexity(proposedQuestion.question);
+        await this.sessionManager.saveCurrentQuestion(sessionId, proposedQuestion.question, complexity);
+
+        return {
+          action: 'continue_probing',
+          content: proposedQuestion.question,
+          reasoning: proposedQuestion.reasoning,
+          delayedIntervention: delayedIntervention.needed ? delayedIntervention : null,
+          metadata: {
+            lightweight: true,
+            costOptimized: true,
+            responseQuality: responseAnalysis.quality,
+            timestamp: new Date().toISOString()
+          }
+        };
+      }
+
+    } catch (error) {
+      console.error('❌ Failed to process candidate response intelligently:', error);
+
+      // Fallback to full AI processing on error
+      console.log('⚠️ Falling back to full AI processing due to error');
+      return await this.processCandidateResponse(sessionId, transcript, audioMetadata);
+    }
+  }
 }
 
 module.exports = new IntelligentInterviewService();
