@@ -154,6 +154,15 @@ class RedisSessionManager {
         questions: [],
         answers: [],
         silenceCount: 0,
+        silenceStage: 0, // 0 = no silence, 1 = first (patience), 2 = second (help offer), 3 = third (rephrase)
+        currentQuestionContext: {
+          originalQuestion: null,
+          askedAt: null,
+          complexity: 'medium', // simple, medium, complex
+          hasBeenRephrased: false,
+          rephraseHistory: [],
+          silenceStartTime: null
+        },
         candidateBehavior: {
           responseLength: [],
           silenceDuration: [],
@@ -367,7 +376,39 @@ class RedisSessionManager {
   }
 
   /**
-   * Track silence event
+   * Save current question for potential rephrasing
+   */
+  async saveCurrentQuestion(sessionId, questionContent, complexity = 'medium') {
+    try {
+      const currentQuestionContext = {
+        originalQuestion: questionContent,
+        askedAt: Date.now(),
+        complexity: complexity,
+        hasBeenRephrased: false,
+        rephraseHistory: [],
+        silenceStartTime: null
+      };
+
+      await this.updateSession(sessionId, {
+        currentQuestionContext,
+        silenceStage: 0 // Reset silence stage when new question is asked
+      });
+
+      console.log(`💾 [Session] Saved current question for potential rephrasing:`, {
+        sessionId,
+        questionPreview: questionContent.substring(0, 80) + '...',
+        complexity
+      });
+
+      return currentQuestionContext;
+    } catch (error) {
+      console.error('❌ Failed to save current question:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Track silence event with stage progression
    */
   async trackSilence(sessionId, silenceDuration) {
     try {
@@ -376,20 +417,45 @@ class RedisSessionManager {
         throw new Error(`Session ${sessionId} not found`);
       }
 
+      const silenceStage = (session.silenceStage || 0) + 1;
       const silenceCount = (session.silenceCount || 0) + 1;
       const candidateBehavior = {
         ...session.candidateBehavior,
         silenceDuration: [...(session.candidateBehavior.silenceDuration || []), silenceDuration]
       };
 
+      // Update silence start time if this is the first silence for current question
+      const currentQuestionContext = session.currentQuestionContext;
+      if (currentQuestionContext && !currentQuestionContext.silenceStartTime) {
+        currentQuestionContext.silenceStartTime = Date.now();
+      }
+
       await this.updateSession(sessionId, {
+        silenceStage,
         silenceCount,
-        candidateBehavior
+        candidateBehavior,
+        currentQuestionContext
       });
 
-      return { silenceCount, candidateBehavior };
+      return { silenceStage, silenceCount, candidateBehavior, currentQuestionContext };
     } catch (error) {
       console.error('❌ Failed to track silence:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Reset silence stage when candidate responds
+   */
+  async resetSilenceStage(sessionId) {
+    try {
+      await this.updateSession(sessionId, {
+        silenceStage: 0
+      });
+
+      console.log(`🔄 [Session] Reset silence stage for session: ${sessionId}`);
+    } catch (error) {
+      console.error('❌ Failed to reset silence stage:', error.message);
       throw error;
     }
   }

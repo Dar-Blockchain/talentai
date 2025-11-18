@@ -669,7 +669,7 @@ const IntelligentInterviewTest = () => {
   // Adaptive Silence Thresholds
   const [baseSilenceThreshold] = useState(5000); // 5 seconds base
   const [adaptiveSilenceThreshold, setAdaptiveSilenceThreshold] = useState(5000);
-  const readingTimeBuffer = 10000; // 10 seconds reading time after new question
+  const readingTimeBuffer = 15000; // 15 seconds reading time after new question
   const naturalPauseThreshold = 2000; // 2 seconds for natural pauses
   const maxNaturalPauses = 3; // Maximum natural pauses before considering complete
 

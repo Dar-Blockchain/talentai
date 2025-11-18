@@ -118,6 +118,10 @@ class IntelligentInterviewController {
           // Reset inter-turn pause timer when new turn is received
           this.resetInterTurnPauseTimer(socket, sessionId);
 
+          // Reset silence stage - candidate is responding
+          await this.service.sessionManager.resetSilenceStage(sessionId);
+          console.log(`🔄 [Session] Silence stage reset - candidate is responding`);
+
           // Process response with AI service
           const decision = await this.service.processCandidateResponse(
             sessionId,
@@ -559,53 +563,87 @@ class IntelligentInterviewController {
    * Start monitoring inter-turn pauses (silence BETWEEN complete responses)
    * V3 handles turn detection, this monitors silence after interviewer asks next question
    */
-  startInterTurnPauseMonitoring(socket, sessionId) {
-    // Clear any existing timer
+  async startInterTurnPauseMonitoring(socket, sessionId) {
+    // Clear any existing timers
     this.resetInterTurnPauseTimer(socket, sessionId);
 
-    // Set pause monitoring timer (6 seconds - longer than V3's max_turn_silence)
-    const INTER_TURN_PAUSE_THRESHOLD = 6000; // 6 seconds
+    // Get question complexity for adaptive timing
+    const session = await this.service.sessionManager.getSession(sessionId);
+    const complexity = session?.currentQuestionContext?.complexity || 'medium';
 
-    const timerId = setTimeout(async () => {
-      console.log(`⏸️ Inter-turn pause detected in session: ${sessionId}`);
-      console.log(`🔇 SILENCE EVENT: ${INTER_TURN_PAUSE_THRESHOLD / 1000} seconds elapsed without speech from candidate`);
+    // Base thresholds - Human-like patience (30s, 60s, 90s)
+    const baseThresholds = {
+      stage1: 30000, // 30s - patient waiting
+      stage2: 60000, // 60s - help offer
+      stage3: 90000  // 90s - rephrase
+    };
 
-      try {
-        // Track as inter-turn pause (not in-turn silence)
-        const silenceDuration = INTER_TURN_PAUSE_THRESHOLD / 1000;
-        console.log(`📊 Tracking silence event: duration=${silenceDuration}s, type=inter-turn`);
-        const silenceResponse = await this.service.handleSilence(sessionId, silenceDuration);
+    // Complexity multipliers (simple questions need less time)
+    const multipliers = {
+      simple: 0.8,    // 24s, 48s, 72s
+      medium: 1.0,    // 30s, 60s, 90s
+      complex: 1.3    // 39s, 78s, 117s
+    };
 
-        // Send silence response to client
-        socket.emit('silence_response', {
-          action: silenceResponse.action,
-          content: silenceResponse.content,
-          silenceCount: silenceResponse.silenceCount,
-          timestamp: new Date().toISOString(),
-          isInterTurnPause: true // Flag to distinguish from in-turn silence
-        });
+    const multiplier = multipliers[complexity] || 1.0;
+    const thresholds = {
+      stage1: Math.floor(baseThresholds.stage1 * multiplier),
+      stage2: Math.floor(baseThresholds.stage2 * multiplier),
+      stage3: Math.floor(baseThresholds.stage3 * multiplier)
+    };
 
-        // If it's a prompt, also send as interviewer message
-        if (silenceResponse.action === 'silence_prompt') {
-          socket.emit('interviewer_message', {
-            type: 'silence_prompt',
-            content: silenceResponse.content,
-            timestamp: new Date().toISOString(),
-            sessionId
-          });
-        }
-      } catch (error) {
-        console.error('❌ Failed to handle inter-turn pause:', error.message);
-      }
-    }, INTER_TURN_PAUSE_THRESHOLD);
+    console.log(`⏱️ [SilenceMonitoring] Starting progressive timers for ${sessionId}:`, {
+      complexity,
+      stage1: `${thresholds.stage1/1000}s`,
+      stage2: `${thresholds.stage2/1000}s`,
+      stage3: `${thresholds.stage3/1000}s`
+    });
 
-    // Store timer on socket for cleanup
+    // Create 3 independent timers (one for each stage)
+    const timers = {
+      stage1: setTimeout(() => this.handleSilenceStage(socket, sessionId, 1, thresholds.stage1/1000), thresholds.stage1),
+      stage2: setTimeout(() => this.handleSilenceStage(socket, sessionId, 2, thresholds.stage2/1000), thresholds.stage2),
+      stage3: setTimeout(() => this.handleSilenceStage(socket, sessionId, 3, thresholds.stage3/1000), thresholds.stage3)
+    };
+
+    // Store all timers on socket (not just one)
     if (!socket.interTurnTimers) {
       socket.interTurnTimers = new Map();
     }
-    socket.interTurnTimers.set(sessionId, timerId);
+    socket.interTurnTimers.set(sessionId, timers);
+  }
 
-    console.log(`🔊 Inter-turn pause monitoring started for session: ${sessionId} (${INTER_TURN_PAUSE_THRESHOLD}ms threshold)`);
+  /**
+   * Handle individual silence stage timer firing
+   */
+  async handleSilenceStage(socket, sessionId, stage, silenceDuration) {
+    console.log(`🔔 [SilenceStage] Stage ${stage} triggered after ${silenceDuration}s`);
+
+    try {
+      const silenceResponse = await this.service.handleSilence(sessionId, silenceDuration);
+
+      // Send silence response to frontend
+      socket.emit('silence_response', {
+        action: silenceResponse.action,
+        content: silenceResponse.content,
+        silenceStage: stage,
+        timestamp: new Date().toISOString(),
+        isInterTurnPause: true
+      });
+
+      // Also send as interviewer message (so it displays)
+      if (silenceResponse.content) {
+        socket.emit('interviewer_message', {
+          type: `silence_stage${stage}`,
+          content: silenceResponse.content,
+          timestamp: new Date().toISOString(),
+          sessionId,
+          metadata: silenceResponse.metadata
+        });
+      }
+    } catch (error) {
+      console.error(`❌ Failed to handle silence stage ${stage}:`, error.message);
+    }
   }
 
   /**
@@ -613,10 +651,15 @@ class IntelligentInterviewController {
    */
   resetInterTurnPauseTimer(socket, sessionId) {
     if (socket.interTurnTimers && socket.interTurnTimers.has(sessionId)) {
-      const timerId = socket.interTurnTimers.get(sessionId);
-      clearTimeout(timerId);
+      const timers = socket.interTurnTimers.get(sessionId);
+
+      // Clear all 3 stage timers
+      if (timers.stage1) clearTimeout(timers.stage1);
+      if (timers.stage2) clearTimeout(timers.stage2);
+      if (timers.stage3) clearTimeout(timers.stage3);
+
       socket.interTurnTimers.delete(sessionId);
-      console.log(`🔇 Inter-turn pause timer RESET for session: ${sessionId} (user activity detected)`);
+      console.log(`🔇 [SilenceMonitoring] All 3 timers cleared for session: ${sessionId} (user activity detected)`);
       console.log(`✅ Silence monitoring paused - waiting for next complete response`);
     }
   }

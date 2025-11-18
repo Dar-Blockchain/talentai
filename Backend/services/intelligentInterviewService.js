@@ -446,6 +446,8 @@ REQUIREMENTS:
 - Progress from general to specific based on what's already known
 - Be engaging and allow candidate to showcase their expertise
 
+CRITICAL: You MUST respond with valid JSON only. No markdown, no code blocks, no extra text.
+
 RESPONSE FORMAT (JSON only):
 {
   "question": "targeted question for the specific area",
@@ -472,7 +474,7 @@ ${JSON.stringify(roleContext, null, 2)}
 CANDIDATE'S PREVIOUS RESPONSES ABOUT THIS AREA:
 ${relevantHistory.map(entry => entry.content).join('\n---\n')}
 
-Generate a targeted question to explore this competency area more deeply.`;
+Generate a targeted question to explore this competency area more deeply. Respond with ONLY valid JSON.`;
 
       const response = await this.together.chat.completions.create({
         model: this.model,
@@ -481,13 +483,32 @@ Generate a targeted question to explore this competency area more deeply.`;
           { role: "user", content: userPrompt }
         ],
         temperature: 0.6,
-        max_tokens: 400
+        max_tokens: 600
       });
 
       const responseContent = response.choices[0].message.content.trim();
-      return AIUtils.parseJSONResponse(responseContent, 'generateTargetedQuestionForArea');
+
+      // Validate response is not suspiciously short or malformed
+      if (responseContent.length < 10 || !responseContent.includes('{')) {
+        console.error('❌ Malformed AI response for generateTargetedQuestionForArea:', responseContent);
+        console.error('   Area:', areaName);
+        console.error('   Response length:', responseContent.length);
+        throw new Error(`AI returned malformed response: "${responseContent}"`);
+      }
+
+      const parsedResponse = AIUtils.parseJSONResponse(responseContent, 'generateTargetedQuestionForArea');
+
+      // Validate the parsed response has required fields
+      if (!parsedResponse.question || parsedResponse.question.length < 5) {
+        console.error('❌ Parsed response missing valid question field:', parsedResponse);
+        throw new Error('AI response missing valid question field');
+      }
+
+      return parsedResponse;
     } catch (error) {
-      console.error('Error generating targeted question:', error);
+      console.error('❌ Error generating targeted question for area:', areaName);
+      console.error('   Error message:', error.message);
+      console.error('   Error type:', error.constructor.name);
       throw error;
     }
   }
@@ -736,6 +757,10 @@ class IntelligentInterviewService {
       });
       console.log('✅ [Service] Greeting added to conversation');
 
+      // Save greeting as current question (simple complexity)
+      await this.sessionManager.saveCurrentQuestion(sessionId, greeting.content, 'simple');
+      console.log('💾 [Greeting] Saved as current question');
+
       // Update session status
       console.log('📊 [Service] Updating session status to active...');
       await this.sessionManager.updateSession(sessionId, { status: 'active' });
@@ -778,64 +803,109 @@ class IntelligentInterviewService {
    * Generate intelligent greeting based on context
    */
   async generateIntelligentGreeting(config) {
-    try {
-      const startTime = Date.now();
+    const maxRetries = 2;
+    let lastError = null;
 
-      const prompt = this.buildGreetingPrompt(config);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const startTime = Date.now();
 
-      const response = await this.together.chat.completions.create({
-        model: config.models.fastModel,
-        messages: [
-          {
-            role: "system",
-            content: "You are an intelligent interviewer. Generate a warm, professional greeting that sets the right tone for the interview. Be natural and contextual."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 200
-      });
+        const prompt = this.buildGreetingPrompt(config);
 
-      const processingTime = Date.now() - startTime;
-      const greeting = response.choices[0].message.content.trim();
+        console.log(`🤖 [Greeting] Attempt ${attempt}/${maxRetries} - Generating greeting...`);
 
-      return {
-        content: greeting,
-        metadata: {
+        const response = await this.together.chat.completions.create({
           model: config.models.fastModel,
-          processingTime,
-          prompt: "greeting_generation",
-          interviewType: config.interviewType
+          messages: [
+            {
+              role: "system",
+              content: "You are a professional interviewer. Your task is to generate ONLY the greeting text - nothing else. Do not include labels, explanations, or formatting. Just write the natural greeting sentences."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.6,
+          max_tokens: 400
+        });
+
+        const processingTime = Date.now() - startTime;
+        const greeting = response.choices[0].message.content.trim();
+
+        // Log the actual response for debugging
+        console.log('✅ [Greeting] AI response received:', {
+          length: greeting.length,
+          preview: greeting.substring(0, 100) + (greeting.length > 100 ? '...' : ''),
+          processingTime: `${processingTime}ms`
+        });
+
+        // Validate the greeting is not malformed
+        if (greeting.length < 20) {
+          console.error('❌ [Greeting] Response too short:', greeting);
+          throw new Error(`Malformed greeting (too short): "${greeting}"`);
         }
-      };
-    } catch (error) {
-      console.error('❌ [Greeting] Failed to generate AI greeting:', {
-        message: error.message,
-        status: error.status,
-        code: error.code,
-        type: error.type,
-        model: config.models.fastModel
-      });
-      console.error('❌ [Greeting] Error details:', error);
 
-      // Fallback greeting based on interview type
-      const fallbackGreeting = `Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's start our conversation!`;
-
-      console.log('⚠️  [Greeting] Using fallback greeting:', fallbackGreeting.substring(0, 50) + '...');
-
-      return {
-        content: fallbackGreeting,
-        metadata: {
-          fallback: true,
-          error: error.message,
-          errorCode: error.code,
-          attemptedModel: config.models.fastModel
+        if (!greeting.match(/[.!?]$/)) {
+          console.warn('⚠️  [Greeting] Response missing proper punctuation:', greeting);
+          // Add punctuation if missing
+          const fixedGreeting = greeting + '.';
+          console.log('🔧 [Greeting] Fixed punctuation:', fixedGreeting);
         }
-      };
+
+        // Check for common malformed patterns
+        if (/^[a-z]\d+$/i.test(greeting) || greeting.length < 15 || !greeting.includes(' ')) {
+          console.error('❌ [Greeting] Malformed response detected:', greeting);
+          throw new Error(`Invalid greeting format: "${greeting}"`);
+        }
+
+        return {
+          content: greeting,
+          metadata: {
+            model: config.models.fastModel,
+            processingTime,
+            prompt: "greeting_generation",
+            interviewType: config.interviewType,
+            attempt
+          }
+        };
+
+      } catch (error) {
+        lastError = error;
+        console.error(`❌ [Greeting] Attempt ${attempt}/${maxRetries} failed:`, {
+          message: error.message,
+          status: error.status,
+          code: error.code,
+          type: error.type,
+          model: config.models.fastModel
+        });
+
+        // If not last attempt, wait and retry
+        if (attempt < maxRetries) {
+          console.log(`🔄 [Greeting] Retrying in 500ms...`);
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
     }
+
+    // All attempts failed - use fallback
+    console.error('❌ [Greeting] All attempts failed, using fallback');
+    console.error('❌ [Greeting] Last error:', lastError?.message);
+
+    const fallbackGreeting = `Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's start our conversation!`;
+
+    console.log('⚠️  [Greeting] Using fallback greeting:', fallbackGreeting);
+
+    return {
+      content: fallbackGreeting,
+      metadata: {
+        fallback: true,
+        error: lastError?.message,
+        errorCode: lastError?.code,
+        attemptedModel: config.models.fastModel,
+        attempts: maxRetries
+      }
+    };
   }
 
   /**
@@ -913,14 +983,49 @@ class IntelligentInterviewService {
 
         if (similarityAnalysis.isSimilar && similarityAnalysis.confidence > 70) {
           // Generate alternative question for same target area
-          nextAction = await this.questionAI.generateTargetedQuestionForArea(
-            decisionAnalysis.targetArea,
-            finalSession.coverage.areas[decisionAnalysis.targetArea],
-            finalSession.conversation,
-            finalSession.config.context
-          );
-          nextAction.type = 'question';
-          nextAction.content = nextAction.question;
+          console.log('🔄 Question similarity detected - generating alternative for area:', decisionAnalysis.targetArea);
+
+          // Validate that we have the required data before calling AI
+          const targetArea = decisionAnalysis.targetArea;
+          const areaData = finalSession.coverage.areas[targetArea];
+
+          if (!targetArea || !areaData) {
+            console.warn('⚠️ Missing targetArea or areaData, using original question instead');
+            console.warn('   targetArea:', targetArea);
+            console.warn('   areaData exists:', !!areaData);
+
+            // Fall back to using the original proposed question
+            nextAction = {
+              type: 'question',
+              content: proposedQuestion.question,
+              reasoning: proposedQuestion.reasoning + ' (similarity detected but fallback used)',
+              targetAreas: proposedQuestion.targetAreas
+            };
+          } else {
+            try {
+              // Try to generate targeted question with validated data
+              nextAction = await this.questionAI.generateTargetedQuestionForArea(
+                targetArea,
+                areaData,
+                finalSession.conversation,
+                finalSession.config.context
+              );
+              nextAction.type = 'question';
+              nextAction.content = nextAction.question;
+
+              console.log('✅ Successfully generated alternative question');
+            } catch (targetedQuestionError) {
+              console.error('❌ Failed to generate targeted question, falling back to original:', targetedQuestionError.message);
+
+              // Fall back to the original proposed question
+              nextAction = {
+                type: 'question',
+                content: proposedQuestion.question,
+                reasoning: proposedQuestion.reasoning + ' (targeted generation failed)',
+                targetAreas: proposedQuestion.targetAreas
+              };
+            }
+          }
         } else {
           nextAction = {
             type: 'question',
@@ -941,6 +1046,11 @@ class IntelligentInterviewService {
             reasoning: nextAction.reasoning
           }
         });
+
+        // Detect complexity and save question for potential rephrasing
+        const complexity = await this.detectQuestionComplexity(nextAction.content);
+        await this.sessionManager.saveCurrentQuestion(sessionId, nextAction.content, complexity);
+        console.log(`💾 [Question] Saved with complexity: ${complexity}`);
 
       } else if (decisionAnalysis.decision === 'end_interview') {
         nextAction = {
@@ -1243,40 +1353,50 @@ class IntelligentInterviewService {
         throw new Error(`Session ${sessionId} not found`);
       }
 
-      // Track silence event
+      // Track silence and get current stage
       const silenceData = await this.sessionManager.trackSilence(sessionId, silenceDuration);
 
-      const config = session.config;
-      const maxSilences = config.sessionSettings.maxSilencePrompts;
+      console.log(`🔇 [HandleSilence] Stage ${silenceData.silenceStage}, Duration: ${silenceDuration}s`);
 
-      if (silenceData.silenceCount <= maxSilences) {
-        // Generate intelligent silence prompt
-        const silencePrompt = await this.generateSilencePrompt(session, silenceData);
+      let response;
 
-        // Add prompt to conversation
-        await this.sessionManager.addConversationEntry(sessionId, {
-          type: 'system',
-          content: silencePrompt.content,
-          metadata: silencePrompt.metadata
-        });
+      // Route to appropriate AI method based on stage
+      switch (silenceData.silenceStage) {
+        case 1: // First silence (30s) - Gentle patience
+          response = await this.generatePatiencePrompt(session, silenceData);
+          break;
 
-        return {
-          action: 'silence_prompt',
-          content: silencePrompt.content,
-          silenceCount: silenceData.silenceCount,
-          maxSilences
-        };
-      } else {
-        // Generate next question to move forward
-        const nextQuestion = await this.makeIntelligentDecision(session, "[SILENCE DETECTED - MOVING FORWARD]");
+        case 2: // Second silence (60s) - Help offer
+          response = await this.generateHelpOffer(session, silenceData);
+          break;
 
-        return {
-          action: 'move_forward',
-          content: nextQuestion.content,
-          reasoning: 'Maximum silence prompts reached',
-          silenceCount: silenceData.silenceCount
-        };
+        case 3: // Third silence (90s) - Rephrase question
+          response = await this.rephraseCurrentQuestion(session, silenceData);
+          break;
+
+        default: // 4+ silences - move forward
+          const nextQuestion = await this.makeIntelligentDecision(session, "[EXTENDED SILENCE - MOVING FORWARD]");
+          return {
+            action: 'move_forward',
+            content: nextQuestion.content,
+            reasoning: 'Extended silence - moving to next topic',
+            silenceStage: silenceData.silenceStage
+          };
       }
+
+      // Add prompt to conversation
+      await this.sessionManager.addConversationEntry(sessionId, {
+        type: 'system',
+        content: response.content,
+        metadata: response.metadata
+      });
+
+      return {
+        action: 'silence_prompt',
+        content: response.content,
+        silenceStage: silenceData.silenceStage,
+        metadata: response.metadata
+      };
     } catch (error) {
       console.error('❌ Failed to handle silence:', error.message);
       throw error;
@@ -1287,60 +1407,377 @@ class IntelligentInterviewService {
    * Generate intelligent silence prompt
    */
   async generateSilencePrompt(session, silenceData) {
+    const maxRetries = 2;
+    let lastError = null;
+
+    // Extract recent context without large JSON
+    const recentMessages = session.conversation.slice(-3).map(entry =>
+      `${entry.type === 'interviewer' ? 'Interviewer' : 'Candidate'}: ${entry.content?.substring(0, 100) || '[no content]'}`
+    ).join('\n');
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const config = session.config;
+
+        const prompt = `Generate a supportive, encouraging message for a candidate who has been silent for ${silenceData.silenceDuration} seconds during an interview.
+
+CONTEXT:
+- This is silence instance #${silenceData.silenceCount}
+- Position: ${config.context.targetRole}
+- Company: ${config.context.targetCompany}
+- Interview Type: ${config.interviewType}
+
+RECENT CONVERSATION:
+${recentMessages}
+
+REQUIREMENTS:
+- Write 1-2 natural, encouraging sentences
+- Be warm and supportive, not pushy
+- Help the candidate feel comfortable to continue
+- DO NOT use labels, bullet points, or explanations
+- ONLY output the encouraging text itself
+
+Example: "Take your time - there's no rush. Would you like me to rephrase the question in a different way?"`;
+
+        console.log(`🔇 [Silence] Attempt ${attempt}/${maxRetries} - Generating silence prompt...`);
+
+        const response = await this.together.chat.completions.create({
+          model: config.models.fastModel,
+          messages: [
+            {
+              role: "system",
+              content: "You are a supportive interviewer. Your task is to generate ONLY the encouraging text - nothing else. Be empathetic and natural."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 300
+        });
+
+        const silencePrompt = response.choices[0].message.content.trim();
+
+        // Log the response for debugging
+        console.log('✅ [Silence] AI response received:', {
+          length: silencePrompt.length,
+          preview: silencePrompt.substring(0, 80) + (silencePrompt.length > 80 ? '...' : ''),
+          silenceCount: silenceData.silenceCount
+        });
+
+        // Validate the silence prompt is not malformed
+        if (silencePrompt.length < 15) {
+          console.error('❌ [Silence] Response too short:', silencePrompt);
+          throw new Error(`Malformed silence prompt (too short): "${silencePrompt}"`);
+        }
+
+        // Check for common malformed patterns (like "s1", "safe", etc.)
+        if (/^[a-z]+\d*$/i.test(silencePrompt) || !silencePrompt.includes(' ')) {
+          console.error('❌ [Silence] Malformed response detected:', silencePrompt);
+          throw new Error(`Invalid silence prompt format: "${silencePrompt}"`);
+        }
+
+        return {
+          content: silencePrompt,
+          metadata: {
+            model: config.models.fastModel,
+            silenceCount: silenceData.silenceCount,
+            silenceDuration: silenceData.silenceDuration,
+            type: 'silence_prompt',
+            attempt
+          }
+        };
+
+      } catch (error) {
+        lastError = error;
+        console.error(`❌ [Silence] Attempt ${attempt}/${maxRetries} failed:`, {
+          message: error.message,
+          silenceCount: silenceData.silenceCount
+        });
+
+        // If not last attempt, wait and retry
+        if (attempt < maxRetries) {
+          console.log(`🔄 [Silence] Retrying in 500ms...`);
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+    }
+
+    // All attempts failed - use fallback
+    console.error('❌ [Silence] All attempts failed, using fallback');
+    console.error('❌ [Silence] Last error:', lastError?.message);
+
+    const fallbacks = [
+      "Take your time to think about it. I'm here when you're ready to continue.",
+      "No rush at all. Would you like me to rephrase the question?",
+      "Feel free to take a moment to gather your thoughts. How would you like to approach this?"
+    ];
+
+    const fallbackMessage = fallbacks[silenceData.silenceCount % fallbacks.length];
+    console.log('⚠️  [Silence] Using fallback:', fallbackMessage);
+
+    return {
+      content: fallbackMessage,
+      metadata: {
+        fallback: true,
+        silenceCount: silenceData.silenceCount,
+        error: lastError?.message,
+        attempts: maxRetries
+      }
+    };
+  }
+
+  /**
+   * Detect question complexity using AI
+   */
+  async detectQuestionComplexity(questionText) {
     try {
-      const config = session.config;
+      const systemPrompt = `Analyze this interview question and determine its complexity level.
 
-      const prompt = `
-        The candidate has been silent for ${silenceData.silenceDuration} seconds.
-        This is silence event #${silenceData.silenceCount}.
+COMPLEXITY LEVELS:
+- simple: Yes/no questions, basic factual questions, straightforward queries (1 sentence)
+- medium: Standard behavioral/situational questions requiring examples (2-3 sentences)
+- complex: Multi-part questions, technical deep-dives, requiring detailed analysis (3+ sentences)
 
-        Interview Context: ${JSON.stringify(config.context)}
-        Recent Conversation: ${JSON.stringify(session.conversation.slice(-3))}
-
-        Generate an encouraging, helpful prompt to re-engage the candidate.
-        Consider their communication style and the interview context.
-        Keep it natural and supportive.
-      `;
+RESPONSE FORMAT (JSON only):
+{
+  "complexity": "simple|medium|complex",
+  "reasoning": "brief explanation",
+  "estimatedThinkingTime": number (in seconds)
+}`;
 
       const response = await this.together.chat.completions.create({
-        model: config.models.fastModel,
+        model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
         messages: [
-          {
-            role: "system",
-            content: "You are a supportive interviewer. Help candidates who need encouragement during silence. Be empathetic and professional."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Analyze this question: "${questionText}"` }
         ],
-        temperature: 0.8,
+        temperature: 0.2,
+        max_tokens: 200
+      });
+
+      const responseContent = response.choices[0].message.content.trim();
+      const parsed = AIUtils.parseJSONResponse(responseContent, 'detectQuestionComplexity');
+
+      console.log(`🔍 [Complexity] Detected:`, {
+        complexity: parsed.complexity,
+        estimatedThinkingTime: parsed.estimatedThinkingTime
+      });
+
+      return parsed.complexity || 'medium';
+    } catch (error) {
+      console.error('❌ Error detecting question complexity:', error.message);
+      return 'medium'; // Default to medium if detection fails
+    }
+  }
+
+  /**
+   * Generate patience prompt (Stage 2 - First Silence)
+   */
+  async generatePatiencePrompt(session, silenceData) {
+    try {
+      const currentQuestion = session.currentQuestionContext?.originalQuestion || 'the question';
+
+      const systemPrompt = `Generate a brief, warm encouragement for a candidate who has been silent for ${silenceData.silenceDuration} seconds.
+
+REQUIREMENTS:
+- Write 1 short, natural sentence
+- Be patient and supportive, NOT pushy
+- Signal that thinking time is okay
+- DO NOT offer to rephrase or help yet - just encouragement
+- ONLY output the encouragement text itself
+
+Examples:
+- "Take your time to think through this."
+- "No rush - I'm listening."
+- "Whenever you're ready."`;
+
+      const response = await this.together.chat.completions.create({
+        model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Generate patience prompt for: "${currentQuestion.substring(0, 100)}..."` }
+        ],
+        temperature: 0.7,
+        max_tokens: 100
+      });
+
+      const patiencePrompt = response.choices[0].message.content.trim();
+
+      // Validation
+      if (patiencePrompt.length < 10 || /^[a-z]+\d*$/i.test(patiencePrompt)) {
+        throw new Error('Malformed patience prompt');
+      }
+
+      console.log(`✅ [Patience] Generated prompt:`, patiencePrompt);
+
+      return {
+        content: patiencePrompt,
+        metadata: { silenceStage: 1, type: 'patience_prompt' }
+      };
+    } catch (error) {
+      console.error('❌ Error generating patience prompt:', error.message);
+      // AI-like fallback (varied responses)
+      const fallbacks = [
+        "Take your time - there's no rush to answer.",
+        "I'm here when you're ready to share your thoughts.",
+        "Feel free to take a moment to think about this."
+      ];
+      return {
+        content: fallbacks[Math.floor(Math.random() * fallbacks.length)],
+        metadata: { silenceStage: 1, type: 'patience_prompt', fallback: true }
+      };
+    }
+  }
+
+  /**
+   * Generate help offer (Stage 3 - Second Silence)
+   */
+  async generateHelpOffer(session, silenceData) {
+    try {
+      const currentQuestion = session.currentQuestionContext?.originalQuestion || 'the question';
+
+      const systemPrompt = `Generate a supportive offer to help a candidate who has been silent for ${silenceData.silenceDuration} seconds.
+
+REQUIREMENTS:
+- Write 1-2 natural sentences
+- Offer to rephrase or clarify
+- Be supportive and professional
+- Suggest specific ways to help
+- ONLY output the help offer text itself
+
+Examples:
+- "Would it help if I rephrased the question?"
+- "Can I break this into smaller parts for you?"
+- "Would you like me to provide a specific example?"`;
+
+      const response = await this.together.chat.completions.create({
+        model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Generate help offer for: "${currentQuestion.substring(0, 100)}..."` }
+        ],
+        temperature: 0.7,
         max_tokens: 150
       });
 
-      const silencePrompt = response.choices[0].message.content.trim();
+      const helpOffer = response.choices[0].message.content.trim();
+
+      // Validation
+      if (helpOffer.length < 15 || /^[a-z]+\d*$/i.test(helpOffer)) {
+        throw new Error('Malformed help offer');
+      }
+
+      console.log(`✅ [HelpOffer] Generated:`, helpOffer);
 
       return {
-        content: silencePrompt,
+        content: helpOffer,
+        metadata: { silenceStage: 2, type: 'help_offer' }
+      };
+    } catch (error) {
+      console.error('❌ Error generating help offer:', error.message);
+      const fallbacks = [
+        "Would you like me to rephrase the question in a different way?",
+        "Can I break this down into smaller, more specific questions?",
+        "Would it help if I provided an example of what I'm looking for?"
+      ];
+      return {
+        content: fallbacks[Math.floor(Math.random() * fallbacks.length)],
+        metadata: { silenceStage: 2, type: 'help_offer', fallback: true }
+      };
+    }
+  }
+
+  /**
+   * Rephrase current question (Stage 4 - Third Silence)
+   */
+  async rephraseCurrentQuestion(session, silenceData) {
+    try {
+      const currentQuestion = session.currentQuestionContext?.originalQuestion;
+
+      if (!currentQuestion) {
+        throw new Error('No current question to rephrase');
+      }
+
+      const recentContext = session.conversation.slice(-3).map(entry =>
+        `${entry.type}: ${entry.content?.substring(0, 100)}`
+      ).join('\n');
+
+      const systemPrompt = `Rephrase this interview question to make it clearer and easier to answer.
+
+REQUIREMENTS:
+- SAME intent and topic as original question
+- Simpler, clearer wording
+- Can break into 2-3 smaller sub-questions if helpful
+- More concrete and specific
+- Natural and conversational
+- ONLY output the rephrased question(s) - no explanations
+
+APPROACH OPTIONS:
+1. Simpler wording of same question
+2. Break into sequential sub-questions
+3. Add scaffolding example then ask`;
+
+      const userPrompt = `ORIGINAL QUESTION: "${currentQuestion}"
+
+CONTEXT:
+- Candidate has been silent for ${silenceData.silenceDuration} seconds
+- This is silence #${silenceData.silenceCount}
+- Interview Type: ${session.config.interviewType}
+- Position: ${session.config.context.targetRole}
+
+RECENT CONVERSATION:
+${recentContext}
+
+Rephrase this question to help the candidate answer it.`;
+
+      const response = await this.together.chat.completions.create({
+        model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo", // Use better model for rephrasing
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.6,
+        max_tokens: 400
+      });
+
+      const rephrasedQuestion = response.choices[0].message.content.trim();
+
+      // Validation
+      if (rephrasedQuestion.length < 20 || /^[a-z]+\d*$/i.test(rephrasedQuestion)) {
+        throw new Error('Malformed rephrased question');
+      }
+
+      console.log(`✅ [Rephrase] Generated rephrased question`);
+
+      // Save rephrase to history
+      const rephraseHistory = session.currentQuestionContext.rephraseHistory || [];
+      rephraseHistory.push({
+        original: currentQuestion,
+        rephrased: rephrasedQuestion,
+        timestamp: Date.now()
+      });
+
+      await this.sessionManager.updateSession(session.sessionId, {
+        'currentQuestionContext.hasBeenRephrased': true,
+        'currentQuestionContext.rephraseHistory': rephraseHistory
+      });
+
+      return {
+        content: rephrasedQuestion,
         metadata: {
-          model: config.models.fastModel,
-          silenceCount: silenceData.silenceCount,
-          silenceDuration: silenceData.silenceDuration,
-          type: 'silence_prompt'
+          silenceStage: 3,
+          type: 'rephrased_question',
+          originalQuestion: currentQuestion
         }
       };
     } catch (error) {
-      console.error('❌ Failed to generate silence prompt:', error.message);
-      // Fallback silence prompts
-      const fallbacks = [
-        "Take your time to think about it. I'm here when you're ready to continue.",
-        "No rush at all. Would you like me to rephrase the question?",
-        "Feel free to take a moment to gather your thoughts. How would you like to approach this?"
-      ];
-
+      console.error('❌ Error rephrasing question:', error.message);
+      // Generate simpler version if rephrasing fails
       return {
-        content: fallbacks[Math.floor(Math.random() * fallbacks.length)],
-        metadata: { fallback: true, silenceCount: silenceData.silenceCount }
+        content: "Let me ask this more simply: Can you share any relevant experience you have with this?",
+        metadata: { silenceStage: 3, type: 'rephrased_question', fallback: true }
       };
     }
   }
@@ -1376,32 +1813,30 @@ class IntelligentInterviewService {
    * Helper method to build greeting prompt
    */
   buildGreetingPrompt(config) {
-    // Handle different interview types
-    let contextInfo = '';
-    
-    contextInfo = `
-      Interview Type: ${config.interviewType}
-      Target Company: ${config.context.targetCompany}
-      Target Role: ${config.context.targetRole}
-      Experience Level: ${config.context.experienceLevel}
-      Test Reason: ${config.testReason}
-      `;
+    // Extract only the essential information, avoid large JSON objects
+    const interviewerStyle = config.interviewerPersona?.style || 'professional';
+    const interviewerTone = config.interviewerPersona?.tone || 'friendly';
+    const cultureTrait = config.companyProfile?.culture?.values?.[0] || 'innovation';
 
-    return `
-      Generate a personalized greeting for this interview:
+    return `Generate a warm, professional greeting for this ${config.interviewType} interview:
 
-      ${contextInfo}
-      Interviewer Persona: ${JSON.stringify(config.interviewerPersona)}
-      Company Culture: ${JSON.stringify(config.companyProfile.culture)}
+INTERVIEW CONTEXT:
+- Position: ${config.context.targetRole}
+- Company: ${config.context.targetCompany}
+- Candidate Experience Level: ${config.context.experienceLevel}
+- Interview Style: ${interviewerStyle}, ${interviewerTone}
+- Company Values: ${cultureTrait}
 
-      Create a warm, professional greeting that:
-      1. Sets the right tone for the interview type
-      2. Makes the candidate feel comfortable
-      3. Briefly explains what to expect
-      4. Reflects the company culture
+REQUIREMENTS:
+- Write 2-3 natural, conversational sentences
+- Welcome the candidate warmly
+- Briefly mention the position and company
+- Set a comfortable, professional tone
+- DO NOT use labels, bullet points, or structured format
+- DO NOT include explanations or meta-text
+- ONLY output the greeting text itself
 
-      Keep it conversational and under 3 sentences.
-    `;
+Example format: "Hello! I'm excited to speak with you today about the [role] position at [company]. Let's have a great conversation about your experience and how you can contribute to our team."`;
   }
 
   /**
