@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const TodoList = require("../models/todoListModel");
+const { PROFILE_TYPES, GENDER_OPTIONS, REQUIRED_EXPERIENCE_LEVELS, EMPLOYMENT_TYPES } = require("../constants/profileConstants");
 
 const profileSchema = new mongoose.Schema(
   {
@@ -10,7 +11,7 @@ const profileSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["Candidate", "Company", "jury"],
+      enum: Object.values(PROFILE_TYPES),
       required: true,
     },
     user_image: { type: String, required: false, default: "client.png" },
@@ -19,7 +20,7 @@ const profileSchema = new mongoose.Schema(
     age: { type: String, required: false },
     gender: {
       type: String,
-      enum: ["Male", "Female", "Other", "Prefer not to say"],
+      enum: Object.values(GENDER_OPTIONS),
       required: false,
     },
     educationLevel: { type: String, required: false },
@@ -104,7 +105,7 @@ const profileSchema = new mongoose.Schema(
       location: String,
       employmentType: {
         type: String,
-        enum: ["Remote", "Hybrid", "On-site"],
+        enum: Object.values(EMPLOYMENT_TYPES),
         required: false,
       },
     },
@@ -112,7 +113,7 @@ const profileSchema = new mongoose.Schema(
     requiredSkills: [String],
     requiredExperienceLevel: {
       type: String,
-      enum: ["Entry Level", "Junior", "Mid Level", "Senior", "Expert"],
+      enum: Object.values(REQUIRED_EXPERIENCE_LEVELS),
     },
 
     targetRole: {
@@ -153,7 +154,7 @@ const profileSchema = new mongoose.Schema(
 
 profileSchema.post("save", async function (doc) {
   try {
-    if (doc.type === "Candidate" && !doc.todoList) {
+    if (doc.type === PROFILE_TYPES.CANDIDATE && !doc.todoList) {
       const todoList = await TodoList.create({ profile: doc._id });
 
       await mongoose.model("Profile").findByIdAndUpdate(doc._id, {

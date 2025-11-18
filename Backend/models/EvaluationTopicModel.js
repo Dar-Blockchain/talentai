@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { EVALUATION_STATUS } = require("../constants/evaluationConstants");
 
 const evaluationTopicSchema = new mongoose.Schema({
   topicId: { type: String, required: true, unique: true },
@@ -9,8 +10,8 @@ const evaluationTopicSchema = new mongoose.Schema({
   topicMemo: { type: String, required: true }, // HCS-11 compliant memo
   status: {
     type: String,
-    enum: ["active", "completed", "cancelled"],
-    default: "active",
+    enum: Object.values(EVALUATION_STATUS),
+    default: EVALUATION_STATUS.ACTIVE,
   },
   createdBy: { type: String, required: true }, // Agent that created the topic
   createdAt: { type: Date, default: Date.now },
