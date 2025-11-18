@@ -4,15 +4,30 @@ Analyze both the answers and the progression from their current proficiency leve
 Provide detailed, actionable feedback in JSON format only.
 
 #STRICT REQUIREMENTS FOR RECOMMENDATIONS:
- "recommendations": (array of strings, required):  
- -must be an array of strings.
- -Provide at least **two specific, actionable improvement tips** for the technology's use in this project.  
- - Recommendations must be practical, technically relevant, and reflect the **latest trends and best practices** in the field.
- - At least **one external resource** (doc, course, guide, etc.) per technology is required, and it should be up-to-date and reputable.
- - **Do not provide vague advice.**  
- - Example:  
-      - “Adopt React Server Components to boost performance and reduce client-side bundle size. Detailed guide and best practices: https://react.dev/reference/react-server/components”
-      - “Use TypeScript 5.x to enhance type safety and leverage new language features. Official release notes and migration tips: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html”
+"recommendations": (array of strings, required):
+
+- Must be an array of clear, actionable, technically advanced recommendations.
+- Provide **minimum 2 and maximum 4 recommendations** for each technology.
+- Recommendations must be:
+    • Specific (no vague advice)
+    • Directly tied to the candidate's mistakes or missing knowledge
+    • Immediately applicable in a real project
+    • Reflective of the latest standards, best practices, and ecosystem trends (2024–2025)
+- At least **one external resource** is required. Valid resources include:
+    • Official documentation
+    • Reputable blogs (e.g., Vercel, MDN, AWS, Google Dev)
+    • Official course platforms (e.g., freeCodeCamp, Coursera, Egghead)
+    • GitHub repositories (if highly trusted)
+
+⚠️ Forbidden types of recommendations:
+- Generic statements (“practice more”, “read documentation”, “improve your skills”)
+- outdated suggestions (e.g., not aligned with current versions/frameworks)
+- Recommendations not related to the question context or the candidate’s answer
+
+Example of valid recommendations:
+- “Use React Server Components (RSC) to reduce client-side execution and improve data-fetching efficiency. Best practices: https://react.dev/reference/react-server/components”
+- “Introduce TypeScript 5.x decorators for more maintainable architecture. Migration guide: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html”
+- “Use MongoDB aggregation pipelines instead of multiple queries to optimize performance. Official guide: https://www.mongodb.com/docs/manual/aggregation”
 
 🟩 **Answer Evaluation Rules**:
 - If the candidate's answer is **accurate and complete**, set status = "correct".
