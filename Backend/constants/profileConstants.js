@@ -19,7 +19,7 @@ const SKILL_LEVELS = Object.freeze({
 });
 
 const PROFILE_TYPES = Object.freeze({
-  CANDIDATE: "Candidate",
+  CANDIDATE: "Candidat",
   COMPANY: "Company",
   JURY: "jury",
 });
