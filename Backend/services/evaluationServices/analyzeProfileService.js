@@ -803,7 +803,7 @@ async function analyzeProfileAnswers(req, res) {
       await profileService.createOrUpdateProfile(id, updatedProfilePayload);
       console.log("Étape J - profileService.createOrUpdateProfile terminé");
 
-      if(newMappedSkills[0].confidenceScore > 0){
+      if(newMappedSkills.length > 0 && newMappedSkills[0].confidenceScore > 0){
       // Save interview details et update profile avec interview ID
       const interviewId = await saveInterviewDetailsForAddSkill(
         existingProfile,

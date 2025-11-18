@@ -302,12 +302,12 @@ export default function ReportOnBoarding() {
               backgroundColor: 'rgba(255,255,255,0.05)',
               borderRadius: 2
             }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <TrendingUpIcon sx={{ color: '#02E2FF' }} />
                 <Typography variant="h5" sx={{ color: '#000' }}>
                   Score: {Number(results.analysis.overallScore).toFixed(2)}%
                 </Typography>
-              </Box>
+              </Box> */}
               {results.analysis.skillAnalysis && results.analysis.skillAnalysis.length > 0 && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <TrendingUpIcon sx={{ color: '#8310FF' }} />
