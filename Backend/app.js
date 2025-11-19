@@ -73,19 +73,30 @@ const initializeApp = async () => {
 
     console.log('🤖 Initializing intelligent interview service...');
     // Initialize intelligent interview service
-     await intelligentInterviewService.initialize();
+    const serviceInitialized = await intelligentInterviewService.initialize();
+    console.log(`${serviceInitialized ? '✅' : '⚠️ '} Interview service initialization ${serviceInitialized ? 'completed' : 'completed with warnings'}`);
 
-    console.log('⚡ Initializing server...');
+    if (!serviceInitialized) {
+      console.warn('⚠️  Interview features may be limited');
+    }
+
+    console.log('⚡ Starting HTTP server...');
     // Start the server only after successful DB connection
-    server.listen(process.env.PORT, () => {
+    const host = process.env.HOST || '0.0.0.0';
+    server.listen(process.env.PORT, host, () => {
       console.log('');
       console.log('🎉 TalentAI Backend successfully started!');
-      console.log(`🚀 Server running on port ${process.env.PORT}`);
+      console.log(`🚀 Server running on ${host}:${process.env.PORT}`);
+      console.log(`🌐 Accessible from Windows at: http://172.23.207.114:${process.env.PORT}`);
+      console.log(`🌐 Accessible from WSL at: http://localhost:${process.env.PORT}`);
+      console.log('');
 
       // Initialize interview namespace AFTER server is listening
       console.log('🎙️  Initializing interview WebSocket namespace...');
       intelligentInterviewController.initializeHandlers(io);
       console.log('✅ Interview namespace /interview initialized and ready');
+      console.log(`🔌 WebSocket endpoint: ws://172.23.207.114:${process.env.PORT}/socket.io/`);
+      console.log('');
 
       console.log(`📖 API Documentation: http://localhost:${process.env.PORT}/api/docs`);
       console.log(`💡 Hedera clients will initialize on first use (lazy loading)`);

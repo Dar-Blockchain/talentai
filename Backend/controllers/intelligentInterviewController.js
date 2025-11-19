@@ -28,22 +28,36 @@ class IntelligentInterviewController {
           const { config, candidateId } = data;
           const sessionId = uuidv4();
 
-          console.log(`🚀 Starting interview session: ${sessionId} for candidate: ${candidateId}`);
+          console.log(`🚀 [Controller] Starting interview session: ${sessionId} for candidate: ${candidateId}`);
+          console.log(`📋 [Controller] Config received:`, {
+            interviewType: config.interviewType,
+            targetRole: config.context?.targetRole,
+            hasModels: !!config.models
+          });
 
           // Store session mapping
           this.activeSessions.set(sessionId, socket.id);
           socket.sessionId = sessionId;
+          console.log(`✅ [Controller] Session mapping stored`);
 
           // Start interview with AI service
+          console.log(`⏳ [Controller] Calling intelligentInterviewService.startInterview()...`);
           const result = await this.service.startInterview(sessionId, config, candidateId);
+          console.log(`✅ [Controller] Service returned:`, {
+            success: result.success,
+            sessionId: result.sessionId,
+            greetingLength: result.greeting?.length
+          });
 
           // Send success response with greeting
+          console.log(`📤 [Controller] Emitting interview_started event to client...`);
           socket.emit('interview_started', {
             success: true,
             sessionId,
             greeting: result.greeting,
             config: result.config
           });
+          console.log(`✅ [Controller] interview_started event emitted`);
 
           // Send initial greeting message
           socket.emit('interviewer_message', {
@@ -53,13 +67,34 @@ class IntelligentInterviewController {
             sessionId
           });
 
-          console.log(`✅ Interview session started successfully: ${sessionId}`);
+          console.log(`✅ [Controller] Interview session started successfully: ${sessionId}`);
 
         } catch (error) {
-          console.error('❌ Failed to start interview:', error.message);
+          console.error('❌ [Controller] Failed to start interview:', {
+            message: error.message,
+            code: error.code,
+            errno: error.errno,
+            syscall: error.syscall
+          });
+          console.error('❌ [Controller] Stack trace:', error.stack);
+
+          // Check if it's a Redis-specific error
+          const isRedisError = error.message?.includes('Redis') ||
+                               error.code === 'ECONNREFUSED' ||
+                               error.syscall === 'connect';
+
+          console.error('🔍 [Controller] Error analysis:', {
+            isRedisError: isRedisError,
+            errorType: error.constructor.name,
+            errorCode: error.code
+          });
+
           socket.emit('interview_error', {
             error: 'Failed to start interview',
-            message: error.message
+            message: error.message,
+            details: error.stack,
+            isRedisError: isRedisError,
+            hint: isRedisError ? 'Check if Redis server is running: redis-cli ping' : null
           });
         }
       });
@@ -67,7 +102,7 @@ class IntelligentInterviewController {
       // Handle candidate responses
       socket.on('candidate_response', async (data) => {
         try {
-          const { transcript, audioMetadata } = data;
+          const { transcript, audioMetadata, v3Turn, turnOrder } = data;
           const sessionId = socket.sessionId;
 
           if (!sessionId) {
@@ -76,9 +111,18 @@ class IntelligentInterviewController {
           }
 
           console.log(`💬 Processing candidate response in session: ${sessionId}`);
+          if (v3Turn) {
+            console.log(`✅ V3 Turn ${turnOrder || 'N/A'} detected with ${transcript?.length || 0} chars`);
+          }
 
-          // Process response with AI service
-          const decision = await this.service.processCandidateResponse(
+          // Reset inter-turn pause timer when new turn is received
+          this.resetInterTurnPauseTimer(socket, sessionId);
+
+          // REMOVED: No silence stage tracking in MVP manual flow
+          // await this.service.sessionManager.resetSilenceStage(sessionId);
+
+          // Process response with INTELLIGENT ANALYSIS (60% cost reduction)
+          const decision = await this.service.processCandidateResponseIntelligently(
             sessionId,
             transcript,
             audioMetadata
@@ -87,19 +131,43 @@ class IntelligentInterviewController {
           // Handle different decision types
           await this.handleAIDecision(socket, sessionId, decision);
 
+          // Send acknowledgment that message was processed successfully
+          socket.emit('response_processed', {
+            status: 'success',
+            transcript: transcript.substring(0, 100), // First 100 chars
+            decisionType: decision.type || 'continue',
+            timestamp: new Date().toISOString()
+          });
+
+          console.log(`✅ Response processed and acknowledged for session: ${sessionId}`);
+
+          // Start INTELLIGENT silence monitoring after AI responds
+          // Timing adapts based on response quality and behavior patterns
+          this.startIntelligentSilenceMonitoring(socket, sessionId, decision);
+
         } catch (error) {
           console.error('❌ Failed to process candidate response:', error.message);
           socket.emit('interview_error', {
             error: 'Failed to process response',
             message: error.message
           });
+
+          // Send failure acknowledgment
+          socket.emit('response_processed', {
+            status: 'error',
+            error: error.message,
+            timestamp: new Date().toISOString()
+          });
         }
       });
 
-      // Handle silence detection
-      socket.on('silence_detected', async (data) => {
+      // REMOVED: Automatic silence detection - using manual "Next" button only for MVP
+      // socket.on('silence_detected', async (data) => { ... });
+
+      // Handle speaking too long (polite interrupt after 3 minutes)
+      socket.on('speaking_too_long', async (data) => {
         try {
-          const { silenceDuration } = data;
+          const { duration } = data;
           const sessionId = socket.sessionId;
 
           if (!sessionId) {
@@ -107,33 +175,65 @@ class IntelligentInterviewController {
             return;
           }
 
-          console.log(`🔇 Silence detected in session: ${sessionId}, duration: ${silenceDuration}s`);
+          console.log(`⏱️  Candidate speaking too long (${Math.round(duration / 1000)}s) - polite interrupt`);
 
-          // Handle silence with AI service
-          const silenceResponse = await this.service.handleSilence(sessionId, silenceDuration);
+          const session = await this.sessionManager.getSession(sessionId);
 
-          // Send silence response to client
-          socket.emit('silence_response', {
-            action: silenceResponse.action,
-            content: silenceResponse.content,
-            silenceCount: silenceResponse.silenceCount,
-            timestamp: new Date().toISOString()
+          // Generate next question
+          const coverageAnalysis = await this.service.coverageAI.analyzeCoverageIntelligently(
+            "[LONG RESPONSE - TIME LIMIT]",
+            session.coverage,
+            session.config.intelligenceContext.focusAreas,
+            session.conversation
+          );
+
+          const nextQuestion = await this.service.questionAI.generateIntelligentQuestion(
+            session,
+            coverageAnalysis,
+            { previousQuestions: session.conversation.filter(e => e.type === 'interviewer') }
+          );
+
+          // Send polite interrupt message
+          socket.emit('interviewer_message', {
+            type: 'polite_interrupt',
+            content: "Thank you for that detailed answer. Let's move on to the next question.",
+            timestamp: new Date().toISOString(),
+            sessionId
           });
 
-          // If it's a prompt, also send as interviewer message
-          if (silenceResponse.action === 'silence_prompt') {
+          // Wait 2 seconds, then send next question
+          setTimeout(() => {
             socket.emit('interviewer_message', {
-              type: 'silence_prompt',
-              content: silenceResponse.content,
+              type: 'question',
+              content: nextQuestion.question,
               timestamp: new Date().toISOString(),
-              sessionId
+              sessionId,
+              metadata: {
+                reason: 'time_limit',
+                previousDuration: duration,
+                targetAreas: nextQuestion.targetAreas
+              }
             });
-          }
+
+            // Store in conversation
+            this.service.sessionManager.addConversationEntry(sessionId, {
+              type: 'interviewer',
+              content: nextQuestion.question,
+              timestamp: new Date().toISOString(),
+              metadata: {
+                aiGenerated: true,
+                targetAreas: nextQuestion.targetAreas,
+                reasoning: 'Time limit reached - moving forward'
+              }
+            });
+
+            console.log(`✅ Sent next question after polite interrupt`);
+          }, 2000);
 
         } catch (error) {
-          console.error('❌ Failed to handle silence:', error.message);
+          console.error('❌ Failed to handle long speaking:', error.message);
           socket.emit('interview_error', {
-            error: 'Failed to handle silence',
+            error: 'Failed to handle long response',
             message: error.message
           });
         }
@@ -278,6 +378,9 @@ class IntelligentInterviewController {
 
         if (socket.sessionId) {
           try {
+            // Clean up inter-turn pause timer
+            this.resetInterTurnPauseTimer(socket, socket.sessionId);
+
             // Mark session as interrupted
             const session = await this.service.sessionManager.getSession(socket.sessionId);
             if (session && session.status === 'active') {
@@ -320,6 +423,34 @@ class IntelligentInterviewController {
       const timestamp = new Date().toISOString();
 
       switch (decision.action) {
+        case 'immediate_intervention':
+          // INTELLIGENT SYSTEM: Immediate help needed (< 1s response)
+          socket.emit('interviewer_message', {
+            type: 'intervention',
+            subtype: decision.interventionType,
+            content: decision.content,
+            reasoning: decision.reasoning,
+            urgency: decision.urgency,
+            timestamp,
+            sessionId,
+            lightweight: true
+          });
+          console.log(`🚨 [Immediate Intervention] ${decision.interventionType} - ${decision.urgency} urgency`);
+          break;
+
+        case 'continue_probing':
+          // INTELLIGENT SYSTEM or normal AI decision
+          socket.emit('interviewer_message', {
+            type: 'question',
+            content: decision.content,
+            reasoning: decision.reasoning,
+            timestamp,
+            sessionId,
+            lightweight: decision.metadata?.lightweight || false
+          });
+          console.log(`💬 [Continue Probing] ${decision.metadata?.lightweight ? '(Optimized)' : '(Full AI)'}`);
+          break;
+
         case 'question':
           // Send new question to candidate
           socket.emit('interviewer_message', {
@@ -488,6 +619,160 @@ class IntelligentInterviewController {
         error: error.message,
         timestamp: new Date().toISOString()
       };
+    }
+  }
+
+  /**
+   * Start monitoring inter-turn pauses (silence BETWEEN complete responses)
+   * V3 handles turn detection, this monitors silence after interviewer asks next question
+   */
+  /**
+   * INTELLIGENT SILENCE MONITORING
+   * Replaces dumb fixed timers with smart, context-aware timing
+   * - No timers for excellent responses (quality >= 75)
+   * - Faster intervention for struggling responses
+   * - Adaptive timing based on response quality
+   */
+  async startIntelligentSilenceMonitoring(socket, sessionId, decision) {
+    // Clear any existing timers
+    this.resetInterTurnPauseTimer(socket, sessionId);
+
+    // OPTIMIZATION: Skip timers for excellent responses (move on immediately)
+    if (decision.metadata?.responseQuality >= 75) {
+      console.log('⚡ [Smart Silence] No monitoring needed - excellent response (quality: ' + decision.metadata.responseQuality + ')');
+      return;
+    }
+
+    // OPTIMIZATION: Skip timers for immediate interventions (already handled)
+    if (decision.action === 'immediate_intervention') {
+      console.log('⚡ [Smart Silence] No monitoring needed - immediate intervention already sent');
+      return;
+    }
+
+    // Get session for adaptive timing
+    const session = await this.service.sessionManager.getSession(sessionId);
+    const complexity = session?.currentQuestionContext?.complexity || 'medium';
+    const responseQuality = decision.metadata?.responseQuality || 50;
+
+    // ADAPTIVE TIMING based on response quality
+    let baseThresholds;
+    if (responseQuality >= 60) {
+      // Good response - standard waiting (rarely needs help)
+      baseThresholds = {
+        stage1: 40000, // 40s - longer patience
+        stage2: 70000, // 70s
+        stage3: 100000 // 100s
+      };
+      console.log('🟢 [Smart Silence] Good quality response - extended patience');
+    } else if (responseQuality >= 40) {
+      // Medium response - moderate waiting
+      baseThresholds = {
+        stage1: 30000, // 30s - standard
+        stage2: 60000, // 60s
+        stage3: 90000  // 90s
+      };
+      console.log('🟡 [Smart Silence] Medium quality response - standard timing');
+    } else {
+      // Poor response - faster help
+      baseThresholds = {
+        stage1: 20000, // 20s - faster intervention
+        stage2: 45000, // 45s
+        stage3: 70000  // 70s
+      };
+      console.log('🔴 [Smart Silence] Poor quality response - faster help');
+    }
+
+    // Apply complexity multipliers
+    const multipliers = {
+      simple: 0.8,
+      medium: 1.0,
+      complex: 1.3
+    };
+
+    const multiplier = multipliers[complexity] || 1.0;
+    const thresholds = {
+      stage1: Math.floor(baseThresholds.stage1 * multiplier),
+      stage2: Math.floor(baseThresholds.stage2 * multiplier),
+      stage3: Math.floor(baseThresholds.stage3 * multiplier)
+    };
+
+    console.log(`⏱️ [Smart Silence] Intelligent monitoring for ${sessionId}:`, {
+      quality: responseQuality,
+      complexity,
+      stage1: `${thresholds.stage1/1000}s`,
+      stage2: `${thresholds.stage2/1000}s`,
+      stage3: `${thresholds.stage3/1000}s`
+    });
+
+    // REMOVED: No automatic silence stage timers for MVP - using manual "Next" button only
+    // const timers = { stage1: ..., stage2: ..., stage3: ... };
+    // socket.interTurnTimers.set(sessionId, timers);
+  }
+
+  /**
+   * OLD FIXED TIMER METHOD (kept for fallback)
+   */
+  async startInterTurnPauseMonitoring(socket, sessionId) {
+    // Clear any existing timers
+    this.resetInterTurnPauseTimer(socket, sessionId);
+
+    // Get question complexity for adaptive timing
+    const session = await this.service.sessionManager.getSession(sessionId);
+    const complexity = session?.currentQuestionContext?.complexity || 'medium';
+
+    // Base thresholds - Human-like patience (30s, 60s, 90s)
+    const baseThresholds = {
+      stage1: 30000, // 30s - patient waiting
+      stage2: 60000, // 60s - help offer
+      stage3: 90000  // 90s - rephrase
+    };
+
+    // Complexity multipliers (simple questions need less time)
+    const multipliers = {
+      simple: 0.8,    // 24s, 48s, 72s
+      medium: 1.0,    // 30s, 60s, 90s
+      complex: 1.3    // 39s, 78s, 117s
+    };
+
+    const multiplier = multipliers[complexity] || 1.0;
+    const thresholds = {
+      stage1: Math.floor(baseThresholds.stage1 * multiplier),
+      stage2: Math.floor(baseThresholds.stage2 * multiplier),
+      stage3: Math.floor(baseThresholds.stage3 * multiplier)
+    };
+
+    console.log(`⏱️ [SilenceMonitoring] Starting progressive timers for ${sessionId}:`, {
+      complexity,
+      stage1: `${thresholds.stage1/1000}s`,
+      stage2: `${thresholds.stage2/1000}s`,
+      stage3: `${thresholds.stage3/1000}s`
+    });
+
+    // REMOVED: No automatic silence stage timers for MVP - using manual "Next" button only
+    // const timers = { stage1: ..., stage2: ..., stage3: ... };
+    // socket.interTurnTimers.set(sessionId, timers);
+  }
+
+  /**
+   * REMOVED: No automatic silence stage handling for MVP - using manual "Next" button only
+   */
+  // async handleSilenceStage(socket, sessionId, stage, silenceDuration) { ... }
+
+  /**
+   * Reset inter-turn pause timer when activity is detected
+   */
+  resetInterTurnPauseTimer(socket, sessionId) {
+    if (socket.interTurnTimers && socket.interTurnTimers.has(sessionId)) {
+      const timers = socket.interTurnTimers.get(sessionId);
+
+      // Clear all 3 stage timers
+      if (timers.stage1) clearTimeout(timers.stage1);
+      if (timers.stage2) clearTimeout(timers.stage2);
+      if (timers.stage3) clearTimeout(timers.stage3);
+
+      socket.interTurnTimers.delete(sessionId);
+      console.log(`🔇 [SilenceMonitoring] All 3 timers cleared for session: ${sessionId} (user activity detected)`);
+      console.log(`✅ Silence monitoring paused - waiting for next complete response`);
     }
   }
 }

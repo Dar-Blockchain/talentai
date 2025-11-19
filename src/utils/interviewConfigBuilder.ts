@@ -133,7 +133,7 @@ export function buildInterviewConfigFromURL(params: URLParams): InterviewConfig 
       interviewGoal: getInterviewGoal(interviewType, params)
     },
     models: {
-      fastModel: 'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
+      fastModel: 'meta-llama/Llama-Guard-3-11B-Vision-Turbo',
       thinkingModel: 'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',
       analysisModel: 'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo'
     },

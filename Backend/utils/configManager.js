@@ -8,7 +8,7 @@ class ConfigManager {
     this.defaultConfigs = {
       HR_INTERVIEW: {
         models: {
-          fastModel: "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
+          fastModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
           thinkingModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
           analysisModel: "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
         },
@@ -107,7 +107,7 @@ class ConfigManager {
       },
       SALARY_INTERVIEW: {
         models: {
-          fastModel: "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
+          fastModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
           thinkingModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
           analysisModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
         },
@@ -150,7 +150,7 @@ class ConfigManager {
       },
       SOFT_SKILL: {
         models: {
-          fastModel: "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
+          fastModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
           thinkingModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
           analysisModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo"
         },
@@ -193,7 +193,7 @@ class ConfigManager {
       },
       PSYCHOTECHNIC: {
         models: {
-          fastModel: "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
+          fastModel: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
           thinkingModel: "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
           analysisModel: "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo"
         },
