@@ -1,7 +1,7 @@
 const USER_ROLES = Object.freeze({
   COMPANY: "Company",
   JURY: "jury",
-  CANDIDAT: "Candidate",
+  CANDIDAT: "Candidat",
   ADMIN: "Admin",
 });
 
