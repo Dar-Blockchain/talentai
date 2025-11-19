@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
+import { AssemblyAI } from 'assemblyai';
 import {
   AppBar,
   Toolbar,
@@ -589,7 +590,7 @@ const IntelligentInterviewTest = () => {
       interviewGoal: 'Assess behavioral competencies and cultural fit'
     },
     models: {
-      fastModel: 'meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo',
+      fastModel: 'meta-llama/Llama-Guard-3-11B-Vision-Turbo',
       thinkingModel: 'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',
       analysisModel: 'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo'
     },
@@ -634,12 +635,27 @@ const IntelligentInterviewTest = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const transcriberRef = useRef<any | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const sessionIdRef = useRef<string | null>(null); // Ref to avoid stale closure in event handlers
 
   // Enhanced Transcript Management
   const [transcriptChunks, setTranscriptChunks] = useState<string[]>([]);
   const [finalTranscriptSent, setFinalTranscriptSent] = useState(false);
   const [lastFinalTranscriptTime, setLastFinalTranscriptTime] = useState<number>(0);
   const transcriptDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Speaking Duration Tracking (to prevent premature interruptions)
+  const [speakingStartTime, setSpeakingStartTime] = useState<number | null>(null);
+  const [lastSpeakingTime, setLastSpeakingTime] = useState<number | null>(null);
+  const speakingStartTimeRef = useRef<number | null>(null); // Ref for closure access
+  const minimumSpeakingDuration = 1000; // 1 second minimum (AssemblyAI handles most turn detection)
+
+  // Answer Accumulation System (prevent mid-speech interruptions)
+  const [accumulatedTurns, setAccumulatedTurns] = useState<string[]>([]);
+  const [lastTurnTime, setLastTurnTime] = useState<number | null>(null);
+  const accumulatedTurnsRef = useRef<string[]>([]); // Ref for closure access
+  const MAX_ACCUMULATED_TURNS = 10; // Maximum turns to accumulate before forcing send
 
   // Camera States
   const [cameraStatus, setCameraStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied' | 'error'>('idle');
@@ -665,7 +681,7 @@ const IntelligentInterviewTest = () => {
   // Adaptive Silence Thresholds
   const [baseSilenceThreshold] = useState(5000); // 5 seconds base
   const [adaptiveSilenceThreshold, setAdaptiveSilenceThreshold] = useState(5000);
-  const readingTimeBuffer = 10000; // 10 seconds reading time after new question
+  const readingTimeBuffer = 10000; // 10 seconds reading time after new question - give candidate time to listen and think
   const naturalPauseThreshold = 2000; // 2 seconds for natural pauses
   const maxNaturalPauses = 3; // Maximum natural pauses before considering complete
 
@@ -725,57 +741,361 @@ const IntelligentInterviewTest = () => {
 
   // Generate temporary token for Assembly AI streaming
   const generateStreamingToken = async (): Promise<string> => {
-    const response = await fetch('/api/session', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ action: 'generate_token' }),
-    });
+    console.log('🔑 [INIT-1] Requesting AssemblyAI V3 temporary token...');
 
-    if (!response.ok) {
-      throw new Error('Failed to generate streaming token');
+    try {
+      const response = await fetch('/api/session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'generate_token' }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ [INIT-1-FAIL] Token generation failed:', response.status, errorText);
+        throw new Error(`Failed to generate streaming token: ${response.status} - ${errorText}`);
+      }
+
+      const { token } = await response.json();
+      console.log('✅ [INIT-1-SUCCESS] Token received, length:', token?.length || 0);
+      return token;
+    } catch (error) {
+      console.error('❌ [INIT-1-ERROR] Exception during token generation:', error);
+      throw error;
     }
-
-    const { token } = await response.json();
-    return token;
   };
 
-  // Setup Assembly AI streaming transcription
+  // Extract technical keywords for word boost
+  const extractTechnicalKeywords = (config: InterviewConfig): string[] => {
+    const baseKeywords = [
+      'JavaScript', 'TypeScript', 'Python', 'Java', 'C++', 'Go', 'Rust', 'PHP', 'Ruby', 'Swift',
+      'React', 'Angular', 'Vue', 'Node', 'Express', 'Next', 'Django', 'Flask', 'Spring',
+      'API', 'REST', 'GraphQL', 'WebSocket', 'microservices', 'monolith',
+      'Docker', 'Kubernetes', 'CI/CD', 'Jenkins', 'GitHub Actions',
+      'AWS', 'Azure', 'GCP', 'cloud', 'serverless', 'Lambda',
+      'MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'Elasticsearch', 'DynamoDB',
+      'algorithm', 'data structure', 'design pattern', 'SOLID', 'DRY',
+      'frontend', 'backend', 'fullstack', 'DevOps', 'SRE',
+      'authentication', 'authorization', 'OAuth', 'JWT', 'session',
+      'testing', 'unit test', 'integration test', 'TDD', 'BDD',
+      'Agile', 'Scrum', 'Kanban', 'sprint', 'standup'
+    ];
+
+    // Add job-specific keywords from interview config
+    const contextText = [
+      config.testReason,
+      config.context.targetRole,
+      config.context.targetCompany
+    ].filter(Boolean).join(' ');
+
+    if (contextText) {
+      const customKeywords = contextText
+        .split(/\s+/)
+        .filter((word: string) => word.length > 4 && word.length < 20)
+        .slice(0, 20);
+      return [...baseKeywords, ...customKeywords].slice(0, 100);
+    }
+
+    return baseKeywords.slice(0, 100);
+  };
+
+  // Get optimal turn detection config for AssemblyAI V3 based on question context
+  const getTurnDetectionConfig = (questionType: string = 'general') => {
+    // Quick responses (yes/no, simple questions) - CONSERVATIVE to prevent interruptions
+    if (questionType === 'quick_response' || questionType === 'confirmation') {
+      return {
+        end_of_turn_confidence_threshold: 0.7,  // Increased from 0.5 to reduce false positives
+        min_end_of_turn_silence_when_confident: 400,  // Increased from 200ms to allow thinking
+        max_turn_silence: 2500,  // Increased from 1.5s - allow pauses even for short answers
+      };
+    }
+
+    // Technical deep-dive (longer explanations expected) - VERY CONSERVATIVE turn detection
+    if (questionType === 'technical' || questionType === 'system_design' || questionType === 'coding') {
+      return {
+        end_of_turn_confidence_threshold: 0.85,  // Increased from 0.8 for more certainty
+        min_end_of_turn_silence_when_confident: 900,  // Increased from 600ms for technical thinking pauses
+        max_turn_silence: 10000,  // Increased from 5s to 10s - allow very long pauses for technical thinking
+      };
+    }
+
+    // Behavioral/storytelling (natural pauses in stories) - MORE CONSERVATIVE
+    if (questionType === 'behavioral' || questionType === 'experience') {
+      return {
+        end_of_turn_confidence_threshold: 0.75,  // Increased from 0.65
+        min_end_of_turn_silence_when_confident: 700,  // Increased from 500ms - stories have pauses
+        max_turn_silence: 8000,  // Increased from 4s to 8s - allow longer narrative thinking time
+      };
+    }
+
+    // Default VERY CONSERVATIVE settings to prevent interruptions during natural pauses
+    return {
+      end_of_turn_confidence_threshold: 0.78,  // Increased from 0.7 to reduce false turn detections
+      min_end_of_turn_silence_when_confident: 800,  // Increased from 500ms - more buffer before declaring turn end
+      max_turn_silence: 8000,  // Increased from 4.5s to 8s - allow much longer pauses without triggering turn detection
+    };
+  };
+
+  // Setup Assembly AI Universal-Streaming with SDK
   const setupStreamingTranscription = async (stream: MediaStream) => {
     try {
+      console.log('🔧 [INIT-B] Starting AssemblyAI V3 streaming setup...');
       setIsConnecting(true);
+      mediaStreamRef.current = stream;
 
-      // Generate token
-      const token = await generateStreamingToken();
-      setStreamingToken(token);
+      // Generate secure temporary token (server-side API call)
+      const tempToken = await generateStreamingToken();
 
-      // Setup audio context
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
+      // Create AssemblyAI client (dummy API key needed for client initialization)
+      // Real auth happens via token parameter in transcriber()
+      console.log('🔧 [INIT-B-2] Creating AssemblyAI client...');
+      const client = new AssemblyAI({
+        apiKey: 'dummy' // Required by SDK, but not used (token-based auth in transcriber)
+      });
+      console.log('✅ [INIT-B-2] AssemblyAI client created');
+
+      // Reuse existing audio context from initializeAudio() to avoid conflicts
+      // If not available, create new one (shouldn't happen in normal flow)
+      console.log('🔊 [INIT-B-3] Setting up audio context...');
+      const isReusingContext = !!audioContextRef.current;
+      const audioContext = audioContextRef.current || new (window.AudioContext || (window as any).webkitAudioContext)({
         sampleRate: 16000,
       });
-      audioContextRef.current = audioContext;
 
+      if (isReusingContext) {
+        console.log('✅ [INIT-B-3] REUSING existing AudioContext (correct!)');
+        console.log('   - Context state:', audioContext.state);
+        console.log('   - Sample rate:', audioContext.sampleRate);
+      } else {
+        console.log('⚠️ [INIT-B-3] Creating NEW AudioContext (unexpected - may cause conflicts)');
+        audioContextRef.current = audioContext;
+      }
+
+      console.log('🎚️ [INIT-B-4] Creating audio processing chain...');
       const source = audioContext.createMediaStreamSource(stream);
       const processor = audioContext.createScriptProcessor(4096, 1, 1);
       processorRef.current = processor;
+      console.log('✅ [INIT-B-4] Audio processing chain created');
+      console.log('   - Buffer size:', 4096);
+      console.log('   - Input channels:', 1);
+      console.log('   - Output channels:', 1);
 
-      // Connect WebSocket
-      const ws = new WebSocket(
-        `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}`
-      );
-      wsRef.current = ws;
+      // Get V3 turn detection config based on question type
+      console.log('⚙️ [INIT-B-5] Configuring turn detection...');
+      const turnDetectionConfig = getTurnDetectionConfig(currentMessage?.type || 'general');
+      console.log('   - Turn detection config:', turnDetectionConfig);
 
-      ws.onopen = () => {
-        console.log('🎤 Assembly AI streaming connection opened');
+      // CRITICAL: Use browser's ACTUAL sample rate, not hardcoded value
+      // Browser AudioContext often defaults to 48000 Hz, not 16000 Hz
+      const actualSampleRate = audioContextRef.current?.sampleRate || 16000;
+      console.log('⚠️ [INIT-B-5.5] CRITICAL - Sample rate configuration:');
+      console.log(`   - Browser AudioContext rate: ${audioContextRef.current?.sampleRate || 'unknown'} Hz`);
+      console.log(`   - AssemblyAI will receive: ${actualSampleRate} Hz`);
+      console.log('   - ⚠️ These MUST match or speech detection will fail!');
+
+      // Configure STREAMING transcriber (V3 API) for advanced turn detection
+      console.log('📡 [INIT-B-6] Creating STREAMING transcriber (V3 API)...');
+      console.log('   - API: client.streaming (V3)');
+      console.log('   - Auto endpoint: wss://streaming.assemblyai.com/v3/ws');
+      console.log(`   - Sample rate: ${actualSampleRate} Hz (ACTUAL browser rate)`);
+      console.log('   - Encoding: pcm_s16le');
+
+      const transcriber = client.streaming.transcriber({
+        token: tempToken,
+        // No realtimeUrl needed - streaming uses v3 endpoint automatically
+        sampleRate: actualSampleRate, // Use ACTUAL browser sample rate, not hardcoded 16000
+        encoding: 'pcm_s16le',
+
+        // Accuracy improvements - streaming uses keytermsPrompt instead of wordBoost
+        keytermsPrompt: extractTechnicalKeywords(interviewConfig),
+
+        // V3 Turn Detection parameters (native to streaming API)
+        endOfTurnConfidenceThreshold: turnDetectionConfig.end_of_turn_confidence_threshold,
+        minEndOfTurnSilenceWhenConfident: turnDetectionConfig.min_end_of_turn_silence_when_confident,
+        maxTurnSilence: turnDetectionConfig.max_turn_silence,
+      });
+
+      transcriberRef.current = transcriber;
+      console.log('✅ [INIT-B-6] Transcriber created and stored in ref');
+
+      console.log('📎 [INIT-B-7] Attaching event handlers...');
+
+      // 🎯 Handle turn events from V3 streaming API
+      // Streaming API uses 'turn' events for both partial and final transcripts
+      transcriber.on('turn', (turn: any) => {
+        const text = turn.transcript?.trim();
+        if (!text) return;
+
+        console.log('📝 [TURN] Turn event received:');
+        console.log('   - Text:', text.slice(0, 100));
+        console.log('   - End of turn:', turn.end_of_turn);
+        console.log('   - Confidence:', turn.end_of_turn_confidence);
+
+        // Track speaking start time on first partial transcript
+        // Use ref to avoid React state race condition
+        if (!speakingStartTimeRef.current) {
+          const now = Date.now();
+          setSpeakingStartTime(now);
+          speakingStartTimeRef.current = now; // Primary source of truth
+          // Cancel reading time immediately when user starts speaking
+          setQuestionReadingTime(null);
+          setIsInReadingTime(false);
+          console.log('🎤 Speaking started - reading time cancelled');
+        }
+        setLastSpeakingTime(Date.now());
+
+        // Check if speaking too long (3 minutes max per response)
+        const MAX_SPEAKING_DURATION = 180000; // 3 minutes
+        if (speakingStartTimeRef.current) {
+          const currentSpeakingDuration = Date.now() - speakingStartTimeRef.current;
+          if (currentSpeakingDuration > MAX_SPEAKING_DURATION) {
+            console.warn(`⏱️  Speaking too long: ${Math.round(currentSpeakingDuration / 1000)}s - sending accumulated answer + interrupt`);
+
+            // First, send any accumulated answer
+            if (accumulatedTurnsRef.current.length > 0) {
+              console.log(`📤 Sending ${accumulatedTurnsRef.current.length} accumulated turns before interrupt`);
+              sendAccumulatedAnswer();
+            }
+
+            // Then send event to backend to politely interrupt
+            if (socketRef.current) {
+              socketRef.current.emit('speaking_too_long', {
+                duration: currentSpeakingDuration
+              });
+            }
+
+            // Reset speaking timer to avoid multiple interrupts
+            speakingStartTimeRef.current = null;
+            setSpeakingStartTime(null);
+            return; // Backend will handle moving to next question
+          }
+        }
+
+        // Update UI with current transcript (partial or final)
+        setCurrentTranscript(text.slice(-200));
+        setSpeechPhase('speaking');
+        setAgentState('waiting');  // Keep in waiting while speaking
+        setAgentMessage('Listening to your answer...');
+        addTranscriptDebugLog(`📝 Partial: "${text.slice(0, 50)}..."`);
+
+        // Only process as final when end_of_turn is true
+        if (turn.end_of_turn) {
+          const finalText = text;
+          const now = Date.now();
+          // Use ref for accurate duration calculation (avoids React state race condition)
+          const speakingDuration = speakingStartTimeRef.current ? now - speakingStartTimeRef.current : 0;
+
+          console.log('🎯 [TURN-COMPLETE] End of turn detected!');
+          console.log('   - Final text length:', finalText.length);
+          console.log('   - Confidence:', turn.end_of_turn_confidence);
+          console.log('   - Speaking duration:', speakingDuration, 'ms');
+          addTranscriptDebugLog(`✅ Turn complete: conf=${(turn.end_of_turn_confidence * 100).toFixed(1)}%`);
+
+          // Check minimum speaking duration to prevent premature turn detection
+          if (speakingDuration < minimumSpeakingDuration) {
+            console.warn('⚠️ Speaking duration too short, ignoring turn:', speakingDuration, 'ms');
+            addTranscriptDebugLog(`⏱️ Too short: ${speakingDuration}ms < ${minimumSpeakingDuration}ms`);
+            return; // Don't process, wait for more speech
+          }
+
+          // Filter VERY low-confidence turns with RECOVERY mechanism
+          // Lowered from 60% to 20% because AssemblyAI often has correct text despite lower confidence
+          if (turn.end_of_turn_confidence < 0.2) {
+            console.warn('⚠️ Very low confidence turn detected:', turn.end_of_turn_confidence);
+            addTranscriptDebugLog(`⚠️ Very low confidence: ${(turn.end_of_turn_confidence * 100).toFixed(1)}%`);
+
+            // RECOVERY: Keep state to preserve speaking duration for next attempt
+            // Don't reset speakingStartTime - let it accumulate across low confidence turns
+            setAgentState('waiting');
+            setAgentMessage('Could not clearly hear you. Please continue speaking...');
+
+            showNotification('Speech very unclear - please speak more clearly', 'warning');
+            // Don't return immediately - allow accumulation for retry
+            setAccumulatedTranscript(finalText);
+            return;
+          }
+
+          // Log confidence for monitoring (even if accepted)
+          if (turn.end_of_turn_confidence < 0.6) {
+            console.log(`ℹ️ Accepted turn with moderate confidence: ${(turn.end_of_turn_confidence * 100).toFixed(1)}%`);
+            addTranscriptDebugLog(`✓ Accepted: ${(turn.end_of_turn_confidence * 100).toFixed(1)}% confidence`);
+          }
+
+          // Prevent duplicate processing
+          if (finalTranscriptSent) {
+            console.log('⚠️ [TURN-SKIP] Already processed this turn');
+            return;
+          }
+
+          // Check if in reading time
+          const isInReadingTime = questionReadingTime && (now - questionReadingTime < readingTimeBuffer);
+
+          if (isInReadingTime) {
+            console.log('📖 Still in reading time, transcript saved but not sent');
+            setAccumulatedTranscript(finalText);
+            setCurrentTranscript(finalText.slice(-200));
+            setAgentState('waiting');
+            setAgentMessage(`Reading time: ${Math.ceil((readingTimeBuffer - (now - questionReadingTime)) / 1000)}s remaining`);
+            setSpeechPhase('reading');
+            return;
+          }
+
+          // ========== SIMPLIFIED ACCUMULATION LOGIC ==========
+          // Just accumulate turns silently - NO TIMERS
+          // Silence detection (20s) will trigger sending when user truly stops
+          console.log('✅ [ACCUMULATION] Turn complete - adding to accumulation buffer');
+          console.log(`   - Current buffer size: ${accumulatedTurns.length} turns`);
+          console.log(`   - This turn length: ${finalText.length} chars`);
+
+          // Add this turn to the accumulation buffer
+          const newTurns = [...accumulatedTurns, finalText];
+          setAccumulatedTurns(newTurns); // For UI
+          accumulatedTurnsRef.current = newTurns; // For closure access
+          setLastTurnTime(now);
+          setAccumulatedTranscript(finalText);
+          setCurrentTranscript(finalText.slice(-200));
+
+          // Visual feedback: Stay in waiting state (user may continue)
+          setAgentState('waiting');
+          setAgentMessage('Listening to your answer...');
+          setSpeechPhase('paused');
+
+          addTranscriptDebugLog(`📥 Turn ${accumulatedTurns.length + 1} accumulated (${finalText.length} chars)`);
+
+          // Check if we've hit the maximum accumulated turns (force send)
+          if (accumulatedTurns.length + 1 >= MAX_ACCUMULATED_TURNS) {
+            console.warn(`⚠️  Max accumulated turns reached (${MAX_ACCUMULATED_TURNS}) - forcing send`);
+            addTranscriptDebugLog(`⚠️ Max turns reached - forcing send`);
+            sendAccumulatedAnswer();
+            return;
+          }
+
+          // NO TIMER - Let silence detection handle sending after 20s of true silence
+        }
+      });
+      console.log('   ✓ turn handler attached');
+
+      // Handle connection events
+      let audioPacketsSent = 0;
+      let lastLogTime = Date.now();
+
+      transcriber.on('open', ({ id: aaiSessionId, expires_at }: any) => {
+        console.log('🎉 [CONNECTED] AssemblyAI Streaming WebSocket connected!');
+        console.log('   - Session ID:', aaiSessionId);
+        console.log('   - Expires at:', new Date(expires_at * 1000).toISOString());
+        console.log('   - Endpoint: V3 streaming (wss://streaming.assemblyai.com/v3/ws)');
         setIsConnecting(false);
 
         // Connect audio processing
+        console.log('🔗 [AUDIO-CHAIN] Connecting audio processing chain...');
         source.connect(processor);
         processor.connect(audioContext.destination);
+        console.log('✅ [AUDIO-CHAIN] Audio chain connected');
 
         processor.onaudioprocess = (event) => {
-          if (ws.readyState === WebSocket.OPEN) {
+          if (transcriber) {
             const inputBuffer = event.inputBuffer.getChannelData(0);
 
             // Convert float32 to int16
@@ -784,134 +1104,110 @@ const IntelligentInterviewTest = () => {
               int16Buffer[i] = Math.max(-32768, Math.min(32767, inputBuffer[i] * 32767));
             }
 
-            ws.send(int16Buffer.buffer);
+            transcriber.sendAudio(int16Buffer.buffer);
+            audioPacketsSent++;
+
+            // Log audio streaming status every 5 seconds
+            const now = Date.now();
+            if (now - lastLogTime > 5000) {
+              console.log(`📡 [AUDIO-STREAM] Streaming active - ${audioPacketsSent} packets sent`);
+              lastLogTime = now;
+            }
           }
         };
-      };
 
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+        console.log('🎧 [AUDIO-PROCESS] Audio processor started - sending data to AssemblyAI');
+        addTranscriptDebugLog('🎤 Streaming started');
+      });
+      console.log('   ✓ open handler attached');
 
-        if (data.message_type === 'PartialTranscript' || data.message_type === 'FinalTranscript') {
-          const text = data.text?.trim();
-          if (text) {
-            // Reset silence detection when we hear speech
-            if (silenceStartTime) {
-              setSilenceStartTime(null);
-              setCurrentSilenceDuration(0);
-              setIsTrueSilence(false);
-              setSpeechPhase('speaking');
-              console.log('🎤 Speech detected, resetting silence timer');
-            }
-
-            const now = Date.now();
-            const isInReadingTime = questionReadingTime && (now - questionReadingTime < readingTimeBuffer);
-
-            if (data.message_type === 'FinalTranscript') {
-              addTranscriptDebugLog(`🎯 Final transcript segment: "${text}"`);
-
-              // Add to transcript chunks for better management
-              setTranscriptChunks(prev => {
-                const newChunks = [...prev, text];
-                addTranscriptDebugLog(`📦 Total chunks: ${newChunks.length}`);
-                return newChunks;
-              });
-
-              // Update accumulated transcript
-              setAccumulatedTranscript(prev => {
-                const newAccumulated = prev ? `${prev} ${text}` : text;
-                addTranscriptDebugLog(`📝 Accumulated length: ${newAccumulated.length} chars`);
-                return newAccumulated;
-              });
-
-              // Update current transcript for display (show recent chunks)
-              setCurrentTranscript(prev => {
-                const combined = prev ? `${prev} ${text}` : text;
-                // Keep only last 200 characters for display
-                return combined.length > 200 ? '...' + combined.slice(-200) : combined;
-              });
-
-              // Update last final transcript time for debouncing
-              setLastFinalTranscriptTime(now);
-              setFinalTranscriptSent(false);
-
-              if (isInReadingTime) {
-                console.log('📖 Still in reading time, transcript saved but not sent');
-                setAgentState('waiting');
-                setAgentMessage(`Reading time: ${Math.ceil((readingTimeBuffer - (now - questionReadingTime)) / 1000)}s remaining`);
-                setSpeechPhase('reading');
-              } else {
-                // Start silence detection for this response with debouncing
-                if (transcriptDebounceRef.current) {
-                  clearTimeout(transcriptDebounceRef.current);
-                }
-
-                transcriptDebounceRef.current = setTimeout(() => {
-                  if (!finalTranscriptSent) {
-                    setSilenceStartTime(Date.now());
-                    setAgentState('ready');
-                    setAgentMessage('Listening for your complete response...');
-                    setSpeechPhase('thinking');
-                    console.log('🔊 Starting silence detection for response');
-                  }
-                }, 1000); // 1 second debounce for final transcripts
-              }
-
-            } else {
-              // For partial transcripts, just update current display
-              setCurrentTranscript(prev => {
-                // Show accumulated + current partial
-                const fullText = accumulatedTranscript ? `${accumulatedTranscript} ${text}` : text;
-                return fullText.length > 200 ? '...' + fullText.slice(-200) : fullText;
-              });
-
-              // Indicate active speech
-              setSpeechPhase('speaking');
-            }
-          }
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('❌ Assembly AI WebSocket error:', error);
+      transcriber.on('error', (error: any) => {
+        console.error('❌ [ERROR] AssemblyAI Error:', error);
+        console.error('   - Message:', error.message || 'No message');
+        console.error('   - Type:', error.type || 'Unknown');
         setIsConnecting(false);
-        showNotification('Transcription service error', 'error');
-      };
+        showNotification('Speech recognition error. Please try again.', 'error');
+        addTranscriptDebugLog(`❌ Error: ${error.message || error}`);
+      });
+      console.log('   ✓ error handler attached');
 
-      ws.onclose = () => {
-        console.log('🔌 Assembly AI WebSocket connection closed');
+      transcriber.on('close', () => {
+        console.log('🔌 [CLOSED] AssemblyAI connection closed');
+        console.log('   - Total packets sent:', audioPacketsSent);
         setIsConnecting(false);
-      };
+        addTranscriptDebugLog('🔌 Streaming stopped');
+      });
+      console.log('   ✓ close handler attached');
+
+      console.log('✅ [INIT-B-7] All event handlers attached');
+
+      // Start transcriber
+      console.log('🚀 [INIT-B-8] Connecting to AssemblyAI WebSocket...');
+      await transcriber.connect();
+      console.log('✅ [INIT-B-8] Connection initiated (waiting for "open" event)');
 
     } catch (error) {
-      console.error('❌ Assembly AI streaming setup error:', error);
+      console.error('❌ [INIT-B-ERROR] Setup failed at some step:', error);
+      console.error('   - Error type:', error instanceof Error ? error.constructor.name : typeof error);
+      console.error('   - Error message:', error instanceof Error ? error.message : String(error));
+      console.error('   - Stack trace:', error instanceof Error ? error.stack : 'N/A');
       setIsConnecting(false);
-      showNotification('Failed to setup transcription service', 'error');
+      showNotification('Failed to setup speech recognition', 'error');
+      addTranscriptDebugLog(`❌ Setup failed: ${(error as Error).message}`);
       throw error;
     }
+
+    console.log('✅ [INIT-B-COMPLETE] AssemblyAI V3 setup complete!');
   };
 
   // Cleanup Assembly AI connections
-  const cleanupAssemblyAI = () => {
+  const cleanupAssemblyAI = async () => {
     try {
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-        console.log('🔌 Assembly AI WebSocket closed');
+      // Close SDK transcriber
+      if (transcriberRef.current) {
+        try {
+          await transcriberRef.current.close();
+          console.log('✅ AssemblyAI transcriber closed');
+        } catch (error) {
+          console.error('Error closing transcriber:', error);
+        }
+        transcriberRef.current = null;
       }
 
+      // Disconnect audio processor
       if (processorRef.current) {
-        processorRef.current.disconnect();
+        try {
+          processorRef.current.disconnect();
+        } catch (error) {
+          console.error('Error disconnecting processor:', error);
+        }
         processorRef.current = null;
       }
 
+      // Close audio context
       if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-        audioContextRef.current.close();
+        try {
+          await audioContextRef.current.close();
+        } catch (error) {
+          console.error('Error closing audio context:', error);
+        }
         audioContextRef.current = null;
       }
 
-      setStreamingToken(null);
+      // Stop media stream
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current = null;
+      }
+
+      // Clean up old WebSocket ref (if any)
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+
       setIsConnecting(false);
+      console.log('🧹 AssemblyAI cleanup complete');
     } catch (error) {
       console.error('⚠️ Error during Assembly AI cleanup:', error);
     }
@@ -1003,6 +1299,7 @@ const IntelligentInterviewTest = () => {
     socket.on('interview_started', (data) => {
       console.log('🚀 Interview started:', data);
       setSessionId(data.sessionId);
+      sessionIdRef.current = data.sessionId; // Sync ref for event handlers
       setInterviewStatus('active');
       setDuration(data.config.duration * 60 * 1000); // Convert to milliseconds
 
@@ -1210,55 +1507,35 @@ const IntelligentInterviewTest = () => {
     };
   }, []);
 
-  // Smart Silence Detection Timer
+  // Reset state when new question arrives (AssemblyAI turn detection handles silence)
   useEffect(() => {
-    let silenceTimer: NodeJS.Timeout | null = null;
+    if (currentMessage) {
+      // Reset transcript state for new question
+      setAccumulatedTranscript('');
+      setCurrentTranscript('');
+      setFinalTranscriptSent(false);
+      setAgentState('waiting');
+      setAgentMessage('Listening to your answer...');
+      setSpeechPhase('reading');
 
-    if (silenceStartTime && interviewStatus === 'active') {
-      silenceTimer = setInterval(() => {
-        const now = Date.now();
-        const duration = now - silenceStartTime;
-        setCurrentSilenceDuration(duration);
+      // Reset speaking timers for new question
+      setSpeakingStartTime(null);
+      setLastSpeakingTime(null);
+      speakingStartTimeRef.current = null;
 
-        // Check if we've reached true silence threshold
-        if (duration >= adaptiveSilenceThreshold && !isTrueSilence) {
-          setIsTrueSilence(true);
-          setAgentState('processing');
-          setAgentMessage('Processing your response...');
+      // Reset silence detection for new question
+      setSilenceStartTime(null);
+      setIsTrueSilence(false);
+      setCurrentSilenceDuration(0);
 
-          // Send the COMPLETE accumulated response to the backend
-          if (socketRef.current && socketRef.current.connected && accumulatedTranscript.trim()) {
-            console.log('✅ True silence detected, sending COMPLETE response:', accumulatedTranscript);
-            console.log('📊 Response length:', accumulatedTranscript.length, 'characters');
+      // Reset accumulation buffer for new question
+      setAccumulatedTurns([]);
+      accumulatedTurnsRef.current = [];
+      setLastTurnTime(null);
 
-            socketRef.current.emit('candidate_response', {
-              sessionId,
-              transcript: accumulatedTranscript, // Send accumulated, not just current
-              timestamp: new Date().toISOString(),
-              isFinal: true,
-              silenceDuration: duration
-            });
-
-            // Update agent state
-            setAgentState('thinking');
-            setAgentMessage('AI is analyzing your response...');
-
-            // Reset silence detection and clear accumulated transcript for next question
-            setSilenceStartTime(null);
-            setCurrentSilenceDuration(0);
-            setAccumulatedTranscript(''); // Clear for next response
-            setCurrentTranscript(''); // Clear display
-          }
-        }
-      }, 100); // Check every 100ms for smooth UI updates
+      addTranscriptDebugLog(`🆕 New question received, state reset`);
     }
-
-    return () => {
-      if (silenceTimer) {
-        clearInterval(silenceTimer);
-      }
-    };
-  }, [silenceStartTime, isTrueSilence, accumulatedTranscript, sessionId, interviewStatus, adaptiveSilenceThreshold, speechPhase, naturalPauseCount, finalTranscriptSent]);
+  }, [currentMessage]);
 
   // Reading Time Management
   useEffect(() => {
@@ -1370,6 +1647,9 @@ const IntelligentInterviewTest = () => {
   // Initialize audio for recording and voice activity detection
   const initializeAudio = async () => {
     try {
+      console.log('🎤 [INIT-A] Starting audio initialization...');
+      console.log('🎤 [INIT-A-1] Requesting microphone access (getUserMedia)...');
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -1379,35 +1659,48 @@ const IntelligentInterviewTest = () => {
         }
       });
 
+      console.log('✅ [INIT-A-1] Microphone access granted');
+      console.log('   - Audio tracks:', stream.getAudioTracks().length);
+      console.log('   - Track label:', stream.getAudioTracks()[0]?.label || 'unknown');
+      console.log('   - Track enabled:', stream.getAudioTracks()[0]?.enabled);
+
       audioStreamRef.current = stream;
 
       // Setup audio context for voice activity detection
+      console.log('🔊 [INIT-A-2] Creating AudioContext for voice activity detection...');
       const audioContext = new AudioContext();
       audioContextRef.current = audioContext;
+      console.log('✅ [INIT-A-2] AudioContext created');
+      console.log('   - Sample rate:', audioContext.sampleRate);
+      console.log('   - State:', audioContext.state);
 
+      console.log('📊 [INIT-A-3] Setting up audio analyser...');
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
       analyserRef.current = analyser;
 
       const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
+      console.log('✅ [INIT-A-3] Audio analyser connected');
 
       setIsRecording(true);
+      console.log('🔍 [INIT-A-4] Starting voice activity detection...');
       startVoiceActivityDetection();
 
       // Initialize Assembly AI transcription with the same audio stream
+      console.log('🚀 [INIT-A-5] Initializing AssemblyAI V3 transcription...');
       try {
         await setupStreamingTranscription(stream);
-        console.log('✅ Assembly AI transcription initialized');
+        console.log('✅ [INIT-A-5] AssemblyAI transcription initialized successfully');
       } catch (transcriptionError) {
-        console.error('⚠️ Assembly AI setup failed, continuing without transcription:', transcriptionError);
+        console.error('❌ [INIT-A-5-FAIL] AssemblyAI setup failed:', transcriptionError);
         showNotification('Transcription service unavailable, but interview can continue', 'warning');
       }
 
-      console.log('✅ Audio initialized successfully');
+      console.log('✅ [INIT-A-COMPLETE] Audio initialization complete');
 
     } catch (error) {
-      console.error('❌ Failed to initialize audio:', error);
+      console.error('❌ [INIT-A-ERROR] Failed to initialize audio:', error);
       throw error;
     }
   };
@@ -1427,6 +1720,58 @@ const IntelligentInterviewTest = () => {
     console.log('🔍 TRANSCRIPT DEBUG:', logEntry);
   };
 
+  // Send accumulated answer to backend (after waiting for continuation)
+  const sendAccumulatedAnswer = () => {
+    const turns = accumulatedTurnsRef.current; // Always get current value from ref
+
+    if (turns.length === 0) {
+      console.log('⚠️ No accumulated turns to send');
+      return;
+    }
+
+    // Combine all accumulated turns into one complete answer
+    const completeAnswer = turns.join(' ');
+
+    console.log(`📤 [ACCUMULATION] Sending accumulated answer:`);
+    console.log(`   - Turn count: ${turns.length}`);
+    console.log(`   - Total length: ${completeAnswer.length} chars`);
+    console.log(`   - Content preview: "${completeAnswer.substring(0, 100)}..."`);
+
+    // NOW send to backend (only once with complete answer)
+    if (socketRef.current?.connected && sessionIdRef.current) {
+      setFinalTranscriptSent(true);
+
+      socketRef.current.emit('candidate_response', {
+        sessionId: sessionIdRef.current,
+        transcript: completeAnswer,
+        timestamp: new Date().toISOString(),
+        isFinal: true,
+        turnCount: turns.length,
+        speakingDuration: speakingStartTimeRef.current ? Date.now() - speakingStartTimeRef.current : 0,
+        accumulated: true
+      });
+
+      // Update UI to show AI is processing the complete answer
+      setAgentState('thinking');
+      setAgentMessage('AI is analyzing your complete response...');
+      setSpeechPhase('thinking');
+
+      addTranscriptDebugLog(`📤 Sent ${turns.length} accumulated turns (${completeAnswer.length} chars)`);
+
+      // Clear accumulated turns (both state and ref)
+      setAccumulatedTurns([]);
+      accumulatedTurnsRef.current = [];
+      setLastTurnTime(null);
+      setSpeakingStartTime(null);
+      speakingStartTimeRef.current = null;
+
+      // Clear current transcript after a delay
+      setTimeout(() => {
+        setCurrentTranscript('');
+      }, 1000);
+    }
+  };
+
   // Reset silence detection state
   const resetSilenceDetection = () => {
     setSilenceStartTime(null);
@@ -1439,10 +1784,26 @@ const IntelligentInterviewTest = () => {
     setTranscriptChunks([]);
     setFinalTranscriptSent(false);
 
+    // Reset speaking timers
+    setSpeakingStartTime(null);
+    setLastSpeakingTime(null);
+    speakingStartTimeRef.current = null;
+
+    // Clear accumulation buffer
+    setAccumulatedTurns([]);
+    accumulatedTurnsRef.current = [];
+    setLastTurnTime(null);
+
     // Clear any pending debounce timers
     if (transcriptDebounceRef.current) {
       clearTimeout(transcriptDebounceRef.current);
       transcriptDebounceRef.current = null;
+    }
+
+    // Clear silence timer
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
     }
 
     addSilenceDebugLog('🔄 Silence detection state reset');
@@ -1476,69 +1837,15 @@ const IntelligentInterviewTest = () => {
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
-    const detectVoiceActivity = () => {
-      if (interviewStatus !== 'active') return;
+    // REMOVED: Automatic silence detection - using manual "Next" button only for MVP
+    // const detectVoiceActivity = () => { ... }
+    // detectVoiceActivity();
 
-      analyser.getByteFrequencyData(dataArray);
-
-      // Calculate average volume
-      const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
-      const isCurrentlyActive = average > 30; // Threshold for voice activity
-
-      // Update voice activity state
-      if (isCurrentlyActive !== isVoiceActive) {
-        setIsVoiceActive(isCurrentlyActive);
-
-        // Send voice activity to WebSocket
-        if (socketRef.current) {
-          socketRef.current.emit('audio_stream', {
-            audioData: dataArray,
-            isActive: isCurrentlyActive
-          });
-        }
-      }
-
-      // Handle silence detection
-      if (isCurrentlyActive) {
-        // Reset silence timer
-        if (silenceTimerRef.current) {
-          clearTimeout(silenceTimerRef.current);
-          silenceTimerRef.current = null;
-        }
-        setLastVoiceActivity(Date.now());
-      } else if (!silenceTimerRef.current) {
-        // Start silence timer
-        const silenceTimeout = (interviewConfig.sessionSettings?.silenceTimeout || 5) * 1000;
-
-        silenceTimerRef.current = setTimeout(() => {
-          const silenceDuration = Date.now() - lastVoiceActivity;
-          handleSilenceDetected(silenceDuration);
-        }, silenceTimeout);
-      }
-
-      // Continue monitoring
-      requestAnimationFrame(detectVoiceActivity);
-    };
-
-    detectVoiceActivity();
+    // Manual submission only - user clicks "Next Question" button when done speaking
   };
 
-  // Handle silence detection
-  const handleSilenceDetected = (silenceDuration: number) => {
-    console.log(`🔇 Silence detected: ${silenceDuration}ms`);
-
-    if (socketRef.current && interviewStatus === 'active') {
-      socketRef.current.emit('silence_detected', {
-        silenceDuration: silenceDuration / 1000 // Convert to seconds
-      });
-    }
-
-    // Reset silence timer
-    if (silenceTimerRef.current) {
-      clearTimeout(silenceTimerRef.current);
-      silenceTimerRef.current = null;
-    }
-  };
+  // REMOVED: Automatic silence detection - using manual "Next" button only for MVP
+  // const handleSilenceDetected = (silenceDuration: number) => { ... }
 
   // Process speech input (would be connected to speech-to-text)
   const processSpeechInput = (transcript: string) => {
@@ -1968,38 +2275,47 @@ const IntelligentInterviewTest = () => {
               </Box>
             )}
 
-            {/* Silence Detection Display */}
+            {/* Manual Next Button - Always clickable when interview active */}
             {interviewStatus === 'active' && !isInReadingTime && (
-              <Box>
+              <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" sx={{ color: '#ccc', mb: 1, fontSize: '0.75rem', fontWeight: 600 }}>
-                  SILENCE DETECTION
+                  SUBMIT ANSWER
                 </Typography>
-
-                {/* Silence Timer */}
-                <Box sx={{ mb: 1 }}>
-                  <TimerDisplay className={isTrueSilence ? 'silence-complete' : 'silence-active'}>
-                    {(currentSilenceDuration / 1000).toFixed(1)}s / 5.0s
-                  </TimerDisplay>
-                </Box>
-
-                {/* Progress Bar */}
-                <SilenceProgressBar
-                  variant="determinate"
-                  value={(currentSilenceDuration / adaptiveSilenceThreshold) * 100}
-                  className={isTrueSilence ? 'complete' : ''}
-                />
-
-                {/* Status Message */}
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={() => {
+                    console.log('🎯 [MANUAL] User clicked Next Question button');
+                    sendAccumulatedAnswer();
+                  }}
+                  sx={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: '#fff',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    py: 1.5,
+                    textTransform: 'none',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)',
+                    }
+                  }}
+                >
+                  {accumulatedTurns.length > 0
+                    ? `Next Question (${accumulatedTurns.length} ${accumulatedTurns.length === 1 ? 'turn' : 'turns'} recorded)`
+                    : 'Next Question'
+                  }
+                </Button>
                 <Typography variant="caption" sx={{
-                  color: isTrueSilence ? '#81c784' : (silenceStartTime ? '#64b5f6' : '#bbb'),
+                  color: '#bbb',
                   textAlign: 'center',
                   display: 'block',
                   mt: 1,
                   fontSize: '0.7rem'
                 }}>
-                  {isTrueSilence ? '✓ Response sent!' :
-                   silenceStartTime ? 'Detecting silence...' :
-                   'Waiting for silence...'}
+                  {accumulatedTurns.length > 0
+                    ? 'Click when you\'re done answering'
+                    : 'Click to skip or move to next question'
+                  }
                 </Typography>
               </Box>
             )}

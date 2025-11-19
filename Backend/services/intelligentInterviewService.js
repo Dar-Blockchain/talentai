@@ -229,6 +229,70 @@ RESPONSE FORMAT (JSON only):
       return { error: error.message };
     }
   }
+
+  /**
+   * Analyze if candidate's response adequately answered the interviewer's question
+   */
+  async analyzeResponseQuality(question, response, targetArea) {
+    try {
+      const systemPrompt = `You are an expert interview evaluator analyzing if a candidate's response adequately addresses the interviewer's question.
+
+EVALUATION CRITERIA:
+- Does the response relate to the question topic?
+- Does it provide examples/details specifically asked for?
+- Is the response vague, unclear, or evasive?
+- Did the candidate dodge or avoid answering directly?
+- Is there missing information that should be clarified?
+
+RESPONSE FORMAT (JSON only):
+{
+  "answeredQuestion": boolean,
+  "qualityScore": number (0-100),
+  "completeness": "complete|partial|minimal|avoided",
+  "missingElements": ["specific elements not addressed"],
+  "clarificationNeeded": boolean,
+  "suggestedFollowUp": "clarifying question if needed (or null)",
+  "reasoning": "detailed explanation of evaluation"
+}`;
+
+      const userPrompt = `INTERVIEWER QUESTION: "${question}"
+
+CANDIDATE RESPONSE: "${response}"
+
+TARGET AREA: ${targetArea || 'General'}
+
+Evaluate if the response adequately answered the question. If clarification is needed, suggest a specific follow-up question.`;
+
+      const aiResponse = await this.together.chat.completions.create({
+        model: this.model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 700
+      });
+
+      const responseContent = aiResponse.choices[0].message.content.trim();
+      const result = AIUtils.parseJSONResponse(responseContent, 'analyzeResponseQuality');
+
+      console.log(`🔍 [Response Quality] ${result.answeredQuestion ? '✅ Answered' : '❌ Not Answered'} - Score: ${result.qualityScore}/100`);
+
+      return result;
+    } catch (error) {
+      console.error('Error analyzing response quality:', error);
+      return {
+        answeredQuestion: true, // Default to true on error to not block flow
+        qualityScore: 50,
+        completeness: 'unknown',
+        missingElements: [],
+        clarificationNeeded: false,
+        suggestedFollowUp: null,
+        reasoning: 'Analysis failed: ' + error.message,
+        error: error.message
+      };
+    }
+  }
 }
 
 /**
@@ -446,6 +510,8 @@ REQUIREMENTS:
 - Progress from general to specific based on what's already known
 - Be engaging and allow candidate to showcase their expertise
 
+CRITICAL: You MUST respond with valid JSON only. No markdown, no code blocks, no extra text.
+
 RESPONSE FORMAT (JSON only):
 {
   "question": "targeted question for the specific area",
@@ -472,7 +538,7 @@ ${JSON.stringify(roleContext, null, 2)}
 CANDIDATE'S PREVIOUS RESPONSES ABOUT THIS AREA:
 ${relevantHistory.map(entry => entry.content).join('\n---\n')}
 
-Generate a targeted question to explore this competency area more deeply.`;
+Generate a targeted question to explore this competency area more deeply. Respond with ONLY valid JSON.`;
 
       const response = await this.together.chat.completions.create({
         model: this.model,
@@ -481,13 +547,32 @@ Generate a targeted question to explore this competency area more deeply.`;
           { role: "user", content: userPrompt }
         ],
         temperature: 0.6,
-        max_tokens: 400
+        max_tokens: 600
       });
 
       const responseContent = response.choices[0].message.content.trim();
-      return AIUtils.parseJSONResponse(responseContent, 'generateTargetedQuestionForArea');
+
+      // Validate response is not suspiciously short or malformed
+      if (responseContent.length < 10 || !responseContent.includes('{')) {
+        console.error('❌ Malformed AI response for generateTargetedQuestionForArea:', responseContent);
+        console.error('   Area:', areaName);
+        console.error('   Response length:', responseContent.length);
+        throw new Error(`AI returned malformed response: "${responseContent}"`);
+      }
+
+      const parsedResponse = AIUtils.parseJSONResponse(responseContent, 'generateTargetedQuestionForArea');
+
+      // Validate the parsed response has required fields
+      if (!parsedResponse.question || parsedResponse.question.length < 5) {
+        console.error('❌ Parsed response missing valid question field:', parsedResponse);
+        throw new Error('AI response missing valid question field');
+      }
+
+      return parsedResponse;
     } catch (error) {
-      console.error('Error generating targeted question:', error);
+      console.error('❌ Error generating targeted question for area:', areaName);
+      console.error('   Error message:', error.message);
+      console.error('   Error type:', error.constructor.name);
       throw error;
     }
   }
@@ -505,6 +590,45 @@ class DecisionEngineAI {
 
   async makeIntelligentDecision(session, candidateResponse, allAnalyses) {
     try {
+      // Check question counts per area to enforce max 5 questions limit
+      const areaQuestionCounts = {};
+      const MAX_QUESTIONS_PER_AREA = 5;
+
+      if (session.coverage && session.coverage.areas) {
+        Object.keys(session.coverage.areas).forEach(areaName => {
+          const area = session.coverage.areas[areaName];
+          areaQuestionCounts[areaName] = area.questionsAsked || 0;
+        });
+      }
+
+      // Determine current topic area from recent conversation
+      const recentInterviewerMessages = session.conversation
+        .filter(entry => entry.type === 'interviewer')
+        .slice(-2);
+
+      let currentArea = null;
+      if (recentInterviewerMessages.length > 0) {
+        const lastQuestion = recentInterviewerMessages[recentInterviewerMessages.length - 1];
+        currentArea = lastQuestion.metadata?.targetAreas?.[0];
+      }
+
+      // Force move to new area if current area has reached question limit
+      let forcedDecision = null;
+      if (currentArea && areaQuestionCounts[currentArea] >= MAX_QUESTIONS_PER_AREA) {
+        console.log(`🚫 [Question Limit] Area "${currentArea}" has ${areaQuestionCounts[currentArea]} questions (max: ${MAX_QUESTIONS_PER_AREA})`);
+        forcedDecision = {
+          decision: "explore_new_area",
+          reasoning: `Asked ${areaQuestionCounts[currentArea]} questions on ${currentArea} - moving to new topic to avoid repetition and maintain engagement`,
+          targetArea: this.findLeastAskedArea(session.coverage.areas, currentArea),
+          strategy: "Move to fresh topic with lowest question count",
+          confidence: 100,
+          expectedDuration: "2-3 minutes",
+          forcedByLimit: true
+        };
+        console.log(`✅ [Forced Decision] Moving to area: ${forcedDecision.targetArea}`);
+        return forcedDecision;
+      }
+
       const systemPrompt = `You are an expert interview decision engine. Make intelligent decisions about interview flow based on comprehensive analysis.
 
 DECISION OPTIONS:
@@ -520,6 +644,9 @@ DECISION FACTORS:
 - Time management and efficiency
 - Candidate engagement and communication style
 - Quality and depth of evidence gathered
+- Question count per area (avoid asking too many on same topic)
+
+IMPORTANT: Avoid asking more than 3-5 questions on the same topic to prevent repetition and maintain candidate engagement.
 
 RESPONSE FORMAT (JSON only):
 {
@@ -538,7 +665,9 @@ ${JSON.stringify({
         config: {
           targetRole: session.config.context.targetRole,
           duration: session.config.sessionSettings.duration
-        }
+        },
+        questionCounts: areaQuestionCounts,
+        currentArea: currentArea
       }, null, 2)}
 
 LATEST RESPONSE: "${candidateResponse}"
@@ -546,7 +675,12 @@ LATEST RESPONSE: "${candidateResponse}"
 ANALYSES:
 ${JSON.stringify(allAnalyses, null, 2)}
 
-Make the next intelligent decision for interview progression.`;
+QUESTION COUNTS PER AREA (Max 5 recommended):
+${JSON.stringify(areaQuestionCounts, null, 2)}
+
+Current Topic Area: ${currentArea || 'N/A'}
+
+Make the next intelligent decision for interview progression. Consider question counts to avoid over-asking on same topic.`;
 
       const response = await this.together.chat.completions.create({
         model: this.model,
@@ -564,6 +698,31 @@ Make the next intelligent decision for interview progression.`;
       console.error('Error in intelligent decision making:', error);
       throw error;
     }
+  }
+
+  /**
+   * Find area with least questions asked (excluding current area)
+   */
+  findLeastAskedArea(coverageAreas, excludeArea = null) {
+    let minQuestions = Infinity;
+    let selectedArea = null;
+
+    Object.keys(coverageAreas).forEach(areaName => {
+      if (areaName === excludeArea) return; // Skip current area
+
+      const questionsAsked = coverageAreas[areaName].questionsAsked || 0;
+      if (questionsAsked < minQuestions) {
+        minQuestions = questionsAsked;
+        selectedArea = areaName;
+      }
+    });
+
+    // If all areas have same count, pick first one that's not excluded
+    if (!selectedArea) {
+      selectedArea = Object.keys(coverageAreas).find(name => name !== excludeArea);
+    }
+
+    return selectedArea || Object.keys(coverageAreas)[0];
   }
 
   async shouldEndInterview(session, totalDuration) {
@@ -637,13 +796,47 @@ class IntelligentInterviewService {
    */
   async initialize() {
     try {
-      // Initialize Redis connection
-      await this.sessionManager.initialize();
-      console.log('✅ Intelligent Interview Service initialized');
-      return true;
+      // Initialize Redis connection with timeout to prevent blocking
+      console.log('🔌 [Service] Attempting to connect to Redis...');
+      const redisInitialized = await Promise.race([
+        this.sessionManager.initialize(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Redis connection timeout after 5 seconds')), 5000)
+        )
+      ]).catch(err => {
+        console.error('⚠️  [Service] Redis initialization failed:', err.message);
+        console.warn('⚠️  [Service] Interview service will continue WITHOUT Redis (in-memory mode)');
+        console.warn('⚠️  [Service] Sessions will not persist across server restarts');
+        console.warn('💡 [Service] To fix: Run `redis-server` or `sudo service redis-server start` in WSL');
+        return false;
+      });
+
+      if (redisInitialized) {
+        console.log('✅ [Service] Intelligent Interview Service initialized with Redis');
+        console.log('💾 [Service] Sessions will be stored in Redis with 2-hour TTL');
+
+        // Test Redis connection with ping
+        try {
+          const pingTest = await this.sessionManager.client.ping();
+          console.log('🏓 [Service] Redis connectivity test:', pingTest);
+          console.log('📊 [Service] Redis status:', {
+            isConnected: this.sessionManager.isConnected,
+            isReady: this.sessionManager.isReady()
+          });
+        } catch (pingError) {
+          console.error('❌ [Service] Redis ping test failed:', pingError.message);
+          console.warn('⚠️  [Service] Redis may not be fully operational');
+        }
+      } else {
+        console.log('⚠️  [Service] Intelligent Interview Service initialized WITHOUT Redis (degraded mode)');
+        console.log('⚠️  [Service] Interview features may be limited');
+      }
+
+      return true;  // Always return true to not block server startup
     } catch (error) {
-      console.error('❌ Failed to initialize Intelligent Interview Service:', error.message);
-      return false;
+      console.error('❌ [Service] Failed to initialize Intelligent Interview Service:', error.message);
+      console.warn('⚠️  [Service] Server will continue without interview service');
+      return true;  // Don't block server startup
     }
   }
 
@@ -652,28 +845,69 @@ class IntelligentInterviewService {
    */
   async startInterview(sessionId, userConfig, candidateId) {
     try {
+      console.log(`🚀 [Service] Starting interview session: ${sessionId} for candidate: ${candidateId}`);
+
+      // Check Redis connection status before proceeding
+      console.log('🔍 [Service] Checking Redis connection status...');
+      console.log('📊 [Service] Redis state:', {
+        isConnected: this.sessionManager.isConnected,
+        isReady: this.sessionManager.isReady(),
+        clientExists: !!this.sessionManager.client
+      });
+
+      if (!this.sessionManager.isConnected || !this.sessionManager.client) {
+        console.error('❌ [Service] Redis is NOT connected - Cannot start interview');
+        throw new Error('Redis connection not available. Please ensure Redis is running.');
+      }
+
       // Create intelligent configuration
       const config = configManager.createIntelligentConfig(userConfig);
       configManager.validateConfig(config);
+      console.log('✅ [Service] Config validated');
 
       // Create session in Redis
+      console.log('💾 [Service] Calling createSession...');
       const session = await this.sessionManager.createSession(sessionId, config, candidateId);
+      console.log('✅ [Service] Session created in Redis');
 
-      // Generate intelligent greeting
-      const greeting = await this.generateIntelligentGreeting(config);
+      // Generate intelligent greeting with error handling
+      let greeting;
+      try {
+        console.log('🤖 Generating AI greeting...');
+        greeting = await this.generateIntelligentGreeting(config);
+        console.log('✅ AI greeting generated');
+      } catch (greetingError) {
+        console.error('⚠️ AI greeting failed, using fallback:', greetingError.message);
+        // Use fallback greeting immediately
+        greeting = {
+          content: `Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's start our conversation!`,
+          metadata: { fallback: true, error: greetingError.message }
+        };
+      }
 
       // Add greeting to conversation
+      console.log('💬 [Service] Adding greeting to conversation...');
       await this.sessionManager.addConversationEntry(sessionId, {
         type: 'interviewer',
         content: greeting.content,
         model: config.models.fastModel,
         metadata: greeting.metadata
       });
+      console.log('✅ [Service] Greeting added to conversation');
+
+      // Save greeting as current question (simple complexity)
+      await this.sessionManager.saveCurrentQuestion(sessionId, greeting.content, 'simple');
+      console.log('💾 [Greeting] Saved as current question');
 
       // Update session status
+      console.log('📊 [Service] Updating session status to active...');
       await this.sessionManager.updateSession(sessionId, { status: 'active' });
+      console.log('✅ [Service] Session status updated to active');
 
-      return {
+      console.log('📤 [Service] Preparing to return result to controller...');
+      console.log(`✅ [Service] Interview ${sessionId} started successfully - returning to controller`);
+
+      const result = {
         success: true,
         sessionId,
         greeting: greeting.content,
@@ -683,8 +917,22 @@ class IntelligentInterviewService {
           silenceTimeout: config.sessionSettings.silenceTimeout
         }
       };
+
+      console.log('✅ [Service] Result prepared:', {
+        success: result.success,
+        sessionId: result.sessionId,
+        greetingLength: result.greeting.length,
+        configType: result.config.interviewType
+      });
+
+      return result;
     } catch (error) {
-      console.error('❌ Failed to start interview:', error.message);
+      console.error('❌ [Service] CRITICAL: Failed to start interview:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
+      console.error('❌ [Service] Full error object:', error);
       throw error;
     }
   }
@@ -693,51 +941,109 @@ class IntelligentInterviewService {
    * Generate intelligent greeting based on context
    */
   async generateIntelligentGreeting(config) {
-    try {
-      const startTime = Date.now();
+    const maxRetries = 2;
+    let lastError = null;
 
-      const prompt = this.buildGreetingPrompt(config);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const startTime = Date.now();
 
-      const response = await this.together.chat.completions.create({
-        model: config.models.fastModel,
-        messages: [
-          {
-            role: "system",
-            content: "You are an intelligent interviewer. Generate a warm, professional greeting that sets the right tone for the interview. Be natural and contextual."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 200
-      });
+        const prompt = this.buildGreetingPrompt(config);
 
-      const processingTime = Date.now() - startTime;
-      const greeting = response.choices[0].message.content.trim();
+        console.log(`🤖 [Greeting] Attempt ${attempt}/${maxRetries} - Generating greeting...`);
 
-      return {
-        content: greeting,
-        metadata: {
+        const response = await this.together.chat.completions.create({
           model: config.models.fastModel,
-          processingTime,
-          prompt: "greeting_generation",
-          interviewType: config.interviewType
+          messages: [
+            {
+              role: "system",
+              content: "You are a professional interviewer. Your task is to generate ONLY the greeting text - nothing else. Do not include labels, explanations, or formatting. Just write the natural greeting sentences."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.6,
+          max_tokens: 400
+        });
+
+        const processingTime = Date.now() - startTime;
+        const greeting = response.choices[0].message.content.trim();
+
+        // Log the actual response for debugging
+        console.log('✅ [Greeting] AI response received:', {
+          length: greeting.length,
+          preview: greeting.substring(0, 100) + (greeting.length > 100 ? '...' : ''),
+          processingTime: `${processingTime}ms`
+        });
+
+        // Validate the greeting is not malformed
+        if (greeting.length < 20) {
+          console.error('❌ [Greeting] Response too short:', greeting);
+          throw new Error(`Malformed greeting (too short): "${greeting}"`);
         }
-      };
-    } catch (error) {
-      console.error('❌ Failed to generate greeting:', error.message);
-      // Fallback greeting based on interview type
-      let fallbackGreeting = '';
-      
-      fallbackGreeting = `Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's start our conversation!`;
-      
-      return {
-        content: fallbackGreeting,
-        metadata: { fallback: true }
-      };
+
+        if (!greeting.match(/[.!?]$/)) {
+          console.warn('⚠️  [Greeting] Response missing proper punctuation:', greeting);
+          // Add punctuation if missing
+          const fixedGreeting = greeting + '.';
+          console.log('🔧 [Greeting] Fixed punctuation:', fixedGreeting);
+        }
+
+        // Check for common malformed patterns
+        if (/^[a-z]\d+$/i.test(greeting) || greeting.length < 15 || !greeting.includes(' ')) {
+          console.error('❌ [Greeting] Malformed response detected:', greeting);
+          throw new Error(`Invalid greeting format: "${greeting}"`);
+        }
+
+        return {
+          content: greeting,
+          metadata: {
+            model: config.models.fastModel,
+            processingTime,
+            prompt: "greeting_generation",
+            interviewType: config.interviewType,
+            attempt
+          }
+        };
+
+      } catch (error) {
+        lastError = error;
+        console.error(`❌ [Greeting] Attempt ${attempt}/${maxRetries} failed:`, {
+          message: error.message,
+          status: error.status,
+          code: error.code,
+          type: error.type,
+          model: config.models.fastModel
+        });
+
+        // If not last attempt, wait and retry
+        if (attempt < maxRetries) {
+          console.log(`🔄 [Greeting] Retrying in 500ms...`);
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
     }
+
+    // All attempts failed - use fallback
+    console.error('❌ [Greeting] All attempts failed, using fallback');
+    console.error('❌ [Greeting] Last error:', lastError?.message);
+
+    const fallbackGreeting = `Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's start our conversation!`;
+
+    console.log('⚠️  [Greeting] Using fallback greeting:', fallbackGreeting);
+
+    return {
+      content: fallbackGreeting,
+      metadata: {
+        fallback: true,
+        error: lastError?.message,
+        errorCode: lastError?.code,
+        attemptedModel: config.models.fastModel,
+        attempts: maxRetries
+      }
+    };
   }
 
   /**
@@ -764,6 +1070,25 @@ class IntelligentInterviewService {
 
       // Get updated session with new conversation entry
       const updatedSession = await this.sessionManager.getSession(sessionId);
+
+      // Check if candidate adequately answered the previous question
+      const recentInterviewerMessages = updatedSession.conversation
+        .filter(entry => entry.type === 'interviewer')
+        .slice(-1);
+
+      let responseQuality = null;
+      if (recentInterviewerMessages.length > 0) {
+        const lastQuestion = recentInterviewerMessages[0].content;
+        const targetArea = recentInterviewerMessages[0].metadata?.targetAreas?.[0];
+
+        responseQuality = await this.memoryAI.analyzeResponseQuality(
+          lastQuestion,
+          transcript,
+          targetArea
+        );
+
+        console.log(`📊 [Response Quality] Answered: ${responseQuality.answeredQuestion}, Score: ${responseQuality.qualityScore}/100`);
+      }
 
       // Perform intelligent coverage analysis
       const coverageAnalysis = await this.coverageAI.analyzeCoverageIntelligently(
@@ -796,10 +1121,10 @@ class IntelligentInterviewService {
         }
       );
 
-      // Generate next question or action based on decision
+      // SIMPLIFIED: Just generate next question (no clarification requests - be more patient)
       let nextAction;
       if (decisionAnalysis.decision === 'explore_new_area' || decisionAnalysis.decision === 'continue_probing') {
-        // Check for question similarity to prevent repetition
+        // Normal flow - generate next question
         const proposedQuestion = await this.questionAI.generateIntelligentQuestion(
           finalSession,
           coverageAnalysis,
@@ -815,14 +1140,49 @@ class IntelligentInterviewService {
 
         if (similarityAnalysis.isSimilar && similarityAnalysis.confidence > 70) {
           // Generate alternative question for same target area
-          nextAction = await this.questionAI.generateTargetedQuestionForArea(
-            decisionAnalysis.targetArea,
-            finalSession.coverage.areas[decisionAnalysis.targetArea],
-            finalSession.conversation,
-            finalSession.config.context
-          );
-          nextAction.type = 'question';
-          nextAction.content = nextAction.question;
+          console.log('🔄 Question similarity detected - generating alternative for area:', decisionAnalysis.targetArea);
+
+          // Validate that we have the required data before calling AI
+          const targetArea = decisionAnalysis.targetArea;
+          const areaData = finalSession.coverage.areas[targetArea];
+
+          if (!targetArea || !areaData) {
+            console.warn('⚠️ Missing targetArea or areaData, using original question instead');
+            console.warn('   targetArea:', targetArea);
+            console.warn('   areaData exists:', !!areaData);
+
+            // Fall back to using the original proposed question
+            nextAction = {
+              type: 'question',
+              content: proposedQuestion.question,
+              reasoning: proposedQuestion.reasoning + ' (similarity detected but fallback used)',
+              targetAreas: proposedQuestion.targetAreas
+            };
+          } else {
+            try {
+              // Try to generate targeted question with validated data
+              nextAction = await this.questionAI.generateTargetedQuestionForArea(
+                targetArea,
+                areaData,
+                finalSession.conversation,
+                finalSession.config.context
+              );
+              nextAction.type = 'question';
+              nextAction.content = nextAction.question;
+
+              console.log('✅ Successfully generated alternative question');
+            } catch (targetedQuestionError) {
+              console.error('❌ Failed to generate targeted question, falling back to original:', targetedQuestionError.message);
+
+              // Fall back to the original proposed question
+              nextAction = {
+                type: 'question',
+                content: proposedQuestion.question,
+                reasoning: proposedQuestion.reasoning + ' (targeted generation failed)',
+                targetAreas: proposedQuestion.targetAreas
+              };
+            }
+          }
         } else {
           nextAction = {
             type: 'question',
@@ -844,12 +1204,56 @@ class IntelligentInterviewService {
           }
         });
 
+        // Detect complexity and save question for potential rephrasing
+        const complexity = await this.detectQuestionComplexity(nextAction.content);
+        await this.sessionManager.saveCurrentQuestion(sessionId, nextAction.content, complexity);
+        console.log(`💾 [Question] Saved with complexity: ${complexity}`);
+
+        // Track questions asked per coverage area (max 5 per area to avoid repetition)
+        const targetArea = decisionAnalysis.targetArea;
+        if (targetArea && finalSession.coverage.areas[targetArea]) {
+          await this.incrementAreaQuestionCount(sessionId, targetArea);
+          console.log(`📊 [Question Counter] Incremented for area: ${targetArea}`);
+        }
+
       } else if (decisionAnalysis.decision === 'end_interview') {
         nextAction = {
           type: 'end_interview',
           content: 'Thank you for your time. This concludes our interview.',
           reasoning: decisionAnalysis.reasoning
         };
+      } else {
+        // FALLBACK: For ANY other decision type (seek_examples, wrap_up_area, unexpected, etc.)
+        // Always generate next question to keep interview moving forward
+        console.log(`⚠️ Unhandled decision type: "${decisionAnalysis.decision}" - generating next question anyway`);
+
+        const proposedQuestion = await this.questionAI.generateIntelligentQuestion(
+          finalSession,
+          coverageAnalysis,
+          { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer') }
+        );
+
+        nextAction = {
+          type: 'question',
+          content: proposedQuestion.question,
+          reasoning: `Fallback for "${decisionAnalysis.decision}": ${decisionAnalysis.reasoning}`,
+          targetAreas: proposedQuestion.targetAreas
+        };
+
+        // Store interviewer question in conversation
+        await this.sessionManager.addConversationEntry(sessionId, {
+          type: 'interviewer',
+          content: nextAction.content,
+          timestamp: new Date().toISOString(),
+          metadata: {
+            aiGenerated: true,
+            targetAreas: nextAction.targetAreas,
+            reasoning: nextAction.reasoning,
+            fallback: true
+          }
+        });
+
+        console.log(`✅ [Fallback] Generated next question to keep interview moving`);
       }
 
       // Update real-time report with AI insights
@@ -1136,52 +1540,90 @@ class IntelligentInterviewService {
   }
 
   /**
-   * Handle silence detection
+   * Handle silence detection - SIMPLIFIED VERSION
+   * Only acts on extended silence (15s+) to move to next question
+   * NO encouragement messages, NO patience prompts
    */
   async handleSilence(sessionId, silenceDuration) {
     try {
+      console.log(`🔇 [Silence] Detected ${silenceDuration}s of silence`);
+
+      // IGNORE short pauses - let candidate think naturally
+      if (silenceDuration < 20) {
+        console.log(`✓ [Silence] Ignoring short pause (< 20s)`);
+        return {
+          action: 'ignore',
+          content: null,
+          reasoning: 'Short pause - allowing natural thinking time'
+        };
+      }
+
+      // Extended silence (20s+) - Move to next question automatically
+      console.log(`⏭️  [Silence] Extended silence (${silenceDuration}s) - generating next question`);
+
       const session = await this.sessionManager.getSession(sessionId);
       if (!session) {
         throw new Error(`Session ${sessionId} not found`);
       }
 
-      // Track silence event
-      const silenceData = await this.sessionManager.trackSilence(sessionId, silenceDuration);
+      // Get updated session for coverage analysis
+      const updatedSession = await this.sessionManager.getSession(sessionId);
 
-      const config = session.config;
-      const maxSilences = config.sessionSettings.maxSilencePrompts;
+      // Perform coverage analysis to determine next question
+      const coverageAnalysis = await this.coverageAI.analyzeCoverageIntelligently(
+        "[SILENCE - NO RESPONSE]",
+        updatedSession.coverage,
+        updatedSession.config.intelligenceContext.focusAreas,
+        updatedSession.conversation
+      );
 
-      if (silenceData.silenceCount <= maxSilences) {
-        // Generate intelligent silence prompt
-        const silencePrompt = await this.generateSilencePrompt(session, silenceData);
+      // Make decision for next area
+      const decisionAnalysis = await this.decisionAI.makeIntelligentDecision(
+        updatedSession,
+        "[EXTENDED SILENCE]",
+        { coverage: coverageAnalysis }
+      );
 
-        // Add prompt to conversation
-        await this.sessionManager.addConversationEntry(sessionId, {
-          type: 'system',
-          content: silencePrompt.content,
-          metadata: silencePrompt.metadata
-        });
+      // Generate next question
+      const nextQuestion = await this.questionAI.generateIntelligentQuestion(
+        updatedSession,
+        coverageAnalysis,
+        { previousQuestions: updatedSession.conversation.filter(e => e.type === 'interviewer') }
+      );
 
-        return {
-          action: 'silence_prompt',
-          content: silencePrompt.content,
-          silenceCount: silenceData.silenceCount,
-          maxSilences
-        };
-      } else {
-        // Generate next question to move forward
-        const nextQuestion = await this.makeIntelligentDecision(session, "[SILENCE DETECTED - MOVING FORWARD]");
+      // Store the new question
+      await this.sessionManager.addConversationEntry(sessionId, {
+        type: 'interviewer',
+        content: nextQuestion.question,
+        timestamp: new Date().toISOString(),
+        metadata: {
+          aiGenerated: true,
+          targetAreas: nextQuestion.targetAreas,
+          reasoning: 'Extended silence - moving forward',
+          silenceDuration: silenceDuration
+        }
+      });
 
-        return {
-          action: 'move_forward',
-          content: nextQuestion.content,
-          reasoning: 'Maximum silence prompts reached',
-          silenceCount: silenceData.silenceCount
-        };
-      }
+      console.log(`✅ [Silence] Moving to next question: "${nextQuestion.question.substring(0, 60)}..."`);
+
+      return {
+        action: 'next_question',
+        content: nextQuestion.question,
+        reasoning: `Extended silence (${silenceDuration}s) - automatically moving forward`,
+        targetAreas: nextQuestion.targetAreas,
+        silenceDuration
+      };
+
     } catch (error) {
-      console.error('❌ Failed to handle silence:', error.message);
-      throw error;
+      console.error('❌ [Silence] Failed to handle silence:', error.message);
+
+      // Fallback: just move forward with generic question
+      return {
+        action: 'next_question',
+        content: "Let's move on to the next topic. Can you tell me about your experience with problem-solving?",
+        reasoning: 'Silence handling failed - using fallback',
+        error: error.message
+      };
     }
   }
 
@@ -1189,60 +1631,377 @@ class IntelligentInterviewService {
    * Generate intelligent silence prompt
    */
   async generateSilencePrompt(session, silenceData) {
+    const maxRetries = 2;
+    let lastError = null;
+
+    // Extract recent context without large JSON
+    const recentMessages = session.conversation.slice(-3).map(entry =>
+      `${entry.type === 'interviewer' ? 'Interviewer' : 'Candidate'}: ${entry.content?.substring(0, 100) || '[no content]'}`
+    ).join('\n');
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const config = session.config;
+
+        const prompt = `Generate a supportive, encouraging message for a candidate who has been silent for ${silenceData.silenceDuration} seconds during an interview.
+
+CONTEXT:
+- This is silence instance #${silenceData.silenceCount}
+- Position: ${config.context.targetRole}
+- Company: ${config.context.targetCompany}
+- Interview Type: ${config.interviewType}
+
+RECENT CONVERSATION:
+${recentMessages}
+
+REQUIREMENTS:
+- Write 1-2 natural, encouraging sentences
+- Be warm and supportive, not pushy
+- Help the candidate feel comfortable to continue
+- DO NOT use labels, bullet points, or explanations
+- ONLY output the encouraging text itself
+
+Example: "Take your time - there's no rush. Would you like me to rephrase the question in a different way?"`;
+
+        console.log(`🔇 [Silence] Attempt ${attempt}/${maxRetries} - Generating silence prompt...`);
+
+        const response = await this.together.chat.completions.create({
+          model: config.models.fastModel,
+          messages: [
+            {
+              role: "system",
+              content: "You are a supportive interviewer. Your task is to generate ONLY the encouraging text - nothing else. Be empathetic and natural."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 300
+        });
+
+        const silencePrompt = response.choices[0].message.content.trim();
+
+        // Log the response for debugging
+        console.log('✅ [Silence] AI response received:', {
+          length: silencePrompt.length,
+          preview: silencePrompt.substring(0, 80) + (silencePrompt.length > 80 ? '...' : ''),
+          silenceCount: silenceData.silenceCount
+        });
+
+        // Validate the silence prompt is not malformed
+        if (silencePrompt.length < 15) {
+          console.error('❌ [Silence] Response too short:', silencePrompt);
+          throw new Error(`Malformed silence prompt (too short): "${silencePrompt}"`);
+        }
+
+        // Check for common malformed patterns (like "s1", "safe", etc.)
+        if (/^[a-z]+\d*$/i.test(silencePrompt) || !silencePrompt.includes(' ')) {
+          console.error('❌ [Silence] Malformed response detected:', silencePrompt);
+          throw new Error(`Invalid silence prompt format: "${silencePrompt}"`);
+        }
+
+        return {
+          content: silencePrompt,
+          metadata: {
+            model: config.models.fastModel,
+            silenceCount: silenceData.silenceCount,
+            silenceDuration: silenceData.silenceDuration,
+            type: 'silence_prompt',
+            attempt
+          }
+        };
+
+      } catch (error) {
+        lastError = error;
+        console.error(`❌ [Silence] Attempt ${attempt}/${maxRetries} failed:`, {
+          message: error.message,
+          silenceCount: silenceData.silenceCount
+        });
+
+        // If not last attempt, wait and retry
+        if (attempt < maxRetries) {
+          console.log(`🔄 [Silence] Retrying in 500ms...`);
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+    }
+
+    // All attempts failed - use fallback
+    console.error('❌ [Silence] All attempts failed, using fallback');
+    console.error('❌ [Silence] Last error:', lastError?.message);
+
+    const fallbacks = [
+      "Take your time to think about it. I'm here when you're ready to continue.",
+      "No rush at all. Would you like me to rephrase the question?",
+      "Feel free to take a moment to gather your thoughts. How would you like to approach this?"
+    ];
+
+    const fallbackMessage = fallbacks[silenceData.silenceCount % fallbacks.length];
+    console.log('⚠️  [Silence] Using fallback:', fallbackMessage);
+
+    return {
+      content: fallbackMessage,
+      metadata: {
+        fallback: true,
+        silenceCount: silenceData.silenceCount,
+        error: lastError?.message,
+        attempts: maxRetries
+      }
+    };
+  }
+
+  /**
+   * Detect question complexity using AI
+   */
+  async detectQuestionComplexity(questionText) {
     try {
-      const config = session.config;
+      const systemPrompt = `Analyze this interview question and determine its complexity level.
 
-      const prompt = `
-        The candidate has been silent for ${silenceData.silenceDuration} seconds.
-        This is silence event #${silenceData.silenceCount}.
+COMPLEXITY LEVELS:
+- simple: Yes/no questions, basic factual questions, straightforward queries (1 sentence)
+- medium: Standard behavioral/situational questions requiring examples (2-3 sentences)
+- complex: Multi-part questions, technical deep-dives, requiring detailed analysis (3+ sentences)
 
-        Interview Context: ${JSON.stringify(config.context)}
-        Recent Conversation: ${JSON.stringify(session.conversation.slice(-3))}
-
-        Generate an encouraging, helpful prompt to re-engage the candidate.
-        Consider their communication style and the interview context.
-        Keep it natural and supportive.
-      `;
+RESPONSE FORMAT (JSON only):
+{
+  "complexity": "simple|medium|complex",
+  "reasoning": "brief explanation",
+  "estimatedThinkingTime": number (in seconds)
+}`;
 
       const response = await this.together.chat.completions.create({
-        model: config.models.fastModel,
+        model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
         messages: [
-          {
-            role: "system",
-            content: "You are a supportive interviewer. Help candidates who need encouragement during silence. Be empathetic and professional."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Analyze this question: "${questionText}"` }
         ],
-        temperature: 0.8,
+        temperature: 0.2,
+        max_tokens: 200
+      });
+
+      const responseContent = response.choices[0].message.content.trim();
+      const parsed = AIUtils.parseJSONResponse(responseContent, 'detectQuestionComplexity');
+
+      console.log(`🔍 [Complexity] Detected:`, {
+        complexity: parsed.complexity,
+        estimatedThinkingTime: parsed.estimatedThinkingTime
+      });
+
+      return parsed.complexity || 'medium';
+    } catch (error) {
+      console.error('❌ Error detecting question complexity:', error.message);
+      return 'medium'; // Default to medium if detection fails
+    }
+  }
+
+  /**
+   * REMOVED: No patience prompts for MVP - using manual "Next" button only
+   */
+  async generatePatiencePrompt(session, silenceData) {
+    try {
+      const currentQuestion = session.currentQuestionContext?.originalQuestion || 'the question';
+
+      const systemPrompt = `Generate a brief, warm encouragement for a candidate who has been silent for ${silenceData.silenceDuration} seconds.
+
+REQUIREMENTS:
+- Write 1 short, natural sentence
+- Be patient and supportive, NOT pushy
+- Signal that thinking time is okay
+- DO NOT offer to rephrase or help yet - just encouragement
+- ONLY output the encouragement text itself
+
+Examples:
+- "Take your time to think through this."
+- "No rush - I'm listening."
+- "Whenever you're ready."`;
+
+      const response = await this.together.chat.completions.create({
+        model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Generate patience prompt for: "${currentQuestion.substring(0, 100)}..."` }
+        ],
+        temperature: 0.7,
+        max_tokens: 100
+      });
+
+      const patiencePrompt = response.choices[0].message.content.trim();
+
+      // Validation
+      if (patiencePrompt.length < 10 || /^[a-z]+\d*$/i.test(patiencePrompt)) {
+        throw new Error('Malformed patience prompt');
+      }
+
+      console.log(`✅ [Patience] Generated prompt:`, patiencePrompt);
+
+      return {
+        content: patiencePrompt,
+        metadata: { silenceStage: 1, type: 'patience_prompt' }
+      };
+    } catch (error) {
+      console.error('❌ Error generating patience prompt:', error.message);
+      // AI-like fallback (varied responses)
+      const fallbacks = [
+        "Take your time - there's no rush to answer.",
+        "I'm here when you're ready to share your thoughts.",
+        "Feel free to take a moment to think about this."
+      ];
+      return {
+        content: fallbacks[Math.floor(Math.random() * fallbacks.length)],
+        metadata: { silenceStage: 1, type: 'patience_prompt', fallback: true }
+      };
+    }
+  }
+
+  /**
+   * REMOVED: No help offers for MVP - using manual "Next" button only
+   */
+   async generateHelpOffer(session, silenceData) {
+    try {
+      const currentQuestion = session.currentQuestionContext?.originalQuestion || 'the question';
+
+      const systemPrompt = `Generate a supportive offer to help a candidate who has been silent for ${silenceData.silenceDuration} seconds.
+
+REQUIREMENTS:
+- Write 1-2 natural sentences
+- Offer to rephrase or clarify
+- Be supportive and professional
+- Suggest specific ways to help
+- ONLY output the help offer text itself
+
+Examples:
+- "Would it help if I rephrased the question?"
+- "Can I break this into smaller parts for you?"
+- "Would you like me to provide a specific example?"`;
+
+      const response = await this.together.chat.completions.create({
+        model: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Generate help offer for: "${currentQuestion.substring(0, 100)}..."` }
+        ],
+        temperature: 0.7,
         max_tokens: 150
       });
 
-      const silencePrompt = response.choices[0].message.content.trim();
+      const helpOffer = response.choices[0].message.content.trim();
+
+      // Validation
+      if (helpOffer.length < 15 || /^[a-z]+\d*$/i.test(helpOffer)) {
+        throw new Error('Malformed help offer');
+      }
+
+      console.log(`✅ [HelpOffer] Generated:`, helpOffer);
 
       return {
-        content: silencePrompt,
+        content: helpOffer,
+        metadata: { silenceStage: 2, type: 'help_offer' }
+      };
+    } catch (error) {
+      console.error('❌ Error generating help offer:', error.message);
+      const fallbacks = [
+        "Would you like me to rephrase the question in a different way?",
+        "Can I break this down into smaller, more specific questions?",
+        "Would it help if I provided an example of what I'm looking for?"
+      ];
+      return {
+        content: fallbacks[Math.floor(Math.random() * fallbacks.length)],
+        metadata: { silenceStage: 2, type: 'help_offer', fallback: true }
+      };
+    }
+  }
+
+  /**
+   * REMOVED: No question rephrasing for MVP - using manual "Next" button only
+   */
+   async rephraseCurrentQuestion(session, silenceData) {
+    try {
+      const currentQuestion = session.currentQuestionContext?.originalQuestion;
+
+      if (!currentQuestion) {
+        throw new Error('No current question to rephrase');
+      }
+
+      const recentContext = session.conversation.slice(-3).map(entry =>
+        `${entry.type}: ${entry.content?.substring(0, 100)}`
+      ).join('\n');
+
+      const systemPrompt = `Rephrase this interview question to make it clearer and easier to answer.
+
+REQUIREMENTS:
+- SAME intent and topic as original question
+- Simpler, clearer wording
+- Can break into 2-3 smaller sub-questions if helpful
+- More concrete and specific
+- Natural and conversational
+- ONLY output the rephrased question(s) - no explanations
+
+APPROACH OPTIONS:
+1. Simpler wording of same question
+2. Break into sequential sub-questions
+3. Add scaffolding example then ask`;
+
+      const userPrompt = `ORIGINAL QUESTION: "${currentQuestion}"
+
+CONTEXT:
+- Candidate has been silent for ${silenceData.silenceDuration} seconds
+- This is silence #${silenceData.silenceCount}
+- Interview Type: ${session.config.interviewType}
+- Position: ${session.config.context.targetRole}
+
+RECENT CONVERSATION:
+${recentContext}
+
+Rephrase this question to help the candidate answer it.`;
+
+      const response = await this.together.chat.completions.create({
+        model: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo", // Use better model for rephrasing
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.6,
+        max_tokens: 400
+      });
+
+      const rephrasedQuestion = response.choices[0].message.content.trim();
+
+      // Validation
+      if (rephrasedQuestion.length < 20 || /^[a-z]+\d*$/i.test(rephrasedQuestion)) {
+        throw new Error('Malformed rephrased question');
+      }
+
+      console.log(`✅ [Rephrase] Generated rephrased question`);
+
+      // Save rephrase to history
+      const rephraseHistory = session.currentQuestionContext.rephraseHistory || [];
+      rephraseHistory.push({
+        original: currentQuestion,
+        rephrased: rephrasedQuestion,
+        timestamp: Date.now()
+      });
+
+      await this.sessionManager.updateSession(session.sessionId, {
+        'currentQuestionContext.hasBeenRephrased': true,
+        'currentQuestionContext.rephraseHistory': rephraseHistory
+      });
+
+      return {
+        content: rephrasedQuestion,
         metadata: {
-          model: config.models.fastModel,
-          silenceCount: silenceData.silenceCount,
-          silenceDuration: silenceData.silenceDuration,
-          type: 'silence_prompt'
+          silenceStage: 3,
+          type: 'rephrased_question',
+          originalQuestion: currentQuestion
         }
       };
     } catch (error) {
-      console.error('❌ Failed to generate silence prompt:', error.message);
-      // Fallback silence prompts
-      const fallbacks = [
-        "Take your time to think about it. I'm here when you're ready to continue.",
-        "No rush at all. Would you like me to rephrase the question?",
-        "Feel free to take a moment to gather your thoughts. How would you like to approach this?"
-      ];
-
+      console.error('❌ Error rephrasing question:', error.message);
+      // Generate simpler version if rephrasing fails
       return {
-        content: fallbacks[Math.floor(Math.random() * fallbacks.length)],
-        metadata: { fallback: true, silenceCount: silenceData.silenceCount }
+        content: "Let me ask this more simply: Can you share any relevant experience you have with this?",
+        metadata: { silenceStage: 3, type: 'rephrased_question', fallback: true }
       };
     }
   }
@@ -1278,32 +2037,30 @@ class IntelligentInterviewService {
    * Helper method to build greeting prompt
    */
   buildGreetingPrompt(config) {
-    // Handle different interview types
-    let contextInfo = '';
-    
-    contextInfo = `
-      Interview Type: ${config.interviewType}
-      Target Company: ${config.context.targetCompany}
-      Target Role: ${config.context.targetRole}
-      Experience Level: ${config.context.experienceLevel}
-      Test Reason: ${config.testReason}
-      `;
+    // Extract only the essential information, avoid large JSON objects
+    const interviewerStyle = config.interviewerPersona?.style || 'professional';
+    const interviewerTone = config.interviewerPersona?.tone || 'friendly';
+    const cultureTrait = config.companyProfile?.culture?.values?.[0] || 'innovation';
 
-    return `
-      Generate a personalized greeting for this interview:
+    return `Generate a warm, professional greeting for this ${config.interviewType} interview:
 
-      ${contextInfo}
-      Interviewer Persona: ${JSON.stringify(config.interviewerPersona)}
-      Company Culture: ${JSON.stringify(config.companyProfile.culture)}
+INTERVIEW CONTEXT:
+- Position: ${config.context.targetRole}
+- Company: ${config.context.targetCompany}
+- Candidate Experience Level: ${config.context.experienceLevel}
+- Interview Style: ${interviewerStyle}, ${interviewerTone}
+- Company Values: ${cultureTrait}
 
-      Create a warm, professional greeting that:
-      1. Sets the right tone for the interview type
-      2. Makes the candidate feel comfortable
-      3. Briefly explains what to expect
-      4. Reflects the company culture
+REQUIREMENTS:
+- Write 2-3 natural, conversational sentences
+- Welcome the candidate warmly
+- Briefly mention the position and company
+- Set a comfortable, professional tone
+- DO NOT use labels, bullet points, or structured format
+- DO NOT include explanations or meta-text
+- ONLY output the greeting text itself
 
-      Keep it conversational and under 3 sentences.
-    `;
+Example format: "Hello! I'm excited to speak with you today about the [role] position at [company]. Let's have a great conversation about your experience and how you can contribute to our team."`;
   }
 
   /**
@@ -1476,6 +2233,69 @@ class IntelligentInterviewService {
   }
 
   /**
+   * Build a clarification message when candidate didn't fully answer the question
+   */
+  buildClarificationMessage(missingElements, suggestedFollowUp, targetArea) {
+    const intro = "I notice you didn't fully address ";
+
+    if (missingElements && missingElements.length > 0) {
+      const elementsText = missingElements.length === 1
+        ? missingElements[0]
+        : missingElements.slice(0, -1).join(', ') + ' and ' + missingElements[missingElements.length - 1];
+
+      const message = `${intro}${elementsText}. `;
+
+      if (suggestedFollowUp) {
+        return message + suggestedFollowUp;
+      } else {
+        return message + `Could you elaborate on that?`;
+      }
+    } else if (suggestedFollowUp) {
+      return suggestedFollowUp;
+    } else {
+      return `I'd like to hear more about that. Could you provide more details or specific examples?`;
+    }
+  }
+
+  /**
+   * Increment question count for a coverage area (max 5 per area to avoid repetition)
+   */
+  async incrementAreaQuestionCount(sessionId, areaName) {
+    try {
+      const session = await this.sessionManager.getSession(sessionId);
+      if (!session || !session.coverage.areas[areaName]) {
+        return;
+      }
+
+      const area = session.coverage.areas[areaName];
+      area.questionsAsked = (area.questionsAsked || 0) + 1;
+      area.lastQuestionTime = new Date().toISOString();
+
+      await this.sessionManager.updateCoverage(sessionId, session.coverage);
+
+      console.log(`📊 Area "${areaName}" now has ${area.questionsAsked} questions asked`);
+    } catch (error) {
+      console.error('Error incrementing area question count:', error);
+    }
+  }
+
+  /**
+   * Get current number of questions asked for an area
+   */
+  async getAreaQuestionCount(sessionId, areaName) {
+    try {
+      const session = await this.sessionManager.getSession(sessionId);
+      if (!session || !session.coverage.areas[areaName]) {
+        return 0;
+      }
+      return session.coverage.areas[areaName].questionsAsked || 0;
+    } catch (error) {
+      console.error('Error getting area question count:', error);
+      return 0;
+    }
+  }
+
+  /**
    * Update real-time report with AI intelligence
    */
   async updateRealTimeReportIntelligently(session, candidateResponse, coverageAnalysis, decisionAnalysis) {
@@ -1539,6 +2359,238 @@ Update the real-time report with new AI-powered insights.`;
     } catch (error) {
       console.error('Error updating real-time report intelligently:', error);
       return session.realTimeReport;
+    }
+  }
+
+  /**
+   * INTELLIGENT RESPONSE SYSTEM - NEW METHODS
+   * Selective AI analysis to reduce costs by 60%
+   */
+
+  /**
+   * Determine if response needs full AI analysis or can use lightweight heuristics
+   */
+  shouldDoFullAnalysis(responseAnalysis, session) {
+    // SKIP AI for obviously good responses (save $$$ - 30% of responses)
+    if (responseAnalysis.quality >= 75) {
+      console.log('⚡ [Optimization] Skipping AI - response quality excellent:', responseAnalysis.quality);
+      return false;
+    }
+
+    // SKIP AI for obviously insufficient responses (save $$$ - 10% of responses)
+    if (responseAnalysis.wordCount < 10) {
+      console.log('⚡ [Optimization] Skipping AI - response too short:', responseAnalysis.wordCount);
+      return false;
+    }
+
+    // SKIP AI for generic acknowledgments (save $$$ - 5% of responses)
+    const genericPatterns = /^(yes|no|okay|ok|sure|i see|right|understood|got it)\.?$/i;
+    if (genericPatterns.test(session.lastTranscript?.trim())) {
+      console.log('⚡ [Optimization] Skipping AI - generic acknowledgment');
+      return false;
+    }
+
+    // USE AI every 3rd response minimum to maintain coverage tracking (15% of remaining)
+    const conversationLength = session.conversation?.length || 0;
+    const responseCount = Math.floor(conversationLength / 2); // Rough estimate of candidate responses
+    if (responseCount > 0 && responseCount % 3 !== 0) {
+      // Check if quality is consistently good
+      if (responseAnalysis.quality >= 60 && !responseAnalysis.needsSupport) {
+        console.log('⚡ [Optimization] Skipping AI - consistent quality, not 3rd response');
+        return false;
+      }
+    }
+
+    // USE AI for medium-quality responses needing interpretation (40% of responses)
+    if (responseAnalysis.quality >= 50 && responseAnalysis.quality < 75) {
+      console.log('🧠 [AI Required] Medium quality - needs interpretation:', responseAnalysis.quality);
+      return true;
+    }
+
+    // USE AI for struggling/off-topic/rambling responses (need better understanding)
+    if (['struggling', 'off_topic', 'rambling'].includes(responseAnalysis.type)) {
+      console.log('🧠 [AI Required] Problematic response type:', responseAnalysis.type);
+      return true;
+    }
+
+    // USE AI for longer responses needing interpretation
+    if (responseAnalysis.wordCount > 80) {
+      console.log('🧠 [AI Required] Long response needs analysis:', responseAnalysis.wordCount);
+      return true;
+    }
+
+    // Default: skip AI
+    console.log('⚡ [Optimization] Skipping AI - default case');
+    return false;
+  }
+
+  /**
+   * Quick coverage update without full AI analysis
+   * Update based on heuristic analysis only
+   */
+  async quickCoverageUpdate(sessionId, responseAnalysis) {
+    try {
+      const session = await this.sessionManager.getSession(sessionId);
+
+      // Extract likely areas from keywords in response
+      const keywords = responseAnalysis.signals.responseKeywords || [];
+      const updatedCoverage = { ...session.coverage };
+
+      // Simple keyword-to-area mapping
+      const areaKeywords = {
+        'technical_skills': ['code', 'programming', 'develop', 'build', 'system', 'database', 'api'],
+        'problem_solving': ['solve', 'problem', 'challenge', 'solution', 'approach', 'debug'],
+        'leadership': ['lead', 'manage', 'team', 'mentor', 'guide', 'coordinate'],
+        'communication': ['explain', 'present', 'discuss', 'communicate', 'collaborate'],
+        'experience': ['project', 'work', 'experience', 'role', 'position', 'company']
+      };
+
+      // Quick scoring based on keyword matches
+      for (const [area, areaWords] of Object.entries(areaKeywords)) {
+        const matches = keywords.filter(kw => areaWords.some(aw => kw.includes(aw) || aw.includes(kw)));
+
+        if (matches.length > 0 && updatedCoverage.areas[area]) {
+          // Increment score based on quality
+          const increment = Math.round(responseAnalysis.quality / 20); // 0-5 points
+          updatedCoverage.areas[area].score = Math.min(100, updatedCoverage.areas[area].score + increment);
+          updatedCoverage.areas[area].questionsAsked += 1;
+
+          console.log(`📊 [Quick Update] ${area}: +${increment} points (${matches.length} keywords matched)`);
+        }
+      }
+
+      await this.sessionManager.updateCoverage(sessionId, updatedCoverage);
+
+      return {
+        updated: true,
+        method: 'heuristic',
+        areasUpdated: Object.keys(areaKeywords).filter(area =>
+          keywords.some(kw => areaKeywords[area].some(aw => kw.includes(aw) || aw.includes(kw)))
+        )
+      };
+
+    } catch (error) {
+      console.error('❌ Error in quick coverage update:', error);
+      return { updated: false, error: error.message };
+    }
+  }
+
+  /**
+   * Process candidate response with intelligent decision:
+   * - Use lightweight analysis first
+   * - Selectively call expensive AI (60% cost reduction)
+   */
+  async processCandidateResponseIntelligently(sessionId, transcript, audioMetadata = {}) {
+    try {
+      const ResponseQualityAnalyzer = require('../utils/responseQualityAnalyzer');
+      const CandidateBehaviorTracker = require('../utils/candidateBehaviorTracker');
+      const ContextualInterventions = require('../utils/contextualInterventions');
+
+      const session = await this.sessionManager.getSession(sessionId);
+      if (!session) {
+        throw new Error(`Session ${sessionId} not found`);
+      }
+
+      // STEP 1: Lightweight heuristic analysis (< 1ms, $0)
+      const currentQuestion = session.currentQuestionContext?.originalQuestion || session.conversation[session.conversation.length - 1]?.content;
+      const responseAnalysis = ResponseQualityAnalyzer.analyzeResponseQuality(transcript, currentQuestion);
+
+      console.log('📊 [Response Analysis]', {
+        quality: responseAnalysis.quality,
+        type: responseAnalysis.type,
+        wordCount: responseAnalysis.wordCount,
+        needsSupport: responseAnalysis.needsSupport,
+        supportType: responseAnalysis.supportType
+      });
+
+      // STEP 2: Update behavior tracker
+      let behaviorTracker = CandidateBehaviorTracker.fromJSON(session.behaviorTrackerData);
+      behaviorTracker.addResponse(responseAnalysis);
+      await this.sessionManager.updateSession(sessionId, {
+        behaviorTrackerData: behaviorTracker.toJSON()
+      });
+
+      // REMOVED: No interventions for MVP - just generate next question always
+      // const immediateIntervention = behaviorTracker.needsImmediateIntervention(responseAnalysis);
+      // if (immediateIntervention.needed) { ... }
+
+      // STEP 3: Decide if full AI analysis is needed
+      const needsAI = this.shouldDoFullAnalysis(responseAnalysis, session);
+
+      if (needsAI) {
+        // USE EXPENSIVE AI ANALYSIS (40% of responses)
+        console.log('🧠 [Full AI Analysis] Response needs deep interpretation');
+
+        // Call original processCandidateResponse for full AI processing
+        return await this.processCandidateResponse(sessionId, transcript, audioMetadata);
+      } else {
+        // SKIP EXPENSIVE AI (60% of responses - COST SAVINGS!)
+        console.log('⚡ [Optimized Path] Using lightweight processing');
+
+        // Store candidate response with lightweight analysis
+        await this.sessionManager.addConversationEntry(sessionId, {
+          type: 'candidate',
+          content: transcript,
+          timestamp: new Date().toISOString(),
+          metadata: { ...audioMetadata, quickAnalysis: responseAnalysis }
+        });
+
+        // Quick coverage update without AI
+        const coverageUpdate = await this.quickCoverageUpdate(sessionId, responseAnalysis);
+
+        // Check if delayed intervention is recommended
+        const delayedIntervention = behaviorTracker.needsDelayedIntervention(responseAnalysis);
+
+        // Generate next question using AI (still needed for quality questions)
+        const finalSession = await this.sessionManager.getSession(sessionId);
+        const decisionAnalysis = {
+          decision: 'continue_probing',
+          targetArea: 'General',
+          reasoning: 'Continue conversation based on lightweight analysis'
+        };
+
+        const proposedQuestion = await this.questionAI.generateIntelligentQuestion(
+          finalSession,
+          { overallAssessment: { recommendedFocus: ['General'] } },
+          { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer') }
+        );
+
+        // Store interviewer question
+        await this.sessionManager.addConversationEntry(sessionId, {
+          type: 'interviewer',
+          content: proposedQuestion.question,
+          timestamp: new Date().toISOString(),
+          metadata: {
+            aiGenerated: true,
+            lightweightProcessing: true,
+            targetAreas: proposedQuestion.targetAreas
+          }
+        });
+
+        // Save question for potential rephrasing
+        const complexity = await this.detectQuestionComplexity(proposedQuestion.question);
+        await this.sessionManager.saveCurrentQuestion(sessionId, proposedQuestion.question, complexity);
+
+        return {
+          action: 'continue_probing',
+          content: proposedQuestion.question,
+          reasoning: proposedQuestion.reasoning,
+          delayedIntervention: delayedIntervention.needed ? delayedIntervention : null,
+          metadata: {
+            lightweight: true,
+            costOptimized: true,
+            responseQuality: responseAnalysis.quality,
+            timestamp: new Date().toISOString()
+          }
+        };
+      }
+
+    } catch (error) {
+      console.error('❌ Failed to process candidate response intelligently:', error);
+
+      // Fallback to full AI processing on error
+      console.log('⚠️ Falling back to full AI processing due to error');
+      return await this.processCandidateResponse(sessionId, transcript, audioMetadata);
     }
   }
 }
