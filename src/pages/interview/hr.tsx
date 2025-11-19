@@ -645,6 +645,18 @@ const IntelligentInterviewTest = () => {
   const [lastFinalTranscriptTime, setLastFinalTranscriptTime] = useState<number>(0);
   const transcriptDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Speaking Duration Tracking (to prevent premature interruptions)
+  const [speakingStartTime, setSpeakingStartTime] = useState<number | null>(null);
+  const [lastSpeakingTime, setLastSpeakingTime] = useState<number | null>(null);
+  const speakingStartTimeRef = useRef<number | null>(null); // Ref for closure access
+  const minimumSpeakingDuration = 1000; // 1 second minimum (AssemblyAI handles most turn detection)
+
+  // Answer Accumulation System (prevent mid-speech interruptions)
+  const [accumulatedTurns, setAccumulatedTurns] = useState<string[]>([]);
+  const [lastTurnTime, setLastTurnTime] = useState<number | null>(null);
+  const accumulatedTurnsRef = useRef<string[]>([]); // Ref for closure access
+  const MAX_ACCUMULATED_TURNS = 10; // Maximum turns to accumulate before forcing send
+
   // Camera States
   const [cameraStatus, setCameraStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied' | 'error'>('idle');
   const [cameraError, setCameraError] = useState<string>('');
@@ -669,7 +681,7 @@ const IntelligentInterviewTest = () => {
   // Adaptive Silence Thresholds
   const [baseSilenceThreshold] = useState(5000); // 5 seconds base
   const [adaptiveSilenceThreshold, setAdaptiveSilenceThreshold] = useState(5000);
-  const readingTimeBuffer = 15000; // 15 seconds reading time after new question
+  const readingTimeBuffer = 10000; // 10 seconds reading time after new question - give candidate time to listen and think
   const naturalPauseThreshold = 2000; // 2 seconds for natural pauses
   const maxNaturalPauses = 3; // Maximum natural pauses before considering complete
 
@@ -791,38 +803,38 @@ const IntelligentInterviewTest = () => {
 
   // Get optimal turn detection config for AssemblyAI V3 based on question context
   const getTurnDetectionConfig = (questionType: string = 'general') => {
-    // Quick responses (yes/no, simple questions) - AGGRESSIVE turn detection
+    // Quick responses (yes/no, simple questions) - CONSERVATIVE to prevent interruptions
     if (questionType === 'quick_response' || questionType === 'confirmation') {
       return {
-        end_of_turn_confidence_threshold: 0.5,  // More aggressive semantic detection
-        min_end_of_turn_silence_when_confident: 100,  // 100ms after confident turn
-        max_turn_silence: 1000,  // Force turn after 1s silence (shorter for quick responses)
+        end_of_turn_confidence_threshold: 0.7,  // Increased from 0.5 to reduce false positives
+        min_end_of_turn_silence_when_confident: 400,  // Increased from 200ms to allow thinking
+        max_turn_silence: 2500,  // Increased from 1.5s - allow pauses even for short answers
       };
     }
 
-    // Technical deep-dive (longer explanations expected) - CONSERVATIVE turn detection
+    // Technical deep-dive (longer explanations expected) - VERY CONSERVATIVE turn detection
     if (questionType === 'technical' || questionType === 'system_design' || questionType === 'coding') {
       return {
-        end_of_turn_confidence_threshold: 0.8,  // Higher confidence needed (more conservative)
-        min_end_of_turn_silence_when_confident: 300,  // 300ms after confident turn
-        max_turn_silence: 3000,  // Force turn after 3s silence (longer for technical)
+        end_of_turn_confidence_threshold: 0.85,  // Increased from 0.8 for more certainty
+        min_end_of_turn_silence_when_confident: 900,  // Increased from 600ms for technical thinking pauses
+        max_turn_silence: 10000,  // Increased from 5s to 10s - allow very long pauses for technical thinking
       };
     }
 
-    // Behavioral/storytelling (natural pauses in stories) - BALANCED turn detection
+    // Behavioral/storytelling (natural pauses in stories) - MORE CONSERVATIVE
     if (questionType === 'behavioral' || questionType === 'experience') {
       return {
-        end_of_turn_confidence_threshold: 0.65,  // Medium confidence threshold
-        min_end_of_turn_silence_when_confident: 200,  // 200ms after confident turn
-        max_turn_silence: 2200,  // Force turn after 2.2s silence
+        end_of_turn_confidence_threshold: 0.75,  // Increased from 0.65
+        min_end_of_turn_silence_when_confident: 700,  // Increased from 500ms - stories have pauses
+        max_turn_silence: 8000,  // Increased from 4s to 8s - allow longer narrative thinking time
       };
     }
 
-    // Default BALANCED settings (AssemblyAI recommended defaults with slight adjustments)
+    // Default VERY CONSERVATIVE settings to prevent interruptions during natural pauses
     return {
-      end_of_turn_confidence_threshold: 0.7,  // Default semantic confidence
-      min_end_of_turn_silence_when_confident: 160,  // AssemblyAI default
-      max_turn_silence: 2400,  // AssemblyAI default - force turn after 2.4s
+      end_of_turn_confidence_threshold: 0.78,  // Increased from 0.7 to reduce false turn detections
+      min_end_of_turn_silence_when_confident: 800,  // Increased from 500ms - more buffer before declaring turn end
+      max_turn_silence: 8000,  // Increased from 4.5s to 8s - allow much longer pauses without triggering turn detection
     };
   };
 
@@ -921,25 +933,94 @@ const IntelligentInterviewTest = () => {
         console.log('   - End of turn:', turn.end_of_turn);
         console.log('   - Confidence:', turn.end_of_turn_confidence);
 
+        // Track speaking start time on first partial transcript
+        // Use ref to avoid React state race condition
+        if (!speakingStartTimeRef.current) {
+          const now = Date.now();
+          setSpeakingStartTime(now);
+          speakingStartTimeRef.current = now; // Primary source of truth
+          // Cancel reading time immediately when user starts speaking
+          setQuestionReadingTime(null);
+          setIsInReadingTime(false);
+          console.log('🎤 Speaking started - reading time cancelled');
+        }
+        setLastSpeakingTime(Date.now());
+
+        // Check if speaking too long (3 minutes max per response)
+        const MAX_SPEAKING_DURATION = 180000; // 3 minutes
+        if (speakingStartTimeRef.current) {
+          const currentSpeakingDuration = Date.now() - speakingStartTimeRef.current;
+          if (currentSpeakingDuration > MAX_SPEAKING_DURATION) {
+            console.warn(`⏱️  Speaking too long: ${Math.round(currentSpeakingDuration / 1000)}s - sending accumulated answer + interrupt`);
+
+            // First, send any accumulated answer
+            if (accumulatedTurnsRef.current.length > 0) {
+              console.log(`📤 Sending ${accumulatedTurnsRef.current.length} accumulated turns before interrupt`);
+              sendAccumulatedAnswer();
+            }
+
+            // Then send event to backend to politely interrupt
+            if (socketRef.current) {
+              socketRef.current.emit('speaking_too_long', {
+                duration: currentSpeakingDuration
+              });
+            }
+
+            // Reset speaking timer to avoid multiple interrupts
+            speakingStartTimeRef.current = null;
+            setSpeakingStartTime(null);
+            return; // Backend will handle moving to next question
+          }
+        }
+
         // Update UI with current transcript (partial or final)
         setCurrentTranscript(text.slice(-200));
         setSpeechPhase('speaking');
+        setAgentState('waiting');  // Keep in waiting while speaking
+        setAgentMessage('Listening to your answer...');
         addTranscriptDebugLog(`📝 Partial: "${text.slice(0, 50)}..."`);
 
         // Only process as final when end_of_turn is true
         if (turn.end_of_turn) {
           const finalText = text;
+          const now = Date.now();
+          // Use ref for accurate duration calculation (avoids React state race condition)
+          const speakingDuration = speakingStartTimeRef.current ? now - speakingStartTimeRef.current : 0;
+
           console.log('🎯 [TURN-COMPLETE] End of turn detected!');
           console.log('   - Final text length:', finalText.length);
           console.log('   - Confidence:', turn.end_of_turn_confidence);
+          console.log('   - Speaking duration:', speakingDuration, 'ms');
           addTranscriptDebugLog(`✅ Turn complete: conf=${(turn.end_of_turn_confidence * 100).toFixed(1)}%`);
 
-          // Filter low-confidence turns
-          if (turn.end_of_turn_confidence < 0.6) {
-            console.warn('⚠️ Low confidence turn, skipping:', turn.end_of_turn_confidence);
-            addTranscriptDebugLog(`⚠️ Low confidence: ${(turn.end_of_turn_confidence * 100).toFixed(1)}%`);
-            showNotification('Low confidence detected. Please speak clearly.', 'warning');
+          // Check minimum speaking duration to prevent premature turn detection
+          if (speakingDuration < minimumSpeakingDuration) {
+            console.warn('⚠️ Speaking duration too short, ignoring turn:', speakingDuration, 'ms');
+            addTranscriptDebugLog(`⏱️ Too short: ${speakingDuration}ms < ${minimumSpeakingDuration}ms`);
+            return; // Don't process, wait for more speech
+          }
+
+          // Filter VERY low-confidence turns with RECOVERY mechanism
+          // Lowered from 60% to 20% because AssemblyAI often has correct text despite lower confidence
+          if (turn.end_of_turn_confidence < 0.2) {
+            console.warn('⚠️ Very low confidence turn detected:', turn.end_of_turn_confidence);
+            addTranscriptDebugLog(`⚠️ Very low confidence: ${(turn.end_of_turn_confidence * 100).toFixed(1)}%`);
+
+            // RECOVERY: Keep state to preserve speaking duration for next attempt
+            // Don't reset speakingStartTime - let it accumulate across low confidence turns
+            setAgentState('waiting');
+            setAgentMessage('Could not clearly hear you. Please continue speaking...');
+
+            showNotification('Speech very unclear - please speak more clearly', 'warning');
+            // Don't return immediately - allow accumulation for retry
+            setAccumulatedTranscript(finalText);
             return;
+          }
+
+          // Log confidence for monitoring (even if accepted)
+          if (turn.end_of_turn_confidence < 0.6) {
+            console.log(`ℹ️ Accepted turn with moderate confidence: ${(turn.end_of_turn_confidence * 100).toFixed(1)}%`);
+            addTranscriptDebugLog(`✓ Accepted: ${(turn.end_of_turn_confidence * 100).toFixed(1)}% confidence`);
           }
 
           // Prevent duplicate processing
@@ -949,7 +1030,6 @@ const IntelligentInterviewTest = () => {
           }
 
           // Check if in reading time
-          const now = Date.now();
           const isInReadingTime = questionReadingTime && (now - questionReadingTime < readingTimeBuffer);
 
           if (isInReadingTime) {
@@ -962,37 +1042,37 @@ const IntelligentInterviewTest = () => {
             return;
           }
 
-          // Update UI state
-          setAgentState('processing');
-          setAgentMessage('Processing your response...');
+          // ========== SIMPLIFIED ACCUMULATION LOGIC ==========
+          // Just accumulate turns silently - NO TIMERS
+          // Silence detection (20s) will trigger sending when user truly stops
+          console.log('✅ [ACCUMULATION] Turn complete - adding to accumulation buffer');
+          console.log(`   - Current buffer size: ${accumulatedTurns.length} turns`);
+          console.log(`   - This turn length: ${finalText.length} chars`);
+
+          // Add this turn to the accumulation buffer
+          const newTurns = [...accumulatedTurns, finalText];
+          setAccumulatedTurns(newTurns); // For UI
+          accumulatedTurnsRef.current = newTurns; // For closure access
+          setLastTurnTime(now);
           setAccumulatedTranscript(finalText);
           setCurrentTranscript(finalText.slice(-200));
 
-          // Send COMPLETE response to backend
-          if (socketRef.current?.connected && sessionIdRef.current && !finalTranscriptSent) {
-            setFinalTranscriptSent(true);
+          // Visual feedback: Stay in waiting state (user may continue)
+          setAgentState('waiting');
+          setAgentMessage('Listening to your answer...');
+          setSpeechPhase('paused');
 
-            socketRef.current.emit('candidate_response', {
-              sessionId: sessionIdRef.current,
-              transcript: finalText,
-              timestamp: new Date().toISOString(),
-              isFinal: true,
-              confidence: turn.end_of_turn_confidence,
-              turnOrder: turn.turn_order
-            });
+          addTranscriptDebugLog(`📥 Turn ${accumulatedTurns.length + 1} accumulated (${finalText.length} chars)`);
 
-            // Update agent state
-            setAgentState('thinking');
-            setAgentMessage('AI is analyzing your response...');
-            setSpeechPhase('thinking');
-
-            addTranscriptDebugLog(`📤 Sent to backend: ${finalText.length} chars`);
-
-            // Clear for next turn
-            setTimeout(() => {
-              setCurrentTranscript('');
-            }, 1000);
+          // Check if we've hit the maximum accumulated turns (force send)
+          if (accumulatedTurns.length + 1 >= MAX_ACCUMULATED_TURNS) {
+            console.warn(`⚠️  Max accumulated turns reached (${MAX_ACCUMULATED_TURNS}) - forcing send`);
+            addTranscriptDebugLog(`⚠️ Max turns reached - forcing send`);
+            sendAccumulatedAnswer();
+            return;
           }
+
+          // NO TIMER - Let silence detection handle sending after 20s of true silence
         }
       });
       console.log('   ✓ turn handler attached');
@@ -1438,6 +1518,21 @@ const IntelligentInterviewTest = () => {
       setAgentMessage('Listening to your answer...');
       setSpeechPhase('reading');
 
+      // Reset speaking timers for new question
+      setSpeakingStartTime(null);
+      setLastSpeakingTime(null);
+      speakingStartTimeRef.current = null;
+
+      // Reset silence detection for new question
+      setSilenceStartTime(null);
+      setIsTrueSilence(false);
+      setCurrentSilenceDuration(0);
+
+      // Reset accumulation buffer for new question
+      setAccumulatedTurns([]);
+      accumulatedTurnsRef.current = [];
+      setLastTurnTime(null);
+
       addTranscriptDebugLog(`🆕 New question received, state reset`);
     }
   }, [currentMessage]);
@@ -1625,6 +1720,58 @@ const IntelligentInterviewTest = () => {
     console.log('🔍 TRANSCRIPT DEBUG:', logEntry);
   };
 
+  // Send accumulated answer to backend (after waiting for continuation)
+  const sendAccumulatedAnswer = () => {
+    const turns = accumulatedTurnsRef.current; // Always get current value from ref
+
+    if (turns.length === 0) {
+      console.log('⚠️ No accumulated turns to send');
+      return;
+    }
+
+    // Combine all accumulated turns into one complete answer
+    const completeAnswer = turns.join(' ');
+
+    console.log(`📤 [ACCUMULATION] Sending accumulated answer:`);
+    console.log(`   - Turn count: ${turns.length}`);
+    console.log(`   - Total length: ${completeAnswer.length} chars`);
+    console.log(`   - Content preview: "${completeAnswer.substring(0, 100)}..."`);
+
+    // NOW send to backend (only once with complete answer)
+    if (socketRef.current?.connected && sessionIdRef.current) {
+      setFinalTranscriptSent(true);
+
+      socketRef.current.emit('candidate_response', {
+        sessionId: sessionIdRef.current,
+        transcript: completeAnswer,
+        timestamp: new Date().toISOString(),
+        isFinal: true,
+        turnCount: turns.length,
+        speakingDuration: speakingStartTimeRef.current ? Date.now() - speakingStartTimeRef.current : 0,
+        accumulated: true
+      });
+
+      // Update UI to show AI is processing the complete answer
+      setAgentState('thinking');
+      setAgentMessage('AI is analyzing your complete response...');
+      setSpeechPhase('thinking');
+
+      addTranscriptDebugLog(`📤 Sent ${turns.length} accumulated turns (${completeAnswer.length} chars)`);
+
+      // Clear accumulated turns (both state and ref)
+      setAccumulatedTurns([]);
+      accumulatedTurnsRef.current = [];
+      setLastTurnTime(null);
+      setSpeakingStartTime(null);
+      speakingStartTimeRef.current = null;
+
+      // Clear current transcript after a delay
+      setTimeout(() => {
+        setCurrentTranscript('');
+      }, 1000);
+    }
+  };
+
   // Reset silence detection state
   const resetSilenceDetection = () => {
     setSilenceStartTime(null);
@@ -1637,10 +1784,26 @@ const IntelligentInterviewTest = () => {
     setTranscriptChunks([]);
     setFinalTranscriptSent(false);
 
+    // Reset speaking timers
+    setSpeakingStartTime(null);
+    setLastSpeakingTime(null);
+    speakingStartTimeRef.current = null;
+
+    // Clear accumulation buffer
+    setAccumulatedTurns([]);
+    accumulatedTurnsRef.current = [];
+    setLastTurnTime(null);
+
     // Clear any pending debounce timers
     if (transcriptDebounceRef.current) {
       clearTimeout(transcriptDebounceRef.current);
       transcriptDebounceRef.current = null;
+    }
+
+    // Clear silence timer
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
     }
 
     addSilenceDebugLog('🔄 Silence detection state reset');
@@ -1674,69 +1837,15 @@ const IntelligentInterviewTest = () => {
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
-    const detectVoiceActivity = () => {
-      if (interviewStatus !== 'active') return;
+    // REMOVED: Automatic silence detection - using manual "Next" button only for MVP
+    // const detectVoiceActivity = () => { ... }
+    // detectVoiceActivity();
 
-      analyser.getByteFrequencyData(dataArray);
-
-      // Calculate average volume
-      const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
-      const isCurrentlyActive = average > 30; // Threshold for voice activity
-
-      // Update voice activity state
-      if (isCurrentlyActive !== isVoiceActive) {
-        setIsVoiceActive(isCurrentlyActive);
-
-        // Send voice activity to WebSocket
-        if (socketRef.current) {
-          socketRef.current.emit('audio_stream', {
-            audioData: dataArray,
-            isActive: isCurrentlyActive
-          });
-        }
-      }
-
-      // Handle silence detection
-      if (isCurrentlyActive) {
-        // Reset silence timer
-        if (silenceTimerRef.current) {
-          clearTimeout(silenceTimerRef.current);
-          silenceTimerRef.current = null;
-        }
-        setLastVoiceActivity(Date.now());
-      } else if (!silenceTimerRef.current) {
-        // Start silence timer
-        const silenceTimeout = (interviewConfig.sessionSettings?.silenceTimeout || 5) * 1000;
-
-        silenceTimerRef.current = setTimeout(() => {
-          const silenceDuration = Date.now() - lastVoiceActivity;
-          handleSilenceDetected(silenceDuration);
-        }, silenceTimeout);
-      }
-
-      // Continue monitoring
-      requestAnimationFrame(detectVoiceActivity);
-    };
-
-    detectVoiceActivity();
+    // Manual submission only - user clicks "Next Question" button when done speaking
   };
 
-  // Handle silence detection
-  const handleSilenceDetected = (silenceDuration: number) => {
-    console.log(`🔇 Silence detected: ${silenceDuration}ms`);
-
-    if (socketRef.current && interviewStatus === 'active') {
-      socketRef.current.emit('silence_detected', {
-        silenceDuration: silenceDuration / 1000 // Convert to seconds
-      });
-    }
-
-    // Reset silence timer
-    if (silenceTimerRef.current) {
-      clearTimeout(silenceTimerRef.current);
-      silenceTimerRef.current = null;
-    }
-  };
+  // REMOVED: Automatic silence detection - using manual "Next" button only for MVP
+  // const handleSilenceDetected = (silenceDuration: number) => { ... }
 
   // Process speech input (would be connected to speech-to-text)
   const processSpeechInput = (transcript: string) => {
@@ -2166,38 +2275,47 @@ const IntelligentInterviewTest = () => {
               </Box>
             )}
 
-            {/* Silence Detection Display */}
+            {/* Manual Next Button - Always clickable when interview active */}
             {interviewStatus === 'active' && !isInReadingTime && (
-              <Box>
+              <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" sx={{ color: '#ccc', mb: 1, fontSize: '0.75rem', fontWeight: 600 }}>
-                  SILENCE DETECTION
+                  SUBMIT ANSWER
                 </Typography>
-
-                {/* Silence Timer */}
-                <Box sx={{ mb: 1 }}>
-                  <TimerDisplay className={isTrueSilence ? 'silence-complete' : 'silence-active'}>
-                    {(currentSilenceDuration / 1000).toFixed(1)}s / 5.0s
-                  </TimerDisplay>
-                </Box>
-
-                {/* Progress Bar */}
-                <SilenceProgressBar
-                  variant="determinate"
-                  value={(currentSilenceDuration / adaptiveSilenceThreshold) * 100}
-                  className={isTrueSilence ? 'complete' : ''}
-                />
-
-                {/* Status Message */}
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={() => {
+                    console.log('🎯 [MANUAL] User clicked Next Question button');
+                    sendAccumulatedAnswer();
+                  }}
+                  sx={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: '#fff',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    py: 1.5,
+                    textTransform: 'none',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)',
+                    }
+                  }}
+                >
+                  {accumulatedTurns.length > 0
+                    ? `Next Question (${accumulatedTurns.length} ${accumulatedTurns.length === 1 ? 'turn' : 'turns'} recorded)`
+                    : 'Next Question'
+                  }
+                </Button>
                 <Typography variant="caption" sx={{
-                  color: isTrueSilence ? '#81c784' : (silenceStartTime ? '#64b5f6' : '#bbb'),
+                  color: '#bbb',
                   textAlign: 'center',
                   display: 'block',
                   mt: 1,
                   fontSize: '0.7rem'
                 }}>
-                  {isTrueSilence ? '✓ Response sent!' :
-                   silenceStartTime ? 'Detecting silence...' :
-                   'Waiting for silence...'}
+                  {accumulatedTurns.length > 0
+                    ? 'Click when you\'re done answering'
+                    : 'Click to skip or move to next question'
+                  }
                 </Typography>
               </Box>
             )}

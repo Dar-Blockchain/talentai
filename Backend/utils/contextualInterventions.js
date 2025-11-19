@@ -2,9 +2,12 @@
  * Contextual Interventions Generator
  * Generates appropriate AI-powered intervention messages based on context
  * 6 intervention types: encouragement, elaboration, clarification, refocus, probe, continuation
+ *
+ * NOTE: Disabled for MVP - using manual "Next" button flow only
  */
 
-const togetherAI = require('../services/togetherAI');
+// REMOVED: Module doesn't exist - not needed for MVP manual flow
+// const togetherAI = require('../services/togetherAI');
 
 class ContextualInterventions {
 

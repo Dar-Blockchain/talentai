@@ -154,7 +154,8 @@ class RedisSessionManager {
         questions: [],
         answers: [],
         silenceCount: 0,
-        silenceStage: 0, // 0 = no silence, 1 = first (patience), 2 = second (help offer), 3 = third (rephrase)
+        // REMOVED: No silenceStage tracking for MVP - using manual "Next" button only
+        // silenceStage: 0,
         currentQuestionContext: {
           originalQuestion: null,
           askedAt: null,
@@ -391,8 +392,8 @@ class RedisSessionManager {
       };
 
       await this.updateSession(sessionId, {
-        currentQuestionContext,
-        silenceStage: 0 // Reset silence stage when new question is asked
+        currentQuestionContext
+        // REMOVED: No silenceStage tracking for MVP
       });
 
       console.log(`💾 [Session] Saved current question for potential rephrasing:`, {
@@ -446,20 +447,9 @@ class RedisSessionManager {
   }
 
   /**
-   * Reset silence stage when candidate responds
+   * REMOVED: No silence stage tracking for MVP - using manual "Next" button only
    */
-  async resetSilenceStage(sessionId) {
-    try {
-      await this.updateSession(sessionId, {
-        silenceStage: 0
-      });
-
-      console.log(`🔄 [Session] Reset silence stage for session: ${sessionId}`);
-    } catch (error) {
-      console.error('❌ Failed to reset silence stage:', error.message);
-      throw error;
-    }
-  }
+  // async resetSilenceStage(sessionId) { ... }
 
   /**
    * Update candidate behavior analysis

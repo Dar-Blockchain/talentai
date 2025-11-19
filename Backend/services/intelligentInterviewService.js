@@ -229,6 +229,70 @@ RESPONSE FORMAT (JSON only):
       return { error: error.message };
     }
   }
+
+  /**
+   * Analyze if candidate's response adequately answered the interviewer's question
+   */
+  async analyzeResponseQuality(question, response, targetArea) {
+    try {
+      const systemPrompt = `You are an expert interview evaluator analyzing if a candidate's response adequately addresses the interviewer's question.
+
+EVALUATION CRITERIA:
+- Does the response relate to the question topic?
+- Does it provide examples/details specifically asked for?
+- Is the response vague, unclear, or evasive?
+- Did the candidate dodge or avoid answering directly?
+- Is there missing information that should be clarified?
+
+RESPONSE FORMAT (JSON only):
+{
+  "answeredQuestion": boolean,
+  "qualityScore": number (0-100),
+  "completeness": "complete|partial|minimal|avoided",
+  "missingElements": ["specific elements not addressed"],
+  "clarificationNeeded": boolean,
+  "suggestedFollowUp": "clarifying question if needed (or null)",
+  "reasoning": "detailed explanation of evaluation"
+}`;
+
+      const userPrompt = `INTERVIEWER QUESTION: "${question}"
+
+CANDIDATE RESPONSE: "${response}"
+
+TARGET AREA: ${targetArea || 'General'}
+
+Evaluate if the response adequately answered the question. If clarification is needed, suggest a specific follow-up question.`;
+
+      const aiResponse = await this.together.chat.completions.create({
+        model: this.model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 700
+      });
+
+      const responseContent = aiResponse.choices[0].message.content.trim();
+      const result = AIUtils.parseJSONResponse(responseContent, 'analyzeResponseQuality');
+
+      console.log(`🔍 [Response Quality] ${result.answeredQuestion ? '✅ Answered' : '❌ Not Answered'} - Score: ${result.qualityScore}/100`);
+
+      return result;
+    } catch (error) {
+      console.error('Error analyzing response quality:', error);
+      return {
+        answeredQuestion: true, // Default to true on error to not block flow
+        qualityScore: 50,
+        completeness: 'unknown',
+        missingElements: [],
+        clarificationNeeded: false,
+        suggestedFollowUp: null,
+        reasoning: 'Analysis failed: ' + error.message,
+        error: error.message
+      };
+    }
+  }
 }
 
 /**
@@ -526,6 +590,45 @@ class DecisionEngineAI {
 
   async makeIntelligentDecision(session, candidateResponse, allAnalyses) {
     try {
+      // Check question counts per area to enforce max 5 questions limit
+      const areaQuestionCounts = {};
+      const MAX_QUESTIONS_PER_AREA = 5;
+
+      if (session.coverage && session.coverage.areas) {
+        Object.keys(session.coverage.areas).forEach(areaName => {
+          const area = session.coverage.areas[areaName];
+          areaQuestionCounts[areaName] = area.questionsAsked || 0;
+        });
+      }
+
+      // Determine current topic area from recent conversation
+      const recentInterviewerMessages = session.conversation
+        .filter(entry => entry.type === 'interviewer')
+        .slice(-2);
+
+      let currentArea = null;
+      if (recentInterviewerMessages.length > 0) {
+        const lastQuestion = recentInterviewerMessages[recentInterviewerMessages.length - 1];
+        currentArea = lastQuestion.metadata?.targetAreas?.[0];
+      }
+
+      // Force move to new area if current area has reached question limit
+      let forcedDecision = null;
+      if (currentArea && areaQuestionCounts[currentArea] >= MAX_QUESTIONS_PER_AREA) {
+        console.log(`🚫 [Question Limit] Area "${currentArea}" has ${areaQuestionCounts[currentArea]} questions (max: ${MAX_QUESTIONS_PER_AREA})`);
+        forcedDecision = {
+          decision: "explore_new_area",
+          reasoning: `Asked ${areaQuestionCounts[currentArea]} questions on ${currentArea} - moving to new topic to avoid repetition and maintain engagement`,
+          targetArea: this.findLeastAskedArea(session.coverage.areas, currentArea),
+          strategy: "Move to fresh topic with lowest question count",
+          confidence: 100,
+          expectedDuration: "2-3 minutes",
+          forcedByLimit: true
+        };
+        console.log(`✅ [Forced Decision] Moving to area: ${forcedDecision.targetArea}`);
+        return forcedDecision;
+      }
+
       const systemPrompt = `You are an expert interview decision engine. Make intelligent decisions about interview flow based on comprehensive analysis.
 
 DECISION OPTIONS:
@@ -541,6 +644,9 @@ DECISION FACTORS:
 - Time management and efficiency
 - Candidate engagement and communication style
 - Quality and depth of evidence gathered
+- Question count per area (avoid asking too many on same topic)
+
+IMPORTANT: Avoid asking more than 3-5 questions on the same topic to prevent repetition and maintain candidate engagement.
 
 RESPONSE FORMAT (JSON only):
 {
@@ -559,7 +665,9 @@ ${JSON.stringify({
         config: {
           targetRole: session.config.context.targetRole,
           duration: session.config.sessionSettings.duration
-        }
+        },
+        questionCounts: areaQuestionCounts,
+        currentArea: currentArea
       }, null, 2)}
 
 LATEST RESPONSE: "${candidateResponse}"
@@ -567,7 +675,12 @@ LATEST RESPONSE: "${candidateResponse}"
 ANALYSES:
 ${JSON.stringify(allAnalyses, null, 2)}
 
-Make the next intelligent decision for interview progression.`;
+QUESTION COUNTS PER AREA (Max 5 recommended):
+${JSON.stringify(areaQuestionCounts, null, 2)}
+
+Current Topic Area: ${currentArea || 'N/A'}
+
+Make the next intelligent decision for interview progression. Consider question counts to avoid over-asking on same topic.`;
 
       const response = await this.together.chat.completions.create({
         model: this.model,
@@ -585,6 +698,31 @@ Make the next intelligent decision for interview progression.`;
       console.error('Error in intelligent decision making:', error);
       throw error;
     }
+  }
+
+  /**
+   * Find area with least questions asked (excluding current area)
+   */
+  findLeastAskedArea(coverageAreas, excludeArea = null) {
+    let minQuestions = Infinity;
+    let selectedArea = null;
+
+    Object.keys(coverageAreas).forEach(areaName => {
+      if (areaName === excludeArea) return; // Skip current area
+
+      const questionsAsked = coverageAreas[areaName].questionsAsked || 0;
+      if (questionsAsked < minQuestions) {
+        minQuestions = questionsAsked;
+        selectedArea = areaName;
+      }
+    });
+
+    // If all areas have same count, pick first one that's not excluded
+    if (!selectedArea) {
+      selectedArea = Object.keys(coverageAreas).find(name => name !== excludeArea);
+    }
+
+    return selectedArea || Object.keys(coverageAreas)[0];
   }
 
   async shouldEndInterview(session, totalDuration) {
@@ -933,6 +1071,25 @@ class IntelligentInterviewService {
       // Get updated session with new conversation entry
       const updatedSession = await this.sessionManager.getSession(sessionId);
 
+      // Check if candidate adequately answered the previous question
+      const recentInterviewerMessages = updatedSession.conversation
+        .filter(entry => entry.type === 'interviewer')
+        .slice(-1);
+
+      let responseQuality = null;
+      if (recentInterviewerMessages.length > 0) {
+        const lastQuestion = recentInterviewerMessages[0].content;
+        const targetArea = recentInterviewerMessages[0].metadata?.targetAreas?.[0];
+
+        responseQuality = await this.memoryAI.analyzeResponseQuality(
+          lastQuestion,
+          transcript,
+          targetArea
+        );
+
+        console.log(`📊 [Response Quality] Answered: ${responseQuality.answeredQuestion}, Score: ${responseQuality.qualityScore}/100`);
+      }
+
       // Perform intelligent coverage analysis
       const coverageAnalysis = await this.coverageAI.analyzeCoverageIntelligently(
         transcript,
@@ -964,10 +1121,10 @@ class IntelligentInterviewService {
         }
       );
 
-      // Generate next question or action based on decision
+      // SIMPLIFIED: Just generate next question (no clarification requests - be more patient)
       let nextAction;
       if (decisionAnalysis.decision === 'explore_new_area' || decisionAnalysis.decision === 'continue_probing') {
-        // Check for question similarity to prevent repetition
+        // Normal flow - generate next question
         const proposedQuestion = await this.questionAI.generateIntelligentQuestion(
           finalSession,
           coverageAnalysis,
@@ -1052,12 +1209,51 @@ class IntelligentInterviewService {
         await this.sessionManager.saveCurrentQuestion(sessionId, nextAction.content, complexity);
         console.log(`💾 [Question] Saved with complexity: ${complexity}`);
 
+        // Track questions asked per coverage area (max 5 per area to avoid repetition)
+        const targetArea = decisionAnalysis.targetArea;
+        if (targetArea && finalSession.coverage.areas[targetArea]) {
+          await this.incrementAreaQuestionCount(sessionId, targetArea);
+          console.log(`📊 [Question Counter] Incremented for area: ${targetArea}`);
+        }
+
       } else if (decisionAnalysis.decision === 'end_interview') {
         nextAction = {
           type: 'end_interview',
           content: 'Thank you for your time. This concludes our interview.',
           reasoning: decisionAnalysis.reasoning
         };
+      } else {
+        // FALLBACK: For ANY other decision type (seek_examples, wrap_up_area, unexpected, etc.)
+        // Always generate next question to keep interview moving forward
+        console.log(`⚠️ Unhandled decision type: "${decisionAnalysis.decision}" - generating next question anyway`);
+
+        const proposedQuestion = await this.questionAI.generateIntelligentQuestion(
+          finalSession,
+          coverageAnalysis,
+          { previousQuestions: finalSession.conversation.filter(e => e.type === 'interviewer') }
+        );
+
+        nextAction = {
+          type: 'question',
+          content: proposedQuestion.question,
+          reasoning: `Fallback for "${decisionAnalysis.decision}": ${decisionAnalysis.reasoning}`,
+          targetAreas: proposedQuestion.targetAreas
+        };
+
+        // Store interviewer question in conversation
+        await this.sessionManager.addConversationEntry(sessionId, {
+          type: 'interviewer',
+          content: nextAction.content,
+          timestamp: new Date().toISOString(),
+          metadata: {
+            aiGenerated: true,
+            targetAreas: nextAction.targetAreas,
+            reasoning: nextAction.reasoning,
+            fallback: true
+          }
+        });
+
+        console.log(`✅ [Fallback] Generated next question to keep interview moving`);
       }
 
       // Update real-time report with AI insights
@@ -1344,62 +1540,90 @@ class IntelligentInterviewService {
   }
 
   /**
-   * Handle silence detection
+   * Handle silence detection - SIMPLIFIED VERSION
+   * Only acts on extended silence (15s+) to move to next question
+   * NO encouragement messages, NO patience prompts
    */
   async handleSilence(sessionId, silenceDuration) {
     try {
+      console.log(`🔇 [Silence] Detected ${silenceDuration}s of silence`);
+
+      // IGNORE short pauses - let candidate think naturally
+      if (silenceDuration < 20) {
+        console.log(`✓ [Silence] Ignoring short pause (< 20s)`);
+        return {
+          action: 'ignore',
+          content: null,
+          reasoning: 'Short pause - allowing natural thinking time'
+        };
+      }
+
+      // Extended silence (20s+) - Move to next question automatically
+      console.log(`⏭️  [Silence] Extended silence (${silenceDuration}s) - generating next question`);
+
       const session = await this.sessionManager.getSession(sessionId);
       if (!session) {
         throw new Error(`Session ${sessionId} not found`);
       }
 
-      // Track silence and get current stage
-      const silenceData = await this.sessionManager.trackSilence(sessionId, silenceDuration);
+      // Get updated session for coverage analysis
+      const updatedSession = await this.sessionManager.getSession(sessionId);
 
-      console.log(`🔇 [HandleSilence] Stage ${silenceData.silenceStage}, Duration: ${silenceDuration}s`);
+      // Perform coverage analysis to determine next question
+      const coverageAnalysis = await this.coverageAI.analyzeCoverageIntelligently(
+        "[SILENCE - NO RESPONSE]",
+        updatedSession.coverage,
+        updatedSession.config.intelligenceContext.focusAreas,
+        updatedSession.conversation
+      );
 
-      let response;
+      // Make decision for next area
+      const decisionAnalysis = await this.decisionAI.makeIntelligentDecision(
+        updatedSession,
+        "[EXTENDED SILENCE]",
+        { coverage: coverageAnalysis }
+      );
 
-      // Route to appropriate AI method based on stage
-      switch (silenceData.silenceStage) {
-        case 1: // First silence (30s) - Gentle patience
-          response = await this.generatePatiencePrompt(session, silenceData);
-          break;
+      // Generate next question
+      const nextQuestion = await this.questionAI.generateIntelligentQuestion(
+        updatedSession,
+        coverageAnalysis,
+        { previousQuestions: updatedSession.conversation.filter(e => e.type === 'interviewer') }
+      );
 
-        case 2: // Second silence (60s) - Help offer
-          response = await this.generateHelpOffer(session, silenceData);
-          break;
-
-        case 3: // Third silence (90s) - Rephrase question
-          response = await this.rephraseCurrentQuestion(session, silenceData);
-          break;
-
-        default: // 4+ silences - move forward
-          const nextQuestion = await this.makeIntelligentDecision(session, "[EXTENDED SILENCE - MOVING FORWARD]");
-          return {
-            action: 'move_forward',
-            content: nextQuestion.content,
-            reasoning: 'Extended silence - moving to next topic',
-            silenceStage: silenceData.silenceStage
-          };
-      }
-
-      // Add prompt to conversation
+      // Store the new question
       await this.sessionManager.addConversationEntry(sessionId, {
-        type: 'system',
-        content: response.content,
-        metadata: response.metadata
+        type: 'interviewer',
+        content: nextQuestion.question,
+        timestamp: new Date().toISOString(),
+        metadata: {
+          aiGenerated: true,
+          targetAreas: nextQuestion.targetAreas,
+          reasoning: 'Extended silence - moving forward',
+          silenceDuration: silenceDuration
+        }
       });
 
+      console.log(`✅ [Silence] Moving to next question: "${nextQuestion.question.substring(0, 60)}..."`);
+
       return {
-        action: 'silence_prompt',
-        content: response.content,
-        silenceStage: silenceData.silenceStage,
-        metadata: response.metadata
+        action: 'next_question',
+        content: nextQuestion.question,
+        reasoning: `Extended silence (${silenceDuration}s) - automatically moving forward`,
+        targetAreas: nextQuestion.targetAreas,
+        silenceDuration
       };
+
     } catch (error) {
-      console.error('❌ Failed to handle silence:', error.message);
-      throw error;
+      console.error('❌ [Silence] Failed to handle silence:', error.message);
+
+      // Fallback: just move forward with generic question
+      return {
+        action: 'next_question',
+        content: "Let's move on to the next topic. Can you tell me about your experience with problem-solving?",
+        reasoning: 'Silence handling failed - using fallback',
+        error: error.message
+      };
     }
   }
 
@@ -1573,7 +1797,7 @@ RESPONSE FORMAT (JSON only):
   }
 
   /**
-   * Generate patience prompt (Stage 2 - First Silence)
+   * REMOVED: No patience prompts for MVP - using manual "Next" button only
    */
   async generatePatiencePrompt(session, silenceData) {
     try {
@@ -1632,9 +1856,9 @@ Examples:
   }
 
   /**
-   * Generate help offer (Stage 3 - Second Silence)
+   * REMOVED: No help offers for MVP - using manual "Next" button only
    */
-  async generateHelpOffer(session, silenceData) {
+   async generateHelpOffer(session, silenceData) {
     try {
       const currentQuestion = session.currentQuestionContext?.originalQuestion || 'the question';
 
@@ -1690,9 +1914,9 @@ Examples:
   }
 
   /**
-   * Rephrase current question (Stage 4 - Third Silence)
+   * REMOVED: No question rephrasing for MVP - using manual "Next" button only
    */
-  async rephraseCurrentQuestion(session, silenceData) {
+   async rephraseCurrentQuestion(session, silenceData) {
     try {
       const currentQuestion = session.currentQuestionContext?.originalQuestion;
 
@@ -2009,6 +2233,69 @@ Example format: "Hello! I'm excited to speak with you today about the [role] pos
   }
 
   /**
+   * Build a clarification message when candidate didn't fully answer the question
+   */
+  buildClarificationMessage(missingElements, suggestedFollowUp, targetArea) {
+    const intro = "I notice you didn't fully address ";
+
+    if (missingElements && missingElements.length > 0) {
+      const elementsText = missingElements.length === 1
+        ? missingElements[0]
+        : missingElements.slice(0, -1).join(', ') + ' and ' + missingElements[missingElements.length - 1];
+
+      const message = `${intro}${elementsText}. `;
+
+      if (suggestedFollowUp) {
+        return message + suggestedFollowUp;
+      } else {
+        return message + `Could you elaborate on that?`;
+      }
+    } else if (suggestedFollowUp) {
+      return suggestedFollowUp;
+    } else {
+      return `I'd like to hear more about that. Could you provide more details or specific examples?`;
+    }
+  }
+
+  /**
+   * Increment question count for a coverage area (max 5 per area to avoid repetition)
+   */
+  async incrementAreaQuestionCount(sessionId, areaName) {
+    try {
+      const session = await this.sessionManager.getSession(sessionId);
+      if (!session || !session.coverage.areas[areaName]) {
+        return;
+      }
+
+      const area = session.coverage.areas[areaName];
+      area.questionsAsked = (area.questionsAsked || 0) + 1;
+      area.lastQuestionTime = new Date().toISOString();
+
+      await this.sessionManager.updateCoverage(sessionId, session.coverage);
+
+      console.log(`📊 Area "${areaName}" now has ${area.questionsAsked} questions asked`);
+    } catch (error) {
+      console.error('Error incrementing area question count:', error);
+    }
+  }
+
+  /**
+   * Get current number of questions asked for an area
+   */
+  async getAreaQuestionCount(sessionId, areaName) {
+    try {
+      const session = await this.sessionManager.getSession(sessionId);
+      if (!session || !session.coverage.areas[areaName]) {
+        return 0;
+      }
+      return session.coverage.areas[areaName].questionsAsked || 0;
+    } catch (error) {
+      console.error('Error getting area question count:', error);
+      return 0;
+    }
+  }
+
+  /**
    * Update real-time report with AI intelligence
    */
   async updateRealTimeReportIntelligently(session, candidateResponse, coverageAnalysis, decisionAnalysis) {
@@ -2223,42 +2510,11 @@ Update the real-time report with new AI-powered insights.`;
         behaviorTrackerData: behaviorTracker.toJSON()
       });
 
-      // STEP 3: Check for IMMEDIATE intervention (< 1s response time)
-      const immediateIntervention = behaviorTracker.needsImmediateIntervention(responseAnalysis);
+      // REMOVED: No interventions for MVP - just generate next question always
+      // const immediateIntervention = behaviorTracker.needsImmediateIntervention(responseAnalysis);
+      // if (immediateIntervention.needed) { ... }
 
-      if (immediateIntervention.needed) {
-        console.log('🚨 [Immediate Intervention]', immediateIntervention);
-
-        // Generate intervention message
-        const intervention = await ContextualInterventions.generate(immediateIntervention.suggestedAction, {
-          currentQuestion,
-          lastResponse: responseAnalysis,
-          behaviorProfile: behaviorTracker.getCommunicationStyle()
-        });
-
-        // Store candidate response
-        await this.sessionManager.addConversationEntry(sessionId, {
-          type: 'candidate',
-          content: transcript,
-          timestamp: new Date().toISOString(),
-          metadata: { ...audioMetadata, quickAnalysis: responseAnalysis }
-        });
-
-        // Return intervention immediately
-        return {
-          action: 'immediate_intervention',
-          content: intervention.content,
-          reasoning: `Immediate help needed: ${immediateIntervention.reason}`,
-          interventionType: immediateIntervention.suggestedAction,
-          urgency: immediateIntervention.urgency,
-          metadata: {
-            lightweight: true,
-            timestamp: new Date().toISOString()
-          }
-        };
-      }
-
-      // STEP 4: Decide if full AI analysis is needed
+      // STEP 3: Decide if full AI analysis is needed
       const needsAI = this.shouldDoFullAnalysis(responseAnalysis, session);
 
       if (needsAI) {
