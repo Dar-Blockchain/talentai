@@ -19,17 +19,15 @@ import {
   Paper,
 } from "@mui/material";
 import {
-  Search as SearchIcon,
-  LocationOn as LocationIcon,
   Work as WorkIcon,
   AttachMoney as MoneyIcon,
   Business as BusinessIcon,
-  FilterList as FilterIcon,
 } from "@mui/icons-material";
 import { useRouter } from "next/router";
 import Header from "@/components/Header";
-import SimpleFooter from "@/components/SimpleFooter";
 import { JOB_LOCATIONS } from "@/constants/jobConstants";
+import Image from "next/image";
+import Footer from "@/components/home-page/Footer";
 
 interface Job {
   id: string;
@@ -98,11 +96,7 @@ const JobSearchPage: React.FC = () => {
         process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
       const apiUrl = `${baseUrl}post/search?${params}`; // ⚠️ SLASH IS REQUIRED!
 
-      console.log("🔍 Fetching jobs from:", apiUrl);
-
       const response = await fetch(apiUrl);
-
-      console.log("📡 Response status:", response.status, response.statusText);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -113,9 +107,6 @@ const JobSearchPage: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log("📦 API Response:", data);
-      console.log("📊 Total posts found:", data.total);
-      console.log("📄 Posts in this page:", data.results?.length || 0);
 
       if (data.success) {
         // Transform backend data to match frontend Job interface
@@ -278,6 +269,7 @@ const JobSearchPage: React.FC = () => {
     <Box
       sx={{
         minHeight: "100vh",
+        backgroundColor: "#FDFEFE",
       }}
     >
       <Header
@@ -287,7 +279,15 @@ const JobSearchPage: React.FC = () => {
         link="Are you hiring?"
       />
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container
+        sx={{
+          py: 4,
+          px: { xs: 2, sm: 3, md: 4 },
+          maxWidth: { xs: "95%", lg: "1400px" }, // 100% on small, 80% on large screens
+          mx: "auto", // center horizontally
+        }}
+      >
+        {" "}
         {/* Hero Section - matches the image exactly */}
         <Box sx={{ textAlign: "center", mb: 6 }}>
           <Typography
@@ -325,190 +325,198 @@ const JobSearchPage: React.FC = () => {
             each month.
           </Typography>
         </Box>
-
-        {/* Search Bar - matches the image design */}
-        <Card
+        {/* Search Bar - matches the image exactly */}
+        <Box
           sx={{
-            p: 3,
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            maxWidth: 900,
+            alignItems: "center",
+            gap: { xs: 2, sm: 0 },
             mb: 4,
-            borderRadius: 3,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+            p: 1,
+            backgroundColor: "#fff",
+            borderRadius: "50px",
+            border: "1px solid #e5e7eb",
+            boxShadow:
+              "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)",
+            overflow: "hidden",
+            mx: "auto",
           }}
         >
-          <Grid container spacing={2} alignItems="center">
-            <Grid size={{ xs: 12, md: 5 }}>
-              <TextField
-                fullWidth
-                placeholder="Job Title"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon sx={{ color: "#8310FF" }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 2,
-                  },
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 5 }}>
-              <Autocomplete
-                value={selectedLocation}
-                onChange={(event, newValue) => {
-                  setSelectedLocation(newValue || "");
-                }}
-                options={JOB_LOCATIONS}
-                getOptionLabel={(option) => option}
-                isOptionEqualToValue={(option, value) => option === value}
-                filterOptions={(options, state) => {
-                  // Custom filtering for better search experience
-                  const inputValue = state.inputValue.toLowerCase();
-                  if (!inputValue) return options;
-
-                  return options.filter((option) =>
-                    option.toLowerCase().includes(inputValue)
-                  );
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    placeholder="Search locations..."
-                    InputProps={{
-                      ...params.InputProps,
-                      startAdornment: (
-                        <>
-                          <InputAdornment position="start">
-                            <LocationIcon sx={{ color: "#8310FF" }} />
-                          </InputAdornment>
-                          {params.InputProps.startAdornment}
-                        </>
-                      ),
-                    }}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 2,
-                      },
-                    }}
+          {/* Job Title Input */}
+          <TextField
+            fullWidth
+            placeholder="Job Title"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyUp={(e) => e.key === "Enter" && handleSearch()}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Image
+                    src="/icons/search.svg" // ✅ path inside /public folder
+                    alt="search"
+                    width={24}
+                    height={24}
+                    style={{ opacity: 0.7 }}
                   />
-                )}
-                PaperComponent={({ children, ...other }) => (
-                  <Paper
-                    {...other}
-                    sx={{
-                      maxHeight: 400,
-                      boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-                      "& .MuiAutocomplete-listbox": {
-                        maxHeight: 400,
-                        "& .MuiAutocomplete-option": {
-                          padding: "10px 16px",
-                          fontSize: "0.9rem",
-                          transition: "all 0.2s ease",
-                          "&:hover": {
-                            backgroundColor: "rgba(131, 16, 255, 0.08)",
-                          },
-                          "&.Mui-focused": {
-                            backgroundColor: "rgba(131, 16, 255, 0.12)",
-                          },
-                          '&[aria-selected="true"]': {
-                            backgroundColor: "rgba(131, 16, 255, 0.15)",
-                            fontWeight: 600,
-                          },
-                        },
-                      },
-                    }}
-                  >
-                    {children}
-                  </Paper>
-                )}
-                renderOption={(props, option) => (
-                  <Box
-                    component="li"
-                    {...props}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                    }}
-                  >
-                    <LocationIcon sx={{ color: "#8310FF", fontSize: 18 }} />
-                    <Typography sx={{ fontSize: "0.9rem" }}>
-                      {option}
-                    </Typography>
-                  </Box>
-                )}
-                noOptionsText="No locations found"
-                clearOnEscape
-                autoHighlight
-                openOnFocus
+                </InputAdornment>
+              ),
+              sx: {
+                height: "48px",
+                paddingRight: 1,
+                "& input": {
+                  padding: "10px 0px",
+                  fontSize: "14px",
+                  color: "#333",
+                },
+              },
+            }}
+            sx={{
+              flex: 1,
+              "& .MuiOutlinedInput-root": {
+                display: "flex",
+                alignItems: "center",
+                borderRadius: 0,
+                border: "none",
+                backgroundColor: "transparent",
+                "& fieldset": { border: "none" },
+              },
+              "& input::placeholder": {
+                fontSize: "16px",
+                color: "rgba(135, 135, 134, 1)",
+              },
+            }}
+          />
+
+          {/* Divider (hidden on mobile) */}
+          <Box
+            sx={{
+              width: "1px",
+              backgroundColor: "#e5e7eb",
+              height: "30px",
+              display: { xs: "none", sm: "block" },
+              mx: 1,
+            }}
+          />
+
+          {/* Location Autocomplete */}
+          <Autocomplete
+            value={selectedLocation}
+            onChange={(e, newValue) => setSelectedLocation(newValue || "")}
+            options={JOB_LOCATIONS}
+            freeSolo
+            onInputChange={(event, newInputValue) => {
+              if (event?.type === "change") setSelectedLocation(newInputValue);
+            }}
+            PaperComponent={({ children, ...other }) => (
+              <Paper
+                {...other}
                 sx={{
-                  "& .MuiAutocomplete-inputRoot": {
-                    paddingRight: "14px !important",
-                  },
-                  "& .MuiAutocomplete-clearIndicator": {
-                    color: "#8310FF",
-                    "&:hover": {
-                      backgroundColor: "rgba(131, 16, 255, 0.08)",
-                    },
-                  },
-                  "& .MuiAutocomplete-popupIndicator": {
-                    color: "#8310FF",
-                    "&:hover": {
-                      backgroundColor: "rgba(131, 16, 255, 0.08)",
-                    },
-                  },
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 2 }}>
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={handleSearch}
-                sx={{
-                  backgroundColor: "#8310FF",
-                  color: "white",
-                  py: 1.5,
+                  maxHeight: 300,
                   borderRadius: 2,
-                  textTransform: "none",
-                  fontWeight: 600,
-                  fontSize: "1rem",
-                  "&:hover": {
-                    backgroundColor: "#6B0BC7",
-                  },
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
                 }}
               >
-                Search Job
-              </Button>
-            </Grid>
-          </Grid>
-        </Card>
+                {children}
+              </Paper>
+            )}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="All Locations"
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Image
+                        src="/icons/location.svg"
+                        alt="location"
+                        width={24}
+                        height={24}
+                        style={{ opacity: 0.7 }}
+                      />
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    height: "48px",
+                    paddingRight: 1,
+                    "& input": {
+                      padding: "10px 0px",
+                      fontSize: "16px",
+                    },
+                  },
+                }}
+                sx={{
+                  flex: 1,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 0,
+                    border: "none",
+                    "& fieldset": { border: "none" },
+                  },
+                  "& input::placeholder": {
+                    fontSize: "16px",
+                    color: "rgba(135, 135, 134, 1)",
+                  },
+                }}
+              />
+            )}
+            sx={{ flex: 1 }}
+          />
 
-        {/* Results Header - matches the image */}
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: "#333" }}>
-            Discover {totalJobs} job listings :
-          </Typography>
+          {/* Button */}
+          <Button
+            onClick={handleSearch}
+            sx={{
+              border: "1px solid rgba(163, 98, 239, 1)",
+              color: "rgba(163, 98, 239, 1)",
+              borderRadius: "50px",
+              textTransform: "none",
+              px: 3,
+              py: 1.2,
+              fontWeight: 600,
+              fontSize: "16px",
+              minWidth: "160px",
+              ml: { xs: 0, sm: 1 },
+              mt: { xs: 1, sm: 0 },
+              "&:hover": {
+                backgroundColor: "rgba(163, 98, 239, 1)",
+                color: "white",
+              },
+            }}
+          >
+            Search Job
+          </Button>
         </Box>
-
+        {/* Results Header - matches the image */}
+        <Typography
+          variant="h6"
+          sx={{
+            color: "rgba(0, 0, 0, 1)",
+            fontWeight: 500, // Medium weight
+            fontStyle: "normal", // "Medium" is a weight, not a style
+            fontSize: "14px",
+            lineHeight: "160%", // equivalent to 1.6
+            letterSpacing: 0,
+            fontFamily: "var(--font-poppins)",
+            mb: 2,
+          }}
+        >
+          Discover {totalJobs} job listings :
+        </Typography>
         {/* Loading State */}
         {loading && (
           <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
             <CircularProgress sx={{ color: "#8310FF" }} />
           </Box>
         )}
-
         {/* Error State */}
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
           </Alert>
         )}
-
         {/* Two Column Layout */}
         <Grid container spacing={3}>
           {/* Left Column - Job Listings */}
@@ -525,7 +533,7 @@ const JobSearchPage: React.FC = () => {
                           borderRadius: 2,
                           border:
                             selectedJob?.id === job.id
-                              ? "2px solid #8310FF"
+                              ? "2px solid rgba(163, 98, 239, 1)"
                               : "1px solid #e0e0e0",
                           boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
                           transition: "all 0.3s ease",
@@ -535,7 +543,9 @@ const JobSearchPage: React.FC = () => {
                             transform: "translateY(-1px)",
                           },
                         }}
-                        onClick={() => handleJobClick(job.id)}
+                        onClick={(e) => {
+                          handleJobClick(job.id);
+                        }}
                       >
                         <CardContent
                           sx={{
@@ -543,6 +553,9 @@ const JobSearchPage: React.FC = () => {
                             height: "100%",
                             display: "flex",
                             flexDirection: "column",
+                            "&:last-child": {
+                              paddingBottom: 2,
+                            },
                           }}
                         >
                           {/* Header with logo, title, company and date */}
@@ -550,14 +563,13 @@ const JobSearchPage: React.FC = () => {
                             sx={{
                               display: "flex",
                               alignItems: "flex-start",
-                              mb: 1.5,
                             }}
                           >
                             {/* Company Logo */}
                             <Box
                               sx={{
-                                width: 40,
-                                height: 40,
+                                width: 64,
+                                height: 64,
                                 backgroundColor: "#f5f5f5",
                                 borderRadius: 1,
                                 display: "flex",
@@ -624,14 +636,93 @@ const JobSearchPage: React.FC = () => {
                                   >
                                     {job.company}
                                   </Typography>
+                                  {/* Job Tags - matches the image exactly with light blue color */}
+                                  <Stack
+                                    direction="row"
+                                    spacing={0.5}
+                                    sx={{ mt: 1, flexWrap: "wrap", gap: 0.5 }}
+                                  >
+                                    <Chip
+                                      label={job.type}
+                                      size="small"
+                                      sx={{
+                                        backgroundColor:
+                                          "rgba(95, 168, 211, 0.1)",
+                                        color: "rgba(84, 98, 116, 1)",
+                                        fontWeight: 500,
+                                        fontSize: "0.75rem",
+                                        height: 24,
+                                        border:
+                                          "0.25px solid rgba(95, 168, 211, 1)",
+                                      }}
+                                      icon={
+                                        <Image
+                                          src="/icons/location2.svg" // ✅ path inside /public folder
+                                          alt="search"
+                                          width={13}
+                                          height={13}
+                                        />
+                                      }
+                                    />
+                                    <Chip
+                                      label={job.employmentType}
+                                      size="small"
+                                      sx={{
+                                        backgroundColor:
+                                          "rgba(95, 168, 211, 0.1)",
+                                        color: "rgba(84, 98, 116, 1)",
+                                        fontWeight: 500,
+                                        fontSize: "0.75rem",
+                                        height: 24,
+                                        border:
+                                          "0.25px solid rgba(95, 168, 211, 1)",
+                                      }}
+                                      icon={
+                                        <Image
+                                          src="/icons/suitcase.svg" // ✅ path inside /public folder
+                                          alt="search"
+                                          width={13}
+                                          height={13}
+                                        />
+                                      }
+                                    />
+                                    <Chip
+                                      label={formatSalary(job.salary)}
+                                      size="small"
+                                      sx={{
+                                        backgroundColor:
+                                          "rgba(95, 168, 211, 0.1)",
+                                        color: "rgba(84, 98, 116, 1)",
+                                        fontWeight: 500,
+                                        fontSize: "0.75rem",
+                                        height: 24,
+                                        border:
+                                          "0.25px solid rgba(95, 168, 211, 1)",
+                                      }}
+                                      icon={
+                                        <Image
+                                          src="/icons/dollar.svg" // ✅ path inside /public folder
+                                          alt="search"
+                                          width={13}
+                                          height={13}
+                                        />
+                                      }
+                                    />
+                                  </Stack>
                                 </Box>
                                 <Typography
                                   variant="caption"
                                   sx={{
-                                    color: "#999",
+                                    color: "rgba(156, 163, 175, 1)",
                                     whiteSpace: "nowrap",
                                     ml: 1.5,
-                                    fontSize: "0.75rem",
+                                    fontFamily: "Poppins", // font family
+                                    fontWeight: 500, // Medium weight
+                                    fontStyle: "normal", // font-style only accepts normal, italic, oblique
+                                    fontSize: "12px", // font size
+                                    lineHeight: "23px", // line-height
+                                    letterSpacing: 0, // letter-spacing
+                                    textAlign: "right",
                                   }}
                                 >
                                   {formatDate(job.datePosted)}
@@ -639,108 +730,6 @@ const JobSearchPage: React.FC = () => {
                               </Box>
                             </Box>
                           </Box>
-
-                          {/* Job Tags - matches the image exactly with light blue color */}
-                          <Stack
-                            direction="row"
-                            spacing={0.5}
-                            sx={{ mb: 1.5, flexWrap: "wrap", gap: 0.5 }}
-                          >
-                            <Chip
-                              label={job.type}
-                              size="small"
-                              sx={{
-                                backgroundColor: "#e3f2fd",
-                                color: "#1976d2",
-                                fontWeight: 500,
-                                border: "none",
-                                fontSize: "0.75rem",
-                                height: 24,
-                              }}
-                              icon={
-                                <LocationIcon
-                                  sx={{ fontSize: 12, color: "#1976d2" }}
-                                />
-                              }
-                            />
-                            <Chip
-                              label={job.employmentType}
-                              size="small"
-                              sx={{
-                                backgroundColor: "#e3f2fd",
-                                color: "#1976d2",
-                                fontWeight: 500,
-                                border: "none",
-                                fontSize: "0.75rem",
-                                height: 24,
-                              }}
-                              icon={
-                                <WorkIcon
-                                  sx={{ fontSize: 12, color: "#1976d2" }}
-                                />
-                              }
-                            />
-                            <Chip
-                              label={formatSalary(job.salary)}
-                              size="small"
-                              sx={{
-                                backgroundColor: "#e3f2fd",
-                                color: "#1976d2",
-                                fontWeight: 500,
-                                border: "none",
-                                fontSize: "0.75rem",
-                                height: 24,
-                              }}
-                              icon={
-                                <MoneyIcon
-                                  sx={{ fontSize: 12, color: "#1976d2" }}
-                                />
-                              }
-                            />
-                          </Stack>
-
-                          {/* Description */}
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              color: "#666",
-                              mb: 2,
-                              flex: 1,
-                              lineHeight: 1.4,
-                              display: "-webkit-box",
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: "vertical",
-                              overflow: "hidden",
-                              fontSize: "0.8rem",
-                            }}
-                          >
-                            {job.description}
-                          </Typography>
-
-                          {/* Action Buttons - matches the image */}
-                          <Button
-                            variant="contained"
-                            size="small"
-                            fullWidth
-                            onClick={(e) => {
-                              e.stopPropagation(); // Prevent card click when button is clicked
-                              handleJobClick(job.id);
-                            }}
-                            sx={{
-                              textTransform: "none",
-                              fontWeight: 600,
-                              backgroundColor: "#8310FF",
-                              color: "white",
-                              borderRadius: 1.5,
-                              py: 0.75,
-                              fontSize: "0.8rem",
-                              "&:hover": {
-                                backgroundColor: "#6B0BC7",
-                              },
-                            }}
-                          >
-                            View Details
-                          </Button>
                         </CardContent>
                       </Card>
                     </Grid>
@@ -754,7 +743,7 @@ const JobSearchPage: React.FC = () => {
                       display: "flex",
                       justifyContent: "center",
                       mt: 4,
-                      mb: 4,
+                      mb: 0,
                     }}
                   >
                     <Pagination
@@ -773,8 +762,8 @@ const JobSearchPage: React.FC = () => {
                           fontWeight: 500,
                           "&.Mui-selected": {
                             backgroundColor: "white",
-                            borderColor: "#8310FF",
-                            color: "#8310FF",
+                            borderColor: "rgba(163, 98, 239, 1)",
+                            color: "rgba(163, 98, 239, 1)",
                             "&:hover": {
                               backgroundColor: "rgba(131, 16, 255, 0.04)",
                             },
@@ -810,7 +799,7 @@ const JobSearchPage: React.FC = () => {
                   minHeight: "60vh",
                 }}
               >
-                <CircularProgress sx={{ color: "#8310FF" }} />
+                <CircularProgress sx={{ color: "rgba(163, 98, 239, 1)" }} />
               </Box>
             )}
 
@@ -1073,23 +1062,55 @@ const JobSearchPage: React.FC = () => {
             )}
 
             {/* No Job Selected State */}
-            {!jobDetailsLoading && !jobDetailsError && !jobDetails && (
+            {!jobDetailsLoading && !jobDetailsError && !jobDetails && !loading && (
               <Card
                 sx={{
-                  borderRadius: 3,
-                  border: "1px solid rgba(255,255,255,0.5)",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-                  background: "rgba(255,255,255,0.6)",
-                  backdropFilter: "blur(12px)",
-                  WebkitBackdropFilter: "blur(12px)",
+                  height: "100%",
+                  borderRadius: 4,
+                  border: "1px solid rgba(255,255,255,0.4)",
+                  background: "rgba(255,255,255,0.4)",
+                  backdropFilter: "blur(18px)",
+                  WebkitBackdropFilter: "blur(18px)",
+                  py: 6,
+                  px: 3,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+                  textAlign: "center",
                 }}
               >
-                <CardContent sx={{ p: 4, textAlign: "center" }}>
-                  <Typography variant="h6" sx={{ color: "#666", mb: 2 }}>
-                    Select a job to view details
+                <CardContent sx={{ p: 0 }}>
+                  <Box
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: "50%",
+                      mx: "auto",
+                      mb: 3,
+                      background: "rgba(130,16,255,0.12)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Image
+                      src="/icons/suitcase.svg" // ✅ path inside /public folder
+                      alt="search"
+                      width={32}
+                      height={32}
+                    />
+                  </Box>
+
+                  <Typography
+                    variant="h6"
+                    sx={{ color: "#333", fontWeight: 600, mb: 1 }}
+                  >
+                    No Job Selected
                   </Typography>
-                  <Typography variant="body2" sx={{ color: "#999" }}>
-                    Click on any job listing to see the full job description and
+
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "#666", maxWidth: 300, mx: "auto" }}
+                  >
+                    Select a job from the list to view its full description and
                     requirements.
                   </Typography>
                 </CardContent>
@@ -1097,7 +1118,6 @@ const JobSearchPage: React.FC = () => {
             )}
           </Grid>
         </Grid>
-
         {/* No Results */}
         {!loading && !error && jobs.length === 0 && (
           <Box sx={{ textAlign: "center", py: 8 }}>
@@ -1111,7 +1131,7 @@ const JobSearchPage: React.FC = () => {
         )}
       </Container>
 
-      <SimpleFooter />
+      <Footer />
     </Box>
   );
 };
