@@ -2279,7 +2279,12 @@ const IntelligentInterviewTest = () => {
             {interviewStatus === 'active' && !isInReadingTime && (
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" sx={{ color: '#ccc', mb: 1, fontSize: '0.75rem', fontWeight: 600 }}>
-                  SUBMIT ANSWER
+                  {agentState === 'thinking' || agentState === 'processing'
+                    ? 'AI PROCESSING'
+                    : agentState === 'waiting' && accumulatedTurns.length > 0
+                    ? 'SUBMIT ANSWER'
+                    : 'ACTIONS'
+                  }
                 </Typography>
                 <Button
                   variant="contained"
@@ -2288,21 +2293,43 @@ const IntelligentInterviewTest = () => {
                     console.log('🎯 [MANUAL] User clicked Next Question button');
                     sendAccumulatedAnswer();
                   }}
+                  disabled={agentState === 'thinking' || agentState === 'processing'}
                   sx={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: agentState === 'thinking' || agentState === 'processing'
+                      ? 'linear-gradient(135deg, #9e9e9e 0%, #757575 100%)'
+                      : accumulatedTurns.length > 0
+                      ? 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)'
+                      : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     color: '#fff',
                     fontWeight: 600,
                     fontSize: '0.875rem',
                     py: 1.5,
                     textTransform: 'none',
+                    transition: 'all 0.3s ease',
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)',
+                      background: agentState === 'thinking' || agentState === 'processing'
+                        ? 'linear-gradient(135deg, #9e9e9e 0%, #757575 100%)'
+                        : accumulatedTurns.length > 0
+                        ? 'linear-gradient(135deg, #45a049 0%, #388e3c 100%)'
+                        : 'linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)',
+                    },
+                    '&:disabled': {
+                      color: '#fff',
+                      opacity: 0.7
                     }
                   }}
                 >
-                  {accumulatedTurns.length > 0
+                  {agentState === 'thinking'
+                    ? '⏳ AI is Thinking...'
+                    : agentState === 'processing'
+                    ? '⚙️ Processing Your Answer...'
+                    : agentState === 'waiting' && accumulatedTurns.length > 0
+                    ? `✓ Submit Answer (${accumulatedTurns.length} ${accumulatedTurns.length === 1 ? 'turn' : 'turns'} recorded)`
+                    : accumulatedTurns.length > 0
                     ? `Next Question (${accumulatedTurns.length} ${accumulatedTurns.length === 1 ? 'turn' : 'turns'} recorded)`
-                    : 'Next Question'
+                    : isVoiceActive
+                    ? '🎤 Speaking... Click when done'
+                    : ' Next Question'
                   }
                 </Button>
                 <Typography variant="caption" sx={{
@@ -2312,9 +2339,17 @@ const IntelligentInterviewTest = () => {
                   mt: 1,
                   fontSize: '0.7rem'
                 }}>
-                  {accumulatedTurns.length > 0
+                  {agentState === 'thinking'
+                    ? 'Please wait while the AI prepares the next question'
+                    : agentState === 'processing'
+                    ? 'Your answer is being analyzed'
+                    : agentState === 'waiting' && accumulatedTurns.length > 0
+                    ? 'Click to submit your answer and continue'
+                    : accumulatedTurns.length > 0
                     ? 'Click when you\'re done answering'
-                    : 'Click to skip or move to next question'
+                    : isVoiceActive
+                    ? 'Listening to your response...'
+                    : 'Click to skip this question'
                   }
                 </Typography>
               </Box>
