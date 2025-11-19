@@ -1410,13 +1410,34 @@ const IntelligentInterviewTest = () => {
       setIsRecording(false);
       showNotification('Interview completed!', 'success');
 
-      // Navigate to report page with final report
-      setTimeout(() => {
-        router.push({
-          pathname: '/interview/report/hr',
-          query: { sessionId: data.sessionId }
+      // Store session ID for results page
+      if (data.sessionId) {
+        localStorage.setItem('last_interview_id', data.sessionId);
+      }
+
+      // Store the complete analysis data for the results page
+      if (data.finalReport || data.analytics) {
+        console.log('💾 Storing interview analysis in localStorage:', {
+          hasFinalReport: !!data.finalReport,
+          hasAnalytics: !!data.analytics,
+          sessionId: data.sessionId
         });
-      }, 2000);
+
+        const analysisData = {
+          finalReport: data.finalReport,
+          analytics: data.analytics,
+          sessionId: data.sessionId,
+          interviewType: interviewConfig?.interviewType || 'HR_INTERVIEW',
+          timestamp: new Date().toISOString()
+        };
+
+        localStorage.setItem('last_interview_analysis', JSON.stringify(analysisData));
+        console.log('✅ Analysis data stored successfully');
+      } else {
+        console.warn('⚠️ No analysis data received from socket event');
+      }
+
+      // Don't auto-redirect - let user click "View Results" button
     });
 
     socket.on('interview_error', (error) => {
@@ -1900,6 +1921,11 @@ const IntelligentInterviewTest = () => {
 
     setIsRecording(false);
     setInterviewStatus('ended');
+
+    // Store session ID for results page
+    if (sessionId) {
+      localStorage.setItem('last_interview_id', sessionId);
+    }
   };
 
   // Utility function to show notifications
@@ -2730,7 +2756,15 @@ const IntelligentInterviewTest = () => {
                 textShadow: '0 2px 4px rgba(0,0,0,0.1)'
               }}
             >
-              HR Interview Simulation
+              {interviewConfig.interviewType === 'TECHNICAL_SKILL'
+                ? `${interviewConfig.context.targetRole} Technical Interview`
+                : interviewConfig.interviewType === 'SOFT_SKILL'
+                ? 'Soft Skills Assessment'
+                : interviewConfig.interviewType === 'SALARY_INTERVIEW'
+                ? 'Salary Negotiation Interview'
+                : interviewConfig.interviewType === 'PSYCHOTECHNIC'
+                ? 'Psychotechnic Assessment'
+                : 'HR Interview Simulation'}
             </Typography>
             <Typography
               variant="subtitle1"
@@ -2740,7 +2774,11 @@ const IntelligentInterviewTest = () => {
                 fontWeight: 300
               }}
             >
-              Intelligent Real-time Interview with AI
+              {interviewConfig.interviewType === 'TECHNICAL_SKILL'
+                ? `Validate ${router.query.skill || 'technical'} expertise • ${interviewConfig.context.experienceLevel} level`
+                : interviewConfig.interviewType === 'SOFT_SKILL'
+                ? `Assess ${router.query.skill || 'soft skill'} in ${router.query.category || 'general'} context • ${interviewConfig.context.experienceLevel} level`
+                : 'Intelligent Real-time Interview with AI'}
             </Typography>
 
             {/* Status Indicators */}
@@ -2973,19 +3011,53 @@ const IntelligentInterviewTest = () => {
           )}
 
           {interviewStatus === 'ended' && (
-            <Box textAlign="center" py={4}>
-              <Typography variant="h5" gutterBottom color="success.main">
+            <Box
+              textAlign="center"
+              py={8}
+              sx={{
+                background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.03) 0%, rgba(67, 160, 71, 0.03) 100%)',
+                borderRadius: 3,
+                border: '2px solid rgba(76, 175, 80, 0.15)'
+              }}
+            >
+              <Box sx={{ mb: 3 }}>
+                <AssessmentIcon sx={{ fontSize: 60, color: '#4caf50', opacity: 0.8 }} />
+              </Box>
+              <Typography
+                variant="h4"
+                gutterBottom
+                sx={{
+                  fontWeight: 600,
+                  color: '#2c3e50',
+                  mb: 2
+                }}
+              >
                 Interview Completed!
               </Typography>
-              <Typography variant="body1" color="text.secondary" mb={4}>
+              <Typography variant="body1" color="text.secondary" mb={4} sx={{ fontSize: '1.1rem' }}>
                 Thank you for participating. Your responses have been recorded and analyzed.
               </Typography>
               <Button
                 variant="contained"
-                onClick={() => router.push('/interview/report/hr')}
+                size="large"
+                onClick={() => router.push('/interview/results')}
                 startIcon={<AssessmentIcon />}
+                sx={{
+                  px: 5,
+                  py: 1.8,
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                  borderRadius: 3,
+                  background: 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)',
+                  boxShadow: '0 4px 15px rgba(76, 175, 80, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 6px 20px rgba(76, 175, 80, 0.4)',
+                  }
+                }}
               >
-                View Report
+                View Results
               </Button>
             </Box>
           )}
