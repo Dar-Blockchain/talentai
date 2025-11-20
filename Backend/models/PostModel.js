@@ -135,6 +135,30 @@ const postSchema = new mongoose.Schema({
       ref: "Post_Steps",
     },
   ],
+
+  // Payment information
+  paymentStatus: {
+    type: String,
+    enum: ['not_paid', 'pending', 'completed', 'failed'],
+    default: 'not_paid',
+    description: 'Payment status for agent creation'
+  },
+  paymentTransactionId: {
+    type: String,
+    description: 'Reference to TokenTransaction ID'
+  },
+  pricePaid: {
+    type: Number,
+    description: 'Amount paid in TAI tokens'
+  },
+  paymentCompletedAt: {
+    type: Date,
+    description: 'Timestamp when payment was completed'
+  },
+  paymentError: {
+    type: String,
+    description: 'Error message if payment failed'
+  }
 });
 
 const Post = mongoose.model("Post", postSchema);

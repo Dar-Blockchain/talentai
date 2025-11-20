@@ -12,6 +12,7 @@ const { requireAuthUser } = require("../middleware/authMiddleware");
 
 // Import des middlewares
 const postController = require("../controllers/postController");
+const postPaymentController = require("../controllers/postPaymentController");
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 const { controledAcces } = require('../middleware/controledAcces'); // Importez le middleware
 
@@ -76,5 +77,26 @@ router.get("/DetailsPost/:id", postController.getPostById);
 // POST /post/send-technical-test
 // Description: Send technical test task via email with PDF
 router.post("/send-technical-test", postController.sendTechnicalTest);
+
+// ========================================
+// PAYMENT ROUTES
+// ========================================
+
+// GET /post/payment/calculate-price/:postId
+// Description: Calculate payment price for a post based on number of steps
+router.get("/payment/calculate-price/:postId", postPaymentController.calculatePostPrice);
+
+// POST /post/payment/process
+// Description: Process payment for agent creation after post and agent are created
+// Body: { postId, agentId }
+router.post("/payment/process", postPaymentController.processPostPayment);
+
+// GET /post/payment/history
+// Description: Get payment history for user's posts
+router.get("/payment/history", postPaymentController.getPostPaymentHistory);
+
+// GET /post/payment/details/:postId
+// Description: Get payment details for a specific post
+router.get("/payment/details/:postId", postPaymentController.getPostPaymentDetails);
 
 module.exports = router;

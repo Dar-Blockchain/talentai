@@ -78,6 +78,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import PostDetails from './recruitment-post/PostDetails';
 import { PostDetailsRef } from './recruitment-post/types';
 import AgentConfigurationForm, { AgentConfigurationFormValues } from './AgentConfigurationForm';
+import PaymentConfirmationDialog from './PaymentConfirmationDialog';
 import { AppDispatch } from '@/store/store';
 import { useDispatch } from 'react-redux';
 import { useRouter } from 'next/router';
@@ -411,6 +412,8 @@ const RecruitmentFlowBuilder: React.FC = () => {
   const [isSavingSteps, setIsSavingSteps] = useState(false);
   const [isRegisteringAgent, setIsRegisteringAgent] = useState(false);
   const [postDetailsReady, setPostDetailsReady] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Refs
   const postDetailsRef = useRef<PostDetailsRef>(null);
@@ -1036,6 +1039,14 @@ Ready to customize the content or add more triggers?`
     setModalOpen(false);
   };
 
+  // Payment success handler
+  const handlePaymentSuccess = () => {
+    console.log('Payment successful! Redirecting to dashboard...');
+    setShowPaymentDialog(false);
+    toast.success("Job post created successfully! Your recruitment flow has been saved and payment is complete.");
+    router.push('/dashboard/company');
+  };
+
   const handleNext = async () => {
     setSaveError(null);
 
@@ -1223,8 +1234,10 @@ Ready to customize the content or add more triggers?`
 
         if (postRecruitmentSteps.fulfilled.match(result)) {
           console.log('Sequence saved successfully:', result.payload);
-          toast.success("Job post created successfully! Your recruitment flow has been saved.");
-          router.push('/dashboard/company');
+
+          // Pipeline saved successfully - now trigger payment
+          console.log('Opening payment dialog for post:', savedJobId);
+          setShowPaymentDialog(true);
         } else {
           console.error('Failed to save sequence:', result.payload);
           setSaveError(`Failed to save sequence: ${result.payload}`);
@@ -2212,6 +2225,16 @@ Ready to customize the content or add more triggers?`
           </Box>
         </Box>
       </Modal>
+
+      {/* Payment Confirmation Dialog */}
+      <PaymentConfirmationDialog
+        open={showPaymentDialog}
+        postId={savedJobId || ''}
+        agentId={registeredAgentId || ''}
+        numberOfSteps={nodes.length}
+        onClose={() => setShowPaymentDialog(false)}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
     </Container>
   );
 };
