@@ -29,6 +29,7 @@ import {
   Warning as WarningIcon,
   Stars as StarsIcon,
   ContentCopy as CopyIcon,
+  Save as SaveIcon,
 } from '@mui/icons-material';
 import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
@@ -75,6 +76,7 @@ export default function InterviewResults() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   useEffect(() => {
     if (router.isReady) {
@@ -86,6 +88,99 @@ export default function InterviewResults() {
   useEffect(() => {
     if (analysis) {
       logInterviewDataToConsole();
+    }
+  }, [analysis]);
+
+  // Save interview data to backend
+  const saveInterviewToBackend = async (showStatus = true) => {
+    try {
+      if (showStatus) setSaveStatus('saving');
+
+      const storedAnalysis = localStorage.getItem('last_interview_analysis');
+      if (!storedAnalysis) {
+        console.log('⚠️ [Save] No interview data to save');
+        if (showStatus) setSaveStatus('error');
+        return;
+      }
+
+      const parsedData = JSON.parse(storedAnalysis);
+
+      // Get metadata from localStorage
+      const skill = localStorage.getItem('interview_skill');
+      const role = localStorage.getItem('interview_role');
+      const category = localStorage.getItem('interview_category');
+      const proficiency = localStorage.getItem('interview_proficiency');
+
+      // Prepare payload for backend API
+      const payload = {
+        metadata: {
+          exportedAt: new Date().toISOString(),
+          skill: skill || 'N/A',
+          role: role || 'N/A',
+          category: category || 'N/A',
+          proficiency: proficiency || 'N/A'
+        },
+        interviewData: parsedData
+      };
+
+      console.log('💾 [Save] Saving interview to backend...');
+      console.log('📤 [Save] Payload:', payload);
+
+      const token = localStorage.getItem('api_token') || Cookies.get('api_token');
+      if (!token) {
+        console.error('❌ [Save] No authentication token found');
+        if (showStatus) setSaveStatus('error');
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ [Save] Failed to save interview:', response.status, errorData);
+        if (showStatus) setSaveStatus('error');
+        throw new Error(`Failed to save: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ [Save] Interview saved successfully:', result);
+
+      // Store the saved interview ID
+      if (result.data?._id) {
+        localStorage.setItem('last_interview_id', result.data._id);
+        console.log('💾 [Save] Stored interview ID:', result.data._id);
+      }
+
+      if (showStatus) {
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 3000);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('❌ [Save] Error saving interview:', error);
+      if (showStatus) {
+        setSaveStatus('error');
+        setTimeout(() => setSaveStatus('idle'), 3000);
+      }
+      // Don't throw - we don't want to block the UI if save fails
+    }
+  };
+
+  // Auto-save to backend when analysis loads (silent save)
+  useEffect(() => {
+    if (analysis) {
+      saveInterviewToBackend(false); // false = don't show status for auto-save
     }
   }, [analysis]);
 
@@ -753,6 +848,26 @@ export default function InterviewResults() {
               }}
             >
               Download Report
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={saveStatus === 'saving' ? <CircularProgress size={20} sx={{ color: 'white' }} /> : saveStatus === 'saved' ? <CheckCircleIcon /> : <SaveIcon />}
+              onClick={() => saveInterviewToBackend(true)}
+              disabled={saveStatus === 'saving'}
+              sx={{
+                borderRadius: 2,
+                bgcolor: saveStatus === 'saved' ? '#4caf50' : saveStatus === 'error' ? '#f44336' : 'white',
+                color: saveStatus === 'saved' || saveStatus === 'error' ? 'white' : '#8310FF',
+                '&:hover': {
+                  bgcolor: saveStatus === 'saved' ? '#45a049' : saveStatus === 'error' ? '#e53935' : 'rgba(255,255,255,0.9)',
+                },
+                '&:disabled': {
+                  bgcolor: 'rgba(255,255,255,0.5)',
+                  color: 'rgba(131, 16, 255, 0.5)',
+                }
+              }}
+            >
+              {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved!' : saveStatus === 'error' ? 'Error' : 'Save Results'}
             </Button>
           </Box>
 
