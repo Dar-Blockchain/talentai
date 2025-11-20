@@ -29,5 +29,10 @@ router.get("/", interviewDetailsController.getAll);
 // Description: Récupère les détails d'un entretien par son identifiant
 router.get("/getInterviewDetailsById/:id", interviewDetailsController.getInterviewDetailsById);
 
+// POST /interview-details/
+// Body: { newInterviewData, profileId, userId? }
+// Description: Ajoute les détails d'un nouvel entretien (convertit le format nouveau en ancien)
+router.post("/", interviewDetailsController.addInterviewDetails);
+
 
 module.exports = router;
