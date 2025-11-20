@@ -9,7 +9,6 @@ import { clearProfile } from "@/store/slices/profileSlice";
 import { logout, setLoggingOut } from "@/store/slices/authSlice";
 import { resetRedirectState } from "@/utils/authRedirect";
 import Cookies from "js-cookie";
-import { PreferencesHeader, PreferencesMain } from "@/components/preferences";
 import { usePreferences } from "@/components/preferences/hooks/usePreferences";
 import Header from "@/components/Header";
 import { Box, Card, Typography } from "@mui/material";
