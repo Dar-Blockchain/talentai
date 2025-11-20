@@ -28,9 +28,15 @@ import {
   EmojiEvents as TrophyIcon,
   Warning as WarningIcon,
   Stars as StarsIcon,
+  ContentCopy as CopyIcon,
 } from '@mui/icons-material';
 import { useSession } from 'next-auth/react';
 import Cookies from 'js-cookie';
+import {
+  exportInterviewDataAsJSON,
+  copyInterviewDataToClipboard,
+  logInterviewDataToConsole
+} from '@/utils/exportInterviewData';
 
 interface SkillScore {
   skill: string;
@@ -68,12 +74,29 @@ export default function InterviewResults() {
   const [analysis, setAnalysis] = useState<InterviewAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   useEffect(() => {
     if (router.isReady) {
       fetchAnalysis();
     }
   }, [router.isReady]);
+
+  // Auto-log interview data to console on page load
+  useEffect(() => {
+    if (analysis) {
+      logInterviewDataToConsole();
+    }
+  }, [analysis]);
+
+  // Handle copy to clipboard
+  const handleCopyJSON = async () => {
+    const success = await copyInterviewDataToClipboard();
+    if (success) {
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 3000);
+    }
+  };
 
   const fetchAnalysis = async () => {
     try {
@@ -85,13 +108,51 @@ export default function InterviewResults() {
 
       if (storedAnalysis) {
         console.log('✅ [Results] Found stored analysis in localStorage');
+        console.log('📦 [Results] Raw localStorage data:', storedAnalysis);
+
         try {
           const parsedAnalysis = JSON.parse(storedAnalysis);
+          console.log('📊 [Results] Parsed analysis object:', parsedAnalysis);
+          console.log('📋 [Results] Analysis keys:', Object.keys(parsedAnalysis));
+          console.log('🔍 [Results] Final Report:', parsedAnalysis.finalReport);
+          console.log('📈 [Results] Analytics:', parsedAnalysis.analytics);
+          console.log('🆔 [Results] Session ID:', parsedAnalysis.sessionId);
+          console.log('🎯 [Results] Interview Type:', parsedAnalysis.interviewType);
 
           // Transform the data to match our interface
           const transformedAnalysis = transformSocketAnalysis(parsedAnalysis);
 
           if (transformedAnalysis) {
+            console.log('✅ [Results] Successfully transformed analysis:', transformedAnalysis);
+            console.log('📊 [Results] Transformed data structure:');
+            console.log('  - Overall Score:', transformedAnalysis.overallScore);
+            console.log('  - Overall Level:', transformedAnalysis.overallLevel);
+            console.log('  - Interview Type:', transformedAnalysis.interviewType);
+            console.log('  - Skill Scores:', transformedAnalysis.skillScores);
+            console.log('  - Strengths:', transformedAnalysis.strengths);
+            console.log('  - Weaknesses:', transformedAnalysis.weaknesses);
+            console.log('  - Recommendations:', transformedAnalysis.recommendations);
+            console.log('  - Feedback:', transformedAnalysis.feedback);
+            console.log('  - Conversation Quality:', transformedAnalysis.conversationQuality);
+            console.log('  - Coverage:', transformedAnalysis.coverage);
+
+            // Store data globally for easy access in console
+            (window as any).INTERVIEW_DATA = {
+              original: parsedAnalysis,
+              transformed: transformedAnalysis,
+              timestamp: new Date().toISOString()
+            };
+
+            console.log('\n');
+            console.log('🌐 ════════════════════════════════════════════════════════════════');
+            console.log('🌐 DATA AVAILABLE IN GLOBAL VARIABLE');
+            console.log('🌐 ════════════════════════════════════════════════════════════════');
+            console.log('💡 Type in console: INTERVIEW_DATA');
+            console.log('💡 Type in console: copy(INTERVIEW_DATA) - to copy to clipboard');
+            console.log('💡 Type in console: JSON.stringify(INTERVIEW_DATA, null, 2) - for formatted JSON');
+            console.log('🌐 ════════════════════════════════════════════════════════════════');
+            console.log('\n');
+
             setAnalysis(transformedAnalysis);
             setLoading(false);
             return;
@@ -173,18 +234,60 @@ export default function InterviewResults() {
    * Transform socket event data to InterviewAnalysis interface
    */
   const transformSocketAnalysis = (socketData: any): InterviewAnalysis | null => {
+    console.log('🔄 [Results] ========================================');
+    console.log('🔄 [Results] STARTING DATA TRANSFORMATION');
+    console.log('🔄 [Results] ========================================');
     console.log('🔄 [Results] Transforming socket data:', socketData);
     console.log('📊 [Results] Full socket data structure:', JSON.stringify(socketData, null, 2));
 
     const finalReport = socketData.finalReport || socketData;
     const analytics = socketData.analytics || {};
 
+    console.log('📋 [Results] ========================================');
+    console.log('📋 [Results] FINAL REPORT BREAKDOWN');
+    console.log('📋 [Results] ========================================');
+    console.log('📋 [Results] Final Report Object:', finalReport);
+    console.log('📋 [Results] Final Report Keys:', Object.keys(finalReport));
+    console.log('📋 [Results] Final Report Summary:', finalReport.summary);
+    console.log('📋 [Results] Final Report Recommendations:', finalReport.recommendations);
+
     // Extract scores from the final report
     const scores = finalReport.scores || {};
     const coverage = finalReport.coverage || {};
 
-    console.log('📈 [Results] Coverage data:', coverage);
-    console.log('📊 [Results] Coverage areas:', coverage.areas);
+    console.log('📈 [Results] ========================================');
+    console.log('📈 [Results] SCORES & COVERAGE DATA');
+    console.log('📈 [Results] ========================================');
+    console.log('📈 [Results] Scores Object:', scores);
+    console.log('📈 [Results] Scores Keys:', Object.keys(scores));
+    console.log('📈 [Results] Overall Score:', scores.overall);
+    console.log('📈 [Results] Individual Scores:', {
+      clarity: scores.clarity,
+      relevance: scores.relevance,
+      depth: scores.depth,
+      engagement: scores.engagement
+    });
+    console.log('📈 [Results] Coverage Object:', coverage);
+    console.log('📈 [Results] Coverage Keys:', Object.keys(coverage));
+    console.log('📈 [Results] Coverage Areas:', coverage.areas);
+    console.log('📈 [Results] Coverage Areas Keys:', coverage.areas ? Object.keys(coverage.areas) : 'N/A');
+
+    // Log each coverage area in detail
+    if (coverage.areas) {
+      console.log('📊 [Results] ========================================');
+      console.log('📊 [Results] DETAILED COVERAGE AREAS');
+      console.log('📊 [Results] ========================================');
+      Object.entries(coverage.areas).forEach(([areaName, areaData]: [string, any]) => {
+        console.log(`📊 [Results] Area: ${areaName}`);
+        console.log(`  - Percentage: ${areaData.percentage}`);
+        console.log(`  - Indicators:`, areaData.indicators);
+        console.log(`  - Questions Asked: ${areaData.questionsAsked}`);
+        console.log(`  - AI Analysis:`, areaData.aiAnalysis);
+      });
+    }
+
+    console.log('📈 [Results] Analytics Object:', analytics);
+    console.log('📈 [Results] Analytics Keys:', Object.keys(analytics));
 
     // Check if we have actual data or just empty objects
     const hasActualData =
@@ -269,7 +372,7 @@ export default function InterviewResults() {
       }
     }
 
-    return {
+    const result = {
       overallScore: overallScore,
       overallLevel: determineLevel(overallScore),
       interviewType: interviewType,
@@ -288,6 +391,48 @@ export default function InterviewResults() {
       },
       coverage: coverage.areas || {},
     };
+
+    console.log('🎉 [Results] ========================================');
+    console.log('🎉 [Results] FINAL TRANSFORMED RESULT');
+    console.log('🎉 [Results] ========================================');
+    console.log('🎉 [Results] Complete Result Object:', result);
+    console.log('📊 [Results] Result Summary:');
+    console.log(`  ✓ Overall Score: ${result.overallScore}`);
+    console.log(`  ✓ Overall Level: ${result.overallLevel}`);
+    console.log(`  ✓ Interview Type: ${result.interviewType}`);
+    console.log(`  ✓ Skill Scores Count: ${result.skillScores.length}`);
+    console.log(`  ✓ Strengths Count: ${result.strengths.length}`);
+    console.log(`  ✓ Weaknesses Count: ${result.weaknesses.length}`);
+    console.log(`  ✓ Recommendations Count: ${result.recommendations.length}`);
+    console.log(`  ✓ Coverage Areas Count: ${Object.keys(result.coverage).length}`);
+    console.log('🎉 [Results] ========================================');
+
+    // ============================================================================
+    // 📋 COPYABLE DATA FOR BACKEND DEVELOPER
+    // ============================================================================
+    console.log('\n\n');
+    console.log('📋 ╔════════════════════════════════════════════════════════════════╗');
+    console.log('📋 ║         COPY/PASTE DATA FOR BACKEND DEVELOPER                 ║');
+    console.log('📋 ╚════════════════════════════════════════════════════════════════╝');
+    console.log('\n');
+    console.log('📤 ORIGINAL SOCKET DATA (What Backend Sent):');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(JSON.stringify(socketData, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('\n');
+    console.log('📥 TRANSFORMED FRONTEND DATA (What We Display):');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(JSON.stringify(result, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('\n');
+    console.log('💡 HOW TO COPY:');
+    console.log('   1. Right-click on the JSON above → Select "Copy object"');
+    console.log('   2. OR: Expand object → Right-click → "Store as global variable"');
+    console.log('   3. OR: Select the text between ━━━ lines and copy');
+    console.log('\n');
+    console.log('📋 ════════════════════════════════════════════════════════════════');
+
+    return result;
   };
 
   /**
@@ -418,6 +563,15 @@ export default function InterviewResults() {
     return '#f44336';
   };
 
+  const getPerformanceMessage = (score: number): string => {
+    if (score >= 90) return 'Outstanding performance! You demonstrate expert-level knowledge.';
+    if (score >= 80) return 'Excellent work! You show advanced proficiency.';
+    if (score >= 70) return 'Good performance! You have solid intermediate skills.';
+    if (score >= 60) return 'Developing well! Continue practicing to improve.';
+    if (score >= 50) return 'Basic understanding shown. Focus on strengthening fundamentals.';
+    return 'Needs improvement. Consider additional study and practice.';
+  };
+
   const getScoreLabel = (score: number): string => {
     if (score >= 90) return 'Excellent';
     if (score >= 80) return 'Very Good';
@@ -439,12 +593,12 @@ export default function InterviewResults() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: '#ffffff',
         }}
       >
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <CircularProgress size={60} />
-          <Typography variant="h6" sx={{ mt: 2 }}>
+        <Paper sx={{ p: 4, textAlign: 'center', border: '2px solid #e0e0e0', borderRadius: 3 }}>
+          <CircularProgress size={60} sx={{ color: '#8310FF' }} />
+          <Typography variant="h6" sx={{ mt: 2, color: 'text.primary' }}>
             Loading your results...
           </Typography>
         </Paper>
@@ -460,10 +614,10 @@ export default function InterviewResults() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: '#ffffff',
         }}
       >
-        <Paper sx={{ p: 4, maxWidth: 600, textAlign: 'center' }}>
+        <Paper sx={{ p: 4, maxWidth: 600, textAlign: 'center', border: '2px solid #e0e0e0', borderRadius: 3 }}>
           <WarningIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
           <Typography variant="h5" fontWeight={600} mb={2}>
             No Analysis Data Available
@@ -503,11 +657,47 @@ export default function InterviewResults() {
                 color: 'primary.main',
                 '&:hover': {
                   borderColor: 'primary.dark',
-                  bgcolor: 'rgba(102, 126, 234, 0.04)',
+                  bgcolor: 'rgba(131, 16, 255, 0.04)',
                 }
               }}
             >
               Take New Interview
+            </Button>
+          </Box>
+
+          {/* Export Data Buttons */}
+          <Box display="flex" gap={2} flexDirection={{ xs: 'column', sm: 'row' }} mt={2}>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={exportInterviewDataAsJSON}
+              fullWidth
+              sx={{
+                borderColor: 'success.main',
+                color: 'success.main',
+                '&:hover': {
+                  borderColor: 'success.dark',
+                  bgcolor: 'rgba(76, 175, 80, 0.04)',
+                }
+              }}
+            >
+              Download JSON
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<CopyIcon />}
+              onClick={handleCopyJSON}
+              fullWidth
+              sx={{
+                borderColor: copySuccess ? 'success.main' : 'info.main',
+                color: copySuccess ? 'success.main' : 'info.main',
+                '&:hover': {
+                  borderColor: copySuccess ? 'success.dark' : 'info.dark',
+                  bgcolor: copySuccess ? 'rgba(76, 175, 80, 0.04)' : 'rgba(33, 150, 243, 0.04)',
+                }
+              }}
+            >
+              {copySuccess ? 'Copied!' : 'Copy JSON'}
             </Button>
           </Box>
         </Paper>
@@ -519,28 +709,30 @@ export default function InterviewResults() {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: '#ffffff',
         py: 4,
       }}
     >
       <Container maxWidth="lg">
         {/* Header */}
         <Paper
-          elevation={6}
+          elevation={0}
           sx={{
             p: 4,
             mb: 3,
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%)',
+            background: 'linear-gradient(135deg, rgba(131, 16, 255, 0.95) 0%, rgba(0, 184, 212, 0.95) 100%)',
             borderRadius: 3,
+            border: '2px solid',
+            borderColor: '#8310FF',
           }}
         >
           <Box display="flex" alignItems="center" gap={2} mb={2}>
             <TrophyIcon sx={{ fontSize: 48, color: '#ffd700' }} />
             <Box flex={1}>
-              <Typography variant="h3" fontWeight={700} color="primary">
+              <Typography variant="h3" fontWeight={700} sx={{ color: 'white' }}>
                 Interview Complete!
               </Typography>
-              <Typography variant="subtitle1" color="text.secondary">
+              <Typography variant="subtitle1" sx={{ color: 'rgba(255,255,255,0.9)' }}>
                 {analysis.skillScores.length > 0 && analysis.skillScores[0].skill !== 'General Interview'
                   ? `${analysis.skillScores[0].skill} Assessment Results`
                   : `${analysis.interviewType.replace('_', ' ')} Assessment Results`}
@@ -550,7 +742,15 @@ export default function InterviewResults() {
               variant="outlined"
               startIcon={<DownloadIcon />}
               onClick={downloadReport}
-              sx={{ borderRadius: 2 }}
+              sx={{
+                borderRadius: 2,
+                borderColor: 'white',
+                color: 'white',
+                '&:hover': {
+                  borderColor: 'white',
+                  bgcolor: 'rgba(255,255,255,0.1)',
+                }
+              }}
             >
               Download Report
             </Button>
@@ -561,9 +761,9 @@ export default function InterviewResults() {
             sx={{
               mt: 3,
               p: 3,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'white',
               borderRadius: 3,
-              color: 'white',
+              border: '2px solid #8310FF',
             }}
           >
             <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} alignItems="center" gap={3}>
@@ -575,7 +775,7 @@ export default function InterviewResults() {
                     size={120}
                     thickness={4}
                     sx={{
-                      color: 'white',
+                      color: '#8310FF',
                       '& .MuiCircularProgress-circle': {
                         strokeLinecap: 'round',
                       },
@@ -594,21 +794,21 @@ export default function InterviewResults() {
                       flexDirection: 'column',
                     }}
                   >
-                    <Typography variant="h3" fontWeight={700}>
+                    <Typography variant="h3" fontWeight={700} sx={{ color: '#8310FF' }}>
                       {Math.round(analysis.overallScore)}
                     </Typography>
-                    <Typography variant="caption">/ 100</Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>/ 100</Typography>
                   </Box>
                 </Box>
               </Box>
               <Box flex="1">
-                <Typography variant="h4" fontWeight={600} mb={1}>
+                <Typography variant="h4" fontWeight={600} mb={1} sx={{ color: 'text.primary' }}>
                   {getScoreLabel(analysis.overallScore)}
                 </Typography>
-                <Typography variant="h6" mb={2}>
+                <Typography variant="h6" mb={2} sx={{ color: 'text.secondary' }}>
                   Level: {analysis.overallLevel}
                 </Typography>
-                <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                <Typography variant="body1" sx={{ color: 'text.secondary' }}>
                   {analysis.feedback}
                 </Typography>
               </Box>
@@ -616,117 +816,105 @@ export default function InterviewResults() {
           </Box>
         </Paper>
 
-        {/* Skill Breakdown */}
-        {analysis.skillScores && analysis.skillScores.length > 0 && (
-          <Paper elevation={6} sx={{ p: 4, mb: 3, borderRadius: 3 }}>
+        {/* Primary Skill Summary - Only show the main tested skill */}
+        {analysis.skillScores && analysis.skillScores.length > 0 && analysis.skillScores[0] && (
+          <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
             <Box display="flex" alignItems="center" gap={1} mb={3}>
               <AssessmentIcon color="primary" />
               <Typography variant="h5" fontWeight={600}>
-                Skill Assessment
+                Primary Skill Assessment
               </Typography>
             </Box>
 
-            <Box display="flex" flexWrap="wrap" gap={3}>
-              {analysis.skillScores.map((skill, index) => (
-                <Box key={index} flex={{ xs: '1 1 100%', md: '1 1 calc(50% - 12px)' }}>
-                  <Card
-                    variant="outlined"
-                    sx={{
-                      height: '100%',
-                      // Highlight the first skill (main tested skill) with gradient border
-                      ...(index === 0 && {
-                        border: '2px solid',
-                        borderImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) 1',
-                        boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
-                      })
-                    }}
-                  >
-                    <CardContent>
-                      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Typography variant="h6" fontWeight={600}>
-                            {skill.skill}
-                          </Typography>
-                          {index === 0 && (
-                            <Chip
-                              label="Primary"
-                              size="small"
-                              sx={{
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                color: 'white',
-                                fontWeight: 600,
-                                fontSize: '0.65rem',
-                              }}
-                            />
-                          )}
-                        </Box>
-                        <Chip
-                          label={skill.level}
-                          color={skill.score >= 70 ? 'success' : skill.score >= 50 ? 'warning' : 'error'}
-                          size="small"
-                        />
-                      </Box>
-
-                      <Box mb={2}>
-                        <Box display="flex" justifyContent="space-between" mb={1}>
-                          <Typography variant="body2" color="text.secondary">
-                            Score
-                          </Typography>
-                          <Typography variant="body2" fontWeight={600}>
-                            {Math.round(skill.score)}%
-                          </Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={skill.score}
-                          sx={{
-                            height: 8,
-                            borderRadius: 4,
-                            backgroundColor: '#e0e0e0',
-                            '& .MuiLinearProgress-bar': {
-                              backgroundColor: getScoreColor(skill.score),
-                              borderRadius: 4,
-                            },
-                          }}
-                        />
-                      </Box>
-
-                      {skill.strengths && skill.strengths.length > 0 && (
-                        <Box mb={1}>
-                          <Typography variant="caption" color="success.main" fontWeight={600}>
-                            ✓ Strengths:
-                          </Typography>
-                          {skill.strengths.slice(0, 2).map((strength, i) => (
-                            <Typography key={i} variant="caption" display="block" color="text.secondary">
-                              • {strength}
-                            </Typography>
-                          ))}
-                        </Box>
-                      )}
-
-                      {skill.improvements && skill.improvements.length > 0 && (
-                        <Box>
-                          <Typography variant="caption" color="warning.main" fontWeight={600}>
-                            ⚠ Areas to Improve:
-                          </Typography>
-                          {skill.improvements.slice(0, 2).map((improvement, i) => (
-                            <Typography key={i} variant="caption" display="block" color="text.secondary">
-                              • {improvement}
-                            </Typography>
-                          ))}
-                        </Box>
-                      )}
-                    </CardContent>
-                  </Card>
+            <Card
+              variant="outlined"
+              sx={{
+                border: '2px solid',
+                borderImage: 'linear-gradient(135deg, rgba(131, 16, 255, 0.95) 0%, rgba(0, 184, 212, 0.95) 100%) 1',
+                boxShadow: '0 4px 12px rgba(131, 16, 255, 0.15)',
+              }}
+            >
+              <CardContent>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Typography variant="h6" fontWeight={600}>
+                      {analysis.skillScores[0].skill}
+                    </Typography>
+                    <Chip
+                      label="Primary"
+                      size="small"
+                      sx={{
+                        background: 'linear-gradient(135deg, rgba(131, 16, 255, 0.95) 0%, rgba(0, 184, 212, 0.95) 100%)',
+                        color: 'white',
+                        fontWeight: 600,
+                        fontSize: '0.65rem',
+                      }}
+                    />
+                  </Box>
+                  <Chip
+                    label={analysis.skillScores[0].level}
+                    color={analysis.skillScores[0].score >= 70 ? 'success' : analysis.skillScores[0].score >= 50 ? 'warning' : 'error'}
+                    size="small"
+                  />
                 </Box>
-              ))}
-            </Box>
+
+                <Box mb={2}>
+                  <Box display="flex" justifyContent="space-between" mb={1}>
+                    <Typography variant="body2" color="text.secondary">
+                      Score
+                    </Typography>
+                    <Typography variant="body2" fontWeight={600}>
+                      {Math.round(analysis.skillScores[0].score)}%
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={analysis.skillScores[0].score}
+                    sx={{
+                      height: 10,
+                      borderRadius: 5,
+                      backgroundColor: '#e0e0e0',
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: getScoreColor(analysis.skillScores[0].score),
+                        borderRadius: 5,
+                      },
+                    }}
+                  />
+                </Box>
+
+                {analysis.skillScores[0].strengths && analysis.skillScores[0].strengths.length > 0 && (
+                  <Box mb={1}>
+                    <Typography variant="caption" color="success.main" fontWeight={600}>
+                      ✓ Strengths:
+                    </Typography>
+                    {analysis.skillScores[0].strengths.slice(0, 3).map((strength, i) => (
+                      <Typography key={i} variant="caption" display="block" color="text.secondary">
+                        • {strength}
+                      </Typography>
+                    ))}
+                  </Box>
+                )}
+
+                {analysis.skillScores[0].improvements && analysis.skillScores[0].improvements.length > 0 && (
+                  <Box>
+                    <Typography variant="caption" color="warning.main" fontWeight={600}>
+                      ⚠ Areas to Improve:
+                    </Typography>
+                    {analysis.skillScores[0].improvements.slice(0, 3).map((improvement, i) => (
+                      <Typography key={i} variant="caption" display="block" color="text.secondary">
+                        • {improvement}
+                      </Typography>
+                    ))}
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
           </Paper>
         )}
 
         {/* Conversation Quality */}
         {analysis.conversationQuality && (
-          <Paper elevation={6} sx={{ p: 4, mb: 3, borderRadius: 3 }}>
+          <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
             <Box display="flex" alignItems="center" gap={1} mb={3}>
               <StarsIcon color="primary" />
               <Typography variant="h5" fontWeight={600}>
@@ -755,7 +943,7 @@ export default function InterviewResults() {
         {/* Strengths & Weaknesses */}
         <Box display="flex" flexWrap="wrap" gap={3} mb={3}>
           <Box flex={{ xs: '1 1 100%', md: '1 1 calc(50% - 12px)' }}>
-            <Paper elevation={6} sx={{ p: 4, height: '100%', borderRadius: 3 }}>
+            <Paper elevation={0} sx={{ p: 4, height: '100%', borderRadius: 3, border: '2px solid #e0e0e0' }}>
               <Box display="flex" alignItems="center" gap={1} mb={2}>
                 <CheckCircleIcon color="success" />
                 <Typography variant="h5" fontWeight={600}>
@@ -779,7 +967,7 @@ export default function InterviewResults() {
           </Box>
 
           <Box flex={{ xs: '1 1 100%', md: '1 1 calc(50% - 12px)' }}>
-            <Paper elevation={6} sx={{ p: 4, height: '100%', borderRadius: 3 }}>
+            <Paper elevation={0} sx={{ p: 4, height: '100%', borderRadius: 3, border: '2px solid #e0e0e0' }}>
               <Box display="flex" alignItems="center" gap={1} mb={2}>
                 <WarningIcon color="warning" />
                 <Typography variant="h5" fontWeight={600}>
@@ -804,7 +992,7 @@ export default function InterviewResults() {
         </Box>
 
         {/* Recommendations */}
-        <Paper elevation={6} sx={{ p: 4, mb: 3, borderRadius: 3 }}>
+        <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
           <Box display="flex" alignItems="center" gap={1} mb={3}>
             <TrendingUpIcon color="primary" />
             <Typography variant="h5" fontWeight={600}>
@@ -819,7 +1007,7 @@ export default function InterviewResults() {
                     minWidth: 32,
                     height: 32,
                     borderRadius: '50%',
-                    bgcolor: 'primary.main',
+                    bgcolor: '#8310FF',
                     color: 'white',
                     display: 'flex',
                     alignItems: 'center',
@@ -842,8 +1030,182 @@ export default function InterviewResults() {
           </List>
         </Paper>
 
+        {/* Interview Details & Statistics */}
+        <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
+          <Box display="flex" alignItems="center" gap={1} mb={3}>
+            <AssessmentIcon color="primary" />
+            <Typography variant="h5" fontWeight={600}>
+              Interview Details
+            </Typography>
+          </Box>
+
+          <Box display="flex" flexWrap="wrap" gap={3}>
+            {/* Interview Type */}
+            <Box flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>
+              <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'rgba(131, 16, 255, 0.05)' }}>
+                <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight={600}>
+                  Interview Type
+                </Typography>
+                <Typography variant="h6" fontWeight={600} mt={1}>
+                  {analysis.interviewType.replace('_', ' ')}
+                </Typography>
+              </Paper>
+            </Box>
+
+            {/* Duration */}
+            <Box flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>
+              <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'rgba(131, 16, 255, 0.05)' }}>
+                <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight={600}>
+                  Duration
+                </Typography>
+                <Typography variant="h6" fontWeight={600} mt={1}>
+                  {Math.round(analysis.duration / 60)} min
+                </Typography>
+              </Paper>
+            </Box>
+
+            {/* Completed Date */}
+            <Box flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>
+              <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'rgba(131, 16, 255, 0.05)' }}>
+                <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight={600}>
+                  Completed
+                </Typography>
+                <Typography variant="h6" fontWeight={600} mt={1}>
+                  {new Date(analysis.completedAt).toLocaleDateString()}
+                </Typography>
+              </Paper>
+            </Box>
+
+            {/* Skills Assessed */}
+            <Box flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>
+              <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'rgba(131, 16, 255, 0.05)' }}>
+                <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight={600}>
+                  Skills Assessed
+                </Typography>
+                <Typography variant="h6" fontWeight={600} mt={1}>
+                  {analysis.skillScores.length}
+                </Typography>
+              </Paper>
+            </Box>
+          </Box>
+        </Paper>
+
+        {/* Coverage Details */}
+        {analysis.coverage && Object.keys(analysis.coverage).length > 0 && (
+          <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
+            <Box display="flex" alignItems="center" gap={1} mb={3}>
+              <StarsIcon color="primary" />
+              <Typography variant="h5" fontWeight={600}>
+                Detailed Coverage Analysis
+              </Typography>
+            </Box>
+
+            <Box display="flex" flexDirection="column" gap={2}>
+              {Object.entries(analysis.coverage).map(([areaName, areaData]: [string, any]) => (
+                <Box key={areaName}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                    <Typography variant="subtitle1" fontWeight={600} textTransform="capitalize">
+                      {areaName.replace('_', ' ')}
+                    </Typography>
+                    <Chip
+                      label={`${Math.round(areaData.percentage || 0)}%`}
+                      size="small"
+                      color={areaData.percentage >= 70 ? 'success' : areaData.percentage >= 50 ? 'warning' : 'error'}
+                    />
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={areaData.percentage || 0}
+                    sx={{
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: '#e0e0e0',
+                      mb: 1,
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: getScoreColor(areaData.percentage || 0),
+                        borderRadius: 4,
+                      },
+                    }}
+                  />
+
+                  {/* Show indicators if available */}
+                  {areaData.indicators && areaData.indicators.length > 0 && (
+                    <Box display="flex" flexWrap="wrap" gap={1} mt={1}>
+                      {areaData.indicators.slice(0, 5).map((indicator: any, idx: number) => (
+                        <Chip
+                          key={idx}
+                          label={indicator.name || indicator}
+                          size="small"
+                          variant={indicator.covered ? 'filled' : 'outlined'}
+                          color={indicator.covered ? 'success' : 'default'}
+                          sx={{ fontSize: '0.75rem' }}
+                        />
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              ))}
+            </Box>
+          </Paper>
+        )}
+
+        {/* Performance Summary */}
+        <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
+          <Box display="flex" alignItems="center" gap={1} mb={3}>
+            <TrophyIcon sx={{ color: '#ffd700' }} />
+            <Typography variant="h5" fontWeight={600}>
+              Performance Summary
+            </Typography>
+          </Box>
+
+          <Box display="flex" flexDirection="column" gap={2}>
+            {/* Overall Assessment */}
+            <Box sx={{ p: 3, bgcolor: 'rgba(131, 16, 255, 0.05)', borderRadius: 2 }}>
+              <Typography variant="h6" fontWeight={600} mb={2}>
+                Overall Assessment
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                {analysis.feedback}
+              </Typography>
+            </Box>
+
+            {/* Performance Level */}
+            <Box sx={{ p: 3, bgcolor: 'rgba(255, 152, 0, 0.05)', borderRadius: 2 }}>
+              <Typography variant="h6" fontWeight={600} mb={2}>
+                Performance Level
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Box
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: '50%',
+                    bgcolor: '#8310FF',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    fontSize: '1.5rem',
+                  }}
+                >
+                  {analysis.overallScore}
+                </Box>
+                <Box>
+                  <Typography variant="h6" fontWeight={600}>
+                    {analysis.overallLevel}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {getPerformanceMessage(analysis.overallScore)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        </Paper>
+
         {/* Actions */}
-        <Box display="flex" gap={2} justifyContent="center">
+        <Box display="flex" gap={2} justifyContent="center" flexWrap="wrap">
           <Button
             variant="contained"
             size="large"
@@ -853,7 +1215,8 @@ export default function InterviewResults() {
               px: 4,
               py: 1.5,
               borderRadius: 2,
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, rgba(131, 16, 255, 0.95) 0%, rgba(0, 184, 212, 0.95) 100%)',
+              color: 'white',
             }}
           >
             Return to Dashboard
@@ -866,15 +1229,58 @@ export default function InterviewResults() {
               px: 4,
               py: 1.5,
               borderRadius: 2,
-              borderColor: 'white',
-              color: 'white',
+              borderColor: '#8310FF',
+              color: '#8310FF',
               '&:hover': {
-                borderColor: 'white',
-                bgcolor: 'rgba(255,255,255,0.1)',
+                borderColor: '#8310FF',
+                bgcolor: 'rgba(131, 16, 255, 0.04)',
               },
             }}
           >
             Take Another Test
+          </Button>
+        </Box>
+
+        {/* Export Data Actions */}
+        <Box display="flex" gap={2} justifyContent="center" flexWrap="wrap" mt={2}>
+          <Button
+            variant="outlined"
+            size="large"
+            startIcon={<DownloadIcon />}
+            onClick={exportInterviewDataAsJSON}
+            sx={{
+              px: 4,
+              py: 1.5,
+              borderRadius: 2,
+              borderColor: '#00b8d4',
+              color: '#00b8d4',
+              '&:hover': {
+                borderColor: '#00b8d4',
+                bgcolor: 'rgba(0, 184, 212, 0.04)',
+              },
+            }}
+          >
+            Download JSON
+          </Button>
+          <Button
+            variant="outlined"
+            size="large"
+            startIcon={<CopyIcon />}
+            onClick={handleCopyJSON}
+            sx={{
+              px: 4,
+              py: 1.5,
+              borderRadius: 2,
+              borderColor: copySuccess ? '#4caf50' : '#00b8d4',
+              color: copySuccess ? '#4caf50' : '#00b8d4',
+              bgcolor: copySuccess ? 'rgba(76, 175, 80, 0.1)' : 'transparent',
+              '&:hover': {
+                borderColor: copySuccess ? '#4caf50' : '#00b8d4',
+                bgcolor: copySuccess ? 'rgba(76, 175, 80, 0.2)' : 'rgba(0, 184, 212, 0.04)',
+              },
+            }}
+          >
+            {copySuccess ? 'Copied to Clipboard!' : 'Copy JSON'}
           </Button>
         </Box>
       </Container>
