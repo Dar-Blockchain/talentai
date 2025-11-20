@@ -3,32 +3,57 @@ const convertNewToOld = require("../utils/convertNewInterviewToOld");
 
 exports.addInterviewDetails = async (req, res) => {
   try {
-    const { newInterviewData, profileId } = req.body;
-
+    const { metadata, interviewData } = req.body;
+    const userId = req.user._id;
+    
     // Valider les données entrantes
-    if (!newInterviewData) {
+    if (!metadata || !interviewData) {
       return res.status(400).json({
         success: false,
-        error: "newInterviewData is required",
+        error: "metadata and interviewData are required",
       });
     }
 
-    if (!profileId) {
+    // Le candidate (ProfileId MongoDB) est requis
+    const candidateId = userId;
+    if (!candidateId) {
       return res.status(400).json({
         success: false,
-        error: "profileId is required",
+        error: "candidate (profile ID) is required",
       });
     }
+
+    // Construire newInterviewData au format attendu par convertNewToOld
+    const newInterviewData = {
+      metadata,
+      interviewData,
+    };
 
     // Convertir le nouveau format au format ancien
     const convertedData = convertNewToOld(newInterviewData);
 
-    // Ajouter profileId et userId
+    // Mapper le type d'entretien
+    const interviewTypeMap = {
+      "HR_INTERVIEW": "hr",
+      "TECHNICAL_INTERVIEW": "skill",
+      "POST_INTERVIEW": "post",
+      "ONBOARDING": "onboarding",
+    };
+
+    const interviewType = interviewTypeMap[interviewData?.interviewType] || "hr";
+
+    // Construire l'objet interview conforme au schéma MongoDB
     const interviewDetails = {
-      ...convertedData,
-      profileId,
-      userId: req.user?.id || req.body.userId,
-      createdAt: new Date(),
+      candidate: candidateId,
+      type: interviewType,
+      overallScore: convertedData.overallScore,
+      skillDetails: convertedData.skillDetails || [],
+      recommendations: convertedData.recommendations || [],
+      questions: [],
+      interviewContext: {
+        targetRole: metadata?.role || "N/A",
+        experienceLevel: metadata?.proficiency || "N/A",
+      },
     };
 
     // Sauvegarder en base de données
@@ -40,6 +65,11 @@ exports.addInterviewDetails = async (req, res) => {
       success: true,
       message: "Interview details added successfully",
       data: result,
+      metadata: {
+        sessionId: interviewData?.sessionId,
+        timestamp: interviewData?.timestamp,
+        analytics: interviewData?.analytics,
+      },
     });
   } catch (error) {
     console.error("Error in addInterviewDetails:", error);

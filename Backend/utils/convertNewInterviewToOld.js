@@ -1,11 +1,13 @@
 function convertNewToOld(newJson) {
   const report = newJson?.interviewData?.finalReport;
+  const interviewData = newJson?.interviewData || {};
+  const metadata = newJson?.metadata || {};
 
   // ---- 1. overallScore ----
   const overallScore = report?.coverage?.overall ?? 0;
 
   // ---- 2. technicalLevel → based on proficiency ----
-  const technicalLevel = newJson?.metadata?.proficiency || "Unknown";
+  const technicalLevel = metadata?.proficiency || "Unknown";
 
   // ---- 3. generalAssessment ----
   const generalAssessment = report?.summary || "No assessment provided";
@@ -24,52 +26,18 @@ function convertNewToOld(newJson) {
     ? weakAreas.map((area) => `Improve your skills in ${area}`)
     : ["No next steps identified"];
 
-  // ---- 6. skillAnalysis ----
+  // ---- 6. skillDetails (format MongoDB) ----
   const areas = report?.coverage?.areas || {};
-  const skillAnalysis = Object.keys(areas).map((key) => {
+  const skillDetails = Object.keys(areas).map((key) => {
     const area = areas[key];
 
-    // Strengths: indicators with quality >= 2
-    const strengths = area.indicators
-      .filter((i) => i.quality >= 2)
-      .map((i) => i.name);
-
-    // Weaknesses: indicators with quality = 0
-    const weaknesses = area.indicators
-      .filter((i) => i.quality === 0)
-      .map((i) => i.name);
-
     return {
-      skillName: key,
-      requiredLevel: 3, // valeur par défaut
-      demonstratedExperienceLevel: Math.round(
-        (area.percentage || 0) / 20
-      ),
-      strengths: strengths.length
-        ? strengths
-        : ["No strengths identified for this skill"],
-      weaknesses: weaknesses.length
-        ? weaknesses
-        : ["No weaknesses identified for this skill"],
-      confidenceScore: (area.aiAnalysis?.qualityScore || 0) * 20,
-
-      todoList: {
-        title: key,
-        type: "Skill",
-        tasks: [
-          {
-            title: `Improve skill: ${key}`,
-            type: "Course",
-            description: `Take a course to improve ${key}`,
-            url: "",
-            priority: "medium",
-            dueDate: Date.now() + 1000 * 60 * 60 * 24 * 30, // 30 jours
-            isCompleted: false,
-          },
-        ],
-      },
-
-      questionAnswerList: [], // tu peux mapper si tu as les Q/A dans new JSON
+      name: key,
+      type: "hard", // hard ou soft (pas technical)
+      confidenceScore: (area.aiAnalysis?.qualityScore || 0) * 100,
+      proficiencyLevel: Math.ceil((area.percentage || 0) / 20),
+      experienceLevel: technicalLevel,
+      questionAnswerList: [],
     };
   });
 
@@ -79,7 +47,10 @@ function convertNewToOld(newJson) {
     generalAssassment: generalAssessment,
     recommendations,
     nextSteps,
-    skillAnalysis,
+    skillDetails,
+    interviewType: interviewData?.interviewType || "hr",
+    sessionId: interviewData?.sessionId,
+    analytics: interviewData?.analytics,
   };
 }
 
