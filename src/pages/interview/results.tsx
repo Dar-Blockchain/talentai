@@ -174,6 +174,7 @@ export default function InterviewResults() {
    */
   const transformSocketAnalysis = (socketData: any): InterviewAnalysis | null => {
     console.log('🔄 [Results] Transforming socket data:', socketData);
+    console.log('📊 [Results] Full socket data structure:', JSON.stringify(socketData, null, 2));
 
     const finalReport = socketData.finalReport || socketData;
     const analytics = socketData.analytics || {};
@@ -181,6 +182,9 @@ export default function InterviewResults() {
     // Extract scores from the final report
     const scores = finalReport.scores || {};
     const coverage = finalReport.coverage || {};
+
+    console.log('📈 [Results] Coverage data:', coverage);
+    console.log('📊 [Results] Coverage areas:', coverage.areas);
 
     // Check if we have actual data or just empty objects
     const hasActualData =
@@ -194,13 +198,84 @@ export default function InterviewResults() {
       return null;
     }
 
+    // Extract skill information from URL parameters or interview type
+    const interviewType = socketData.interviewType || 'General Interview';
+    const urlParams = new URLSearchParams(window.location.search);
+    const skill = urlParams.get('skill') || localStorage.getItem('interview_skill');
+    const role = urlParams.get('role') || localStorage.getItem('interview_role');
+    const category = urlParams.get('category') || localStorage.getItem('interview_category');
+    const proficiency = urlParams.get('proficiency') || localStorage.getItem('interview_proficiency');
+
+    console.log('🎯 [Results] Extracted skill info:', { skill, role, category, proficiency, interviewType });
+
+    // Transform skill scores from coverage areas
+    let skillScores = transformSkillScores(coverage.areas || {}, socketData);
+
+    // If no skills found in coverage but we have interview context, add the tested skill
+    if (skillScores.length === 0 && (skill || role || category)) {
+      console.log('⚠️ [Results] No skills in coverage, adding from context');
+
+      // Determine the skill name based on interview type
+      let testedSkill = 'General Interview';
+
+      if (interviewType === 'TECHNICAL_SKILL') {
+        testedSkill = skill || role || 'Technical Skill';
+      } else if (interviewType === 'SOFT_SKILL') {
+        testedSkill = `${skill || 'Communication'} (${category || 'Language Assessment'})`;
+      } else if (interviewType === 'HR_INTERVIEW') {
+        testedSkill = role || 'HR Interview';
+      } else {
+        testedSkill = skill || role || category || 'General Assessment';
+      }
+
+      const overallScore = scores.overall || calculateOverallScore(scores);
+
+      console.log(`✅ [Results] Creating skill score for: ${testedSkill} with score: ${overallScore}`);
+
+      skillScores = [{
+        skill: testedSkill,
+        score: overallScore,
+        level: determineLevel(overallScore),
+        strengths: finalReport.recommendations?.strengths || [],
+        improvements: finalReport.recommendations?.improvements || []
+      }];
+    }
+
+    console.log('✅ [Results] Final skill scores:', skillScores);
+
+    // Calculate overall score from coverage areas if not provided
+    let overallScore = scores.overall || 0;
+    if (overallScore === 0 && coverage.areas && Object.keys(coverage.areas).length > 0) {
+      const areaScores = Object.values(coverage.areas).map((area: any) => area.percentage || 0);
+      overallScore = Math.round(areaScores.reduce((sum, score) => sum + score, 0) / areaScores.length);
+      console.log('📊 [Results] Calculated overall score from areas:', overallScore, 'from scores:', areaScores);
+    }
+
+    // If we have a tested skill, add it as the primary skill at the top
+    if ((skill || role) && skillScores.length > 0) {
+      const primarySkillName = skill || role || 'Primary Skill';
+      const hasMainSkill = skillScores.some(s => s.skill === primarySkillName);
+
+      if (!hasMainSkill) {
+        console.log(`📌 [Results] Adding primary skill: ${primarySkillName} with score: ${overallScore}`);
+        // Add primary skill at the beginning of the array
+        skillScores.unshift({
+          skill: primarySkillName,
+          score: overallScore,
+          level: determineLevel(overallScore),
+          strengths: finalReport.recommendations?.strengths || [],
+          improvements: finalReport.recommendations?.improvements || []
+        });
+      }
+    }
+
     return {
-      overallScore: scores.overall || calculateOverallScore(scores),
-      overallLevel: determineLevel(scores.overall || 70),
-      interviewType: socketData.interviewType || 'General Interview',
+      overallScore: overallScore,
+      overallLevel: determineLevel(overallScore),
+      interviewType: interviewType,
       duration: analytics.duration || 0,
       completedAt: socketData.timestamp || new Date().toISOString(),
-      skillScores: transformSkillScores(coverage.areas || {}),
+      skillScores: skillScores,
       strengths: finalReport.recommendations?.strengths || extractStrengths(coverage),
       weaknesses: finalReport.recommendations?.improvements || extractWeaknesses(coverage),
       recommendations: finalReport.recommendations?.suggestions || generateRecommendations(coverage),
@@ -273,16 +348,28 @@ export default function InterviewResults() {
     return 'Beginner';
   };
 
-  const transformSkillScores = (areas: any): SkillScore[] => {
-    if (!areas || Object.keys(areas).length === 0) return [];
+  const transformSkillScores = (areas: any, socketData?: any): SkillScore[] => {
+    console.log('🔍 [Results] transformSkillScores - areas:', areas);
+    console.log('🔍 [Results] transformSkillScores - socketData:', socketData);
 
-    return Object.entries(areas).map(([name, area]: [string, any]) => ({
-      skill: name,
-      score: area.percentage || 0,
-      level: determineLevel(area.percentage || 0),
-      strengths: area.indicators?.filter((i: any) => i.covered).map((i: any) => i.name).slice(0, 3) || [],
-      improvements: area.indicators?.filter((i: any) => !i.covered).map((i: any) => i.name).slice(0, 3) || [],
-    }));
+    if (!areas || Object.keys(areas).length === 0) {
+      console.log('⚠️ [Results] No areas found in coverage');
+      return [];
+    }
+
+    const skillScores = Object.entries(areas).map(([name, area]: [string, any]) => {
+      console.log(`📊 [Results] Processing area: ${name}`, area);
+      return {
+        skill: name,
+        score: area.percentage || 0,
+        level: determineLevel(area.percentage || 0),
+        strengths: area.indicators?.filter((i: any) => i.covered).map((i: any) => i.name).slice(0, 3) || [],
+        improvements: area.indicators?.filter((i: any) => !i.covered).map((i: any) => i.name).slice(0, 3) || [],
+      };
+    });
+
+    console.log('✅ [Results] Transformed skill scores:', skillScores);
+    return skillScores;
   };
 
   const extractStrengths = (coverage: any): string[] => {
@@ -454,7 +541,9 @@ export default function InterviewResults() {
                 Interview Complete!
               </Typography>
               <Typography variant="subtitle1" color="text.secondary">
-                {analysis.interviewType.replace('_', ' ')} Assessment Results
+                {analysis.skillScores.length > 0 && analysis.skillScores[0].skill !== 'General Interview'
+                  ? `${analysis.skillScores[0].skill} Assessment Results`
+                  : `${analysis.interviewType.replace('_', ' ')} Assessment Results`}
               </Typography>
             </Box>
             <Button
@@ -540,12 +629,37 @@ export default function InterviewResults() {
             <Box display="flex" flexWrap="wrap" gap={3}>
               {analysis.skillScores.map((skill, index) => (
                 <Box key={index} flex={{ xs: '1 1 100%', md: '1 1 calc(50% - 12px)' }}>
-                  <Card variant="outlined" sx={{ height: '100%' }}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      height: '100%',
+                      // Highlight the first skill (main tested skill) with gradient border
+                      ...(index === 0 && {
+                        border: '2px solid',
+                        borderImage: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%) 1',
+                        boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
+                      })
+                    }}
+                  >
                     <CardContent>
                       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                        <Typography variant="h6" fontWeight={600}>
-                          {skill.skill}
-                        </Typography>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Typography variant="h6" fontWeight={600}>
+                            {skill.skill}
+                          </Typography>
+                          {index === 0 && (
+                            <Chip
+                              label="Primary"
+                              size="small"
+                              sx={{
+                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                color: 'white',
+                                fontWeight: 600,
+                                fontSize: '0.65rem',
+                              }}
+                            />
+                          )}
+                        </Box>
                         <Chip
                           label={skill.level}
                           color={skill.score >= 70 ? 'success' : skill.score >= 50 ? 'warning' : 'error'}

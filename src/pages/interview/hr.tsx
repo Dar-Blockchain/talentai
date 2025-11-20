@@ -728,6 +728,24 @@ const IntelligentInterviewTest = () => {
       const dynamicConfig = buildInterviewConfigFromURL(urlParams);
       console.log('✅ Generated dynamic interview config:', dynamicConfig);
       setInterviewConfig(dynamicConfig);
+
+      // Store skill information in localStorage for results page
+      if (urlParams.skill) {
+        localStorage.setItem('interview_skill', urlParams.skill);
+        console.log('💾 Stored skill in localStorage:', urlParams.skill);
+      }
+      if (urlParams.category) {
+        localStorage.setItem('interview_category', urlParams.category);
+        console.log('💾 Stored category in localStorage:', urlParams.category);
+      }
+      if (urlParams.proficiency) {
+        localStorage.setItem('interview_proficiency', urlParams.proficiency);
+        console.log('💾 Stored proficiency in localStorage:', urlParams.proficiency);
+      }
+      if (urlParams.role) {
+        localStorage.setItem('interview_role', urlParams.role);
+        console.log('💾 Stored role in localStorage:', urlParams.role);
+      }
     } else {
       console.log('ℹ️  No URL params detected, using default HR interview config');
     }
