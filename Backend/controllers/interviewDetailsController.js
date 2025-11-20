@@ -1,4 +1,54 @@
 const interviewDetailsService = require("../services/interviewDetailsService");
+const convertNewToOld = require("../utils/convertNewInterviewToOld");
+
+exports.addInterviewDetails = async (req, res) => {
+  try {
+    const { newInterviewData, profileId } = req.body;
+
+    // Valider les données entrantes
+    if (!newInterviewData) {
+      return res.status(400).json({
+        success: false,
+        error: "newInterviewData is required",
+      });
+    }
+
+    if (!profileId) {
+      return res.status(400).json({
+        success: false,
+        error: "profileId is required",
+      });
+    }
+
+    // Convertir le nouveau format au format ancien
+    const convertedData = convertNewToOld(newInterviewData);
+
+    // Ajouter profileId et userId
+    const interviewDetails = {
+      ...convertedData,
+      profileId,
+      userId: req.user?.id || req.body.userId,
+      createdAt: new Date(),
+    };
+
+    // Sauvegarder en base de données
+    const result = await interviewDetailsService.createInterviewDetails(
+      interviewDetails
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Interview details added successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error in addInterviewDetails:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Internal server error",
+    });
+  }
+};
 
 exports.getAll = async (req, res) => {
   try {
