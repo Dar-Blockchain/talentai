@@ -107,6 +107,7 @@ export default function InterviewResults() {
 
       // Get metadata from URL params first, then localStorage as fallback
       const urlParams = new URLSearchParams(window.location.search);
+      const type = urlParams.get('type') || localStorage.getItem('interview_type');
       const role = urlParams.get('role') || localStorage.getItem('interview_role');
       const skill = urlParams.get('skill') || localStorage.getItem('interview_skill');
       const category = urlParams.get('category') || localStorage.getItem('interview_category');
@@ -136,6 +137,7 @@ export default function InterviewResults() {
       const payload = {
         metadata: {
           exportedAt: new Date().toISOString(),
+          type: type || 'hr',
           skill: effectiveSkill,
           role: role || 'N/A',
           category: category || 'N/A',
