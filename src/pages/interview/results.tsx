@@ -130,8 +130,10 @@ export default function InterviewResults() {
         });
       }
 
-      // For technical interviews, skill should be the role (e.g., "JavaScript")
+      // For technical: role is the skill (e.g., "JavaScript")
+      // For soft: skill is the skill (e.g., "Communication")
       const effectiveSkill = role || skill || 'N/A';
+      const effectiveRole = role || skill || 'N/A'; // Use skill as role for soft skills
 
       // Prepare payload for backend API
       const payload = {
@@ -139,7 +141,7 @@ export default function InterviewResults() {
           exportedAt: new Date().toISOString(),
           type: type || 'hr',
           skill: effectiveSkill,
-          role: role || 'N/A',
+          role: effectiveRole,
           category: category || 'N/A',
           proficiency: proficiency || 'N/A'
         },
