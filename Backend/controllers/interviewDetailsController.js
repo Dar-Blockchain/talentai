@@ -3,7 +3,7 @@ const convertNewToOld = require("../utils/convertNewInterviewToOld");
 
 exports.addInterviewDetails = async (req, res) => {
   try {
-    const { metadata, interviewData } = req.body;
+    const { metadata, interviewData, candidate, profileId } = req.body;
     const userId = req.user._id;
     
     // Valider les données entrantes
@@ -14,13 +14,20 @@ exports.addInterviewDetails = async (req, res) => {
       });
     }
 
-    // Le candidate (ProfileId MongoDB) est requis
-    const candidateId = userId;
+    // Le candidate (ProfileId MongoDB) peut venir du body ou être récupéré du user authentifié
+    let candidateId = candidate || profileId;
+    
     if (!candidateId) {
-      return res.status(400).json({
-        success: false,
-        error: "candidate (profile ID) is required",
-      });
+      // Si pas fourni, chercher le profil de l'utilisateur authentifié
+      const Profile = require("../models/ProfileModel");
+      const userProfile = await Profile.findOne({ userId });
+      if (!userProfile) {
+        return res.status(400).json({
+          success: false,
+          error: "No profile found for this user",
+        });
+      }
+      candidateId = userProfile._id;
     }
 
     // Construire newInterviewData au format attendu par convertNewToOld
@@ -58,7 +65,9 @@ exports.addInterviewDetails = async (req, res) => {
 
     // Sauvegarder en base de données
     const result = await interviewDetailsService.createInterviewDetails(
-      interviewDetails
+      interviewDetails,
+      metadata,
+      interviewData
     );
 
     res.status(201).json({
