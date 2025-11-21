@@ -59,3 +59,30 @@ module.exports.getInterviewDetailsById = async (id) => {
   if (!interview) throw new Error("InterviewDetails non trouvée !");
   return interview;
 };
+
+exports.createInterviewDetails = async (interviewData) => {
+  try {
+    const newInterview = new InterviewDetails(interviewData);
+    const savedInterview = await newInterview.save();
+    
+    // Populate les références après la sauvegarde
+    const populatedInterview = await InterviewDetails.findById(savedInterview._id)
+      .populate("candidate", "firstName lastName email")
+      .populate("company", "name email")
+      .populate({
+        path: "post",
+        select: "title jobDetails post_Steps",
+        populate: {
+          path: "post_Steps",
+          model: "Post_Steps",
+          select: "id type data position connections"
+        }
+      })
+      .populate("jobAssessmentResult")
+      .populate("postSteps");
+
+    return populatedInterview;
+  } catch (error) {
+    throw new Error(`Failed to create interview details: ${error.message}`);
+  }
+};

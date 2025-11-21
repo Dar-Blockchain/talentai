@@ -1,0 +1,1346 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import {
+  Box,
+  Container,
+  Paper,
+  Typography,
+  Button,
+  LinearProgress,
+  Card,
+  CardContent,
+  Chip,
+  CircularProgress,
+  Alert,
+  List,
+  ListItem,
+  ListItemText,
+  Rating,
+} from '@mui/material';
+import {
+  CheckCircle as CheckCircleIcon,
+  TrendingUp as TrendingUpIcon,
+  Assessment as AssessmentIcon,
+  Download as DownloadIcon,
+  Home as HomeIcon,
+  EmojiEvents as TrophyIcon,
+  Warning as WarningIcon,
+  Stars as StarsIcon,
+  ContentCopy as CopyIcon,
+  Save as SaveIcon,
+} from '@mui/icons-material';
+import { useSession } from 'next-auth/react';
+import Cookies from 'js-cookie';
+import {
+  exportInterviewDataAsJSON,
+  copyInterviewDataToClipboard,
+  logInterviewDataToConsole
+} from '@/utils/exportInterviewData';
+
+interface SkillScore {
+  skill: string;
+  score: number;
+  level: string;
+  strengths: string[];
+  improvements: string[];
+}
+
+interface InterviewAnalysis {
+  overallScore: number;
+  overallLevel: string;
+  interviewType: string;
+  duration: number;
+  completedAt: string;
+  skillScores: SkillScore[];
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: string[];
+  feedback: string;
+  conversationQuality: {
+    clarity: number;
+    relevance: number;
+    depth: number;
+    engagement: number;
+  };
+  coverage: {
+    [key: string]: number;
+  };
+}
+
+export default function InterviewResults() {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const [analysis, setAnalysis] = useState<InterviewAnalysis | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+
+  useEffect(() => {
+    if (router.isReady) {
+      fetchAnalysis();
+    }
+  }, [router.isReady]);
+
+  // Auto-log interview data to console on page load
+  useEffect(() => {
+    if (analysis) {
+      logInterviewDataToConsole();
+    }
+  }, [analysis]);
+
+  // Save interview data to backend
+  const saveInterviewToBackend = async (showStatus = true) => {
+    try {
+      if (showStatus) setSaveStatus('saving');
+
+      const storedAnalysis = localStorage.getItem('last_interview_analysis');
+      if (!storedAnalysis) {
+        console.log('⚠️ [Save] No interview data to save');
+        if (showStatus) setSaveStatus('error');
+        return;
+      }
+
+      const parsedData = JSON.parse(storedAnalysis);
+
+      // Get metadata from localStorage
+      const skill = localStorage.getItem('interview_skill');
+      const role = localStorage.getItem('interview_role');
+      const category = localStorage.getItem('interview_category');
+      const proficiency = localStorage.getItem('interview_proficiency');
+
+      // Prepare payload for backend API
+      const payload = {
+        metadata: {
+          exportedAt: new Date().toISOString(),
+          skill: skill || 'N/A',
+          role: role || 'N/A',
+          category: category || 'N/A',
+          proficiency: proficiency || 'N/A'
+        },
+        interviewData: parsedData
+      };
+
+      console.log('💾 [Save] Saving interview to backend...');
+      console.log('📤 [Save] Payload:', payload);
+
+      const token = localStorage.getItem('api_token') || Cookies.get('api_token');
+      if (!token) {
+        console.error('❌ [Save] No authentication token found');
+        if (showStatus) setSaveStatus('error');
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ [Save] Failed to save interview:', response.status, errorData);
+        if (showStatus) setSaveStatus('error');
+        throw new Error(`Failed to save: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ [Save] Interview saved successfully:', result);
+
+      // Store the saved interview ID
+      if (result.data?._id) {
+        localStorage.setItem('last_interview_id', result.data._id);
+        console.log('💾 [Save] Stored interview ID:', result.data._id);
+      }
+
+      if (showStatus) {
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 3000);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('❌ [Save] Error saving interview:', error);
+      if (showStatus) {
+        setSaveStatus('error');
+        setTimeout(() => setSaveStatus('idle'), 3000);
+      }
+      // Don't throw - we don't want to block the UI if save fails
+    }
+  };
+
+  // Auto-save to backend when analysis loads (silent save)
+  useEffect(() => {
+    if (analysis) {
+      saveInterviewToBackend(false); // false = don't show status for auto-save
+    }
+  }, [analysis]);
+
+  // Handle copy to clipboard
+  const handleCopyJSON = async () => {
+    const success = await copyInterviewDataToClipboard();
+    if (success) {
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 3000);
+    }
+  };
+
+  const fetchAnalysis = async () => {
+    try {
+      setLoading(true);
+      console.log('📊 [Results] Fetching interview analysis...');
+
+      // First, try to get stored analysis from localStorage (set by socket event)
+      const storedAnalysis = localStorage.getItem('last_interview_analysis');
+
+      if (storedAnalysis) {
+        console.log('✅ [Results] Found stored analysis in localStorage');
+        console.log('📦 [Results] Raw localStorage data:', storedAnalysis);
+
+        try {
+          const parsedAnalysis = JSON.parse(storedAnalysis);
+          console.log('📊 [Results] Parsed analysis object:', parsedAnalysis);
+          console.log('📋 [Results] Analysis keys:', Object.keys(parsedAnalysis));
+          console.log('🔍 [Results] Final Report:', parsedAnalysis.finalReport);
+          console.log('📈 [Results] Analytics:', parsedAnalysis.analytics);
+          console.log('🆔 [Results] Session ID:', parsedAnalysis.sessionId);
+          console.log('🎯 [Results] Interview Type:', parsedAnalysis.interviewType);
+
+          // Transform the data to match our interface
+          const transformedAnalysis = transformSocketAnalysis(parsedAnalysis);
+
+          if (transformedAnalysis) {
+            console.log('✅ [Results] Successfully transformed analysis:', transformedAnalysis);
+            console.log('📊 [Results] Transformed data structure:');
+            console.log('  - Overall Score:', transformedAnalysis.overallScore);
+            console.log('  - Overall Level:', transformedAnalysis.overallLevel);
+            console.log('  - Interview Type:', transformedAnalysis.interviewType);
+            console.log('  - Skill Scores:', transformedAnalysis.skillScores);
+            console.log('  - Strengths:', transformedAnalysis.strengths);
+            console.log('  - Weaknesses:', transformedAnalysis.weaknesses);
+            console.log('  - Recommendations:', transformedAnalysis.recommendations);
+            console.log('  - Feedback:', transformedAnalysis.feedback);
+            console.log('  - Conversation Quality:', transformedAnalysis.conversationQuality);
+            console.log('  - Coverage:', transformedAnalysis.coverage);
+
+            // Store data globally for easy access in console
+            (window as any).INTERVIEW_DATA = {
+              original: parsedAnalysis,
+              transformed: transformedAnalysis,
+              timestamp: new Date().toISOString()
+            };
+
+            console.log('\n');
+            console.log('🌐 ════════════════════════════════════════════════════════════════');
+            console.log('🌐 DATA AVAILABLE IN GLOBAL VARIABLE');
+            console.log('🌐 ════════════════════════════════════════════════════════════════');
+            console.log('💡 Type in console: INTERVIEW_DATA');
+            console.log('💡 Type in console: copy(INTERVIEW_DATA) - to copy to clipboard');
+            console.log('💡 Type in console: JSON.stringify(INTERVIEW_DATA, null, 2) - for formatted JSON');
+            console.log('🌐 ════════════════════════════════════════════════════════════════');
+            console.log('\n');
+
+            setAnalysis(transformedAnalysis);
+            setLoading(false);
+            return;
+          } else {
+            console.warn('⚠️ [Results] Stored analysis has no actual data');
+            // Continue to API fallback or show error
+          }
+        } catch (parseError) {
+          console.error('❌ [Results] Failed to parse stored analysis:', parseError);
+          // Continue to API fallback
+        }
+      }
+
+      console.log('🔍 [Results] No stored analysis found, trying API...');
+
+      const token = localStorage.getItem('api_token') || Cookies.get('api_token');
+
+      if (!token) {
+        console.log('❌ [Results] No auth token found');
+        router.push('/signin');
+        return;
+      }
+
+      // Get interview ID from query params or localStorage
+      const interviewId = router.query.id || localStorage.getItem('last_interview_id');
+
+      if (!interviewId) {
+        console.log('❌ [Results] No interview ID found');
+        setError('No interview data found. Please complete an interview first.');
+        setLoading(false);
+        return;
+      }
+
+      console.log(`🔄 [Results] Attempting API call for interview: ${interviewId}`);
+
+      // Try to fetch from backend API (if endpoint exists)
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}interview-details/getInterviewDetailsById/${interviewId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ [Results] Got data from API:', data);
+
+          if (data.success && data.data) {
+            const transformedAnalysis = transformAPIAnalysis(data.data);
+
+            if (transformedAnalysis) {
+              setAnalysis(transformedAnalysis);
+              setLoading(false);
+              return;
+            } else {
+              console.warn('⚠️ [Results] API data has no actual analysis');
+            }
+          }
+        }
+      } catch (apiError) {
+        console.log('⚠️ [Results] API call failed:', apiError);
+      }
+
+      // If all else fails, show a helpful error
+      setError('No interview data available to perform analysis. Please complete an interview first or the interview may not have generated results yet.');
+
+    } catch (err: any) {
+      console.error('❌ [Results] Error fetching analysis:', err);
+      setError(err.message || 'Failed to load interview results');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Transform socket event data to InterviewAnalysis interface
+   */
+  const transformSocketAnalysis = (socketData: any): InterviewAnalysis | null => {
+    console.log('🔄 [Results] ========================================');
+    console.log('🔄 [Results] STARTING DATA TRANSFORMATION');
+    console.log('🔄 [Results] ========================================');
+    console.log('🔄 [Results] Transforming socket data:', socketData);
+    console.log('📊 [Results] Full socket data structure:', JSON.stringify(socketData, null, 2));
+
+    const finalReport = socketData.finalReport || socketData;
+    const analytics = socketData.analytics || {};
+
+    console.log('📋 [Results] ========================================');
+    console.log('📋 [Results] FINAL REPORT BREAKDOWN');
+    console.log('📋 [Results] ========================================');
+    console.log('📋 [Results] Final Report Object:', finalReport);
+    console.log('📋 [Results] Final Report Keys:', Object.keys(finalReport));
+    console.log('📋 [Results] Final Report Summary:', finalReport.summary);
+    console.log('📋 [Results] Final Report Recommendations:', finalReport.recommendations);
+
+    // Extract scores from the final report
+    const scores = finalReport.scores || {};
+    const coverage = finalReport.coverage || {};
+
+    console.log('📈 [Results] ========================================');
+    console.log('📈 [Results] SCORES & COVERAGE DATA');
+    console.log('📈 [Results] ========================================');
+    console.log('📈 [Results] Scores Object:', scores);
+    console.log('📈 [Results] Scores Keys:', Object.keys(scores));
+    console.log('📈 [Results] Overall Score:', scores.overall);
+    console.log('📈 [Results] Individual Scores:', {
+      clarity: scores.clarity,
+      relevance: scores.relevance,
+      depth: scores.depth,
+      engagement: scores.engagement
+    });
+    console.log('📈 [Results] Coverage Object:', coverage);
+    console.log('📈 [Results] Coverage Keys:', Object.keys(coverage));
+    console.log('📈 [Results] Coverage Areas:', coverage.areas);
+    console.log('📈 [Results] Coverage Areas Keys:', coverage.areas ? Object.keys(coverage.areas) : 'N/A');
+
+    // Log each coverage area in detail
+    if (coverage.areas) {
+      console.log('📊 [Results] ========================================');
+      console.log('📊 [Results] DETAILED COVERAGE AREAS');
+      console.log('📊 [Results] ========================================');
+      Object.entries(coverage.areas).forEach(([areaName, areaData]: [string, any]) => {
+        console.log(`📊 [Results] Area: ${areaName}`);
+        console.log(`  - Percentage: ${areaData.percentage}`);
+        console.log(`  - Indicators:`, areaData.indicators);
+        console.log(`  - Questions Asked: ${areaData.questionsAsked}`);
+        console.log(`  - AI Analysis:`, areaData.aiAnalysis);
+      });
+    }
+
+    console.log('📈 [Results] Analytics Object:', analytics);
+    console.log('📈 [Results] Analytics Keys:', Object.keys(analytics));
+
+    // Check if we have actual data or just empty objects
+    const hasActualData =
+      (finalReport && Object.keys(finalReport).length > 0) ||
+      (analytics && Object.keys(analytics).length > 0) ||
+      (scores && Object.keys(scores).length > 0) ||
+      (coverage && coverage.areas && Object.keys(coverage.areas).length > 0);
+
+    if (!hasActualData) {
+      console.warn('⚠️ [Results] No actual data found in socket analysis');
+      return null;
+    }
+
+    // Extract skill information from URL parameters or interview type
+    const interviewType = socketData.interviewType || 'General Interview';
+    const urlParams = new URLSearchParams(window.location.search);
+    const skill = urlParams.get('skill') || localStorage.getItem('interview_skill');
+    const role = urlParams.get('role') || localStorage.getItem('interview_role');
+    const category = urlParams.get('category') || localStorage.getItem('interview_category');
+    const proficiency = urlParams.get('proficiency') || localStorage.getItem('interview_proficiency');
+
+    console.log('🎯 [Results] Extracted skill info:', { skill, role, category, proficiency, interviewType });
+
+    // Transform skill scores from coverage areas
+    let skillScores = transformSkillScores(coverage.areas || {}, socketData);
+
+    // If no skills found in coverage but we have interview context, add the tested skill
+    if (skillScores.length === 0 && (skill || role || category)) {
+      console.log('⚠️ [Results] No skills in coverage, adding from context');
+
+      // Determine the skill name based on interview type
+      let testedSkill = 'General Interview';
+
+      if (interviewType === 'TECHNICAL_SKILL') {
+        testedSkill = skill || role || 'Technical Skill';
+      } else if (interviewType === 'SOFT_SKILL') {
+        testedSkill = `${skill || 'Communication'} (${category || 'Language Assessment'})`;
+      } else if (interviewType === 'HR_INTERVIEW') {
+        testedSkill = role || 'HR Interview';
+      } else {
+        testedSkill = skill || role || category || 'General Assessment';
+      }
+
+      const overallScore = scores.overall || calculateOverallScore(scores);
+
+      console.log(`✅ [Results] Creating skill score for: ${testedSkill} with score: ${overallScore}`);
+
+      skillScores = [{
+        skill: testedSkill,
+        score: overallScore,
+        level: determineLevel(overallScore),
+        strengths: finalReport.recommendations?.strengths || [],
+        improvements: finalReport.recommendations?.improvements || []
+      }];
+    }
+
+    console.log('✅ [Results] Final skill scores:', skillScores);
+
+    // Calculate overall score from coverage areas if not provided
+    let overallScore = scores.overall || 0;
+    if (overallScore === 0 && coverage.areas && Object.keys(coverage.areas).length > 0) {
+      const areaScores = Object.values(coverage.areas).map((area: any) => area.percentage || 0);
+      overallScore = Math.round(areaScores.reduce((sum, score) => sum + score, 0) / areaScores.length);
+      console.log('📊 [Results] Calculated overall score from areas:', overallScore, 'from scores:', areaScores);
+    }
+
+    // If we have a tested skill, add it as the primary skill at the top
+    if ((skill || role) && skillScores.length > 0) {
+      const primarySkillName = skill || role || 'Primary Skill';
+      const hasMainSkill = skillScores.some(s => s.skill === primarySkillName);
+
+      if (!hasMainSkill) {
+        console.log(`📌 [Results] Adding primary skill: ${primarySkillName} with score: ${overallScore}`);
+        // Add primary skill at the beginning of the array
+        skillScores.unshift({
+          skill: primarySkillName,
+          score: overallScore,
+          level: determineLevel(overallScore),
+          strengths: finalReport.recommendations?.strengths || [],
+          improvements: finalReport.recommendations?.improvements || []
+        });
+      }
+    }
+
+    const result = {
+      overallScore: overallScore,
+      overallLevel: determineLevel(overallScore),
+      interviewType: interviewType,
+      duration: analytics.duration || 0,
+      completedAt: socketData.timestamp || new Date().toISOString(),
+      skillScores: skillScores,
+      strengths: finalReport.recommendations?.strengths || extractStrengths(coverage),
+      weaknesses: finalReport.recommendations?.improvements || extractWeaknesses(coverage),
+      recommendations: finalReport.recommendations?.suggestions || generateRecommendations(coverage),
+      feedback: finalReport.summary || 'Interview analysis in progress...',
+      conversationQuality: {
+        clarity: scores.clarity || 0,
+        relevance: scores.relevance || 0,
+        depth: scores.depth || 0,
+        engagement: scores.engagement || 0,
+      },
+      coverage: coverage.areas || {},
+    };
+
+    console.log('🎉 [Results] ========================================');
+    console.log('🎉 [Results] FINAL TRANSFORMED RESULT');
+    console.log('🎉 [Results] ========================================');
+    console.log('🎉 [Results] Complete Result Object:', result);
+    console.log('📊 [Results] Result Summary:');
+    console.log(`  ✓ Overall Score: ${result.overallScore}`);
+    console.log(`  ✓ Overall Level: ${result.overallLevel}`);
+    console.log(`  ✓ Interview Type: ${result.interviewType}`);
+    console.log(`  ✓ Skill Scores Count: ${result.skillScores.length}`);
+    console.log(`  ✓ Strengths Count: ${result.strengths.length}`);
+    console.log(`  ✓ Weaknesses Count: ${result.weaknesses.length}`);
+    console.log(`  ✓ Recommendations Count: ${result.recommendations.length}`);
+    console.log(`  ✓ Coverage Areas Count: ${Object.keys(result.coverage).length}`);
+    console.log('🎉 [Results] ========================================');
+
+    // ============================================================================
+    // 📋 COPYABLE DATA FOR BACKEND DEVELOPER
+    // ============================================================================
+    console.log('\n\n');
+    console.log('📋 ╔════════════════════════════════════════════════════════════════╗');
+    console.log('📋 ║         COPY/PASTE DATA FOR BACKEND DEVELOPER                 ║');
+    console.log('📋 ╚════════════════════════════════════════════════════════════════╝');
+    console.log('\n');
+    console.log('📤 ORIGINAL SOCKET DATA (What Backend Sent):');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(JSON.stringify(socketData, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('\n');
+    console.log('📥 TRANSFORMED FRONTEND DATA (What We Display):');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(JSON.stringify(result, null, 2));
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('\n');
+    console.log('💡 HOW TO COPY:');
+    console.log('   1. Right-click on the JSON above → Select "Copy object"');
+    console.log('   2. OR: Expand object → Right-click → "Store as global variable"');
+    console.log('   3. OR: Select the text between ━━━ lines and copy');
+    console.log('\n');
+    console.log('📋 ════════════════════════════════════════════════════════════════');
+
+    return result;
+  };
+
+  /**
+   * Transform API data to InterviewAnalysis interface
+   */
+  const transformAPIAnalysis = (apiData: any): InterviewAnalysis | null => {
+    // Check if API data has actual interview results
+    const hasActualData =
+      apiData &&
+      (apiData.overallScore !== undefined ||
+        (apiData.skillDetails && apiData.skillDetails.length > 0) ||
+        (apiData.recommendations && apiData.recommendations.length > 0));
+
+    if (!hasActualData) {
+      console.warn('⚠️ [Results] No actual data found in API response');
+      return null;
+    }
+
+    return {
+      overallScore: apiData.overallScore || 0,
+      overallLevel: determineLevel(apiData.overallScore || 0),
+      interviewType: apiData.type || 'General Interview',
+      duration: 30,
+      completedAt: apiData.createdAt || new Date().toISOString(),
+      skillScores: apiData.skillDetails?.map((skill: any) => ({
+        skill: skill.name,
+        score: skill.confidenceScore || 0,
+        level: skill.experienceLevel || 'Not Assessed',
+        strengths: [],
+        improvements: []
+      })) || [],
+      strengths: apiData.recommendations || [],
+      weaknesses: [],
+      recommendations: apiData.recommendations || [],
+      feedback: 'Interview analysis completed',
+      conversationQuality: {
+        clarity: 0,
+        relevance: 0,
+        depth: 0,
+        engagement: 0,
+      },
+      coverage: {},
+    };
+  };
+
+  const calculateOverallScore = (scores: any): number => {
+    const values = Object.values(scores).filter((v): v is number => typeof v === 'number');
+    if (values.length === 0) return 0;
+    return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+  };
+
+  const determineLevel = (score: number): string => {
+    if (score === 0) return 'Not Assessed';
+    if (score >= 90) return 'Expert';
+    if (score >= 80) return 'Advanced';
+    if (score >= 70) return 'Intermediate';
+    if (score >= 60) return 'Developing';
+    return 'Beginner';
+  };
+
+  const transformSkillScores = (areas: any, socketData?: any): SkillScore[] => {
+    console.log('🔍 [Results] transformSkillScores - areas:', areas);
+    console.log('🔍 [Results] transformSkillScores - socketData:', socketData);
+
+    if (!areas || Object.keys(areas).length === 0) {
+      console.log('⚠️ [Results] No areas found in coverage');
+      return [];
+    }
+
+    const skillScores = Object.entries(areas).map(([name, area]: [string, any]) => {
+      console.log(`📊 [Results] Processing area: ${name}`, area);
+      return {
+        skill: name,
+        score: area.percentage || 0,
+        level: determineLevel(area.percentage || 0),
+        strengths: area.indicators?.filter((i: any) => i.covered).map((i: any) => i.name).slice(0, 3) || [],
+        improvements: area.indicators?.filter((i: any) => !i.covered).map((i: any) => i.name).slice(0, 3) || [],
+      };
+    });
+
+    console.log('✅ [Results] Transformed skill scores:', skillScores);
+    return skillScores;
+  };
+
+  const extractStrengths = (coverage: any): string[] => {
+    const strengths: string[] = [];
+    if (coverage.areas) {
+      Object.entries(coverage.areas).forEach(([name, area]: [string, any]) => {
+        if (area.percentage >= 70) {
+          strengths.push(`Strong performance in ${name}`);
+        }
+      });
+    }
+    return strengths.length > 0 ? strengths : ['No strengths data available'];
+  };
+
+  const extractWeaknesses = (coverage: any): string[] => {
+    const weaknesses: string[] = [];
+    if (coverage.areas) {
+      Object.entries(coverage.areas).forEach(([name, area]: [string, any]) => {
+        if (area.percentage < 50) {
+          weaknesses.push(`Could improve in ${name}`);
+        }
+      });
+    }
+    return weaknesses.length > 0 ? weaknesses : ['No weaknesses data available'];
+  };
+
+  const generateRecommendations = (coverage: any): string[] => {
+    const recommendations: string[] = [];
+
+    if (coverage.aiAnalysis?.recommendedFocus) {
+      recommendations.push(...coverage.aiAnalysis.recommendedFocus.map((focus: string) =>
+        `Focus on improving ${focus}`
+      ));
+    }
+
+    if (recommendations.length === 0) {
+      return ['No recommendations available - interview analysis incomplete'];
+    }
+
+    return recommendations.slice(0, 5);
+  };
+
+  const getScoreColor = (score: number): string => {
+    if (score >= 80) return '#4caf50';
+    if (score >= 60) return '#ff9800';
+    return '#f44336';
+  };
+
+  const getPerformanceMessage = (score: number): string => {
+    if (score >= 90) return 'Outstanding performance! You demonstrate expert-level knowledge.';
+    if (score >= 80) return 'Excellent work! You show advanced proficiency.';
+    if (score >= 70) return 'Good performance! You have solid intermediate skills.';
+    if (score >= 60) return 'Developing well! Continue practicing to improve.';
+    if (score >= 50) return 'Basic understanding shown. Focus on strengthening fundamentals.';
+    return 'Needs improvement. Consider additional study and practice.';
+  };
+
+  const getScoreLabel = (score: number): string => {
+    if (score >= 90) return 'Excellent';
+    if (score >= 80) return 'Very Good';
+    if (score >= 70) return 'Good';
+    if (score >= 60) return 'Fair';
+    return 'Needs Improvement';
+  };
+
+  const downloadReport = () => {
+    // Generate PDF or export functionality
+    console.log('Downloading report...');
+  };
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#ffffff',
+        }}
+      >
+        <Paper sx={{ p: 4, textAlign: 'center', border: '2px solid #e0e0e0', borderRadius: 3 }}>
+          <CircularProgress size={60} sx={{ color: '#8310FF' }} />
+          <Typography variant="h6" sx={{ mt: 2, color: 'text.primary' }}>
+            Loading your results...
+          </Typography>
+        </Paper>
+      </Box>
+    );
+  }
+
+  if (error || !analysis) {
+    return (
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: '#ffffff',
+        }}
+      >
+        <Paper sx={{ p: 4, maxWidth: 600, textAlign: 'center', border: '2px solid #e0e0e0', borderRadius: 3 }}>
+          <WarningIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
+          <Typography variant="h5" fontWeight={600} mb={2}>
+            No Analysis Data Available
+          </Typography>
+          <Alert severity="warning" sx={{ mb: 3, textAlign: 'left' }}>
+            {error || 'No interview data found to perform analysis. This could be because:'}
+          </Alert>
+          <Box sx={{ textAlign: 'left', mb: 3, px: 2 }}>
+            <Typography variant="body2" color="text.secondary" mb={1}>
+              • The interview was not completed
+            </Typography>
+            <Typography variant="body2" color="text.secondary" mb={1}>
+              • The interview session has expired
+            </Typography>
+            <Typography variant="body2" color="text.secondary" mb={1}>
+              • Analysis has not been generated yet
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              • The interview data was cleared from storage
+            </Typography>
+          </Box>
+          <Box display="flex" gap={2} flexDirection={{ xs: 'column', sm: 'row' }}>
+            <Button
+              variant="contained"
+              startIcon={<HomeIcon />}
+              onClick={() => router.push('/dashboard/candidate')}
+              fullWidth
+            >
+              Return to Dashboard
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => router.push('/interview')}
+              fullWidth
+              sx={{
+                borderColor: 'primary.main',
+                color: 'primary.main',
+                '&:hover': {
+                  borderColor: 'primary.dark',
+                  bgcolor: 'rgba(131, 16, 255, 0.04)',
+                }
+              }}
+            >
+              Take New Interview
+            </Button>
+          </Box>
+
+          {/* Export Data Buttons */}
+          <Box display="flex" gap={2} flexDirection={{ xs: 'column', sm: 'row' }} mt={2}>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={exportInterviewDataAsJSON}
+              fullWidth
+              sx={{
+                borderColor: 'success.main',
+                color: 'success.main',
+                '&:hover': {
+                  borderColor: 'success.dark',
+                  bgcolor: 'rgba(76, 175, 80, 0.04)',
+                }
+              }}
+            >
+              Download JSON
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<CopyIcon />}
+              onClick={handleCopyJSON}
+              fullWidth
+              sx={{
+                borderColor: copySuccess ? 'success.main' : 'info.main',
+                color: copySuccess ? 'success.main' : 'info.main',
+                '&:hover': {
+                  borderColor: copySuccess ? 'success.dark' : 'info.dark',
+                  bgcolor: copySuccess ? 'rgba(76, 175, 80, 0.04)' : 'rgba(33, 150, 243, 0.04)',
+                }
+              }}
+            >
+              {copySuccess ? 'Copied!' : 'Copy JSON'}
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: '#ffffff',
+        py: 4,
+      }}
+    >
+      <Container maxWidth="lg">
+        {/* Header */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            mb: 3,
+            background: 'linear-gradient(135deg, rgba(131, 16, 255, 0.95) 0%, rgba(0, 184, 212, 0.95) 100%)',
+            borderRadius: 3,
+            border: '2px solid',
+            borderColor: '#8310FF',
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={2} mb={2}>
+            <TrophyIcon sx={{ fontSize: 48, color: '#ffd700' }} />
+            <Box flex={1}>
+              <Typography variant="h3" fontWeight={700} sx={{ color: 'white' }}>
+                Interview Complete!
+              </Typography>
+              <Typography variant="subtitle1" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+                {analysis.skillScores.length > 0 && analysis.skillScores[0].skill !== 'General Interview'
+                  ? `${analysis.skillScores[0].skill} Assessment Results`
+                  : `${analysis.interviewType.replace('_', ' ')} Assessment Results`}
+              </Typography>
+            </Box>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              onClick={downloadReport}
+              sx={{
+                borderRadius: 2,
+                borderColor: 'white',
+                color: 'white',
+                '&:hover': {
+                  borderColor: 'white',
+                  bgcolor: 'rgba(255,255,255,0.1)',
+                }
+              }}
+            >
+              Download Report
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={saveStatus === 'saving' ? <CircularProgress size={20} sx={{ color: 'white' }} /> : saveStatus === 'saved' ? <CheckCircleIcon /> : <SaveIcon />}
+              onClick={() => saveInterviewToBackend(true)}
+              disabled={saveStatus === 'saving'}
+              sx={{
+                borderRadius: 2,
+                bgcolor: saveStatus === 'saved' ? '#4caf50' : saveStatus === 'error' ? '#f44336' : 'white',
+                color: saveStatus === 'saved' || saveStatus === 'error' ? 'white' : '#8310FF',
+                '&:hover': {
+                  bgcolor: saveStatus === 'saved' ? '#45a049' : saveStatus === 'error' ? '#e53935' : 'rgba(255,255,255,0.9)',
+                },
+                '&:disabled': {
+                  bgcolor: 'rgba(255,255,255,0.5)',
+                  color: 'rgba(131, 16, 255, 0.5)',
+                }
+              }}
+            >
+              {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved!' : saveStatus === 'error' ? 'Error' : 'Save Results'}
+            </Button>
+          </Box>
+
+          {/* Overall Score */}
+          <Box
+            sx={{
+              mt: 3,
+              p: 3,
+              background: 'white',
+              borderRadius: 3,
+              border: '2px solid #8310FF',
+            }}
+          >
+            <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} alignItems="center" gap={3}>
+              <Box flex={{ xs: '1 1 auto', md: '0 0 auto' }} textAlign="center">
+                <Box position="relative" display="inline-flex">
+                  <CircularProgress
+                    variant="determinate"
+                    value={analysis.overallScore}
+                    size={120}
+                    thickness={4}
+                    sx={{
+                      color: '#8310FF',
+                      '& .MuiCircularProgress-circle': {
+                        strokeLinecap: 'round',
+                      },
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      top: 0,
+                      left: 0,
+                      bottom: 0,
+                      right: 0,
+                      position: 'absolute',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <Typography variant="h3" fontWeight={700} sx={{ color: '#8310FF' }}>
+                      {Math.round(analysis.overallScore)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>/ 100</Typography>
+                  </Box>
+                </Box>
+              </Box>
+              <Box flex="1">
+                <Typography variant="h4" fontWeight={600} mb={1} sx={{ color: 'text.primary' }}>
+                  {getScoreLabel(analysis.overallScore)}
+                </Typography>
+                <Typography variant="h6" mb={2} sx={{ color: 'text.secondary' }}>
+                  Level: {analysis.overallLevel}
+                </Typography>
+                <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                  {analysis.feedback}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Paper>
+
+        {/* Primary Skill Summary - Only show the main tested skill */}
+        {analysis.skillScores && analysis.skillScores.length > 0 && analysis.skillScores[0] && (
+          <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
+            <Box display="flex" alignItems="center" gap={1} mb={3}>
+              <AssessmentIcon color="primary" />
+              <Typography variant="h5" fontWeight={600}>
+                Primary Skill Assessment
+              </Typography>
+            </Box>
+
+            <Card
+              variant="outlined"
+              sx={{
+                border: '2px solid',
+                borderImage: 'linear-gradient(135deg, rgba(131, 16, 255, 0.95) 0%, rgba(0, 184, 212, 0.95) 100%) 1',
+                boxShadow: '0 4px 12px rgba(131, 16, 255, 0.15)',
+              }}
+            >
+              <CardContent>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Typography variant="h6" fontWeight={600}>
+                      {analysis.skillScores[0].skill}
+                    </Typography>
+                    <Chip
+                      label="Primary"
+                      size="small"
+                      sx={{
+                        background: 'linear-gradient(135deg, rgba(131, 16, 255, 0.95) 0%, rgba(0, 184, 212, 0.95) 100%)',
+                        color: 'white',
+                        fontWeight: 600,
+                        fontSize: '0.65rem',
+                      }}
+                    />
+                  </Box>
+                  <Chip
+                    label={analysis.skillScores[0].level}
+                    color={analysis.skillScores[0].score >= 70 ? 'success' : analysis.skillScores[0].score >= 50 ? 'warning' : 'error'}
+                    size="small"
+                  />
+                </Box>
+
+                <Box mb={2}>
+                  <Box display="flex" justifyContent="space-between" mb={1}>
+                    <Typography variant="body2" color="text.secondary">
+                      Score
+                    </Typography>
+                    <Typography variant="body2" fontWeight={600}>
+                      {Math.round(analysis.skillScores[0].score)}%
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={analysis.skillScores[0].score}
+                    sx={{
+                      height: 10,
+                      borderRadius: 5,
+                      backgroundColor: '#e0e0e0',
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: getScoreColor(analysis.skillScores[0].score),
+                        borderRadius: 5,
+                      },
+                    }}
+                  />
+                </Box>
+
+                {analysis.skillScores[0].strengths && analysis.skillScores[0].strengths.length > 0 && (
+                  <Box mb={1}>
+                    <Typography variant="caption" color="success.main" fontWeight={600}>
+                      ✓ Strengths:
+                    </Typography>
+                    {analysis.skillScores[0].strengths.slice(0, 3).map((strength, i) => (
+                      <Typography key={i} variant="caption" display="block" color="text.secondary">
+                        • {strength}
+                      </Typography>
+                    ))}
+                  </Box>
+                )}
+
+                {analysis.skillScores[0].improvements && analysis.skillScores[0].improvements.length > 0 && (
+                  <Box>
+                    <Typography variant="caption" color="warning.main" fontWeight={600}>
+                      ⚠ Areas to Improve:
+                    </Typography>
+                    {analysis.skillScores[0].improvements.slice(0, 3).map((improvement, i) => (
+                      <Typography key={i} variant="caption" display="block" color="text.secondary">
+                        • {improvement}
+                      </Typography>
+                    ))}
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          </Paper>
+        )}
+
+        {/* Conversation Quality */}
+        {analysis.conversationQuality && (
+          <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
+            <Box display="flex" alignItems="center" gap={1} mb={3}>
+              <StarsIcon color="primary" />
+              <Typography variant="h5" fontWeight={600}>
+                Conversation Quality
+              </Typography>
+            </Box>
+
+            <Box display="flex" flexWrap="wrap" gap={3}>
+              {Object.entries(analysis.conversationQuality).map(([key, value]) => (
+                <Box key={key} flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>
+                  <Box textAlign="center">
+                    <Typography variant="body2" color="text.secondary" textTransform="capitalize" mb={1}>
+                      {key}
+                    </Typography>
+                    <Rating value={value / 20} precision={0.5} readOnly size="large" />
+                    <Typography variant="h6" fontWeight={600} mt={1}>
+                      {Math.round(value)}%
+                    </Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          </Paper>
+        )}
+
+        {/* Strengths & Weaknesses */}
+        <Box display="flex" flexWrap="wrap" gap={3} mb={3}>
+          <Box flex={{ xs: '1 1 100%', md: '1 1 calc(50% - 12px)' }}>
+            <Paper elevation={0} sx={{ p: 4, height: '100%', borderRadius: 3, border: '2px solid #e0e0e0' }}>
+              <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <CheckCircleIcon color="success" />
+                <Typography variant="h5" fontWeight={600}>
+                  Key Strengths
+                </Typography>
+              </Box>
+              <List>
+                {analysis.strengths.map((strength, index) => (
+                  <ListItem key={index} sx={{ px: 0 }}>
+                    <ListItemText
+                      primary={strength}
+                      primaryTypographyProps={{
+                        variant: 'body1',
+                        color: 'text.primary',
+                      }}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Paper>
+          </Box>
+
+          <Box flex={{ xs: '1 1 100%', md: '1 1 calc(50% - 12px)' }}>
+            <Paper elevation={0} sx={{ p: 4, height: '100%', borderRadius: 3, border: '2px solid #e0e0e0' }}>
+              <Box display="flex" alignItems="center" gap={1} mb={2}>
+                <WarningIcon color="warning" />
+                <Typography variant="h5" fontWeight={600}>
+                  Areas for Improvement
+                </Typography>
+              </Box>
+              <List>
+                {analysis.weaknesses.map((weakness, index) => (
+                  <ListItem key={index} sx={{ px: 0 }}>
+                    <ListItemText
+                      primary={weakness}
+                      primaryTypographyProps={{
+                        variant: 'body1',
+                        color: 'text.primary',
+                      }}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Paper>
+          </Box>
+        </Box>
+
+        {/* Recommendations */}
+        <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
+          <Box display="flex" alignItems="center" gap={1} mb={3}>
+            <TrendingUpIcon color="primary" />
+            <Typography variant="h5" fontWeight={600}>
+              Recommendations
+            </Typography>
+          </Box>
+          <List>
+            {analysis.recommendations.map((recommendation, index) => (
+              <ListItem key={index} sx={{ px: 0, alignItems: 'flex-start' }}>
+                <Box
+                  sx={{
+                    minWidth: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    bgcolor: '#8310FF',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mr: 2,
+                    fontWeight: 600,
+                  }}
+                >
+                  {index + 1}
+                </Box>
+                <ListItemText
+                  primary={recommendation}
+                  primaryTypographyProps={{
+                    variant: 'body1',
+                    color: 'text.primary',
+                  }}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Paper>
+
+        {/* Interview Details & Statistics */}
+        <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
+          <Box display="flex" alignItems="center" gap={1} mb={3}>
+            <AssessmentIcon color="primary" />
+            <Typography variant="h5" fontWeight={600}>
+              Interview Details
+            </Typography>
+          </Box>
+
+          <Box display="flex" flexWrap="wrap" gap={3}>
+            {/* Interview Type */}
+            <Box flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>
+              <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'rgba(131, 16, 255, 0.05)' }}>
+                <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight={600}>
+                  Interview Type
+                </Typography>
+                <Typography variant="h6" fontWeight={600} mt={1}>
+                  {analysis.interviewType.replace('_', ' ')}
+                </Typography>
+              </Paper>
+            </Box>
+
+            {/* Duration */}
+            <Box flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>
+              <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'rgba(131, 16, 255, 0.05)' }}>
+                <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight={600}>
+                  Duration
+                </Typography>
+                <Typography variant="h6" fontWeight={600} mt={1}>
+                  {Math.round(analysis.duration / 60)} min
+                </Typography>
+              </Paper>
+            </Box>
+
+            {/* Completed Date */}
+            <Box flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>
+              <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'rgba(131, 16, 255, 0.05)' }}>
+                <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight={600}>
+                  Completed
+                </Typography>
+                <Typography variant="h6" fontWeight={600} mt={1}>
+                  {new Date(analysis.completedAt).toLocaleDateString()}
+                </Typography>
+              </Paper>
+            </Box>
+
+            {/* Skills Assessed */}
+            <Box flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>
+              <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'rgba(131, 16, 255, 0.05)' }}>
+                <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight={600}>
+                  Skills Assessed
+                </Typography>
+                <Typography variant="h6" fontWeight={600} mt={1}>
+                  {analysis.skillScores.length}
+                </Typography>
+              </Paper>
+            </Box>
+          </Box>
+        </Paper>
+
+        {/* Coverage Details */}
+        {analysis.coverage && Object.keys(analysis.coverage).length > 0 && (
+          <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
+            <Box display="flex" alignItems="center" gap={1} mb={3}>
+              <StarsIcon color="primary" />
+              <Typography variant="h5" fontWeight={600}>
+                Detailed Coverage Analysis
+              </Typography>
+            </Box>
+
+            <Box display="flex" flexDirection="column" gap={2}>
+              {Object.entries(analysis.coverage).map(([areaName, areaData]: [string, any]) => (
+                <Box key={areaName}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                    <Typography variant="subtitle1" fontWeight={600} textTransform="capitalize">
+                      {areaName.replace('_', ' ')}
+                    </Typography>
+                    <Chip
+                      label={`${Math.round(areaData.percentage || 0)}%`}
+                      size="small"
+                      color={areaData.percentage >= 70 ? 'success' : areaData.percentage >= 50 ? 'warning' : 'error'}
+                    />
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={areaData.percentage || 0}
+                    sx={{
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: '#e0e0e0',
+                      mb: 1,
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: getScoreColor(areaData.percentage || 0),
+                        borderRadius: 4,
+                      },
+                    }}
+                  />
+
+                  {/* Show indicators if available */}
+                  {areaData.indicators && areaData.indicators.length > 0 && (
+                    <Box display="flex" flexWrap="wrap" gap={1} mt={1}>
+                      {areaData.indicators.slice(0, 5).map((indicator: any, idx: number) => (
+                        <Chip
+                          key={idx}
+                          label={indicator.name || indicator}
+                          size="small"
+                          variant={indicator.covered ? 'filled' : 'outlined'}
+                          color={indicator.covered ? 'success' : 'default'}
+                          sx={{ fontSize: '0.75rem' }}
+                        />
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              ))}
+            </Box>
+          </Paper>
+        )}
+
+        {/* Performance Summary */}
+        <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
+          <Box display="flex" alignItems="center" gap={1} mb={3}>
+            <TrophyIcon sx={{ color: '#ffd700' }} />
+            <Typography variant="h5" fontWeight={600}>
+              Performance Summary
+            </Typography>
+          </Box>
+
+          <Box display="flex" flexDirection="column" gap={2}>
+            {/* Overall Assessment */}
+            <Box sx={{ p: 3, bgcolor: 'rgba(131, 16, 255, 0.05)', borderRadius: 2 }}>
+              <Typography variant="h6" fontWeight={600} mb={2}>
+                Overall Assessment
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                {analysis.feedback}
+              </Typography>
+            </Box>
+
+            {/* Performance Level */}
+            <Box sx={{ p: 3, bgcolor: 'rgba(255, 152, 0, 0.05)', borderRadius: 2 }}>
+              <Typography variant="h6" fontWeight={600} mb={2}>
+                Performance Level
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Box
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: '50%',
+                    bgcolor: '#8310FF',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    fontSize: '1.5rem',
+                  }}
+                >
+                  {analysis.overallScore}
+                </Box>
+                <Box>
+                  <Typography variant="h6" fontWeight={600}>
+                    {analysis.overallLevel}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {getPerformanceMessage(analysis.overallScore)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        </Paper>
+
+        {/* Actions */}
+        <Box display="flex" gap={2} justifyContent="center" flexWrap="wrap">
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={<HomeIcon />}
+            onClick={() => router.push('/dashboard/candidate')}
+            sx={{
+              px: 4,
+              py: 1.5,
+              borderRadius: 2,
+              background: 'linear-gradient(135deg, rgba(131, 16, 255, 0.95) 0%, rgba(0, 184, 212, 0.95) 100%)',
+              color: 'white',
+            }}
+          >
+            Return to Dashboard
+          </Button>
+
+        </Box>
+
+
+      </Container>
+    </Box>
+  );
+}
