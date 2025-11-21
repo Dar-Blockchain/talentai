@@ -111,6 +111,23 @@ export default function InterviewResults() {
       const category = localStorage.getItem('interview_category');
       const proficiency = localStorage.getItem('interview_proficiency');
 
+      // Fix confidence scores in coverage areas before sending
+      // qualityScore is 0-5 scale, percentage is 0-100
+      if (parsedData?.finalReport?.coverage?.areas) {
+        const areas = parsedData.finalReport.coverage.areas;
+        Object.keys(areas).forEach((key) => {
+          const area = areas[key];
+          // Ensure percentage is capped at 100
+          if (area.percentage > 100) {
+            area.percentage = Math.min(area.percentage, 100);
+          }
+          // Fix qualityScore if it's > 5 (should be 0-5 scale)
+          if (area.aiAnalysis?.qualityScore > 5) {
+            area.aiAnalysis.qualityScore = Math.min(area.aiAnalysis.qualityScore, 5);
+          }
+        });
+      }
+
       // Prepare payload for backend API
       const payload = {
         metadata: {
@@ -122,6 +139,8 @@ export default function InterviewResults() {
         },
         interviewData: parsedData
       };
+
+      console.log('📊 [Save] Fixed coverage areas:', parsedData?.finalReport?.coverage?.areas);
 
       console.log('💾 [Save] Saving interview to backend...');
       console.log('📤 [Save] Payload:', payload);
@@ -406,66 +425,56 @@ export default function InterviewResults() {
 
     console.log('🎯 [Results] Extracted skill info:', { skill, role, category, proficiency, interviewType });
 
-    // Transform skill scores from coverage areas
-    let skillScores = transformSkillScores(coverage.areas || {}, socketData);
-
-    // If no skills found in coverage but we have interview context, add the tested skill
-    if (skillScores.length === 0 && (skill || role || category)) {
-      console.log('⚠️ [Results] No skills in coverage, adding from context');
-
-      // Determine the skill name based on interview type
-      let testedSkill = 'General Interview';
-
-      if (interviewType === 'TECHNICAL_SKILL') {
-        testedSkill = skill || role || 'Technical Skill';
-      } else if (interviewType === 'SOFT_SKILL') {
-        testedSkill = `${skill || 'Communication'} (${category || 'Language Assessment'})`;
-      } else if (interviewType === 'HR_INTERVIEW') {
-        testedSkill = role || 'HR Interview';
-      } else {
-        testedSkill = skill || role || category || 'General Assessment';
-      }
-
-      const overallScore = scores.overall || calculateOverallScore(scores);
-
-      console.log(`✅ [Results] Creating skill score for: ${testedSkill} with score: ${overallScore}`);
-
-      skillScores = [{
-        skill: testedSkill,
-        score: overallScore,
-        level: determineLevel(overallScore),
-        strengths: finalReport.recommendations?.strengths || [],
-        improvements: finalReport.recommendations?.improvements || []
-      }];
+    // Calculate overall score as weighted average of areas
+    let overallScore = 0;
+    if (coverage.areas && Object.keys(coverage.areas).length > 0) {
+      let weightedSum = 0;
+      let totalWeight = 0;
+      Object.values(coverage.areas).forEach((area: any) => {
+        const weight = area.weight || 1;
+        const percentage = area.percentage || 0;
+        weightedSum += percentage * weight;
+        totalWeight += weight;
+      });
+      overallScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
+      console.log('📊 [Results] Calculated weighted overall score:', overallScore);
+    } else {
+      overallScore = scores.overall || coverage.overall || 0;
+      console.log('📊 [Results] Using fallback overall score:', overallScore);
     }
+
+    // Determine the PRIMARY SKILL NAME from URL params (NOT from coverage areas!)
+    // Coverage areas (technical_depth, problem_approach, etc.) are assessment categories, not skills
+    let primarySkillName = 'General Assessment';
+
+    // Priority: role > skill > category > interviewType
+    if (role && role !== 'N/A') {
+      primarySkillName = role;
+    } else if (skill && skill !== 'N/A') {
+      primarySkillName = skill;
+    } else if (category && category !== 'N/A') {
+      primarySkillName = category;
+    } else if (interviewType === 'HR_INTERVIEW') {
+      primarySkillName = 'HR Interview';
+    } else if (interviewType === 'TECHNICAL_SKILL') {
+      primarySkillName = 'Technical Assessment';
+    }
+
+    console.log(`🎯 [Results] Primary skill determined: ${primarySkillName}`);
+    console.log(`   - From role: ${role}, skill: ${skill}, category: ${category}`);
+
+    // Create ONE skill score with the actual tested skill (NOT coverage area names!)
+    const skillScores = [{
+      skill: primarySkillName,
+      score: overallScore,
+      level: determineLevel(overallScore),
+      strengths: finalReport.recommendations?.strengths ||
+                 coverage.aiAnalysis?.strongestAreas?.map((a: string) => `Strong in ${a.replace('_', ' ')}`) || [],
+      improvements: finalReport.recommendations?.improvements ||
+                   coverage.aiAnalysis?.weakestAreas?.map((a: string) => `Improve ${a.replace('_', ' ')}`) || []
+    }];
 
     console.log('✅ [Results] Final skill scores:', skillScores);
-
-    // Calculate overall score from coverage areas if not provided
-    let overallScore = scores.overall || 0;
-    if (overallScore === 0 && coverage.areas && Object.keys(coverage.areas).length > 0) {
-      const areaScores = Object.values(coverage.areas).map((area: any) => area.percentage || 0);
-      overallScore = Math.round(areaScores.reduce((sum, score) => sum + score, 0) / areaScores.length);
-      console.log('📊 [Results] Calculated overall score from areas:', overallScore, 'from scores:', areaScores);
-    }
-
-    // If we have a tested skill, add it as the primary skill at the top
-    if ((skill || role) && skillScores.length > 0) {
-      const primarySkillName = skill || role || 'Primary Skill';
-      const hasMainSkill = skillScores.some(s => s.skill === primarySkillName);
-
-      if (!hasMainSkill) {
-        console.log(`📌 [Results] Adding primary skill: ${primarySkillName} with score: ${overallScore}`);
-        // Add primary skill at the beginning of the array
-        skillScores.unshift({
-          skill: primarySkillName,
-          score: overallScore,
-          level: determineLevel(overallScore),
-          strengths: finalReport.recommendations?.strengths || [],
-          improvements: finalReport.recommendations?.improvements || []
-        });
-      }
-    }
 
     const result = {
       overallScore: overallScore,
@@ -573,12 +582,6 @@ export default function InterviewResults() {
     };
   };
 
-  const calculateOverallScore = (scores: any): number => {
-    const values = Object.values(scores).filter((v): v is number => typeof v === 'number');
-    if (values.length === 0) return 0;
-    return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
-  };
-
   const determineLevel = (score: number): string => {
     if (score === 0) return 'Not Assessed';
     if (score >= 90) return 'Expert';
@@ -588,29 +591,8 @@ export default function InterviewResults() {
     return 'Beginner';
   };
 
-  const transformSkillScores = (areas: any, socketData?: any): SkillScore[] => {
-    console.log('🔍 [Results] transformSkillScores - areas:', areas);
-    console.log('🔍 [Results] transformSkillScores - socketData:', socketData);
-
-    if (!areas || Object.keys(areas).length === 0) {
-      console.log('⚠️ [Results] No areas found in coverage');
-      return [];
-    }
-
-    const skillScores = Object.entries(areas).map(([name, area]: [string, any]) => {
-      console.log(`📊 [Results] Processing area: ${name}`, area);
-      return {
-        skill: name,
-        score: area.percentage || 0,
-        level: determineLevel(area.percentage || 0),
-        strengths: area.indicators?.filter((i: any) => i.covered).map((i: any) => i.name).slice(0, 3) || [],
-        improvements: area.indicators?.filter((i: any) => !i.covered).map((i: any) => i.name).slice(0, 3) || [],
-      };
-    });
-
-    console.log('✅ [Results] Transformed skill scores:', skillScores);
-    return skillScores;
-  };
+  // Note: Coverage areas (technical_depth, problem_approach, etc.) are assessment categories,
+  // not actual skills. The primary skill comes from URL params (role, skill, category).
 
   const extractStrengths = (coverage: any): string[] => {
     const strengths: string[] = [];
