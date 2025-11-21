@@ -1336,68 +1336,10 @@ export default function InterviewResults() {
           >
             Return to Dashboard
           </Button>
-          <Button
-            variant="outlined"
-            size="large"
-            onClick={() => router.push('/interview')}
-            sx={{
-              px: 4,
-              py: 1.5,
-              borderRadius: 2,
-              borderColor: '#8310FF',
-              color: '#8310FF',
-              '&:hover': {
-                borderColor: '#8310FF',
-                bgcolor: 'rgba(131, 16, 255, 0.04)',
-              },
-            }}
-          >
-            Take Another Test
-          </Button>
+
         </Box>
 
-        {/* Export Data Actions */}
-        <Box display="flex" gap={2} justifyContent="center" flexWrap="wrap" mt={2}>
-          <Button
-            variant="outlined"
-            size="large"
-            startIcon={<DownloadIcon />}
-            onClick={exportInterviewDataAsJSON}
-            sx={{
-              px: 4,
-              py: 1.5,
-              borderRadius: 2,
-              borderColor: '#00b8d4',
-              color: '#00b8d4',
-              '&:hover': {
-                borderColor: '#00b8d4',
-                bgcolor: 'rgba(0, 184, 212, 0.04)',
-              },
-            }}
-          >
-            Download JSON
-          </Button>
-          <Button
-            variant="outlined"
-            size="large"
-            startIcon={<CopyIcon />}
-            onClick={handleCopyJSON}
-            sx={{
-              px: 4,
-              py: 1.5,
-              borderRadius: 2,
-              borderColor: copySuccess ? '#4caf50' : '#00b8d4',
-              color: copySuccess ? '#4caf50' : '#00b8d4',
-              bgcolor: copySuccess ? 'rgba(76, 175, 80, 0.1)' : 'transparent',
-              '&:hover': {
-                borderColor: copySuccess ? '#4caf50' : '#00b8d4',
-                bgcolor: copySuccess ? 'rgba(76, 175, 80, 0.2)' : 'rgba(0, 184, 212, 0.04)',
-              },
-            }}
-          >
-            {copySuccess ? 'Copied to Clipboard!' : 'Copy JSON'}
-          </Button>
-        </Box>
+
       </Container>
     </Box>
   );
