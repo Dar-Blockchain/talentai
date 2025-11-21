@@ -63,7 +63,7 @@ const profileSchema = new mongoose.Schema(
     // Ready for match
     readyForMatch: { type: Boolean, default: false },
 
-    overallScore: { type: Number, default: 0 },
+   // overallScore: { type: Number, default: 0 },
 
     // Hard Skills
     skills: [

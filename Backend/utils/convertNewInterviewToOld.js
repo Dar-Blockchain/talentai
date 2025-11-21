@@ -1,3 +1,36 @@
+// Valid experienceLevel enum values
+const VALID_EXPERIENCE_LEVELS = ["NoLevel", "Entry Level", "Junior", "Mid Level", "Senior", "Expert"];
+
+function mapToValidExperienceLevel(value) {
+  if (!value) return "NoLevel";
+
+  // If already a valid enum value, return it
+  if (VALID_EXPERIENCE_LEVELS.includes(value)) {
+    return value;
+  }
+
+  // Handle numeric values
+  const numValue = typeof value === 'number' ? value : parseInt(value, 10);
+  if (!isNaN(numValue)) {
+    if (numValue <= 0) return "NoLevel";
+    if (numValue === 1) return "Entry Level";
+    if (numValue === 2) return "Junior";
+    if (numValue === 3) return "Mid Level";
+    if (numValue === 4) return "Senior";
+    return "Expert";
+  }
+
+  // Handle string variations
+  const lowerValue = String(value).toLowerCase().trim();
+  if (lowerValue.includes("entry")) return "Entry Level";
+  if (lowerValue.includes("junior")) return "Junior";
+  if (lowerValue.includes("mid")) return "Mid Level";
+  if (lowerValue.includes("senior")) return "Senior";
+  if (lowerValue.includes("expert") || lowerValue.includes("lead")) return "Expert";
+
+  return "Mid Level";
+}
+
 function convertNewToOld(newJson) {
   const report = newJson?.interviewData?.finalReport;
   const interviewData = newJson?.interviewData || {};
@@ -27,22 +60,36 @@ function convertNewToOld(newJson) {
     : ["No next steps identified"];
 
   // ---- 6. skillDetails (format MongoDB) ----
+  // Use role from metadata as skill name (e.g., "javascript" from URL param)
+  const primarySkillName = metadata?.role || metadata?.skill || "General";
   const areas = report?.coverage?.areas || {};
-  const skillDetails = Object.keys(areas).map((key) => {
-    const area = areas[key];
 
-    return {
-      name: key,
-      type: "hard", // hard ou soft (pas technical)
-      confidenceScore: (area.aiAnalysis?.qualityScore || 0) * 100,
-      proficiencyLevel: Math.ceil((area.percentage || 0) / 20),
-      experienceLevel: technicalLevel,
-      questionAnswerList: [],
-    };
-  });
+  // Calculate weighted overall score from areas
+  let calculatedScore = overallScore;
+  if (Object.keys(areas).length > 0) {
+    let weightedSum = 0;
+    let totalWeight = 0;
+    Object.values(areas).forEach((area) => {
+      const weight = area.weight || 1;
+      const percentage = area.percentage || 0;
+      weightedSum += percentage * weight;
+      totalWeight += weight;
+    });
+    calculatedScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : overallScore;
+  }
+
+  // Create skill detail with the actual tested skill (role from URL)
+  const skillDetails = [{
+    name: primarySkillName,
+    type: "hard",
+    confidenceScore: calculatedScore,
+    proficiencyLevel: Math.ceil(calculatedScore / 20),
+    experienceLevel: mapToValidExperienceLevel(technicalLevel),
+    questionAnswerList: [],
+  }];
 
   return {
-    overallScore,
+    overallScore: calculatedScore,
     technicalLevel,
     generalAssassment: generalAssessment,
     recommendations,

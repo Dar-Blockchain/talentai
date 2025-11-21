@@ -1,4 +1,5 @@
 const InterviewDetails = require("../models/InterviewDetailsModel");
+const Profile = require("../models/ProfileModel");
 
 exports.getAllInterviewDetails = async ({ page = 1, limit = 10, sort = "-createdAt", type, profileId }) => {
   const query = {};
@@ -60,7 +61,7 @@ module.exports.getInterviewDetailsById = async (id) => {
   return interview;
 };
 
-exports.createInterviewDetails = async (interviewData) => {
+exports.createInterviewDetails = async (interviewData, metadata, rawInterviewData) => {
   try {
     const newInterview = new InterviewDetails(interviewData);
     const savedInterview = await newInterview.save();
@@ -80,6 +81,86 @@ exports.createInterviewDetails = async (interviewData) => {
       })
       .populate("jobAssessmentResult")
       .populate("postSteps");
+
+    // Mettre à jour le profil avec l'interview et les skills
+    const candidateId = interviewData.candidate;
+    console.log("Candidate ID:", candidateId);
+    
+    // Créer un skill unique à partir des données brutes
+    const skillName = metadata?.role || "Unknown Skill";
+    const experienceLevel = metadata?.proficiency || "NoLevel";
+    const overallScore = rawInterviewData?.finalReport?.coverage?.overall || 0;
+    
+    // Mapper experienceLevel en proficiencyLevel (1-5)
+    const experienceLevelMap = {
+      "Entry Level": 1,
+      "Junior": 2,
+      "Mid Level": 3,
+      "Senior": 4,
+      "Expert": 5,
+    };
+    const proficiencyLevel = experienceLevelMap[experienceLevel] || 0;
+    
+    const skill = {
+      name: skillName,
+      proficiencyLevel: proficiencyLevel,
+      experienceLevel: experienceLevel,
+      NumberTestPassed: 0,
+      ScoreTest: overallScore,
+      Levelconfirmed: proficiencyLevel - 1,
+      isPrimary: false,
+    };
+
+    console.log("Skill to save:", skill);
+
+    // Ajouter l'interview au profil et mettre à jour les skills
+    await Profile.findByIdAndUpdate(
+      candidateId,
+      {
+        $push: {
+          interviewDetails: savedInterview._id,
+        },
+      },
+      { new: true }
+    );
+
+    // Vérifier si le skill existe déjà pour l'incrémenter
+    const existingSkill = await Profile.findOne(
+      { _id: candidateId, "skills.name": skillName },
+      { "skills.$": 1 }
+    );
+
+    if (existingSkill && existingSkill.skills.length > 0) {
+      // Le skill existe, incrémenter NumberTestPassed
+      await Profile.findByIdAndUpdate(
+        candidateId,
+        {
+          $inc: { "skills.$[elem].NumberTestPassed": 1 },
+          $set: { 
+            "skills.$[elem].ScoreTest": overallScore,
+            "skills.$[elem].proficiencyLevel": proficiencyLevel,
+            "skills.$[elem].Levelconfirmed": proficiencyLevel
+          },
+        },
+        {
+          arrayFilters: [{ "elem.name": skillName }],
+          new: true,
+        }
+      );
+      console.log(`Skill "${skillName}" updated - NumberTestPassed incremented`);
+    } else {
+      // Le skill n'existe pas, l'ajouter
+      await Profile.findByIdAndUpdate(
+        candidateId,
+        {
+          $addToSet: {
+            skills: skill,
+          },
+        },
+        { new: true }
+      );
+      console.log(`Skill "${skillName}" added as new`);
+    }
 
     return populatedInterview;
   } catch (error) {

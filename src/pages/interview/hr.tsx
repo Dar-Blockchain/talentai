@@ -729,7 +729,12 @@ const IntelligentInterviewTest = () => {
       console.log('✅ Generated dynamic interview config:', dynamicConfig);
       setInterviewConfig(dynamicConfig);
 
-      // Store skill information in localStorage for results page
+      // Clear old values first, then store new skill information for results page
+      localStorage.removeItem('interview_skill');
+      localStorage.removeItem('interview_category');
+      localStorage.removeItem('interview_proficiency');
+      localStorage.removeItem('interview_role');
+
       if (urlParams.skill) {
         localStorage.setItem('interview_skill', urlParams.skill);
         console.log('💾 Stored skill in localStorage:', urlParams.skill);
