@@ -193,7 +193,10 @@ const OnboardingStepper: React.FC<OnboardingStepperProps> = ({
       }
       profileData = {
         ...cleanedCandidateDetails,
-        skills: skills.map((skill) => ({ name: skill })),
+        skills: skills.map((skill) => ({
+          name: skill,
+          proficiency: preferences.skillProficiency || "3" // Add proficiency level
+        })),
         type: "Candidat",
         expectedSalary,
       };
@@ -206,12 +209,21 @@ const OnboardingStepper: React.FC<OnboardingStepperProps> = ({
         if (userType === "company") return router.push("/dashboard/company");
         const returnUrl = router.query.returnUrl as string;
         if (returnUrl) return router.push(decodeURIComponent(returnUrl));
+
+        // Build interview parameters from onboarding data for /interview/hr
+        const primarySkill = skills[0] || "Software";
+        const skillProficiency = preferences.skillProficiency || "3"; // Default: Mid Level
+        const targetRole = `${primarySkill} Developer`;
+
         router.push({
-          pathname: "/interview",
+          pathname: "/interview/hr",
           query: {
-            type: "on-boarding",
-            skills: skills.join(","),
-            experienceLevel: "Entry Level",
+            type: "hr",
+            role: targetRole,
+            proficiency: skillProficiency,
+            company: "Target Company",
+            language: "en",
+            difficulty: "intermediate"
           },
         });
       } else {

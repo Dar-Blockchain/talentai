@@ -35,6 +35,7 @@ export const usePreferences = () => {
 
   // Skills
   const [skills, setSkills] = useState<string[]>([]);
+  const [skillProficiency, setSkillProficiency] = useState<string>("3"); // Default: Mid Level (1-5)
   const [skillWarning, setSkillWarning] = useState<string>("");
 
   // Navigation
@@ -81,6 +82,7 @@ export const usePreferences = () => {
     companyDetails,
     candidateDetails,
     skills,
+    skillProficiency,
     skillWarning,
 
     // Setters
@@ -92,6 +94,7 @@ export const usePreferences = () => {
     setCandidateDetails,
     updateCandidateDetail,
     setSkills,
+    setSkillProficiency,
     setSkillWarning,
 
     // Functions

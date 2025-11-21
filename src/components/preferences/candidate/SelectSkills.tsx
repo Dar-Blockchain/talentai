@@ -9,6 +9,7 @@ import {
   Button,
   TextField,
   InputAdornment,
+  MenuItem,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { CATEGORIES, skillsByCategory } from "../data/skillsData";
@@ -19,6 +20,15 @@ type SelectSkillsProps = {
   >;
 };
 
+// --- Proficiency Levels ---
+const PROFICIENCY_LEVELS = [
+  { value: "1", label: "Entry Level" },
+  { value: "2", label: "Junior" },
+  { value: "3", label: "Mid Level" },
+  { value: "4", label: "Senior" },
+  { value: "5", label: "Expert" }
+];
+
 // --- Colors for UI ---
 const colors = {
   gray: "rgba(156, 163, 175, 1)",
@@ -28,7 +38,7 @@ const colors = {
 // --- Component ---
 const SelectSkills = forwardRef(({ preferences }: SelectSkillsProps, ref) => {
   const [activeTab, setActiveTab] = useState(CATEGORIES[0].id);
-  const { skills, setSkills } = preferences;
+  const { skills, setSkills, skillProficiency, setSkillProficiency } = preferences;
 
   const [selectedSkill, setSelectedSkill] = useState<string | null>(
     skills[0] || null
@@ -195,6 +205,44 @@ const SelectSkills = forwardRef(({ preferences }: SelectSkillsProps, ref) => {
           </Typography>
         )}
       </Box>
+
+      {/* Proficiency Level Selector (shown after skill selection) */}
+      {selectedSkill && (
+        <Box sx={{ mt: 4 }}>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              mb: 2,
+              fontWeight: 500,
+              fontFamily: "Poppins",
+              fontSize: "15px",
+              color: colors.mauve,
+            }}
+          >
+            Select your proficiency level for {selectedSkill}
+          </Typography>
+          <TextField
+            select
+            fullWidth
+            value={skillProficiency}
+            onChange={(e) => setSkillProficiency(e.target.value)}
+            sx={{
+              maxWidth: 400,
+              "& .MuiOutlinedInput-root": {
+                "&.Mui-focused fieldset": {
+                  borderColor: colors.mauve,
+                },
+              },
+            }}
+          >
+            {PROFICIENCY_LEVELS.map((level) => (
+              <MenuItem key={level.value} value={level.value}>
+                {level.label}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Box>
+      )}
 
       {/* Helper Text */}
       <Typography

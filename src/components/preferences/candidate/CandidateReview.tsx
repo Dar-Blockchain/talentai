@@ -7,7 +7,7 @@ type ReviewProps = {
 };
 
 const CandidateReview: React.FC<ReviewProps> = ({ preferences }: ReviewProps) => {
-  const { candidateDetails, skills } = preferences;
+  const { candidateDetails, skills, skillProficiency } = preferences;
 
   const labelStyle = {
     fontFamily: "Poppins",
@@ -21,6 +21,15 @@ const CandidateReview: React.FC<ReviewProps> = ({ preferences }: ReviewProps) =>
     fontWeight: 500,
     fontSize: "16px",
     lineHeight: "42.99px",
+  };
+
+  // Map proficiency levels
+  const proficiencyMap: { [key: string]: string } = {
+    "1": "Entry Level",
+    "2": "Junior",
+    "3": "Mid Level",
+    "4": "Senior",
+    "5": "Expert"
   };
 
   // ⭐ Format salary field based on new model
@@ -52,6 +61,7 @@ const salaryText =
     { label: "Preferred Contract", value: candidateDetails.preferredContractType || "***" },
     { label: "Work Mode", value: candidateDetails.workModePreference || "***" },
     { label: "Selected Skill", value: skills?.[0] || "***" },
+    { label: "Proficiency Level", value: proficiencyMap[skillProficiency] || "***" },
 
   ];
 
