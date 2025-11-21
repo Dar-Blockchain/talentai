@@ -31,6 +31,7 @@ import MatchingProfiles from "@/components/dashboard-company/MatchingProfiles";
 import Navbar from "@/components/dashboard-company/Navbar";
 import MyJobPosts from "@/components/dashboard-company/MyJobPosts";
 import HRAgentsTable from "@/components/dashboard-company/HRAgentsTable";
+import HeaderDashboard from "@/components/HeaderDashboard";
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -167,7 +168,7 @@ const DashboardCompany = () => {
       <Box
         sx={{
           minHeight: "100vh",
-          backgroundColor: "white",
+          backgroundColor: "rgba(251, 254, 255, 1)",
           py: 2,
         }}
       >
@@ -187,7 +188,7 @@ const DashboardCompany = () => {
         />
         <Container maxWidth="lg">
           {/* Filter Dialog */}
-          <Navbar profile={profile} />
+          <HeaderDashboard />
 
           <FilterDialog
             open={filterDialog}
