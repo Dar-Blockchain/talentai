@@ -105,11 +105,12 @@ export default function InterviewResults() {
 
       const parsedData = JSON.parse(storedAnalysis);
 
-      // Get metadata from localStorage
-      const skill = localStorage.getItem('interview_skill');
-      const role = localStorage.getItem('interview_role');
-      const category = localStorage.getItem('interview_category');
-      const proficiency = localStorage.getItem('interview_proficiency');
+      // Get metadata from URL params first, then localStorage as fallback
+      const urlParams = new URLSearchParams(window.location.search);
+      const role = urlParams.get('role') || localStorage.getItem('interview_role');
+      const skill = urlParams.get('skill') || localStorage.getItem('interview_skill');
+      const category = urlParams.get('category') || localStorage.getItem('interview_category');
+      const proficiency = urlParams.get('proficiency') || localStorage.getItem('interview_proficiency');
 
       // Fix confidence scores in coverage areas before sending
       // qualityScore is 0-5 scale, percentage is 0-100
@@ -128,11 +129,14 @@ export default function InterviewResults() {
         });
       }
 
+      // For technical interviews, skill should be the role (e.g., "JavaScript")
+      const effectiveSkill = role || skill || 'N/A';
+
       // Prepare payload for backend API
       const payload = {
         metadata: {
           exportedAt: new Date().toISOString(),
-          skill: skill || 'N/A',
+          skill: effectiveSkill,
           role: role || 'N/A',
           category: category || 'N/A',
           proficiency: proficiency || 'N/A'
