@@ -3,7 +3,7 @@
  *
  * Middlewares globaux appliqués:
  * - requireAuthUser: nécessite un utilisateur authentifié
- * - controledAcces('Candidat'): réservé aux candidats
+ * - controledAcces('Candidate'): réservé aux candidats
  * - LogMiddleware("Todo"): journalise les requêtes todo
  */
 const express = require("express");
@@ -17,7 +17,7 @@ const { controledAcces } = require('../middleware/controledAcces');
 
 
 // Auth candidat obligatoire + logs
-router.use(requireAuthUser, controledAcces('Candidat'), authLogMiddleware("Todo"));
+router.use(requireAuthUser, controledAcces('Candidate'), authLogMiddleware("Todo"));
 
 
 // POST /todo/profile — génère une todo list pour le profil de l'utilisateur

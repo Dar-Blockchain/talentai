@@ -183,7 +183,7 @@ export default function SignIn() {
               case "Admin":
                 router.push("/dashboard/admin");
                 break;
-              case "Candidat":
+              case "Candidate":
                 router.push("/dashboard/candidate");
                 break;
               case "Company":
@@ -301,7 +301,7 @@ export default function SignIn() {
           case "Admin":
             router.push("/dashboard/admin");
             break;
-          case "Candidat":
+          case "Candidate":
             router.push("/dashboard/candidate");
             break;
           case "Company":

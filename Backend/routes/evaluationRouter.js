@@ -3,7 +3,7 @@
  *
  * Middlewares globaux appliqués:
  * - requireAuthUser: nécessite un utilisateur authentifié
- * - controledAcces('Candidat'): restreint aux rôles Candidat
+ * - controledAcces('Candidate'): restreint aux rôles Candidate
  * - LogMiddleware("Evaluation"): journalise les requêtes d'évaluation
  */
 const express = require('express');
@@ -19,8 +19,8 @@ const { controledAcces } = require('../middleware/controledAcces'); // Importez 
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 
-// Toutes les routes ci-dessous nécessitent un utilisateur Candidat authentifié
-router.use(requireAuthUser, controledAcces('Candidat'), authLogMiddleware("Evaluation"));
+// Toutes les routes ci-dessous nécessitent un utilisateur Candidate authentifié
+router.use(requireAuthUser, controledAcces('Candidate'), authLogMiddleware("Evaluation"));
 
 // POST /evaluation/generate-onboarding-questions
 // Description: Génère des questions pour l'onboarding

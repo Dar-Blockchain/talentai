@@ -197,7 +197,7 @@ const OnboardingStepper: React.FC<OnboardingStepperProps> = ({
           name: skill,
           proficiency: preferences.skillProficiency || "3" // Add proficiency level
         })),
-        type: "Candidat",
+        type: "Candidate",
         expectedSalary,
       };
     }

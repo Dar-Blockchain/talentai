@@ -19,7 +19,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
     const updateUserData = {
       FirstName: profileData.firstName || profileData.FirstName,
       LastName: profileData.lastName || profileData.LastName,
-      role: "Candidat",
+      role: "Candidate",
     };
 
     // Update user with correct field names

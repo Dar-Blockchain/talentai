@@ -166,7 +166,7 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
 
       // Profile exists - check role
       const role = profile?.userId?.role;
-      if (role === 'Candidat' || role === 'Candidate') {
+      if (role === 'Candidate') {
         router.push('/dashboard/candidate');
         return;
       } else if (role === 'Admin') {

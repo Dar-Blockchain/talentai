@@ -172,7 +172,7 @@ export default function CandidateOnly({ children }: CandidateOnlyProps) {
       } else if (profile.userId.role === 'Admin') {
         router.push('/dashboard/admin');
         return;
-      } else if (profile.userId.role !== 'Candidat' && profile.userId.role !== 'Candidate') {
+      } else if (profile.userId.role !== 'Candidate') {
         if (!hasRedirectedRef.current) {
           hasRedirectedRef.current = true;
           redirectToLogin(router);
@@ -205,13 +205,13 @@ export default function CandidateOnly({ children }: CandidateOnlyProps) {
   }
 
   // Show error if user is not a candidate
-  if (!profileLoading && profile && profile.userId.role !== 'Candidat' && profile.userId.role !== 'Candidate') {
+  if (!profileLoading && profile && profile.userId.role !== 'Candidate') {
     return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh' 
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh'
       }}>
         <Alert severity="error" sx={{ maxWidth: 400 }}>
           Access Denied. This page is only for candidates.

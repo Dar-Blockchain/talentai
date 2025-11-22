@@ -24,7 +24,7 @@ http://localhost:5000
 
 ```json
 {
-  "type": "Candidate",
+  "type": "Candidat",
   "firstName": "John",
   "lastName": "Doe",
   "age": "28",
@@ -72,7 +72,7 @@ http://localhost:5000
 ### Required Fields
 | Field | Type | Description | Example |
 |-------|------|-------------|---------|
-| `type` | String | Profile type (must be "Candidate") | `"Candidate"` |
+| `type` | String | Profile type (must be "Candidat") | `"Candidat"` |
 | `firstName` | String | First name (supports both firstName and FirstName) | `"John"` |
 | `lastName` | String | Last name (supports both lastName and LastName) | `"Doe"` |
 
@@ -129,7 +129,7 @@ http://localhost:5000
   "profile": {
     "_id": "507f1f77bcf86cd799439011",
     "userId": "507f1f77bcf86cd799439010",
-    "type": "Candidate",
+    "type": "Candidat",
     "firstName": "John",
     "lastName": "Doe",
     "age": "28",
@@ -248,7 +248,7 @@ http://localhost:5000
 
 ```json
 {
-  "type": "Candidate",
+  "type": "Candidat",
   "firstName": "Jane",
   "lastName": "Smith"
 }

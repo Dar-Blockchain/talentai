@@ -3,7 +3,7 @@
  *
  * Middlewares globaux appliqués:
  * - requireAuthUser: nécessite un utilisateur authentifié
- * - controledAcces('Candidat'): réservé aux candidats
+ * - controledAcces('Candidate'): réservé aux candidats
  * - LogMiddleware("InterviewDetails"): journalise l'accès aux entretiens
  */
 const express = require("express");
@@ -17,7 +17,7 @@ const { requireAuthUser } = require("../middleware/authMiddleware");
 
 
 // Toutes les routes ci-dessous nécessitent un candidat authentifié
-router.use(requireAuthUser, controledAcces('Candidat'), authLogMiddleware("InterviewDetails"));
+router.use(requireAuthUser, controledAcces('Candidate'), authLogMiddleware("InterviewDetails"));
 
 
 // GET /interview-details/
