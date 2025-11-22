@@ -77,6 +77,15 @@ export default function InterviewResults() {
   const [error, setError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [rewardInfo, setRewardInfo] = useState<{
+    success: boolean;
+    amount?: number;
+    transactionId?: string;
+    canRetry?: boolean;
+    error?: string;
+    interviewId?: string;
+  } | null>(null);
+  const [claimingReward, setClaimingReward] = useState(false);
 
   useEffect(() => {
     if (router.isReady) {
@@ -184,6 +193,37 @@ export default function InterviewResults() {
         console.log('💾 [Save] Stored interview ID:', result.data._id);
       }
 
+      // NEW: Handle reward notification
+      if (result.reward) {
+        console.log('🎁 [Save] Reward info received:', result.reward);
+
+        if (result.reward.success && !result.reward.skipped) {
+          // Reward distributed successfully
+          setRewardInfo({
+            success: true,
+            amount: result.reward.amount,
+            transactionId: result.reward.transactionId,
+            interviewId: result.data._id
+          });
+          console.log(`🎉 [Save] Reward earned: ${result.reward.amount} TAI`);
+        } else if (result.reward.skipped) {
+          // Reward skipped (score was 0)
+          console.log(`⚠️  [Save] Reward skipped: ${result.reward.reason}`);
+        } else if (result.reward.canRetry) {
+          // Reward failed but can retry
+          setRewardInfo({
+            success: false,
+            canRetry: true,
+            error: result.reward.error,
+            interviewId: result.data._id
+          });
+          console.log(`❌ [Save] Reward failed (can retry): ${result.reward.error}`);
+        } else {
+          // Reward failed, cannot retry
+          console.log(`❌ [Save] Reward failed: ${result.reward.error}`);
+        }
+      }
+
       if (showStatus) {
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 3000);
@@ -213,6 +253,65 @@ export default function InterviewResults() {
     if (success) {
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 3000);
+    }
+  };
+
+  // Handle manual reward claim
+  const handleClaimReward = async () => {
+    if (!rewardInfo?.interviewId) {
+      console.error('❌ No interview ID found for reward claim');
+      return;
+    }
+
+    try {
+      setClaimingReward(true);
+      console.log(`🎁 Attempting to claim reward for interview ${rewardInfo.interviewId}`);
+
+      const token = localStorage.getItem('api_token') || Cookies.get('api_token');
+      if (!token) {
+        console.error('❌ No authentication token found');
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/${rewardInfo.interviewId}/claim-reward`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.success) {
+        console.log('✅ Reward claimed successfully:', result.reward);
+        setRewardInfo({
+          success: true,
+          amount: result.reward.amount,
+          transactionId: result.reward.transactionId,
+          interviewId: rewardInfo.interviewId
+        });
+      } else {
+        console.error('❌ Reward claim failed:', result.error);
+        setRewardInfo({
+          ...rewardInfo,
+          success: false,
+          error: result.error,
+          canRetry: result.canRetry !== false
+        });
+      }
+    } catch (error: any) {
+      console.error('❌ Error claiming reward:', error);
+      setRewardInfo({
+        ...rewardInfo,
+        success: false,
+        error: error.message || 'Failed to claim reward'
+      });
+    } finally {
+      setClaimingReward(false);
     }
   };
 
@@ -916,6 +1015,74 @@ export default function InterviewResults() {
             </Box>
           </Box>
         </Paper>
+
+        {/* Reward Notification */}
+        {rewardInfo && (
+          <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
+            {rewardInfo.success ? (
+              <Box textAlign="center">
+                <TrophyIcon sx={{ fontSize: 80, color: '#ffd700', mb: 2, animation: 'bounce 1s ease-in-out infinite' }} />
+                <Typography variant="h3" fontWeight={700} mb={2} sx={{
+                  background: 'linear-gradient(135deg, #8310FF 0%, #00B8D4 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}>
+                  🎉 Congratulations!
+                </Typography>
+                <Typography variant="h4" fontWeight={700} color="primary" mb={2}>
+                  You earned {rewardInfo.amount?.toFixed(2)} TAI tokens!
+                </Typography>
+                <Alert severity="success" sx={{ mb: 2, textAlign: 'left' }}>
+                  <Typography variant="body2" fontWeight={600} mb={1}>
+                    ✅ Reward distributed successfully!
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" fontFamily="monospace" display="block">
+                    Transaction ID: {rewardInfo.transactionId}
+                  </Typography>
+                </Alert>
+                <Typography variant="body2" color="text.secondary">
+                  TAI tokens have been sent to your Hedera wallet. Check your balance in your dashboard!
+                </Typography>
+              </Box>
+            ) : (
+              <Box textAlign="center">
+                <WarningIcon sx={{ fontSize: 64, color: 'warning.main', mb: 2 }} />
+                <Typography variant="h5" fontWeight={600} mb={2}>
+                  Reward Claim Issue
+                </Typography>
+                <Alert severity="warning" sx={{ mb: 2, textAlign: 'left' }}>
+                  {rewardInfo.error || 'Failed to distribute reward automatically'}
+                </Alert>
+                {rewardInfo.canRetry && (
+                  <Button
+                    variant="contained"
+                    size="large"
+                    startIcon={claimingReward ? <CircularProgress size={20} sx={{ color: 'white' }} /> : <TrophyIcon />}
+                    onClick={handleClaimReward}
+                    disabled={claimingReward}
+                    sx={{
+                      mt: 2,
+                      background: 'linear-gradient(135deg, #8310FF 0%, #00B8D4 100%)',
+                      color: 'white',
+                      fontWeight: 600,
+                      py: 1.5,
+                      px: 4,
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #6f0dd9 0%, #0099b8 100%)',
+                      },
+                      '&:disabled': {
+                        background: 'rgba(131, 16, 255, 0.3)',
+                        color: 'rgba(255,255,255,0.5)'
+                      }
+                    }}
+                  >
+                    {claimingReward ? 'Claiming Reward...' : 'Claim Reward Now'}
+                  </Button>
+                )}
+              </Box>
+            )}
+          </Paper>
+        )}
 
         {/* Primary Skill Summary - Only show the main tested skill */}
         {analysis.skillScores && analysis.skillScores.length > 0 && analysis.skillScores[0] && (

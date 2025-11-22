@@ -233,10 +233,10 @@ export default function Test() {
           ...otherParams
         };
       } else if (type === 'on-boarding') {
-        // Onboarding interview - treat as technical skill assessment
+        // Onboarding interview - PURE technical skill assessment (100% technical questions)
         queryParams = {
-          type: 'technical',
-          role: (skill || skills) as string || 'Software Developer',
+          type: 'technicalSkill',  // Maps to TECHNICAL_SKILL config for technical-only questions
+          skill: (skill || skills) as string || 'JavaScript',
           proficiency: experienceLevel as string || proficiency as string || 'Entry Level',
           ...otherParams
         };

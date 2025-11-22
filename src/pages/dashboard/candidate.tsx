@@ -41,6 +41,7 @@ import EditProfileModal from "@/components/dashboard-candidate/EditProfileModal"
 import LoadingState from "@/components/dashboard-candidate/LoadingState";
 import ErrorState from "@/components/dashboard-candidate/ErrorState";
 import DashboardNavbar from "@/components/dashboard-candidate/DashboardNavbar";
+import TokenBalanceCard from "@/components/dashboard-candidate/TokenBalanceCard";
 import { skillCategories, softSkillNames, softSkills, technicalSkillsList } from "@/constants/skills";
 
 const GREEN_MAIN = "#8310FF";
@@ -669,6 +670,9 @@ export default function DashboardCandidate() {
                      profileSkills={profile?.skills || []}
                      profileSoftSkills={profile?.softSkills || []}
                    />
+
+              {/* Token Balance Card */}
+              <TokenBalanceCard />
 
               {/* Recommended Opportunities */}
               <StyledCard sx={{ mb: 4 }}>

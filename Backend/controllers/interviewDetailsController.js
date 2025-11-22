@@ -1,5 +1,9 @@
 const interviewDetailsService = require("../services/interviewDetailsService");
 const convertNewToOld = require("../utils/convertNewInterviewToOld");
+const tokenRewardController = require("./tokenRewardController");
+
+// Export the claim reward method from tokenRewardController
+exports.claimInterviewReward = tokenRewardController.claimInterviewReward;
 
 exports.addInterviewDetails = async (req, res) => {
   try {
@@ -70,10 +74,45 @@ exports.addInterviewDetails = async (req, res) => {
       interviewData
     );
 
+    // ========================================
+    // TRY TO DISTRIBUTE TAI TOKEN REWARD
+    // ========================================
+    console.log('🎁 Attempting to distribute interview reward...');
+    console.log(`   User ID: ${userId}`);
+    console.log(`   Candidate ID: ${candidateId}`);
+    console.log(`   Score: ${convertedData.overallScore}`);
+    console.log(`   Interview ID: ${result._id}`);
+
+    let rewardResult = null;
+    try {
+      rewardResult = await tokenRewardController.distributeInterviewReward(
+        userId, // Use authenticated user ID for reward
+        convertedData.overallScore || 0,
+        result._id.toString()
+      );
+
+      if (rewardResult.success) {
+        console.log(`✅ Reward distributed successfully: ${rewardResult.amount} TAI`);
+      } else if (rewardResult.skipped) {
+        console.log(`⚠️  Reward skipped: ${rewardResult.reason}`);
+      } else {
+        console.log(`❌ Reward distribution failed: ${rewardResult.error}`);
+      }
+    } catch (rewardError) {
+      console.error('❌ Failed to distribute interview reward:', rewardError.message);
+      // Don't fail the interview save, just log the error
+      rewardResult = {
+        success: false,
+        error: rewardError.message,
+        canRetry: true
+      };
+    }
+
     res.status(201).json({
       success: true,
       message: "Interview details added successfully",
       data: result,
+      reward: rewardResult, // NEW: Include reward information in response
       metadata: {
         sessionId: interviewData?.sessionId,
         timestamp: interviewData?.timestamp,
