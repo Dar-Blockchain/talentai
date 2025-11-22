@@ -72,6 +72,14 @@ const getQuickPrompt = (description, companyLocation) => `
     - If not specified, distribute evenly and logically.  
     - Return only valid JSON. Avoid markdown or code blocks.
 
+    STRICT SKILL RULES:
+- NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
+- Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
+- If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
+- Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
+- Never invent unrealistic skills; remain consistent with standard industry technical stacks.
+- The “name” field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
+
     Job Description:
     ${description}
 `.trim();
@@ -201,6 +209,15 @@ const getDetailedPrompt = (description, companyLocation) => `
         "finalPost": "The complete formatted post ready for LinkedIn"
       }
     }
+
+    STRICT SKILL RULES:
+- NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
+- Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
+- If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
+- Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
+- Never invent unrealistic skills; remain consistent with standard industry technical stacks.
+- The “name” field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
+
 `.trim();
 
 module.exports = {
