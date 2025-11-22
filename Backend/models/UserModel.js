@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const { USER_ROLES, AUTH_METHODS, AUTH_STATUS } = require("../constants/userConstants");
 
 const userSchema = new mongoose.Schema(
   {
@@ -36,7 +35,7 @@ const userSchema = new mongoose.Schema(
     },
     ip: String,
     Localisation: String,
-    role: { type: String, enum: Object.values(USER_ROLES) },
+    role: { type: String, enum: ["Company", "jury", "Candidat", "Admin"] },
     profile: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Profile",
@@ -56,13 +55,13 @@ const userSchema = new mongoose.Schema(
         localisation: String,
         method: {
           type: String,
-          enum: Object.values(AUTH_METHODS),
-          default: AUTH_METHODS.OTP,
+          enum: ["OTP", "Password", "OAuth"],
+          default: "OTP",
         },
         status: {
           type: String,
-          enum: Object.values(AUTH_STATUS),
-          default: AUTH_STATUS.SUCCESS,
+          enum: ["Success", "Failed"],
+          default: "Success",
         },
       },
     ],

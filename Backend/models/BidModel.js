@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const { BID_STATUS } = require("../constants/bidConstants");
 
 const BidSchema = new mongoose.Schema({
   postId: {
@@ -26,8 +25,8 @@ const BidSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: Object.values(BID_STATUS),
-    default: BID_STATUS.PENDING,
+    enum: ["pending", "active", "refunded", "won"],
+    default: "pending",
   },
   createdAt: {
     type: Date,

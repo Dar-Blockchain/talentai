@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const { TOPIC_STATUS } = require("../constants/topicConstants");
 
 const TopicSchema = new mongoose.Schema({
   postId: {
@@ -14,8 +13,8 @@ const TopicSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: Object.values(TOPIC_STATUS),
-    default: TOPIC_STATUS.ACTIVE,
+    enum: ["active", "closed"],
+    default: "active",
   },
   createdAt: {
     type: Date,
@@ -32,7 +31,7 @@ TopicSchema.index({ status: 1 });
 
 // Add closedAt timestamp when status changes to closed
 TopicSchema.pre("save", function (next) {
-  if (this.isModified("status") && this.status === TOPIC_STATUS.CLOSED) {
+  if (this.isModified("status") && this.status === "closed") {
     this.closedAt = new Date();
   }
   next();

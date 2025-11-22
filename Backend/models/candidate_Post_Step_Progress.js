@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const { STEP_STATUS } = require("../constants/stepConstants");
 
 const candidate_Post_Step_ProgressSchema = new mongoose.Schema({
   idCandidate: {
@@ -32,8 +31,8 @@ const candidate_Post_Step_ProgressSchema = new mongoose.Schema({
       },
       status: {
         type: String,
-        enum: Object.values(STEP_STATUS),
-        default: STEP_STATUS.PENDING,
+        enum: ["pending", "inProgress", "done"],
+        default: "pending",
         required: true,
       },
       completedAt: {

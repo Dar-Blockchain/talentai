@@ -2,7 +2,9 @@
 // Gère les notifications envoyées aux utilisateurs.
 
 const mongoose = require("mongoose");
-const { NOTIFICATION_TYPES } = require("../constants/notificationConstants");
+
+// Liste des types de notifications possibles
+const NOTIFICATION_TYPES = ["info", "success", "warning", "error", "custom"];
 
 // Schéma Mongoose pour les notifications
 const NotificationSchema = new mongoose.Schema(
@@ -16,10 +18,10 @@ const NotificationSchema = new mongoose.Schema(
     type: {
       type: String,
       enum: {
-        values: Object.values(NOTIFICATION_TYPES),
+        values: NOTIFICATION_TYPES,
         message: "Type de notification invalide.",
       },
-      default: NOTIFICATION_TYPES.INFO,
+      default: "info",
     },
     url: {
       type: String,
