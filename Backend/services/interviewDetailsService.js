@@ -113,7 +113,7 @@ exports.createInterviewDetails = async (interviewData, metadata, rawInterviewDat
 
     console.log("Skill to save:", skill);
 
-    // Ajouter l'interview au profil et mettre à jour les skills
+    // Ajouter l'interview au profil
     await Profile.findByIdAndUpdate(
       candidateId,
       {
@@ -124,42 +124,84 @@ exports.createInterviewDetails = async (interviewData, metadata, rawInterviewDat
       { new: true }
     );
 
-    // Vérifier si le skill existe déjà pour l'incrémenter
-    const existingSkill = await Profile.findOne(
-      { _id: candidateId, "skills.name": skillName },
-      { "skills.$": 1 }
-    );
+    // Si metadata.type === 'soft', enregistrer dans softSkills, sinon dans skills
+    const skillType = (metadata?.type || '').toLowerCase();
+    if (skillType === 'soft') {
+      // softSkills schema: { name, category, proficiencyLevel, experienceLevel, ScoreTest, isPrimary }
+      const softSkill = {
+        name: skillName,
+        category: metadata?.category || '',
+        proficiencyLevel: proficiencyLevel,
+        experienceLevel: experienceLevel,
+        ScoreTest: overallScore,
+        isPrimary: false,
+      };
 
-    if (existingSkill && existingSkill.skills.length > 0) {
-      // Le skill existe, incrémenter NumberTestPassed
-      await Profile.findByIdAndUpdate(
-        candidateId,
-        {
-          $inc: { "skills.$[elem].NumberTestPassed": 1 },
-          $set: { 
-            "skills.$[elem].ScoreTest": overallScore,
-            "skills.$[elem].proficiencyLevel": proficiencyLevel,
-            "skills.$[elem].Levelconfirmed": proficiencyLevel
-          },
-        },
-        {
-          arrayFilters: [{ "elem.name": skillName }],
-          new: true,
-        }
+      // Vérifier si softSkill existe
+      const existingSoft = await Profile.findOne(
+        { _id: candidateId, 'softSkills.name': skillName },
+        { 'softSkills.$': 1 }
       );
-      console.log(`Skill "${skillName}" updated - NumberTestPassed incremented`);
+
+      if (existingSoft && existingSoft.softSkills.length > 0) {
+        // Mettre à jour ScoreTest et proficiencyLevel
+        await Profile.findByIdAndUpdate(
+          candidateId,
+          {
+            $set: {
+              'softSkills.$[elem].ScoreTest': overallScore,
+              'softSkills.$[elem].proficiencyLevel': proficiencyLevel,
+            },
+          },
+          {
+            arrayFilters: [{ 'elem.name': skillName }],
+            new: true,
+          }
+        );
+        console.log(`Soft skill "${skillName}" updated`);
+      } else {
+        // Ajouter softSkill neuf
+        await Profile.findByIdAndUpdate(
+          candidateId,
+          { $addToSet: { softSkills: softSkill } },
+          { new: true }
+        );
+        console.log(`Soft skill "${skillName}" added`);
+      }
     } else {
-      // Le skill n'existe pas, l'ajouter
-      await Profile.findByIdAndUpdate(
-        candidateId,
-        {
-          $addToSet: {
-            skills: skill,
-          },
-        },
-        { new: true }
+      // Hard skill logic (skills array) - incrémenter NumberTestPassed si existe
+      const existingSkill = await Profile.findOne(
+        { _id: candidateId, 'skills.name': skillName },
+        { 'skills.$': 1 }
       );
-      console.log(`Skill "${skillName}" added as new`);
+
+      if (existingSkill && existingSkill.skills.length > 0) {
+        // Le skill existe, incrémenter NumberTestPassed
+        await Profile.findByIdAndUpdate(
+          candidateId,
+          {
+            $inc: { 'skills.$[elem].NumberTestPassed': 1 },
+            $set: {
+              'skills.$[elem].ScoreTest': overallScore,
+              'skills.$[elem].proficiencyLevel': proficiencyLevel,
+              'skills.$[elem].Levelconfirmed': proficiencyLevel,
+            },
+          },
+          {
+            arrayFilters: [{ 'elem.name': skillName }],
+            new: true,
+          }
+        );
+        console.log(`Skill "${skillName}" updated - NumberTestPassed incremented`);
+      } else {
+        // Le skill n'existe pas, l'ajouter
+        await Profile.findByIdAndUpdate(
+          candidateId,
+          { $addToSet: { skills: skill } },
+          { new: true }
+        );
+        console.log(`Skill "${skillName}" added as new`);
+      }
     }
 
     return populatedInterview;
