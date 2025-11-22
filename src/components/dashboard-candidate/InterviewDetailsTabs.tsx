@@ -25,6 +25,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import PsychologyIcon from "@mui/icons-material/Psychology";
 import PostInterviewTab from "@/components/dashboard-candidate/PostInterviewTab";
 
 const INTERVIEW_TYPES = [
@@ -32,6 +33,7 @@ const INTERVIEW_TYPES = [
     { label: "Onboarding", value: "onboarding", icon: <CalendarTodayIcon sx={{ fontSize: 18 }} /> },
     { label: "HR", value: "hr", icon: <PersonOutlineIcon sx={{ fontSize: 18 }} /> },
     { label: "Skill", value: "skill", icon: <TrendingUpIcon sx={{ fontSize: 18 }} /> },
+    { label: "Soft Skills", value: "soft", icon: <PsychologyIcon sx={{ fontSize: 18 }} /> },
 ];
 
 export type InterviewDetailsTabsProps = {
@@ -653,6 +655,168 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                                             </Stack>
                                                         </Box>
                                                     )}
+                                                    <Stack direction="row" justifyContent="flex-end" sx={{ mt: 0.5 }}>
+                                                        <Button
+                                                            onClick={() => router.push(`/interview/report/${row._id || row.id}`)}
+                                                            size="small"
+                                                            variant="contained"
+                                                            sx={{
+                                                                textTransform: "none",
+                                                                fontWeight: 700,
+                                                                px: 2,
+                                                                backgroundColor: "#8310FF",
+                                                                color: "#fff",
+                                                                borderRadius: 2,
+                                                                "&:hover": {
+                                                                    backgroundColor: "#6B0BC7",
+                                                                },
+                                                            }}
+                                                        >
+                                                            View details
+                                                        </Button>
+                                                    </Stack>
+                                                </Stack>
+                                            </Paper>
+                                        );
+                                    })
+                                )}
+                            </Box>
+                        </Box>
+                    ) : normalizedTab === "soft" ? (
+                        <Box>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 800 }}>Soft Skills Assessments</Typography>
+                                <Typography variant="body2" sx={{ color: "#666" }}>{total} result{total === 1 ? "" : "s"}</Typography>
+                            </Stack>
+                            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" }, gap: 2 }}>
+                                {data.length === 0 ? (
+                                    <Paper variant="outlined" sx={{ p: 4, textAlign: "center", borderRadius: 3 }}>
+                                        <Typography sx={{ fontWeight: 600 }}>No soft skills assessments found</Typography>
+                                        <Typography variant="body2" sx={{ color: "#777", mt: 0.5 }}>Soft skills assessments you complete will appear here.</Typography>
+                                    </Paper>
+                                ) : (
+                                    data.map((row: any) => {
+                                        const score = typeof row.skillDetails?.[0]?.confidenceScore === "number"
+                                            ? Math.max(0, Math.min(100, row.skillDetails[0].confidenceScore))
+                                            : typeof row?.overallScore === "number"
+                                            ? Math.max(0, Math.min(100, row.overallScore))
+                                            : null;
+                                        let level: string = "Unknown";
+                                        let color: "default" | "success" | "warning" | "error" = "default";
+                                        if (score !== null) {
+                                            if (score >= 85) { level = "Excellent"; color = "success"; }
+                                            else if (score >= 70) { level = "Good"; color = "success"; }
+                                            else if (score >= 50) { level = "Average"; color = "warning"; }
+                                            else { level = "Needs Improvement"; color = "error"; }
+                                        }
+                                        const skillName = row.skillDetails?.[0]?.name;
+                                        const title = skillName || row.post?.jobDetails?.title || row.skillName || "Soft Skills Assessment";
+                                        const dateLabel = row.createdAt ? new Date(row.createdAt).toLocaleDateString() : null;
+                                        const proficiencyLevel = row.skillDetails?.[0]?.proficiencyLevel;
+                                        const totalQuestions = row.skillDetails?.[0]?.questionAnswerList?.length || 0;
+                                        const correctAnswers = row.skillDetails?.[0]?.questionAnswerList?.filter((qa: any) => qa.status === "correct").length || 0;
+                                        return (
+                                            <Paper
+                                                key={row._id || row.id}
+                                                variant="outlined"
+                                                sx={{
+                                                    p: 2.5,
+                                                    borderRadius: 3,
+                                                    height: "100%",
+                                                    overflow: "hidden",
+                                                    position: "relative",
+                                                    borderColor: "#E0E0E0",
+                                                    transition: "all .2s ease",
+                                                    "&:hover": { boxShadow: "0 10px 30px rgba(0,0,0,.08)", transform: "translateY(-2px)" },
+                                                }}
+                                            >
+                                                <Stack spacing={1.25}>
+                                                    <Stack direction="row" alignItems="center" justifyContent="space-between">
+                                                        <Typography sx={{ fontWeight: 800 }}>{title}</Typography>
+                                                        {score !== null && (
+                                                            <Chip size="small" color={color} label={level} sx={{ fontWeight: 700 }} />
+                                                        )}
+                                                    </Stack>
+                                                    <Stack direction="row" spacing={1} alignItems="center" sx={{ color: "#7a7a7a" }}>
+                                                        <PsychologyIcon sx={{ fontSize: 18 }} />
+                                                        <Typography variant="body2">soft skills</Typography>
+                                                        {dateLabel && (
+                                                            <>
+                                                                <Typography variant="body2" sx={{ mx: 0.5 }}>•</Typography>
+                                                                <Typography variant="body2">{dateLabel}</Typography>
+                                                            </>
+                                                        )}
+                                                    </Stack>
+
+                                                    {score !== null ? (
+                                                        <Stack direction="row" spacing={2} alignItems="center">
+                                                            <Box sx={{ position: "relative", display: "inline-flex" }}>
+                                                                <CircularProgress variant="determinate" value={score} size={64} thickness={5} sx={{
+                                                                    color: "#ece7fb",
+                                                                }} />
+                                                                <CircularProgress variant="determinate" value={score} size={64} thickness={5} sx={{
+                                                                    position: "absolute",
+                                                                    left: 0,
+                                                                    top: 0,
+                                                                    color: "#8310FF",
+                                                                }} />
+                                                                <Box sx={{
+                                                                    top: 0,
+                                                                    left: 0,
+                                                                    bottom: 0,
+                                                                    right: 0,
+                                                                    position: "absolute",
+                                                                    display: "flex",
+                                                                    alignItems: "center",
+                                                                    justifyContent: "center",
+                                                                }}>
+                                                                    <Typography variant="caption" sx={{ fontWeight: 800, color: "#333" }}>{`${score}%`}</Typography>
+                                                                </Box>
+                                                            </Box>
+                                                            <Box sx={{ flex: 1 }}>
+                                                                <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.75 }}>
+                                                                    <Typography variant="caption" sx={{ color: "#666" }}>Overall Score</Typography>
+                                                                    <Stack direction="row" spacing={1} alignItems="center">
+                                                                        <Tooltip title="Relative standing">
+                                                                            <TrendingUpIcon sx={{ fontSize: 16, color: "#8310FF" }} />
+                                                                        </Tooltip>
+                                                                        <Typography variant="caption" sx={{ color: "#333", fontWeight: 700 }}>{level}</Typography>
+                                                                    </Stack>
+                                                                </Stack>
+                                                                <LinearProgress variant="determinate" value={score} sx={{ height: 8, borderRadius: 6, "& .MuiLinearProgress-bar": { backgroundColor: "#8310FF" } }} />
+                                                            </Box>
+                                                        </Stack>
+                                                    ) : (
+                                                        <Typography variant="body2" sx={{ color: "#666" }}>No score available</Typography>
+                                                    )}
+
+                                                    <Divider sx={{ my: 1 }} />
+                                                    <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
+                                                        <Chip
+                                                            size="small"
+                                                            label="soft skill"
+                                                            variant="outlined"
+                                                            sx={{ textTransform: "capitalize", fontWeight: 600 }}
+                                                        />
+                                                        {proficiencyLevel && (
+                                                            <Chip
+                                                                size="small"
+                                                                label={`Level ${proficiencyLevel}`}
+                                                                variant="outlined"
+                                                                color="primary"
+                                                                sx={{ fontWeight: 600 }}
+                                                            />
+                                                        )}
+                                                        {totalQuestions > 0 && (
+                                                            <Chip
+                                                                size="small"
+                                                                label={`${correctAnswers}/${totalQuestions} correct`}
+                                                                variant="outlined"
+                                                                sx={{ fontWeight: 600 }}
+                                                            />
+                                                        )}
+                                                    </Stack>
+
                                                     <Stack direction="row" justifyContent="flex-end" sx={{ mt: 0.5 }}>
                                                         <Button
                                                             onClick={() => router.push(`/interview/report/${row._id || row.id}`)}

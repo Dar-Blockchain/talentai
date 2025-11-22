@@ -730,11 +730,17 @@ const IntelligentInterviewTest = () => {
       setInterviewConfig(dynamicConfig);
 
       // Clear old values first, then store new skill information for results page
+      localStorage.removeItem('interview_type');
       localStorage.removeItem('interview_skill');
       localStorage.removeItem('interview_category');
       localStorage.removeItem('interview_proficiency');
       localStorage.removeItem('interview_role');
 
+      // Store type (technical, soft, onboarding, etc.)
+      if (urlParams.type) {
+        localStorage.setItem('interview_type', urlParams.type);
+        console.log('💾 Stored type in localStorage:', urlParams.type);
+      }
       if (urlParams.skill) {
         localStorage.setItem('interview_skill', urlParams.skill);
         console.log('💾 Stored skill in localStorage:', urlParams.skill);

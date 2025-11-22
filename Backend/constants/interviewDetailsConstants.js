@@ -9,6 +9,7 @@ const INTERVIEW_TYPES = Object.freeze({
   ONBOARDING: "onboarding",
   HR: "hr",
   SKILL: "skill",
+  SOFT: "soft",
   POST_INTERVIEW: "post_interview"
 });
 

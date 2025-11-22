@@ -43,15 +43,31 @@ exports.addInterviewDetails = async (req, res) => {
     // Convertir le nouveau format au format ancien
     const convertedData = convertNewToOld(newInterviewData);
 
-    // Mapper le type d'entretien
-    const interviewTypeMap = {
+    // Mapper le type d'entretien from metadata.type (URL param) or interviewData.interviewType
+    const typeFromMetadata = metadata?.type; // "technical", "soft", "onboarding", "hr"
+
+    const urlTypeMap = {
+      "technical": "skill",
+      "soft": "soft",
+      "onboarding": "onboarding",
+      "hr": "hr",
+    };
+
+    const interviewDataTypeMap = {
       "HR_INTERVIEW": "hr",
       "TECHNICAL_INTERVIEW": "skill",
+      "TECHNICAL_SKILL": "skill",
       "POST_INTERVIEW": "post",
       "ONBOARDING": "onboarding",
     };
 
-    const interviewType = interviewTypeMap[interviewData?.interviewType] || "hr";
+    // Priority: metadata.type (from URL) > interviewData.interviewType
+    let interviewType = "hr";
+    if (typeFromMetadata && urlTypeMap[typeFromMetadata]) {
+      interviewType = urlTypeMap[typeFromMetadata];
+    } else if (interviewData?.interviewType) {
+      interviewType = interviewDataTypeMap[interviewData.interviewType] || "hr";
+    }
 
     // Construire l'objet interview conforme au schéma MongoDB
     const interviewDetails = {
