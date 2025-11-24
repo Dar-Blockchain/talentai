@@ -55,20 +55,20 @@ const Navbar: React.FC<NavbarProps> = ({ profile }) => {
     handleClose();
     try {
       console.log("Starting logout process...");
-      
+
       // Set logout flag to prevent axios interceptors from triggering redirects
       setLoggingOut(true);
       resetRedirectState();
-      
+
       // Clear Redux state FIRST to prevent components from trying to fetch
       dispatch(clearProfile());
       dispatch(logout());
-      
+
       // Then clear the token and storage
       localStorage.removeItem("api_token");
       Cookies.remove("api_token", { path: "/" });
       localStorage.clear();
-      
+
       // Clear all other cookies
       Object.keys(Cookies.get()).forEach((cookieName) => {
         Cookies.remove(cookieName, { path: "/" });
@@ -77,14 +77,15 @@ const Navbar: React.FC<NavbarProps> = ({ profile }) => {
       // Sign out from NextAuth (don't await to make redirect faster)
       signOut({ redirect: false }).catch(console.error);
 
-      // Redirect immediately (don't wait for async operations)
-      window.location.href = "/signin";
+      // Use replace instead of href to prevent returnUrl from being added
+      // replace() removes current page from history, preventing back button issues
+      window.location.replace("/signin");
     } catch (error) {
       console.error("Logout failed:", error);
       // Even on error, redirect to signin
       setLoggingOut(true);
       resetRedirectState();
-      window.location.href = "/signin";
+      window.location.replace("/signin");
     }
   };
   return (

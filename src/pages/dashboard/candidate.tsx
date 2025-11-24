@@ -314,15 +314,16 @@ export default function DashboardCandidate() {
 
       // Sign out from NextAuth (don't await to make redirect faster)
       signOut({ redirect: false }).catch(console.error);
-      
-      // Redirect immediately (don't wait for async operations)
-      window.location.href = "/signin";
+
+      // Use replace instead of href to prevent returnUrl from being added
+      // replace() removes current page from history, preventing back button issues
+      window.location.replace("/signin");
     } catch (error) {
       console.error("Logout failed:", error);
       // Even on error, redirect to signin
       setLoggingOut(true);
       resetRedirectState();
-      window.location.href = "/signin";
+      window.location.replace("/signin");
     }
   };
 

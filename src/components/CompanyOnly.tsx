@@ -63,18 +63,28 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
         hasRedirectedRef.current = true;
         localStorage.removeItem('api_token');
         setIsChecking(false);
-        redirectToLogin(router);
+        // Check if logging out - if so, just go to signin without returnUrl
+        if (isLoggingOutCheck()) {
+          router.replace('/signin');
+        } else {
+          redirectToLogin(router);
+        }
         return;
       }
-      
+
       const token = cookieToken || localToken;
-      
+
       // If no token at all, redirect
       if (!token) {
         hasRedirectedRef.current = true;
         setIsChecking(false);
         console.log("🔒 No token found, redirecting to signin");
-        redirectToLogin(router);
+        // Check if logging out - if so, just go to signin without returnUrl
+        if (isLoggingOutCheck()) {
+          router.replace('/signin');
+        } else {
+          redirectToLogin(router);
+        }
         return;
       }
 
@@ -83,7 +93,12 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
         hasRedirectedRef.current = true;
         setIsChecking(false);
         console.log("🔒 Token expired (JWT), clearing and redirecting to signin");
-        handleTokenExpiration();
+        // Check if logging out - if so, just go to signin without returnUrl
+        if (isLoggingOutCheck()) {
+          router.replace('/signin');
+        } else {
+          handleTokenExpiration();
+        }
         return;
       }
 
@@ -109,7 +124,12 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
       hasRedirectedRef.current = true;
       setIsChecking(false);
       console.log("🔒 Profile fetch failed (401/expired), redirecting to signin");
-      redirectToLogin(router);
+      // Check if logging out - if so, just go to signin without returnUrl
+      if (isLoggingOutCheck()) {
+        router.replace('/signin');
+      } else {
+        redirectToLogin(router);
+      }
       return;
     }
 
@@ -148,7 +168,12 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
             } else if (!tokenStillExists && !hasRedirectedRef.current) {
               hasRedirectedRef.current = true;
               setIsChecking(false);
-              redirectToLogin(router);
+              // Check if logging out - if so, just go to signin without returnUrl
+              if (isLoggingOutCheck()) {
+                router.replace('/signin');
+              } else {
+                redirectToLogin(router);
+              }
             }
           }, 1000);
           return;
@@ -158,7 +183,12 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
             hasRedirectedRef.current = true;
             setIsChecking(false);
             console.log("🔒 Profile not found after retries, redirecting to signin");
-            redirectToLogin(router);
+            // Check if logging out - if so, just go to signin without returnUrl
+            if (isLoggingOutCheck()) {
+              router.replace('/signin');
+            } else {
+              redirectToLogin(router);
+            }
           }
           return;
         }
@@ -175,7 +205,12 @@ export default function CompanyOnly({ children }: CompanyOnlyProps) {
       } else if (role !== 'Company') {
         if (!hasRedirectedRef.current) {
           hasRedirectedRef.current = true;
-          redirectToLogin(router);
+          // Check if logging out - if so, just go to signin without returnUrl
+          if (isLoggingOutCheck()) {
+            router.replace('/signin');
+          } else {
+            redirectToLogin(router);
+          }
         }
         return;
       }
