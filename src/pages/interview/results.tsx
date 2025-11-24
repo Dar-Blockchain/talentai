@@ -14,14 +14,10 @@ import {
   Chip,
   CircularProgress,
   Alert,
-  List,
-  ListItem,
-  ListItemText,
   Rating,
 } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
-  TrendingUp as TrendingUpIcon,
   Assessment as AssessmentIcon,
   Download as DownloadIcon,
   Home as HomeIcon,
@@ -729,8 +725,28 @@ export default function InterviewResults() {
     const strengths: string[] = [];
     if (coverage.areas) {
       Object.entries(coverage.areas).forEach(([name, area]: [string, any]) => {
+        const areaNameFormatted = name.replace(/_/g, ' ');
+
         if (area.percentage >= 70) {
-          strengths.push(`Strong performance in ${name}`);
+          // Add AI analysis positive feedback if available
+          if (area.aiAnalysis?.strengths && Array.isArray(area.aiAnalysis.strengths)) {
+            area.aiAnalysis.strengths.forEach((strength: string) => {
+              strengths.push(`${areaNameFormatted}: ${strength}`);
+            });
+          } else if (area.aiAnalysis?.feedback && area.percentage >= 80) {
+            strengths.push(`${areaNameFormatted}: ${area.aiAnalysis.feedback}`);
+          } else {
+            strengths.push(`Strong performance in ${areaNameFormatted} (${Math.round(area.percentage)}%)`);
+          }
+
+          // Add covered indicators as strengths
+          if (area.indicators && Array.isArray(area.indicators)) {
+            const coveredIndicators = area.indicators.filter((ind: any) => ind.covered);
+            if (coveredIndicators.length > 0) {
+              const indicatorNames = coveredIndicators.slice(0, 2).map((ind: any) => ind.name || ind).join(', ');
+              strengths.push(`${areaNameFormatted}: Demonstrated ${indicatorNames}`);
+            }
+          }
         }
       });
     }
@@ -741,8 +757,28 @@ export default function InterviewResults() {
     const weaknesses: string[] = [];
     if (coverage.areas) {
       Object.entries(coverage.areas).forEach(([name, area]: [string, any]) => {
+        const areaNameFormatted = name.replace(/_/g, ' ');
+
         if (area.percentage < 50) {
-          weaknesses.push(`Could improve in ${name}`);
+          // Add AI analysis weaknesses if available
+          if (area.aiAnalysis?.weaknesses && Array.isArray(area.aiAnalysis.weaknesses)) {
+            area.aiAnalysis.weaknesses.forEach((weakness: string) => {
+              weaknesses.push(`${areaNameFormatted}: ${weakness}`);
+            });
+          } else if (area.aiAnalysis?.feedback) {
+            weaknesses.push(`${areaNameFormatted}: ${area.aiAnalysis.feedback}`);
+          } else {
+            weaknesses.push(`Needs improvement in ${areaNameFormatted} (${Math.round(area.percentage)}% coverage)`);
+          }
+
+          // Add uncovered indicators as weaknesses
+          if (area.indicators && Array.isArray(area.indicators)) {
+            const uncoveredIndicators = area.indicators.filter((ind: any) => !ind.covered);
+            if (uncoveredIndicators.length > 0 && uncoveredIndicators.length <= 3) {
+              const indicatorNames = uncoveredIndicators.map((ind: any) => ind.name || ind).join(', ');
+              weaknesses.push(`${areaNameFormatted}: Missing coverage of ${indicatorNames}`);
+            }
+          }
         }
       });
     }
@@ -752,17 +788,70 @@ export default function InterviewResults() {
   const generateRecommendations = (coverage: any): string[] => {
     const recommendations: string[] = [];
 
+    // Extract recommendations from overall coverage AI analysis
     if (coverage.aiAnalysis?.recommendedFocus) {
       recommendations.push(...coverage.aiAnalysis.recommendedFocus.map((focus: string) =>
         `Focus on improving ${focus}`
       ));
     }
 
+    // Extract detailed recommendations from each coverage area
+    if (coverage.areas) {
+      Object.entries(coverage.areas).forEach(([areaName, areaData]: [string, any]) => {
+        const area = areaData;
+        const areaNameFormatted = areaName.replace(/_/g, ' ');
+
+        // Add AI analysis insights if available
+        if (area.aiAnalysis) {
+          const aiAnalysis = area.aiAnalysis;
+
+          // Add specific insights from AI analysis
+          if (aiAnalysis.insights && Array.isArray(aiAnalysis.insights)) {
+            aiAnalysis.insights.forEach((insight: string) => {
+              recommendations.push(`${areaNameFormatted}: ${insight}`);
+            });
+          }
+
+          // Add improvement suggestions
+          if (aiAnalysis.suggestions && Array.isArray(aiAnalysis.suggestions)) {
+            aiAnalysis.suggestions.forEach((suggestion: string) => {
+              recommendations.push(`${areaNameFormatted}: ${suggestion}`);
+            });
+          }
+
+          // Add areas needing attention based on percentage
+          if (area.percentage < 60) {
+            if (aiAnalysis.feedback) {
+              recommendations.push(`${areaNameFormatted}: ${aiAnalysis.feedback}`);
+            } else {
+              recommendations.push(`Strengthen ${areaNameFormatted} - current coverage: ${Math.round(area.percentage)}%`);
+            }
+          }
+
+          // Add quality-based recommendations
+          if (aiAnalysis.qualityScore !== undefined && aiAnalysis.qualityScore < 3) {
+            recommendations.push(`Improve response quality in ${areaNameFormatted} (current quality: ${aiAnalysis.qualityScore}/5)`);
+          }
+        }
+
+        // Add indicator-based recommendations
+        if (area.indicators && Array.isArray(area.indicators)) {
+          const uncoveredIndicators = area.indicators.filter((ind: any) => !ind.covered);
+          if (uncoveredIndicators.length > 0 && uncoveredIndicators.length <= 3) {
+            uncoveredIndicators.forEach((indicator: any) => {
+              recommendations.push(`${areaNameFormatted}: Demonstrate knowledge of ${indicator.name || indicator}`);
+            });
+          }
+        }
+      });
+    }
+
     if (recommendations.length === 0) {
       return ['No recommendations available - interview analysis incomplete'];
     }
 
-    return recommendations.slice(0, 5);
+    // Return up to 10 recommendations for more detail
+    return recommendations.slice(0, 10);
   };
 
   const getScoreColor = (score: number): string => {
@@ -1209,7 +1298,11 @@ export default function InterviewResults() {
         )}
 
         {/* Conversation Quality */}
-        {analysis.conversationQuality && (
+        {analysis.conversationQuality &&
+         (analysis.conversationQuality.clarity > 0 ||
+          analysis.conversationQuality.relevance > 0 ||
+          analysis.conversationQuality.depth > 0 ||
+          analysis.conversationQuality.engagement > 0) && (
           <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
             <Box display="flex" alignItems="center" gap={1} mb={3}>
               <StarsIcon color="primary" />
@@ -1219,7 +1312,9 @@ export default function InterviewResults() {
             </Box>
 
             <Box display="flex" flexWrap="wrap" gap={3}>
-              {Object.entries(analysis.conversationQuality).map(([key, value]) => (
+              {Object.entries(analysis.conversationQuality)
+                .filter(([_, value]) => typeof value === 'number')
+                .map(([key, value]) => (
                 <Box key={key} flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>
                   <Box textAlign="center">
                     <Typography variant="body2" color="text.secondary" textTransform="capitalize" mb={1}>
@@ -1236,94 +1331,168 @@ export default function InterviewResults() {
           </Paper>
         )}
 
-        {/* Strengths & Weaknesses */}
-        <Box display="flex" flexWrap="wrap" gap={3} mb={3}>
-          <Box flex={{ xs: '1 1 100%', md: '1 1 calc(50% - 12px)' }}>
-            <Paper elevation={0} sx={{ p: 4, height: '100%', borderRadius: 3, border: '2px solid #e0e0e0' }}>
-              <Box display="flex" alignItems="center" gap={1} mb={2}>
-                <CheckCircleIcon color="success" />
-                <Typography variant="h5" fontWeight={600}>
-                  Key Strengths
-                </Typography>
-              </Box>
-              <List>
-                {analysis.strengths.map((strength, index) => (
-                  <ListItem key={index} sx={{ px: 0 }}>
-                    <ListItemText
-                      primary={strength}
-                      primaryTypographyProps={{
-                        variant: 'body1',
-                        color: 'text.primary',
-                      }}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Paper>
-          </Box>
-
-          <Box flex={{ xs: '1 1 100%', md: '1 1 calc(50% - 12px)' }}>
-            <Paper elevation={0} sx={{ p: 4, height: '100%', borderRadius: 3, border: '2px solid #e0e0e0' }}>
-              <Box display="flex" alignItems="center" gap={1} mb={2}>
-                <WarningIcon color="warning" />
-                <Typography variant="h5" fontWeight={600}>
-                  Areas for Improvement
-                </Typography>
-              </Box>
-              <List>
-                {analysis.weaknesses.map((weakness, index) => (
-                  <ListItem key={index} sx={{ px: 0 }}>
-                    <ListItemText
-                      primary={weakness}
-                      primaryTypographyProps={{
-                        variant: 'body1',
-                        color: 'text.primary',
-                      }}
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            </Paper>
-          </Box>
-        </Box>
-
-        {/* Recommendations */}
-        <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
+        {/* Key Strengths */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            mb: 3,
+            borderRadius: 3,
+            border: '2px solid #4CAF50',
+            background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(56, 142, 60, 0.05) 100%)',
+          }}
+        >
           <Box display="flex" alignItems="center" gap={1} mb={3}>
-            <TrendingUpIcon color="primary" />
-            <Typography variant="h5" fontWeight={600}>
-              Recommendations
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 2,
+                bgcolor: 'rgba(76, 175, 80, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <CheckCircleIcon sx={{ color: '#4CAF50', fontSize: 28 }} />
+            </Box>
+            <Typography variant="h5" fontWeight={700} sx={{ color: '#2E7D32' }}>
+              Key Strengths
             </Typography>
           </Box>
-          <List>
-            {analysis.recommendations.map((recommendation, index) => (
-              <ListItem key={index} sx={{ px: 0, alignItems: 'flex-start' }}>
+          <Box display="flex" flexDirection="column" gap={2}>
+            {analysis.strengths.map((strength, index) => (
+              <Box
+                key={index}
+                sx={{
+                  p: 2.5,
+                  borderRadius: 2,
+                  bgcolor: 'white',
+                  border: '1px solid #C8E6C9',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 2,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    transform: 'translateX(-4px)',
+                    boxShadow: '0 4px 12px rgba(76, 175, 80, 0.15)',
+                    borderColor: '#4CAF50',
+                  }
+                }}
+              >
                 <Box
                   sx={{
-                    minWidth: 32,
-                    height: 32,
+                    minWidth: 28,
+                    height: 28,
                     borderRadius: '50%',
-                    bgcolor: '#8310FF',
-                    color: 'white',
+                    bgcolor: 'rgba(76, 175, 80, 0.1)',
+                    border: '2px solid #4CAF50',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    mr: 2,
-                    fontWeight: 600,
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    color: '#2E7D32',
+                    flexShrink: 0,
+                  }}
+                >
+                  ✓
+                </Box>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: '#424242',
+                    lineHeight: 1.6,
+                    flex: 1,
+                  }}
+                >
+                  {strength}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        </Paper>
+
+        {/* Areas for Improvement */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            mb: 3,
+            borderRadius: 3,
+            border: '2px solid #FFB74D',
+            background: 'linear-gradient(135deg, rgba(255, 183, 77, 0.05) 0%, rgba(255, 152, 0, 0.05) 100%)',
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={1} mb={3}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 2,
+                bgcolor: 'rgba(255, 152, 0, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <WarningIcon sx={{ color: '#FF9800', fontSize: 28 }} />
+            </Box>
+            <Typography variant="h5" fontWeight={700} sx={{ color: '#E65100' }}>
+              Areas for Improvement
+            </Typography>
+          </Box>
+          <Box display="flex" flexDirection="column" gap={2}>
+            {analysis.weaknesses.map((weakness, index) => (
+              <Box
+                key={index}
+                sx={{
+                  p: 2.5,
+                  borderRadius: 2,
+                  bgcolor: 'white',
+                  border: '1px solid #FFE0B2',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 2,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    transform: 'translateX(4px)',
+                    boxShadow: '0 4px 12px rgba(255, 152, 0, 0.15)',
+                    borderColor: '#FFB74D',
+                  }
+                }}
+              >
+                <Box
+                  sx={{
+                    minWidth: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    bgcolor: 'rgba(255, 152, 0, 0.1)',
+                    border: '2px solid #FFB74D',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    color: '#E65100',
+                    flexShrink: 0,
                   }}
                 >
                   {index + 1}
                 </Box>
-                <ListItemText
-                  primary={recommendation}
-                  primaryTypographyProps={{
-                    variant: 'body1',
-                    color: 'text.primary',
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: '#424242',
+                    lineHeight: 1.6,
+                    flex: 1,
                   }}
-                />
-              </ListItem>
+                >
+                  {weakness}
+                </Typography>
+              </Box>
             ))}
-          </List>
+          </Box>
         </Paper>
 
         {/* Interview Details & Statistics */}
@@ -1343,7 +1512,10 @@ export default function InterviewResults() {
                   Interview Type
                 </Typography>
                 <Typography variant="h6" fontWeight={600} mt={1}>
-                  {analysis.interviewType.replace('_', ' ')}
+                  {analysis.interviewType
+                    .split('_')
+                    .map((word: string) => word.charAt(0) + word.slice(1).toLowerCase())
+                    .join(' ')}
                 </Typography>
               </Paper>
             </Box>
@@ -1355,7 +1527,20 @@ export default function InterviewResults() {
                   Duration
                 </Typography>
                 <Typography variant="h6" fontWeight={600} mt={1}>
-                  {Math.round(analysis.duration / 60)} min
+                  {(() => {
+                    const totalSeconds = analysis.duration;
+                    const hours = Math.floor(totalSeconds / 3600);
+                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                    const seconds = totalSeconds % 60;
+
+                    if (hours > 0) {
+                      return `${hours}h ${minutes}m`;
+                    } else if (minutes > 0) {
+                      return `${minutes} min ${seconds > 0 ? `${seconds}s` : ''}`.trim();
+                    } else {
+                      return `${seconds}s`;
+                    }
+                  })()}
                 </Typography>
               </Paper>
             </Box>
@@ -1372,14 +1557,14 @@ export default function InterviewResults() {
               </Paper>
             </Box>
 
-            {/* Skills Assessed */}
+            {/* Areas Assessed */}
             <Box flex={{ xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 18px)' }}>
               <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', bgcolor: 'rgba(131, 16, 255, 0.05)' }}>
                 <Typography variant="caption" color="text.secondary" textTransform="uppercase" fontWeight={600}>
-                  Skills Assessed
+                  Areas Assessed
                 </Typography>
                 <Typography variant="h6" fontWeight={600} mt={1}>
-                  {analysis.skillScores.length}
+                  {Object.keys(analysis.coverage || {}).length || analysis.skillScores.length}
                 </Typography>
               </Paper>
             </Box>
