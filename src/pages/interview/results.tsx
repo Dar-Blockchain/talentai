@@ -137,6 +137,30 @@ export default function InterviewResults() {
             area.aiAnalysis.qualityScore = Math.min(area.aiAnalysis.qualityScore, 5);
           }
         });
+
+        // Calculate coverage.overall as weighted average if weights exist, otherwise simple mean
+        let weightedSum = 0;
+        let totalWeight = 0;
+        let hasWeights = false;
+
+        Object.values(areas).forEach((area: any) => {
+          const weight = area.weight || 1;
+          const percentage = area.percentage || 0;
+
+          if (area.weight && area.weight !== 1) {
+            hasWeights = true;
+          }
+
+          weightedSum += percentage * weight;
+          totalWeight += weight;
+        });
+
+        if (totalWeight > 0) {
+          parsedData.finalReport.coverage.overall = Math.round(weightedSum / totalWeight);
+          console.log('📊 [Save] Calculated coverage.overall:', parsedData.finalReport.coverage.overall,
+                      hasWeights ? '(weighted average)' : '(simple mean)',
+                      'weightedSum:', weightedSum, 'totalWeight:', totalWeight);
+        }
       }
 
       // For technical: role is the skill (e.g., "JavaScript")
@@ -1185,7 +1209,7 @@ export default function InterviewResults() {
         )}
 
         {/* Conversation Quality */}
-        {analysis.conversationQuality && Object.values(analysis.conversationQuality).some(v => v > 0) && (
+        {analysis.conversationQuality && (
           <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
             <Box display="flex" alignItems="center" gap={1} mb={3}>
               <StarsIcon color="primary" />
