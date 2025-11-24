@@ -1185,7 +1185,7 @@ export default function InterviewResults() {
         )}
 
         {/* Conversation Quality */}
-        {analysis.conversationQuality && (
+        {analysis.conversationQuality && Object.values(analysis.conversationQuality).some(v => v > 0) && (
           <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 3, border: '2px solid #e0e0e0' }}>
             <Box display="flex" alignItems="center" gap={1} mb={3}>
               <StarsIcon color="primary" />
