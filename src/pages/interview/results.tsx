@@ -940,7 +940,10 @@ export default function InterviewResults() {
             <Button
               variant="contained"
               startIcon={<HomeIcon />}
-              onClick={() => router.push('/dashboard/candidate')}
+              onClick={() => {
+                // Force a full page reload to refresh dashboard data
+                window.location.href = '/dashboard/candidate';
+              }}
               fullWidth
             >
               Return to Dashboard
@@ -1691,7 +1694,10 @@ export default function InterviewResults() {
             variant="contained"
             size="large"
             startIcon={<HomeIcon />}
-            onClick={() => router.push('/dashboard/candidate')}
+            onClick={() => {
+              // Force a full page reload to refresh dashboard data
+              window.location.href = '/dashboard/candidate';
+            }}
             sx={{
               px: 4,
               py: 1.5,
