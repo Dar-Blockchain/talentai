@@ -15,8 +15,8 @@ import {
 } from '@mui/material';
 import ErrorIcon from '@mui/icons-material/Error';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import TollIcon from '@mui/icons-material/Toll';
 import { useRouter } from 'next/router';
 
 // Update the MatchingCandidate interface
@@ -472,7 +472,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                 <Button
                   variant="outlined"
                   fullWidth
-                  startIcon={<AttachMoneyIcon />}
+                  startIcon={<TollIcon />}
                   onClick={() => onBidDialogOpen(candidate)}
                   sx={{
                     borderColor: '#3b82f6',
@@ -494,7 +494,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                   }}
                   disabled={!candidate?.candidateId?._id || !selectedJob}
                 >
-                  Place Bid
+                  Place Bid (TAI)
                 </Button>
               </Box>
             </Box>

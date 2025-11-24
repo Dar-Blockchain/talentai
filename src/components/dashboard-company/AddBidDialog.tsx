@@ -185,7 +185,7 @@ const AddBidDialog: React.FC<AddBidDialogProps> = ({
                   fontSize: '1.25rem',
                   lineHeight: 1
                 }}>
-                  {selectedCandidate?.finalBid} $
+                  {selectedCandidate?.finalBid} TAI
                 </Typography>
                 <Typography variant="caption" sx={{
                   color: 'black',
@@ -202,7 +202,7 @@ const AddBidDialog: React.FC<AddBidDialogProps> = ({
             value={bidAmount}
             onChange={(e) => setBidAmount(e.target.value)}
             InputProps={{
-              startAdornment: <InputAdornment position="start">$</InputAdornment>,
+              startAdornment: <InputAdornment position="start">TAI</InputAdornment>,
             }}
             fullWidth
             InputLabelProps={{ sx: { color: 'black' } }}
@@ -289,7 +289,7 @@ const AddBidDialog: React.FC<AddBidDialogProps> = ({
           <Typography sx={{ color: 'black', mb: 2 }}>
             Are you sure you want to place a bid of{' '}
             <Box component="span" sx={{ fontWeight: 700, color: '#02E2FF' }}>
-              ${bidAmount}
+              {bidAmount} TAI
             </Box>
             {' '}for candidate{' '}
             <Box component="span" sx={{ fontWeight: 700 }}>
@@ -304,10 +304,10 @@ const AddBidDialog: React.FC<AddBidDialogProps> = ({
             border: '1px solid rgba(2,226,255,0.3)',
           }}>
             <Typography variant="body2" sx={{ color: 'black', fontWeight: 500 }}>
-              Current bid: ${selectedCandidate?.finalBid || 0}
+              Current bid: {selectedCandidate?.finalBid || 0} TAI
             </Typography>
             <Typography variant="body2" sx={{ color: 'black', fontWeight: 500, mt: 0.5 }}>
-              New bid: ${bidAmount}
+              New bid: {bidAmount} TAI
             </Typography>
           </Box>
         </DialogContent>

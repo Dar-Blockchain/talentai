@@ -453,7 +453,7 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                   </Box>
                   <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="h6" sx={{ color: '#111827', fontWeight: 600, fontSize: '1.25rem' }}>
-                      {minBid > 0 ? `$${minBid.toLocaleString()}` : 'No bids'}
+                      {minBid > 0 ? `${minBid.toLocaleString()} TAI` : 'No bids'}
                     </Typography>
                     <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 500, fontSize: '0.75rem' }}>
                       Min Bid
@@ -668,7 +668,7 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                               }}
                             />
                             <Chip
-                              label={match.finalBid ? `Bid: $${match.finalBid.toLocaleString()}` : 'No bid'}
+                              label={match.finalBid ? `Bid: ${match.finalBid.toLocaleString()} TAI` : 'No bid'}
                               size="small"
                               sx={{
                                 backgroundColor: '#eff6ff',
