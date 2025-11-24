@@ -1,7 +1,13 @@
 const InterviewDetails = require("../models/InterviewDetailsModel");
 const Profile = require("../models/ProfileModel");
 
-exports.getAllInterviewDetails = async ({ page = 1, limit = 10, sort = "-createdAt", type, profileId }) => {
+exports.getAllInterviewDetails = async ({
+  page = 1,
+  limit = 10,
+  sort = "-createdAt",
+  type,
+  profileId,
+}) => {
   const query = {};
 
   if (type) query.type = type;
@@ -22,13 +28,13 @@ exports.getAllInterviewDetails = async ({ page = 1, limit = 10, sort = "-created
         populate: {
           path: "post_Steps",
           model: "Post_Steps",
-          select: "id order type data position connections"
-        }
+          select: "id order type data position connections",
+        },
       })
       .populate("jobAssessmentResult")
       .populate("postSteps") // Using the virtual populate
       .exec(),
-    InterviewDetails.countDocuments(query)
+    InterviewDetails.countDocuments(query),
   ]);
 
   return {
@@ -36,11 +42,9 @@ exports.getAllInterviewDetails = async ({ page = 1, limit = 10, sort = "-created
     page: parseInt(page),
     limit: parseInt(limit),
     results,
-    totalPages: Math.ceil(total / limit)
+    totalPages: Math.ceil(total / limit),
   };
 };
-
-
 
 module.exports.getInterviewDetailsById = async (id) => {
   const interview = await InterviewDetails.findById(id)
@@ -52,8 +56,8 @@ module.exports.getInterviewDetailsById = async (id) => {
       populate: {
         path: "post_Steps",
         model: "Post_Steps",
-        select: "id type data position connections"
-      }
+        select: "id type data position connections",
+      },
     })
     .populate("jobAssessmentResult")
     .populate("postSteps"); // Using the virtual populate
@@ -61,13 +65,19 @@ module.exports.getInterviewDetailsById = async (id) => {
   return interview;
 };
 
-exports.createInterviewDetails = async (interviewData, metadata, rawInterviewData) => {
+exports.createInterviewDetails = async (
+  interviewData,
+  metadata,
+  rawInterviewData
+) => {
   try {
     const newInterview = new InterviewDetails(interviewData);
     const savedInterview = await newInterview.save();
-    
+
     // Populate les références après la sauvegarde
-    const populatedInterview = await InterviewDetails.findById(savedInterview._id)
+    const populatedInterview = await InterviewDetails.findById(
+      savedInterview._id
+    )
       .populate("candidate", "firstName lastName email")
       .populate("company", "name email")
       .populate({
@@ -76,8 +86,8 @@ exports.createInterviewDetails = async (interviewData, metadata, rawInterviewDat
         populate: {
           path: "post_Steps",
           model: "Post_Steps",
-          select: "id type data position connections"
-        }
+          select: "id type data position connections",
+        },
       })
       .populate("jobAssessmentResult")
       .populate("postSteps");
@@ -85,22 +95,22 @@ exports.createInterviewDetails = async (interviewData, metadata, rawInterviewDat
     // Mettre à jour le profil avec l'interview et les skills
     const candidateId = interviewData.candidate;
     console.log("Candidate ID:", candidateId);
-    
+
     // Créer un skill unique à partir des données brutes
     const skillName = metadata?.role || "Unknown Skill";
     const experienceLevel = metadata?.proficiency || "NoLevel";
     const overallScore = rawInterviewData?.finalReport?.coverage?.overall || 0;
-    
+
     // Mapper experienceLevel en proficiencyLevel (1-5)
     const experienceLevelMap = {
       "Entry Level": 1,
-      "Junior": 2,
+      Junior: 2,
       "Mid Level": 3,
-      "Senior": 4,
-      "Expert": 5,
+      Senior: 4,
+      Expert: 5,
     };
     const proficiencyLevel = experienceLevelMap[experienceLevel] || 0;
-    
+
     const skill = {
       name: skillName,
       proficiencyLevel: proficiencyLevel,
@@ -117,6 +127,7 @@ exports.createInterviewDetails = async (interviewData, metadata, rawInterviewDat
     await Profile.findByIdAndUpdate(
       candidateId,
       {
+        $inc: { quota: 1 },
         $push: {
           interviewDetails: savedInterview._id,
         },
@@ -125,12 +136,12 @@ exports.createInterviewDetails = async (interviewData, metadata, rawInterviewDat
     );
 
     // Si metadata.type === 'soft', enregistrer dans softSkills, sinon dans skills
-    const skillType = (metadata?.type || '').toLowerCase();
-    if (skillType === 'soft') {
+    const skillType = (metadata?.type || "").toLowerCase();
+    if (skillType === "soft") {
       // softSkills schema: { name, category, proficiencyLevel, experienceLevel, ScoreTest, isPrimary }
       const softSkill = {
         name: skillName,
-        category: metadata?.category || '',
+        category: metadata?.category || "",
         proficiencyLevel: proficiencyLevel,
         experienceLevel: experienceLevel,
         ScoreTest: overallScore,
@@ -139,8 +150,8 @@ exports.createInterviewDetails = async (interviewData, metadata, rawInterviewDat
 
       // Vérifier si softSkill existe
       const existingSoft = await Profile.findOne(
-        { _id: candidateId, 'softSkills.name': skillName },
-        { 'softSkills.$': 1 }
+        { _id: candidateId, "softSkills.name": skillName },
+        { "softSkills.$": 1 }
       );
 
       if (existingSoft && existingSoft.softSkills.length > 0) {
@@ -149,12 +160,12 @@ exports.createInterviewDetails = async (interviewData, metadata, rawInterviewDat
           candidateId,
           {
             $set: {
-              'softSkills.$[elem].ScoreTest': overallScore,
-              'softSkills.$[elem].proficiencyLevel': proficiencyLevel,
+              "softSkills.$[elem].ScoreTest": overallScore,
+              "softSkills.$[elem].proficiencyLevel": proficiencyLevel,
             },
           },
           {
-            arrayFilters: [{ 'elem.name': skillName }],
+            arrayFilters: [{ "elem.name": skillName }],
             new: true,
           }
         );
@@ -171,8 +182,8 @@ exports.createInterviewDetails = async (interviewData, metadata, rawInterviewDat
     } else {
       // Hard skill logic (skills array) - incrémenter NumberTestPassed si existe
       const existingSkill = await Profile.findOne(
-        { _id: candidateId, 'skills.name': skillName },
-        { 'skills.$': 1 }
+        { _id: candidateId, "skills.name": skillName },
+        { "skills.$": 1 }
       );
 
       if (existingSkill && existingSkill.skills.length > 0) {
@@ -180,19 +191,21 @@ exports.createInterviewDetails = async (interviewData, metadata, rawInterviewDat
         await Profile.findByIdAndUpdate(
           candidateId,
           {
-            $inc: { 'skills.$[elem].NumberTestPassed': 1 },
+            $inc: { "skills.$[elem].NumberTestPassed": 1 },
             $set: {
-              'skills.$[elem].ScoreTest': overallScore,
-              'skills.$[elem].proficiencyLevel': proficiencyLevel,
-              'skills.$[elem].Levelconfirmed': proficiencyLevel,
+              "skills.$[elem].ScoreTest": overallScore,
+              "skills.$[elem].proficiencyLevel": proficiencyLevel,
+              "skills.$[elem].Levelconfirmed": proficiencyLevel,
             },
           },
           {
-            arrayFilters: [{ 'elem.name': skillName }],
+            arrayFilters: [{ "elem.name": skillName }],
             new: true,
           }
         );
-        console.log(`Skill "${skillName}" updated - NumberTestPassed incremented`);
+        console.log(
+          `Skill "${skillName}" updated - NumberTestPassed incremented`
+        );
       } else {
         // Le skill n'existe pas, l'ajouter
         await Profile.findByIdAndUpdate(
