@@ -22,6 +22,7 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./swagger.json");
 const blockPostmanRequests = require("./middleware/blockPostmanRequests");
 const resetQuotaJob = require("./cron/resetQuota");
+import Stripe from 'stripe';
 
 const http = require("http");
 const connectDB = require("./config/database");
@@ -56,6 +57,10 @@ require("dotenv").config();
 
 // 🧠 Import et exécution automatique du CRON job
 require("./cron/resetQuota");
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2024-06-20",
+});
 
 const app = express();
 
