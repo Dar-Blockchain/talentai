@@ -8,18 +8,18 @@ const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
 router.use(requireAuthUser, authLogMiddleware('NotificationSystem'));
 
 // POST /notification-system/ — create a system notification
-router.post('/', controller.createSystemNotification);
+router.post('/AddNotification', controller.createSystemNotification);
 
 // GET /notification-system/ — list system notifications for current user
-router.get('/', controller.listForUser);
+router.get('/GetMyNotification', controller.listForUser);
 
 // GET /notification-system/:id — retrieve a notification
-router.get('/:id', controller.getById);
+router.get('/GetNotificationByID/:id', controller.getById);
 
 // PATCH /notification-system/:id/read — mark as read
-router.patch('/:id/read', controller.markAsRead);
+router.patch('/markAsRead/:id/read', controller.markAsRead);
 
 // DELETE /notification-system/:id — delete
-router.delete('/:id', controller.deleteNotification);
+router.delete('/deleteNotification/:id', controller.deleteNotification);
 
 module.exports = router;
