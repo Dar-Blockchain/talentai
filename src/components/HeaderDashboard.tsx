@@ -11,6 +11,7 @@ import {
   Drawer,
   Divider,
   Skeleton,
+  Tooltip
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -28,6 +29,7 @@ import {
   selectTokenLoading,
 } from "@/store/slices/tokenSlice";
 import TokenPurchaseModal from "./token-purchase/TokenPurchaseModal";
+import { formatNumber } from "@/utils/functions";
 
 function stringToColor(string: string) {
   let hash = 0;
@@ -211,9 +213,10 @@ const HeaderDashboard = () => {
                       color: "rgba(222, 147, 0, 1)",
                     }}
                   >
-                    {tokenBalance} tokens
+                    {formatNumber(tokenBalance)} tokens
                   </Typography>
                 )}
+<Tooltip title="Purchase Tokens">
 
                 <IconButton
                   onClick={handleOpenModal}
@@ -234,6 +237,7 @@ const HeaderDashboard = () => {
                     height={12}
                   />
                 </IconButton>
+                </Tooltip>
               </Box>
 
               {/* Avatar */}
@@ -359,10 +363,10 @@ const HeaderDashboard = () => {
             </Box>
           ) : (
             <Typography sx={{ color: "rgba(222,147,0,1)", fontWeight: 500 }}>
-              {tokenBalance} tokens
+              {formatNumber(tokenBalance)} tokens
             </Typography>
           )}
-
+<Tooltip title="Purchase Tokens">
           <IconButton
             onClick={handleOpenModal}
             sx={{
@@ -377,6 +381,7 @@ const HeaderDashboard = () => {
           >
             <Image src="/icons/plus.svg" alt="plus" width={14} height={14} />
           </IconButton>
+          </Tooltip>
         </Box>
 
         <Divider sx={{ my: 2 }} />

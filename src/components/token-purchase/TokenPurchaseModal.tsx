@@ -121,10 +121,12 @@ function TokenPurchaseModal({ open, handleClose }: TokenPurchaseModalProps) {
             setCurrentStep={setCurrentStep}
             isProcessing={isProcessing}
             setIsProcessing={setIsProcessing}
-            amount={selectedPlan?.totalHbar || 0}
+            // amount={selectedPlan?.totalHbar || 0}
+            amount={1}
             tokens={calculateTaiTokens()}
             priceUsd={selectedPlan?.priceUsd}
             onBack={handleBack}
+            onClose={onClose}
           />
         );
       default:

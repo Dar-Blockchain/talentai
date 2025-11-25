@@ -17,6 +17,7 @@ import { STEPS } from "./TokenPurchaseModal";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { completePayment } from "@/store/slices/tokenSlice";
+import { toast } from 'react-toastify';
 
 interface ConfirmTransactionProps {
   walletInfo: WalletInfo | null;
@@ -26,6 +27,7 @@ interface ConfirmTransactionProps {
   priceUsd?: number;
   selectedPlan: PricingPlan | null;
   onBack: () => void;
+  onClose: () => void;
   setIsProcessing: (processing: boolean) => void;
   setCurrentStep: (step: number) => void;
   setWalletInfo: (walletInfo: WalletInfo | null) => void;
@@ -42,6 +44,7 @@ const ConfirmTransaction = ({
   setIsProcessing,
   setCurrentStep,
   setWalletInfo,
+  onClose
 }: ConfirmTransactionProps) => {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -82,6 +85,17 @@ const ConfirmTransaction = ({
     } finally {
       dispatch(fetchTokenBalance());
       setIsProcessing(false);
+      onClose();
+      toast.success('Tokens purchased successfully!', {
+        theme: "light",
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
     }
   };
 
