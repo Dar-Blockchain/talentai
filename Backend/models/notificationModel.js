@@ -44,6 +44,10 @@ const NotificationSchema = new mongoose.Schema(
       required: [true, "Un destinataire est requis."],
       index: true,
     },
+    emailed: {
+      type: Boolean,
+      default: false,
+    },
     createdAt: {
       type: Date,
       default: Date.now,
