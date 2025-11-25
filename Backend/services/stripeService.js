@@ -6,7 +6,6 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 exports.createCheckoutSession = async ({ planId, baseUrl }) => {
   try {
-    // Must await
     const plan = await getPlanById(planId);
 
     if (!plan) {
@@ -15,8 +14,7 @@ exports.createCheckoutSession = async ({ planId, baseUrl }) => {
 
     console.log('Selected plan:', plan);
 
-    // Stripe wants amount in cents
-    const amount = Math.round(plan.priceUsd * 100); // e.g. 199 → 19900
+    const amount = Math.round(plan.priceUsd * 100); // USD → cents
     const currency = "usd";
 
     const normalizedBase = (baseUrl || '').replace(/\/+$/, '');
@@ -40,7 +38,13 @@ exports.createCheckoutSession = async ({ planId, baseUrl }) => {
       ],
     });
 
-    return session;
+    // 👉 Retourne session + sessionId
+    return {
+      success: true,
+      sessionId: session.id,
+      session
+    };
+
   } catch (err) {
     console.error('❌ Error creating Stripe checkout session:', err);
     throw err;
