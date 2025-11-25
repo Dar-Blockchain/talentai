@@ -149,7 +149,7 @@ export default function UserAvatar() {
   // Get user role for badge color
   const getUserRole = () => {
     if (safeUser?.role === "Company") return "company";
-    if (safeUser?.role === "Candidat") return "candidate";
+    if (safeUser?.role === "Candidate") return "candidate";
     if (safeUser?.role === "Admin") return "admin";
     return "default";
   };

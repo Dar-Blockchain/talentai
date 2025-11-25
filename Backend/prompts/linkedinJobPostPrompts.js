@@ -19,22 +19,22 @@ const getQuickPrompt = (description, companyLocation) => `
         "requiredSkills": [
           {
             "name": "Skill 1",
-            "level": "1-5 (based on years of experience in the job post)",
-            "importance": "Required/Preferred",
+            "level": "beginner",
+            "importance": "high",
             "category": "Frontend/Backend/Other",
             "percentage": 0
           },
           {
             "name": "Skill 2",
-            "level": "1-5 (based on years of experience in the job post)",
-            "importance": "Required/Preferred",
+            "level": "intermediate",
+            "importance": "medium",
             "category": "Frontend/Backend/Other",
             "percentage": 0
           },
           {
             "name": "Skill 3",
-            "level": "1-5 (based on years of experience in the job post)",
-            "importance": "Required/Preferred",
+            "level": "advanced",
+            "importance": "critical",
             "category": "Frontend/Backend/Other",
             "percentage": 0
           }
@@ -60,17 +60,34 @@ const getQuickPrompt = (description, companyLocation) => `
     - Always include "responsibilities", "location", and "employmentType".
     - For the "location" field, extract the location from the job description if specified.
     - If no location is specified in the job description, use the company location: "${companyLocation}".
-    - Set skill level based on years of experience mentioned in the post:
-      - 1 year = level 1
-      - 2 years = level 2
-      - 5 years = level 3
-      - 10 years = level 4
-      - 15+ years = level 5
+
+    - CRITICAL: For "level", ONLY use these EXACT lowercase values: "beginner", "intermediate", "advanced", "expert"
+    - CRITICAL: For "importance", ONLY use these EXACT lowercase values: "low", "medium", "high", "critical"
+
+    - Set skill level based on years of experience using these EXACT values:
+      - 0-2 years → "beginner"
+      - 3-5 years → "intermediate"
+      - 6-10 years → "advanced"
+      - 11+ years → "expert"
+
+    - Set importance using these EXACT values:
+      - "critical" → Must-have core requirement with years of experience required
+      - "high" → Required for the job, explicitly mentioned as "Required"
+      - "medium" → Preferred or nice to have, mentioned as "Preferred" or "Plus"
+      - "low" → Bonus or additional skill, would be helpful
+
+    - The sum of all skill percentages must equal 100%.
+    - LIA must determine the percentage distribution based on importance, frequency, and context in the job description.
+    - If not specified, distribute evenly and logically.
     - Return only valid JSON. Avoid markdown or code blocks.
-    - The sum of all skill percentages must equal 100%.  
-    - LIA must determine the percentage distribution based on importance, frequency, and context in the job description.  
-    - If not specified, distribute evenly and logically.  
-    - Return only valid JSON. Avoid markdown or code blocks.
+
+    STRICT SKILL RULES:
+- NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
+- Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
+- If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
+- Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
+- Never invent unrealistic skills; remain consistent with standard industry technical stacks.
+- The “name” field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
 
     Job Description:
     ${description}
@@ -88,17 +105,27 @@ const getDetailedPrompt = (description, companyLocation) => `
     - For the "location" field, extract the location from the job description if specified.
     - If no location is specified in the job description, use the company location: "${companyLocation}".
     - Always include "location" in the output.
-    - Set skill level based on years of experience mentioned in the job post:
-      - 1 year = level 1
-      - 2 years = level 2
-      - 5 years = level 3
-      - 10 years = level 4
-      - 15+ years = level 5
-      - Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
-      - The total sum of all percentages must equal exactly 100%.
-      - LIA must infer the percentage distribution based on the importance, frequency, and emphasis of each skill mentioned in the job description.
-      - If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
-      - Core and frequently mentioned skills should receive higher percentages.
+
+    - CRITICAL: For "level", ONLY use these EXACT lowercase values: "beginner", "intermediate", "advanced", "expert"
+    - CRITICAL: For "importance", ONLY use these EXACT lowercase values: "low", "medium", "high", "critical"
+
+    - Set skill level based on years of experience using these EXACT values:
+      - 0-2 years → "beginner"
+      - 3-5 years → "intermediate"
+      - 6-10 years → "advanced"
+      - 11+ years → "expert"
+
+    - Set importance using these EXACT values:
+      - "critical" → Must-have core requirement with years of experience required
+      - "high" → Required for the job, explicitly mentioned as "Required"
+      - "medium" → Preferred or nice to have, mentioned as "Preferred" or "Plus"
+      - "low" → Bonus or additional skill, would be helpful
+
+    - Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
+    - The total sum of all percentages must equal exactly 100%.
+    - LIA must infer the percentage distribution based on the importance, frequency, and emphasis of each skill mentioned in the job description.
+    - If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
+    - Core and frequently mentioned skills should receive higher percentages.
     
     Job Description:
     ${description}
@@ -124,22 +151,22 @@ const getDetailedPrompt = (description, companyLocation) => `
         "requiredSkills": [
           {
             "name": "Skill 1",
-            "level": "Required level (1-5) based on years of experience",
-            "importance": "Required/Preferred",
+            "level": "beginner",
+            "importance": "high",
             "category": "Frontend/Backend/DevOps/etc.",
             "percentage": 0
           },
           {
             "name": "Skill 2",
-            "level": "Required level (1-5) based on years of experience",
-            "importance": "Required/Preferred",
+            "level": "intermediate",
+            "importance": "medium",
             "category": "Frontend/Backend/DevOps/etc.",
             "percentage": 0
           },
           {
             "name": "Skill 3",
-            "level": "Required level (1-5) based on years of experience",
-            "importance": "Required/Preferred",
+            "level": "advanced",
+            "importance": "critical",
             "category": "Frontend/Backend/DevOps/etc.",
             "percentage": 0
           }
@@ -201,6 +228,15 @@ const getDetailedPrompt = (description, companyLocation) => `
         "finalPost": "The complete formatted post ready for LinkedIn"
       }
     }
+
+    STRICT SKILL RULES:
+- NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
+- Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
+- If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
+- Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
+- Never invent unrealistic skills; remain consistent with standard industry technical stacks.
+- The “name” field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
+
 `.trim();
 
 module.exports = {

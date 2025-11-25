@@ -41,6 +41,7 @@ import EditProfileModal from "@/components/dashboard-candidate/EditProfileModal"
 import LoadingState from "@/components/dashboard-candidate/LoadingState";
 import ErrorState from "@/components/dashboard-candidate/ErrorState";
 import DashboardNavbar from "@/components/dashboard-candidate/DashboardNavbar";
+import TokenBalanceCard from "@/components/dashboard-candidate/TokenBalanceCard";
 import { skillCategories, softSkillNames, softSkills, technicalSkillsList } from "@/constants/skills";
 
 const GREEN_MAIN = "#8310FF";
@@ -313,15 +314,16 @@ export default function DashboardCandidate() {
 
       // Sign out from NextAuth (don't await to make redirect faster)
       signOut({ redirect: false }).catch(console.error);
-      
-      // Redirect immediately (don't wait for async operations)
-      window.location.href = "/signin";
+
+      // Use replace instead of href to prevent returnUrl from being added
+      // replace() removes current page from history, preventing back button issues
+      window.location.replace("/signin");
     } catch (error) {
       console.error("Logout failed:", error);
       // Even on error, redirect to signin
       setLoggingOut(true);
       resetRedirectState();
-      window.location.href = "/signin";
+      window.location.replace("/signin");
     }
   };
 
@@ -669,6 +671,9 @@ export default function DashboardCandidate() {
                      profileSkills={profile?.skills || []}
                      profileSoftSkills={profile?.softSkills || []}
                    />
+
+              {/* Token Balance Card */}
+              <TokenBalanceCard />
 
               {/* Recommended Opportunities */}
               <StyledCard sx={{ mb: 4 }}>

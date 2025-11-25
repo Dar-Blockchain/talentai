@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const { STEP_STATUS } = require("../constants/stepConstants");
 
 const connectionSchema = new mongoose.Schema(
   {
@@ -60,8 +59,8 @@ const postStepSchema = new mongoose.Schema(
     condition: String,
     status: {
       type: String,
-      enum: Object.values(STEP_STATUS),
-      default: STEP_STATUS.PENDING,
+      enum: ["pending", "inProgress", "done"],
+      default: "pending",
       required: true,
     },
     data: dataSchema,

@@ -439,7 +439,40 @@ class QuestionGeneratorAI {
 
   async generateIntelligentQuestion(session, coverageAnalysis, memoryAnalysis) {
     try {
+      // ENFORCE INTERVIEW TYPE SPECIFIC QUESTION GUIDELINES
+      let questionGuidelines = '';
+
+      if (session.config.interviewType === 'TECHNICAL_SKILL') {
+        questionGuidelines = `
+⚠️ CRITICAL: This is a TECHNICAL SKILL interview - ask ONLY technical questions about:
+✅ ALLOWED TOPICS:
+- Code implementation, architecture, and design patterns
+- Problem-solving approaches and algorithms
+- System design, scalability, and performance optimization
+- Debugging, testing, and code quality practices
+- Specific technologies, frameworks, and tools (${session.config.context.targetRole})
+- Technical trade-offs and decision-making
+- Hands-on coding experience and real-world technical challenges
+- Best practices and technical expertise at ${session.config.context.experienceLevel} level
+
+❌ STRICTLY FORBIDDEN:
+- Behavioral questions (team dynamics, leadership style, conflict resolution)
+- Soft skill questions (communication, collaboration, interpersonal skills)
+- General career questions (why you want to work here, where you see yourself)
+- Cultural fit or HR-style questions
+
+FOCUS: Technical depth, code quality, practical implementation, problem-solving technical approach.`;
+      } else if (session.config.interviewType === 'HR_INTERVIEW') {
+        questionGuidelines = `
+This is an HR/BEHAVIORAL interview - focus on soft skills, teamwork, cultural fit, and behavioral patterns.`;
+      } else if (session.config.interviewType === 'SOFT_SKILL') {
+        questionGuidelines = `
+This is a SOFT SKILLS interview - focus on communication, emotional intelligence, collaboration, and interpersonal abilities.`;
+      }
+
       const systemPrompt = `You are an expert interviewer generating intelligent, targeted questions based on coverage gaps and conversation flow.
+
+${questionGuidelines}
 
 QUESTION GENERATION PRINCIPLES:
 - Target specific coverage gaps identified
@@ -448,6 +481,7 @@ QUESTION GENERATION PRINCIPLES:
 - Avoid repetitive or similar questions
 - Progress logically through competency exploration
 - Be natural and conversational, not robotic
+- STRICTLY follow the interview type guidelines above
 
 RESPONSE FORMAT (JSON only):
 {
@@ -590,9 +624,24 @@ class DecisionEngineAI {
 
   async makeIntelligentDecision(session, candidateResponse, allAnalyses) {
     try {
-      // Check question counts per area to enforce max 5 questions limit
+      // DYNAMIC QUESTION LIMITS based on response quality for time efficiency
+      const QUALITY_THRESHOLDS = {
+        EXCELLENT: 75,    // Skip after 2 questions - candidate clearly competent
+        GOOD: 60,         // Skip after 3 questions - good evidence gathered
+        MODERATE: 40,     // Ask up to 4 questions - need more evidence
+        POOR: 30          // Skip after 2 questions - no point continuing on this topic
+      };
+
+      const QUESTIONS_PER_QUALITY = {
+        EXCELLENT: 2,     // Quick validation, move on (save time)
+        GOOD: 3,          // Standard exploration
+        MODERATE: 4,      // Need more evidence
+        POOR: 2           // Don't waste time on weak areas
+      };
+
+      // Check question counts per area to enforce dynamic limits
       const areaQuestionCounts = {};
-      const MAX_QUESTIONS_PER_AREA = 5;
+      const MAX_QUESTIONS_PER_AREA = 5; // Absolute maximum fallback
 
       if (session.coverage && session.coverage.areas) {
         Object.keys(session.coverage.areas).forEach(areaName => {
@@ -612,21 +661,52 @@ class DecisionEngineAI {
         currentArea = lastQuestion.metadata?.targetAreas?.[0];
       }
 
-      // Force move to new area if current area has reached question limit
+      // SMART DECISION: Calculate quality-based limit for current area
       let forcedDecision = null;
-      if (currentArea && areaQuestionCounts[currentArea] >= MAX_QUESTIONS_PER_AREA) {
-        console.log(`🚫 [Question Limit] Area "${currentArea}" has ${areaQuestionCounts[currentArea]} questions (max: ${MAX_QUESTIONS_PER_AREA})`);
-        forcedDecision = {
-          decision: "explore_new_area",
-          reasoning: `Asked ${areaQuestionCounts[currentArea]} questions on ${currentArea} - moving to new topic to avoid repetition and maintain engagement`,
-          targetArea: this.findLeastAskedArea(session.coverage.areas, currentArea),
-          strategy: "Move to fresh topic with lowest question count",
-          confidence: 100,
-          expectedDuration: "2-3 minutes",
-          forcedByLimit: true
-        };
-        console.log(`✅ [Forced Decision] Moving to area: ${forcedDecision.targetArea}`);
-        return forcedDecision;
+      let maxQuestionsForArea = MAX_QUESTIONS_PER_AREA;
+
+      if (currentArea && areaQuestionCounts[currentArea] > 0) {
+        // Calculate average quality for responses in this area
+        const currentAreaQuality = this.calculateAreaQualityAverage(
+          session.conversation,
+          currentArea,
+          areaQuestionCounts[currentArea]
+        );
+
+        // Determine dynamic limit based on quality
+        if (currentAreaQuality >= QUALITY_THRESHOLDS.EXCELLENT) {
+          maxQuestionsForArea = QUESTIONS_PER_QUALITY.EXCELLENT;
+          console.log(`⚡ [Smart Limit] Excellent responses (${currentAreaQuality.toFixed(1)}/100) in ${currentArea} - limit to ${maxQuestionsForArea} questions`);
+        } else if (currentAreaQuality >= QUALITY_THRESHOLDS.GOOD) {
+          maxQuestionsForArea = QUESTIONS_PER_QUALITY.GOOD;
+          console.log(`✅ [Smart Limit] Good responses (${currentAreaQuality.toFixed(1)}/100) in ${currentArea} - limit to ${maxQuestionsForArea} questions`);
+        } else if (currentAreaQuality >= QUALITY_THRESHOLDS.MODERATE) {
+          maxQuestionsForArea = QUESTIONS_PER_QUALITY.MODERATE;
+          console.log(`📊 [Smart Limit] Moderate responses (${currentAreaQuality.toFixed(1)}/100) in ${currentArea} - limit to ${maxQuestionsForArea} questions`);
+        } else {
+          maxQuestionsForArea = QUESTIONS_PER_QUALITY.POOR;
+          console.log(`⚠️  [Smart Limit] Poor responses (${currentAreaQuality.toFixed(1)}/100) in ${currentArea} - limit to ${maxQuestionsForArea} questions, moving on`);
+        }
+
+        // Force move to new area if dynamic limit reached
+        if (areaQuestionCounts[currentArea] >= maxQuestionsForArea) {
+          console.log(`🚫 [Smart Question Limit] Area "${currentArea}" has ${areaQuestionCounts[currentArea]} questions (dynamic max: ${maxQuestionsForArea} based on quality ${currentAreaQuality.toFixed(1)}/100)`);
+          forcedDecision = {
+            decision: "explore_new_area",
+            reasoning: `Asked ${areaQuestionCounts[currentArea]} questions on ${currentArea} with ${currentAreaQuality.toFixed(1)}/100 average quality. ` +
+                      (currentAreaQuality >= QUALITY_THRESHOLDS.GOOD
+                        ? 'Good performance - moving on efficiently.'
+                        : 'Limited value from additional questions - exploring other areas.'),
+            targetArea: this.findLeastAskedArea(session.coverage.areas, currentArea),
+            strategy: "Move to fresh topic for time efficiency",
+            confidence: 95,
+            expectedDuration: "2-3 minutes",
+            forcedBySmartLimit: true,
+            areaQuality: currentAreaQuality
+          };
+          console.log(`✅ [Forced Decision] Moving to area: ${forcedDecision.targetArea}`);
+          return forcedDecision;
+        }
       }
 
       const systemPrompt = `You are an expert interview decision engine. Make intelligent decisions about interview flow based on comprehensive analysis.
@@ -701,6 +781,51 @@ Make the next intelligent decision for interview progression. Consider question 
   }
 
   /**
+   * Calculate average response quality for a specific area
+   * Used for smart question limit decisions
+   * @param {Array} conversation - Full conversation history
+   * @param {string} areaName - Area to analyze
+   * @param {number} questionCount - Number of questions asked in this area
+   * @returns {number} Average quality score (0-100)
+   */
+  calculateAreaQualityAverage(conversation, areaName, questionCount) {
+    if (!areaName || questionCount === 0) return 50; // Default to moderate
+
+    // Find all candidate responses related to this area
+    const areaResponses = [];
+
+    for (let i = 0; i < conversation.length; i++) {
+      const entry = conversation[i];
+
+      // Look for interviewer questions targeting this area
+      if (entry.type === 'interviewer' &&
+          entry.metadata?.targetAreas?.includes(areaName)) {
+
+        // Get the candidate's response (next entry)
+        if (i + 1 < conversation.length && conversation[i + 1].type === 'candidate') {
+          const candidateResponse = conversation[i + 1];
+
+          // Extract quality score if available
+          if (candidateResponse.metadata?.qualityScore !== undefined) {
+            areaResponses.push(candidateResponse.metadata.qualityScore);
+          } else if (candidateResponse.aiAnalysis?.qualityScore !== undefined) {
+            areaResponses.push(candidateResponse.aiAnalysis.qualityScore);
+          }
+        }
+      }
+    }
+
+    // Calculate average
+    if (areaResponses.length === 0) return 50; // Default
+
+    const average = areaResponses.reduce((sum, score) => sum + score, 0) / areaResponses.length;
+
+    console.log(`📊 [Quality Analysis] ${areaName}: ${areaResponses.length} responses, avg quality: ${average.toFixed(1)}/100`);
+
+    return average;
+  }
+
+  /**
    * Find area with least questions asked (excluding current area)
    */
   findLeastAskedArea(coverageAreas, excludeArea = null) {
@@ -727,6 +852,53 @@ Make the next intelligent decision for interview progression. Consider question 
 
   async shouldEndInterview(session, totalDuration) {
     try {
+      // EARLY TERMINATION: Calculate overall response quality across all areas
+      const allQualityScores = session.conversation
+        .filter(entry => entry.type === 'candidate')
+        .map(entry => entry.metadata?.qualityScore || entry.aiAnalysis?.qualityScore)
+        .filter(score => score !== undefined);
+
+      const overallQualityAverage = allQualityScores.length > 0
+        ? allQualityScores.reduce((sum, score) => sum + score, 0) / allQualityScores.length
+        : 50;
+
+      const candidateResponseCount = Math.floor(session.conversation.length / 2);
+
+      // EARLY TERMINATION: Consistently poor performance after 6+ responses (5-8 minutes)
+      if (candidateResponseCount >= 6 && overallQualityAverage < 35) {
+        console.log(`❌ [Early Termination - Poor Performance] ${overallQualityAverage.toFixed(1)}/100 avg quality over ${candidateResponseCount} responses`);
+        return {
+          shouldEnd: true,
+          confidence: 95,
+          reasoning: `Candidate consistently provides insufficient technical responses (${overallQualityAverage.toFixed(1)}/100 average quality over ${candidateResponseCount} responses). Early termination to save time. Technical competency below threshold.`,
+          completedObjectives: ['Performance assessment completed - insufficient technical depth'],
+          remainingGaps: [],
+          recommendedAction: 'End interview - insufficient technical competency demonstrated',
+          earlyTermination: true,
+          terminationReason: 'poor_performance',
+          qualityScore: overallQualityAverage,
+          responseCount: candidateResponseCount
+        };
+      }
+
+      // EARLY SUCCESS: Consistently excellent performance after 8+ responses (10-12 minutes)
+      if (candidateResponseCount >= 8 && overallQualityAverage >= 80) {
+        console.log(`✅ [Early Success - Excellent Performance] ${overallQualityAverage.toFixed(1)}/100 avg quality over ${candidateResponseCount} responses`);
+        return {
+          shouldEnd: true,
+          confidence: 90,
+          reasoning: `Candidate consistently demonstrates strong technical competency (${overallQualityAverage.toFixed(1)}/100 average quality over ${candidateResponseCount} responses). Sufficient evidence gathered across multiple focus areas. Further questioning provides diminishing returns.`,
+          completedObjectives: ['Technical competency validated', 'Strong performance across technical focus areas', 'Sufficient evidence of expertise'],
+          remainingGaps: [],
+          recommendedAction: 'End interview - candidate clearly qualified',
+          earlySuccess: true,
+          terminationReason: 'excellent_performance',
+          qualityScore: overallQualityAverage,
+          responseCount: candidateResponseCount
+        };
+      }
+
+      // Continue with standard evaluation if no early termination
       const systemPrompt = `Determine if an interview should end based on coverage completeness and interview objectives.
 
 EVALUATION CRITERIA:
@@ -1088,6 +1260,17 @@ class IntelligentInterviewService {
         );
 
         console.log(`📊 [Response Quality] Answered: ${responseQuality.answeredQuestion}, Score: ${responseQuality.qualityScore}/100`);
+
+        // STORE QUALITY SCORES: Add quality metadata to candidate entry for smart limit calculations
+        candidateEntry.metadata = {
+          ...candidateEntry.metadata,
+          qualityScore: responseQuality.qualityScore,
+          answeredQuestion: responseQuality.answeredQuestion,
+          completeness: responseQuality.completeness,
+          targetArea: targetArea  // Track which area this response relates to
+        };
+
+        console.log(`💾 [Quality Storage] Stored quality score ${responseQuality.qualityScore}/100 for area: ${targetArea}`);
       }
 
       // Perform intelligent coverage analysis
@@ -2042,7 +2225,40 @@ Rephrase this question to help the candidate answer it.`;
     const interviewerTone = config.interviewerPersona?.tone || 'friendly';
     const cultureTrait = config.companyProfile?.culture?.values?.[0] || 'innovation';
 
+    // INTERVIEW TYPE SPECIFIC FOCUS
+    let interviewFocus = '';
+    let exampleGreeting = '';
+
+    if (config.interviewType === 'TECHNICAL_SKILL') {
+      interviewFocus = `⚠️ CRITICAL: This is a PURELY TECHNICAL interview assessing ${config.context.targetRole} technical skills at ${config.context.experienceLevel} level.
+
+FOCUS:
+- ONLY technical competencies and hands-on experience
+- Code architecture, problem-solving, system design
+- NO behavioral or soft skill topics
+- NO general career questions
+- This is a technical depth assessment`;
+
+      exampleGreeting = `"Hello! I'm excited to discuss your technical experience with ${config.context.targetRole}. Today we'll be exploring your hands-on technical skills, problem-solving approach, and expertise at the ${config.context.experienceLevel} level. Let's dive into the technical aspects of your work."`;
+
+    } else if (config.interviewType === 'HR_INTERVIEW') {
+      interviewFocus = `This is a BEHAVIORAL and CULTURAL FIT interview focusing on soft skills, teamwork, and alignment with company values.`;
+      exampleGreeting = `"Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's have a great conversation about your experience and how you can contribute to our team."`;
+
+    } else if (config.interviewType === 'SOFT_SKILL') {
+      interviewFocus = `This is a SOFT SKILLS and COMMUNICATION assessment focusing on interpersonal abilities, emotional intelligence, and collaboration.`;
+      exampleGreeting = `"Hello! Today we'll be discussing your communication style and collaboration experiences. I'm looking forward to understanding how you work with others and handle various workplace scenarios."`;
+
+    } else {
+      // Default/generic
+      interviewFocus = `Standard professional interview.`;
+      exampleGreeting = `"Hello! I'm excited to speak with you today about the ${config.context.targetRole} position. Let's have a great conversation."`;
+    }
+
     return `Generate a warm, professional greeting for this ${config.interviewType} interview:
+
+INTERVIEW TYPE & FOCUS:
+${interviewFocus}
 
 INTERVIEW CONTEXT:
 - Position: ${config.context.targetRole}
@@ -2054,13 +2270,13 @@ INTERVIEW CONTEXT:
 REQUIREMENTS:
 - Write 2-3 natural, conversational sentences
 - Welcome the candidate warmly
-- Briefly mention the position and company
-- Set a comfortable, professional tone
+- Briefly mention the position and set expectations for the interview type
+- Set a comfortable, professional tone appropriate for ${config.interviewType}
 - DO NOT use labels, bullet points, or structured format
 - DO NOT include explanations or meta-text
 - ONLY output the greeting text itself
 
-Example format: "Hello! I'm excited to speak with you today about the [role] position at [company]. Let's have a great conversation about your experience and how you can contribute to our team."`;
+Example format for ${config.interviewType}: ${exampleGreeting}`;
   }
 
   /**

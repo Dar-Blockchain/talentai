@@ -1354,7 +1354,7 @@ const DashboardAdmin = () => {
                         onChange={e => setUserRoleFilter(e.target.value)}
                     >
                         <MenuItem value="">All</MenuItem>
-                        <MenuItem value="Candidat">Candidate</MenuItem>
+                        <MenuItem value="Candidate">Candidate</MenuItem>
                         <MenuItem value="Company">Company</MenuItem>
                         <MenuItem value="Admin">Admin</MenuItem>
                     </Select>

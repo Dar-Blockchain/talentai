@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { TOKEN_TRANSACTION_TYPES, TOKEN_TRANSACTION_STATUS, PAYMENT_METHODS } = require('../constants/tokenTransactionConstants');
 
 const tokenTransactionSchema = new mongoose.Schema({
   userId: {
@@ -15,7 +14,7 @@ const tokenTransactionSchema = new mongoose.Schema({
   type: {
     type: String,
     required: true,
-    enum: Object.values(TOKEN_TRANSACTION_TYPES)
+    enum: ['purchase', 'spend', 'refund', 'bonus', 'adjustment']
   },
   amount: {
     type: Number,
@@ -31,15 +30,15 @@ const tokenTransactionSchema = new mongoose.Schema({
   status: {
     type: String,
     required: true,
-    enum: Object.values(TOKEN_TRANSACTION_STATUS),
-    default: TOKEN_TRANSACTION_STATUS.PENDING
+    enum: ['pending', 'completed', 'failed', 'cancelled'],
+    default: 'pending'
   },
   paymentMethod: {
     type: String,
-    enum: Object.values(PAYMENT_METHODS),
+    enum: ['hedera', 'hashpack', 'admin'],
     // Only required for purchases
     required: function() {
-      return this.type === TOKEN_TRANSACTION_TYPES.PURCHASE;
+      return this.type === 'purchase';
     }
   },
   walletAddress: {
@@ -83,26 +82,26 @@ tokenTransactionSchema.index({ hederaTransactionHash: 1 });
 tokenTransactionSchema.pre('save', function(next) {
   if (!this.description) {
     switch (this.type) {
-      case TOKEN_TRANSACTION_TYPES.PURCHASE:
+      case 'purchase':
         this.description = `Purchased ${this.amount} tokens for $${this.price}`;
         break;
-      case TOKEN_TRANSACTION_TYPES.SPEND:
+      case 'spend':
         this.description = `Spent ${Math.abs(this.amount)} tokens`;
         break;
-      case TOKEN_TRANSACTION_TYPES.REFUND:
+      case 'refund':
         this.description = `Refund of ${this.amount} tokens`;
         break;
-      case TOKEN_TRANSACTION_TYPES.BONUS:
+      case 'bonus':
         this.description = `Bonus tokens: ${this.amount}`;
         break;
-      case TOKEN_TRANSACTION_TYPES.ADJUSTMENT:
+      case 'adjustment':
         this.description = `Balance adjustment: ${this.amount}`;
         break;
     }
   }
 
   // Set completedAt when status changes to completed
-  if (this.status === TOKEN_TRANSACTION_STATUS.COMPLETED && !this.completedAt) {
+  if (this.status === 'completed' && !this.completedAt) {
     this.completedAt = new Date();
   }
 
@@ -161,7 +160,7 @@ tokenTransactionSchema.statics.getUserTransactions = async function(userId, opti
 
 // Method to mark transaction as completed
 tokenTransactionSchema.methods.markCompleted = function(hederaHash = null) {
-  this.status = TOKEN_TRANSACTION_STATUS.COMPLETED;
+  this.status = 'completed';
   this.completedAt = new Date();
   if (hederaHash) {
     this.hederaTransactionHash = hederaHash;
@@ -171,7 +170,7 @@ tokenTransactionSchema.methods.markCompleted = function(hederaHash = null) {
 
 // Method to mark transaction as failed
 tokenTransactionSchema.methods.markFailed = function(reason = null) {
-  this.status = TOKEN_TRANSACTION_STATUS.FAILED;
+  this.status = 'failed';
   if (reason) {
     this.failureReason = reason;
   }

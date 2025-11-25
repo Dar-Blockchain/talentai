@@ -1,6 +1,8 @@
 const AgentConfig = require('../models/AgentConfigModel');
 const Agent = require('../models/AgentModel');
 const Post = require('../models/PostModel');
+const User = require('../models/UserModel');
+const postPaymentService = require('./postPaymentService');
 
 /**
  * Service pour AgentConfig
@@ -165,5 +167,102 @@ module.exports.deleteAgentConfig = async (id) => {
     return cfg;
   } catch (error) {
     throw new Error('Error deleting AgentConfig: ' + error.message);
+  }
+};
+
+/**
+ * Process payment for agent creation after agent config is created
+ * This function should be called AFTER the agent and config are fully created
+ * @param {string} postId - Post ID
+ * @param {string} userId - User ID (company)
+ * @returns {Promise<Object>} Payment result
+ */
+module.exports.processAgentCreationPayment = async (postId, userId) => {
+  try {
+    console.log(`💳 Processing agent creation payment for Post ${postId}...`);
+
+    // Get post with steps populated
+    const post = await Post.findById(postId).populate('post_Steps');
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    // Verify ownership
+    if (post.user.toString() !== userId.toString()) {
+      throw new Error('User is not the owner of this post');
+    }
+
+    // Check if already paid
+    if (post.paymentStatus === 'completed') {
+      console.log(`ℹ️  Payment already completed for Post ${postId}`);
+      return {
+        success: true,
+        alreadyPaid: true,
+        message: 'Payment already completed',
+        transactionId: post.paymentTransactionId
+      };
+    }
+
+    // Get user with Hedera credentials
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (!user.hederaAccountId || !user.hederaPrivateKey) {
+      throw new Error('User Hedera account not configured');
+    }
+
+    // Calculate price based on number of steps
+    const numberOfSteps = post.post_Steps?.length || 0;
+    const price = postPaymentService.calculatePrice(numberOfSteps);
+
+    console.log(`📊 Payment calculation:`);
+    console.log(`   Steps: ${numberOfSteps}`);
+    console.log(`   Price: ${price} TAI`);
+
+    // Update post status to pending
+    post.paymentStatus = 'pending';
+    await post.save();
+
+    // Process the payment
+    const paymentResult = await postPaymentService.processPayment(
+      user.hederaAccountId,
+      user.hederaPrivateKey,
+      price,
+      postId,
+      userId
+    );
+
+    // Update post with payment details
+    post.paymentStatus = 'completed';
+    post.paymentTransactionId = paymentResult.transactionId;
+    post.pricePaid = price;
+    post.paymentCompletedAt = new Date();
+    await post.save();
+
+    console.log(`✅ Agent creation payment completed for Post ${postId}`);
+
+    return {
+      success: true,
+      payment: paymentResult,
+      postId: postId,
+      price: price,
+      numberOfSteps: numberOfSteps
+    };
+  } catch (error) {
+    console.error(`❌ Error processing agent creation payment:`, error);
+
+    // Update post status to failed
+    try {
+      await Post.findByIdAndUpdate(postId, {
+        paymentStatus: 'failed',
+        paymentError: error.message
+      });
+    } catch (updateError) {
+      console.error('Failed to update post payment status:', updateError);
+    }
+
+    throw new Error('Payment processing failed: ' + error.message);
   }
 };

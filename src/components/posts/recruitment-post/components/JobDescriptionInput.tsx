@@ -17,6 +17,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import SparklesIcon from "@mui/icons-material/AutoFixHigh";
 import BoltIcon from "@mui/icons-material/Bolt";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import SalaryRange from "./SalaryRange";
 
 const GREEN_MAIN = "#00FF9D";
@@ -137,6 +138,32 @@ const JobDescriptionInput: React.FC<JobDescriptionInputProps> = ({
       />
       <Divider sx={{ borderColor: "rgba(0, 255, 157, 0.1)" }} />
       <CardContent sx={{ p: 3 }}>
+        {/* Pricing Information Alert */}
+        <Alert
+          severity="info"
+          icon={<MonetizationOnIcon />}
+          sx={{
+            mb: 3,
+            borderRadius: 2,
+            backgroundColor: 'rgba(139, 92, 246, 0.05)',
+            border: '1px solid rgba(139, 92, 246, 0.2)',
+            '& .MuiAlert-icon': {
+              color: PURPLE_ACCENT,
+            }
+          }}
+        >
+          <Typography variant="subtitle2" fontWeight={600} gutterBottom sx={{ color: '#0F172A' }}>
+            💰 Pipeline Pricing Information
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#475569' }}>
+            Base Fee: <strong>1,000 TAI</strong> + <strong>100 TAI</strong> per interview step
+            <br />
+            <Box component="span" sx={{ fontSize: '0.85rem', color: '#64748b', mt: 0.5, display: 'block' }}>
+              Examples: 1 step = 1,100 TAI | 2 steps = 1,200 TAI | 5 steps = 1,500 TAI | 10 steps = 2,000 TAI
+            </Box>
+          </Typography>
+        </Alert>
+
         <Box sx={{ mb: 3 }}>
           <Typography
             variant="h6"

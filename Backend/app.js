@@ -22,6 +22,7 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./swagger.json");
 const blockPostmanRequests = require("./middleware/blockPostmanRequests");
 const resetQuotaJob = require("./cron/resetQuota");
+import Stripe from 'stripe';
 
 const http = require("http");
 const connectDB = require("./config/database");
@@ -40,7 +41,7 @@ const todoRouter = require("./routes/todoRouter");
 const feedbackRouter = require("./routes/feedbackRoutes");
 const logRoutes = require("./routes/logRoutes");
 const interviewDetailsRouter = require("./routes/interviewDetailsRouter");
-const notificationRouter = require("./routes/notificationRouter");
+const notificationSystemRouter = require("./routes/notificationSystemRoutes");
 const postStepsRouter = require("./routes/postStepsRouter");
 const candidatePostStepProgressRouter = require("./routes/candidatePostStepProgressRouter");
 const hederaToolsRouter = require("./routes/hederaToolsRouter");
@@ -50,12 +51,22 @@ const recruitementStepRouter = require("./routes/recruitementStepRouter");
 const taskRouter = require("./routes/taskRouter");
 const agentConfigRouter = require("./routes/agentConfigRouter");
 const tokenRouter = require("./routes/tokenRouter");
+
+const stripRouter = require("./routes/StripRouter");
 const paymentRouter = require("./routes/paymentRouter");
 
 require("dotenv").config();
 
+
 // 🧠 Import et exécution automatique du CRON job
 require("./cron/resetQuota");
+
+// Stripe payment routes
+app.use('/api/stripe', stripRouter);
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2024-06-20",
+});
 
 const app = express();
 
@@ -139,7 +150,7 @@ app.use("/resume", resumeRouter);
 app.use("/todo", todoRouter);
 app.use("/logs", logRoutes);
 app.use("/interviewDetails", interviewDetailsRouter);
-app.use("/notification", notificationRouter);
+app.use("/notification-system", notificationSystemRouter);
 app.use("/post-steps", postStepsRouter);
 app.use("/candidate-progress", candidatePostStepProgressRouter);
 app.use("/hedera-tools", hederaToolsRouter);

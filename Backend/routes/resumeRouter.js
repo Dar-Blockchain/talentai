@@ -3,7 +3,7 @@
  *
  * Middlewares globaux appliqués:
  * - requireAuthUser: nécessite un utilisateur authentifié
- * - controledAcces('Candidat'): réservé aux candidats
+ * - controledAcces('Candidate'): réservé aux candidats
  * - LogMiddleware("Resume"): journalise les requêtes liées aux CV
  */
 // routes/resumeRoutes.js
@@ -18,7 +18,7 @@ const { controledAcces } = require('../middleware/controledAcces'); // Importez 
 
 
 // Auth candidat obligatoire + logs
-router.use(requireAuthUser, controledAcces('Candidat'), authLogMiddleware("Resume"));
+router.use(requireAuthUser, controledAcces('Candidate'), authLogMiddleware("Resume"));
 
 
 // CRUD CV

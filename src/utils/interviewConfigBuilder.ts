@@ -62,7 +62,7 @@ function getInterviewGoal(interviewType: string, params: URLParams): string {
   const goals: { [key: string]: string } = {
     'HR_INTERVIEW': 'Assess behavioral competencies and cultural fit',
     'TECHNICAL_SKILL': `Validate ${params.skill || 'technical'} proficiency and problem-solving ability`,
-    'SOFT_SKILL': `Evaluate ${params.skill || 'soft skill'} effectiveness and application`,
+    'SOFT_SKILL': `Evaluate ${params.category || params.language || 'language'} ${params.skill || 'communication'} proficiency through interactive conversation`,
     'SALARY_INTERVIEW': 'Discuss compensation expectations and market alignment',
     'PSYCHOTECHNIC': 'Assess cognitive abilities and personality traits'
   };
@@ -101,8 +101,8 @@ export function buildInterviewConfigFromURL(params: URLParams): InterviewConfig 
   } else if (params.type === 'soft') {
     // Soft skill assessment
     experienceLevel = PROFICIENCY_MAP[params.proficiency || '3'] || params.proficiency || 'Mid Level';
-    targetRole = params.role || 'Professional';
-    testReason = `Assess ${params.skill || 'soft skill'} in ${params.category || 'general'} context at ${experienceLevel} level`;
+    targetRole = params.role || `${params.category || 'English'} ${params.skill || 'Communication'} Assessment`;
+    testReason = `Evaluate ${params.skill || 'soft skill'} proficiency in ${params.category || 'general'} language at ${experienceLevel} level`;
 
   } else if (params.type === 'salary') {
     // Salary negotiation interview
@@ -127,7 +127,7 @@ export function buildInterviewConfigFromURL(params: URLParams): InterviewConfig 
     interviewType,
     testReason,
     context: {
-      targetCompany: params.company || 'Target Company',
+      targetCompany: params.company || (params.type === 'soft' ? 'Language Assessment Center' : 'Target Company'),
       targetRole,
       experienceLevel,
       interviewGoal: getInterviewGoal(interviewType, params)

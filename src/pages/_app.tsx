@@ -92,8 +92,11 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
       );
     };
 
-    window.fetch = async function (...args) {
-      const url = args[0];
+    window.fetch = async function (
+      input: RequestInfo | URL,
+      init?: RequestInit
+    ): Promise<Response> {
+      const url = input;
       const pathname = window.location.pathname;
 
       if (isApiCall(url) && !pathname.startsWith("/signin")) {
@@ -115,7 +118,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
           localStorage.setItem("api_token", cookieToken);
       }
 
-      const response = await originalFetch.apply(this, args);
+      const response = await originalFetch(input, init);
       if (
         response.status === 401 &&
         isApiCall(url) &&

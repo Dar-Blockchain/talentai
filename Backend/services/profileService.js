@@ -6,7 +6,6 @@ const AgentConfig = require("../models/AgentConfigModel");
 const { POST_STATUS } = require("../constants/postConstants");
 const fs = require("fs");
 const path = require("path");
-const { USER_ROLES } = require("../constants/userConstants");
 
 // Create or update a candidate profile
 module.exports.createOrUpdateProfile = async (userId, profileData) => {
@@ -20,7 +19,7 @@ module.exports.createOrUpdateProfile = async (userId, profileData) => {
     const updateUserData = {
       FirstName: profileData.firstName || profileData.FirstName,
       LastName: profileData.lastName || profileData.LastName,
-      role: USER_ROLES.CANDIDAT,
+      role: "Candidate",
     };
 
     // Update user with correct field names

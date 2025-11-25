@@ -6,7 +6,7 @@
  * - LogMiddleware("Feedback"): journalise les requêtes de feedback
  *
  * Rôles:
- * - Candidat: peut créer un feedback
+ * - Candidate: peut créer un feedback
  * - Admin: peut lister tous les feedbacks
  */
 const express = require('express');
@@ -23,9 +23,9 @@ router.use(requireAuthUser, authLogMiddleware("Feedback"));
 
 
 // POST /feedback/addFeedback
-// Accès: Candidat
+// Accès: Candidate
 // Body: { message, rating, ... }
-router.post('/addFeedback', controledAcces('Candidat'), feedbackController.create);
+router.post('/addFeedback', controledAcces('Candidate'), feedbackController.create);
 // GET /feedback/getAllFeedback
 // Accès: Admin
 router.get('/getAllFeedback', controledAcces('Admin'), feedbackController.getAllFeedback);

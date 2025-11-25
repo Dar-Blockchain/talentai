@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const { POST_STATUS } = require("../constants/postConstants");
-const { SKILL_LEVELS, SKILL_IMPORTANCE } = require("../constants/skillConstants");
 
 const salarySchema = new mongoose.Schema({
   min: { type: Number, required: true },
@@ -10,8 +9,8 @@ const salarySchema = new mongoose.Schema({
 
 const skillSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  level: { type: String, enum: Object.values(SKILL_LEVELS) },
-  importance: { type: String, enum: Object.values(SKILL_IMPORTANCE) },
+  level: { type: String },
+  importance: { type: String },
   category: { type: String },
   percentage: {
     type: Number,
@@ -135,6 +134,30 @@ const postSchema = new mongoose.Schema({
       ref: "Post_Steps",
     },
   ],
+
+  // Payment information
+  paymentStatus: {
+    type: String,
+    enum: ['not_paid', 'pending', 'completed', 'failed'],
+    default: 'not_paid',
+    description: 'Payment status for agent creation'
+  },
+  paymentTransactionId: {
+    type: String,
+    description: 'Reference to TokenTransaction ID'
+  },
+  pricePaid: {
+    type: Number,
+    description: 'Amount paid in TAI tokens'
+  },
+  paymentCompletedAt: {
+    type: Date,
+    description: 'Timestamp when payment was completed'
+  },
+  paymentError: {
+    type: String,
+    description: 'Error message if payment failed'
+  }
 });
 
 const Post = mongoose.model("Post", postSchema);

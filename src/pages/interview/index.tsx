@@ -208,6 +208,45 @@ export default function Test() {
   const userRole = useSelector((state: RootState) => state.user.userType);
   const GREEN_MAIN = userRole === 'company' ? 'rgba(0, 255, 157, 1)' : '#8310FF';
 
+  // Redirect to HR interview page if type is technicalSkill, soft, or on-boarding
+  useEffect(() => {
+    if (router.isReady && (router.query.type === 'technicalSkill' || router.query.type === 'soft' || router.query.type === 'on-boarding')) {
+      const { type, skill, skills, category, proficiency, experienceLevel, language, ...otherParams } = router.query;
+
+      let queryParams: Record<string, string> = {};
+
+      if (type === 'technicalSkill') {
+        // Technical skill interview
+        queryParams = {
+          type: 'technical',
+          role: skill as string || 'Software Engineer',
+          proficiency: proficiency as string || 'Mid Level',
+          ...otherParams
+        };
+      } else if (type === 'soft') {
+        // Soft skill interview
+        queryParams = {
+          type: 'soft',
+          skill: skill as string || 'Communication',
+          proficiency: proficiency as string || '3',
+          category: category as string || language as string || 'General',
+          ...otherParams
+        };
+      } else if (type === 'on-boarding') {
+        // Onboarding interview - PURE technical skill assessment (100% technical questions)
+        queryParams = {
+          type: 'technicalSkill',  // Maps to TECHNICAL_SKILL config for technical-only questions
+          skill: (skill || skills) as string || 'JavaScript',
+          proficiency: experienceLevel as string || proficiency as string || 'Entry Level',
+          ...otherParams
+        };
+      }
+
+      const queryString = new URLSearchParams(queryParams as Record<string, string>).toString();
+      router.replace(`/interview/hr?${queryString}`);
+    }
+  }, [router.isReady, router.query]);
+
   const [questions, setQuestions] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(true);
   const [current, setCurrent] = useState(0);
@@ -2157,12 +2196,18 @@ export default function Test() {
         }}>
           <Button
             variant="contained"
-            endIcon={<ArrowForwardIcon />}
+            endIcon={!nextButtonDisabled && !isGenerating ? <ArrowForwardIcon /> : null}
             onClick={handleNext}
             disabled={isGenerating || (current > 0 && nextButtonDisabled)}
             sx={{
               textTransform: 'none',
-              background: nextButtonDisabled ? 'rgba(0,0,0,0.12)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: isGenerating
+                ? 'linear-gradient(135deg, #9e9e9e 0%, #757575 100%)'
+                : nextButtonDisabled
+                ? 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)'
+                : transcriptions[current]?.trim()
+                ? 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)'
+                : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               borderRadius: 2,
               px: { xs: 3, sm: 4 },
               py: { xs: 1, sm: 1.5 },
@@ -2170,19 +2215,53 @@ export default function Test() {
               fontWeight: 600,
               width: { xs: '100%', sm: 'auto' },
               maxWidth: { xs: '300px', sm: 'none' },
-              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+              boxShadow: isGenerating
+                ? 'none'
+                : nextButtonDisabled
+                ? '0 4px 12px rgba(255, 152, 0, 0.4)'
+                : transcriptions[current]?.trim()
+                ? '0 4px 12px rgba(76, 175, 80, 0.4)'
+                : '0 4px 12px rgba(102, 126, 234, 0.4)',
+              transition: 'all 0.3s ease',
               '&:hover': {
-                background: nextButtonDisabled ? 'rgba(0,0,0,0.12)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                boxShadow: '0 6px 16px rgba(102, 126, 234, 0.5)',
+                background: isGenerating
+                  ? 'linear-gradient(135deg, #9e9e9e 0%, #757575 100%)'
+                  : nextButtonDisabled
+                  ? 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)'
+                  : transcriptions[current]?.trim()
+                  ? 'linear-gradient(135deg, #45a049 0%, #388e3c 100%)'
+                  : 'linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)',
+                boxShadow: isGenerating
+                  ? 'none'
+                  : nextButtonDisabled
+                  ? '0 6px 16px rgba(255, 152, 0, 0.5)'
+                  : transcriptions[current]?.trim()
+                  ? '0 6px 16px rgba(76, 175, 80, 0.5)'
+                  : '0 6px 16px rgba(102, 126, 234, 0.5)',
               },
               '&.Mui-disabled': {
-                background: 'rgba(0,0,0,0.12)',
-                color: 'rgba(0,0,0,0.26)',
+                background: isGenerating
+                  ? 'linear-gradient(135deg, #9e9e9e 0%, #757575 100%)'
+                  : 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
+                color: '#fff',
+                opacity: 0.7,
               }
             }}
           >
-            {current < questions.length - 1
-              ? `Next Question${nextButtonDisabled ? ` (${buttonTimer}s)` : ''}`
+            {isGenerating
+              ? '⏳ Generating Questions...'
+              : nextButtonDisabled
+              ? `⏱️ Please Wait (${buttonTimer}s)`
+              : isRecording
+              ? '🎤 Recording... Click when done'
+              : transcriptions[current]?.trim()
+              ? current < questions.length - 1
+                ? '✓ Submit & Next Question'
+                : '✓ Submit & Finish Test'
+              : current < questions.length - 1
+              ? isSpeechActive
+                ? '🎤 Speaking... Click when done'
+                : 'Skip to Next Question'
               : 'Finish Test'}
           </Button>
         </Box>

@@ -112,17 +112,18 @@ async function initializeAgenda() {
         // Load agent manual configuration
         const agentConfig = await AgentConfig.findOne({ agentId: agent._id }).lean();
         if (!agentConfig) {
-          console.warn(`⚠️  [Agenda] No configuration found for agent ${agentLabel}. Default configuration used.`);
+          console.warn(`⚠️  [Agenda] No configuration found for agent ${agentLabel}. Skipping this agent (no default values).`);
+          continue; // If no config exists, skip this agent entirely as requested
         }
 
-        // Configuration values (or defaults)
-        const thresholdPercent = agentConfig?.thresholdPercent ?? 70;
-        const bidBudgetMin = agentConfig?.bidBudgetMin ?? 10;
-        const bidBudgetMax = agentConfig?.bidBudgetMax ?? 1000;
-        const bidStep = agentConfig?.bidStep ?? 5;
-        const maxCandidatesToBid = agentConfig?.maxCandidatesToBid ?? 1;
-        const autoSubmitTopMatch = agentConfig?.autoSubmitTopMatch ?? true;
-        const maxDailySpending = agentConfig?.maxDailySpending ?? 200;
+        // Configuration values (require explicit values in agentConfig — no defaults)
+        const thresholdPercent = agentConfig.thresholdPercent;
+        const bidBudgetMin = agentConfig.bidBudgetMin;
+        const bidBudgetMax = agentConfig.bidBudgetMax;
+        const bidStep = agentConfig.bidStep;
+        const maxCandidatesToBid = agentConfig.maxCandidatesToBid;
+        const autoSubmitTopMatch = agentConfig.autoSubmitTopMatch;
+        const maxDailySpending = agentConfig.maxDailySpending;
 
         const { jobTitle, matches } = await computeMatches(agent.postId._id);
         totalMatches += matches.length;
