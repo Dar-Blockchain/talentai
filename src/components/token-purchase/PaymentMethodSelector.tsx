@@ -1,41 +1,43 @@
-import hashConnectService, { ConnectionStatus, WalletInfo } from "@/services/hashConnectService";
+import hashConnectService, {
+  ConnectionStatus,
+  WalletInfo,
+} from "@/services/hashConnectService";
 import { Box, Radio, RadioGroup, Typography, Button } from "@mui/material";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { PricingPlan } from "@/store/slices/tokenSlice";
+
+const methods = [
+  { label: "Pay with card", value: "card", icon: "/icons/card.svg" },
+  { label: "Wallet", value: "wallet", icon: "/icons/wallet.svg" },
+];
 
 interface PaymentMethodSelectorProps {
+  selectedPaymentMethod: string;
+  setSelectedPaymentMethod: (method: string) => void;
   onBack: () => void;
   onClose: () => void;
-  selectedPlan: PricingPlan | null;
   onPaymentMethodSelected: (method: string, walletInfo?: WalletInfo) => void;
 }
 
 const PaymentMethodSelector = ({
+  selectedPaymentMethod = "wallet",
+  setSelectedPaymentMethod,
   onBack,
   onClose,
-  selectedPlan,
-  onPaymentMethodSelected
+  onPaymentMethodSelected,
 }: PaymentMethodSelectorProps) => {
-  const [walletStatus, setWalletStatus] = useState<ConnectionStatus>('disconnected');
-  const [walletInfo, setWalletInfo] = useState<WalletInfo | null>(null);
+  const [walletStatus, setWalletStatus] =
+    useState<ConnectionStatus>("disconnected");
   const [isHashConnectReady, setIsHashConnectReady] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState("wallet");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleMethodChange = (event: any) => {
-    setSelectedMethod(event.target.value);
+    setSelectedPaymentMethod(event.target.value);
   };
-
-  const methods = [
-    { label: "Pay with card", value: "card", icon: "/icons/card.svg" },
-    { label: "Wallet", value: "wallet", icon: "/icons/wallet.svg" },
-  ];
 
   const connectWallet = async () => {
     try {
       await hashConnectService.connectWallet();
-      console.log("Wallet connection initiated");
     } catch (error) {
       console.error("Failed to connect wallet:", error);
       setErrorMessage(`Failed to connect wallet: ${error}`);
@@ -43,24 +45,23 @@ const PaymentMethodSelector = ({
   };
 
   const handleContinue = async () => {
-    if (selectedMethod === "wallet") {
+    if (selectedPaymentMethod === "wallet") {
       // For wallet payment, connect first
       await connectWallet();
     } else {
       // For card payment, proceed directly to confirmation
-      onPaymentMethodSelected(selectedMethod);
+      onPaymentMethodSelected(selectedPaymentMethod);
     }
   };
 
   // Initialize HashConnect event handlers
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     const handleWalletConnected = (info: WalletInfo) => {
-      setWalletInfo(info);
       setErrorMessage(null);
       // Once wallet is connected, proceed to confirmation
-      onPaymentMethodSelected(selectedMethod, info);
+      onPaymentMethodSelected(selectedPaymentMethod, info);
     };
 
     hashConnectService.setEventHandlers({
@@ -68,16 +69,14 @@ const PaymentMethodSelector = ({
         setWalletStatus(status);
       },
       onWalletConnected: handleWalletConnected,
-      onWalletDisconnected: () => {
-        setWalletInfo(null);
-      },
+      onWalletDisconnected: () => {},
       onError: (error: string) => {
         setErrorMessage(error);
-        setWalletStatus('error');
+        setWalletStatus("error");
       },
       onInitialized: () => {
         setIsHashConnectReady(true);
-      }
+      },
     });
 
     // Check if HashConnect is already ready
@@ -86,19 +85,11 @@ const PaymentMethodSelector = ({
         setIsHashConnectReady(true);
         const initialStatus = hashConnectService.getConnectionStatus();
         setWalletStatus(initialStatus);
-
-        if (initialStatus === 'connected') {
-          const info = await hashConnectService.getWalletInfo();
-          if (info) {
-            setWalletInfo(info);
-          }
-        }
       }
     };
 
     checkExistingConnection();
-
-  }, [selectedMethod, onPaymentMethodSelected]);
+  }, [selectedPaymentMethod, onPaymentMethodSelected]);
 
   return (
     <>
@@ -122,7 +113,7 @@ const PaymentMethodSelector = ({
           Choose payment method
         </Typography>
 
-        <RadioGroup value={selectedMethod} onChange={handleMethodChange}>
+        <RadioGroup value={selectedPaymentMethod} onChange={handleMethodChange}>
           {methods.map((method) => (
             <Box
               key={method.value}
@@ -139,12 +130,12 @@ const PaymentMethodSelector = ({
                 "&:hover": {
                   backgroundColor: "rgba(0, 0, 0, 0.02)",
                 },
-                ...(selectedMethod === method.value && {
+                ...(selectedPaymentMethod === method.value && {
                   borderColor: "rgba(32, 45, 57, 0.7)",
                   backgroundColor: "rgba(0, 0, 0, 0.02)",
                 }),
               }}
-              onClick={() => setSelectedMethod(method.value)}
+              onClick={() => setSelectedPaymentMethod(method.value)}
             >
               <Image src={method.icon} alt="token" width={34} height={34} />
               <Box
@@ -289,11 +280,17 @@ const PaymentMethodSelector = ({
                 boxShadow: "0 4px 14px rgba(0,0,0,0.02)",
                 backgroundColor: "rgba(224, 154, 16, 0.1)",
               },
+              "&.Mui-disabled": {
+                border: "none",
+              },
             }}
-            disabled={!isHashConnectReady && selectedMethod === "wallet"}
+            disabled={
+              (!isHashConnectReady && selectedPaymentMethod === "wallet") ||
+              !selectedPaymentMethod
+            }
             onClick={handleContinue}
           >
-            {selectedMethod === "wallet" ? "Connect Wallet" : "Continue"}
+            {selectedPaymentMethod === "wallet" ? "Connect Wallet" : "Continue"}
           </Button>
         </Box>
       </Box>

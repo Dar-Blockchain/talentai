@@ -215,6 +215,53 @@ export const fetchPricingPlans = createAsyncThunk(
   }
 );
 
+export const completePayment = createAsyncThunk(
+  'token/completePayment',
+  async (
+    {
+      planId,
+      hederaTransactionId
+    }: { planId: string; hederaTransactionId: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}payment/complete`;
+
+      const token =
+        localStorage.getItem('token') || localStorage.getItem('api_token');
+
+      const response = await axios.post(
+        apiUrl,
+        { planId, hederaTransactionId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to complete payment:', error);
+
+      if (error.response) {
+        return rejectWithValue(
+          error.response.data?.message ||
+            'Payment sent but backend processing failed'
+        );
+      } else if (error.request) {
+        return rejectWithValue(
+          'Network error: Unable to connect to server while completing payment'
+        );
+      } else {
+        return rejectWithValue(error.message);
+      }
+    }
+  }
+);
+
+
 // Token slice
 const tokenSlice = createSlice({
   name: 'token',
@@ -344,7 +391,19 @@ const tokenSlice = createSlice({
       .addCase(fetchPricingPlans.rejected, (state, action) => {
         state.pricingPlansLoading = false;
         state.pricingPlansError = action.payload as string;
-      });
+      })
+      .addCase(completePayment.pending, (state) => {
+    state.loading = true;
+  })
+  .addCase(completePayment.fulfilled, (state, action) => {
+    state.loading = false;
+    state.error = null;
+    // Optional: update token balance, transactions, etc.
+  })
+  .addCase(completePayment.rejected, (state, action) => {
+    state.loading = false;
+    state.error = action.payload as string;
+  });
   },
 });
 

@@ -3,8 +3,7 @@ import { AppDispatch } from "@/store/store";
 import { Box, Radio, RadioGroup, Typography, Skeleton, Button } from "@mui/material";
 import Image from "next/image";
 import { useEffect } from "react";
-import { useSelector } from "react-redux";
-import { useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 
 interface TokenPlansSelectorProps {
   onNext: () => void;

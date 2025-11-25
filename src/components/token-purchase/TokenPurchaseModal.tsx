@@ -36,7 +36,7 @@ function TokenPurchaseModal({ open, handleClose }: TokenPurchaseModalProps) {
   const [currentStep, setCurrentStep] = useState<number>(STEPS.TOKEN_BALANCE);
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<string>("");
+    useState<string>("wallet");
   const [walletInfo, setWalletInfo] = useState<WalletInfo | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -105,9 +105,10 @@ function TokenPurchaseModal({ open, handleClose }: TokenPurchaseModalProps) {
       case STEPS.PAYMENT_METHOD:
         return (
           <PaymentMethodSelector
+            selectedPaymentMethod={selectedPaymentMethod}
+            setSelectedPaymentMethod={setSelectedPaymentMethod}
             onBack={handleBack}
             onClose={onClose}
-            selectedPlan={selectedPlan}
             onPaymentMethodSelected={handlePaymentMethodSelected}
           />
         );
