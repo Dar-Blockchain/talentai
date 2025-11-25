@@ -9,52 +9,42 @@ import {
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import hashConnectService, {
   TransactionResult,
-  WalletInfo,
 } from "@/services/hashConnectService";
 import { useState } from "react";
-import { fetchTokenBalance, PricingPlan } from "@/store/slices/tokenSlice";
-import { STEPS } from "./TokenPurchaseModal";
+import { fetchTokenBalance } from "@/store/slices/tokenSlice";
 import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import { completePayment } from "@/store/slices/tokenSlice";
-import { toast } from 'react-toastify';
-
-interface ConfirmTransactionProps {
-  walletInfo: WalletInfo | null;
-  isProcessing: boolean;
-  amount: number;
-  tokens: number;
-  priceUsd?: number;
-  selectedPlan: PricingPlan | null;
-  onBack: () => void;
-  onClose: () => void;
-  setIsProcessing: (processing: boolean) => void;
-  setCurrentStep: (step: number) => void;
-  setWalletInfo: (walletInfo: WalletInfo | null) => void;
-}
-
-const ConfirmTransaction = ({
-  walletInfo,
-  isProcessing,
-  amount,
-  tokens,
-  priceUsd,
-  selectedPlan,
-  onBack,
-  setIsProcessing,
-  setCurrentStep,
+import { toast } from "react-toastify";
+import {
+  closeModal,
+  previousStep,
+  setProcessing,
+  setStep,
   setWalletInfo,
-  onClose
-}: ConfirmTransactionProps) => {
-  const dispatch = useDispatch<AppDispatch>();
+  STEPS,
+} from "@/store/slices/tokenPurchaseSlice";
+import { useSelector } from "react-redux";
+import { calculateTaiTokens } from "@/utils/functions";
 
+const ConfirmTransaction = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { selectedPlan, walletInfo, isProcessing } = useSelector(
+    (state: RootState) => state.tokenPurchase
+  );
+  const amount = selectedPlan?.totalHbar || 0;
+  const priceUsd = selectedPlan?.priceUsd;
+  const tokens = calculateTaiTokens(selectedPlan.priceUsd);
   const hasInsufficientBalance = walletInfo && walletInfo.balance < amount;
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const onBack = () => dispatch(previousStep());
+  const onClose = () => dispatch(closeModal());
 
   const onSendTransaction = async () => {
     if (!walletInfo) return;
 
-    setIsProcessing(true);
+    dispatch(setProcessing(true));
     setErrorMessage(null);
 
     try {
@@ -84,9 +74,9 @@ const ConfirmTransaction = ({
       setErrorMessage(`Transaction failed: ${error.message}`);
     } finally {
       dispatch(fetchTokenBalance());
-      setIsProcessing(false);
+      dispatch(setProcessing(false));
       onClose();
-      toast.success('Tokens purchased successfully!', {
+      toast.success("Tokens purchased successfully!", {
         theme: "light",
         position: "top-right",
         autoClose: 3000,
@@ -102,8 +92,8 @@ const ConfirmTransaction = ({
   const handleDisconnectWallet = async () => {
     try {
       await hashConnectService.disconnectWallet();
-      setWalletInfo(null);
-      setCurrentStep(STEPS.PAYMENT_METHOD);
+      dispatch(setWalletInfo(null));
+      dispatch(setStep(STEPS.PAYMENT_METHOD));
     } catch (error) {
       console.error("Failed to disconnect wallet:", error);
     }

@@ -1,73 +1,23 @@
-import React, { useState } from "react";
+"use client";
+
+import React from "react";
 import { Box, Typography, Modal } from "@mui/material";
 import Image from "next/image";
 import TokenBalance from "./TokenBalance";
 import TokenPlansSelector from "./TokenPlansSelector";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 import ConfirmTransaction from "./ConfirmTransaction";
-import { PricingPlan } from "@/store/slices/tokenSlice";
-import { WalletInfo } from "@/services/hashConnectService";
+import { closeModal, STEPS } from "@/store/slices/tokenPurchaseSlice";
+import { AppDispatch, RootState } from "@/store/store";
+import { useDispatch, useSelector } from "react-redux";
 
-const style = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: "100%",
-  maxWidth: 600,
-  bgcolor: "background.paper",
-  boxShadow: 24,
-  borderRadius: 2,
-};
+function TokenPurchaseModal() {
+  const dispatch = useDispatch<AppDispatch>();
+  const { open, currentStep } = useSelector(
+    (state: RootState) => state.tokenPurchase
+  );
 
-interface TokenPurchaseModalProps {
-  open: boolean;
-  handleClose: () => void;
-}
-
-export const STEPS = {
-  TOKEN_BALANCE: 0,
-  TOKEN_PLANS: 1,
-  PAYMENT_METHOD: 2,
-  CONFIRM_TRANSACTION: 3,
-} as const;
-
-function TokenPurchaseModal({ open, handleClose }: TokenPurchaseModalProps) {
-  const [currentStep, setCurrentStep] = useState<number>(STEPS.TOKEN_BALANCE);
-  const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<string>("wallet");
-  const [walletInfo, setWalletInfo] = useState<WalletInfo | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const onClose = () => {
-    handleClose();
-    setCurrentStep(STEPS.TOKEN_BALANCE);
-    setSelectedPlan(null);
-    setSelectedPaymentMethod("");
-    setWalletInfo(null);
-    setIsProcessing(false);
-  };
-
-  const handleNext = () => {
-    if (currentStep < STEPS.CONFIRM_TRANSACTION) {
-      setCurrentStep((prev) => prev + 1);
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > STEPS.TOKEN_BALANCE) {
-      setCurrentStep((prev) => prev - 1);
-    }
-  };
-
-  const handlePaymentMethodSelected = (method: string, info?: WalletInfo) => {
-    setSelectedPaymentMethod(method);
-    if (info) {
-      setWalletInfo(info);
-    }
-    handleNext();
-  };
+  const onClose = () => dispatch(closeModal());
 
   const getStepTitle = () => {
     switch (currentStep) {
@@ -76,7 +26,7 @@ function TokenPurchaseModal({ open, handleClose }: TokenPurchaseModalProps) {
       case STEPS.TOKEN_PLANS:
         return "Purchase Token Packs";
       case STEPS.PAYMENT_METHOD:
-        return "Payment";
+        return "Payment Method";
       case STEPS.CONFIRM_TRANSACTION:
         return "Confirm Transaction";
       default:
@@ -84,109 +34,71 @@ function TokenPurchaseModal({ open, handleClose }: TokenPurchaseModalProps) {
     }
   };
 
-  const calculateTaiTokens = () => {
-    return selectedPlan ? Math.floor(selectedPlan.priceUsd * 1000) : 0;
-  };
-
   const renderStepContent = () => {
     switch (currentStep) {
       case STEPS.TOKEN_BALANCE:
-        return <TokenBalance onNext={handleNext} onClose={onClose} />;
+        return <TokenBalance />;
+
       case STEPS.TOKEN_PLANS:
-        return (
-          <TokenPlansSelector
-            onNext={handleNext}
-            onBack={handleBack}
-            onClose={onClose}
-            selectedPlan={selectedPlan}
-            setSelectedPlan={setSelectedPlan}
-          />
-        );
+        return <TokenPlansSelector />;
+
       case STEPS.PAYMENT_METHOD:
-        return (
-          <PaymentMethodSelector
-            selectedPaymentMethod={selectedPaymentMethod}
-            setSelectedPaymentMethod={setSelectedPaymentMethod}
-            onBack={handleBack}
-            onClose={onClose}
-            onPaymentMethodSelected={handlePaymentMethodSelected}
-          />
-        );
+        return <PaymentMethodSelector />;
+
       case STEPS.CONFIRM_TRANSACTION:
-        return (
-          <ConfirmTransaction
-            selectedPlan={selectedPlan}
-            walletInfo={walletInfo}
-            setWalletInfo={setWalletInfo}
-            setCurrentStep={setCurrentStep}
-            isProcessing={isProcessing}
-            setIsProcessing={setIsProcessing}
-            // amount={selectedPlan?.totalHbar || 0}
-            amount={1}
-            tokens={calculateTaiTokens()}
-            priceUsd={selectedPlan?.priceUsd}
-            onBack={handleBack}
-            onClose={onClose}
-          />
-        );
+        return <ConfirmTransaction />;
+
       default:
-        return <TokenBalance onNext={handleNext} onClose={onClose} />;
+        return null;
     }
   };
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      aria-labelledby="buy-tokens-modal-title"
-      aria-describedby="buy-tokens-modal-description"
-      sx={{ zIndex: 50 }}
-    >
-      <Box sx={style}>
+    <Modal open={open} onClose={onClose}>
+      <Box
+        sx={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "100%",
+          maxWidth: 600,
+          bgcolor: "background.paper",
+          boxShadow: 24,
+          borderRadius: 2,
+        }}
+      >
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "center",
             p: 3,
-            borderBottom: "1px solid rgba(227, 229, 233, 1)",
+            borderBottom: "1px solid rgba(227,229,233,1)",
           }}
         >
           <Typography
-            id="buy-tokens-modal-title"
             variant="h6"
-            component="h2"
-            gutterBottom
             sx={{
               fontFamily: "Poppins",
               fontWeight: 600,
               fontSize: "20px",
-              lineHeight: "25px",
-              letterSpacing: "0px",
-              color: "rgba(41, 210, 145, 1)",
+              color: "rgba(41,210,145,1)",
             }}
           >
             {getStepTitle()}
           </Typography>
+
           <Image
             src="/icons/close.svg"
             alt="Close"
             width={12}
             height={12}
             onClick={onClose}
-            style={{
-              cursor: "pointer",
-              transition: "transform 0.2s ease-in-out",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.2)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
-            }}
+            style={{ cursor: "pointer" }}
           />
         </Box>
-        <Box sx={{ overflow: "auto", maxHeight: "80vh" }}>
+
+        <Box sx={{ maxHeight: "80vh", overflow: "auto" }}>
           {renderStepContent()}
         </Box>
       </Box>

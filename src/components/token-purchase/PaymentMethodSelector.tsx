@@ -2,37 +2,46 @@ import hashConnectService, {
   ConnectionStatus,
   WalletInfo,
 } from "@/services/hashConnectService";
+import {
+  closeModal,
+  nextStep,
+  previousStep,
+  selectPaymentMethod,
+  setWalletInfo,
+} from "@/store/slices/tokenPurchaseSlice";
+import { AppDispatch, RootState } from "@/store/store";
 import { Box, Radio, RadioGroup, Typography, Button } from "@mui/material";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 
 const methods = [
   { label: "Pay with card", value: "card", icon: "/icons/card.svg" },
   { label: "Wallet", value: "wallet", icon: "/icons/wallet.svg" },
 ];
 
-interface PaymentMethodSelectorProps {
-  selectedPaymentMethod: string;
-  setSelectedPaymentMethod: (method: string) => void;
-  onBack: () => void;
-  onClose: () => void;
-  onPaymentMethodSelected: (method: string, walletInfo?: WalletInfo) => void;
-}
-
-const PaymentMethodSelector = ({
-  selectedPaymentMethod = "wallet",
-  setSelectedPaymentMethod,
-  onBack,
-  onClose,
-  onPaymentMethodSelected,
-}: PaymentMethodSelectorProps) => {
+const PaymentMethodSelector = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { paymentMethod } = useSelector(
+    (state: RootState) => state.tokenPurchase
+  );
   const [walletStatus, setWalletStatus] =
     useState<ConnectionStatus>("disconnected");
   const [isHashConnectReady, setIsHashConnectReady] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
+  const onClose = () => dispatch(closeModal());
+  const onBack = () => dispatch(previousStep());
 
   const handleMethodChange = (event: any) => {
-    setSelectedPaymentMethod(event.target.value);
+    dispatch(selectPaymentMethod(event.target.value));
+  };
+
+  const onPaymentMethodSelected = (method: string, info?: any) => {
+    dispatch(selectPaymentMethod(method));
+    dispatch(setWalletInfo(info || null));
+    dispatch(nextStep());
   };
 
   const connectWallet = async () => {
@@ -45,12 +54,12 @@ const PaymentMethodSelector = ({
   };
 
   const handleContinue = async () => {
-    if (selectedPaymentMethod === "wallet") {
+    if (paymentMethod === "wallet") {
       // For wallet payment, connect first
       await connectWallet();
     } else {
       // For card payment, proceed directly to confirmation
-      onPaymentMethodSelected(selectedPaymentMethod);
+      onPaymentMethodSelected(paymentMethod);
     }
   };
 
@@ -61,7 +70,7 @@ const PaymentMethodSelector = ({
     const handleWalletConnected = (info: WalletInfo) => {
       setErrorMessage(null);
       // Once wallet is connected, proceed to confirmation
-      onPaymentMethodSelected(selectedPaymentMethod, info);
+      onPaymentMethodSelected(paymentMethod, info);
     };
 
     hashConnectService.setEventHandlers({
@@ -89,7 +98,7 @@ const PaymentMethodSelector = ({
     };
 
     checkExistingConnection();
-  }, [selectedPaymentMethod, onPaymentMethodSelected]);
+  }, [paymentMethod, onPaymentMethodSelected]);
 
   return (
     <>
@@ -113,7 +122,7 @@ const PaymentMethodSelector = ({
           Choose payment method
         </Typography>
 
-        <RadioGroup value={selectedPaymentMethod} onChange={handleMethodChange}>
+        <RadioGroup value={paymentMethod} onChange={handleMethodChange}>
           {methods.map((method) => (
             <Box
               key={method.value}
@@ -130,12 +139,12 @@ const PaymentMethodSelector = ({
                 "&:hover": {
                   backgroundColor: "rgba(0, 0, 0, 0.02)",
                 },
-                ...(selectedPaymentMethod === method.value && {
+                ...(paymentMethod === method.value && {
                   borderColor: "rgba(32, 45, 57, 0.7)",
                   backgroundColor: "rgba(0, 0, 0, 0.02)",
                 }),
               }}
-              onClick={() => setSelectedPaymentMethod(method.value)}
+              onClick={() => dispatch(selectPaymentMethod(method.value))}
             >
               <Image src={method.icon} alt="token" width={34} height={34} />
               <Box
@@ -285,12 +294,12 @@ const PaymentMethodSelector = ({
               },
             }}
             disabled={
-              (!isHashConnectReady && selectedPaymentMethod === "wallet") ||
-              !selectedPaymentMethod
+              (!isHashConnectReady && paymentMethod === "wallet") ||
+              !paymentMethod
             }
             onClick={handleContinue}
           >
-            {selectedPaymentMethod === "wallet" ? "Connect Wallet" : "Continue"}
+            {paymentMethod === "wallet" ? "Connect Wallet" : "Continue"}
           </Button>
         </Box>
       </Box>

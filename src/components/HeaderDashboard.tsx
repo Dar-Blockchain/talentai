@@ -11,7 +11,7 @@ import {
   Drawer,
   Divider,
   Skeleton,
-  Tooltip
+  Tooltip,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -29,28 +29,9 @@ import {
   selectTokenLoading,
 } from "@/store/slices/tokenSlice";
 import TokenPurchaseModal from "./token-purchase/TokenPurchaseModal";
-import { formatNumber } from "@/utils/functions";
+import { formatNumber, stringAvatar } from "@/utils/functions";
+import { openModal } from "@/store/slices/tokenPurchaseSlice";
 
-function stringToColor(string: string) {
-  let hash = 0;
-  for (let i = 0; i < string.length; i++) {
-    hash = string.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  let color = "#";
-  for (let i = 0; i < 3; i++) {
-    const value = (hash >> (i * 8)) & 0xff;
-    color += `00${value.toString(16)}`.slice(-2);
-  }
-  return color;
-}
-
-function stringAvatar(name: string) {
-  const parts = name.trim().toUpperCase().split(" ");
-  return {
-    sx: { bgcolor: stringToColor(name) },
-    children: `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}`,
-  };
-}
 const pulseDot = {
   width: 4,
   height: 4,
@@ -69,13 +50,12 @@ const HeaderDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   const tokenBalance = useSelector(selectTokenBalance);
   const tokenLoading = useSelector(selectTokenLoading);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const handleOpenModal = () => setIsModalOpen(true);
-  const handleCloseModal = () => setIsModalOpen(false);
-  // Fetch token balance on component mount and when returning from payment
+  const handleOpenModal = () => dispatch(openModal());
+
   useEffect(() => {
     dispatch(fetchTokenBalance());
   }, [dispatch]);
+
   useEffect(() => {
     const { refreshBalance } = router.query;
     if (refreshBalance === "true") {
@@ -216,27 +196,26 @@ const HeaderDashboard = () => {
                     {formatNumber(tokenBalance)} tokens
                   </Typography>
                 )}
-<Tooltip title="Purchase Tokens">
-
-                <IconButton
-                  onClick={handleOpenModal}
-                  sx={{
-                    ml: 1,
-                    width: 22,
-                    height: 22,
-                    backgroundColor: "white",
-                    border: "0.5px solid rgba(14, 194, 125, 0.27)",
-                    borderRadius: "16px",
-                    boxShadow: "0px 0px 10.7px 1px rgba(41, 210, 145, 0.17)",
-                  }}
-                >
-                  <Image
-                    src="/icons/plus.svg"
-                    alt="plus"
-                    width={12}
-                    height={12}
-                  />
-                </IconButton>
+                <Tooltip title="Purchase Tokens">
+                  <IconButton
+                    onClick={handleOpenModal}
+                    sx={{
+                      ml: 1,
+                      width: 22,
+                      height: 22,
+                      backgroundColor: "white",
+                      border: "0.5px solid rgba(14, 194, 125, 0.27)",
+                      borderRadius: "16px",
+                      boxShadow: "0px 0px 10.7px 1px rgba(41, 210, 145, 0.17)",
+                    }}
+                  >
+                    <Image
+                      src="/icons/plus.svg"
+                      alt="plus"
+                      width={12}
+                      height={12}
+                    />
+                  </IconButton>
                 </Tooltip>
               </Box>
 
@@ -366,21 +345,21 @@ const HeaderDashboard = () => {
               {formatNumber(tokenBalance)} tokens
             </Typography>
           )}
-<Tooltip title="Purchase Tokens">
-          <IconButton
-            onClick={handleOpenModal}
-            sx={{
-              width: 26,
-              height: 26,
-              marginLeft: "auto",
-              backgroundColor: "white",
-              border: "0.5px solid rgba(14, 194, 125, 0.27)",
-              borderRadius: "16px",
-              boxShadow: "0px 0px 10.7px 1px rgba(41, 210, 145, 0.17)",
-            }}
-          >
-            <Image src="/icons/plus.svg" alt="plus" width={14} height={14} />
-          </IconButton>
+          <Tooltip title="Purchase Tokens">
+            <IconButton
+              onClick={handleOpenModal}
+              sx={{
+                width: 26,
+                height: 26,
+                marginLeft: "auto",
+                backgroundColor: "white",
+                border: "0.5px solid rgba(14, 194, 125, 0.27)",
+                borderRadius: "16px",
+                boxShadow: "0px 0px 10.7px 1px rgba(41, 210, 145, 0.17)",
+              }}
+            >
+              <Image src="/icons/plus.svg" alt="plus" width={14} height={14} />
+            </IconButton>
           </Tooltip>
         </Box>
 
@@ -409,7 +388,7 @@ const HeaderDashboard = () => {
           Logout
         </Button>
       </Drawer>
-      <TokenPurchaseModal open={isModalOpen} handleClose={handleCloseModal} />
+      <TokenPurchaseModal />
     </>
   );
 };

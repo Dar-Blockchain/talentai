@@ -1,50 +1,60 @@
-import { fetchPricingPlans, PricingPlan, selectPricingPlans, selectPricingPlansLoading } from "@/store/slices/tokenSlice";
-import { AppDispatch } from "@/store/store";
-import { Box, Radio, RadioGroup, Typography, Skeleton, Button } from "@mui/material";
+import {
+  closeModal,
+  nextStep,
+  previousStep,
+  selectPlan,
+} from "@/store/slices/tokenPurchaseSlice";
+import {
+  fetchPricingPlans,
+  PricingPlan,
+  selectPricingPlans,
+  selectPricingPlansLoading,
+} from "@/store/slices/tokenSlice";
+import { AppDispatch, RootState } from "@/store/store";
+import { calculateTaiTokens } from "@/utils/functions";
+import {
+  Box,
+  Radio,
+  RadioGroup,
+  Typography,
+  Skeleton,
+  Button,
+} from "@mui/material";
 import Image from "next/image";
 import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-
-interface TokenPlansSelectorProps {
-  onNext: () => void;
-  onBack: () => void;
-  onClose: () => void;
-  setSelectedPlan: (plan: PricingPlan | null) => void;
-  selectedPlan: PricingPlan | null;
-}
 
 interface PricingPlansResponse {
   plans: PricingPlan[];
 }
 
-const TokenPlansSelector = ({ onNext, onBack, onClose, setSelectedPlan, selectedPlan }: TokenPlansSelectorProps) => {
+const TokenPlansSelector = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const pricingPlans = useSelector(selectPricingPlans) as PricingPlansResponse | null;
+  const pricingPlans = useSelector(
+    selectPricingPlans
+  ) as PricingPlansResponse | null;
   const loading = useSelector(selectPricingPlansLoading);
-
+  const { selectedPlan } = useSelector(
+    (state: RootState) => state.tokenPurchase
+  );
   useEffect(() => {
     dispatch(fetchPricingPlans());
   }, [dispatch]);
 
   const handlePlanChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const planId = event.target.value;
-    const selectedPlanObject = pricingPlans?.plans?.find(plan => plan.id === planId);
-    setSelectedPlan(selectedPlanObject || null);
+    const selectedPlanObject = pricingPlans?.plans?.find(
+      (plan) => plan.id === planId
+    );
+    dispatch(selectPlan(selectedPlanObject || null));
   };
 
-  const handleNextClick = () => {
-    if (!selectedPlan) {
-      return;
-    }
-    onNext();
-  };
+  const onClose = () => dispatch(closeModal());
+  const onNext = () => dispatch(nextStep());
+  const onBack = () => dispatch(previousStep());
 
   const handlePlanClick = (plan: PricingPlan) => {
-    setSelectedPlan(plan);
-  };
-
-  const calculateTaiTokens = (usdAmount: number): number => {
-    return Math.floor(usdAmount * 1000);
+    dispatch(selectPlan(plan));
   };
 
   const PlanSkeleton = () => (
@@ -83,7 +93,9 @@ const TokenPlansSelector = ({ onNext, onBack, onClose, setSelectedPlan, selected
 
   return (
     <>
-      <Box sx={{ p: 3, pt: 2, borderBottom: "1px solid rgba(227, 229, 233, 1)" }}>
+      <Box
+        sx={{ p: 3, pt: 2, borderBottom: "1px solid rgba(227, 229, 233, 1)" }}
+      >
         <Typography
           variant="body2"
           sx={{
@@ -105,7 +117,10 @@ const TokenPlansSelector = ({ onNext, onBack, onClose, setSelectedPlan, selected
             ))}
           </Box>
         ) : (
-          <RadioGroup value={selectedPlan?.id || ""} onChange={handlePlanChange}>
+          <RadioGroup
+            value={selectedPlan?.id || ""}
+            onChange={handlePlanChange}
+          >
             {pricingPlans?.plans?.map((plan: PricingPlan) => (
               <Box
                 key={plan.id}
@@ -129,11 +144,11 @@ const TokenPlansSelector = ({ onNext, onBack, onClose, setSelectedPlan, selected
                 }}
                 onClick={() => handlePlanClick(plan)}
               >
-                <Image 
-                  src="/icons/token.svg" 
-                  alt="token" 
-                  width={43} 
-                  height={43} 
+                <Image
+                  src="/icons/token.svg"
+                  alt="token"
+                  width={43}
+                  height={43}
                   priority={false}
                 />
                 <Box
@@ -301,7 +316,7 @@ const TokenPlansSelector = ({ onNext, onBack, onClose, setSelectedPlan, selected
                 border: "none",
               },
             }}
-            onClick={handleNextClick}
+            onClick={onNext}
             disabled={!selectedPlan}
           >
             Continue to Payment
