@@ -494,7 +494,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                   }}
                   disabled={!candidate?.candidateId?._id || !selectedJob}
                 >
-                  Place Bid (TAI)
+                  Buy to Reveal
                 </Button>
               </Box>
             </Box>
