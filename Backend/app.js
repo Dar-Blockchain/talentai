@@ -51,12 +51,18 @@ const recruitementStepRouter = require("./routes/recruitementStepRouter");
 const taskRouter = require("./routes/taskRouter");
 const agentConfigRouter = require("./routes/agentConfigRouter");
 const tokenRouter = require("./routes/tokenRouter");
+
+const stripRouter = require("./routes/StripRouter");
 const paymentRouter = require("./routes/paymentRouter");
 
 require("dotenv").config();
 
+
 // 🧠 Import et exécution automatique du CRON job
 require("./cron/resetQuota");
+
+// Stripe payment routes
+app.use('/api/stripe', stripRouter);
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2024-06-20",
