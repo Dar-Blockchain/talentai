@@ -1,18 +1,26 @@
 require('dotenv').config();
 const stripeService = require('../services/stripeService');
 
-// Create Stripe Checkout session (delegates business logic to service)
+// Create Stripe Checkout session
 exports.createCheckoutSession = async (req, res) => {
   try {
     const { planId } = req.body;
 
-    const baseUrl = (process.env.BASE_URL || '').replace(/\/+$/,'');
+    const baseUrl = (process.env.BASE_URL || '').replace(/\/+$/, '');
 
-    const session = await stripeService.createCheckoutSession({ planId, baseUrl });
+    const result = await stripeService.createCheckoutSession({ planId, baseUrl });
 
-    return res.status(200).json({ url: session.url });
+    // 👉 Maintenant on retourne : url + sessionId
+    return res.status(200).json({
+      url: result.session.url,
+      sessionId: result.sessionId
+    });
+
   } catch (error) {
     console.error('Stripe error:', error);
-    return res.status(500).json({ message: 'Payment failed.', error: error?.message || 'Unknown error' });
+    return res.status(500).json({
+      message: 'Payment failed.',
+      error: error?.message || 'Unknown error'
+    });
   }
 };
