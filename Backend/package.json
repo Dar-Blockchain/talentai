@@ -36,6 +36,7 @@
     "qrcode": "^1.5.4",
     "redis": "^5.1.0",
     "socket.io": "^4.8.1",
+    "stripe": "^20.0.0",
     "swagger-ui-express": "^5.0.1",
     "together-ai": "^0.16.0",
     "xlsx": "^0.18.5"
