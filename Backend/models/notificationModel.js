@@ -4,7 +4,7 @@
 const mongoose = require("mongoose");
 
 // Liste des types de notifications possibles
-const NOTIFICATION_TYPES = ["info", "success", "warning", "error", "custom"];
+const NOTIFICATION_TYPES = ["info", "success", "warning", "error", "custom", "system"];
 
 // Schéma Mongoose pour les notifications
 const NotificationSchema = new mongoose.Schema(
@@ -73,6 +73,19 @@ NotificationSchema.methods.markAsRead = function () {
 // Méthode statique pour récupérer les notifications non lues par utilisateur
 NotificationSchema.statics.findUnreadByUser = function (userId) {
   return this.find({ recipient: userId, read: false }).sort({ createdAt: -1 });
+};
+
+// Méthode statique pour créer une notification système
+NotificationSchema.statics.createSystem = function (recipient, content, url) {
+  const notif = new this({
+    recipient,
+    content,
+    type: "system",
+    url: url || undefined,
+    read: false,
+    emailed: false,
+  });
+  return notif.save();
 };
 
 // Modèle Notification
