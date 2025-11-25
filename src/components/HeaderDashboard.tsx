@@ -27,7 +27,7 @@ import {
   selectTokenBalance,
   selectTokenLoading,
 } from "@/store/slices/tokenSlice";
-import BuyTokensModal from "./BuyTokensModal";
+import TokenPurchaseModal from "./token-purchase/TokenPurchaseModal";
 
 function stringToColor(string: string) {
   let hash = 0;
@@ -67,8 +67,8 @@ const HeaderDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   const tokenBalance = useSelector(selectTokenBalance);
   const tokenLoading = useSelector(selectTokenLoading);
- const [isModalOpen, setIsModalOpen] = useState(false);
- const handleOpenModal = () => setIsModalOpen(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
   // Fetch token balance on component mount and when returning from payment
   useEffect(() => {
@@ -352,19 +352,19 @@ const HeaderDashboard = () => {
         >
           <Image src="/icons/token.svg" width={22} height={22} alt="token" />
           {tokenLoading ? (
-                  <Box sx={{ display: "flex", gap: 0.6, alignItems: "center" }}>
-                    <Box sx={pulseDot} />
-                    <Box sx={{ ...pulseDot, animationDelay: "0.2s" }} />
-                    <Box sx={{ ...pulseDot, animationDelay: "0.4s" }} />
-                  </Box>
-                ) : (<Typography sx={{ color: "rgba(222,147,0,1)", fontWeight: 500 }}>
-            {tokenBalance} tokens
-          </Typography>)}
-          
+            <Box sx={{ display: "flex", gap: 0.6, alignItems: "center" }}>
+              <Box sx={pulseDot} />
+              <Box sx={{ ...pulseDot, animationDelay: "0.2s" }} />
+              <Box sx={{ ...pulseDot, animationDelay: "0.4s" }} />
+            </Box>
+          ) : (
+            <Typography sx={{ color: "rgba(222,147,0,1)", fontWeight: 500 }}>
+              {tokenBalance} tokens
+            </Typography>
+          )}
 
           <IconButton
-                            onClick={handleOpenModal}
-
+            onClick={handleOpenModal}
             sx={{
               width: 26,
               height: 26,
@@ -388,15 +388,15 @@ const HeaderDashboard = () => {
           startIcon={<LogoutIcon />}
           sx={{
             backgroundColor: "white",
-                  color: "rgba(200, 65, 75, 1)",
-                  border: '0.25px solid rgba(200, 65, 75, 0.3)',
-                  borderRadius: "25px",
-                  boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
-                  textTransform: "none",
-                  "&:hover": {
-                    boxShadow: "0 4px 14px rgba(0,0,0,0.02)",
-                    backgroundColor: "rgba(200, 65, 75, 0.08)",
-                  },
+            color: "rgba(200, 65, 75, 1)",
+            border: "0.25px solid rgba(200, 65, 75, 0.3)",
+            borderRadius: "25px",
+            boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
+            textTransform: "none",
+            "&:hover": {
+              boxShadow: "0 4px 14px rgba(0,0,0,0.02)",
+              backgroundColor: "rgba(200, 65, 75, 0.08)",
+            },
             py: 1,
           }}
           onClick={handleLogout}
@@ -404,10 +404,7 @@ const HeaderDashboard = () => {
           Logout
         </Button>
       </Drawer>
-       <BuyTokensModal 
-        open={isModalOpen} 
-        handleClose={handleCloseModal}
-      />
+      <TokenPurchaseModal open={isModalOpen} handleClose={handleCloseModal} />
     </>
   );
 };
