@@ -22,7 +22,6 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./swagger.json");
 const blockPostmanRequests = require("./middleware/blockPostmanRequests");
 const resetQuotaJob = require("./cron/resetQuota");
-import Stripe from 'stripe';
 
 const http = require("http");
 const connectDB = require("./config/database");
@@ -62,11 +61,6 @@ require("dotenv").config();
 require("./cron/resetQuota");
 
 // Stripe payment routes
-app.use('/api/stripe', stripRouter);
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-06-20",
-});
 
 const app = express();
 
@@ -161,6 +155,7 @@ app.use("/task", taskRouter);
 app.use('/agent-config', agentConfigRouter);
 app.use("/tokens", tokenRouter);
 app.use("/payment", paymentRouter);
+app.use('/api/stripe', stripRouter);
 
 app.get("/some-route", (req, res) => {
   res.json("Route accessible");
