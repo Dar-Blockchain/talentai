@@ -50,3 +50,4 @@ exports.createCheckoutSession = async ({ planId, baseUrl }) => {
     throw err;
   }
 };
+
