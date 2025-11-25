@@ -20,6 +20,8 @@ import {
   Avatar,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import Badge from "@mui/material/Badge";
 import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
@@ -38,6 +40,8 @@ import { logout } from "@/store/slices/authSlice";
 import Cookies from "js-cookie";
 import { signOut } from "next-auth/react";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import { useNotifications } from "@/contexts/NotificationContext";
+import NotificationDropdown from "./NotificationDropdown";
 
 type NavItem = {
   label: string;
@@ -117,6 +121,36 @@ const Header = ({ logo, type }: HeaderProps) => {
   const [mounted, setMounted] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null);
+  const notificationOpen = Boolean(notificationAnchorEl);
+
+  // Notification context - wrapped in try/catch for when provider not available
+  let unreadCount = 0;
+  let notificationsList: any[] = [];
+  let markAsRead = (id: string) => {};
+  let markAllAsRead = () => {};
+  try {
+    const notifications = useNotifications();
+    unreadCount = notifications.unreadCount;
+    notificationsList = notifications.notifications;
+    markAsRead = notifications.markAsRead;
+    markAllAsRead = notifications.markAllAsRead;
+  } catch (e) {
+    // NotificationProvider not available
+  }
+
+  const handleNotificationClick = (event: React.MouseEvent<HTMLElement>) => {
+    setNotificationAnchorEl(event.currentTarget);
+  };
+
+  const handleNotificationClose = () => {
+    setNotificationAnchorEl(null);
+  };
+
+  const handleViewAllNotifications = () => {
+    setNotificationAnchorEl(null);
+    router.push('/settings/profile?tab=notifications');
+  };
 
   const handleLogout = async () => {
     try {
@@ -472,6 +506,43 @@ const Header = ({ logo, type }: HeaderProps) => {
             {!isMobile ? (
               isAuthenticated ? (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  {/* Notification Bell */}
+                  <IconButton
+                    onClick={handleNotificationClick}
+                    sx={{
+                      color: '#000',
+                      '&:hover': {
+                        backgroundColor: '#f5f5f5',
+                      },
+                    }}
+                  >
+                    <Badge
+                      badgeContent={unreadCount}
+                      color="error"
+                      sx={{
+                        '& .MuiBadge-badge': {
+                          backgroundColor: '#f5576c',
+                          color: 'white',
+                          fontWeight: 700,
+                          fontSize: '0.75rem',
+                        },
+                      }}
+                    >
+                      <NotificationsIcon />
+                    </Badge>
+                  </IconButton>
+
+                  {/* Notification Dropdown */}
+                  <NotificationDropdown
+                    anchorEl={notificationAnchorEl}
+                    open={notificationOpen}
+                    onClose={handleNotificationClose}
+                    notifications={notificationsList}
+                    onMarkAsRead={markAsRead}
+                    onMarkAllAsRead={markAllAsRead}
+                    onViewAll={handleViewAllNotifications}
+                  />
+
                   <Box
                     sx={{
                       display: "flex",
