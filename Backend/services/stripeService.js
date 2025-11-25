@@ -6,7 +6,7 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 exports.createCheckoutSession = async ({ planId, baseUrl }) => {
   try {
-    // FIX: getPlanById is async → MUST await
+    // Must await
     const plan = await getPlanById(planId);
 
     if (!plan) {
@@ -15,13 +15,9 @@ exports.createCheckoutSession = async ({ planId, baseUrl }) => {
 
     console.log('Selected plan:', plan);
 
-    // Extract price & currency from plan
-    const amount = plan.amount || plan.price?.amount;
-    const currency = plan.currency || plan.price?.currency || 'usd';
-
-    if (!amount) {
-      throw new Error('Plan is missing amount.');
-    }
+    // Stripe wants amount in cents
+    const amount = Math.round(plan.priceUsd * 100); // e.g. 199 → 19900
+    const currency = "usd";
 
     const normalizedBase = (baseUrl || '').replace(/\/+$/, '');
     const success_url = `${normalizedBase}/payment/result?status=success&session_id={CHECKOUT_SESSION_ID}`;
