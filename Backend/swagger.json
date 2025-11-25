@@ -4342,6 +4342,312 @@
           }
         }
       }
+    },
+    "/notification-system": {
+      "post": {
+        "tags": ["Notification System"],
+        "summary": "Create a system notification",
+        "description": "Create a new system notification for a specific user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "recipient": {
+                    "type": "string",
+                    "description": "User ID of the notification recipient",
+                    "example": "65f1a2b3c4d5e6f7g8h9i0j1"
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "Notification content",
+                    "minLength": 1,
+                    "maxLength": 512,
+                    "example": "Your profile has been updated successfully."
+                  },
+                  "url": {
+                    "type": "string",
+                    "description": "Optional URL link for the notification",
+                    "format": "uri",
+                    "example": "https://app.talentai.bid/profile"
+                  }
+                },
+                "required": ["recipient", "content"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "System notification created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSystem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Missing or invalid parameters"
+          },
+          "401": {
+            "description": "Unauthorized - Missing or invalid token"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "get": {
+        "tags": ["Notification System"],
+        "summary": "Get all system notifications for current user",
+        "description": "Retrieve all system notifications for the authenticated user with optional filtering",
+        "parameters": [
+          {
+            "name": "unread",
+            "in": "query",
+            "description": "Filter by read status",
+            "schema": {
+              "type": "boolean",
+              "example": true
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of notifications to return",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "example": 10
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of notifications to skip (pagination)",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "example": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of notifications",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationSystem"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Missing userId"
+          },
+          "401": {
+            "description": "Unauthorized - Missing or invalid token"
+          }
+        }
+      }
+    },
+    "/notification-system/{id}": {
+      "get": {
+        "tags": ["Notification System"],
+        "summary": "Get a specific system notification",
+        "description": "Retrieve a single system notification by ID (owner or admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Notification ID",
+            "schema": {
+              "type": "string",
+              "example": "65f1a2b3c4d5e6f7g8h9i0j1"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSystem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Access denied"
+          },
+          "404": {
+            "description": "Not found - Notification does not exist"
+          },
+          "401": {
+            "description": "Unauthorized - Missing or invalid token"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Notification System"],
+        "summary": "Delete a system notification",
+        "description": "Delete a system notification (owner or admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Notification ID",
+            "schema": {
+              "type": "string",
+              "example": "65f1a2b3c4d5e6f7g8h9i0j1"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Notification deleted."
+                    },
+                    "notification": {
+                      "$ref": "#/components/schemas/NotificationSystem"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Access denied"
+          },
+          "404": {
+            "description": "Not found - Notification does not exist"
+          },
+          "401": {
+            "description": "Unauthorized - Missing or invalid token"
+          }
+        }
+      }
+    },
+    "/notification-system/{id}/read": {
+      "patch": {
+        "tags": ["Notification System"],
+        "summary": "Mark a notification as read",
+        "description": "Mark a system notification as read (owner or admin only)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Notification ID",
+            "schema": {
+              "type": "string",
+              "example": "65f1a2b3c4d5e6f7g8h9i0j1"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification marked as read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Marked as read."
+                    },
+                    "notification": {
+                      "$ref": "#/components/schemas/NotificationSystem"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Access denied"
+          },
+          "404": {
+            "description": "Not found - Notification does not exist"
+          },
+          "401": {
+            "description": "Unauthorized - Missing or invalid token"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "NotificationSystem": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "description": "Unique notification identifier",
+            "example": "65f1a2b3c4d5e6f7g8h9i0j1"
+          },
+          "content": {
+            "type": "string",
+            "description": "Notification content text",
+            "example": "Your profile has been updated successfully."
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of notification",
+            "enum": ["info", "success", "warning", "error", "custom", "system"],
+            "example": "system"
+          },
+          "url": {
+            "type": "string",
+            "description": "Optional URL link for the notification",
+            "format": "uri",
+            "example": "https://app.talentai.bid/profile",
+            "nullable": true
+          },
+          "read": {
+            "type": "boolean",
+            "description": "Whether the notification has been read",
+            "example": false
+          },
+          "recipient": {
+            "type": "string",
+            "description": "User ID of the recipient",
+            "example": "65f1a2b3c4d5e6f7g8h9i0j1"
+          },
+          "emailed": {
+            "type": "boolean",
+            "description": "Whether the notification has been sent via email",
+            "example": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the notification was created",
+            "example": "2025-11-25T10:30:00Z"
+          }
+        },
+        "required": ["_id", "content", "type", "read", "recipient", "emailed", "createdAt"]
+      }
     }
   }
 } 
