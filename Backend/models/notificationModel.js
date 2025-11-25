@@ -1,9 +1,9 @@
 // Notification Model - Mongoose Schema
-// Gère les notifications envoyées aux utilisateurs.
+// Manages notifications sent to users.
 
 const mongoose = require("mongoose");
 
-// Liste des types de notifications possibles
+// List of possible notification types
 const NOTIFICATION_TYPES = ["info", "success", "warning", "error", "custom", "system"];
 
 // Schéma Mongoose pour les notifications
@@ -11,15 +11,15 @@ const NotificationSchema = new mongoose.Schema(
   {
     content: {
       type: String,
-      required: [true, "Le contenu de la notification est requis."],
+      required: [true, "Notification content is required."],
       trim: true,
-      maxlength: [512, "Le contenu de la notification est trop long."],
+      maxlength: [512, "Notification content is too long."],
     },
     type: {
       type: String,
       enum: {
         values: NOTIFICATION_TYPES,
-        message: "Type de notification invalide.",
+        message: "Invalid notification type.",
       },
       default: "info",
     },
@@ -28,20 +28,20 @@ const NotificationSchema = new mongoose.Schema(
       trim: true,
       validate: {
         validator: function (v) {
-          return !v || /^https?:\/\/.+$/.test(v); // URL valide ou vide
+          return !v || /^https?:\/\/.+$/.test(v); // Valid URL or empty
         },
-        message: "URL de notification invalide.",
+        message: "Invalid notification URL.",
       },
     },
     read: {
       type: Boolean,
       default: false,
-      index: true, // Pour filtrer rapidement les non-lues
+      index: true, // Index for quick filtering of unread notifications
     },
     recipient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "Un destinataire est requis."],
+      required: [true, "Recipient is required."],
       index: true,
     },
     emailed: {
@@ -61,21 +61,21 @@ const NotificationSchema = new mongoose.Schema(
   }
 );
 
-// Index composé pour optimiser les requêtes fréquentes
+// Compound index to optimize frequent queries
 NotificationSchema.index({ recipient: 1, read: 1, createdAt: -1 });
 
-// Méthode pour marquer la notification comme lue
+// Method to mark notification as read
 NotificationSchema.methods.markAsRead = function () {
   this.read = true;
   return this.save();
 };
 
-// Méthode statique pour récupérer les notifications non lues par utilisateur
+// Static method to retrieve unread notifications for a user
 NotificationSchema.statics.findUnreadByUser = function (userId) {
   return this.find({ recipient: userId, read: false }).sort({ createdAt: -1 });
 };
 
-// Méthode statique pour créer une notification système
+// Static method to create a system notification
 NotificationSchema.statics.createSystem = function (recipient, content, url) {
   const notif = new this({
     recipient,
@@ -88,7 +88,7 @@ NotificationSchema.statics.createSystem = function (recipient, content, url) {
   return notif.save();
 };
 
-// Modèle Notification
+// Notification Model
 const Notification = mongoose.model("Notification", NotificationSchema);
 
 module.exports = Notification;

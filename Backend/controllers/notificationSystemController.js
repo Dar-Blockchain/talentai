@@ -1,19 +1,19 @@
 const Notification = require('../models/notificationModel');
 const socket = require('../socket');
 
-// Créer une notification système
+// Create a system notification
 exports.createSystemNotification = async (req, res) => {
   try {
     const { recipient, content, url } = req.body;
     if (!recipient || !content) {
-      return res.status(400).json({ message: 'Recipient et content requis.' });
+      return res.status(400).json({ message: 'Recipient and content are required.' });
     }
     const notification = await Notification.createSystem(recipient, content, url);
     // Emit via socket.io
     try {
       socket.getIO().to(recipient).emit('notification', notification);
     } catch (e) {
-      // ne pas bloquer la réponse si l'émission échoue
+      // Do not block the response if emit fails
       console.warn('Socket emit failed for system notification', e.message || e);
     }
     res.status(201).json(notification);
@@ -22,11 +22,11 @@ exports.createSystemNotification = async (req, res) => {
   }
 };
 
-// Lister les notifications système (optionnel: filtrer par non-lues)
+// List system notifications (optional: filter by unread)
 exports.listForUser = async (req, res) => {
   try {
     const userId = req.user && req.user._id ? req.user._id : req.query.userId;
-    if (!userId) return res.status(400).json({ message: 'userId requis.' });
+    if (!userId) return res.status(400).json({ message: 'userId is required.' });
     const filter = { recipient: userId, type: 'system' };
     if (req.query.unread === 'true') filter.read = false;
     const list = await Notification.find(filter).sort({ createdAt: -1 });
@@ -36,15 +36,15 @@ exports.listForUser = async (req, res) => {
   }
 };
 
-// Récupérer une notification par id
+// Retrieve a notification by ID
 exports.getById = async (req, res) => {
   try {
     const notif = await Notification.findById(req.params.id);
-    if (!notif) return res.status(404).json({ message: 'Notification non trouvée.' });
-    // Autoriser l'accès si destinataire ou admin (si role présent)
+    if (!notif) return res.status(404).json({ message: 'Notification not found.' });
+    // Allow access if recipient or admin (if role is present)
     const userId = req.user && req.user._id;
     if (notif.recipient.toString() !== String(userId) && !(req.user && req.user.role === 'admin')) {
-      return res.status(403).json({ message: 'Accès refusé.' });
+      return res.status(403).json({ message: 'Access denied.' });
     }
     res.json(notif);
   } catch (err) {
@@ -52,34 +52,34 @@ exports.getById = async (req, res) => {
   }
 };
 
-// Marquer comme lue
+// Mark as read
 exports.markAsRead = async (req, res) => {
   try {
     const notif = await Notification.findById(req.params.id);
-    if (!notif) return res.status(404).json({ message: 'Notification non trouvée.' });
+    if (!notif) return res.status(404).json({ message: 'Notification not found.' });
     const userId = req.user && req.user._id;
     if (notif.recipient.toString() !== String(userId) && !(req.user && req.user.role === 'admin')) {
-      return res.status(403).json({ message: 'Accès refusé.' });
+      return res.status(403).json({ message: 'Access denied.' });
     }
     notif.read = true;
     await notif.save();
-    res.json({ message: 'Marqué comme lu.', notification: notif });
+    res.json({ message: 'Marked as read.', notification: notif });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Supprimer une notification
+// Delete a notification
 exports.deleteNotification = async (req, res) => {
   try {
     const notif = await Notification.findById(req.params.id);
-    if (!notif) return res.status(404).json({ message: 'Notification non trouvée.' });
+    if (!notif) return res.status(404).json({ message: 'Notification not found.' });
     const userId = req.user && req.user._id;
     if (notif.recipient.toString() !== String(userId) && !(req.user && req.user.role === 'admin')) {
-      return res.status(403).json({ message: 'Accès refusé.' });
+      return res.status(403).json({ message: 'Access denied.' });
     }
     await notif.remove();
-    res.json({ message: 'Notification supprimée.' });
+    res.json({ message: 'Notification deleted.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
