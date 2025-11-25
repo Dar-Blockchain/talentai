@@ -210,18 +210,16 @@ const OnboardingStepper: React.FC<OnboardingStepperProps> = ({
         const returnUrl = router.query.returnUrl as string;
         if (returnUrl) return router.push(decodeURIComponent(returnUrl));
 
-        // Build interview parameters from onboarding data for /interview/hr
+        // Build interview parameters from onboarding data for technical interview
         const primarySkill = skills[0] || "Software";
-        const skillProficiency = preferences.skillProficiency || "3"; // Default: Mid Level
-        const targetRole = `${primarySkill} Developer`;
+        const skillProficiency = preferences.skillProficiency || "Mid Level"; // Default: Mid Level
 
         router.push({
           pathname: "/interview/hr",
           query: {
-            type: "hr",
-            role: targetRole,
+            type: "technical",
+            skill: primarySkill,
             proficiency: skillProficiency,
-            company: "Target Company",
             language: "en",
             difficulty: "intermediate"
           },
