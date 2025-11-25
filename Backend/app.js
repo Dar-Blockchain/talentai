@@ -21,7 +21,6 @@ const cookieParser = require("cookie-parser");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./swagger.json");
 const blockPostmanRequests = require("./middleware/blockPostmanRequests");
-const resetQuotaJob = require("./cron/resetQuota");
 
 const http = require("http");
 const connectDB = require("./config/database");
@@ -50,9 +49,11 @@ const recruitementStepRouter = require("./routes/recruitementStepRouter");
 const taskRouter = require("./routes/taskRouter");
 const agentConfigRouter = require("./routes/agentConfigRouter");
 const tokenRouter = require("./routes/tokenRouter");
+
 const paymentRouter = require("./routes/paymentRouter");
 
 require("dotenv").config();
+
 
 // 🧠 Import et exécution automatique du CRON job
 require("./cron/resetQuota");
