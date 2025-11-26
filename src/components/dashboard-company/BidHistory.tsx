@@ -63,8 +63,8 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
 
 /**
  * BidHistory Component
- * 
- * Displays and manages bid history for company jobs
+ *
+ * Displays and manages purchase history for company jobs
  */
 const BidHistory: React.FC<BidHistoryProps> = ({
   bids,
@@ -75,10 +75,10 @@ const BidHistory: React.FC<BidHistoryProps> = ({
   return (
     <StyledCard sx={{ mt: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <SectionTitle sx={{ mb: 0 }}>Bid History</SectionTitle>
+        <SectionTitle sx={{ mb: 0 }}>Purchase History</SectionTitle>
         {bids.length > 0 && (
           <Chip
-            label={`${bids.length} bids`}
+            label={`${bids.length} purchases`}
             size="small"
             sx={{
               backgroundColor: '#eff6ff',
@@ -140,26 +140,26 @@ const BidHistory: React.FC<BidHistoryProps> = ({
               a
             </Box>
           </Box>
-          <Typography variant="h5" sx={{ 
-            color: '#10b981', 
+          <Typography variant="h5" sx={{
+            color: '#10b981',
             fontWeight: 700,
             fontSize: '1.5rem'
           }}>
-            No bid history Yet
+            No purchase history yet
           </Typography>
           <Box sx={{ maxWidth: 480 }}>
-            <Typography variant="body1" sx={{ 
-              color: '#6b7280', 
+            <Typography variant="body1" sx={{
+              color: '#6b7280',
               lineHeight: 1.6,
               mb: 1
             }}>
-              Once you place bids on candidates who match your job posts, they will appear here.
+              Once you buy to reveal candidates who match your job posts, they will appear here.
             </Typography>
-            <Typography variant="body1" sx={{ 
-              color: '#6b7280', 
+            <Typography variant="body1" sx={{
+              color: '#6b7280',
               lineHeight: 1.6
             }}>
-              View matches from your job posts to place a bid.
+              View matches from your job posts to buy and reveal candidate information.
             </Typography>
           </Box>
         </Box>
@@ -218,13 +218,13 @@ const BidHistory: React.FC<BidHistoryProps> = ({
                   )}
                 </Box>
               </Box>
-              <Typography sx={{ 
-                color: '#111827', 
-                fontWeight: 700, 
+              <Typography sx={{
+                color: '#111827',
+                fontWeight: 700,
                 justifySelf: 'end',
                 fontSize: '1.125rem'
               }}>
-                ${bid.finalBid}
+                {bid.finalBid} TAI
               </Typography>
               <Typography sx={{ 
                 color: '#6b7280', 

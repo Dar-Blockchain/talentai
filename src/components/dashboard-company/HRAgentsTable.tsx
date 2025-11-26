@@ -453,10 +453,10 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                   </Box>
                   <Box sx={{ textAlign: 'center' }}>
                     <Typography variant="h6" sx={{ color: '#111827', fontWeight: 600, fontSize: '1.25rem' }}>
-                      {minBid > 0 ? `$${minBid.toLocaleString()}` : 'No bids'}
+                      {minBid > 0 ? `${minBid.toLocaleString()} TAI` : 'No prices'}
                     </Typography>
                     <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 500, fontSize: '0.75rem' }}>
-                      Min Bid
+                      Min Price
                     </Typography>
                   </Box>
                   <Box sx={{ textAlign: 'center' }}>
@@ -636,9 +636,17 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                 }}>
                   Matched Candidates
                 </Typography>
-                {selectedAgent.matches && selectedAgent.matches.length > 0 ? (
-                  <Box>
-                    {selectedAgent.matches.map((match, index) => (
+                {(() => {
+                  const filteredMatches = selectedAgent.matches
+                    ? [...selectedAgent.matches]
+                        .filter((match) => match.finalBid && match.finalBid > 0) // Only show candidates with a price
+                        .sort((a, b) => b.score - a.score) // Sort by score descending
+                        .slice(0, 2) // Take only top 2
+                    : [];
+
+                  return filteredMatches.length > 0 ? (
+                    <Box>
+                      {filteredMatches.map((match, index) => (
                       <Box key={index} sx={{
                         mb: 2,
                         p: 3,
@@ -668,7 +676,7 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                               }}
                             />
                             <Chip
-                              label={match.finalBid ? `Bid: $${match.finalBid.toLocaleString()}` : 'No bid'}
+                              label={match.finalBid ? `Price: ${match.finalBid.toLocaleString()} TAI` : 'No price'}
                               size="small"
                               sx={{
                                 backgroundColor: '#eff6ff',
@@ -729,7 +737,8 @@ const HRAgentsTable: React.FC<HRAgentsTableProps> = ({ companyId }) => {
                       No matches found for this agent.
                     </Typography>
                   </Box>
-                )}
+                  );
+                })()}
               </Box>
             </DialogContent>
             <DialogActions sx={{
