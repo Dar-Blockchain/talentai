@@ -504,7 +504,7 @@ const Header = ({ logo, type }: HeaderProps) => {
 
             {/* Right Actions */}
             {!isMobile ? (
-              isAuthenticated ? (
+              isAuthenticated && profile ? (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   {/* Notification Bell */}
                   <IconButton
@@ -565,7 +565,7 @@ const Header = ({ logo, type }: HeaderProps) => {
                           ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile?.user_image || profile?.userId?.user_image}`
                           : undefined
                       }
-                      {...stringAvatar(profile?.userId?.username || "Unnamed")}
+                      {...stringAvatar(profile?.userId?.username || "User")}
                     />
 
                     {/* User Name */}
@@ -577,7 +577,7 @@ const Header = ({ logo, type }: HeaderProps) => {
                         fontFamily: "Arial, sans-serif",
                       }}
                     >
-                      {profile?.userId?.username || "John"}
+                      {profile?.userId?.username || "User"}
                     </Typography>
 
                     {/* Dropdown Arrow */}
