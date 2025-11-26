@@ -441,10 +441,22 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
   // Tous les postes triés par pertinence
   const allPosts = scored.map((s) => s.post);
 
+  // Fonction pour sélectionner aléatoirement 3 posts
+  const getRandomPosts = (posts, count = 3) => {
+    if (posts.length <= count) {
+      return posts;
+    }
+    
+    const shuffled = [...posts].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+  };
+
+  const randomPosts = getRandomPosts(allPosts, 3);
+
   return {
     success: true,
-    posts: allPosts,
-    message: `${allPosts.length} recommandation(s) trouvée(s)`,
+    posts: randomPosts,
+    message: `${randomPosts.length} recommandation(s) trouvée(s) sur ${allPosts.length} disponible(s)`,
   };
 };
 
