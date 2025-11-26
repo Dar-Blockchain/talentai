@@ -217,7 +217,7 @@ const OnboardingStepper: React.FC<OnboardingStepperProps> = ({
         router.push({
           pathname: "/interview/hr",
           query: {
-            type: "technical",
+            type: "onboarding",
             skill: primarySkill,
             proficiency: skillProficiency,
             language: "en",
