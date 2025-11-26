@@ -620,13 +620,18 @@ const ProfileSettingsPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#F8F9FA' }}>
+    <Box sx={{
+      minHeight: '100vh',
+      backgroundColor: '#F8F9FA',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
       <Header logo="/images/home/logocandidate.png"
         type="jobseeker"
         color="#8310FF"
         link="Are you hiring?" />
 
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl" sx={{ py: 4, flex: 1 }}>
         <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
           {/* Sidebar */}
           <Card sx={{
