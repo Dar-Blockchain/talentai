@@ -144,15 +144,21 @@ export default function SignIn() {
         hasProfile,
         returnUrl,
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('OTP verification failed:', err);
+
+      // Handle error message from rejected action
+      let errorMessage = "OTP verification failed. Please try again.";
+
       if (typeof err === 'string') {
-        setError(err);
-      } else if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("OTP verification failed. Please try again.");
+        errorMessage = err;
+      } else if (err?.message) {
+        errorMessage = err.message;
+      } else if (err?.error) {
+        errorMessage = err.error;
       }
+
+      setError(errorMessage);
       setVerifying(false);
     }
   };
