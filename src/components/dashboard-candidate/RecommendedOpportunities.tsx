@@ -31,15 +31,26 @@ export type RecommendedOpportunity = {
   type?: string; // e.g., Full-time
   employmentType?: string;
   firstStepId?: string;
+  requiredSkills?: string[];
   salary?: {
     min: number;
     max: number;
     currency: string;
   };
+  skillAnalysis?: {
+    requiredSkills?: Array<{
+      name: string;
+      level?: string;
+      importance?: string;
+      category?: string;
+      percentage?: number;
+    }>;
+  };
   jobDetails?: {
     title?: string;
     employmentType?: string;
     location?: string;
+    requiredSkills?: string[];
     salary?: {
       min: number;
       max: number;
@@ -265,7 +276,7 @@ export default function RecommendedOpportunities({profile, data, total, emptyTex
               const jobDetails = row?.jobDetails || row;
               const title = jobDetails?.title || row?.title;
               const employmentType = jobDetails?.employmentType || row?.employmentType || row?.type;
-              
+
               // Extract real salary from your data format - try multiple paths
               let salary: string | undefined = undefined;
               const salaryData = jobDetails?.salary || row?.salary;
@@ -273,9 +284,14 @@ export default function RecommendedOpportunities({profile, data, total, emptyTex
                 const { currency, min, max } = salaryData;
                 salary = `${currency}${min.toLocaleString()}-${max.toLocaleString()}`;
               }
-              
+
               const company = jobDetails?.company || jobDetails?.companyName || row?.company;
               const location = jobDetails?.location || row?.location;
+
+              // Extract skills from skillAnalysis.requiredSkills array
+              const skillsFromAnalysis = row?.skillAnalysis?.requiredSkills?.map(skill => skill.name) || [];
+              const skillsFromJobDetails = jobDetails?.requiredSkills || row?.requiredSkills || [];
+              const skills = skillsFromAnalysis.length > 0 ? skillsFromAnalysis : skillsFromJobDetails;
 
               return (
                 <Paper
@@ -284,7 +300,8 @@ export default function RecommendedOpportunities({profile, data, total, emptyTex
                   sx={{
                     minWidth: 400,
                     maxWidth: 400,
-                    height: 160,
+                    height: 'auto',
+                    minHeight: 180,
                     p: 3,
                     borderRadius: 2,
                     background: '#ffffff',
@@ -339,7 +356,7 @@ export default function RecommendedOpportunities({profile, data, total, emptyTex
 
                     {/* Employment Type and Salary */}
                     {(employmentType || salary) && (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                         {employmentType && (
                           <Chip
                             label={employmentType}
@@ -364,6 +381,41 @@ export default function RecommendedOpportunities({profile, data, total, emptyTex
                           >
                             Salary: {salary}
                           </Typography>
+                        )}
+                      </Box>
+                    )}
+
+                    {/* Skills */}
+                    {skills && skills.length > 0 && (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                        {skills.slice(0, 4).map((skill: string, index: number) => (
+                          <Chip
+                            key={index}
+                            label={skill}
+                            size="small"
+                            sx={{
+                              backgroundColor: 'rgba(131, 16, 255, 0.1)',
+                              color: '#8310FF',
+                              fontWeight: 500,
+                              fontSize: '0.7rem',
+                              height: 22,
+                              borderRadius: 1,
+                            }}
+                          />
+                        ))}
+                        {skills.length > 4 && (
+                          <Chip
+                            label={`+${skills.length - 4}`}
+                            size="small"
+                            sx={{
+                              backgroundColor: 'rgba(131, 16, 255, 0.1)',
+                              color: '#8310FF',
+                              fontWeight: 600,
+                              fontSize: '0.7rem',
+                              height: 22,
+                              borderRadius: 1,
+                            }}
+                          />
                         )}
                       </Box>
                     )}
@@ -457,6 +509,11 @@ export default function RecommendedOpportunities({profile, data, total, emptyTex
               const responsibilities: string[] = Array.isArray(details.responsibilities) ? details.responsibilities : [];
               const requirements: string[] = Array.isArray(details.requirements) ? details.requirements : [];
               const company = details.company || details.companyName || job.company || job.companyName;
+
+              // Extract skills from skillAnalysis or fallback to requiredSkills array
+              const skillsFromAnalysis = job?.skillAnalysis?.requiredSkills?.map((skill: any) => skill.name) || [];
+              const skillsFromDetails = Array.isArray(details.requiredSkills) ? details.requiredSkills : (Array.isArray(job.requiredSkills) ? job.requiredSkills : []);
+              const requiredSkills: string[] = skillsFromAnalysis.length > 0 ? skillsFromAnalysis : skillsFromDetails;
 
               console.log('Rendering modal content:', {
                 job,
@@ -554,6 +611,33 @@ export default function RecommendedOpportunities({profile, data, total, emptyTex
                       <Typography variant="body2" sx={{ color: '#333', whiteSpace: 'pre-line', lineHeight: 1.6 }}>
                         {description}
                       </Typography>
+                    </Box>
+                  )}
+
+                  {/* Required Skills */}
+                  {requiredSkills.length > 0 && (
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5, color: '#000' }}>
+                        Required Skills
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {requiredSkills.map((skill: string, index: number) => (
+                          <Chip
+                            key={index}
+                            label={skill}
+                            size="small"
+                            sx={{
+                              backgroundColor: 'rgba(131, 16, 255, 0.1)',
+                              color: '#8310FF',
+                              fontWeight: 500,
+                              fontSize: '0.8rem',
+                              height: 28,
+                              borderRadius: 1.5,
+                              border: '1px solid rgba(131, 16, 255, 0.2)',
+                            }}
+                          />
+                        ))}
+                      </Box>
                     </Box>
                   )}
 
