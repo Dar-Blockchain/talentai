@@ -400,15 +400,15 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
     };
   }
 
-  // 🔍 Trouver les IDs de postes pour lesquels l'utilisateur a déjà passé un test
+  // IDs de postes déjà testés
   const testedPosts = await JobAssessmentResult.find({
     condidateId: user.profile._id,
   }).distinct("jobId");
 
-  // 🧩 Trouver les postes correspondants aux skills, mais exclure ceux déjà testés
+  // Tous les postes correspondants aux skills, en excluant ceux déjà testés
   const candidatePosts = await Post.find({
     "skillAnalysis.requiredSkills.name": { $in: skillNames },
-    _id: { $nin: testedPosts }, // <-- exclure les posts déjà testés
+    _id: { $nin: testedPosts },
   })
     .sort({ createdAt: -1 })
     .lean();
@@ -421,7 +421,7 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
     };
   }
 
-  // 🧮 Calculer le score selon le nombre de compétences correspondantes
+  // Calcul du score de correspondance pour chaque poste
   const scored = candidatePosts.map((post) => {
     const required = (post.skillAnalysis?.requiredSkills || []).map((rs) => rs.name);
     const matchCount = required.reduce(
@@ -431,25 +431,25 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
     return { post, matchCount };
   });
 
-  // Trier : plus de correspondances d'abord, puis le plus récent
+  // Tri par correspondances décroissantes puis par date
   scored.sort(
     (a, b) =>
       b.matchCount - a.matchCount ||
       new Date(b.post.createdAt) - new Date(a.post.createdAt)
   );
 
-  // Garder les 3 meilleurs postes
-  const top = scored.slice(0, 3).map((s) => s.post);
+  // Tous les postes triés par pertinence
+  const allPosts = scored.map((s) => s.post);
 
   return {
     success: true,
-    posts: top,
-    message:
-      top.length > 0
-        ? `${top.length} recommandation(s) trouvée(s)`
-        : "Pas de recommandations pour le moment.",
+    posts: allPosts,
+    message: `${allPosts.length} recommandation(s) trouvée(s)`,
   };
 };
+
+
+
 
 // Create technical test using AI prompts based on post technologies
 // Generate coding project content based on experience level
