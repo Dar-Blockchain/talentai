@@ -82,6 +82,7 @@ const getQuickPrompt = (description, companyLocation) => `
     - Return only valid JSON. Avoid markdown or code blocks.
 
     STRICT SKILL RULES:
+- REQUIRED: Generate exactly 3 skills in "requiredSkills" — no more, no less.
 - NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
 - Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
 - If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
@@ -230,6 +231,7 @@ const getDetailedPrompt = (description, companyLocation) => `
     }
 
     STRICT SKILL RULES:
+- REQUIRED: Generate exactly 3 skills in "requiredSkills" — no more, no less.
 - NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
 - Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
 - If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
