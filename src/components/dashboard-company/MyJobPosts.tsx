@@ -27,8 +27,8 @@ const StyledCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
   marginBottom: theme.spacing(3),
   background: 'white',
-  borderRadius: '16px',
-  border: '1px solid #e5e7eb',
+  borderRadius: '12px',
+  border: '1px solid rgba(84,98,116,0.1)',
 }));
 
 const JobCard = styled(Box)(({ theme }) => ({
@@ -170,7 +170,14 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h5" sx={{ color: '#111827', fontWeight: 700 }}>
-          Our Job Posts
+          <span
+            style={{
+              borderBottom: "5px solid rgba(41, 210, 145, 0.83)",
+              paddingBottom: "2px",
+            }}
+          >
+            Our
+          </span>{" "}Job Posts
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField

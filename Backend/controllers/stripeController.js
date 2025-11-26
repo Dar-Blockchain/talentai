@@ -1,35 +1,26 @@
-const Stripe = require('stripe');
 require('dotenv').config();
+const stripeService = require('../services/stripeService');
 
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
-
-// Create a Stripe Checkout session
+// Create Stripe Checkout session
 exports.createCheckoutSession = async (req, res) => {
   try {
-    const { amount, currency, success_url, cancel_url } = req.body;
-    if (!amount || !currency || !success_url || !cancel_url) {
-      return res.status(400).json({ message: 'Missing required fields.' });
-    }
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency,
-            product_data: {
-              name: 'Payment',
-            },
-            unit_amount: amount,
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url,
-      cancel_url,
+    const { planId } = req.body;
+
+    const baseUrl = (process.env.BASE_URL || '').replace(/\/+$/, '');
+
+    const result = await stripeService.createCheckoutSession({ planId, baseUrl });
+
+    // 👉 Maintenant on retourne : url + sessionId
+    return res.status(200).json({
+      url: result.session.url,
+      sessionId: result.sessionId
     });
-    res.status(200).json({ url: session.url });
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Stripe error:', error);
+    return res.status(500).json({
+      message: 'Payment failed.',
+      error: error?.message || 'Unknown error'
+    });
   }
 };

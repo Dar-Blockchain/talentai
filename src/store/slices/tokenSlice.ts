@@ -10,6 +10,9 @@ export interface TokenState {
   lastUpdated: string | null;
   transactions: TokenTransaction[];
   transactionsLoading: boolean;
+  pricingPlans: PricingData;
+  pricingPlansLoading: boolean;
+  pricingPlansError: string | null;
 }
 
 export interface TokenTransaction {
@@ -29,6 +32,35 @@ export interface PurchaseTokensPayload {
   walletAddress?: string;
 }
 
+export interface PricingPlan {
+  id: string;
+  name: string;
+  priceUsd: number;
+  hbarPrice: number;
+  gasFeeHbar: number;
+  totalHbar: number;
+  gasFeeUsd: number;
+  popular?: boolean;
+  currentHbarRate: number;
+  lastUpdated: string;
+}
+
+interface TAITokenConfig {
+  tokenId: string;
+  name: string;
+  symbol: string;
+  decimals: number;
+  totalSupply: number;
+  description: string;
+}
+
+interface PricingData {
+  plans: PricingPlan[];
+  taiToken: TAITokenConfig;
+  hbarPrice: number;
+  lastUpdated: string;
+}
+
 // Initial state
 const initialState: TokenState = {
   balance: 0,
@@ -37,6 +69,9 @@ const initialState: TokenState = {
   lastUpdated: null,
   transactions: [],
   transactionsLoading: false,
+  pricingPlans: null,
+  pricingPlansLoading: false,
+  pricingPlansError: null,
 };
 
 // Async thunks
@@ -146,6 +181,87 @@ export const verifyPayment = createAsyncThunk(
   }
 );
 
+// Add the fetchPricingPlans async thunk
+export const fetchPricingPlans = createAsyncThunk(
+  'token/fetchPricingPlans',
+  async (_, { rejectWithValue }) => {
+    try {
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}payment/plans`;
+      console.log('📊 Fetching pricing plans from:', apiUrl);
+
+      const response = await axios.get(apiUrl, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('api_token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch pricing plans');
+      }
+
+      return response.data.data;
+    } catch (error: any) {
+      console.error('Error fetching pricing plans:', error);
+
+      if (error.response) {
+        return rejectWithValue(error.response.data?.message || 'Failed to fetch pricing plans');
+      } else if (error.request) {
+        return rejectWithValue('Network error: Unable to connect to server');
+      } else {
+        return rejectWithValue(error.message || 'Failed to fetch pricing plans');
+      }
+    }
+  }
+);
+
+export const completePayment = createAsyncThunk(
+  'token/completePayment',
+  async (
+    {
+      planId,
+      hederaTransactionId
+    }: { planId: string; hederaTransactionId: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}payment/complete`;
+
+      const token =
+        localStorage.getItem('token') || localStorage.getItem('api_token');
+
+      const response = await axios.post(
+        apiUrl,
+        { planId, hederaTransactionId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to complete payment:', error);
+
+      if (error.response) {
+        return rejectWithValue(
+          error.response.data?.message ||
+            'Payment sent but backend processing failed'
+        );
+      } else if (error.request) {
+        return rejectWithValue(
+          'Network error: Unable to connect to server while completing payment'
+        );
+      } else {
+        return rejectWithValue(error.message);
+      }
+    }
+  }
+);
+
+
 // Token slice
 const tokenSlice = createSlice({
   name: 'token',
@@ -153,6 +269,7 @@ const tokenSlice = createSlice({
   reducers: {
     clearError: (state) => {
       state.error = null;
+      state.pricingPlansError = null;
     },
     updateBalance: (state, action: PayloadAction<number>) => {
       state.balance = action.payload;
@@ -173,6 +290,12 @@ const tokenSlice = createSlice({
     },
     resetTokenState: (state) => {
       return initialState;
+    },
+    setPricingPlans: (state, action: PayloadAction<PricingData | null>) => {
+      state.pricingPlans = action.payload;
+    },
+    clearPricingPlansError: (state) => {
+      state.pricingPlansError = null;
     },
   },
   extraReducers: (builder) => {
@@ -253,7 +376,34 @@ const tokenSlice = createSlice({
       .addCase(verifyPayment.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
+      })
+
+      // Fetch pricing plans
+      .addCase(fetchPricingPlans.pending, (state) => {
+        state.pricingPlansLoading = true;
+        state.pricingPlansError = null;
+      })
+      .addCase(fetchPricingPlans.fulfilled, (state, action) => {
+        state.pricingPlansLoading = false;
+        state.pricingPlans = action.payload;
+        state.pricingPlansError = null;
+      })
+      .addCase(fetchPricingPlans.rejected, (state, action) => {
+        state.pricingPlansLoading = false;
+        state.pricingPlansError = action.payload as string;
+      })
+      .addCase(completePayment.pending, (state) => {
+    state.loading = true;
+  })
+  .addCase(completePayment.fulfilled, (state, action) => {
+    state.loading = false;
+    state.error = null;
+    // Optional: update token balance, transactions, etc.
+  })
+  .addCase(completePayment.rejected, (state, action) => {
+    state.loading = false;
+    state.error = action.payload as string;
+  });
   },
 });
 
@@ -266,13 +416,20 @@ export const selectTokenTransactions = (state: RootState) => state.token.transac
 export const selectTokenTransactionsLoading = (state: RootState) => state.token.transactionsLoading;
 export const selectTokenState = (state: RootState) => state.token;
 
+// New pricing plans selectors
+export const selectPricingPlans = (state: RootState) => state.token.pricingPlans;
+export const selectPricingPlansLoading = (state: RootState) => state.token.pricingPlansLoading;
+export const selectPricingPlansError = (state: RootState) => state.token.pricingPlansError;
+
 // Actions
 export const {
   clearError,
   updateBalance,
   addTransaction,
   updateTransaction,
-  resetTokenState
+  resetTokenState,
+  setPricingPlans,
+  clearPricingPlansError,
 } = tokenSlice.actions;
 
 export default tokenSlice.reducer;

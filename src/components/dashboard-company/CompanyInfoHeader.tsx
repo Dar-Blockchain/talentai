@@ -1,63 +1,37 @@
-import React, { useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Avatar,
-  Button,
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
-import AddIcon from '@mui/icons-material/Add';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CategoryIcon from '@mui/icons-material/Category';
-import GroupsIcon from '@mui/icons-material/Groups';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import { useRouter } from 'next/router';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch } from '@/store/store';
-import { fetchTokenBalance, selectTokenBalance, selectTokenLoading } from '@/store/slices/tokenSlice';
-import TokenBalanceCard from './TokenBalanceCard';
+import React from "react";
+import { Box, Typography, Avatar, Button } from "@mui/material";
+import { styled } from "@mui/material/styles";
+import AddIcon from "@mui/icons-material/Add";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { useRouter } from "next/router";
+import Image from "next/image";
 
 // Styled Components
 const ProfileHeader = styled(Box)(({ theme }) => ({
-  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-  color: '#000000',
-  padding: theme.spacing(4, 2),
-  borderRadius: '32px',
-  marginBottom: theme.spacing(6),
-  position: 'relative',
-  overflow: 'hidden',
-  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.1), 0 0 30px rgba(0, 0, 0, 0.06)',
-  '&:before': {
-    content: '""',
-    position: 'absolute',
-    top: '0',
-    left: '0',
-    right: '0',
-    bottom: '0',
-    background: 'radial-gradient(circle at top right, rgba(0, 0, 0, 0.03) 0%, transparent 70%)',
-    zIndex: 1,
-  },
-  [theme.breakpoints.up('sm')]: {
-    padding: theme.spacing(6, 4),
-  },
-  [theme.breakpoints.up('md')]: {
-    padding: theme.spacing(8),
-  },
+  background: "rgba(255, 255, 255, 1)",
+  color: "#000000",
+  padding: "35px 30px",
+  marginBottom: theme.spacing(2),
+  position: "relative",
+  overflow: "hidden",
+  borderRadius: "12px",
+  border: "1px solid rgba(84,98,116,0.1)",
 }));
 
 const GradientButton = styled(Button)(({ theme }) => ({
-  textTransform: 'none',
+  textTransform: "none",
   fontWeight: 600,
-  borderRadius: '12px',
-  padding: '12px 24px',
-  height: 48,
-  background: '#10b981',
-  color: '#ffffff',
+  borderRadius: "38px",
+  padding: "12px 24px",
+  height: 42,
+  maxWidth: "228px",
+  background: "rgba(77, 217, 163, 1)",
+  color: "#ffffff",
   letterSpacing: 0.3,
-  boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
-  '&:hover': {
-    background: '#059669',
-    boxShadow: '0 4px 12px rgba(16,185,129,0.4)',
+  boxShadow: "0 2px 8px rgba(16,185,129,0.3)",
+  "&:hover": {
+    background: "rgba(77, 217, 163, 0.8)",
+    boxShadow: "0 4px 12px rgba(16,185,129,0.4)",
   },
 }));
 
@@ -67,75 +41,82 @@ interface CompanyInfoHeaderProps {
 
 const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
   const router = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
-  const tokenBalance = useSelector(selectTokenBalance);
-  const tokenLoading = useSelector(selectTokenLoading);
-
-  // Fetch token balance on component mount and when returning from payment
-  useEffect(() => {
-    dispatch(fetchTokenBalance());
-  }, [dispatch]);
-
-  // Refresh balance if returning from payment page
-  useEffect(() => {
-    const { refreshBalance } = router.query;
-    if (refreshBalance === 'true') {
-      dispatch(fetchTokenBalance());
-      // Clean up the query parameter
-      router.replace('/dashboard/company', undefined, { shallow: true });
-    }
-  }, [router.query, dispatch, router]);
-
-  const handleBuyTokens = () => {
-    router.push('/payment');
-  };
-
-  const handleRefreshBalance = async () => {
-    await dispatch(fetchTokenBalance());
-  };
 
   return (
     <ProfileHeader>
-      <Box sx={{ position: 'relative', zIndex: 2 }}>
+      <Box sx={{ position: "relative", zIndex: 2 }}>
         {/* Header with Company Info and Post Job Button */}
-        <Box sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 3,
-          flexDirection: { xs: 'column', md: 'row' },
-          gap: { xs: 2, md: 0 },
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar 
-              sx={{ 
-                bgcolor: '#f3f4f6', 
-                color: '#111827', 
-                width: 56, 
-                height: 56, 
-                fontSize: 24, 
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+            flexDirection: { xs: "column", md: "row" },
+            gap: { xs: 2, md: 0 },
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Avatar
+              sx={{
+                bgcolor: "#f3f4f6",
+                color: "#111827",
+                width: 66,
+                height: 66,
+                fontSize: 24,
                 fontWeight: 600,
-                border: '2px solid #e5e7eb'
+                border: "2px solid #e5e7eb",
               }}
             >
-              {(profile?.companyDetails?.name || profile?.userId?.username || 'C')?.[0]}
+              {
+                (profile?.companyDetails?.name ||
+                  profile?.userId?.username ||
+                  "C")?.[0]
+              }
             </Avatar>
             <Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="h5" sx={{ fontWeight: 600, color: '#111827', lineHeight: 1.2 }}>
-                  {profile?.companyDetails?.name || 'Company Name'}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: "24px",
+                    lineHeight: 1,
+                    letterSpacing: 0,
+                    verticalAlign: "middle",
+                    color: "rgba(0, 0, 0, 1)",
+                  }}
+                >
+                  {profile?.companyDetails?.name || "Company Name"}
                 </Typography>
                 {profile?.userId?.isVerified && (
-                  <CheckCircleIcon sx={{ color: '#10b981', fontSize: 22 }} />
+                  <CheckCircleIcon
+                    sx={{
+                      color: "rgba(41, 210, 145, 0.83)",
+                      width: 24,
+                      height: 24,
+                    }}
+                  />
                 )}
               </Box>
-              <Typography variant="body2" sx={{ color: '#6b7280', mt: 0.5 }}>
-                {profile?.userId?.email || 'company@contact.com'}
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 400,
+                  fontSize: "12px",
+                  lineHeight: 1,
+                  letterSpacing: 0,
+                  verticalAlign: "middle",
+                  color: "rgba(144, 152, 163, 1)",
+                  mt: 0.5,
+                }}
+              >
+                {profile?.userId?.email || "company@contact.com"}
               </Typography>
             </Box>
           </Box>
-          <GradientButton 
-            onClick={() => router.push('/posts/create')} 
+          <GradientButton
+            onClick={() => router.push("/posts/create")}
             startIcon={<AddIcon />}
           >
             Post Job
@@ -143,109 +124,221 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
         </Box>
 
         {/* Info Cards */}
-        <Box sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
-          gap: 2,
-        }}>
-          <Box sx={{
-            background: '#ffffff',
-            padding: 2.5,
-            borderRadius: '12px',
-            border: '1px solid #e5e7eb',
-            display: 'flex',
-            alignItems: 'center',
+        <Box
+          sx={{
+            display: "flex",
             gap: 2,
-          }}>
-            <Box sx={{
-              width: 48,
-              height: 48,
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: '#f3f4f6',
-            }}>
-              <CategoryIcon sx={{ color: '#8b5cf6', fontSize: 24 }} />
+            alignItems: "flex-start",
+          }}
+        >
+          <Box
+            sx={{
+              background: "rgba(255, 255, 255, 1)",
+              padding: 2,
+              borderRadius: "8px",
+              border: "1px solid rgba(189, 133, 255, 0.18)",
+              boxShadow: "0px 0px 18px 0px rgba(0, 0, 0, 0.03)",
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "0.25px solid rgba(189, 133, 255, 0.4)",
+                background: "rgba(189, 133, 255, 0.04)",
+              }}
+            >
+              <Image
+                src="/icons/industry.svg"
+                alt="search"
+                width={24}
+                height={24}
+              />
             </Box>
-            <Box>
-              <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 500, textTransform: 'uppercase', fontSize: '0.7rem' }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                flexDirection: "column",
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "rgba(84, 98, 116, 0.53)",
+                  fontFamily: "Poppins",
+                  fontWeight: 400,
+                  fontStyle: "normal",
+                  fontSize: 10,
+                  lineHeight: "18.78px",
+                  letterSpacing: "0px",
+                }}
+              >
                 INDUSTRY
               </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 600, color: '#111827', mt: 0.5 }}>
-                {profile?.companyDetails?.industry || 'Technology'}
+              <Typography
+                variant="body1"
+                sx={{
+                  color: "rgba(49, 56, 66, 1)",
+                  fontFamily: "Poppins",
+                  fontWeight: 500,
+                  fontStyle: "normal",
+                  fontSize: 15,
+                  lineHeight: "18.78px",
+                  letterSpacing: "0px",
+                }}
+              >
+                {profile?.companyDetails?.industry || "Technology"}
               </Typography>
             </Box>
           </Box>
 
-          <Box sx={{
-            background: '#ffffff',
-            padding: 2.5,
-            borderRadius: '12px',
-            border: '1px solid #e5e7eb',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-          }}>
-            <Box sx={{
-              width: 48,
-              height: 48,
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: '#f3f4f6',
-            }}>
-              <GroupsIcon sx={{ color: '#06b6d4', fontSize: 24 }} />
+          <Box
+            sx={{
+              background: "rgba(255, 255, 255, 1)",
+              padding: 2,
+              borderRadius: "8px",
+              border: "1px solid rgba(189, 133, 255, 0.18)",
+              boxShadow: "0px 0px 18px 0px rgba(0, 0, 0, 0.03)",
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "0.25px solid rgba(189, 133, 255, 0.4)",
+                background: "rgba(189, 133, 255, 0.04)",
+              }}
+            >
+              <Image
+                src="/icons/people.svg"
+                alt="search"
+                width={24}
+                height={24}
+              />
             </Box>
-            <Box>
-              <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 500, textTransform: 'uppercase', fontSize: '0.7rem' }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                flexDirection: "column",
+              }}
+            >
+              {" "}
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "rgba(84, 98, 116, 0.53)",
+                  fontFamily: "Poppins",
+                  fontWeight: 400,
+                  fontStyle: "normal",
+                  fontSize: 10,
+                  lineHeight: "18.78px",
+                  letterSpacing: "0px",
+                }}
+              >
                 COMPANY SIZE
               </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 600, color: '#111827', mt: 0.5 }}>
-                {profile?.companyDetails?.size || '11 - 50'}
+              <Typography
+                variant="body1"
+                sx={{
+                  color: "rgba(49, 56, 66, 1)",
+                  fontFamily: "Poppins",
+                  fontWeight: 500,
+                  fontStyle: "normal",
+                  fontSize: 15,
+                  lineHeight: "18.78px",
+                  letterSpacing: "0px",
+                }}
+              >
+                {profile?.companyDetails?.size?.replace(" employees", "") ||
+                  "11 - 50"}
               </Typography>
             </Box>
           </Box>
 
-          <Box sx={{
-            background: '#ffffff',
-            padding: 2.5,
-            borderRadius: '12px',
-            border: '1px solid #e5e7eb',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-          }}>
-            <Box sx={{
-              width: 48,
-              height: 48,
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: '#f3f4f6',
-            }}>
-              <LocationOnIcon sx={{ color: '#10b981', fontSize: 24 }} />
+          <Box
+            sx={{
+              background: "rgba(255, 255, 255, 1)",
+              padding: 2,
+              borderRadius: "8px",
+              border: "1px solid rgba(189, 133, 255, 0.18)",
+              boxShadow: "0px 0px 18px 0px rgba(0, 0, 0, 0.03)",
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "0.25px solid rgba(189, 133, 255, 0.4)",
+                background: "rgba(189, 133, 255, 0.04)",
+              }}
+            >
+              <Image
+                src="/icons/location2.svg"
+                alt="search"
+                width={24}
+                height={24}
+              />{" "}
             </Box>
-            <Box>
-              <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 500, textTransform: 'uppercase', fontSize: '0.7rem' }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                flexDirection: "column",
+              }}
+            >
+              {" "}
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "rgba(84, 98, 116, 0.53)",
+                  fontFamily: "Poppins",
+                  fontWeight: 400,
+                  fontStyle: "normal",
+                  fontSize: 10,
+                  lineHeight: "18.78px",
+                  letterSpacing: "0px",
+                }}
+              >
                 LOCATION
               </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 600, color: '#111827', mt: 0.5 }}>
-                {profile?.companyDetails?.location || 'On-site'}
+              <Typography
+                variant="body1"
+                sx={{
+                  color: "rgba(49, 56, 66, 1)",
+                  fontFamily: "Poppins",
+                  fontWeight: 500,
+                  fontStyle: "normal",
+                  fontSize: 15,
+                  lineHeight: "18.78px",
+                  letterSpacing: "0px",
+                }}
+              >
+                {profile?.companyDetails?.location || "On-site"}
               </Typography>
             </Box>
-          </Box>
-
-          {/* Token Balance Card */}
-          <Box>
-            <TokenBalanceCard
-              balance={tokenBalance}
-              onBuyTokens={handleBuyTokens}
-              onRefresh={handleRefreshBalance}
-              loading={tokenLoading}
-            />
           </Box>
         </Box>
       </Box>
@@ -254,4 +347,3 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
 };
 
 export default CompanyInfoHeader;
-

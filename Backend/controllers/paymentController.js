@@ -36,6 +36,26 @@ module.exports.getPricingPlans = async (req, res) => {
   }
 };
 
+
+module.exports.getPlanById = async (planId) => {
+  try {
+    // FIX: use tokenService.getPricingPlans()
+    const { plans } = await tokenService.getPricingPlans();
+
+    const plan = plans.find(p => p.id === planId);
+
+    if (!plan) {
+      throw new Error(`Plan with id "${planId}" not found`);
+    }
+
+    return plan;
+  } catch (error) {
+    console.error(`Error getting plan with id ${planId}:`, error);
+    throw error;
+  }
+};
+
+
 /**
  * Initiate TAI token purchase
  */

@@ -21,6 +21,7 @@ const cookieParser = require("cookie-parser");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./swagger.json");
 const blockPostmanRequests = require("./middleware/blockPostmanRequests");
+const resetQuotaJob = require("./cron/resetQuota");
 
 const http = require("http");
 const connectDB = require("./config/database");
@@ -58,9 +59,9 @@ require("dotenv").config();
 // 🧠 Import et exécution automatique du CRON job
 require("./cron/resetQuota");
 
-const app = express();
+// Stripe payment routes
 
-// Initialize database connection
+const app = express();
 const initializeApp = async () => {
   console.log('🔄 Starting TalentAI Backend...');
   console.log('📦 Loading environment configuration...');
@@ -151,6 +152,7 @@ app.use("/task", taskRouter);
 app.use('/agent-config', agentConfigRouter);
 app.use("/tokens", tokenRouter);
 app.use("/payment", paymentRouter);
+app.use('/api/stripe', stripRouter);
 
 app.get("/some-route", (req, res) => {
   res.json("Route accessible");

@@ -19,6 +19,7 @@ import postReducer from './slices/postSlice';
 import hrAgentsReducer from './slices/hrAgentsSlice';
 import tokenReducer from './slices/tokenSlice';
 import agentConfigReducer from './slices/agentConfigSlice';
+import tokenPurchaseReducer from './slices/tokenPurchaseSlice';
 
 const rootReducer = combineReducers({
   user: userReducer,
@@ -31,7 +32,8 @@ const rootReducer = combineReducers({
   post: postReducer,
   hrAgents: hrAgentsReducer,
   token: tokenReducer,
-  agentConfig: agentConfigReducer
+  agentConfig: agentConfigReducer,
+  tokenPurchase: tokenPurchaseReducer
 });
 
 const persistConfig = {
