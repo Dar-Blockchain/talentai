@@ -56,7 +56,7 @@ const AddBidDialog: React.FC<AddBidDialogProps> = ({
       await dispatch(placeBid(params)).unwrap();
       setShowConfirmation(false);
       onClose();
-      toast.success("Bid submitted successfully!", {
+      toast.success("Purchase successful! Candidate information revealed.", {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -112,7 +112,7 @@ const AddBidDialog: React.FC<AddBidDialogProps> = ({
         color: 'black'
       }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography variant="h6">Place Bid</Typography>
+          <Typography variant="h6">Buy to Reveal</Typography>
           <IconButton
             onClick={handleClose}
             sx={{ color: 'black' }}
@@ -185,24 +185,24 @@ const AddBidDialog: React.FC<AddBidDialogProps> = ({
                   fontSize: '1.25rem',
                   lineHeight: 1
                 }}>
-                  {selectedCandidate?.finalBid} $
+                  {selectedCandidate?.finalBid} TAI
                 </Typography>
                 <Typography variant="caption" sx={{
                   color: 'black',
                   fontSize: '0.7rem'
                 }}>
-                  Current Bid
+                  Current Price
                 </Typography>
               </Box>
             </Box>
           </Box>
           <TextField
-            label="Bid Amount"
+            label="Amount"
             type="number"
             value={bidAmount}
             onChange={(e) => setBidAmount(e.target.value)}
             InputProps={{
-              startAdornment: <InputAdornment position="start">$</InputAdornment>,
+              startAdornment: <InputAdornment position="start">TAI</InputAdornment>,
             }}
             fullWidth
             InputLabelProps={{ sx: { color: 'black' } }}
@@ -257,7 +257,7 @@ const AddBidDialog: React.FC<AddBidDialogProps> = ({
             }
           }}
         >
-          Submit Bid
+          Buy to Reveal
         </Button>
       </DialogActions>
 
@@ -283,13 +283,13 @@ const AddBidDialog: React.FC<AddBidDialogProps> = ({
           color: 'black',
           fontWeight: 600,
         }}>
-          Confirm Bid
+          Confirm Purchase
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
           <Typography sx={{ color: 'black', mb: 2 }}>
-            Are you sure you want to place a bid of{' '}
+            Are you sure you want to buy to reveal for{' '}
             <Box component="span" sx={{ fontWeight: 700, color: '#02E2FF' }}>
-              ${bidAmount}
+              {bidAmount} TAI
             </Box>
             {' '}for candidate{' '}
             <Box component="span" sx={{ fontWeight: 700 }}>
@@ -304,10 +304,10 @@ const AddBidDialog: React.FC<AddBidDialogProps> = ({
             border: '1px solid rgba(2,226,255,0.3)',
           }}>
             <Typography variant="body2" sx={{ color: 'black', fontWeight: 500 }}>
-              Current bid: ${selectedCandidate?.finalBid || 0}
+              Current price: {selectedCandidate?.finalBid || 0} TAI
             </Typography>
             <Typography variant="body2" sx={{ color: 'black', fontWeight: 500, mt: 0.5 }}>
-              New bid: ${bidAmount}
+              Your offer: {bidAmount} TAI
             </Typography>
           </Box>
         </DialogContent>
