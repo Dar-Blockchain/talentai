@@ -10,7 +10,6 @@ import {
   IconButton,
   Drawer,
   Divider,
-  Skeleton,
   Tooltip,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -50,36 +49,52 @@ const HeaderDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   const tokenBalance = useSelector(selectTokenBalance);
   const tokenLoading = useSelector(selectTokenLoading);
-  const handleOpenModal = () => dispatch(openModal());
-
-  useEffect(() => {
-    dispatch(fetchTokenBalance());
-  }, [dispatch]);
-
-  useEffect(() => {
-    const { refreshBalance } = router.query;
-    if (refreshBalance === "true") {
-      dispatch(fetchTokenBalance());
-      // Clean up the query parameter
-      router.replace("/dashboard/company", undefined, { shallow: true });
-    }
-  }, [router.query, dispatch, router]);
-
   const { profile } = useSelector((state: RootState) => state.profile);
   const userType = profile?.type;
-
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
 
+  useEffect(() => {
+    setToken(localStorage.getItem("api_token"));
+  }, []);
+
+  const handleOpenModal = () => dispatch(openModal());
   const toggleDrawer = () => setMobileOpen(!mobileOpen);
 
   const handleLogout = async () => {
-    dispatch(clearProfile());
-    dispatch(logout());
-    localStorage.clear();
-    Object.keys(Cookies.get()).forEach((c) => Cookies.remove(c));
-    signOut({ redirect: false });
-    window.location.href = "/signin";
+    // try {
+    //   dispatch(clearProfile());
+    //   dispatch(logout());
+
+    //   localStorage.removeItem("api_token");
+    //   Cookies.remove("api_token", { path: "/" });
+    //   setToken(null);
+
+    //   // Clear other cookies
+    //   Object.keys(Cookies.get()).forEach((cookieName) => {
+    //     Cookies.remove(cookieName, { path: "/" });
+    //   });
+
+    //   signOut({ redirect: false }).catch(console.error);
+
+    //   window.location.href = "/signin";
+    // } catch (err) {
+    //   window.location.href = "/signin";
+    // }
   };
+
+  useEffect(() => {
+    if (!token) return;
+    dispatch(fetchTokenBalance());
+  }, [dispatch, token]);
+
+  useEffect(() => {
+    const refreshBalance = router.query.refreshBalance;
+
+    if (refreshBalance === "true" && token) {
+      dispatch(fetchTokenBalance());
+    }
+  }, [router.query.refreshBalance, token, dispatch]);
 
   return (
     <>

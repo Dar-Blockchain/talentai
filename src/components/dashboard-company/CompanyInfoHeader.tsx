@@ -1,20 +1,9 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Box, Typography, Avatar, Button } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import AddIcon from "@mui/icons-material/Add";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CategoryIcon from "@mui/icons-material/Category";
-import GroupsIcon from "@mui/icons-material/Groups";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { useRouter } from "next/router";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/store/store";
-import {
-  fetchTokenBalance,
-  selectTokenBalance,
-  selectTokenLoading,
-} from "@/store/slices/tokenSlice";
-import TokenBalanceCard from "./TokenBalanceCard";
 import Image from "next/image";
 
 // Styled Components
@@ -22,7 +11,7 @@ const ProfileHeader = styled(Box)(({ theme }) => ({
   background: "rgba(255, 255, 255, 1)",
   color: "#000000",
   padding: "35px 30px",
-  marginBottom: theme.spacing(6),
+  marginBottom: theme.spacing(2),
   position: "relative",
   overflow: "hidden",
   borderRadius: "12px",
@@ -35,7 +24,7 @@ const GradientButton = styled(Button)(({ theme }) => ({
   borderRadius: "38px",
   padding: "12px 24px",
   height: 42,
-  maxWidth: '228px', 
+  maxWidth: "228px",
   background: "rgba(77, 217, 163, 1)",
   color: "#ffffff",
   letterSpacing: 0.3,
@@ -52,32 +41,6 @@ interface CompanyInfoHeaderProps {
 
 const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
   const router = useRouter();
-  const dispatch = useDispatch<AppDispatch>();
-  const tokenBalance = useSelector(selectTokenBalance);
-  const tokenLoading = useSelector(selectTokenLoading);
-
-  // Fetch token balance on component mount and when returning from payment
-  useEffect(() => {
-    dispatch(fetchTokenBalance());
-  }, [dispatch]);
-
-  // Refresh balance if returning from payment page
-  useEffect(() => {
-    const { refreshBalance } = router.query;
-    if (refreshBalance === "true") {
-      dispatch(fetchTokenBalance());
-      // Clean up the query parameter
-      router.replace("/dashboard/company", undefined, { shallow: true });
-    }
-  }, [router.query, dispatch, router]);
-
-  const handleBuyTokens = () => {
-    router.push("/payment");
-  };
-
-  const handleRefreshBalance = async () => {
-    await dispatch(fetchTokenBalance());
-  };
 
   return (
     <ProfileHeader>
@@ -199,9 +162,13 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
                 height={24}
               />
             </Box>
-            <Box sx={{    display: 'flex',
-    alignItems: 'flex-start',
-    flexDirection: 'column'}}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                flexDirection: "column",
+              }}
+            >
               <Typography
                 variant="caption"
                 sx={{
@@ -264,9 +231,15 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
                 height={24}
               />
             </Box>
-            <Box sx={{    display: 'flex',
-    alignItems: 'flex-start',
-    flexDirection: 'column'}}>              <Typography
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                flexDirection: "column",
+              }}
+            >
+              {" "}
+              <Typography
                 variant="caption"
                 sx={{
                   color: "rgba(84, 98, 116, 0.53)",
@@ -292,7 +265,8 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
                   letterSpacing: "0px",
                 }}
               >
-                {profile?.companyDetails?.size?.replace(' employees', '') || "11 - 50"}
+                {profile?.companyDetails?.size?.replace(" employees", "") ||
+                  "11 - 50"}
               </Typography>
             </Box>
           </Box>
@@ -328,9 +302,15 @@ const CompanyInfoHeader: React.FC<CompanyInfoHeaderProps> = ({ profile }) => {
                 height={24}
               />{" "}
             </Box>
-            <Box sx={{    display: 'flex',
-    alignItems: 'flex-start',
-    flexDirection: 'column'}}>              <Typography
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                flexDirection: "column",
+              }}
+            >
+              {" "}
+              <Typography
                 variant="caption"
                 sx={{
                   color: "rgba(84, 98, 116, 0.53)",

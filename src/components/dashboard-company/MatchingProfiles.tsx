@@ -102,16 +102,11 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
   const endIndex = startIndex + itemsPerPage;
   const paginatedCandidates = matchingProfiles.slice(startIndex, endIndex);
   const effectiveTotalPages = totalPages > 1 ? totalPages : calculatedTotalPages;
-  
-  const handleItemsPerPageChange = (event: any) => {
-    const newItemsPerPage = parseInt(event.target.value, 10);
-    setItemsPerPage(newItemsPerPage);
-  };
 
   return (
     <>
       {/* Header Section */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2, backgroundColor: 'white', p: 2, borderRadius: '8px', border: '1px solid #e5e7eb' }}>
         <Box>
           <Typography variant="h5" sx={{ 
             color: '#111827', 
@@ -133,33 +128,6 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          {/* Items per page selector */}
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel id="items-per-page-label">Per Page</InputLabel>
-            <Select
-              labelId="items-per-page-label"
-              id="items-per-page-select"
-              value={itemsPerPage}
-              label="Per Page"
-              onChange={handleItemsPerPageChange}
-              sx={{
-                borderRadius: '8px',
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#d1d5db',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#10b981',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#10b981',
-                },
-              }}
-            >
-              <MenuItem value={5}>5</MenuItem>
-              <MenuItem value={10}>10</MenuItem>
-              <MenuItem value={20}>20</MenuItem>
-            </Select>
-          </FormControl>
           <Button
             variant="contained"
             startIcon={<ArrowBackIcon />}

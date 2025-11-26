@@ -54,7 +54,7 @@ function TokenPurchaseModal() {
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
+    <Modal open={open} onClose={onClose} sx={{zIndex: 50}}>
       <Box
         sx={{
           position: "absolute",

@@ -28,7 +28,6 @@ import CompanyInfoHeader from "@/components/dashboard-company/CompanyInfoHeader"
 import AddBidDialog from "@/components/dashboard-company/AddBidDialog";
 import FilterDialog from "@/components/dashboard-company/FilterDialog";
 import MatchingProfiles from "@/components/dashboard-company/MatchingProfiles";
-import Navbar from "@/components/dashboard-company/Navbar";
 import MyJobPosts from "@/components/dashboard-company/MyJobPosts";
 import HRAgentsTable from "@/components/dashboard-company/HRAgentsTable";
 import HeaderDashboard from "@/components/HeaderDashboard";
@@ -40,13 +39,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
   background: "white",
   backdropFilter: "blur(10px)",
   borderRadius: "16px",
-  boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-  border: "1px solid rgba(255,255,255,0.1)",
-  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-  "&:hover": {
-    transform: "translateY(-2px)",
-    boxShadow: "0 6px 25px rgba(0,0,0,0.3)",
-  },
+  border: "1px solid #EEF0F2",
 }));
 
 // Update the MatchingCandidate interface
@@ -172,8 +165,6 @@ const DashboardCompany = () => {
           py: 2,
         }}
       >
-        {/* Navbar */}
-
         <ToastContainer
           position="top-right"
           autoClose={3000}
@@ -187,8 +178,8 @@ const DashboardCompany = () => {
           theme="dark"
         />
         <Container maxWidth="lg">
-          {/* Filter Dialog */}
           <HeaderDashboard />
+          <CompanyInfoHeader profile={profile} />
 
           <FilterDialog
             open={filterDialog}
@@ -204,7 +195,6 @@ const DashboardCompany = () => {
             isLoadingJobs={isLoadingJobs}
             jobsError={jobsError}
           />
-          <CompanyInfoHeader profile={profile} />
 
           <Box
             sx={{
