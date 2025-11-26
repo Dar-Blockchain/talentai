@@ -2,6 +2,7 @@ import hashConnectService, {
   ConnectionStatus,
   WalletInfo,
 } from "@/services/hashConnectService";
+import { payWithCard } from "@/services/stripeService";
 import {
   closeModal,
   nextStep,
@@ -22,15 +23,16 @@ const methods = [
 ];
 
 const PaymentMethodSelector = () => {
+
   const dispatch = useDispatch<AppDispatch>();
-  const { paymentMethod } = useSelector(
+  const { paymentMethod, selectedPlan } = useSelector(
     (state: RootState) => state.tokenPurchase
   );
   const [walletStatus, setWalletStatus] =
     useState<ConnectionStatus>("disconnected");
   const [isHashConnectReady, setIsHashConnectReady] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  
+
   const onClose = () => dispatch(closeModal());
   const onBack = () => dispatch(previousStep());
 
@@ -59,7 +61,8 @@ const PaymentMethodSelector = () => {
       await connectWallet();
     } else {
       // For card payment, proceed directly to confirmation
-      onPaymentMethodSelected(paymentMethod);
+      dispatch(selectPaymentMethod(paymentMethod));
+      await payWithCard(selectedPlan?.id!);
     }
   };
 
