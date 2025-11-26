@@ -157,16 +157,33 @@ export const verifyOTP = createAsyncThunk(
   'auth/verifyOTP',
   async ({ email, otp, location }: { email: string; otp: string; location?: any }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}auth/verify-otp`, {
-        email,
-        otp,
-        location
-      });
-      // Store token in localStorage
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/verify-otp`,
+        {
+          email,
+          otp,
+          location
+        },
+        {
+          validateStatus: (status) => {
+            // Accept all status codes to prevent axios from throwing
+            return status >= 200 && status < 500;
+          }
+        }
+      );
+
+      // Check if response was successful
+      if (response.status >= 200 && response.status < 300) {
+        // Store token in localStorage
+        if (response.data.token) {
+          localStorage.setItem('token', response.data.token);
+        }
+        return response.data;
+      } else {
+        // Handle 4xx errors (like 400 Bad Request)
+        const message = response.data?.message || `Verification failed: ${response.statusText}`;
+        return rejectWithValue(message);
       }
-      return response.data;
     } catch (error: any) {
       console.error('OTP verification error:', error);
 
