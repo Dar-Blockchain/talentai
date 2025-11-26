@@ -177,6 +177,32 @@ io.on('connection', (sock) => {
     sock.join(userId);
     console.log(`Utilisateur ${userId} a rejoint sa room.`);
   });
+  // Allow clients to request the server to create a system notification
+  sock.on('sendSystemNotification', async (data) => {
+    try {
+      const { recipient, content, url } = data || {};
+      const notificationService = require('./services/notificationSystemService');
+      const notification = await notificationService.createSystemNotification(recipient, content, url);
+      // Acknowledge to sender
+      sock.emit('notificationCreated', notification);
+    } catch (err) {
+      console.error('Failed to create system notification via socket:', err);
+      sock.emit('notificationError', { error: err.message || 'Unknown error' });
+    }
+  });
+
+  // Allow broadcasting to multiple recipients via socket
+  sock.on('broadcastSystemNotification', async (data) => {
+    try {
+      const { recipients, content, url } = data || {};
+      const notificationService = require('./services/notificationSystemService');
+      const results = await notificationService.broadcastSystemNotification(recipients, content, url);
+      sock.emit('broadcastCreated', { created: results.length });
+    } catch (err) {
+      console.error('Failed to broadcast system notifications via socket:', err);
+      sock.emit('notificationError', { error: err.message || 'Unknown error' });
+    }
+  });
   sock.on('disconnect', () => {
     console.log('Utilisateur déconnecté de Socket.IO :', sock.id);
   });
