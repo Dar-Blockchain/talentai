@@ -50,6 +50,7 @@ const recruitementStepRouter = require("./routes/recruitementStepRouter");
 const taskRouter = require("./routes/taskRouter");
 const agentConfigRouter = require("./routes/agentConfigRouter");
 const tokenRouter = require("./routes/tokenRouter");
+const stripRouter = require("./routes/StripRouter");
 
 const paymentRouter = require("./routes/paymentRouter");
 
