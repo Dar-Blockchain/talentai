@@ -1860,3 +1860,147 @@
     "timestamp": "2025-11-27T17:19:34.941Z"
   }
 }
+
+{
+  "metadata": {
+    "exportedAt": "2025-11-27T19:29:38.524Z",
+    "type": "soft",
+    "skill": "Communication",
+    "role": "Communication",
+    "category": "English",
+    "proficiency": "1"
+  },
+  "interviewData": {
+    "finalReport": {
+      "summary": "Interview completed successfully",
+      "coverage": {
+        "overall": 0,
+        "areas": {
+          "communication": {
+            "percentage": 0,
+            "indicators": [
+              {
+                "name": "clarity",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "active listening",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "adaptability",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              }
+            ],
+            "weight": 0.3,
+            "depth": "assess communication effectiveness in various scenarios",
+            "completed": false
+          },
+          "emotional_intelligence": {
+            "percentage": 0,
+            "indicators": [
+              {
+                "name": "self-awareness",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "empathy",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "emotional regulation",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              }
+            ],
+            "weight": 0.25,
+            "depth": "explore emotional responses and management",
+            "completed": false
+          },
+          "teamwork": {
+            "percentage": 0,
+            "indicators": [
+              {
+                "name": "collaboration",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "conflict resolution",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "support for others",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              }
+            ],
+            "weight": 0.25,
+            "depth": "understand team interaction and contribution",
+            "completed": false
+          },
+          "adaptability": {
+            "percentage": 0,
+            "indicators": [
+              {
+                "name": "change management",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "learning agility",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "resilience",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              }
+            ],
+            "weight": 0.2,
+            "depth": "assess flexibility and response to change",
+            "completed": false
+          }
+        },
+        "completedAreas": [],
+        "nextRecommendedArea": null,
+        "lastUpdated": "2025-11-27T19:29:32.481Z"
+      },
+      "recommendations": [],
+      "scores": {},
+      "timestamp": "2025-11-27T19:29:36.378Z"
+    },
+    "analytics": {
+      "duration": 19633,
+      "messageCount": 3,
+      "silenceEvents": 0,
+      "coveragePercentage": 0,
+      "completedAreas": 0,
+      "totalAreas": 4,
+      "averageResponseLength": 0,
+      "interactionStyle": "unknown"
+    },
+    "sessionId": "5bcc62ca-fd30-41c5-9632-157d694a6791",
+    "interviewType": "HR_INTERVIEW",
+    "timestamp": "2025-11-27T19:29:36.482Z"
+  }
+}
