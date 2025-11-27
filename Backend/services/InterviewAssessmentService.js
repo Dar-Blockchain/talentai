@@ -9,6 +9,25 @@ const urlTypeMap = {
   "hr": "hr",
 };
 
+function getLevelFromScore(score) {
+  if (score < 20) return 1;
+  if (score < 40) return 2;
+  if (score < 60) return 3;
+  if (score < 80) return 4;
+  return 5;
+}
+
+function getExperienceLabel(level) {
+  const map = {
+    1: 'Entry Level',
+    2: 'Junior',
+    3: 'Mid Level',
+    4: 'Senior',
+    5: 'Expert',
+  };
+  return map[level] || 'Unknown Level';
+}
+
 // Create a new assessment
 const createAssessment = async (data, metadata, rawInterviewData, userId) => {
   try {
@@ -23,18 +42,12 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
     if (candidateId) {
       // Create skill object from metadata
       const skillName = metadata?.skill || 'Unknown Skill';
-      const experienceLevel = metadata?.proficiency || 'NoLevel';
+      //const experienceLevel = metadata?.proficiency || 'NoLevel';
       const overallScore = rawInterviewData?.finalReport?.coverage?.overall || 0;
 
-      // Map experience level to proficiency level (1-5)
-      const experienceLevelMap = {
-        'Entry Level': 1,
-        'Junior': 2,
-        'Mid Level': 3,
-        'Senior': 4,
-        'Expert': 5,
-      };
-      const proficiencyLevel = experienceLevelMap[experienceLevel] || 0;
+      const proficiencyLevel = getLevelFromScore(overallScore);
+
+      const experienceLevel = getExperienceLabel(proficiencyLevel);
 
       const skill = {
         name: skillName,
@@ -77,7 +90,6 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
           proficiencyLevel: proficiencyLevel,
           experienceLevel: experienceLevel,
           ScoreTest: overallScore,
-          isPrimary: false,
         };
 
         // Check if soft skill exists
@@ -127,7 +139,8 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
               $set: {
                 'skills.$[elem].ScoreTest': overallScore,
                 'skills.$[elem].proficiencyLevel': proficiencyLevel,
-                'skills.$[elem].Levelconfirmed': proficiencyLevel,
+                'skills.$[elem].experienceLevel': experienceLevel,
+                'skills.$[elem].Levelconfirmed': proficiencyLevel - 1,
               },
             },
             {
