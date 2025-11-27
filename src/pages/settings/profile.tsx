@@ -37,6 +37,7 @@ import {
   Warning as WarningIcon,
   Error as ErrorIcon,
   AccessTime as AccessTimeIcon,
+  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { signOut } from 'next-auth/react';
 import { clearProfile } from '@/store/slices/profileSlice';
@@ -632,6 +633,28 @@ const ProfileSettingsPage: React.FC = () => {
         link="Are you hiring?" />
 
       <Container maxWidth="xl" sx={{ py: 4, flex: 1 }}>
+        {/* Back to Dashboard Button */}
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => {
+            const dashboardPath = profile.profileType === 'Company'
+              ? '/dashboard/company'
+              : '/dashboard/candidate';
+            router.push(dashboardPath);
+          }}
+          sx={{
+            mb: 3,
+            color: '#8310FF',
+            textTransform: 'none',
+            fontWeight: 600,
+            '&:hover': {
+              backgroundColor: 'rgba(131, 16, 255, 0.08)',
+            },
+          }}
+        >
+          Back to Dashboard
+        </Button>
+
         <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
           {/* Sidebar */}
           <Card sx={{
