@@ -76,8 +76,8 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
             try {
                 const token = localStorage.getItem("api_token");
                 const realProfileId = profileIdRef.current;
-                const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/?page=${pageNum + 1
-                    }&limit=${limit}&type=${type}&profileId=${realProfileId}`;
+                const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}InterviewAssessment/?page=${pageNum + 1
+                    }&limit=${limit}&type=${type}&candidateId=${realProfileId}`;
 
                 console.log(`📡 [Comp-${componentId}][Req-${requestId}] Making HTTP request to:`, url);
 
@@ -233,27 +233,49 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                     </Paper>
                                 ) : (
                                     data.map((row: any) => {
-                                        const score = typeof row.skillDetails?.[0]?.confidenceScore === "number" 
-                                            ? Math.max(0, Math.min(100, row.skillDetails[0].confidenceScore)) 
-                                            : typeof row?.overallScore === "number" 
-                                            ? Math.max(0, Math.min(100, row.overallScore)) 
-                                            : null;
+                                        // Extract data directly from the structure
+                                        const metadata = row.metadata || {};
+                                        const interviewData = row.interviewData || {};
+                                        const finalReport = interviewData.finalReport || {};
+                                        const coverage = finalReport.coverage || {};
+                                        const areas = coverage.areas || {};
+                                        const technicalDepth = areas.technical_depth || {};
+                                        const problemApproach = areas.problem_approach || {};
+
+                                        // Get quality score directly (0-10 scale)
+                                        const qualityScore = technicalDepth.aiAnalysis?.qualityScore || problemApproach.aiAnalysis?.qualityScore;
+
+                                        // Get overall coverage percentage directly from coverage.overall
+                                        const overallCoverage = coverage.overall || 0;
+                                        const technicalDepthPercentage = technicalDepth.percentage;
+                                        const problemApproachPercentage = problemApproach.percentage;
+
+                                        // Use quality score as display value or fall back to old structure
+                                        const score = qualityScore || row.skillDetails?.[0]?.confidenceScore || row?.overallScore || null;
+
+                                        // Simple level based on quality score
                                         let level: string = "Unknown";
                                         let color: "default" | "success" | "warning" | "error" = "default";
-                                        if (score !== null) {
-                                            if (score >= 85) { level = "Expert"; color = "success"; }
-                                            else if (score >= 70) { level = "Advanced"; color = "success"; }
-                                            else if (score >= 50) { level = "Intermediate"; color = "warning"; }
+                                        if (qualityScore) {
+                                            if (qualityScore >= 8) { level = "Expert"; color = "success"; }
+                                            else if (qualityScore >= 6) { level = "Advanced"; color = "success"; }
+                                            else if (qualityScore >= 4) { level = "Intermediate"; color = "warning"; }
                                             else { level = "Beginner"; color = "error"; }
                                         }
-                                        const skillName = row.skillDetails?.[0]?.name;
+
+                                        const skillName = metadata.skill || row.skillDetails?.[0]?.name;
                                         const title = skillName || row.post?.jobDetails?.title || row.skillName || "Skill Assessment";
-                                        const dateLabel = row.createdAt ? new Date(row.createdAt).toLocaleDateString() : null;
-                                        const skillType = row.skillDetails?.[0]?.type || "hard";
-                                        const proficiencyLevel = row.skillDetails?.[0]?.proficiencyLevel;
-                                        const confidenceScore = row.skillDetails?.[0]?.confidenceScore;
+                                        const dateLabel = metadata.exportedAt ? new Date(metadata.exportedAt).toLocaleDateString() :
+                                                         (row.createdAt ? new Date(row.createdAt).toLocaleDateString() : null);
+                                        const skillType = metadata.type || row.skillDetails?.[0]?.type || "technical";
+                                        const proficiencyLevel = metadata.proficiency || row.skillDetails?.[0]?.proficiencyLevel;
                                         const totalQuestions = row.skillDetails?.[0]?.questionAnswerList?.length || 0;
                                         const correctAnswers = row.skillDetails?.[0]?.questionAnswerList?.filter((qa: any) => qa.status === "correct").length || 0;
+
+                                        // Count covered indicators
+                                        const technicalIndicators = technicalDepth.indicators?.filter((i: any) => i.covered) || [];
+                                        const problemIndicators = problemApproach.indicators?.filter((i: any) => i.covered) || [];
+                                        const totalIndicatorsCovered = technicalIndicators.length + problemIndicators.length;
                                         return (
                                             <Paper
                                                 key={row._id || row.id}
@@ -278,7 +300,7 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                                     </Stack>
                                                     <Stack direction="row" spacing={1} alignItems="center" sx={{ color: "#7a7a7a" }}>
                                                         <AssignmentTurnedInIcon sx={{ fontSize: 18 }} />
-                                                        <Typography variant="body2">{row.type || "skill"}</Typography>
+                                                        <Typography variant="body2">{skillType}</Typography>
                                                         {dateLabel && (
                                                             <>
                                                                 <Typography variant="body2" sx={{ mx: 0.5 }}>•</Typography>
@@ -290,10 +312,10 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                                     {score !== null ? (
                                                         <Stack direction="row" spacing={2} alignItems="center">
                                                             <Box sx={{ position: "relative", display: "inline-flex" }}>
-                                                                <CircularProgress variant="determinate" value={score} size={64} thickness={5} sx={{
+                                                                <CircularProgress variant="determinate" value={overallCoverage || technicalDepthPercentage || problemApproachPercentage || 0} size={64} thickness={5} sx={{
                                                                     color: "#ece7fb",
                                                                 }} />
-                                                                <CircularProgress variant="determinate" value={score} size={64} thickness={5} sx={{
+                                                                <CircularProgress variant="determinate" value={overallCoverage || technicalDepthPercentage || problemApproachPercentage || 0} size={64} thickness={5} sx={{
                                                                     position: "absolute",
                                                                     left: 0,
                                                                     top: 0,
@@ -309,20 +331,32 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                                                     alignItems: "center",
                                                                     justifyContent: "center",
                                                                 }}>
-                                                                    <Typography variant="caption" sx={{ fontWeight: 800, color: "#333" }}>{`${score}%`}</Typography>
+                                                                    <Typography variant="caption" sx={{ fontWeight: 800, color: "#333" }}>{`${overallCoverage || technicalDepthPercentage || problemApproachPercentage || 0}%`}</Typography>
                                                                 </Box>
                                                             </Box>
                                                             <Box sx={{ flex: 1 }}>
-                                                                <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.75 }}>
-                                                                    <Typography variant="caption" sx={{ color: "#666" }}>Overall Score</Typography>
-                                                                    <Stack direction="row" spacing={1} alignItems="center">
-                                                                        <Tooltip title="Relative standing">
-                                                                            <TrendingUpIcon sx={{ fontSize: 16, color: "#8310FF" }} />
-                                                                        </Tooltip>
-                                                                        <Typography variant="caption" sx={{ color: "#333", fontWeight: 700 }}>{level}</Typography>
-                                                                    </Stack>
-                                                                </Stack>
-                                                                <LinearProgress variant="determinate" value={score} sx={{ height: 8, borderRadius: 6, "& .MuiLinearProgress-bar": { backgroundColor: "#8310FF" } }} />
+                                                                {qualityScore ? (
+                                                                    <>
+                                                                        <Typography variant="caption" sx={{ color: "#666", display: "block", mb: 0.5 }}>Quality Score</Typography>
+                                                                        <Typography variant="h6" sx={{ fontWeight: 700, color: "#333", mb: 0.5 }}>{qualityScore}/10</Typography>
+                                                                        {totalIndicatorsCovered > 0 && (
+                                                                            <Typography variant="caption" sx={{ color: "#666" }}>{totalIndicatorsCovered} indicators covered</Typography>
+                                                                        )}
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.75 }}>
+                                                                            <Typography variant="caption" sx={{ color: "#666" }}>Overall Score</Typography>
+                                                                            <Stack direction="row" spacing={1} alignItems="center">
+                                                                                <Tooltip title="Relative standing">
+                                                                                    <TrendingUpIcon sx={{ fontSize: 16, color: "#8310FF" }} />
+                                                                                </Tooltip>
+                                                                                <Typography variant="caption" sx={{ color: "#333", fontWeight: 700 }}>{level}</Typography>
+                                                                            </Stack>
+                                                                        </Stack>
+                                                                        <LinearProgress variant="determinate" value={score} sx={{ height: 8, borderRadius: 6, "& .MuiLinearProgress-bar": { backgroundColor: "#8310FF" } }} />
+                                                                    </>
+                                                                )}
                                                             </Box>
                                                         </Stack>
                                                     ) : (
