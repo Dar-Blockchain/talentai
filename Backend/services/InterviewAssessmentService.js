@@ -1,10 +1,145 @@
 const InterviewAssessment = require('../models/InterviewAssessmentModel');
+const Profile = require('../models/ProfileModel');
 
 // Create a new assessment
-const createAssessment = async (data) => {
+const createAssessment = async (data, metadata, rawInterviewData, userId) => {
   try {
     const assessment = new InterviewAssessment(data);
-    return await assessment.save();
+    const savedAssessment = await assessment.save();
+
+    // Get the candidate ID from data
+    const candidateId = data.candidateId;
+    console.log('Candidate ID from data:', candidateId);
+    console.log('Assessment saved:', savedAssessment._id);
+    
+    if (candidateId) {
+      // Create skill object from metadata
+      const skillName = metadata?.skill || 'Unknown Skill';
+      const experienceLevel = metadata?.proficiency || 'NoLevel';
+      const overallScore = rawInterviewData?.finalReport?.scores?.overall || 0;
+
+      // Map experience level to proficiency level (1-5)
+      const experienceLevelMap = {
+        'Entry Level': 1,
+        'Junior': 2,
+        'Mid Level': 3,
+        'Senior': 4,
+        'Expert': 5,
+      };
+      const proficiencyLevel = experienceLevelMap[experienceLevel] || 0;
+
+      const skill = {
+        name: skillName,
+        proficiencyLevel: proficiencyLevel,
+        experienceLevel: experienceLevel,
+        NumberTestPassed: 1,
+        ScoreTest: overallScore,
+        Levelconfirmed: proficiencyLevel - 1,
+        isPrimary: false,
+      };
+
+      // Update profile with interview and skills
+      const updatedProfile = await Profile.findByIdAndUpdate(
+        candidateId,
+        {
+          $inc: { quota: 1 },
+          $push: {
+            interviewDetails: savedAssessment._id,
+          },
+        },
+        { new: true }
+      );
+
+      if (!updatedProfile) {
+        console.warn(`Profile with ID ${candidateId} not found`);
+        throw new Error(`Profile not found for candidate: ${candidateId}`);
+      }
+
+      console.log(`Profile updated: Quota incremented, Interview added`);
+      console.log(`Updated profile quota: ${updatedProfile.quota}`);
+
+      // Handle skill type - technical or soft
+      const skillType = (metadata?.type || '').toLowerCase();
+      
+      if (skillType === 'soft') {
+        const softSkill = {
+          name: skillName,
+          category: metadata?.category || '',
+          proficiencyLevel: proficiencyLevel,
+          experienceLevel: experienceLevel,
+          ScoreTest: overallScore,
+          isPrimary: false,
+        };
+
+        // Check if soft skill exists
+        const existingSoft = await Profile.findOne(
+          { _id: candidateId, 'softSkills.name': skillName },
+          { 'softSkills.$': 1 }
+        );
+
+        if (existingSoft && existingSoft.softSkills.length > 0) {
+          // Update existing soft skill
+          await Profile.findByIdAndUpdate(
+            candidateId,
+            {
+              $set: {
+                'softSkills.$[elem].ScoreTest': overallScore,
+                'softSkills.$[elem].proficiencyLevel': proficiencyLevel,
+              },
+            },
+            {
+              arrayFilters: [{ 'elem.name': skillName }],
+              new: true,
+            }
+          );
+          console.log(`Soft skill "${skillName}" updated`);
+        } else {
+          // Add new soft skill
+          await Profile.findByIdAndUpdate(
+            candidateId,
+            { $addToSet: { softSkills: softSkill } },
+            { new: true }
+          );
+          console.log(`Soft skill "${skillName}" added`);
+        }
+      } else {
+        // Hard skill logic
+        const existingSkill = await Profile.findOne(
+          { _id: candidateId, 'skills.name': skillName },
+          { 'skills.$': 1 }
+        );
+
+        if (existingSkill && existingSkill.skills.length > 0) {
+          // Update existing skill
+          await Profile.findByIdAndUpdate(
+            candidateId,
+            {
+              $inc: { 'skills.$[elem].NumberTestPassed': 1 },
+              $set: {
+                'skills.$[elem].ScoreTest': overallScore,
+                'skills.$[elem].proficiencyLevel': proficiencyLevel,
+                'skills.$[elem].Levelconfirmed': proficiencyLevel,
+              },
+            },
+            {
+              arrayFilters: [{ 'elem.name': skillName }],
+              new: true,
+            }
+          );
+          console.log(`Skill "${skillName}" updated - NumberTestPassed incremented`);
+        } else {
+          // Add new skill
+          await Profile.findByIdAndUpdate(
+            candidateId,
+            { $addToSet: { skills: skill } },
+            { new: true }
+          );
+          console.log(`Skill "${skillName}" added as new`);
+        }
+      }
+    }
+
+    return await getAssessmentById(savedAssessment._id);
   } catch (error) {
     throw new Error(`Error creating assessment: ${error.message}`);
   }
@@ -126,7 +261,7 @@ const getAssessmentsBySkill = async (skill, page = 1, limit = 10) => {
 };
 
 // Update assessment
-const updateAssessment = async (id, updateData) => {
+const updateAssessment = async (id, updateData, metadata) => {
   try {
     const assessment = await InterviewAssessment.findByIdAndUpdate(
       id,
@@ -138,7 +273,57 @@ const updateAssessment = async (id, updateData) => {
     if (!assessment) {
       throw new Error('Assessment not found');
     }
-    return assessment;
+
+    // Update profile if metadata provided
+    if (metadata && assessment.candidateId) {
+      const candidateId = assessment.candidateId._id;
+      const skillName = metadata?.skill || 'Unknown Skill';
+      const experienceLevel = metadata?.proficiency || 'NoLevel';
+      const overallScore = updateData?.interviewData?.finalReport?.scores?.overall || 0;
+
+      const experienceLevelMap = {
+        'Entry Level': 1,
+        'Junior': 2,
+        'Mid Level': 3,
+        'Senior': 4,
+        'Expert': 5,
+      };
+      const proficiencyLevel = experienceLevelMap[experienceLevel] || 0;
+
+      const skillType = (metadata?.type || '').toLowerCase();
+
+      if (skillType === 'soft') {
+        await Profile.findByIdAndUpdate(
+          candidateId,
+          {
+            $set: {
+              'softSkills.$[elem].ScoreTest': overallScore,
+              'softSkills.$[elem].proficiencyLevel': proficiencyLevel,
+            },
+          },
+          {
+            arrayFilters: [{ 'elem.name': skillName }],
+            new: true,
+          }
+        );
+      } else {
+        await Profile.findByIdAndUpdate(
+          candidateId,
+          {
+            $set: {
+              'skills.$[elem].ScoreTest': overallScore,
+              'skills.$[elem].proficiencyLevel': proficiencyLevel,
+            },
+          },
+          {
+            arrayFilters: [{ 'elem.name': skillName }],
+            new: true,
+          }
+        );
+      }
+    }
+
+    return await getAssessmentById(assessment._id);
   } catch (error) {
     throw new Error(`Error updating assessment: ${error.message}`);
   }

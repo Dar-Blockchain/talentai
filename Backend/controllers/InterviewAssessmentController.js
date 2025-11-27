@@ -4,6 +4,7 @@ const InterviewAssessmentService = require('../services/InterviewAssessmentServi
 const create = async (req, res) => {
   try {
     const data = req.body;
+    const userId = req.user?._id;
 
     // Basic validation
     if (!data.interviewData?.sessionId) {
@@ -13,7 +14,33 @@ const create = async (req, res) => {
       });
     }
 
-    const assessment = await InterviewAssessmentService.createAssessment(data);
+    // Ensure candidateId is set - use from body or get from user's profile
+    if (!data.candidateId && userId) {
+      const Profile = require('../models/ProfileModel');
+      const userProfile = await Profile.findOne({ userId });
+      if (userProfile) {
+        data.candidateId = userProfile._id;
+        console.log('Candidate ID set from user profile:', data.candidateId);
+      }
+    }
+
+    if (!data.candidateId) {
+      return res.status(400).json({
+        success: false,
+        message: 'candidateId is required or user must have a profile'
+      });
+    }
+
+    // Extract metadata and raw interview data
+    const metadata = data.metadata;
+    const rawInterviewData = data.interviewData;
+
+    const assessment = await InterviewAssessmentService.createAssessment(
+      data,
+      metadata,
+      rawInterviewData,
+      userId
+    );
 
     return res.status(201).json({
       success: true,
@@ -158,8 +185,13 @@ const update = async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
+    const metadata = req.body.metadata;
 
-    const assessment = await InterviewAssessmentService.updateAssessment(id, updateData);
+    const assessment = await InterviewAssessmentService.updateAssessment(
+      id,
+      updateData,
+      metadata
+    );
 
     return res.status(200).json({
       success: true,

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-// Schéma pour les indicateurs individuels
+// Schema for individual indicators
 const indicatorSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -26,7 +26,7 @@ const indicatorSchema = new mongoose.Schema({
   reasoning: String
 }, { _id: false });
 
-// Schéma pour les zones d'évaluation
+// Schema for evaluation areas
 const areaSchema = new mongoose.Schema({
   percentage: {
     type: Number,
@@ -60,8 +60,8 @@ const areaSchema = new mongoose.Schema({
   lastQuestionTime: Date
 }, { _id: false });
 
-// Schéma principal du modèle Pro
-const InterviewAssessmentModelSchema = new mongoose.Schema({
+// Main schema for InterviewAssessment model
+const interviewAssessmentSchema = new mongoose.Schema({
   metadata: {
     exportedAt: {
       type: Date,
@@ -137,10 +137,10 @@ const InterviewAssessmentModelSchema = new mongoose.Schema({
     timestamp: Date
   },
 
-  // Métadonnées supplémentaires
+  // Additional metadata
   candidateId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Candidate'
+    ref: 'Profile'
   },
   interviewerId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -164,22 +164,21 @@ const InterviewAssessmentModelSchema = new mongoose.Schema({
   collection: 'InterviewAssessment'
 });
 
-// Index pour les requêtes fréquentes
-InterviewAssessmentModelSchema.index({ 'interviewData.sessionId': 1 });
-InterviewAssessmentModelSchema.index({ candidateId: 1 });
-InterviewAssessmentModelSchema.index({ 'metadata.skill': 1 });
-InterviewAssessmentModelSchema.index({ 'metadata.proficiency': 1 });
-InterviewAssessmentModelSchema.index({ createdAt: -1 });
-InterviewAssessmentModelSchema.index({ status: 1 });
+// Index for frequent queries
+interviewAssessmentSchema.index({ candidateId: 1 });
+interviewAssessmentSchema.index({ 'metadata.skill': 1 });
+interviewAssessmentSchema.index({ 'metadata.proficiency': 1 });
+interviewAssessmentSchema.index({ createdAt: -1 });
+interviewAssessmentSchema.index({ status: 1 });
 
-// Middleware pour mettre à jour updatedAt
-InterviewAssessmentModelSchema.pre('save', function(next) {
+// Middleware to update updatedAt
+interviewAssessmentSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
 
-// Méthode pour calculer le score global
-InterviewAssessmentModelSchema.methods.calculateOverallScore = function() {
+// Method to calculate overall score
+interviewAssessmentSchema.methods.calculateOverallScore = function() {
   const areas = this.interviewData.finalReport.coverage.areas;
   const scores = [];
 
@@ -199,8 +198,8 @@ InterviewAssessmentModelSchema.methods.calculateOverallScore = function() {
   return scores.reduce((a, b) => a + b, 0);
 };
 
-// Méthode pour obtenir un résumé
-InterviewAssessmentModelSchema.methods.getSummary = function() {
+// Method to get summary
+interviewAssessmentSchema.methods.getSummary = function() {
   return {
     candidateId: this.candidateId,
     skill: this.metadata.skill,
@@ -213,13 +212,13 @@ InterviewAssessmentModelSchema.methods.getSummary = function() {
   };
 };
 
-// Méthode pour mettre à jour le statut
-InterviewAssessmentModelSchema.methods.updateStatus = function(newStatus) {
+// Method to update status
+interviewAssessmentSchema.methods.updateStatus = function(newStatus) {
   if (['draft', 'in-progress', 'completed', 'archived'].includes(newStatus)) {
     this.status = newStatus;
     return this.save();
   }
-  throw new Error('Statut invalide');
+  throw new Error('Invalid status');
 };
 
-module.exports = mongoose.model('InterviewAssessment', InterviewAssessmentModelSchema);
+module.exports = mongoose.model('InterviewAssessment', interviewAssessmentSchema);
