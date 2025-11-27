@@ -1,55 +1,70 @@
 const express = require('express');
 const router = express.Router();
-const InterviewAssessmentController = require('../controllers/InterviewAssessmentController');
+const {
+  create,
+  getById,
+  getBySessionId,
+  getAll,
+  getByCandidate,
+  getBySkill,
+  update,
+  updateStatus,
+  deleteAssessment,
+  archive,
+  getSummary,
+  getStatistics
+} = require('../controllers/InterviewAssessmentController');
 
-// Routes CRUD
+// CRUD Routes
 
-// POST - Créer une nouvelle évaluation
+// POST - Create a new assessment
 // POST /api/interview-assessments
-router.post('/', InterviewAssessmentController.create);
+router.post('/', create);
 
-// GET - Récupérer toutes les évaluations (avec pagination et filtres)
+// GET - Retrieve all assessments (with pagination and filters)
 // GET /api/interview-assessments?page=1&limit=10&status=completed&skill=Node.js
-router.get('/', InterviewAssessmentController.getAll);
+router.get('/', getAll);
 
-// GET - Obtenir les statistiques globales
+// GET - Get global statistics
 // GET /api/interview-assessments/stats/global
-router.get('/stats/global', InterviewAssessmentController.getStatistics);
+router.get('/stats/global', getStatistics);
 
-// GET - Récupérer une évaluation par ID
+// GET - Retrieve an assessment by ID
 // GET /api/interview-assessments/:id
-router.get('/:id', InterviewAssessmentController.getById);
+router.get('/:id', getById);
 
-// GET - Récupérer le résumé d'une évaluation
+// GET - Get assessment summary
 // GET /api/interview-assessments/:id/summary
-router.get('/:id/summary', InterviewAssessmentController.getSummary);
+router.get('/:id/summary', getSummary);
 
-// GET - Récupérer une évaluation par sessionId
+// GET - Retrieve assessment by sessionId
 // GET /api/interview-assessments/session/:sessionId
-router.get('/session/:sessionId', InterviewAssessmentController.getBySessionId);
+router.get('/session/:sessionId', getBySessionId);
 
-// GET - Récupérer les évaluations par candidat
+// GET - Retrieve assessments by candidate
 // GET /api/interview-assessments/candidate/:candidateId?page=1&limit=10
-router.get('/candidate/:candidateId', InterviewAssessmentController.getByCandidate);
+router.get('/candidate/:candidateId', getByCandidate);
 
-// GET - Récupérer les évaluations par compétence
+// GET - Retrieve assessments by skill
 // GET /api/interview-assessments/skill/:skill?page=1&limit=10
-router.get('/skill/:skill', InterviewAssessmentController.getBySkill);
+router.get('/skill/:skill', getBySkill);
 
-// PUT - Mettre à jour une évaluation
+// PUT - Update an assessment
 // PUT /api/interview-assessments/:id
-router.put('/:id', InterviewAssessmentController.update);
+router.put('/:id', update);
 
-// PATCH - Mettre à jour le statut
+// PATCH - Update status
 // PATCH /api/interview-assessments/:id/status
-router.patch('/:id/status', InterviewAssessmentController.updateStatus);
+router.patch('/:id/status', updateStatus);
 
-// PATCH - Archiver une évaluation
+// PATCH - Archive an assessment
 // PATCH /api/interview-assessments/:id/archive
-router.patch('/:id/archive', InterviewAssessmentController.archive);
+router.patch('/:id/archive', archive);
 
-// DELETE - Supprimer une évaluation
+// DELETE - Delete an assessment
 // DELETE /api/interview-assessments/:id
-router.delete('/:id', InterviewAssessmentController.delete);
+router.delete('/:id', deleteAssessment);
+
+module.exports = router;
 
 module.exports = router;
