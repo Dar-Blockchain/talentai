@@ -349,7 +349,7 @@ const JobPreview: React.FC<JobPreviewProps> = ({
         </Box>
 
         {/* Job Details */}
-        {editedJob && editedJob.jobDetails && <Box sx={{ mb: 3 }}>
+        {((editedJob && editedJob.jobDetails) || (generatedJob && generatedJob.jobDetails)) && <Box sx={{ mb: 3 }}>
           <Typography
             variant="h6"
             sx={{ color: "#0F172A", mb: 2, fontWeight: 700 }}
@@ -362,7 +362,7 @@ const JobPreview: React.FC<JobPreviewProps> = ({
               onInputChange={onInputChange}
             />
           ) : (
-            <JobInfoDisplay jobDetails={editedJob.jobDetails} />
+            <JobInfoDisplay jobDetails={(editedJob || generatedJob)?.jobDetails} />
           )}
         </Box>}
 

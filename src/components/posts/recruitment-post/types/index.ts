@@ -7,6 +7,7 @@ export interface JobPost {
     responsibilities: string[];
     location: string;
     employmentType: string;
+    workMode?: string;
     experienceLevel: string;
     salary: {
       min: number;

@@ -18,6 +18,8 @@ const PostDetails = forwardRef<PostDetailsRef, PostDetailsProps>(({ onReadyChang
     min: "",
     max: "",
   });
+  const [contractType, setContractType] = useState("");
+  const [workMode, setWorkMode] = useState("");
   const [isQuickGenerating, setIsQuickGenerating] = useState(false);
   const [isDetailedGenerating, setIsDetailedGenerating] = useState(false);
   const [generatedJob, setGeneratedJob] = useState<JobPost | null>(null);
@@ -66,13 +68,15 @@ const PostDetails = forwardRef<PostDetailsRef, PostDetailsProps>(({ onReadyChang
           setIsDetailedGenerating(true);
         }
         setJobPostError("");
-  
+
         const token = Cookies.get('api_token');
-  
-        // Format salary range for description
+
+        // Format salary range, contract type, and work mode for description
         const salaryText = `\n\nSalary Range: ${salaryRange.currency}${salaryRange.min.toLocaleString()} - ${salaryRange.currency}${salaryRange.max.toLocaleString()}`;
-        const descriptionWithSalary = jobDescription + salaryText;
-  
+        const contractTypeText = contractType ? `\nContract Type: ${contractType}` : '';
+        const workModeText = workMode ? `\nWork Mode: ${workMode}` : '';
+        const descriptionWithDetails = jobDescription + salaryText + contractTypeText + workModeText;
+
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}linkedinPost/generate-job-post`, {
           method: 'POST',
           headers: {
@@ -80,8 +84,10 @@ const PostDetails = forwardRef<PostDetailsRef, PostDetailsProps>(({ onReadyChang
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            description: descriptionWithSalary,
-            type
+            description: descriptionWithDetails,
+            type,
+            contractType: contractType || undefined,
+            workMode: workMode || undefined
           })
         });
   
@@ -92,14 +98,22 @@ const PostDetails = forwardRef<PostDetailsRef, PostDetailsProps>(({ onReadyChang
         const data = await response.json();
   
         // Transform the API response into our required structure
+        // Clean location field if it contains work mode keywords
+        let cleanedLocation = data.jobDetails.location;
+        const workModeKeywords = ['remote', 'on-site', 'onsite', 'hybrid'];
+        if (workModeKeywords.some(keyword => cleanedLocation?.toLowerCase().includes(keyword))) {
+          cleanedLocation = 'Not specified';
+        }
+
         const jobPost = {
           jobDetails: {
             title: data.jobDetails.title,
             description: data.jobDetails.description,
             requirements: data.jobDetails.requirements,
             responsibilities: data.jobDetails.responsibilities,
-            location: data.jobDetails.location,
-            employmentType: data.jobDetails.employmentType,
+            location: cleanedLocation,
+            employmentType: data.jobDetails.employmentType || contractType,
+            workMode: workMode || data.jobDetails.workMode, // Prioritize user selection
             experienceLevel: data.jobDetails.experienceLevel,
             salary: data.jobDetails.salary
           },
@@ -342,6 +356,7 @@ const handleInputChange = (field: string, value: any): void => {
           responsibilities: jobDataToUse.jobDetails.responsibilities,
           location: jobDataToUse.jobDetails.location,
           employmentType: jobDataToUse.jobDetails.employmentType,
+          workMode: jobDataToUse.jobDetails.workMode,
           experienceLevel: jobDataToUse.jobDetails.experienceLevel,
           salary: jobDataToUse.jobDetails.salary,
         },
@@ -619,6 +634,10 @@ As a ${
           onJobDescriptionChange={setJobDescription}
           salaryRange={salaryRange}
           onSalaryChange={handleSalaryChange}
+          contractType={contractType}
+          onContractTypeChange={setContractType}
+          workMode={workMode}
+          onWorkModeChange={setWorkMode}
           onGenerateJob={handleGenerateJob}
           isQuickGenerating={isQuickGenerating}
           isDetailedGenerating={isDetailedGenerating}
