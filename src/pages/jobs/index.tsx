@@ -29,7 +29,7 @@ import { JOB_LOCATIONS } from "@/constants/jobConstants";
 import Image from "next/image";
 import Footer from "@/components/home-page/Footer";
 
-interface Job {
+export interface Job {
   id: string;
   title: string;
   company: string;

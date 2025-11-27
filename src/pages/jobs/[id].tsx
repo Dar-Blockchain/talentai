@@ -422,4 +422,3 @@ const JobDetailPage: React.FC = () => {
 };
 
 export default JobDetailPage;
-

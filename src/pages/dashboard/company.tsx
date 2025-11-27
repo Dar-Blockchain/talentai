@@ -165,6 +165,20 @@ const DashboardCompany = () => {
           py: 2,
         }}
       >
+        <FilterDialog
+          open={filterDialog}
+          onClose={() => setFilterDialog(false)}
+          selectedJob={selectedJob}
+          onJobChange={handleJobChange}
+          onApplyFilter={handleFilterApply}
+          onCancel={() => {
+            setSelectedJob("");
+            setFilterDialog(false);
+          }}
+          jobs={myJobs}
+          isLoadingJobs={isLoadingJobs}
+          jobsError={jobsError}
+        />
         <ToastContainer
           position="top-right"
           autoClose={3000}
@@ -180,71 +194,39 @@ const DashboardCompany = () => {
         <Container maxWidth="lg">
           <HeaderDashboard />
           <CompanyInfoHeader profile={profile} />
-
-          <FilterDialog
-            open={filterDialog}
-            onClose={() => setFilterDialog(false)}
-            selectedJob={selectedJob}
-            onJobChange={handleJobChange}
-            onApplyFilter={handleFilterApply}
-            onCancel={() => {
-              setSelectedJob("");
-              setFilterDialog(false);
-            }}
-            jobs={myJobs}
-            isLoadingJobs={isLoadingJobs}
-            jobsError={jobsError}
-          />
-
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", md: "row" },
-              gap: 3,
-            }}
-          >
-            <Box sx={{ flex: 2 }}>
-              {!selectedJob ? (
-                <MyJobPosts
-                  myJobs={myJobs}
-                  isLoadingJobs={isLoadingJobs}
-                  jobsError={jobsError}
-                  displayCount={displayCount}
-                  onViewMatches={(jobId) => {
-                    setSelectedJob(jobId);
-                    handleFilterDialogOpen();
-                  }}
-                  onDeleteJob={(jobId) => {
-                    setJobToDelete(jobId);
-                    setDeleteDialogOpen(true);
-                  }}
-                  onLoadMore={() => setDisplayCount((prev: number) => prev + 3)}
-                  onCreateNewJob={() => router.push("/posts/create")}
-                  onRefresh={fetchMyJobs}
-                  deleteDialogOpen={deleteDialogOpen}
-                  isDeleting={isDeleting}
-                  jobToDelete={jobToDelete}
-                  onCancelDelete={handleCancelDelete}
-                  onConfirmDelete={() => handleDeleteJob(jobToDelete)}
-                />
-              ) : (
-                <StyledCard>
-                  <MatchingProfiles
-                    matchingProfiles={matchingProfiles}
-                    isLoadingMatches={isLoadingMatches}
-                    matchError={matchError}
-                    displayCount={displayCount}
-                    selectedJob={selectedJob}
-                    onRetry={handleFilterApply}
-                    onBackToJobs={() => setSelectedJob("")}
-                    onCreateNewJob={() => router.push("/posts/create")}
-                    onLoadMore={() => setDisplayCount((prev) => prev + 3)}
-                    onBidDialogOpen={handleBidDialogOpen}
-                  />
-                </StyledCard>
-              )}
-            </Box>
-          </Box>
+          {!selectedJob ? (
+            <MyJobPosts
+              myJobs={myJobs}
+              isLoadingJobs={isLoadingJobs}
+              jobsError={jobsError}
+              onViewMatches={(jobId) => {
+                setSelectedJob(jobId);
+                handleFilterDialogOpen();
+              }}
+              onDeleteJob={(jobId) => {
+                setJobToDelete(jobId);
+                setDeleteDialogOpen(true);
+              }}
+              onRefresh={fetchMyJobs}
+              deleteDialogOpen={deleteDialogOpen}
+              isDeleting={isDeleting}
+              onCancelDelete={handleCancelDelete}
+              onConfirmDelete={() => handleDeleteJob(jobToDelete)}
+            />
+          ) : (
+            <MatchingProfiles
+              matchingProfiles={matchingProfiles}
+              isLoadingMatches={isLoadingMatches}
+              matchError={matchError}
+              displayCount={displayCount}
+              selectedJob={selectedJob}
+              onRetry={handleFilterApply}
+              onBackToJobs={() => setSelectedJob("")}
+              onCreateNewJob={() => router.push("/posts/create")}
+              onLoadMore={() => setDisplayCount((prev) => prev + 3)}
+              onBidDialogOpen={handleBidDialogOpen}
+            />
+          )}
 
           {/* Bid History Section */}
           <BidHistory
@@ -253,19 +235,17 @@ const DashboardCompany = () => {
             error={error}
             onPostNewJob={() => router.push("/posts/create")}
           />
-          
+
           {/* HR Agents Section */}
-          {profile?._id && (
-            <HRAgentsTable companyId={profile._id} />
-          )}
-          
+          {profile?._id && <HRAgentsTable companyId={profile._id} />}
+
           {/* Add Bid Dialog */}
           <AddBidDialog
             open={bidDialogOpen}
             onClose={handleBidDialogClose}
             selectedCandidate={selectedCandidate}
             selectedJob={selectedJob}
-            companyId={profile?.userId?._id || ''}
+            companyId={profile?.userId?._id || ""}
           />
           {/* Company Profiles & Assessments Section */}
           <CompanyProfilesAssessments profile={profile} />

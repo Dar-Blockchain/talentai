@@ -16,6 +16,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import WorkIcon from "@mui/icons-material/Work";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import HomeWorkIcon from "@mui/icons-material/HomeWork";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 
@@ -57,7 +58,7 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      {/* LOCATION & EMPLOYMENT TYPE */}
+      {/* LOCATION & WORK MODE */}
       <Box
         sx={{
           display: "flex",
@@ -65,7 +66,45 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
           flexDirection: { xs: "column", sm: "row" },
         }}
       >
-        {/* LOCATION TYPE SELECT */}
+        {/* LOCATION INPUT */}
+        <TextField
+          fullWidth
+          label="Location"
+          value={jobDetails.location || ""}
+          onChange={(e) => onInputChange("location", e.target.value)}
+          placeholder="e.g., New York, USA"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LocationOnIcon sx={{ color: GREEN_MAIN }} />
+              </InputAdornment>
+            ),
+            sx: {
+              color: "#0F172A",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: GREEN_MAIN,
+                borderWidth: "2px",
+              },
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                borderColor: GREEN_MAIN,
+                borderWidth: "2px",
+              },
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                borderColor: GREEN_MAIN,
+                borderWidth: "2px",
+              },
+            },
+          }}
+          InputLabelProps={{
+            sx: {
+              color: GREEN_MAIN,
+              fontSize: "1rem",
+              fontWeight: 600,
+            },
+          }}
+        />
+
+        {/* WORK MODE SELECT */}
         <FormControl fullWidth>
           <InputLabel
             sx={{
@@ -74,15 +113,15 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
               fontWeight: 600,
             }}
           >
-            Location
+            Work Mode
           </InputLabel>
           <Select
-            value={jobDetails.location || ""}
-            onChange={(e) => onInputChange("location", e.target.value)}
-            label="Location"
+            value={jobDetails.workMode || ""}
+            onChange={(e) => onInputChange("workMode", e.target.value)}
+            label="Work Mode"
             startAdornment={
               <InputAdornment position="start">
-                <LocationOnIcon sx={{ color: GREEN_MAIN }} />
+                <HomeWorkIcon sx={{ color: GREEN_MAIN }} />
               </InputAdornment>
             }
             sx={{
@@ -109,7 +148,16 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
             <MenuItem value="Hybrid">Hybrid</MenuItem>
           </Select>
         </FormControl>
+      </Box>
 
+      {/* EMPLOYMENT TYPE & EXPERIENCE LEVEL */}
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          flexDirection: { xs: "column", sm: "row" },
+        }}
+      >
         {/* EMPLOYMENT TYPE */}
         <FormControl fullWidth>
           <InputLabel
@@ -152,7 +200,53 @@ const JobDetailsForm: React.FC<JobDetailsFormProps> = ({
             <MenuItem value="Full-time">Full-time</MenuItem>
             <MenuItem value="Part-time">Part-time</MenuItem>
             <MenuItem value="Contract">Contract</MenuItem>
-            <MenuItem value="Freelance">Freelance</MenuItem>
+            <MenuItem value="Internship">Internship</MenuItem>
+          </Select>
+        </FormControl>
+
+        {/* EXPERIENCE LEVEL */}
+        <FormControl fullWidth>
+          <InputLabel
+            sx={{
+              color: GREEN_MAIN,
+              fontSize: "1rem",
+              fontWeight: 600,
+            }}
+          >
+            Experience Level
+          </InputLabel>
+          <Select
+            value={jobDetails.experienceLevel || ""}
+            onChange={(e) => onInputChange("experienceLevel", e.target.value)}
+            label="Experience Level"
+            startAdornment={
+              <InputAdornment position="start">
+                <TrendingUpIcon sx={{ color: GREEN_MAIN }} />
+              </InputAdornment>
+            }
+            sx={{
+              color: "#0F172A",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: GREEN_MAIN,
+                borderWidth: "2px",
+              },
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                borderColor: GREEN_MAIN,
+                borderWidth: "2px",
+              },
+              "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                borderColor: GREEN_MAIN,
+                borderWidth: "2px",
+              },
+              "& .MuiSelect-icon": {
+                color: GREEN_MAIN,
+              },
+            }}
+          >
+            <MenuItem value="Entry Level">Entry Level</MenuItem>
+            <MenuItem value="Mid Level">Mid Level</MenuItem>
+            <MenuItem value="Senior Level">Senior Level</MenuItem>
+            <MenuItem value="Lead">Lead</MenuItem>
           </Select>
         </FormControl>
       </Box>

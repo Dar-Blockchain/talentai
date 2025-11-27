@@ -12,6 +12,10 @@ import {
   Divider,
   Paper,
   Fade,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
 } from "@mui/material";
 import DescriptionIcon from "@mui/icons-material/Description";
 import SparklesIcon from "@mui/icons-material/AutoFixHigh";
@@ -26,6 +30,9 @@ const GRADIENT_PRIMARY = "linear-gradient(135deg, #00FF9D 0%, #00E5FF 100%)";
 const GRADIENT_SECONDARY = "linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%)";
 const CARD_BG = "#FFFFFF";
 
+const CONTRACT_TYPES = ["Full-time", "Part-time", "Contract", "Internship"];
+const WORK_MODES = ["On-site", "Remote", "Hybrid"];
+
 interface JobDescriptionInputProps {
   jobDescription: string;
   onJobDescriptionChange: (value: string) => void;
@@ -35,6 +42,10 @@ interface JobDescriptionInputProps {
     max: string;
   };
   onSalaryChange: (field: "min" | "max" | "currency", value: string) => void;
+  contractType?: string;
+  onContractTypeChange?: (value: string) => void;
+  workMode?: string;
+  onWorkModeChange?: (value: string) => void;
   onGenerateJob: (type: "quick" | "detailed") => void;
   isQuickGenerating: boolean;
   isDetailedGenerating: boolean;
@@ -46,6 +57,10 @@ const JobDescriptionInput: React.FC<JobDescriptionInputProps> = ({
   onJobDescriptionChange,
   salaryRange,
   onSalaryChange,
+  contractType,
+  onContractTypeChange,
+  workMode,
+  onWorkModeChange,
   onGenerateJob,
   isQuickGenerating,
   isDetailedGenerating,
@@ -299,6 +314,82 @@ Benefits:
           salaryRange={salaryRange}
           onSalaryChange={onSalaryChange}
         />
+
+        {/* Contract Type and Work Mode */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", sm: "row" },
+            gap: 2,
+            mt: 3,
+          }}
+        >
+          <FormControl fullWidth>
+            <InputLabel>Contract Type</InputLabel>
+            <Select
+              value={contractType || ""}
+              onChange={(e) => onContractTypeChange?.(e.target.value)}
+              label="Contract Type"
+              sx={{
+                borderRadius: 3,
+                backgroundColor: "rgba(248, 250, 252, 0.8)",
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(0, 255, 157, 0.2)",
+                  borderWidth: 2,
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: GREEN_MAIN,
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: GREEN_MAIN,
+                  boxShadow: `0 0 0 3px rgba(0, 255, 157, 0.1)`,
+                },
+              }}
+            >
+              <MenuItem value="" disabled>
+                Select contract type
+              </MenuItem>
+              {CONTRACT_TYPES.map((type) => (
+                <MenuItem key={type} value={type}>
+                  {type}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth>
+            <InputLabel>Work Mode</InputLabel>
+            <Select
+              value={workMode || ""}
+              onChange={(e) => onWorkModeChange?.(e.target.value)}
+              label="Work Mode"
+              sx={{
+                borderRadius: 3,
+                backgroundColor: "rgba(248, 250, 252, 0.8)",
+                "& .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(0, 255, 157, 0.2)",
+                  borderWidth: 2,
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: GREEN_MAIN,
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: GREEN_MAIN,
+                  boxShadow: `0 0 0 3px rgba(0, 255, 157, 0.1)`,
+                },
+              }}
+            >
+              <MenuItem value="" disabled>
+                Select work mode
+              </MenuItem>
+              {WORK_MODES.map((mode) => (
+                <MenuItem key={mode} value={mode}>
+                  {mode}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
 
         <Box
           sx={{

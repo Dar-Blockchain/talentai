@@ -4,6 +4,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import WorkIcon from "@mui/icons-material/Work";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import HomeWorkIcon from "@mui/icons-material/HomeWork";
 
 const GREEN_MAIN = "#00FF9D";
 
@@ -16,6 +17,7 @@ interface JobInfoDisplayProps {
       max: number;
     };
     employmentType: string;
+    workMode?: string;
     experienceLevel: string;
   };
 }
@@ -60,6 +62,17 @@ const JobInfoDisplay: React.FC<JobInfoDisplayProps> = ({ jobDetails }) => {
           {jobDetails.employmentType}
         </Typography>
       </Box>
+      {jobDetails.workMode && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <HomeWorkIcon sx={{ color: GREEN_MAIN, fontSize: 20 }} />
+          <Typography
+            variant="body2"
+            sx={{ color: "#1E293B", fontWeight: 600 }}
+          >
+            {jobDetails.workMode}
+          </Typography>
+        </Box>
+      )}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <TrendingUpIcon sx={{ color: GREEN_MAIN, fontSize: 20 }} />
         <Typography

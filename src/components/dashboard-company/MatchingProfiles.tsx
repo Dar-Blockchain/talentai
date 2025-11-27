@@ -12,13 +12,24 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Card,
 } from '@mui/material';
 import ErrorIcon from '@mui/icons-material/Error';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TollIcon from '@mui/icons-material/Toll';
 import { useRouter } from 'next/router';
+import { styled } from "@mui/material/styles";
 
+// Styled Components
+const StyledCard = styled(Card)(({ theme }) => ({
+  padding: theme.spacing(3),
+  marginBottom: theme.spacing(3),
+  background: "white",
+  backdropFilter: "blur(10px)",
+  borderRadius: "16px",
+  border: "1px solid #EEF0F2",
+}));
 // Update the MatchingCandidate interface
 interface MatchingCandidate {
   candidateId: {
@@ -104,6 +115,15 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
   const effectiveTotalPages = totalPages > 1 ? totalPages : calculatedTotalPages;
 
   return (
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", md: "row" },
+                  gap: 3,
+                }}
+              >
+                <Box sx={{ flex: 2 }}>
+                  <StyledCard>
     <>
       {/* Header Section */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2, backgroundColor: 'white', p: 2, borderRadius: '8px', border: '1px solid #e5e7eb' }}>
@@ -496,7 +516,11 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
           )}
         </Box>
       )}
+      
     </>
+    </StyledCard>
+    </Box></Box>
+
   );
 };
 
