@@ -61,7 +61,7 @@ const areaSchema = new mongoose.Schema({
 }, { _id: false });
 
 // Schéma principal du modèle Pro
-const proModelSchema = new mongoose.Schema({
+const InterviewAssessmentModelSchema = new mongoose.Schema({
   metadata: {
     exportedAt: {
       type: Date,
@@ -161,25 +161,25 @@ const proModelSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true,
-  collection: 'pro_interviews'
+  collection: 'InterviewAssessment'
 });
 
 // Index pour les requêtes fréquentes
-proModelSchema.index({ 'interviewData.sessionId': 1 });
-proModelSchema.index({ candidateId: 1 });
-proModelSchema.index({ 'metadata.skill': 1 });
-proModelSchema.index({ 'metadata.proficiency': 1 });
-proModelSchema.index({ createdAt: -1 });
-proModelSchema.index({ status: 1 });
+InterviewAssessmentModelSchema.index({ 'interviewData.sessionId': 1 });
+InterviewAssessmentModelSchema.index({ candidateId: 1 });
+InterviewAssessmentModelSchema.index({ 'metadata.skill': 1 });
+InterviewAssessmentModelSchema.index({ 'metadata.proficiency': 1 });
+InterviewAssessmentModelSchema.index({ createdAt: -1 });
+InterviewAssessmentModelSchema.index({ status: 1 });
 
 // Middleware pour mettre à jour updatedAt
-proModelSchema.pre('save', function(next) {
+InterviewAssessmentModelSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
 
 // Méthode pour calculer le score global
-proModelSchema.methods.calculateOverallScore = function() {
+InterviewAssessmentModelSchema.methods.calculateOverallScore = function() {
   const areas = this.interviewData.finalReport.coverage.areas;
   const scores = [];
 
@@ -200,7 +200,7 @@ proModelSchema.methods.calculateOverallScore = function() {
 };
 
 // Méthode pour obtenir un résumé
-proModelSchema.methods.getSummary = function() {
+InterviewAssessmentModelSchema.methods.getSummary = function() {
   return {
     candidateId: this.candidateId,
     skill: this.metadata.skill,
@@ -214,7 +214,7 @@ proModelSchema.methods.getSummary = function() {
 };
 
 // Méthode pour mettre à jour le statut
-proModelSchema.methods.updateStatus = function(newStatus) {
+InterviewAssessmentModelSchema.methods.updateStatus = function(newStatus) {
   if (['draft', 'in-progress', 'completed', 'archived'].includes(newStatus)) {
     this.status = newStatus;
     return this.save();
@@ -222,4 +222,4 @@ proModelSchema.methods.updateStatus = function(newStatus) {
   throw new Error('Statut invalide');
 };
 
-module.exports = mongoose.model('InterviewAssessment', proModelSchema);
+module.exports = mongoose.model('InterviewAssessment', InterviewAssessmentModelSchema);
