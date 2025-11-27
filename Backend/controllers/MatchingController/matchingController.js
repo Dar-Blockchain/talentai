@@ -15,7 +15,7 @@ exports.matchCandidatesToJob = async (req, res) => {
 
     // 1. Récupérer les profils des candidats + peupler companyBid.company
     const candidates = await Profile.find({ type: "Candidate" })
-      .populate("userId", "username email")
+      .populate("userId", "username email firstName lastName")
       .populate("companyBid.company", "username email")
       .select("userId skills companyDetails.name companyBid")
       .lean();
