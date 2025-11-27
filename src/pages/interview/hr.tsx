@@ -1979,21 +1979,21 @@ const IntelligentInterviewTest = () => {
 
   // Security violation handler
   const handleSecurityViolation = () => {
-    setSecurityViolationCount((prev) => {
-      const next = prev + 1;
-      if (next === 1) {
-        // First violation: show intelligent popup
-        setShowFirstViolationModal(true);
-      } else if (next === 2) {
-        // Second violation: redirect and show modal
-        setShowSecurityModal(true);
-        endInterview();
-        setTimeout(() => {
-          router.push('/dashboard/candidate');
-        }, 2000); // Give time for modal to show
-      }
-      return next;
-    });
+    // setSecurityViolationCount((prev) => {
+    //   const next = prev + 1;
+    //   if (next === 1) {
+    //     // First violation: show intelligent popup
+    //     setShowFirstViolationModal(true);
+    //   } else if (next === 2) {
+    //     // Second violation: redirect and show modal
+    //     setShowSecurityModal(true);
+    //     endInterview();
+    //     setTimeout(() => {
+    //       router.push('/dashboard/candidate');
+    //     }, 2000); // Give time for modal to show
+    //   }
+    //   return next;
+    // });
   };
 
   // Security monitoring
