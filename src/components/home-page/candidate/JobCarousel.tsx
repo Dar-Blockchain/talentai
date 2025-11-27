@@ -133,7 +133,7 @@ const JobCarousel = ({ jobs = [], loading }) => {
               {currentJobs.map((job, index) => (
                 <Card
                   key={job.id || index}
-                  onClick={() => router.push(`/job/${job.id}`)}
+                  onClick={() => router.push(`/jobs/${job.id}`)}
                   sx={{
                     borderRadius: 3,
                     border: "1px solid rgba(228, 229, 232, 1)",
@@ -261,7 +261,7 @@ const JobCarousel = ({ jobs = [], loading }) => {
                       </Box>
                       <Box>
                         <Image
-                          onClick={() => router.push(`/job/${job.id}`)}
+                          onClick={() => router.push(`/jobs/${job.id}`)}
                           src="/icons/arrow-up.svg"
                           alt="search"
                           width={24}
