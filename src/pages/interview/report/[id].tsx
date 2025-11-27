@@ -165,7 +165,7 @@ export default function CandidateInterviewDetailPage() {
         const fetchData = async () => {
             try {
                 const token = localStorage.getItem('api_token');
-                const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}interviewDetails/getInterviewDetailsById/${id}`;
+                const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}InterviewAssessment/${id}`;
                 const res = await fetch(url, {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                 });
@@ -507,7 +507,130 @@ export default function CandidateInterviewDetailPage() {
                                     ))}
                                 </Box>
                             )}
-                            
+
+                            {/* Technical Interview Assessment Section */}
+                            {data.metadata && data.interviewData?.finalReport?.coverage && (
+                                <Box sx={{ mb: 4, p: 3, background: '#f0f9ff', borderRadius: 3, border: '1px solid #bae6fd' }}>
+                                    <Typography variant="h6" sx={{ color: GREEN_MAIN, fontWeight: 700, mb: 2 }}>
+                                        🎯 Technical Interview Assessment
+                                    </Typography>
+
+                                    {/* Metadata Section */}
+                                    <Box sx={{ mb: 3, p: 2, background: '#fff', borderRadius: 2, border: '1px solid #e0e0e0' }}>
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>Interview Metadata:</Typography>
+                                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                                            <Box>
+                                                <Typography variant="body2" sx={{ color: '#666', mb: 0.5 }}>Skill:</Typography>
+                                                <Chip label={data.metadata.skill || 'N/A'} color="primary" size="small" />
+                                            </Box>
+                                            <Box>
+                                                <Typography variant="body2" sx={{ color: '#666', mb: 0.5 }}>Type:</Typography>
+                                                <Chip label={data.metadata.type || 'N/A'} size="small" />
+                                            </Box>
+                                            <Box>
+                                                <Typography variant="body2" sx={{ color: '#666', mb: 0.5 }}>Proficiency:</Typography>
+                                                <Chip label={data.metadata.proficiency || 'N/A'} color="info" size="small" />
+                                            </Box>
+                                            <Box>
+                                                <Typography variant="body2" sx={{ color: '#666', mb: 0.5 }}>Exported:</Typography>
+                                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                    {data.metadata.exportedAt ? new Date(data.metadata.exportedAt).toLocaleString() : 'N/A'}
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+                                    </Box>
+
+                                    {/* Overall Coverage */}
+                                    {data.interviewData.finalReport.coverage.overall !== undefined && (
+                                        <Box sx={{ mb: 3, p: 2, background: '#fff', borderRadius: 2, border: '1px solid #e0e0e0' }}>
+                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>Overall Coverage:</Typography>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                <Box sx={{
+                                                    width: 60,
+                                                    height: 60,
+                                                    borderRadius: '50%',
+                                                    background: GREEN_MAIN,
+                                                    color: '#fff',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    fontWeight: 700,
+                                                    fontSize: '1.25rem'
+                                                }}>
+                                                    {data.interviewData.finalReport.coverage.overall}%
+                                                </Box>
+                                                <Typography variant="body2" sx={{ color: '#666' }}>
+                                                    Overall assessment coverage score
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+                                    )}
+
+                                    {/* Coverage Areas */}
+                                    {data.interviewData.finalReport.coverage.areas && (
+                                        <>
+                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, mt: 3 }}>Coverage Areas:</Typography>
+                                            {Object.entries(data.interviewData.finalReport.coverage.areas).map(([areaName, areaData]: [string, any]) => (
+                                                <Box key={areaName} sx={{ mb: 3, p: 2, background: '#fff', borderRadius: 2, border: '1px solid #e0e0e0' }}>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: GREEN_MAIN, textTransform: 'capitalize' }}>
+                                                            {areaName.replace(/_/g, ' ')}
+                                                        </Typography>
+                                                        <Chip
+                                                            label={`${areaData.percentage}% Coverage`}
+                                                            color={areaData.percentage >= 70 ? 'success' : areaData.percentage >= 50 ? 'warning' : 'error'}
+                                                            size="small"
+                                                        />
+                                                    </Box>
+
+                                                    {/* AI Analysis */}
+                                                    {areaData.aiAnalysis && (
+                                                        <Box sx={{ mb: 2, p: 2, background: '#f9fafb', borderRadius: 1 }}>
+                                                            <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>AI Analysis:</Typography>
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                                                                <Typography variant="body2" sx={{ color: '#666' }}>Quality Score:</Typography>
+                                                                <Chip
+                                                                    label={`${areaData.aiAnalysis.qualityScore}/10`}
+                                                                    color={areaData.aiAnalysis.qualityScore >= 7 ? 'success' : areaData.aiAnalysis.qualityScore >= 4 ? 'warning' : 'error'}
+                                                                    size="small"
+                                                                />
+                                                            </Box>
+                                                            {areaData.aiAnalysis.reasoning && (
+                                                                <Typography variant="body2" sx={{ color: '#666', fontStyle: 'italic', mt: 1 }}>
+                                                                    {areaData.aiAnalysis.reasoning}
+                                                                </Typography>
+                                                            )}
+                                                        </Box>
+                                                    )}
+
+                                                    {/* Indicators */}
+                                                    {areaData.indicators && areaData.indicators.length > 0 && (
+                                                        <Box sx={{ mt: 2 }}>
+                                                            <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>Indicators:</Typography>
+                                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                                                {areaData.indicators.map((indicator: any, idx: number) => (
+                                                                    <Chip
+                                                                        key={idx}
+                                                                        label={indicator.name || indicator}
+                                                                        size="small"
+                                                                        variant={indicator.covered ? 'filled' : 'outlined'}
+                                                                        color={indicator.covered ? 'success' : 'default'}
+                                                                        sx={{ fontSize: '0.75rem' }}
+                                                                    />
+                                                                ))}
+                                                            </Box>
+                                                            <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#666' }}>
+                                                                {areaData.indicators.filter((i: any) => i.covered).length} of {areaData.indicators.length} indicators covered
+                                                            </Typography>
+                                                        </Box>
+                                                    )}
+                                                </Box>
+                                            ))}
+                                        </>
+                                    )}
+                                </Box>
+                            )}
+
                             {/* Assessment Result Section */}
                             {data.jobAssessmentResult?.analysis && (
                                 <Box sx={{ mb: 4, p: 3, background: '#e6f7fa', borderRadius: 3, border: '1px solid #b2ebf2' }}>
