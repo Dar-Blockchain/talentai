@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Typography,
-  Card,
   Chip,
   Button,
   Alert,
@@ -12,34 +11,33 @@ import {
   Pagination,
   Menu,
   MenuItem,
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import SearchIcon from '@mui/icons-material/Search';
-import TuneIcon from '@mui/icons-material/Tune';
-import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import DeleteJobPostDialog from '@/components/dashboard-company/DeleteJobPostDialog';
-import JobDetailsDialog from '@/components/dashboard-company/JobDetailsDialog';
+  Stack,
+} from "@mui/material";
+import { styled } from "@mui/material/styles";
+import SearchIcon from "@mui/icons-material/Search";
+import DeleteJobPostDialog from "@/components/dashboard-company/DeleteJobPostDialog";
+import JobDetailsDialog from "@/components/dashboard-company/JobDetailsDialog";
+import Image from "next/image";
+
 // Styled Components
 const StyledCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
   marginBottom: theme.spacing(3),
-  background: 'white',
-  borderRadius: '12px',
-  border: '1px solid rgba(84,98,116,0.1)',
+  background: "white",
+  borderRadius: "12px",
+  border: "1px solid rgba(84,98,116,0.1)",
 }));
 
 const JobCard = styled(Box)(({ theme }) => ({
-  background: 'white',
-  borderRadius: '12px',
+  background: "white",
+  borderRadius: "8px",
   padding: theme.spacing(3),
-  border: '1px solid #e5e7eb',
+  border: "1px solid rgba(228, 229, 232, 1)",
   marginBottom: theme.spacing(2),
-  transition: 'border-color 0.2s',
-  '&:hover': {
-    borderColor: '#d1d5db',
+  boxShadow: "0px 2px 18px 0px rgba(24, 25, 28, 0.03)",
+  transition: "border-color 0.2s",
+  "&:hover": {
+    borderColor: "#d1d5db",
   },
 }));
 
@@ -47,16 +45,11 @@ interface MyJobPostsProps {
   myJobs: any[];
   isLoadingJobs: boolean;
   jobsError: string | null;
-  displayCount: number;
   onViewMatches: (jobId: string) => void;
   onDeleteJob: (jobId: string) => void;
-  onLoadMore: () => void;
-  onCreateNewJob: () => void;
   onRefresh?: () => void;
-  // Delete dialog control from parent
   deleteDialogOpen: boolean;
   isDeleting: boolean;
-  jobToDelete: string;
   onCancelDelete: () => void;
   onConfirmDelete: () => void;
 }
@@ -65,15 +58,11 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   myJobs,
   isLoadingJobs,
   jobsError,
-  displayCount,
   onViewMatches,
   onDeleteJob,
-  onLoadMore,
-  onCreateNewJob,
   onRefresh,
   deleteDialogOpen,
   isDeleting,
-  jobToDelete,
   onCancelDelete,
   onConfirmDelete,
 }) => {
@@ -85,16 +74,20 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   const selectedJobForDetails = selectedJobId
     ? myJobs.find((job: any) => job._id === selectedJobId)
     : null;
-  
+
   // State for search and sort
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'title-asc' | 'title-desc'>('newest');
-  const [sortMenuAnchor, setSortMenuAnchor] = useState<null | HTMLElement>(null);
-  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<
+    "newest" | "oldest" | "title-asc" | "title-desc"
+  >("newest");
+  const [sortMenuAnchor, setSortMenuAnchor] = useState<null | HTMLElement>(
+    null
+  );
+
   // State for pagination
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 2;
-  
+
   // Filter and sort jobs
   const filteredAndSortedJobs = myJobs
     .filter((job: any) => {
@@ -109,19 +102,23 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
     })
     .sort((a: any, b: any) => {
       switch (sortBy) {
-        case 'newest':
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        case 'oldest':
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        case 'title-asc':
+        case "newest":
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+        case "oldest":
+          return (
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+        case "title-asc":
           return a.jobDetails.title.localeCompare(b.jobDetails.title);
-        case 'title-desc':
+        case "title-desc":
           return b.jobDetails.title.localeCompare(a.jobDetails.title);
         default:
           return 0;
       }
     });
-  
+
   // Calculate pagination
   const totalPages = Math.ceil(filteredAndSortedJobs.length / jobsPerPage);
   const startIndex = (currentPage - 1) * jobsPerPage;
@@ -138,27 +135,32 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
     setJobDetailsModalOpen(false);
     setSelectedJobId(null);
   };
-  
+
   // Handler for pagination
-  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+  const handlePageChange = (
+    event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
     setCurrentPage(value);
   };
-  
+
   // Handlers for sort menu
   const handleSortMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setSortMenuAnchor(event.currentTarget);
   };
-  
+
   const handleSortMenuClose = () => {
     setSortMenuAnchor(null);
   };
-  
-  const handleSortChange = (sortOption: 'newest' | 'oldest' | 'title-asc' | 'title-desc') => {
+
+  const handleSortChange = (
+    sortOption: "newest" | "oldest" | "title-asc" | "title-desc"
+  ) => {
     setSortBy(sortOption);
     setCurrentPage(1); // Reset to first page when sorting
     handleSortMenuClose();
   };
-  
+
   // Reset to first page when search changes
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
@@ -166,306 +168,462 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   };
 
   return (
-    <StyledCard>
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" sx={{ color: '#111827', fontWeight: 700 }}>
-          <span
-            style={{
-              borderBottom: "5px solid rgba(41, 210, 145, 0.83)",
-              paddingBottom: "2px",
-            }}
-          >
-            Our
-          </span>{" "}Job Posts
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <TextField
-            size="small"
-            placeholder="Search Jobs"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: '#9ca3af', fontSize: 20 }} />
-                </InputAdornment>
-              )
-            }}
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: { xs: "column", md: "row" },
+        gap: 3,
+      }}
+    >
+      <Box sx={{ flex: 2 }}>
+        <StyledCard>
+          {/* Header */}
+          <Box
             sx={{
-              width: 280,
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                border: '1px solid #e5e7eb',
-                '& fieldset': {
-                  border: 'none',
-                },
-                '&:hover': {
-                  borderColor: '#d1d5db',
-                }
-              }
-            }}
-          />
-          <Button
-            variant="outlined"
-            startIcon={<TuneIcon />}
-            onClick={handleSortMenuOpen}
-            sx={{
-              borderColor: '#e5e7eb',
-              color: '#6b7280',
-              textTransform: 'uppercase',
-              fontWeight: 600,
-              fontSize: '0.875rem',
-              borderRadius: '12px',
-              px: 2.5,
-              '&:hover': {
-                borderColor: '#d1d5db',
-                backgroundColor: '#f9fafb'
-              }
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
             }}
           >
-            SORT
-          </Button>
-          <Menu
-            anchorEl={sortMenuAnchor}
-            open={Boolean(sortMenuAnchor)}
-            onClose={handleSortMenuClose}
-            anchorOrigin={{
-              vertical: 'bottom',
-              horizontal: 'right',
-            }}
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-          >
-            <MenuItem 
-              onClick={() => handleSortChange('newest')}
-              selected={sortBy === 'newest'}
-              sx={{ fontSize: '0.875rem' }}
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 600,
+                fontSize: "20px",
+                lineHeight: "100%",
+                color: "#111827",
+              }}
             >
-              Newest First
-            </MenuItem>
-            <MenuItem 
-              onClick={() => handleSortChange('oldest')}
-              selected={sortBy === 'oldest'}
-              sx={{ fontSize: '0.875rem' }}
-            >
-              Oldest First
-            </MenuItem>
-            <MenuItem 
-              onClick={() => handleSortChange('title-asc')}
-              selected={sortBy === 'title-asc'}
-              sx={{ fontSize: '0.875rem' }}
-            >
-              Title (A-Z)
-            </MenuItem>
-            <MenuItem 
-              onClick={() => handleSortChange('title-desc')}
-              selected={sortBy === 'title-desc'}
-              sx={{ fontSize: '0.875rem' }}
-            >
-              Title (Z-A)
-            </MenuItem>
-          </Menu>
-        </Box>
-      </Box>
-
-      {/* Job Cards */}
-      {isLoadingJobs ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-          <CircularProgress sx={{ color: '#3b82f6' }} />
-        </Box>
-      ) : jobsError ? (
-        <Alert severity="error" sx={{ mb: 2 }}>{jobsError}</Alert>
-      ) : myJobs.length === 0 ? (
-        <Alert severity="info" sx={{ mb: 2 }}>No job posts found.</Alert>
-      ) : filteredAndSortedJobs.length === 0 ? (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          No jobs match your search criteria. Try a different search term.
-        </Alert>
-      ) : (
-        <>
-          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            {currentJobs.map((job: any) => (
-              <JobCard key={job._id}>
-                {/* Header with Title and Date */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Typography variant="h6" sx={{ color: '#111827', fontWeight: 600, flex: 1 }}>
-                    {job.jobDetails.title}
-                  </Typography>
-                  {job.createdAt && (
-                    <Typography variant="caption" sx={{ color: '#9ca3af', fontWeight: 500, whiteSpace: 'nowrap', ml: 2 }}>
-                      Date Posted : {new Date(job.createdAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
-                    </Typography>
-                  )}
-                </Box>
-
-                {/* Tags */}
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 2 }}>
-                  <Chip
-                    icon={<LocationOnIcon sx={{ fontSize: 16, color: '#10b981' }} />}
-                    label={job.jobDetails.location}
-                    size="small"
-                    sx={{ 
-                      backgroundColor: '#f0fdf4', 
-                      color: '#166534', 
-                      fontWeight: 500, 
-                      border: '1px solid #bbf7d0',
-                      '& .MuiChip-icon': { color: '#10b981' }
-                    }}
-                  />
-                  <Chip
-                    icon={<WorkOutlineIcon sx={{ fontSize: 16, color: '#3b82f6' }} />}
-                    label={job.jobDetails.employmentType}
-                    size="small"
-                    sx={{ 
-                      backgroundColor: '#eff6ff', 
-                      color: '#1e40af', 
-                      fontWeight: 500, 
-                      border: '1px solid #bfdbfe',
-                      '& .MuiChip-icon': { color: '#3b82f6' }
-                    }}
-                  />
-                  <Chip
-                    icon={<AttachMoneyIcon sx={{ fontSize: 16, color: '#f59e0b' }} />}
-                    label={`${job.jobDetails.salary.currency} ${job.jobDetails.salary.min} - ${job.jobDetails.salary.currency} ${job.jobDetails.salary.max}`}
-                    size="small"
-                    sx={{ 
-                      backgroundColor: '#fffbeb', 
-                      color: '#92400e', 
-                      fontWeight: 500, 
-                      border: '1px solid #fde68a',
-                      '& .MuiChip-icon': { color: '#f59e0b' }
-                    }}
-                  />
-                </Box>
-
-                {/* Description */}
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: '#6b7280',
-                    mb: 3,
-                    lineHeight: 1.6,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical'
-                  }}
-                >
-                  {job.jobDetails.description}
-                </Typography>
-
-                {/* Action Buttons */}
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    onClick={() => handleViewJobDetails(job)}
-                    sx={{
-                      borderColor: '#3b82f6',
-                      color: '#3b82f6',
-                      textTransform: 'uppercase',
-                      fontWeight: 600,
-                      fontSize: '0.875rem',
-                      borderRadius: '12px',
-                      py: 1.25,
-                      '&:hover': {
-                        borderColor: '#2563eb',
-                        backgroundColor: '#eff6ff'
-                      }
-                    }}
-                  >
-                    VIEW DETAILS
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    onClick={() => onViewMatches(job._id)}
-                    sx={{
-                      borderColor: '#e5e7eb',
-                      color: '#6b7280',
-                      textTransform: 'uppercase',
-                      fontWeight: 600,
-                      fontSize: '0.875rem',
-                      borderRadius: '12px',
-                      py: 1.25,
-                      '&:hover': {
-                        borderColor: '#d1d5db',
-                        backgroundColor: '#f9fafb'
-                      }
-                    }}
-                  >
-                    VIEW MATCHES
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    startIcon={<DeleteOutlineIcon />}
-                    onClick={() => onDeleteJob(job._id)}
-                    sx={{
-                      borderColor: '#fecaca',
-                      color: '#dc2626',
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      fontSize: '0.875rem',
-                      borderRadius: '12px',
-                      py: 1.25,
-                      '&:hover': {
-                        borderColor: '#fca5a5',
-                        backgroundColor: '#fef2f2'
-                      }
-                    }}
-                  >
-                    Delete Job
-                  </Button>
-                </Box>
-              </JobCard>
-            ))}
-          </Box>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-              <Pagination 
-                count={totalPages} 
-                page={currentPage} 
-                onChange={handlePageChange}
-                color="primary"
-                shape="rounded"
+              <span
+                style={{
+                  borderBottom: "5px solid rgba(41, 210, 145, 0.83)",
+                  paddingBottom: "2px",
+                }}
+              >
+                Our
+              </span>{" "}
+              Job Posts
+            </Typography>
+            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+              <TextField
+                size="small"
+                placeholder="Search Jobs"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon
+                        sx={{ color: "rgba(84, 98, 116, 1)", fontSize: 20 }}
+                      />
+                    </InputAdornment>
+                  ),
+                }}
                 sx={{
-                  '& .MuiPaginationItem-root': {
-                    color: '#6b7280',
-                    fontWeight: 500,
-                    '&.Mui-selected': {
-                      backgroundColor: '#e0f2fe',
-                      color: '#0369a1',
-                      fontWeight: 600,
+                  width: 280,
+                  height: "40px",
+                  "& .MuiOutlinedInput-root": {
+                    backgroundColor: "white",
+                    borderRadius: "42px",
+                    border: "1px solid rgba(165, 172, 181, 1)",
+                    "& fieldset": {
+                      border: "none",
                     },
-                    '&:hover': {
-                      backgroundColor: '#f3f4f6',
-                    }
-                  }
+                    "&:hover": {
+                      borderColor: "rgba(165, 172, 181, 0.8)",
+                    },
+                  },
                 }}
               />
+              <Button
+                variant="outlined"
+                startIcon={
+                  <Image
+                    src="/icons/sort.svg"
+                    alt="search"
+                    width={24}
+                    height={24}
+                  />
+                }
+                onClick={handleSortMenuOpen}
+                sx={{
+                  height: "40px",
+                  borderColor: "rgba(165, 172, 181, 1)",
+                  color: "rgba(84, 98, 116, 1)",
+                  textTransform: "uppercase",
+                  fontWeight: 400,
+                  fontSize: "0.875rem",
+                  borderRadius: "42px",
+                  px: 2.5,
+                  "&:hover": {
+                    borderColor: "rgba(165, 172, 181, 0.8)",
+                    backgroundColor: "#f9fafb",
+                  },
+                }}
+              >
+                SORT
+              </Button>
+              <Menu
+                anchorEl={sortMenuAnchor}
+                open={Boolean(sortMenuAnchor)}
+                onClose={handleSortMenuClose}
+                anchorOrigin={{
+                  vertical: "bottom",
+                  horizontal: "right",
+                }}
+                transformOrigin={{
+                  vertical: "top",
+                  horizontal: "right",
+                }}
+              >
+                <MenuItem
+                  onClick={() => handleSortChange("newest")}
+                  selected={sortBy === "newest"}
+                  sx={{ fontSize: "0.875rem" }}
+                >
+                  Newest First
+                </MenuItem>
+                <MenuItem
+                  onClick={() => handleSortChange("oldest")}
+                  selected={sortBy === "oldest"}
+                  sx={{ fontSize: "0.875rem" }}
+                >
+                  Oldest First
+                </MenuItem>
+                <MenuItem
+                  onClick={() => handleSortChange("title-asc")}
+                  selected={sortBy === "title-asc"}
+                  sx={{ fontSize: "0.875rem" }}
+                >
+                  Title (A-Z)
+                </MenuItem>
+                <MenuItem
+                  onClick={() => handleSortChange("title-desc")}
+                  selected={sortBy === "title-desc"}
+                  sx={{ fontSize: "0.875rem" }}
+                >
+                  Title (Z-A)
+                </MenuItem>
+              </Menu>
             </Box>
+          </Box>
+
+          {/* Job Cards */}
+          {isLoadingJobs ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+              <CircularProgress sx={{ color: "#3b82f6" }} />
+            </Box>
+          ) : jobsError ? (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {jobsError}
+            </Alert>
+          ) : myJobs.length === 0 ? (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              No job posts found.
+            </Alert>
+          ) : filteredAndSortedJobs.length === 0 ? (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              No jobs match your search criteria. Try a different search term.
+            </Alert>
+          ) : (
+            <>
+              <Box sx={{ display: "flex", flexDirection: "column" }}>
+                {currentJobs.map((job: any) => (
+                  <JobCard key={job._id}>
+                    {/* Header with Title and Date */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        mb: 1,
+                      }}
+                    >
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          color: "rgba(24, 25, 28, 1)",
+                          fontFamily: "Poppins",
+                          fontWeight: 500,
+                          fontStyle: "medium",
+                          fontSize: {
+                            xs: "14px", // mobile
+                            sm: "16px", // small tablet
+                            md: "18px", // tablet/desktop
+                            lg: "18px", // large desktop
+                          },
+                          lineHeight: {
+                            xs: "20px",
+                            sm: "24px",
+                            md: "28px",
+                            lg: "28px",
+                          },
+                          letterSpacing: "0%",
+                          flex: 1,
+                        }}
+                      >
+                        {job.jobDetails.title}
+                      </Typography>
+                      {job.createdAt && (
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "rgba(84, 98, 116, 0.53)",
+                            fontFamily: "Poppins",
+                            fontWeight: 400,
+                            fontSize: {
+                              xs: "10px", // mobile
+                              sm: "11px", // tablet
+                              md: "12px", // desktop
+                            },
+                            lineHeight: {
+                              xs: "19px",
+                              sm: "21px",
+                              md: "23px",
+                            },
+                            letterSpacing: "0px",
+                            ml: 2,
+                          }}
+                        >
+                          Date Posted :{" "}
+                          {new Date(job.createdAt).toLocaleDateString("en-US", {
+                            month: "2-digit",
+                            day: "2-digit",
+                            year: "numeric",
+                          })}
+                        </Typography>
+                      )}
+                    </Box>
+                    <Stack
+                      direction="row"
+                      spacing={0.5}
+                      sx={{ flexWrap: "wrap", gap: 0.5 }}
+                    >
+                      <Chip
+                        label={job.jobDetails.location}
+                        size="small"
+                        sx={{
+                          backgroundColor: "rgba(95, 168, 211, 0.1)",
+                          color: "rgba(84, 98, 116, 1)",
+                          fontWeight: 500,
+                          fontSize: "0.75rem",
+                          height: 24,
+                          border: "0.25px solid rgba(95, 168, 211, 1)",
+                        }}
+                        icon={
+                          <Image
+                            src="/icons/location2.svg" // ✅ path inside /public folder
+                            alt="search"
+                            width={13}
+                            height={13}
+                          />
+                        }
+                      />
+                      <Chip
+                        label={job.jobDetails.employmentType}
+                        size="small"
+                        sx={{
+                          backgroundColor: "rgba(95, 168, 211, 0.1)",
+                          color: "rgba(84, 98, 116, 1)",
+                          fontWeight: 500,
+                          fontSize: "0.75rem",
+                          height: 24,
+                          border: "0.25px solid rgba(95, 168, 211, 1)",
+                        }}
+                        icon={
+                          <Image
+                            src="/icons/suitcase.svg" // ✅ path inside /public folder
+                            alt="search"
+                            width={13}
+                            height={13}
+                          />
+                        }
+                      />
+                      <Chip
+                        label={`${job.jobDetails.salary.currency} ${job.jobDetails.salary.min} - ${job.jobDetails.salary.currency} ${job.jobDetails.salary.max}`}
+                        size="small"
+                        sx={{
+                          backgroundColor: "rgba(95, 168, 211, 0.1)",
+                          color: "rgba(84, 98, 116, 1)",
+                          fontWeight: 500,
+                          fontSize: "0.75rem",
+                          height: 24,
+                          border: "0.25px solid rgba(95, 168, 211, 1)",
+                        }}
+                        icon={
+                          <Image
+                            src="/icons/dollar.svg" // ✅ path inside /public folder
+                            alt="search"
+                            width={13}
+                            height={13}
+                          />
+                        }
+                      />
+                    </Stack>
+
+                    {/* Description */}
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "rgba(0, 0, 0, 1)",
+                        mt: 1.3,
+                        mb: 3,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        fontFamily: "Poppins",
+                        fontWeight: 400,
+                        fontStyle: "normal",
+                        fontSize: "12px",
+                        lineHeight: "23px",
+                        letterSpacing: "0px",
+                        maxWidth: "700px",
+                      }}
+                    >
+                      {job.jobDetails.description}
+                    </Typography>
+
+                    {/* Action Buttons */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 2,
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", gap: 1, flex: 1 }}>
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          onClick={() => handleViewJobDetails(job)}
+                          sx={{
+                            borderColor: "rgba(11, 82, 198, 1)",
+                            color: "rgba(11, 82, 198, 1)",
+                            textTransform: "uppercase",
+                            fontWeight: 500,
+                            fontSize: "0.875rem",
+                            py: 1.25,
+                            borderRadius: "38px",
+                            maxWidth: "250px",
+                            height: "42px",
+                            backgroundColor: "rgba(11, 82, 198, 0.08)",
+                            "&:hover": {
+                              borderColor: "#2563eb",
+                              backgroundColor: "rgba(11, 82, 198, 0.04)",
+                            },
+                          }}
+                        >
+                          VIEW DETAILS
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          onClick={() => onViewMatches(job._id)}
+                          sx={{
+                            borderColor: "rgba(84, 98, 116, 0.53)",
+                            color: "rgba(84, 98, 116, 1)",
+                            textTransform: "uppercase",
+                            fontWeight: 500,
+                            fontSize: "0.875rem",
+                            borderRadius: "38px",
+                            maxWidth: "250px",
+                            height: "42px",
+                            py: 1.25,
+                            backgroundColor: "rgba(84, 98, 116, 0.08)",
+                            "&:hover": {
+                              borderColor: "rgba(84, 98, 116, 0.53)",
+                              backgroundColor: "rgba(84, 98, 116, 0.04)",
+                            },
+                          }}
+                        >
+                          VIEW MATCHES
+                        </Button>
+                      </Box>
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        startIcon={
+                          <Image
+                            src="/icons/delete.svg"
+                            alt="search"
+                            width={20}
+                            height={20}
+                          />
+                        }
+                        onClick={() => onDeleteJob(job._id)}
+                        sx={{
+                          borderColor: "rgba(224, 62, 92, 1)",
+                          color: "rgba(224, 62, 92, 1)",
+                          textTransform: "none",
+                          fontWeight: 500,
+                          fontSize: "0.875rem",
+                          py: 1.25,
+                          borderRadius: "38px",
+                          maxWidth: "200px",
+                          height: "42px",
+                          backgroundColor: "rgba(224, 62, 92, 0.08)",
+                          "&:hover": {
+                            borderColor: "rgba(224, 62, 92, 1)",
+                            backgroundColor: "rgba(224, 62, 92, 0.04)",
+                          },
+                        }}
+                      >
+                        Delete Job
+                      </Button>
+                    </Box>
+                  </JobCard>
+                ))}
+              </Box>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+                  <Pagination
+                    count={totalPages}
+                    page={currentPage}
+                    onChange={handlePageChange}
+                    color="primary"
+                    shape="rounded"
+                    sx={{
+                      "& .MuiPaginationItem-root": {
+                        color: "#6b7280",
+                        fontWeight: 500,
+                        "&.Mui-selected": {
+                          backgroundColor: "#e0f2fe",
+                          color: "#0369a1",
+                          fontWeight: 600,
+                        },
+                        "&:hover": {
+                          backgroundColor: "#f3f4f6",
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+              )}
+            </>
           )}
-        </>
-      )}
 
-      <JobDetailsDialog open={jobDetailsModalOpen} onClose={handleCloseJobDetailsModal} job={selectedJobForDetails} onRefresh={onRefresh} />
+          <JobDetailsDialog
+            open={jobDetailsModalOpen}
+            onClose={handleCloseJobDetailsModal}
+            job={selectedJobForDetails}
+            onRefresh={onRefresh}
+          />
 
-      {/* Delete Job Post Dialog */}
-      <DeleteJobPostDialog
-        open={deleteDialogOpen}
-        onClose={onCancelDelete}
-        onDelete={onConfirmDelete}
-        isDeleting={isDeleting}
-      />
-    </StyledCard>
+          {/* Delete Job Post Dialog */}
+          <DeleteJobPostDialog
+            open={deleteDialogOpen}
+            onClose={onCancelDelete}
+            onDelete={onConfirmDelete}
+            isDeleting={isDeleting}
+          />
+        </StyledCard>
+      </Box>
+    </Box>
   );
 };
 
