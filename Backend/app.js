@@ -28,7 +28,7 @@ const connectDB = require("./config/database");
 const socket = require("./socket");
 const { initializeAgenda } = require("./services/agendaService");
 
-const authRouter = require("./routes/authRouter");
+const authRouter = require("./routes/authenticationRouter");
 const dashboardRouter = require("./routes/dashboardRouter");
 const profileRouter = require("./routes/profileRouter");
 const evaluationRouter = require("./routes/evaluationRouter");

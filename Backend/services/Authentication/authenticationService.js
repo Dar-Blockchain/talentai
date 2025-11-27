@@ -1,8 +1,8 @@
-const User = require("../models/UserModel");
-const { sendOTP } = require("../utils/mailing");
-const { generateOTP } = require("../utils/Onetimepassword");
-const { generateToken } = require("../utils/generateToken");
-const { getGmailByToken } = require("../utils/getGmailByToken");
+const User = require("../../models/UserModel");
+const { sendOTP } = require("../../utils/mailing");
+const { generateOTP } = require("../../utils/Onetimepassword");
+const { generateToken } = require("../../utils/generateToken");
+const { getGmailByToken } = require("../../utils/getGmailByToken");
 
 // Extraire le nom d'utilisateur de l'email
 const extractUsernameFromEmail = (email) => {
@@ -20,7 +20,7 @@ module.exports.registerUser = async (email) => {
     // Si l'utilisateur existe, générer un nouveau code OTP
     const otp = generateOTP();
     const otpExpiry = new Date(Date.now() + 5 * 60000); // 5 minutes
-
+    console.log(otp);
     existingUser.otp = {
       code: otp,
       expiresAt: otpExpiry,
