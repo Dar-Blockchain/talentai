@@ -90,9 +90,9 @@ const profileSchema = new mongoose.Schema(
     ],
 
     todoList: { type: mongoose.Schema.Types.ObjectId, ref: "TodoList" },
-    //interviewDetails only for profile of type Candidate
+    //interviewDetails for profile of type Candidate - references to InterviewAssessment
     interviewDetails: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "InterviewDetails" },
+      { type: mongoose.Schema.Types.ObjectId, ref: "InterviewAssessment" },
     ],
 
     // Company details (if type is Company)
