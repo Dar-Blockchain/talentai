@@ -1390,3 +1390,473 @@
     "timestamp": "2025-11-27T11:33:53.471Z"
   }
 }
+
+{
+  "metadata": {
+    "exportedAt": "2025-11-27T17:19:56.679Z",
+    "type": "onboarding",
+    "skill": "Java",
+    "role": "Java",
+    "category": "N/A",
+    "proficiency": "3"
+  },
+  "interviewData": {
+    "finalReport": {
+      "summary": "Interview completed successfully",
+      "coverage": {
+        "overall": 81,
+        "areas": {
+          "leadership_potential": {
+            "percentage": 90,
+            "indicators": [
+              {
+                "name": "mentoring examples",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "project ownership",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "conflict resolution",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "AI-detected: project ownership",
+                "covered": true,
+                "evidence": [
+                  "my role was to design and implement the backend endpoints ensure they were fast and scalable and coordinate with the front end team so the data structure matched their needs"
+                ],
+                "quality": 4,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated project ownership by taking the lead in designing and implementing backend endpoints, ensuring they were fast and scalable, and coordinating with the frontend team to match data structure needs."
+              },
+              {
+                "name": "AI-detected: project ownership",
+                "covered": true,
+                "evidence": [
+                  "i took ownership from the discovery phase to deployment"
+                ],
+                "quality": 9,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated strong project ownership skills by taking the lead on a project from discovery to deployment, clarifying requirements, designing the backend architecture, and ensuring the feature was stable before release. They also demonstrated leadership skills by driving communication, anticipating blockers, and validating performance early."
+              },
+              {
+                "name": "AI-detected: project ownership",
+                "covered": true,
+                "evidence": [
+                  "i clarified requirements with the product manager and defined clear milestones"
+                ],
+                "quality": 9,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated strong project ownership skills by taking the lead on a project from discovery to deployment, clarifying requirements, designing the backend architecture, and ensuring the feature was stable before release. They also demonstrated leadership skills by driving communication, anticipating blockers, and validating performance early."
+              },
+              {
+                "name": "AI-detected: project ownership",
+                "covered": true,
+                "evidence": [
+                  "i designed the backend architecture chose the right data models and implemented all core features"
+                ],
+                "quality": 9,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated strong project ownership skills by taking the lead on a project from discovery to deployment, clarifying requirements, designing the backend architecture, and ensuring the feature was stable before release. They also demonstrated leadership skills by driving communication, anticipating blockers, and validating performance early."
+              },
+              {
+                "name": "AI-detected: project ownership",
+                "covered": true,
+                "evidence": [
+                  "i coordinated with the front end team to align on the api contract and created documentation to keep everyone"
+                ],
+                "quality": 9,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated strong project ownership skills by taking the lead on a project from discovery to deployment, clarifying requirements, designing the backend architecture, and ensuring the feature was stable before release. They also demonstrated leadership skills by driving communication, anticipating blockers, and validating performance early."
+              },
+              {
+                "name": "AI-detected: project ownership",
+                "covered": true,
+                "evidence": [
+                  "i also set up logging monitoring and load testing to ensure the new feature was stable before release"
+                ],
+                "quality": 9,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated strong project ownership skills by taking the lead on a project from discovery to deployment, clarifying requirements, designing the backend architecture, and ensuring the feature was stable before release. They also demonstrated leadership skills by driving communication, anticipating blockers, and validating performance early."
+              },
+              {
+                "name": "AI-detected: project ownership",
+                "covered": true,
+                "evidence": [
+                  "by driving communication anticipating blockers and validating performance early"
+                ],
+                "quality": 9,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated strong project ownership skills by taking the lead on a project from discovery to deployment, clarifying requirements, designing the backend architecture, and ensuring the feature was stable before release. They also demonstrated leadership skills by driving communication, anticipating blockers, and validating performance early."
+              },
+              {
+                "name": "AI-detected: project ownership",
+                "covered": true,
+                "evidence": [
+                  "i became better at breaking down complex problems designing scalable architectures and validating performance through profiling and testing"
+                ],
+                "quality": 8,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated project ownership skills by breaking down complex problems, designing scalable architectures, and validating performance. They also emphasized the importance of taking ownership, anticipating issues, and making informed technical decisions, which shows their ability to lead projects effectively."
+              },
+              {
+                "name": "AI-detected: project ownership",
+                "covered": true,
+                "evidence": [
+                  "it also reinforced the value of taking ownership anticipating issues making informed technical decisions and ensuring smooth delivery end to end"
+                ],
+                "quality": 8,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated project ownership skills by breaking down complex problems, designing scalable architectures, and validating performance. They also emphasized the importance of taking ownership, anticipating issues, and making informed technical decisions, which shows their ability to lead projects effectively."
+              }
+            ],
+            "weight": 0.25,
+            "depth": "probe for specific examples and outcomes",
+            "completed": false,
+            "questionsAsked": 1,
+            "lastQuestionTime": "2025-11-27T17:13:29.765Z",
+            "lastUpdated": "2025-11-27T17:19:15.709Z",
+            "aiAnalysis": {
+              "qualityScore": 5,
+              "reasoning": "The candidate demonstrated project ownership skills by breaking down complex problems, designing scalable architectures, and validating performance. They also emphasized the importance of taking ownership, anticipating issues, and making informed technical decisions, which shows their ability to lead projects effectively.",
+              "indicators": ["project ownership"]
+            }
+          },
+          "problem_solving": {
+            "percentage": 85,
+            "indicators": [
+              {
+                "name": "technical challenges",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "creative solutions",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "systematic thinking",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "AI-detected: systematic thinking",
+                "covered": true,
+                "evidence": [
+                  "my experience problems methodically first understand the root cause then break the problem into smaller pieces and finally choose the simplest and most reliable solution"
+                ],
+                "quality": 8,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrates a systematic approach to problem-solving by breaking down problems into smaller pieces and choosing the simplest solution. Additionally, their experience with performance-critical applications shows their ability to handle technical challenges."
+              },
+              {
+                "name": "AI-detected: systematic thinking",
+                "covered": true,
+                "evidence": [
+                  "working on performance critical applications help me develop a mindset focused on profiling measuring and iterating rather than guessing"
+                ],
+                "quality": 8,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrates a systematic approach to problem-solving by breaking down problems into smaller pieces and choosing the simplest solution. Additionally, their experience with performance-critical applications shows their ability to handle technical challenges."
+              },
+              {
+                "name": "AI-detected: technical challenges",
+                "covered": true,
+                "evidence": [
+                  "building a performance optimized api for a platform that handled user profiles and recommendation logic"
+                ],
+                "quality": 8,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated problem-solving skills by building a performance-optimized API for a complex platform, ensuring it was fast and scalable, which shows their ability to handle technical challenges."
+              },
+              {
+                "name": "AI-detected: technical challenges",
+                "covered": true,
+                "evidence": ["ensure they were fast and scalable"],
+                "quality": 8,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated problem-solving skills by building a performance-optimized API for a complex platform, ensuring it was fast and scalable, which shows their ability to handle technical challenges."
+              },
+              {
+                "name": "AI-detected: technical challenges",
+                "covered": true,
+                "evidence": [
+                  "i designed the backend architecture chose the right data models and implemented all core features"
+                ],
+                "quality": 9,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated problem-solving skills by designing the backend architecture and implementing core features. They also demonstrated systematic thinking by setting up logging, monitoring, and load testing to ensure the feature was stable before release."
+              },
+              {
+                "name": "AI-detected: technical challenges",
+                "covered": true,
+                "evidence": [
+                  "i set up logging monitoring and load testing to ensure the new feature was stable before release"
+                ],
+                "quality": 9,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated problem-solving skills by designing the backend architecture and implementing core features. They also demonstrated systematic thinking by setting up logging, monitoring, and load testing to ensure the feature was stable before release."
+              },
+              {
+                "name": "AI-detected: systematic thinking",
+                "covered": true,
+                "evidence": [
+                  "i became better at breaking down complex problems designing scalable architectures and validating performance through profiling and testing"
+                ],
+                "quality": 8,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated systematic thinking by breaking down complex problems and designing scalable architectures. They also validated performance through profiling and testing, which shows their ability to approach problems systematically."
+              }
+            ],
+            "weight": 0.3,
+            "depth": "ask for step-by-step problem breakdown",
+            "completed": false,
+            "lastUpdated": "2025-11-27T17:19:15.709Z",
+            "aiAnalysis": {
+              "qualityScore": 5,
+              "reasoning": "The candidate demonstrated systematic thinking by breaking down complex problems and designing scalable architectures. They also validated performance through profiling and testing, which shows their ability to approach problems systematically.",
+              "indicators": ["systematic thinking"]
+            }
+          },
+          "collaboration": {
+            "percentage": 75,
+            "indicators": [
+              {
+                "name": "cross-team work",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "communication style",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "feedback handling",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "AI-detected: cross-team work",
+                "covered": true,
+                "evidence": [
+                  "i worked closely with front end developers the product manager and the qo team"
+                ],
+                "quality": 8,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated collaboration skills by working closely with multiple teams, coordinating with the frontend team, and collaborating with QA to write test cases and resolve issues quickly, which shows their ability to work effectively across teams."
+              },
+              {
+                "name": "AI-detected: cross-team work",
+                "covered": true,
+                "evidence": [
+                  "coordinate with the front end team so the data structure matched their needs"
+                ],
+                "quality": 8,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated collaboration skills by working closely with multiple teams, coordinating with the frontend team, and collaborating with QA to write test cases and resolve issues quickly, which shows their ability to work effectively across teams."
+              },
+              {
+                "name": "AI-detected: cross-team work",
+                "covered": true,
+                "evidence": [
+                  "collaborated with qa to write test cases and resolve issues quickly through frequent stand ups and shared documentation"
+                ],
+                "quality": 8,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated collaboration skills by working closely with multiple teams, coordinating with the frontend team, and collaborating with QA to write test cases and resolve issues quickly, which shows their ability to work effectively across teams."
+              },
+              {
+                "name": "AI-detected: cross-team work",
+                "covered": true,
+                "evidence": [
+                  "i coordinated with the front end team to align on the api contract and created documentation to keep everyone"
+                ],
+                "quality": 9,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated collaboration skills by coordinating with the frontend team and creating documentation to keep everyone informed. They also demonstrated effective communication skills by driving communication, anticipating blockers, and validating performance early."
+              },
+              {
+                "name": "AI-detected: cross-team work",
+                "covered": true,
+                "evidence": [
+                  "by driving communication anticipating blockers and validating performance early"
+                ],
+                "quality": 9,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated collaboration skills by coordinating with the frontend team and creating documentation to keep everyone informed. They also demonstrated effective communication skills by driving communication, anticipating blockers, and validating performance early."
+              },
+              {
+                "name": "AI-detected: communication style",
+                "covered": true,
+                "evidence": [
+                  "aligning with product front end and qa taught me how important clarity and documentation are"
+                ],
+                "quality": 8,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated effective communication skills by emphasizing the importance of clarity and documentation in collaboration. They also highlighted the value of aligning with product, frontend, and QA teams, which shows their ability to work effectively across teams."
+              }
+            ],
+            "weight": 0.25,
+            "depth": "explore difficult collaboration scenarios",
+            "completed": false,
+            "lastUpdated": "2025-11-27T17:19:15.709Z",
+            "aiAnalysis": {
+              "qualityScore": 5,
+              "reasoning": "The candidate demonstrated effective communication skills by emphasizing the importance of clarity and documentation in collaboration. They also highlighted the value of aligning with product, frontend, and QA teams, which shows their ability to work effectively across teams.",
+              "indicators": ["communication style"]
+            },
+            "questionsAsked": 1,
+            "lastQuestionTime": "2025-11-27T17:15:18.229Z"
+          },
+          "growth_mindset": {
+            "percentage": 70,
+            "indicators": [
+              {
+                "name": "learning from failure",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "skill development",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "feedback incorporation",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "AI-detected: skill development",
+                "covered": true,
+                "evidence": [
+                  "i got into software engineering because i've always enjoyed understanding how things work and building solutions that have a real impact"
+                ],
+                "quality": 6,
+                "aiGenerated": true,
+                "reasoning": "The candidate shows a willingness to learn and adapt by starting with .NET and Angular and then moving into JavaScript and specializing in Node.js and React. This demonstrates their ability to develop new skills and stay up-to-date with industry demands."
+              },
+              {
+                "name": "AI-detected: skill development",
+                "covered": true,
+                "evidence": [
+                  "i started with net and angular then moved into javascript and eventually specialized in node js and react as i noticed how much demand there was for scalable web applications and web three projects"
+                ],
+                "quality": 6,
+                "aiGenerated": true,
+                "reasoning": "The candidate shows a willingness to learn and adapt by starting with .NET and Angular and then moving into JavaScript and specializing in Node.js and React. This demonstrates their ability to develop new skills and stay up-to-date with industry demands."
+              },
+              {
+                "name": "AI-detected: feedback incorporation",
+                "covered": true,
+                "evidence": [
+                  "this project reinforced the importance of communication and iterative feedback across teams"
+                ],
+                "quality": 6,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated a growth mindset by recognizing the importance of communication and iterative feedback across teams, which shows their ability to incorporate feedback and learn from experiences."
+              },
+              {
+                "name": "AI-detected: skill development",
+                "covered": true,
+                "evidence": [
+                  "this experience strengthened my ability to lead features end to end while keeping quality and performance at the center"
+                ],
+                "quality": 8,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated a growth mindset by recognizing the importance of leading features end-to-end while keeping quality and performance at the center. This shows their ability to develop new skills and take on new challenges."
+              },
+              {
+                "name": "AI-detected: skill development",
+                "covered": true,
+                "evidence": [
+                  "this experience helped me grow by strengthening both my technical and leadership skills"
+                ],
+                "quality": 9,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated a growth mindset by recognizing the importance of continuous learning and skill development. They also emphasized the value of applying lessons learned to new projects, which shows their ability to incorporate feedback and adapt to new challenges."
+              },
+              {
+                "name": "AI-detected: skill development",
+                "covered": true,
+                "evidence": [
+                  "these lessons especially around scalability collaboration and proactive problem solving are skills i continue applying to every new project i work on"
+                ],
+                "quality": 9,
+                "aiGenerated": true,
+                "reasoning": "The candidate demonstrated a growth mindset by recognizing the importance of continuous learning and skill development. They also emphasized the value of applying lessons learned to new projects, which shows their ability to incorporate feedback and adapt to new challenges."
+              }
+            ],
+            "weight": 0.2,
+            "depth": "understand motivation and learning approach",
+            "completed": false,
+            "lastUpdated": "2025-11-27T17:19:15.709Z",
+            "aiAnalysis": {
+              "qualityScore": 5,
+              "reasoning": "The candidate demonstrated a growth mindset by recognizing the importance of continuous learning and skill development. They also emphasized the value of applying lessons learned to new projects, which shows their ability to incorporate feedback and adapt to new challenges.",
+              "indicators": ["skill development", "feedback incorporation"]
+            }
+          }
+        },
+        "completedAreas": [],
+        "nextRecommendedArea": null,
+        "lastUpdated": "2025-11-27T17:19:15.710Z",
+        "aiAnalysis": {
+          "totalCoverage": 63,
+          "strongestAreas": [
+            "problem_solving",
+            "collaboration",
+            "leadership_potential"
+          ],
+          "weakestAreas": ["growth_mindset"],
+          "recommendedFocus": ["growth_mindset"]
+        }
+      },
+      "recommendations": [
+        "Discuss specific examples of mentoring experiences, such as guiding junior team members or providing constructive feedback",
+        "Provide examples of conflict resolution experiences, such as handling disagreements between team members or negotiating with stakeholders",
+        "Continue to develop growth mindset by discussing strategies for handling failures or setbacks in projects",
+        "Share specific examples of learning from failure or feedback incorporation experiences to further assess growth mindset"
+      ],
+      "scores": {
+        "problem_solving": 0.75,
+        "growth_mindset": 0.5,
+        "leadership_potential": 0.4,
+        "collaboration": 0.65
+      },
+      "timestamp": "2025-11-27T17:19:34.845Z"
+    },
+    "analytics": {
+      "duration": 507120,
+      "messageCount": 11,
+      "silenceEvents": 0,
+      "coveragePercentage": 63,
+      "completedAreas": 0,
+      "totalAreas": 4,
+      "averageResponseLength": 0,
+      "interactionStyle": "unknown"
+    },
+    "sessionId": "afdd75d4-ea4a-472d-9d9a-2c6ab9577bdb",
+    "interviewType": "HR_INTERVIEW",
+    "timestamp": "2025-11-27T17:19:34.941Z"
+  }
+}
