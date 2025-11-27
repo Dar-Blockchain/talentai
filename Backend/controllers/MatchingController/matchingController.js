@@ -15,11 +15,11 @@ exports.matchCandidatesToJob = async (req, res) => {
 
     // 1. Récupérer les profils des candidats + peupler companyBid.company
     const candidates = await Profile.find({ type: "Candidate" })
-      .populate("userId", "username email firstName lastName")
+      .populate("userId", "username email")
       .populate("companyBid.company", "username email")
-      .select("userId skills companyDetails.name companyBid")
+      .select("userId firstName lastName skills companyDetails.name companyBid")
       .lean();
-
+console.log(candidates);
     // 2. Récupérer l'annonce de poste et les compétences requises
     const jobPost = await JobPost.findById(jobPostId)
       .select("skillAnalysis.requiredSkills jobDetails.title")
@@ -64,6 +64,8 @@ exports.matchCandidatesToJob = async (req, res) => {
         return {
           candidateId: candidate.userId,
           name: candidate.userId?.username || "Anonymous",
+          firstName: candidate.firstName || "Anonymous",
+          lastName: candidate.lastName || "Anonymous",
           score,
           finalBid: candidate.companyBid?.finalBid || null,
           biddingCompany: candidate.companyBid?.company?.username || null,
