@@ -1,4 +1,7 @@
 const InterviewAssessmentService = require('../services/InterviewAssessmentService');
+const interviewRewardService = require('../services/interviewRewardService');
+const InterviewAssessment = require('../models/InterviewAssessmentModel');
+const Profile = require('../models/ProfileModel');
 
 // POST - Create a new assessment
 const create = async (req, res) => {
@@ -301,6 +304,60 @@ const getStatistics = async (req, res) => {
   }
 };
 
+// POST - Claim interview reward (manual)
+const claimInterviewReward = async (req, res) => {
+  try {
+    const interviewId = req.params.id;
+    const userId = req.user?._id;
+
+    console.log(`🎯 Manual claim request for interview ${interviewId} by user ${userId}`);
+
+    // Load the assessment
+    const interview = await InterviewAssessment.findById(interviewId);
+    if (!interview) {
+      console.log(`Interview not found: ${interviewId}`);
+      return res.status(404).json({ success: false, error: 'Interview not found' });
+    }
+
+    // Verify ownership: find profile for this user
+    const userProfile = await Profile.findOne({ userId });
+    if (!userProfile) {
+      console.log(`User profile not found for user ${userId}`);
+      return res.status(403).json({ success: false, error: 'User profile not found' });
+    }
+
+    if (interview.candidateId?.toString() !== userProfile._id.toString()) {
+      console.log(`Unauthorized claim attempt by user ${userId} for interview ${interviewId}`);
+      return res.status(403).json({ success: false, error: 'Not authorized to claim this reward' });
+    }
+
+    // Check if reward already claimed
+    const claimStatus = await interviewRewardService.checkRewardClaimed(userId, interviewId);
+    if (claimStatus.claimed) {
+      console.log('Reward already claimed');
+      return res.status(400).json({ success: false, error: 'Reward already claimed for this interview', transaction: claimStatus.transaction });
+    }
+
+    // Determine score (fallbacks applied)
+    const score = interview.interviewData?.finalReport?.scores?.overall || 0;
+
+    // Distribute reward
+    const rewardResult = await interviewRewardService.distributeInterviewReward(userId, score, interviewId);
+
+    if (rewardResult.success) {
+      console.log(`Manual claim successful: ${rewardResult.amount} TAI`);
+      return res.status(200).json({ success: true, message: 'Reward claimed successfully', reward: rewardResult });
+    }
+
+    console.log(`Manual claim failed: ${rewardResult.error}`);
+    return res.status(400).json({ success: false, error: rewardResult.error, canRetry: rewardResult.canRetry, requiresWallet: rewardResult.requiresWallet });
+
+  } catch (error) {
+    console.error('Error in manual claim:', error);
+    return res.status(500).json({ success: false, error: 'Internal server error while claiming reward', message: error.message });
+  }
+};
+
 module.exports = {
   create,
   getById,
@@ -313,5 +370,6 @@ module.exports = {
   deleteAssessment,
   archive,
   getSummary,
+  claimInterviewReward,
   getStatistics
 };

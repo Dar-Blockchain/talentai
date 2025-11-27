@@ -7,6 +7,7 @@ const {
   getAll,
   getByCandidate,
   getBySkill,
+  claimInterviewReward,
   update,
   updateStatus,
   deleteAssessment,
@@ -39,6 +40,10 @@ router.get('/stats/global', getStatistics);
 
 // GET - Retrieve an assessment by ID
 // GET /api/interview-assessments/:id
+// POST - Claim reward for an assessment
+// POST /api/interview-assessments/:id/claim-reward
+router.post('/:id/claim-reward', claimInterviewReward);
+
 router.get('/:id', getById);
 
 // GET - Get assessment summary
