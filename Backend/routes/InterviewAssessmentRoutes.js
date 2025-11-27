@@ -14,6 +14,14 @@ const {
   getSummary,
   getStatistics
 } = require('../controllers/InterviewAssessmentController');
+// Import des middlewares
+const { controledAcces } = require('../middleware/controledAcces'); 
+const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
+const { requireAuthUser } = require("../middleware/authMiddleware");
+
+
+// Toutes les routes ci-dessous nécessitent un candidat authentifié
+router.use(requireAuthUser, controledAcces('Candidate'), authLogMiddleware("InterviewDetails"));
 
 // CRUD Routes
 
