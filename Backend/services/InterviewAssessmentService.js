@@ -461,7 +461,7 @@ const getAllAssessmentsWithPagination = async ({
   try {
     const query = {};
 
-    if (type) query['interviewData.interviewType'] = type;
+    if (type) query['metadata.type'] = type;
     if (candidateId) query.candidateId = candidateId;
 
     const skip = (page - 1) * limit;
