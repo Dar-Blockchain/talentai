@@ -24,7 +24,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
       // Create skill object from metadata
       const skillName = metadata?.skill || 'Unknown Skill';
       const experienceLevel = metadata?.proficiency || 'NoLevel';
-      const overallScore = rawInterviewData?.finalReport?.scores?.overall || 0;
+      const overallScore = rawInterviewData?.finalReport?.coverage?.overall || 0;
 
       // Map experience level to proficiency level (1-5)
       const experienceLevelMap = {
