@@ -450,6 +450,45 @@ const getGlobalStatistics = async () => {
   }
 };
 
+// Get all assessments with pagination, filtering, and sorting
+const getAllAssessmentsWithPagination = async ({
+  page = 1,
+  limit = 10,
+  sort = '-createdAt',
+  type,
+  candidateId
+}) => {
+  try {
+    const query = {};
+
+    if (type) query['interviewData.type'] = type;
+    if (candidateId) query.candidateId = candidateId;
+
+    const skip = (page - 1) * limit;
+
+    const [results, total] = await Promise.all([
+      InterviewAssessment.find(query)
+        .sort(sort)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate('candidateId', 'firstName lastName email')
+        .populate('interviewerId', 'firstName lastName email')
+        .exec(),
+      InterviewAssessment.countDocuments(query),
+    ]);
+
+    return {
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      results,
+      totalPages: Math.ceil(total / limit),
+    };
+  } catch (error) {
+    throw new Error(`Error retrieving assessments: ${error.message}`);
+  }
+};
+
 // Build query with filters
 const buildQuery = (filters) => {
   const query = {};
@@ -503,5 +542,6 @@ module.exports = {
   deleteAssessment,
   archiveAssessment,
   getAssessmentSummary,
-  getGlobalStatistics
+  getGlobalStatistics,
+  getAllAssessmentsWithPagination
 };

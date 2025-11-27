@@ -74,5 +74,3 @@ router.patch('/:id/archive', archive);
 router.delete('/:id', deleteAssessment);
 
 module.exports = router;
-
-module.exports = router;

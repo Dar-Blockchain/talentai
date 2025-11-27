@@ -143,7 +143,7 @@ app.use("/resume", resumeRouter);
 app.use("/todo", todoRouter);
 app.use("/logs", logRoutes);
 app.use("/interviewDetails", interviewDetailsRouter);
-app.use("/InterviewAssessmentRoutes", InterviewAssessmentRoutes);
+app.use("/InterviewAssessment", InterviewAssessmentRoutes);
 app.use("/notification-system", notificationSystemRouter);
 app.use("/post-steps", postStepsRouter);
 app.use("/candidate-progress", candidatePostStepProgressRouter);

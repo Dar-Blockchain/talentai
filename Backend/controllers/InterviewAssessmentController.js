@@ -99,34 +99,20 @@ const getBySessionId = async (req, res) => {
 // GET - Retrieve all assessments
 const getAll = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
-    const filters = {
-      status: req.query.status,
-      skill: req.query.skill,
-      proficiency: req.query.proficiency,
-      interviewType: req.query.interviewType,
-      candidateId: req.query.candidateId,
-      interviewerId: req.query.interviewerId,
-      startDate: req.query.startDate,
-      endDate: req.query.endDate
-    };
+    const { page, limit, sort, type, candidateId } = req.query;
 
-    const result = await InterviewAssessmentService.getAllAssessments(
-      parseInt(page),
-      parseInt(limit),
-      Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== undefined))
-    );
-
-    return res.status(200).json({
-      success: true,
-      ...result
+    const result = await InterviewAssessmentService.getAllAssessmentsWithPagination({
+      page,
+      limit,
+      sort,
+      type,
+      candidateId,
     });
+
+    return res.status(200).json(result);
   } catch (error) {
-    console.error('Error retrieving assessments:', error);
-    return res.status(500).json({
-      success: false,
-      message: error.message
-    });
+    console.error('Error in getAll:', error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
