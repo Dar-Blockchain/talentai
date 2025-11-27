@@ -1,6 +1,14 @@
 const InterviewAssessment = require('../models/InterviewAssessmentModel');
 const Profile = require('../models/ProfileModel');
 
+// Type translation map for metadata.type
+const urlTypeMap = {
+  "technical": "skill",
+  "soft": "soft",
+  "onboarding": "onboarding",
+  "hr": "hr",
+};
+
 // Create a new assessment
 const createAssessment = async (data, metadata, rawInterviewData, userId) => {
   try {
@@ -58,10 +66,11 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
       console.log(`Profile updated: Quota incremented, Interview added`);
       console.log(`Updated profile quota: ${updatedProfile.quota}`);
 
-      // Handle skill type - technical or soft
-      const skillType = (metadata?.type || '').toLowerCase();
+      // Handle skill type - translate using urlTypeMap
+      const rawType = (metadata?.type || '').toLowerCase();
+      const translatedType = urlTypeMap[rawType] || rawType;
       
-      if (skillType === 'soft') {
+      if (translatedType === 'soft') {
         const softSkill = {
           name: skillName,
           category: metadata?.category || '',
@@ -103,7 +112,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
           console.log(`Soft skill "${skillName}" added`);
         }
       } else {
-        // Hard skill logic
+        // Hard skill logic (for 'skill', 'onboarding', 'hr', etc.)
         const existingSkill = await Profile.findOne(
           { _id: candidateId, 'skills.name': skillName },
           { 'skills.$': 1 }
@@ -290,9 +299,10 @@ const updateAssessment = async (id, updateData, metadata) => {
       };
       const proficiencyLevel = experienceLevelMap[experienceLevel] || 0;
 
-      const skillType = (metadata?.type || '').toLowerCase();
+      const rawType = (metadata?.type || '').toLowerCase();
+      const translatedType = urlTypeMap[rawType] || rawType;
 
-      if (skillType === 'soft') {
+      if (translatedType === 'soft') {
         await Profile.findByIdAndUpdate(
           candidateId,
           {
