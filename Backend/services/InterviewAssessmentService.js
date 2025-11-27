@@ -31,6 +31,12 @@ function getExperienceLabel(level) {
 // Create a new assessment
 const createAssessment = async (data, metadata, rawInterviewData, userId) => {
   try {
+    // Translate metadata.type before saving to database
+    if (data.metadata && data.metadata.type) {
+      const rawType = data.metadata.type.toLowerCase();
+      data.metadata.type = urlTypeMap[rawType] || rawType;
+    }
+
     const assessment = new InterviewAssessment(data);
     const savedAssessment = await assessment.save();
 
