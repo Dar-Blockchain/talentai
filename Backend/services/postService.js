@@ -374,7 +374,8 @@ module.exports.updatePostStatus = async (postId, userId, status) => {
 module.exports.getPostsByUserTopSkill = async (userId) => {
   const user = await User.findById(userId).populate({
     path: "profile",
-    select: "skills",
+    // include expectedSalary so we can filter posts by user's salary expectations
+    select: "skills expectedSalary",
   });
 
   if (!user) {
@@ -406,12 +407,31 @@ module.exports.getPostsByUserTopSkill = async (userId) => {
   }).distinct("jobId");
 
   // Tous les postes correspondants aux skills, en excluant ceux déjà testés
-  const candidatePosts = await Post.find({
+  let candidatePosts = await Post.find({
     "skillAnalysis.requiredSkills.name": { $in: skillNames },
     _id: { $nin: testedPosts },
   })
     .sort({ createdAt: -1 })
     .lean();
+
+  // Si l'utilisateur a des attentes salariales, filtrer les postes pour ne garder
+  // que ceux dont la plage salariale chevauche les attentes de l'utilisateur.
+  try {
+    const userExpected = user?.profile?.expectedSalary;
+    if (userExpected && (userExpected.min || userExpected.max)) {
+      const userMin = typeof userExpected.min === "number" ? userExpected.min : 0;
+      const userMax = typeof userExpected.max === "number" ? userExpected.max : Number.MAX_SAFE_INTEGER;
+
+      candidatePosts = candidatePosts.filter((post) => {
+        const postMin = post?.jobDetails?.salary?.min ?? 0;
+        const postMax = post?.jobDetails?.salary?.max ?? Number.MAX_SAFE_INTEGER;
+        // Overlap between [postMin, postMax] and [userMin, userMax]
+        return postMin <= userMax && postMax >= userMin;
+      });
+    }
+  } catch (err) {
+    console.warn("Erreur lors du filtrage par expectedSalary:", err.message);
+  }
 
   if (!candidatePosts || candidatePosts.length === 0) {
     return {
