@@ -31,6 +31,7 @@ import MatchingProfiles from "@/components/dashboard-company/MatchingProfiles";
 import MyJobPosts from "@/components/dashboard-company/MyJobPosts";
 import HRAgentsTable from "@/components/dashboard-company/HRAgentsTable";
 import HeaderDashboard from "@/components/HeaderDashboard";
+import UnlockCandidate from "@/components/dashboard-company/UnlockCandidate";
 
 // Styled Components
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -52,6 +53,8 @@ interface MatchingCandidate {
     role: string;
   };
   name: string;
+  firstName: string;
+  lastName: string;
   score: number;
   finalBid: number;
   matchedSkills: Array<{
@@ -74,7 +77,6 @@ const DashboardCompany = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { profile } = useSelector(selectProfile);
-  const [filterDialog, setFilterDialog] = useState(false);
   const matchingProfiles = useSelector(selectJobMatches) as MatchingCandidate[];
   const isLoadingMatches = useSelector(selectJobMatchesLoading);
   const matchError = useSelector(selectJobMatchesError);
@@ -87,24 +89,7 @@ const DashboardCompany = () => {
   const isDeleting = useSelector(selectDeletePostLoading);
   const [bidDialogOpen, setBidDialogOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
-  const { data, status, error } = useSelector(
-    (state: RootState) => state.bid.bids
-  );
   const [jobToDelete, setJobToDelete] = useState<string>("");
-
-  const handleFilterApply = async () => {
-    if (!selectedJob) {
-      setFilterDialog(false);
-      return;
-    }
-
-    dispatch(fetchJobMatches(selectedJob));
-    setFilterDialog(false);
-  };
-
-  useEffect(() => {
-    dispatch(fetchBids());
-  }, [dispatch]);
 
   // Fetch HR agents when profile is loaded (profile fetching is handled by CompanyOnly wrapper)
   useEffect(() => {
@@ -121,11 +106,6 @@ const DashboardCompany = () => {
     setSelectedJob(event.target.value);
   };
 
-  // Update the filter dialog open handler
-  const handleFilterDialogOpen = () => {
-    setFilterDialog(true);
-    fetchMyJobs(); // Fetch jobs when dialog opens
-  };
   useEffect(() => {
     fetchMyJobs();
   }, []);
@@ -165,20 +145,6 @@ const DashboardCompany = () => {
           py: 2,
         }}
       >
-        <FilterDialog
-          open={filterDialog}
-          onClose={() => setFilterDialog(false)}
-          selectedJob={selectedJob}
-          onJobChange={handleJobChange}
-          onApplyFilter={handleFilterApply}
-          onCancel={() => {
-            setSelectedJob("");
-            setFilterDialog(false);
-          }}
-          jobs={myJobs}
-          isLoadingJobs={isLoadingJobs}
-          jobsError={jobsError}
-        />
         <ToastContainer
           position="top-right"
           autoClose={3000}
@@ -201,7 +167,7 @@ const DashboardCompany = () => {
               jobsError={jobsError}
               onViewMatches={(jobId) => {
                 setSelectedJob(jobId);
-                handleFilterDialogOpen();
+                dispatch(fetchJobMatches(jobId));
               }}
               onDeleteJob={(jobId) => {
                 setJobToDelete(jobId);
@@ -220,27 +186,17 @@ const DashboardCompany = () => {
               matchError={matchError}
               displayCount={displayCount}
               selectedJob={selectedJob}
-              onRetry={handleFilterApply}
               onBackToJobs={() => setSelectedJob("")}
-              onCreateNewJob={() => router.push("/posts/create")}
               onLoadMore={() => setDisplayCount((prev) => prev + 3)}
               onBidDialogOpen={handleBidDialogOpen}
             />
           )}
 
-          {/* Bid History Section */}
-          <BidHistory
-            bids={data}
-            status={status}
-            error={error}
-            onPostNewJob={() => router.push("/posts/create")}
-          />
-
           {/* HR Agents Section */}
           {profile?._id && <HRAgentsTable companyId={profile._id} />}
 
           {/* Add Bid Dialog */}
-          <AddBidDialog
+          <UnlockCandidate
             open={bidDialogOpen}
             onClose={handleBidDialogClose}
             selectedCandidate={selectedCandidate}

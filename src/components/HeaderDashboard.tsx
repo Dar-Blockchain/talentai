@@ -17,10 +17,6 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { useRouter } from "next/router";
-import { clearProfile } from "@/store/slices/profileSlice";
-import { logout } from "@/store/slices/authSlice";
-import Cookies from "js-cookie";
-import { signOut } from "next-auth/react";
 import Image from "next/image";
 import {
   fetchTokenBalance,
@@ -236,6 +232,7 @@ const HeaderDashboard = () => {
 
               {/* Avatar */}
               <Box
+                onClick={() => router.push("/settings/profile") }
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -245,6 +242,7 @@ const HeaderDashboard = () => {
                   height: 40,
                   p: "0 10px",
                   gap: 1.5,
+                  cursor: 'pointer',
                 }}
               >
                 <Avatar
