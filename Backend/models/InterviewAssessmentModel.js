@@ -69,15 +69,12 @@ const interviewAssessmentSchema = new mongoose.Schema({
     },
     type: {
       type: String,
-      enum: ['technical', 'behavioral', 'cultural'],
-      default: 'technical'
     },
     skill: String,
     role: String,
     category: String,
     proficiency: {
       type: String,
-      enum: ['Junior', 'Mid Level', 'Senior', 'Lead', 'Expert']
     }
   },
 

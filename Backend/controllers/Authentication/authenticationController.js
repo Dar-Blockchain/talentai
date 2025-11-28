@@ -1,5 +1,5 @@
-const authService = require("../services/authService");
-const Profile = require("../models/ProfileModel");
+const authService = require("../../services/Authentication/authenticationService");
+const Profile = require("../../models/ProfileModel");
 
 // Route d'inscription
 module.exports.register = async (req, res) => {

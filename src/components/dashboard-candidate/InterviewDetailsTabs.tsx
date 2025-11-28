@@ -32,7 +32,7 @@ const INTERVIEW_TYPES = [
     { label: "Post Interview", value: "post_interview", icon: <AssignmentTurnedInIcon sx={{ fontSize: 18 }} /> },
     { label: "Onboarding", value: "onboarding", icon: <CalendarTodayIcon sx={{ fontSize: 18 }} /> },
     { label: "HR", value: "hr", icon: <PersonOutlineIcon sx={{ fontSize: 18 }} /> },
-    { label: "Skill", value: "skill", icon: <TrendingUpIcon sx={{ fontSize: 18 }} /> },
+    { label: "Technical", value: "skill", icon: <TrendingUpIcon sx={{ fontSize: 18 }} /> },
     { label: "Soft Skills", value: "soft", icon: <PsychologyIcon sx={{ fontSize: 18 }} /> },
 ];
 
@@ -246,7 +246,7 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                         const qualityScore = technicalDepth.aiAnalysis?.qualityScore || problemApproach.aiAnalysis?.qualityScore;
 
                                         // Get overall coverage percentage directly from coverage.overall
-                                        const overallCoverage = coverage.overall || 0;
+                                        const overallCoverage = coverage.overall !== undefined ? coverage.overall : 0;
                                         const technicalDepthPercentage = technicalDepth.percentage;
                                         const problemApproachPercentage = problemApproach.percentage;
 
@@ -434,7 +434,19 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                     </Paper>
                                 ) : (
                                     data.map((row: any) => {
-                                        const score = typeof row?.overallScore === "number" ? Math.max(0, Math.min(100, row.overallScore)) : null;
+                                        // Extract data from new structure (metadata + interviewData)
+                                        const metadata = row.metadata || {};
+                                        const interviewData = row.interviewData || {};
+                                        const finalReport = interviewData.finalReport || {};
+                                        const coverage = finalReport.coverage || {};
+
+                                        // Get overall coverage score
+                                        const overallCoverage = coverage.overall !== undefined ? coverage.overall : null;
+
+                                        // Use overall coverage as score, fallback to old structure
+                                        const score = overallCoverage !== null ? overallCoverage :
+                                                     (typeof row?.overallScore === "number" ? Math.max(0, Math.min(100, row.overallScore)) : null);
+
                                         let statusLabel: string = "Pending";
                                         let statusColor: "default" | "success" | "warning" | "error" = "default";
                                         if (score !== null) {
@@ -443,9 +455,16 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                             else if (score >= 40) { statusLabel = "Consider"; statusColor = "warning"; }
                                             else { statusLabel = "Not a fit"; statusColor = "error"; }
                                         }
-                                        const title = row.post?.jobDetails?.title || row.position || "HR Interview";
-                                        const candidateName = row.candidate?.name || row.profile?.fullName || "Candidate";
-                                        const dateLabel = row.createdAt ? new Date(row.createdAt).toLocaleDateString() : null;
+
+                                        const skillName = metadata.skill || metadata.role;
+                                        const title = skillName || row.post?.jobDetails?.title || row.position || "HR Interview";
+                                        const candidateName = row.candidateId?.firstName && row.candidateId?.lastName
+                                                            ? `${row.candidateId.firstName} ${row.candidateId.lastName}`
+                                                            : (row.candidate?.name || row.profile?.fullName || "Candidate");
+                                        const dateLabel = metadata.exportedAt ? new Date(metadata.exportedAt).toLocaleDateString() :
+                                                         (row.createdAt ? new Date(row.createdAt).toLocaleDateString() : null);
+                                        const proficiencyLevel = metadata.proficiency;
+                                        const interviewType = metadata.type || "hr";
                                         const notes = row.notes || row.summary || row.hrNotes || "";
                                         return (
                                             <Paper
@@ -499,6 +518,27 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                                             <Typography variant="body2" sx={{ color: "#333", mt: 0.5 }} noWrap title={notes}>{notes}</Typography>
                                                         </Box>
                                                     )}
+                                                    {(interviewType || proficiencyLevel) && (
+                                                        <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 0.5 }}>
+                                                            {interviewType && (
+                                                                <Chip
+                                                                    size="small"
+                                                                    label={interviewType}
+                                                                    variant="outlined"
+                                                                    sx={{ textTransform: "capitalize", fontWeight: 600, fontSize: "0.7rem" }}
+                                                                />
+                                                            )}
+                                                            {proficiencyLevel && (
+                                                                <Chip
+                                                                    size="small"
+                                                                    label={proficiencyLevel}
+                                                                    variant="outlined"
+                                                                    color="primary"
+                                                                    sx={{ fontWeight: 600, fontSize: "0.7rem" }}
+                                                                />
+                                                            )}
+                                                        </Stack>
+                                                    )}
                                                     <Stack direction="row" justifyContent="flex-end">
                                                         <Button
                                                             onClick={() => router.push(`/interview/report/${row._id || row.id}`)}
@@ -540,12 +580,28 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                     </Paper>
                                 ) : (
                                     data.map((row: any) => {
-                                        const score = typeof row?.overallScore === "number" ? Math.max(0, Math.min(100, row.overallScore)) : null;
-                                        const skillName = row.skillDetails?.[0]?.name;
+                                        // Extract data from new structure (metadata + interviewData)
+                                        const metadata = row.metadata || {};
+                                        const interviewData = row.interviewData || {};
+                                        const finalReport = interviewData.finalReport || {};
+                                        const coverage = finalReport.coverage || {};
+                                        const areas = coverage.areas || {};
+                                        const technicalDepth = areas.technical_depth || {};
+                                        const problemApproach = areas.problem_approach || {};
+
+                                        // Get overall coverage score
+                                        const overallCoverage = coverage.overall !== undefined ? coverage.overall : null;
+                                        const qualityScore = technicalDepth.aiAnalysis?.qualityScore || problemApproach.aiAnalysis?.qualityScore;
+
+                                        // Use overall coverage as score, fallback to old structure
+                                        const score = overallCoverage !== null ? overallCoverage : (row?.overallScore || null);
+
+                                        const skillName = metadata.skill || row.skillDetails?.[0]?.name;
                                         const title = skillName || row.title || row.post?.jobDetails?.title || "Onboarding";
-                                        const dateLabel = row.createdAt ? new Date(row.createdAt).toLocaleDateString() : null;
+                                        const dateLabel = metadata.exportedAt ? new Date(metadata.exportedAt).toLocaleDateString() :
+                                                         (row.createdAt ? new Date(row.createdAt).toLocaleDateString() : null);
                                         const updatedLabel = row.updatedAt ? new Date(row.updatedAt).toLocaleDateString() : null;
-                                        
+
                                         // Score-based level
                                         let level: string = "Not Started";
                                         let levelColor: "default" | "success" | "warning" | "error" = "default";
@@ -555,14 +611,19 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                             else if (score >= 50) { level = "Average"; levelColor = "warning"; }
                                             else { level = "Needs Work"; levelColor = "error"; }
                                         }
-                                        
+
                                         // Extract additional data
                                         const skillDetails = row.skillDetails?.[0];
-                                        const proficiencyLevel = skillDetails?.proficiencyLevel;
+                                        const proficiencyLevel = metadata.proficiency || skillDetails?.proficiencyLevel;
                                         const totalQuestions = skillDetails?.questionAnswerList?.length || 0;
                                         const correctAnswers = skillDetails?.questionAnswerList?.filter((qa: any) => qa.status === "correct").length || 0;
                                         const partialAnswers = skillDetails?.questionAnswerList?.filter((qa: any) => qa.status === "partial_correct").length || 0;
                                         const recommendationsCount = row.recommendations?.length || 0;
+
+                                        // Count covered indicators from new structure
+                                        const technicalIndicators = technicalDepth.indicators?.filter((i: any) => i.covered) || [];
+                                        const problemIndicators = problemApproach.indicators?.filter((i: any) => i.covered) || [];
+                                        const totalIndicatorsCovered = technicalIndicators.length + problemIndicators.length;
                                         return (
                                             <Paper
                                                 key={row._id || row.id}
@@ -623,11 +684,23 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                                                 </Box>
                                                             </Box>
                                                             <Box sx={{ flex: 1 }}>
-                                                                <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
-                                                                    <Typography variant="caption" sx={{ color: "#666", fontWeight: 600 }}>Overall Score</Typography>
-                                                                    <Typography variant="caption" sx={{ color: "#333", fontWeight: 700 }}>{level}</Typography>
-                                                                </Stack>
-                                                                <LinearProgress variant="determinate" value={score} sx={{ height: 6, borderRadius: 4, "& .MuiLinearProgress-bar": { backgroundColor: "#8310FF" } }} />
+                                                                {qualityScore ? (
+                                                                    <>
+                                                                        <Typography variant="caption" sx={{ color: "#666", display: "block", mb: 0.5 }}>Quality Score</Typography>
+                                                                        <Typography variant="body2" sx={{ fontWeight: 700, color: "#333", mb: 0.5 }}>{qualityScore}/10</Typography>
+                                                                        {totalIndicatorsCovered > 0 && (
+                                                                            <Typography variant="caption" sx={{ color: "#666" }}>{totalIndicatorsCovered} indicators covered</Typography>
+                                                                        )}
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
+                                                                            <Typography variant="caption" sx={{ color: "#666", fontWeight: 600 }}>Overall Score</Typography>
+                                                                            <Typography variant="caption" sx={{ color: "#333", fontWeight: 700 }}>{level}</Typography>
+                                                                        </Stack>
+                                                                        <LinearProgress variant="determinate" value={score} sx={{ height: 6, borderRadius: 4, "& .MuiLinearProgress-bar": { backgroundColor: "#8310FF" } }} />
+                                                                    </>
+                                                                )}
                                                             </Box>
                                                         </Stack>
                                                     ) : (
@@ -637,25 +710,35 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                                     <Divider sx={{ my: 0.5 }} />
 
                                                     {/* Skill Details Section */}
-                                                    {totalQuestions > 0 && (
+                                                    {(totalQuestions > 0 || proficiencyLevel || metadata.type) && (
                                                         <Stack spacing={0.5}>
                                                             <Typography variant="caption" sx={{ color: "#666", fontWeight: 600 }}>Assessment Details:</Typography>
                                                             <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 0.5 }}>
+                                                                {metadata.type && (
+                                                                    <Chip
+                                                                        size="small"
+                                                                        label={metadata.type}
+                                                                        variant="outlined"
+                                                                        sx={{ fontWeight: 600, fontSize: "0.7rem", textTransform: "capitalize" }}
+                                                                    />
+                                                                )}
                                                                 {proficiencyLevel && (
-                                                                    <Chip 
-                                                                        size="small" 
-                                                                        label={`Level ${proficiencyLevel}`} 
-                                                                        variant="outlined" 
+                                                                    <Chip
+                                                                        size="small"
+                                                                        label={proficiencyLevel}
+                                                                        variant="outlined"
                                                                         color="primary"
                                                                         sx={{ fontWeight: 600, fontSize: "0.7rem" }}
                                                                     />
                                                                 )}
-                                                                <Chip 
-                                                                    size="small" 
-                                                                    label={`${totalQuestions} questions`} 
-                                                                    variant="outlined"
-                                                                    sx={{ fontWeight: 600, fontSize: "0.7rem" }}
-                                                                />
+                                                                {totalQuestions > 0 && (
+                                                                    <Chip
+                                                                        size="small"
+                                                                        label={`${totalQuestions} questions`}
+                                                                        variant="outlined"
+                                                                        sx={{ fontWeight: 600, fontSize: "0.7rem" }}
+                                                                    />
+                                                                )}
                                                                 {correctAnswers > 0 && (
                                                                     <Chip 
                                                                         size="small" 
@@ -730,11 +813,23 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                     </Paper>
                                 ) : (
                                     data.map((row: any) => {
-                                        const score = typeof row.skillDetails?.[0]?.confidenceScore === "number"
-                                            ? Math.max(0, Math.min(100, row.skillDetails[0].confidenceScore))
-                                            : typeof row?.overallScore === "number"
-                                            ? Math.max(0, Math.min(100, row.overallScore))
-                                            : null;
+                                        // Extract data from new structure (metadata + interviewData)
+                                        const metadata = row.metadata || {};
+                                        const interviewData = row.interviewData || {};
+                                        const finalReport = interviewData.finalReport || {};
+                                        const coverage = finalReport.coverage || {};
+
+                                        // Get overall coverage score
+                                        const overallCoverage = coverage.overall !== undefined ? coverage.overall : null;
+
+                                        // Use overall coverage as score, fallback to old structure
+                                        const score = overallCoverage !== null ? overallCoverage :
+                                                     (typeof row.skillDetails?.[0]?.confidenceScore === "number"
+                                                         ? Math.max(0, Math.min(100, row.skillDetails[0].confidenceScore))
+                                                         : typeof row?.overallScore === "number"
+                                                         ? Math.max(0, Math.min(100, row.overallScore))
+                                                         : null);
+
                                         let level: string = "Unknown";
                                         let color: "default" | "success" | "warning" | "error" = "default";
                                         if (score !== null) {
@@ -743,10 +838,13 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                             else if (score >= 50) { level = "Average"; color = "warning"; }
                                             else { level = "Needs Improvement"; color = "error"; }
                                         }
-                                        const skillName = row.skillDetails?.[0]?.name;
+
+                                        const skillName = metadata.skill || row.skillDetails?.[0]?.name;
                                         const title = skillName || row.post?.jobDetails?.title || row.skillName || "Soft Skills Assessment";
-                                        const dateLabel = row.createdAt ? new Date(row.createdAt).toLocaleDateString() : null;
-                                        const proficiencyLevel = row.skillDetails?.[0]?.proficiencyLevel;
+                                        const dateLabel = metadata.exportedAt ? new Date(metadata.exportedAt).toLocaleDateString() :
+                                                         (row.createdAt ? new Date(row.createdAt).toLocaleDateString() : null);
+                                        const proficiencyLevel = metadata.proficiency || row.skillDetails?.[0]?.proficiencyLevel;
+                                        const skillType = metadata.type || "soft skills";
                                         const totalQuestions = row.skillDetails?.[0]?.questionAnswerList?.length || 0;
                                         const correctAnswers = row.skillDetails?.[0]?.questionAnswerList?.filter((qa: any) => qa.status === "correct").length || 0;
                                         return (
@@ -773,7 +871,7 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                                                     </Stack>
                                                     <Stack direction="row" spacing={1} alignItems="center" sx={{ color: "#7a7a7a" }}>
                                                         <PsychologyIcon sx={{ fontSize: 18 }} />
-                                                        <Typography variant="body2">soft skills</Typography>
+                                                        <Typography variant="body2">{skillType}</Typography>
                                                         {dateLabel && (
                                                             <>
                                                                 <Typography variant="body2" sx={{ mx: 0.5 }}>•</Typography>
@@ -826,16 +924,18 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
 
                                                     <Divider sx={{ my: 1 }} />
                                                     <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ gap: 1 }}>
-                                                        <Chip
-                                                            size="small"
-                                                            label="soft skill"
-                                                            variant="outlined"
-                                                            sx={{ textTransform: "capitalize", fontWeight: 600 }}
-                                                        />
+                                                        {metadata.type && (
+                                                            <Chip
+                                                                size="small"
+                                                                label={metadata.type}
+                                                                variant="outlined"
+                                                                sx={{ textTransform: "capitalize", fontWeight: 600 }}
+                                                            />
+                                                        )}
                                                         {proficiencyLevel && (
                                                             <Chip
                                                                 size="small"
-                                                                label={`Level ${proficiencyLevel}`}
+                                                                label={proficiencyLevel}
                                                                 variant="outlined"
                                                                 color="primary"
                                                                 sx={{ fontWeight: 600 }}

@@ -604,38 +604,39 @@ module.exports.deleteHardSkill = async (userId, skillToDelete) => {
     await profile.save();
     console.log("💾 Profil sauvegardé avec succès dans la base de données");
 
-    // ✅ 7) Supprimer les InterviewDetails liés à ce skill et retirer les relations
+    // ✅ 7) Supprimer les InterviewAssessment liés à ce skill et retirer les relations
+    let assessmentIds = [];
     try {
-      console.log("🧹 Suppression des InterviewDetails en cours...");
-      const InterviewDetails = require("../models/InterviewDetailsModel");
+      console.log("🧹 Suppression des InterviewAssessment en cours...");
+      const InterviewAssessment = require("../models/InterviewAssessmentModel");
 
-       // Suppression insensible à la casse du skill visé dans les tableaux skillDetails
-       const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-       const skillRegex = new RegExp(`^${escapeRegExp(skillToDelete)}$`, "i");
+      // Suppression insensible à la casse du skill visé
+      const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const skillRegex = new RegExp(`^${escapeRegExp(skillToDelete)}$`, "i");
 
-      // 7.a Trouver les InterviewDetails à supprimer (qui contiennent ce skill)
-      const detailsToDelete = await InterviewDetails.find({
-        candidate: profile._id,
-        "skillDetails.name": { $regex: skillRegex },
+      // 7.a Trouver les InterviewAssessment à supprimer (qui contiennent ce skill)
+      const assessmentsToDelete = await InterviewAssessment.find({
+        candidateId: profile._id,
+        "metadata.skill": { $regex: skillRegex },
       }).select("_id");
 
-      const detailsIds = detailsToDelete.map((d) => d._id);
+      assessmentIds = assessmentsToDelete.map((d) => d._id);
 
-      if (detailsIds.length > 0) {
-        // 7.b Supprimer les InterviewDetails correspondants
-        const delRes = await InterviewDetails.deleteMany({ _id: { $in: detailsIds } });
-        console.log("✅ InterviewDetails supprimés:", delRes.deletedCount);
+      if (assessmentIds.length > 0) {
+        // 7.b Supprimer les InterviewAssessment correspondants
+        const delRes = await InterviewAssessment.deleteMany({ _id: { $in: assessmentIds } });
+        console.log("✅ InterviewAssessment supprimés:", delRes.deletedCount);
 
         // 7.c Retirer les références dans le profil
         profile.interviewDetails = (profile.interviewDetails || []).filter(
-          (id) => !detailsIds.some((x) => x.toString() === id.toString())
+          (id) => !assessmentIds.some((x) => x.toString() === id.toString())
         );
         await profile.save();
       } else {
-        console.log("ℹ️ Aucun InterviewDetails à supprimer pour ce skill");
+        console.log("ℹ️ Aucun InterviewAssessment à supprimer pour ce skill");
       }
     } catch (relErr) {
-      console.warn("⚠️ Erreur lors du nettoyage des InterviewDetails:", relErr.message);
+      console.warn("⚠️ Erreur lors du nettoyage des InterviewAssessment:", relErr.message);
     }
 
     // ✅ 8) Nettoyer les références dans JobAssessmentResult
@@ -655,11 +656,11 @@ module.exports.deleteHardSkill = async (userId, skillToDelete) => {
 
       console.log("✅ Nettoyage des JobAssessmentResult terminé:", res2.modifiedCount, "documents mis à jour");
 
-      // Supprimer aussi les JobAssessmentResult qui pointent vers des InterviewDetails supprimés
+      // Supprimer aussi les JobAssessmentResult qui pointent vers des InterviewAssessment supprimés
       try {
-        if (typeof detailsIds !== "undefined" && detailsIds.length > 0) {
-          const delAss = await JobAssessmentResult.deleteMany({ interviewId: { $in: detailsIds } });
-          console.log("🗑️ JobAssessmentResult supprimés (liés aux InterviewDetails supprimés):", delAss.deletedCount);
+        if (typeof assessmentIds !== "undefined" && assessmentIds.length > 0) {
+          const delAss = await JobAssessmentResult.deleteMany({ interviewId: { $in: assessmentIds } });
+          console.log("🗑️ JobAssessmentResult supprimés (liés aux InterviewAssessment supprimés):", delAss.deletedCount);
         }
       } catch (innerErr) {
         console.warn("⚠️ Erreur lors de la suppression des JobAssessmentResult liés:", innerErr.message);
@@ -721,38 +722,39 @@ module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
     await profile.save();
     console.log("💾 Profil sauvegardé avec succès dans la base de données");
 
-    // ✅ 6) Supprimer les InterviewDetails liés à ce softSkill et retirer les relations
+    // ✅ 6) Supprimer les InterviewAssessment liés à ce softSkill et retirer les relations
+    let assessmentIds = [];
     try {
-      console.log("🧹 Suppression des InterviewDetails en cours...");
-      const InterviewDetails = require("../models/InterviewDetailsModel");
+      console.log("🧹 Suppression des InterviewAssessment en cours...");
+      const InterviewAssessment = require("../models/InterviewAssessmentModel");
 
-      // Suppression insensible à la casse du softSkill visé dans les tableaux skillDetails
+      // Suppression insensible à la casse du softSkill visé
       const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const softSkillRegex = new RegExp(`^${escapeRegExp(softSkillToDelete)}$`, "i");
 
-      // 6.a Trouver les InterviewDetails à supprimer (qui contiennent ce softSkill)
-      const detailsToDelete = await InterviewDetails.find({
-        candidate: profile._id,
-        "skillDetails.name": { $regex: softSkillRegex },
+      // 6.a Trouver les InterviewAssessment à supprimer (qui contiennent ce softSkill)
+      const assessmentsToDelete = await InterviewAssessment.find({
+        candidateId: profile._id,
+        "metadata.skill": { $regex: softSkillRegex },
       }).select("_id");
 
-      const detailsIds = detailsToDelete.map((d) => d._id);
+      assessmentIds = assessmentsToDelete.map((d) => d._id);
 
-      if (detailsIds.length > 0) {
-        // 6.b Supprimer les InterviewDetails correspondants
-        const delRes = await InterviewDetails.deleteMany({ _id: { $in: detailsIds } });
-        console.log("✅ InterviewDetails supprimés:", delRes.deletedCount);
+      if (assessmentIds.length > 0) {
+        // 6.b Supprimer les InterviewAssessment correspondants
+        const delRes = await InterviewAssessment.deleteMany({ _id: { $in: assessmentIds } });
+        console.log("✅ InterviewAssessment supprimés:", delRes.deletedCount);
 
         // 6.c Retirer les références dans le profil
         profile.interviewDetails = (profile.interviewDetails || []).filter(
-          (id) => !detailsIds.some((x) => x.toString() === id.toString())
+          (id) => !assessmentIds.some((x) => x.toString() === id.toString())
         );
         await profile.save();
       } else {
-        console.log("ℹ️ Aucun InterviewDetails à supprimer pour ce softSkill");
+        console.log("ℹ️ Aucun InterviewAssessment à supprimer pour ce softSkill");
       }
     } catch (relErr) {
-      console.warn("⚠️ Erreur lors du nettoyage des InterviewDetails:", relErr.message);
+      console.warn("⚠️ Erreur lors du nettoyage des InterviewAssessment:", relErr.message);
     }
 
     // ✅ 7) Nettoyer les références dans JobAssessmentResult
@@ -772,11 +774,11 @@ module.exports.deleteSoftSkill = async (userId, softSkillToDelete) => {
 
       console.log("✅ Nettoyage des JobAssessmentResult terminé:", res2.modifiedCount, "documents mis à jour");
 
-      // Supprimer aussi les JobAssessmentResult qui pointent vers des InterviewDetails supprimés
+      // Supprimer aussi les JobAssessmentResult qui pointent vers des InterviewAssessment supprimés
       try {
-        if (typeof detailsIds !== "undefined" && detailsIds.length > 0) {
-          const delAss = await JobAssessmentResult.deleteMany({ interviewId: { $in: detailsIds } });
-          console.log("🗑️ JobAssessmentResult supprimés (liés aux InterviewDetails supprimés):", delAss.deletedCount);
+        if (typeof assessmentIds !== "undefined" && assessmentIds.length > 0) {
+          const delAss = await JobAssessmentResult.deleteMany({ interviewId: { $in: assessmentIds } });
+          console.log("🗑️ JobAssessmentResult supprimés (liés aux InterviewAssessment supprimés):", delAss.deletedCount);
         }
       } catch (innerErr) {
         console.warn("⚠️ Erreur lors de la suppression des JobAssessmentResult liés:", innerErr.message);

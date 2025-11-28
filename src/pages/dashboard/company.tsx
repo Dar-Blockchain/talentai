@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getMyProfile, selectProfile } from "@/store/slices/profileSlice";
+import { getMyProfile, selectProfile, clearProfile } from "@/store/slices/profileSlice";
+import { logout, setLoggingOut } from "@/store/slices/authSlice";
 import { AppDispatch, RootState } from "@/store/store";
 import { Box, Container, Card } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { useRouter } from "next/router";
+import Cookies from "js-cookie";
+import { signOut } from "next-auth/react";
+import { resetRedirectState } from "@/utils/authRedirect";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { fetchBids } from "@/store/slices/bidSlice";
@@ -136,6 +140,40 @@ const DashboardCompany = () => {
     setSelectedCandidate(null);
   };
 
+  const handleLogout = async () => {
+    try {
+      // Set logout flag to prevent axios interceptors from triggering redirects
+      setLoggingOut(true);
+      resetRedirectState();
+
+      // Clear Redux state FIRST to prevent components from trying to fetch
+      dispatch(clearProfile());
+      dispatch(logout());
+
+      // Then clear the token and storage
+      localStorage.removeItem("api_token");
+      Cookies.remove("api_token", { path: "/" });
+      localStorage.clear();
+
+      // Clear all other cookies
+      Object.keys(Cookies.get()).forEach((cookieName) => {
+        Cookies.remove(cookieName, { path: "/" });
+      });
+
+      // Sign out from NextAuth (don't await to make redirect faster)
+      signOut({ redirect: false }).catch(console.error);
+
+      // Redirect to company home page
+      window.location.replace("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Even on error, redirect to home
+      setLoggingOut(true);
+      resetRedirectState();
+      window.location.replace("/");
+    }
+  };
+
   return (
     <CompanyOnly>
       <Box
@@ -158,7 +196,7 @@ const DashboardCompany = () => {
           theme="dark"
         />
         <Container maxWidth="lg">
-          <HeaderDashboard />
+          <HeaderDashboard onLogout={handleLogout} />
           <CompanyInfoHeader profile={profile} />
           {!selectedJob ? (
             <MyJobPosts
