@@ -81,7 +81,6 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
         NumberTestPassed: 1,
         ScoreTest: overallScore,
         Levelconfirmed: proficiencyLevel - 1,
-        isPrimary: false,
       };
 
       // Update profile interviewDetails and quota.
@@ -140,6 +139,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
           await Profile.findByIdAndUpdate(
             candidateId,
             {
+              $inc: { quota: 1 },
               $set: {
                 'softSkills.$[elem].ScoreTest': overallScore,
                 'softSkills.$[elem].proficiencyLevel': proficiencyLevel,
@@ -155,7 +155,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
           // Add new soft skill
           await Profile.findByIdAndUpdate(
             candidateId,
-            { $addToSet: { softSkills: softSkill } },
+            { $inc: { quota: 1 },$addToSet: { softSkills: softSkill } },
             { new: true }
           );
           console.log(`Soft skill "${skillNameFromMeta}" added`);
@@ -174,6 +174,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
             await Profile.findByIdAndUpdate(
               candidateId,
               {
+                $inc: { quota: 1 },
                 $set: {
                   'skills.$[elem].NumberTestPassed': 1,
                   'skills.$[elem].ScoreTest': overallScore,
@@ -212,7 +213,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
           // Add new skill
           await Profile.findByIdAndUpdate(
             candidateId,
-            { $addToSet: { skills: skill } },
+            { $inc: { quota: 1 },$addToSet: { skills: skill } },
             { new: true }
           );
           console.log(`Skill "${skillNameFromMeta}" added as new`);
