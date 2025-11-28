@@ -67,6 +67,7 @@ console.log(candidates);
           firstName: candidate.firstName || "Anonymous",
           lastName: candidate.lastName || "Anonymous",
           score,
+          unlockPrice: 5,
           finalBid: candidate.companyBid?.finalBid || null,
           biddingCompany: candidate.companyBid?.company?.username || null,
           matchedSkills: candidateSkills.filter((candidateSkill) =>
