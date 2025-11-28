@@ -19,21 +19,21 @@ const getQuickPrompt = (description, companyLocation) => `
         "requiredSkills": [
           {
             "name": "Skill 1",
-            "level": "beginner",
+            "level": "1-5 (based on years of experience in the job post)",
             "importance": "high",
             "category": "Frontend/Backend/Other",
             "percentage": 0
           },
           {
             "name": "Skill 2",
-            "level": "intermediate",
+            "level": "1-5 (based on years of experience in the job post)",
             "importance": "medium",
             "category": "Frontend/Backend/Other",
             "percentage": 0
           },
           {
             "name": "Skill 3",
-            "level": "advanced",
+            "level": "1-5 (based on years of experience in the job post)",
             "importance": "critical",
             "category": "Frontend/Backend/Other",
             "percentage": 0
@@ -60,15 +60,14 @@ const getQuickPrompt = (description, companyLocation) => `
     - Always include "responsibilities", "location", and "employmentType".
     - For the "location" field, extract the location from the job description if specified.
     - If no location is specified in the job description, use the company location: "${companyLocation}".
+    - Set skill level based on years of experience mentioned in the post:
+      - 1 year = level 1
+      - 2 years = level 2
+      - 5 years = level 3
+      - 10 years = level 4
+      - 15+ years = level 5
 
-    - CRITICAL: For "level", ONLY use these EXACT lowercase values: "beginner", "intermediate", "advanced", "expert"
     - CRITICAL: For "importance", ONLY use these EXACT lowercase values: "low", "medium", "high", "critical"
-
-    - Set skill level based on years of experience using these EXACT values:
-      - 0-2 years → "beginner"
-      - 3-5 years → "intermediate"
-      - 6-10 years → "advanced"
-      - 11+ years → "expert"
 
     - Set importance using these EXACT values:
       - "critical" → Must-have core requirement with years of experience required
@@ -107,14 +106,13 @@ const getDetailedPrompt = (description, companyLocation) => `
     - If no location is specified in the job description, use the company location: "${companyLocation}".
     - Always include "location" in the output.
 
-    - CRITICAL: For "level", ONLY use these EXACT lowercase values: "beginner", "intermediate", "advanced", "expert"
+    - Set skill level based on years of experience mentioned in the job post:
+      - 1 year = level 1
+      - 2 years = level 2
+      - 5 years = level 3
+      - 10 years = level 4
+      - 15+ years = level 5
     - CRITICAL: For "importance", ONLY use these EXACT lowercase values: "low", "medium", "high", "critical"
-
-    - Set skill level based on years of experience using these EXACT values:
-      - 0-2 years → "beginner"
-      - 3-5 years → "intermediate"
-      - 6-10 years → "advanced"
-      - 11+ years → "expert"
 
     - Set importance using these EXACT values:
       - "critical" → Must-have core requirement with years of experience required
@@ -152,21 +150,21 @@ const getDetailedPrompt = (description, companyLocation) => `
         "requiredSkills": [
           {
             "name": "Skill 1",
-            "level": "beginner",
+            "level": "Required level (1-5) based on years of experience",
             "importance": "high",
             "category": "Frontend/Backend/DevOps/etc.",
             "percentage": 0
           },
           {
             "name": "Skill 2",
-            "level": "intermediate",
+            "level": "Required level (1-5) based on years of experience",
             "importance": "medium",
             "category": "Frontend/Backend/DevOps/etc.",
             "percentage": 0
           },
           {
             "name": "Skill 3",
-            "level": "advanced",
+            "level": "Required level (1-5) based on years of experience",
             "importance": "critical",
             "category": "Frontend/Backend/DevOps/etc.",
             "percentage": 0
