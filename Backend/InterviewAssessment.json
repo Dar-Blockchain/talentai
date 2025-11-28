@@ -2004,3 +2004,147 @@
     "timestamp": "2025-11-27T19:29:36.482Z"
   }
 }
+
+{
+  "metadata": {
+    "exportedAt": "2025-11-28T09:37:21.416Z",
+    "type": "hr",
+    "skill": "Software Engineer",
+    "role": "Software Engineer",
+    "category": "N/A",
+    "proficiency": "Mid-Level"
+  },
+  "interviewData": {
+    "finalReport": {
+      "summary": "Interview completed successfully",
+      "coverage": {
+        "overall": 0,
+        "areas": {
+          "leadership_potential": {
+            "percentage": 0,
+            "indicators": [
+              {
+                "name": "mentoring examples",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "project ownership",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "conflict resolution",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              }
+            ],
+            "weight": 0.25,
+            "depth": "probe for specific examples and outcomes",
+            "completed": false
+          },
+          "problem_solving": {
+            "percentage": 0,
+            "indicators": [
+              {
+                "name": "technical challenges",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "creative solutions",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "systematic thinking",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              }
+            ],
+            "weight": 0.3,
+            "depth": "ask for step-by-step problem breakdown",
+            "completed": false
+          },
+          "collaboration": {
+            "percentage": 0,
+            "indicators": [
+              {
+                "name": "cross-team work",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "communication style",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "feedback handling",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              }
+            ],
+            "weight": 0.25,
+            "depth": "explore difficult collaboration scenarios",
+            "completed": false
+          },
+          "growth_mindset": {
+            "percentage": 0,
+            "indicators": [
+              {
+                "name": "learning from failure",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "skill development",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              },
+              {
+                "name": "feedback incorporation",
+                "covered": false,
+                "evidence": [],
+                "quality": 0
+              }
+            ],
+            "weight": 0.2,
+            "depth": "understand motivation and learning approach",
+            "completed": false
+          }
+        },
+        "completedAreas": [],
+        "nextRecommendedArea": null,
+        "lastUpdated": "2025-11-28T09:36:46.873Z"
+      },
+      "recommendations": [],
+      "scores": {},
+      "timestamp": "2025-11-28T09:37:19.307Z"
+    },
+    "analytics": {
+      "duration": 32434,
+      "messageCount": 1,
+      "silenceEvents": 0,
+      "coveragePercentage": 0,
+      "completedAreas": 0,
+      "totalAreas": 4,
+      "averageResponseLength": 0,
+      "interactionStyle": "unknown"
+    },
+    "sessionId": "da0342e7-9e20-496f-a99a-548e7d097ccd",
+    "interviewType": "HR_INTERVIEW",
+    "timestamp": "2025-11-28T09:37:19.412Z"
+  }
+}
