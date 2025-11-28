@@ -3,7 +3,6 @@ import {
   Typography,
   Button,
   Alert,
-  Divider,
   CircularProgress,
 } from "@mui/material";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
@@ -102,92 +101,210 @@ const ConfirmTransaction = () => {
   return (
     <>
       <Box
-        sx={{ p: 3, pt: 2, borderBottom: "1px solid rgba(227, 229, 233, 1)" }}
+        sx={{ p: 2, pt: 2, borderBottom: "1px solid rgba(227, 229, 233, 1)" }}
       >
-        <Typography
-          variant="body2"
-          sx={{
-            mb: 3,
-            fontFamily: "Poppins",
-            fontWeight: 400,
-            fontSize: "16px",
-            lineHeight: "34px",
-          }}
-        >
-          Confirm Transaction
-        </Typography>
-
-        {/* Wallet Info */}
         <Box
           sx={{
-            backgroundColor: "rgba(249, 250, 251, 1)",
-            padding: 2,
-            borderRadius: "12px",
-            border: "1px solid rgba(229, 231, 235, 1)",
-            mb: 3,
+            p: 2,
+            borderRadius: "13px",
+            backgroundColor: "rgba(245, 245, 245, 0.27)",
+            border: "1px solid rgba(230, 231, 235, 1)",
           }}
         >
-          <Typography sx={{ color: "gray", fontSize: "14px", mb: 1 }}>
-            Connected Wallet:
+          <Typography
+            variant="body2"
+            sx={{
+              fontFamily: "Poppins",
+              fontWeight: 600,
+              fontSize: "16px",
+              lineHeight: "34px",
+              letterSpacing: "0px",
+              verticalAlign: "middle",
+            }}
+          >
+            Transaction Details
           </Typography>
-          <Typography sx={{ fontFamily: "monospace", mb: 2 }}>
-            {walletInfo?.accountId}
-          </Typography>
-
-          <Typography sx={{ color: "gray", fontSize: "14px", mb: 1 }}>
-            Balance:
-          </Typography>
-          <Typography sx={{ mb: 2 }}>{walletInfo?.balance} HBAR</Typography>
-
-          <Typography sx={{ color: "gray", fontSize: "14px", mb: 1 }}>
-            Network:
-          </Typography>
-          <Typography>{walletInfo?.network}</Typography>
+          <Box sx={{mt: 2, display: 'flex',flexDirection: 'column', gap: 2,}}>
+          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Poppins",
+                fontWeight: 400,
+                fontSize: "13px",
+                lineHeight: "100%",
+                letterSpacing: "0%",
+              }}
+            >
+              Plan Price:
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Poppins",
+                fontWeight: 600,
+                fontSize: "13px",
+                lineHeight: "100%",
+                letterSpacing: "0%",
+                textAlign: "right",
+              }}
+            >
+              ${priceUsd}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Poppins",
+                fontWeight: 400,
+                fontSize: "13px",
+                lineHeight: "100%",
+                letterSpacing: "0%",
+              }}
+            >
+              Total HBAR:
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Poppins",
+                fontWeight: 600,
+                fontSize: "13px",
+                lineHeight: "100%",
+                letterSpacing: "0%",
+                textAlign: "right",
+              }}
+            >
+              {amount} HBAR
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Poppins",
+                fontWeight: 400,
+                fontSize: "13px",
+                lineHeight: "100%",
+                letterSpacing: "0%",
+              }}
+            >
+              Talent Ai Token:
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "Poppins",
+                fontWeight: 600,
+                fontSize: "13px",
+                lineHeight: "100%",
+                letterSpacing: "0%",
+                textAlign: "right",
+              }}
+            >
+              {tokens.toLocaleString()} TAI
+            </Typography>
+          </Box>
+          </Box>
         </Box>
 
-        <Divider sx={{ my: 2 }} />
-
-        {/* Transaction Details */}
-        <Box sx={{ mb: 3 }}>
-          <Typography sx={{ fontWeight: 600, mb: 2 }}>
-            Transaction Details:
+        <Box sx={{p: 2, pt: 3}}>
+          <Typography
+            variant="body2"
+            sx={{
+              mb: 2,
+              fontFamily: "Poppins",
+              fontWeight: 400,
+              fontSize: "12px",
+              lineHeight: "100%",
+              letterSpacing: "0%",
+            }}
+          >
+            Additional Informations
           </Typography>
-
-          {priceUsd && (
+          <Box sx={{ display: 'flex',flexDirection: 'column', gap: 2,  p: 2, borderTop: "1px solid rgba(84, 98, 116, 0.21)" }}>
             <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography sx={{ color: "gray" }}>Plan Price:</Typography>
-              <Typography>${priceUsd} USD</Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontFamily: "Poppins",
+                  fontWeight: 400,
+                  fontSize: "13px",
+                  lineHeight: "100%",
+                  letterSpacing: "0%",
+                }}
+              >
+                Connected Wallet:
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontFamily: "Poppins",
+                  fontWeight: 600,
+                  fontSize: "13px",
+                  lineHeight: "100%",
+                  letterSpacing: "0%",
+                  textAlign: "right",
+                }}
+              >
+                {walletInfo?.accountId}
+              </Typography>
             </Box>
-          )}
-
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography sx={{ color: "gray" }}>Total HBAR:</Typography>
-            <Typography>{amount} HBAR</Typography>
-          </Box>
-
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography sx={{ color: "gray" }}>TAI Tokens:</Typography>
-            <Typography>{tokens.toLocaleString()} TAI</Typography>
-          </Box>
-
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography sx={{ color: "gray" }}>To:</Typography>
-            <Typography sx={{ fontFamily: "monospace" }}>
-              {hashConnectService.getTargetAccountId()}
-            </Typography>
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontFamily: "Poppins",
+                  fontWeight: 400,
+                  fontSize: "13px",
+                  lineHeight: "100%",
+                  letterSpacing: "0%",
+                }}
+              >
+                Balance:
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontFamily: "Poppins",
+                  fontWeight: 600,
+                  fontSize: "13px",
+                  lineHeight: "100%",
+                  letterSpacing: "0%",
+                  textAlign: "right",
+                }}
+              >
+                {walletInfo?.balance} HBAR
+              </Typography>
+            </Box>
           </Box>
         </Box>
 
         {/* Insufficient Balance */}
         {hasInsufficientBalance && (
-          <Alert severity="error" sx={{ mb: 2 }}>
+          <Alert severity="error">
             Insufficient balance. You need {amount} HBAR but have{" "}
             {walletInfo.balance} HBAR.
           </Alert>
         )}
+      </Box>
 
-        {/* Confirm Button */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      {/* Bottom Navigation */}
+      <Box
+        sx={{ display: "flex", justifyContent: "space-between", p: 3, pt: 2 }}
+      >
+        <Button onClick={onBack} sx={{ color: "rgba(133,169,227,1)" }}>
+          Back
+        </Button>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Button
+            onClick={handleDisconnectWallet}
+            sx={{ color: "rgba(133,169,227,1)" }}
+          >
+            Disconnect Wallet
+          </Button>
+
           <Button
             variant="contained"
             disabled={isProcessing || hasInsufficientBalance}
@@ -202,34 +319,14 @@ const ConfirmTransaction = () => {
               border: "1px solid rgba(224,154,16,1)",
               borderRadius: "38px",
               textTransform: "none",
+              '&:disabled': {
+                border: 'unset'
+              }
             }}
           >
-            {isProcessing ? "Sending..." : `Send ${amount} HBAR`}
-          </Button>
-
-          <Button
-            onClick={handleDisconnectWallet}
-            sx={{ color: "rgba(133,169,227,1)" }}
-          >
-            Disconnect Wallet
+            {isProcessing ? "Sending..." : `Send ${amount.toFixed(2)} HBAR`}
           </Button>
         </Box>
-      </Box>
-
-      {/* Bottom Navigation */}
-      <Box
-        sx={{ display: "flex", justifyContent: "space-between", p: 3, pt: 2 }}
-      >
-        <Button onClick={onBack} sx={{ color: "rgba(133,169,227,1)" }}>
-          Back
-        </Button>
-
-        <Button
-          onClick={handleDisconnectWallet}
-          sx={{ color: "rgba(133,169,227,1)" }}
-        >
-          Cancel
-        </Button>
       </Box>
     </>
   );
