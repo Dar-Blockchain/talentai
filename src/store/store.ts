@@ -20,20 +20,20 @@ import hrAgentsReducer from './slices/hrAgentsSlice';
 import tokenReducer from './slices/tokenSlice';
 import agentConfigReducer from './slices/agentConfigSlice';
 import tokenPurchaseReducer from './slices/tokenPurchaseSlice';
+import candidateReducer from './slices/candidateSlice';
 
 const rootReducer = combineReducers({
   user: userReducer,
-
   auth: authReducer,
   profile: profileReducer,
   bid: bidReducer,
   todo: todoReducer,
-  // project slice removed
   post: postReducer,
   hrAgents: hrAgentsReducer,
   token: tokenReducer,
   agentConfig: agentConfigReducer,
-  tokenPurchase: tokenPurchaseReducer
+  tokenPurchase: tokenPurchaseReducer,
+  candidate: candidateReducer,
 });
 
 const persistConfig = {
