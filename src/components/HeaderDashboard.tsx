@@ -43,7 +43,11 @@ const pulseDot = {
     "100%": { transform: "scale(1)", opacity: 0.4 },
   },
 };
-const HeaderDashboard = () => {
+interface HeaderDashboardProps {
+  onLogout?: () => void | Promise<void>;
+}
+
+const HeaderDashboard = ({ onLogout }: HeaderDashboardProps) => {
   const router = useRouter();
 
   const dispatch = useDispatch<AppDispatch>();
@@ -62,25 +66,9 @@ const HeaderDashboard = () => {
   const toggleDrawer = () => setMobileOpen(!mobileOpen);
 
   const handleLogout = async () => {
-    // try {
-    //   dispatch(clearProfile());
-    //   dispatch(logout());
-
-    //   localStorage.removeItem("api_token");
-    //   Cookies.remove("api_token", { path: "/" });
-    //   setToken(null);
-
-    //   // Clear other cookies
-    //   Object.keys(Cookies.get()).forEach((cookieName) => {
-    //     Cookies.remove(cookieName, { path: "/" });
-    //   });
-
-    //   signOut({ redirect: false }).catch(console.error);
-
-    //   window.location.href = "/signin";
-    // } catch (err) {
-    //   window.location.href = "/signin";
-    // }
+    if (onLogout) {
+      await onLogout();
+    }
   };
 
   useEffect(() => {
