@@ -126,6 +126,7 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
           proficiencyLevel: proficiencyLevel,
           experienceLevel: experienceLevel,
           ScoreTest: overallScore,
+          Levelconfirmed: proficiencyLevel - 1,
         };
 
         // Check if soft skill exists
@@ -143,6 +144,8 @@ const createAssessment = async (data, metadata, rawInterviewData, userId) => {
               $set: {
                 'softSkills.$[elem].ScoreTest': overallScore,
                 'softSkills.$[elem].proficiencyLevel': proficiencyLevel,
+                'softSkills.$[elem].experienceLevel': experienceLevel,
+                'softSkills.$[elem].Levelconfirmed': proficiencyLevel - 1,
               },
             },
             {

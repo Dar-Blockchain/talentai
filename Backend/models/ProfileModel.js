@@ -86,6 +86,7 @@ const profileSchema = new mongoose.Schema(
         experienceLevel: String, // NoLevel , Entry Level..
         ScoreTest: Number,
         isPrimary: Boolean,
+        Levelconfirmed: Number,
       },
     ],
 
