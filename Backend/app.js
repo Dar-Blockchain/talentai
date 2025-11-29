@@ -52,7 +52,7 @@ const taskRouter = require("./routes/taskRouter");
 const agentConfigRouter = require("./routes/agentConfigRouter");
 const tokenRouter = require("./routes/tokenRouter");
 const stripRouter = require("./routes/StripRouter");
-
+const matchingConfigRoutes = require("./routes/matchingConfigRoutes");
 const paymentRouter = require("./routes/paymentRouter");
 
 require("dotenv").config();
@@ -155,6 +155,7 @@ app.use("/task", taskRouter);
 app.use('/agent-config', agentConfigRouter);
 app.use("/tokens", tokenRouter);
 app.use("/payment", paymentRouter);
+app.use("/matchingConfig", matchingConfigRoutes);
 app.use('/api/stripe', stripRouter);
 
 app.get("/some-route", (req, res) => {

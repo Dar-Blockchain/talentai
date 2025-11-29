@@ -1,0 +1,48 @@
+const MatchingConfig = require('../../../models/MatchingConfigModel');
+
+// Simple in-memory cache to avoid hitting DB on every match calculation
+let _cache = null;
+let _cacheAt = 0;
+const CACHE_TTL_MS = 1000 * 60; // 1 minute
+
+const defaultConfig = () => ({
+  weights: {
+    hardSkill: 40,
+    experience: 35,
+    salary: 10,
+    workMode: 7.5,
+    contract: 7.5,
+  },
+  importanceWeight: { critical: 1.5, high: 1.2, medium: 1.0, low: 0.8 },
+  exchangeRates: { USD: 1, EUR: 1.1, TND: 0.32 },
+});
+
+async function getMatchingConfig() {
+  try {
+    const now = Date.now();
+    if (_cache && now - _cacheAt < CACHE_TTL_MS) return _cache;
+
+    const doc = await MatchingConfig.findOne({}).lean();
+    if (!doc) {
+      _cache = defaultConfig();
+      _cacheAt = now;
+      return _cache;
+    }
+
+    // Merge defaults with stored values
+    const merged = Object.assign({}, defaultConfig(), {
+      weights: Object.assign({}, defaultConfig().weights, doc.weights || {}),
+      importanceWeight: Object.assign({}, defaultConfig().importanceWeight, doc.importanceWeight || {}),
+      exchangeRates: Object.assign({}, defaultConfig().exchangeRates, Object.fromEntries(Object.entries(doc.exchangeRates || {}))),
+    });
+
+    _cache = merged;
+    _cacheAt = now;
+    return _cache;
+  } catch (err) {
+    console.warn('getMatchingConfig error, falling back to defaults', err.message);
+    return defaultConfig();
+  }
+}
+
+module.exports = { getMatchingConfig };
