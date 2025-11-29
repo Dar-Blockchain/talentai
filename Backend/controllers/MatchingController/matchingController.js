@@ -1,68 +1,46 @@
-const { calculateSkillMatchScore } = require("../../services/MatchingService/matchingService");
+// controllers/matchingController.js
+
 const JobPost = require("../../models/PostModel");
 const Profile = require("../../models/ProfileModel");
+const { calculateMatchScore, normalizeSkillName } = require("../../services/MatchingService/matchingService");
 
-function normalizeSkillName(name) {
-  if (!name) return "";
-  const part = name.split(".")[0].trim();
-  return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
-}
-
-// Ensuite dans ton controller :
 exports.matchCandidatesToJob = async (req, res) => {
   try {
     const { jobPostId } = req.params;
+    console.log("Fetching job post with ID:", jobPostId);
 
-    // 1. Récupérer les profils des candidats + peupler companyBid.company
     const candidates = await Profile.find({ type: "Candidate" })
       .populate("userId", "username email")
       .populate("companyBid.company", "username email")
-      .select("userId firstName lastName skills companyDetails.name companyBid")
       .lean();
-console.log(candidates);
-    // 2. Récupérer l'annonce de poste et les compétences requises
+
+    console.log(`Found ${candidates.length} candidates.`);
+
     const jobPost = await JobPost.findById(jobPostId)
-      .select("skillAnalysis.requiredSkills jobDetails.title")
+      .select("skillAnalysis.requiredSkills skillAnalysis.suggestedSkills jobDetails")
       .lean();
 
-    if (!jobPost) {
-      return res.status(404).json({ error: "Job post not found" });
-    }
+    if (!jobPost) return res.status(404).json({ error: "Job post not found" });
 
-    // Vérifier que skillAnalysis existe
-    if (!jobPost.skillAnalysis) {
-      return res.status(400).json({
-        error: "Job post has no skill analysis data",
-      });
-    }
-
-    // Vérifier et normaliser les requiredSkills avec protection contre les valeurs null
     const requiredSkills = (jobPost.skillAnalysis?.requiredSkills || [])
-      .filter((skill) => skill && skill.name) // Filtrer les skills null ou sans nom
-      .map((skill) => ({
-        ...skill,
-        name: normalizeSkillName(skill.name),
-      }));
+      .filter((s) => s && s.name)
+      .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
-    // 3. Calculer les correspondances avec les informations supplémentaires
+    console.log("Required skills for job:", requiredSkills.map(s => s.name));
+
     const matches = candidates
       .map((candidate) => {
-        if (!candidate.userId) {
-          return null; // Ignorer ce candidat
-        }
+        if (!candidate.userId) return null;
 
-        // Vérifier et normaliser les skills du candidat avec protection contre les valeurs null
         const candidateSkills = (candidate.skills || [])
-          .filter((skill) => skill && skill.name) // Filtrer les skills null ou sans nom
-          .map((skill) => ({
-            ...skill,
-            name: normalizeSkillName(skill.name),
-          }));
+          .filter((s) => s && s.name)
+          .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
-        const score = calculateSkillMatchScore(requiredSkills, candidateSkills);
+        const score = calculateMatchScore(requiredSkills, candidateSkills, jobPost.jobDetails, candidate);
+        if (score === 0) return null; // éliminer ceux sans hard skill matching
 
         return {
-          candidateId: candidate.userId,
+          candidateId: candidate.userId._id,
           name: candidate.userId?.username || "Anonymous",
           firstName: candidate.firstName || "Anonymous",
           lastName: candidate.lastName || "Anonymous",
@@ -70,18 +48,18 @@ console.log(candidates);
           unlockPrice: 5,
           finalBid: candidate.companyBid?.finalBid || null,
           biddingCompany: candidate.companyBid?.company?.username || null,
-          matchedSkills: candidateSkills.filter((candidateSkill) =>
-            requiredSkills.some(
-              (jobSkill) => jobSkill.name === candidateSkill.name
-            )
+          matchedSkills: candidateSkills.filter((cs) =>
+            requiredSkills.some((js) => js.name === cs.name)
           ),
           requiredSkills,
         };
       })
-      .filter((match) => match !== null && match.score > 0)
+      .filter((m) => m && m.score > 0)
       .sort((a, b) => b.score - a.score);
 
-    // 4. Retourner la réponse avec protection contre les valeurs null
+    console.log(`Total matches found: ${matches.length}`);
+    matches.forEach((m) => console.log(`Candidate ${m.name} -> Score: ${m.score}`));
+
     res.json({
       success: true,
       jobTitle: jobPost.jobDetails?.title || "Unknown Job",
