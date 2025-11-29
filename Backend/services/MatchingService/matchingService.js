@@ -1,4 +1,10 @@
 // services/MatchingService/matchingService.js
+// Définir les pondérations max
+const MAX_HARD_SKILL_SCORE = 40; // anciennement 60
+const MAX_EXPERIENCE_SCORE = 30; // anciennement 10
+const MAX_SALARY_SCORE = 15; // anciennement 5
+const MAX_WORKMODE_SCORE = 7.5; // anciennement 5
+const MAX_CONTRACT_SCORE = 7.5; // anciennement 5
 
 const LEVELS = {
   Beginner: 1,
@@ -96,8 +102,8 @@ function calculateMatchScore(
     }
   });
 
-  hardSkillScore = Math.min((hardSkillScore / 100) * 60, 60);
-  console.log("Hard skill score (60% max):", hardSkillScore);
+  hardSkillScore = Math.min((hardSkillScore / 100) * MAX_HARD_SKILL_SCORE, MAX_HARD_SKILL_SCORE);
+  console.log("Hard skill score (40% max):", hardSkillScore);
 
   // Élimination si aucun hard skill ne matche
   if (hardSkillScore === 0) {
@@ -135,8 +141,8 @@ function calculateMatchScore(
     }
   });
 
-  experienceScore = skillCount > 0 ? totalExpScore / skillCount : 0;
-  console.log("✅ Total Experience Score (10% max):", experienceScore);
+  experienceScore = skillCount > 0 ? (totalExpScore / skillCount) * (MAX_EXPERIENCE_SCORE / 10) : 0;
+  console.log("✅ Total Experience Score (30% max):", experienceScore);
 
   // 3️⃣ Salary Score avec multi-devises et marge commune
   console.log("\n--- Salary Score Calculation ---");
@@ -166,9 +172,9 @@ function calculateMatchScore(
     if (overlapMax > overlapMin) {
       const overlap = overlapMax - overlapMin;
       const jobRange = jobMaxUSD - jobMinUSD;
-      salaryScore = (overlap / jobRange) * 5; // 5% max
+      salaryScore = (overlap / jobRange) * MAX_SALARY_SCORE; // 15% max
       console.log(
-        `Salary overlap (5% max): ${overlap} | JobRange: ${jobRange} | SalaryScore: ${salaryScore}`
+      `Salary score (${MAX_SALARY_SCORE}% max): ${salaryScore.toFixed(1)} [Candidate: ${candidateSalary.min}-${candidateSalary.max}, Job: ${jobSalary.min}-${jobSalary.max}]`
       );
     } else {
       salaryScore = 0;
@@ -182,11 +188,11 @@ function calculateMatchScore(
     workModeScore =
       jobDetails.location.toLowerCase() ===
       candidateProfile.workModePreference.toLowerCase()
-        ? 5
-        : 2.5;
+        ? MAX_WORKMODE_SCORE
+        : MAX_WORKMODE_SCORE / 2;
   }
   console.log(
-    `WorkMode score (5% max): ${workModeScore} | Candidate: ${candidateProfile.workModePreference} | Job: ${jobDetails.location}`
+    `WorkMode score (${MAX_WORKMODE_SCORE}% max): ${workModeScore} [Candidate: ${candidateProfile.workModePreference}, Job: ${jobDetails.location}]`
   );
 
   // 5️⃣ Contract Type
@@ -195,11 +201,11 @@ function calculateMatchScore(
     contractScore =
       jobDetails.employmentType.toLowerCase() ===
       candidateProfile.preferredContractType.toLowerCase()
-        ? 5
+        ? MAX_CONTRACT_SCORE
         : 0;
   }
   console.log(
-    `Contract score (5% max): ${contractScore} | Candidate: ${candidateProfile.preferredContractType} | Job: ${jobDetails.employmentType}`
+    `Contract score (${MAX_CONTRACT_SCORE}% max): ${contractScore} [Candidate: ${candidateProfile.preferredContractType}, Job: ${jobDetails.employmentType}]`
   );
 
   // Total Score
