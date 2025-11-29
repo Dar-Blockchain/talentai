@@ -5,10 +5,19 @@ async function getConfig(req, res) {
   try {
     let cfg = await MatchingConfig.findOne({}).lean();
     if (!cfg) {
-      // Return defaults from model schema by creating a temporary instance
-      cfg = new MatchingConfig();
-      cfg = cfg.toObject();
+      // If no config in DB, create one with schema defaults so it can be edited later
+      try {
+        const created = await MatchingConfig.create({});
+        cfg = created.toObject ? created.toObject() : created;
+        console.log('MatchingConfig: default configuration created in DB');
+      } catch (createErr) {
+        console.warn('MatchingConfig: failed to persist default config, returning defaults only', createErr.message);
+        // Return defaults from model schema by creating a temporary instance
+        cfg = new MatchingConfig();
+        cfg = cfg.toObject();
+      }
     }
+
     return res.json({ success: true, config: cfg });
   } catch (err) {
     console.error('Error fetching matching config:', err.message);
