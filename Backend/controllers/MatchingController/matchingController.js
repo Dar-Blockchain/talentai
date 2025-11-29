@@ -28,34 +28,34 @@ exports.matchCandidatesToJob = async (req, res) => {
 
     console.log("Required skills for job:", requiredSkills.map(s => s.name));
 
-    const matches = candidates
-      .map((candidate) => {
-        if (!candidate.userId) return null;
+    const matches = [];
+    for (const candidate of candidates) {
+      if (!candidate.userId) continue;
 
-        const candidateSkills = (candidate.skills || [])
-          .filter((s) => s && s.name)
-          .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
+      const candidateSkills = (candidate.skills || [])
+        .filter((s) => s && s.name)
+        .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
-        const score = calculateMatchScore(requiredSkills, candidateSkills, jobPost.jobDetails, candidate);
-        if (score === 0) return null; // éliminer ceux sans hard skill matching
+      const score = await calculateMatchScore(requiredSkills, candidateSkills, jobPost.jobDetails, candidate);
+      if (!score || score === 0) continue; // éliminer ceux sans hard skill matching
 
-        return {
-          candidateId: candidate.userId._id,
-          name: candidate.userId?.username || "Anonymous",
-          firstName: candidate.firstName || "Anonymous",
-          lastName: candidate.lastName || "Anonymous",
-          score,
-          unlockPrice: 5,
-          finalBid: candidate.companyBid?.finalBid || null,
-          biddingCompany: candidate.companyBid?.company?.username || null,
-          matchedSkills: candidateSkills.filter((cs) =>
-            requiredSkills.some((js) => js.name === cs.name)
-          ),
-          requiredSkills,
-        };
-      })
-      .filter((m) => m && m.score > 0)
-      .sort((a, b) => b.score - a.score);
+      matches.push({
+        candidateId: candidate.userId._id,
+        name: candidate.userId?.username || "Anonymous",
+        firstName: candidate.firstName || "Anonymous",
+        lastName: candidate.lastName || "Anonymous",
+        score,
+        unlockPrice: 5,
+        finalBid: candidate.companyBid?.finalBid || null,
+        biddingCompany: candidate.companyBid?.company?.username || null,
+        matchedSkills: candidateSkills.filter((cs) =>
+          requiredSkills.some((js) => js.name === cs.name)
+        ),
+        requiredSkills,
+      });
+    }
+
+    matches.sort((a, b) => b.score - a.score);
 
     console.log(`Total matches found: ${matches.length}`);
     matches.forEach((m) => console.log(`Candidate ${m.name} -> Score: ${m.score}`));
