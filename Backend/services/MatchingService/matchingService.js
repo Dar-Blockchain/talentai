@@ -1,8 +1,8 @@
 // services/MatchingService/matchingService.js
 // Définir les pondérations max
 const MAX_HARD_SKILL_SCORE = 40; // anciennement 60
-const MAX_EXPERIENCE_SCORE = 30; // anciennement 10
-const MAX_SALARY_SCORE = 15; // anciennement 5
+const MAX_EXPERIENCE_SCORE = 35; // anciennement 10
+const MAX_SALARY_SCORE = 10; // anciennement 5
 const MAX_WORKMODE_SCORE = 7.5; // anciennement 5
 const MAX_CONTRACT_SCORE = 7.5; // anciennement 5
 
