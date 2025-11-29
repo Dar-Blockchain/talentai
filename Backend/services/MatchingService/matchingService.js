@@ -19,6 +19,13 @@ const IMPORTANCE_WEIGHT = {
   low: 0.8,
 };
 
+// Pour la conversion multi-devises
+const EXCHANGE_RATES = {
+  USD: 1,
+  EUR: 1.1, // exemple: 1 EUR = 1.1 USD
+  TND: 0.32, // exemple: 1 TND = 0.32 USD
+};
+
 function convertLevelToNumber(level) {
   return LEVELS[level] || 1;
 }
@@ -35,17 +42,14 @@ function calculateMatchScore(
   jobDetails = {},
   candidateProfile = {}
 ) {
-  console.log("\n--- Matching Candidate ---");
-  console.log(
-    "Job required skills:",
-    jobSkills.map((s) => s.name)
-  );
-  console.log(
-    "Candidate skills:",
-    candidateSkills.map((s) => s.name)
-  );
+  console.log("\n=== Matching Candidate ===");
+  console.log("Job required skills:", jobSkills.map((s) => s.name));
+  console.log("Candidate skills:", candidateSkills.map((s) => s.name));
 
-  if (!jobSkills?.length || !candidateSkills?.length) return 0;
+  if (!jobSkills?.length || !candidateSkills?.length) {
+    console.log("❌ No job skills or candidate skills, score = 0");
+    return 0;
+  }
 
   let hardSkillScore = 0;
   let experienceScore = 0;
@@ -54,10 +58,12 @@ function calculateMatchScore(
   let contractScore = 0;
 
   // 1️⃣ Hard Skills
+  console.log("\n--- Hard Skills Calculation ---");
   const totalPercentage = jobSkills.reduce(
     (sum, s) => sum + (s.percentage || 0),
     0
   );
+
   const normalizedJobSkills = jobSkills.map((skill) => ({
     ...skill,
     weight:
@@ -70,6 +76,7 @@ function calculateMatchScore(
     const candidateSkill = candidateSkills.find(
       (s) => s.name?.toLowerCase() === jobSkill.name?.toLowerCase()
     );
+
     if (candidateSkill) {
       const jobLevel = convertLevelToNumber(jobSkill.level);
       const candidateLevel =
@@ -82,26 +89,24 @@ function calculateMatchScore(
       hardSkillScore += skillScore * jobSkill.weight;
 
       console.log(
-        `Matched skill: ${
-          jobSkill.name
-        }, CandidateLevel: ${candidateLevel}, JobLevel: ${jobLevel}, WeightedScore: ${
+        `Matched skill: ${jobSkill.name} | CandidateLevel: ${candidateLevel} | JobLevel: ${jobLevel} | Importance: ${jobSkill.importance} | WeightedScore: ${
           skillScore * jobSkill.weight
         }`
       );
     }
   });
+
   hardSkillScore = Math.min((hardSkillScore / 100) * 60, 60);
   console.log("Hard skill score (60% max):", hardSkillScore);
 
-  // Après le calcul du hardSkillScore
+  // Élimination si aucun hard skill ne matche
   if (hardSkillScore === 0) {
     console.log("❌ Candidate eliminated: no matching hard skills");
-    return 0; // On considère 0 comme éliminé
+    return 0;
   }
 
-  // ✅ Suggested Skills supprimés
-
   // 2️⃣ Experience Level basé sur Levelconfirmed de chaque skill
+  console.log("\n--- Experience Score Calculation ---");
   let totalExpScore = 0;
   let skillCount = 0;
 
@@ -109,6 +114,7 @@ function calculateMatchScore(
     const candidateSkill = candidateSkills.find(
       (s) => s.name?.toLowerCase() === jobSkill.name?.toLowerCase()
     );
+
     if (candidateSkill) {
       const jobLevel = convertLevelToNumber(jobSkill.level);
       const candidateLevel =
@@ -124,7 +130,7 @@ function calculateMatchScore(
       skillCount++;
 
       console.log(
-        `Experience score for skill ${jobSkill.name}: ${skillExpScore} [CandidateLevel: ${candidateLevel}, JobLevel: ${jobLevel}]`
+        `Experience score for skill ${jobSkill.name}: ${skillExpScore} | CandidateLevel: ${candidateLevel} | JobLevel: ${jobLevel}`
       );
     }
   });
@@ -132,51 +138,46 @@ function calculateMatchScore(
   experienceScore = skillCount > 0 ? totalExpScore / skillCount : 0;
   console.log("✅ Total Experience Score (10% max):", experienceScore);
 
-  // 3️⃣ Salary
-  // 4️⃣ Salary Score basé sur la marge commune
-// 3️⃣ Salary
-// Gestion des 3 devises et score basé sur la marge commune
-const exchangeRates = {
-  USD: 1,
-  EUR: 1.1, // 1 EUR = 1.1 USD (exemple, à ajuster selon les taux réels)
-  TND: 0.32, // 1 TND = 0.32 USD
-};
+  // 3️⃣ Salary Score avec multi-devises et marge commune
+  console.log("\n--- Salary Score Calculation ---");
+  const jobSalary = jobDetails.salary || {};
+  const candidateSalary = candidateProfile.expectedSalary || {};
 
-const jobSalary = jobDetails.salary || {};
-const candidateSalary = candidateProfile.expectedSalary || {};
-salaryScore = 0;
+  if (
+    jobSalary.min != null &&
+    jobSalary.max != null &&
+    candidateSalary.min != null &&
+    candidateSalary.max != null
+  ) {
+    const jobMinUSD = jobSalary.min * (EXCHANGE_RATES[jobSalary.currency] || 1);
+    const jobMaxUSD = jobSalary.max * (EXCHANGE_RATES[jobSalary.currency] || 1);
+    const candidateMinUSD =
+      candidateSalary.min * (EXCHANGE_RATES[candidateSalary.currency] || 1);
+    const candidateMaxUSD =
+      candidateSalary.max * (EXCHANGE_RATES[candidateSalary.currency] || 1);
 
-if (
-  jobSalary.min != null &&
-  jobSalary.max != null &&
-  candidateSalary.min != null &&
-  candidateSalary.max != null
-) {
-  // Conversion en USD pour comparaison
-  const jobMinUSD = jobSalary.min * (exchangeRates[jobSalary.currency] || 1);
-  const jobMaxUSD = jobSalary.max * (exchangeRates[jobSalary.currency] || 1);
-  const candidateMinUSD =
-    candidateSalary.min * (exchangeRates[candidateSalary.currency] || 1);
-  const candidateMaxUSD =
-    candidateSalary.max * (exchangeRates[candidateSalary.currency] || 1);
+    console.log(
+      `Converted salaries to USD | Job: ${jobMinUSD}-${jobMaxUSD} | Candidate: ${candidateMinUSD}-${candidateMaxUSD}`
+    );
 
-  const overlapMin = Math.max(candidateMinUSD, jobMinUSD);
-  const overlapMax = Math.min(candidateMaxUSD, jobMaxUSD);
+    const overlapMin = Math.max(candidateMinUSD, jobMinUSD);
+    const overlapMax = Math.min(candidateMaxUSD, jobMaxUSD);
 
-  if (overlapMax > overlapMin) {
-    const overlap = overlapMax - overlapMin;
-    const jobRange = jobMaxUSD - jobMinUSD;
-    salaryScore = (overlap / jobRange) * 5; // 5% max
-  } else {
-    salaryScore = 0;
+    if (overlapMax > overlapMin) {
+      const overlap = overlapMax - overlapMin;
+      const jobRange = jobMaxUSD - jobMinUSD;
+      salaryScore = (overlap / jobRange) * 5; // 5% max
+      console.log(
+        `Salary overlap (5% max): ${overlap} | JobRange: ${jobRange} | SalaryScore: ${salaryScore}`
+      );
+    } else {
+      salaryScore = 0;
+      console.log("No salary overlap, SalaryScore = 0");
+    }
   }
-}
-
-console.log(
-  `Salary score (5% max): ${salaryScore.toFixed(1)} [Candidate: ${candidateSalary.min}-${candidateSalary.max} ${candidateSalary.currency}, Job: ${jobSalary.min}-${jobSalary.max} ${jobSalary.currency}]`
-);
 
   // 4️⃣ Work Mode
+  console.log("\n--- Work Mode Score ---");
   if (jobDetails.employmentType && candidateProfile.workModePreference) {
     workModeScore =
       jobDetails.location.toLowerCase() ===
@@ -185,10 +186,11 @@ console.log(
         : 2.5;
   }
   console.log(
-    `WorkMode score (5% max): ${workModeScore} [Candidate: ${candidateProfile.workModePreference}, Job: ${jobDetails.location}]`
+    `WorkMode score (5% max): ${workModeScore} | Candidate: ${candidateProfile.workModePreference} | Job: ${jobDetails.location}`
   );
 
   // 5️⃣ Contract Type
+  console.log("\n--- Contract Type Score ---");
   if (jobDetails.employmentType && candidateProfile.preferredContractType) {
     contractScore =
       jobDetails.employmentType.toLowerCase() ===
@@ -197,16 +199,13 @@ console.log(
         : 0;
   }
   console.log(
-    `Contract score (5% max): ${contractScore} [Candidate: ${candidateProfile.preferredContractType}, Job: ${jobDetails.employmentType}]`
+    `Contract score (5% max): ${contractScore} | Candidate: ${candidateProfile.preferredContractType} | Job: ${jobDetails.employmentType}`
   );
 
+  // Total Score
   const totalScore =
-    hardSkillScore +
-    experienceScore +
-    salaryScore +
-    workModeScore +
-    contractScore;
-  console.log("✅ Total Match Score:", totalScore.toFixed(1));
+    hardSkillScore + experienceScore + salaryScore + workModeScore + contractScore;
+  console.log("\n✅ Total Match Score:", totalScore.toFixed(1));
 
   return Math.round(totalScore * 10) / 10;
 }
