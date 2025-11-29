@@ -1,4 +1,4 @@
-const MatchingConfig = require('../../../models/MatchingConfigModel');
+const MatchingConfig = require('../../models/MatchingConfigModel');
 
 // Simple in-memory cache to avoid hitting DB on every match calculation
 let _cache = null;
@@ -22,11 +22,22 @@ async function getMatchingConfig() {
     const now = Date.now();
     if (_cache && now - _cacheAt < CACHE_TTL_MS) return _cache;
 
-    const doc = await MatchingConfig.findOne({}).lean();
+    let doc = await MatchingConfig.findOne({}).lean();
     if (!doc) {
-      _cache = defaultConfig();
-      _cacheAt = now;
-      return _cache;
+      // If no config exists yet, persist the default one so admins can edit it later
+      try {
+        const toCreate = defaultConfig();
+        // Create and retrieve the stored document
+        const created = await MatchingConfig.create(toCreate);
+        // Ensure we work with a plain object
+        doc = created.toObject ? created.toObject() : created;
+        console.log('MatchingConfig: default config created in DB');
+      } catch (createErr) {
+        console.warn('MatchingConfig: failed to create default config in DB, falling back to defaults', createErr.message);
+        _cache = defaultConfig();
+        _cacheAt = now;
+        return _cache;
+      }
     }
 
     // Merge defaults with stored values
