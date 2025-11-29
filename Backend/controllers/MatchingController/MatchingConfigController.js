@@ -1,4 +1,4 @@
-const MatchingConfig = require('../models/MatchingConfigModel');
+const MatchingConfig = require('../../models/MatchingConfigModel');
 
 // GET /api/matching-config
 async function getConfig(req, res) {
