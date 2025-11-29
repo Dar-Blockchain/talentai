@@ -8,7 +8,7 @@
  */
 // routes/resumeRoutes.js
 const router = require('express').Router();
-const resumeController= require('../controllers/resumeController');
+const resumeController= require('../controllers/ResumeControllers/resumeController');
 const hederaNFTController = require('../controllers/hederaNFTController');
 
 // Import des middlewares

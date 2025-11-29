@@ -9,7 +9,7 @@ const express = require("express");
 const router = express.Router();
 const { requireAuthUser } = require("../middleware/authMiddleware");
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware");
-const taskController = require("../controllers/taskController");
+const taskController = require("../controllers/Task&Todo&FeedbackControllers/taskController");
 
 // Auth obligatoire + logs pour toutes les routes
 router.use(requireAuthUser, authLogMiddleware("Task"));

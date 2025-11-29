@@ -1,4 +1,4 @@
-const onboardingService = require("../../services/onboardingService");
+const onboardingService = require("../../services/evaluationServices/onboardingService");
 
 exports.generateOnboardingQuestions = async (req, res) => {
   try {

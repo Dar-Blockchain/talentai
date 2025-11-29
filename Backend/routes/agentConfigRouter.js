@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { requireAuthUser } = require('../middleware/authMiddleware');
-const agentConfigController = require('../controllers/agentConfigController');
+const agentConfigController = require('../controllers/Agent/agentConfigController');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 // Public read endpoints

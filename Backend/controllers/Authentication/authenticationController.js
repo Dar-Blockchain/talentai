@@ -1,4 +1,4 @@
-const authService = require("../../services/Authentication/authenticationService");
+const authService = require("../../services/AuthenticationServices/authenticationService");
 const Profile = require("../../models/ProfileModel");
 
 // Route d'inscription

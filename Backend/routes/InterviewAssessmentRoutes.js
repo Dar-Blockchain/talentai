@@ -14,7 +14,7 @@ const {
   archive,
   getSummary,
   getStatistics
-} = require('../controllers/InterviewAssessmentController');
+} = require('../controllers/InterviewControllers/InterviewAssessmentController');
 // Import des middlewares
 const { controledAcces } = require('../middleware/controledAcces'); 
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")

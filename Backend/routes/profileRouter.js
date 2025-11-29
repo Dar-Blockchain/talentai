@@ -7,7 +7,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const profileController = require('../controllers/profileController');
+const profileController = require('../controllers/ProfileControllers/profileController');
 
 // Import des middlewares
 const { requireAuthUser } = require('../middleware/authMiddleware');

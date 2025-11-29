@@ -13,7 +13,7 @@ const { HttpError } = require("../../utils/httpUtils");
 const { SKILL_TYPES } = require("../../constants/profileConstants");
 const { INTERVIEW_TYPES } = require("../../constants/interviewDetailsConstants");
 
-const profileService = require("../profileService");
+const profileService = require("../ProfileService/profileService");
 const Profile = require("../../models/ProfileModel");
 const InterviewDetails = require("../../models/InterviewDetailsModel");
 

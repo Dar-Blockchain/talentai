@@ -10,8 +10,8 @@ const TodoList = require("../../../models/todoListModel");
 const Post = require("../../../models/PostModel");
 const InterviewDetails = require("../../../models/InterviewDetailsModel");
 
-const postService = require("../../../services/postService");
-const evaluationservice = require("../../../services/evaluationService");
+const postService = require("../../../services/PosteServices/postService");
+const evaluationservice = require("../../../services/evaluationServices/evaluationService");
 
 
 // Configure the Together AI client

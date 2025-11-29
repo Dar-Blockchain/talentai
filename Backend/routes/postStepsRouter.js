@@ -6,7 +6,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const postStepsController = require('../controllers/postStepsController');
+const postStepsController = require('../controllers/PostControllers/postStepsController');
 const {requireAuthUser} = require('../middleware/authMiddleware');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 

@@ -8,7 +8,7 @@
  */
 const express = require("express");
 const router = express.Router();
-const linkedinPostController = require("../controllers/linkedinPostController");
+const linkedinPostController = require("../controllers/PostControllers/linkedinPostController");
 
 
 // Import des middlewares

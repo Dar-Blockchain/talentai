@@ -26,7 +26,7 @@ const resetQuotaJob = require("./cron/resetQuota");
 const http = require("http");
 const connectDB = require("./config/database");
 const socket = require("./socket");
-const { initializeAgenda } = require("./services/agendaService");
+const { initializeAgenda } = require("./services/Agent&AgendaServices/agendaService");
 
 const authRouter = require("./routes/authenticationRouter");
 const dashboardRouter = require("./routes/dashboardRouter");

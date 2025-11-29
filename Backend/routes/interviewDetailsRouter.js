@@ -8,7 +8,7 @@
  */
 const express = require("express");
 const router = express.Router();
-const interviewDetailsController = require("../controllers/interviewDetailsController");
+const interviewDetailsController = require("../controllers/InterviewControllers/interviewDetailsController");
 
 // Import des middlewares
 const { controledAcces } = require('../middleware/controledAcces'); 

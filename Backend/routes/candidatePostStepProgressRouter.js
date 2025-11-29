@@ -6,7 +6,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const candidatePostStepProgressController = require('../controllers/candidatePostStepProgressController');
+const candidatePostStepProgressController = require('../controllers/RecruitmentControllers/candidatePostStepProgressController');
 const {requireAuthUser} = require('../middleware/authMiddleware');
 const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
