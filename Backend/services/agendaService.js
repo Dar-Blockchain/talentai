@@ -3,7 +3,7 @@ const Agent = require("../models/AgentModel");
 const JobPost = require("../models/PostModel");
 const Profile = require("../models/ProfileModel");
 const AgentConfig = require("../models/AgentConfigModel");
-const { calculateSkillMatchScore } = require("./MatchingService/matchingService");
+const { calculateSkillMatchScore } = require("./MatchingService/matchingForBidService");
 const axios = require("axios");
 
 let agendaInstance;
