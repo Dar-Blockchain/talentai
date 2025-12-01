@@ -54,6 +54,7 @@ const tokenRouter = require("./routes/tokenRouter");
 const stripRouter = require("./routes/StripRouter");
 const matchingConfigRoutes = require("./routes/matchingConfigRoutes");
 const paymentRouter = require("./routes/paymentRouter");
+const unlockCandidateRouter = require("./routes/unlockCandidateRouter");
 
 require("dotenv").config();
 
@@ -157,6 +158,7 @@ app.use("/tokens", tokenRouter);
 app.use("/payment", paymentRouter);
 app.use("/matchingConfig", matchingConfigRoutes);
 app.use('/api/stripe', stripRouter);
+app.use('/unlock-candidate', unlockCandidateRouter);
 
 app.get("/some-route", (req, res) => {
   res.json("Route accessible");
