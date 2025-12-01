@@ -1,0 +1,150 @@
+const UnlockCandidate = require("../models/UnlockCandidateModel");
+const TokenTransaction = require("../models/TokenTransactionModel");
+const TokenBalance = require("../models/TokenBalanceModel");
+const User = require("../models/UserModel");
+
+/**
+ * Get all unlocked candidates by company
+ */
+const getUnlockedCandidatesByCompany = async (idCompany) => {
+  try {
+    const unlockedCandidates = await UnlockCandidate.find({ idCompany })
+      .populate('idCandidate', 'firstName lastName email profileImage')
+      .populate('idJob', 'title description')
+      .populate('transactionId', 'transactionId amount status')
+      .sort({ createdAt: -1 });
+
+
+    return unlockedCandidates;
+  } catch (error) {
+    console.error("Error getting unlocked candidates:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get all unlock candidates by company (including pending)
+ */
+const getUnlockCandidatesByCompany = async (idCompany) => {
+  try {
+    const unlockRecords = await UnlockCandidate.find({ idCompany })
+      .populate('idCandidate', 'firstName lastName email profileImage')
+      .populate('idJob', 'title description')
+      .populate('transactionId', 'transactionId amount status')
+      .sort({ createdAt: -1 });
+
+    return unlockRecords;
+  } catch (error) {
+    console.error("Error getting unlock candidates:", error);
+    throw error;
+  }
+};
+
+/**
+ * Create unlock candidate record
+ */
+const unlockCandidate = async (idCompany, idCandidate, idJob, unlockPrice) => {
+  try {
+    // Validate company exists
+    const company = await User.findById(idCompany);
+    if (!company) {
+      throw new Error("Company not found");
+    }
+
+    // Validate candidate exists
+    const candidate = await User.findById(idCandidate);
+    if (!candidate) {
+      throw new Error("Candidate not found");
+    }
+
+    // Validate Job exists
+    const job = await require("../models/PostModel").findById(idJob);
+    if (!job) {
+      throw new Error("Job not found");
+    }
+
+    const transactionId = null; // Initially null since not paid yet
+    // Check if already unlocked
+    const existingUnlock = await UnlockCandidate.findOne({
+      idCompany,
+      idCandidate,
+      idJob,
+      transactionId
+    });
+
+    if (existingUnlock) {
+      return {
+        success: false,
+        message: "Candidate already unlocked for this job",
+        data: existingUnlock
+      };
+    }
+
+    // Create unlock record
+    const unlockRecord = new UnlockCandidate({
+      idCompany,
+      idCandidate,
+      idJob,
+      unlockPrice
+    });
+
+    await unlockRecord.save();
+
+    return {
+      success: true,
+      message: "Unlock candidate record created",
+      data: unlockRecord
+    };
+  } catch (error) {
+    console.error("Error creating unlock candidate:", error);
+    throw error;
+  }
+};
+
+/**
+ * Complete unlock after payment
+ */
+const completeUnlock = async (unlockId, transactionId) => {
+  try {
+    const unlockRecord = await UnlockCandidate.findById(unlockId);
+    if (!unlockRecord) {
+      throw new Error("Unlock record not found");
+    }
+
+    unlockRecord.transactionId = transactionId;
+    unlockRecord.updatedAt = new Date();
+
+    await unlockRecord.save();
+
+    return unlockRecord;
+  } catch (error) {
+    console.error("Error completing unlock:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get unlock record by ID
+ */
+const getUnlockById = async (unlockId) => {
+  try {
+    const unlockRecord = await UnlockCandidate.findById(unlockId)
+      .populate('idCompany', 'firstName lastName email')
+      .populate('idCandidate', 'firstName lastName email profileImage')
+      .populate('idJob', 'title description')
+      .populate('transactionId');
+
+    return unlockRecord;
+  } catch (error) {
+    console.error("Error getting unlock record:", error);
+    throw error;
+  }
+};
+
+module.exports = {
+  getUnlockedCandidatesByCompany,
+  getUnlockCandidatesByCompany,
+  unlockCandidate,
+  completeUnlock,
+  getUnlockById
+};
