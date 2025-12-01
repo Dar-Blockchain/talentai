@@ -44,6 +44,8 @@ exports.matchCandidatesToJob = async (req, res) => {
         name: candidate.userId?.username || "Anonymous",
         firstName: candidate.firstName || "Anonymous",
         lastName: candidate.lastName || "Anonymous",
+        targertargetRole: candidate.targetRole || "N/A",
+        email: candidate.userId?.email || "N/A",
         score,
         unlockPrice: 5,
         finalBid: candidate.companyBid?.finalBid || null,
