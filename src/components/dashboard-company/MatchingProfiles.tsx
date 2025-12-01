@@ -16,6 +16,12 @@ import { styled } from "@mui/material/styles";
 import Image from "next/image";
 import { GradientCircle } from "../GradientCircle";
 
+const noCopyStyle = {
+  userSelect: "none" as const,
+  WebkitUserSelect: "none" as const,
+  MozUserSelect: "none" as const,
+  msUserSelect: "none" as const,
+};
 // Styled Components
 const StyledCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -421,6 +427,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                             fontSize: "18px",
                             lineHeight: "28px",
                             filter: "blur(6px)",
+                            ...noCopyStyle
                           }}
                         >
                           {candidate?.firstName + " " + candidate?.lastName ||
@@ -465,6 +472,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                           fontSize: "12px",
                           lineHeight: "23px",
                           letterSpacing: "0px",
+                          ...noCopyStyle
                         }}
                       >
                         {candidate?.email}

@@ -25,6 +25,13 @@ import {
   unlockCandidate,
 } from "@/store/slices/candidateSlice";
 
+const noCopyStyle = {
+  userSelect: "none" as const,
+  WebkitUserSelect: "none" as const,
+  MozUserSelect: "none" as const,
+  msUserSelect: "none" as const,
+};
+
 interface UnlockCandidateProps {
   open: boolean;
   onClose: () => void;
@@ -161,6 +168,7 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
                   fontSize: "18px",
                   lineHeight: "28px",
                   filter: isCandidateUnlocked ? "none" : "blur(6px)",
+                  ...( !isCandidateUnlocked && noCopyStyle),          
                 }}
               >
                 {selectedCandidate?.firstName +
@@ -179,6 +187,7 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
                   fontSize: "12px",
                   lineHeight: "23px",
                   letterSpacing: "0px",
+                  ...( !isCandidateUnlocked && noCopyStyle),
                 }}
               >
                 {selectedCandidate?.email}
