@@ -169,6 +169,7 @@ async function checkIfCandidateUnlocked(idCompany, idCandidate) {
       idCompany,
       idCandidate,
     });
+    console.log(`Check unlock status for Company ${idCompany} and Candidate ${idCandidate}:`, unlocked ? "Unlocked" : "Not Unlocked");
     return !!unlocked;
   } catch (error) {
     console.error("Error checking unlock status:", error);
@@ -182,8 +183,7 @@ async function calculateMatchScore(
   candidateSkills,
   jobDetails = {},
   candidateProfile = {},
-  idCompany = null,
-  idCandidate = null
+  idCompany
 ) {
   console.log("\n=== Matching Candidate ===");
   console.log(
@@ -196,10 +196,9 @@ async function calculateMatchScore(
   );
 
   if (!jobSkills?.length || !candidateSkills?.length) return 0;
-
   // Check if candidate is already unlocked by same company for same job
-  if (idCompany && idCandidate ) {
-    const isUnlocked = await checkIfCandidateUnlocked(idCompany, idCandidate);
+  if (idCompany && candidateProfile.userId._id) {
+    const isUnlocked = await checkIfCandidateUnlocked(idCompany, candidateProfile.userId._id);
     if (isUnlocked) {
       console.log("❌ Candidate eliminated: already unlocked by this company");
       return 0;

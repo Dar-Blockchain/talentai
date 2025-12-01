@@ -6,8 +6,13 @@
  */
 const express = require("express");
 const { matchCandidatesToJob } = require("../controllers/MatchingController/matchingController");
+const { requireAuthUser } = require('../middleware/authMiddleware');
+const { controledAcces } = require('../middleware/controledAcces'); 
+const authLogMiddleware = require("../middleware/SystemeLogs/LogMiddleware")
 
 const router = express.Router();
+
+router.use(requireAuthUser, controledAcces('Company'), authLogMiddleware("MatchingConfig"));
 
 // GET /matching/jobs/:jobPostId/matches — retourne les meilleurs candidats pour une offre
 router.get("/jobs/:jobPostId/matches", matchCandidatesToJob);
