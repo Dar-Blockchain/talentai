@@ -7,16 +7,10 @@ import {
   CircularProgress,
   Avatar,
   Pagination,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Card,
 } from "@mui/material";
 import ErrorIcon from "@mui/icons-material/Error";
-import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import TollIcon from "@mui/icons-material/Toll";
 import { useRouter } from "next/router";
 import { styled } from "@mui/material/styles";
 import Image from "next/image";
@@ -201,16 +195,37 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
             border: "1px solid #e5e7eb",
           }}
         >
-          <CircularProgress sx={{ color: "#3b82f6", mb: 3 }} />
+          <CircularProgress sx={{ color: "rgba(41, 210, 145, 1)", mb: 3 }} />
           <Typography
             variant="h6"
-            sx={{ color: "#111827", fontWeight: 600, mb: 1 }}
+            sx={{
+              color: "rgba(19, 163, 108, 0.83)",
+              fontFamily: "Poppins",
+              fontWeight: 500,
+              fontStyle: "medium",
+              fontSize: "20px",
+              lineHeight: "28px",
+              letterSpacing: "0",
+              mb: 1,
+            }}
           >
             Finding Perfect Matches
           </Typography>
           <Typography
             variant="body2"
-            sx={{ color: "#6b7280", textAlign: "center" }}
+            sx={{
+              color: "rgba(147, 147, 147, 1)",
+              maxWidth: "500px",
+              mb: 4,
+              fontFamily: "Poppins",
+              fontWeight: 400,
+              fontStyle: "normal",
+              fontSize: "14px",
+              lineHeight: "25px",
+              letterSpacing: "0px",
+              textAlign: "center",
+              verticalAlign: "middle",
+            }}
           >
             Analyzing candidate profiles and skills...
           </Typography>
@@ -253,22 +268,61 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
             justifyContent: "center",
             py: 8,
             px: 4,
-            backgroundColor: "#f9fafb",
-            borderRadius: "12px",
-            border: "1px solid #e5e7eb",
+            backgroundColor: "rgba(62, 233, 167, 0.03)",
+            borderRadius: "8px",
+            border: "1px solid rgba(98, 111, 134, 0.18)",
             textAlign: "center",
           }}
         >
-          <PersonSearchIcon sx={{ fontSize: 48, color: "#6b7280", mb: 3 }} />
+          <Box
+            sx={{
+              mb: 3,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(76, 217, 163, 0.2)",
+              width: 100,
+              height: 100,
+              borderRadius: "50%",
+            }}
+          >
+            <Image
+              src="/icons/user-search.svg"
+              alt="user-search"
+              width={43}
+              height={43}
+            />{" "}
+          </Box>
           <Typography
             variant="h5"
-            sx={{ color: "#111827", fontWeight: 700, mb: 2 }}
+            sx={{
+              color: "rgba(19, 163, 108, 0.83)",
+              fontFamily: "Poppins",
+              fontWeight: 500,
+              fontStyle: "medium",
+              fontSize: "20px",
+              lineHeight: "28px",
+              letterSpacing: "0",
+              mb: 2,
+            }}
           >
             No Matching Candidates Found
           </Typography>
           <Typography
             variant="body1"
-            sx={{ color: "#6b7280", maxWidth: "500px", mb: 4, lineHeight: 1.6 }}
+            sx={{
+              color: "rgba(147, 147, 147, 1)",
+              maxWidth: "500px",
+              mb: 4,
+              fontFamily: "Poppins",
+              fontWeight: 400,
+              fontStyle: "normal", // "Regular" is not valid CSS → use "normal"
+              fontSize: "14px",
+              lineHeight: "25px",
+              letterSpacing: "0px",
+              textAlign: "center",
+              verticalAlign: "middle",
+            }}
           >
             We couldn't find any candidates that match your job requirements.
             Try adjusting your filters or requirements to find more matches.
