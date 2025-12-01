@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  getMyProfile,
   selectProfile,
   clearProfile,
 } from "@/store/slices/profileSlice";
 import { logout, setLoggingOut } from "@/store/slices/authSlice";
-import { AppDispatch, RootState } from "@/store/store";
+import { AppDispatch } from "@/store/store";
 import { Box, Container, Card } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { useRouter } from "next/router";
@@ -15,7 +14,6 @@ import { signOut } from "next-auth/react";
 import { resetRedirectState } from "@/utils/authRedirect";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { fetchBids } from "@/store/slices/bidSlice";
 import {
   fetchMyPosts,
   selectMyPosts,
@@ -31,25 +29,12 @@ import {
 import { fetchHRAgents } from "@/store/slices/hrAgentsSlice";
 import CompanyOnly from "@/components/CompanyOnly";
 import CompanyProfilesAssessments from "@/components/dashboard-company/CompanyProfilesAssessments";
-import BidHistory from "@/components/dashboard-company/BidHistory";
 import CompanyInfoHeader from "@/components/dashboard-company/CompanyInfoHeader";
-import AddBidDialog from "@/components/dashboard-company/AddBidDialog";
-import FilterDialog from "@/components/dashboard-company/FilterDialog";
 import MatchingProfiles from "@/components/dashboard-company/MatchingProfiles";
 import MyJobPosts from "@/components/dashboard-company/MyJobPosts";
 import HRAgentsTable from "@/components/dashboard-company/HRAgentsTable";
 import HeaderDashboard from "@/components/HeaderDashboard";
 import UnlockCandidate from "@/components/dashboard-company/UnlockCandidate";
-
-// Styled Components
-const StyledCard = styled(Card)(({ theme }) => ({
-  padding: theme.spacing(3),
-  marginBottom: theme.spacing(3),
-  background: "white",
-  backdropFilter: "blur(10px)",
-  borderRadius: "16px",
-  border: "1px solid #EEF0F2",
-}));
 
 // Update the MatchingCandidate interface
 interface MatchingCandidate {
