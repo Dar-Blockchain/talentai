@@ -22,7 +22,7 @@ import Image from "next/image";
 // Styled Components
 const StyledCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
-  marginBottom: theme.spacing(3),
+  marginBottom: theme.spacing(2),
   background: "white",
   borderRadius: "12px",
   border: "1px solid rgba(84,98,116,0.1)",
@@ -168,14 +168,6 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: { xs: "column", md: "row" },
-        gap: 3,
-      }}
-    >
-      <Box sx={{ flex: 2 }}>
         <StyledCard>
           {/* Header */}
           <Box
@@ -622,8 +614,6 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
             isDeleting={isDeleting}
           />
         </StyledCard>
-      </Box>
-    </Box>
   );
 };
 
