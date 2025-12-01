@@ -5,40 +5,37 @@ import { RootState } from '../store';
 export interface UnlockResponse {
   success: boolean;
   message: string;
-  candidateId: string;
-  companyId: string;
-  amount: number;
 }
 
 export interface CandidateState {
   loading: boolean;
   error: string | null;
+  unlockResult: UnlockResponse | null; 
 }
 
 const initialState: CandidateState = {
   loading: false,
   error: null,
+  unlockResult: null,
 };
 
 export const unlockCandidate = createAsyncThunk<
   UnlockResponse,
-  { candidateId: string; jobId: string; companyId: string; amount: number },
+  { idCandidate: string; idJob: string; },
   { state: RootState }
 >(
   'candidate/unlock',
-  async ({ candidateId, jobId, companyId, amount }, { rejectWithValue }) => {
+  async ({ idCandidate, idJob }, { rejectWithValue }) => {
     try {
       const token =
         localStorage.getItem('token') ||
         localStorage.getItem('api_token');
 
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}candidates/unlock`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}unlock-candidate/create`,
         {
-          candidateId,
-          jobId,
-          companyId,
-          amount,
+          idCandidate,
+          idJob,
         },
         {
           headers: {
@@ -80,17 +77,20 @@ const candidateSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(unlockCandidate.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(unlockCandidate.fulfilled, (state, action) => {
-        state.loading = false;
-      })
-      .addCase(unlockCandidate.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      });
+    .addCase(unlockCandidate.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+      state.unlockResult = null;
+    })
+    .addCase(unlockCandidate.fulfilled, (state, action) => {
+      state.loading = false;
+      state.unlockResult = action.payload;
+    })
+    .addCase(unlockCandidate.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+      state.unlockResult = null;
+    });
   },
 });
 

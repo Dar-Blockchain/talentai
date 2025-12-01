@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -9,13 +9,21 @@ import {
   IconButton,
   Button,
   Avatar,
+  Alert,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
+import { AppDispatch, RootState } from "@/store/store";
 import Image from "next/image";
 import { useSelector } from "react-redux";
-import { selectTokenBalance } from "@/store/slices/tokenSlice";
+import {
+  fetchTokenBalance,
+  selectTokenBalance,
+} from "@/store/slices/tokenSlice";
+import {
+  resetCandidateState,
+  unlockCandidate,
+} from "@/store/slices/candidateSlice";
 
 interface UnlockCandidateProps {
   open: boolean;
@@ -34,12 +42,31 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const tokenBalance = useSelector(selectTokenBalance);
-
-  const handleConfirmUnlock = () => {};
+  const { walletInfo } = useSelector((state: RootState) => state.tokenPurchase);
+  const { unlockResult } = useSelector((state: RootState) => state.candidate);
+  const hasInsufficientBalance =
+    walletInfo && walletInfo.balance < selectedCandidate?.unlockPrice;
+  const [isCandidateUnlocked, setIsCandidateUnlocked] = useState(false);
+  const handleConfirmUnlock = async () => {
+    const data = {
+      idCandidate: selectedCandidate.candidateId,
+      idJob: selectedJob,
+    };
+    await dispatch(unlockCandidate(data));
+  };
 
   const handleClose = () => {
     onClose();
+    setIsCandidateUnlocked(false);
+    dispatch(resetCandidateState());
   };
+
+  useEffect(() => {
+    if (unlockResult && unlockResult.success) {
+      setIsCandidateUnlocked(true);
+      dispatch(fetchTokenBalance());
+    }
+  }, [unlockResult]);
 
   return (
     <Dialog
@@ -133,7 +160,7 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
                   fontWeight: 500,
                   fontSize: "18px",
                   lineHeight: "28px",
-                  filter: "blur(6px)",
+                  filter: isCandidateUnlocked ? "none" : "blur(6px)",
                 }}
               >
                 {selectedCandidate?.firstName +
@@ -144,7 +171,7 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
                 variant="body2"
                 sx={{
                   color: "rgba(84, 98, 116, 0.53)",
-                  filter: "blur(4px)",
+                  filter: isCandidateUnlocked ? "none" : "blur(4px)",
                   userSelect: "none",
                   fontFamily: "Poppins",
                   fontWeight: 400,
@@ -189,27 +216,36 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
             </Typography>
           </Box>
         </Box>
-        <Typography
-          variant="body2"
-          sx={{
-            mt: 2.5,
-            color: "rgba(0, 0, 0, 1)",
-            fontFamily: "Poppins",
-            fontWeight: 400,
-            fontStyle: "normal",
-            fontSize: "14px",
-            lineHeight: "34px",
-            letterSpacing: "0px",
-            verticalAlign: "middle",
-          }}
-        >
-          You are about to use <b>{selectedCandidate?.unlockPrice} Tokens</b> to
-          unlock the full profile for this candidate. This will grant you
-          permanent access to their contact information and detailed resume.
-          Your remaining balance will be{" "}
-          <b>{tokenBalance - selectedCandidate?.unlockPrice} Tokens</b>.
-        </Typography>
-        {false && (
+        {/* Insufficient Balance */}
+        {hasInsufficientBalance && (
+          <Alert severity="error">
+            Insufficient balance. You need {selectedCandidate?.unlockPrice} HBAR
+            but have {walletInfo.balance} HBAR.
+          </Alert>
+        )}
+        {!hasInsufficientBalance && !isCandidateUnlocked && (
+          <Typography
+            variant="body2"
+            sx={{
+              mt: 2.5,
+              color: "rgba(0, 0, 0, 1)",
+              fontFamily: "Poppins",
+              fontWeight: 400,
+              fontStyle: "normal",
+              fontSize: "14px",
+              lineHeight: "34px",
+              letterSpacing: "0px",
+              verticalAlign: "middle",
+            }}
+          >
+            You are about to use <b>{selectedCandidate?.unlockPrice} Tokens</b>{" "}
+            to unlock the full profile for this candidate. This will grant you
+            permanent access to their contact information and detailed resume.
+            Your remaining balance will be{" "}
+            <b>{tokenBalance - selectedCandidate?.unlockPrice} Tokens</b>.
+          </Typography>
+        )}
+        {isCandidateUnlocked && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 3, mt: 2.5 }}>
             <Image src="/icons/check.svg" width={58} height={58} alt="token" />
             <Typography
@@ -254,33 +290,35 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
         >
           Cancel
         </Button>
-        <Button
-          variant="outlined"
-          onClick={handleConfirmUnlock}
-          sx={{
-            borderColor: "rgba(222, 147, 0, 1)",
-            color: "rgba(222, 147, 0, 1)",
-            fontWeight: 600,
-            borderRadius: "38px",
-            py: 1.5,
-            maxWidth: "300px",
-            height: "42px",
-            textTransform: "none",
-            fontSize: "0.875rem",
-            borderWidth: "1px",
-            "&:hover": {
-              backgroundColor: "rgba(222, 147, 0, 0.08)",
-            },
-            "&.Mui-disabled": {
-              borderColor: "#e5e7eb",
-              color: "#9ca3af",
-            },
-          }}
-        >
-          Confirm Unlock
-        </Button>
+        {!isCandidateUnlocked && (
+          <Button
+            variant="outlined"
+            onClick={handleConfirmUnlock}
+            sx={{
+              borderColor: "rgba(222, 147, 0, 1)",
+              color: "rgba(222, 147, 0, 1)",
+              fontWeight: 600,
+              borderRadius: "38px",
+              py: 1.5,
+              maxWidth: "300px",
+              height: "42px",
+              textTransform: "none",
+              fontSize: "0.875rem",
+              borderWidth: "1px",
+              "&:hover": {
+                backgroundColor: "rgba(222, 147, 0, 0.08)",
+              },
+              "&.Mui-disabled": {
+                borderColor: "#e5e7eb",
+                color: "#9ca3af",
+              },
+            }}
+          >
+            Confirm Unlock
+          </Button>
+        )}
 
-        {false && (
+        {isCandidateUnlocked && (
           <Button
             variant="outlined"
             onClick={handleConfirmUnlock}

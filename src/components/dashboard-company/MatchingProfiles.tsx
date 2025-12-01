@@ -17,9 +17,9 @@ import Image from "next/image";
 import { GradientCircle } from "../GradientCircle";
 
 // Styled Components
-const StyledCard = styled(Card)(({ theme }) => ({
+const StyledCard = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
-  marginBottom: theme.spacing(3),
+  marginBottom: theme.spacing(2),
   background: "white",
   borderRadius: "12px",
   border: "1px solid rgba(84,98,116,0.1)",
@@ -78,8 +78,6 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
   totalPages = 1,
   onPageChange,
 }) => {
-  const router = useRouter();
-
   // Items per page selector - user can choose 5, 10, or 20
   const [itemsPerPage, setItemsPerPage] = React.useState<number>(10);
   const calculatedTotalPages = Math.ceil(
@@ -190,9 +188,9 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
             alignItems: "center",
             justifyContent: "center",
             py: 8,
-            backgroundColor: "#f9fafb",
-            borderRadius: "12px",
-            border: "1px solid #e5e7eb",
+            backgroundColor: "rgba(62, 233, 167, 0.03)",
+            borderRadius: "8px",
+            border: '1px solid rgba(98, 111, 134, 0.18)',
           }}
         >
           <CircularProgress sx={{ color: "rgba(41, 210, 145, 1)", mb: 3 }} />
