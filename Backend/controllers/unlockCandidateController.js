@@ -54,7 +54,9 @@ module.exports.getUnlockCandidatesByCompany = async (req, res) => {
 module.exports.unlockCandidate = async (req, res) => {
   try {
     const idCompany = req.user._id;
-    const { idCandidate, idJob, unlockPrice } = req.body;
+    const { idCandidate, idJob } = req.body;
+
+    const unlockPrice = 5; // Example fixed price, could be dynamic
 
     // Validate required fields
     if (!idCandidate || !idJob || unlockPrice === undefined) {

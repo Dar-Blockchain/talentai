@@ -1,6 +1,5 @@
 const UnlockCandidate = require("../models/UnlockCandidateModel");
-const TokenTransaction = require("../models/TokenTransactionModel");
-const TokenBalance = require("../models/TokenBalanceModel");
+const tokenService = require("../services/tokenService");
 const User = require("../models/UserModel");
 
 /**
@@ -63,7 +62,6 @@ const unlockCandidate = async (idCompany, idCandidate, idJob, unlockPrice) => {
       throw new Error("Job not found");
     }
 
-    const transactionId = null; // Initially null since not paid yet
     // Check if already unlocked
     const existingUnlock = await UnlockCandidate.findOne({
       idCompany,
@@ -79,6 +77,15 @@ const unlockCandidate = async (idCompany, idCandidate, idJob, unlockPrice) => {
         data: existingUnlock
       };
     }
+
+    const result = await tokenService.spendTokens(idCompany, {
+      amount : unlockPrice,
+      service : "Unlock Candidate",
+      description : `Unlocking candidate ${idCandidate} for job ${idJob}`,
+      metadata : { unlockCandidate: true, idCandidate, idJob }
+    });
+
+    const transactionId = result.transaction.id; // Initially null since not paid yet
 
     // Create unlock record
     const unlockRecord = new UnlockCandidate({
