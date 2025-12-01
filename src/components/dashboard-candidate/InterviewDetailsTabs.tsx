@@ -77,29 +77,42 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
                 const token = localStorage.getItem("api_token");
                 const realProfileId = profileIdRef.current;
 
-                // Use interviewDetails API only for post_interview tab, InterviewAssessment for others
-                const endpoint = type === 'post_interview' ? 'interviewDetails' : 'InterviewAssessment';
-                const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}/?page=${pageNum + 1
-                    }&limit=${limit}&type=${type}&candidateId=${realProfileId}`;
+                // All tabs use InterviewAssessment API
+                const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}InterviewAssessment/?page=${pageNum + 1}&limit=${limit}&type=${type}&candidateId=${realProfileId}`;
 
-                console.log(`📡 [Comp-${componentId}][Req-${requestId}] Making HTTP request to:`, url, `(using ${endpoint} API)`);
+                console.log(`📡 [Comp-${componentId}][Req-${requestId}] Making HTTP request to:`, url);
 
                 const res = await fetch(url, {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},
                     signal: signal, // Support cancellation
                 });
                 
-                if (!res.ok) throw new Error("Failed to fetch interview details");
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    console.error(`❌ [Comp-${componentId}][Req-${requestId}] API Error ${res.status}:`, errorText);
+                    throw new Error(`Failed to fetch interview details: ${res.status}`);
+                }
+
                 const json = await res.json();
+                console.log(`📦 [Comp-${componentId}][Req-${requestId}] Raw API Response:`, json);
+
                 const results = Array.isArray(json.results) ? json.results : (Array.isArray(json.data) ? json.data : []);
                 const inferredTotal =
                     (typeof json.total === 'number' && json.total >= 0) ? json.total :
                     (typeof json.count === 'number' && json.count >= 0) ? json.count :
                     (typeof json.totalCount === 'number' && json.totalCount >= 0) ? json.totalCount :
                     results.length;
+
+                console.log(`📊 [Comp-${componentId}][Req-${requestId}] Parsed results:`, {
+                    resultsCount: results.length,
+                    total: inferredTotal,
+                    hasResults: results.length > 0,
+                    firstItem: results[0] || 'No items'
+                });
+
                 setData(results);
                 setTotal(inferredTotal);
-                
+
                 console.log(`✅ [Comp-${componentId}][Req-${requestId}] SUCCESS - Data loaded:`, results.length, 'items');
             } catch (e: any) {
                 // Don't show error if request was aborted
