@@ -66,14 +66,12 @@ const unlockCandidate = async (idCompany, idCandidate, idJob, unlockPrice) => {
     const existingUnlock = await UnlockCandidate.findOne({
       idCompany,
       idCandidate,
-      idJob,
-      transactionId
     });
 
     if (existingUnlock) {
       return {
         success: false,
-        message: "Candidate already unlocked for this job",
+        message: "Candidate already unlocked for this Company",
         data: existingUnlock
       };
     }
@@ -92,7 +90,8 @@ const unlockCandidate = async (idCompany, idCandidate, idJob, unlockPrice) => {
       idCompany,
       idCandidate,
       idJob,
-      unlockPrice
+      unlockPrice,
+    transactionId
     });
 
     await unlockRecord.save();
