@@ -41,11 +41,11 @@ exports.matchCandidatesToJob = async (req, res) => {
 
       matches.push({
         candidateId: candidate.userId._id,
-        name: candidate.userId?.username || "Anonymous",
-        firstName: candidate.firstName || "Anonymous",
-        lastName: candidate.lastName || "Anonymous",
-        targetRole: candidate.targetRole || "N/A",
-        email: candidate.userId?.email || "N/A",
+        name: candidate.userId?.username ,
+        firstName: candidate.firstName ,
+        lastName: candidate.lastName ,
+        targetRole: candidate.targetRole,
+        email: candidate.userId?.email ,
         score,
         unlockPrice: 5,
         finalBid: candidate.companyBid?.finalBid || null,
