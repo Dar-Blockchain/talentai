@@ -10,7 +10,6 @@ const getUnlockedCandidatesByCompany = async (idCompany) => {
     const unlockedCandidates = await UnlockCandidate.find({ idCompany })
       .populate('idCandidate', 'firstName lastName email profileImage')
       .populate('idJob', 'title description')
-      .populate('transactionId', 'transactionId amount status')
       .sort({ createdAt: -1 });
 
 
@@ -91,7 +90,7 @@ const unlockCandidate = async (idCompany, idCandidate, idJob, unlockPrice) => {
       idCandidate,
       idJob,
       unlockPrice,
-    transactionId
+      transactionId
     });
 
     await unlockRecord.save();

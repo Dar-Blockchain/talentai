@@ -22,8 +22,7 @@ const unlockCandidateSchema = new mongoose.Schema({
     min: 0
   },
   transactionId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'TokenTransaction',
+    type: String,
     // Reference to transaction if paid
   },
   createdAt: {
