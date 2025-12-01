@@ -7,6 +7,7 @@ const { calculateMatchScore, normalizeSkillName } = require("../../services/Matc
 exports.matchCandidatesToJob = async (req, res) => {
   try {
     const { jobPostId } = req.params;
+    const idCompany = req.user._id;
     console.log("Fetching job post with ID:", jobPostId);
 
     const candidates = await Profile.find({ type: "Candidate" })
@@ -36,7 +37,7 @@ exports.matchCandidatesToJob = async (req, res) => {
         .filter((s) => s && s.name)
         .map((s) => ({ ...s, name: normalizeSkillName(s.name) }));
 
-      const score = await calculateMatchScore(requiredSkills, candidateSkills, jobPost.jobDetails, candidate);
+      const score = await calculateMatchScore(requiredSkills, candidateSkills, jobPost.jobDetails, candidate,idCompany);
       if (!score || score === 0) continue; // éliminer ceux sans hard skill matching
 
       matches.push({

@@ -1,6 +1,7 @@
 // services/MatchingService/matchingService.js
 
 const { getMatchingConfig } = require('./matchingConfigService');
+const UnlockCandidate = require('../../models/UnlockCandidateModel');
 
 const LEVELS = {
   Beginner: 1,
@@ -161,12 +162,28 @@ function calculateContractScore(jobDetails, candidateProfile, MAX_CONTRACT_SCORE
   return score;
 }
 
+// 6️⃣ Check if candidate is already unlocked by company
+async function checkIfCandidateUnlocked(idCompany, idCandidate) {
+  try {
+    const unlocked = await UnlockCandidate.findOne({
+      idCompany,
+      idCandidate,
+    });
+    console.log(`Check unlock status for Company ${idCompany} and Candidate ${idCandidate}:`, unlocked ? "Unlocked" : "Not Unlocked");
+    return !!unlocked;
+  } catch (error) {
+    console.error("Error checking unlock status:", error);
+    return false;
+  }
+}
+
 // Fonction principale
 async function calculateMatchScore(
   jobSkills,
   candidateSkills,
   jobDetails = {},
-  candidateProfile = {}
+  candidateProfile = {},
+  idCompany
 ) {
   console.log("\n=== Matching Candidate ===");
   console.log(
@@ -179,6 +196,14 @@ async function calculateMatchScore(
   );
 
   if (!jobSkills?.length || !candidateSkills?.length) return 0;
+  // Check if candidate is already unlocked by same company for same job
+  if (idCompany && candidateProfile.userId._id) {
+    const isUnlocked = await checkIfCandidateUnlocked(idCompany, candidateProfile.userId._id);
+    if (isUnlocked) {
+      console.log("❌ Candidate eliminated: already unlocked by this company");
+      return 0;
+    }
+  }
 
   // Load dynamic config
   const cfg = await getMatchingConfig();
@@ -206,4 +231,4 @@ async function calculateMatchScore(
   return Math.round(totalScore * 10) / 10;
 }
 
-module.exports = { calculateMatchScore, normalizeSkillName };
+module.exports = { calculateMatchScore, normalizeSkillName, checkIfCandidateUnlocked };

@@ -91,16 +91,9 @@ const DashboardCompany = () => {
   // Fetch job posts via Redux
   const fetchMyJobs = () => dispatch(fetchMyPosts());
 
-  // Add handler for job selection
-  const handleJobChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedJob(event.target.value);
-  };
-
   useEffect(() => {
     fetchMyJobs();
   }, []);
-
-  // MatchingProfiles component handles this now
 
   const handleDeleteJob = async (jobId: string) => {
     await dispatch(deletePost(jobId));
@@ -217,7 +210,7 @@ const DashboardCompany = () => {
           )}
 
           {/* HR Agents Section */}
-          {profile?._id && <HRAgentsTable companyId={profile._id} />}
+          {/* {profile?._id && <HRAgentsTable companyId={profile._id} />} */}
 
           {/* Add Bid Dialog */}
           <UnlockCandidate
