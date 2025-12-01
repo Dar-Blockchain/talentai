@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getMyProfile, selectProfile, clearProfile } from "@/store/slices/profileSlice";
+import {
+  getMyProfile,
+  selectProfile,
+  clearProfile,
+} from "@/store/slices/profileSlice";
 import { logout, setLoggingOut } from "@/store/slices/authSlice";
 import { AppDispatch, RootState } from "@/store/store";
 import { Box, Container, Card } from "@mui/material";
@@ -49,16 +53,13 @@ const StyledCard = styled(Card)(({ theme }) => ({
 
 // Update the MatchingCandidate interface
 interface MatchingCandidate {
-  candidateId: {
-    _id: string;
-    username: string;
-    email: string;
-    isVerified: boolean;
-    role: string;
-  };
+  candidateId: string;
   name: string;
   firstName: string;
   lastName: string;
+  unlockPrice: number;
+  email: string;
+  targetRole: string;
   score: number;
   finalBid: number;
   matchedSkills: Array<{

@@ -14,6 +14,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import Image from "next/image";
+import { useSelector } from "react-redux";
+import { selectTokenBalance } from "@/store/slices/tokenSlice";
 
 interface UnlockCandidateProps {
   open: boolean;
@@ -31,6 +33,7 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
   companyId,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const tokenBalance = useSelector(selectTokenBalance);
 
   const handleConfirmUnlock = () => {};
 
@@ -120,12 +123,7 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
                 color: "#6b7280",
               }}
             >
-              {(
-                selectedCandidate?.name ||
-                selectedCandidate?.candidateId?.username
-              )
-                ?.charAt(0)
-                ?.toUpperCase()}
+              {selectedCandidate?.name?.charAt(0)?.toUpperCase()}
             </Avatar>
             <Box sx={{ flex: 1 }}>
               <Typography
@@ -140,8 +138,7 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
               >
                 {selectedCandidate?.firstName +
                   " " +
-                  selectedCandidate?.lastName ||
-                  selectedCandidate?.candidateId?.username}
+                  selectedCandidate?.lastName || selectedCandidate?.name}
               </Typography>
               <Typography
                 variant="body2"
@@ -157,7 +154,7 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
                   letterSpacing: "0px",
                 }}
               >
-                {selectedCandidate?.candidateId?.email}
+                {selectedCandidate?.email}
               </Typography>
             </Box>
           </Box>
@@ -188,7 +185,7 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
                 verticalAlign: "middle",
               }}
             >
-              5 tokens
+              {selectedCandidate?.unlockPrice} tokens
             </Typography>
           </Box>
         </Box>
@@ -206,10 +203,11 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
             verticalAlign: "middle",
           }}
         >
-          You are about to use 5 Tokens to unlock the full profile for this
-          candidate. This will grant you permanent access to their contact
-          information and detailed resume. Your remaining balance will be 200
-          Tokens.
+          You are about to use <b>{selectedCandidate?.unlockPrice} Tokens</b> to
+          unlock the full profile for this candidate. This will grant you
+          permanent access to their contact information and detailed resume.
+          Your remaining balance will be{" "}
+          <b>{tokenBalance - selectedCandidate?.unlockPrice} Tokens</b>.
         </Typography>
         {false && (
           <Box sx={{ display: "flex", alignItems: "center", gap: 3, mt: 2.5 }}>

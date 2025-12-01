@@ -32,18 +32,15 @@ const StyledCard = styled(Card)(({ theme }) => ({
 }));
 // Update the MatchingCandidate interface
 interface MatchingCandidate {
-  candidateId: {
-    _id: string;
-    username: string;
-    email: string;
-    isVerified: boolean;
-    role: string;
-  };
+  candidateId: string;
   lastName: string;
   firstName: string;
   name: string;
+  email: string;
   score: number;
+  targetRole: string;
   finalBid: number;
+  unlockPrice: number;
   matchedSkills: Array<{
     name: string;
     proficiencyLevel: number;
@@ -308,7 +305,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
           {/* Candidate Cards */}
           {paginatedCandidates.map((candidate, index) => (
             <Box
-              key={candidate.candidateId._id}
+              key={candidate.candidateId}
               sx={{
                 background: "white",
                 borderRadius: "12px",
@@ -353,9 +350,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                         color: "#6b7280",
                       }}
                     >
-                      {(candidate.name || candidate.candidateId.username)
-                        ?.charAt(0)
-                        ?.toUpperCase()}
+                      {candidate.name?.charAt(0)?.toUpperCase()}
                     </Avatar>
                     <Box sx={{ flex: 1 }}>
                       <Box
@@ -376,30 +371,35 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                             filter: "blur(6px)",
                           }}
                         >
-                          {candidate?.firstName + ' '+ candidate?.lastName || candidate.candidateId.username}
+                          {candidate?.firstName + " " + candidate?.lastName ||
+                            candidate?.name}
                         </Typography>
-                                                <Typography
-                          variant="h6"
-                          sx={{
-                            color: "rgba(24, 25, 28, 1)",
-                            fontWeight: 500,
-                            fontSize: "18px",
-                            lineHeight: "28px",
-                          }}
-                        >
-                          |
-                        </Typography>
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            color: "rgba(84, 98, 116, 0.53)",
-                            fontWeight: 400,
-                            fontSize: "18px",
-                            lineHeight: "28px",
-                          }}
-                        >
-                          {candidate.candidateId.role || "Software Engineer"}
-                        </Typography>
+                        {candidate?.targetRole && (
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              color: "rgba(24, 25, 28, 1)",
+                              fontWeight: 500,
+                              fontSize: "18px",
+                              lineHeight: "28px",
+                            }}
+                          >
+                            |
+                          </Typography>
+                        )}
+                        {candidate?.targetRole && (
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              color: "rgba(84, 98, 116, 0.53)",
+                              fontWeight: 400,
+                              fontSize: "18px",
+                              lineHeight: "28px",
+                            }}
+                          >
+                            {candidate?.targetRole}
+                          </Typography>
+                        )}
                       </Box>
                       <Typography
                         variant="body2"
@@ -415,12 +415,12 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                           letterSpacing: "0px",
                         }}
                       >
-                        {candidate.candidateId.email}
+                        {candidate?.email}
                       </Typography>
                     </Box>
                   </Box>
                   {/* Skills Section */}
-                  <Box sx={{my: 0.5}}>
+                  <Box sx={{ my: 0.5 }}>
                     <Typography
                       variant="subtitle2"
                       sx={{
@@ -541,9 +541,9 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                           color: "#9ca3af",
                         },
                       }}
-                      disabled={!candidate?.candidateId?._id || !selectedJob}
+                      disabled={!candidate?.candidateId || !selectedJob}
                     >
-                      Unlock Full Profile (5 Tokens)
+                      Unlock Full Profile ({candidate?.unlockPrice} Tokens)
                     </Button>
                   </Box>
                 </Box>
