@@ -272,9 +272,13 @@ const simulateHederaVerification = async (transactionHash, expectedAmount) => {
  */
 const updateUserBalance = async (userId, amount) => {
   try {
+    console.log(`💬 [updateUserBalance] Starting balance update for user: ${userId}, amount: ${amount}`);
+    
     let tokenBalance = await TokenBalance.findOne({ userId });
+    const previousBalance = tokenBalance ? tokenBalance.balance : 0;
 
     if (!tokenBalance) {
+      console.log(`✨ [updateUserBalance] Creating new balance record for user: ${userId}, initial balance: ${amount}`);
       tokenBalance = new TokenBalance({
         userId,
         balance: amount,
@@ -283,12 +287,14 @@ const updateUserBalance = async (userId, amount) => {
     } else {
       tokenBalance.balance += amount;
       tokenBalance.lastUpdated = new Date();
+      console.log(`📝 [updateUserBalance] Updated balance for user: ${userId}, previous: ${previousBalance}, amount added: ${amount}, new balance: ${tokenBalance.balance}`);
     }
 
     await tokenBalance.save();
+    console.log(`✅ [updateUserBalance] Balance successfully saved for user: ${userId}, final balance: ${tokenBalance.balance}`);
     return tokenBalance.balance;
   } catch (error) {
-    console.error("Error updating user balance:", error);
+    console.error(`❌ [updateUserBalance] Error updating user balance for user: ${userId}, amount: ${amount}, error:`, error);
     throw error;
   }
 };
@@ -328,10 +334,14 @@ const getUserTransactions = async (userId, options = {}) => {
 const spendTokens = async (userId, spendData) => {
   try {
     const { amount, service, description, metadata } = spendData;
+    console.log(`💳 [spendTokens] Initiating token spend for user: ${userId}, amount: ${amount}, service: ${service}`);
 
     // Check user balance
     const userBalance = await getUserBalance(userId);
+    console.log(`💰 [spendTokens] Current balance for user: ${userId} is ${userBalance.balance} tokens`);
+    
     if (userBalance.balance < amount) {
+      console.error(`❌ [spendTokens] Insufficient balance for user: ${userId}. Required: ${amount}, Available: ${userBalance.balance}`);
       throw new Error("Insufficient token balance");
     }
 
@@ -349,10 +359,13 @@ const spendTokens = async (userId, spendData) => {
       transactionId: uuidv4()
     });
 
+    console.log(`📝 [spendTokens] Created spend transaction for user: ${userId}, transactionId: ${transaction.transactionId}, service: ${service}`);
     await transaction.save();
+    console.log(`💾 [spendTokens] Transaction saved successfully, transactionId: ${transaction.transactionId}`);
 
     // Update balance
     const newBalance = await updateUserBalance(userId, -amount);
+    console.log(`✅ [spendTokens] Token spend completed for user: ${userId}. Spent: ${amount}, New balance: ${newBalance}`);
 
     return {
       transaction: {
@@ -365,7 +378,7 @@ const spendTokens = async (userId, spendData) => {
       newBalance
     };
   } catch (error) {
-    console.error("Error spending tokens:", error);
+    console.error(`❌ [spendTokens] Error spending tokens for user: ${userId}, amount: ${spendData.amount}, service: ${spendData.service}, error:`, error);
     throw error;
   }
 };
