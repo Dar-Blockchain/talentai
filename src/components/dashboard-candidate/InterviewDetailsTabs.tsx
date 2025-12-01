@@ -76,10 +76,13 @@ export default function InterviewDetailsTabs({ profile }: InterviewDetailsTabsPr
             try {
                 const token = localStorage.getItem("api_token");
                 const realProfileId = profileIdRef.current;
-                const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}InterviewAssessment/?page=${pageNum + 1
+
+                // Use interviewDetails API only for post_interview tab, InterviewAssessment for others
+                const endpoint = type === 'post_interview' ? 'interviewDetails' : 'InterviewAssessment';
+                const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}${endpoint}/?page=${pageNum + 1
                     }&limit=${limit}&type=${type}&candidateId=${realProfileId}`;
 
-                console.log(`📡 [Comp-${componentId}][Req-${requestId}] Making HTTP request to:`, url);
+                console.log(`📡 [Comp-${componentId}][Req-${requestId}] Making HTTP request to:`, url, `(using ${endpoint} API)`);
 
                 const res = await fetch(url, {
                     headers: token ? { Authorization: `Bearer ${token}` } : {},

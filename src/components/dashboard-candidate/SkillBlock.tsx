@@ -135,18 +135,35 @@ function SkillBlockComponent({ profile, skill, type, onStartTest, onDelete, gree
               )}
             </>
           ) : (
-            <Chip
-              label={skill.experienceLevel}
-              size="small"
-              sx={{
-                backgroundColor: '#FF6B6B',
-                color: '#ffffff',
-                fontWeight: 600,
-                fontSize: '0.75rem',
-                height: 24,
-                borderRadius: 1,
-              }}
-            />
+            <>
+              {skill.Levelconfirmed && skill.Levelconfirmed > 0 ? (
+                <Chip
+                  label={`${getLevelFromNumber(skill.Levelconfirmed)} Confirmed`}
+                  size="small"
+                  sx={{
+                    backgroundColor: '#4CAF50',
+                    color: '#ffffff',
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                    height: 24,
+                    borderRadius: 1,
+                  }}
+                />
+              ) : (
+                <Chip
+                  label="No Level Confirmed"
+                  size="small"
+                  sx={{
+                    backgroundColor: '#FF9800',
+                    color: '#ffffff',
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                    height: 24,
+                    borderRadius: 1,
+                  }}
+                />
+              )}
+            </>
           )}
         </Box>
         

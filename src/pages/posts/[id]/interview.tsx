@@ -424,6 +424,8 @@ const Test = () => {
   // Word-by-word streaming state
   const lastPartialWordsRef = useRef<string[]>([]);
   const streamingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectionAttemptsRef = useRef<number>(0); // Track reconnection attempts to prevent loops
+  const lastReconnectTimeRef = useRef<number>(0); // Track last reconnection time
 
   // MediaRecorder references
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -712,20 +714,45 @@ const Test = () => {
 
   // Generate temporary token for streaming
   const generateStreamingToken = async (): Promise<string> => {
-    const response = await fetch('/api/session', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ action: 'generate_token' }),
-    });
+    try {
+      console.log('🔑 Requesting streaming token from /api/sessionpost...');
 
-    if (!response.ok) {
-      throw new Error('Failed to generate streaming token');
+      const response = await fetch('/api/sessionpost', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'generate_token' }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Token generation failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        throw new Error(`Failed to generate streaming token: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const { token } = data;
+
+      if (!token) {
+        console.error('❌ No token in response:', data);
+        throw new Error('Token missing in response');
+      }
+
+      console.log('✅ Streaming token generated successfully:', {
+        tokenLength: token.length,
+        tokenPreview: token.substring(0, 20) + '...'
+      });
+
+      return token;
+    } catch (error) {
+      console.error('❌ Error in generateStreamingToken:', error);
+      throw error;
     }
-
-    const { token } = await response.json();
-    return token;
   };
 
   // Setup streaming transcription
@@ -733,9 +760,17 @@ const Test = () => {
     try {
       setIsConnecting(true);
 
-      // Generate token
-      const token = await generateStreamingToken();
-      setStreamingToken(token);
+      // Generate token with error handling
+      let token: string;
+      try {
+        token = await generateStreamingToken();
+        setStreamingToken(token);
+      } catch (tokenError) {
+        console.error('❌ Failed to generate token:', tokenError);
+        setIsConnecting(false);
+        alert('Failed to connect to speech recognition service. Please check:\n\n1. ASSEMBLYAI_API_KEY is set in .env.local\n2. The API key is valid\n3. Internet connection is stable\n\nError: ' + (tokenError instanceof Error ? tokenError.message : String(tokenError)));
+        throw tokenError;
+      }
 
       // Setup audio context with optimal settings for accent recognition
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
@@ -750,9 +785,15 @@ const Test = () => {
       processorRef.current = processor;
 
       // Connect WebSocket with enhanced accent recognition for all global accents
-      const ws = new WebSocket(
-        `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}`
-      );
+      const wsUrl = `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000&token=${token}`;
+      console.log('🔌 Connecting to WebSocket:', {
+        url: 'wss://api.assemblyai.com/v2/realtime/ws',
+        sampleRate: 16000,
+        tokenLength: token.length,
+        tokenPreview: token.substring(0, 20) + '...' + token.substring(token.length - 10)
+      });
+
+      const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
       
       // Track connection quality and accent detection
@@ -770,28 +811,33 @@ const Test = () => {
         setIsConnecting(false);
         lastWebSocketActivityRef.current = Date.now();
 
-        // Start WebSocket health monitoring
+        // Reset reconnection counter on successful connection
+        reconnectionAttemptsRef.current = 0;
+        console.log('✅ Connection established successfully, reconnection counter reset');
+
+        // Start WebSocket health monitoring - RELAXED to prevent reconnection loops
         websocketHealthCheckRef.current = setInterval(() => {
           const timeSinceActivity = Date.now() - lastWebSocketActivityRef.current;
-          
-          // If no activity for 30 seconds and WebSocket is open, warn
-          if (timeSinceActivity > 30000 && ws.readyState === WebSocket.OPEN) {
-            console.warn('⚠️ WebSocket inactive for 30s - connection may be stale');
+
+          // If no activity for 60 seconds and WebSocket is open, warn (increased from 30s)
+          if (timeSinceActivity > 60000 && ws.readyState === WebSocket.OPEN) {
+            console.warn('⚠️ WebSocket inactive for 60s - connection may be stale');
           }
-          
-          // If no activity for 60 seconds, attempt reconnection
-          if (timeSinceActivity > 60000 && ws.readyState === WebSocket.OPEN && audioStreamRef.current) {
-            console.error('❌ WebSocket inactive for 60s - forcing reconnection');
+
+          // If no activity for 120 seconds (2 minutes), attempt reconnection (increased from 60s)
+          // This prevents premature reconnections that cause loops
+          if (timeSinceActivity > 120000 && ws.readyState === WebSocket.OPEN && audioStreamRef.current && isRecording) {
+            console.error('❌ WebSocket inactive for 120s - forcing reconnection');
             ws.close();
             setTimeout(() => {
-              if (audioStreamRef.current) {
+              if (audioStreamRef.current && isRecording) {
                 setupStreamingTranscription(audioStreamRef.current).catch(err => {
                   console.error('❌ Health check reconnection failed:', err);
                 });
               }
-            }, 1000);
+            }, 2000); // Increased delay to 2s to prevent rapid reconnects
           }
-        }, 10000); // Check every 10 seconds
+        }, 15000); // Check every 15 seconds (increased from 10s)
 
         // Connect audio processing with minimal interference
         source.connect(processor);
@@ -934,51 +980,51 @@ const Test = () => {
                 return;
               }
               
-              // Check 2: AGGRESSIVE real-time duplicate detection
+              // Check 2: RELAXED duplicate detection - only block exact matches at the end
               const currentAccumulated = accumulatedTranscriptRef.current.toLowerCase().trim();
               const currentTextLower = cleanedText.toLowerCase().trim();
-              
+
               if (currentAccumulated.length > 0 && cleanedText.length > 5) {
-                // Check 2.1: Exact substring match (case-insensitive)
-                if (currentAccumulated.includes(currentTextLower)) {
-                  console.log('🚫 Text already in transcript, blocking duplicate:', cleanedText.substring(0, 50));
-                  return;
-                }
-                
-                // Check 2.2: Accumulated ends with this text
+                // Check 2.1: REMOVED - was too aggressive, blocked legitimate new speech
+                // if (currentAccumulated.includes(currentTextLower)) {
+                //   console.log('🚫 Text already in transcript, blocking duplicate:', cleanedText.substring(0, 50));
+                //   return;
+                // }
+
+                // Check 2.2: Only block if accumulated EXACTLY ends with this text (preventing true duplicates)
                 if (currentAccumulated.endsWith(currentTextLower)) {
                   console.log('🚫 Text already at end, blocking:', cleanedText.substring(0, 50));
                   return;
                 }
+
+                // Check 2.3: REMOVED - was blocking valid speech
+                // if (currentTextLower.includes(currentAccumulated) && currentAccumulated.length > 15) {
+                //   console.log('🚫 Current contains accumulated transcript (superset), blocking:', cleanedText.substring(0, 50));
+                //   return;
+                // }
                 
-                // Check 2.3: Current contains accumulated (superset)
-                if (currentTextLower.includes(currentAccumulated) && currentAccumulated.length > 15) {
-                  console.log('🚫 Current contains accumulated transcript (superset), blocking:', cleanedText.substring(0, 50));
-                  return;
-                }
-                
-                // Check 2.4: AGGRESSIVE Jaccard similarity for near-duplicates (lowered threshold for real-time)
+                // Check 2.4: RELAXED Jaccard similarity - increased threshold to 90% to allow more speech through
                 const accWords = new Set(currentAccumulated.split(/\s+/));
                 const currWords = new Set(currentTextLower.split(/\s+/));
                 const intersection = new Set([...accWords].filter(w => currWords.has(w)));
                 const union = new Set([...accWords, ...currWords]);
                 const jaccardSimilarity = intersection.size / union.size;
-                
-                // More aggressive: 70%+ similar (down from 80%) and not significantly longer
-                if (jaccardSimilarity > 0.7 && cleanedText.length < currentAccumulated.length * 1.4) {
-                  console.log(`🚫 High similarity (${(jaccardSimilarity * 100).toFixed(1)}%) detected, blocking duplicate:`, cleanedText.substring(0, 50));
+
+                // Only block if 90%+ similar (up from 70%) to reduce false positives
+                if (jaccardSimilarity > 0.9 && cleanedText.length < currentAccumulated.length * 1.2) {
+                  console.log(`🚫 Very high similarity (${(jaccardSimilarity * 100).toFixed(1)}%) detected, blocking duplicate:`, cleanedText.substring(0, 50));
                   return;
                 }
-                
-                // Check 2.5: AGGRESSIVE word-level overlap detection (check up to 10 words)
+
+                // Check 2.5: RELAXED word-level overlap - only check significant overlaps (5+ words)
                 const accWordsArray = currentAccumulated.split(/\s+/);
                 const currWordsArray = currentTextLower.split(/\s+/);
-                
-                // Check last 3-10 words of accumulated vs first 3-10 words of current
-                for (let checkSize = 3; checkSize <= Math.min(10, accWordsArray.length, currWordsArray.length); checkSize++) {
+
+                // Only check for significant overlaps (5+ words minimum)
+                for (let checkSize = 5; checkSize <= Math.min(10, accWordsArray.length, currWordsArray.length); checkSize++) {
                   const lastAccWords = accWordsArray.slice(-checkSize).join(' ');
                   const firstCurrWords = currWordsArray.slice(0, checkSize).join(' ');
-                  
+
                   if (lastAccWords === firstCurrWords) {
                     console.log(`🚫 Word-level overlap detected (${checkSize} words), blocking:`, cleanedText.substring(0, 50));
                     return;
@@ -1186,23 +1232,66 @@ const Test = () => {
       ws.onclose = (event) => {
         console.log(`🔴 WebSocket closed [${event.code}]: ${event.reason || 'Normal closure'}`);
         setIsConnecting(false);
-        
+
         // Clear health check interval
         if (websocketHealthCheckRef.current) {
           clearInterval(websocketHealthCheckRef.current);
           websocketHealthCheckRef.current = null;
         }
-        
-        // Auto-reconnect if closed unexpectedly (not normal closure)
+
+        // Handle specific error codes
+        if (event.code === 4001) {
+          console.error('❌ Authentication failed (4001): Token is invalid or expired');
+          console.error('📋 Troubleshooting steps:');
+          console.error('  1. Check your AssemblyAI API key at https://www.assemblyai.com/app');
+          console.error('  2. Verify your account has credits: https://www.assemblyai.com/app/billing');
+          console.error('  3. Make sure the API key in .env.local is correct');
+          console.error('  4. Try generating a new API key from the dashboard');
+
+          alert('❌ Speech Recognition Authentication Failed (Error 4001)\n\n' +
+                'The AssemblyAI service rejected the connection.\n\n' +
+                'Common causes:\n' +
+                '• Invalid or expired API key\n' +
+                '• No credits remaining on your account\n' +
+                '• API key lacks streaming permissions\n\n' +
+                'Solutions:\n' +
+                '1. Go to https://www.assemblyai.com/app\n' +
+                '2. Check your account billing/credits\n' +
+                '3. Generate a new API key if needed\n' +
+                '4. Update .env.local with the new key\n' +
+                '5. Restart the dev server: npm run dev\n\n' +
+                'Check the console for more details.');
+          return; // Don't attempt reconnection on auth failures
+        }
+
+        // Auto-reconnect if closed unexpectedly (not normal closure) with safeguards
         if (event.code !== 1000 && event.code !== 1001 && audioStreamRef.current && isRecording) {
-          console.log('🔄 Reconnecting to AssemblyAI...');
-          setTimeout(() => {
-            if (audioStreamRef.current) {
-              setupStreamingTranscription(audioStreamRef.current).catch(err => {
-                console.error('❌ Reconnection failed:', err);
-              });
-            }
-          }, 1000);
+          const now = Date.now();
+          const timeSinceLastReconnect = now - lastReconnectTimeRef.current;
+
+          // Reset counter if it's been more than 30 seconds since last reconnect
+          if (timeSinceLastReconnect > 30000) {
+            reconnectionAttemptsRef.current = 0;
+          }
+
+          // Limit reconnection attempts to prevent infinite loops
+          if (reconnectionAttemptsRef.current < 5) {
+            reconnectionAttemptsRef.current++;
+            lastReconnectTimeRef.current = now;
+
+            console.log(`🔄 Reconnecting to AssemblyAI (attempt ${reconnectionAttemptsRef.current}/5)...`);
+
+            const delay = Math.min(1000 * reconnectionAttemptsRef.current, 5000); // Exponential backoff, max 5s
+            setTimeout(() => {
+              if (audioStreamRef.current && isRecording) {
+                setupStreamingTranscription(audioStreamRef.current).catch(err => {
+                  console.error('❌ Reconnection failed:', err);
+                });
+              }
+            }, delay);
+          } else {
+            console.error('❌ Max reconnection attempts (5) reached. Please refresh the page or restart recording.');
+          }
         }
       };
 
