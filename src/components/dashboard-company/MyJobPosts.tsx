@@ -304,7 +304,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
           {/* Job Cards */}
           {isLoadingJobs ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-              <CircularProgress sx={{ color: "#3b82f6" }} />
+              <CircularProgress sx={{ color: "rgba(19, 163, 108, 0.83)" }} />
             </Box>
           ) : jobsError ? (
             <Alert severity="error" sx={{ mb: 2 }}>
