@@ -39,6 +39,23 @@ const getQuickPrompt = (description, companyLocation) => `
             "percentage": 0
           }
         ],
+        "softSkills": [
+          {
+            "name": "Soft Skill 1",
+            "importance": "low/medium/high/critical",
+            "percentage": 0
+          },
+          {
+            "name": "Soft Skill 2",
+            "importance": "low/medium/high/critical",
+            "percentage": 0
+          },
+          {
+            "name": "Soft Skill 3",
+            "importance": "low/medium/high/critical",
+            "percentage": 0
+          }
+        ],
         "suggestedSkills": {
           "technical": [],
           "frameworks": [],
@@ -75,12 +92,13 @@ const getQuickPrompt = (description, companyLocation) => `
       - "medium" → Preferred or nice to have, mentioned as "Preferred" or "Plus"
       - "low" → Bonus or additional skill, would be helpful
 
+    - The sum of all soft skill percentages must also equal 100%.
     - The sum of all skill percentages must equal 100%.
     - LIA must determine the percentage distribution based on importance, frequency, and context in the job description.
     - If not specified, distribute evenly and logically.
     - Return only valid JSON. Avoid markdown or code blocks.
 
-    STRICT SKILL RULES:
+STRICT SKILL RULES:
 - REQUIRED: Generate exactly 3 skills in "requiredSkills" — no more, no less.
 - NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
 - Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
@@ -88,6 +106,14 @@ const getQuickPrompt = (description, companyLocation) => `
 - Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
 - Never invent unrealistic skills; remain consistent with standard industry technical stacks.
 - The “name” field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
+
+STRICT SOFT SKILL RULES:
+- Generate exactly 3 soft skills.
+- Soft skills must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Adaptability, Time management, Leadership, Attention to detail).
+- Never use generic, vague, or irrelevant soft skills.
+- Importance values must follow: "low", "medium", "high", "critical".
+- The sum of soft skill percentages must be 100%.
+
 
     Job Description:
     ${description}
@@ -122,6 +148,8 @@ const getDetailedPrompt = (description, companyLocation) => `
 
     - Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
     - The total sum of all percentages must equal exactly 100%.
+    - Soft skills must also include their own percentage field.
+    - The total sum of all soft skill percentages must equal exactly 100% as well.
     - LIA must infer the percentage distribution based on the importance, frequency, and emphasis of each skill mentioned in the job description.
     - If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
     - Core and frequently mentioned skills should receive higher percentages.
@@ -170,6 +198,24 @@ const getDetailedPrompt = (description, companyLocation) => `
             "percentage": 0
           }
         ],
+        "softSkills": [
+          {
+            "name": "Soft Skill 1",
+            "importance": "low/medium/high/critical",
+            "percentage": 0
+          },
+          {
+            "name": "Soft Skill 2",
+            "importance": "low/medium/high/critical",
+            "percentage": 0
+          },
+          {
+            "name": "Soft Skill 3",
+            "importance": "low/medium/high/critical",
+            "percentage": 0
+          }
+        ],
+
         "suggestedSkills": {
           "technical": [
             {
@@ -236,6 +282,14 @@ const getDetailedPrompt = (description, companyLocation) => `
 - Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
 - Never invent unrealistic skills; remain consistent with standard industry technical stacks.
 - The “name” field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
+
+STRICT SOFT SKILL RULES:
+- REQUIRED: Generate exactly 3 soft skills — no more, no less.
+- Soft skills must be relevant to the job (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Critical thinking, Time management).
+- Do NOT generate vague, generic, or irrelevant soft skills.
+- Importance must follow ONLY these lowercase values: "low", "medium", "high", "critical".
+- Each soft skill must include a "percentage" field.
+- Soft skill percentages must add up to exactly 100%.
 
 `.trim();
 
