@@ -1,4 +1,5 @@
-const getQuickPrompt = (description, companyLocation) => `
+const getQuickPrompt = (description, companyLocation) =>
+  `
     As an expert technical recruiter and AI assistant, analyze this job description and generate a JSON object with only the following structure:
     
     {
@@ -89,21 +90,21 @@ const getQuickPrompt = (description, companyLocation) => `
     - If not specified, distribute evenly and logically.
     - Return only valid JSON. Avoid markdown or code blocks.
 
-STRICT SKILL RULES:
-- REQUIRED: Generate exactly 3 skills in "requiredSkills" — no more, no less.
-- NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
-- Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
-- If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
-- Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
-- Never invent unrealistic skills; remain consistent with standard industry technical stacks.
-- The “name” field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
+    STRICT SKILL RULES:
+    - REQUIRED: Generate exactly 3 skills in "requiredSkills" — no more, no less.
+    - NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
+    - Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
+    - If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
+    - Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
+    - Never invent unrealistic skills; remain consistent with standard industry technical stacks.
+    - The “name” field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
 
-STRICT SOFT SKILL RULES:
-- Generate exactly 1 soft skill — no more, no less.
-- The soft skill must always have percentage = 100%.
-- Soft skills must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Adaptability, Time management, Leadership, Attention to detail).
-- Never use generic, vague, or irrelevant soft skills.
-- Importance values must follow: "Junior", "Mid_Level", "Senior", "Expert".
+    STRICT SOFT SKILL RULES:
+    - Generate exactly 1 soft skill — no more, no less.
+    - The soft skill must always have percentage = 100%.
+    - Soft skills must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Adaptability, Time management, Leadership, Attention to detail).
+    - Never use generic, vague, or irrelevant soft skills.
+    - Importance values must follow: "Junior", "Mid_Level", "Senior", "Expert".
 
 
     Job Description:
@@ -111,44 +112,45 @@ STRICT SOFT SKILL RULES:
 
     Before generating the job details, include the following matching configuration exactly as structured:
 
-"matchingConfig": {
-  "weights": {
-    "hardSkill": 40,
-    "SoftSkill": 10,
-    "experience": 30,
-    "salary": 5,
-    "workMode": 7.5,
-    "contract": 7.5
-  },
-  "importanceWeight": {
-    "Junior": 1.5,
-    "Mid_Level": 1.2,
-    "Senior": 1.0,
-    "Expert": 0.8
-  },
-  "exchangeRates": {
-    "USD": 1,
-    "EUR": 1.1,
-    "TND": 0.32
-  }
-},
+    "matchingConfig": {
+      "weights": {
+        "hardSkill": 40,
+        "SoftSkill": 10,
+        "experience": 30,
+        "salary": 5,
+        "workMode": 7.5,
+        "contract": 7.5
+      },
+      "importanceWeight": {
+        "Junior": 1.5,
+        "Mid_Level": 1.2,
+        "Senior": 1.0,
+        "Expert": 0.8
+      },
+      "exchangeRates": {
+        "USD": 1,
+        "EUR": 1.1,
+        "TND": 0.32
+      }
+    },
 
-The "weights" MUST be dynamically adjusted based on the job description context.  
-For example:
-- Increase "hardSkill" weight if the job description is highly technical.  
-- Increase "SoftSkill" weight if the role requires leadership or communication.  
-- Increase "experience" weight if seniority is emphasized.  
-- Increase "salary" weight if compensation is a key factor in the job description.  
-- Adjust "workMode" and "contract" weight if the post highlights remote/on-site or contract specifics.
+    The "weights" MUST be dynamically adjusted based on the job description context.  
+    For example:
+    - Increase "hardSkill" weight if the job description is highly technical.  
+    - Increase "SoftSkill" weight if the role requires leadership or communication.  
+    - Increase "experience" weight if seniority is emphasized.  
+    - Increase "salary" weight if compensation is a key factor in the job description.  
+    - Adjust "workMode" and "contract" weight if the post highlights remote/on-site or contract specifics.
 
-The final weight distribution MUST always sum to 100%.  
-The assistant must return the adjusted weights inside "matchingConfig".
+    The final weight distribution MUST always sum to 100%.  
+    The assistant must return the adjusted weights inside "matchingConfig".
 
-The "exchangeRates" values must reflect today's real exchange rates.
+    The "exchangeRates" values must reflect today's real exchange rates.
 
 `.trim();
 
-const getDetailedPrompt = (description, companyLocation) => `
+const getDetailedPrompt = (description, companyLocation) =>
+  `
     As an expert technical recruiter and AI assistant, analyze this job description and generate a JSON object with only the following structure:
     1. Create a professional job post
     2. Extract and suggest relevant skills
@@ -294,62 +296,62 @@ const getDetailedPrompt = (description, companyLocation) => `
       }
     }
 
-    STRICT SKILL RULES:
-- REQUIRED: Generate exactly 3 skills in "requiredSkills" — no more, no less.
-- NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
-- Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
-- If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
-- Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
-- Never invent unrealistic skills; remain consistent with standard industry technical stacks.
-- The “name” field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
+        STRICT SKILL RULES:
+    - REQUIRED: Generate exactly 3 skills in "requiredSkills" — no more, no less.
+    - NEVER generate general or non-technical skills such as “Web Development”, “Software Engineering”, “Programming”, or “Full Stack”.
+    - Skills MUST ALWAYS be specific and technical (e.g., React.js, Next.js, Node.js, Express.js, NestJS, MongoDB, PostgreSQL, REST APIs, HTML/CSS, TypeScript, Docker, AWS, Redis, CI/CD, PHPUnit, Laravel, Symfony).
+    - If the job description is vague, infer the most relevant precise technologies instead of using generic terms.
+    - Categorize each skill only as: "Frontend", "Backend", "Fullstack", "DevOps", or "Other".
+    - Never invent unrealistic skills; remain consistent with standard industry technical stacks.
+    - The “name” field must always be a precise tool, language, framework, library, cloud service, or dev practice (NOT a job role).
 
-STRICT SOFT SKILL RULES:
-- REQUIRED: Generate exactly 1 soft skill — no more, no less.
-- The soft skill must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management).
-- The soft skill must include an "importance" field and a "percentage" field.
-- The percentage must always be 100.
-- Never use vague or irrelevant soft skills.
+    STRICT SOFT SKILL RULES:
+    - REQUIRED: Generate exactly 1 soft skill — no more, no less.
+    - The soft skill must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management).
+    - The soft skill must include an "importance" field and a "percentage" field.
+    - The percentage must always be 100.
+    - Never use vague or irrelevant soft skills.
 
-Before generating the job details, include the following matching configuration exactly as structured:
+    Before generating the job details, include the following matching configuration exactly as structured:
 
-"matchingConfig": {
-  "weights": {
-    "hardSkill": 40,
-    "SoftSkill": 10,
-    "experience": 30,
-    "salary": 5,
-    "workMode": 7.5,
-    "contract": 7.5
-  },
-  "importanceWeight": {
-    "Junior": 1.5,
-    "Mid_Level": 1.2,
-    "Senior": 1.0,
-    "Expert": 0.8
-  },
-  "exchangeRates": {
-    "USD": 1,
-    "EUR": 1.1,
-    "TND": 0.32
-  }
-},
+    "matchingConfig": {
+      "weights": {
+        "hardSkill": 40,
+        "SoftSkill": 10,
+        "experience": 30,
+        "salary": 5,
+        "workMode": 7.5,
+        "contract": 7.5
+      },
+      "importanceWeight": {
+        "Junior": 1.5,
+        "Mid_Level": 1.2,
+        "Senior": 1.0,
+        "Expert": 0.8
+      },
+      "exchangeRates": {
+        "USD": 1,
+        "EUR": 1.1,
+        "TND": 0.32
+      }
+    },
 
-The "weights" MUST be dynamically adjusted based on the job description context.  
-For example:
-- Increase "hardSkill" weight if the job description is highly technical.  
-- Increase "SoftSkill" weight if the role requires leadership or communication.  
-- Increase "experience" weight if seniority is emphasized.  
-- Increase "salary" weight if compensation is a key factor in the job description.  
-- Adjust "workMode" and "contract" weight if the post highlights remote/on-site or contract specifics.
+    The "weights" MUST be dynamically adjusted based on the job description context.  
+    For example:
+    - Increase "hardSkill" weight if the job description is highly technical.  
+    - Increase "SoftSkill" weight if the role requires leadership or communication.  
+    - Increase "experience" weight if seniority is emphasized.  
+    - Increase "salary" weight if compensation is a key factor in the job description.  
+    - Adjust "workMode" and "contract" weight if the post highlights remote/on-site or contract specifics.
 
-The final weight distribution MUST always sum to 100%.  
-The assistant must return the adjusted weights inside "matchingConfig".
+    The final weight distribution MUST always sum to 100%.  
+    The assistant must return the adjusted weights inside "matchingConfig".
 
-The "exchangeRates" values must reflect today's real exchange rates.
+    The "exchangeRates" values must reflect today's real exchange rates.
 
 `.trim();
 
 module.exports = {
-    getQuickPrompt,
-    getDetailedPrompt
+  getQuickPrompt,
+  getDetailedPrompt,
 };
