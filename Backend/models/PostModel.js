@@ -37,6 +37,23 @@ const suggestedSkillSchema = new mongoose.Schema({
   purpose: String,
 });
 
+const softSkillSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  importance: { type: String },
+  percentage: {
+    type: Number,
+    min: 0,
+    max: 100,
+    required: false,
+    validate: {
+      validator: function (v) {
+        return v === undefined || (v >= 0 && v <= 100);
+      },
+      message: (props) => `${props.value} is not a valid percentage (must be between 0 and 100)!`,
+    },
+  },
+});
+
 const jobDetailsSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
@@ -55,6 +72,7 @@ const skillAnalysisSchema = new mongoose.Schema({
     frameworks: [suggestedSkillSchema],
     tools: [suggestedSkillSchema],
   },
+  softSkills: [softSkillSchema],
   skillSummary: {
     mainTechnologies: [String],
     complementarySkills: [String],
