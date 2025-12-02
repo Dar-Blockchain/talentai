@@ -7,13 +7,38 @@ const User = require("../models/UserModel");
  */
 const getUnlockedCandidatesByCompany = async (idCompany) => {
   try {
+    // Populate idCandidate email and its profile (firstName, lastName, targetRole)
     const unlockedCandidates = await UnlockCandidate.find({ idCompany })
-      .populate('idCandidate', 'firstName lastName email profileImage')
+      .populate({
+        path: 'idCandidate',
+        select: 'email profile',
+        populate: { path: 'profile', select: 'firstName lastName targetRole' }
+      })
       .populate('idJob', 'title description')
       .sort({ createdAt: -1 });
 
+    // Map to return only requested fields from candidate profile
+    const result = unlockedCandidates.map((rec) => {
+      const candidate = rec.idCandidate || {};
+      const profile = candidate.profile || {};
+      return {
+        _id: rec._id,
+        idCandidate: candidate._id || null,
+        email: candidate.email || null,
+        firstName: profile.firstName || null,
+        lastName: profile.lastName || null,
+        targetRole: profile.targetRole || null,
+        idJob: rec.idJob || null,
+        unlockPrice: rec.unlockPrice,
+        transactionId: rec.transactionId,
+        createdAt: rec.createdAt,
+        updatedAt: rec.updatedAt
+      };
+    });
 
-    return unlockedCandidates;
+    console.log("Unlocked candidates fetched:", result);
+
+    return result;
   } catch (error) {
     console.error("Error getting unlocked candidates:", error);
     throw error;
