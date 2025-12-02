@@ -26,6 +26,11 @@ import {
 import TokenPurchaseModal from "./token-purchase/TokenPurchaseModal";
 import { formatNumber, stringAvatar } from "@/utils/functions";
 import { openModal } from "@/store/slices/tokenPurchaseSlice";
+import { logout, setLoggingOut } from "@/store/slices/authSlice";
+import { resetRedirectState } from "@/utils/authRedirect";
+import { clearProfile } from "@/store/slices/profileSlice";
+import Cookies from "js-cookie";
+import { signOut } from "next-auth/react";
 
 const pulseDot = {
   width: 4,
@@ -39,11 +44,8 @@ const pulseDot = {
     "100%": { transform: "scale(1)", opacity: 0.4 },
   },
 };
-interface HeaderDashboardProps {
-  onLogout?: () => void | Promise<void>;
-}
 
-const HeaderDashboard = ({ onLogout }: HeaderDashboardProps) => {
+const HeaderDashboard = () => {
   const router = useRouter();
 
   const dispatch = useDispatch<AppDispatch>();
@@ -62,8 +64,36 @@ const HeaderDashboard = ({ onLogout }: HeaderDashboardProps) => {
   const toggleDrawer = () => setMobileOpen(!mobileOpen);
 
   const handleLogout = async () => {
-    if (onLogout) {
-      await onLogout();
+    try {
+      // Set logout flag to prevent axios interceptors from triggering redirects
+      setLoggingOut(true);
+      resetRedirectState();
+
+      // Clear Redux state FIRST to prevent components from trying to fetch
+      dispatch(clearProfile());
+      dispatch(logout());
+
+      // Then clear the token and storage
+      localStorage.removeItem("api_token");
+      Cookies.remove("api_token", { path: "/" });
+      localStorage.clear();
+
+      // Clear all other cookies
+      Object.keys(Cookies.get()).forEach((cookieName) => {
+        Cookies.remove(cookieName, { path: "/" });
+      });
+
+      // Sign out from NextAuth (don't await to make redirect faster)
+      signOut({ redirect: false }).catch(console.error);
+
+      // Redirect to company home page
+      window.location.replace("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Even on error, redirect to home
+      setLoggingOut(true);
+      resetRedirectState();
+      window.location.replace("/");
     }
   };
 

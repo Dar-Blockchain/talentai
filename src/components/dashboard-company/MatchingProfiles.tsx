@@ -41,6 +41,7 @@ interface MatchingCandidate {
   targetRole: string;
   finalBid: number;
   unlockPrice: number;
+  unlocked: boolean;
   matchedSkills: Array<{
     name: string;
     proficiencyLevel: number;
@@ -426,7 +427,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                             fontWeight: 500,
                             fontSize: "18px",
                             lineHeight: "28px",
-                            filter: "blur(6px)",
+                            filter: candidate?.unlocked ? "none" :"blur(6px)" ,
                             ...noCopyStyle
                           }}
                         >
@@ -464,7 +465,7 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                         variant="body2"
                         sx={{
                           color: "rgba(84, 98, 116, 0.53)",
-                          filter: "blur(4px)",
+                          filter: candidate?.unlocked ? 'none': "blur(4px)",
                           userSelect: "none",
                           fontFamily: "Poppins",
                           fontWeight: 400,
@@ -566,11 +567,11 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                           color: "white",
                         },
                       }}
-                      disabled
+                      disabled={!candidate?.unlocked}
                     >
                       Contact Candidate
                     </Button>
-                    <Button
+                    {!candidate?.unlocked && <Button
                       variant="outlined"
                       fullWidth
                       startIcon={
@@ -604,7 +605,31 @@ const MatchingProfiles: React.FC<MatchingProfilesProps> = ({
                       disabled={!candidate?.candidateId || !selectedJob}
                     >
                       Unlock Full Profile ({candidate?.unlockPrice} Tokens)
-                    </Button>
+                    </Button>}
+                    {candidate?.unlocked && <Button
+            variant="outlined"
+            sx={{
+              borderColor: "rgba(11, 82, 198, 1)",
+              color: "rgba(11, 82, 198, 1)",
+              fontWeight: 600,
+              borderRadius: "38px",
+              py: 1.5,
+              maxWidth: "300px",
+              height: "42px",
+              textTransform: "none",
+              fontSize: "0.875rem",
+              borderWidth: "1px",
+              "&:hover": {
+                backgroundColor: "rgba(11, 82, 198, 0.08)",
+              },
+              "&.Mui-disabled": {
+                borderColor: "#e5e7eb",
+                color: "#9ca3af",
+              },
+            }}
+          >
+            View Full Profile
+          </Button>}
                   </Box>
                 </Box>
                 <GradientCircle
