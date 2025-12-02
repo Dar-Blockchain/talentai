@@ -24,6 +24,7 @@ import {
   resetCandidateState,
   unlockCandidate,
 } from "@/store/slices/candidateSlice";
+import { fetchJobMatches } from "@/store/slices/postSlice";
 
 const noCopyStyle = {
   userSelect: "none" as const,
@@ -50,7 +51,7 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
   const dispatch = useDispatch<AppDispatch>();
   const tokenBalance = useSelector(selectTokenBalance);
   const { walletInfo } = useSelector((state: RootState) => state.tokenPurchase);
-  const { unlockResult } = useSelector((state: RootState) => state.candidate);
+  const { unlockResult, loading } = useSelector((state: RootState) => state.candidate);
   const hasInsufficientBalance =
     walletInfo && walletInfo.balance < selectedCandidate?.unlockPrice;
   const [isCandidateUnlocked, setIsCandidateUnlocked] = useState(false);
@@ -72,8 +73,9 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
     if (unlockResult && unlockResult.success) {
       setIsCandidateUnlocked(true);
       dispatch(fetchTokenBalance());
+      dispatch(fetchJobMatches(selectedJob));
     }
-  }, [unlockResult]);
+  }, [unlockResult, selectedJob]);
 
   return (
     <Dialog
@@ -322,6 +324,7 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
                 color: "#9ca3af",
               },
             }}
+            loading={loading}
           >
             Confirm Unlock
           </Button>
@@ -330,7 +333,6 @@ const UnlockCandidate: React.FC<UnlockCandidateProps> = ({
         {isCandidateUnlocked && (
           <Button
             variant="outlined"
-            onClick={handleConfirmUnlock}
             sx={{
               borderColor: "rgba(11, 82, 198, 1)",
               color: "rgba(11, 82, 198, 1)",

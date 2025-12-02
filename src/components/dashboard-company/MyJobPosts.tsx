@@ -18,6 +18,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import DeleteJobPostDialog from "@/components/dashboard-company/DeleteJobPostDialog";
 import JobDetailsDialog from "@/components/dashboard-company/JobDetailsDialog";
 import Image from "next/image";
+import { useRouter } from "next/router";
 
 // Styled Components
 const StyledCard = styled(Box)(({ theme }) => ({
@@ -66,6 +67,7 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   onCancelDelete,
   onConfirmDelete,
 }) => {
+  const router = useRouter();
   // State for job details modal
   const [jobDetailsModalOpen, setJobDetailsModalOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -168,452 +170,453 @@ const MyJobPosts: React.FC<MyJobPostsProps> = ({
   };
 
   return (
-        <StyledCard>
-          {/* Header */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 3,
+    <StyledCard>
+      {/* Header */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: 600,
+            fontSize: "20px",
+            lineHeight: "100%",
+            color: "#111827",
+          }}
+        >
+          <span
+            style={{
+              borderBottom: "5px solid rgba(41, 210, 145, 0.83)",
+              paddingBottom: "2px",
             }}
           >
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: 600,
-                fontSize: "20px",
-                lineHeight: "100%",
-                color: "#111827",
-              }}
+            Our
+          </span>{" "}
+          Job Posts
+        </Typography>
+        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+          <TextField
+            size="small"
+            placeholder="Search Jobs"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon
+                    sx={{ color: "rgba(84, 98, 116, 1)", fontSize: 20 }}
+                  />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              width: 280,
+              height: "40px",
+              "& .MuiOutlinedInput-root": {
+                backgroundColor: "white",
+                borderRadius: "42px",
+                border: "1px solid rgba(165, 172, 181, 1)",
+                "& fieldset": {
+                  border: "none",
+                },
+                "&:hover": {
+                  borderColor: "rgba(165, 172, 181, 0.8)",
+                },
+              },
+            }}
+          />
+          <Button
+            variant="outlined"
+            startIcon={
+              <Image
+                src="/icons/sort.svg"
+                alt="search"
+                width={24}
+                height={24}
+              />
+            }
+            onClick={handleSortMenuOpen}
+            sx={{
+              height: "40px",
+              borderColor: "rgba(165, 172, 181, 1)",
+              color: "rgba(84, 98, 116, 1)",
+              textTransform: "uppercase",
+              fontWeight: 400,
+              fontSize: "0.875rem",
+              borderRadius: "42px",
+              px: 2.5,
+              "&:hover": {
+                borderColor: "rgba(165, 172, 181, 0.8)",
+                backgroundColor: "#f9fafb",
+              },
+            }}
+          >
+            SORT
+          </Button>
+          <Menu
+            anchorEl={sortMenuAnchor}
+            open={Boolean(sortMenuAnchor)}
+            onClose={handleSortMenuClose}
+            anchorOrigin={{
+              vertical: "bottom",
+              horizontal: "right",
+            }}
+            transformOrigin={{
+              vertical: "top",
+              horizontal: "right",
+            }}
+          >
+            <MenuItem
+              onClick={() => handleSortChange("newest")}
+              selected={sortBy === "newest"}
+              sx={{ fontSize: "0.875rem" }}
             >
-              <span
-                style={{
-                  borderBottom: "5px solid rgba(41, 210, 145, 0.83)",
-                  paddingBottom: "2px",
-                }}
-              >
-                Our
-              </span>{" "}
-              Job Posts
-            </Typography>
-            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-              <TextField
-                size="small"
-                placeholder="Search Jobs"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon
-                        sx={{ color: "rgba(84, 98, 116, 1)", fontSize: 20 }}
+              Newest First
+            </MenuItem>
+            <MenuItem
+              onClick={() => handleSortChange("oldest")}
+              selected={sortBy === "oldest"}
+              sx={{ fontSize: "0.875rem" }}
+            >
+              Oldest First
+            </MenuItem>
+            <MenuItem
+              onClick={() => handleSortChange("title-asc")}
+              selected={sortBy === "title-asc"}
+              sx={{ fontSize: "0.875rem" }}
+            >
+              Title (A-Z)
+            </MenuItem>
+            <MenuItem
+              onClick={() => handleSortChange("title-desc")}
+              selected={sortBy === "title-desc"}
+              sx={{ fontSize: "0.875rem" }}
+            >
+              Title (Z-A)
+            </MenuItem>
+          </Menu>
+        </Box>
+      </Box>
+
+      {/* Job Cards */}
+      {isLoadingJobs ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+          <CircularProgress sx={{ color: "rgba(19, 163, 108, 0.83)" }} />
+        </Box>
+      ) : jobsError ? (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {jobsError}
+        </Alert>
+      ) : myJobs.length === 0 ? (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          No job posts found.
+        </Alert>
+      ) : filteredAndSortedJobs.length === 0 ? (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          No jobs match your search criteria. Try a different search term.
+        </Alert>
+      ) : (
+        <>
+          <Box sx={{ display: "flex", flexDirection: "column" }}>
+            {currentJobs.map((job: any) => (
+              <JobCard key={job._id}>
+                {/* Header with Title and Date */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    mb: 1,
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: "rgba(24, 25, 28, 1)",
+                      fontFamily: "Poppins",
+                      fontWeight: 500,
+                      fontStyle: "medium",
+                      fontSize: {
+                        xs: "14px", // mobile
+                        sm: "16px", // small tablet
+                        md: "18px", // tablet/desktop
+                        lg: "18px", // large desktop
+                      },
+                      lineHeight: {
+                        xs: "20px",
+                        sm: "24px",
+                        md: "28px",
+                        lg: "28px",
+                      },
+                      letterSpacing: "0%",
+                      flex: 1,
+                    }}
+                  >
+                    {job.jobDetails.title}
+                  </Typography>
+                  {job.createdAt && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: "rgba(84, 98, 116, 0.53)",
+                        fontFamily: "Poppins",
+                        fontWeight: 400,
+                        fontSize: {
+                          xs: "10px", // mobile
+                          sm: "11px", // tablet
+                          md: "12px", // desktop
+                        },
+                        lineHeight: {
+                          xs: "19px",
+                          sm: "21px",
+                          md: "23px",
+                        },
+                        letterSpacing: "0px",
+                        ml: 2,
+                      }}
+                    >
+                      Date Posted :{" "}
+                      {new Date(job.createdAt).toLocaleDateString("en-US", {
+                        month: "2-digit",
+                        day: "2-digit",
+                        year: "numeric",
+                      })}
+                    </Typography>
+                  )}
+                </Box>
+                <Stack
+                  direction="row"
+                  spacing={0.5}
+                  sx={{ flexWrap: "wrap", gap: 0.5 }}
+                >
+                  <Chip
+                    label={job.jobDetails.location}
+                    size="small"
+                    sx={{
+                      backgroundColor: "rgba(95, 168, 211, 0.1)",
+                      color: "rgba(84, 98, 116, 1)",
+                      fontWeight: 500,
+                      fontSize: "0.75rem",
+                      height: 24,
+                      border: "0.25px solid rgba(95, 168, 211, 1)",
+                    }}
+                    icon={
+                      <Image
+                        src="/icons/location2.svg"
+                        alt="search"
+                        width={13}
+                        height={13}
                       />
-                    </InputAdornment>
-                  ),
-                }}
+                    }
+                  />
+                  <Chip
+                    label={job.jobDetails.employmentType}
+                    size="small"
+                    sx={{
+                      backgroundColor: "rgba(95, 168, 211, 0.1)",
+                      color: "rgba(84, 98, 116, 1)",
+                      fontWeight: 500,
+                      fontSize: "0.75rem",
+                      height: 24,
+                      border: "0.25px solid rgba(95, 168, 211, 1)",
+                    }}
+                    icon={
+                      <Image
+                        src="/icons/suitcase.svg"
+                        alt="search"
+                        width={13}
+                        height={13}
+                      />
+                    }
+                  />
+                  <Chip
+                    label={`${job.jobDetails.salary.currency} ${job.jobDetails.salary.min} - ${job.jobDetails.salary.currency} ${job.jobDetails.salary.max}`}
+                    size="small"
+                    sx={{
+                      backgroundColor: "rgba(95, 168, 211, 0.1)",
+                      color: "rgba(84, 98, 116, 1)",
+                      fontWeight: 500,
+                      fontSize: "0.75rem",
+                      height: 24,
+                      border: "0.25px solid rgba(95, 168, 211, 1)",
+                    }}
+                    icon={
+                      <Image
+                        src="/icons/dollar.svg"
+                        alt="search"
+                        width={13}
+                        height={13}
+                      />
+                    }
+                  />
+                </Stack>
+
+                {/* Description */}
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "rgba(0, 0, 0, 1)",
+                    mt: 1.3,
+                    mb: 3,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    fontFamily: "Poppins",
+                    fontWeight: 400,
+                    fontStyle: "normal",
+                    fontSize: "12px",
+                    lineHeight: "23px",
+                    letterSpacing: "0px",
+                    maxWidth: "700px",
+                  }}
+                >
+                  {job.jobDetails.description}
+                </Typography>
+
+                {/* Action Buttons */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 2,
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Box sx={{ display: "flex", gap: 1, flex: 1 }}>
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      onClick={() => handleViewJobDetails(job)}
+                      // onClick={() => router.push("/jobs/" + job._id)}
+                      sx={{
+                        borderColor: "rgba(11, 82, 198, 1)",
+                        color: "rgba(11, 82, 198, 1)",
+                        textTransform: "uppercase",
+                        fontWeight: 500,
+                        fontSize: "0.875rem",
+                        py: 1.25,
+                        borderRadius: "38px",
+                        maxWidth: "250px",
+                        height: "42px",
+                        backgroundColor: "rgba(11, 82, 198, 0.08)",
+                        "&:hover": {
+                          borderColor: "#2563eb",
+                          backgroundColor: "rgba(11, 82, 198, 0.04)",
+                        },
+                      }}
+                    >
+                      VIEW DETAILS
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      onClick={() => onViewMatches(job._id)}
+                      sx={{
+                        borderColor: "rgba(84, 98, 116, 0.53)",
+                        color: "rgba(84, 98, 116, 1)",
+                        textTransform: "uppercase",
+                        fontWeight: 500,
+                        fontSize: "0.875rem",
+                        borderRadius: "38px",
+                        maxWidth: "250px",
+                        height: "42px",
+                        py: 1.25,
+                        backgroundColor: "rgba(84, 98, 116, 0.08)",
+                        "&:hover": {
+                          borderColor: "rgba(84, 98, 116, 0.53)",
+                          backgroundColor: "rgba(84, 98, 116, 0.04)",
+                        },
+                      }}
+                    >
+                      VIEW MATCHES
+                    </Button>
+                  </Box>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    startIcon={
+                      <Image
+                        src="/icons/delete.svg"
+                        alt="search"
+                        width={20}
+                        height={20}
+                      />
+                    }
+                    onClick={() => onDeleteJob(job._id)}
+                    sx={{
+                      borderColor: "rgba(224, 62, 92, 1)",
+                      color: "rgba(224, 62, 92, 1)",
+                      textTransform: "none",
+                      fontWeight: 500,
+                      fontSize: "0.875rem",
+                      py: 1.25,
+                      borderRadius: "38px",
+                      maxWidth: "200px",
+                      height: "42px",
+                      backgroundColor: "rgba(224, 62, 92, 0.08)",
+                      "&:hover": {
+                        borderColor: "rgba(224, 62, 92, 1)",
+                        backgroundColor: "rgba(224, 62, 92, 0.04)",
+                      },
+                    }}
+                  >
+                    Delete Job
+                  </Button>
+                </Box>
+              </JobCard>
+            ))}
+          </Box>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+              <Pagination
+                count={totalPages}
+                page={currentPage}
+                onChange={handlePageChange}
+                color="primary"
+                shape="rounded"
                 sx={{
-                  width: 280,
-                  height: "40px",
-                  "& .MuiOutlinedInput-root": {
-                    backgroundColor: "white",
-                    borderRadius: "42px",
-                    border: "1px solid rgba(165, 172, 181, 1)",
-                    "& fieldset": {
-                      border: "none",
+                  "& .MuiPaginationItem-root": {
+                    color: "#6b7280",
+                    fontWeight: 500,
+                    "&.Mui-selected": {
+                      backgroundColor: "#e0f2fe",
+                      color: "#0369a1",
+                      fontWeight: 600,
                     },
                     "&:hover": {
-                      borderColor: "rgba(165, 172, 181, 0.8)",
+                      backgroundColor: "#f3f4f6",
                     },
                   },
                 }}
               />
-              <Button
-                variant="outlined"
-                startIcon={
-                  <Image
-                    src="/icons/sort.svg"
-                    alt="search"
-                    width={24}
-                    height={24}
-                  />
-                }
-                onClick={handleSortMenuOpen}
-                sx={{
-                  height: "40px",
-                  borderColor: "rgba(165, 172, 181, 1)",
-                  color: "rgba(84, 98, 116, 1)",
-                  textTransform: "uppercase",
-                  fontWeight: 400,
-                  fontSize: "0.875rem",
-                  borderRadius: "42px",
-                  px: 2.5,
-                  "&:hover": {
-                    borderColor: "rgba(165, 172, 181, 0.8)",
-                    backgroundColor: "#f9fafb",
-                  },
-                }}
-              >
-                SORT
-              </Button>
-              <Menu
-                anchorEl={sortMenuAnchor}
-                open={Boolean(sortMenuAnchor)}
-                onClose={handleSortMenuClose}
-                anchorOrigin={{
-                  vertical: "bottom",
-                  horizontal: "right",
-                }}
-                transformOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
-              >
-                <MenuItem
-                  onClick={() => handleSortChange("newest")}
-                  selected={sortBy === "newest"}
-                  sx={{ fontSize: "0.875rem" }}
-                >
-                  Newest First
-                </MenuItem>
-                <MenuItem
-                  onClick={() => handleSortChange("oldest")}
-                  selected={sortBy === "oldest"}
-                  sx={{ fontSize: "0.875rem" }}
-                >
-                  Oldest First
-                </MenuItem>
-                <MenuItem
-                  onClick={() => handleSortChange("title-asc")}
-                  selected={sortBy === "title-asc"}
-                  sx={{ fontSize: "0.875rem" }}
-                >
-                  Title (A-Z)
-                </MenuItem>
-                <MenuItem
-                  onClick={() => handleSortChange("title-desc")}
-                  selected={sortBy === "title-desc"}
-                  sx={{ fontSize: "0.875rem" }}
-                >
-                  Title (Z-A)
-                </MenuItem>
-              </Menu>
             </Box>
-          </Box>
-
-          {/* Job Cards */}
-          {isLoadingJobs ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-              <CircularProgress sx={{ color: "rgba(19, 163, 108, 0.83)" }} />
-            </Box>
-          ) : jobsError ? (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {jobsError}
-            </Alert>
-          ) : myJobs.length === 0 ? (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              No job posts found.
-            </Alert>
-          ) : filteredAndSortedJobs.length === 0 ? (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              No jobs match your search criteria. Try a different search term.
-            </Alert>
-          ) : (
-            <>
-              <Box sx={{ display: "flex", flexDirection: "column" }}>
-                {currentJobs.map((job: any) => (
-                  <JobCard key={job._id}>
-                    {/* Header with Title and Date */}
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        mb: 1,
-                      }}
-                    >
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          color: "rgba(24, 25, 28, 1)",
-                          fontFamily: "Poppins",
-                          fontWeight: 500,
-                          fontStyle: "medium",
-                          fontSize: {
-                            xs: "14px", // mobile
-                            sm: "16px", // small tablet
-                            md: "18px", // tablet/desktop
-                            lg: "18px", // large desktop
-                          },
-                          lineHeight: {
-                            xs: "20px",
-                            sm: "24px",
-                            md: "28px",
-                            lg: "28px",
-                          },
-                          letterSpacing: "0%",
-                          flex: 1,
-                        }}
-                      >
-                        {job.jobDetails.title}
-                      </Typography>
-                      {job.createdAt && (
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: "rgba(84, 98, 116, 0.53)",
-                            fontFamily: "Poppins",
-                            fontWeight: 400,
-                            fontSize: {
-                              xs: "10px", // mobile
-                              sm: "11px", // tablet
-                              md: "12px", // desktop
-                            },
-                            lineHeight: {
-                              xs: "19px",
-                              sm: "21px",
-                              md: "23px",
-                            },
-                            letterSpacing: "0px",
-                            ml: 2,
-                          }}
-                        >
-                          Date Posted :{" "}
-                          {new Date(job.createdAt).toLocaleDateString("en-US", {
-                            month: "2-digit",
-                            day: "2-digit",
-                            year: "numeric",
-                          })}
-                        </Typography>
-                      )}
-                    </Box>
-                    <Stack
-                      direction="row"
-                      spacing={0.5}
-                      sx={{ flexWrap: "wrap", gap: 0.5 }}
-                    >
-                      <Chip
-                        label={job.jobDetails.location}
-                        size="small"
-                        sx={{
-                          backgroundColor: "rgba(95, 168, 211, 0.1)",
-                          color: "rgba(84, 98, 116, 1)",
-                          fontWeight: 500,
-                          fontSize: "0.75rem",
-                          height: 24,
-                          border: "0.25px solid rgba(95, 168, 211, 1)",
-                        }}
-                        icon={
-                          <Image
-                            src="/icons/location2.svg" // ✅ path inside /public folder
-                            alt="search"
-                            width={13}
-                            height={13}
-                          />
-                        }
-                      />
-                      <Chip
-                        label={job.jobDetails.employmentType}
-                        size="small"
-                        sx={{
-                          backgroundColor: "rgba(95, 168, 211, 0.1)",
-                          color: "rgba(84, 98, 116, 1)",
-                          fontWeight: 500,
-                          fontSize: "0.75rem",
-                          height: 24,
-                          border: "0.25px solid rgba(95, 168, 211, 1)",
-                        }}
-                        icon={
-                          <Image
-                            src="/icons/suitcase.svg" // ✅ path inside /public folder
-                            alt="search"
-                            width={13}
-                            height={13}
-                          />
-                        }
-                      />
-                      <Chip
-                        label={`${job.jobDetails.salary.currency} ${job.jobDetails.salary.min} - ${job.jobDetails.salary.currency} ${job.jobDetails.salary.max}`}
-                        size="small"
-                        sx={{
-                          backgroundColor: "rgba(95, 168, 211, 0.1)",
-                          color: "rgba(84, 98, 116, 1)",
-                          fontWeight: 500,
-                          fontSize: "0.75rem",
-                          height: 24,
-                          border: "0.25px solid rgba(95, 168, 211, 1)",
-                        }}
-                        icon={
-                          <Image
-                            src="/icons/dollar.svg" // ✅ path inside /public folder
-                            alt="search"
-                            width={13}
-                            height={13}
-                          />
-                        }
-                      />
-                    </Stack>
-
-                    {/* Description */}
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: "rgba(0, 0, 0, 1)",
-                        mt: 1.3,
-                        mb: 3,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        fontFamily: "Poppins",
-                        fontWeight: 400,
-                        fontStyle: "normal",
-                        fontSize: "12px",
-                        lineHeight: "23px",
-                        letterSpacing: "0px",
-                        maxWidth: "700px",
-                      }}
-                    >
-                      {job.jobDetails.description}
-                    </Typography>
-
-                    {/* Action Buttons */}
-                    <Box
-                      sx={{
-                        display: "flex",
-                        gap: 2,
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <Box sx={{ display: "flex", gap: 1, flex: 1 }}>
-                        <Button
-                          variant="outlined"
-                          fullWidth
-                          onClick={() => handleViewJobDetails(job)}
-                          sx={{
-                            borderColor: "rgba(11, 82, 198, 1)",
-                            color: "rgba(11, 82, 198, 1)",
-                            textTransform: "uppercase",
-                            fontWeight: 500,
-                            fontSize: "0.875rem",
-                            py: 1.25,
-                            borderRadius: "38px",
-                            maxWidth: "250px",
-                            height: "42px",
-                            backgroundColor: "rgba(11, 82, 198, 0.08)",
-                            "&:hover": {
-                              borderColor: "#2563eb",
-                              backgroundColor: "rgba(11, 82, 198, 0.04)",
-                            },
-                          }}
-                        >
-                          VIEW DETAILS
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          fullWidth
-                          onClick={() => onViewMatches(job._id)}
-                          sx={{
-                            borderColor: "rgba(84, 98, 116, 0.53)",
-                            color: "rgba(84, 98, 116, 1)",
-                            textTransform: "uppercase",
-                            fontWeight: 500,
-                            fontSize: "0.875rem",
-                            borderRadius: "38px",
-                            maxWidth: "250px",
-                            height: "42px",
-                            py: 1.25,
-                            backgroundColor: "rgba(84, 98, 116, 0.08)",
-                            "&:hover": {
-                              borderColor: "rgba(84, 98, 116, 0.53)",
-                              backgroundColor: "rgba(84, 98, 116, 0.04)",
-                            },
-                          }}
-                        >
-                          VIEW MATCHES
-                        </Button>
-                      </Box>
-                      <Button
-                        variant="outlined"
-                        fullWidth
-                        startIcon={
-                          <Image
-                            src="/icons/delete.svg"
-                            alt="search"
-                            width={20}
-                            height={20}
-                          />
-                        }
-                        onClick={() => onDeleteJob(job._id)}
-                        sx={{
-                          borderColor: "rgba(224, 62, 92, 1)",
-                          color: "rgba(224, 62, 92, 1)",
-                          textTransform: "none",
-                          fontWeight: 500,
-                          fontSize: "0.875rem",
-                          py: 1.25,
-                          borderRadius: "38px",
-                          maxWidth: "200px",
-                          height: "42px",
-                          backgroundColor: "rgba(224, 62, 92, 0.08)",
-                          "&:hover": {
-                            borderColor: "rgba(224, 62, 92, 1)",
-                            backgroundColor: "rgba(224, 62, 92, 0.04)",
-                          },
-                        }}
-                      >
-                        Delete Job
-                      </Button>
-                    </Box>
-                  </JobCard>
-                ))}
-              </Box>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-                  <Pagination
-                    count={totalPages}
-                    page={currentPage}
-                    onChange={handlePageChange}
-                    color="primary"
-                    shape="rounded"
-                    sx={{
-                      "& .MuiPaginationItem-root": {
-                        color: "#6b7280",
-                        fontWeight: 500,
-                        "&.Mui-selected": {
-                          backgroundColor: "#e0f2fe",
-                          color: "#0369a1",
-                          fontWeight: 600,
-                        },
-                        "&:hover": {
-                          backgroundColor: "#f3f4f6",
-                        },
-                      },
-                    }}
-                  />
-                </Box>
-              )}
-            </>
           )}
+        </>
+      )}
 
-          <JobDetailsDialog
-            open={jobDetailsModalOpen}
-            onClose={handleCloseJobDetailsModal}
-            job={selectedJobForDetails}
-            onRefresh={onRefresh}
-          />
+      <JobDetailsDialog
+        open={jobDetailsModalOpen}
+        onClose={handleCloseJobDetailsModal}
+        job={selectedJobForDetails}
+        onRefresh={onRefresh}
+      />
 
-          {/* Delete Job Post Dialog */}
-          <DeleteJobPostDialog
-            open={deleteDialogOpen}
-            onClose={onCancelDelete}
-            onDelete={onConfirmDelete}
-            isDeleting={isDeleting}
-          />
-        </StyledCard>
+      {/* Delete Job Post Dialog */}
+      <DeleteJobPostDialog
+        open={deleteDialogOpen}
+        onClose={onCancelDelete}
+        onDelete={onConfirmDelete}
+        isDeleting={isDeleting}
+      />
+    </StyledCard>
   );
 };
 
