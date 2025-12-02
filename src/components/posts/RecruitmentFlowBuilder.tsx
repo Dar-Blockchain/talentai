@@ -1111,7 +1111,70 @@ Ready to customize the content or add more triggers?`
     }
 
     if (activeStep === 1) {
-      // Just move to next step, no validation needed for matching config display
+      // Save matching config before moving to next step
+      if (!matchingConfig) {
+        setSaveError('Matching configuration is missing. Please refresh and try again.');
+        return;
+      }
+
+      // Validate that weights total 100%
+      const totalWeights = Object.values(matchingConfig.weights || {}).reduce((sum: number, val: any) => sum + Number(val), 0);
+      if (totalWeights !== 100) {
+        setSaveError(`Matching weights must total 100%. Current total: ${totalWeights}%`);
+        return;
+      }
+
+      // Get job title from generated job data and company name from profile
+      const jobTitle = generatedJobData?.jobDetails?.title || 'Untitled Job';
+      const companyName = authProfile?.companyDetails?.name || 'Company';
+
+      setIsSavingJob(true);
+      setSaveError(null);
+
+      try {
+        let token: string | undefined = Cookies.get("api_token");
+        if (!token && typeof window !== 'undefined') {
+          token = window.localStorage.getItem('api_token') || window.localStorage.getItem('token') || undefined;
+        }
+
+        if (!token) {
+          setSaveError('No authentication token found. Please log in again.');
+          return;
+        }
+
+        const payload = {
+          name: `${jobTitle} - ${companyName}`,
+          weights: matchingConfig.weights,
+          importanceWeight: matchingConfig.importanceWeight,
+          exchangeRates: matchingConfig.exchangeRates,
+        };
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}matchingConfig/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `Failed to save matching configuration (${response.status})`);
+        }
+
+        const result = await response.json();
+        console.log('Matching config saved successfully:', result);
+        toast.success('Matching configuration saved successfully!');
+
+      } catch (error) {
+        console.error('Error saving matching config:', error);
+        setSaveError(error instanceof Error ? error.message : 'Failed to save matching configuration. Please try again.');
+        return;
+      } finally {
+        setIsSavingJob(false);
+      }
+
       setActiveStep((prev) => prev + 1);
       return;
     }
@@ -1721,17 +1784,19 @@ Ready to customize the content or add more triggers?`
                 },
               }}
             >
-              {isSavingJob
-                ? 'Saving Job...'
-                : isRegisteringAgent
-                  ? 'Creating AI Agent...'
-                  : isSavingAgentConfig
-                    ? 'Saving Agent Config...'
-                    : postStepsLoading
-                      ? 'Confirm...'
-                      : activeStep === 1
-                        ? 'Save & Continue'
-                        : 'Next'}
+              {isSavingJob && activeStep === 1
+                ? 'Saving Matching Config...'
+                : isSavingJob
+                  ? 'Saving Job...'
+                  : isRegisteringAgent
+                    ? 'Creating AI Agent...'
+                    : isSavingAgentConfig
+                      ? 'Saving Agent Config...'
+                      : postStepsLoading
+                        ? 'Confirm...'
+                        : activeStep === 1
+                          ? 'Save & Continue'
+                          : 'Next'}
             </Button>
           ) : (
             <Button
