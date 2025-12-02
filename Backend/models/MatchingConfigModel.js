@@ -10,10 +10,10 @@ const matchingConfigSchema = new mongoose.Schema({
     contract: { type: Number, default: 7.5 },
   },
   importanceWeight: {
-    critical: { type: Number, default: 1.5 },
-    high: { type: Number, default: 1.2 },
-    medium: { type: Number, default: 1.0 },
-    low: { type: Number, default: 0.8 },
+    Junior: { type: Number, default: 1.5 },
+    Mid_Level: { type: Number, default: 1.2 },
+    Senior: { type: Number, default: 1.0 },
+    Expert: { type: Number, default: 0.8 },
   },
   exchangeRates: {
     type: Map,

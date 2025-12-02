@@ -212,7 +212,7 @@ async function calculateMatchScore(
   const MAX_SALARY_SCORE = cfg.weights.salary;
   const MAX_WORKMODE_SCORE = cfg.weights.workMode;
   const MAX_CONTRACT_SCORE = cfg.weights.contract;
-  const IMPORTANCE_WEIGHT = cfg.importanceWeight || { critical: 1.5, high: 1.2, medium: 1.0, low: 0.8 };
+  const IMPORTANCE_WEIGHT = cfg.importanceWeight ;
   const EXCHANGE_RATES = cfg.exchangeRates || { USD: 1, EUR: 1.1, TND: 0.32 };
 
   const hardSkillScore = calculateHardSkillsScore(jobSkills, candidateSkills, IMPORTANCE_WEIGHT, MAX_HARD_SKILL_SCORE);

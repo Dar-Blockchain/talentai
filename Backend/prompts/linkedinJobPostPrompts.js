@@ -20,21 +20,21 @@ const getQuickPrompt = (description, companyLocation) => `
           {
             "name": "Skill 1",
             "level": "1-5 (based on years of experience in the job post)",
-            "importance": "high",
+            "importance": "Senior",
             "category": "Frontend/Backend/Other",
             "percentage": 0
           },
           {
             "name": "Skill 2",
             "level": "1-5 (based on years of experience in the job post)",
-            "importance": "medium",
+            "importance": "Mid_Level",
             "category": "Frontend/Backend/Other",
             "percentage": 0
           },
           {
             "name": "Skill 3",
             "level": "1-5 (based on years of experience in the job post)",
-            "importance": "critical",
+            "importance": "Expert",
             "category": "Frontend/Backend/Other",
             "percentage": 0
           }
@@ -42,7 +42,7 @@ const getQuickPrompt = (description, companyLocation) => `
         "softSkills": [
           {
             "name": "Soft Skill 1",
-            "importance": "low/medium/high/critical",
+            "importance": "Junior/Mid_Level/Senior/Expert",
             "percentage": 100
           },
         ],
@@ -74,13 +74,13 @@ const getQuickPrompt = (description, companyLocation) => `
       - 10 years = level 4
       - 15+ years = level 5
 
-    - CRITICAL: For "importance", ONLY use these EXACT lowercase values: "low", "medium", "high", "critical"
+    - CRITICAL: For "importance", ONLY use these EXACT lowercase values: "Junior", "Mid_Level", "Senior", "Expert"
 
     - Set importance using these EXACT values:
-      - "critical" → Must-have core requirement with years of experience required
-      - "high" → Required for the job, explicitly mentioned as "Required"
-      - "medium" → Preferred or nice to have, mentioned as "Preferred" or "Plus"
-      - "low" → Bonus or additional skill, would be helpful
+      - "Expert" → Must-have core requirement with years of experience required
+      - "Senior" → Required for the job, explicitly mentioned as "Required"
+      - "Mid_Level" → Preferred or nice to have, mentioned as "Preferred" or "Plus"
+      - "Junior" → Bonus or additional skill, would be helpful
 
     - Only one soft skill must be generated.
     - The soft skill must always have percentage = 100.
@@ -103,7 +103,7 @@ STRICT SOFT SKILL RULES:
 - The soft skill must always have percentage = 100%.
 - Soft skills must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Adaptability, Time management, Leadership, Attention to detail).
 - Never use generic, vague, or irrelevant soft skills.
-- Importance values must follow: "low", "medium", "high", "critical".
+- Importance values must follow: "Junior", "Mid_Level", "Senior", "Expert".
 
 
     Job Description:
@@ -129,18 +129,18 @@ const getDetailedPrompt = (description, companyLocation) => `
       - 5 years = level 3
       - 10 years = level 4
       - 15+ years = level 5
-    - CRITICAL: For "importance", ONLY use these EXACT lowercase values: "low", "medium", "high", "critical"
+    - CRITICAL: For "importance", ONLY use these EXACT lowercase values: "Junior", "Mid_Level", "Senior", "Expert"
 
     - Set importance using these EXACT values:
-      - "critical" → Must-have core requirement with years of experience required
-      - "high" → Required for the job, explicitly mentioned as "Required"
-      - "medium" → Preferred or nice to have, mentioned as "Preferred" or "Plus"
-      - "low" → Bonus or additional skill, would be helpful
+      - "Expert" → Must-have core requirement with years of experience required
+      - "Senior" → Required for the job, explicitly mentioned as "Required"
+      - "Mid_Level" → Preferred or nice to have, mentioned as "Preferred" or "Plus"
+      - "Junior" → Bonus or additional skill, would be helpful
 
     - Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
     - The total sum of all percentages must equal exactly 100%.
     - Only one soft skill must be generated.
-    - Soft skill importance must follow: "low", "medium", "high", "critical".
+    - Soft skill importance must follow: "Junior", "Mid_Level", "Senior", "Expert".
     - The soft skill must always have percentage = 100 (since it is the only one).
     - LIA must infer the percentage distribution based on the importance, frequency, and emphasis of each skill mentioned in the job description.
     - If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
@@ -171,21 +171,21 @@ const getDetailedPrompt = (description, companyLocation) => `
           {
             "name": "Skill 1",
             "level": "Required level (1-5) based on years of experience",
-            "importance": "high",
+            "importance": "Senior",
             "category": "Frontend/Backend/DevOps/etc.",
             "percentage": 0
           },
           {
             "name": "Skill 2",
             "level": "Required level (1-5) based on years of experience",
-            "importance": "medium",
+            "importance": "Mid_Level",
             "category": "Frontend/Backend/DevOps/etc.",
             "percentage": 0
           },
           {
             "name": "Skill 3",
             "level": "Required level (1-5) based on years of experience",
-            "importance": "critical",
+            "importance": "Expert",
             "category": "Frontend/Backend/DevOps/etc.",
             "percentage": 0
           }
@@ -193,7 +193,7 @@ const getDetailedPrompt = (description, companyLocation) => `
         "softSkills": [
           {
             "name": "Soft Skill 1",
-            "importance": "low/medium/high/critical",
+            "importance": "Junior/Mid_Level/Senior/Expert",
             "percentage": 100
           },        
         ],
@@ -204,14 +204,14 @@ const getDetailedPrompt = (description, companyLocation) => `
               "name": "Skill name",
               "reason": "Why this skill is relevant",
               "category": "Frontend/Backend/DevOps/etc.",
-              "priority": "High/Medium/Low"
+              "priority": "Senior/Mid_Level/Junior"
             }
           ],
           "frameworks": [
             {
               "name": "Framework name",
               "relatedTo": "Related technology",
-              "priority": "High/Medium/Low"
+              "priority": "Senior/Mid_Level/Junior"
             }
           ],
           "tools": [

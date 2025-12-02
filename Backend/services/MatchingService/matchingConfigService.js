@@ -13,7 +13,7 @@ const defaultConfig = () => ({
     workMode: 7.5,
     contract: 7.5,
   },
-  importanceWeight: { critical: 1.5, high: 1.2, medium: 1.0, low: 0.8 },
+  importanceWeight: { Expert: 1.5, Senior: 1.2, Mid_Level: 1.0, Junior: 0.8 },
   exchangeRates: { USD: 1, EUR: 1.1, TND: 0.32 },
 });
 
