@@ -79,7 +79,6 @@ const getQuickPrompt = (description, companyLocation) => `
       - "low" → Bonus or additional skill, would be helpful
 
     - Only one soft skill must be generated.
-    - LIA must determine the percentage distribution based on importance, frequency, and context in the job description.
     - If not specified, distribute evenly and logically.
     - Return only valid JSON. Avoid markdown or code blocks.
 
@@ -130,12 +129,8 @@ const getDetailedPrompt = (description, companyLocation) => `
       - "medium" → Preferred or nice to have, mentioned as "Preferred" or "Plus"
       - "low" → Bonus or additional skill, would be helpful
 
-    - Each skill in "requiredSkills" must include a "percentage" field representing its importance weight in the job.
     - Only one soft skill must be generated.
     - Soft skill importance must follow: "low", "medium", "high", "critical".
-    - LIA must infer the percentage distribution based on the importance, frequency, and emphasis of each skill mentioned in the job description.
-    - If no clear priorities are specified, distribute the percentages evenly and logically among all required skills.
-    - Core and frequently mentioned skills should receive higher percentages.
     
     Job Description:
     ${description}
@@ -255,7 +250,7 @@ const getDetailedPrompt = (description, companyLocation) => `
 STRICT SOFT SKILL RULES:
 - REQUIRED: Generate exactly 1 soft skill — no more, no less.
 - The soft skill must be relevant to the job role (e.g., Problem solving, Communication, Teamwork, Leadership, Adaptability, Time management).
-- The soft skill must include an "importance" field and a "percentage" field.
+- The soft skill must include an "importance" field .
 - Never use vague or irrelevant soft skills.
 
 
