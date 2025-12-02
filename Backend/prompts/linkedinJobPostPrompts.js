@@ -108,6 +108,44 @@ STRICT SOFT SKILL RULES:
 
     Job Description:
     ${description}
+
+    Before generating the job details, include the following matching configuration exactly as structured:
+
+"matchingConfig": {
+  "weights": {
+    "hardSkill": 40,
+    "SoftSkill": 10,
+    "experience": 30,
+    "salary": 5,
+    "workMode": 7.5,
+    "contract": 7.5
+  },
+  "importanceWeight": {
+    "Junior": 1.5,
+    "Mid_Level": 1.2,
+    "Senior": 1.0,
+    "Expert": 0.8
+  },
+  "exchangeRates": {
+    "USD": 1,
+    "EUR": 1.1,
+    "TND": 0.32
+  }
+},
+
+The "weights" MUST be dynamically adjusted based on the job description context.  
+For example:
+- Increase "hardSkill" weight if the job description is highly technical.  
+- Increase "SoftSkill" weight if the role requires leadership or communication.  
+- Increase "experience" weight if seniority is emphasized.  
+- Increase "salary" weight if compensation is a key factor in the job description.  
+- Adjust "workMode" and "contract" weight if the post highlights remote/on-site or contract specifics.
+
+The final weight distribution MUST always sum to 100%.  
+The assistant must return the adjusted weights inside "matchingConfig".
+
+The "exchangeRates" values must reflect today's real exchange rates.
+
 `.trim();
 
 const getDetailedPrompt = (description, companyLocation) => `
@@ -272,6 +310,42 @@ STRICT SOFT SKILL RULES:
 - The percentage must always be 100.
 - Never use vague or irrelevant soft skills.
 
+Before generating the job details, include the following matching configuration exactly as structured:
+
+"matchingConfig": {
+  "weights": {
+    "hardSkill": 40,
+    "SoftSkill": 10,
+    "experience": 30,
+    "salary": 5,
+    "workMode": 7.5,
+    "contract": 7.5
+  },
+  "importanceWeight": {
+    "Junior": 1.5,
+    "Mid_Level": 1.2,
+    "Senior": 1.0,
+    "Expert": 0.8
+  },
+  "exchangeRates": {
+    "USD": 1,
+    "EUR": 1.1,
+    "TND": 0.32
+  }
+},
+
+The "weights" MUST be dynamically adjusted based on the job description context.  
+For example:
+- Increase "hardSkill" weight if the job description is highly technical.  
+- Increase "SoftSkill" weight if the role requires leadership or communication.  
+- Increase "experience" weight if seniority is emphasized.  
+- Increase "salary" weight if compensation is a key factor in the job description.  
+- Adjust "workMode" and "contract" weight if the post highlights remote/on-site or contract specifics.
+
+The final weight distribution MUST always sum to 100%.  
+The assistant must return the adjusted weights inside "matchingConfig".
+
+The "exchangeRates" values must reflect today's real exchange rates.
 
 `.trim();
 

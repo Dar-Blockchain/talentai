@@ -4,8 +4,9 @@ const matchingConfigSchema = new mongoose.Schema({
   name: { type: String, default: 'default' },
   weights: {
     hardSkill: { type: Number, default: 40 },
-    experience: { type: Number, default: 35 },
-    salary: { type: Number, default: 10 },
+    experience: { type: Number, default: 30 },
+    SoftSkill: { type: Number, default: 10 },
+    salary: { type: Number, default: 5 },
     workMode: { type: Number, default: 7.5 },
     contract: { type: Number, default: 7.5 },
   },
