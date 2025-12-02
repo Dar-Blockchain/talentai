@@ -615,12 +615,17 @@ As a ${
      return [...new Set(skills)];
    };
 
+   const getJobData = (): JobPost | null => {
+     return updatedJobData || generatedJob;
+   };
+
    // Expose functions to parent component
    useImperativeHandle(ref, () => ({
      saveJob,
      canProceed,
      getJobTitle,
-     getJobSkills
+     getJobSkills,
+     getJobData
    }));
 
   return (

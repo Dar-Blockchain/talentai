@@ -86,6 +86,7 @@ export interface PostDetailsRef {
   canProceed: () => boolean;
   getJobTitle: () => string | undefined;
   getJobSkills: () => string[];
+  getJobData: () => JobPost | null;
 }
 
 export interface SalaryRange {
