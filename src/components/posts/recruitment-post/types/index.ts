@@ -24,6 +24,11 @@ export interface JobPost {
       experienceLevel: string;
       percentage?: number;
     }>;
+    softSkills?: Array<{
+      name: string;
+      importance: string;
+      percentage: number;
+    }>;
     suggestedSkills: {
       technical: Array<{
         name: string;

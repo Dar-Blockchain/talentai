@@ -127,6 +127,11 @@ const PostDetails = forwardRef<PostDetailsRef, PostDetailsProps>(({ onReadyChang
                   'General'),
               percentage: skill.percentage
             })),
+            softSkills: data.skillAnalysis.softSkills?.map((skill: any) => ({
+              name: skill.name,
+              importance: skill.importance,
+              percentage: skill.percentage
+            })) || [],
             suggestedSkills: {
               technical: data.skillAnalysis.suggestedSkills.technical.map((skill: any) => ({
                 name: skill.name,
@@ -306,6 +311,19 @@ const handleInputChange = (field: string, value: any): void => {
             skillAnalysis: {
               ...prev.skillAnalysis,
               requiredSkills: value,
+            },
+          }
+        : null
+    );
+  } else if (field === "softSkills") {
+    // Update softSkills in skillAnalysis
+    setEditedJob((prev) =>
+      prev
+        ? {
+            ...prev,
+            skillAnalysis: {
+              ...prev.skillAnalysis,
+              softSkills: value,
             },
           }
         : null
