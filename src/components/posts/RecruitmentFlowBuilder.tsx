@@ -77,6 +77,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 import PostDetails from './recruitment-post/PostDetails';
 import { PostDetailsRef } from './recruitment-post/types';
+import MatchingConfig from './recruitment-post/components/MatchingConfig';
 import AgentConfigurationForm, { AgentConfigurationFormValues } from './AgentConfigurationForm';
 import PaymentConfirmationDialog from './PaymentConfirmationDialog';
 import { AppDispatch } from '@/store/store';
@@ -414,6 +415,8 @@ const RecruitmentFlowBuilder: React.FC = () => {
   const [postDetailsReady, setPostDetailsReady] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [generatedJobData, setGeneratedJobData] = useState<any>(null);
+  const [matchingConfig, setMatchingConfig] = useState<any>(null);
 
   // Refs
   const postDetailsRef = useRef<PostDetailsRef>(null);
@@ -709,6 +712,7 @@ const RecruitmentFlowBuilder: React.FC = () => {
 
   const steps = [
     'Job Details',
+    'Matching Config',
     'Agent Configuration',
     'Recruitment Flow',
   ];
@@ -1084,6 +1088,10 @@ Ready to customize the content or add more triggers?`
         setRegisteredAgentId(null);
         setRegisteredAgentName(null);
 
+        // Capture the generated job data for matching config display
+        const jobData = postDetailsRef.current?.getJobData();
+        setGeneratedJobData(jobData);
+
         try {
           await registerHRAgent(saveResult.jobId);
         } catch (agentError) {
@@ -1103,6 +1111,12 @@ Ready to customize the content or add more triggers?`
     }
 
     if (activeStep === 1) {
+      // Just move to next step, no validation needed for matching config display
+      setActiveStep((prev) => prev + 1);
+      return;
+    }
+
+    if (activeStep === 2) {
       if (!savedJobId) {
         setSaveError('No job ID available. Please save the job post before configuring the agent.');
         return;
@@ -1283,18 +1297,27 @@ Ready to customize the content or add more triggers?`
         );
       case 1:
         return (
+          <Box sx={{ flex: 1, height: '100%', overflow: 'auto' }}>
+            <MatchingConfig
+              jobData={generatedJobData}
+              onChange={setMatchingConfig}
+            />
+          </Box>
+        );
+      case 2:
+        return (
           <AgentConfigurationForm
             value={agentConfig}
             onChange={handleAgentConfigChange}
             disabled={!savedJobId || isSavingAgentConfig || isRegisteringAgent}
             loading={isSavingAgentConfig}
-            errorMessage={activeStep === 1 ? saveError : null}
+            errorMessage={activeStep === 2 ? saveError : null}
             agentSummary={{
               agentName: registeredAgentName ?? undefined,
             }}
           />
         );
-      case 2:
+      case 3:
         return (
           <Box sx={{ flex: 1, height: '100%', position: 'relative' }}>
             <ReactFlow

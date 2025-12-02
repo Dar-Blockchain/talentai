@@ -14,6 +14,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import DoneIcon from "@mui/icons-material/Done";
 import WorkIcon from "@mui/icons-material/Work";
 import SkillsList from "./SkillsList";
+import SoftSkillsList from "./SoftSkillsList";
 import JobDetailsForm from "./JobDetailsForm";
 import JobInfoDisplay from "./JobInfoDisplay";
 
@@ -375,6 +376,19 @@ const JobPreview: React.FC<JobPreviewProps> = ({
             onInputChange("skills", updatedSkills)
           }
         />
+
+        {/* Soft Skills */}
+        {((editedJob?.skillAnalysis?.softSkills && editedJob.skillAnalysis.softSkills.length > 0) ||
+          (generatedJob?.skillAnalysis?.softSkills && generatedJob.skillAnalysis.softSkills.length > 0)) && (
+          <SoftSkillsList
+            skills={editedJob?.skillAnalysis?.softSkills || generatedJob?.skillAnalysis?.softSkills || []}
+            title="Soft Skills"
+            editable={isEditing}
+            onSkillsChange={(updatedSkills) =>
+              onInputChange("softSkills", updatedSkills)
+            }
+          />
+        )}
 
         {/* Description */}
         <Box sx={{ mb: 3 }}>
