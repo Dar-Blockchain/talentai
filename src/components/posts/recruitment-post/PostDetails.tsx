@@ -380,6 +380,7 @@ const handleInputChange = (field: string, value: any): void => {
         },
         skillAnalysis: {
           requiredSkills: jobDataToUse.skillAnalysis.requiredSkills || [],
+          softSkills: jobDataToUse.skillAnalysis.softSkills || [],
           suggestedSkills: {
             technical: (
               jobDataToUse.skillAnalysis.suggestedSkills?.technical || []
