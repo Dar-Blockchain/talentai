@@ -25,7 +25,7 @@ function normalizeSkillName(name) {
   return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
 }
 
-// 1️⃣ Hard Skills
+// 0️⃣ Hard Skills
 function calculateHardSkillsScore(jobSkills, candidateSkills, IMPORTANCE_WEIGHT, MAX_HARD_SKILL_SCORE) {
   console.log("\n--- Hard Skills Calculation ---");
   let hardSkillScore = 0;
@@ -71,6 +71,35 @@ function calculateHardSkillsScore(jobSkills, candidateSkills, IMPORTANCE_WEIGHT,
   console.log(`Hard skill score (${MAX_HARD_SKILL_SCORE}% max):`, hardSkillScore);
   return hardSkillScore;
 }
+
+// 1️⃣ Bis — Soft Skills
+function calculateSoftSkillsScore(jobSoftSkills, candidateSoftSkills, MAX_SOFT_SKILL_SCORE) {
+  console.log("\n--- Soft Skills Calculation ---");
+
+  if (!jobSoftSkills?.length || !candidateSoftSkills?.length) {
+    console.log("No soft skills provided.");
+    return 0;
+  }
+
+  let matchCount = 0;
+
+  jobSoftSkills.forEach((jobSoft) => {
+    const match = candidateSoftSkills.find(
+      (s) => s.name?.toLowerCase() === jobSoft.name?.toLowerCase()
+    );
+
+    if (match) {
+      matchCount++;
+      console.log(`Matched soft skill: ${jobSoft.name}`);
+    }
+  });
+
+  const softSkillScore = (matchCount / jobSoftSkills.length) * MAX_SOFT_SKILL_SCORE;
+
+  console.log(`Soft skill score (${MAX_SOFT_SKILL_SCORE}% max):`, softSkillScore.toFixed(2));
+  return softSkillScore;
+}
+
 
 // 2️⃣ Experience
 function calculateExperienceScore(jobSkills, candidateSkills, MAX_EXPERIENCE_SCORE) {
@@ -208,6 +237,7 @@ async function calculateMatchScore(
   // Load dynamic config
   const cfg = await getMatchingConfig(idCompany);
   const MAX_HARD_SKILL_SCORE = cfg.weights.hardSkill;
+  const MAX_SOFT_SKILL_SCORE = cfg.weights.SoftSkill;
   const MAX_EXPERIENCE_SCORE = cfg.weights.experience;
   const MAX_SALARY_SCORE = cfg.weights.salary;
   const MAX_WORKMODE_SCORE = cfg.weights.workMode;
