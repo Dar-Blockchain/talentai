@@ -198,13 +198,14 @@ async function checkIfCandidateUnlocked(idCompany, idCandidate) {
       idCompany,
       idCandidate,
     });
-    console.log(`Check unlock status for Company ${idCompany} and Candidate ${idCandidate}:`, unlocked ? "Unlocked" : "Not Unlocked");
+
     return !!unlocked;
   } catch (error) {
     console.error("Error checking unlock status:", error);
     return false;
   }
 }
+
 
 // Fonction principale
 async function calculateMatchScore(
@@ -226,13 +227,15 @@ async function calculateMatchScore(
 
   if (!jobSkills?.length || !candidateSkills?.length) return 0;
   // Check if candidate is already unlocked by same company for same job
-  if (idCompany && candidateProfile.userId._id) {
-    const isUnlocked = await checkIfCandidateUnlocked(idCompany, candidateProfile.userId._id);
-    if (isUnlocked) {
-      console.log("❌ Candidate eliminated: already unlocked by this company");
-      return 0;
-    }
+  let unlocked = false;
+
+  if (idCompany && candidateProfile.userId?._id) {
+    unlocked = await checkIfCandidateUnlocked(
+      idCompany,
+      candidateProfile.userId._id
+    );
   }
+
 
   // Load dynamic config
   const cfg = await getMatchingConfig(idCompany);
@@ -258,7 +261,10 @@ async function calculateMatchScore(
 
   const totalScore = hardSkillScore + experienceScore + salaryScore + workModeScore + contractScore;
   console.log("\n✅ Total Match Score:", totalScore.toFixed(1));
-  return Math.round(totalScore * 10) / 10;
+return {
+  score: Math.round(totalScore * 10) / 10,
+  unlocked
+};
 }
 
 module.exports = { calculateMatchScore, normalizeSkillName, checkIfCandidateUnlocked };
