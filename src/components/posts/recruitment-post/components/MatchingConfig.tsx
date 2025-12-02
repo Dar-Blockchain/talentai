@@ -365,8 +365,8 @@ const MatchingConfig: React.FC<MatchingConfigProps> = ({ jobData, onChange }) =>
                 fullWidth
                 size="small"
                 slotProps={{
+                  htmlInput: { step: 0.1 },
                   input: {
-                    step: 0.1,
                     endAdornment: <Typography sx={{ color: "#94a3b8", fontWeight: 600, fontSize: "1.1rem" }}>×</Typography>,
                   },
                 }}
@@ -455,9 +455,7 @@ const MatchingConfig: React.FC<MatchingConfigProps> = ({ jobData, onChange }) =>
                 fullWidth
                 size="small"
                 slotProps={{
-                  input: {
-                    step: 0.01,
-                  },
+                  htmlInput: { step: 0.01 },
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
